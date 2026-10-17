@@ -18,6 +18,13 @@ in the implemented-surface manifest. Its foundation features already map the
 bootstrap behavior and runtime build boundary to tests.
 Connect an earlier component when its missing layer is introduced.
 
+Follow [MMORPG authority and identity](../../../docs/architecture/0007-mmorpg-architecture.md):
+classify state as server-authoritative, predicted, replicated or presentation-only.
+Player requests are bounded authenticated intents, not authoring transactions or
+arbitrary component setters. Separate durable identity from local/replica handles;
+test stale ownership epochs, reconnect, region handoff and duplicate durable actions
+when those layers exist. Render-frame Lua must not decide live gameplay outcomes.
+
 For an implemented surface, trace valid and invalid behavior through engine
 validation, serialization/versioning, editor fields, typed commands, selected
 Lua bindings and cooked export as applicable. Document intentional unsupported
@@ -25,8 +32,9 @@ operations. Every exposed API gets a stable manifest entry linked to real tests
 and a FeatureWorld exercise or justified external fixture.
 
 Test stale handles, missing components, duplicate IDs, rollback, callback ordering,
-scene reload and deferred create/destroy where relevant. Only the process main
-thread commits scene changes; physics workers queue events and never call Lua.
+scene reload and deferred create/destroy where relevant. The local editor/client
+controlling thread commits its scene changes; each authoritative server region
+uses its designated single writer. Physics workers queue events and never call Lua.
 Bindings use checked handles instead of borrowed component pointers. Preserve
 edit/play isolation and the authored scene through failed operations.
 

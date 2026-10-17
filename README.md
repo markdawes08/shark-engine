@@ -1,6 +1,10 @@
 # Shark
 
-Shark is a C++20 game engine project. The versioned
+Shark is a C++20 game engine project targeting a **seamless open-world MMORPG**.
+The [MMORPG plan and existing-code assessment](docs/roadmap/mmorpg-plan.md) define
+the authoritative server, persistent world and staged client/server work.
+These are planned capabilities; the current implementation is a CPU bootstrap.
+The versioned
 [requirements manifest](docs/coverage/requirements.json) preserves assignment
 scope and acceptance criteria for clean checkouts.
 
@@ -10,7 +14,7 @@ scenes, gameplay and editor UI are future increments. CPU build results do not
 establish graphics or release-platform support.
 
 - [Architecture decisions](docs/architecture/README.md): targets, dependencies,
-  platform candidates, formats, simulation conventions, and the v1 profile.
+  platform candidates, formats, simulation conventions and the MMORPG profile.
 - [Requirements and coverage](docs/coverage/README.md): every roadmap assignment
   has owned requirements and observable acceptance criteria. Bootstrap and runtime
   boundary features are mapped to tests; component, command and Lua entries remain
@@ -18,7 +22,10 @@ establish graphics or release-platform support.
 - [Build instructions](docs/building.md), [CI](docs/ci.md) and [agent guidance](AGENTS.md)
   describe native presets, tool versions, checks and ownership policies.
 - [Assignment 01 handoff](docs/handoffs/01-build-foundation.md) records local
-  verification and the hosted CI gate still pending the user's commit/push.
+  verification and the hosted CI gate that was open at that handoff.
+- [MMORPG planning handoff](docs/handoffs/mmorpg-planning-amendment.md) records
+  the scope change and current repository state. Once 01's hosted gate is verified,
+  M01 introduces the headless server boundary before 02's graphics work.
 
 From an x64 Visual Studio developer shell with the documented tools installed:
 

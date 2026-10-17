@@ -6,6 +6,27 @@ Scope: Assignment 00. Assignment 01 implements the build and lock mechanism; lat
 
 ## Decision
 
+MMORPG amendment: the product now follows [ADR 0007](0007-mmorpg-architecture.md).
+The existing dependency lock and working bootstrap are retained. M01 introduces
+EngineCore/EngineClient/Server before client subsystem integration: GLFW, NVRHI,
+Vulkan, miniaudio and platform input are EngineClient-only; math, ECS, authoritative
+physics, simulation Lua and bounded runtime data belong to EngineCore. EngineTools
+uses Core for authoring; optional previews depend explicitly on Client. Runtime
+uses the client composition, while Server links Core only. Rows below naming
+generic Engine describe these owning implementations under that split, not
+permission to put presentation dependencies into Core. Headless configurations
+must not discover/download graphics/audio/window packages merely to disable them.
+
+MMO additions require deliberate selections at their owners: maintained transport,
+session authentication and cryptography in M02; transactional persistence and
+migration tooling in M03; terrain/collision/navigation and bounded streaming in
+M05; skeletal-animation processing in M06; deployment/content authenticity in
+M08. No network, database, navmesh, hosting vendor or new package is selected here.
+Use the existing single dependency lock before first integration. License, patch,
+CPU/platform and offline/server package tests apply to these dependencies too.
+Single-precision Jolt is confined to bounded local origins; it does not select
+single-precision global world coordinates or deterministic lockstep simulation.
+
 Use C++20 for engine-owned code and target-based CMake, with CMake 3.28 as the minimum project version. Require the standard without compiler extensions. Express includes, definitions, warnings and link dependencies on targets rather than directory-wide settings. Build third-party C code in its supported language. Pin the exact compiler, CMake and other build-tool versions used by CI in assignment 01; a minimum version is not a reproducible toolchain lock. CMake's target model supports scoped usage requirements, and current EnTT upstream requires C++20. These are upstream facts, not evidence that this project's build passes. [CMake build-system manual](https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html), [EnTT integration requirements](https://github.com/skypjack/entt#integration).
 
 Retain the roadmap's requested stack. The following selections authorize integration only in their owning assignments. Unless a release is explicitly given below, select an immutable revision at first integration after checking upstream release notes, toolchain compatibility and licensing; never build a floating branch while waiting for that selection.
@@ -87,6 +108,6 @@ Assignment 24 fixes and tests concrete source limits, channel conversion, sample
 
 ## Consequences and evidence
 
-Third-party types stay inside the owning implementation except centrally configured GLM types permitted by the engine math contract. Shared scene/command schemas use engine-owned types. EngineTools depends on Engine; Editor and local authoring tools consume EngineTools; Runtime depends on Engine only. Test-only and build-only libraries must not enter packaged runtime dependency closures. Assignment 01 establishes boundary checks, and 14/31 inspect exported packages and licenses.
+Third-party types stay inside the owning implementation except centrally configured GLM types permitted by the engine math contract. Shared scene/command schemas use engine-owned types. The implemented 01 bootstrap has EngineTools and Runtime depending on Engine. In M01 the planned split changes EngineTools to Core with explicit optional Client previews; Editor/local tools consume EngineTools, Runtime uses the Engine client composition, and Server depends on Core only. Test-only and build-only libraries must not enter packaged runtime dependency closures. Assignment 01 establishes boundary checks, and 14/31 inspect exported packages and licenses.
 
 All upstream sources above were reviewed on 2026-10-17. This record makes architecture selections, not claims of tested combinations, performance, audio playback or platform support. No dependencies were installed and no builds or hardware checks ran in assignment 00. Unknown compatibility has explicit owning assignments; a failing gate requires evidence and a concrete decision, never a silent stack replacement.

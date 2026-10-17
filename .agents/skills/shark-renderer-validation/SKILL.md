@@ -35,3 +35,10 @@ As lighting lands, exercise PBR, IBL, shadows, AO and tonemapping separately and
 combined in FeatureWorld and isolated fixtures. Preserve explicit color/depth/
 winding conventions and measure cost on named hardware. Update coverage and the
 handoff with PASS/FAIL/NOT RUN; absent hardware remains an open gate.
+
+For the [seamless MMORPG profile](../../../docs/architecture/0007-mmorpg-architecture.md),
+keep presentation in EngineClient once M01 introduces the split. Add origin-shift,
+streaming, animated-crowd and LOD-cost fixtures in their owners; a static reference
+sphere cannot qualify a populated world. Rendering/minimize must not advance or
+pause server time. Existing depth/lighting choices require measured amendments if
+large-world or crowd evidence shows a problem, not a speculative replacement.

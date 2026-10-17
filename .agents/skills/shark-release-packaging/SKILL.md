@@ -36,3 +36,10 @@ secrets outside the repository. Missing credentials or hardware remain explicit
 release blockers. Do not stage, commit or push: the user's repository policy
 reserves these source-control actions to them. Provide a reviewable change set,
 remaining release gates, handoff and suggested commit text.
+
+The [MMORPG release plan](../../../docs/roadmap/mmorpg-plan.md) also requires separate
+client/server packages in M08, compatible wire/content/database versions, private
+server roots, authenticated content, drain/restart and tested backup/restore.
+The Server package must run on its qualified Linux target without presentation
+dependencies. M09/M10 supply multi-client seamless-world, failure and active-load
+evidence; Tetris/desktop install checks alone cannot qualify an MMORPG release.

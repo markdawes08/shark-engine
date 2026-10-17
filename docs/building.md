@@ -6,6 +6,11 @@ The entry points report bootstrap information and usage. Graphics, gameplay,
 scene import, authoring UI and export are not implemented by this increment.
 CPU build success does not qualify a GPU, audio device or final release platform.
 
+The [MMORPG amendment](roadmap/mmorpg-plan.md) plans a headless Server and
+EngineCore/EngineClient separation in M01. No Server target or server-only preset
+exists yet. The current `runtime-only` preset builds the graphical-client bootstrap
+without authoring targets; it is not proof of headless server dependency isolation.
+
 ## Prerequisites
 
 Run from the repository root. Use Python 3.13.5 for the pinned development-tool

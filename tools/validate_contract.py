@@ -12,7 +12,18 @@ import sys
 
 ROOT = Path(__file__).resolve().parents[1]
 MANIFEST = ROOT / "docs/coverage/requirements.json"
-OWNERS = {f"{number:02d}" for number in range(36)}
+BASE_OWNERS = [f"{number:02d}" for number in range(36)]
+MMO_OWNERS = [f"M{number:02d}" for number in range(1, 11)]
+OWNERS = set(BASE_OWNERS + MMO_OWNERS)
+# Insertions retain the original numeric order while closing MMO foundations
+# before later layers depend on them. The manifest records the full sequence.
+INSERT_AFTER = {
+    "M01": "01", "02": "M01", "M02": "07", "08": "M02",
+    "M03": "08", "09": "M03", "M04": "21", "M05": "M04",
+    "M06": "M05", "22": "M06", "M07": "24", "25": "M07",
+    "M08": "31", "32": "M08", "M09": "33", "34": "M09",
+    "M10": "34", "35": "M10",
+}
 SURFACES = {"features", "components", "commands", "lua_api"}
 DOCUMENTS = (
     "README.md",
@@ -26,8 +37,11 @@ DOCUMENTS = (
     "docs/architecture/0004-formats-and-identity.md",
     "docs/architecture/0005-simulation-and-rendering.md",
     "docs/architecture/0006-v1-profile.md",
+    "docs/architecture/0007-mmorpg-architecture.md",
+    "docs/roadmap/mmorpg-plan.md",
     "docs/coverage/README.md",
     "docs/handoffs/00-architecture-contract.md",
+    "docs/handoffs/mmorpg-planning-amendment.md",
 )
 
 
@@ -48,16 +62,33 @@ def validate_manifest(data: object) -> list[str]:
     errors = []
     if not isinstance(data, dict):
         return ["manifest must be an object"]
-    if type(data.get("schema_version")) is not int or data["schema_version"] != 2:
-        errors.append("schema_version must be integer 2")
+    if type(data.get("schema_version")) is not int or data["schema_version"] != 3:
+        errors.append("schema_version must be integer 3")
+    if data.get("product_profile") != "seamless-open-world-mmorpg":
+        errors.append("product_profile must be seamless-open-world-mmorpg")
+    if data.get("planning_document") != "docs/roadmap/mmorpg-plan.md":
+        errors.append("planning_document must identify the versioned MMORPG plan")
+    order = data.get("assignment_order")
+    positions = {}
+    if not isinstance(order, list) or not all(isinstance(value, str) for value in order):
+        errors.append("assignment_order must be an array of assignment IDs")
+    elif len(order) != len(OWNERS) or set(order) != OWNERS:
+        errors.append("assignment_order must contain every assignment exactly once")
+    else:
+        positions = {owner: index for index, owner in enumerate(order)}
+        if [owner for owner in order if owner in BASE_OWNERS] != BASE_OWNERS:
+            errors.append("assignment_order must retain original 00-35 order")
+        for owner, prerequisite in INSERT_AFTER.items():
+            if positions[owner] <= positions[prerequisite]:
+                errors.append(f"assignment_order: {owner} must follow {prerequisite}")
     assignment = data.get("current_assignment")
     if not isinstance(assignment, str) or assignment not in OWNERS:
-        errors.append("current_assignment must be 00 through 35")
+        errors.append("current_assignment must be 00-35 or M01-M10")
         assignment = "00"
     if data.get("engine") != "Shark":
         errors.append("engine must be Shark")
     if data.get("roadmap") != "AI_Game_Engine_Agent_Roadmap.txt":
-        errors.append("roadmap must identify the original assignment document")
+        errors.append("roadmap must identify the ignored local assignment document")
     requirements = data.get("requirements")
     if not isinstance(requirements, list) or not requirements:
         return errors + ["requirements must be a nonempty array"]
@@ -78,7 +109,7 @@ def validate_manifest(data: object) -> list[str]:
             seen_ids.add(identifier)
         owner = entry.get("owner")
         if not isinstance(owner, str) or owner not in OWNERS:
-            errors.append(f"{context}: owner must be 00 through 35")
+            errors.append(f"{context}: owner must be 00-35 or M01-M10")
         else:
             seen_owners.add(owner)
         for field in ("requirement", "planned_fixture"):
@@ -94,7 +125,7 @@ def validate_manifest(data: object) -> list[str]:
         status = verification.get("status")
         if status not in ("PASS", "FAIL", "NOT_RUN"):
             errors.append(f"{context}: invalid verification status")
-        if isinstance(owner, str) and owner in OWNERS and owner > assignment and status != "NOT_RUN":
+        if isinstance(owner, str) and owner in positions and positions[owner] > positions[assignment] and status != "NOT_RUN":
             errors.append(f"{context}: future assignment must remain NOT_RUN")
         if not nonempty_text(verification.get("reason")):
             errors.append(f"{context}: verification reason must be nonempty text")
@@ -175,6 +206,12 @@ def validate_surface_files(data: dict, root: Path) -> list[str]:
 
 def self_test(data: dict) -> list[str]:
     """In-memory mutations prove omissions/false claims do not pass the gate."""
+    # Keep the fixtures stable as real assignments advance and gain evidence.
+    # Production validation above still checks the caller's actual state first.
+    data = copy.deepcopy(data)
+    data["current_assignment"] = "01"
+    for requirement in data["requirements"]:
+        requirement["verification"]["status"] = "NOT_RUN"
     cases = []
 
     def changed(label, change, expected):
@@ -187,6 +224,12 @@ def self_test(data: dict) -> list[str]:
     changed("missing criterion", lambda d: d["requirements"][0].update(acceptance=[]), "acceptance must contain")
     changed("blank criterion", lambda d: d["requirements"][0].update(acceptance=[" "]), "acceptance must contain")
     changed("invalid owner", lambda d: d["requirements"][0].update(owner="36"), "owner must be")
+    changed("missing MMO owner", lambda d: d.update(requirements=[r for r in d["requirements"] if r["owner"] != "M05"]), "missing assignment owners: M05")
+    changed("missing ordered assignment", lambda d: d["assignment_order"].remove("M05"), "assignment_order must contain")
+    changed("duplicate ordered assignment", lambda d: d["assignment_order"].append("01"), "assignment_order must contain")
+    changed("misordered MMO dependency", lambda d: d["assignment_order"].reverse(), "must follow")
+    changed("false future MMO pass", lambda d: next(r for r in d["requirements"] if r["owner"] == "M01")["verification"].update(status="PASS"), "future assignment must remain NOT_RUN")
+    changed("wrong product profile", lambda d: d.update(product_profile="offline-only"), "product_profile must be")
     changed("missing fixture", lambda d: d["requirements"][0].pop("planned_fixture"), "planned_fixture must be")
     changed("false future pass", lambda d: next(r for r in d["requirements"] if r["owner"] == "02")["verification"].update(status="PASS"), "future assignment must remain NOT_RUN")
     changed("missing evidence reason", lambda d: d["requirements"][0]["verification"].update(reason=""), "verification reason must be")
@@ -203,8 +246,15 @@ def self_test(data: dict) -> list[str]:
     cases.append(("duplicate JSON key", duplicate_errors, "duplicate JSON key"))
 
     failures = [label for label, errors, expected in cases if not any(expected in error for error in errors)]
+    # M01 precedes 02 even though lexical string order would place it later.
+    reordered = copy.deepcopy(data)
+    reordered["current_assignment"] = "02"
+    next(r for r in reordered["requirements"] if r["owner"] == "M01")["verification"]["status"] = "PASS"
+    if validate_manifest(reordered):
+        failures.append("completed earlier MMO assignment rejected by lexical ordering")
     if not failures:
         print(f"PASS: {len(cases)} negative checks reject omissions, malformed data and false claims")
+        print("PASS: completed MMO insertion follows declared order rather than lexical ID order")
     return [f"negative check did not fail as expected: {label}" for label in failures]
 
 
@@ -226,7 +276,7 @@ def main() -> int:
         for error in errors:
             print(f"FAIL: {error}", file=sys.stderr)
         return 1
-    print(f"PASS: {len(data['requirements'])} requirements cover assignments 00-35; document links resolve")
+    print(f"PASS: {len(data['requirements'])} requirements cover 46 ordered assignments (00-35 and M01-M10); document links resolve")
     print("Scope: requirement/documentation checks only; CTest and hardware qualification are separate")
     return 0
 

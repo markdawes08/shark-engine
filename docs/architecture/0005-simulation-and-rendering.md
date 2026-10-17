@@ -3,6 +3,11 @@
 Status: accepted contract; behavior tests land with the respective systems.
 Date: 2026-10-17.
 
+MMORPG amendment: seamless open world authority, clocks and partition behavior
+below are planned, not implemented. [ADR 0007](0007-mmorpg-architecture.md) and
+the [MMORPG plan](../roadmap/mmorpg-plan.md) own the added M01-M10 stages.
+Existing local rendering and authoring conventions remain applicable.
+
 ## Spatial conventions
 
 - Meters, seconds, kilograms and radians internally; editor angles may display
@@ -31,6 +36,40 @@ Date: 2026-10-17.
   bodies are scene roots with positive uniform scale; collider dimensions bake
   that scale. Parenting, shear and negative/nonuniform rigid-body scale reject
   explicitly. This restriction is checked in editor, commands and Lua.
+
+## Seamless world positions and internal partitions
+
+The world is logically continuous. Streaming cells and authority regions are
+internal partitions, not player-visible zone boundaries or mandatory loading
+screens. This does not promise an unbounded world or that every player shares
+one process. M05 defines finite supported world extents and partition budgets.
+
+Before assignment 07 fixes transform storage, distinguish global world location
+from a local transform: world ID, integer cell coordinates and a normalized
+double-precision offset within that cell. The cell size, integer bounds, offset
+range and canonical boundary rounding are versioned schema decisions with
+round-trip tests. Global position calculations use this cell-plus-double-offset
+representation; never convert the entire world's coordinates to a single float
+vector. Spatial cells remain stable when region authority is reassigned.
+
+Rendering and Jolt operate on bounded single-precision coordinates relative to
+explicit origins. The conversion records world/cell and origin generation;
+stale-origin results are rejected or explicitly transformed. Client render-origin
+rebasing does not teleport authoritative entities. Server region origins and
+client render origins are independent. Rebase only at an ownership-safe boundary,
+updating physics bodies, queries, interpolation history and dependent references
+consistently. Keep the existing Jolt single-precision selection; do not claim that
+double-precision world storage alone qualifies large-world physics.
+
+M05 must gate boundary round trips, negative coordinates, large supported cell
+indices, neighboring-cell rendering and repeated rebases against declared
+precision tolerances. Streaming preloads neighboring cells and overlaps interest
+before handoff; publication follows validated content and authority readiness.
+Movement, collision, combat queries, AI/navigation and projectiles crossing a
+partition retain defined continuous behavior. Ghost/replica state has no second
+mutation authority. A missing neighbor, unavailable authority or failed preload
+has an explicit bounded recovery policy; silently teleporting or showing a normal
+zone-loading transition does not satisfy the seamless-world gate.
 
 ## Raster and color conventions
 
@@ -69,59 +108,120 @@ terms, never emissive or the entire final image. Overlays are not exposed or
 tonemapped again. No temporal AO/history in v1. Details and visual tolerances land
 in 25–29; 00 establishes no visual baseline.
 
-## Simulation and rendering clocks
+## Simulation, network and rendering clocks
 
-Fixed simulation timestep is exactly `1/60` second, represented by an integer
-tick count and double-precision accumulator. Use a monotonic wall clock. Clamp
-each incoming wall delta to `[0, 0.25]` seconds, perform at most 8 ticks per
-render iteration, discard remaining whole overdue ticks, retain the sub-tick
-remainder, and report dropped time. Never enlarge the physics timestep to catch
-up. Deterministic tests advance explicit ticks and bypass wall-time dropping.
+The planned authoritative server uses a configured fixed timestep, provisionally
+20 Hz (`1/20` second), with integer tick indices and a monotonic scheduling clock.
+This is an initial tuning target, not a chosen combat model, capacity claim or
+final performance promise. Change the rate only through a validated world/session
+configuration that clients can discover; never enlarge individual timesteps to
+catch up. Physics substeps, if needed, are an explicit configuration measured in
+M04. Render rate, input capture and network snapshot frequency are independent
+from server tick frequency. Client timestamps are not authoritative time.
 
-After ticks, render interpolation alpha is `remainder / fixed_dt` in `[0,1)`.
-Interpolate previous/current physics translation and rotation for rendering only;
-never write interpolated poses back to simulation. Static and kinematic poses
-come from validated scene/target state; dynamic body poses come from physics.
-Teleports reset both interpolation endpoints. Frame rendering has no authority
-to advance physics. Cross-platform floating-point bit identity is not a promise.
+Server scheduling is independent of a window or render iteration. It never
+silently discards authoritative ticks, advances tick indices over unexecuted
+simulation, or freezes because a client pauses, minimizes or loses focus. Each
+scheduling pass has a bounded catch-up budget. Remaining debt is measured and
+retained while within the configured bound; excess debt triggers an explicit
+overload policy with admission limits, reduced optional replication work or
+controlled unhealthy-region shutdown/recovery. It cannot grow without bound or
+be hidden by dropping time. Assignment 03 establishes controllable-clock tests, queue/debt
+limits and overload diagnostics; M10 qualifies the selected budgets under load.
 
-Pause freezes ticks, game time and callbacks; UI/event processing and rendering
-continue. A step command runs exactly one fixed tick and renders its resulting
-state. Minimize suspends swapchain work and freezes local gameplay (no networking
-in v1); restore resets wall-time sampling. Focus loss clears held inputs. Focus
-loss alone does not advance or synthesize input; project pause-on-focus-loss
-defaults on. Stop discards the play scene and clears accumulated time.
+Simulation-duration effects use authoritative ticks. Durable real-time deadlines
+that must survive downtime use a separately specified server-time policy with
+clock-skew and restart tests in M03/M07. Wall-clock adjustments never directly
+change tick ordering or let clients extend a cooldown. Deterministic tests advance
+explicit ticks; cross-platform floating-point bit identity is not promised.
 
-## Main-thread mutation phases
+The original 60 Hz accumulator remains an explicit local/offline profile only:
+clamp incoming wall delta to `[0, 0.25]` seconds, run at most 8 ticks per render
+iteration, report/discard overdue whole ticks and retain the sub-tick remainder.
+An offline world using the MMORPG simulation profile instead uses its configured
+tick rate; it must not silently inherit two different gameplay timesteps. The
+offline 60 Hz profile is not the server scheduler or a multiplayer prediction
+clock. Local interpolation alpha is `remainder / fixed_dt` in `[0,1)`.
+Interpolate previous/current translation and rotation for presentation only;
+never write interpolated poses back to simulation. Static/kinematic poses come
+from validated scene/target state and dynamic body poses from physics.
 
-Each tick: commit queued validated changes; initialize newly created entities in
-stable persistent-ID order (resolve hierarchy/components, create physics bodies,
-then initialize scripts); latch input for the tick; invoke script `fixed_update`;
-apply validated body controls; step/join physics; synchronize authoritative dynamic
-poses; dispatch buffered contact/trigger events in documented stable pair/event
-order; then commit deferred structural changes. Script callback removal requests
-mark handles pending destruction immediately, so subsequent access fails, but
-storage removal and destruction callbacks occur at the boundary. A script runs
-at most once per applicable callback phase; new spawns do not recursively run the
-phase that spawned them. Destruction invalidates lookup before releasing bodies,
-VM state and deferred render/audio references.
+Clients render buffered authoritative snapshots, with interpolation timing
+independent of server execution. M04 defines bounded local movement prediction,
+input sequence acknowledgements and correction/replay of still-valid inputs.
+Prediction cannot grant authoritative position, collision, damage, inventory or
+rewards. Reconciliation updates client presentation/simulation state against the
+server result; render interpolation is never written back into server state.
+Teleports and authority/origin changes reset or transform interpolation history
+explicitly. Snapshot gaps and delayed/out-of-order updates have bounded buffering
+and resynchronization behavior, tested under packet loss and jitter.
 
-Once per active rendered frame after fixed ticks, call script `update` with the
-bounded frame delta for visual/gameplay presentation work, commit queued edits,
-then extract an immutable render snapshot. Physics-affecting controls from this
-callback apply at the next fixed tick. Reproducible game logic and injected input
-use fixed ticks; frame `update` is not promised render-rate determinism. Scene
-edits while paused commit at an application boundary without advancing time.
-Lua never executes on physics workers. Scripts cannot keep raw component pointers.
+Pause, one-tick step and discard-on-stop apply only to a local/offline editor
+play world. Minimize may suspend presentation; in an online session it never
+pauses the shared world. Focus loss clears held inputs and sends the defined
+neutral/released input state; local pause-on-focus-loss defaults on only offline.
+Reconnect does not rewind or restore the server from client state. Stopping a
+client closes that session; it does not discard the authoritative world.
 
-Authoring transactions commit on that same controlling thread, before simulation
-or extraction, and validate scene revision atomically. Render/audio/import workers
-receive immutable data or handles and return bounded messages tagged with scene
-generation and request revision; stale results are discarded with job diagnostics.
-GPU submission and retirement initially remain on the controlling thread. Worker
-counts and queue bounds are introduced only with the subsystem that needs them.
+## Simulation ownership and mutation phases
 
-Owners: 03/04 implement clocks, 07/09 mutation and hierarchy, 18–22 physics and
-script lifecycles, 24 audio threading, and 25–29 renderer conventions. Their
-tests must cover boundaries, callback ordering and invalid inputs, not just the
-nominal update path.
+Every authoritative region has one designated simulation owner/writer. An initial
+headless world can run on the process main thread; later co-located regions may
+have separate owner threads. This is not a global requirement that every region
+share the process main thread. GLFW initialization/window events stay on the
+process main thread. Local editor/play mutation remains on its controlling main
+thread. A per-region Lua VM and physics state belong to that region's owner;
+multiple region owners never concurrently call the same VM or mutate shared ECS
+storage. Cross-region effects use bounded messages and explicit ownership fences.
+
+Each tick: validate and commit eligible queued intents/completions for the current
+authority; initialize new entities in stable persistent-ID order (resolve
+hierarchy/components, create physics bodies, then initialize scripts); latch
+validated input for this tick; invoke server script `fixed_update`; apply body
+controls; step/join physics; synchronize authoritative dynamic poses; dispatch
+buffered contact/trigger events in documented stable pair/event order; then commit
+deferred structural changes. Input sequencing, cutoff and deterministic queue
+ordering are specified in M02/M04, not inferred from packet arrival races.
+Publish immutable replication/render observations after the commit boundary.
+
+Script removal requests mark handles pending destruction immediately; subsequent
+access fails while storage removal and destruction callbacks wait for the safe
+boundary. New spawns do not recursively run the phase that spawned them. A script
+runs at most once per applicable callback phase. Destruction invalidates lookup
+before releasing physics, VM and deferred presentation references. Physics
+workers never invoke Lua or commit authoritative mutations.
+
+Frame `update` is presentation-only in the MMORPG client. It cannot mutate
+authoritative gameplay or run server combat/economy logic. Input capture may queue
+an intent for a future server tick. The local/offline profile may retain its
+documented next-tick body controls, but those calls are not an online authority
+grant. Render/audio consumers operate on immutable snapshots or checked handles;
+scripts cannot retain raw component pointers. GPU submission/retirement initially
+remain on the client controlling thread, independently of server ownership.
+
+Authoring transactions validate scene revisions and commit only in the trusted
+local authoring world; they are not gameplay messages. Paused editor edits can
+commit without advancing simulation. Network, storage and worker results carry
+world/region incarnation, authority epoch and request/operation context as
+applicable. Owners reject stale results after unload, transfer or restart. Region
+handoff uses the identity/fencing protocol in [ADR 0004](0004-formats-and-identity.md),
+including prepare, commit and abort/recovery; it cannot leave two committing
+owners. M05 proves co-located handoff first, including overlapping interest,
+preloaded neighbors and cross-boundary combat/AI/projectile continuity.
+
+Server drain stops admission, resolves or rejects bounded pending work, persists
+required committed state and invalidates the exiting authority before teardown.
+Disconnect, region unload and process shutdown are distinct lifecycle events;
+none implies deleting durable character state. M01/M03/M05 define deadlines,
+failure results and recovery behavior. No automatic restart is a substitute for
+proving that old callbacks, packets or persistence completions cannot reappear as
+valid work in a new incarnation.
+
+Owners: 03/04 retain local clocks/window work; 07/09 retain scene and authoring
+mutation; 18–22 retain local physics/script/play lifecycles; 24 and 25–29 retain
+audio/render conventions. M01 owns the headless build/lifecycle boundary; 03 owns
+the reusable headless scheduler and ownership primitives. M02 owns session and
+message boundaries, M03 durable lifecycle, M04 authority/prediction, M05 seamless
+partition/streaming/navigation behavior, M06 animated actors, M07 the RPG slice,
+M08 live operations, M09 MMO acceptance and M10 measured load qualification.
+All server behavior above remains planned until its executable gates pass.

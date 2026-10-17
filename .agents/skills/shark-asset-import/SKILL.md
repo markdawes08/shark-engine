@@ -35,3 +35,10 @@ must not download assets. Cover embedded/external glTF, sparse accessors,
 negative/nonuniform transforms, missing images, required extensions and decoder
 failures appropriate to the selected profile. Update public version policy,
 coverage, FeatureWorld when available, dependency notices and the handoff.
+
+The [MMORPG plan](../../../docs/roadmap/mmorpg-plan.md) extends static import in M05/M06
+with cell/collision/navigation data and a bounded skeletal profile. Preserve the
+intermediate unsupported-content errors until those behaviors exist. Test streaming
+dependency closure, cancellation and per-cell budgets; keep server collision/rules
+roots separate from client visual/audio payloads and never cook private server
+content into a client package. Seamless streaming must include collision readiness.

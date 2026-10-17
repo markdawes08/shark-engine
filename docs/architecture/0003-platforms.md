@@ -1,14 +1,23 @@
-# ADR 0003: Platform and graphics qualification contract
+# ADR 0003: Client and headless-server platform qualification
 
 - Date: 2026-10-17
 - Status: accepted planning contract; every runtime target is **UNVERIFIED**
-- Owners: 01 (build qualification), 02 (graphics feasibility), 05-06 (production integration), 35 (release qualification)
+- Owners: 01 (build qualification), M01 (headless-server foundation), 02 (client graphics feasibility), 05-06 (production graphics integration), later MMO milestones (server behavior/load), 35 (client release qualification)
 
 ## Decision and present support status
 
-Shark targets Windows, Ubuntu Linux, Apple Silicon Macs and Intel Macs. **No OS, CPU or GPU is currently supported by a tested Shark implementation.** This ADR defines the intended v1 qualification boundary, not a report of passing builds or hardware tests. Chunk 00 is documentation only. All execution results below are **NOT RUN**.
+Shark targets Windows, Ubuntu Linux, Apple Silicon Macs and Intel Macs for clients,
+and Ubuntu Linux for the planned dedicated server. **No shipping client or server
+release is qualified.** The [01 handoff](../handoffs/01-build-foundation.md) records
+passing local Windows bootstrap builds/tests and supplemental WSL Ubuntu 26.04
+CPU checks. The full 01 hosted-CI gate remains open; those local results do not
+qualify client graphics, a headless server or a released game. Every graphics and
+MMO qualification result below remains **NOT RUN**. The
+[MMORPG plan](../roadmap/mmorpg-plan.md) adds future server milestones without
+removing the native client commitments.
 
-Use GLFW, NVRHI and Vulkan on every target. NVRHI's upstream README currently identifies Windows and Linux on x64/ARM64, and describes its Vulkan backend as Vulkan 1.3. It does not establish macOS support. A compiler accepting NVRHI, or a Vulkan triangle without NVRHI, does not prove this stack works. [NVRHI README](https://github.com/NVIDIA-RTX/NVRHI/blob/main/README.md)
+Use GLFW, NVRHI and Vulkan on every client target. Server excludes that stack at
+configuration, build, link and runtime. NVRHI's upstream README currently identifies Windows and Linux on x64/ARM64, and describes its Vulkan backend as Vulkan 1.3. It does not establish macOS support. A compiler accepting NVRHI, or a Vulkan triangle without NVRHI, does not prove this stack works. [NVRHI README](https://github.com/NVIDIA-RTX/NVRHI/blob/main/README.md)
 
 Assignment 02 owns the unresolved macOS feasibility decision, including NVRHI source portability, device creation, shader translation, formats, limits, maintenance and redistribution. It records the exact NVRHI and graphics-toolchain revisions before probe execution through the dependency lock mechanism established in 01. Patches must be versioned with an upstream issue, rationale and maintenance owner. A failure requires a minimal reproducer and a concrete decision request. Removing either Mac CPU family, lowering the baseline, or replacing NVRHI requires an explicit recorded scope/architecture decision; it cannot be reported as a passing gate.
 
@@ -18,18 +27,56 @@ These are minimum deployment candidates. New major OS versions or GPU families r
 
 | Target | OS and window system | Native CPU/ABI | Planned graphics route | State |
 | --- | --- | --- | --- | --- |
-| Windows | Windows 11 25H2, Win32 desktop | x86-64, SSE4.2 floor; no mandatory AVX/AVX2 | Native vendor Vulkan driver | UNVERIFIED |
-| Linux | Ubuntu 24.04 LTS, glibc 2.39 baseline, X11 desktop session | x86-64, SSE4.2 floor; no mandatory AVX/AVX2 | Native vendor/Mesa Vulkan driver | UNVERIFIED |
+| Windows client | Windows 11 25H2, Win32 desktop | x86-64, SSE4.2 floor; no mandatory AVX/AVX2 | Native vendor Vulkan driver | UNVERIFIED |
+| Linux client | Ubuntu 24.04 LTS, glibc 2.39 baseline, X11 desktop session | x86-64, SSE4.2 floor; no mandatory AVX/AVX2 | Native vendor/Mesa Vulkan driver | UNVERIFIED |
 | macOS Apple Silicon | macOS 26, Cocoa | arm64, Apple M1 floor | KosmicKrisp Vulkan-on-Metal candidate | UNVERIFIED |
 | macOS Intel | macOS 15, Cocoa | x86-64, SSE4.2 floor; no mandatory AVX/AVX2 | MoltenVK Vulkan-on-Metal candidate | UNVERIFIED |
+| Linux dedicated Server | Ubuntu 24.04 LTS, glibc 2.39 baseline, no display session | x86-64, SSE4.2 floor; no mandatory AVX/AVX2 | None; no GPU, window, graphics or audio-device requirement | UNVERIFIED / NOT RUN |
 
 Windows 25H2 avoids beginning a new qualification program on Windows 11 24H2 Home/Pro after its October 2026 end of updates. This is a project baseline choice, not a claim of tested compatibility. [Microsoft lifecycle](https://learn.microsoft.com/en-us/lifecycle/products/windows-11-home-and-pro)
 
-The Linux v1 window-system commitment is X11; native Wayland is a future qualification target. XWayland may be investigated but cannot substitute for the named X11 gate. Ubuntu 24.04 supplies the selected glibc 2.39 baseline. [Ubuntu release notes](https://discourse.ubuntu.com/t/ubuntu-24-04-lts-noble-numbat-release-notes/39890)
+The Linux client v1 window-system commitment is X11; native Wayland is a future qualification target. XWayland may be investigated but cannot substitute for the named X11 gate. Server has no window-system gate. Ubuntu 24.04 supplies the selected glibc 2.39 baseline. [Ubuntu release notes](https://discourse.ubuntu.com/t/ubuntu-24-04-lts-noble-numbat-release-notes/39890)
 
 Windows/Linux ARM64, 32-bit builds, Rosetta-only qualification, mobile, consoles, browser deployment and native Metal are outside this v1 platform profile. Separate native arm64 and x86-64 Mac artifacts are sufficient; a universal binary is optional and must preserve both qualification results.
 
 The selected Apple route deliberately has different OS floors. Mesa documents KosmicKrisp as an Apple Silicon implementation using Metal 4 on macOS 26+. Khronos' MoltenVK notice recommends KosmicKrisp for Apple Silicon and community-maintained MoltenVK for Intel Macs. These upstream statements establish candidates, not Shark compatibility. [Mesa KosmicKrisp](https://docs.mesa3d.org/drivers/kosmickrisp.html), [MoltenVK README](https://github.com/KhronosGroup/MoltenVK/blob/main/README.md)
+
+## Planned headless Server qualification in M01
+
+[ADR 0001](0001-targets-and-boundaries.md) separates future EngineCore from
+EngineClient and adds Server. The present `runtime-only` preset is a client
+bootstrap with authoring/tests disabled; it does not implement a dedicated server.
+M01 follows closure of the 01 CPU gate. It can qualify independently of 02's
+client graphics feasibility; it neither bypasses nor closes any client GPU row.
+Server starts as one process with one writer per internal world partition. The
+player world is continuous; M05 later qualifies multi-process ownership transfer.
+Windows/macOS server deployment and Linux ARM64 server deployment are not selected
+by this amendment.
+
+| M01 evidence | Required acceptance | Result |
+| --- | --- | --- |
+| Dependency isolation | Fresh server-only configure/build with locked Core inputs; no client/authoring package discovery, download or target creation; direct/transitive boundary rejection fixtures pass | NOT RUN |
+| Native CPU build | Ubuntu 24.04 x86-64 Debug/Release with GCC and Clang ASan/UBSan; record exact compiler, standard library, SDK, OS/image and dependency lock digest | NOT RUN |
+| Headless startup | Actual Server runs with DISPLAY and WAYLAND_DISPLAY unset, without X11/Wayland, Vulkan/GLFW, GPU or audio-device services; package and dynamic-library inspection agree with the Core-only closure | NOT RUN |
+| CLI and configuration | Help/version, valid minimal configuration, unknown flags and invalid/missing configuration have tested output and exit status; configuration failure occurs before work is accepted | NOT RUN |
+| Lifecycle and smoke | Bounded process-level smoke test, partial-initialization failure and graceful stop signal all terminate within recorded deadlines; owned workers/resources are released and repeated starts/stops remain clean | NOT RUN |
+| CI evidence | Dedicated headless job exercises the real Server tests with nonempty CTest selection and archives configuration/build/test logs, JUnit, package inventory and toolchain metadata | NOT RUN |
+
+Use a clean Ubuntu 24.04 server environment or minimal Ubuntu 24.04 runtime
+container with no client libraries or mapped GPU/audio devices for the deployment
+smoke test. Unsetting display variables on a rich desktop runner is insufficient
+on its own. Server qualification may use a native x86-64 VM/container; record its
+host, CPU allocation, memory/IO limits and image identity so load results describe
+the tested environment. This does not relax the separate real-GPU client gates.
+
+These checks qualify the server foundation, not multiplayer capacity, durable
+world state or live operations. Later MMO milestones add actual simulation,
+protocol, persistence, recovery and seamless partition handoff checks. Performance
+qualification must record the named CPU/RAM and deployment limits, clients and
+entities per partition, interest density, tick duration/debt, CPU/RAM use,
+bandwidth, queue bounds and soak duration. Client GPU/FPS measurements cannot
+stand in for those results. Provisional capacity goals in ADR 0007 require load
+evidence before being advertised; no current player-count claim is made.
 
 ## GPU baseline and mandatory representative hardware
 
@@ -87,13 +134,21 @@ The gate must also produce a redistribution inventory: loader, ICD manifests, tr
 
 ## Build support is a separate claim
 
-01 must establish C++20 target-based CMake and native CPU CI for Windows x86-64, Ubuntu 24.04 x86-64, macOS arm64 and macOS x86-64. Use MSVC on Windows, GCC plus a Clang sanitizer configuration on Ubuntu, and Apple Clang on macOS. CMake 3.28 is the proposed project floor; 01 must reconcile it with pinned dependency requirements and record exact CMake, compiler, SDK, standard-library and runner versions. No compiler version is claimed tested in 00.
+01 provides C++20 target-based CMake and native CPU CI configuration for Windows
+x86-64, Ubuntu 24.04 x86-64, macOS arm64 and macOS x86-64. The required hosted
+execution gate remains open. Use MSVC on Windows, GCC plus a Clang sanitizer
+configuration on Ubuntu, and Apple Clang on macOS. The project declares CMake
+3.28 as its floor and pins 3.31.10 for qualification; the 01 handoff identifies
+the versions actually tested. Record exact CMake, compiler, SDK, standard-library
+and runner versions with each result. M01 adds server-only qualification without
+relabeling the existing CPU jobs as server tests.
 
 Configure dependency SIMD options to preserve the CPU floor. Do not compile every binary for the host's CPU or require AVX2 through Jolt defaults. Native arm64 tests do not qualify x86-64 through cross-compilation. Build host OS/toolchain requirements may be newer than the deployment OS; record both and validate the actual deployment artifact. Building on a GPU-less CI runner is CPU/build evidence only. Software Vulkan, virtual machines and remote desktop runs may supplement diagnostics, but do not satisfy the real-GPU rows.
 
 ## Observable gate evidence and current results
 
-02 must produce a machine-readable result and linked artifacts for every matrix row. Each record contains repository commit, dependency lock digest, full configure/build/run commands, timestamp, host/OS/CPU/GPU IDs, driver and ICD versions, shader hashes, selected queues/features/formats, limits, exit code and PASS/FAIL/NOT RUN for each item below. A missing device/runner is NOT RUN and leaves its required gate open.
+02 must produce a machine-readable result and linked artifacts for every client
+graphics matrix row. Each record contains repository commit, dependency lock digest, full configure/build/run commands, timestamp, host/OS/CPU/GPU IDs, driver and ICD versions, shader hashes, selected queues/features/formats, limits, exit code and PASS/FAIL/NOT RUN for each item below. A missing device/runner is NOT RUN and leaves its required gate open.
 
 | Check | Observable acceptance evidence | Present result |
 | --- | --- | --- |
@@ -108,4 +163,12 @@ Configure dependency SIMD options to preserve the CPU floor. Do not compile ever
 
 For readback comparisons, use exact integer results and channel tolerances of 1/255 for simple UNORM tests, 2e-3 absolute or 2e-3 relative for HDR test values, and 1e-5 absolute for controlled depth values. State reference calculations, tested values and edge exclusions in the probe. Image baselines are platform-specific, reviewed artifacts; never approve a changed baseline merely to turn a failure green. These are probe tolerances, not a promise of bit-identical rendering or physics across platforms.
 
-01 build/CTest results are currently NOT RUN. 02 hardware results are currently NOT RUN. Assignment 00 closes by assigning these uncertainties and defining their acceptance evidence; it does not execute or waive either later gate. Dependent renderer architecture cannot advance on an assumed macOS PASS. Assignment 35 may call a target supported only after the final packaged Editor/Runtime, input, audio, physics, scripting and graphics acceptance suite passes on its declared matrix.
+The [01 handoff](../handoffs/01-build-foundation.md) records local build/CTest
+passes and the still-open hosted matrix/red-green gate. 02 hardware and all MMO
+server results are NOT RUN. Assignment 00 originally assigned these uncertainties;
+this amendment adds server ownership without waiving a later gate. Dependent
+renderer architecture cannot advance on an assumed macOS PASS. Assignment 35 may
+call a client target supported only after the final packaged Editor/Runtime,
+input, audio, physics, scripting and graphics suite passes on its declared matrix.
+Server release qualification is separate and additionally requires the MMO
+behavior, recovery, security and load gates in ADR 0007 and the MMORPG plan.

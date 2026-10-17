@@ -1,10 +1,18 @@
 # Requirement and API coverage
 
-[requirements.json](requirements.json) is the version-2 requirement/coverage manifest for
+[requirements.json](requirements.json) is the version-3 requirement/coverage manifest for
 Shark. Each requirement has a unique ID, one owning roadmap assignment, observable
 acceptance criteria, a planned FeatureWorld case or external fixture, and an
 honest verification state. Related assignments can contribute without changing
 which assignment owns the gate.
+
+The user selected a seamless open-world MMORPG. The
+[versioned execution plan](../roadmap/mmorpg-plan.md) and
+[ADR 0007](../architecture/0007-mmorpg-architecture.md) expand the original 00-35
+assignments with M01-M10. There are 49 requirements across 46 ordered assignments.
+`assignment_order` records dependency order; M01 follows 01 and precedes 02, and
+the validator checks order rather than comparing IDs lexically. The product
+profile and plan path are explicit machine-readable fields.
 
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`
 means precisely that; documentation validation cannot pass a future engine gate.
@@ -32,9 +40,17 @@ relative Markdown document links. Its negative cases confirm that omissions
 actually fail. It does not parse natural language to prove all requirements are
 present; the handoff records a separate review against the source roadmap.
 
-Schema 2 adds `current_assignment` and structured implemented-surface entries to
-schema 1. This repository's planning manifest was migrated directly; the checker
-explicitly rejects earlier/future schema versions. No project/scene/runtime format
-changed. The ignored original roadmap is optional local context; it is not a CI
-input. REQ-01 remains NOT_RUN while its full cross-platform/hosted gate is open,
-even when the handoff records passing local checks.
+Schema 2 added `current_assignment` and structured implemented-surface entries to
+schema 1. Schema 3 adds the MMORPG product/plan fields and ordered expanded owner
+set. This planning manifest was migrated directly; the checker explicitly rejects
+earlier/future versions, missing MMO owners, invalid ordering and unsupported
+future PASS claims. No project/scene/runtime/wire/database data format has been
+implemented or migrated by this amendment. The original two foundation features
+remain the only implemented surface; every new MMO gate is NOT_RUN.
+
+The ignored local roadmap is amended for consistency but remains optional context,
+not a CI input. REQ-00's PASS records its historical planning evidence, not MMO
+implementation. REQ-01 remains NOT_RUN while its full hosted gate is unverified.
+The user has committed/pushed the foundation; that alone does not prove the
+required hosted red/green or platform results. See the
+[planning handoff](../handoffs/mmorpg-planning-amendment.md) for this update.

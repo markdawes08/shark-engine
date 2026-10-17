@@ -44,3 +44,10 @@ to the user; maintain `.gitignore` and provide suggested commit text.
 Report exact command, revision/worktree state, toolchain, platform, outcome and
 unverified gates. CPU tests do not qualify GPUs, audio or packaged games. Current
 bootstrap executables are not working game/editor applications.
+
+For MMORPG work, read the [execution order](../../../docs/roadmap/mmorpg-plan.md).
+M01 must introduce a truly headless Server/Core build; existing `runtime-only`
+does not prove this. Check configure/download and final package closures as well
+as links, and reject presentation dependencies even if client-runtime-safe.
+Add actual server/network/database/load commands only when their owners land;
+ordinary bootstrap CTest results are not simulation, capacity or seamlessness evidence.

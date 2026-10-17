@@ -1,17 +1,27 @@
-# ADR 0006: Shark v1 release profile
+# ADR 0006: Shark MMORPG release profile and intermediate client milestones
 
 Status: accepted intended scope; none of these engine features is implemented in
 assignment 00. Date: 2026-10-17.
 
+Amended 2026-10-17 for the user's seamless open-world MMORPG direction.
+[ADR 0007](0007-mmorpg-architecture.md) and the
+[execution plan](../roadmap/mmorpg-plan.md) add mandatory M01-M10 gates. Original
+client features below remain required; static assets, primitive collision and
+the minimal HUD are intermediate milestones rather than the complete MMO profile.
+
 ## Required release behavior
 
-Shark v1 contains a runtime and editor on the separately qualified platform rows
+Shark's release contains a client runtime and editor on the separately qualified platform rows
 in [0003](0003-platforms.md), static glTF scene assets, authoring and transform
 gizmos, HDR forward PBR, HDRI IBL, filtered shadows, quality SSAO, rigid-body physics,
 Lua behavior, prefab/entity spawning, input, a small HUD, audio, standalone export,
-and agent authoring through shared local commands. The
-[requirements manifest](../coverage/requirements.json) assigns all 36 increments,
-including reliability, packaging and acceptance games, to observable gates.
+and agent authoring through shared local commands. It additionally requires a
+headless authoritative server, authenticated multiplayer, persistent characters/
+economy, seamless world streaming and authority transfer, animated characters,
+navigation/AI, a small MMORPG reference module and operational recovery. The
+[requirements manifest](../coverage/requirements.json) assigns the retained 00-35
+and inserted M01-M10 increments to observable gates. Existing Tetris/physics samples
+remain useful tooling checks, but only M09/M10 qualify the MMO experience and load.
 
 FeatureWorld grows from 10 onward with each component, command and Lua entry
 point. Isolated error fixtures cover incompatible or destructive cases. Non-scene
@@ -21,7 +31,8 @@ planned requirements do not constitute implementation coverage.
 
 ## glTF import and material profile
 
-The selected subset is **static glTF 2.0**, not full glTF support. The
+The assignment-12 subset is **static glTF 2.0**, not full glTF support. M06 extends
+it with the bounded character profile below before an MMORPG release. The
 [Khronos specification](https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html)
 is the semantic reference; the following limits are Shark product decisions.
 
@@ -34,7 +45,7 @@ is the semantic reference; the following limits are Shark product decisions.
 | Images | PNG/JPEG for glTF, with checked dimensions/decoded byte counts; preserve sampler filtering/wrap, generate mip chains; missing/invalid referenced images fail import without replacing the last valid asset |
 | Core materials | Metallic-roughness, base color, normal/scale, emissive, occlusion/strength, factors and samplers; all OPAQUE/MASK/BLEND modes, alpha cutoff and double-sided rendering preserved |
 | Extensions | Supported rendering/import extension list is initially empty. Any unsupported `extensionsRequired` entry fails with its name. Optional extensions emit diagnostics and use a valid core fallback; absent fallback is an error |
-| Unsupported content | Skins, animations and morph targets fail import explicitly. No Draco, meshopt, KTX2/Basis, transmission, clearcoat, specular-glossiness or other extension functionality is implied by cgltf parsing |
+| Unsupported content in 12 | Skins, animations and morph targets fail import explicitly until their declared support lands. M06 adds the skin/TRS subset below; morphs remain unsupported. No Draco, meshopt, KTX2/Basis, transmission, clearcoat, specular-glossiness or other extension functionality is implied by cgltf parsing |
 | Additional nodes | Static mesh hierarchy is required. Camera/light import is not part of this profile; present camera nodes or optional light extensions produce explicit diagnostics, and users author engine Camera/Light components separately |
 
 Import limits apply before allocation, including encoded/decoded lengths, accessor
@@ -43,6 +54,18 @@ licensed offline valid/malformed fixtures and an independent validator. Negative
 and nonuniform scale follow [0005](0005-simulation-and-rendering.md). Import
 success only claims data support; 13's temporary unlit renderer cannot establish
 PBR correctness, which belongs to 25–29.
+
+M06's initial character profile supports skins with at most 128 joints per skin,
+four influences per vertex (`JOINTS_0`/`WEIGHTS_0`), validated inverse-bind matrices,
+finite normalized nonnegative weights and bounded TRS animation clips on nodes/
+joints. Support STEP and LINEAR interpolation (quaternion shortest-arc rotation);
+reject CUBICSPLINE, additional influence sets, morph channels and unsupported
+required extensions explicitly. Pin tested import/cook limits before claiming
+support. Provide clip looping, transitions/blending, attachments and animation LOD.
+Server-authoritative movement drives actor displacement; visual root motion and
+animation events do not grant movement, damage or rewards. Retargeting and morphs
+remain outside the first release profile. Any expansion requires fixtures and a
+versioned compatibility decision, not silent parser-driven support.
 
 ## Lighting and image quality
 
@@ -87,14 +110,19 @@ licensed Poly Haven reference with origin metadata; startup needs no network.
 
 ## Gameplay and authoring limits
 
-- Jolt rigid bodies: box/sphere/capsule colliders; static/dynamic/kinematic modes,
+- Jolt rigid bodies in 18/20: box/sphere/capsule colliders; static/dynamic/kinematic modes,
   gravity, layers, triggers, raycasts/overlaps and safe queued contacts. No mesh
-  colliders, joints, vehicles, cloth or soft bodies in the initial profile.
+  colliders, joints, vehicles, cloth or soft bodies in that initial milestone.
+  M05 must add validated static terrain/world collision and tiled navigation with
+  bounded asynchronous NPC pathfinding before seamless-world acceptance. Rigid
+  bodies use bounded local origins; global float world space is not the contract.
 - Lua scripts: checked entity/component access, logging, math/time, lifecycle,
   physics, input, spawning, audio and documented material controls. Enable base,
   table, string, math, utf8 and coroutine facilities under engine lifecycle limits;
   omit `io`, `os`, `debug`, native module loading and unrestricted filesystem APIs.
-  A project-scoped module loader is the only `require` route. Memory/instruction
+  Server gameplay and client presentation use distinct allowed capabilities and
+  cooked module roots; remote clients cannot invoke arbitrary scripts or grant
+  authoritative outcomes. A project-scoped module loader is the only `require` route. Memory/instruction
   budgets and errors stop the affected behavior with diagnostics. This is not a
   security sandbox for untrusted native or script code.
 - Prefabs: one level, stable local references, per-instance component-field
@@ -102,7 +130,9 @@ licensed Poly Haven reference with origin metadata; startup needs no network.
   no generalized inheritance or implicit apply-back from play to edit state.
 - Input: keyboard/mouse actions, rebind-ready maps, deterministic tick injection,
   focus routing. HUD: licensed font, simple text/score/pause/restart/game-over,
-  resize-aware layout in Runtime; no full UI toolkit or ImGui runtime dependency.
+  resize-aware layout in Runtime; no ImGui runtime dependency. M07 adds character
+  selection, health/target/action UI, inventory/equipment, party, bounded chat and
+  connection/recovery state using the public engine/game-module interfaces.
 - Audio: WAV and Ogg Vorbis source import, cooked PCM payloads, play/pause/stop,
   looping/volume and distance attenuation; one active listener and a bounded
   voice pool. Assignment 24 chooses and tests its concrete voice limit and
@@ -113,7 +143,9 @@ licensed Poly Haven reference with origin metadata; startup needs no network.
   Add a thin MCP adapter in 15 if required by the chosen agent environment.
 - Export: host-platform packages first, reproducible final cooked content,
   dynamic asset roots, licenses and clean-machine runs on every release baseline.
-  Cross-host toolchain/export support is not implied.
+  M08 separates client and headless server packages/content; server rules and
+  credentials cannot enter client exports. Cross-host toolchain/export support
+  is not implied.
 
 Audio decoding dependencies must be selected consistently with
 [0002](0002-dependencies.md); Vorbis decoding is offline in EngineTools, and
@@ -121,10 +153,11 @@ Runtime consumes engine-owned PCM. Source imports stay out of distributed games.
 
 ## Explicit future scope and release evidence
 
-Skeletal/morph animation, networking, terrain, ray tracing, vehicles, soft bodies,
-a marketplace and a native Metal backend are future projects. No such exclusion
-removes the mandatory runtime/editor, static material, lighting, physics, Lua,
-spawning, sound, export or agent authoring requirements.
+Networking, skeletal characters and streamed terrain/world data are now mandatory
+MMORPG scope in M01-M10, replacing the original exclusions. Morph animation,
+advanced retargeting, ray tracing, vehicles, soft bodies, a marketplace and a native
+Metal backend remain future projects. No exclusion removes the retained client
+features or the new authoritative server, persistence and seamless-world gates.
 
 Assignment 33 must have a fresh agent create, save, reopen, test, capture, export
 and launch a playable Tetris-style game through documented public tools only,
@@ -134,3 +167,6 @@ A separate 3D physics sandbox proves collision/spawning/audio behavior. Assignme
 and enforces them; no performance figure is claimed in 00. Assignment 35 requires
 clean-machine installation, any required signing/notarization, notices, samples,
 references and archived build inputs/symbols on every qualified release row.
+It also depends on M08-M10's server packages, multi-client world acceptance,
+capacity/soak, recovery and operational evidence. The provisional targets in
+ADR 0007 are not observed performance or a claim of production readiness.

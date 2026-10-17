@@ -3,6 +3,12 @@
 Status: accepted contract; formats are implemented in their owning assignments.
 Date: 2026-10-17.
 
+MMORPG amendment: the seamless open world contract below is planned, not
+implemented. It supplements the existing authoring and cooked formats under
+[ADR 0007](0007-mmorpg-architecture.md) and the [MMORPG plan](../roadmap/mmorpg-plan.md).
+Internal regions partition streaming and authority; they are not player-visible
+zones or a requirement for loading screens between adjacent world locations.
+
 ## Source and derived data
 
 Use readable UTF-8 JSON with explicit `format` and integer `schema_version` fields.
@@ -22,6 +28,8 @@ Human formatting is not identity and is not a cache key by itself.
 | Cook manifest | Versioned JSON mapping IDs to payloads, sizes, digests, dependencies and target profile, startup scenes and explicit dynamic roots | 31 |
 | Authoring protocol | JSON-RPC 2.0 over local stdio plus a separately versioned Shark method/schema contract, initially 1 | 15 |
 | Lua API | Engine-owned surface, API version 1; not the Lua language version | 19 |
+| Gameplay protocol | Independently versioned authenticated session, intent and replication messages; never the authoring JSON-RPC schema | M02 |
+| Server durable state | Transactional database schema for characters, world state and durable operations, with explicit migration and recovery rules | M03 |
 
 Never serialize raw C++ structs, pointers, EnTT indices, compiler ABI layouts or
 padding. Encoders use explicit widths and byte order. Runtime validates cooked
@@ -56,11 +64,108 @@ its source; importing an unrecognized duplicate sidecar must diagnose a collisio
 Runtime entity handles contain a scene-instance generation, entity slot and slot
 generation. Each dereference checks all three. Scene unload invalidates its
 instance generation; slot reuse increments generation. Retire a slot or scene
-token rather than wrapping a generation into a valid old handle. Serialized IDs
-resolve to handles only within the active scene. Lua, physics user data and GPU
-selection records use checked IDs/handles, never borrowed component pointers.
+token rather than wrapping a generation into a valid old handle. Authored scene
+IDs resolve to handles only within their active scene instance. Lua, physics user
+data and GPU selection records use checked IDs/handles, never borrowed component pointers.
 Prefab instances remap every local entity ID and internal reference atomically;
 references outside the prefab remain asset or explicitly scoped scene references.
+
+## MMORPG identity, ownership and replication
+
+Use distinct engine-owned types, retaining UUIDv4 for new durable identifiers.
+Account IDs identify authenticated principals; character IDs identify durable
+player characters; world-entity IDs identify server-created gameplay objects.
+They are not interchangeable with authored entity or asset IDs. A character's
+association with a live entity is explicit and can change on respawn or recovery.
+Character and persistent world-entity IDs survive reconnect, server restart and
+region transfer. Ephemeral entities have live identities without an implied
+database record. IDs are references, never credentials or proof of ownership.
+
+A world ID and stable spatial cell/region IDs identify content and partition
+locations. Region instances identify running authorities over that content;
+an authority epoch/fencing token distinguishes successive owners. Spatial cell
+identity does not change merely because a process or authority assignment changes.
+Account, character, world and region references are validated within their declared
+scope. Authentication/session secrets have separate representations and lifetimes.
+
+Live server handles include the owning region-instance incarnation and checked
+slot generations. Network replica IDs are compact protocol identifiers scoped
+to a connection/session incarnation and replica generation, with an explicit
+mapping to authoritative entity identity. They are not EnTT indices, Jolt body
+IDs or persistent database keys. Reuse must never make a stale packet or handle
+refer to a different live object. Restart, reconnect and handoff invalidate old
+session/authority mappings; a stable durable ID alone cannot authorize a mutation.
+
+The server enforces character control permissions and the chosen duplicate-login
+policy. Every gameplay intent carries the necessary session, sequence and
+authority context, but the server derives permission from authenticated state,
+not a client-supplied owner field. Message size, queue depth, sequence windows,
+retry retention and rate limits are bounded and tested in M02. State replication
+uses explicit field schemas and recipient visibility rules: persistent,
+replicated, owner-private, server-only and presentation-only fields are classified
+deliberately. Interest filtering does not replace authorization.
+
+M05 introduces a fenced transfer between internal regions. There is at most one
+committing authority for an entity at a time. Transfer records bind entity IDs,
+source/destination incarnations, an ownership token and an operation ID; retries
+and in-flight intents are deduplicated across the transfer. The destination
+prepares validated state before activation, and the source cannot resume writes
+after losing its fence. Transfer uses a consistent authoritative tick/input-sequence
+cut, a final source snapshot and pending durable-operation context; an earlier
+preparation snapshot cannot overwrite newer state at activation. The source
+quiesces at the cut. Post-cut intents and late worker/storage completions route to
+the committed owner with deduplication/reconciliation, so acknowledged outcomes
+cannot be lost between preparation and ownership commit. Cut/commit fault tests
+include in-flight mutations and late durable success, with bounded buffering and
+handoff pause. Failure before ownership commit aborts safely; recovery
+after commit follows the durable owner record rather than allowing both owners
+to roll back independently. Client replica continuity is explicit even when the
+local runtime handle changes. Start with co-located region authorities; claiming
+distributed handoff requires the same failure tests across processes.
+
+## MMORPG durable state and trust boundaries
+
+Authored scene/project files define content. They do not serve as the live
+character database, an inventory ledger or a save file for a running server.
+M03 selects and pins a transactional database integration after defining its
+durability and recovery contract; no database or networking library is selected
+by this amendment. Durable commands use operation IDs and atomic transactions
+covering both the state change and the retained deduplication result. Retrying a
+committed operation after a lost acknowledgement must not duplicate a reward,
+item or currency transfer. Deduplication retention and request expiry must agree:
+an old request cannot become a new valid operation merely because its cached
+result expired. Acknowledging durable success requires the declared
+commit boundary; uncommitted state must not be presented as durable success.
+
+Database schema versions, gameplay wire versions, content/cooked versions and
+Lua API versions evolve independently. M02 specifies negotiation and rejection
+of incompatible peers before joining a world. M03 specifies tested database
+migrations, backup/restore, interrupted migration recovery, stale-write rejection
+and compatibility with the deployed server build. Source JSON migration rules
+remain for authoring documents; they do not implicitly migrate server databases.
+
+Only the owning simulation thread commits live region state. Database workers
+return bounded results tagged with operation, entity and authority incarnation;
+the owner revalidates them before applying a completion. Storage outage and
+timeout policies bound pending work and reject affected durable operations
+without granting an uncommitted benefit. Recovery reconciles committed results
+before resuming entity admission. Never block the simulation indefinitely on
+storage, or let a late completion mutate a replacement entity/region.
+
+Gameplay clients submit bounded intents, not arbitrary component writes, Lua
+source, filesystem paths, authoring transactions or server save/load commands.
+Local CLI/JSON-RPC authoring stays a separate trusted interface. Shared engine
+validation can be reused, but does not grant gameplay clients editor privileges.
+M08 defines separately authenticated and authorized administrative operations.
+No public server protocol or hostile-client security claim exists yet.
+
+M02 gates malformed/oversized messages, stale sessions/replicas, duplicate and
+out-of-order intents, unauthorized character control and private-field leakage.
+M03 gates crash/retry around each durable commit boundary, a lost acknowledgement,
+restore/migration failure and rejected stale completions. M05 gates transfer
+retry, source/destination failure and abort/recovery with exactly one owner,
+preserved durable identity and no duplicated committed operation. Planned
+fixtures are specified in the MMORPG plan; none is an executed result.
 
 ## Validation and version policy
 

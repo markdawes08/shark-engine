@@ -11,6 +11,14 @@ If the ignored local roadmap is absent, use the versioned
 [assignment requirements](docs/coverage/requirements.json) and handoff; report
 any genuinely missing instruction rather than inventing source text.
 
+The product target is a **seamless open-world MMORPG**. Read the versioned
+[MMORPG execution plan](docs/roadmap/mmorpg-plan.md) and
+[ADR 0007](docs/architecture/0007-mmorpg-architecture.md) before system design.
+They supersede the original offline-only scope. Original assignments 00-35 retain
+their IDs; M01-M10 are inserted in the manifest's explicit `assignment_order`.
+After the unverified 01 hosted gate closes, M01 precedes 02. This planning amendment
+does not claim that any server, networking, persistence or streaming code exists.
+
 The user owns staging and commits. **Never run `git add`, stage through another
 tool, commit, or push, including from tests or temporary repositories.** Leave
 the change set reviewable and include suggested commit text in the final response
@@ -90,7 +98,12 @@ Current labels are `cpu`, `unit`, `integration`, `boundary`, `contract` and `too
 
 ## Protected target and dependency boundaries
 
-Engine is a static runtime library. EngineTools owns import, cook and authoring
+Currently Engine is a static bootstrap library. M01 must split shared EngineCore
+from EngineClient presentation and introduce Server -> EngineCore before graphics
+integration. Server/Core must exclude window/GPU/audio/authoring libraries at
+configure/download, link and package time. `runtime-only` is not a server preset.
+No server commands or test labels exist yet; add and document real ones in M01.
+EngineTools owns import, cook and authoring
 facilities and depends on Engine. Editor depends on those libraries; Runtime
 depends only on Engine. Runtime must not link/load Editor, EngineTools, ImGui,
 ImGuizmo, cgltf, source image/audio decoders or offline source shader compilers.
@@ -108,7 +121,10 @@ dependent renderer work; neither Mac CPU family is silently dropped.
 Keep EnTT/Jolt/NVRHI details inside their subsystem implementations. Shared public
 contracts use engine-owned types; centrally configured GLM is the math exception.
 UI, CLI and protocol authoring edits share validated application services and
-transactions, never a second authoritative mutable scene.
+transactions, never a second authoritative mutable scene. Those local authoring
+services are not the player protocol. Server validates authenticated, bounded
+intents and owns simulation, inventory, currency and progression. Client prediction
+has no authority to grant outcomes; administrative access is separately authorized.
 
 ## Ownership, threading and errors
 
@@ -118,12 +134,19 @@ own services, scenes own entity/script/physics state, and managers own immutable
 assets. Prefer RAII and unique ownership; shared asset reference counts do not
 make mutable scene access thread-safe. Unwind partial startup in reverse order.
 
-The process main thread controls GLFW, scene mutation, Lua callbacks and command
-commits. Workers return bounded messages or immutable results. Physics workers
+The client process main thread controls GLFW and local scene/authoring operations.
+Server simulation has a single writer per authoritative region; ownership/fencing
+and bounded messages mediate cross-region work. Workers never mutate a registry
+directly. Workers return bounded messages or immutable results. Physics workers
 never invoke Lua; audio callbacks perform no blocking I/O, general allocations
 or scene mutations. Retire GPU resources only after submitted use completes.
 Checked generational handles replace borrowed component pointers across mutation
-boundaries. Follow the fixed 60 Hz tick and deferred mutation ordering in the ADR.
+boundaries. Follow ADR 0005's distinct clock profiles: offline 60 Hz, provisional
+server 20 Hz, independently scheduled replication/presentation. Live server time
+never pauses on client focus/minimize and never silently drops authoritative ticks.
+Render callbacks are presentation-only for live gameplay. Use stable global cell
+coordinates and bounded local origins; internal regions must not create visible
+zone breaks or duplicate authority during seamless travel.
 
 Expected failures return structured engine errors with stable code, message,
 operation and relevant entity/asset/path/request context once assignment 03
@@ -136,7 +159,11 @@ throw. Fatal device failures receive diagnostics and bounded teardown.
 ## Formats and coverage
 
 [ADR 0004](docs/architecture/0004-formats-and-identity.md) defines independent
-source, cooked, protocol and Lua API versions. Source JSON is UTF-8 with explicit
+source, cooked, authoring protocol, gameplay wire, database and Lua API versions.
+Authored scenes are not live player persistence. Durable account/character/world
+IDs, region ownership epochs, local handles and session replica IDs are distinct.
+Economy/progression writes require validated, idempotent durable transactions;
+file-save atomicity does not satisfy that contract. Source JSON is UTF-8 with explicit
 format/schema fields. Reject unsupported versions, unknown fields outside bounded
 extras, duplicate keys/IDs, nonfinite numbers and escaping project paths. Public
 format changes need a tested migration or explicit version-rejection policy.
@@ -149,6 +176,11 @@ FeatureWorld case, or a justified external fixture. FeatureWorld starts in 10;
 connect earlier components then and add new cases when their feature lands.
 Keep planned fixtures separate from implemented coverage. The bootstrap does not
 provide scene/component/Lua/import/export APIs or a renderer.
+MMO requirements remain planned until executable multi-process, network-fault,
+database, streaming and load evidence exists. M09 adds MMOWorld acceptance; Tetris
+and the physics sandbox remain tooling regressions, not MMO release qualification.
+Record active workload and named hardware before capacity claims. Current values
+in ADR 0007 are provisional targets; tests cannot silently reduce them to pass.
 
 ## Locations and repository skills
 
@@ -157,10 +189,12 @@ provide scene/component/Lua/import/export APIs or a renderer.
 | `engine/`, `engine_tools/`, `editor/`, `runtime/` | Runtime library, authoring library and separate executables |
 | `tests/`, `cmake/`, `tools/` | Behavior tests, target configuration and development checks |
 | `docs/architecture/`, `docs/coverage/`, `docs/handoffs/` | Decisions, mappings/evidence and assignment handoffs |
+| `docs/roadmap/` | Versioned execution order, scope amendments and foundation assessment |
 | `.github/workflows/` | Required CI automation |
 | `.agents/skills/` | Repository-scoped Codex skill sources |
 | `build/`, `out/` | Ignored generated builds and test evidence |
 | `cli/`, `assets/FeatureWorld/` | Future CLI and scene fixtures, created by their owning assignments |
+| `server/`, `assets/MMOWorld/` | Planned M01 server entry point and M09 MMO acceptance world; not implemented |
 
 Use the relevant focused skill:
 

@@ -5,6 +5,14 @@ deliberate-failure proof, is **NOT RUN** until the user publishes this repositor
 and runs its workflow. No remote, branch-protection rule or GitHub run was created
 by this increment. The user reserves Git staging, committing and pushing.
 
+Status update for the [MMORPG planning amendment](handoffs/mmorpg-planning-amendment.md):
+the user has since committed/pushed the foundation (`3fecfc3`); actual hosted
+results were not inspected in this planning task, so the gate remains unverified.
+The existing fourteen required jobs remain the current configuration. M01 must
+add genuine headless Server/Core checks on a minimal Ubuntu24.04 environment;
+M02-M10 introduce network, database, world-handoff and active-load tiers. Those
+jobs/commands are planned and are not provided by the present CPU workflow.
+
 ## Jobs and required checks
 
 [The workflow](../.github/workflows/cpu.yml) runs on pushes, pull requests and
