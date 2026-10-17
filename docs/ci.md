@@ -1,13 +1,15 @@
 # CPU CI and evidence
 
-Assignment 01 configures CPU/build checks. Hosted execution, including the required
-deliberate-failure proof, is **NOT RUN** until the user publishes this repository
-and runs its workflow. No remote, branch-protection rule or GitHub run was created
-by this increment. The user reserves Git staging, committing and pushing.
+Assignment 01's hosted gate is **FAIL / OPEN**. Both ordinary push runs at
+`3fecfc3` and `7aac0b1` passed thirteen of fourteen jobs; macOS ARM64 ASan/UBSan
+timed out in four tests. The Xcode pin repair still needs a hosted run, and the
+deliberate-failure/red-to-green proof remains **NOT RUN**. See the
+[CI verification handoff](handoffs/01-ci-verification.md) for actual run URLs,
+artifact findings and remaining work. The user reserves Git staging, committing
+and pushing.
 
-Status update for the [MMORPG planning amendment](handoffs/mmorpg-planning-amendment.md):
-the user has since committed/pushed the foundation (`3fecfc3`); actual hosted
-results were not inspected in this planning task, so the gate remains unverified.
+The [MMORPG planning amendment](handoffs/mmorpg-planning-amendment.md) retains
+assignment 01 as the current gate, followed by M01 before 02.
 The existing fourteen required jobs remain the current configuration. M01 must
 add genuine headless Server/Core checks on a minimal Ubuntu24.04 environment;
 M02-M10 introduce network, database, world-handoff and active-load tiers. Those
@@ -25,7 +27,7 @@ persisting credentials, and uploads logs on failure as well as success.
 | `cpu-windows-debug`, `cpu-windows-release`, `cpu-windows-asan` | `windows-2025-vs2026` x64 | VS 2026, MSVC toolset 14.51, Windows SDK 10.0.26100.0 | Debug, Release, ASan |
 | `cpu-linux-debug`, `cpu-linux-release` | `ubuntu-24.04` x64 | GCC 13 (`g++-13`) | Debug, Release |
 | `cpu-linux-asan-ubsan` | `ubuntu-24.04` x64 | Clang 18 (`clang++-18`) | ASan + UBSan |
-| `cpu-macos-arm64-debug`, `cpu-macos-arm64-release`, `cpu-macos-arm64-asan-ubsan` | `macos-26` arm64 | Xcode 26.0.1 / Apple Clang | Debug, Release, ASan + UBSan |
+| `cpu-macos-arm64-debug`, `cpu-macos-arm64-release`, `cpu-macos-arm64-asan-ubsan` | `macos-26` arm64 | Xcode 26.4.1 / Apple Clang | Debug, Release, ASan + UBSan |
 | `cpu-macos-intel-debug`, `cpu-macos-intel-release`, `cpu-macos-intel-asan-ubsan` | `macos-15-intel` x64 | Xcode 16.4 / Apple Clang | Debug, Release, ASan + UBSan |
 | `runtime-only` | `ubuntu-24.04` x64 | GCC 13 | Release, no Editor/EngineTools/Tests |
 
@@ -69,8 +71,16 @@ Xcode bundle, MSVC toolset family/SDK and GCC/Clang executable family; it fails
 when a requested bundle is absent instead of silently choosing another Xcode or
 Visual Studio major version. Full compiler patch/build versions, compiler binary
 hashes, SDK selection and `ImageOS`/`ImageVersion` are recorded after configure.
-Upstream inventory documents the selected labels and installed tools, but no
-hosted result has been observed here. [GitHub runner image policy and inventory](https://github.com/actions/runner-images)
+Upstream inventory documents the selected labels and installed tools; actual
+results and recorded images are linked in the handoff.
+[GitHub runner image policy and inventory](https://github.com/actions/runner-images)
+
+The ARM64 Xcode pin is 26.4.1 because Apple documents sanitizer hangs on macOS
+26.4 with binaries built by Xcode 26.3 or older (issue 171762808), and recommends
+Xcode 26.4. The observed failures used Xcode 26.0.1 on macOS 26.6.2; this matches
+the reported issue, but the repair must still be confirmed by native CI.
+All three ARM configurations select the same updated bundle. Sanitizers and
+existing test deadlines remain enabled. [Apple Xcode 26.4 release notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-26_4-release-notes)
 
 Qualification amendment to ADR 0002: exact project tools and source dependencies
 are immutable inputs; hosted CI compiler families/bundles are explicitly selected
@@ -140,9 +150,10 @@ acceptance evidence to durable release/handoff storage before expiration.
    default). All fourteen jobs must pass, and no injected failure may remain in
    CTest. Save this run URL and artifacts alongside the failed-run evidence.
 4. Update the assignment 01 handoff and requirement status only after checking
-   both actual runs and the four native CPU rows. No workflow was dispatched in
-   this workspace session. Until those runs exist, hosted red/green proof and
-   unexecuted OS/CPU rows remain **NOT RUN**, and assignment 01's full gate is open.
+   both actual runs and the four native CPU rows. Ordinary failed push runs do
+   not prove deliberate test failure propagation. Until the injected failure
+   and restored pass are verified on the same revision, hosted red/green proof
+   remains **NOT RUN**, and assignment 01's full gate is open.
 
 The same real failure can be checked locally, for example in a Windows developer
 shell: `python tools/ci.py --preset windows-debug --inject-test-failure` must fail;

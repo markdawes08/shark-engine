@@ -50,7 +50,8 @@ remain the only implemented surface; every new MMO gate is NOT_RUN.
 
 The ignored local roadmap is amended for consistency but remains optional context,
 not a CI input. REQ-00's PASS records its historical planning evidence, not MMO
-implementation. REQ-01 remains NOT_RUN while its full hosted gate is unverified.
-The user has committed/pushed the foundation; that alone does not prove the
-required hosted red/green or platform results. See the
-[planning handoff](../handoffs/mmorpg-planning-amendment.md) for this update.
+implementation. REQ-01 is FAIL / OPEN: ordinary hosted runs passed thirteen of
+fourteen jobs, with macOS ARM64 sanitizer timeouts. The Xcode pin repair and
+required hosted deliberate-failure/red-to-green proof remain unverified. See the
+[CI verification handoff](../handoffs/01-ci-verification.md) for actual evidence
+and the remaining gate.

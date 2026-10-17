@@ -2,6 +2,10 @@
 
 Date: 2026-10-17. Assignment: **01 - Repository, build system and test foundation**.
 
+Historical implementation handoff. The later [CI verification handoff](01-ci-verification.md)
+supersedes the hosted-run status below. The [MMORPG planning amendment](mmorpg-planning-amendment.md)
+inserts M01 after this gate and before 02.
+
 Implementation is present. The full assignment gate is **NOT RUN / OPEN** until
 the hosted clean-checkout matrix and actual red/green workflow proof run after
 the user publishes the repository. Assignment 02 has not started.

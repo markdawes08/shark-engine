@@ -52,9 +52,11 @@ jobs:
           - {id: linux-debug, os: ubuntu-24.04, arch: x64, preset: linux-debug, cc: gcc-13, cxx: g++-13}
           - {id: linux-release, os: ubuntu-24.04, arch: x64, preset: linux-release, cc: gcc-13, cxx: g++-13}
           - {id: linux-asan-ubsan, os: ubuntu-24.04, arch: x64, preset: linux-asan-ubsan, cc: clang-18, cxx: clang++-18}
-          - {id: macos-arm64-debug, os: macos-26, arch: arm64, preset: macos-debug, developer_dir: /Applications/Xcode_26.0.1.app/Contents/Developer}
-          - {id: macos-arm64-release, os: macos-26, arch: arm64, preset: macos-release, developer_dir: /Applications/Xcode_26.0.1.app/Contents/Developer}
-          - {id: macos-arm64-asan-ubsan, os: macos-26, arch: arm64, preset: macos-asan-ubsan, developer_dir: /Applications/Xcode_26.0.1.app/Contents/Developer}
+          # Apple issue 171762808: older Xcode sanitizer runtimes can hang on macOS 26.4+.
+          # Keep all ARM configurations on the same explicitly selected, fixed toolchain.
+          - {id: macos-arm64-debug, os: macos-26, arch: arm64, preset: macos-debug, developer_dir: /Applications/Xcode_26.4.1.app/Contents/Developer}
+          - {id: macos-arm64-release, os: macos-26, arch: arm64, preset: macos-release, developer_dir: /Applications/Xcode_26.4.1.app/Contents/Developer}
+          - {id: macos-arm64-asan-ubsan, os: macos-26, arch: arm64, preset: macos-asan-ubsan, developer_dir: /Applications/Xcode_26.4.1.app/Contents/Developer}
           - {id: macos-intel-debug, os: macos-15-intel, arch: x64, preset: macos-debug, developer_dir: /Applications/Xcode_16.4.app/Contents/Developer}
           - {id: macos-intel-release, os: macos-15-intel, arch: x64, preset: macos-release, developer_dir: /Applications/Xcode_16.4.app/Contents/Developer}
           - {id: macos-intel-asan-ubsan, os: macos-15-intel, arch: x64, preset: macos-asan-ubsan, developer_dir: /Applications/Xcode_16.4.app/Contents/Developer}

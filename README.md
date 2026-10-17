@@ -23,6 +23,8 @@ establish graphics or release-platform support.
   describe native presets, tool versions, checks and ownership policies.
 - [Assignment 01 handoff](docs/handoffs/01-build-foundation.md) records local
   verification and the hosted CI gate that was open at that handoff.
+- [CI verification follow-up](docs/handoffs/01-ci-verification.md) records the
+  observed macOS sanitizer failure, toolchain repair and pending red/green proof.
 - [MMORPG planning handoff](docs/handoffs/mmorpg-planning-amendment.md) records
   the scope change and current repository state. Once 01's hosted gate is verified,
   M01 introduces the headless server boundary before 02's graphics work.
