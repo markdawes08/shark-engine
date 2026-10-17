@@ -1,0 +1,2230 @@
+{
+  "schema_version": 1,
+  "repository": "markdawes08/shark-engine",
+  "run_id": 39077652643,
+  "run_attempt": 1,
+  "expected_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+  "mode": "injected",
+  "verified_at_utc": "20261017T231130196919Z",
+  "run_url": "https://github.com/markdawes08/shark-engine/actions/runs/39077652643",
+  "status": "PASS",
+  "errors": [],
+  "jobs": [
+    {
+      "name": "cpu-linux-asan-ubsan",
+      "id": 117528040020,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39077652643/job/117528040020",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Configure, build and test on Linux or macOS"
+      ],
+      "started_at": "2026-10-17T23:05:28Z",
+      "completed_at": "2026-10-17T23:07:00Z",
+      "runner_labels": [
+        "ubuntu-24.04"
+      ]
+    },
+    {
+      "name": "cpu-linux-debug",
+      "id": 117528039946,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39077652643/job/117528039946",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Configure, build and test on Linux or macOS"
+      ],
+      "started_at": "2026-10-17T23:05:28Z",
+      "completed_at": "2026-10-17T23:06:28Z",
+      "runner_labels": [
+        "ubuntu-24.04"
+      ]
+    },
+    {
+      "name": "cpu-linux-release",
+      "id": 117528040011,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39077652643/job/117528040011",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Configure, build and test on Linux or macOS"
+      ],
+      "started_at": "2026-10-17T23:05:28Z",
+      "completed_at": "2026-10-17T23:06:37Z",
+      "runner_labels": [
+        "ubuntu-24.04"
+      ]
+    },
+    {
+      "name": "cpu-macos-arm64-asan-ubsan",
+      "id": 117528040141,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39077652643/job/117528040141",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Configure, build and test on Linux or macOS"
+      ],
+      "started_at": "2026-10-17T23:05:34Z",
+      "completed_at": "2026-10-17T23:07:18Z",
+      "runner_labels": [
+        "macos-26"
+      ]
+    },
+    {
+      "name": "cpu-macos-arm64-debug",
+      "id": 117528040005,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39077652643/job/117528040005",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Configure, build and test on Linux or macOS"
+      ],
+      "started_at": "2026-10-17T23:05:32Z",
+      "completed_at": "2026-10-17T23:06:49Z",
+      "runner_labels": [
+        "macos-26"
+      ]
+    },
+    {
+      "name": "cpu-macos-arm64-release",
+      "id": 117528039995,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39077652643/job/117528039995",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Configure, build and test on Linux or macOS"
+      ],
+      "started_at": "2026-10-17T23:05:36Z",
+      "completed_at": "2026-10-17T23:07:34Z",
+      "runner_labels": [
+        "macos-26"
+      ]
+    },
+    {
+      "name": "cpu-macos-intel-asan-ubsan",
+      "id": 117528040041,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39077652643/job/117528040041",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Configure, build and test on Linux or macOS"
+      ],
+      "started_at": "2026-10-17T23:06:55Z",
+      "completed_at": "2026-10-17T23:10:58Z",
+      "runner_labels": [
+        "macos-15-intel"
+      ]
+    },
+    {
+      "name": "cpu-macos-intel-debug",
+      "id": 117528039929,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39077652643/job/117528039929",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Configure, build and test on Linux or macOS"
+      ],
+      "started_at": "2026-10-17T23:05:30Z",
+      "completed_at": "2026-10-17T23:08:06Z",
+      "runner_labels": [
+        "macos-15-intel"
+      ]
+    },
+    {
+      "name": "cpu-macos-intel-release",
+      "id": 117528039923,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39077652643/job/117528039923",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Configure, build and test on Linux or macOS"
+      ],
+      "started_at": "2026-10-17T23:05:29Z",
+      "completed_at": "2026-10-17T23:08:12Z",
+      "runner_labels": [
+        "macos-15-intel"
+      ]
+    },
+    {
+      "name": "cpu-windows-asan",
+      "id": 117528040024,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39077652643/job/117528040024",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Configure, build and test on Windows"
+      ],
+      "started_at": "2026-10-17T23:05:29Z",
+      "completed_at": "2026-10-17T23:08:29Z",
+      "runner_labels": [
+        "windows-2025-vs2026"
+      ]
+    },
+    {
+      "name": "cpu-windows-debug",
+      "id": 117528040053,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39077652643/job/117528040053",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Configure, build and test on Windows"
+      ],
+      "started_at": "2026-10-17T23:05:29Z",
+      "completed_at": "2026-10-17T23:08:38Z",
+      "runner_labels": [
+        "windows-2025-vs2026"
+      ]
+    },
+    {
+      "name": "cpu-windows-release",
+      "id": 117528040054,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39077652643/job/117528040054",
+      "status": "completed",
+      "conclusion": "failure",
+      "failed_steps": [
+        "Configure, build and test on Windows"
+      ],
+      "started_at": "2026-10-17T23:05:29Z",
+      "completed_at": "2026-10-17T23:08:21Z",
+      "runner_labels": [
+        "windows-2025-vs2026"
+      ]
+    },
+    {
+      "name": "quality",
+      "id": 117528039879,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39077652643/job/117528039879",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:05:28Z",
+      "completed_at": "2026-10-17T23:05:44Z",
+      "runner_labels": [
+        "ubuntu-24.04"
+      ]
+    },
+    {
+      "name": "runtime-only",
+      "id": 117528039646,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39077652643/job/117528039646",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:05:28Z",
+      "completed_at": "2026-10-17T23:05:48Z",
+      "runner_labels": [
+        "ubuntu-24.04"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12117811868,
+      "name": "cpu-linux-asan-ubsan-1",
+      "digest": "sha256:cf331785ee2c4d00eee9583a9d9f012068f87da82b6ddd6085cd729adf1df334",
+      "size_in_bytes": 9366,
+      "created_at": "2026-10-17T23:06:59Z",
+      "expires_at": "2026-11-16T23:06:58Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/linux-asan-ubsan/Testing/Temporary/LastTest.log",
+          "size_bytes": 10532,
+          "sha256": "ad66bce3dbefb515f2c816e0ca6b6202c5ebe0bb9ac01c0e095c5db739e50507"
+        },
+        {
+          "path": "out/ci/linux-asan-ubsan/build.log",
+          "size_bytes": 14533,
+          "sha256": "8dc5c08ac2cbbc65e82d06f4a8b16afc621a6b15b64633041d574e78624b8f20"
+        },
+        {
+          "path": "out/ci/linux-asan-ubsan/configure.log",
+          "size_bytes": 1040,
+          "sha256": "5da8b6536d56cfdf7b18e1330285a22d08e770042bd1372b274659cbc6a0d95d"
+        },
+        {
+          "path": "out/ci/linux-asan-ubsan/ctest.xml",
+          "size_bytes": 5468,
+          "sha256": "b5d7708f9bb4683c7d11e57feb2eecd436c09aa30a4aeee94abd66c44caf71a4"
+        },
+        {
+          "path": "out/ci/linux-asan-ubsan/summary.json",
+          "size_bytes": 1265,
+          "sha256": "3279ca40eba0e3eae8b9cab2b04b959041208fb3f9dc56bcd6a7dcbfcca88c63"
+        },
+        {
+          "path": "out/ci/linux-asan-ubsan/test.log",
+          "size_bytes": 2533,
+          "sha256": "b20b1febb844d1b1bfa6d92dd6c1ede7d5ccd4309336af1db54b4c3c8741ef5d"
+        },
+        {
+          "path": "out/ci/linux-asan-ubsan/toolchain.json",
+          "size_bytes": 3629,
+          "sha256": "82574e5bc32251d6c1249f85fffd476be3e2ffe144ee54b66b4daa55efb04ed2"
+        }
+      ],
+      "job": "cpu-linux-asan-ubsan",
+      "verification": {
+        "preset": "linux-asan-ubsan",
+        "injected_failure": true,
+        "summary_status": "FAIL",
+        "sanitizer_configuration": "address-undefined",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          8
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "linux-asan-ubsan",
+              "-DSHARK_INJECT_TEST_FAILURE=ON",
+              "-DPython3_EXECUTABLE=/opt/hostedtoolcache/Python/3.13.5/x64/bin/python",
+              "-DCMAKE_CXX_COMPILER=clang++-18"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 4.327,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "linux-asan-ubsan",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 65.399,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "linux-asan-ubsan",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/home/runner/work/shark-engine/shark-engine/out/ci/linux-asan-ubsan/ctest.xml"
+            ],
+            "exit_code": 8,
+            "elapsed_seconds": 1.82,
+            "status": "FAIL"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 9,
+          "failures": [
+            "shark.failure-sentinel"
+          ],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Tests is a Catch2 v3.16.1 host application. Run with -? for options ------------------------------------------------------------------------------- CI failure sentinel is disabled in normal builds ------------------------------------------------------------------------------- /home/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:35 ............................................................................... /home/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:37: FAILED: REQUIRE( 1 == 0 ) with message: SHARK_INJECT_TEST_FAILURE must fail CTest and the enclosing CI command when enabled =============================================================================== test cases: 1 | 1 failed assertions: 1 | 1 failed"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Linux",
+            "release": "6.17.0-1022-azure",
+            "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+            "machine": "x86_64"
+          },
+          "image": {
+            "os": "ubuntu24",
+            "version": "20261012.334.1"
+          },
+          "runner_os": "Linux",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39077652643,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "Clang",
+            "version": "18.1.3",
+            "path": "/usr/bin/clang++-18",
+            "binary_path": "/usr/lib/llvm-18/bin/clang",
+            "sha256": "8ef402d453d1ba4902e4ee0f0f847f6cfa01400c95aa43c24e97818b9c0e3f45",
+            "probe_exit": 0
+          },
+          "xcode": null,
+          "sdk": null,
+          "developer_dir": "",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12118000131,
+      "name": "cpu-linux-debug-1",
+      "digest": "sha256:7ef65b65cf1a96a76e2ff893e4df9ddf1c2dd6089cbe200a0e03571c4f7fd559",
+      "size_in_bytes": 9218,
+      "created_at": "2026-10-17T23:06:26Z",
+      "expires_at": "2026-11-16T23:06:26Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/linux-debug/Testing/Temporary/LastTest.log",
+          "size_bytes": 10472,
+          "sha256": "5bb2fcc262f080354b60b6cca6985d5b95c58f135878c8515627dd1d1712a365"
+        },
+        {
+          "path": "out/ci/linux-debug/build.log",
+          "size_bytes": 13621,
+          "sha256": "34c393fbb2a2ab4a9a976a04e404503e33816afd3be86c4cf23cb672bd27205d"
+        },
+        {
+          "path": "out/ci/linux-debug/configure.log",
+          "size_bytes": 1006,
+          "sha256": "b592432a29b0da739b8cda75bc4f7df72e049afe7105189454a6c6587ad5d234"
+        },
+        {
+          "path": "out/ci/linux-debug/ctest.xml",
+          "size_bytes": 5472,
+          "sha256": "eb179dc8de5d1214d5f473ea5f01a7621326589ecc12e04cbc707e274480282a"
+        },
+        {
+          "path": "out/ci/linux-debug/summary.json",
+          "size_bytes": 1237,
+          "sha256": "047ef03ebeae46c40adbbf83c4c63e9bcf6a9aa746944cde2a4284cbd9e54fd0"
+        },
+        {
+          "path": "out/ci/linux-debug/test.log",
+          "size_bytes": 2528,
+          "sha256": "a6281fabb197d850d8daacfcdbde23e070e2ebb617ee4e4ed9a3100c67bb21ce"
+        },
+        {
+          "path": "out/ci/linux-debug/toolchain.json",
+          "size_bytes": 3767,
+          "sha256": "282d7b3fef05a17b160fcb2e1c539c614a7d780370e2e64ce5b3ee25489d5447"
+        }
+      ],
+      "job": "cpu-linux-debug",
+      "verification": {
+        "preset": "linux-debug",
+        "injected_failure": true,
+        "summary_status": "FAIL",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          8
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "linux-debug",
+              "-DSHARK_INJECT_TEST_FAILURE=ON",
+              "-DPython3_EXECUTABLE=/opt/hostedtoolcache/Python/3.13.5/x64/bin/python",
+              "-DCMAKE_CXX_COMPILER=g++-13"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 1.017,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "linux-debug",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 41.382,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "linux-debug",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/home/runner/work/shark-engine/shark-engine/out/ci/linux-debug/ctest.xml"
+            ],
+            "exit_code": 8,
+            "elapsed_seconds": 1.619,
+            "status": "FAIL"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 9,
+          "failures": [
+            "shark.failure-sentinel"
+          ],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Tests is a Catch2 v3.16.1 host application. Run with -? for options ------------------------------------------------------------------------------- CI failure sentinel is disabled in normal builds ------------------------------------------------------------------------------- /home/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:35 ............................................................................... /home/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:37: FAILED: REQUIRE( 1 == 0 ) with message: SHARK_INJECT_TEST_FAILURE must fail CTest and the enclosing CI command when enabled =============================================================================== test cases: 1 | 1 failed assertions: 1 | 1 failed"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Linux",
+            "release": "6.17.0-1022-azure",
+            "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+            "machine": "x86_64"
+          },
+          "image": {
+            "os": "ubuntu24",
+            "version": "20261012.334.1"
+          },
+          "runner_os": "Linux",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39077652643,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "GNU",
+            "version": "13.3.0",
+            "path": "/usr/bin/g++-13",
+            "binary_path": "/usr/bin/x86_64-linux-gnu-g++-13",
+            "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+            "probe_exit": 0
+          },
+          "xcode": null,
+          "sdk": null,
+          "developer_dir": "",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12116864522,
+      "name": "cpu-linux-release-1",
+      "digest": "sha256:101dc1a80372296feb0cce5f2dd313de05481f4eb49ccc059aa5bf318fee22fe",
+      "size_in_bytes": 9239,
+      "created_at": "2026-10-17T23:06:34Z",
+      "expires_at": "2026-11-16T23:06:33Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/linux-release/Testing/Temporary/LastTest.log",
+          "size_bytes": 10498,
+          "sha256": "91095beeb1ef0b135dfcbcfef595ab94eb249a16d79f7b1d273bcceea011a430"
+        },
+        {
+          "path": "out/ci/linux-release/build.log",
+          "size_bytes": 13619,
+          "sha256": "79ace4bb16d498cdd56bdadf9e745881fd7ab4b335bffabb140e07a975de3b78"
+        },
+        {
+          "path": "out/ci/linux-release/configure.log",
+          "size_bytes": 1014,
+          "sha256": "0bcb76d2f18cd1c86ddb207dd62a773864e906ece825b3c06189cb0c8b7e7557"
+        },
+        {
+          "path": "out/ci/linux-release/ctest.xml",
+          "size_bytes": 5467,
+          "sha256": "a314d7253b31d3e7bfdebedf9136318cacc237ce9f5557b9d25daa83067046b7"
+        },
+        {
+          "path": "out/ci/linux-release/summary.json",
+          "size_bytes": 1246,
+          "sha256": "2cdf648bde6a2cb07dfc2814ff230b8602dc4f8a777214605679575a6af89f6e"
+        },
+        {
+          "path": "out/ci/linux-release/test.log",
+          "size_bytes": 2530,
+          "sha256": "3b882aeaf3294e63e51f75659d09c2dab37d4b1fa0e8f639bbdec869c57649c4"
+        },
+        {
+          "path": "out/ci/linux-release/toolchain.json",
+          "size_bytes": 3771,
+          "sha256": "18a6a04cf6a4b83aa18c606ccaef774bd62573e8c8426a3b16c54d7d0ddf1add"
+        }
+      ],
+      "job": "cpu-linux-release",
+      "verification": {
+        "preset": "linux-release",
+        "injected_failure": true,
+        "summary_status": "FAIL",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          8
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "linux-release",
+              "-DSHARK_INJECT_TEST_FAILURE=ON",
+              "-DPython3_EXECUTABLE=/opt/hostedtoolcache/Python/3.13.5/x64/bin/python",
+              "-DCMAKE_CXX_COMPILER=g++-13"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 1.167,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "linux-release",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 45.794,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "linux-release",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/home/runner/work/shark-engine/shark-engine/out/ci/linux-release/ctest.xml"
+            ],
+            "exit_code": 8,
+            "elapsed_seconds": 1.72,
+            "status": "FAIL"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 9,
+          "failures": [
+            "shark.failure-sentinel"
+          ],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Tests is a Catch2 v3.16.1 host application. Run with -? for options ------------------------------------------------------------------------------- CI failure sentinel is disabled in normal builds ------------------------------------------------------------------------------- /home/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:35 ............................................................................... /home/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:37: FAILED: REQUIRE( 1 == 0 ) with message: SHARK_INJECT_TEST_FAILURE must fail CTest and the enclosing CI command when enabled =============================================================================== test cases: 1 | 1 failed assertions: 1 | 1 failed"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Linux",
+            "release": "6.17.0-1022-azure",
+            "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+            "machine": "x86_64"
+          },
+          "image": {
+            "os": "ubuntu24",
+            "version": "20261012.334.1"
+          },
+          "runner_os": "Linux",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39077652643,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "GNU",
+            "version": "13.3.0",
+            "path": "/usr/bin/g++-13",
+            "binary_path": "/usr/bin/x86_64-linux-gnu-g++-13",
+            "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+            "probe_exit": 0
+          },
+          "xcode": null,
+          "sdk": null,
+          "developer_dir": "",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Release",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117841770,
+      "name": "cpu-macos-arm64-asan-ubsan-1",
+      "digest": "sha256:113c032d6612a845d680f234a71d3f439f21deaecc12500498b0bb6991aa939c",
+      "size_in_bytes": 9625,
+      "created_at": "2026-10-17T23:07:15Z",
+      "expires_at": "2026-11-16T23:07:14Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/macos-asan-ubsan/Testing/Temporary/LastTest.log",
+          "size_bytes": 10655,
+          "sha256": "81b6a76501c9ddde486ee5f2a387a8e332d7244cc93f7dc9f288afeba806a1dc"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/build.log",
+          "size_bytes": 13621,
+          "sha256": "02b04642223dc645804acabe1aee6d15a10f9ab0cc6dd8168654d1403476ceb3"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/configure.log",
+          "size_bytes": 1151,
+          "sha256": "6ad6c50d34fdd78fed670c89a5033de9c4be587964204163ea909aeb5c7cf948"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/ctest.xml",
+          "size_bytes": 5463,
+          "sha256": "1bfa9337e19c8f788c180194997ce7390293054fc2c62c538d85bfecf461dcf3"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/summary.json",
+          "size_bytes": 1368,
+          "sha256": "7ceb37d1c2b65a233dd79ad436ea3f467e251382ab4af5715d075805f96aa9cb"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/test.log",
+          "size_bytes": 2536,
+          "sha256": "94263edf4e23558263dff69f2b84af7408bf807979afafec587a1c36508cb528"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/toolchain.json",
+          "size_bytes": 4906,
+          "sha256": "82d05c8e12056b1c865417ba0fea96aad78b40bf14a0fa30c9f27345ab1d2b1c"
+        }
+      ],
+      "job": "cpu-macos-arm64-asan-ubsan",
+      "verification": {
+        "preset": "macos-asan-ubsan",
+        "injected_failure": true,
+        "summary_status": "FAIL",
+        "sanitizer_configuration": "address-undefined",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          8
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "macos-asan-ubsan",
+              "-DSHARK_INJECT_TEST_FAILURE=ON",
+              "-DPython3_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.13/bin/python",
+              "-DCMAKE_CXX_COMPILER=/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 2.3,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "macos-asan-ubsan",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 52.081,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "macos-asan-ubsan",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/Users/runner/work/shark-engine/shark-engine/out/ci/macos-asan-ubsan/ctest.xml"
+            ],
+            "exit_code": 8,
+            "elapsed_seconds": 3.874,
+            "status": "FAIL"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 9,
+          "failures": [
+            "shark.failure-sentinel"
+          ],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Tests is a Catch2 v3.16.1 host application. Run with -? for options ------------------------------------------------------------------------------- CI failure sentinel is disabled in normal builds ------------------------------------------------------------------------------- /Users/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:35 ............................................................................... /Users/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:37: FAILED: REQUIRE( 1 == 0 ) with message: SHARK_INJECT_TEST_FAILURE must fail CTest and the enclosing CI command when enabled =============================================================================== test cases: 1 | 1 failed assertions: 1 | 1 failed"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "version": "Darwin Kernel Version 25.6.0: Fri Jul 31 19:16:43 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_VMAPPLE",
+            "machine": "arm64"
+          },
+          "image": {
+            "os": "macos26",
+            "version": "20261013.0424.1"
+          },
+          "runner_os": "macOS",
+          "runner_arch": "ARM64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39077652643,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "AppleClang",
+            "version": "21.0.0.21000099",
+            "path": "/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++",
+            "binary_path": "/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+            "sha256": "a0d27cfee61b9b547a39529fb5609feb43ac3c372db023c3278ae41d0c45cc21",
+            "probe_exit": 0
+          },
+          "xcode": "Xcode 26.4.1\nBuild version 17E202",
+          "sdk": "26.4",
+          "developer_dir": "/Applications/Xcode_26.4.1.app/Contents/Developer",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/Users/runner/hostedtoolcache/Python/3.13.5/arm64/bin/ninja",
+            "CMAKE_OSX_ARCHITECTURES": "",
+            "CMAKE_OSX_DEPLOYMENT_TARGET": "",
+            "CMAKE_OSX_SYSROOT": "/Applications/Xcode_26.4.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117697319,
+      "name": "cpu-macos-arm64-debug-1",
+      "digest": "sha256:74a9a7fa3417a6a046e5c1d15d710e1c04f7d9297557b545bf0a6135815b014e",
+      "size_in_bytes": 9488,
+      "created_at": "2026-10-17T23:06:46Z",
+      "expires_at": "2026-11-16T23:06:45Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/macos-debug/Testing/Temporary/LastTest.log",
+          "size_bytes": 10595,
+          "sha256": "0ef9eceebc0464f11a8f4b3e33f183b84c75c7a2a40d4c59670884742a71f18d"
+        },
+        {
+          "path": "out/ci/macos-debug/build.log",
+          "size_bytes": 13621,
+          "sha256": "8f6890ff532e7a88c546d494e67e11fa5ba6f9249b006c7db610893b579c4c28"
+        },
+        {
+          "path": "out/ci/macos-debug/configure.log",
+          "size_bytes": 1123,
+          "sha256": "6d5abb12ba49d284355571dcd239f74527ffaafa3fef490820ad91a42240eb51"
+        },
+        {
+          "path": "out/ci/macos-debug/ctest.xml",
+          "size_bytes": 5469,
+          "sha256": "23e2a6781128f13b4a071874e3274b96179e89705156f921169363e98800b023"
+        },
+        {
+          "path": "out/ci/macos-debug/summary.json",
+          "size_bytes": 1345,
+          "sha256": "74138780b0483657e3c17217f3c955269a207b17392efd660969dfe1ba7fecd5"
+        },
+        {
+          "path": "out/ci/macos-debug/test.log",
+          "size_bytes": 2531,
+          "sha256": "408bba4de60ca65b5fdd05951990588d7879ad0e44366f4183fa2cf88e69094b"
+        },
+        {
+          "path": "out/ci/macos-debug/toolchain.json",
+          "size_bytes": 4901,
+          "sha256": "3bfdf2331b0aef9b4d951fd5383da85816fdc43b31607f93ea2c35ba60fe2d94"
+        }
+      ],
+      "job": "cpu-macos-arm64-debug",
+      "verification": {
+        "preset": "macos-debug",
+        "injected_failure": true,
+        "summary_status": "FAIL",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          8
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "macos-debug",
+              "-DSHARK_INJECT_TEST_FAILURE=ON",
+              "-DPython3_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.13/bin/python",
+              "-DCMAKE_CXX_COMPILER=/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 2.039,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "macos-debug",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 35.927,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "macos-debug",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/Users/runner/work/shark-engine/shark-engine/out/ci/macos-debug/ctest.xml"
+            ],
+            "exit_code": 8,
+            "elapsed_seconds": 2.027,
+            "status": "FAIL"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 9,
+          "failures": [
+            "shark.failure-sentinel"
+          ],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Tests is a Catch2 v3.16.1 host application. Run with -? for options ------------------------------------------------------------------------------- CI failure sentinel is disabled in normal builds ------------------------------------------------------------------------------- /Users/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:35 ............................................................................... /Users/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:37: FAILED: REQUIRE( 1 == 0 ) with message: SHARK_INJECT_TEST_FAILURE must fail CTest and the enclosing CI command when enabled =============================================================================== test cases: 1 | 1 failed assertions: 1 | 1 failed"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "version": "Darwin Kernel Version 25.6.0: Fri Jul 31 19:16:43 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_VMAPPLE",
+            "machine": "arm64"
+          },
+          "image": {
+            "os": "macos26",
+            "version": "20261013.0424.1"
+          },
+          "runner_os": "macOS",
+          "runner_arch": "ARM64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39077652643,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "AppleClang",
+            "version": "21.0.0.21000099",
+            "path": "/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++",
+            "binary_path": "/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+            "sha256": "a0d27cfee61b9b547a39529fb5609feb43ac3c372db023c3278ae41d0c45cc21",
+            "probe_exit": 0
+          },
+          "xcode": "Xcode 26.4.1\nBuild version 17E202",
+          "sdk": "26.4",
+          "developer_dir": "/Applications/Xcode_26.4.1.app/Contents/Developer",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/Users/runner/hostedtoolcache/Python/3.13.5/arm64/bin/ninja",
+            "CMAKE_OSX_ARCHITECTURES": "",
+            "CMAKE_OSX_DEPLOYMENT_TARGET": "",
+            "CMAKE_OSX_SYSROOT": "/Applications/Xcode_26.4.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117124740,
+      "name": "cpu-macos-arm64-release-1",
+      "digest": "sha256:3c47973380acc94960caeac2c7012a9c85ff8dd466439b10d0440d29fe353cf8",
+      "size_in_bytes": 9537,
+      "created_at": "2026-10-17T23:07:31Z",
+      "expires_at": "2026-11-16T23:07:31Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/macos-release/Testing/Temporary/LastTest.log",
+          "size_bytes": 10621,
+          "sha256": "44f858a53076272ec18c6df4a08cc2208615b0464e1d1bff43452a528a996eca"
+        },
+        {
+          "path": "out/ci/macos-release/build.log",
+          "size_bytes": 13619,
+          "sha256": "3a40bb00907c7db6d7a2ebe457e054db6bf93abfefaa9d062bd030cbffef49c4"
+        },
+        {
+          "path": "out/ci/macos-release/configure.log",
+          "size_bytes": 1131,
+          "sha256": "7c8035d4c5e3096cdab0101ea81047d2be75c93d6aee6906a61033b82723db27"
+        },
+        {
+          "path": "out/ci/macos-release/ctest.xml",
+          "size_bytes": 5468,
+          "sha256": "e9ff71db3cad256d6748ac57a9eaa18114d12523097d7588ba5dc4c7b27c1066"
+        },
+        {
+          "path": "out/ci/macos-release/summary.json",
+          "size_bytes": 1355,
+          "sha256": "bd08b558c22f4703c33734c99439362b600ebd42f1ec2e5bc8588ce70f19df8f"
+        },
+        {
+          "path": "out/ci/macos-release/test.log",
+          "size_bytes": 2533,
+          "sha256": "e62ac0303a2328cfa5f17b89382492a9467be249535ec8b17fe157c910aeb772"
+        },
+        {
+          "path": "out/ci/macos-release/toolchain.json",
+          "size_bytes": 4905,
+          "sha256": "06c8d1fe980eb950b81ee21961e2e492e837ce9be0a7d9bfcf60672350404f3b"
+        }
+      ],
+      "job": "cpu-macos-arm64-release",
+      "verification": {
+        "preset": "macos-release",
+        "injected_failure": true,
+        "summary_status": "FAIL",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          8
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "macos-release",
+              "-DSHARK_INJECT_TEST_FAILURE=ON",
+              "-DPython3_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.13/bin/python",
+              "-DCMAKE_CXX_COMPILER=/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 3.221,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "macos-release",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 61.935,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "macos-release",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/Users/runner/work/shark-engine/shark-engine/out/ci/macos-release/ctest.xml"
+            ],
+            "exit_code": 8,
+            "elapsed_seconds": 2.693,
+            "status": "FAIL"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 9,
+          "failures": [
+            "shark.failure-sentinel"
+          ],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Tests is a Catch2 v3.16.1 host application. Run with -? for options ------------------------------------------------------------------------------- CI failure sentinel is disabled in normal builds ------------------------------------------------------------------------------- /Users/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:35 ............................................................................... /Users/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:37: FAILED: REQUIRE( 1 == 0 ) with message: SHARK_INJECT_TEST_FAILURE must fail CTest and the enclosing CI command when enabled =============================================================================== test cases: 1 | 1 failed assertions: 1 | 1 failed"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "version": "Darwin Kernel Version 25.6.0: Fri Jul 31 19:16:43 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_VMAPPLE",
+            "machine": "arm64"
+          },
+          "image": {
+            "os": "macos26",
+            "version": "20261013.0424.1"
+          },
+          "runner_os": "macOS",
+          "runner_arch": "ARM64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39077652643,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "AppleClang",
+            "version": "21.0.0.21000099",
+            "path": "/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++",
+            "binary_path": "/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+            "sha256": "a0d27cfee61b9b547a39529fb5609feb43ac3c372db023c3278ae41d0c45cc21",
+            "probe_exit": 0
+          },
+          "xcode": "Xcode 26.4.1\nBuild version 17E202",
+          "sdk": "26.4",
+          "developer_dir": "/Applications/Xcode_26.4.1.app/Contents/Developer",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Release",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/Users/runner/hostedtoolcache/Python/3.13.5/arm64/bin/ninja",
+            "CMAKE_OSX_ARCHITECTURES": "",
+            "CMAKE_OSX_DEPLOYMENT_TARGET": "",
+            "CMAKE_OSX_SYSROOT": "/Applications/Xcode_26.4.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117907107,
+      "name": "cpu-macos-intel-asan-ubsan-1",
+      "digest": "sha256:ab7a7634458046d58fa678d1e134d441b8c0f6764f8bedd5183c8518490592b6",
+      "size_in_bytes": 9614,
+      "created_at": "2026-10-17T23:10:56Z",
+      "expires_at": "2026-11-16T23:10:56Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/macos-asan-ubsan/Testing/Temporary/LastTest.log",
+          "size_bytes": 10655,
+          "sha256": "a68068629b634547f4a60153d94fdf888e5de4ea259b2b3a0b4da720d349f97a"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/build.log",
+          "size_bytes": 13621,
+          "sha256": "75325b7c8aecaaa8d5471a5d3d010d5bce9d244074fd27fc0b93b816b3a8309b"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/configure.log",
+          "size_bytes": 1149,
+          "sha256": "e3e4da9d93dcecce8341af77c1afcad9ffdd1feb5a6c257a25fcd32dd14c63cf"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/ctest.xml",
+          "size_bytes": 5459,
+          "sha256": "f337e0c774a86f0705efd6efbfd1fe121db66d81686de484b763ab2a5ea420e3"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/summary.json",
+          "size_bytes": 1368,
+          "sha256": "739302f3bddc4afcc540193c7f8ab2d0b3edfded8d5dfae6b6f0406bfc609a3f"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/test.log",
+          "size_bytes": 2536,
+          "sha256": "0d11e1a00f6fb5f5c41abb4a64c048789e35e2db44fca722850f167a78ea6d05"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/toolchain.json",
+          "size_bytes": 4881,
+          "sha256": "37bcba0ecb7301cea52c905529702b493fda71f9d490ae2cf0bc58915e8cdd87"
+        }
+      ],
+      "job": "cpu-macos-intel-asan-ubsan",
+      "verification": {
+        "preset": "macos-asan-ubsan",
+        "injected_failure": true,
+        "summary_status": "FAIL",
+        "sanitizer_configuration": "address-undefined",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          8
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "macos-asan-ubsan",
+              "-DSHARK_INJECT_TEST_FAILURE=ON",
+              "-DPython3_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.13/bin/python",
+              "-DCMAKE_CXX_COMPILER=/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 5.272,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "macos-asan-ubsan",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 123.49,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "macos-asan-ubsan",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/Users/runner/work/shark-engine/shark-engine/out/ci/macos-asan-ubsan/ctest.xml"
+            ],
+            "exit_code": 8,
+            "elapsed_seconds": 7.165,
+            "status": "FAIL"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 9,
+          "failures": [
+            "shark.failure-sentinel"
+          ],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Tests is a Catch2 v3.16.1 host application. Run with -? for options ------------------------------------------------------------------------------- CI failure sentinel is disabled in normal builds ------------------------------------------------------------------------------- /Users/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:35 ............................................................................... /Users/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:37: FAILED: REQUIRE( 1 == 0 ) with message: SHARK_INJECT_TEST_FAILURE must fail CTest and the enclosing CI command when enabled =============================================================================== test cases: 1 | 1 failed assertions: 1 | 1 failed"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Darwin",
+            "release": "24.6.0",
+            "version": "Darwin Kernel Version 24.6.0: Tue Jul 21 20:50:07 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_X86_64",
+            "machine": "x86_64"
+          },
+          "image": {
+            "os": "macos15",
+            "version": "20260824.0482.1"
+          },
+          "runner_os": "macOS",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39077652643,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "AppleClang",
+            "version": "17.0.0.17000013",
+            "path": "/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++",
+            "binary_path": "/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+            "sha256": "4c458256bcdf913774de1bb4a37768244d3b41f32ad55afb2dfec3432f46f4fe",
+            "probe_exit": 0
+          },
+          "xcode": "Xcode 16.4\nBuild version 16F6",
+          "sdk": "15.5",
+          "developer_dir": "/Applications/Xcode_16.4.app/Contents/Developer",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/Users/runner/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+            "CMAKE_OSX_ARCHITECTURES": "",
+            "CMAKE_OSX_DEPLOYMENT_TARGET": "",
+            "CMAKE_OSX_SYSROOT": "/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117477056,
+      "name": "cpu-macos-intel-debug-1",
+      "digest": "sha256:24eccc163169717ee0cb10c1b77d45e7e41fbca423b18ad0bfcd534b7284612d",
+      "size_in_bytes": 9516,
+      "created_at": "2026-10-17T23:08:02Z",
+      "expires_at": "2026-11-16T23:08:01Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/macos-debug/Testing/Temporary/LastTest.log",
+          "size_bytes": 10595,
+          "sha256": "1430346b7605586c027836d5997b553fc94230eefe46009d702fe300618a70f0"
+        },
+        {
+          "path": "out/ci/macos-debug/build.log",
+          "size_bytes": 13621,
+          "sha256": "bb329905e1d461b50bf256c7a0bcd20368ad53781cf15e355f2a9ea869b26f65"
+        },
+        {
+          "path": "out/ci/macos-debug/configure.log",
+          "size_bytes": 1121,
+          "sha256": "a02cac26605d60ec232139ab2a1cd124026217639ea147f8470f3d9dd27287a6"
+        },
+        {
+          "path": "out/ci/macos-debug/ctest.xml",
+          "size_bytes": 5464,
+          "sha256": "e840df3aeb5d35cfae7a4c0de5157762ecfb1ed40fdc5f0b89a6f461c707cad3"
+        },
+        {
+          "path": "out/ci/macos-debug/summary.json",
+          "size_bytes": 1343,
+          "sha256": "26b721a79ca91c1fba32ed77a6934bdd387ab73bc70ad7abcdd95ce3be6102e0"
+        },
+        {
+          "path": "out/ci/macos-debug/test.log",
+          "size_bytes": 2531,
+          "sha256": "831e39fdaf3f4f13eaf21cf4415fcdf945ad44e77fdaaf3754ad00d128e600ba"
+        },
+        {
+          "path": "out/ci/macos-debug/toolchain.json",
+          "size_bytes": 4876,
+          "sha256": "1c3fb98316f079eafbfd369ca0bfe936a8ed332e5ff36fcf89023f92177a5c61"
+        }
+      ],
+      "job": "cpu-macos-intel-debug",
+      "verification": {
+        "preset": "macos-debug",
+        "injected_failure": true,
+        "summary_status": "FAIL",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          8
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "macos-debug",
+              "-DSHARK_INJECT_TEST_FAILURE=ON",
+              "-DPython3_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.13/bin/python",
+              "-DCMAKE_CXX_COMPILER=/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 4.118,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "macos-debug",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 84.504,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "macos-debug",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/Users/runner/work/shark-engine/shark-engine/out/ci/macos-debug/ctest.xml"
+            ],
+            "exit_code": 8,
+            "elapsed_seconds": 3.598,
+            "status": "FAIL"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 9,
+          "failures": [
+            "shark.failure-sentinel"
+          ],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Tests is a Catch2 v3.16.1 host application. Run with -? for options ------------------------------------------------------------------------------- CI failure sentinel is disabled in normal builds ------------------------------------------------------------------------------- /Users/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:35 ............................................................................... /Users/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:37: FAILED: REQUIRE( 1 == 0 ) with message: SHARK_INJECT_TEST_FAILURE must fail CTest and the enclosing CI command when enabled =============================================================================== test cases: 1 | 1 failed assertions: 1 | 1 failed"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Darwin",
+            "release": "24.6.0",
+            "version": "Darwin Kernel Version 24.6.0: Tue Jul 21 20:50:07 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_X86_64",
+            "machine": "x86_64"
+          },
+          "image": {
+            "os": "macos15",
+            "version": "20260824.0482.1"
+          },
+          "runner_os": "macOS",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39077652643,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "AppleClang",
+            "version": "17.0.0.17000013",
+            "path": "/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++",
+            "binary_path": "/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+            "sha256": "4c458256bcdf913774de1bb4a37768244d3b41f32ad55afb2dfec3432f46f4fe",
+            "probe_exit": 0
+          },
+          "xcode": "Xcode 16.4\nBuild version 16F6",
+          "sdk": "15.5",
+          "developer_dir": "/Applications/Xcode_16.4.app/Contents/Developer",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/Users/runner/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+            "CMAKE_OSX_ARCHITECTURES": "",
+            "CMAKE_OSX_DEPLOYMENT_TARGET": "",
+            "CMAKE_OSX_SYSROOT": "/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117771220,
+      "name": "cpu-macos-intel-release-1",
+      "digest": "sha256:f6d2b6aa3b9a625b55317382a230ed7368e57da7214cca945d5d03c42515f01b",
+      "size_in_bytes": 9522,
+      "created_at": "2026-10-17T23:08:09Z",
+      "expires_at": "2026-11-16T23:08:08Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/macos-release/Testing/Temporary/LastTest.log",
+          "size_bytes": 10621,
+          "sha256": "ba42ef688828acd5894898ffa09f8bf118f231ff7eab3cf67c5ec6a371ebc5ec"
+        },
+        {
+          "path": "out/ci/macos-release/build.log",
+          "size_bytes": 13619,
+          "sha256": "e43e48e2ae233225790edb4e39a2f7dc98b765ad0ff13539f2eb1f6cdb39475c"
+        },
+        {
+          "path": "out/ci/macos-release/configure.log",
+          "size_bytes": 1129,
+          "sha256": "4262cd29d82f296889a4ce3bcf33e1d4796928f91176e750f3aa7435b7bb0d35"
+        },
+        {
+          "path": "out/ci/macos-release/ctest.xml",
+          "size_bytes": 5466,
+          "sha256": "567584c190d8197b7fff31f49eb22a9a14323b0bdc459d9c763a15a8d9df01a1"
+        },
+        {
+          "path": "out/ci/macos-release/summary.json",
+          "size_bytes": 1352,
+          "sha256": "c119c7cca76d09d192cd7089abc8875453c1cec7114c3b79ddb985469c9ab6f5"
+        },
+        {
+          "path": "out/ci/macos-release/test.log",
+          "size_bytes": 2533,
+          "sha256": "7bb5839566f2c7d3ffeffd131f42d6dce587e87f17275e8fe5f7534f8bf9885f"
+        },
+        {
+          "path": "out/ci/macos-release/toolchain.json",
+          "size_bytes": 4880,
+          "sha256": "36109f44b5edf391c3823dc5c2d5e0eb48b163f51dd7ca3273331a31a53ce6b0"
+        }
+      ],
+      "job": "cpu-macos-intel-release",
+      "verification": {
+        "preset": "macos-release",
+        "injected_failure": true,
+        "summary_status": "FAIL",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          8
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "macos-release",
+              "-DSHARK_INJECT_TEST_FAILURE=ON",
+              "-DPython3_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.13/bin/python",
+              "-DCMAKE_CXX_COMPILER=/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 5.154,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "macos-release",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 91.362,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "macos-release",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/Users/runner/work/shark-engine/shark-engine/out/ci/macos-release/ctest.xml"
+            ],
+            "exit_code": 8,
+            "elapsed_seconds": 2.75,
+            "status": "FAIL"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 9,
+          "failures": [
+            "shark.failure-sentinel"
+          ],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Tests is a Catch2 v3.16.1 host application. Run with -? for options ------------------------------------------------------------------------------- CI failure sentinel is disabled in normal builds ------------------------------------------------------------------------------- /Users/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:35 ............................................................................... /Users/runner/work/shark-engine/shark-engine/tests/bootstrap_tests.cpp:37: FAILED: REQUIRE( 1 == 0 ) with message: SHARK_INJECT_TEST_FAILURE must fail CTest and the enclosing CI command when enabled =============================================================================== test cases: 1 | 1 failed assertions: 1 | 1 failed"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Darwin",
+            "release": "24.6.0",
+            "version": "Darwin Kernel Version 24.6.0: Tue Jul 21 20:50:07 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_X86_64",
+            "machine": "x86_64"
+          },
+          "image": {
+            "os": "macos15",
+            "version": "20260824.0482.1"
+          },
+          "runner_os": "macOS",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39077652643,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "AppleClang",
+            "version": "17.0.0.17000013",
+            "path": "/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++",
+            "binary_path": "/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+            "sha256": "4c458256bcdf913774de1bb4a37768244d3b41f32ad55afb2dfec3432f46f4fe",
+            "probe_exit": 0
+          },
+          "xcode": "Xcode 16.4\nBuild version 16F6",
+          "sdk": "15.5",
+          "developer_dir": "/Applications/Xcode_16.4.app/Contents/Developer",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Release",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/Users/runner/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+            "CMAKE_OSX_ARCHITECTURES": "",
+            "CMAKE_OSX_DEPLOYMENT_TARGET": "",
+            "CMAKE_OSX_SYSROOT": "/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12118205053,
+      "name": "cpu-windows-asan-1",
+      "digest": "sha256:ff992d422cf38beb457d3792562f152e5963ec37d924fcd59da2fe872a16cc35",
+      "size_in_bytes": 9720,
+      "created_at": "2026-10-17T23:08:25Z",
+      "expires_at": "2026-11-16T23:08:24Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/windows-asan/Testing/Temporary/LastTest.log",
+          "size_bytes": 10911,
+          "sha256": "11c55330dc86c627c96da38aa21b5016251c683d9a6975f475a820ea1493d0f2"
+        },
+        {
+          "path": "out/ci/windows-asan/build.log",
+          "size_bytes": 14833,
+          "sha256": "1ff8ad3590449ec65d467ad24b2922a471e33ca0b5aaf8b7a476f20fec5a417c"
+        },
+        {
+          "path": "out/ci/windows-asan/configure.log",
+          "size_bytes": 887,
+          "sha256": "5ef67b3530d216760787412fdbb354562881be8a4c23f3e01d127425089241ea"
+        },
+        {
+          "path": "out/ci/windows-asan/ctest.xml",
+          "size_bytes": 5566,
+          "sha256": "933e3ba116e2aa3eeb24b5a4733fba03d0ae437dc85683803aeec31dadf39a5d"
+        },
+        {
+          "path": "out/ci/windows-asan/summary.json",
+          "size_bytes": 1262,
+          "sha256": "60861b60153fe0571ac3292ad7109b5ec2ffebf17c3d304768f3130f4a26553d"
+        },
+        {
+          "path": "out/ci/windows-asan/test.log",
+          "size_bytes": 2557,
+          "sha256": "d1b5e8e0dccae04ec6bd7ea2edd09d4686fe339fe8945ab753ebb4e516352981"
+        },
+        {
+          "path": "out/ci/windows-asan/toolchain.json",
+          "size_bytes": 5518,
+          "sha256": "43468b72cc79c909f96afdcb8f228617db2ea51ae2ac4c65a9abbb8255d21d6c"
+        }
+      ],
+      "job": "cpu-windows-asan",
+      "verification": {
+        "preset": "windows-asan",
+        "injected_failure": true,
+        "summary_status": "FAIL",
+        "sanitizer_configuration": "address",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          8
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "windows-asan",
+              "-DSHARK_INJECT_TEST_FAILURE=ON",
+              "-DPython3_EXECUTABLE=C:\\hostedtoolcache\\windows\\Python\\3.13.5\\x64\\python.exe"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 7.418,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "windows-asan",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 95.848,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "windows-asan",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "D:\\a\\shark-engine\\shark-engine\\out\\ci\\windows-asan\\ctest.xml"
+            ],
+            "exit_code": 8,
+            "elapsed_seconds": 4.034,
+            "status": "FAIL"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 9,
+          "failures": [
+            "shark.failure-sentinel"
+          ],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Tests.exe is a Catch2 v3.16.1 host application. Run with -? for options ------------------------------------------------------------------------------- CI failure sentinel is disabled in normal builds ------------------------------------------------------------------------------- D:\\a\\shark-engine\\shark-engine\\tests\\bootstrap_tests.cpp(35) ............................................................................... D:\\a\\shark-engine\\shark-engine\\tests\\bootstrap_tests.cpp(37): FAILED: REQUIRE( 1 == 0 ) with message: SHARK_INJECT_TEST_FAILURE must fail CTest and the enclosing CI command when enabled =============================================================================== test cases: 1 | 1 failed assertions: 1 | 1 failed"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Windows",
+            "release": "2025Server",
+            "version": "10.0.26100",
+            "machine": "AMD64"
+          },
+          "image": {
+            "os": "win25-vs2026",
+            "version": "20261007.264.1"
+          },
+          "runner_os": "Windows",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39077652643,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "MSVC",
+            "version": "19.51.36260.0",
+            "path": "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+            "binary_path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+            "sha256": "b0a1818ebae6da7f18230a84e76ce839212584ac4c2ab55b97a0d5268085da57",
+            "probe_exit": 2
+          },
+          "xcode": null,
+          "sdk": null,
+          "developer_dir": "",
+          "windows_sdk": "10.0.26100.0\\",
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+            "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+            "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+            "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "C:/hostedtoolcache/windows/Python/3.13.5/x64/Scripts/ninja.exe",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117538104,
+      "name": "cpu-windows-debug-1",
+      "digest": "sha256:096bd2626ee9f587cd753dc486eee08b31ee4d45054a5a9a1ec3fef228c1080f",
+      "size_in_bytes": 9722,
+      "created_at": "2026-10-17T23:08:35Z",
+      "expires_at": "2026-11-16T23:08:34Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/windows-debug/Testing/Temporary/LastTest.log",
+          "size_bytes": 10914,
+          "sha256": "127bcf64be3e96d34acd59e1773bb7dbd60a274da338d3742e64edb09b5aa6d8"
+        },
+        {
+          "path": "out/ci/windows-debug/build.log",
+          "size_bytes": 14835,
+          "sha256": "bd660e54fb34680e42dad525694c635932aaaed1a56f24f62c0a218d772ea4a4"
+        },
+        {
+          "path": "out/ci/windows-debug/configure.log",
+          "size_bytes": 876,
+          "sha256": "e049a4d67e79bfc20f98b3aaed3ddfe6c8f6eb8760e35017f7142a60bd64b51a"
+        },
+        {
+          "path": "out/ci/windows-debug/ctest.xml",
+          "size_bytes": 5568,
+          "sha256": "446625c898c4fd3d04f717bcc1c50ae9c34c6790a378833fa60bbf7221f9a2b4"
+        },
+        {
+          "path": "out/ci/windows-debug/summary.json",
+          "size_bytes": 1267,
+          "sha256": "f031dd96eb91751f8dd4839661589b4252f8602db669647ac607243cb361ccf1"
+        },
+        {
+          "path": "out/ci/windows-debug/test.log",
+          "size_bytes": 2558,
+          "sha256": "8b27f9340c4c0ce38931be206bc03bfea57e31a52efbe9abf98887ca4d93586f"
+        },
+        {
+          "path": "out/ci/windows-debug/toolchain.json",
+          "size_bytes": 5510,
+          "sha256": "992a2d3356617f3643d64bd3a287ed0134e64f70a5dc64b6269e29029c985150"
+        }
+      ],
+      "job": "cpu-windows-debug",
+      "verification": {
+        "preset": "windows-debug",
+        "injected_failure": true,
+        "summary_status": "FAIL",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          8
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "windows-debug",
+              "-DSHARK_INJECT_TEST_FAILURE=ON",
+              "-DPython3_EXECUTABLE=C:\\hostedtoolcache\\windows\\Python\\3.13.5\\x64\\python.exe"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 9.402,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "windows-debug",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 85.632,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "windows-debug",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "D:\\a\\shark-engine\\shark-engine\\out\\ci\\windows-debug\\ctest.xml"
+            ],
+            "exit_code": 8,
+            "elapsed_seconds": 4.074,
+            "status": "FAIL"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 9,
+          "failures": [
+            "shark.failure-sentinel"
+          ],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Tests.exe is a Catch2 v3.16.1 host application. Run with -? for options ------------------------------------------------------------------------------- CI failure sentinel is disabled in normal builds ------------------------------------------------------------------------------- D:\\a\\shark-engine\\shark-engine\\tests\\bootstrap_tests.cpp(35) ............................................................................... D:\\a\\shark-engine\\shark-engine\\tests\\bootstrap_tests.cpp(37): FAILED: REQUIRE( 1 == 0 ) with message: SHARK_INJECT_TEST_FAILURE must fail CTest and the enclosing CI command when enabled =============================================================================== test cases: 1 | 1 failed assertions: 1 | 1 failed"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Windows",
+            "release": "2025Server",
+            "version": "10.0.26100",
+            "machine": "AMD64"
+          },
+          "image": {
+            "os": "win25-vs2026",
+            "version": "20261007.264.1"
+          },
+          "runner_os": "Windows",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39077652643,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "MSVC",
+            "version": "19.51.36260.0",
+            "path": "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+            "binary_path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+            "sha256": "b0a1818ebae6da7f18230a84e76ce839212584ac4c2ab55b97a0d5268085da57",
+            "probe_exit": 2
+          },
+          "xcode": null,
+          "sdk": null,
+          "developer_dir": "",
+          "windows_sdk": "10.0.26100.0\\",
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+            "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+            "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "C:/hostedtoolcache/windows/Python/3.13.5/x64/Scripts/ninja.exe",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117767146,
+      "name": "cpu-windows-release-1",
+      "digest": "sha256:339983662eaa4cc74ec36aa645d94df47c7565b52ecaf21f7cbcb644491387e6",
+      "size_in_bytes": 9733,
+      "created_at": "2026-10-17T23:08:18Z",
+      "expires_at": "2026-11-16T23:08:18Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/windows-release/Testing/Temporary/LastTest.log",
+          "size_bytes": 10940,
+          "sha256": "eccdb3d9ac02683719660068a35c5a8883e44e1133834cb49f7416e6cc3e26df"
+        },
+        {
+          "path": "out/ci/windows-release/build.log",
+          "size_bytes": 14833,
+          "sha256": "99dd33c1bc7df7ef2b64afbd070c96580194032d80f40cb21bc432119b70e32d"
+        },
+        {
+          "path": "out/ci/windows-release/configure.log",
+          "size_bytes": 880,
+          "sha256": "8ff77e9f362f63d9501b29618f8028101cec7778ba7ab9a95d3414c1f4e4c404"
+        },
+        {
+          "path": "out/ci/windows-release/ctest.xml",
+          "size_bytes": 5571,
+          "sha256": "1c7de1e240b5acf47802ef09d883b35b9dc2a5cc3c149acf29d912caade68cd2"
+        },
+        {
+          "path": "out/ci/windows-release/summary.json",
+          "size_bytes": 1277,
+          "sha256": "bf6c7468038b6771a4f5c8f5944b291a3b655c64a376d456e37704124b52fad2"
+        },
+        {
+          "path": "out/ci/windows-release/test.log",
+          "size_bytes": 2560,
+          "sha256": "3029deca528844b2611cec411ac73178766b09b2737472a3658c4950c2e39b05"
+        },
+        {
+          "path": "out/ci/windows-release/toolchain.json",
+          "size_bytes": 5514,
+          "sha256": "bd8079eb9706d468cdb5de4b74d0b1e9b37187a47ba0ceecb3abdc911357bdb7"
+        }
+      ],
+      "job": "cpu-windows-release",
+      "verification": {
+        "preset": "windows-release",
+        "injected_failure": true,
+        "summary_status": "FAIL",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          8
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "windows-release",
+              "-DSHARK_INJECT_TEST_FAILURE=ON",
+              "-DPython3_EXECUTABLE=C:\\hostedtoolcache\\windows\\Python\\3.13.5\\x64\\python.exe"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 7.282,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "windows-release",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 83.561,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "windows-release",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "D:\\a\\shark-engine\\shark-engine\\out\\ci\\windows-release\\ctest.xml"
+            ],
+            "exit_code": 8,
+            "elapsed_seconds": 3.509,
+            "status": "FAIL"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 9,
+          "failures": [
+            "shark.failure-sentinel"
+          ],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~ Tests.exe is a Catch2 v3.16.1 host application. Run with -? for options ------------------------------------------------------------------------------- CI failure sentinel is disabled in normal builds ------------------------------------------------------------------------------- D:\\a\\shark-engine\\shark-engine\\tests\\bootstrap_tests.cpp(35) ............................................................................... D:\\a\\shark-engine\\shark-engine\\tests\\bootstrap_tests.cpp(37): FAILED: REQUIRE( 1 == 0 ) with message: SHARK_INJECT_TEST_FAILURE must fail CTest and the enclosing CI command when enabled =============================================================================== test cases: 1 | 1 failed assertions: 1 | 1 failed"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Windows",
+            "release": "2025Server",
+            "version": "10.0.26100",
+            "machine": "AMD64"
+          },
+          "image": {
+            "os": "win25-vs2026",
+            "version": "20261007.264.1"
+          },
+          "runner_os": "Windows",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39077652643,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "MSVC",
+            "version": "19.51.36260.0",
+            "path": "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+            "binary_path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+            "sha256": "b0a1818ebae6da7f18230a84e76ce839212584ac4c2ab55b97a0d5268085da57",
+            "probe_exit": 2
+          },
+          "xcode": null,
+          "sdk": null,
+          "developer_dir": "",
+          "windows_sdk": "10.0.26100.0\\",
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Release",
+            "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+            "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+            "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "C:/hostedtoolcache/windows/Python/3.13.5/x64/Scripts/ninja.exe",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117672300,
+      "name": "runtime-only-1",
+      "digest": "sha256:dd58323436874c5ac960553354abca2eebe1b526ce25f08c61e87caead3bfcd8",
+      "size_in_bytes": 1518,
+      "created_at": "2026-10-17T23:05:45Z",
+      "expires_at": "2026-11-16T23:05:45Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "toolchain.json",
+          "size_bytes": 3701,
+          "sha256": "9cc03f096ada0f0eeac572505aa0b9e071de775ae94a391cc95664a29a92f7f8"
+        }
+      ],
+      "job": "runtime-only",
+      "verification": {
+        "tests": "NOT_APPLICABLE: Tests disabled; job build/boundary/version step checked",
+        "toolchain": {
+          "platform": {
+            "system": "Linux",
+            "release": "6.17.0-1022-azure",
+            "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+            "machine": "x86_64"
+          },
+          "image": {
+            "os": "ubuntu24",
+            "version": "20261012.334.1"
+          },
+          "runner_os": "Linux",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39077652643,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "GNU",
+            "version": "13.3.0",
+            "path": "/usr/bin/g++-13",
+            "binary_path": "/usr/bin/x86_64-linux-gnu-g++-13",
+            "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+            "probe_exit": 0
+          },
+          "xcode": null,
+          "sdk": null,
+          "developer_dir": null,
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Release",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    }
+  ],
+  "event": "workflow_dispatch",
+  "run_started_at": "2026-10-17T23:05:25Z",
+  "run_updated_at": "2026-10-17T23:10:59Z",
+  "run_conclusion": "failure",
+  "scope": "One completed run; red/green chronology must be checked across reports.",
+  "cpu_test_count": 120,
+  "cpu_passed": 108,
+  "expected_sentinel_failures": 12
+}

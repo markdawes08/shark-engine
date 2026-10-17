@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "repository": "markdawes08/shark-engine",
+  "branch": "main",
+  "observed_at_utc": "2026-10-17T23:12:25.784204+00:00",
+  "source_api": "https://api.github.com/repos/markdawes08/shark-engine/branches/main/protection",
+  "required_status_checks": {
+    "strict": true,
+    "checks": [
+      {
+        "context": "cpu-linux-asan-ubsan",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-linux-debug",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-linux-release",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-macos-arm64-asan-ubsan",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-macos-arm64-debug",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-macos-arm64-release",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-macos-intel-asan-ubsan",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-macos-intel-debug",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-macos-intel-release",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-windows-asan",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-windows-debug",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-windows-release",
+        "app_id": 15368
+      },
+      {
+        "context": "quality",
+        "app_id": 15368
+      },
+      {
+        "context": "runtime-only",
+        "app_id": 15368
+      }
+    ]
+  },
+  "enforce_admins": false,
+  "required_pull_request_reviews": null,
+  "restrictions": null,
+  "allow_force_pushes": false,
+  "allow_deletions": false
+}

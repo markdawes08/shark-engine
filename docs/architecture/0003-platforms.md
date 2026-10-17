@@ -10,8 +10,9 @@ Shark targets Windows, Ubuntu Linux, Apple Silicon Macs and Intel Macs for clien
 and Ubuntu Linux for the planned dedicated server. **No shipping client or server
 release is qualified.** The [01 handoff](../handoffs/01-build-foundation.md) records
 passing local Windows bootstrap builds/tests and supplemental WSL Ubuntu 26.04
-CPU checks. The full 01 hosted-CI gate remains open; those local results do not
-qualify client graphics, a headless server or a released game. Every graphics and
+CPU checks. The [CI verification handoff](../handoffs/01-ci-verification.md) records
+the completed 01 hosted CPU matrix and deliberate-failure/red-to-green gate. These
+results do not qualify client graphics, a headless server or a released game. Every graphics and
 MMO qualification result below remains **NOT RUN**. The
 [MMORPG plan](../roadmap/mmorpg-plan.md) adds future server milestones without
 removing the native client commitments.
@@ -136,10 +137,11 @@ The gate must also produce a redistribution inventory: loader, ICD manifests, tr
 
 01 provides C++20 target-based CMake and native CPU CI configuration for Windows
 x86-64, Ubuntu 24.04 x86-64, macOS arm64 and macOS x86-64. The required hosted
-execution gate remains open. Use MSVC on Windows, GCC plus a Clang sanitizer
+CPU execution gate has passed. Use MSVC on Windows, GCC plus a Clang sanitizer
 configuration on Ubuntu, and Apple Clang on macOS. The project declares CMake
-3.28 as its floor and pins 3.31.10 for qualification; the 01 handoff identifies
-the versions actually tested. Record exact CMake, compiler, SDK, standard-library
+3.28 as its floor and pins 3.31.10 for qualification; the
+[CI verification handoff](../handoffs/01-ci-verification.md) identifies the versions
+actually tested. Record exact CMake, compiler, SDK, standard-library
 and runner versions with each result. M01 adds server-only qualification without
 relabeling the existing CPU jobs as server tests.
 
@@ -163,9 +165,10 @@ graphics matrix row. Each record contains repository commit, dependency lock dig
 
 For readback comparisons, use exact integer results and channel tolerances of 1/255 for simple UNORM tests, 2e-3 absolute or 2e-3 relative for HDR test values, and 1e-5 absolute for controlled depth values. State reference calculations, tested values and edge exclusions in the probe. Image baselines are platform-specific, reviewed artifacts; never approve a changed baseline merely to turn a failure green. These are probe tolerances, not a promise of bit-identical rendering or physics across platforms.
 
-The [01 handoff](../handoffs/01-build-foundation.md) records local build/CTest
-passes and the still-open hosted matrix/red-green gate. 02 hardware and all MMO
-server results are NOT RUN. Assignment 00 originally assigned these uncertainties;
+The [01 handoff](../handoffs/01-build-foundation.md) records historical local
+build/CTest passes; the [CI verification handoff](../handoffs/01-ci-verification.md)
+closes the hosted CPU matrix/red-green gate. 02 hardware and all MMO server
+results are NOT RUN. Assignment 00 originally assigned these uncertainties;
 this amendment adds server ownership without waiving a later gate. Dependent
 renderer architecture cannot advance on an assumed macOS PASS. Assignment 35 may
 call a client target supported only after the final packaged Editor/Runtime,

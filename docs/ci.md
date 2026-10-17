@@ -1,12 +1,13 @@
 # CPU CI and evidence
 
-Assignment 01's hosted gate is **FAIL / OPEN**. Both ordinary push runs at
-`3fecfc3` and `7aac0b1` passed thirteen of fourteen jobs; macOS ARM64 ASan/UBSan
-timed out in four tests. The Xcode pin repair still needs a hosted run, and the
-deliberate-failure/red-to-green proof remains **NOT RUN**. See the
-[CI verification handoff](handoffs/01-ci-verification.md) for actual run URLs,
-artifact findings and remaining work. The user reserves Git staging, committing
-and pushing.
+Assignment 01's hosted gate is **PASS** on
+`3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de`. After repairing the macOS ARM Xcode
+selection, the ordinary push passed all fourteen jobs. The subsequent injected
+run failed only the sentinel in each of twelve CPU jobs; the restored run passed
+all fourteen jobs and all 120 CPU tests on the same revision. See the
+[CI verification handoff](handoffs/01-ci-verification.md) and
+[durable gate evidence](coverage/evidence/01-ci-gate.json). The user reserves Git
+staging, committing and pushing.
 
 The [MMORPG planning amendment](handoffs/mmorpg-planning-amendment.md) retains
 assignment 01 as the current gate, followed by M01 before 02.
@@ -31,10 +32,11 @@ persisting credentials, and uploads logs on failure as well as success.
 | `cpu-macos-intel-debug`, `cpu-macos-intel-release`, `cpu-macos-intel-asan-ubsan` | `macos-15-intel` x64 | Xcode 16.4 / Apple Clang | Debug, Release, ASan + UBSan |
 | `runtime-only` | `ubuntu-24.04` x64 | GCC 13 | Release, no Editor/EngineTools/Tests |
 
-Configure all fourteen named jobs as required checks once they have been created
-by a real run. Use the exact check names GitHub presents under **CPU foundation**.
-An administrator must configure branch protection/rulesets after the repository
-exists; documenting a check does not enforce it. Missing, skipped or cancelled
+All fourteen named jobs are configured as required checks on `main`, bound to
+the GitHub Actions app (15368), with up-to-date branches required. Administrator
+bypass remains enabled for the owner's direct-push workflow; no approving-review
+or push-actor restriction was added. The settings were read back from GitHub and
+[recorded](coverage/evidence/01-ci-protection.json). Missing, skipped or cancelled
 required jobs do not establish a passing assignment gate. The Windows Server
 runner is build evidence; it does not qualify Windows 11 graphics or deployment.
 The Mac CPU jobs do not qualify either Vulkan-on-Metal implementation.
@@ -77,8 +79,8 @@ results and recorded images are linked in the handoff.
 
 The ARM64 Xcode pin is 26.4.1 because Apple documents sanitizer hangs on macOS
 26.4 with binaries built by Xcode 26.3 or older (issue 171762808), and recommends
-Xcode 26.4. The observed failures used Xcode 26.0.1 on macOS 26.6.2; this matches
-the reported issue, but the repair must still be confirmed by native CI.
+Xcode 26.4. The observed failures used Xcode 26.0.1 on macOS 26.6.2 and match
+the reported issue. Native CI now passes with Xcode 26.4.1 on the same OS/image.
 All three ARM configurations select the same updated bundle. Sanitizers and
 existing test deadlines remain enabled. [Apple Xcode 26.4 release notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-26_4-release-notes)
 
@@ -137,7 +139,13 @@ revision capture reports a missing Git repository honestly. Artifacts are upload
 with distinct platform/architecture names and retained for 30 days; copy required
 acceptance evidence to durable release/handoff storage before expiration.
 
-## Required red/green proof after the user pushes
+## Repeating the red/green proof
+
+The assignment 01 proof is complete: [injected run 39077652643](https://github.com/markdawes08/shark-engine/actions/runs/39077652643)
+followed by [restored run 39078070735](https://github.com/markdawes08/shark-engine/actions/runs/39078070735),
+both at `3620fab`. Use this procedure when a future build/CI change requires
+renewed failure-propagation evidence. Finish the first dispatch before starting
+the second; the workflow's concurrency policy can cancel overlapping dispatches.
 
 1. Open the repository's **Actions > CPU foundation > Run workflow** on the
    intended revision. Set `inject_test_failure` to **true**. The twelve CPU jobs
@@ -152,8 +160,8 @@ acceptance evidence to durable release/handoff storage before expiration.
 4. Update the assignment 01 handoff and requirement status only after checking
    both actual runs and the four native CPU rows. Ordinary failed push runs do
    not prove deliberate test failure propagation. Until the injected failure
-   and restored pass are verified on the same revision, hosted red/green proof
-   remains **NOT RUN**, and assignment 01's full gate is open.
+   and restored pass are verified on the same revision, a new red/green claim
+   remains unverified. Keep the previously verified revision explicit.
 
 The same real failure can be checked locally, for example in a Windows developer
 shell: `python tools/ci.py --preset windows-debug --inject-test-failure` must fail;

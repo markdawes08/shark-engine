@@ -8,7 +8,7 @@ The versioned
 [requirements manifest](docs/coverage/requirements.json) preserves assignment
 scope and acceptance criteria for clean checkouts.
 
-**Assignment 01: repository, build system and test foundation.** The current
+**Assignment 01 complete: repository, build system and test foundation.** The current
 executables provide build/version information and honest bootstrap help. Graphics,
 scenes, gameplay and editor UI are future increments. CPU build results do not
 establish graphics or release-platform support.
@@ -24,10 +24,11 @@ establish graphics or release-platform support.
 - [Assignment 01 handoff](docs/handoffs/01-build-foundation.md) records local
   verification and the hosted CI gate that was open at that handoff.
 - [CI verification follow-up](docs/handoffs/01-ci-verification.md) records the
-  observed macOS sanitizer failure, toolchain repair and pending red/green proof.
+  repaired macOS sanitizer failure, passing hosted CPU matrix and verified
+  deliberate-failure/red-to-green proof.
 - [MMORPG planning handoff](docs/handoffs/mmorpg-planning-amendment.md) records
-  the scope change and current repository state. Once 01's hosted gate is verified,
-  M01 introduces the headless server boundary before 02's graphics work.
+  the scope change and repository state at that handoff. M01 is next and
+  introduces the headless server boundary before 02's graphics work.
 
 From an x64 Visual Studio developer shell with the documented tools installed:
 

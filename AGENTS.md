@@ -16,8 +16,10 @@ The product target is a **seamless open-world MMORPG**. Read the versioned
 [ADR 0007](docs/architecture/0007-mmorpg-architecture.md) before system design.
 They supersede the original offline-only scope. Original assignments 00-35 retain
 their IDs; M01-M10 are inserted in the manifest's explicit `assignment_order`.
-After the unverified 01 hosted gate closes, M01 precedes 02. This planning amendment
-does not claim that any server, networking, persistence or streaming code exists.
+Assignment 01's hosted CPU and red/green gate is complete; see the
+[CI verification handoff](docs/handoffs/01-ci-verification.md). The current assignment
+remains 01; M01 is next, before 02. Server, networking, persistence and streaming
+remain planned, not implemented or qualified.
 
 The user owns staging and commits. **Never run `git add`, stage through another
 tool, commit, or push, including from tests or temporary repositories.** Leave

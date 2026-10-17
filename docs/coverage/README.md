@@ -50,8 +50,8 @@ remain the only implemented surface; every new MMO gate is NOT_RUN.
 
 The ignored local roadmap is amended for consistency but remains optional context,
 not a CI input. REQ-00's PASS records its historical planning evidence, not MMO
-implementation. REQ-01 is FAIL / OPEN: ordinary hosted runs passed thirteen of
-fourteen jobs, with macOS ARM64 sanitizer timeouts. The Xcode pin repair and
-required hosted deliberate-failure/red-to-green proof remain unverified. See the
-[CI verification handoff](../handoffs/01-ci-verification.md) for actual evidence
-and the remaining gate.
+implementation. REQ-01 is PASS: the repaired hosted CPU matrix and required
+deliberate-failure/red-to-green proof are verified. The current assignment remains
+01; M01 is next and has not started. All graphics and MMO requirements remain
+NOT_RUN. See the [CI verification handoff](../handoffs/01-ci-verification.md) for
+the tested revision, run URLs and qualification limits.

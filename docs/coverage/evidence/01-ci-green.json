@@ -1,0 +1,2182 @@
+{
+  "schema_version": 1,
+  "repository": "markdawes08/shark-engine",
+  "run_id": 39078070735,
+  "run_attempt": 1,
+  "expected_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+  "mode": "normal",
+  "verified_at_utc": "20261017T231645285976Z",
+  "run_url": "https://github.com/markdawes08/shark-engine/actions/runs/39078070735",
+  "status": "PASS",
+  "errors": [],
+  "jobs": [
+    {
+      "name": "cpu-linux-asan-ubsan",
+      "id": 117529253179,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39078070735/job/117529253179",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:11:49Z",
+      "completed_at": "2026-10-17T23:13:07Z",
+      "runner_labels": [
+        "ubuntu-24.04"
+      ]
+    },
+    {
+      "name": "cpu-linux-debug",
+      "id": 117529253212,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39078070735/job/117529253212",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:11:49Z",
+      "completed_at": "2026-10-17T23:12:49Z",
+      "runner_labels": [
+        "ubuntu-24.04"
+      ]
+    },
+    {
+      "name": "cpu-linux-release",
+      "id": 117529253183,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39078070735/job/117529253183",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:11:48Z",
+      "completed_at": "2026-10-17T23:12:52Z",
+      "runner_labels": [
+        "ubuntu-24.04"
+      ]
+    },
+    {
+      "name": "cpu-macos-arm64-asan-ubsan",
+      "id": 117529253116,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39078070735/job/117529253116",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:11:54Z",
+      "completed_at": "2026-10-17T23:13:34Z",
+      "runner_labels": [
+        "macos-26"
+      ]
+    },
+    {
+      "name": "cpu-macos-arm64-debug",
+      "id": 117529253208,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39078070735/job/117529253208",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:11:53Z",
+      "completed_at": "2026-10-17T23:13:02Z",
+      "runner_labels": [
+        "macos-26"
+      ]
+    },
+    {
+      "name": "cpu-macos-arm64-release",
+      "id": 117529253112,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39078070735/job/117529253112",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:11:54Z",
+      "completed_at": "2026-10-17T23:13:56Z",
+      "runner_labels": [
+        "macos-26"
+      ]
+    },
+    {
+      "name": "cpu-macos-intel-asan-ubsan",
+      "id": 117529253145,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39078070735/job/117529253145",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:11:50Z",
+      "completed_at": "2026-10-17T23:15:35Z",
+      "runner_labels": [
+        "macos-15-intel"
+      ]
+    },
+    {
+      "name": "cpu-macos-intel-debug",
+      "id": 117529253168,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39078070735/job/117529253168",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:13:04Z",
+      "completed_at": "2026-10-17T23:16:07Z",
+      "runner_labels": [
+        "macos-15-intel"
+      ]
+    },
+    {
+      "name": "cpu-macos-intel-release",
+      "id": 117529253148,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39078070735/job/117529253148",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:11:49Z",
+      "completed_at": "2026-10-17T23:14:44Z",
+      "runner_labels": [
+        "macos-15-intel"
+      ]
+    },
+    {
+      "name": "cpu-windows-asan",
+      "id": 117529253134,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39078070735/job/117529253134",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:11:48Z",
+      "completed_at": "2026-10-17T23:14:45Z",
+      "runner_labels": [
+        "windows-2025-vs2026"
+      ]
+    },
+    {
+      "name": "cpu-windows-debug",
+      "id": 117529253138,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39078070735/job/117529253138",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:11:48Z",
+      "completed_at": "2026-10-17T23:14:52Z",
+      "runner_labels": [
+        "windows-2025-vs2026"
+      ]
+    },
+    {
+      "name": "cpu-windows-release",
+      "id": 117529253191,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39078070735/job/117529253191",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:11:48Z",
+      "completed_at": "2026-10-17T23:14:42Z",
+      "runner_labels": [
+        "windows-2025-vs2026"
+      ]
+    },
+    {
+      "name": "quality",
+      "id": 117529253144,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39078070735/job/117529253144",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:11:48Z",
+      "completed_at": "2026-10-17T23:12:04Z",
+      "runner_labels": [
+        "ubuntu-24.04"
+      ]
+    },
+    {
+      "name": "runtime-only",
+      "id": 117529252899,
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39078070735/job/117529252899",
+      "status": "completed",
+      "conclusion": "success",
+      "failed_steps": [],
+      "started_at": "2026-10-17T23:11:48Z",
+      "completed_at": "2026-10-17T23:12:16Z",
+      "runner_labels": [
+        "ubuntu-24.04"
+      ]
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12118210488,
+      "name": "cpu-linux-asan-ubsan-1",
+      "digest": "sha256:59bc8da2493fe895f279b30d3c5c6a1f8b8f3af7b2d0cc9418248d329b3dfa06",
+      "size_in_bytes": 8562,
+      "created_at": "2026-10-17T23:13:04Z",
+      "expires_at": "2026-11-16T23:13:03Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/linux-asan-ubsan/Testing/Temporary/LastTest.log",
+          "size_bytes": 9810,
+          "sha256": "c5cc0f7f28ec711af4e0fa352eb35d036a8c4881f9e5f61fcb6f4633c9f60619"
+        },
+        {
+          "path": "out/ci/linux-asan-ubsan/build.log",
+          "size_bytes": 14533,
+          "sha256": "43c2763ec8627c8d605639ad21d32c9c6fbf228c2523f55d0574c58a3e9ecefd"
+        },
+        {
+          "path": "out/ci/linux-asan-ubsan/configure.log",
+          "size_bytes": 1040,
+          "sha256": "b1694d113e7b538299f6de026c4a7c39c00922817b3c8c596e18fa6d123cce97"
+        },
+        {
+          "path": "out/ci/linux-asan-ubsan/ctest.xml",
+          "size_bytes": 4715,
+          "sha256": "337d3ebc231f794f9d674ebfb45a413e4e5cb28882b2dbb9d3b5d42b6a21639d"
+        },
+        {
+          "path": "out/ci/linux-asan-ubsan/summary.json",
+          "size_bytes": 1268,
+          "sha256": "fac32d9485d8ca25bbaf887082f03607467bcf965e1fcdf46abf6eb658fc3edb"
+        },
+        {
+          "path": "out/ci/linux-asan-ubsan/test.log",
+          "size_bytes": 1507,
+          "sha256": "5bc1f7509c980a6430f8ae9dec68a368514025d4451600d93f0749b919e3d4fb"
+        },
+        {
+          "path": "out/ci/linux-asan-ubsan/toolchain.json",
+          "size_bytes": 3629,
+          "sha256": "fbc1f669ebd9b0b1aed5efb1d4e6514d877233da5ab3fe81d094517e9943d1e8"
+        }
+      ],
+      "job": "cpu-linux-asan-ubsan",
+      "verification": {
+        "preset": "linux-asan-ubsan",
+        "injected_failure": false,
+        "summary_status": "PASS",
+        "sanitizer_configuration": "address-undefined",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          0
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "linux-asan-ubsan",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=/opt/hostedtoolcache/Python/3.13.5/x64/bin/python",
+              "-DCMAKE_CXX_COMPILER=clang++-18"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 1.718,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "linux-asan-ubsan",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 55.263,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "linux-asan-ubsan",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/home/runner/work/shark-engine/shark-engine/out/ci/linux-asan-ubsan/ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 1.818,
+            "status": "PASS"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 10,
+          "failures": [],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 =============================================================================== All tests passed (1 assertion in 1 test case)"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Linux",
+            "release": "6.17.0-1022-azure",
+            "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+            "machine": "x86_64"
+          },
+          "image": {
+            "os": "ubuntu24",
+            "version": "20261012.334.1"
+          },
+          "runner_os": "Linux",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39078070735,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "Clang",
+            "version": "18.1.3",
+            "path": "/usr/bin/clang++-18",
+            "binary_path": "/usr/lib/llvm-18/bin/clang",
+            "sha256": "8ef402d453d1ba4902e4ee0f0f847f6cfa01400c95aa43c24e97818b9c0e3f45",
+            "probe_exit": 0
+          },
+          "xcode": null,
+          "sdk": null,
+          "developer_dir": "",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12118185152,
+      "name": "cpu-linux-debug-1",
+      "digest": "sha256:02485b0fe6b6cb84dba4e93af3725ee39316de359f8403ed2c7e65edeeaeba22",
+      "size_in_bytes": 8404,
+      "created_at": "2026-10-17T23:12:47Z",
+      "expires_at": "2026-11-16T23:12:46Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/linux-debug/Testing/Temporary/LastTest.log",
+          "size_bytes": 9750,
+          "sha256": "eb2f1506e45aaca5bc9bd523b56bbc88e987846e3515e3809155c5f8b3998cf5"
+        },
+        {
+          "path": "out/ci/linux-debug/build.log",
+          "size_bytes": 13621,
+          "sha256": "8de36cabe40a8f74a79708b2215123aff70a927ff3c2effaf089c7b66c576b52"
+        },
+        {
+          "path": "out/ci/linux-debug/configure.log",
+          "size_bytes": 1006,
+          "sha256": "b592432a29b0da739b8cda75bc4f7df72e049afe7105189454a6c6587ad5d234"
+        },
+        {
+          "path": "out/ci/linux-debug/ctest.xml",
+          "size_bytes": 4716,
+          "sha256": "8a98f1c2fef30e20284f148747b865146e559b97f28641e09b58385c81da52c6"
+        },
+        {
+          "path": "out/ci/linux-debug/summary.json",
+          "size_bytes": 1239,
+          "sha256": "d76ce1a6b757e4dec09d8a8917ace5aa20fbc509a56601e69b79dbf909ffa3b5"
+        },
+        {
+          "path": "out/ci/linux-debug/test.log",
+          "size_bytes": 1502,
+          "sha256": "5ba3b0b56f17b0d2d2394dcc42fc63c77b9a7a279a34098e59579f57d354e03a"
+        },
+        {
+          "path": "out/ci/linux-debug/toolchain.json",
+          "size_bytes": 3767,
+          "sha256": "16349c0024efc141b8e077a0a37de041f96ea8f19bc52aae3e96804cb3cdfbfe"
+        }
+      ],
+      "job": "cpu-linux-debug",
+      "verification": {
+        "preset": "linux-debug",
+        "injected_failure": false,
+        "summary_status": "PASS",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          0
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "linux-debug",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=/opt/hostedtoolcache/Python/3.13.5/x64/bin/python",
+              "-DCMAKE_CXX_COMPILER=g++-13"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 1.017,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "linux-debug",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 41.332,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "linux-debug",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/home/runner/work/shark-engine/shark-engine/out/ci/linux-debug/ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 1.668,
+            "status": "PASS"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 10,
+          "failures": [],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 =============================================================================== All tests passed (1 assertion in 1 test case)"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Linux",
+            "release": "6.17.0-1022-azure",
+            "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+            "machine": "x86_64"
+          },
+          "image": {
+            "os": "ubuntu24",
+            "version": "20261012.334.1"
+          },
+          "runner_os": "Linux",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39078070735,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "GNU",
+            "version": "13.3.0",
+            "path": "/usr/bin/g++-13",
+            "binary_path": "/usr/bin/x86_64-linux-gnu-g++-13",
+            "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+            "probe_exit": 0
+          },
+          "xcode": null,
+          "sdk": null,
+          "developer_dir": "",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117902321,
+      "name": "cpu-linux-release-1",
+      "digest": "sha256:8a8c83e35ebbf3de2892717a8e9b4d7e9a0ba2b21c4fba9ac9bf5a7f72b901a1",
+      "size_in_bytes": 8431,
+      "created_at": "2026-10-17T23:12:50Z",
+      "expires_at": "2026-11-16T23:12:50Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/linux-release/Testing/Temporary/LastTest.log",
+          "size_bytes": 9776,
+          "sha256": "ba7019d877af8dadf88fe10fe74c38342295d1cd5a217a3719a3cdf66af52613"
+        },
+        {
+          "path": "out/ci/linux-release/build.log",
+          "size_bytes": 13619,
+          "sha256": "b0669d99277545f6bc5b1791e21e1d5c39d841bfa0f6bc5d91558ddf9245cd1a"
+        },
+        {
+          "path": "out/ci/linux-release/configure.log",
+          "size_bytes": 1014,
+          "sha256": "325ac8cce7ead25f3a4aafe46457baf16d7753243f106dfeb3d89031f7de47f0"
+        },
+        {
+          "path": "out/ci/linux-release/ctest.xml",
+          "size_bytes": 4718,
+          "sha256": "ca6107a65846eed78e2dfb125221f65c970e624a95a7a3123836c01d8689e344"
+        },
+        {
+          "path": "out/ci/linux-release/summary.json",
+          "size_bytes": 1249,
+          "sha256": "d34644170bc281fc704762ef147e08fadd63885afdefe9684f18fb9541161ebc"
+        },
+        {
+          "path": "out/ci/linux-release/test.log",
+          "size_bytes": 1504,
+          "sha256": "688514569b8dc8d4dd2c90eac89840c02489e6b316ed475efb4223599f01df10"
+        },
+        {
+          "path": "out/ci/linux-release/toolchain.json",
+          "size_bytes": 3771,
+          "sha256": "9280ce8ce24272d28eab5f8da7fa23a79fa1c49a93bd91770ff5560d00089451"
+        }
+      ],
+      "job": "cpu-linux-release",
+      "verification": {
+        "preset": "linux-release",
+        "injected_failure": false,
+        "summary_status": "PASS",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          0
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "linux-release",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=/opt/hostedtoolcache/Python/3.13.5/x64/bin/python",
+              "-DCMAKE_CXX_COMPILER=g++-13"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 0.966,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "linux-release",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 44.488,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "linux-release",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/home/runner/work/shark-engine/shark-engine/out/ci/linux-release/ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 1.668,
+            "status": "PASS"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 10,
+          "failures": [],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 =============================================================================== All tests passed (1 assertion in 1 test case)"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Linux",
+            "release": "6.17.0-1022-azure",
+            "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+            "machine": "x86_64"
+          },
+          "image": {
+            "os": "ubuntu24",
+            "version": "20261012.334.1"
+          },
+          "runner_os": "Linux",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39078070735,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "GNU",
+            "version": "13.3.0",
+            "path": "/usr/bin/g++-13",
+            "binary_path": "/usr/bin/x86_64-linux-gnu-g++-13",
+            "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+            "probe_exit": 0
+          },
+          "xcode": null,
+          "sdk": null,
+          "developer_dir": "",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Release",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117698079,
+      "name": "cpu-macos-arm64-asan-ubsan-1",
+      "digest": "sha256:2abd2df4800f86843deb7d174b7896e422bc74795dbae3adf5aaedbca76795c6",
+      "size_in_bytes": 8813,
+      "created_at": "2026-10-17T23:13:31Z",
+      "expires_at": "2026-11-16T23:13:30Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/macos-asan-ubsan/Testing/Temporary/LastTest.log",
+          "size_bytes": 9931,
+          "sha256": "fa474b372505ec8b60ebf8057539639f02b08d32d955281418e8e8ae683fee61"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/build.log",
+          "size_bytes": 13621,
+          "sha256": "097f7b8985e1e15b03be6080031d653bd008014035409d31c1551bdfaa5c709b"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/configure.log",
+          "size_bytes": 1151,
+          "sha256": "2e9852f9e15ea9039e52c5109a18ba6c111a2f6453f8b9949b1a21b22e5826fd"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/ctest.xml",
+          "size_bytes": 4708,
+          "sha256": "986370f9121b3cfea3d3fdb4e352fca0b89f798e3835c1286536d59d6e8a7afd"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/summary.json",
+          "size_bytes": 1372,
+          "sha256": "d3d20bf2a74f5c12fd7117b422c70a68d7b39d872cbf4be417d8d2e75549f404"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/test.log",
+          "size_bytes": 1508,
+          "sha256": "cd1588b30991a68a492704e4f4764c62b01b0f2584dee4ab02e83335a58a46d6"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/toolchain.json",
+          "size_bytes": 4906,
+          "sha256": "fa41b8408c2d7d6354b3b81b66346568c5e5bc355d74daf947a6bf39d38a5498"
+        }
+      ],
+      "job": "cpu-macos-arm64-asan-ubsan",
+      "verification": {
+        "preset": "macos-asan-ubsan",
+        "injected_failure": false,
+        "summary_status": "PASS",
+        "sanitizer_configuration": "address-undefined",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          0
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "macos-asan-ubsan",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.13/bin/python",
+              "-DCMAKE_CXX_COMPILER=/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 2.757,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "macos-asan-ubsan",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 51.744,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "macos-asan-ubsan",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/Users/runner/work/shark-engine/shark-engine/out/ci/macos-asan-ubsan/ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 3.614,
+            "status": "PASS"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 10,
+          "failures": [],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 =============================================================================== All tests passed (1 assertion in 1 test case)"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "version": "Darwin Kernel Version 25.6.0: Fri Jul 31 19:16:43 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_VMAPPLE",
+            "machine": "arm64"
+          },
+          "image": {
+            "os": "macos26",
+            "version": "20261013.0424.1"
+          },
+          "runner_os": "macOS",
+          "runner_arch": "ARM64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39078070735,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "AppleClang",
+            "version": "21.0.0.21000099",
+            "path": "/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++",
+            "binary_path": "/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+            "sha256": "a0d27cfee61b9b547a39529fb5609feb43ac3c372db023c3278ae41d0c45cc21",
+            "probe_exit": 0
+          },
+          "xcode": "Xcode 26.4.1\nBuild version 17E202",
+          "sdk": "26.4",
+          "developer_dir": "/Applications/Xcode_26.4.1.app/Contents/Developer",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/Users/runner/hostedtoolcache/Python/3.13.5/arm64/bin/ninja",
+            "CMAKE_OSX_ARCHITECTURES": "",
+            "CMAKE_OSX_DEPLOYMENT_TARGET": "",
+            "CMAKE_OSX_SYSROOT": "/Applications/Xcode_26.4.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117392416,
+      "name": "cpu-macos-arm64-debug-1",
+      "digest": "sha256:843d96ff38a2072f7b09c8e1c6f47c8840bc5e38d9269b8dabbe62c857242711",
+      "size_in_bytes": 8693,
+      "created_at": "2026-10-17T23:12:59Z",
+      "expires_at": "2026-11-16T23:12:58Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/macos-debug/Testing/Temporary/LastTest.log",
+          "size_bytes": 9871,
+          "sha256": "f19559669a8a3581a7147d975913aa7bb40fa388f438e974510bca3773716774"
+        },
+        {
+          "path": "out/ci/macos-debug/build.log",
+          "size_bytes": 13621,
+          "sha256": "90bb967ccfbe009a5aa83f606a869b376b75c66abc3f3bb6bdfbd0352f4f9b1e"
+        },
+        {
+          "path": "out/ci/macos-debug/configure.log",
+          "size_bytes": 1123,
+          "sha256": "52c63db1a8b92eb77a4cf1a4ab4b88f8d65b5a679128a3c1cf9ed9f004087f58"
+        },
+        {
+          "path": "out/ci/macos-debug/ctest.xml",
+          "size_bytes": 4716,
+          "sha256": "46b68a215df3a52f8d5e30f45a0576dfc856a508824e6fd0690ddcb65f5b80ed"
+        },
+        {
+          "path": "out/ci/macos-debug/summary.json",
+          "size_bytes": 1346,
+          "sha256": "3a96f030c6c8299e1186769b40814fddad82b73943fd30c8bea57b4c3275eaa6"
+        },
+        {
+          "path": "out/ci/macos-debug/test.log",
+          "size_bytes": 1503,
+          "sha256": "d50632c7512cd3a2fc0da485755bea585510ba4811cc9d45eb4fc7f2ac485f75"
+        },
+        {
+          "path": "out/ci/macos-debug/toolchain.json",
+          "size_bytes": 4901,
+          "sha256": "113ff096ae2b50585d7b09daee777f51e83a36d19f48f3d5996cbe65a7863fb7"
+        }
+      ],
+      "job": "cpu-macos-arm64-debug",
+      "verification": {
+        "preset": "macos-debug",
+        "injected_failure": false,
+        "summary_status": "PASS",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          0
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "macos-debug",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.13/bin/python",
+              "-DCMAKE_CXX_COMPILER=/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 2.26,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "macos-debug",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 33.662,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "macos-debug",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/Users/runner/work/shark-engine/shark-engine/out/ci/macos-debug/ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 1.902,
+            "status": "PASS"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 10,
+          "failures": [],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 =============================================================================== All tests passed (1 assertion in 1 test case)"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "version": "Darwin Kernel Version 25.6.0: Fri Jul 31 19:16:43 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_VMAPPLE",
+            "machine": "arm64"
+          },
+          "image": {
+            "os": "macos26",
+            "version": "20261013.0424.1"
+          },
+          "runner_os": "macOS",
+          "runner_arch": "ARM64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39078070735,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "AppleClang",
+            "version": "21.0.0.21000099",
+            "path": "/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++",
+            "binary_path": "/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+            "sha256": "a0d27cfee61b9b547a39529fb5609feb43ac3c372db023c3278ae41d0c45cc21",
+            "probe_exit": 0
+          },
+          "xcode": "Xcode 26.4.1\nBuild version 17E202",
+          "sdk": "26.4",
+          "developer_dir": "/Applications/Xcode_26.4.1.app/Contents/Developer",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/Users/runner/hostedtoolcache/Python/3.13.5/arm64/bin/ninja",
+            "CMAKE_OSX_ARCHITECTURES": "",
+            "CMAKE_OSX_DEPLOYMENT_TARGET": "",
+            "CMAKE_OSX_SYSROOT": "/Applications/Xcode_26.4.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117708036,
+      "name": "cpu-macos-arm64-release-1",
+      "digest": "sha256:c332a0fa10fe0dad2cb9c6c09b66c1a33c39ea5321c77d19c72d7472e6d8fc6f",
+      "size_in_bytes": 8735,
+      "created_at": "2026-10-17T23:13:53Z",
+      "expires_at": "2026-11-16T23:13:52Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/macos-release/Testing/Temporary/LastTest.log",
+          "size_bytes": 9897,
+          "sha256": "764f2c1503cd4bc093712ef634193b1f5017c85163bc3b8ad2126da33e1e11a5"
+        },
+        {
+          "path": "out/ci/macos-release/build.log",
+          "size_bytes": 13619,
+          "sha256": "f06caf14251264a61bb1d0457b6aafdd4c4e4ee9ea99add078fc041f503aab1e"
+        },
+        {
+          "path": "out/ci/macos-release/configure.log",
+          "size_bytes": 1131,
+          "sha256": "d11bd9768656cd1598818934d50478c89cd7c517e1e6f65431c3ea699c65cd4f"
+        },
+        {
+          "path": "out/ci/macos-release/ctest.xml",
+          "size_bytes": 4713,
+          "sha256": "de095d5f81420de62b84687ebf2c0b09098a66c9425a96b5d726adbdb79447c6"
+        },
+        {
+          "path": "out/ci/macos-release/summary.json",
+          "size_bytes": 1357,
+          "sha256": "93fa0f0718778abc3626339f82d08d65371f28455c705a90a5f00c7a9e1e7f59"
+        },
+        {
+          "path": "out/ci/macos-release/test.log",
+          "size_bytes": 1505,
+          "sha256": "b48ac52cc0be50ddc11ffaa86d98403b72563270efedf835071382e58ec15b49"
+        },
+        {
+          "path": "out/ci/macos-release/toolchain.json",
+          "size_bytes": 4905,
+          "sha256": "e3fe0993b6b4539547e44ccdb682b5a52ef71312f02793b4e983c0ba445fe5ca"
+        }
+      ],
+      "job": "cpu-macos-arm64-release",
+      "verification": {
+        "preset": "macos-release",
+        "injected_failure": false,
+        "summary_status": "PASS",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          0
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "macos-release",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.13/bin/python",
+              "-DCMAKE_CXX_COMPILER=/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 4.599,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "macos-release",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 66.708,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "macos-release",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/Users/runner/work/shark-engine/shark-engine/out/ci/macos-release/ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 2.641,
+            "status": "PASS"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 10,
+          "failures": [],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 =============================================================================== All tests passed (1 assertion in 1 test case)"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Darwin",
+            "release": "25.6.0",
+            "version": "Darwin Kernel Version 25.6.0: Fri Jul 31 19:16:43 PDT 2026; root:xnu-12377.161.14~5/RELEASE_ARM64_VMAPPLE",
+            "machine": "arm64"
+          },
+          "image": {
+            "os": "macos26",
+            "version": "20261013.0424.1"
+          },
+          "runner_os": "macOS",
+          "runner_arch": "ARM64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39078070735,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "AppleClang",
+            "version": "21.0.0.21000099",
+            "path": "/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++",
+            "binary_path": "/Applications/Xcode_26.4.1.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+            "sha256": "a0d27cfee61b9b547a39529fb5609feb43ac3c372db023c3278ae41d0c45cc21",
+            "probe_exit": 0
+          },
+          "xcode": "Xcode 26.4.1\nBuild version 17E202",
+          "sdk": "26.4",
+          "developer_dir": "/Applications/Xcode_26.4.1.app/Contents/Developer",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Release",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/Users/runner/hostedtoolcache/Python/3.13.5/arm64/bin/ninja",
+            "CMAKE_OSX_ARCHITECTURES": "",
+            "CMAKE_OSX_DEPLOYMENT_TARGET": "",
+            "CMAKE_OSX_SYSROOT": "/Applications/Xcode_26.4.1.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX26.4.sdk",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12118255702,
+      "name": "cpu-macos-intel-asan-ubsan-1",
+      "digest": "sha256:84b98c3da2e21db043c66cb0cad8ee148592115b32a98822780463c313fd3644",
+      "size_in_bytes": 8818,
+      "created_at": "2026-10-17T23:15:32Z",
+      "expires_at": "2026-11-16T23:15:30Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/macos-asan-ubsan/Testing/Temporary/LastTest.log",
+          "size_bytes": 9931,
+          "sha256": "f55e40788f0f27a5080df2ba75f1245b084b16efa3c0d96ee76e2208ce3529ea"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/build.log",
+          "size_bytes": 13621,
+          "sha256": "f53e0cdc973cad7534bf113fe7546ec5936e073a8c6d9f771c8230dc17d24fe5"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/configure.log",
+          "size_bytes": 1149,
+          "sha256": "f39d9f8dece504e28c424500b16b4ba9f43ec070ab93636c5be26bbd8d748441"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/ctest.xml",
+          "size_bytes": 4706,
+          "sha256": "6daa259a816218ec22aa56789b1a7504e80c61dec78ba402f341c81e285df66c"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/summary.json",
+          "size_bytes": 1369,
+          "sha256": "99c7a3bc89fbd89f419e9e83ae7ac5539582010c772132d0c603afcc4f4a6673"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/test.log",
+          "size_bytes": 1508,
+          "sha256": "79fc600c8f0b0caa6bc27f93dda5dcee160830b83a979d4e8b8a87ea38dbc11f"
+        },
+        {
+          "path": "out/ci/macos-asan-ubsan/toolchain.json",
+          "size_bytes": 4881,
+          "sha256": "b5ee936442f4055adfd4ef364ef159b1183f0ee1449f5df5c04b5771db6134d7"
+        }
+      ],
+      "job": "cpu-macos-intel-asan-ubsan",
+      "verification": {
+        "preset": "macos-asan-ubsan",
+        "injected_failure": false,
+        "summary_status": "PASS",
+        "sanitizer_configuration": "address-undefined",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          0
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "macos-asan-ubsan",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.13/bin/python",
+              "-DCMAKE_CXX_COMPILER=/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 5.97,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "macos-asan-ubsan",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 125.582,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "macos-asan-ubsan",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/Users/runner/work/shark-engine/shark-engine/out/ci/macos-asan-ubsan/ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 4.99,
+            "status": "PASS"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 10,
+          "failures": [],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 =============================================================================== All tests passed (1 assertion in 1 test case)"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Darwin",
+            "release": "24.6.0",
+            "version": "Darwin Kernel Version 24.6.0: Tue Jul 21 20:50:07 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_X86_64",
+            "machine": "x86_64"
+          },
+          "image": {
+            "os": "macos15",
+            "version": "20260824.0482.1"
+          },
+          "runner_os": "macOS",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39078070735,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "AppleClang",
+            "version": "17.0.0.17000013",
+            "path": "/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++",
+            "binary_path": "/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+            "sha256": "4c458256bcdf913774de1bb4a37768244d3b41f32ad55afb2dfec3432f46f4fe",
+            "probe_exit": 0
+          },
+          "xcode": "Xcode 16.4\nBuild version 16F6",
+          "sdk": "15.5",
+          "developer_dir": "/Applications/Xcode_16.4.app/Contents/Developer",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/Users/runner/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+            "CMAKE_OSX_ARCHITECTURES": "",
+            "CMAKE_OSX_DEPLOYMENT_TARGET": "",
+            "CMAKE_OSX_SYSROOT": "/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12118091296,
+      "name": "cpu-macos-intel-debug-1",
+      "digest": "sha256:eb46a058197a82fba2d57f4b4ab888a3761d95ac6e46d28020be5793bd628649",
+      "size_in_bytes": 8707,
+      "created_at": "2026-10-17T23:16:03Z",
+      "expires_at": "2026-11-16T23:16:01Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/macos-debug/Testing/Temporary/LastTest.log",
+          "size_bytes": 9871,
+          "sha256": "8a08ce4a5199c88a82612f5ecbdbdd6780e9325d8630ca34552a6411f30e8a4f"
+        },
+        {
+          "path": "out/ci/macos-debug/build.log",
+          "size_bytes": 13621,
+          "sha256": "e9024ef8dd3fd50e1f868b4af7ddaa027b793167d4c2bbff352b1305576324a5"
+        },
+        {
+          "path": "out/ci/macos-debug/configure.log",
+          "size_bytes": 1121,
+          "sha256": "b1d84a05a456f5c3a5fa099d92808c739b14e472b3e87633167e8c5551146f36"
+        },
+        {
+          "path": "out/ci/macos-debug/ctest.xml",
+          "size_bytes": 4710,
+          "sha256": "da4c066068b810d923f50fd112a1916233abf389c2e3da7c086a3d2c1c091fe1"
+        },
+        {
+          "path": "out/ci/macos-debug/summary.json",
+          "size_bytes": 1346,
+          "sha256": "52215f8f243534d0fe1de9c182c49ba475f7a815a37500fcb0d16e844ece1d6a"
+        },
+        {
+          "path": "out/ci/macos-debug/test.log",
+          "size_bytes": 1503,
+          "sha256": "28c712683a4bd2420a108cd855d4e4706450a3968f657e4c9e1b6bf47a1684b9"
+        },
+        {
+          "path": "out/ci/macos-debug/toolchain.json",
+          "size_bytes": 4876,
+          "sha256": "b37cda3e79998e1dc4443c1eef5140507188866e0a80885cdd8086bd0c50c0e2"
+        }
+      ],
+      "job": "cpu-macos-intel-debug",
+      "verification": {
+        "preset": "macos-debug",
+        "injected_failure": false,
+        "summary_status": "PASS",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          0
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "macos-debug",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.13/bin/python",
+              "-DCMAKE_CXX_COMPILER=/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 4.115,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "macos-debug",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 108.388,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "macos-debug",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/Users/runner/work/shark-engine/shark-engine/out/ci/macos-debug/ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 2.752,
+            "status": "PASS"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 10,
+          "failures": [],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 =============================================================================== All tests passed (1 assertion in 1 test case)"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Darwin",
+            "release": "24.6.0",
+            "version": "Darwin Kernel Version 24.6.0: Tue Jul 21 20:50:07 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_X86_64",
+            "machine": "x86_64"
+          },
+          "image": {
+            "os": "macos15",
+            "version": "20260824.0482.1"
+          },
+          "runner_os": "macOS",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39078070735,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "AppleClang",
+            "version": "17.0.0.17000013",
+            "path": "/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++",
+            "binary_path": "/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+            "sha256": "4c458256bcdf913774de1bb4a37768244d3b41f32ad55afb2dfec3432f46f4fe",
+            "probe_exit": 0
+          },
+          "xcode": "Xcode 16.4\nBuild version 16F6",
+          "sdk": "15.5",
+          "developer_dir": "/Applications/Xcode_16.4.app/Contents/Developer",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/Users/runner/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+            "CMAKE_OSX_ARCHITECTURES": "",
+            "CMAKE_OSX_DEPLOYMENT_TARGET": "",
+            "CMAKE_OSX_SYSROOT": "/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12118110529,
+      "name": "cpu-macos-intel-release-1",
+      "digest": "sha256:828b47a808608809ff87f6f9b316921d3f2aa2e64f2c0cea6500d7d85e71c835",
+      "size_in_bytes": 8724,
+      "created_at": "2026-10-17T23:14:42Z",
+      "expires_at": "2026-11-16T23:14:41Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/macos-release/Testing/Temporary/LastTest.log",
+          "size_bytes": 9897,
+          "sha256": "c2f6b981b0e613602acfe32818df57a7366709fd7b08a7ec5335f30c12f7073e"
+        },
+        {
+          "path": "out/ci/macos-release/build.log",
+          "size_bytes": 13619,
+          "sha256": "6903a22c789b9fd5f3a614709be606aaf92ac3f47128d49ad4f648b2eb88dadd"
+        },
+        {
+          "path": "out/ci/macos-release/configure.log",
+          "size_bytes": 1129,
+          "sha256": "0b9da55c49e5f7b392c1b0316139c6d4a306ed4d11394c3ad3e511c424a399ed"
+        },
+        {
+          "path": "out/ci/macos-release/ctest.xml",
+          "size_bytes": 4711,
+          "sha256": "10d4a569aa1cf2cec5bc04fc238327f99e01e5555fd868bfcf933f1c33369b4c"
+        },
+        {
+          "path": "out/ci/macos-release/summary.json",
+          "size_bytes": 1355,
+          "sha256": "4c6861a52e74c4ad61126c7e22d6537d853f537d990d418c453dd4cb79c759e8"
+        },
+        {
+          "path": "out/ci/macos-release/test.log",
+          "size_bytes": 1505,
+          "sha256": "d30de7ddd5cf5216b745d9b5c0e5e1ecb091ec033c1bda638d4b37b9062463f1"
+        },
+        {
+          "path": "out/ci/macos-release/toolchain.json",
+          "size_bytes": 4880,
+          "sha256": "28122ba14ef0ec1758c9fd3ac4dbb01c52722255926e70e09147444cc5b37db6"
+        }
+      ],
+      "job": "cpu-macos-intel-release",
+      "verification": {
+        "preset": "macos-release",
+        "injected_failure": false,
+        "summary_status": "PASS",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          0
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "macos-release",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=/Library/Frameworks/Python.framework/Versions/3.13/bin/python",
+              "-DCMAKE_CXX_COMPILER=/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 7.234,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "macos-release",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 105.88,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "macos-release",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/Users/runner/work/shark-engine/shark-engine/out/ci/macos-release/ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 2.847,
+            "status": "PASS"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 10,
+          "failures": [],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 =============================================================================== All tests passed (1 assertion in 1 test case)"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Darwin",
+            "release": "24.6.0",
+            "version": "Darwin Kernel Version 24.6.0: Tue Jul 21 20:50:07 PDT 2026; root:xnu-11417.140.69.711.44~1/RELEASE_X86_64",
+            "machine": "x86_64"
+          },
+          "image": {
+            "os": "macos15",
+            "version": "20260824.0482.1"
+          },
+          "runner_os": "macOS",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39078070735,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "AppleClang",
+            "version": "17.0.0.17000013",
+            "path": "/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang++",
+            "binary_path": "/Applications/Xcode_16.4.app/Contents/Developer/Toolchains/XcodeDefault.xctoolchain/usr/bin/clang",
+            "sha256": "4c458256bcdf913774de1bb4a37768244d3b41f32ad55afb2dfec3432f46f4fe",
+            "probe_exit": 0
+          },
+          "xcode": "Xcode 16.4\nBuild version 16F6",
+          "sdk": "15.5",
+          "developer_dir": "/Applications/Xcode_16.4.app/Contents/Developer",
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Release",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/Users/runner/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+            "CMAKE_OSX_ARCHITECTURES": "",
+            "CMAKE_OSX_DEPLOYMENT_TARGET": "",
+            "CMAKE_OSX_SYSROOT": "/Applications/Xcode_16.4.app/Contents/Developer/Platforms/MacOSX.platform/Developer/SDKs/MacOSX15.5.sdk",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12118136008,
+      "name": "cpu-windows-asan-1",
+      "digest": "sha256:0c099fe6a9376c961acdb5714851b49925db5940ddab2bf5c6ff0c4bd980af1d",
+      "size_in_bytes": 8858,
+      "created_at": "2026-10-17T23:14:43Z",
+      "expires_at": "2026-11-16T23:14:42Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/windows-asan/Testing/Temporary/LastTest.log",
+          "size_bytes": 10191,
+          "sha256": "dcf6d8ad5cfbb145478b6283ada2c740546e3d99e668ffd4927c896e6ae5afa5"
+        },
+        {
+          "path": "out/ci/windows-asan/build.log",
+          "size_bytes": 14833,
+          "sha256": "e01d080e4c9bc51b2f27271c24f058841a2198c3e9b099057e9cf67f35a67fd9"
+        },
+        {
+          "path": "out/ci/windows-asan/configure.log",
+          "size_bytes": 887,
+          "sha256": "ed87a83d8be5a97a752de7694e17cf7e0e14edbf73154ac5cdc209c09c2d56ea"
+        },
+        {
+          "path": "out/ci/windows-asan/ctest.xml",
+          "size_bytes": 4814,
+          "sha256": "c18ef900ac79781a4908b8af0af821a3e17619a5ab7a8c5a9213d3d47be50802"
+        },
+        {
+          "path": "out/ci/windows-asan/summary.json",
+          "size_bytes": 1264,
+          "sha256": "88914430b6223117d3e8b0a0509a961f0c92fbdf8f95497463d88ea522a39a08"
+        },
+        {
+          "path": "out/ci/windows-asan/test.log",
+          "size_bytes": 1523,
+          "sha256": "5aec951452751778faff267392998ec34bf29c80b204b2e9a16f924c3f92ebec"
+        },
+        {
+          "path": "out/ci/windows-asan/toolchain.json",
+          "size_bytes": 5518,
+          "sha256": "32fa5641247abdd4e7514cefa0b6678ae00ad6f2631f6a6204cc169cdfe5e03d"
+        }
+      ],
+      "job": "cpu-windows-asan",
+      "verification": {
+        "preset": "windows-asan",
+        "injected_failure": false,
+        "summary_status": "PASS",
+        "sanitizer_configuration": "address",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          0
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "windows-asan",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=C:\\hostedtoolcache\\windows\\Python\\3.13.5\\x64\\python.exe"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 7.566,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "windows-asan",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 92.862,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "windows-asan",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "D:\\a\\shark-engine\\shark-engine\\out\\ci\\windows-asan\\ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 4.001,
+            "status": "PASS"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 10,
+          "failures": [],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 =============================================================================== All tests passed (1 assertion in 1 test case)"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Windows",
+            "release": "2025Server",
+            "version": "10.0.26100",
+            "machine": "AMD64"
+          },
+          "image": {
+            "os": "win25-vs2026",
+            "version": "20261007.264.1"
+          },
+          "runner_os": "Windows",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39078070735,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "MSVC",
+            "version": "19.51.36260.0",
+            "path": "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+            "binary_path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+            "sha256": "b0a1818ebae6da7f18230a84e76ce839212584ac4c2ab55b97a0d5268085da57",
+            "probe_exit": 2
+          },
+          "xcode": null,
+          "sdk": null,
+          "developer_dir": "",
+          "windows_sdk": "10.0.26100.0\\",
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+            "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+            "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+            "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "C:/hostedtoolcache/windows/Python/3.13.5/x64/Scripts/ninja.exe",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117703097,
+      "name": "cpu-windows-debug-1",
+      "digest": "sha256:9ce4df5e8cce9469cc9728399495e273792c9cecaada13df8fa48db4912f6382",
+      "size_in_bytes": 8859,
+      "created_at": "2026-10-17T23:14:48Z",
+      "expires_at": "2026-11-16T23:14:48Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/windows-debug/Testing/Temporary/LastTest.log",
+          "size_bytes": 10194,
+          "sha256": "806fba8b752c13936c0ee96fbce7629ecde2aeed18bf6a2123c5215dc4594f2f"
+        },
+        {
+          "path": "out/ci/windows-debug/build.log",
+          "size_bytes": 14835,
+          "sha256": "a427afc4637d1877fea39eb3cb4cd8b756b6538fd74aba7966ebf6d63310beec"
+        },
+        {
+          "path": "out/ci/windows-debug/configure.log",
+          "size_bytes": 876,
+          "sha256": "8b0bb7972059bcfc34cc155b389b4996b638e76c2669365551fd1495add3fe92"
+        },
+        {
+          "path": "out/ci/windows-debug/ctest.xml",
+          "size_bytes": 4815,
+          "sha256": "d131f110e4b99fa8ebc35724f06bf0c0f3c9851c7426a639f1cb1c4f229f4ad6"
+        },
+        {
+          "path": "out/ci/windows-debug/summary.json",
+          "size_bytes": 1270,
+          "sha256": "5da2ab0898d2efefeb476b28e275401db6037ecd92c9a3031726d147d8a72966"
+        },
+        {
+          "path": "out/ci/windows-debug/test.log",
+          "size_bytes": 1524,
+          "sha256": "645bdac5a8ecfe6634d9cf47040b7015cb4b260608c47af556fbed4b1fcdbfac"
+        },
+        {
+          "path": "out/ci/windows-debug/toolchain.json",
+          "size_bytes": 5510,
+          "sha256": "2cc639ddd37d3b375e2b58529eb6cccf85715fe5fc0838a8e632b1103f748504"
+        }
+      ],
+      "job": "cpu-windows-debug",
+      "verification": {
+        "preset": "windows-debug",
+        "injected_failure": false,
+        "summary_status": "PASS",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          0
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "windows-debug",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=C:\\hostedtoolcache\\windows\\Python\\3.13.5\\x64\\python.exe"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 7.543,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "windows-debug",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 100.307,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "windows-debug",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "D:\\a\\shark-engine\\shark-engine\\out\\ci\\windows-debug\\ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 4.945,
+            "status": "PASS"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 10,
+          "failures": [],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 =============================================================================== All tests passed (1 assertion in 1 test case)"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Windows",
+            "release": "2025Server",
+            "version": "10.0.26100",
+            "machine": "AMD64"
+          },
+          "image": {
+            "os": "win25-vs2026",
+            "version": "20261007.264.1"
+          },
+          "runner_os": "Windows",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39078070735,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "MSVC",
+            "version": "19.51.36260.0",
+            "path": "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+            "binary_path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+            "sha256": "b0a1818ebae6da7f18230a84e76ce839212584ac4c2ab55b97a0d5268085da57",
+            "probe_exit": 2
+          },
+          "xcode": null,
+          "sdk": null,
+          "developer_dir": "",
+          "windows_sdk": "10.0.26100.0\\",
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Debug",
+            "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+            "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+            "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "C:/hostedtoolcache/windows/Python/3.13.5/x64/Scripts/ninja.exe",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117658391,
+      "name": "cpu-windows-release-1",
+      "digest": "sha256:232f4edba5dc706cb6b194309d94315479b713bc42b2482a9ccff9c7f21a5844",
+      "size_in_bytes": 8872,
+      "created_at": "2026-10-17T23:14:39Z",
+      "expires_at": "2026-11-16T23:14:39Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "build/windows-release/Testing/Temporary/LastTest.log",
+          "size_bytes": 10220,
+          "sha256": "6325f73c229ddbe6f3f2844358d1aa5fac170aa122331242c85d91d7d4e5c73d"
+        },
+        {
+          "path": "out/ci/windows-release/build.log",
+          "size_bytes": 14833,
+          "sha256": "ae8e3931f5bd725138e0ad92bf642410736c7b47159696b8dff028f959803db1"
+        },
+        {
+          "path": "out/ci/windows-release/configure.log",
+          "size_bytes": 880,
+          "sha256": "451f3ffbc4604c781c6e609461071d47d0963064f9f9038ee75537782194d8e1"
+        },
+        {
+          "path": "out/ci/windows-release/ctest.xml",
+          "size_bytes": 4817,
+          "sha256": "19cedeaadf08a6d5955eaf0ab915df7a8f6e7763ffd2b12bc4e780736f57f3b2"
+        },
+        {
+          "path": "out/ci/windows-release/summary.json",
+          "size_bytes": 1279,
+          "sha256": "8583471a7fa3b1bfaa31f72a1603770c90643b35bdcd97f96c6a95b7ed5a21a5"
+        },
+        {
+          "path": "out/ci/windows-release/test.log",
+          "size_bytes": 1526,
+          "sha256": "ee7a01c46f7e5b117cc0a1bea2f592102c4e8537071a6255d94fa2bc4cad44f4"
+        },
+        {
+          "path": "out/ci/windows-release/toolchain.json",
+          "size_bytes": 5514,
+          "sha256": "405ff4c452ff72cb2bd56bf20995c6098e371b47b8e34a00192c42668708f1cd"
+        }
+      ],
+      "job": "cpu-windows-release",
+      "verification": {
+        "preset": "windows-release",
+        "injected_failure": false,
+        "summary_status": "PASS",
+        "sanitizer_configuration": "none",
+        "sanitizer_evidence_scope": "Preset/configure evidence and reviewed source; no independent binary-instrumentation inspection",
+        "phase_exits": [
+          0,
+          0,
+          0
+        ],
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "windows-release",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=C:\\hostedtoolcache\\windows\\Python\\3.13.5\\x64\\python.exe"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 7.582,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "windows-release",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 91.134,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "windows-release",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "D:\\a\\shark-engine\\shark-engine\\out\\ci\\windows-release\\ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 3.665,
+            "status": "PASS"
+          }
+        ],
+        "test_results": {
+          "tests": 10,
+          "passed": 10,
+          "failures": [],
+          "skipped": 0,
+          "disabled": 0,
+          "errors": 0,
+          "sentinel_output": "Filters: [failure-sentinel] Randomness seeded to: 1337 =============================================================================== All tests passed (1 assertion in 1 test case)"
+        },
+        "toolchain": {
+          "platform": {
+            "system": "Windows",
+            "release": "2025Server",
+            "version": "10.0.26100",
+            "machine": "AMD64"
+          },
+          "image": {
+            "os": "win25-vs2026",
+            "version": "20261007.264.1"
+          },
+          "runner_os": "Windows",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39078070735,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "MSVC",
+            "version": "19.51.36260.0",
+            "path": "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+            "binary_path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Enterprise\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+            "sha256": "b0a1818ebae6da7f18230a84e76ce839212584ac4c2ab55b97a0d5268085da57",
+            "probe_exit": 2
+          },
+          "xcode": null,
+          "sdk": null,
+          "developer_dir": "",
+          "windows_sdk": "10.0.26100.0\\",
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Release",
+            "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+            "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+            "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "C:/hostedtoolcache/windows/Python/3.13.5/x64/Scripts/ninja.exe",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    },
+    {
+      "id": 12117344165,
+      "name": "runtime-only-1",
+      "digest": "sha256:927a3008eb5cf62286d4acd7ae0aab40239b8253b0a6fdda63d2853c71207212",
+      "size_in_bytes": 1519,
+      "created_at": "2026-10-17T23:12:14Z",
+      "expires_at": "2026-11-16T23:12:13Z",
+      "digest_source": "GitHub artifact API; extracted file hashes independently recorded below",
+      "archive_digest_recomputed": false,
+      "files": [
+        {
+          "path": "toolchain.json",
+          "size_bytes": 3701,
+          "sha256": "aaaab709b95673e04eb198590c41be68b7f2b12e8351d773311bac1a1dc36692"
+        }
+      ],
+      "job": "runtime-only",
+      "verification": {
+        "tests": "NOT_APPLICABLE: Tests disabled; job build/boundary/version step checked",
+        "toolchain": {
+          "platform": {
+            "system": "Linux",
+            "release": "6.17.0-1022-azure",
+            "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+            "machine": "x86_64"
+          },
+          "image": {
+            "os": "ubuntu24",
+            "version": "20261012.334.1"
+          },
+          "runner_os": "Linux",
+          "runner_arch": "X64",
+          "git_sha": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+          "run_id": 39078070735,
+          "run_attempt": 1,
+          "python": "3.13.5",
+          "packages": {
+            "cmake": "3.31.10",
+            "ninja": "1.13.2",
+            "clang-format": "20.1.8",
+            "PyYAML": "6.0.3"
+          },
+          "compiler": {
+            "id": "GNU",
+            "version": "13.3.0",
+            "path": "/usr/bin/g++-13",
+            "binary_path": "/usr/bin/x86_64-linux-gnu-g++-13",
+            "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+            "probe_exit": 0
+          },
+          "xcode": null,
+          "sdk": null,
+          "developer_dir": null,
+          "windows_sdk": null,
+          "cmake_inputs": {
+            "CMAKE_BUILD_TYPE": "Release",
+            "CMAKE_CXX_FLAGS": "",
+            "CMAKE_CXX_FLAGS_DEBUG": "-g",
+            "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+            "CMAKE_MAKE_PROGRAM": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+            "CMAKE_GENERATOR": "Ninja"
+          }
+        }
+      }
+    }
+  ],
+  "event": "workflow_dispatch",
+  "run_started_at": "2026-10-17T23:11:45Z",
+  "run_updated_at": "2026-10-17T23:16:07Z",
+  "run_conclusion": "success",
+  "scope": "One completed run; red/green chronology must be checked across reports.",
+  "cpu_test_count": 120,
+  "cpu_passed": 120,
+  "expected_sentinel_failures": 0
+}

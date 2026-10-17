@@ -1,24 +1,30 @@
 # Assignment 01 CI verification follow-up
 
 Date: 2026-10-17. Assignment: **01 - Repository, build system and test foundation**.
-Full gate: **FAIL / OPEN**. This follows the [implementation handoff](01-build-foundation.md)
+Full gate: **PASS**. This follows the [implementation handoff](01-build-foundation.md)
 and [MMORPG planning amendment](mmorpg-planning-amendment.md).
 
 ## Revision and scope
 
 Base: `7aac0b120666de0c0368e3500fe5630165c2e5a5` on `main`, with a clean worktree
-at investigation start. Remote: `markdawes08/shark-engine`. The result is an
-uncommitted local repair; the user retains all staging, committing and pushing.
+at investigation start. Remote: `markdawes08/shark-engine`. The user committed
+and pushed the repair as `3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de`; all three
+successful verification stages below tested that revision. The completion
+documents/evidence are a subsequent uncommitted update. The user retains all
+staging, committing and pushing.
 No C++ behavior, public API, dependency source pin or target boundary changed.
 
-Changed files: `.github/workflows/cpu.yml` selects Xcode 26.4.1 for the three
-macOS ARM configurations; `docs/ci.md`, this handoff, the historical handoff link,
-README and `docs/coverage/` record actual evidence. REQ-01 is
-FAIL instead of NOT_RUN; current assignment remains 01. Feature mappings and
+The repair commit changed `.github/workflows/cpu.yml` to Xcode 26.4.1 for the three
+macOS ARM configurations and recorded the initial investigation. This completion
+updates AGENTS, README, CI/coverage documentation, this handoff, the MMORPG plan
+and status references in ADRs 0001/0003, and adds four durable evidence reports.
+REQ-01 is now PASS; current assignment remains 01. Feature mappings and
 FeatureWorld coverage are unchanged. `.gitignore` was reviewed: `/out/` already
-covers downloaded evidence, and the local roadmap remains ignored.
+covers downloaded raw evidence and the temporary verifier, and the local roadmap
+remains ignored. The reports under `docs/coverage/evidence/` intentionally preserve
+acceptance findings in version control.
 
-## Observed hosted results
+## Initial hosted failures
 
 These are ordinary push runs with failure injection disabled, not the required
 deliberate-failure proof:
@@ -62,9 +68,10 @@ gh run view 39076666000 --repo markdawes08/shark-engine --job 117525120417 --log
 
 Downloaded logs, JUnit and toolchain reports are retained locally under the
 ignored `out/ci/hosted/` tree. GitHub artifacts expire after 30 days; this tracked
-handoff preserves the findings, not the full logs.
+handoff preserves the initial findings, and the reports below preserve the final
+acceptance evidence, including assertions, commands, toolchains and file hashes.
 
-## Repair and verification limits
+## Repair and local checks
 
 Apple documents ASan/TSan hangs on macOS 26.4 when compiled using Xcode 26.3 or
 older (issue 171762808), with Xcode 26.4 as the workaround. The observed toolchain
@@ -90,37 +97,96 @@ environment. Commands from the repository root:
 | `git diff --check` | PASS |
 
 No local C++ rebuild was needed for this workflow/documentation-only change.
-Native execution of the new Xcode pin is **NOT RUN** because this workspace is
-Windows and hosted Actions requires the user to publish the change. Independent
+Native execution of the new Xcode pin is verified in the hosted runs below. Independent
 review of the existing process runner, Catch2 setup and sanitizer flags found
 no concrete defect explaining these macOS-only timeouts.
 
-## Remaining gate and next assignment
+## Completed hosted gate
 
-No manual workflow has been dispatched in this follow-up. `main` currently has
-no branch protection (GitHub API reports 404); repository administration is
-available. Required checks remain to be configured after validating the repair.
+All runs below used `3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de`, attempt 1:
 
-1. The user commits/pushes the repair; verify the ordinary run, including ARM64
-   ASan/UBSan, passes on that exact revision.
-2. Dispatch `cpu.yml` on that revision with `inject_test_failure=true`. All twelve
-   CPU jobs must reach CTest and fail specifically at `shark.failure-sentinel`,
-   with the other nine tests passing. Preserve run URL, SHA, artifacts and exits.
-3. After that run completes, dispatch on the same revision with
-   `inject_test_failure=false`; all fourteen jobs must pass. Running these
-   dispatches concurrently can cancel the first due to workflow concurrency.
-4. Record both runs and configure the fourteen documented required checks.
-   Update REQ-01 only after the actual acceptance evidence is verified.
+| Run | Input | Verified result |
+| --- | --- | --- |
+| [39077290171](https://github.com/markdawes08/shark-engine/actions/runs/39077290171) | Ordinary push, injection OFF | PASS: 14/14 jobs; 120/120 CPU tests |
+| [39077652643](https://github.com/markdawes08/shark-engine/actions/runs/39077652643) | Manual dispatch, injection ON | EXPECTED FAIL: all 12 CPU jobs fail only `shark.failure-sentinel`; other 108 tests pass; quality/runtime-only pass |
+| [39078070735](https://github.com/markdawes08/shark-engine/actions/runs/39078070735) | Later manual dispatch, injection OFF | PASS: 14/14 jobs; 120/120 CPU tests; no skips or remaining injected assertion |
 
-After this gate passes, the exact next assignment is **M01 - Headless server and
+Every CPU job reached all three phases. Injected phase exits were 0/0/8 and each
+JUnit recorded the real `REQUIRE(1 == 0)` assertion with its sentinel diagnostic.
+Restored phase exits were 0/0/0. Actual test names, assertion output, flags,
+compiler/image identity, checkout SHA, run attempt and selected workflow steps
+were inspected in the downloaded artifacts and GitHub API responses. The
+injected run finished before the restored run started. No jobs were cancelled,
+retried or accepted merely because they failed.
+
+The final run recorded these native toolchains; every row exercised Debug,
+Release and its sanitizer configuration:
+
+| Runner / CPU | Observed compiler / SDK | Image version |
+| --- | --- | --- |
+| `windows-2025-vs2026` x64 | MSVC 19.51.36260.0; Windows SDK 10.0.26100.0; ASan | `20261007.264.1` |
+| `ubuntu-24.04` x64 | GCC 13.3.0; Clang 18.1.3 for ASan/UBSan | `20261012.334.1` |
+| `macos-26` ARM64 | Xcode 26.4.1 (17E202), Apple Clang 21.0.0.21000099, SDK 26.4; ASan/UBSan | `20261013.0424.1` |
+| `macos-15-intel` x64 | Xcode 16.4 (16F6), Apple Clang 17.0.0.17000013, SDK 15.5; ASan/UBSan | `20260824.0482.1` |
+
+All retained Python/development-tool pins matched. These are managed CPU runners;
+no graphics or audio devices were exercised. Sanitizer selection was verified
+from recorded configure data and reviewed build sources, without a separate
+binary-instrumentation audit.
+
+Dispatch commands, with `main` checked against the tested SHA before each:
+
+```text
+gh workflow run cpu.yml --repo markdawes08/shark-engine --ref main -f inject_test_failure=true
+gh workflow run cpu.yml --repo markdawes08/shark-engine --ref main -f inject_test_failure=false
+```
+
+An ignored one-off verifier checked API data and downloaded artifacts, using:
+
+```text
+.tools/venv/Scripts/python.exe -B out/ci/hosted/verify_run.py --run-id 39077290171 --expected-sha 3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de --mode normal
+.tools/venv/Scripts/python.exe -B out/ci/hosted/verify_run.py --run-id 39077652643 --expected-sha 3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de --mode injected
+.tools/venv/Scripts/python.exe -B out/ci/hosted/verify_run.py --run-id 39078070735 --expected-sha 3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de --mode normal
+```
+
+All returned verification PASS; the injected workflow itself correctly remained
+red. The helper is local investigation tooling, not a new checkout prerequisite.
+Its parsing checks rejected the original timeout evidence as an injected-test
+proof. Same-revision ordering and the live required-check list were additionally
+verified across reports before marking the gate complete.
+
+Durable reports:
+
+- [Gate and report hashes](../coverage/evidence/01-ci-gate.json).
+- [Injected run](../coverage/evidence/01-ci-red.json), including actual failed assertions.
+- [Restored run](../coverage/evidence/01-ci-green.json), including phase commands,
+  test totals, exact compilers/SDKs/images, artifact identities and extracted-file hashes.
+- [Required-check configuration](../coverage/evidence/01-ci-protection.json).
+
+Artifact archive digests are those returned by GitHub; extracted-file SHA-256
+values were independently computed. These reports preserve acceptance findings;
+the complete raw logs remain local and in the expiring GitHub artifacts.
+
+`main` had no protection at investigation start. All fourteen documented checks
+are now required from GitHub Actions app 15368, with strict branch freshness.
+Administrator bypass remains enabled to preserve the owner's direct pushes;
+no required approving review or push-actor restriction was introduced. The rule
+was applied with `gh api --method PUT repos/markdawes08/shark-engine/branches/main/protection
+--input out/ci/hosted/main-protection-request.json` and verified through a subsequent
+GET of the same endpoint. Force pushes and branch deletion remain disallowed.
+
+## Next assignment and limits
+
+Assignment 01 has no remaining acceptance blocker. The exact next assignment is
+**M01 - Headless server and
 client/core build separation**, before 02 graphics feasibility. No MMO, graphics,
 audio-device or release-package qualification is claimed by these CPU results.
 
 Suggested commit text:
 
 ```text
-fix(ci): update macOS ARM Xcode to avoid sanitizer hangs
+docs: close assignment 01 hosted CI gate
 
-- pin all macOS ARM builds to Xcode 26.4.1
-- record hosted results and the outstanding red/green CI gate
+- archive verified failure/restoration runs and required-check settings
+- mark the CPU foundation gate passed and M01 ready to start
 ```

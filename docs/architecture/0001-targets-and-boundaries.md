@@ -14,10 +14,11 @@ The existing 01 implementation has static `Engine` and `EngineTools` libraries,
 `Editor` and `Runtime` executables, and Catch2 `Tests`. `Engine` currently contains
 only argument parsing and version reporting. Neither executable runs a game or
 server loop. Preserve this small working foundation; the target split below is
-future work in M01, after the open 01 hosted-CI gate closes. Current `runtime-only`
-proves exclusion of authoring and tests, not dedicated-server support. See the
-[01 handoff](../handoffs/01-build-foundation.md) for local passing evidence and
-remaining qualification.
+future work in M01, the next assignment after the completed 01 CPU gate. Current
+`runtime-only` proves exclusion of authoring and tests, not dedicated-server support.
+The [01 handoff](../handoffs/01-build-foundation.md) records local evidence; the
+[CI verification handoff](../handoffs/01-ci-verification.md) records hosted CPU
+qualification and deliberate-failure/red-to-green proof.
 
 ## Planned M01 target split
 

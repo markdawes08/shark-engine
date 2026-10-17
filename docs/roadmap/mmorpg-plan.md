@@ -44,12 +44,13 @@ manifest schema 3 because lexical/numeric order no longer expresses dependencies
    -> 34 -> M10 -> 35
 ```
 
-Current assignment remains 01 because its full hosted acceptance gate has not
-been verified in this update. The user has since committed/pushed the foundation;
-the historical handoff's initial no-commit state is not today's repository state.
-Inspect actual hosted results before advancing; a push alone proves no CI outcome.
-After 01 closes, **M01 is next**, then 02. The graphics compatibility gate still
-blocks dependent client renderer work; a headless server pass never waives it.
+Assignment 01's hosted CPU acceptance and deliberate-failure/red-to-green gate
+is complete; the [CI verification handoff](../handoffs/01-ci-verification.md) records
+the tested revision and run evidence. Current assignment remains 01; **M01 is next**
+and has not started, followed by 02. Earlier handoffs retain their historical
+repository/gate status. Graphics and MMO qualification remain NOT_RUN. The graphics
+compatibility gate still blocks dependent client renderer work; a headless server
+pass never waives it.
 
 ## Inserted assignments and gates
 

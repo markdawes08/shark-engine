@@ -1,0 +1,36 @@
+{
+  "schema_version": 1,
+  "assignment": "01",
+  "status": "PASS",
+  "repository": "markdawes08/shark-engine",
+  "tested_revision": "3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de",
+  "verified_at_utc": "2026-10-17T23:17:30.605877+00:00",
+  "red_run": 39077652643,
+  "green_run": 39078070735,
+  "red_completed_at": "2026-10-17T23:10:58+00:00",
+  "green_started_at": "2026-10-17T23:11:45+00:00",
+  "checks": {
+    "same_revision": true,
+    "red_completed_before_green_started": true,
+    "twelve_cpu_jobs_failed_only_the_injected_assertion": true,
+    "all_fourteen_restored_jobs_passed": true,
+    "all_120_restored_cpu_tests_passed_without_skips": true,
+    "all_fourteen_required_checks_configured": true,
+    "administrator_bypass_retained": true
+  },
+  "evidence": [
+    {
+      "path": "01-ci-red.json",
+      "sha256": "17a0671e592a91205bd39f5f6584ff0ad6849563e66d8933cf7f9c30bd1cb840"
+    },
+    {
+      "path": "01-ci-green.json",
+      "sha256": "0da214530de9ae060bf0482be705512aa974d9249279559c3d21d7fff699b959"
+    },
+    {
+      "path": "01-ci-protection.json",
+      "sha256": "734a42062e20675a4fec22020d10e34166db49083d666fbf3733a6269f98e14e"
+    }
+  ],
+  "scope": "Assignment 01 CPU/build foundation only. No graphics, audio-device, server, MMORPG or release-package qualification. Full raw logs are retained locally under ignored out/ci/hosted; these tracked reports preserve verified results, commands, toolchains, assertions and hashes."
+}
