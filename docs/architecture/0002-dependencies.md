@@ -1,0 +1,92 @@
+# ADR 0002: Shark language, dependencies and integration boundaries
+
+Date: 2026-10-17  
+Status: Accepted architecture contract; dependency integration and compatibility tests have not run.  
+Scope: Assignment 00. Assignment 01 implements the build and lock mechanism; later owners integrate their subsystems.
+
+## Decision
+
+Use C++20 for engine-owned code and target-based CMake, with CMake 3.28 as the minimum project version. Require the standard without compiler extensions. Express includes, definitions, warnings and link dependencies on targets rather than directory-wide settings. Build third-party C code in its supported language. Pin the exact compiler, CMake and other build-tool versions used by CI in assignment 01; a minimum version is not a reproducible toolchain lock. CMake's target model supports scoped usage requirements, and current EnTT upstream requires C++20. These are upstream facts, not evidence that this project's build passes. [CMake build-system manual](https://cmake.org/cmake/help/latest/manual/cmake-buildsystem.7.html), [EnTT integration requirements](https://github.com/skypjack/entt#integration).
+
+Retain the roadmap's requested stack. The following selections authorize integration only in their owning assignments. Unless a release is explicitly given below, select an immutable revision at first integration after checking upstream release notes, toolchain compatibility and licensing; never build a floating branch while waiting for that selection.
+
+| Purpose | Selected dependency/configuration | Allowed consumer | Integration owner and evidence required |
+| --- | --- | --- | --- |
+| Windows and raw input | GLFW; Vulkan windows, no OpenGL context | Engine platform implementation | 02 probe, 04 lifecycle; surface creation and input/focus/resize checks on target systems |
+| Graphics | NVRHI Vulkan backend; Vulkan-Headers and loader from one recorded compatible toolchain | Engine graphics implementation | 02 pins and qualifies the combination; 05 owns production lifecycle |
+| Math | GLM, one centrally configured header interface | Engine math layer and engine-owned clients | 03/07; convention and transform tests; never serialize GLM object memory |
+| ECS | EnTT entity/registry facilities behind the engine's scene interface | Engine scene implementation only | 07; generational handles, safe mutation and hierarchy tests |
+| Rigid-body physics | Jolt, single-precision world, CPU options matching the platform baseline | Engine physics implementation only | 18/20; lifecycle, fixed-step and event/query checks |
+| Audio playback/mixing | miniaudio, one implementation translation unit, source decoding/encoding disabled | Engine audio implementation only | 24; offline mix and actual playback/device checks |
+| Offline audio import | dr_wav for WAV; Xiph libvorbisfile/libvorbis plus libogg for Ogg Vorbis | EngineTools audio importer only | 24; exact decoder pins, malformed-input/length/loop tests and validated PCM output |
+| Gameplay | Lua 5.5.1, official C API with small engine-owned bindings | Engine scripting implementation only | 19; binding/lifetime/error/limit tests on each CPU family |
+| Editor GUI | Dear ImGui docking configuration | Editor only | 16; pin core and backend sources from the same commit; test docking and viewport sizing |
+| Transform editing | ImGuizmo transform widget, using that same ImGui checkout | Editor only | 16 selects the pair; 17 proves gizmo/undo/matrix compatibility |
+| glTF parsing | cgltf | EngineTools importer only | 12; bounded parse, accessor/profile validation and fixture tests |
+| Image decoding | stb_image limited to PNG/JPEG; Radiance HDR enabled for environment import | EngineTools image importer only | 12 and 27; malformed/oversized input and color/orientation checks |
+| Source JSON/configuration/protocol | nlohmann/json with engine-owned typed validation | Engine configuration/serialization implementation; EngineTools and local tool services | 03/08/15; bounded parsing, version rejection and transactional-load tests |
+| Tests | Catch2 v3, the sole primary C++ test framework, registered with CTest | Tests only | 01; a real starter test and evidence that test failures fail CI |
+| glTF fixture validation | Khronos glTF-Validator, local CLI/package | Development/CI only | 12; pin tool and its runtime; keep validation reports with fixture provenance |
+| Offline shader compilation | HLSL through DXC to SPIR-V; SPIR-V validation tools | Build/cook tooling only | 02 probe pins the initial toolchain; 06 owns reproducible shader pipeline |
+
+GLFW lists Windows, macOS, Linux, X11 and Wayland; this does not qualify the engine on those platforms. GLM supplies the selected math types. Jolt lists macOS x64/ARM64 as well as Windows and Linux. miniaudio provides playback, mixing and spatialization. Their broader advertised features do not expand the v1 profile. [GLFW](https://github.com/glfw/glfw), [GLM](https://github.com/g-truc/glm), [Jolt platform requirements](https://github.com/jrouwe/JoltPhysics#supported-platforms), [miniaudio](https://github.com/mackron/miniaudio).
+
+## Immutable dependency inputs
+
+Assignment 01 qualification amendment: source dependencies, development-tool
+wheels and GitHub actions have immutable hash pins. Hosted CI selects explicit
+compiler families/vendor bundles and records their full observed versions,
+binary hashes, SDK and runner-image revision. GitHub's rolling images cannot be
+made immutable by choosing a runner label. This is an explicit limitation on
+the original exact-toolchain-pin intention, not a claim of reproducible hosted
+VMs. Release reproduction in 35 requires archived toolchain/build inputs or a
+controlled immutable runner image. See [CI configuration and evidence](../ci.md).
+The initial integrated dependency is Catch2; graphics pins still belong to 02.
+
+Assignment 01 must establish one authoritative, versioned dependency manifest consumed by the CMake dependency setup. Use CMake FetchContent or locally populated source trees from that manifest; do not introduce competing package-manager resolution paths. Every dependency must record upstream URL, release label when available, full commit SHA or archive URL plus SHA-256, applicable patches, build options, license files, owning target and integration assignment. Include transitives, vendored headers, shader tools and CI tool downloads. Locally populated trees must match the same locked inputs.
+
+A branch name, `latest`, a version range, an unverified mutable tag, or the host's arbitrary installed package is not an exact pin. CMake also recommends commit hashes for fetched Git content. Disable upstream automatic downloads or override every transitive revision centrally. No configure-time update may silently change the selected inputs. A normal build can populate a missing locked dependency; repeat builds and tests use the populated cache, and tests do not download assets. Dependency changes require a manifest diff, license review and the affected owner tests. [CMake FetchContent guidance](https://cmake.org/cmake/help/latest/module/FetchContent.html).
+
+The initial manifest in 01 locks all dependencies actually consumed by that increment. Later assignments must add their dependency pins before integrating them. Do not populate future subsystems or create fake compile checks in 00 merely to make an untested lock look complete. Toolchain/platform/package qualification remains separate from knowing a source checksum.
+
+## Lua release and binding contract
+
+Select the maintained Lua 5.5 line, initially **Lua 5.5.1**. Upstream lists 5.5.1 as current and 5.4.9 as the final 5.4 release. The published archive is `https://www.lua.org/ftp/lua-5.5.1.tar.gz`, with published SHA-256 `1c4b4068d67061f2a2231ad2b5422e77acea1487ea9890f6320af614f4373dce`. This is a documented source pin; the archive has not been downloaded or built here. Its integration owner must verify the digest and review intervening fixes before adding it to the build. A later update must be explicit. [Lua version history](https://www.lua.org/versions.html), [Lua archive checksums](https://www.lua.org/ftp/).
+
+Use the C API documented for this exact Lua language version, with engine-owned registration and checked userdata. This avoids an unverified third-party binding compatibility assumption. No LuaJIT, sol2 or general C++ reflection/binding framework is selected. The official 5.5 manual supplies the embedding API, protected calls, allocator and debug-hook interfaces. Compatibility is therefore an API selection supported by documentation; actual engine bindings remain untested until 19. [Lua 5.5 manual](https://www.lua.org/manual/5.5/manual.html).
+
+The versioned gameplay API exposes engine values and checked entity handles, never borrowed component pointers or EnTT/Jolt/NVRHI types. Script calls are protected; the C API boundary must not let Lua error unwinding bypass live C++ objects requiring destruction, and C++ exceptions must not escape C callbacks. Compile Lua as C and keep error-raising trampolines narrow. Assignment 19 must test stack restoration, stale handles, allocator failure, instruction limits and teardown. The VM's existence is not a security sandbox. Persistent scripts use source text; do not promise portable precompiled Lua bytecode across versions or CPU configurations.
+
+## Graphics and editor compatibility contract
+
+Upstream NVRHI currently describes Vulkan 1.3 on Windows/Linux and does not establish macOS support. Pin NVRHI, its Vulkan inputs, offline compiler and any portability driver together in 02. Enable only the Vulkan backend; disable DX11, DX12, NVAPI and optional ray-tracing integrations unless a later approved scope change requires them. Any macOS patch must be recorded and maintained. The platform ADR and assignment 02 decide the shipping path using actual hardware evidence. Choosing Vulkan or GLFW alone cannot satisfy this gate. [NVRHI requirements and CMake options](https://github.com/NVIDIA-RTX/NVRHI/blob/main/README.md).
+
+DXC documents HLSL-to-SPIR-V support, which justifies the toolchain candidate. It does not prove that particular shader features, layouts or Metal translation work on the target Macs. Assignment 02 verifies representative graphics/compute shaders and 06 fixes layout/compilation conventions. Shipped games consume precompiled shader assets and do not require a compiler or Vulkan SDK installation. [DXC SPIR-V mapping](https://github.com/microsoft/DirectXShaderCompiler/blob/main/docs/SPIR-V.rst).
+
+Select Dear ImGui docking in one host window. Multi-viewport OS windows are disabled in v1. Use a release's docking tag resolved to an immutable commit, or a documented docking-branch commit, rather than following the branch. Pin ImGuizmo and that exact ImGui revision as a compatibility pair in 16; test transform behavior in 17 and update the pair together. Upstream offers docking release tags, while ImGuizmo uses Dear ImGui and manipulates matrices. No particular pair has been compiled here. [Dear ImGui docking](https://github.com/ocornut/imgui/wiki/Docking), [ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo).
+
+Editor owns ImGui platform/backend integration and translates GUI draw data through engine rendering services. Engine headers must not expose ImGui types. Do not import ImGuizmo's example application, renderer, unrelated widgets or bundled dependency downloads. The runtime HUD is engine-owned and does not link these authoring libraries.
+
+## Import, validation and serialization boundaries
+
+cgltf parses `.gltf`/`.glb` and provides `cgltf_validate`; it does not itself establish the engine's supported rendering, decompression or image profile. The importer combines parser checks with checked arithmetic, accessor bounds, finite-value checks, resource budgets, project-contained URI resolution and an explicit required-extension allowlist. Unknown required extensions fail. Khronos Validator supplies an additional local fixture-validation oracle; it is not shipped or treated as a replacement for engine checks. [cgltf API](https://raw.githubusercontent.com/jkuhlmann/cgltf/master/cgltf.h), [Khronos glTF-Validator](https://github.com/KhronosGroup/glTF-Validator).
+
+Use stb_image's memory decoding paths behind the bounded importer, with only the image formats in the v1 profile enabled. Enforce file, dimension, pixel-count and decoded-byte limits before allocating; recheck decoder results. Configure a finite `STBI_MAX_DIMENSIONS` consistent with those limits. Color-texture sRGB conversion and linear data-map treatment are engine import decisions, not a decoder side effect. Radiance `.hdr` covers the initial HDRI source path; EXR and compressed texture formats require an explicit future decision. The selected header provides PNG/JPEG/HDR decoding and configurable dimension limits. [stb_image](https://raw.githubusercontent.com/nothings/stb/master/stb_image.h).
+
+nlohmann/json is the selected parser/writer, not the source of schema semantics. Engine-owned code defines document versions, required fields, numeric ranges, duplicate-key policy, references and migration/rejection behavior. Its upstream CMake interface target supports target-scoped integration. Keep authored source readers and external asset parsers/decoders in EngineTools; Engine's JSON use covers runtime configuration and manifests. Final Runtime consumes validated cooked assets. The early export spine consumes validated engine-owned development payloads prepared by EngineTools, never glTF or project-source imports at launch. It does not authorize linking EngineTools into Runtime. [nlohmann/json CMake integration](https://github.com/nlohmann/json#cmake).
+
+Catch2 v3 integrates with CMake/CTest. Other upstream projects may use their own test tools internally; do not adopt them as additional engine test frameworks or ship them. [Catch2 CMake integration](https://catch2-temp.readthedocs.io/en/latest/cmake-integration.html).
+
+## Audio import and runtime boundary
+
+Keep miniaudio for runtime device I/O, mixing and spatialization, fed through engine-owned PCM data sources. Compile its sole implementation with `MA_NO_DECODING` and `MA_NO_ENCODING`; configure all miniaudio consumers consistently. It must not pull a source decoder into Runtime through a resource-manager convenience path. These switches disable the documented decoder/encoder interfaces; assignment 24 must verify the selected playback configuration with cooked PCM. [miniaudio build configuration](https://raw.githubusercontent.com/mackron/miniaudio/master/miniaudio.h).
+
+EngineTools imports WAV through standalone dr_wav and Ogg Vorbis through Xiph libvorbisfile/libvorbis with its libogg dependency. These are private offline importer targets, pinned in 24 under the same immutable-input policy. dr_wav supplies memory/callback decoding; Vorbisfile supports application-controlled I/O callbacks and explicit setup/teardown. Decode through bounded input and output buffers, validate channel/rate/frame counts and checked decoded sizes, reject malformed/truncated streams, and publish engine-owned PCM only after complete validation. No source codec or container is needed by exported Runtime. [dr_wav API](https://raw.githubusercontent.com/mackron/dr_libs/master/dr_wav.h), [Vorbisfile callback API](https://xiph.org/vorbis/doc/vorbisfile/ov_open_callbacks.html), [Xiph Vorbis](https://github.com/xiph/vorbis), [Xiph Ogg](https://github.com/xiph/ogg).
+
+Assignment 24 fixes and tests concrete source limits, channel conversion, sample rates, decoded sample counts and loop boundaries before claiming import support. Library format recognition does not expand Shark's WAV/Ogg Vorbis profile. Do not substitute stb_vorbis silently: its documented floor-0, concatenation and beginning-truncation limitations would require an explicit narrower source contract. [stb_vorbis limitations](https://raw.githubusercontent.com/nothings/stb/master/stb_vorbis.c).
+
+## Consequences and evidence
+
+Third-party types stay inside the owning implementation except centrally configured GLM types permitted by the engine math contract. Shared scene/command schemas use engine-owned types. EngineTools depends on Engine; Editor and local authoring tools consume EngineTools; Runtime depends on Engine only. Test-only and build-only libraries must not enter packaged runtime dependency closures. Assignment 01 establishes boundary checks, and 14/31 inspect exported packages and licenses.
+
+All upstream sources above were reviewed on 2026-10-17. This record makes architecture selections, not claims of tested combinations, performance, audio playback or platform support. No dependencies were installed and no builds or hardware checks ran in assignment 00. Unknown compatibility has explicit owning assignments; a failing gate requires evidence and a concrete decision, never a silent stack replacement.

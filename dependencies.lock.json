@@ -1,0 +1,28 @@
+{
+  "schema_version": 1,
+  "dependencies": {
+    "Catch2": {
+      "version": "3.16.1",
+      "upstream": "https://github.com/catchorg/Catch2",
+      "url": "https://github.com/catchorg/Catch2/archive/refs/tags/v3.16.1.tar.gz",
+      "sha256": "d16bd1b8b2364918bd472cb216394acb93bde6784890df0d91bccfb3f28d777d",
+      "license": "BSL-1.0",
+      "license_files": ["LICENSE.txt"],
+      "owner_target": "Tests",
+      "cxx_standard": 20,
+      "assignment": "01",
+      "patches": [],
+      "transitive_dependencies": [],
+      "options": {
+        "CATCH_BUILD_TESTING": "OFF",
+        "CATCH_BUILD_EXAMPLES": "OFF",
+        "CATCH_BUILD_EXTRA_TESTS": "OFF",
+        "CATCH_BUILD_BENCHMARKS": "OFF",
+        "CATCH_INSTALL_DOCS": "OFF",
+        "CATCH_INSTALL_EXTRAS": "OFF",
+        "CATCH_DEVELOPMENT_BUILD": "OFF"
+      },
+      "verification": "Official archive downloaded and SHA-256 computed on 2026-10-17; release https://github.com/catchorg/Catch2/releases/tag/v3.16.1"
+    }
+  }
+}

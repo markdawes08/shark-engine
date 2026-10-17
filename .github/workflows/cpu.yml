@@ -1,0 +1,162 @@
+name: CPU foundation
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+    inputs:
+      inject_test_failure:
+        description: Enable the deliberately failing CTest to prove that CI becomes red
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cpu-${{ github.workflow }}-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: true
+
+jobs:
+  quality:
+    name: quality
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.13.5'
+          architecture: x64
+      - name: Install locked tools
+        run: >-
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.txt
+      - name: Validate documentation, workflow and source formatting
+        run: |
+          python tools/validate_contract.py --self-test
+          python tools/check_ci_config.py
+          python tools/check_format.py
+
+  cpu:
+    name: cpu-${{ matrix.id }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - {id: windows-debug, os: windows-2025-vs2026, arch: x64, preset: windows-debug}
+          - {id: windows-release, os: windows-2025-vs2026, arch: x64, preset: windows-release}
+          - {id: windows-asan, os: windows-2025-vs2026, arch: x64, preset: windows-asan}
+          - {id: linux-debug, os: ubuntu-24.04, arch: x64, preset: linux-debug, cc: gcc-13, cxx: g++-13}
+          - {id: linux-release, os: ubuntu-24.04, arch: x64, preset: linux-release, cc: gcc-13, cxx: g++-13}
+          - {id: linux-asan-ubsan, os: ubuntu-24.04, arch: x64, preset: linux-asan-ubsan, cc: clang-18, cxx: clang++-18}
+          - {id: macos-arm64-debug, os: macos-26, arch: arm64, preset: macos-debug, developer_dir: /Applications/Xcode_26.0.1.app/Contents/Developer}
+          - {id: macos-arm64-release, os: macos-26, arch: arm64, preset: macos-release, developer_dir: /Applications/Xcode_26.0.1.app/Contents/Developer}
+          - {id: macos-arm64-asan-ubsan, os: macos-26, arch: arm64, preset: macos-asan-ubsan, developer_dir: /Applications/Xcode_26.0.1.app/Contents/Developer}
+          - {id: macos-intel-debug, os: macos-15-intel, arch: x64, preset: macos-debug, developer_dir: /Applications/Xcode_16.4.app/Contents/Developer}
+          - {id: macos-intel-release, os: macos-15-intel, arch: x64, preset: macos-release, developer_dir: /Applications/Xcode_16.4.app/Contents/Developer}
+          - {id: macos-intel-asan-ubsan, os: macos-15-intel, arch: x64, preset: macos-asan-ubsan, developer_dir: /Applications/Xcode_16.4.app/Contents/Developer}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 30
+    env:
+      SHARK_PRESET: ${{ matrix.preset }}
+      SHARK_EXPECTED_ARCH: ${{ matrix.arch }}
+      SHARK_INJECT_FAILURE: ${{ inputs.inject_test_failure || false }}
+      CC: ${{ matrix.cc || '' }}
+      CXX: ${{ matrix.cxx || '' }}
+      DEVELOPER_DIR: ${{ matrix.developer_dir || '' }}
+      ASAN_OPTIONS: halt_on_error=1
+      UBSAN_OPTIONS: halt_on_error=1:print_stacktrace=1
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.13.5'
+          architecture: ${{ matrix.arch }}
+      - name: Install locked tools
+        run: >-
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.txt
+      - name: Configure, build and test on Windows
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $vswhere = Join-Path ${env:ProgramFiles(x86)} 'Microsoft Visual Studio/Installer/vswhere.exe'
+          $vsPath = & $vswhere -latest -products '*' -version '[18.0,19.0)' -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath
+          if (-not $vsPath) { throw 'Visual Studio 2026 with x64 tools is required' }
+          Import-Module (Join-Path $vsPath 'Common7/Tools/Microsoft.VisualStudio.DevShell.dll')
+          Enter-VsDevShell -VsInstallPath $vsPath -SkipAutomaticLocation -DevCmdArguments '-arch=x64 -host_arch=x64 -vcvars_ver=14.51 -winsdk=10.0.26100.0'
+          if ($env:VCToolsVersion -notlike '14.51.*') { throw "Expected MSVC toolset 14.51; found $env:VCToolsVersion" }
+          $env:PATH = "$env:pythonLocation;$env:pythonLocation/Scripts;$env:PATH"
+          python -c "import platform; assert platform.machine().lower() in ('amd64', 'x86_64')"
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $ciArgs = @('tools/ci.py', '--preset', $env:SHARK_PRESET)
+          if ($env:SHARK_INJECT_FAILURE -eq 'true') { $ciArgs += '--inject-test-failure' }
+          python @ciArgs
+          exit $LASTEXITCODE
+      - name: Configure, build and test on Linux or macOS
+        if: runner.os != 'Windows'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -c "import os, platform; expected = 'arm64' if os.environ['SHARK_EXPECTED_ARCH'] == 'arm64' else 'x86_64'; assert platform.machine() == expected"
+          if [[ "$RUNNER_OS" == 'macOS' ]]; then
+            test -d "$DEVELOPER_DIR"
+            export CC="$(xcrun --find clang)" CXX="$(xcrun --find clang++)"
+            xcodebuild -version
+          else
+            "$CXX" --version
+          fi
+          ci_args=(--preset "$SHARK_PRESET")
+          if [[ "$SHARK_INJECT_FAILURE" == 'true' ]]; then ci_args+=(--inject-test-failure); fi
+          python tools/ci.py "${ci_args[@]}"
+      - name: Preserve logs and test results, including failures
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: cpu-${{ matrix.id }}-${{ github.run_attempt }}
+          path: |
+            out/ci/${{ matrix.preset }}/
+            build/${{ matrix.preset }}/Testing/Temporary/LastTest.log
+          if-no-files-found: warn
+          retention-days: 30
+
+  runtime-only:
+    name: runtime-only
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      CC: gcc-13
+      CXX: g++-13
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c # v6.0.0
+        with:
+          python-version: '3.13.5'
+          architecture: x64
+      - name: Install locked tools
+        run: >-
+          python -m pip install --require-hashes --only-binary=:all: -r requirements-dev.txt
+      - name: Build the runtime with authoring and tests disabled
+        run: |
+          cmake --preset runtime-only
+          cmake --build --preset runtime-only --parallel 2
+          cmake --build --preset runtime-only --target shark_check_runtime_boundary
+          build/runtime-only/bin/Runtime --version
+      - name: Record toolchain
+        if: always()
+        run: python tools/toolchain_report.py --output out/ci/runtime-only/toolchain.json --build-dir build/runtime-only --check-pins
+      - name: Preserve runtime-only toolchain evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: runtime-only-${{ github.run_attempt }}
+          path: out/ci/runtime-only/
+          if-no-files-found: warn
+          retention-days: 30

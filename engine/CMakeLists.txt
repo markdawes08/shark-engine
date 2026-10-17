@@ -1,0 +1,5 @@
+configure_file(version_config.hpp.in "${CMAKE_CURRENT_BINARY_DIR}/generated/version_config.hpp" @ONLY)
+add_library(Engine STATIC src/bootstrap.cpp)
+target_include_directories(Engine PUBLIC include PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
+shark_configure_target(Engine)
+shark_classify_target(Engine runtime)

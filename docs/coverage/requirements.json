@@ -1,0 +1,542 @@
+{
+  "schema_version": 2,
+  "current_assignment": "01",
+  "engine": "Shark",
+  "roadmap": "AI_Game_Engine_Agent_Roadmap.txt",
+  "requirements": [
+    {
+      "id": "REQ-00",
+      "owner": "00",
+      "requirement": "Record the engine name and architecture decisions for executable/library targets, dependency choices, explicit OS/CPU/GPU baselines, source/imported/cooked formats, complete v1 scope, meters/axes/handedness/quaternion/matrix/Vulkan depth/color conventions, fixed simulation/render timing, stable IDs, ownership and the scene-mutation thread. Treat macOS Apple Silicon and Intel separately.",
+      "acceptance": [
+        "Architecture records make each listed choice explicit, including the supported glTF profile, alpha modes, extensions and future exclusions.",
+        "Every mandatory roadmap requirement has an owner assignment and an observable acceptance criterion in this manifest.",
+        "Unverified platform feasibility is assigned to 02; target intentions are distinguished from tested support, and stack replacement or scope reduction requires an explicit recorded decision.",
+        "The assignment handoff records the starting repository state, reviewable changes, validation results, unresolved limitations and assignment 01 as the next task."
+      ],
+      "planned_fixture": "ArchitectureContract review and machine-readable requirements-manifest validation; architecture decisions are documents rather than a running scene.",
+      "verification": { "status": "PASS", "reason": "Assignment 00 only: six ADRs reviewed against the complete roadmap; 39 owned requirements cover 00-35 and recurring contracts. python tools/validate_contract.py and --self-test pass on Windows 11/Python 3.13.5, including 14 negative checks. Evidence: docs/handoffs/00-architecture-contract.md. No engine implementation or platform support is claimed." }
+    },
+    {
+      "id": "REQ-01",
+      "owner": "01",
+      "requirement": "Create C++20 target-based CMake Engine, EngineTools, Editor, Runtime and Tests targets, exact dependency pins, configure/build/test presets, formatting, compiler warnings, one primary test framework registered with CTest, sanitizer configurations, test labels and CPU CI for Windows, macOS and Ubuntu 24.04. Provide AGENTS.md, architecture/handoff directories and actual repository-discoverable build/test, renderer-validation, component/API, import and release SKILL.md guidance.",
+      "acceptance": [
+        "A clean checkout configures, builds and runs a real starter test on every build platform using documented commands.",
+        "A deliberately failing test fails the CI job before the temporary failure is removed; evidence identifies the job and revision.",
+        "Build dependency inspection proves Runtime links neither Editor nor EngineTools nor editor GUI libraries.",
+        "AGENTS.md contains exact presets/commands, warnings/formatting, ownership/threading, errors, allowed dependencies, file locations, schema/version policy, test requirements, protected boundaries and handoff format.",
+        "The repository skill discovery location is documented, linked from AGENTS.md, versioned and verified discoverable; entry points remain minimal and do not pretend future APIs exist.",
+        "Required CI checks are documented and configured wherever repository permissions allow; supported compiler sanitizer configurations are available."
+      ],
+      "planned_fixture": "CleanCheckoutBuild matrix, DeliberateCTestFailure CI fixture, RuntimeDependencyBoundary, RepositorySkillDiscovery and SanitizerConfigure fixtures; these exercise build tooling outside a scene.",
+      "verification": { "status": "NOT_RUN", "reason": "Implementation is present: CMake targets/presets, locked Catch2/tools/actions, tests, sanitizer configurations, CI, AGENTS and five discoverable skills. Local results are recorded in docs/handoffs/01-build-foundation.md. The full gate remains open until actual Ubuntu 24.04 and both native macOS CI rows plus hosted deliberate-failure/red-to-green evidence pass after the user commits/pushes. No Git index entries or commits were created by the agent." }
+    },
+    {
+      "id": "REQ-02",
+      "owner": "02",
+      "requirement": "Qualify the pinned GLFW/NVRHI/Vulkan stack with a maintained real-hardware probe on each selected Windows, Linux, macOS Apple Silicon and macOS Intel baseline. Evaluate and pin the shipping Vulkan-on-Metal path actually tested, including shader translation, formats/features/device limits, portability, patches, redistribution and maintenance.",
+      "acceptance": [
+        "Each target creates a surface/device/swapchain, draws a textured primitive and a depth-tested draw, executes representative compute and reads back a known result.",
+        "HDR color/depth formats and shader compilation work; resize, minimize/restore and exit complete with clean validation for exercised paths.",
+        "Results identify exact OS/CPU/GPU/driver/dependency revisions and tested Apple Silicon versus Intel Vulkan-on-Metal paths.",
+        "Missing features and shipping constraints are recorded; a failing combination yields a minimal reproducer and concrete explicit decision request.",
+        "No dependent renderer architecture proceeds on assumed macOS compatibility, and no unsupported platform is represented as qualified."
+      ],
+      "planned_fixture": "GraphicsFeasibilityProbe hardware matrix, including separate MacAppleSiliconProbe and MacIntelProbe; external fixtures are required because a CPU scene cannot validate platform GPU compatibility.",
+      "verification": { "status": "NOT_RUN", "reason": "The graphics probe and real target-hardware qualification are not implemented or run; owner assignment 02." }
+    },
+    {
+      "id": "REQ-03",
+      "owner": "03",
+      "requirement": "Implement explicit subsystem ownership, predictable startup/shutdown, structured logging, assertions/error types, configuration, stable IDs, project-relative paths, controllable clocks and bounded work queues only where needed. Define callback/thread logging and allocation rules without a general service locator or hidden global state.",
+      "acceptance": [
+        "Injected partial startup failures clean up successfully initialized services in reverse order.",
+        "Repeated startup/shutdown, invalid configuration, resource ownership, Unicode paths and paths with spaces have passing tests.",
+        "Release diagnostics identify actionable failures and preserve structured error context.",
+        "Ownership and callback/thread allocation/logging policies are implemented and exercised at the relevant boundaries."
+      ],
+      "planned_fixture": "CoreLifecycle, StartupFailureInjection, ProjectPathResolution and ConfigurationErrors unit/integration fixtures; startup and ownership failures occur before a scene can run.",
+      "verification": { "status": "NOT_RUN", "reason": "Core services are not implemented; owner assignment 03." }
+    },
+    {
+      "id": "REQ-04",
+      "owner": "04",
+      "requirement": "Implement GLFW lifecycle, raw input events, focus/framebuffer/high-DPI handling and bounded fixed-step scheduling with simulation/render separation, pause and long-frame policies. Make input and time injectable.",
+      "acceptance": [
+        "Automated scheduling/input tests and platform smoke runs cover resize, minimize, close, focus loss, key release and high-DPI coordinates.",
+        "Focus loss cannot leave input stuck, and stalled frames cannot cause unbounded catch-up work.",
+        "Controllable clocks and injected input exercise pause and fixed-step/render-rate separation without requiring a real keyboard."
+      ],
+      "planned_fixture": "WindowLifecycle hardware smoke, InputFocusRelease and FixedStepAccumulator fixtures; FeatureWorld/FrameTiming is connected when assignment 10 adds the scene runner.",
+      "verification": { "status": "NOT_RUN", "reason": "Window/input/frame scheduling is not implemented; owner assignment 04." }
+    },
+    {
+      "id": "REQ-05",
+      "owner": "05",
+      "requirement": "Turn proven graphics choices into owned device/capability selection, swapchain recreation, frames in flight, fences/submission, safe resource retirement and validation logging. Define recover-or-exit behavior for device and surface loss.",
+      "acceptance": [
+        "Sustained present/resize/minimize/restore and repeated teardown loops show no relevant validation errors, use-after-free or unbounded resource growth.",
+        "Required-feature rejection identifies the exact missing capability.",
+        "Device/surface loss follows the recorded policy and does not hide fatal errors behind an endless retry."
+      ],
+      "planned_fixture": "PresentationLifecycle hardware stress, CapabilityRejection and GraphicsLossPolicy fixtures; these validate device infrastructure outside ordinary scene behavior.",
+      "verification": { "status": "NOT_RUN", "reason": "Production graphics infrastructure is not implemented; owner assignment 05." }
+    },
+    {
+      "id": "REQ-06",
+      "owner": "06",
+      "requirement": "Provide a pinned offline shader toolchain, SPIR-V artifacts, reproducible shader dependency tracking, defined binding/layout conventions, pipelines, buffer/texture uploads and offscreen render/readback. Exclude shader compiler dependencies from distribution builds.",
+      "acceptance": [
+        "A textured depth-tested cube renders both to a window and an offscreen target; readback pixels match documented tolerances.",
+        "Malformed shaders, binding/layout mismatches and missing artifacts produce useful failures.",
+        "Every target uses the same declared shader/layout conventions, dependency changes rebuild the correct shaders, and distribution dependency inspection finds no shader compiler."
+      ],
+      "planned_fixture": "TexturedCubeReadback GPU fixture, ShaderCompileErrors, ShaderDependencyRebuild and DistributionShaderBoundary; cube case joins FeatureWorld in assignment 10.",
+      "verification": { "status": "NOT_RUN", "reason": "Shader and basic GPU resource pipeline is not implemented; owner assignment 06." }
+    },
+    {
+      "id": "REQ-07",
+      "owner": "07",
+      "requirement": "Implement EnTT behind an engine-owned scene/ECS interface with generational runtime handles, persistent entity IDs, Name/Transform components, schema metadata, parent/child hierarchy and an explicit deferred mutation boundary.",
+      "acceptance": [
+        "Tests cover stale handles, generation reuse and creation/destruction requested during iteration.",
+        "Hierarchy tests reject cycles and cover parent deletion, world/local reparenting and the documented nonuniform-scale policy.",
+        "Scene mutation follows the defined thread/boundary rules; GPU and Lua references use checked IDs/handles instead of raw pointers surviving destruction.",
+        "Name/Transform schemas and public APIs remain independent of EnTT implementation details."
+      ],
+      "planned_fixture": "SceneHandles, HierarchyMutation and TransformConventions fixtures; FeatureWorld/Hierarchy and later Lua/GPU stale-reference fixtures connect as their layers land.",
+      "verification": { "status": "NOT_RUN", "reason": "Scene/ECS/transform implementation is absent; owner assignment 07." }
+    },
+    {
+      "id": "REQ-08",
+      "owner": "08",
+      "requirement": "Implement readable versioned project/scene documents, stable references, validation, transactional load, atomic save/replace, missing-reference diagnostics, a small migration framework and project-root resolution boundaries.",
+      "acceptance": [
+        "Representative hierarchy round trips preserve IDs and data; a genuine older fixture migrates successfully and unknown future versions reject explicitly.",
+        "Malformed/truncated files, duplicate IDs and missing references produce actionable errors without activating a partially loaded scene.",
+        "Interrupted-save and failed-load tests preserve the previous durable file/current scene.",
+        "Resource paths cannot escape the declared project root."
+      ],
+      "planned_fixture": "ProjectSceneRoundTrip, SceneMigrationV1, FutureVersionRejection, InterruptedSave and ProjectRootEscape fixtures; FeatureWorld/Persistence provides the representative authored hierarchy.",
+      "verification": { "status": "NOT_RUN", "reason": "Project/scene persistence is not implemented; owner assignment 08." }
+    },
+    {
+      "id": "REQ-09",
+      "owner": "09",
+      "requirement": "Implement shared typed create/delete/reparent/component-edit commands and queries, validation, atomic transactions, revision checks, stable results, undo/redo and documented duplicate-request behavior. Distinguish asynchronous jobs from atomic edits; gameplay shares validation/safe mutation without recording every tick in undo.",
+      "acceptance": [
+        "Replaying, undoing and redoing a command sequence produces equivalent scene states.",
+        "Invalid transactions roll back completely; stale revisions, missing entities and duplicate requests have tested documented outcomes.",
+        "All authoritative authoring entry points use the same command/service layer and mutation boundaries.",
+        "Long-running jobs report their lifecycle separately from transaction commit and cannot publish partial edits."
+      ],
+      "planned_fixture": "CommandReplayUndoRedo, TransactionRollback, RevisionConflict and RequestRetry fixtures; FeatureWorld/AuthoringCommands is added with assignment 10.",
+      "verification": { "status": "NOT_RUN", "reason": "Shared authoring commands are not implemented; owner assignment 09." }
+    },
+    {
+      "id": "REQ-10",
+      "owner": "10",
+      "requirement": "Create a saved growing FeatureWorld, engine-owned headless simulation runner, deterministic seeds/timestep/input controls, scene assertions, result files, CPU/GPU modes and machine-readable feature/component/command/Lua API coverage manifests.",
+      "acceptance": [
+        "Every currently supported component and command maps to passing automated behavior tests and a FeatureWorld case or documented external-system fixture.",
+        "A deliberate scene assertion fails the run with useful entity/case context and machine-readable results.",
+        "CPU-only headless results explicitly do not claim renderer initialization; GPU tests use the appropriate mode.",
+        "Subsequent assignments extend manifests and scene/isolated fixtures when each feature lands rather than deferring coverage to assignment 32."
+      ],
+      "planned_fixture": "FeatureWorld/current-surface cases, IntentionalSceneAssertionFailure and CoverageManifestAudit; the audit inspects mappings while the scene runner exercises behavior.",
+      "verification": { "status": "NOT_RUN", "reason": "FeatureWorld, runner and executable surface manifests are not implemented; owner assignment 10." }
+    },
+    {
+      "id": "REQ-11",
+      "owner": "11",
+      "requirement": "Implement asset IDs/metadata, source/imported/cooked boundaries, dependency tracking, cache keys including content/settings/tool versions, bounded background import jobs, progress/cancellation, atomic publication, missing-asset behavior and a focused importer interface.",
+      "acceptance": [
+        "Renaming or moving source assets preserves references; changed content/settings/tool versions invalidate the correct dependents.",
+        "Matching work deduplicates, and cancelled/failed imports never publish corrupt cache output.",
+        "The same declared inputs and tool versions reproduce import output.",
+        "Missing assets follow the explicit documented policy, and job concurrency remains bounded."
+      ],
+      "planned_fixture": "AssetRenameMove, ImportDependencyInvalidation, ImportDedupCancelFailure and ImportReproducibility fixtures; FeatureWorld/AssetIdentity uses the imported references.",
+      "verification": { "status": "NOT_RUN", "reason": "Asset database/import/cache is not implemented; owner assignment 11." }
+    },
+    {
+      "id": "REQ-12",
+      "owner": "12",
+      "requirement": "Implement the declared useful static glTF 2.0 profile for .gltf/.glb, node transforms, indexed primitives, normals/tangents/UVs, core metallic-roughness descriptions, referenced supported images and samplers, color/data decoding and preservation of alpha/double-sided fields. Validate accessor bounds, offsets and sizes and distinguish parser recognition from supported rendering/decompression.",
+      "acceptance": [
+        "Licensed, locally available fixtures exercise embedded/external buffers/images, missing textures, negative/nonuniform transforms and malformed accessors/files.",
+        "Sparse accessors are tested if supported, otherwise explicitly rejected according to the recorded profile.",
+        "Unsupported required extensions fail clearly; supported optional-extension/fallback behavior matches the profile without claiming full glTF support.",
+        "Path traversal and unbounded allocations/sizes reject; normal tests perform no network downloads.",
+        "Color textures decode as sRGB and data maps remain linear; imported alpha modes and double-sided flags survive serialization for subsequent rendering."
+      ],
+      "planned_fixture": "LicensedGLTFProfile corpus with EmbeddedExternal, SparsePolicy, MalformedAccessor, RequiredExtension, ImageColorSpace and PathTraversal cases; FeatureWorld/ImportedStaticMeshes uses accepted assets.",
+      "verification": { "status": "NOT_RUN", "reason": "glTF import is not implemented; owner assignment 12, with final material rendering acceptance owned by 26." }
+    },
+    {
+      "id": "REQ-13",
+      "owner": "13",
+      "requirement": "Implement perspective/orthographic Camera and MeshRenderer components, scene extraction, depth-tested meshes, bounds/frustum culling and a resizable offscreen viewport. Supply built-in cube/plane assets with stable IDs and clearly identify temporary debug/unlit material limitations.",
+      "acceptance": [
+        "Runtime loads FeatureWorld and an imported scene and verifies camera transforms, clipping, winding, visibility, viewport resizing and culling.",
+        "Visible entities can be destroyed/reloaded without resource errors.",
+        "Image tests validate geometry and camera behavior without claiming final PBR quality.",
+        "A fresh project can author cube/plane geometry using stable asset IDs without downloading models."
+      ],
+      "planned_fixture": "FeatureWorld/Cameras, FeatureWorld/ImportedStaticMeshes, FeatureWorld/BuiltinGeometry and VisibleEntityReload GPU fixtures.",
+      "verification": { "status": "NOT_RUN", "reason": "Basic scene rendering/cameras are not implemented; owner assignment 13." }
+    },
+    {
+      "id": "REQ-14",
+      "owner": "14",
+      "requirement": "Implement minimal current-host standalone export staging Runtime, startup project, scene/assets and runtime libraries using a documented temporary development asset representation, with final cooking replacement assigned to 31.",
+      "acceptance": [
+        "On each target OS an export launches from outside the checkout and a different working directory without Editor, source code, build tools or Vulkan SDK installation.",
+        "Only declared runtime/driver prerequisites are needed and dependency inspection finds no editor/authoring libraries.",
+        "Host/target restrictions are explicit; one host is not represented as exporting arbitrary platforms."
+      ],
+      "planned_fixture": "EarlyStandaloneExport clean-target matrix; packaging/environment boundaries require an external process and clean machine rather than a FeatureWorld-only assertion.",
+      "verification": { "status": "NOT_RUN", "reason": "Early export is not implemented; owner assignment 14." }
+    },
+    {
+      "id": "REQ-15",
+      "owner": "15",
+      "requirement": "Implement CLI and local versioned structured protocol with schema discovery, project create/open, scene queries/commands, save/load, import/job status, scoped text asset read/write, diagnostics, deterministic runs, screenshots and current export. Permit later Lua source authoring through these public operations; add a thin MCP adapter if the chosen agent environment needs one; omit authoring services from shipped games.",
+      "acceptance": [
+        "A separate process creates a scene, imports/modifies an asset, saves/reopens, captures a frame and exports without UI interaction.",
+        "Invalid requests, protocol-version mismatch, cancellation and retries have tested useful results.",
+        "Every authoritative mutation routes through assignment 09 validation/commands; project-scoped file operations cannot escape their root.",
+        "Discovery exposes supported schemas and services; later owning assignments extend materials, prefabs, play controls and other authoring surfaces.",
+        "Shipped runtime dependency/service inspection confirms local authoring facilities are absent."
+      ],
+      "planned_fixture": "PublicAuthoringProcess scenario, ProtocolInvalidRequests, ProtocolVersionMismatch, CancellationRetry and ScopedTextAsset fixtures; FeatureWorld/AgentAuthoredScene provides saved scene equivalence.",
+      "verification": { "status": "NOT_RUN", "reason": "Agent command interface and discovery are not implemented; owner assignment 15." }
+    },
+    {
+      "id": "REQ-16",
+      "owner": "16",
+      "requirement": "Implement editor viewport, hierarchy, schema-driven component inspector where practical, asset browser, console, project open/save, selection and command-based undo/redo using the same authoritative scene/services as automation.",
+      "acceptance": [
+        "Equivalent UI-driven and API-driven operations produce equivalent saved scene state.",
+        "Repeated entity select/edit/delete, asset import and project reopen workflows succeed.",
+        "Editor focus and shortcuts do not leak into gameplay input.",
+        "Runtime builds independently of editor GUI libraries and the editor maintains no second authoritative mutable scene."
+      ],
+      "planned_fixture": "EditorApiStateEquivalence, EditorLifecycle and EditorFocusRouting fixtures; FeatureWorld/EditorAuthoring is the representative saved project.",
+      "verification": { "status": "NOT_RUN", "reason": "Editor shell is not implemented; owner assignment 16." }
+    },
+    {
+      "id": "REQ-17",
+      "owner": "17",
+      "requirement": "Implement viewport navigation, picking and verified translate/rotate/scale gizmos with local/world modes and snapping. A continuous drag commits one undo transaction; define supported scale and rejected shear/singular-transform behavior.",
+      "acceptance": [
+        "Tests cover parented/rotated-parent transforms, snapping, high-DPI picking, viewport offsets and supported scale cases.",
+        "Unsupported shear/singular transforms reject explicitly rather than corrupting component transforms.",
+        "One undo reverses an entire drag, and the public agent API reproduces the same resulting transform."
+      ],
+      "planned_fixture": "FeatureWorld/GizmoHierarchy, GizmoDragUndo, HighDpiViewportPicking and GizmoAgentEquivalence fixtures.",
+      "verification": { "status": "NOT_RUN", "reason": "Viewport navigation/picking/gizmos are not implemented; owner assignment 17." }
+    },
+    {
+      "id": "REQ-18",
+      "owner": "18",
+      "requirement": "Integrate Jolt rigid bodies, box/sphere/capsule colliders, static/dynamic/kinematic modes, gravity, collision layers, triggers and fixed-step synchronization. Define transform authority, parenting/scale and render-pose interpolation per mode, with editor and command-authorable settings.",
+      "acceptance": [
+        "Tests exercise falling/resting bodies, filtering, kinematic movement, trigger transitions, teardown and body removal during queued events.",
+        "Equivalent fixed-step inputs at different render rates stay within documented tolerances, without asserting cross-platform bitwise determinism.",
+        "Mode-specific transform ownership and scale/parent constraints prevent conflicting scene/physics writes.",
+        "Physics component serialization and editor/agent authoring preserve declared settings."
+      ],
+      "planned_fixture": "FeatureWorld/RigidBodies, FeatureWorld/CollisionLayers, FeatureWorld/Triggers, PhysicsRenderRateTolerance and PhysicsQueuedRemoval fixtures.",
+      "verification": { "status": "NOT_RUN", "reason": "3D physics core is not implemented; owner assignment 18." }
+    },
+    {
+      "id": "REQ-19",
+      "owner": "19",
+      "requirement": "Implement Lua VM and Script component lifecycle with documented initialization/update/fixed-update/destruction order, entity/component access, log/math/time helpers, stack-trace diagnostics, permitted libraries, error policy and appropriate allocator/instruction limits. Use a deliberately small versioned API with checked handles; do not call the embedded VM a complete hostile-code sandbox.",
+      "acceptance": [
+        "Tests cover callback order, syntax/runtime failures, stale handles, missing components, repeated scene loads and script teardown.",
+        "The runaway-script policy leaves the editor recoverable and reports actionable script context.",
+        "Bindings never expose borrowed raw component pointers across mutation boundaries.",
+        "Every exposed API entry is registered in the Lua manifest and has valid/invalid behavior tests plus a FeatureWorld script exercise.",
+        "Lua sources can be created/edited using the existing project-scoped public authoring operations."
+      ],
+      "planned_fixture": "FeatureWorld/ScriptLifecycle, FeatureWorld/CoreLuaApi, LuaSyntaxRuntimeErrors, LuaRunawayRecovery and LuaStaleHandles fixtures.",
+      "verification": { "status": "NOT_RUN", "reason": "Lua VM/core gameplay API is not implemented; owner assignment 19." }
+    },
+    {
+      "id": "REQ-20",
+      "owner": "20",
+      "requirement": "Implement physics force/impulse/velocity controls, supported teleports and kinematic moves, raycasts/overlaps, collision/trigger callbacks, debug visualization and Lua bindings. Buffer worker events and deliver script callbacks only at the defined main-thread simulation boundary.",
+      "acceptance": [
+        "Tests cover masks/filters, callback order, destroyed participants, body creation/destruction requested inside callbacks, pause and scene teardown.",
+        "Instrumentation verifies scripts never execute directly in physics worker callbacks.",
+        "All exposed operations have valid/invalid-input tests, API-manifest mappings and scene cases.",
+        "Debug visualization and query results match the tested physics objects and filtering rules."
+      ],
+      "planned_fixture": "FeatureWorld/PhysicsQueries, FeatureWorld/ContactScripts, PhysicsCallbackMutation, PhysicsWorkerEventBoundary and PhysicsQueryInvalidInput fixtures.",
+      "verification": { "status": "NOT_RUN", "reason": "Physics queries/events/Lua control are not implemented; owner assignment 20." }
+    },
+    {
+      "id": "REQ-21",
+      "owner": "21",
+      "requirement": "Implement versioned prefab assets with stable internal references, per-instance ID remapping, simple documented overrides and Lua spawn/destroy. Define transform/script/physics initialization ordering and either detect nested-prefab cycles or explicitly reject nesting.",
+      "acceptance": [
+        "Many instances receive independent IDs and correct instance-local references; editing one instance does not alter another.",
+        "Spawn/destroy requests during update/contact callbacks and scene reload follow the safe mutation and initialization order.",
+        "Repeated spawn/destroy does not leak VM, physics or GPU resources.",
+        "Prefab version validation, overrides and nesting/cycle policy have executable tests and editor/agent authoring coverage."
+      ],
+      "planned_fixture": "FeatureWorld/PrefabInstances, FeatureWorld/ScriptSpawning, PrefabReferenceRemap, PrefabNestingPolicy and SpawnDestroyLifetime fixtures.",
+      "verification": { "status": "NOT_RUN", "reason": "Prefabs/spawning are not implemented; owner assignment 21." }
+    },
+    {
+      "id": "REQ-22",
+      "owner": "22",
+      "requirement": "Implement separate authored/edit and runtime/play scene states with play, pause, exactly-one-fixed-tick step and stop commands, isolated script/physics state and explicit teardown. Discard play changes by default; any apply-back requires its own specification and tests.",
+      "acceptance": [
+        "Repeated play/stop restores identical authored state and leaves no scripts or bodies from previous sessions.",
+        "Pause freezes simulation, and single-step advances exactly one simulation tick.",
+        "The agent API performs the same transitions as UI and reports completion.",
+        "Play-time changes do not silently overwrite authored state."
+      ],
+      "planned_fixture": "FeatureWorld/PlayLifecycle, PlayStopStateIsolation, PauseSingleTick and AgentPlayControls fixtures.",
+      "verification": { "status": "NOT_RUN", "reason": "Editor play/pause/step/stop is not implemented; owner assignment 22." }
+    },
+    {
+      "id": "REQ-23",
+      "owner": "23",
+      "requirement": "Implement named input actions, rebinding-ready mappings, deterministic injection, gameplay/editor focus routing and Lua input access. Provide a minimal runtime text/HUD layer for score, pause, restart and game-over messages using licensed fonts and resize-aware layout, without becoming a general-purpose UI toolkit.",
+      "acceptance": [
+        "The same recorded inputs drive equivalent scripted gameplay in editor, Runtime and tests.",
+        "Tests verify repeat/hold/release semantics, focus loss and input isolation while editing.",
+        "HUD text lays out at supported window sizes and survives resize.",
+        "Exported Runtime displays HUD without Dear ImGui authoring dependencies, and font origin/license metadata and notices are present."
+      ],
+      "planned_fixture": "FeatureWorld/InputActions, FeatureWorld/RuntimeHud, RecordedInputParity, InputFocusIsolation, HudResize and ExportedHud fixtures.",
+      "verification": { "status": "NOT_RUN", "reason": "Gameplay actions/runtime HUD are not implemented; owner assignment 23." }
+    },
+    {
+      "id": "REQ-24",
+      "owner": "24",
+      "requirement": "Implement miniaudio AudioSource/AudioListener components, supported audio import, play/pause/stop/loop/volume, basic 3D attenuation and Lua controls. Define source lifetime, voice limits and scene-to-audio queue; prohibit blocking file I/O and general scene mutation inside real-time audio callbacks.",
+      "acceptance": [
+        "Offline/null-device tests verify playback state, mixing, attenuation and cleanup.",
+        "Real-device checks establish audible output on supported platforms and verify missing-device/device-change behavior.",
+        "Repeated play/stop and scene unload retain no voices; voice limits and callback/thread ownership rules are exercised.",
+        "FeatureWorld includes audible and script-driven examples, and all exposed audio APIs map to behavior tests."
+      ],
+      "planned_fixture": "FeatureWorld/AudioSpatial, FeatureWorld/ScriptAudio, OfflineAudioMix, AudioVoiceLifetime and RealAudioDevice platform fixtures; offline success does not establish hardware playback.",
+      "verification": { "status": "NOT_RUN", "reason": "Audio integration is not implemented and real playback is unverified; owner assignment 24." }
+    },
+    {
+      "id": "REQ-25",
+      "owner": "25",
+      "requirement": "Implement floating-point scene color, explicit sRGB input decode, linear intermediates, exposure, a documented tonemapper and final output encoding. Define transparent composition and HUD/editor overlay ordering; SDR display output from HDR scene lighting satisfies v1.",
+      "acceptance": [
+        "Known color ramps and synthetic bright values verify the transform without double gamma, unexpected clipping, NaNs or data-map decoding errors.",
+        "Resize/recreation leaves no stale bindings or attachments.",
+        "Stable approved visual baselines and memory/performance costs are recorded on named hardware.",
+        "Transparency and overlays are composed in the declared color spaces and stages."
+      ],
+      "planned_fixture": "FeatureWorld/HdrColorRamps, FeatureWorld/Tonemapping, HdrBrightValueReadback, HdrResize and OverlayColorSpace GPU fixtures.",
+      "verification": { "status": "NOT_RUN", "reason": "HDR/color/tonemapping pipeline is not implemented; owner assignment 25." }
+    },
+    {
+      "id": "REQ-26",
+      "owner": "26",
+      "requirement": "Render imported core glTF metallic-roughness PBR with base color, normal, metallic/roughness, emissive and occlusion inputs; directional/point/spot lights; material editing; opaque/masked/blended alpha and double-sided materials. Define light limits, transparency sorting and unsupported cases without silent material substitutions.",
+      "acceptance": [
+        "Reference spheres and licensed glTF fixtures cover metallic/roughness extremes, normals/tangents, all alpha modes, double-sided materials and linear color behavior.",
+        "Material serialization, public command edits and selected documented Lua material/light controls have tests and FeatureWorld mappings.",
+        "Approved image comparisons validate direct lighting and material mapping with explicit tolerances and numerical-stability checks.",
+        "Import-to-render mapping preserves every supported material field; unsupported cases report the declared policy and light limits are enforced."
+      ],
+      "planned_fixture": "FeatureWorld/PbrSpheres, FeatureWorld/AlphaModes, FeatureWorld/DirectLightTypes, LicensedGLTFMaterials, MaterialCommandRoundTrip and PbrNumericalStability fixtures.",
+      "verification": { "status": "NOT_RUN", "reason": "PBR/direct lighting is not implemented; owner assignment 26." }
+    },
+    {
+      "id": "REQ-27",
+      "owner": "27",
+      "requirement": "Implement HDRI decode, environment orientation/intensity, sky, diffuse irradiance, prefiltered specular environment and BRDF lookup. Bake/cache derived data in the cooker; include a pinned licensed Poly Haven fixture with origin/license metadata and editor/agent environment controls.",
+      "acceptance": [
+        "Tests verify orientation, roughness-dependent reflections, seams, energy consistency and regeneration after source/settings changes.",
+        "Derived IBL data is reused instead of being expensively recomputed on every launch.",
+        "Exported Runtime loads cooked environment data without network access.",
+        "A reproducible material-lighting reference scene and licensed fixture metadata are present; editor/API controls serialize and reproduce environment settings."
+      ],
+      "planned_fixture": "FeatureWorld/HdriIblReference, IblOrientationSeams, IblRoughnessEnergy, EnvironmentCacheInvalidation and CookedEnvironmentOffline fixtures.",
+      "verification": { "status": "NOT_RUN", "reason": "HDRI/IBL is not implemented; owner assignment 27." }
+    },
+    {
+      "id": "REQ-28",
+      "owner": "28",
+      "requirement": "Implement cascaded directional shadow maps with documented PCF, stable cascades, depth/normal bias, transitions and resolution/quality controls. Implement spotlight shadows if included in the chosen v1 profile, explicitly list shadow-casting light types and unshadowed point lights, and do not imply PCF produces PCSS contact-hardening penumbrae.",
+      "acceptance": [
+        "Reference cases cover acne, detached shadows, thin geometry, masked materials, cascade boundaries and camera movement.",
+        "GPU cost is measured and bounded on the declared quality settings.",
+        "Quality controls serialize and are reachable from editor and agent tools.",
+        "The declared light-type shadow support and chosen filtering behavior match rendered results and documentation."
+      ],
+      "planned_fixture": "FeatureWorld/ShadowCascades, FeatureWorld/MaskedShadowCasters, ShadowBiasThinGeometry, ShadowCameraStability and ShadowQualityCost GPU fixtures.",
+      "verification": { "status": "NOT_RUN", "reason": "Filtered shadow mapping is not implemented; owner assignment 28." }
+    },
+    {
+      "id": "REQ-29",
+      "owner": "29",
+      "requirement": "Implement a documented quality SSAO method using depth/normals, edge-aware filtering and authorable quality/radius controls. Apply AO to appropriate indirect terms without darkening emissive or multiplying the final image indiscriminately. If temporal accumulation is selected, provide complete motion/history inputs and rejection.",
+      "acceptance": [
+        "Approved references compare thin objects, flat walls, corners, silhouettes and moving cameras for halos, flicker, noise, scale sensitivity and contact quality.",
+        "GPU timing is recorded and disabling AO gives a clean validated path.",
+        "Editor/agent controls serialize and FeatureWorld exposes meaningful comparison cases.",
+        "Emissive/direct/final-image handling follows the declared indirect-lighting composition; temporal history, if present, rejects invalid history correctly."
+      ],
+      "planned_fixture": "FeatureWorld/AoComparison, AoThinSilhouette, AoMovingCamera, AoScaleContact, AoDisabledPath and AoComposition GPU fixtures.",
+      "verification": { "status": "NOT_RUN", "reason": "Quality SSAO is not implemented; owner assignment 29." }
+    },
+    {
+      "id": "REQ-30",
+      "owner": "30",
+      "requirement": "Implement dependency-aware asset reload, shader replacement only after successful compilation, explicit Lua reload semantics, autosave/recovery, dirty state and atomic safe-boundary resource swaps. Preserve the last valid replacement or stop affected behavior with an explicit error according to the recorded policy.",
+      "acceptance": [
+        "Texture/material/script edits while running update correctly; malformed replacements and file rename/delete follow the explicit policy.",
+        "Interrupted save/import work recovers the last durable scene without activating half-written files.",
+        "Pending GPU/physics/audio work never accesses destroyed replacement resources.",
+        "Dirty state, successful shader compilation gating and script reload initialization/lifetime behavior have repeatable tests."
+      ],
+      "planned_fixture": "FeatureWorld/LiveReload, MalformedReplacementRetention, InterruptedAutosaveRecovery, ReloadRenameDelete and AtomicResourceSwapLifetime fixtures.",
+      "verification": { "status": "NOT_RUN", "reason": "Reload/recovery is not implemented; owner assignment 30." }
+    },
+    {
+      "id": "REQ-31",
+      "owner": "31",
+      "requirement": "Replace early export with versioned validated cooked manifests, reachable dependency closure, explicit dynamic cook roots/include-list or labels, precompiled shaders, derived IBL, scripts/fonts/audio and missing-reference validation. Package runtime redistributables/licenses per platform with editor/CLI export progress and machine-readable failure status; shipped Runtime imports no source assets and links no authoring tools.",
+      "acceptance": [
+        "Each supported build host exports a game that launches on a clean target outside the checkout without compiler, editor, SDK or source asset dependencies.",
+        "All startup scenes and prefab-referenced assets load, including a prefab and a sound selected only by script through runtime-assembled asset IDs.",
+        "Explicit cook roots/include-lists capture dynamic dependencies that static scene references cannot discover, and missing dependencies fail with useful diagnostics.",
+        "Cooking is reproducible for pinned inputs, invalid export fails atomically and progress/failure status is machine-readable.",
+        "Packages contain appropriate redistributables and licenses, with no claim that signed/notarized packages are byte-identical."
+      ],
+      "planned_fixture": "FinalCookReproducibility, DynamicPrefabAndSoundRoots, AtomicExportFailure, RuntimeCookedBoundary and CleanTargetGameLaunch platform fixtures; packaging checks require an external clean-machine environment.",
+      "verification": { "status": "NOT_RUN", "reason": "Final cooking/distribution is not implemented; owner assignment 31." }
+    },
+    {
+      "id": "REQ-32",
+      "owner": "32",
+      "requirement": "Audit complete feature/component/command/Lua manifests, FeatureWorld, isolated edge-case fixtures and CI coverage reports. Reconcile authoring, serialization, Lua, agent access and export across the supported surface and fix concrete gaps.",
+      "acceptance": [
+        "Every supported component and exposed script API maps to an executable behavior test and scene exercise; each non-scene feature maps to an appropriate documented external fixture.",
+        "CI fails a deliberately introduced coverage hole and reports the uncovered entry.",
+        "GPU suites exercise PBR, IBL, shadows, SSAO and tonemapping separately and combined.",
+        "Unsupported features are explicit; no stub or mapping percentage substitutes for behavior tests, and no coverage claim promises absence of every bug."
+      ],
+      "planned_fixture": "CompleteCoverageAudit, IntentionalCoverageHole, FeatureWorld/full-surface, FeatureWorld/CombinedLighting and isolated graphics/edge-case suites.",
+      "verification": { "status": "NOT_RUN", "reason": "Complete implemented-surface audit awaits assignments 01-31; owner assignment 32." }
+    },
+    {
+      "id": "REQ-33",
+      "owner": "33",
+      "requirement": "Have a fresh agent use only documented public authoring tools to build a playable Tetris-style falling-block project with controls, scoring, pause/restart, game-over and simple audio, plus a small 3D physics sandbox. Lua may be written through public scoped text operations; engine patching and unsupported private-format edits cannot bypass missing tools.",
+      "acceptance": [
+        "Without mouse intervention the agent creates, saves, reopens, runs scripted checks, captures results, exports and launches the game.",
+        "Checks verify movement, rotation, line clearing, scoring, game over, pause/restart and sound behavior.",
+        "A separate physics sandbox proves 3D collisions, spawning and sound interactions that grid-based Tetris gameplay does not naturally exercise.",
+        "The run uses only public documented tools and discovered tool gaps are fixed before accepting the gate."
+      ],
+      "planned_fixture": "FreshAgentTetrisAcceptance and FreshAgentPhysicsSandboxAcceptance external authoring scenarios with saved projects/input recordings/results; a fresh-agent workflow cannot be established by a preauthored FeatureWorld scene alone.",
+      "verification": { "status": "NOT_RUN", "reason": "Public authoring stack and autonomous game-build acceptance are not implemented; owner assignment 33." }
+    },
+    {
+      "id": "REQ-34",
+      "owner": "34",
+      "requirement": "Qualify measured frame-time/memory budgets on named hardware with CPU/GPU profiling, sanitizers, bounded parser/protocol fuzzing, repeated open/play/stop/export, long spawn/destroy runs, import/storage failure tests and graphics/device diagnostics. Tie fixes and budgets to measured release problems.",
+      "acceptance": [
+        "The agreed suite has no unresolved critical crash, corruption, unsafe lifetime or sustained resource-growth issue.",
+        "Quantitative performance/memory budgets are established from measured baselines and enforced.",
+        "Results identify remaining limitations, exact hardware/platform coverage and failures; critical failures are fixed before release-candidate declaration.",
+        "Tests are not made to pass through widened tolerances, automatic baseline replacement or retries masking real failures."
+      ],
+      "planned_fixture": "NamedHardwarePerformanceBudget, LifecycleSoak, SpawnDestroySoak, ParserProtocolFuzz, StorageFaultInjection and DeviceFailureDiagnostics qualification suites; these measure release properties beyond a short scene run.",
+      "verification": { "status": "NOT_RUN", "reason": "Reliability/performance qualification awaits implemented engine features; owner assignment 34." }
+    },
+    {
+      "id": "REQ-35",
+      "owner": "35",
+      "requirement": "Deliver versioned editor/runtime packages, samples, quickstart/build instructions, public Lua/automation reference, troubleshooting, supported-platform matrix, dependency notices, release notes and migration/upgrade policy. Automate selected signing/notarization where authorized credentials exist, keep secrets out of the repository and archive evidence/build inputs/symbols before tagging the reviewed release candidate.",
+      "acceptance": [
+        "Clean-machine install/launch and exported-game checks pass on every declared OS/CPU/GPU baseline, including Ubuntu 24.04 and only explicitly tested later releases.",
+        "Required distribution-channel signing/notarization is verified with the actual selected path.",
+        "Missing credentials or target hardware remain explicit release blockers rather than waived checks.",
+        "Documentation, sample projects, notices, upgrade policy, test evidence, exact build inputs and symbols accompany a reviewed tagged release candidate."
+      ],
+      "planned_fixture": "ReleaseCleanInstall matrix, ReleasedSampleExport, DistributionSigningVerification and ReleaseEvidenceArchive fixtures; installer/channel checks need external target systems.",
+      "verification": { "status": "NOT_RUN", "reason": "Release packaging/installation/handoff is not implemented; owner assignment 35." }
+    },
+    {
+      "id": "REQ-CROSS-ASSIGNMENT-CONTRACT",
+      "owner": "01",
+      "requirement": "Establish the recurring assignment workflow and handoff contract: read AGENTS/architecture/current assignment/previous handoff, verify branch/commit/worktree, preserve unrelated work, implement only the assigned increment and extend existing systems. Continue applying this contract for assignments 01-35.",
+      "acceptance": [
+        "Each assignment provides one reviewable change set or PR, updates docs/public-format migration-or-rejection policy and coverage/handoff records, and states the exact next task.",
+        "Each assignment's evidence records exact commands, revision, platform, PASS/FAIL/NOT_RUN, unverified hardware and blockers; a missing device/runner is never reported PASS.",
+        "No-op APIs, fake success and silently skipped error/lifetime/cleanup behavior cannot satisfy a gate.",
+        "An assignment does not advance while its required gate is unmet; later layers connect earlier components when those layers are introduced."
+      ],
+      "planned_fixture": "AssignmentHandoffReview for each increment; process evidence is reviewed outside FeatureWorld.",
+      "verification": { "status": "NOT_RUN", "reason": "Recurring repository workflow must be established in assignment 01 and followed throughout assignments 01-35." }
+    },
+    {
+      "id": "REQ-CROSS-TEST-POLICY",
+      "owner": "01",
+      "requirement": "Establish meaningful engine-owned unit tests, interaction/loading/callback/lifecycle integration tests, fixed seeds/controllable clocks/explicit timeouts and tiered CI. Add subsystem-specific suites in their owner assignments instead of claiming unsupported generic coverage.",
+      "acceptance": [
+        "Fast CPU checks run in ordinary CI; GPU/hardware/soak/packaged checks run on appropriate named runners.",
+        "GPU validation includes Vulkan/NVRHI messages, readback checks and visual comparisons with explicit tolerances/platform baselines; approving a baseline change is intentional, never automatic failure recovery.",
+        "Audio qualification includes both offline/null-device and real-device checks, with their conclusions kept distinct.",
+        "Tests avoid arbitrary sleeps and do not require identical pixels or bitwise physics outcomes across all architectures; software rendering is not substituted for target-GPU qualification.",
+        "Components, script bindings, command schemas and scene cases are tested as soon as those layers exist; incompatible/error configurations use isolated fixtures."
+      ],
+      "planned_fixture": "TestingPolicyReview plus CI tier configuration; concrete renderer, audio and lifecycle fixtures are owned by their subsystem assignments and referenced above.",
+      "verification": { "status": "NOT_RUN", "reason": "Testing policy/tooling begins in assignment 01 and is enforced with subsystem suites as each owner assignment lands." }
+    },
+    {
+      "id": "REQ-CROSS-RUNTIME-BOUNDARY",
+      "owner": "31",
+      "requirement": "Keep Runtime independent of Editor/EngineTools throughout development and remove the early-export development representation from final shipping runtime. External source import, cooking, authoring protocol, editor GUI and shader compilation remain outside distributed games.",
+      "acceptance": [
+        "Target/link/dependency checks begin in 01 and repeat after relevant boundary changes, including early export 14, editor 16 and final export 31.",
+        "Final cooked export runs without authoring services, importer/cooker, source assets, shader compiler, editor GUI or Vulkan SDK installation.",
+        "No runtime-only API depends on EnTT implementation details or editor state, and final source/cooked schema validation rejects unsupported versions."
+      ],
+      "planned_fixture": "RuntimeDependencyBoundary and FinalCookedRuntimeBoundary fixtures, using binary/link inspection and clean-target launches rather than scene assertions alone.",
+      "verification": { "status": "NOT_RUN", "reason": "Boundary checks start in assignment 01 and final cooked-only enforcement is owned by assignment 31." }
+    }
+  ],
+  "implemented_surface": {
+    "features": [
+      {
+        "id": "foundation.bootstrap",
+        "name": "Engine version metadata and strict informational bootstrap arguments",
+        "requirement_ids": ["REQ-01"],
+        "test_ids": ["shark.unit", "shark.runtime.cli", "shark.editor.cli"],
+        "test_sources": ["tests/bootstrap_tests.cpp", "tests/CheckCli.cmake"],
+        "fixtures": ["runtime/main.cpp", "editor/main.cpp"],
+        "fixture_reason": "Executable bootstrap behavior is tested outside a scene; FeatureWorld begins in assignment 10. These flags are not authoring commands."
+      },
+      {
+        "id": "foundation.runtime-boundary",
+        "name": "Runtime dependency closure excludes authoring and test dependencies",
+        "requirement_ids": ["REQ-01"],
+        "test_ids": ["shark.boundary", "shark.boundary.fixture"],
+        "test_sources": ["cmake/CheckRuntimeBoundary.cmake", "tests/CheckBoundaryFixture.cmake"],
+        "fixtures": ["tests/boundary_fixture/CMakeLists.txt"],
+        "fixture_reason": "The generated CMake target graph and isolated forbidden-link fixture test the build boundary before any scene exists. Runtime-only is an additional configured build."
+      }
+    ],
+    "components": [],
+    "commands": [],
+    "lua_api": []
+  }
+}
