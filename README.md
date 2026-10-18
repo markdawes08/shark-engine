@@ -8,6 +8,12 @@ The versioned
 [requirements manifest](docs/coverage/requirements.json) preserves assignment
 scope and acceptance criteria for clean checkouts.
 
+The engine is designed for **both human editor users and terminal-based LLM
+agents**, with shared authoring services and no required model/provider integration.
+The [human/agent plan and foundation assessment](docs/roadmap/human-agent-plan.md)
+define noninteractive tools, discoverable schemas and safe project handoff. Those
+game-authoring interfaces remain planned; terminal build/test tools work today.
+
 **Current assignment: M01, headless server and Core/Client separation.** Assignment
 01's build foundation is complete. Editor/Runtime provide version and bootstrap
 help; Server adds validated startup, timed execution and shutdown. Graphics,
@@ -31,6 +37,8 @@ establish graphics or release-platform support.
   the scope change and repository state at that handoff.
 - [M01 handoff](docs/handoffs/M01-headless-server.md) records the headless server
   implementation, local evidence and outstanding hosted qualification before 02.
+- [Human/agent planning handoff](docs/handoffs/human-agent-planning-amendment.md)
+  records the shared-authoring amendment and review of the existing foundation.
 
 From an x64 Visual Studio developer shell with the documented tools installed:
 

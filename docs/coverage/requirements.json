@@ -65,7 +65,8 @@
         "Repeated startup/shutdown, invalid configuration, resource ownership, Unicode paths and paths with spaces have passing tests.",
         "Release diagnostics identify actionable failures and preserve structured error context.",
         "Ownership and callback/thread allocation/logging policies are implemented and exercised at the relevant boundaries.",
-        "Define separate client/offline and authoritative server roles, monotonic tick scheduling, bounded asynchronous completion queues and backpressure; no window/audio/renderer is required for server lifecycle."
+        "Define separate client/offline and authoritative server roles, monotonic tick scheduling, bounded asynchronous completion queues and backpressure; no window/audio/renderer is required for server lifecycle.",
+        "Structured errors retain stable codes, operation/request context and readable messages through later terminal, protocol and editor adapters; unavailable capabilities and validation/conflict/execution failures remain distinguishable."
       ],
       "planned_fixture": "CoreLifecycle, StartupFailureInjection, ProjectPathResolution and ConfigurationErrors unit/integration fixtures; startup and ownership failures occur before a scene can run.",
       "verification": {"status": "NOT_RUN", "reason": "Core services are not implemented; owner assignment 03."}
@@ -118,7 +119,8 @@
         "Hierarchy tests reject cycles and cover parent deletion, world/local reparenting and the documented nonuniform-scale policy.",
         "Scene mutation follows the defined thread/boundary rules; GPU and Lua references use checked IDs/handles instead of raw pointers surviving destruction.",
         "Name/Transform schemas and public APIs remain independent of EnTT implementation details.",
-        "Establish world/region scope, authority metadata, checked replica lifetime and global-cell/local-coordinate contracts before committing transform schemas; local EnTT handles are not durable or network identity."
+        "Establish world/region scope, authority metadata, checked replica lifetime and global-cell/local-coordinate contracts before committing transform schemas; local EnTT handles are not durable or network identity.",
+        "Engine-owned schema metadata and immutable revisioned queries support semantic terminal inspection: property types, defaults, ranges, units, enums and mutability never require viewport or EnTT access."
       ],
       "planned_fixture": "SceneHandles, HierarchyMutation and TransformConventions fixtures; FeatureWorld/Hierarchy and later Lua/GPU stale-reference fixtures connect as their layers land.",
       "verification": {"status": "NOT_RUN", "reason": "Scene/ECS/transform implementation is absent; owner assignment 07."}
@@ -132,7 +134,8 @@
         "Malformed/truncated files, duplicate IDs and missing references produce actionable errors without activating a partially loaded scene.",
         "Interrupted-save and failed-load tests preserve the previous durable file/current scene.",
         "Resource paths cannot escape the declared project root.",
-        "Authored scene/project files are world content, not live player persistence. M03 separately owns transactional characters/economy, migrations and recovery; preserve stable world/cell identity in authored data."
+        "Authored scene/project files are world content, not live player persistence. M03 separately owns transactional characters/economy, migrations and recovery; preserve stable world/cell identity in authored data.",
+        "File saves and scoped text writes detect changed on-disk revisions/digests and reject stale overwrites; external-edit, failed-save and subsequent reload fixtures preserve human and agent work."
       ],
       "planned_fixture": "ProjectSceneRoundTrip, SceneMigrationV1, FutureVersionRejection, InterruptedSave and ProjectRootEscape fixtures; FeatureWorld/Persistence provides the representative authored hierarchy.",
       "verification": {"status": "NOT_RUN", "reason": "Project/scene persistence is not implemented; owner assignment 08."}
@@ -146,9 +149,12 @@
         "Invalid transactions roll back completely; stale revisions, missing entities and duplicate requests have tested documented outcomes.",
         "All authoritative authoring entry points use the same command/service layer and mutation boundaries.",
         "Long-running jobs report their lifecycle separately from transaction commit and cannot publish partial edits.",
-        "Authoring transactions/undo are local development capabilities, never player gameplay RPCs. Remote intents and operational administration have separate authenticated/authorized surfaces."
+        "Authoring transactions/undo are local development capabilities, never player gameplay RPCs. Remote intents and operational administration have separate authenticated/authorized surfaces.",
+        "Pure validation/preview has no side effects; commit rechecks expected revisions. Atomic batches return changed IDs and a new revision, while stale snapshots or conflicting undo/redo cannot overwrite unrelated edits.",
+        "Define mutation retry identity, payload matching, deduplication retention and lost-reply recovery separately from request correlation. After restart/expiry resolve or report an unknown outcome instead of blindly repeating a mutation.",
+        "Test alternating human/agent-equivalent edits, stale revisions, invalid batches and retry outcomes through the common service; process ownership is enforced in 15 and editor integration in 16."
       ],
-      "planned_fixture": "CommandReplayUndoRedo, TransactionRollback, RevisionConflict and RequestRetry fixtures; FeatureWorld/AuthoringCommands is added with assignment 10.",
+      "planned_fixture": "CommandReplayUndoRedo, TransactionRollback, RevisionConflict and RequestRetry fixtures; FeatureWorld/AuthoringCommands is added with assignment 10. Add HumanAgentRevisionHistory, PureValidationPreview and LostReplyRetryScope fixtures.",
       "verification": {"status": "NOT_RUN", "reason": "Shared authoring commands are not implemented; owner assignment 09."}
     },
     {
@@ -160,7 +166,8 @@
         "A deliberate scene assertion fails the run with useful entity/case context and machine-readable results.",
         "CPU-only headless results explicitly do not claim renderer initialization; GPU tests use the appropriate mode.",
         "Subsequent assignments extend manifests and scene/isolated fixtures when each feature lands rather than deferring coverage to assignment 32.",
-        "Plan MMOWorld in M09 and external multi-process/network/database fixtures; a scene runner or FeatureWorld alone cannot prove distributed authority or persistence."
+        "Plan MMOWorld in M09 and external multi-process/network/database fixtures; a scene runner or FeatureWorld alone cannot prove distributed authority or persistence.",
+        "Noninteractive CPU runs produce bounded versioned results and artifact references with revision/seed/execution context. Device-dependent runs identify capabilities and cannot silently substitute an unqualified backend."
       ],
       "planned_fixture": "FeatureWorld/current-surface cases, IntentionalSceneAssertionFailure and CoverageManifestAudit; the audit inspects mappings while the scene runner exercises behavior.",
       "verification": {"status": "NOT_RUN", "reason": "FeatureWorld, runner and executable surface manifests are not implemented; owner assignment 10."}
@@ -174,7 +181,8 @@
         "Matching work deduplicates, and cancelled/failed imports never publish corrupt cache output.",
         "The same declared inputs and tool versions reproduce import output.",
         "Missing assets follow the explicit documented policy, and job concurrency remains bounded.",
-        "Preserve dependency metadata needed for bounded asynchronous cell streaming and separate client/server cook roots; imports must not run on a live simulation/render thread."
+        "Preserve dependency metadata needed for bounded asynchronous cell streaming and separate client/server cook roots; imports must not run on a live simulation/render thread.",
+        "Shared import services expose bounded job status, diagnostics, cancellation and artifact identity to later UI/CLI adapters. Changed source/settings or cancellation before publication cannot replace newer valid output."
       ],
       "planned_fixture": "AssetRenameMove, ImportDependencyInvalidation, ImportDedupCancelFailure and ImportReproducibility fixtures; FeatureWorld/AssetIdentity uses the imported references.",
       "verification": {"status": "NOT_RUN", "reason": "Asset database/import/cache is not implemented; owner assignment 11."}
@@ -216,7 +224,8 @@
         "On each target OS an export launches from outside the checkout and a different working directory without Editor, source code, build tools or Vulkan SDK installation.",
         "Only declared runtime/driver prerequisites are needed and dependency inspection finds no editor/authoring libraries.",
         "Host/target restrictions are explicit; one host is not represented as exporting arbitrary platforms.",
-        "The early exported client is not a dedicated server or MMO release; retain separate server-only content roots for the later M08 packages."
+        "The early exported client is not a dedicated server or MMO release; retain separate server-only content roots for the later M08 packages.",
+        "The initial export command is noninteractive and exposes structured completion/failure and artifact metadata. CPU staging/export does not require an editor window or graphics-device initialization; target/toolchain prerequisites remain explicit."
       ],
       "planned_fixture": "EarlyStandaloneExport clean-target matrix; packaging/environment boundaries require an external process and clean machine rather than a FeatureWorld-only assertion.",
       "verification": {"status": "NOT_RUN", "reason": "Early export is not implemented; owner assignment 14."}
@@ -231,9 +240,15 @@
         "Every authoritative mutation routes through assignment 09 validation/commands; project-scoped file operations cannot escape their root.",
         "Discovery exposes supported schemas and services; later owning assignments extend materials, prefabs, play controls and other authoring surfaces.",
         "Shipped runtime dependency/service inspection confirms local authoring facilities are absent.",
-        "Local JSON-RPC/agent source editing must never be reused as an authenticated player protocol or exposed to untrusted clients. Administrative access is a separate capability."
+        "Local JSON-RPC/agent source editing must never be reused as an authenticated player protocol or exposed to untrusted clients. Administrative access is a separate capability.",
+        "A normal terminal subprocess works without a TTY, prompt, GUI automation, LLM SDK or MCP client. One-shot JSON and stdio modes use versioned UTF-8 inputs/results, explicit framing and exit/completion semantics; stdout never contains ordinary logs. Real Windows and POSIX pipe fixtures cover UTF-8, Unicode/space-containing paths and clean machine streams.",
+        "Discovery reports implemented methods, schemas, examples, versions, execution context and capability availability. Bounded semantic queries expose IDs/revisions, filters/projection and pagination with explicit consistency and truncation behavior.",
+        "Test CPU authoring configure/build/start and project/query/edit/save/import/run/export behavior without GUI/device libraries; optional preview/capture uses a separate client adapter and real GPU evidence. Unavailable capture fails explicitly.",
+        "One service owns project state and unsaved history. Test second-writer rejection and save/close/reopen handoff, or a separately implemented same-owner attachment path; simultaneous writable copies cannot silently diverge.",
+        "Test structured stale-revision/conflict errors, file digest conflicts, validation preview, retry payload mismatch/expiry/lost replies, malformed/oversized streams, EOF, process failure and path escapes.",
+        "Jobs expose stable IDs, bounded progress/status, diagnostics, cancellation and final artifacts. Timeouts/disconnects/cancellation around publication return the actual committed or uncommitted outcome with no partial activation."
       ],
-      "planned_fixture": "PublicAuthoringProcess scenario, ProtocolInvalidRequests, ProtocolVersionMismatch, CancellationRetry and ScopedTextAsset fixtures; FeatureWorld/AgentAuthoredScene provides saved scene equivalence.",
+      "planned_fixture": "PublicAuthoringProcess scenario, ProtocolInvalidRequests, ProtocolVersionMismatch, CancellationRetry and ScopedTextAsset fixtures; FeatureWorld/AgentAuthoredScene provides saved scene equivalence. Add NoTTYProtocolStreams, BoundedDiscoveryQueries, CPUAuthoringClosure, ProjectOwnerExclusion, TextWriteConflict and JobPublicationInterruption fixtures.",
       "verification": {"status": "NOT_RUN", "reason": "Agent command interface and discovery are not implemented; owner assignment 15."}
     },
     {
@@ -244,9 +259,10 @@
         "Equivalent UI-driven and API-driven operations produce equivalent saved scene state.",
         "Repeated entity select/edit/delete, asset import and project reopen workflows succeed.",
         "Editor focus and shortcuts do not leak into gameplay input.",
-        "Runtime builds independently of editor GUI libraries and the editor maintains no second authoritative mutable scene."
+        "Runtime builds independently of editor GUI libraries and the editor maintains no second authoritative mutable scene.",
+        "A human opens and continues a terminal-authored project, then the terminal continues human changes with equivalent semantic state and shared validation. The active owner preserves unsaved state/history; save/close/reopen handoff resolves dirty state and documents history reset or persistence. Stale edits and conflicting undo have tested outcomes; a clear busy response is valid when concurrent attachment is unsupported."
       ],
-      "planned_fixture": "EditorApiStateEquivalence, EditorLifecycle and EditorFocusRouting fixtures; FeatureWorld/EditorAuthoring is the representative saved project.",
+      "planned_fixture": "EditorApiStateEquivalence, EditorLifecycle and EditorFocusRouting fixtures; FeatureWorld/EditorAuthoring is the representative saved project. Add HumanTerminalProjectHandoff and UnsavedHistoryConflict fixtures.",
       "verification": { "status": "NOT_RUN", "reason": "Editor shell is not implemented; owner assignment 16." }
     },
     {
@@ -256,7 +272,8 @@
       "acceptance": [
         "Tests cover parented/rotated-parent transforms, snapping, high-DPI picking, viewport offsets and supported scale cases.",
         "Unsupported shear/singular transforms reject explicitly rather than corrupting component transforms.",
-        "One undo reverses an entire drag, and the public agent API reproduces the same resulting transform."
+        "One undo reverses an entire drag, and the public agent API reproduces the same resulting transform.",
+        "Semantic transform commands and UI gizmos use the same validation and revision/history rules, including human edits interleaved with stale agent requests; purely visual navigation need not mirror every widget as an API."
       ],
       "planned_fixture": "FeatureWorld/GizmoHierarchy, GizmoDragUndo, HighDpiViewportPicking and GizmoAgentEquivalence fixtures.",
       "verification": { "status": "NOT_RUN", "reason": "Viewport navigation/picking/gizmos are not implemented; owner assignment 17." }
@@ -285,7 +302,8 @@
         "Bindings never expose borrowed raw component pointers across mutation boundaries.",
         "Every exposed API entry is registered in the Lua manifest and has valid/invalid behavior tests plus a FeatureWorld script exercise.",
         "Lua sources can be created/edited using the existing project-scoped public authoring operations.",
-        "Separate server gameplay and client presentation capabilities/modules. Render-frame update cannot grant authoritative outcomes; clients cannot upload scripts or invoke arbitrary server Lua."
+        "Separate server gameplay and client presentation capabilities/modules. Render-frame update cannot grant authoritative outcomes; clients cannot upload scripts or invoke arbitrary server Lua.",
+        "Scoped Lua editing detects stale content revisions, reports syntax/runtime diagnostics with script context and runs through public noninteractive tools; it grants no shell or production-server execution authority."
       ],
       "planned_fixture": "FeatureWorld/ScriptLifecycle, FeatureWorld/CoreLuaApi, LuaSyntaxRuntimeErrors, LuaRunawayRecovery and LuaStaleHandles fixtures.",
       "verification": {"status": "NOT_RUN", "reason": "Lua VM/core gameplay API is not implemented; owner assignment 19."}
@@ -437,7 +455,8 @@
         "Interrupted save/import work recovers the last durable scene without activating half-written files.",
         "Pending GPU/physics/audio work never accesses destroyed replacement resources.",
         "Dirty state, successful shader compilation gating and script reload initialization/lifetime behavior have repeatable tests.",
-        "Development reload is distinct from controlled live server rollout. M08 coordinates compatible content/schema versions, draining and rollback; critical authoritative state is not arbitrarily reloaded."
+        "Development reload is distinct from controlled live server rollout. M08 coordinates compatible content/schema versions, draining and rollback; critical authoritative state is not arbitrarily reloaded.",
+        "Reload jobs detect source/revision conflicts, expose bounded status/cancellation and preserve the last valid active state; neither editor nor terminal silently overwrites external changes or reloads live server authority."
       ],
       "planned_fixture": "FeatureWorld/LiveReload, MalformedReplacementRetention, InterruptedAutosaveRecovery, ReloadRenameDelete and AtomicResourceSwapLifetime fixtures.",
       "verification": {"status": "NOT_RUN", "reason": "Reload/recovery is not implemented; owner assignment 30."}
@@ -452,7 +471,8 @@
         "Explicit cook roots/include-lists capture dynamic dependencies that static scene references cannot discover, and missing dependencies fail with useful diagnostics.",
         "Cooking is reproducible for pinned inputs, invalid export fails atomically and progress/failure status is machine-readable.",
         "Packages contain appropriate redistributables and licenses, with no claim that signed/notarized packages are byte-identical.",
-        "Prepare separate client/server dependency roots and exclude private server rules/secrets from client payloads. Assignment 31 requalifies M05 streaming with final cooked cell manifests; M08 qualifies headless server packages, authentic content updates and compatible rollout."
+        "Prepare separate client/server dependency roots and exclude private server rules/secrets from client payloads. Assignment 31 requalifies M05 streaming with final cooked cell manifests; M08 qualifies headless server packages, authentic content updates and compatible rollout.",
+        "Human and terminal exports use the same validation/jobs and produce versioned result/artifact metadata for reproducible inputs. Supported CPU cooking/packaging is independent of editor/device startup; device-specific preprocessing remains explicitly qualified."
       ],
       "planned_fixture": "FinalCookReproducibility, DynamicPrefabAndSoundRoots, AtomicExportFailure, RuntimeCookedBoundary and CleanTargetGameLaunch platform fixtures; packaging checks require an external clean-machine environment.",
       "verification": {"status": "NOT_RUN", "reason": "Final cooking/distribution is not implemented; owner assignment 31."}
@@ -466,7 +486,8 @@
         "CI fails a deliberately introduced coverage hole and reports the uncovered entry.",
         "GPU suites exercise PBR, IBL, shadows, SSAO and tonemapping separately and combined.",
         "Unsupported features are explicit; no stub or mapping percentage substitutes for behavior tests, and no coverage claim promises absence of every bug.",
-        "Audit MMO features and external multi-process, persistence, authority, streaming and load fixtures as well as FeatureWorld. Planned M09/M10 gates remain NOT_RUN until executed."
+        "Audit MMO features and external multi-process, persistence, authority, streaming and load fixtures as well as FeatureWorld. Planned M09/M10 gates remain NOT_RUN until executed.",
+        "Audit every supported semantic authoring feature across shared schema/service, terminal discovery/commands, editor, persistence and tests. Explicit presentation-only exceptions are recorded; missing terminal or human authoring paths block completeness."
       ],
       "planned_fixture": "CompleteCoverageAudit, IntentionalCoverageHole, FeatureWorld/full-surface, FeatureWorld/CombinedLighting and isolated graphics/edge-case suites.",
       "verification": {"status": "NOT_RUN", "reason": "Complete implemented-surface audit awaits assignments 01-31; owner assignment 32."}
@@ -480,9 +501,10 @@
         "Checks verify movement, rotation, line clearing, scoring, game over, pause/restart and sound behavior.",
         "A separate physics sandbox proves 3D collisions, spawning and sound interactions that grid-based Tetris gameplay does not naturally exercise.",
         "The run uses only public documented tools and discovered tool gaps are fixed before accepting the gate.",
-        "Retain Tetris and physics samples as public-tooling regressions. M09 additionally requires fresh-agent-authored MMORPG content and multi-client seamless-world acceptance; these offline samples cannot qualify an MMO."
+        "Retain Tetris and physics samples as public-tooling regressions. M09 additionally requires fresh-agent-authored MMORPG content and multi-client seamless-world acceptance; these offline samples cannot qualify an MMO.",
+        "Use an ordinary fresh terminal-agent session without GUI automation, mandatory MCP or provider integration. Retain public requests/results, errors/recovery and saved artifacts; a human then opens, inspects and continues each sample in the editor and hands it back without lost content or stale overwrites."
       ],
-      "planned_fixture": "FreshAgentTetrisAcceptance and FreshAgentPhysicsSandboxAcceptance external authoring scenarios with saved projects/input recordings/results; a fresh-agent workflow cannot be established by a preauthored FeatureWorld scene alone.",
+      "planned_fixture": "FreshAgentTetrisAcceptance and FreshAgentPhysicsSandboxAcceptance external authoring scenarios with saved projects/input recordings/results; a fresh-agent workflow cannot be established by a preauthored FeatureWorld scene alone. Add FreshTerminalHumanContinuation for both samples.",
       "verification": {"status": "NOT_RUN", "reason": "Public authoring stack and autonomous game-build acceptance are not implemented; owner assignment 33."}
     },
     {
@@ -494,7 +516,8 @@
         "Quantitative performance/memory budgets are established from measured baselines and enforced.",
         "Results identify remaining limitations, exact hardware/platform coverage and failures; critical failures are fixed before release-candidate declaration.",
         "Tests are not made to pass through widened tolerances, automatic baseline replacement or retries masking real failures.",
-        "Establish named-hardware server tick/lag, active-player bandwidth, streaming/crowd and durable-recovery metrics. M10 runs the explicit active-load/24-hour soak and overload profile before release."
+        "Establish named-hardware server tick/lag, active-player bandwidth, streaming/crowd and durable-recovery metrics. M10 runs the explicit active-load/24-hour soak and overload profile before release.",
+        "Measure bounded authoring request/query/job workloads, repeated disconnect/cancel/retry and alternating editor/terminal ownership; no protocol-output contamination, unbounded queues or silent lost edits is accepted."
       ],
       "planned_fixture": "NamedHardwarePerformanceBudget, LifecycleSoak, SpawnDestroySoak, ParserProtocolFuzz, StorageFaultInjection and DeviceFailureDiagnostics qualification suites; these measure release properties beyond a short scene run.",
       "verification": {"status": "NOT_RUN", "reason": "Reliability/performance qualification awaits implemented engine features; owner assignment 34."}
@@ -508,7 +531,8 @@
         "Required distribution-channel signing/notarization is verified with the actual selected path.",
         "Missing credentials or target hardware remain explicit release blockers rather than waived checks.",
         "Documentation, sample projects, notices, upgrade policy, test evidence, exact build inputs and symbols accompany a reviewed tagged release candidate.",
-        "MMORPG release also requires M08-M10 headless server packages, wire/content/database compatibility, seamless multi-client acceptance, measured capacity, backup/restore and operations evidence. No offline-only release may satisfy the amended profile."
+        "MMORPG release also requires M08-M10 headless server packages, wire/content/database compatibility, seamless multi-client acceptance, measured capacity, backup/restore and operations evidence. No offline-only release may satisfy the amended profile.",
+        "Ship tested human-editor and terminal quickstarts, CLI help/examples, machine schemas/protocol reference and handoff/conflict guidance. Developer tools require no LLM provider or MCP client, and packaged public-tool examples run on qualified hosts."
       ],
       "planned_fixture": "ReleaseCleanInstall matrix, ReleasedSampleExport, DistributionSigningVerification and ReleaseEvidenceArchive fixtures; installer/channel checks need external target systems.",
       "verification": {"status": "NOT_RUN", "reason": "Release packaging/installation/handoff is not implemented; owner assignment 35."}
@@ -573,7 +597,8 @@
         "Continuous travel preserves session, identity and world view without loading screens/reconnect/scene reset; physics, navigation and target/interest visibility agree across cell/origin boundaries.",
         "Movement, combat/projectiles, AI pursuit and durable interactions cross a region boundary; collision/navigation readiness gates traversal.",
         "A consistent tick/input-sequence cut captures final state and pending operations. Source/destination loss or partition before/after prepare, cut and ownership commit yields one owner and one durable effect; stale writers are fenced and post-cut inputs/late completions cannot lose acknowledged outcomes.",
-        "Asset prefetch/cancel/failure, IO pressure, distant-coordinate precision and resident memory budgets are measured; rendering-only streaming cannot satisfy multi-process authority."
+        "Asset prefetch/cancel/failure, IO pressure, distant-coordinate precision and resident memory budgets are measured; rendering-only streaming cannot satisfy multi-process authority.",
+        "Supported authored cell/world/collision/navigation settings use shared schemas and semantic terminal/editor operations; query bounds and cell identity support large worlds without whole-world dumps."
       ],
       "planned_fixture": "MMOWorld/ContinuousTraversal, RegionAuthorityTransferFaultMatrix, CrossBoundaryCombatAI, OriginShiftPrecision and CellStreamingBudget fixtures.",
       "verification": {"status": "NOT_RUN", "reason": "Planning amendment only; MMORPG implementation and qualification belong to M05. No server/network/persistence/streaming/load result is claimed."}
@@ -586,7 +611,8 @@
         "Licensed valid/malformed fixtures exercise joint/weight/bind-pose limits, STEP/LINEAR interpolation, clip loop/transitions, attachments and unsupported-content rejection through import/cook/render.",
         "Server movement drives displacement; client root motion and animation events cannot grant authoritative damage/rewards.",
         "Measure the provisional 128-visible-actor fixture and establish client frame/memory/streaming budgets and LOD error thresholds on named hardware before acceptance.",
-        "Origin shifts, streaming and network corrections preserve attachments/continuity without unbounded GPU uploads; static assets and retained renderer features regress correctly."
+        "Origin shifts, streaming and network corrections preserve attachments/continuity without unbounded GPU uploads; static assets and retained renderer features regress correctly.",
+        "Supported character/clip/attachment/LOD authoring is discoverable through public terminal schemas and shared editor services, with equivalent validation and saved content."
       ],
       "planned_fixture": "SkinnedCharacterProfile, AnimationBlendLOD, MMOWorld/Crowd128 and AnimatedOriginCorrection fixtures.",
       "verification": {"status": "NOT_RUN", "reason": "Planning amendment only; MMORPG implementation and qualification belong to M06. No server/network/persistence/streaming/load result is claimed."}
@@ -599,7 +625,8 @@
         "Two users complete the gameplay loop across an internal world boundary, including trade in flight and party visibility during handoff, and reconnect with correct durable state.",
         "Concurrent trade/reward, full inventory, ownership violations, disconnect and chat flood preserve economy integrity and enforce bounds.",
         "Public tools author the reference content; game-specific formulas and content remain outside generic EngineCore.",
-        "The UI distinguishes predicted/pending state from confirmed durable results and exposes connection/recovery without pausing the world."
+        "The UI distinguishes predicted/pending state from confirmed durable results and exposes connection/recovery without pausing the world.",
+        "Reference quests/items/characters/UI content can be authored by a human or terminal agent through shared public schemas/services; local content operations never become gameplay or live-admin privileges."
       ],
       "planned_fixture": "MMOWorld/QuestTradePartyLoop, ConcurrentTradeDisconnect, CharacterReconnectUI and BoundedChat fixtures.",
       "verification": {"status": "NOT_RUN", "reason": "Planning amendment only; MMORPG implementation and qualification belong to M07. No server/network/persistence/streaming/load result is claimed."}
@@ -625,9 +652,10 @@
         "Create/save/cook/export/start and authenticate two graphical clients; move/fight/loot/quest/trade/chat/party across regions, reconnect and restore correct durable state.",
         "Seeded network adversity and server failure preserve single authority, identity and durable effects.",
         "Exercise provisional 256 active synthetic players, 128 concentrated players, at least two regions and 1000 crossings; report actual workload and results, not a production-capacity claim.",
-        "Supported APIs map to executable tests and FeatureWorld/MMOWorld or justified external fixtures; preauthored demos cannot replace fresh-agent public-tool acceptance."
+        "Supported APIs map to executable tests and FeatureWorld/MMOWorld or justified external fixtures; preauthored demos cannot replace fresh-agent public-tool acceptance.",
+        "Fresh terminal-agent authoring requires no GUI automation or mandatory MCP/provider integration. A human opens and continues the same MMORPG project, then hands it back with preserved revisions/content; actual client/server acceptance remains independently required."
       ],
-      "planned_fixture": "FreshAgentMMORPGAcceptance, MMOWorldMultiClient, ActivePopulation256, HotSpot128 and SeamCrossings1000 fixtures.",
+      "planned_fixture": "FreshAgentMMORPGAcceptance, MMOWorldMultiClient, ActivePopulation256, HotSpot128 and SeamCrossings1000 fixtures. Add FreshTerminalMMOWorldHumanContinuation.",
       "verification": {"status": "NOT_RUN", "reason": "Planning amendment only; MMORPG implementation and qualification belong to M09. No server/network/persistence/streaming/load result is claimed."}
     },
     {
@@ -642,6 +670,23 @@
       ],
       "planned_fixture": "ActiveMMOSoak24h, NamedHardwareCapacityRamp, CrowdedWorldStreamingBudget, OverloadAdmission and CrashBackupRecovery qualification suites.",
       "verification": {"status": "NOT_RUN", "reason": "Planning amendment only; MMORPG implementation and qualification belong to M10. No server/network/persistence/streaming/load result is claimed."}
+    },
+    {
+      "id": "REQ-CROSS-HUMAN-AGENT",
+      "owner": "32",
+      "requirement": "Treat human editor and ordinary terminal-agent game development as equal product capabilities under ADR0008. Apply shared-service, discoverability, noninteractive output, project ownership and semantic parity rules in each owning assignment; 32 audits the complete authoring surface and 33/M09 prove fresh-session workflows.",
+      "acceptance": [
+        "Before 15 build services/schemas for both interfaces; 15 exposes earlier authoring capabilities, 16 integrates the editor, and every later semantic authoring feature extends both paths when it lands.",
+        "The public terminal baseline needs no editor window, GUI automation, LLM SDK or MCP client; optional adapters never become a second authoritative implementation.",
+        "CPU authoring excludes device/GUI requirements; real GPU/audio qualification is separate. Human and terminal operations share validation, revision conflicts, retry outcomes and documented undo/recovery.",
+        "Coverage maps semantic features to discoverable public commands, editor behavior and executable parity/handoff fixtures; presentation-only exceptions are explicit and cannot hide unsupported release features.",
+        "The active project owner preserves unsaved state/history and detects external changes; exclusive handoff resolves dirty state, preserves saved content/revisions and documents whether history resets. Cross-restart undo is not required. Local authoring remains separate from gameplay and authorized operational administration."
+      ],
+      "planned_fixture": "HumanTerminalSurfaceAudit in 32, with ProtocolNoTTY/CPUAuthoringClosure in 15, EditorTerminalParity/Handoff in 16/17, FreshTerminalHumanContinuation in 33 and FreshTerminalMMOWorldHumanContinuation in M09; these are future fixtures, not implemented APIs.",
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Planning contract only. Current bootstrap and developer build tools do not implement game authoring; evidence belongs to the named future owners. See docs/roadmap/human-agent-plan.md."
+      }
     },
     {
       "id": "REQ-CROSS-ASSIGNMENT-CONTRACT",

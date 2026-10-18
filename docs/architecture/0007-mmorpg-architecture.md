@@ -16,6 +16,12 @@ playable MMORPG reference world to prove the engine. A commercial game's content
 monetization, customer support and global hosting operation are separate product
 work; the engine still needs tested deployment, recovery and observability hooks.
 
+Humans and terminal LLM agents author that world through the shared development
+contract in [ADR 0008](0008-human-agent-authoring.md). Terminal reachability extends
+to world/cell, character, script and reference-game content as those features land.
+Development tools do not acquire gameplay or production administration authority;
+M09 must prove both terminal creation and human continuation of the same world.
+
 Seamless means normal travel through adjacent world regions keeps the same
 character, session and continuous world view, without a loading screen, forced
 reconnect or scene reset at an internal cell boundary. A process failure may cause

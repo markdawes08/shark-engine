@@ -12,6 +12,12 @@ to point to the same amendment; a clean checkout uses this plan and the
 00-35 keep their identities and retained requirements. M01-M10 are mandatory
 insertions, not optional work after the old release candidate.
 
+The later [human/terminal-agent amendment](human-agent-plan.md) and
+[ADR 0008](../architecture/0008-human-agent-authoring.md) strengthen shared
+authoring requirements across these owners. Both human editor use and independent
+terminal development are mandatory; assignment order and MMO authority stay intact.
+The pre-M01 assessment below is historical; the later plan assesses `d9f53ef`.
+
 ## Historical assessment of the pre-M01 foundation
 
 | Existing work | Assessment and action |
@@ -192,6 +198,11 @@ After 32/33 and M08. Retain the original fresh-agent Tetris and physics tests as
 tooling regressions. Add a fresh-agent-authored small MMORPG world using documented
 public tools and the reference game contracts, with automated real-client/load
 drivers and separate multi-process server execution.
+
+The fresh agent must use an ordinary terminal with public discovery/docs/results,
+without GUI automation or a required MCP/provider integration. A human then opens,
+inspects and continues the same authored world in the editor; both directions of
+handoff preserve revisions and content. This complements real-client MMO proof.
 
 Gate: create/save/cook/export/start, authenticate two graphical clients, move/fight/
 loot/quest/trade/chat/party, cross regions, reconnect and restore durable state.

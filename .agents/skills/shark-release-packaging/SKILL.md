@@ -9,6 +9,9 @@ Read [AGENTS.md](../../../AGENTS.md), the exact assigned export/release incremen
 [target boundaries](../../../docs/architecture/0001-targets-and-boundaries.md),
 [platform matrix](../../../docs/architecture/0003-platforms.md) and
 [cooked-format rules](../../../docs/architecture/0004-formats-and-identity.md).
+Follow the [human and terminal-agent contract](../../../docs/architecture/0008-human-agent-authoring.md)
+and [implementation plan](../../../docs/roadmap/human-agent-plan.md) at the owning
+export and acceptance gates; those authoring interfaces remain planned.
 
 Assignment 01 has no game export, cooker, installer or signing workflow. Bootstrap
 Runtime is not a playable distributed game. The available boundary check is the
@@ -36,6 +39,16 @@ compiler or Vulkan SDK. Verify host/target restrictions, startup scenes and a
 prefab plus sound chosen only by script. Test repeatable cooking under pinned
 inputs; signing/notarization does not need byte-identical package output. Preserve
 logs, build inputs, symbols and precise OS/CPU/GPU/driver evidence per matrix row.
+
+Qualify authoring from a fresh terminal-agent session using only documented
+discovery, schemas and public commands, then hand the same project to a human in
+the editor and back without conversion or state loss. Exercise shared validation,
+revision conflicts, safe retries and undo/recovery semantics. CPU validation,
+import/cook and packaging must run without an editor, window or GPU; declare
+hardware-dependent operations separately. Retain structured diagnostics, job
+status/cancellation results and artifact manifests so terminal automation can
+determine success without parsing UI text. Missing GUI/hardware qualification
+remains NOT RUN even when the terminal workflow passes.
 
 Apply signing/notarization only through the selected authorized channel, with
 secrets outside the repository. Missing credentials or hardware remain explicit

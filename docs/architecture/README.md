@@ -10,6 +10,11 @@ offline-only v1 scope. Earlier records are amended in place where their contract
 conflicted; historical handoffs keep their original evidence. All MMO behavior
 remains planned. Original 00-35 IDs are retained with M01-M10 inserted by dependency.
 
+Human/agent amendment, 2026-10-17: [ADR 0008](0008-human-agent-authoring.md) and
+the [terminal-development plan](../roadmap/human-agent-plan.md) make human editor
+and terminal LLM workflows equal product requirements. They strengthen existing
+authoring assignments without changing order or implying a working CLI/editor.
+
 | Record | Decision |
 | --- | --- |
 | [0001](0001-targets-and-boundaries.md) | C++20 targets, dependency direction, application services, errors and ownership |
@@ -19,6 +24,7 @@ remains planned. Original 00-35 IDs are retained with M01-M10 inserted by depend
 | [0005](0005-simulation-and-rendering.md) | Units, transforms, depth, color, ticks and scene mutation |
 | [0006](0006-v1-profile.md) | Exact v1 feature and glTF profile, explicit exclusions |
 | [0007](0007-mmorpg-architecture.md) | Seamless world, authority, server boundary, replication, persistence and provisional capacity gates |
+| [0008](0008-human-agent-authoring.md) | Shared human/terminal authoring, discovery, noninteractive results, project ownership and parity gates |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

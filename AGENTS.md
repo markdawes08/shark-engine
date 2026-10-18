@@ -22,6 +22,18 @@ is M01, before 02. The headless Server bootstrap and Core/Client split are
 implemented; qualification is recorded in the [M01 handoff](docs/handoffs/M01-headless-server.md).
 Networking, persistence, simulation and streaming remain planned.
 
+Human editor users and terminal-based LLM agents are equal development audiences.
+Read [ADR 0008](docs/architecture/0008-human-agent-authoring.md) and the
+[human/agent plan](docs/roadmap/human-agent-plan.md) before authoring/API design.
+Use shared schemas/services, stable IDs/revisions, bounded semantic queries,
+noninteractive commands and machine-readable results. CPU authoring must not
+require an editor, display or GPU; capture has an explicit device capability.
+An LLM SDK or MCP adapter is never a prerequisite. Editor and terminal writes
+share one project owner or reject conflicting access; preserve unsaved changes,
+common undo history and explicit retry outcomes. Add both semantic authoring
+paths when features land, with earlier services exposed in 15 and editor in 16.
+Current bootstrap flags are not game-authoring APIs; do not create premature stubs.
+
 The user owns staging and commits. **Never run `git add`, stage through another
 tool, commit, or push, including from tests or temporary repositories.** Leave
 the change set reviewable and include suggested commit text in the final response

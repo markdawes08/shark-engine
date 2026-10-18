@@ -38,11 +38,14 @@ DOCUMENTS = (
     "docs/architecture/0005-simulation-and-rendering.md",
     "docs/architecture/0006-v1-profile.md",
     "docs/architecture/0007-mmorpg-architecture.md",
+    "docs/architecture/0008-human-agent-authoring.md",
     "docs/roadmap/mmorpg-plan.md",
+    "docs/roadmap/human-agent-plan.md",
     "docs/coverage/README.md",
     "docs/handoffs/00-architecture-contract.md",
     "docs/handoffs/mmorpg-planning-amendment.md",
     "docs/handoffs/M01-headless-server.md",
+    "docs/handoffs/human-agent-planning-amendment.md",
 )
 
 

@@ -9,10 +9,19 @@ which assignment owns the gate.
 The user selected a seamless open-world MMORPG. The
 [versioned execution plan](../roadmap/mmorpg-plan.md) and
 [ADR 0007](../architecture/0007-mmorpg-architecture.md) expand the original 00-35
-assignments with M01-M10. There are 49 requirements across 46 ordered assignments.
+assignments with M01-M10. There are 50 requirements across 46 ordered assignments.
 `assignment_order` records dependency order; M01 follows 01 and precedes 02, and
 the validator checks order rather than comparing IDs lexically. The product
 profile and plan path are explicit machine-readable fields.
+
+[ADR 0008](../architecture/0008-human-agent-authoring.md) and the
+[human/terminal-agent plan](../roadmap/human-agent-plan.md) strengthen existing
+owners and add `REQ-CROSS-HUMAN-AGENT` (audit owner 32). Shared services, terminal
+discovery/results, one project owner and semantic editor/CLI parity are required
+as their layers land; 33/M09 add fresh terminal and human continuation evidence.
+This adds no assignment or implemented API and does not change schema 3. All
+original criteria and verification states are retained, including historical PASS
+records; documentation checks do not qualify the new authoring gates.
 
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`
 means precisely that; documentation validation cannot pass a future engine gate.

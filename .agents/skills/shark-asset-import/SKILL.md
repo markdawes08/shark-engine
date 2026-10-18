@@ -9,6 +9,8 @@ Read [AGENTS.md](../../../AGENTS.md),
 [decoder/dependency choices](../../../docs/architecture/0002-dependencies.md),
 [formats and identity](../../../docs/architecture/0004-formats-and-identity.md)
 and the [exact source profile](../../../docs/architecture/0006-v1-profile.md).
+Apply the [human and terminal-agent contract](../../../docs/architecture/0008-human-agent-authoring.md)
+through its [implementation plan](../../../docs/roadmap/human-agent-plan.md).
 
 Assignment 01 contains no asset database, importer, cache or cooker. Those begin
 in 11/12; audio import is 24 and HDRI is 27. There is no import CLI command yet.
@@ -29,6 +31,15 @@ tool/dependency inputs; cancellation and failure cannot publish partial results.
 Stage and validate output before atomic replacement, preserving the last valid
 asset according to the documented policy. Test invalidation, deduplication,
 cancellation, rename/move, reproducibility and malformed source paths.
+
+When import/cook services land, expose the same settings schema, discovery,
+validation and jobs to the human editor and terminal agent. CPU import/cook work
+must not require a running editor, window or GPU; separately capability-gate any
+GPU-dependent preview or processing. Provide stable JSON diagnostics, job IDs,
+progress/cancellation results and artifact manifests. Test revision conflicts,
+retry/idempotency and the documented undo or recovery policy through both
+adapters, including a human edit during an agent job. Never publish stale output
+over newer source/settings or require GUI interaction to resolve a CPU job.
 
 Keep fixtures local and licensed with origin/license metadata; ordinary tests
 must not download assets. Cover embedded/external glTF, sparse accessors,

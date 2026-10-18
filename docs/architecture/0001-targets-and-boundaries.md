@@ -35,7 +35,7 @@ they do not impose player-visible zone transitions.
 | EngineCore | Static library, introduced in M01 | Device-free configuration, identity, lifecycle and later simulation, scene, physics, Lua and cooked simulation-data loading; no client or authoring dependencies |
 | EngineClient | Static library, introduced in M01 | EngineCore; window/input, GLFW, NVRHI/Vulkan rendering, audio and client presentation |
 | Engine | INTERFACE compatibility/composition target | EngineClient, transitively EngineCore; preserves Runtime's existing engine-facing composition |
-| EngineTools | Static library | EngineCore; project/source persistence, commands/undo, imports, cook/export, discovery and authoring services; client preview integration is an explicitly optional, separately gated dependency |
+| EngineTools | Static library | EngineCore; device-free project/source persistence, commands/undo, imports, cook/export, discovery and authoring services; client preview is a separately gated adapter/target and cannot enter the CPU host's dependency closure |
 | Editor | Executable | EngineTools and client presentation services; Dear ImGui/ImGuizmo views of shared services |
 | Runtime | Executable | Engine only among engine libraries; client startup and game loop |
 | Server | Executable, introduced in M01 | EngineCore only among engine libraries; headless configuration and lifecycle first, authoritative simulation and private network/persistence integration in later milestones |
@@ -83,6 +83,14 @@ Server-owned state and client presentation have separate authority under ADR 000
 sharing Core code does not make a client an authorized world writer. The existing
 local authoring CLI/JSON-RPC contract is not a multiplayer transport.
 Read queries return snapshots or checked handles, not mutable storage pointers.
+
+[ADR 0008](0008-human-agent-authoring.md) makes terminal and human authoring
+first-class workflows. CLI access requires no editor window or LLM integration;
+CPU authoring excludes device dependencies while capture uses an optional client
+adapter. Editor and CLI share one project owner or explicitly reject a second
+writer, with revision-checked edits, common history and tested save/reopen handoff.
+The current Tools library contains only build metadata; these services land in
+their assigned increments, with the public terminal surface completed in 15.
 
 EnTT stays behind an engine-owned interface. Start with an ordered forward-render
 pass list, explicit resources and dependency injection through constructors.

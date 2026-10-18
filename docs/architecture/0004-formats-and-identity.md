@@ -159,6 +159,14 @@ validation can be reused, but does not grant gameplay clients editor privileges.
 M08 defines separately authenticated and authorized administrative operations.
 No public server protocol or hostile-client security claim exists yet.
 
+[ADR 0008](0008-human-agent-authoring.md) supplements the local authoring format:
+versioned UTF-8 machine results/discovery, stable semantic IDs and revisions,
+bounded queries and job artifacts, clean protocol stdout and conflict-aware text
+writes. Source/schema, authoring protocol and result envelope versions remain
+explicit; changing one does not silently change the others. Exact wire framing,
+schemas and compatibility fixtures arrive in 15. Human and agent edits share one
+owner/history; a lost reply never authorizes an unchecked duplicate mutation.
+
 M02 gates malformed/oversized messages, stale sessions/replicas, duplicate and
 out-of-order intents, unauthorized character control and private-field leakage.
 M03 gates crash/retry around each durable commit boundary, a lost acknowledgement,

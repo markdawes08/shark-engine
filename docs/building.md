@@ -12,6 +12,22 @@ EngineCore/EngineClient separation implemented in M01. `server-only` provides th
 isolated Server build. The `runtime-only` preset builds the graphical-client bootstrap
 without authoring targets; it is not proof of headless server dependency isolation.
 
+Human contributors and terminal agents can use the same commands below to work
+on engine code now. The [human/agent development plan](roadmap/human-agent-plan.md)
+assigns game-authoring CLI/discovery to 14/15 and editor integration to 16/17.
+There is no game-authoring CLI or usable graphical editor in the current bootstrap.
+The dedicated Server is not an authoring host.
+
+Use the documented repository root and preset explicitly in automation; on
+Windows the wrapper below initializes the compiler without opening an IDE.
+`tools/ci.py` returns a nonzero failure and writes `out/ci/<preset>/summary.json`,
+phase logs and JUnit when tests execute. Serialize runs sharing that preset/build
+and evidence directory, since each run replaces its prior evidence. Archive a
+run before repeating it when both results matter. Ordinary toolchain reports
+identify HEAD; record worktree modifications separately in the handoff. The
+headless wrapper requires a fresh output directory and records additional state.
+Neither route needs the ignored local roadmap or an LLM service.
+
 ## Prerequisites
 
 Run from the repository root. Use Python 3.13.5 for the pinned development-tool

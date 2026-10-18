@@ -23,6 +23,13 @@ navigation/AI, a small MMORPG reference module and operational recovery. The
 and inserted M01-M10 increments to observable gates. Existing Tetris/physics samples
 remain useful tooling checks, but only M09/M10 qualify the MMO experience and load.
 
+Human editor and terminal LLM development are equally required under
+[ADR 0008](0008-human-agent-authoring.md). The terminal workflow needs no editor
+window, provider SDK or MCP client; the human can open and continue its projects.
+Shared schemas/services, structured diagnostics, conflict-aware edits and public
+tool examples are release requirements. Device-dependent capture/audio evidence
+remains separately qualified, and no authoring interface exists in the bootstrap.
+
 FeatureWorld grows from 10 onward with each component, command and Lua entry
 point. Isolated error fixtures cover incompatible or destructive cases. Non-scene
 features such as installation use named external fixtures. Feature/API manifests
