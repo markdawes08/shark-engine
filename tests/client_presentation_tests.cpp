@@ -67,6 +67,9 @@ struct State {
     DrainStatus drained{DrainStatus::complete};
     std::optional<Call> fail;
     bool throw_failure{false};
+    Error injected_error{ErrorCode::execution_failed,
+                         "Injected presentation failure",
+                         {.operation = "test.presentation.failure", .request_id = "owned-request"}};
     bool validation_error_on_submit{false};
     std::optional<Call> validation_stage;
     GraphicsDiagnosticSink* diagnostics{nullptr};
@@ -92,9 +95,7 @@ struct State {
         if (throw_failure) {
             throw std::runtime_error("Injected presentation exception");
         }
-        return Error{ErrorCode::execution_failed,
-                     "Injected presentation failure",
-                     {.operation = "test.presentation.failure", .request_id = "owned-request"}};
+        return injected_error;
     }
     [[nodiscard]] std::vector<Event> calls(Call call) const {
         std::vector<Event> found;
@@ -669,6 +670,55 @@ TEST_CASE("submission validation errors stop further presentation and survive cl
     REQUIRE(diagnostics);
     CHECK(diagnostics.value().errors == 1);
     CHECK(state.position(Call::drain) < state.position(Call::destroy_swapchain));
+}
+
+TEST_CASE("named surface and device faults retain first context through failed cleanup",
+          "[presentation]") {
+    for (const auto stage :
+         {Call::swapchain, Call::wait, Call::acquire, Call::submit, Call::present}) {
+        for (const auto* source : {"surface_lost", "device_lost"}) {
+            State state;
+            auto owner = create(state);
+            if (stage != Call::swapchain) {
+                REQUIRE(owner->present());
+                REQUIRE(owner->present());
+            }
+            const auto before = owner->presentation_stats().value();
+            state.fail = stage;
+            state.injected_error = {ErrorCode::execution_failed,
+                                    std::string("Injected ") + source,
+                                    {.operation = std::string("test.presentation.") + source,
+                                     .request_id = "first-fault-request"}};
+            const auto failed = owner->present();
+            REQUIRE_FALSE(failed);
+            CHECK(failed.error().context.request_id == "first-fault-request");
+            const auto calls = state.event_count;
+            const auto repeated = owner->present();
+            REQUIRE_FALSE(repeated);
+            CHECK(state.event_count == calls);
+            CHECK(repeated.error().message == failed.error().message);
+            CHECK(repeated.error().context.operation == failed.error().context.operation);
+            const auto faulted = owner->presentation_stats().value();
+            CHECK(faulted.presented == before.presented);
+            CHECK(faulted.submitted == before.submitted + (stage == Call::present ? 1U : 0U));
+            state.fail = Call::drain;
+            state.injected_error = {ErrorCode::execution_failed,
+                                    "Secondary drain failure",
+                                    {.operation = "test.presentation.secondary_drain"}};
+            const auto retained = owner->close();
+            REQUIRE_FALSE(retained);
+            CHECK(retained.error().message == failed.error().message);
+            CHECK(state.count(Call::destroy_device) == 0);
+            CHECK_FALSE(owner->presentation_stats().value().closed);
+            state.fail.reset();
+            const auto closed = owner->close();
+            REQUIRE_FALSE(closed);
+            CHECK(closed.error().context.operation == failed.error().context.operation);
+            CHECK(closed.error().context.request_id == "first-fault-request");
+            CHECK(owner->presentation_stats().value().closed);
+            CHECK(state.count(Call::destroy_device) == 1);
+        }
+    }
 }
 
 TEST_CASE("validation failures remain immediate across waits cleanup and successful presentation",

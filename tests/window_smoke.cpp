@@ -139,6 +139,11 @@ void run() {
     const auto state = take(window->state());
     const auto dpi = GetDpiForWindow(handle);
     require(dpi != 0, "native DPI available");
+    require(AreDpiAwarenessContextsEqual(GetWindowDpiAwarenessContext(handle),
+                                         DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) != FALSE &&
+                AreDpiAwarenessContextsEqual(GetThreadDpiAwarenessContext(),
+                                             DPI_AWARENESS_CONTEXT_PER_MONITOR_AWARE_V2) != FALSE,
+            "native window and owner thread retain the manifest PerMonitorV2 policy");
     const auto actual_scale = static_cast<float>(dpi) / 96.0F;
     require(std::abs(state.scale.x - actual_scale) < 0.01F &&
                 std::abs(state.scale.y - actual_scale) < 0.01F,

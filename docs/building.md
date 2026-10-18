@@ -51,6 +51,14 @@ checks in `shark.client.presentation`, device-free native fixture CLI checks and
 `shark.tooling.presentation-evidence`. `PresentationSmoke` explicitly qualifies
 the declared presentation workload on each GPU. Editor/Runtime `--graphics`
 opens the clear sample; `--window` retains the existing empty-window sample.
+05c adds [failure and stress qualification](presentation-qualification.md).
+`PresentationStress` has a compiled Debug/Release/ASan workload and bounded
+resource samples. `PresentationFaults` uses isolated children for CPU fatal
+destruction and explicitly selected native failure injections. Their ordinary
+CTest entries remain device-free. The three `shark.tooling.presentation-stress`,
+`shark.tooling.presentation-faults` and `shark.tooling.runtime-package` families
+verify evidence and deployment inputs without initializing graphics.
+Native tests require separate, explicit commands and retained raw output.
 
 The active client/editor target is this Windows 11 x64 PC. Existing WSL2 Ubuntu
 environments cover CPU/headless Server and local package checks.

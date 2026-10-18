@@ -43,6 +43,21 @@ struct SwapchainInfo {
     std::uint32_t image_count{0};
 };
 
+// Private qualification observations of engine-owned native handles. These do
+// not estimate driver allocations, resident GPU bytes or hidden NVRHI storage.
+struct GraphicsResourceSnapshot {
+    std::uint32_t live_swapchains{0};
+    std::uint32_t image_wrappers{0};
+    std::uint32_t image_views{0};
+    std::uint32_t present_semaphores{0};
+    std::uint32_t present_fences{0};
+    std::uint32_t command_lists{0};
+    std::uint32_t acquire_semaphores{0};
+    std::uint32_t acquire_fences{0};
+    std::uint32_t pending_queue_workers{0};
+    std::uint32_t retained_recordings{0};
+};
+
 // Failed/throwing stages may partially acquire resources. The owner marks each
 // attempted phase and calls its noexcept cleanup once, in reverse order.
 // Native backends reuse the existing Window owner, not a second GLFW lifecycle.
@@ -74,6 +89,9 @@ class GraphicsBackend {
     // presentation fences. Uses a single total deadline. Device-lost permits
     // destruction but is never success. Failed/timeout drain MUST retain owners.
     [[nodiscard]] virtual Result<DrainStatus> drain_presentation(std::uint64_t timeout_ns);
+    [[nodiscard]] virtual GraphicsResourceSnapshot presentation_resources() const noexcept {
+        return {};
+    }
     virtual void destroy_swapchain() noexcept;
     virtual void destroy_presentation() noexcept;
     virtual void destroy_nvrhi() noexcept = 0;

@@ -29,7 +29,11 @@ game-authoring interfaces remain planned; terminal build/test tools work today.
 current-machine scope.** The [05b handoff](docs/handoffs/05b-presentation-lifecycle.md)
 records 236 passing CTests and 2,304 validated presentations across both local
 GPUs, with repeated resize, minimize/restore and teardown. The next checkpoint is
-**05c: failure and stress qualification**.
+**05c: failure and stress qualification**. Its fixtures and Runtime package
+tooling are implemented, but the gate remains open after a repeatable GDI-object
+increase in the NVIDIA swapchain path and an Intel ASan child exit timeout. The
+[05c handoff](docs/handoffs/05c-presentation-qualification.md) records the
+investigation and remaining checks; assignment 06 has not started.
 The [05a handoff](docs/handoffs/05a-graphics-device.md) records 211 passing CTests
 and 112 validated device lifetimes across the two local GPUs. Full `REQ-05` remains
 NOT_RUN until 05c passes.

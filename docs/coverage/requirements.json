@@ -117,7 +117,7 @@
         "Production graphics belongs to EngineClient and cannot become a configure/download/link requirement of EngineCore or Server."
       ],
       "planned_fixture": "PresentationLifecycle hardware stress, CapabilityRejection and GraphicsLossPolicy fixtures; these validate device infrastructure outside ordinary scene behavior.",
-      "verification": {"status": "NOT_RUN", "reason": "05a and 05b checkpoints PASS under current-machine scope. Final 05b gate: 236 CTests across Windows Debug/Release/ASan and WSL client/headless suites; 36 presentation cases with 1548 assertions per client configuration; 24 required-validation presentation lifetimes across both local GPUs and all three Windows configurations, totaling 2304 presentations, 96 resizes and 48 minimize/restore pairs, with zero warnings/errors/dropped diagnostics. 96 device-foundation lifetimes, native-window regressions, 14 graphical application samples, device-free CLI/parser fixtures, Runtime-only/Server-only boundaries and SDK-free WSL Server package pass. Final source/tool inputs match after the recording-ownership audit correction; native recording failure was not induced. Full REQ-05 remains NOT_RUN until 05c sustained presentation, measured resource behavior and broader failure qualification. Evidence: docs/coverage/evidence/05b-local.json; docs/handoffs/05b-presentation-lifecycle.md; docs/roadmap/graphics-device-plan.md. Historical 05a evidence remains in docs/coverage/evidence/05a-local.json."}
+      "verification": {"status": "NOT_RUN", "reason": "05a and 05b retain their completed current-machine gates. 05c stress/failure fixtures and protected Runtime deployment tooling are implemented, but qualification is open. Frozen-input regressions passed 265 CTests across Windows Debug/Release/ASan and WSL client/headless suites, plus short presentation/device/window checks and isolated Runtime/Server package checks. Current Debug stress FAIL: NVIDIA retains one GDI object per swapchain/window lifetime; Intel exceeded its initialized USER-object baseline during restore (a budget failure, not proof of a leak). An original Intel ASan fault child timed out after reporting complete native cleanup. A later fixture-only observer-lifetime correction passed focused fault CTests in all five client configurations and all 24 fresh native fault children; the earlier timeout remains unexplained and preserved. Failed evidence is preserved; Release/ASan sustained workloads remain NOT_RUN. Full REQ-05 cannot pass or advance to 06 until remaining failures and the complete native qualification gate are resolved. Evidence: docs/coverage/evidence/05c-local.json; docs/handoffs/05c-presentation-qualification.md; docs/presentation-qualification.md; docs/roadmap/graphics-device-plan.md. Historical 05a/05b receipts remain unchanged."}
     },
     {
       "id": "REQ-06",
@@ -808,6 +808,24 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "client.presentation-qualification",
+        "name": "Bounded native presentation stress, resource observations and fatal cleanup qualification",
+        "requirement_ids": ["REQ-05"],
+        "test_ids": ["shark.client.presentation", "shark.client.presentation-faults", "shark.client.presentation-stress-cli", "shark.tooling.presentation-faults", "shark.tooling.presentation-stress"],
+        "test_sources": ["tests/client_presentation_tests.cpp", "tests/check_presentation_stress_cli.py", "tools/tests/test_presentation_faults.py", "tools/tests/test_presentation_stress.py"],
+        "fixtures": ["tests/presentation_stress.cpp", "tests/presentation_faults.cpp", "engine/client/src/graphics_native_test.hpp", "tools/presentation_stress.py", "tools/presentation_faults.py"],
+        "fixture_reason": "Explicit native commands exercise the predeclared sustained workload,100resizes,20minimize/restore pairs and20subsequent device lifetimes per GPU/build. Independent parsers verify fixed resource budgets, exact live-owner bounds, zero owned resources after close, validation and raw aggregate consistency. CPU child processes exercise real fatal destruction; private native hooks inject failures after actual NVRHI recording opens or before acquire while requiring healthy-driver cleanup. Physical GPU removal/reset is not induced. Native execution remains separate from device-free CTest. No scene, readback, authoring API or MMO capacity claim; FeatureWorld starts in10."
+      },
+      {
+        "id": "foundation.runtime-package",
+        "name": "Protected Release Runtime package with inspected relocation and loaded-module closure",
+        "requirement_ids": ["REQ-05"],
+        "test_ids": ["shark.tooling.runtime-package", "shark.boundary", "shark.boundary.fixture"],
+        "test_sources": ["tools/tests/test_runtime_package.py", "cmake/CheckRuntimeBoundary.cmake", "tests/CheckBoundaryFixture.cmake"],
+        "fixtures": ["tools/package_runtime.py", "tools/runtime_package/Run-IsolatedRuntime.ps1"],
+        "fixture_reason": "CPU tests reject invalid build settings, stale builds, unexpected or corrupt payloads, missing notices and unsafe relocation. Explicit standard-user native launches inspect loaded modules outside the checkout with a restricted environment on both current-PC GPUs. This diagnostic clear-window package contains Runtime, the pinned Vulkan loader, locked Release CRT and notices; it does not implement game export, cooking or assignment35release qualification."
+      },
       {
         "id": "client.presentation-lifecycle",
         "name": "Owned clear presentation, bounded submission and swapchain retirement",

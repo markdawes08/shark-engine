@@ -87,6 +87,10 @@ records the completed 04c gate. 05a device ownership and 05b presentation
 lifecycle are complete under the current-machine scope.
 05c failure and stress qualification is next, as recorded in the
 [05b handoff](../handoffs/05b-presentation-lifecycle.md).
+The [05c handoff](../handoffs/05c-presentation-qualification.md) now records its
+implemented machine-readable stress/failure/package tools and the open native
+resource/finite-exit gate. These tools are usable by a human or terminal agent; they
+do not add authoring APIs or permit progression past failed native qualification.
 
 1. **Discovery and read-only access:** one-shot CLI + versioned stdio framing,
    clean stdout, capability/schema discovery, bounded project/scene queries,

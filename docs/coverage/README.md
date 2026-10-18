@@ -75,6 +75,13 @@ and [local evidence](evidence/05b-local.json) record the completed checkpoint;
 short clear presentation does not establish sustained
 resource-growth behavior, shaders or scene rendering. All later
 implementation requirements remain NOT_RUN.
+`client.presentation-qualification` and `foundation.runtime-package` now map
+05c's implemented stress/failure fixtures and protected deployment tooling.
+The [05c handoff](../handoffs/05c-presentation-qualification.md) records the
+open native GDI-retention and ASan exit investigations; implemented tests do not imply that
+their hardware acceptance gate passed. The [05c local receipt](evidence/05c-local.json)
+preserves its FAIL result, partial stress runs and later focused fault rechecks.
+Full `REQ-05` stays NOT_RUN.
 
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`
 means precisely that; documentation validation cannot pass a future engine gate.

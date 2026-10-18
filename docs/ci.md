@@ -32,6 +32,9 @@ complete under the current-machine scope.** The
 [05b handoff](handoffs/05b-presentation-lifecycle.md) records 236 passing CTests,
 2,304 validated presentations across both local GPUs, application and protected
 package checks. **05c failure and stress qualification** is next.
+Its [fixtures and package tools](presentation-qualification.md) are now implemented,
+but the [05c native GDI-retention investigation](handoffs/05c-presentation-qualification.md)
+leaves the sustained-resource gate open. CPU and short native passes do not replace it.
 The [05a handoff](handoffs/05a-graphics-device.md) records 211 CTests and both-GPU
 device qualification; full `REQ-05` remains NOT_RUN until 05c. The [opt-in probe](graphics-probe.md) adds CPU checks to
 ordinary CI while graphics builds/device runs use explicit graphics presets.
@@ -116,6 +119,17 @@ in Windows Debug, Release and ASan with required validation. Ordinary CTest does
 not open a window or replace those hardware runs. Editor/Runtime's clear sample
 uses the shared offline frame/input pump; its diagnostic completion is NOT_RUN
 for qualification. Full `REQ-05` remains NOT_RUN until 05c's sustained/fault gate.
+05c's [qualification guide](presentation-qualification.md) declares the fixed
+native workloads, resource limits and commands. `shark.client.presentation-faults`
+executes three isolated CPU fatal-destructor paths with a 45-second CTest limit;
+`shark.client.presentation-stress-cli` checks device-free discovery and invalid
+arguments with a 30-second limit. The `shark.tooling.presentation-faults`,
+`shark.tooling.presentation-stress` and `shark.tooling.runtime-package` tests reject
+malformed or false evidence and invalid package inputs. Native recording/surface/
+device fault injections, sustained measured presentation and relocated Runtime
+execution are separate opt-in runs. Their wrappers bind the executable, source,
+lock, tools, validation payload and selected UUID to retained raw records; a test
+child's expected fatal exit is accepted only with its matching cleanup evidence.
 Windows tests cover finite-duration shutdown; POSIX SIGINT/SIGTERM and readiness
 I/O failure checks execute on Linux, not through Windows `terminate()`.
 

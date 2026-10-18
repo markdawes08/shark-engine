@@ -88,8 +88,11 @@ normal retirement ownership. A recording error, rejected execution or exception
 before that point retains the device even if device loss is later reported;
 its destructor emits a bounded diagnostic and fails fast. It never submits
 invalid work merely to release an internal reference. This is a recover-or-exit
-policy, not a device-recovery implementation. Native injection of this path
-remains part of 05c; the policy follows inspection of the exact pinned source.
+policy, not a device-recovery implementation. 05c's private native fixture now
+injects this path immediately after actual NVRHI recording opens, preserving
+the owner and requiring the expected fatal child exit. See the
+[failure/stress contract](presentation-qualification.md); its full qualification
+gate remains open independently of these failure-policy tests.
 
 ## Native 05b workload declared before execution
 

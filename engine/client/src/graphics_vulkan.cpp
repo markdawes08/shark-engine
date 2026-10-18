@@ -1,5 +1,8 @@
 #include "graphics_backend.hpp"
 #include "graphics_queue_waiter.hpp"
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+#include "graphics_native_test.hpp"
+#endif
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -16,6 +19,7 @@
 #include <chrono>
 #include <limits>
 #include <memory>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -288,6 +292,10 @@ GraphicsAdapter inspect_adapter(VkPhysicalDevice handle, VkSurfaceKHR surface) {
 
 class VulkanBackend final : public detail::GraphicsBackend {
   public:
+    VulkanBackend() = default;
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+    explicit VulkanBackend(detail::NativeGraphicsTestControl& test) noexcept : test_(&test) {}
+#endif
     ~VulkanBackend() noexcept override {
         if (queue_waiter_.pending()) {
             std::terminate();
@@ -765,6 +773,20 @@ class VulkanBackend final : public detail::GraphicsBackend {
 
     Result<detail::AcquiredImage> acquire(std::uint32_t slot, std::uint64_t timeout_ns) override {
         return phase<detail::AcquiredImage>([&]() -> Result<detail::AcquiredImage> {
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+            if (inject(detail::NativeGraphicsFault::surface_error)) {
+                return failure(
+                    ErrorCode::execution_failed, "graphics.test.surface_error",
+                    "Injected surface-loss policy error; the native driver remains healthy");
+            }
+            if (inject(detail::NativeGraphicsFault::device_error)) {
+                // Deliberately do not set device_lost_: cleanup must still prove
+                // actual healthy-driver completion, never fake its loss shortcut.
+                return failure(
+                    ErrorCode::execution_failed, "graphics.test.device_error",
+                    "Injected device-loss policy error; the native driver remains healthy");
+            }
+#endif
             auto& frame = frames_.at(slot);
             check(vkResetFences(device_, 1, &frame.acquire_fence), "graphics.acquire.reset_fence");
             std::uint32_t image = 0;
@@ -815,6 +837,16 @@ class VulkanBackend final : public detail::GraphicsBackend {
             // so failed recording must retain ownership even after device loss.
             frame.unretired_recording = true;
             commands->open();
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+            if (inject(detail::NativeGraphicsFault::recording_error)) {
+                return failure(ErrorCode::execution_failed, "graphics.test.recording_error",
+                               "Injected failure after opening a real NVRHI command list");
+            }
+            if (inject(detail::NativeGraphicsFault::recording_exception)) {
+                throw std::runtime_error(
+                    "Injected exception after opening a real NVRHI command list");
+            }
+#endif
             if (nvrhi_diagnostics_.sink->has_errors()) {
                 return failure(ErrorCode::execution_failed, "graphics.submit.validation",
                                "Validation reported an error while opening presentation commands");
@@ -999,7 +1031,27 @@ class VulkanBackend final : public detail::GraphicsBackend {
         }
     }
 
+    detail::GraphicsResourceSnapshot presentation_resources() const noexcept override {
+        detail::GraphicsResourceSnapshot result;
+        result.live_swapchains = swapchain_ != VK_NULL_HANDLE ? 1U : 0U;
+        result.pending_queue_workers = queue_waiter_.pending() ? 1U : 0U;
+        for (const auto& frame : frames_) {
+            result.command_lists += frame.commands ? 1U : 0U;
+            result.acquire_semaphores += frame.acquired != VK_NULL_HANDLE ? 1U : 0U;
+            result.acquire_fences += frame.acquire_fence != VK_NULL_HANDLE ? 1U : 0U;
+            result.retained_recordings += frame.unretired_recording ? 1U : 0U;
+        }
+        for (const auto& image : images_) {
+            result.image_wrappers += image.texture ? 1U : 0U;
+            result.image_views += image.view != VK_NULL_HANDLE ? 1U : 0U;
+            result.present_semaphores += image.rendered != VK_NULL_HANDLE ? 1U : 0U;
+            result.present_fences += image.present_fence != VK_NULL_HANDLE ? 1U : 0U;
+        }
+        return result;
+    }
+
     void destroy_swapchain() noexcept override {
+        record_teardown();
         if (queue_waiter_.pending()) {
             std::terminate();
         }
@@ -1029,6 +1081,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
     }
 
     void destroy_presentation() noexcept override {
+        record_teardown();
         for (auto& frame : frames_) {
             frame.commands = nullptr;
             if (frame.acquire_fence != VK_NULL_HANDLE) {
@@ -1042,6 +1095,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
     }
 
     void destroy_nvrhi() noexcept override {
+        record_teardown();
         // Presentation has already completed its bounded drain or reported
         // device loss, and any legacy queue-idle worker has joined. NVRHI's
         // unbounded waitForIdle is never called on the owning thread.
@@ -1051,6 +1105,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
     }
 
     void destroy_device() noexcept override {
+        record_teardown();
         if (queue_waiter_.pending()) {
             std::terminate();
         }
@@ -1063,6 +1118,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
     }
 
     void destroy_surface() noexcept override {
+        record_teardown();
         if (surface_ != VK_NULL_HANDLE) {
             vkDestroySurfaceKHR(instance_, surface_, nullptr);
             surface_ = VK_NULL_HANDLE;
@@ -1070,6 +1126,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
     }
 
     void destroy_instance() noexcept override {
+        record_teardown();
         if (messenger_ != VK_NULL_HANDLE && destroy_messenger_ != nullptr) {
             destroy_messenger_(instance_, messenger_, nullptr);
             messenger_ = VK_NULL_HANDLE;
@@ -1084,10 +1141,28 @@ class VulkanBackend final : public detail::GraphicsBackend {
     }
 
     void destroy_window() noexcept override {
+        record_teardown();
         window_.reset();
     }
 
   private:
+    void record_teardown() noexcept {
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+        if (test_) {
+            ++test_->teardown_calls;
+        }
+#endif
+    }
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+    bool inject(detail::NativeGraphicsFault fault) noexcept {
+        if (test_ && test_->armed && !test_->fired && test_->fault == fault) {
+            test_->fired = true;
+            return true;
+        }
+        return false;
+    }
+    detail::NativeGraphicsTestControl* test_{nullptr};
+#endif
     using Clock = std::chrono::steady_clock;
     static Clock::time_point make_deadline(std::uint64_t timeout_ns) noexcept {
         // The coordinator supplies millisecond/one-second bounds. Clamp this
@@ -1216,5 +1291,10 @@ namespace detail {
 std::unique_ptr<GraphicsBackend> make_graphics_backend() {
     return std::make_unique<VulkanBackend>();
 }
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+std::unique_ptr<GraphicsBackend> make_fault_graphics_backend(NativeGraphicsTestControl& control) {
+    return std::make_unique<VulkanBackend>(control);
+}
+#endif
 } // namespace detail
 } // namespace shark::client

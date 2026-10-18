@@ -37,6 +37,14 @@ set_tests_properties(shark.core.timing PROPERTIES LABELS "cpu;unit;server" TIMEO
 add_test(NAME shark.core.work COMMAND Tests "[work]" --rng-seed 1337)
 set_tests_properties(shark.core.work PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
 if(TARGET EngineClient)
+    add_executable(PresentationFaults presentation_faults.cpp)
+    target_include_directories(PresentationFaults PRIVATE "${PROJECT_SOURCE_DIR}"
+        "${PROJECT_SOURCE_DIR}/engine/client/src")
+    target_link_libraries(PresentationFaults PRIVATE EngineClient)
+    target_compile_definitions(PresentationFaults PRIVATE
+        SHARK_FAULT_NATIVE_GRAPHICS=$<BOOL:${SHARK_NATIVE_GRAPHICS}>)
+    shark_configure_target(PresentationFaults)
+    shark_classify_target(PresentationFaults test)
     add_test(NAME shark.client.input COMMAND Tests "[input]" --rng-seed 1337)
     set_tests_properties(shark.client.input PROPERTIES LABELS "cpu;unit;client" TIMEOUT 15)
     add_test(NAME shark.client.window COMMAND Tests "[window]" --rng-seed 1337)
@@ -67,6 +75,19 @@ if(TARGET EngineClient)
         target_link_libraries(PresentationSmoke PRIVATE EngineClient)
         shark_configure_target(PresentationSmoke)
         shark_classify_target(PresentationSmoke test)
+        add_executable(PresentationStress presentation_stress.cpp)
+        target_include_directories(PresentationStress PRIVATE "${PROJECT_SOURCE_DIR}"
+            "${PROJECT_SOURCE_DIR}/engine/client/src")
+        target_link_libraries(PresentationStress PRIVATE EngineClient Psapi)
+        shark_configure_target(PresentationStress)
+        shark_classify_target(PresentationStress test)
+        if(SHARK_SANITIZER STREQUAL "none")
+            string(TOLOWER "${CMAKE_BUILD_TYPE}" shark_presentation_profile)
+        else()
+            set(shark_presentation_profile "asan")
+        endif()
+        target_compile_definitions(PresentationStress PRIVATE
+            SHARK_GRAPHICS_PROFILE="${shark_presentation_profile}")
 
         file(SHA256 "${PROJECT_SOURCE_DIR}/dependencies.lock.json" shark_graphics_lock_sha256)
         file(GLOB_RECURSE shark_graphics_source_paths CONFIGURE_DEPENDS
@@ -110,6 +131,28 @@ if(TARGET EngineClient)
             SHARK_GRAPHICS_LOCK_SHA256="${shark_graphics_lock_sha256}"
             SHARK_GRAPHICS_SOURCE_SHA256="${shark_graphics_source_sha256}"
             SHARK_GRAPHICS_COMPILER="${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}")
+        list(REMOVE_ITEM shark_graphics_source_paths "tests/presentation_smoke.cpp")
+        foreach(shark_fixture IN ITEMS PresentationStress PresentationFaults)
+            if(shark_fixture STREQUAL "PresentationStress")
+                set(shark_fixture_source "tests/presentation_stress.cpp")
+            else()
+                set(shark_fixture_source "tests/presentation_faults.cpp")
+            endif()
+            set(shark_fixture_sources ${shark_graphics_source_paths} "${shark_fixture_source}")
+            list(SORT shark_fixture_sources)
+            set(shark_fixture_material "")
+            foreach(shark_source IN LISTS shark_fixture_sources)
+                file(SHA256 "${PROJECT_SOURCE_DIR}/${shark_source}" shark_file_sha256)
+                string(APPEND shark_fixture_material "${shark_source}\n${shark_file_sha256}\n")
+                set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+                    "${PROJECT_SOURCE_DIR}/${shark_source}")
+            endforeach()
+            string(SHA256 shark_fixture_sha256 "${shark_fixture_material}")
+            target_compile_definitions(${shark_fixture} PRIVATE
+                SHARK_GRAPHICS_LOCK_SHA256="${shark_graphics_lock_sha256}"
+                SHARK_GRAPHICS_SOURCE_SHA256="${shark_fixture_sha256}"
+                SHARK_GRAPHICS_COMPILER="${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}")
+        endforeach()
     endif()
 endif()
 
@@ -153,6 +196,28 @@ set(Python3_FIND_STRATEGY LOCATION)
 set(Python3_FIND_REGISTRY NEVER)
 set(Python3_FIND_FRAMEWORK NEVER)
 find_package(Python3 3.11 COMPONENTS Interpreter REQUIRED)
+foreach(shark_tooling_fixture IN ITEMS presentation-stress presentation-faults runtime-package)
+    string(REPLACE "-" "_" shark_tooling_source "${shark_tooling_fixture}")
+    add_test(NAME "shark.tooling.${shark_tooling_fixture}"
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_${shark_tooling_source}.py" -v)
+    set_tests_properties("shark.tooling.${shark_tooling_fixture}" PROPERTIES
+        LABELS "cpu;tooling" TIMEOUT 30 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+endforeach()
+set_tests_properties(shark.tooling.runtime-package PROPERTIES LABELS "cpu;tooling;boundary")
+if(TARGET PresentationFaults)
+    add_test(NAME shark.client.presentation-faults
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/presentation_faults.py"
+            --executable "$<TARGET_FILE:PresentationFaults>" --mode cpu)
+    set_tests_properties(shark.client.presentation-faults PROPERTIES
+        LABELS "cpu;integration;client" TIMEOUT 45 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+endif()
+if(TARGET PresentationStress)
+    add_test(NAME shark.client.presentation-stress-cli
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_presentation_stress_cli.py"
+            --executable "$<TARGET_FILE:PresentationStress>")
+    set_tests_properties(shark.client.presentation-stress-cli PROPERTIES
+        LABELS "cpu;integration;client" TIMEOUT 30 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+endif()
 add_test(NAME shark.tooling.graphics-device-evidence
     COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_graphics_device_smoke.py" -v)
 set_tests_properties(shark.tooling.graphics-device-evidence PROPERTIES

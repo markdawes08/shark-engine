@@ -95,6 +95,11 @@ checkpoint is **05c, failure and stress qualification**. The
 lifecycle and qualification limits. The completed
 [05a handoff](../handoffs/05a-graphics-device.md) retains device validation on both
 local GPUs and WSL CPU/Server isolation. Full `REQ-05` remains NOT_RUN until 05c.
+05c's [implemented qualification fixtures](../presentation-qualification.md) found
+an unresolved GDI-object increase in the NVIDIA swapchain path and an Intel
+ASan fault-child exit timeout; its
+[handoff](../handoffs/05c-presentation-qualification.md) records that open gate.
+Do not start 06 or relax the two-GPU/current-machine target to bypass it.
 Presentation stays in Client and cannot acquire authority over server time or world state.
 The [final local handoff](../handoffs/02d-final-verification.md)
 preserves the Windows lifecycle and isolated Ubuntu CPU/package evidence. The

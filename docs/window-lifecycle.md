@@ -4,6 +4,14 @@
 `GraphicsDevice`; it does not create another GLFW lifecycle. `--window` remains
 the standalone empty-window diagnostic described below.
 
+Native Windows client executables declare `PerMonitorV2` in their embedded
+manifest before DLL or UI initialization, alongside the graphics loader's UTF-8
+process code page. This makes the existing GLFW DPI policy explicit at process
+startup. The native smoke verifies window/thread awareness and the actual
+content/framebuffer/DPI relationship. Microsoft recommends
+[manifest DPI configuration](https://learn.microsoft.com/en-us/windows/win32/hidpi/setting-the-default-dpi-awareness-for-a-process)
+over setting the process default after startup.
+
 04b connects EngineClient's [input contract](input-contracts.md) to the pinned
 GLFW backend on Windows. Editor and Runtime use the same owned `Window` and
 explicit launch mode. This opens an empty native window without a graphics

@@ -23,8 +23,14 @@ split are implemented; the [M01 handoff](docs/handoffs/M01-headless-server.md) r
 local qualification and the [hosted follow-up](docs/handoffs/M01-ci-verification.md)
 records the completed native CPU, headless Docker and red/green gate. **05b,
 swapchain, submission and presentation lifecycle, is complete under the
-current-machine scope.** The next checkpoint is **05c, failure and stress
-qualification**. Follow the
+current-machine scope.** **05c failure/stress fixtures are implemented, but its
+qualification gate remains open:** native investigation found one retained GDI
+object per NVIDIA swapchain/window lifetime, and an Intel ASan fault child timed
+out after recording native cleanup. Do not mark full 05 PASS or start 06 while
+these remain unresolved. Read the
+[05c handoff](docs/handoffs/05c-presentation-qualification.md) and
+[qualification contract](docs/presentation-qualification.md) before continuing;
+preserve its failed evidence and fixed resource limits. Follow the
 [05 checkpoint plan](docs/roadmap/graphics-device-plan.md),
 [graphics device contract](docs/graphics-device.md),
 [presentation lifecycle contract](docs/presentation-lifecycle.md) and

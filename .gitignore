@@ -7,6 +7,7 @@
 # binary readbacks, validation layers and reports use build/ and out/graphics*/.
 # Standalone graphics probe packages and relocation receipts also belong in out/ or dist/.
 # Device/presentation JSONL traces, local verification helpers and receipts stay in out/.
+# Stress/resource traces and Runtime relocation packages also stay in out/ or dist/.
 # Keep generated agent/session reports under out/; public schemas/examples stay tracked.
 /build/
 /out/

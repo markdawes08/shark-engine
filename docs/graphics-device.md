@@ -7,6 +7,9 @@ local gate. Assignment **05b** extends it with
 swapchain retirement; the [05b handoff](handoffs/05b-presentation-lifecycle.md)
 records that checkpoint. Full `REQ-05` remains **NOT_RUN** until the
 [05c failure/stress gate](roadmap/graphics-device-plan.md) is complete.
+Its [qualification fixtures](presentation-qualification.md) are implemented;
+the [05c handoff](handoffs/05c-presentation-qualification.md) records an unresolved
+native GDI-retention finding rather than a completed sustained-resource gate.
 Public contracts still expose no native GPU
 handles or authoring APIs. Editor/Runtime `--window` retains its empty-window
 sample; explicit `--graphics` uses the same [offline pump](frame-loop.md) and
