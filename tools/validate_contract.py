@@ -45,6 +45,7 @@ DOCUMENTS = (
     "docs/handoffs/00-architecture-contract.md",
     "docs/handoffs/mmorpg-planning-amendment.md",
     "docs/handoffs/M01-headless-server.md",
+    "docs/handoffs/M01-ci-verification.md",
     "docs/handoffs/human-agent-planning-amendment.md",
 )
 

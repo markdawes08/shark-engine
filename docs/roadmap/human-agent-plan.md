@@ -7,8 +7,11 @@ This is a planning amendment, not implementation of the authoring CLI or editor.
 [ADR 0008](../architecture/0008-human-agent-authoring.md) is the product contract.
 It supplements the [MMORPG execution plan](mmorpg-plan.md) and
 [requirements manifest](../coverage/requirements.json). Original assignment IDs,
-MMO insertions and current assignment M01 remain unchanged. M01's hosted gate is
-still recorded as open; no hosted results are inferred from the new local commit.
+MMO insertions and current assignment M01 remain unchanged. At the planning
+review, M01's hosted gate was recorded as open. Its later
+[hosted verification](../handoffs/M01-ci-verification.md) now closes that gate at
+`d658d69`; the historical assessment below remains tied to the reviewed baseline.
+No authoring implementation or parity evidence is inferred from the CI result.
 
 ## Assessment of existing work
 
@@ -68,7 +71,7 @@ The engine works without an LLM service; agents consume ordinary developer tools
 ## Reviewable parts of assignment 15
 
 Keep 15 as one manifest owner and final gate, but implement it in these dependent
-parts. This does not advance past M01 or waive 02's graphics feasibility gate.
+parts. This plan does not start assignment 15 or waive 02's graphics feasibility gate.
 
 1. **Discovery and read-only access:** one-shot CLI + versioned stdio framing,
    clean stdout, capability/schema discovery, bounded project/scene queries,
@@ -90,12 +93,13 @@ extend both interfaces and their tests, without waiting for a second API phase.
 ## Evidence and current limits
 
 Current available terminal development entry points are documented in
-[building](../building.md) and [CI](../ci.md). Existing local M01 tests cover
-bootstrap/lifecycle/boundaries only. They do not prove project authoring, agent
+[building](../building.md) and [CI](../ci.md). Completed local and hosted M01
+qualification covers bootstrap/lifecycle/boundaries only. It does not prove project authoring, agent
 discovery, human/agent parity, graphics or live MMO operations. The separate
 [amendment handoff](../handoffs/human-agent-planning-amendment.md) records the
 checks for this planning change. The full authoring gate remains NOT_RUN.
 
-Next implementation work remains closing M01's hosted qualification, then 02
-graphics compatibility. No additional numbered chunk or change to product/player
-authority is necessary for this amendment.
+M01's hosted qualification is complete. Next implementation work is assignment 02
+graphics compatibility, starting with 02a dependency/probe setup; it has not started.
+No additional numbered chunk or change to product/player authority is necessary
+for this amendment.

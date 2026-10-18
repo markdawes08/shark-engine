@@ -1,7 +1,7 @@
 # ADR 0003: Client and headless-server platform qualification
 
 - Date: 2026-10-17
-- Status: accepted planning contract; every runtime target is **UNVERIFIED**
+- Status: accepted planning contract; M01 server foundation **PASS**, every shipping release target **UNVERIFIED**
 - Owners: 01 (build qualification), M01 (headless-server foundation), 02 (client graphics feasibility), 05-06 (production graphics integration), later MMO milestones (server behavior/load), 35 (client release qualification)
 
 ## Decision and present support status
@@ -13,8 +13,10 @@ passing local Windows bootstrap builds/tests and supplemental WSL Ubuntu 26.04
 CPU checks. The [CI verification handoff](../handoffs/01-ci-verification.md) records
 the completed 01 hosted CPU matrix and deliberate-failure/red-to-green gate. These
 results do not qualify client graphics, a headless server or a released game.
-M01's separate local foundation results are recorded below and in its
-[handoff](../handoffs/M01-headless-server.md); hosted verification is still open.
+M01's separate foundation gate is **PASS**. Local results are recorded below and
+in its [handoff](../handoffs/M01-headless-server.md); the
+[hosted follow-up](../handoffs/M01-ci-verification.md) records the native CPU
+matrix, minimal Docker Server gate and deliberate-failure/restored-success proof.
 Graphics and multiplayer qualification remain **NOT RUN**. The
 [MMORPG plan](../roadmap/mmorpg-plan.md) adds future server milestones without
 removing the native client commitments.
@@ -34,7 +36,7 @@ These are minimum deployment candidates. New major OS versions or GPU families r
 | Linux client | Ubuntu 24.04 LTS, glibc 2.39 baseline, X11 desktop session | x86-64, SSE4.2 floor; no mandatory AVX/AVX2 | Native vendor/Mesa Vulkan driver | UNVERIFIED |
 | macOS Apple Silicon | macOS 26, Cocoa | arm64, Apple M1 floor | KosmicKrisp Vulkan-on-Metal candidate | UNVERIFIED |
 | macOS Intel | macOS 15, Cocoa | x86-64, SSE4.2 floor; no mandatory AVX/AVX2 | MoltenVK Vulkan-on-Metal candidate | UNVERIFIED |
-| Linux dedicated Server | Ubuntu 24.04 LTS, glibc 2.39 baseline, no display session | x86-64, SSE4.2 floor; no mandatory AVX/AVX2 | None; no GPU, window, graphics or audio-device requirement | UNVERIFIED / NOT RUN |
+| Linux dedicated Server | Ubuntu 24.04 LTS, glibc 2.39 baseline, no display session | x86-64, SSE4.2 floor; no mandatory AVX/AVX2 | None; no GPU, window, graphics or audio-device requirement | M01 idle foundation PASS; shipping release UNVERIFIED |
 
 Windows 25H2 avoids beginning a new qualification program on Windows 11 24H2 Home/Pro after its October 2026 end of updates. This is a project baseline choice, not a claim of tested compatibility. [Microsoft lifecycle](https://learn.microsoft.com/en-us/lifecycle/products/windows-11-home-and-pro)
 
@@ -58,12 +60,12 @@ by this amendment.
 
 | M01 evidence | Required acceptance | Result |
 | --- | --- | --- |
-| Dependency isolation | Fresh server-only configure/build with locked Core inputs; no client/authoring package discovery, download or target creation; direct/transitive boundary rejection fixtures pass | PASS locally; hosted pending |
-| Native CPU build | Ubuntu 24.04 x86-64 Debug/Release with GCC and Clang ASan/UBSan; record exact compiler, standard library, SDK, OS/image and dependency lock digest | PASS in pinned Ubuntu userspace under WSL, not bare-metal Ubuntu; hosted pending |
-| Headless startup | Actual Server runs with DISPLAY and WAYLAND_DISPLAY unset, without X11/Wayland, Vulkan/GLFW, GPU or audio-device services; package and dynamic-library inspection agree with the Core-only closure | PASS locally, including pristine-base package lifecycle |
-| CLI and configuration | Help/version, valid minimal configuration, unknown flags and invalid/missing configuration have tested output and exit status; configuration failure occurs before work is accepted | PASS locally |
-| Lifecycle and smoke | Bounded process-level smoke test, partial-initialization failure and graceful stop signal all terminate within recorded deadlines; owned workers/resources are released and repeated starts/stops remain clean | PASS locally for the implemented idle lifecycle; no simulation workers yet |
-| CI evidence | Dedicated headless job exercises the real Server tests with nonempty CTest selection and archives configuration/build/test logs, JUnit, package inventory and toolchain metadata | Local stages PASS; GitHub/Docker workflow NOT RUN on M01 |
+| Dependency isolation | Fresh server-only configure/build with locked Core inputs; no client/authoring package discovery, download or target creation; direct/transitive boundary rejection fixtures pass | PASS locally and in hosted Docker, including actual source/header/link/package closure |
+| Native CPU build | Ubuntu 24.04 x86-64 Debug/Release with GCC and Clang ASan/UBSan; record exact compiler, standard library, SDK, OS/image and dependency lock digest | PASS in pinned Ubuntu userspace under WSL and hosted native x86-64 Docker; shared kernels, not bare-metal qualification |
+| Headless startup | Actual Server runs with DISPLAY and WAYLAND_DISPLAY unset, without X11/Wayland, Vulkan/GLFW, GPU or audio-device services; package and dynamic-library inspection agree with the Core-only closure | PASS locally and hosted; pristine pinned Docker runtime has networking disabled and read-only root/package |
+| CLI and configuration | Help/version, valid minimal configuration, unknown flags and invalid/missing configuration have tested output and exit status; configuration failure occurs before work is accepted | PASS locally and hosted |
+| Lifecycle and smoke | Bounded process-level smoke test, partial-initialization failure and graceful stop signal all terminate within recorded deadlines; owned workers/resources are released and repeated starts/stops remain clean | PASS for the implemented idle lifecycle in build/test environments; pristine Docker runtime runs a separate finite smoke; no simulation workers yet |
+| CI evidence | Dedicated headless job exercises the real Server tests with nonempty CTest selection and archives configuration/build/test logs, JUnit, package inventory and toolchain metadata | PASS: hosted Debug and ASan/UBSan each 13/13, package smoke, deliberate sentinel failure and restored success |
 
 Use a clean Ubuntu 24.04 server environment or minimal Ubuntu 24.04 runtime
 container with no client libraries or mapped GPU/audio devices for the deployment
@@ -169,8 +171,9 @@ For readback comparisons, use exact integer results and channel tolerances of 1/
 
 The [01 handoff](../handoffs/01-build-foundation.md) records historical local
 build/CTest passes; the [CI verification handoff](../handoffs/01-ci-verification.md)
-closes the hosted CPU matrix/red-green gate. 02 hardware and all MMO server
-results are NOT RUN. Assignment 00 originally assigned these uncertainties;
+closes the historical hosted CPU matrix/red-green gate; the M01 follow-up closes
+the server foundation. 02 hardware and MMO gameplay/load results remain NOT RUN.
+Assignment 00 originally assigned these uncertainties;
 this amendment adds server ownership without waiving a later gate. Dependent
 renderer architecture cannot advance on an assumed macOS PASS. Assignment 35 may
 call a client target supported only after the final packaged Editor/Runtime,

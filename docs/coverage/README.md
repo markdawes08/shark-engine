@@ -62,11 +62,16 @@ The ignored local roadmap is amended for consistency but remains optional contex
 not a CI input. REQ-00's PASS records its historical planning evidence, not MMO
 implementation. REQ-01 is PASS: the repaired hosted CPU matrix and required
 deliberate-failure/red-to-green proof are verified at the recorded historical
-revision. The current assignment is M01; its implementation and pending hosted
-qualification are recorded in the [M01 handoff](../handoffs/M01-headless-server.md).
-Its [local receipt](evidence/M01-local.json) records Windows 45/45 CTests,
+revision. The current assignment remains M01 and REQ-M01 is PASS. Its
+implementation and local qualification are recorded in the
+[M01 handoff](../handoffs/M01-headless-server.md). The
+[local receipt](evidence/M01-local.json) records Windows 45/45 CTests,
 Ubuntu 26/26 restored CTests, the expected injected sentinel failure and package
-closure/lifecycle evidence. The hosted gate remains open.
+closure/lifecycle evidence. The [hosted follow-up](../handoffs/M01-ci-verification.md)
+and [gate receipt](evidence/M01-ci-gate.json) record all fifteen jobs passing,
+206/206 restored CTests, the expected thirteen injected sentinel failures,
+Docker/package closure and fifteen required checks. Assignment 02 is next,
+starting with 02a dependency/probe setup; it has not started.
 Graphics and multiplayer requirements remain NOT_RUN. See the
 [CI verification handoff](../handoffs/01-ci-verification.md) for 01's tested
 revision, run URLs and qualification limits.

@@ -18,8 +18,11 @@ They supersede the original offline-only scope. Original assignments 00-35 retai
 their IDs; M01-M10 are inserted in the manifest's explicit `assignment_order`.
 Assignment 01's hosted CPU and red/green gate is complete; see the
 [CI verification handoff](docs/handoffs/01-ci-verification.md). The current assignment
-is M01, before 02. The headless Server bootstrap and Core/Client split are
-implemented; qualification is recorded in the [M01 handoff](docs/handoffs/M01-headless-server.md).
+remains M01 and its gate is complete. The headless Server bootstrap and Core/Client
+split are implemented; the [M01 handoff](docs/handoffs/M01-headless-server.md) records
+local qualification and the [hosted follow-up](docs/handoffs/M01-ci-verification.md)
+records the completed native CPU, headless Docker and red/green gate. The next
+assignment is 02, starting with 02a dependency/probe setup; it has not started.
 Networking, persistence, simulation and streaming remain planned.
 
 Human editor users and terminal-based LLM agents are equal development audiences.

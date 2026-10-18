@@ -9,13 +9,17 @@ all fourteen jobs and all 120 CPU tests on the same revision. See the
 [durable gate evidence](coverage/evidence/01-ci-gate.json). The user reserves Git
 staging, committing and pushing.
 
-**M01 is the current assignment; its hosted gate is open.** Its implementation
-adds a `headless-server` job beside the fourteen existing jobs. The new job and
-updated client matrix still need execution on the user-committed M01 revision;
-the completed 01 evidence does not qualify these changes. The new check has not
-yet been added to the recorded branch-protection configuration. The
-[MMORPG execution plan](roadmap/mmorpg-plan.md) places M01 before 02; later
-network, database, world-handoff and active-load tiers remain planned.
+**M01 remains the current assignment and its hosted gate is PASS** at
+`d658d69c21c492c844f5678f931b1ddf955d25cd`. The ordinary push and restored manual
+run pass all fifteen jobs and all 206 CTests. The intervening injected run reaches
+193 tests, failing only the thirteen intended sentinels while the other 180 pass;
+headless sanitizer and clean-runtime stages stop after its Debug failure.
+The [M01 hosted follow-up](handoffs/M01-ci-verification.md) and
+[durable gate evidence](coverage/evidence/M01-ci-gate.json) record actual runs,
+Docker/package qualification and the fifteen required checks. The
+[MMORPG execution plan](roadmap/mmorpg-plan.md) places 02 next, starting with 02a
+dependency/probe setup; it has not started. Network, database, world-handoff and
+active-load tiers remain planned.
 
 ## Jobs and required checks
 
@@ -34,16 +38,15 @@ persisting credentials, and uploads logs on failure as well as success.
 | `runtime-only` | `ubuntu-24.04` x64 | GCC 13 | Client Release, no Server/Editor/EngineTools/Tests |
 | `headless-server` | `ubuntu-24.04` x64 host; locked Ubuntu 24.04 amd64 image | Snapshot GCC 13 and Clang 18 | Server-only Release package, Core/Server Debug tests, ASan + UBSan tests and clean-runtime smoke |
 
-The fourteen pre-M01 jobs are configured as required checks on `main`, bound to
-the GitHub Actions app (15368), with up-to-date branches required. Administrator
-bypass remains enabled for the owner's direct-push workflow; no approving-review
-or push-actor restriction was added. The settings were read back from GitHub and
-[recorded](coverage/evidence/01-ci-protection.json). After the user commits/pushes
-M01 and its hosted job is verified, add `headless-server` to those fourteen
-required checks using the exact GitHub Actions check name. The workflow now
-defines fifteen checks; the older protection report proves only the fourteen
-it records. Missing, skipped or cancelled
-required jobs do not establish a passing assignment gate. The Windows Server
+All fifteen jobs, including `headless-server`, are configured as required checks
+on `main`, bound to GitHub Actions app 15368, with up-to-date branches required.
+Administrator bypass remains enabled for the owner's direct-push workflow; no
+approving-review or push-actor restriction was added. The M01 update preserves
+the earlier policy, adds the verified headless check and records GitHub readback
+in the [hosted gate evidence](coverage/evidence/M01-ci-gate.json). The historical
+[01 protection report](coverage/evidence/01-ci-protection.json) continues to prove
+only its original fourteen checks. Missing, skipped or cancelled required jobs
+do not establish a passing assignment gate. The Windows Server
 runner is build evidence; it does not qualify Windows 11 graphics or deployment.
 The Mac CPU jobs do not qualify either Vulkan-on-Metal implementation.
 
@@ -243,9 +246,15 @@ acceptance evidence to durable release/handoff storage before expiration.
 
 The assignment 01 proof is complete: [injected run 39077652643](https://github.com/markdawes08/shark-engine/actions/runs/39077652643)
 followed by [restored run 39078070735](https://github.com/markdawes08/shark-engine/actions/runs/39078070735),
-both at `3620fab`. Use this procedure when a future build/CI change requires
-renewed failure-propagation evidence. Finish the first dispatch before starting
-the second; the workflow's concurrency policy can cancel overlapping dispatches.
+both at `3620fab`. M01's separate proof uses
+[injected run 39082507455](https://github.com/markdawes08/shark-engine/actions/runs/39082507455)
+and [restored run 39083098689](https://github.com/markdawes08/shark-engine/actions/runs/39083098689),
+both at `d658d69`; it includes the new headless job. The
+[M01 hosted follow-up](handoffs/M01-ci-verification.md) records their actual
+assertions, phase exits and remaining qualification limits.
+Use this procedure when a future build/CI change requires renewed
+failure-propagation evidence. Finish the first dispatch before starting the
+second; the workflow's concurrency policy can cancel overlapping dispatches.
 
 1. Open the repository's **Actions > CPU foundation > Run workflow** on the
    intended revision. Set `inject_test_failure` to **true**. The twelve CPU jobs

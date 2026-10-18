@@ -1,0 +1,48 @@
+{
+  "schema_version": 1,
+  "assignment": "M01",
+  "status": "PASS",
+  "repository": "markdawes08/shark-engine",
+  "tested_revision": "d658d69c21c492c844f5678f931b1ddf955d25cd",
+  "original_implementation_revision": "d9f53ef94a6a97a02128d35dc6077a5148467a3e",
+  "verified_at_utc": "2026-10-18T00:38:30.373600+00:00",
+  "original_implementation_push_run": 39081460198,
+  "ordinary_push_run": 39082339515,
+  "red_run": 39082507455,
+  "green_run": 39083098689,
+  "red_completed_at": "2026-10-18T00:29:52Z",
+  "green_started_at": "2026-10-18T00:31:54Z",
+  "checks": {
+    "same_revision": true,
+    "red_completed_before_green_started": true,
+    "twelve_cpu_jobs_and_headless_failed_only_the_injected_assertion": true,
+    "all_fifteen_restored_jobs_passed": true,
+    "all_206_restored_tests_passed_without_skips": true,
+    "headless_release_closure_and_clean_runtime_passed": true,
+    "all_fifteen_required_checks_configured": true,
+    "administrator_bypass_and_unrelated_protection_preserved": true
+  },
+  "evidence": [
+    {
+      "path": "M01-local.json",
+      "sha256": "c30d177532ada7e6f3b1aa2339af2306ded160261ddd0d3fce5c8ffc6d50b170"
+    },
+    {
+      "path": "M01-ci-push.json",
+      "sha256": "6bb98dc9842afa0e815933155fd27cd04ff1df8d87e2f696c893e6b2ee05f766"
+    },
+    {
+      "path": "M01-ci-red.json",
+      "sha256": "be2d14fcb574d701f1eb185d085f5c290246dda5cf40cc48716a47740ee58ea5"
+    },
+    {
+      "path": "M01-ci-green.json",
+      "sha256": "0f6e7527da69acd9a33f4ba98553287ff86d09841583b305ebb4538bca6f82dc"
+    },
+    {
+      "path": "M01-ci-protection.json",
+      "sha256": "f2a6e933562d606748cabfb1a820ac753dfbcea24a8e961f45d2e6a06b2040e2"
+    }
+  ],
+  "scope": "M01 bootstrap lifecycle and dependency isolation only. Actual hosted Docker Ubuntu userspace; no graphics, multiplayer, simulation, persistence, streaming, capacity or shipping-release qualification. Windows POSIX signal cases remain inapplicable; Linux/macOS exercise them. Pristine Docker runtime is a 20ms finite smoke; full lifecycle runs in the test container. Raw ZIPs/logs and one-off audit utilities remain under ignored out/ci/m01-hosted."
+}

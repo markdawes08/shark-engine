@@ -14,11 +14,13 @@ The [human/agent plan and foundation assessment](docs/roadmap/human-agent-plan.m
 define noninteractive tools, discoverable schemas and safe project handoff. Those
 game-authoring interfaces remain planned; terminal build/test tools work today.
 
-**Current assignment: M01, headless server and Core/Client separation.** Assignment
-01's build foundation is complete. Editor/Runtime provide version and bootstrap
-help; Server adds validated startup, timed execution and shutdown. Graphics,
-scenes, gameplay and editor UI are future increments. CPU build results do not
-establish graphics or release-platform support.
+**Current assignment: M01, complete.** The headless server and Core/Client
+separation have passed local and hosted qualification, including deliberate test
+failure and restored success. Assignment 02 is next, starting with 02a
+dependency/probe setup; graphics work has not started. Editor/Runtime provide
+version and bootstrap help; Server adds validated startup, timed execution and
+shutdown. Graphics, scenes, gameplay and editor UI are future increments. CPU
+build results do not establish graphics or release-platform support.
 
 - [Architecture decisions](docs/architecture/README.md): targets, dependencies,
   platform candidates, formats, simulation conventions and the MMORPG profile.
@@ -36,7 +38,8 @@ establish graphics or release-platform support.
 - [MMORPG planning handoff](docs/handoffs/mmorpg-planning-amendment.md) records
   the scope change and repository state at that handoff.
 - [M01 handoff](docs/handoffs/M01-headless-server.md) records the headless server
-  implementation, local evidence and outstanding hosted qualification before 02.
+  implementation and local evidence; its [hosted CI follow-up](docs/handoffs/M01-ci-verification.md)
+  closes the native CPU, headless Docker and deliberate-failure/restored-success gate.
 - [Human/agent planning handoff](docs/handoffs/human-agent-planning-amendment.md)
   records the shared-authoring amendment and review of the existing foundation.
 

@@ -1,9 +1,11 @@
 # M01: Headless server and Core/Client separation
 
 Date: 2026-10-17. Base revision: `e2f4966bd99797e7109397728f4ae2babce48f17`
-on `main`, initially clean. Result: uncommitted working-tree changes; the user
-owns staging, committing and pushing. M01 is current. Hosted verification for
-this change set is pending; the historical 01 pass remains tied to `3620fab`.
+on `main`, initially clean. This is the original implementation record: its
+result was uncommitted worktree changes at that handoff. The user subsequently
+committed M01 as `d9f53ef`; the [hosted follow-up](M01-ci-verification.md) now
+closes its full gate at `d658d69`. M01 remains current and complete. The user
+owns staging, committing and pushing; historical 01 evidence remains at `3620fab`.
 
 ## Delivered behavior and contracts
 
@@ -35,8 +37,8 @@ are not authoring API commands; no data-format migration is introduced.
 
 ## Verification record
 
-Tests ran on the uncommitted worktree. Hosted jobs cannot test these changes
-until the user commits and pushes them. Local Windows 11 x64 evidence uses
+Tests below ran on the uncommitted implementation worktree before the user's
+commit/push. The separate follow-up records later hosted results. Local Windows 11 x64 evidence uses
 MSVC 19.51.36248.0 (toolset 14.51.36231), Windows SDK 10.0.28000.0 and Python
 3.13.5. The hosted Windows SDK selection remains 10.0.26100.0; these are distinct
 environments. Commands below use the wrapper from [building](../building.md).
@@ -65,10 +67,10 @@ does not use module import units, so module scanning is explicitly off; ordinary
 header dependency tracking and sanitizer instrumentation remain enabled. No
 sanitizer finding was suppressed.
 
-The new `headless-server` job and retained Windows/Linux/both-Mac CPU jobs are
-NOT RUN on this change set. M01's gate remains open until that hosted evidence
-is inspected. `headless-server` also needs adding to required checks after its
-first verified run; the existing 14-check policy is unchanged.
+At this implementation handoff, the new `headless-server` job and retained
+Windows/Linux/both-Mac CPU jobs were NOT RUN on the change set and the required
+policy still had fourteen checks. The later [hosted verification](M01-ci-verification.md)
+passes the full matrix/red-green proof and adds the fifteenth required check.
 
 Local Linux qualification uses the pinned Ubuntu 24.04 amd64 userspace in a
 private chroot under WSL, with GCC 13.3.0, Clang 18.1.3, glibc 2.39 and Python
@@ -105,8 +107,8 @@ The final evidence is `out/ci/headless-local-injected/` and
 `out/ci/headless-local-restored/`, including `summary.json`, JUnit, phase logs,
 toolchains, licenses and closure inventory. The [durable local receipt](../coverage/evidence/M01-local.json)
 preserves results, commands, tested implementation hashes and environment details.
-Earlier failures remain retained separately. This local proof does not replace
-the pending GitHub jobs or exercise the Docker wrapper.
+Earlier failures remain retained separately. This local proof does not itself
+exercise the Docker wrapper; the later hosted follow-up supplies that evidence.
 
 The prepared root lives at `/var/tmp/shark-headless-m01-final/` inside the WSL
 `Ubuntu` distribution; it uses kernel `6.18.33.2-microsoft-standard-WSL2`.
@@ -137,8 +139,8 @@ paths, including the minimal Ubuntu inputs; source/tests/docs remain eligible.
 The ignored local roadmap remains optional and is excluded from source snapshots.
 Snapshot generation handles unstaged file moves without touching the index.
 
-Next: close M01's hosted headless and retained client-matrix gate, then assignment
-02, the real-hardware GLFW/NVRHI/Vulkan feasibility probe. A headless pass does
+Next after the completed hosted follow-up: assignment 02, starting with 02a
+dependency/probe setup for real-hardware GLFW/NVRHI/Vulkan feasibility. A headless pass does
 not waive any of the nine graphics hardware rows or either Mac CPU family.
 
-Suggested commit: `feat(server): add headless foundation and core/client boundaries`
+Original implementation commit: `d9f53ef` (`feat(server): add headless foundation and core/client boundaries`).

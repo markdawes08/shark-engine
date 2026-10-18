@@ -52,10 +52,14 @@ manifest schema 3 because lexical/numeric order no longer expresses dependencies
 
 Assignment 01's hosted CPU acceptance and deliberate-failure/red-to-green gate
 is complete; the [CI verification handoff](../handoffs/01-ci-verification.md) records
-the tested revision and run evidence. **Current assignment is M01**, followed by
-02 once its gate closes. The [M01 handoff](../handoffs/M01-headless-server.md)
-records implementation and qualification separately. Earlier handoffs retain
-their historical repository/gate status. Graphics and multiplayer qualification remain NOT_RUN. The graphics
+the tested revision and run evidence. **Current assignment remains M01 and its
+gate is complete.** The [M01 handoff](../handoffs/M01-headless-server.md) records
+implementation/local qualification; the
+[hosted follow-up](../handoffs/M01-ci-verification.md) closes its native CPU,
+headless Docker and deliberate-failure/restored-success gate. The exact next
+assignment is 02, starting with 02a dependency/probe setup; it has not started.
+Earlier handoffs and the assessment above retain their historical repository/gate
+status. Graphics and multiplayer qualification remain NOT_RUN. The graphics
 compatibility gate still blocks dependent client renderer work; a headless server
 pass never waives it.
 
