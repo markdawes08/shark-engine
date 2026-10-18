@@ -9,8 +9,18 @@ Scope: Assignment 00. Assignment 01 implements the build and lock mechanism; lat
 04b reuses the existing exact GLFW pin through `SharkWindowDependencies` for
 Windows EngineClient windows. Shared locked source handling also serves the
 opt-in graphics probe. `SHARK_NATIVE_WINDOW` gates all native window population;
-ordinary clients fetch no Vulkan/NVRHI, and Core/Server plus WSL CPU-only clients
-never discover or download GLFW. See the [window guide](../window-lifecycle.md).
+Core/Server plus WSL CPU-only clients never discover or download GLFW.
+05a defaults `SHARK_NATIVE_GRAPHICS` ON for Windows native-window clients and
+shares the same exact Vulkan/NVRHI inputs with the probe through
+`SharkGraphicsDependencies`. Those links remain private to EngineClient.
+The lock changes only owner metadata; no dependency revision or patch changes.
+See the [window guide](../window-lifecycle.md) and
+[graphics device contract](../graphics-device.md).
+The pinned loader's Windows SDK `cfgmgr32` dependency is an explicit
+client-classified imported target. Boundary checks allow only the exact
+`LINKER:/guard:cf` and `LINKER:/guard:ehcont` protection flags; lookalike library
+injection remains rejected. The client propagates a UTF-8 Windows manifest for
+loader path handling. Headless builds acquire none of these dependencies.
 
 03a uses native OS entropy for UUIDv4 creation: Windows SDK `bcrypt` through
 an explicitly classified Core-only imported target, and Linux `getrandom`

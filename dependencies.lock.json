@@ -75,7 +75,7 @@
         "LICENSES/Apache-2.0.txt",
         "LICENSES/MIT.txt"
       ],
-      "owner_target": "GraphicsProbe (02a); later EngineClient only",
+      "owner_target": "EngineClient native graphics (05a) and GraphicsProbe (02)",
       "assignment": "02",
       "patches": [],
       "transitive_dependencies": [],
@@ -102,7 +102,7 @@
         "loader/dirent_on_windows.h",
         "loader/loader_json.c"
       ],
-      "owner_target": "GraphicsProbe (02a); later EngineClient only",
+      "owner_target": "EngineClient native graphics (05a) and GraphicsProbe (02)",
       "assignment": "02",
       "patches": [],
       "transitive_dependencies": [
@@ -165,7 +165,7 @@
       "license_files": [
         "LICENSE.txt"
       ],
-      "owner_target": "GraphicsProbe (02a); later EngineClient only",
+      "owner_target": "EngineClient native graphics (05a) and GraphicsProbe (02)",
       "assignment": "02",
       "patches": [],
       "transitive_dependencies": [

@@ -11,7 +11,7 @@ add_executable(Tests
     server_tests.cpp)
 target_link_libraries(Tests PRIVATE EngineCore Catch2::Catch2WithMain)
 if(TARGET EngineClient)
-    target_sources(Tests PRIVATE client_input_tests.cpp client_window_tests.cpp client_window_launch_tests.cpp client_frame_tests.cpp)
+    target_sources(Tests PRIVATE client_input_tests.cpp client_window_tests.cpp client_window_launch_tests.cpp client_frame_tests.cpp client_graphics_tests.cpp)
     target_include_directories(Tests PRIVATE "${PROJECT_SOURCE_DIR}/engine/client/src")
     target_link_libraries(Tests PRIVATE EngineClient)
 endif()
@@ -43,6 +43,8 @@ if(TARGET EngineClient)
     set_tests_properties(shark.client.window PROPERTIES LABELS "cpu;unit;client" TIMEOUT 20)
     add_test(NAME shark.client.frame COMMAND Tests "[frame]" --rng-seed 1337)
     set_tests_properties(shark.client.frame PROPERTIES LABELS "cpu;unit;client" TIMEOUT 20)
+    add_test(NAME shark.client.graphics COMMAND Tests "[graphics-device]" --rng-seed 1337)
+    set_tests_properties(shark.client.graphics PROPERTIES LABELS "cpu;unit;client" TIMEOUT 20)
     if(SHARK_NATIVE_WINDOW)
         # Explicit developer smoke, never launched by ordinary display-free CTest.
         add_executable(WindowSmoke window_smoke.cpp)
@@ -50,6 +52,40 @@ if(TARGET EngineClient)
         target_link_libraries(WindowSmoke PRIVATE EngineClient)
         shark_configure_target(WindowSmoke)
         shark_classify_target(WindowSmoke test)
+    endif()
+    if(SHARK_NATIVE_GRAPHICS)
+        # Explicit native device qualification; ordinary CTest stays GPU-free.
+        add_executable(GraphicsDeviceSmoke graphics_device_smoke.cpp)
+        target_include_directories(GraphicsDeviceSmoke PRIVATE "${PROJECT_SOURCE_DIR}")
+        target_link_libraries(GraphicsDeviceSmoke PRIVATE EngineClient)
+        shark_configure_target(GraphicsDeviceSmoke)
+        shark_classify_target(GraphicsDeviceSmoke test)
+
+        file(SHA256 "${PROJECT_SOURCE_DIR}/dependencies.lock.json" shark_graphics_lock_sha256)
+        file(GLOB_RECURSE shark_graphics_source_paths CONFIGURE_DEPENDS
+            RELATIVE "${PROJECT_SOURCE_DIR}"
+            "${PROJECT_SOURCE_DIR}/engine/core/*"
+            "${PROJECT_SOURCE_DIR}/engine/client/*")
+        list(FILTER shark_graphics_source_paths INCLUDE REGEX "(\\.(cpp|hpp|manifest)|/CMakeLists\\.txt)$")
+        file(GLOB shark_graphics_cmake_paths CONFIGURE_DEPENDS RELATIVE "${PROJECT_SOURCE_DIR}"
+            "${PROJECT_SOURCE_DIR}/cmake/*.cmake")
+        list(APPEND shark_graphics_source_paths ${shark_graphics_cmake_paths}
+            "CMakeLists.txt" "dependencies.lock.json" "engine/CMakeLists.txt"
+            "tests/CMakeLists.txt" "tests/graphics_device_smoke.cpp" "probes/graphics/report.hpp")
+        list(REMOVE_DUPLICATES shark_graphics_source_paths)
+        list(SORT shark_graphics_source_paths)
+        set(shark_graphics_source_material "")
+        foreach(shark_graphics_source IN LISTS shark_graphics_source_paths)
+            file(SHA256 "${PROJECT_SOURCE_DIR}/${shark_graphics_source}" shark_graphics_file_sha256)
+            string(APPEND shark_graphics_source_material "${shark_graphics_source}\n${shark_graphics_file_sha256}\n")
+            set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+                "${PROJECT_SOURCE_DIR}/${shark_graphics_source}")
+        endforeach()
+        string(SHA256 shark_graphics_source_sha256 "${shark_graphics_source_material}")
+        target_compile_definitions(GraphicsDeviceSmoke PRIVATE
+            SHARK_GRAPHICS_LOCK_SHA256="${shark_graphics_lock_sha256}"
+            SHARK_GRAPHICS_SOURCE_SHA256="${shark_graphics_source_sha256}"
+            SHARK_GRAPHICS_COMPILER="${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}")
     endif()
 endif()
 
@@ -86,6 +122,17 @@ set(Python3_FIND_STRATEGY LOCATION)
 set(Python3_FIND_REGISTRY NEVER)
 set(Python3_FIND_FRAMEWORK NEVER)
 find_package(Python3 3.11 COMPONENTS Interpreter REQUIRED)
+add_test(NAME shark.tooling.graphics-device-evidence
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_graphics_device_smoke.py" -v)
+set_tests_properties(shark.tooling.graphics-device-evidence PROPERTIES
+    LABELS "cpu;tooling" TIMEOUT 15 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+if(TARGET GraphicsDeviceSmoke)
+    add_test(NAME shark.client.graphics-cli
+        COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_graphics_device_cli.py"
+            --executable "$<TARGET_FILE:GraphicsDeviceSmoke>")
+    set_tests_properties(shark.client.graphics-cli PROPERTIES
+        LABELS "cpu;integration;client" TIMEOUT 30 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+endif()
 if(TARGET Server)
     add_test(NAME shark.server.lifecycle
         COMMAND "${Python3_EXECUTABLE}" "${CMAKE_CURRENT_SOURCE_DIR}/check_server.py"

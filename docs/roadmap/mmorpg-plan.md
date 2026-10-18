@@ -85,7 +85,11 @@ bounded catch-up, first-tick input and explicit pause/step; Server timing retain
 its separate policy. Editor/Runtime expose `--window` with F6/F7 sample controls
 without a production renderer, world simulation or game-authoring UI. Full
 `REQ-04` is PASS after final Windows/WSL, native-window and standalone/package
-qualification. Next is **05: production graphics device and presentation lifecycle**.
+qualification. **05a device ownership is now complete; next is 05b, swapchain/submission/presentation.**
+The [05 checkpoints](graphics-device-plan.md), [device contract](../graphics-device.md)
+and [05a handoff](../handoffs/05a-graphics-device.md) record native validation on both
+local GPUs and WSL CPU/Server isolation. Full `REQ-05` remains NOT_RUN until 05c.
+Presentation stays in Client and cannot acquire authority over server time or world state.
 The [final local handoff](../handoffs/02d-final-verification.md)
 preserves the Windows lifecycle and isolated Ubuntu CPU/package evidence. The
 [graphics checkpoint plan](graphics-plan.md) applies the new local gate to those

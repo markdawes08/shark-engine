@@ -1,4 +1,5 @@
-# The graphics experiment is opt-in and never reached by Core/Server builds.
+# Native EngineClient and the opt-in probe share the same immutable graphics
+# inputs. Core/Server and device-free configurations never reach this file.
 include_guard(GLOBAL)
 include(WindowDependencies)
 
@@ -11,11 +12,14 @@ function(shark_validate_graphics_inputs)
 endfunction()
 
 function(shark_setup_graphics_dependencies)
-    if(NOT SHARK_BUILD_CLIENT OR NOT SHARK_BUILD_GRAPHICS_PROBE)
-        message(FATAL_ERROR "Graphics dependencies require the explicit client probe configuration")
+    if(NOT SHARK_BUILD_CLIENT OR NOT (SHARK_NATIVE_GRAPHICS OR SHARK_BUILD_GRAPHICS_PROBE))
+        message(FATAL_ERROR "Graphics dependencies require a native client or explicit graphics probe")
     endif()
     if(NOT CMAKE_SYSTEM_NAME MATCHES "^(Windows|Linux)$")
-        message(FATAL_ERROR "The graphics probe targets Windows and Linux only")
+        message(FATAL_ERROR "Graphics dependencies target Windows and Linux only")
+    endif()
+    if(TARGET SharkGraphicsDependencies)
+        return()
     endif()
     shark_read_client_dependency_lock(shark_client_lock)
     shark_validate_graphics_inputs()
@@ -29,8 +33,29 @@ function(shark_setup_graphics_dependencies)
         "${CMAKE_FIND_PACKAGE_REDIRECTS_DIR}/vulkanheaders-config-version.cmake"
         VERSION "${shark_vulkan_version}" COMPATIBILITY ExactVersion ARCH_INDEPENDENT)
     shark_client_locked_dependency(VulkanLoader)
+    if(WIN32)
+        # Upstream names this SDK import library directly. Preserve its link
+        # position while giving the protected target graph an explicit owner.
+        find_library(SHARK_WINDOWS_CFGMGR32_LIBRARY NAMES cfgmgr32 REQUIRED)
+        add_library(SharkWindowsDeviceConfiguration STATIC IMPORTED GLOBAL)
+        set_target_properties(SharkWindowsDeviceConfiguration PROPERTIES
+            IMPORTED_LOCATION "${SHARK_WINDOWS_CFGMGR32_LIBRARY}")
+        shark_classify_target(SharkWindowsDeviceConfiguration client)
+        get_target_property(shark_loader_links vulkan LINK_LIBRARIES)
+        if(NOT "cfgmgr32" IN_LIST shark_loader_links)
+            message(FATAL_ERROR "Locked Windows Vulkan loader no longer has its expected cfgmgr32 link")
+        endif()
+        list(TRANSFORM shark_loader_links REPLACE "^cfgmgr32$" "SharkWindowsDeviceConfiguration")
+        set_property(TARGET vulkan PROPERTY LINK_LIBRARIES "${shark_loader_links}")
+    endif()
     shark_setup_window_dependencies()
     shark_client_locked_dependency(NVRHI)
+    # NVRHI's public C++ headers share STL objects with engine consumers. Keep
+    # sanitizer instrumentation consistent (including MSVC STL annotations)
+    # without imposing the engine's warning policy on dependency sources.
+    foreach(shark_nvrhi_target IN ITEMS nvrhi nvrhi_vk)
+        shark_enable_sanitizers(${shark_nvrhi_target})
+    endforeach()
 
     # The pinned static Vulkan backend calls the common NVRHI implementation,
     # but upstream does not declare that link edge. Model it explicitly so ELF
@@ -40,7 +65,7 @@ function(shark_setup_graphics_dependencies)
     if(NOT TARGET Vulkan::Vulkan)
         add_library(Vulkan::Vulkan ALIAS vulkan)
     endif()
-    # Keep the pinned loader beside the probe on Windows, and use CMake's build
+    # Keep the pinned loader beside client executables on Windows, and use CMake's build
     # RPATH for the same source-built loader on Linux.
     set_target_properties(vulkan PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
@@ -66,5 +91,5 @@ function(shark_setup_graphics_dependencies)
     foreach(shark_alias IN ITEMS Vulkan::Headers Vulkan::Loader Vulkan::Vulkan)
         shark_classify_target("${shark_alias}" client)
     endforeach()
-    message(STATUS "Graphics dependencies use locked sources; hardware qualification remains assignment 02")
+    message(STATUS "Native client/probe graphics dependencies use shared locked sources")
 endfunction()

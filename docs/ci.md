@@ -27,7 +27,9 @@ The [M01 hosted follow-up](handoffs/M01-ci-verification.md) and
 Docker/package qualification and the fifteen checks required at that revision. The
 [MMORPG execution plan](roadmap/mmorpg-plan.md) records the completed 04c and full
 assignment-04 local gate, following local 03/04a/04b qualification.
-Assignment 05 is next. The [opt-in probe](graphics-probe.md) adds CPU checks to
+05a device ownership is complete locally; 05b presentation is next.
+The [05a handoff](handoffs/05a-graphics-device.md) records 211 CTests and both-GPU
+device qualification; full `REQ-05` remains NOT_RUN until 05c. The [opt-in probe](graphics-probe.md) adds CPU checks to
 ordinary CI while graphics builds/device runs use explicit graphics presets.
 The historical job/test counts above remain tied to their recorded revisions.
 [ADR 0009](architecture/0009-windows-linux-platform-scope.md) removes Mac from
@@ -91,7 +93,15 @@ fixtures and the expanded `shark.core.timing` cover pause/step, first-tick input
 failure/cancellation and server independence. Native window smoke separately
 exercises the shared launch helper and reserved F6/F7 sample controls. Final local
 qualification is PASS in the [04c handoff](handoffs/04c-frame-loop.md).
-No new hosted result is implied by local 04c work.
+05a adds production device ownership and `shark.client.graphics` CPU fixtures,
+`shark.client.graphics-cli` device-free command checks in native builds, and
+`shark.tooling.graphics-device-evidence` parser tests. Native Windows clients
+compile Vulkan/NVRHI by default; WSL CPU and Server builds keep
+`SHARK_NATIVE_GRAPHICS=OFF`. Actual device qualification runs the explicit
+[graphics device fixture](graphics-device.md) on both current-PC GPUs with core,
+synchronization and NVRHI validation. It is separate from ordinary CTest and
+does not establish presentation or GPU submission. No new hosted result is
+implied by local work.
 Windows tests cover finite-duration shutdown; POSIX SIGINT/SIGTERM and readiness
 I/O failure checks execute on Linux, not through Windows `terminate()`.
 

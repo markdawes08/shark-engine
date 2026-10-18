@@ -56,7 +56,9 @@ foreach(shark_root IN LISTS shark_roots)
         endforeach()
         foreach(shark_property IN ITEMS LINK_OPTIONS INTERFACE_LINK_OPTIONS)
             foreach(shark_option IN LISTS "SHARK_${shark_property}_${shark_current}")
-                if(NOT shark_option STREQUAL "" AND NOT shark_option MATCHES "^(-fsanitize=address(,undefined)?|-fno-omit-frame-pointer|/INCREMENTAL:NO)$")
+                # The pinned Windows Vulkan loader propagates control-flow and
+                # exception-continuation protection, never arbitrary LINKER items.
+                if(NOT shark_option STREQUAL "" AND NOT shark_option MATCHES "^(-fsanitize=address(,undefined)?|-fno-omit-frame-pointer|/INCREMENTAL:NO|LINKER:/guard:(cf|ehcont))$")
                     message(FATAL_ERROR "${shark_root} reaches unclassified link option '${shark_option}' through '${shark_current}'")
                 endif()
             endforeach()

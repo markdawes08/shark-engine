@@ -34,7 +34,8 @@ authorize mutation of a server world. No separate scheduler or generic event bus
 is required. Source remains buildable without the ignored local roadmap.
 
 **04c and full assignment 04 are complete under the current-machine scope.**
-Next is **05: production graphics device and presentation lifecycle**.
+The [05 checkpoint plan](graphics-device-plan.md) records completed device
+ownership in 05a. Next is **05b: swapchain, submission and presentation lifecycle**.
 The [input guide](../input-contracts.md)
 and [04a handoff](../handoffs/04a-input-contracts.md) specify the raw input contract.
 The [window lifecycle guide](../window-lifecycle.md) and
@@ -53,4 +54,5 @@ pause/step controls and bounded terminal smoke mode. These are developer control
 not action bindings or authoring commands. Rendering and game-authoring UI remain
 with their later owners. Full `REQ-04` is PASS, with final current-machine
 qualification recorded in the [handoff](../handoffs/04c-frame-loop.md).
-Assignment 05 is ready to begin; its rendering implementation is not part of 04.
+The [05 checkpoint plan](graphics-device-plan.md) now records completed 05a device
+ownership and next 05b presentation. Its implementation is separate from 04.

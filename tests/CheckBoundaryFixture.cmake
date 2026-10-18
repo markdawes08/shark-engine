@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.28)
-foreach(shark_case IN ITEMS allowed server-only client-link client-genex authoring-genex
+foreach(shark_case IN ITEMS allowed server-only security-flags security-flag-injection client-link client-genex authoring-genex
         runtime-authoring raw-link link-option link-directory prebuilt-object utility-client utility-authoring utility-unclassified
         include-client include-authoring source-client source-authoring)
     set(shark_build "${SHARK_FIXTURE_BINARY}/${shark_case}")
@@ -16,7 +16,7 @@ foreach(shark_case IN ITEMS allowed server-only client-link client-genex authori
     execute_process(COMMAND "${CMAKE_COMMAND}" "-DSHARK_GRAPH=${shark_build}/shark-target-graph-.cmake"
         -P "${SHARK_SOURCE}/cmake/CheckRuntimeBoundary.cmake"
         RESULT_VARIABLE shark_result OUTPUT_VARIABLE shark_output ERROR_VARIABLE shark_error TIMEOUT 5)
-    if(shark_case MATCHES "^(allowed|server-only)$")
+    if(shark_case MATCHES "^(allowed|server-only|security-flags)$")
         if(NOT shark_result EQUAL 0)
             message(FATAL_ERROR "Allowed ${shark_case} closure failed: ${shark_output} ${shark_error}")
         endif()
@@ -24,4 +24,4 @@ foreach(shark_case IN ITEMS allowed server-only client-link client-genex authori
         message(FATAL_ERROR "Violation ${shark_case} was not rejected by the boundary checker: ${shark_output} ${shark_error}")
     endif()
 endforeach()
-message(STATUS "Boundary fixtures: 2 allowed configurations and 15 forbidden dependency paths verified")
+message(STATUS "Boundary fixtures: 3 allowed configurations and 16 forbidden dependency paths verified")

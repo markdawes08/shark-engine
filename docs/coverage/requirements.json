@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "04",
+  "current_assignment": "05",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -117,7 +117,7 @@
         "Production graphics belongs to EngineClient and cannot become a configure/download/link requirement of EngineCore or Server."
       ],
       "planned_fixture": "PresentationLifecycle hardware stress, CapabilityRejection and GraphicsLossPolicy fixtures; these validate device infrastructure outside ordinary scene behavior.",
-      "verification": {"status": "NOT_RUN", "reason": "Production graphics infrastructure is not implemented; owner assignment 05."}
+      "verification": {"status": "NOT_RUN", "reason": "05a checkpoint PASS under current-machine scope:211 CTests across Windows Debug/Release/ASan and WSL client/headless suites;29 graphics cases with904 assertions onWindows and912 onWSL;112 required-validation device lifetimes across both local GPUs including auto-selection; zero warnings/errors/dropped diagnostics. Native missing UUID/layer rejection, device-free CLI, evidence parser, protected standalone/WSL package and existing window/probe regressions pass. Full REQ-05 remains NOT_RUN until05b submission/presentation/retirement and05c failure/stress qualification. Evidence:docs/coverage/evidence/05a-local.json; docs/handoffs/05a-graphics-device.md; docs/roadmap/graphics-device-plan.md."}
     },
     {
       "id": "REQ-06",
@@ -808,6 +808,34 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "client.graphics-device",
+        "name": "Owned Vulkan/NVRHI device with explicit capability selection and bounded diagnostics",
+        "requirement_ids": [
+          "REQ-05"
+        ],
+        "test_ids": [
+          "shark.client.graphics",
+          "shark.client.graphics-cli",
+          "shark.tooling.graphics-device-evidence",
+          "shark.tooling.graphics-dependencies",
+          "shark.boundary.fixture"
+        ],
+        "test_sources": [
+          "tests/client_graphics_tests.cpp",
+          "tests/check_graphics_device_cli.py",
+          "tools/tests/test_graphics_device_smoke.py",
+          "tools/tests/test_graphics_dependencies.py",
+          "tests/CheckBoundaryFixture.cmake"
+        ],
+        "fixtures": [
+          "engine/client/src/graphics.cpp",
+          "engine/client/src/graphics_vulkan.cpp",
+          "tests/graphics_device_smoke.cpp",
+          "tools/graphics_device_smoke.py"
+        ],
+        "fixture_reason": "Injected CPU backends cover capability rejection, deterministic/explicit selection, malformed metadata, partial startup and exceptions, reverse cleanup, wrong-thread calls and bounded callback diagnostics. Explicit Windows fixture performs inventory and16 owned-device lifetimes on each current-PC GPU with core/synchronization/NVRHI validation, including second-owner rejection and idempotent close. Parser and device-free CLI checks preserve truthful terminal evidence. No submissions, images, swapchain or retirement claim is made. FeatureWorld attaches in10; no component, authoring command or Lua surface exists."
+      },
       {
         "id": "client.offline-frame-loop",
         "name": "Fixed-tick input consumption and offline pause/step through the shared window pump",

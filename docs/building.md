@@ -20,9 +20,12 @@ Server-only configurations exclude its source and test. The
 04b adds the [owned GLFW window](window-lifecycle.md). `shark.client.window` uses
 seed 1337 and a 20-second timeout for display-free ownership/callback fixtures.
 On Windows, `SHARK_NATIVE_WINDOW=ON` by default for client builds: this enables
-the C compiler and the pinned static GLFW dependency, without NVRHI or Vulkan.
-Set it OFF for a device-free client build. Server-only and WSL CPU configurations
-leave it OFF and never fetch GLFW. Ordinary CTest does not open native windows.
+the C compiler and the pinned static GLFW dependency. 05a also defaults
+`SHARK_NATIVE_GRAPHICS=ON` for these Windows clients, privately adding the locked
+Vulkan loader/headers and NVRHI. Set both native options OFF for a device-free
+client build; graphics requires native windows. Server-only and WSL CPU
+configurations leave both OFF and never fetch presentation dependencies.
+Ordinary CTest does not open native windows or initialize graphics.
 04c adds the [offline frame loop](frame-loop.md). `shark.client.frame` uses seed
 1337 and a 20-second timeout for deterministic input/time, pause/step, overflow,
 failure and server-independence fixtures. `shark.core.timing` also covers the
@@ -36,6 +39,15 @@ configure/build/test presets for standalone probe packages; see the
 [probe guide](graphics-probe.md) for packaging and bounded launch commands.
 Production rendering, gameplay, scene import, authoring UI and export remain unimplemented.
 CPU build success does not qualify a GPU, audio device or final release platform.
+
+05a adds the [owned graphics device](graphics-device.md), with CPU lifecycle and
+capability tests in `shark.client.graphics` (seed 1337, 20-second timeout),
+device-free native CLI checks, and evidence-parser tests. `GraphicsDeviceSmoke`
+explicitly opens hidden windows and exercises Vulkan/NVRHI ownership on a named
+GPU. Its bounded wrapper requires a current locked validation receipt and retains
+JSON evidence. See the [05 checkpoint plan](roadmap/graphics-device-plan.md).
+Swapchain/submission integration is 05b; Editor/Runtime `--window` still uses the
+existing empty-window sample.
 
 The active client/editor target is this Windows 11 x64 PC. Existing WSL2 Ubuntu
 environments cover CPU/headless Server and local package checks.

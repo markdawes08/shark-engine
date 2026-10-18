@@ -21,9 +21,15 @@ Assignment 01's hosted CPU and red/green gate is complete; see the
 complete. The headless Server bootstrap and Core/Client
 split are implemented; the [M01 handoff](docs/handoffs/M01-headless-server.md) records
 local qualification and the [hosted follow-up](docs/handoffs/M01-ci-verification.md)
-records the completed native CPU, headless Docker and red/green gate. **04c and
-full assignment 04 are complete under the current-machine scope; next is
-assignment 05, production graphics device and presentation lifecycle.** Follow the
+records the completed native CPU, headless Docker and red/green gate. **05a is complete under the current-machine scope; next is
+05b, swapchain, submission and presentation lifecycle.** Follow the
+[05 checkpoint plan](docs/roadmap/graphics-device-plan.md),
+[graphics device contract](docs/graphics-device.md) and
+[05a handoff](docs/handoffs/05a-graphics-device.md). Full `REQ-05` remains NOT_RUN
+until 05b/05c; device ownership does not yet submit or present GPU work. Native
+Windows clients privately use the exact pinned Vulkan/NVRHI stack; Core/Server
+and WSL CPU clients keep both native options OFF. Required device validation
+passes on both current-PC GPUs. 04c and full assignment 04 remain complete. Follow the
 [window/input checkpoint plan](docs/roadmap/window-input-plan.md),
 [input contract](docs/input-contracts.md),
 [window lifecycle guide](docs/window-lifecycle.md),

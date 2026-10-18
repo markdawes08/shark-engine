@@ -29,7 +29,10 @@ offline ticks without clearing the manual pause choice. This is a contributor
 smoke interface, not a project-authoring CLI or usable editor UI.
 
 `SHARK_NATIVE_WINDOW` defaults ON for Windows client builds and OFF elsewhere.
-Turning it OFF keeps injectable client tests and returns `capability_unavailable`
+05a also enables the [graphics device backend](graphics-device.md) by default
+for native Windows clients. Set both `SHARK_NATIVE_WINDOW` and
+`SHARK_NATIVE_GRAPHICS` OFF for a device-free client configuration.
+This keeps injectable client tests and returns `capability_unavailable`
 for native creation. Enabling it without `SHARK_BUILD_CLIENT` or on a non-Windows
 target rejects before dependency population. Server-only builds never fetch or
 link GLFW. Existing WSL client tests remain display-free and C++-only. No Mac or

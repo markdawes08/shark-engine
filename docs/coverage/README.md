@@ -64,8 +64,12 @@ as additive schema-3 fields. REQ-02 is PASS for the amended local gate, with
 explicit scope and SHA-256-pinned references to the unchanged 02d receipts.
 The validator verifies those references and retained bytes; it does not rerun
 graphics or interpret an old aggregate NOT_RUN as a universal PASS.
-`current_assignment: 04` records the completed window/input assignment. Assignment
-05, production graphics device and presentation lifecycle, is next. All later
+`current_assignment: 05` records the graphics-device/presentation assignment.
+The [05 checkpoints](../roadmap/graphics-device-plan.md) separate device ownership,
+presentation, and final failure/stress qualification. The `client.graphics-device`
+feature maps real CPU/native device fixtures and bounded evidence tooling.
+Full `REQ-05` remains NOT_RUN until 05c; device creation does not establish
+submission, safe resource retirement or working presentation. All later
 implementation requirements remain NOT_RUN.
 
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`

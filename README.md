@@ -9,7 +9,8 @@ and Mac compatibility are outside current scope.
 The [MMORPG plan and existing-code assessment](docs/roadmap/mmorpg-plan.md) define
 the authoritative server, persistent world and staged client/server work.
 These are planned capabilities; the current engine provides Core services, raw
-input, owned Windows windows and offline frame/input scheduling, with a separate opt-in graphics feasibility
+input, owned Windows windows, offline frame/input scheduling and graphics-device
+ownership, with a separate opt-in graphics feasibility
 probe containing analytic draw/compute/readback cases.
 The versioned
 [requirements manifest](docs/coverage/requirements.json) preserves assignment
@@ -23,7 +24,14 @@ game-authoring interfaces remain planned; terminal build/test tools work today.
 
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
 **04c and full assignment 04 are complete under the current-machine scope.**
-Next is **05: production graphics device and presentation lifecycle**.
+**05a, graphics device foundation, is complete under the current-machine scope.**
+Next is **05b: swapchain, submission and presentation lifecycle**.
+The [05a handoff](docs/handoffs/05a-graphics-device.md) records 211 passing CTests
+and 112 validated device lifetimes across the two local GPUs. Full `REQ-05` remains
+NOT_RUN until presentation and final stress qualification are complete.
+The [05 checkpoint plan](docs/roadmap/graphics-device-plan.md) separates device
+ownership, presentation in 05b, and full failure/stress qualification in 05c.
+See the [device API and terminal commands](docs/graphics-device.md).
 See the [input guide](docs/input-contracts.md),
 [window lifecycle guide](docs/window-lifecycle.md),
 [frame-loop guide](docs/frame-loop.md),

@@ -44,7 +44,8 @@ The [03a handoff](../handoffs/03a-core-contracts.md),
 [03c handoff](../handoffs/03c-time-and-work.md) record interfaces, exact evidence
 and limits. Assignment 04 follows the [window/input plan](window-input-plan.md).
 **04c and full assignment 04 are complete under the current-machine scope.**
-Next is **05: production graphics device and presentation lifecycle**.
+The [05 checkpoint plan](graphics-device-plan.md) records completed device
+ownership in 05a. Next is **05b: swapchain, submission and presentation lifecycle**.
 The [input guide](../input-contracts.md), [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md) and [04c handoff](../handoffs/04c-frame-loop.md)
 describe these increments. Core's existing `OfflineScheduler` now accepts

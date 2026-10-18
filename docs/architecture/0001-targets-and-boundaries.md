@@ -16,8 +16,11 @@ alongside `Editor`, `Runtime` and Catch2 `Tests`. Core contains version/argument
 behavior and the strict server configuration parser. Client contains bootstrap
 help presentation, 04a device-free raw input, 04b owned native Windows GLFW
 windows and 04c's [offline frame coordinator](../frame-loop.md), which reuses
-Core timing for first-tick input consumption and local pause/step. It has no
-production graphics yet.
+Core timing for first-tick input consumption and local pause/step. 05a adds the
+[owned graphics device foundation](../graphics-device.md): adapter/capability
+selection, Window/instance/surface/device/NVRHI ownership and bounded validation.
+It does not yet submit GPU work or present frames. Public contracts contain only
+engine-owned types; native libraries stay private to EngineClient.
 The [input contract](../input-contracts.md) and
 [04 checkpoint plan](../roadmap/window-input-plan.md) keep native GLFW integration
 separate from CPU input tests. The [window lifecycle](../window-lifecycle.md)

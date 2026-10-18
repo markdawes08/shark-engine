@@ -52,6 +52,32 @@ class GraphicsDependencyTests(unittest.TestCase):
             "SHARK_NATIVE_WINDOW requires SHARK_BUILD_CLIENT=ON",
         )
 
+    def test_headless_native_graphics_conflict_precedes_dependency_setup(self):
+        self.configure_failure(
+            ["-DSHARK_BUILD_CLIENT=OFF", "-DSHARK_BUILD_GRAPHICS_PROBE=OFF",
+             "-DSHARK_NATIVE_GRAPHICS=ON", "-DSHARK_BUILD_TESTS=OFF"],
+            "SHARK_NATIVE_GRAPHICS requires SHARK_BUILD_CLIENT=ON",
+        )
+
+    def test_native_graphics_requires_a_supported_native_window_configuration(self):
+        self.configure_failure(
+            ["-DSHARK_BUILD_GRAPHICS_PROBE=OFF", "-DSHARK_NATIVE_WINDOW=OFF",
+             "-DSHARK_NATIVE_GRAPHICS=ON", "-DSHARK_BUILD_TESTS=OFF"],
+            ("SHARK_NATIVE_GRAPHICS requires SHARK_NATIVE_WINDOW=ON"
+             if os.name == "nt" else "SHARK_NATIVE_GRAPHICS is supported only on Windows"),
+        )
+
+    def test_native_graphics_rejects_overrides_or_unsupported_host_before_download(self):
+        for dependency in ("VULKANHEADERS", "VULKANLOADER", "GLFW", "NVRHI"):
+            with self.subTest(dependency=dependency):
+                self.configure_failure(
+                    ["-DSHARK_BUILD_GRAPHICS_PROBE=OFF", "-DSHARK_NATIVE_WINDOW=ON",
+                     "-DSHARK_NATIVE_GRAPHICS=ON",
+                     f"-DFETCHCONTENT_SOURCE_DIR_{dependency}={ROOT}"],
+                    ("source overrides are disabled; use the locked archive/cache"
+                     if os.name == "nt" else "SHARK_NATIVE_GRAPHICS is supported only on Windows"),
+                )
+
     def test_native_window_rejects_override_or_unsupported_host_before_download(self):
         self.configure_failure(
             ["-DSHARK_BUILD_GRAPHICS_PROBE=OFF", "-DSHARK_NATIVE_WINDOW=ON",
@@ -84,6 +110,7 @@ class GraphicsDependencyTests(unittest.TestCase):
                 self.assertFalse((build / "_deps").exists(), output)
                 cache = (build / "CMakeCache.txt").read_text(encoding="utf-8")
                 self.assertIn("SHARK_NATIVE_WINDOW:BOOL=OFF", cache)
+                self.assertIn("SHARK_NATIVE_GRAPHICS:BOOL=OFF", cache)
 
 
 if __name__ == "__main__":

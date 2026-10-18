@@ -25,9 +25,11 @@ are no longer requirements. Assignment 03 is split into the
 [03a handoff](../handoffs/03a-core-contracts.md) and
 [03b handoff](../handoffs/03b-application-lifecycle.md) record completed contracts
 and lifecycle verification. The [03c handoff](../handoffs/03c-time-and-work.md)
-closes scheduling, bounded work and the full Core gate. **04c and full assignment
-04 are complete under the current-machine scope; next is 05, production graphics
-device and presentation lifecycle.** The [input guide](../input-contracts.md),
+closes scheduling, bounded work and the full Core gate. **05a device ownership is complete under the current-machine scope; next is
+05b, swapchain, submission and presentation lifecycle.** The
+[device guide](../graphics-device.md), [05 checkpoint plan](../roadmap/graphics-device-plan.md)
+and [05a handoff](../handoffs/05a-graphics-device.md) distinguish the qualified device
+foundation from pending presentation/stress work. Full `REQ-05` remains NOT_RUN. The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and
 [checkpoint plan](../roadmap/window-input-plan.md) record the contracts and scope.

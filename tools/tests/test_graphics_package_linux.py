@@ -61,7 +61,7 @@ def process_retired(path: Path) -> bool:
     """A disappearing proc record or zombie both mean the child has retired."""
     try:
         record = path.read_text()
-    except FileNotFoundError:
+    except (FileNotFoundError, ProcessLookupError):
         return True
     return record.rsplit(")", 1)[1].split()[0] == "Z"
 
@@ -97,14 +97,16 @@ def fixture_payload() -> tuple[dict, dict]:
 class LinuxPackageTests(unittest.TestCase):
     def test_retirement_observation_handles_disappearance_without_hiding_errors(self):
         path = Path("/proc/123/stat")
-        with patch.object(Path, "read_text", side_effect=FileNotFoundError):
-            self.assertTrue(process_retired(path))
+        for missing in (FileNotFoundError, ProcessLookupError):
+            with self.subTest(missing=missing.__name__), patch.object(Path, "read_text", side_effect=missing):
+                self.assertTrue(process_retired(path))
         for state, retired in (("S", False), ("R", False), ("Z", True)):
             with self.subTest(state=state), patch.object(Path, "read_text", return_value=f"123 (fixture) {state} 1 2 3"):
                 self.assertEqual(process_retired(path), retired)
-        with patch.object(Path, "read_text", side_effect=PermissionError):
-            with self.assertRaises(PermissionError):
-                process_retired(path)
+        for failure in (PermissionError, OSError):
+            with self.subTest(failure=failure.__name__), patch.object(Path, "read_text", side_effect=failure):
+                with self.assertRaises(failure):
+                    process_retired(path)
 
     def test_elf_machine_and_endianness_required(self):
         package.elf_x64(elf_fixture(), "fixture")
