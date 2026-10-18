@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "convention": "shark-vulkan-1",
+  "shaders": [
+    {
+      "id": "textured-cube-vs",
+      "source": "textured_cube.hlsl",
+      "entry": "vsMain",
+      "stage": "vertex",
+      "bindings": [{"kind": "constant_buffer", "slot": 0}]
+    },
+    {
+      "id": "textured-cube-ps",
+      "source": "textured_cube.hlsl",
+      "entry": "psMain",
+      "stage": "pixel",
+      "bindings": [{"kind": "texture", "slot": 0}, {"kind": "sampler", "slot": 0}]
+    }
+  ]
+}

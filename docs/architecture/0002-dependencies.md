@@ -6,6 +6,13 @@ Scope: Assignment 00. Assignment 01 implements the build and lock mechanism; lat
 
 ## Decision
 
+06a reuses the exact locked DXC and SPIRV-Tools inputs for the standalone
+[offline shader builder](../shader-pipeline.md). Compilation is an explicit
+developer command using cached tools; it is absent from the Runtime/Core/Server
+target and package graphs. The lock retains the original dependency introduction
+owners and unchanged bytes; this adds a consumer, not a second toolchain pin.
+The versioned recipe and artifact convention is defined by the shader contract.
+
 04b reuses the existing exact GLFW pin through `SharkWindowDependencies` for
 Windows EngineClient windows. Shared locked source handling also serves the
 opt-in graphics probe. `SHARK_NATIVE_WINDOW` gates all native window population;

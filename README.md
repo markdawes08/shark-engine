@@ -28,8 +28,8 @@ game-authoring interfaces remain planned; terminal build/test tools work today.
 **05b, swapchain, submission and presentation lifecycle, is complete under the
 current-machine scope.** The [05b handoff](docs/handoffs/05b-presentation-lifecycle.md)
 records 236 passing CTests and 2,304 validated presentations across both local
-GPUs, with repeated resize, minimize/restore and teardown. The next checkpoint is
-**05c: failure and stress qualification**. Its fixtures and Runtime package
+GPUs, with repeated resize, minimize/restore and teardown.
+**05c: failure and stress qualification** remains open. Its fixtures and Runtime package
 tooling are implemented, but the gate remains open after a repeatable GDI-object
 increase in the NVIDIA swapchain path, Intel USER-resource retention and an Intel
 ASan child exit timeout. The
@@ -38,7 +38,14 @@ ASan child exit timeout. The
 original evidence. The [latest investigation](docs/handoffs/05c-intel-asan-investigation.md)
 reproduces Intel growth outside Shark, adds capture-ready ASan exit diagnostics,
 and fixes a separate Windows queue-thread deadline defect. The original exit
-timeout remains unexplained; assignment 06 has not started.
+timeout remains unexplained.
+On 2026-10-18, the user's request to proceed starts **06a, CPU/offline shader
+tooling**, under a limited sequencing amendment. The
+[06 checkpoint plan](docs/roadmap/shader-resource-plan.md),
+[shader contract](docs/shader-pipeline.md) and
+[06a handoff](docs/handoffs/06a-offline-shaders.md) record the completed offline checkpoint and its verification limits.
+Existing failed evidence, resource limits and the two-GPU target remain unchanged;
+06b GPU work still requires 05c closure or a later explicit sequencing decision.
 The [05a handoff](docs/handoffs/05a-graphics-device.md) records 211 passing CTests
 and 112 validated device lifetimes across the two local GPUs. Full `REQ-05` remains
 NOT_RUN until 05c passes.

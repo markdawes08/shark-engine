@@ -8,8 +8,8 @@ remains `05`; these checkpoints do not add assignment IDs. Full `REQ-05` is
 current-machine scope; the [handoff](../handoffs/05a-graphics-device.md) records
 its passing gate. **05b presentation lifecycle is complete under the
 current-machine scope.** The [05b handoff](../handoffs/05b-presentation-lifecycle.md)
-records the passing gate and remaining limits. The exact next
-checkpoint is **05c, failure and stress qualification**.
+records the passing gate and remaining limits.
+**05c, failure and stress qualification, remains open.**
 
 05c's fixtures, resource observations and protected Runtime package tooling are
 implemented. Its gate remains open: NVIDIA 610.62 retains a desktop DC per
@@ -25,6 +25,13 @@ driver attribution. Follow the
 [qualification contract](../presentation-qualification.md) and
 [05c handoff](../handoffs/05c-presentation-qualification.md) to resolve and rerun
 the gate. Passing short presentation and CPU tests do not close this failure.
+
+Sequencing amendment, 2026-10-18: the user's next-subchunk request starts only
+**06a, CPU/offline shader tooling**, under the
+[06 checkpoint plan](shader-resource-plan.md). The
+[06a handoff](../handoffs/06a-offline-shaders.md) records the completed offline checkpoint and its verification limits.
+This exception changes no failed receipt, resource budget or platform requirement.
+06b GPU work still requires 05c closure or a later explicit sequencing decision.
 
 The accepted [platform/capability contract](../architecture/0003-platforms.md) and
 [current-machine scope](../architecture/0010-current-machine-scope.md) apply to
@@ -114,8 +121,10 @@ bounded cleanup and a nonzero failure. Finish Windows/WSL regressions and protec
 standalone/package checks. An unavailable in-scope device is NOT_RUN and leaves
 the gate open; previous probe results cannot close new production lifecycle work.
 
-Only after 05c passes may full `REQ-05` become PASS and assignment **06, shader
-pipeline and basic GPU resources**, begin. EngineClient remains presentation-only
+Only after 05c passes may full `REQ-05` become PASS. The CPU/offline 06a exception
+above does not close that gate or authorize 06b GPU resource work. Assignment
+**06, shader pipeline and basic GPU resources**, retains its own final gate in
+the [06 plan](shader-resource-plan.md). EngineClient remains presentation-only
 for the seamless MMORPG target. Terminal agents and humans receive the same owned
 diagnostics and explicit device capabilities; authoring services, shared editor/CLI
 transactions and world simulation remain with their planned owners.

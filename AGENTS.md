@@ -35,8 +35,14 @@ sequence did not reproduce or explain it. The separate Windows queue-worker
 thread-exit deadline defect is fixed and regression-tested. The
 [latest investigation](docs/handoffs/05c-intel-asan-investigation.md) records these
 results and limits; the [earlier investigation](docs/handoffs/05c-failure-investigation.md)
-retains NVIDIA attribution. Do not mark full 05 PASS or start 06 while
-these remain unresolved. Read the
+retains NVIDIA attribution. Do not mark full 05 PASS while these remain unresolved.
+**Sequencing amendment, 2026-10-18:** the user's next-subchunk request starts only
+**06a, CPU/offline shader tooling**, while 05c stays open. Follow the
+[06 checkpoint plan](docs/roadmap/shader-resource-plan.md),
+[shader pipeline contract](docs/shader-pipeline.md) and
+[06a handoff](docs/handoffs/06a-offline-shaders.md). This exception changes no
+failed receipt, resource budget or platform requirement. 06b GPU resource work
+still requires 05c closure or a later explicit sequencing decision. Read the
 [05c handoff](docs/handoffs/05c-presentation-qualification.md) and
 [qualification contract](docs/presentation-qualification.md) before continuing;
 preserve its failed evidence and fixed resource limits. Follow the
@@ -290,6 +296,7 @@ in ADR 0007 are provisional targets; tests cannot silently reduce them to pass.
 | `engine/core/`, `engine/client/`, `engine/include/` | Shared Core, client presentation and retained bootstrap public header |
 | `engine_tools/`, `editor/`, `runtime/`, `server/` | Authoring library and separate client/editor/headless executables |
 | `tests/`, `cmake/`, `tools/` | Behavior tests, target configuration and development checks |
+| `shaders/` | Versioned offline shader recipes and HLSL sources; generated artifacts stay under `out/` |
 | `probes/graphics/` | Opt-in assignment 02 graphics, readback and lifecycle fixtures; not the production renderer |
 | `docs/architecture/`, `docs/coverage/`, `docs/handoffs/` | Decisions, mappings/evidence and assignment handoffs |
 | `docs/roadmap/` | Versioned execution order, scope amendments and foundation assessment |
@@ -328,6 +335,7 @@ Update the assignment handoff with: assignment and base/result revision (or no
 commit); behavior delivered; changed files/public contracts; exact commands and
 results; platforms/hardware verified; checks not run and why; coverage/FeatureWorld
 changes; blockers/limitations; and the exact next assignment. Do not advance until
-the current assignment's required gate is met. End the user response with the
+the current assignment's required gate is met, except for the explicitly recorded
+CPU/offline 06a sequencing amendment above. End the user response with the
 important changes, verification limits and suggested commit message, leaving
 all staging, committing and pushing to the user.

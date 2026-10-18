@@ -196,7 +196,7 @@ set(Python3_FIND_STRATEGY LOCATION)
 set(Python3_FIND_REGISTRY NEVER)
 set(Python3_FIND_FRAMEWORK NEVER)
 find_package(Python3 3.11 COMPONENTS Interpreter REQUIRED)
-foreach(shark_tooling_fixture IN ITEMS presentation-stress presentation-faults runtime-package)
+foreach(shark_tooling_fixture IN ITEMS presentation-stress presentation-faults runtime-package shader-pipeline)
     string(REPLACE "-" "_" shark_tooling_source "${shark_tooling_fixture}")
     add_test(NAME "shark.tooling.${shark_tooling_fixture}"
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_${shark_tooling_source}.py" -v)

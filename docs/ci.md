@@ -31,10 +31,16 @@ assignment-04 local gate, following local 03/04a/04b qualification.
 complete under the current-machine scope.** The
 [05b handoff](handoffs/05b-presentation-lifecycle.md) records 236 passing CTests,
 2,304 validated presentations across both local GPUs, application and protected
-package checks. **05c failure and stress qualification** is next.
+package checks. **05c failure and stress qualification** remains open.
 Its [fixtures and package tools](presentation-qualification.md) are now implemented,
 but the [05c native GDI-retention investigation](handoffs/05c-presentation-qualification.md)
 leaves the sustained-resource gate open. CPU and short native passes do not replace it.
+Sequencing amendment, 2026-10-18: the user's next-subchunk request starts only
+**06a, CPU/offline shader tooling**, while 05c remains open. The
+[06 checkpoint plan](roadmap/shader-resource-plan.md) and
+[06a handoff](handoffs/06a-offline-shaders.md) record the completed offline checkpoint.
+CPU checks do not alter failed native evidence, fixed resource limits or platform
+scope. 06b GPU work still requires 05c closure or a later explicit sequencing decision.
 The [05a handoff](handoffs/05a-graphics-device.md) records 211 CTests and both-GPU
 device qualification; full `REQ-05` remains NOT_RUN until 05c. The [opt-in probe](graphics-probe.md) adds CPU checks to
 ordinary CI while graphics builds/device runs use explicit graphics presets.
@@ -132,6 +138,12 @@ lock, tools, validation payload and selected UUID to retained raw records; a tes
 child's expected fatal exit is accepted only with its matching cleanup evidence.
 Windows tests cover finite-duration shutdown; POSIX SIGINT/SIGTERM and readiness
 I/O failure checks execute on Linux, not through Windows `terminate()`.
+
+06a registers `shark.tooling.shader-pipeline` with `cpu;tooling` labels and a
+30-second timeout. Controlled tool fixtures cover the offline recipe/dependency/
+artifact contract without preparing DXC or a GPU. The explicit real-tool command
+in the [shader guide](shader-pipeline.md) is separate evidence. Full assignment
+06 and the open 05c gate do not pass from this CPU suite.
 
 ## Locked tools and hosted-image limits
 

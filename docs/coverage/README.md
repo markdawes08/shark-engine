@@ -64,7 +64,9 @@ as additive schema-3 fields. REQ-02 is PASS for the amended local gate, with
 explicit scope and SHA-256-pinned references to the unchanged 02d receipts.
 The validator verifies those references and retained bytes; it does not rerun
 graphics or interpret an old aggregate NOT_RUN as a universal PASS.
-`current_assignment: 05` records the graphics-device/presentation assignment.
+`current_assignment: 06` records the CPU-only shader checkpoint authorized by the
+user's next-subchunk instruction. The [06 plan](../roadmap/shader-resource-plan.md)
+records this limited sequencing change while assignment 05 remains unqualified.
 The [05 checkpoints](../roadmap/graphics-device-plan.md) separate device ownership,
 presentation, and final failure/stress qualification. The `client.graphics-device`
 feature maps real CPU/native device fixtures and bounded evidence tooling.
@@ -86,6 +88,14 @@ Intel growth outside Shark, the unresolved ASan fault-run timeout and the
 separate corrected Windows queue-thread exit deadline. The existing presentation
 test family now includes controlled TLS teardown, bounded polls and retained
 worker ownership. Full `REQ-05` stays NOT_RUN.
+
+`tooling.offline-shaders` maps the [06a shader builder](../shader-pipeline.md) to
+its CPU tests and explicit real-tool fixture. Recipes and content dependencies,
+compiler/validator provenance, SPIR-V validation and atomic artifact publication
+are offline tooling behavior. They do not implement GPU resource loading, cube
+rendering, authoring commands or FeatureWorld. Full `REQ-06` remains NOT_RUN;
+06b/06c own the remaining resource, rendering and distribution acceptance. See
+the [06a handoff](../handoffs/06a-offline-shaders.md) for actual scoped results.
 
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`
 means precisely that; documentation validation cannot pass a future engine gate.

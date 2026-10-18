@@ -60,6 +60,14 @@ CTest entries remain device-free. The three `shark.tooling.presentation-stress`,
 verify evidence and deployment inputs without initializing graphics.
 Native tests require separate, explicit commands and retained raw output.
 
+06a adds the CPU-only [offline shader builder](shader-pipeline.md).
+`shark.tooling.shader-pipeline` tests recipes, dependency tracking, artifact
+integrity and failed-build publication with controlled compiler fixtures. The
+explicit offline integration command exercises the cached pinned DXC and SPIR-V
+validator separately. Neither the normal build nor the Runtime/Server distribution
+targets discover or invoke shader tools. This checkpoint follows the limited
+[06 sequencing decision](roadmap/shader-resource-plan.md); 05c remains open.
+
 The active client/editor target is this Windows 11 x64 PC. Existing WSL2 Ubuntu
 environments cover CPU/headless Server and local package checks.
 [ADR 0010](architecture/0010-current-machine-scope.md) limits the plan to these

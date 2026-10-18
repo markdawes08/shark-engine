@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "05",
+  "current_assignment": "06",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -117,7 +117,7 @@
         "Production graphics belongs to EngineClient and cannot become a configure/download/link requirement of EngineCore or Server."
       ],
       "planned_fixture": "PresentationLifecycle hardware stress, CapabilityRejection and GraphicsLossPolicy fixtures; these validate device infrastructure outside ordinary scene behavior.",
-      "verification": {"status": "NOT_RUN", "reason": "05a and 05b retain their completed current-machine gates. 05c stress/failure fixtures and protected Runtime deployment tooling are implemented, but qualification is open. Frozen-input regressions passed 265 CTests across Windows Debug/Release/ASan and WSL client/headless suites, plus short presentation/device/window checks and isolated Runtime/Server package checks. Current Debug stress FAIL: NVIDIA retains one GDI object per swapchain/window lifetime; Intel exceeded its initialized USER-object baseline during restore (a budget failure, not proof of a leak). An original Intel ASan fault child timed out after reporting complete native cleanup. A later fixture-only observer-lifetime correction passed focused fault CTests in all five client configurations and all 24 fresh native fault children; the earlier timeout remains unexplained and preserved. Failed evidence is preserved; Release/ASan sustained workloads remain NOT_RUN. Full REQ-05 cannot pass or advance to 06 until remaining failures and the complete native qualification gate are resolved. Evidence: docs/coverage/evidence/05c-local.json; docs/handoffs/05c-presentation-qualification.md; docs/presentation-qualification.md; docs/roadmap/graphics-device-plan.md. Historical 05a/05b receipts remain unchanged. Follow-up at cd97e87: an independent raw Win32/Vulkan reproducer confirms NVIDIA 610.62 desktop-DC retention; Intel USER counts remain elevated five seconds after teardown, with no growing HWND inventory; 48 bounded ASan diagnostics including the original binary do not reproduce or explain the timeout. No production correction or gate waiver was made. Follow-up evidence: docs/coverage/evidence/05c-investigation.json; docs/handoffs/05c-failure-investigation.md. Follow-up at 9613bec: Intel USER growth also reproduces in 40 complete raw Win32/Vulkan lifetimes without Shark/GLFW/NVRHI; a supported trace matches 11 retained USER objects to 11 failed driver-owned hook removals after driver-created target threads begin exit. The cause is attributed on this installed stack, with no supported engine correction demonstrated. 64 capture-ready ASan diagnostics do not reproduce or explain the original process-chain timeout. A separate Windows queue-worker thread-exit deadline defect is corrected with old-header red/green TLS tests, Windows/WSL CPU regression, both-GPU short native regression and relocated Runtime package checks. This fix does not resolve or waive the original failures. Latest handoff: docs/handoffs/05c-intel-asan-investigation.md; ASan evidence: docs/coverage/evidence/05c-asan-exit-investigation.json; queue-fix evidence: docs/coverage/evidence/05c-queue-exit-fix.json. Intel evidence: docs/coverage/evidence/05c-intel-user-investigation.json."}
+      "verification": {"status": "NOT_RUN", "reason": "05a and 05b retain their completed current-machine gates. 05c stress/failure fixtures and protected Runtime deployment tooling are implemented, but qualification is open. Frozen-input regressions passed 265 CTests across Windows Debug/Release/ASan and WSL client/headless suites, plus short presentation/device/window checks and isolated Runtime/Server package checks. Current Debug stress FAIL: NVIDIA retains one GDI object per swapchain/window lifetime; Intel exceeded its initialized USER-object baseline during restore (a budget failure, not proof of a leak). An original Intel ASan fault child timed out after reporting complete native cleanup. A later fixture-only observer-lifetime correction passed focused fault CTests in all five client configurations and all 24 fresh native fault children; the earlier timeout remains unexplained and preserved. Failed evidence is preserved; Release/ASan sustained workloads remain NOT_RUN. Full REQ-05 cannot pass until remaining failures and the complete native qualification gate are resolved. The later user-directed sequencing decision in docs/roadmap/shader-resource-plan.md permits only CPU/offline 06a while this gate remains open; GPU 06b still requires closure or a subsequent explicit decision. Evidence: docs/coverage/evidence/05c-local.json; docs/handoffs/05c-presentation-qualification.md; docs/presentation-qualification.md; docs/roadmap/graphics-device-plan.md. Historical 05a/05b receipts remain unchanged. Follow-up at cd97e87: an independent raw Win32/Vulkan reproducer confirms NVIDIA 610.62 desktop-DC retention; Intel USER counts remain elevated five seconds after teardown, with no growing HWND inventory; 48 bounded ASan diagnostics including the original binary do not reproduce or explain the timeout. No production correction or gate waiver was made. Follow-up evidence: docs/coverage/evidence/05c-investigation.json; docs/handoffs/05c-failure-investigation.md. Follow-up at 9613bec: Intel USER growth also reproduces in 40 complete raw Win32/Vulkan lifetimes without Shark/GLFW/NVRHI; a supported trace matches 11 retained USER objects to 11 failed driver-owned hook removals after driver-created target threads begin exit. The cause is attributed on this installed stack, with no supported engine correction demonstrated. 64 capture-ready ASan diagnostics do not reproduce or explain the original process-chain timeout. A separate Windows queue-worker thread-exit deadline defect is corrected with old-header red/green TLS tests, Windows/WSL CPU regression, both-GPU short native regression and relocated Runtime package checks. This fix does not resolve or waive the original failures. Latest handoff: docs/handoffs/05c-intel-asan-investigation.md; ASan evidence: docs/coverage/evidence/05c-asan-exit-investigation.json; queue-fix evidence: docs/coverage/evidence/05c-queue-exit-fix.json. Intel evidence: docs/coverage/evidence/05c-intel-user-investigation.json."}
     },
     {
       "id": "REQ-06",
@@ -130,7 +130,7 @@
         "Shader/GPU resources are client-only; keep server content and Core independent of shader toolchains and GPU resource types."
       ],
       "planned_fixture": "TexturedCubeReadback GPU fixture, ShaderCompileErrors, ShaderDependencyRebuild and DistributionShaderBoundary; cube case joins FeatureWorld in assignment 10.",
-      "verification": {"status": "NOT_RUN", "reason": "Shader and basic GPU resource pipeline is not implemented; owner assignment 06."}
+      "verification": {"status": "NOT_RUN", "reason": "06a passes its offline checkpoint with bounded shader recipes, include dependencies, pinned cached DXC/SPIR-V validation and atomic verified artifact generations, with scoped evidence in docs/handoffs/06a-offline-shaders.md. This CPU-only work follows the user-directed sequencing exception in docs/roadmap/shader-resource-plan.md; it does not close 05c. GPU resource loading, pipelines, uploads, window/offscreen cube rendering, runtime layout mismatch validation and complete distribution qualification remain 06b/06c work. Full REQ-06 remains NOT_RUN."}
     },
     {
       "id": "REQ-07",
@@ -808,6 +808,25 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "tooling.offline-shaders",
+        "name": "Offline shader recipes, content dependencies and validated atomic artifact generations",
+        "requirement_ids": [
+          "REQ-06"
+        ],
+        "test_ids": [
+          "shark.tooling.shader-pipeline"
+        ],
+        "test_sources": [
+          "tools/tests/test_shader_pipeline.py"
+        ],
+        "fixtures": [
+          "tools/shader_pipeline.py",
+          "tools/tests/check_shader_pipeline.py",
+          "shaders/recipe.json"
+        ],
+        "fixture_reason": "Device-free tooling fixtures exercise recipe/version/path rejection, tracked includes, cache/artifact integrity and failed-build publication. The explicit real-tool fixture compiles with cached locked DXC and independently validates SPIR-V, tests dependency changes and compiler rejection, and verifies relocated artifacts without source/compiler requirements. No GPU execution, Runtime shader loading, public authoring command or MMO behavior is claimed. FeatureWorld starts in 10; resource and image acceptance remain in 06b/06c."
+      },
       {
         "id": "client.presentation-qualification",
         "name": "Bounded native presentation stress, resource observations and fatal cleanup qualification",

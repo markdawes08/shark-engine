@@ -178,5 +178,11 @@ this PC; this is the accepted local dependency-isolation test under ADR 0010.
 
 Record source, lock, compiler, binary, tool and device/driver identity, exact
 commands and outcomes in the final handoff. Full `REQ-05` remains NOT_RUN until
-all in-scope gates pass. Only then may assignment 06 begin; shader pipelines,
-scene rendering, authoring tools and MMO world behavior remain outside 05c.
+all in-scope gates pass. Sequencing amendment, 2026-10-18: the user's
+next-subchunk request starts only CPU/offline **06a** under the
+[06 checkpoint plan](roadmap/shader-resource-plan.md), while this gate remains
+open. The [06a handoff](handoffs/06a-offline-shaders.md) records that separate
+completed offline checkpoint. This changes no failed receipt, resource budget or platform
+requirement. 06b GPU work still requires 05c closure or a later explicit sequencing
+decision. Shader pipelines, scene rendering, authoring tools and MMO world
+behavior remain outside 05c.

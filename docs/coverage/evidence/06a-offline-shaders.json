@@ -1,0 +1,2404 @@
+{
+  "schema_version": 1,
+  "assignment": "06a",
+  "status": "PASS",
+  "scope": "CPU/offline shader builder and artifact contract only; no GPU or full assignment qualification.",
+  "timestamp_utc": "2026-10-18T10:14:55.248285+00:00",
+  "base_revision": "db4117f264441c96bf2d71fcbe8659f7f78a13b2",
+  "branch": "main",
+  "starting_worktree": "clean",
+  "result_revision": "uncommitted; user owns staging, commits and pushes",
+  "qualification": {
+    "REQ-05": "NOT_RUN",
+    "REQ-06": "NOT_RUN"
+  },
+  "sequencing": "User next-subchunk instruction starts CPU/offline06a; 05c failures/budgets/GPU scope remain unchanged. GPU06b requires05c closure or later explicit sequencing decision.",
+  "source_inputs_sha256": {
+    "tools/shader_pipeline.py": "a4fb769823531adc87cb9533b9588a44057015e9a04b26877e559eed6f5e54dd",
+    "tools/tests/test_shader_pipeline.py": "598b24e2f0b09bb4fcc3021f680ab972e2dc3b2dc6339e9f97b374cc9ce0d93b",
+    "tools/tests/check_shader_pipeline.py": "08320f07442121aec9e072bbc9b533194e8175472d922c137542b49ddcb4bd72",
+    "tests/CMakeLists.txt": "835b2a14101213e69c010652785c9fdd759e1051e60e8b9676b62d9ccf4c9e58",
+    "shaders/recipe.json": "305710ffbf2e100acbeb7e8fa7a0f2f50580ce0cc97802a29bda91768683dbfb",
+    "shaders/textured_cube.hlsl": "2b80ea31c708e37a375fca4205b668e6ba6423507923c72c3544e4ba376b29d6",
+    "shaders/include/globals.hlsli": "f3c7e2465c73a1f06e1a202afb93752ee0facf74272b94585643a8bd5d6f8db2",
+    "dependencies.lock.json": "f2dacdc51fa9004d07ab005af81a9294945f2527cd5972e6a0f78964d7cf9db3"
+  },
+  "checks": {
+    "windows_cpu": {
+      "path": "out/06a-work/windows-cpu-final/summary.json",
+      "sha256": "0d72c8cfe3d0dc7ee61912690a4de9826333efad2d70ee17d1b016e5dcf29dbf",
+      "result": {
+        "schema_version": 1,
+        "assignment": "06a",
+        "status": "PASS",
+        "scope": "Windows Debug CPU CTest; no GPU qualification",
+        "source_inputs": {
+          "tools/shader_pipeline.py": "a4fb769823531adc87cb9533b9588a44057015e9a04b26877e559eed6f5e54dd",
+          "tools/tests/test_shader_pipeline.py": "598b24e2f0b09bb4fcc3021f680ab972e2dc3b2dc6339e9f97b374cc9ce0d93b",
+          "tests/CMakeLists.txt": "835b2a14101213e69c010652785c9fdd759e1051e60e8b9676b62d9ccf4c9e58",
+          "shaders/recipe.json": "305710ffbf2e100acbeb7e8fa7a0f2f50580ce0cc97802a29bda91768683dbfb",
+          "shaders/textured_cube.hlsl": "2b80ea31c708e37a375fca4205b668e6ba6423507923c72c3544e4ba376b29d6",
+          "shaders/include/globals.hlsli": "f3c7e2465c73a1f06e1a202afb93752ee0facf74272b94585643a8bd5d6f8db2"
+        },
+        "started_utc": "2026-10-18T10:11:30.144156+00:00",
+        "commands": [
+          {
+            "phase": "configure",
+            "args": [
+              "cmake",
+              "--preset",
+              "windows-debug",
+              "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+            ],
+            "returncode": 0,
+            "stdout": "Preset CMake variables:\n\n  CMAKE_BUILD_TYPE=\"Debug\"\n  CMAKE_CXX_COMPILER=\"cl\"\n  CMAKE_EXPORT_COMPILE_COMMANDS=\"ON\"\n  SHARK_BUILD_CLIENT=\"ON\"\n  SHARK_BUILD_EDITOR=\"ON\"\n  SHARK_BUILD_GRAPHICS_PROBE=\"OFF\"\n  SHARK_BUILD_SERVER=\"ON\"\n  SHARK_BUILD_TESTS=\"ON\"\n  SHARK_INJECT_TEST_FAILURE=\"OFF\"\n  SHARK_SANITIZER=\"none\"\n\n-- Including Win32 support\n-- Native client/probe graphics dependencies use shared locked sources\n-- Configuring done (1.5s)\n-- Generating done (0.2s)\n-- Build files have been written to: C:/Users/mrkda/Projects/shark/build/windows-debug\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          {
+            "phase": "build",
+            "args": [
+              "cmake",
+              "--build",
+              "--preset",
+              "windows-debug",
+              "--parallel",
+              "2"
+            ],
+            "returncode": 0,
+            "stdout": "[0/2] Re-checking globbed directories...\n[1/3] Checking headless Server/Core dependency boundaries\n-- EngineCore allowed dependency closure: EngineCore;Threads::Threads;SharkWindowsEntropy\n-- Server allowed dependency closure: Server;EngineCore;shark_check_server_boundary;Threads::Threads;SharkWindowsEntropy\n[2/3] Checking client transitive dependency boundaries\n-- Engine allowed dependency closure: Engine;EngineClient;SharkWindowDependencies;SharkGraphicsDependencies;EngineCore;glfw;nvrhi;nvrhi_vk;Vulkan::Headers;Vulkan::Vulkan;Threads::Threads;SharkWindowsEntropy;loader_specific_options;SharkWindowsDeviceConfiguration;loader_asm_gen_files;loader_common_options;asm_offset;platform_wsi\n-- EngineClient allowed dependency closure: EngineClient;SharkWindowDependencies;SharkGraphicsDependencies;EngineCore;glfw;nvrhi;nvrhi_vk;Vulkan::Headers;Vulkan::Vulkan;Threads::Threads;SharkWindowsEntropy;loader_specific_options;SharkWindowsDeviceConfiguration;loader_asm_gen_files;loader_common_options;asm_offset;platform_wsi\n-- Runtime allowed dependency closure: Runtime;Engine;shark_check_runtime_boundary;EngineClient;SharkWindowDependencies;SharkGraphicsDependencies;EngineCore;glfw;nvrhi;nvrhi_vk;Vulkan::Headers;Vulkan::Vulkan;Threads::Threads;SharkWindowsEntropy;loader_specific_options;SharkWindowsDeviceConfiguration;loader_asm_gen_files;loader_common_options;asm_offset;platform_wsi\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          {
+            "phase": "list",
+            "args": [
+              "ctest",
+              "--preset",
+              "windows-debug",
+              "--show-only"
+            ],
+            "returncode": 0,
+            "stdout": "Test project C:/Users/mrkda/Projects/shark/build/windows-debug\n  Test  #1: shark.boundary\n  Test  #2: shark.unit\n  Test  #3: shark.failure-sentinel\n  Test  #4: shark.server.unit\n  Test  #5: shark.core.contracts\n  Test  #6: shark.core.lifecycle\n  Test  #7: shark.core.timing\n  Test  #8: shark.core.work\n  Test  #9: shark.client.input\n  Test #10: shark.client.window\n  Test #11: shark.client.frame\n  Test #12: shark.client.graphics\n  Test #13: shark.client.presentation\n  Test #14: shark.runtime.cli\n  Test #15: shark.runtime.window-cli\n  Test #16: shark.runtime.presentation-cli\n  Test #17: shark.editor.cli\n  Test #18: shark.editor.window-cli\n  Test #19: shark.editor.presentation-cli\n  Test #20: shark.boundary.fixture\n  Test #21: shark.tooling.presentation-stress\n  Test #22: shark.tooling.presentation-faults\n  Test #23: shark.tooling.runtime-package\n  Test #24: shark.tooling.shader-pipeline\n  Test #25: shark.client.presentation-faults\n  Test #26: shark.client.presentation-stress-cli\n  Test #27: shark.tooling.graphics-device-evidence\n  Test #28: shark.tooling.presentation-evidence\n  Test #29: shark.client.graphics-cli\n  Test #30: shark.client.presentation-cli\n  Test #31: shark.server.lifecycle\n  Test #32: shark.tooling.processes\n  Test #33: shark.tooling.sources\n  Test #34: shark.contract\n  Test #35: shark.repository\n  Test #36: shark.tooling.server-closure\n  Test #37: shark.boundary.headers\n  Test #38: shark.tooling.headless-environment\n  Test #39: shark.tooling.graphics-evidence\n  Test #40: shark.tooling.graphics-dependencies\n  Test #41: shark.tooling.graphics-tools\n  Test #42: shark.tooling.graphics-validation\n  Test #43: shark.tooling.graphics-package\n  Test #44: shark.tooling.graphics-package-linux\n\nTotal Tests: 44\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          {
+            "phase": "test",
+            "args": [
+              "ctest",
+              "--preset",
+              "windows-debug",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\windows-cpu-final\\ctest.xml"
+            ],
+            "returncode": 0,
+            "stdout": "Test project C:/Users/mrkda/Projects/shark/build/windows-debug\n      Start  1: shark.boundary\n 1/44 Test  #1: shark.boundary ...........................   Passed    0.23 sec\n      Start  2: shark.unit\n 2/44 Test  #2: shark.unit ...............................   Passed    0.02 sec\n      Start  3: shark.failure-sentinel\n 3/44 Test  #3: shark.failure-sentinel ...................   Passed    0.02 sec\n      Start  4: shark.server.unit\n 4/44 Test  #4: shark.server.unit ........................   Passed    0.02 sec\n      Start  5: shark.core.contracts\n 5/44 Test  #5: shark.core.contracts .....................   Passed    0.08 sec\n      Start  6: shark.core.lifecycle\n 6/44 Test  #6: shark.core.lifecycle .....................   Passed    0.02 sec\n      Start  7: shark.core.timing\n 7/44 Test  #7: shark.core.timing ........................   Passed    0.03 sec\n      Start  8: shark.core.work\n 8/44 Test  #8: shark.core.work ..........................   Passed    0.03 sec\n      Start  9: shark.client.input\n 9/44 Test  #9: shark.client.input .......................   Passed    0.03 sec\n      Start 10: shark.client.window\n10/44 Test #10: shark.client.window ......................   Passed    0.02 sec\n      Start 11: shark.client.frame\n11/44 Test #11: shark.client.frame .......................   Passed    0.02 sec\n      Start 12: shark.client.graphics\n12/44 Test #12: shark.client.graphics ....................   Passed    0.04 sec\n      Start 13: shark.client.presentation\n13/44 Test #13: shark.client.presentation ................   Passed    1.06 sec\n      Start 14: shark.runtime.cli\n14/44 Test #14: shark.runtime.cli ........................   Passed    0.12 sec\n      Start 15: shark.runtime.window-cli\n15/44 Test #15: shark.runtime.window-cli .................   Passed    0.16 sec\n      Start 16: shark.runtime.presentation-cli\n16/44 Test #16: shark.runtime.presentation-cli ...........   Passed    0.23 sec\n      Start 17: shark.editor.cli\n17/44 Test #17: shark.editor.cli .........................   Passed    0.10 sec\n      Start 18: shark.editor.window-cli\n18/44 Test #18: shark.editor.window-cli ..................   Passed    0.16 sec\n      Start 19: shark.editor.presentation-cli\n19/44 Test #19: shark.editor.presentation-cli ............   Passed    0.23 sec\n      Start 20: shark.boundary.fixture\n20/44 Test #20: shark.boundary.fixture ...................   Passed    2.09 sec\n      Start 21: shark.tooling.presentation-stress\n21/44 Test #21: shark.tooling.presentation-stress ........   Passed    6.88 sec\n      Start 22: shark.tooling.presentation-faults\n22/44 Test #22: shark.tooling.presentation-faults ........   Passed    0.19 sec\n      Start 23: shark.tooling.runtime-package\n23/44 Test #23: shark.tooling.runtime-package ............   Passed    0.62 sec\n      Start 24: shark.tooling.shader-pipeline\n24/44 Test #24: shark.tooling.shader-pipeline ............   Passed    0.85 sec\n      Start 25: shark.client.presentation-faults\n25/44 Test #25: shark.client.presentation-faults .........   Passed    1.73 sec\n      Start 26: shark.client.presentation-stress-cli\n26/44 Test #26: shark.client.presentation-stress-cli .....   Passed    4.58 sec\n      Start 27: shark.tooling.graphics-device-evidence\n27/44 Test #27: shark.tooling.graphics-device-evidence ...   Passed    0.23 sec\n      Start 28: shark.tooling.presentation-evidence\n28/44 Test #28: shark.tooling.presentation-evidence ......   Passed    1.68 sec\n      Start 29: shark.client.graphics-cli\n29/44 Test #29: shark.client.graphics-cli ................   Passed    3.12 sec\n      Start 30: shark.client.presentation-cli\n30/44 Test #30: shark.client.presentation-cli ............   Passed    2.97 sec\n      Start 31: shark.server.lifecycle\n31/44 Test #31: shark.server.lifecycle ...................   Passed    4.97 sec\n      Start 32: shark.tooling.processes\n32/44 Test #32: shark.tooling.processes ..................   Passed    4.63 sec\n      Start 33: shark.tooling.sources\n33/44 Test #33: shark.tooling.sources ....................   Passed    0.15 sec\n      Start 34: shark.contract\n34/44 Test #34: shark.contract ...........................   Passed    0.24 sec\n      Start 35: shark.repository\n35/44 Test #35: shark.repository .........................   Passed    0.91 sec\n      Start 36: shark.tooling.server-closure\n36/44 Test #36: shark.tooling.server-closure .............   Passed    1.08 sec\n      Start 37: shark.boundary.headers\n37/44 Test #37: shark.boundary.headers ...................   Passed    2.24 sec\n      Start 38: shark.tooling.headless-environment\n38/44 Test #38: shark.tooling.headless-environment .......   Passed    0.14 sec\n      Start 39: shark.tooling.graphics-evidence\n39/44 Test #39: shark.tooling.graphics-evidence ..........   Passed    2.47 sec\n      Start 40: shark.tooling.graphics-dependencies\n40/44 Test #40: shark.tooling.graphics-dependencies ......   Passed   19.43 sec\n      Start 41: shark.tooling.graphics-tools\n41/44 Test #41: shark.tooling.graphics-tools .............   Passed    0.45 sec\n      Start 42: shark.tooling.graphics-validation\n42/44 Test #42: shark.tooling.graphics-validation ........   Passed    0.40 sec\n      Start 43: shark.tooling.graphics-package\n43/44 Test #43: shark.tooling.graphics-package ...........   Passed    0.38 sec\n      Start 44: shark.tooling.graphics-package-linux\n44/44 Test #44: shark.tooling.graphics-package-linux .....   Passed    1.20 sec\n\n100% tests passed, 0 tests failed out of 44\n\nLabel Time Summary:\nboundary       =  27.27 sec*proc (8 tests)\nclient         =  14.34 sec*proc (13 tests)\ncontract       =   1.15 sec*proc (2 tests)\ncpu            =  66.26 sec*proc (44 tests)\nintegration    =  18.37 sec*proc (11 tests)\nserver         =   8.54 sec*proc (8 tests)\ntooling        =  43.03 sec*proc (17 tests)\nunit           =   1.40 sec*proc (12 tests)\n\nTotal Test time (real) =  66.33 sec\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          }
+        ],
+        "ctest": {
+          "name": "(empty)",
+          "tests": "44",
+          "failures": "0",
+          "disabled": "0",
+          "skipped": "0",
+          "hostname": "",
+          "time": "66",
+          "timestamp": "2026-10-18T06:11:34"
+        },
+        "finished_utc": "2026-10-18T10:12:41.398491+00:00"
+      }
+    },
+    "windows_boundaries": {
+      "path": "out/06a-work/windows-boundaries/summary.json",
+      "sha256": "e36af15bab971774e5e52e8aea57aa8604fdac59337bbfdf82a5bab4b24cebad",
+      "result": {
+        "schema_version": 1,
+        "assignment": "06a",
+        "status": "PASS",
+        "scope": "Windows Runtime-only/Server-only build boundaries; no GPU or package execution",
+        "started_utc": "2026-10-18T10:06:56.375987+00:00",
+        "commands": [
+          {
+            "preset": "runtime-only",
+            "phase": "configure",
+            "args": [
+              "cmake",
+              "--preset",
+              "runtime-only"
+            ],
+            "returncode": 0,
+            "stdout": "Preset CMake variables:\n\n  CMAKE_BUILD_TYPE=\"Release\"\n  CMAKE_EXPORT_COMPILE_COMMANDS=\"ON\"\n  SHARK_BUILD_CLIENT=\"ON\"\n  SHARK_BUILD_EDITOR=\"OFF\"\n  SHARK_BUILD_GRAPHICS_PROBE=\"OFF\"\n  SHARK_BUILD_SERVER=\"OFF\"\n  SHARK_BUILD_TESTS=\"OFF\"\n  SHARK_INJECT_TEST_FAILURE=\"OFF\"\n  SHARK_SANITIZER=\"none\"\n\n-- Including Win32 support\n-- Native client/probe graphics dependencies use shared locked sources\n-- Configuring done (0.8s)\n-- Generating done (0.1s)\n-- Build files have been written to: C:/Users/mrkda/Projects/shark/build/runtime-only\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          {
+            "preset": "runtime-only",
+            "phase": "build",
+            "args": [
+              "cmake",
+              "--build",
+              "--preset",
+              "runtime-only",
+              "--parallel",
+              "2"
+            ],
+            "returncode": 0,
+            "stdout": "[1/2] Checking headless Server/Core dependency boundaries\n-- EngineCore allowed dependency closure: EngineCore;Threads::Threads;SharkWindowsEntropy\n[2/2] Checking client transitive dependency boundaries\n-- Engine allowed dependency closure: Engine;EngineClient;SharkWindowDependencies;SharkGraphicsDependencies;EngineCore;glfw;nvrhi;nvrhi_vk;Vulkan::Headers;Vulkan::Vulkan;Threads::Threads;SharkWindowsEntropy;loader_specific_options;SharkWindowsDeviceConfiguration;loader_asm_gen_files;loader_common_options;asm_offset;platform_wsi\n-- EngineClient allowed dependency closure: EngineClient;SharkWindowDependencies;SharkGraphicsDependencies;EngineCore;glfw;nvrhi;nvrhi_vk;Vulkan::Headers;Vulkan::Vulkan;Threads::Threads;SharkWindowsEntropy;loader_specific_options;SharkWindowsDeviceConfiguration;loader_asm_gen_files;loader_common_options;asm_offset;platform_wsi\n-- Runtime allowed dependency closure: Runtime;Engine;shark_check_runtime_boundary;EngineClient;SharkWindowDependencies;SharkGraphicsDependencies;EngineCore;glfw;nvrhi;nvrhi_vk;Vulkan::Headers;Vulkan::Vulkan;Threads::Threads;SharkWindowsEntropy;loader_specific_options;SharkWindowsDeviceConfiguration;loader_asm_gen_files;loader_common_options;asm_offset;platform_wsi\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          {
+            "preset": "runtime-only",
+            "phase": "version",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\build\\runtime-only\\bin\\Runtime.exe",
+              "--version"
+            ],
+            "returncode": 0,
+            "stdout": "Shark Runtime 0.1.0\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          {
+            "preset": "server-only",
+            "phase": "configure",
+            "args": [
+              "cmake",
+              "--preset",
+              "server-only"
+            ],
+            "returncode": 0,
+            "stdout": "Preset CMake variables:\n\n  CMAKE_BUILD_TYPE=\"Release\"\n  CMAKE_EXPORT_COMPILE_COMMANDS=\"ON\"\n  FETCHCONTENT_FULLY_DISCONNECTED=\"ON\"\n  SHARK_BUILD_CLIENT=\"OFF\"\n  SHARK_BUILD_EDITOR=\"OFF\"\n  SHARK_BUILD_GRAPHICS_PROBE=\"OFF\"\n  SHARK_BUILD_SERVER=\"ON\"\n  SHARK_BUILD_TESTS=\"OFF\"\n  SHARK_INJECT_TEST_FAILURE=\"OFF\"\n  SHARK_SANITIZER=\"none\"\n\n-- Configuring done (0.0s)\n-- Generating done (0.0s)\n-- Build files have been written to: C:/Users/mrkda/Projects/shark/build/server-only\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          {
+            "preset": "server-only",
+            "phase": "build",
+            "args": [
+              "cmake",
+              "--build",
+              "--preset",
+              "server-only",
+              "--parallel",
+              "2"
+            ],
+            "returncode": 0,
+            "stdout": "[1/1] Checking headless Server/Core dependency boundaries\n-- EngineCore allowed dependency closure: EngineCore;Threads::Threads;SharkWindowsEntropy\n-- Server allowed dependency closure: Server;EngineCore;shark_check_server_boundary;Threads::Threads;SharkWindowsEntropy\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          {
+            "preset": "server-only",
+            "phase": "version",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\build\\server-only\\bin\\Server.exe",
+              "--version"
+            ],
+            "returncode": 0,
+            "stdout": "Shark Server 0.1.0\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          }
+        ],
+        "build_graphs": {
+          "runtime-only": {
+            "ninja_sha256": "bddd7e5cfcd3dcf72149a355d9736f09b5ea1f12c6fd20ac5b3abffbbb0ade27",
+            "cache_sha256": "5b0781053c3146165a3b0367f75f48ec66ba336dc4918ac869556cec7c5faf08",
+            "shader_tools_absent": true,
+            "python_discovery_absent": true
+          },
+          "server-only": {
+            "ninja_sha256": "bbd34b566fbe8980ee977f2d08c5c30162da7c9ba3a3ceb76bb3b490c5ded5df",
+            "cache_sha256": "b0d36454918eb5285a8b280a73af2976a904a971bbce02e3760b780b3dbd8009",
+            "shader_tools_absent": true,
+            "python_discovery_absent": true
+          }
+        },
+        "finished_utc": "2026-10-18T10:07:00.819501+00:00"
+      }
+    },
+    "offline_integration": {
+      "path": "out/06a-work/offline-integration-04/summary.json",
+      "sha256": "200f668bacbe8296dbd922758abfa27f670068a2af27b13d98466845892c83c0",
+      "result": {
+        "schema_version": 1,
+        "assignment": "06a",
+        "status": "PASS",
+        "qualification": "NOT_RUN",
+        "scope": "Offline shader toolchain only; no device/rendering/05c qualification",
+        "timestamp_utc": "2026-10-18T10:12:36.375140+00:00",
+        "os": "Windows-11-10.0.26200-SP0",
+        "python": "3.13.5",
+        "commands": [
+          {
+            "name": "initial-build",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 0,
+            "stdout": "{\"disposition\": \"BUILT\", \"generation\": \"eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9\", \"operation\": \"build\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "disposition": "BUILT",
+              "generation": "eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9",
+              "operation": "build",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "unchanged-repeat",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 0,
+            "stdout": "{\"disposition\": \"CACHED\", \"generation\": \"eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9\", \"operation\": \"build\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "disposition": "CACHED",
+              "generation": "eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9",
+              "operation": "build",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "independent-cold-build",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\independent-cold-build",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 0,
+            "stdout": "{\"disposition\": \"BUILT\", \"generation\": \"eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9\", \"operation\": \"build\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "disposition": "BUILT",
+              "generation": "eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9",
+              "operation": "build",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "unreferenced-source-edit",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 0,
+            "stdout": "{\"disposition\": \"CACHED\", \"generation\": \"eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9\", \"operation\": \"build\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "disposition": "CACHED",
+              "generation": "eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9",
+              "operation": "build",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "nested-include-edit",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 0,
+            "stdout": "{\"disposition\": \"BUILT\", \"generation\": \"d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9\", \"operation\": \"build\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "disposition": "BUILT",
+              "generation": "d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9",
+              "operation": "build",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "malformed-hlsl",
+            "expected_error_code": "shader.compile",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 1,
+            "stdout": "{\"error\": {\"code\": \"shader.compile\", \"message\": \"compile failed (exit 2147500037, timeout=False): In file included from ./main.hlsl:1:\\nIn file included from ./common/position.hlsli:1:\\n./common/scale.hlsli:1:23: error: invalid use of 'this' outside of a non-static member function\\nfloat shaderScale() { this is not HLSL; }\\n                      ^\\n\\n\", \"path\": \"\"}, \"operation\": \"shader-pipeline\", \"schema_version\": 1, \"status\": \"FAIL\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "error": {
+                "code": "shader.compile",
+                "message": "compile failed (exit 2147500037, timeout=False): In file included from ./main.hlsl:1:\nIn file included from ./common/position.hlsli:1:\n./common/scale.hlsli:1:23: error: invalid use of 'this' outside of a non-static member function\nfloat shaderScale() { this is not HLSL; }\n                      ^\n\n",
+                "path": ""
+              },
+              "operation": "shader-pipeline",
+              "schema_version": 1,
+              "status": "FAIL"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "missing-nested-include",
+            "expected_error_code": "shader.source",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 1,
+            "stdout": "{\"error\": {\"code\": \"shader.source\", \"message\": \"Missing shader source/include or file exceeds 1 MiB\", \"path\": \"common/scale.hlsli\"}, \"operation\": \"shader-pipeline\", \"schema_version\": 1, \"status\": \"FAIL\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "error": {
+                "code": "shader.source",
+                "message": "Missing shader source/include or file exceeds 1 MiB",
+                "path": "common/scale.hlsli"
+              },
+              "operation": "shader-pipeline",
+              "schema_version": 1,
+              "status": "FAIL"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "unsupported-recipe-version",
+            "expected_error_code": "shader.version",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 1,
+            "stdout": "{\"error\": {\"code\": \"shader.version\", \"message\": \"Only recipe version 1 / shark-vulkan-1 is supported\", \"path\": \"C:\\\\Users\\\\mrkda\\\\Projects\\\\shark\\\\out\\\\06a-work\\\\offline-integration-04\\\\fixture sources \\u03a9\\\\recipe.json\"}, \"operation\": \"shader-pipeline\", \"schema_version\": 1, \"status\": \"FAIL\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "error": {
+                "code": "shader.version",
+                "message": "Only recipe version 1 / shark-vulkan-1 is supported",
+                "path": "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\fixture sources \u03a9\\recipe.json"
+              },
+              "operation": "shader-pipeline",
+              "schema_version": 1,
+              "status": "FAIL"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "binding-contract-mismatch",
+            "expected_error_code": "shader.layout",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 1,
+            "stdout": "{\"error\": {\"code\": \"shader.layout\", \"message\": \"SPIR-V descriptor set/binding numbers differ from the recipe\", \"path\": \"dependent-vs\"}, \"operation\": \"shader-pipeline\", \"schema_version\": 1, \"status\": \"FAIL\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "error": {
+                "code": "shader.layout",
+                "message": "SPIR-V descriptor set/binding numbers differ from the recipe",
+                "path": "dependent-vs"
+              },
+              "operation": "shader-pipeline",
+              "schema_version": 1,
+              "status": "FAIL"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "relocated-source-and-tool-free-verify",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\relocated standalone verifier\\tools\\shader_pipeline.py",
+              "verify",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\relocated standalone verifier\\artifacts"
+            ],
+            "returncode": 0,
+            "stdout": "{\"generation\": \"d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9\", \"operation\": \"verify\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "generation": "d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9",
+              "operation": "verify",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "corrupt-artifact",
+            "expected_error_code": "shader.artifact",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "verify",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\relocated standalone verifier\\artifacts"
+            ],
+            "returncode": 1,
+            "stdout": "{\"error\": {\"code\": \"shader.artifact\", \"message\": \"Evidence file missing, changed or outside its byte budget: C:\\\\Users\\\\mrkda\\\\Projects\\\\shark\\\\out\\\\06a-work\\\\offline-integration-04\\\\relocated standalone verifier\\\\artifacts\\\\generations\\\\d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9\\\\dependent-vs.spv\", \"path\": \"generations/d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9/dependent-vs.spv\"}, \"operation\": \"shader-pipeline\", \"schema_version\": 1, \"status\": \"FAIL\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "error": {
+                "code": "shader.artifact",
+                "message": "Evidence file missing, changed or outside its byte budget: C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\relocated standalone verifier\\artifacts\\generations\\d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9\\dependent-vs.spv",
+                "path": "generations/d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9/dependent-vs.spv"
+              },
+              "operation": "shader-pipeline",
+              "schema_version": 1,
+              "status": "FAIL"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "missing-artifact",
+            "expected_error_code": "shader.artifact",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "verify",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\relocated standalone verifier\\artifacts"
+            ],
+            "returncode": 1,
+            "stdout": "{\"error\": {\"code\": \"shader.artifact\", \"message\": \"Immutable generation inventory differs from recipe\", \"path\": \"C:\\\\Users\\\\mrkda\\\\Projects\\\\shark\\\\out\\\\06a-work\\\\offline-integration-04\\\\relocated standalone verifier\\\\artifacts\\\\generations\\\\d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9\"}, \"operation\": \"shader-pipeline\", \"schema_version\": 1, \"status\": \"FAIL\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "error": {
+                "code": "shader.artifact",
+                "message": "Immutable generation inventory differs from recipe",
+                "path": "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\relocated standalone verifier\\artifacts\\generations\\d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9"
+              },
+              "operation": "shader-pipeline",
+              "schema_version": 1,
+              "status": "FAIL"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "restored-artifact",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "verify",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\relocated standalone verifier\\artifacts"
+            ],
+            "returncode": 0,
+            "stdout": "{\"generation\": \"d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9\", \"operation\": \"verify\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "generation": "d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9",
+              "operation": "verify",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "checked-in-production-recipe",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\shaders\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\production-artifacts",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 0,
+            "stdout": "{\"disposition\": \"BUILT\", \"generation\": \"01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06\", \"operation\": \"build\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "disposition": "BUILT",
+              "generation": "01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06",
+              "operation": "build",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "checked-in-production-artifact-verify",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "verify",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\production-artifacts"
+            ],
+            "returncode": 0,
+            "stdout": "{\"generation\": \"01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06\", \"operation\": \"verify\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "generation": "01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06",
+              "operation": "verify",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "compute-storage-recipe",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\compute-source\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\compute-artifacts",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 0,
+            "stdout": "{\"disposition\": \"BUILT\", \"generation\": \"4924fa08ff510231673929a7263bfed8f3021dd254e32aa8f59d419a8fcff3c5\", \"operation\": \"build\", \"schema_version\": 1, \"shaders\": 1, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "disposition": "BUILT",
+              "generation": "4924fa08ff510231673929a7263bfed8f3021dd254e32aa8f59d419a8fcff3c5",
+              "operation": "build",
+              "schema_version": 1,
+              "shaders": 1,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "compute-storage-artifact-verify",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "verify",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-04\\compute-artifacts"
+            ],
+            "returncode": 0,
+            "stdout": "{\"generation\": \"4924fa08ff510231673929a7263bfed8f3021dd254e32aa8f59d419a8fcff3c5\", \"operation\": \"verify\", \"schema_version\": 1, \"shaders\": 1, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "generation": "4924fa08ff510231673929a7263bfed8f3021dd254e32aa8f59d419a8fcff3c5",
+              "operation": "verify",
+              "schema_version": 1,
+              "shaders": 1,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          }
+        ],
+        "checks": [
+          {
+            "name": "real-compile-and-nested-dependency-closure",
+            "status": "PASS",
+            "generation": "eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9",
+            "dependencies": {
+              "common/position.hlsli": {
+                "bytes": 137,
+                "sha256": "97432cc9d2773b8e5b69f59c1b9852cccb6e3b9a946b18bf7540858701f261fd"
+              },
+              "common/scale.hlsli": {
+                "bytes": 37,
+                "sha256": "300bbe1a6b8a7a7b6bf811aaf0c9e725b77431d9322b1a7abe0c3417c2bad2b9"
+              },
+              "independent.hlsl": {
+                "bytes": 72,
+                "sha256": "12d5e2a0b39d0fc327b779ace78897667c3ac8b67f6699bf5bfb81a1c604dcbc"
+              },
+              "main.hlsl": {
+                "bytes": 147,
+                "sha256": "057c20b02bb76369a485765506c9def34a2578b0673a31f0ae517510f0dc589b"
+              }
+            },
+            "artifacts": {
+              "generations/eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9/dependent-vs.spv": {
+                "bytes": 580,
+                "sha256": "03665b57acc6b87cccb4cea29783c3bd1ea4643019b0bb990de8c660c8a16ad4"
+              },
+              "generations/eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9/independent-ps.spv": {
+                "bytes": 368,
+                "sha256": "7cc25d969e40ea3bd7d2cf5b2e49af5b21381365e320a381de3b867d4598e4c0"
+              },
+              "shader-manifest.json": {
+                "bytes": 2350,
+                "sha256": "a309a610ce5ed35b96f1128f592e634e01dc1409fc7d1cad22670cb544ccecf3"
+              }
+            }
+          },
+          {
+            "name": "unchanged-inputs-reuse-identical-generation",
+            "status": "PASS"
+          },
+          {
+            "name": "independent-cold-build-byte-identical",
+            "status": "PASS"
+          },
+          {
+            "name": "unreferenced-source-does-not-invalidate",
+            "status": "PASS"
+          },
+          {
+            "name": "nested-include-invalidates-generation",
+            "status": "PASS",
+            "before": {
+              "dependent-vs": "03665b57acc6b87cccb4cea29783c3bd1ea4643019b0bb990de8c660c8a16ad4",
+              "independent-ps": "7cc25d969e40ea3bd7d2cf5b2e49af5b21381365e320a381de3b867d4598e4c0"
+            },
+            "after": {
+              "dependent-vs": "97f38ed957fa359f9327bf94d2044da91200df6fde957e6f0ffa458b2f634696",
+              "independent-ps": "7cc25d969e40ea3bd7d2cf5b2e49af5b21381365e320a381de3b867d4598e4c0"
+            },
+            "generation": "d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9",
+            "incremental_scope": "Whole generation rebuilt"
+          },
+          {
+            "name": "compile-and-source-failures-preserve-last-good-generation",
+            "status": "PASS"
+          },
+          {
+            "name": "version-and-binding-mismatch-rejected-without-publication",
+            "status": "PASS"
+          },
+          {
+            "name": "relocated-verifier-needs-no-source-lock-compiler-or-validator",
+            "status": "PASS",
+            "verifier_files": {
+              "graphics_probe.py": {
+                "bytes": 38774,
+                "sha256": "61ba9856f77c5e1a46bd6425bcad0120b90ef602dd1bd25da6a76e30df599feb"
+              },
+              "prepare_graphics_tools.py": {
+                "bytes": 22236,
+                "sha256": "0222c8f46daa079a0e82a9b8fc165238057811637ec5d0b1f911b7bab23b263b"
+              },
+              "process_runner.py": {
+                "bytes": 7997,
+                "sha256": "73ccfe5050040e3f495e518d3ddfbe903ee581edda17f2aed276456ffcf9e4bb"
+              },
+              "shader_pipeline.py": {
+                "bytes": 25218,
+                "sha256": "a4fb769823531adc87cb9533b9588a44057015e9a04b26877e559eed6f5e54dd"
+              },
+              "toolchain_report.py": {
+                "bytes": 5833,
+                "sha256": "59349b3f52acac3465da940c96f1cda5c7a264db89d9f3c1ca21038de50a6fe4"
+              }
+            },
+            "path": "C:\\WINDOWS\\System32",
+            "limits": "Current-machine isolation with installed Python, not a clean physical machine"
+          },
+          {
+            "name": "corrupt-and-missing-artifacts-rejected",
+            "status": "PASS"
+          },
+          {
+            "name": "checked-in-recipe-compiles-and-validates",
+            "status": "PASS",
+            "recipe": "C:\\Users\\mrkda\\Projects\\shark\\shaders\\recipe.json",
+            "recipe_sha256": "305710ffbf2e100acbeb7e8fa7a0f2f50580ce0cc97802a29bda91768683dbfb",
+            "generation": "01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06",
+            "artifacts": {
+              "generations/01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06/textured-cube-ps.spv": {
+                "bytes": 780,
+                "sha256": "9a08883c89af45f1b6fc3975c2146311eb2051d8b2ad36a705a51405dd212406"
+              },
+              "generations/01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06/textured-cube-vs.spv": {
+                "bytes": 1064,
+                "sha256": "e07a66c210b02f52ddf9c72ee441635b1081cc80febc37fa8d739f2944007ace"
+              },
+              "shader-manifest.json": {
+                "bytes": 2261,
+                "sha256": "7f0beb26199614149ee240df981a94b097a6ecc80b5796531f12295a7264c91c"
+              }
+            }
+          },
+          {
+            "name": "compute-storage-shader-compiles-and-validates",
+            "status": "PASS",
+            "source": {
+              "compute.hlsl": {
+                "bytes": 208,
+                "sha256": "00d4ba295e8b2ab89feb9e9727d5f6cbc9dec99a20d350234baa6d3ed832a61a"
+              },
+              "recipe.json": {
+                "bytes": 316,
+                "sha256": "a353047e8ac591ea77fabddf703382468941a816c6a5802a7dee50debe0b5c6f"
+              }
+            },
+            "generation": "4924fa08ff510231673929a7263bfed8f3021dd254e32aa8f59d419a8fcff3c5",
+            "artifacts": {
+              "generations/4924fa08ff510231673929a7263bfed8f3021dd254e32aa8f59d419a8fcff3c5/storage-cs.spv": {
+                "bytes": 608,
+                "sha256": "1bbeb60b8bf2d5fa388d9dc361067c069b4d14c3786902688fbf261dad42bd2e"
+              },
+              "shader-manifest.json": {
+                "bytes": 1730,
+                "sha256": "021c54f15869c3519fb28f22fef4103b2f0d3bc7c340c3fceee1e739bfc2bb1b"
+              }
+            },
+            "limits": "Offline stage/binding validation only; no GPU dispatch"
+          }
+        ],
+        "tool_source_sha256": {
+          "shader_pipeline.py": "a4fb769823531adc87cb9533b9588a44057015e9a04b26877e559eed6f5e54dd",
+          "graphics_probe.py": "61ba9856f77c5e1a46bd6425bcad0120b90ef602dd1bd25da6a76e30df599feb",
+          "prepare_graphics_tools.py": "0222c8f46daa079a0e82a9b8fc165238057811637ec5d0b1f911b7bab23b263b",
+          "process_runner.py": "73ccfe5050040e3f495e518d3ddfbe903ee581edda17f2aed276456ffcf9e4bb",
+          "toolchain_report.py": "59349b3f52acac3465da940c96f1cda5c7a264db89d9f3c1ca21038de50a6fe4"
+        },
+        "harness_sha256": "08320f07442121aec9e072bbc9b533194e8175472d922c137542b49ddcb4bd72",
+        "validation_manifest": "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json",
+        "validation_manifest_sha256": "d377078744aad2fae498f8c28a2f0f70f2640c136462e9be45e0232c6f781dcb",
+        "dependency_lock_sha256": "f2dacdc51fa9004d07ab005af81a9294945f2527cd5972e6a0f78964d7cf9db3",
+        "initial_fixture_files": {
+          "common/position.hlsli": {
+            "bytes": 137,
+            "sha256": "97432cc9d2773b8e5b69f59c1b9852cccb6e3b9a946b18bf7540858701f261fd"
+          },
+          "common/scale.hlsli": {
+            "bytes": 37,
+            "sha256": "300bbe1a6b8a7a7b6bf811aaf0c9e725b77431d9322b1a7abe0c3417c2bad2b9"
+          },
+          "independent.hlsl": {
+            "bytes": 72,
+            "sha256": "12d5e2a0b39d0fc327b779ace78897667c3ac8b67f6699bf5bfb81a1c604dcbc"
+          },
+          "main.hlsl": {
+            "bytes": 147,
+            "sha256": "057c20b02bb76369a485765506c9def34a2578b0673a31f0ae517510f0dc589b"
+          },
+          "recipe.json": {
+            "bytes": 389,
+            "sha256": "ec37ad372525af225fa16a798a4c246e9411b039838b6fc24c151b607569425c"
+          }
+        },
+        "toolchain": {
+          "compiler_archive_sha256": "ad31b1fc8443175d204f77a611fdb3ef2ec42759bdc2f1167368de24a4a7e7f1",
+          "compiler_files": {
+            "LICENCE-MIT.txt": "903df5512f7d02609fed0c780a9b704f5a3eeb6e4d84ebe42a29845c81899a3c",
+            "LICENSE-LLVM.txt": "729615317e28dd03907e46f0fc3b5e88f7853cee61d1a1471d2749335516b46f",
+            "LICENSE-MS.txt": "734f72f239fe7b07b4c7203f294c1a7ce27095687278bab7e56d630d7c672963",
+            "bin/x64/dxc.exe": "aa7965b3763d9c710baaa5a28cedcc633449962a75d1391d161a85304a41b3e2",
+            "bin/x64/dxcompiler.dll": "0689e2fee0a1c9df8662a59680469f24e2a3ad7ce6bbbcc9284f7a83172bfc59",
+            "bin/x64/dxil.dll": "64be2368211d257a038a7d4ea6bb3e24c878eb8d588c7b8414fccf759b69c2ac"
+          },
+          "host": "windows-x86_64",
+          "lock_sha256": "f2dacdc51fa9004d07ab005af81a9294945f2527cd5972e6a0f78964d7cf9db3",
+          "validator_revision": "18b08af19b08515d5a1749adbdb05bc4369a57ed",
+          "validator_sha256": "52a829ee507eb87b1f9c22bd8ec68aeee27e7a8f9eff113d288ac57c122b6586"
+        },
+        "validator": {
+          "path": "C:\\Users\\mrkda\\Projects\\shark\\build\\graphics-validation-windows-x86_64\\bin\\spirv-val.exe",
+          "sha256": "52a829ee507eb87b1f9c22bd8ec68aeee27e7a8f9eff113d288ac57c122b6586",
+          "bytes": 3829760,
+          "version": "SPIRV-Tools v2026.2 18b08af19b08515d5a1749adbdb05bc4369a57ed\nTargets:\n  SPIR-V 1.0\n  SPIR-V 1.1\n  SPIR-V 1.2\n  SPIR-V 1.3\n  SPIR-V 1.4\n  SPIR-V 1.5\n  SPIR-V 1.6\n  SPIR-V 1.2 (under OpenCL 2.2 Full Profile semantics)\n  SPIR-V 1.0 (under Vulkan 1.0 semantics)\n  SPIR-V 1.3 (under Vulkan 1.1 semantics)\n  SPIR-V 1.4 (under Vulkan 1.1 semantics)\n  SPIR-V 1.5 (under Vulkan 1.2 semantics)\n  SPIR-V 1.6 (under Vulkan 1.3 semantics) SPIR-V 1.6 (under Vulkan 1.4 semantics)\n"
+        },
+        "compiler_locked_version": "1.9.2609",
+        "compiler_source_revision": "01b62ad47db7dee3dd33f90e7339cf9e860b3f93",
+        "tool_version_commands": [
+          {
+            "name": "compiler",
+            "sha256": "aa7965b3763d9c710baaa5a28cedcc633449962a75d1391d161a85304a41b3e2",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\graphics\\dxc\\1.9.2609-windows-x86_64\\bin\\x64\\dxc.exe",
+              "--version"
+            ],
+            "returncode": 0,
+            "stdout": "dxcompiler.dll: 1.9(5512-01b62ad4)(1.9.2609.5) - 1.9.2609.5 (01b62ad47)\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          {
+            "name": "validator",
+            "sha256": "52a829ee507eb87b1f9c22bd8ec68aeee27e7a8f9eff113d288ac57c122b6586",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\build\\graphics-validation-windows-x86_64\\bin\\spirv-val.exe",
+              "--version"
+            ],
+            "returncode": 0,
+            "stdout": "SPIRV-Tools v2026.2 18b08af19b08515d5a1749adbdb05bc4369a57ed\nTargets:\n  SPIR-V 1.0\n  SPIR-V 1.1\n  SPIR-V 1.2\n  SPIR-V 1.3\n  SPIR-V 1.4\n  SPIR-V 1.5\n  SPIR-V 1.6\n  SPIR-V 1.2 (under OpenCL 2.2 Full Profile semantics)\n  SPIR-V 1.0 (under Vulkan 1.0 semantics)\n  SPIR-V 1.3 (under Vulkan 1.1 semantics)\n  SPIR-V 1.4 (under Vulkan 1.1 semantics)\n  SPIR-V 1.5 (under Vulkan 1.2 semantics)\n  SPIR-V 1.6 (under Vulkan 1.3 semantics) SPIR-V 1.6 (under Vulkan 1.4 semantics)\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          }
+        ],
+        "final_artifacts": {
+          "generations/d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9/dependent-vs.spv": {
+            "bytes": 580,
+            "sha256": "97f38ed957fa359f9327bf94d2044da91200df6fde957e6f0ffa458b2f634696"
+          },
+          "generations/d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9/independent-ps.spv": {
+            "bytes": 368,
+            "sha256": "7cc25d969e40ea3bd7d2cf5b2e49af5b21381365e320a381de3b867d4598e4c0"
+          },
+          "generations/eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9/dependent-vs.spv": {
+            "bytes": 580,
+            "sha256": "03665b57acc6b87cccb4cea29783c3bd1ea4643019b0bb990de8c660c8a16ad4"
+          },
+          "generations/eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9/independent-ps.spv": {
+            "bytes": 368,
+            "sha256": "7cc25d969e40ea3bd7d2cf5b2e49af5b21381365e320a381de3b867d4598e4c0"
+          },
+          "shader-manifest.json": {
+            "bytes": 2350,
+            "sha256": "b9aaf1cec4866a6a129a18ba3083d8ad866a720a6a2eb6213ab2b379b6e396fc"
+          }
+        }
+      }
+    },
+    "wsl_tooling_and_boundaries": {
+      "path": "out/06a-work/wsl/summary.json",
+      "sha256": "8bb70ad334192a38f0d29850e448cb4b17ac847e6a98aa806f1edc11b564ee57",
+      "result": {
+        "status": "PASS",
+        "started_utc": "2026-10-18T10:09:08.376959+00:00",
+        "scope": "CPU Python shader tooling tests and existing dependency-boundary fixtures only; no engine rebuild, native GPU, C++ sanitizer or packaged Runtime/Server qualification.",
+        "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "kernel": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+        "os_release": "PRETTY_NAME=\"Ubuntu 24.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"24.04\"\nVERSION=\"24.04.5 LTS (Noble Numbat)\"\nVERSION_CODENAME=noble\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=noble\nLOGO=ubuntu-logo\n",
+        "source_read_only": true,
+        "display_and_gpu_devices": false,
+        "source_inputs_sha256": "a3bfbba21de60325cc68ebd760f30fa88f127e3181284480403c2b9b11c50038",
+        "commands": [
+          {
+            "name": "versions-cmake",
+            "command": [
+              "cmake",
+              "--version"
+            ],
+            "exit_code": 0,
+            "status": "PASS",
+            "elapsed_seconds": 0.173,
+            "log": "versions-cmake.log",
+            "log_sha256": "246a2f1394c1f89d947b498ec32196bac864589d0a4aa532c7990a6e011e9fa8",
+            "version_output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake)."
+          },
+          {
+            "name": "versions-ninja",
+            "command": [
+              "ninja",
+              "--version"
+            ],
+            "exit_code": 0,
+            "status": "PASS",
+            "elapsed_seconds": 0.023,
+            "log": "versions-ninja.log",
+            "log_sha256": "e2d14d3b09221b66ba4be4e6fcdf0b867181f75109973bd744ba1833d231a543",
+            "version_output": "1.13.2.git.kitware.jobserver-pipe-1"
+          },
+          {
+            "name": "versions-gcc",
+            "command": [
+              "g++-13",
+              "--version"
+            ],
+            "exit_code": 0,
+            "status": "PASS",
+            "elapsed_seconds": 0.023,
+            "log": "versions-gcc.log",
+            "log_sha256": "b240ade48d7a4743cb2e7940990dd5a8dbc15120543c7eadd9541435edd2efd2",
+            "version_output": "g++-13 (Ubuntu 13.3.0-6ubuntu2~24.04.1) 13.3.0\nCopyright (C) 2023 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE."
+          },
+          {
+            "name": "packages",
+            "command": [
+              "dpkg-query",
+              "-W",
+              "-f=${binary:Package}\t${Version}\t${Architecture}\n"
+            ],
+            "exit_code": 0,
+            "status": "PASS",
+            "elapsed_seconds": 0.026,
+            "log": "packages.log",
+            "log_sha256": "28343c3c868e41beb5161811e9670cc51b57413c2848e6de2fa6b5698e1b92fa",
+            "package_lock_errors": []
+          },
+          {
+            "name": "shader-pipeline",
+            "command": [
+              "/opt/shark-headless/venv/bin/python",
+              "tools/tests/test_shader_pipeline.py",
+              "-v"
+            ],
+            "exit_code": 0,
+            "status": "PASS",
+            "elapsed_seconds": 1.078,
+            "log": "shader-pipeline.log",
+            "log_sha256": "6171e2b49bde24b5604371fa1ac780a0d196a0df1183735c8cb580bd78dd2822",
+            "tests": 22
+          },
+          {
+            "name": "graphics-tools",
+            "command": [
+              "/opt/shark-headless/venv/bin/python",
+              "tools/tests/test_graphics_tools.py",
+              "-v"
+            ],
+            "exit_code": 0,
+            "status": "PASS",
+            "elapsed_seconds": 0.682,
+            "log": "graphics-tools.log",
+            "log_sha256": "755950961998321c89e1790cfe29a47b141f44076504761a736a12e621b035f3",
+            "tests": 18
+          },
+          {
+            "name": "server-closure",
+            "command": [
+              "/opt/shark-headless/venv/bin/python",
+              "tools/tests/test_server_closure.py",
+              "-v"
+            ],
+            "exit_code": 0,
+            "status": "PASS",
+            "elapsed_seconds": 0.578,
+            "log": "server-closure.log",
+            "log_sha256": "2dc2670dd602335c6a02e8e8a1040b9826e6846a226901aa3cb7fa88dd8e9639",
+            "tests": 27
+          },
+          {
+            "name": "boundary-fixture",
+            "command": [
+              "cmake",
+              "-DSHARK_SOURCE=/source",
+              "-DSHARK_FIXTURE_BINARY=/evidence/boundary-fixture",
+              "-P",
+              "/source/tests/CheckBoundaryFixture.cmake"
+            ],
+            "exit_code": 0,
+            "status": "PASS",
+            "elapsed_seconds": 7.289,
+            "log": "boundary-fixture.log",
+            "log_sha256": "ddabe99626243db34bca49da8516a292fecc0f07f1769c116011b19b02ffeba1"
+          },
+          {
+            "name": "runtime-package",
+            "command": [
+              "/opt/shark-headless/venv/bin/python",
+              "tools/tests/test_runtime_package.py",
+              "-v"
+            ],
+            "exit_code": 0,
+            "status": "PASS",
+            "elapsed_seconds": 1.047,
+            "log": "runtime-package.log",
+            "log_sha256": "b31aaec4a109b04cb04d26562cfc3417f66c1d67280c7e1df75fb426f5b8d601",
+            "tests": 14
+          }
+        ],
+        "changed_inputs": [],
+        "completed_utc": "2026-10-18T10:09:19.761479+00:00"
+      }
+    },
+    "wsl_final_shader_tests": {
+      "path": "out/06a-work/wsl-final/summary.json",
+      "sha256": "21c241f0ddc410913890ba8982c5fa0d677e2e63ee367387838b49a32f172cb9",
+      "result": {
+        "status": "PASS",
+        "started_utc": "2026-10-18T10:12:26.946941+00:00",
+        "scope": "Final 22-test shader-only regression after validator ASCII basename/cwd fix; original 81-test/19-boundary receipt retained separately. No GPU, engine build or sanitizer run.",
+        "python": "3.12.3 (main, Aug 31 2026, 10:18:26) [GCC 13.3.0]",
+        "kernel": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.39",
+        "os_release": "PRETTY_NAME=\"Ubuntu 24.04.5 LTS\"\nNAME=\"Ubuntu\"\nVERSION_ID=\"24.04\"\nVERSION=\"24.04.5 LTS (Noble Numbat)\"\nVERSION_CODENAME=noble\nID=ubuntu\nID_LIKE=debian\nHOME_URL=\"https://www.ubuntu.com/\"\nSUPPORT_URL=\"https://help.ubuntu.com/\"\nBUG_REPORT_URL=\"https://bugs.launchpad.net/ubuntu/\"\nPRIVACY_POLICY_URL=\"https://www.ubuntu.com/legal/terms-and-policies/privacy-policy\"\nUBUNTU_CODENAME=noble\nLOGO=ubuntu-logo\n",
+        "source_read_only": true,
+        "display_and_gpu_devices": false,
+        "inputs": {
+          "tools/shader_pipeline.py": "a4fb769823531adc87cb9533b9588a44057015e9a04b26877e559eed6f5e54dd",
+          "tools/tests/test_shader_pipeline.py": "598b24e2f0b09bb4fcc3021f680ab972e2dc3b2dc6339e9f97b374cc9ce0d93b"
+        },
+        "prior_receipt": {
+          "path": "out/06a-work/wsl/summary.json",
+          "sha256": "8bb70ad334192a38f0d29850e448cb4b17ac847e6a98aa806f1edc11b564ee57"
+        },
+        "runner_sha256": "e0b443879b0840780d37d633a85f09327f59bf04928df9ef066cb4e6edf97a6b",
+        "shell_runner_sha256": "018d4eb2045c9c7889e28b08445021d55f51cdc8d51359b20629528ba0b9072e",
+        "command": [
+          "/opt/shark-headless/venv/bin/python",
+          "tools/tests/test_shader_pipeline.py",
+          "-v"
+        ],
+        "exit_code": 0,
+        "elapsed_seconds": 1.133,
+        "tests": 22,
+        "changed_inputs": [],
+        "log_sha256": "d0714c9f2a2ce7740ea9aed8c6d9a090f9c846a650df94e53ef989082fa32110",
+        "completed_utc": "2026-10-18T10:12:28.101624+00:00"
+      }
+    }
+  },
+  "preserved_attempts": [
+    {
+      "path": "out/06a-work/offline-integration-01/summary.json",
+      "sha256": "8d9f9c2b9b7a7ad3c71a0c2592242b448c5c1159558f7c9c59440b20911b7185",
+      "result": {
+        "schema_version": 1,
+        "assignment": "06a",
+        "status": "FAIL",
+        "qualification": "NOT_RUN",
+        "scope": "Offline shader toolchain only; no device/rendering/05c qualification",
+        "timestamp_utc": "2026-10-18T10:09:02.938972+00:00",
+        "os": "Windows-11-10.0.26200-SP0",
+        "python": "3.13.5",
+        "commands": [
+          {
+            "name": "initial-build",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-01\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-01\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\graphics-validation\\02d-windows-portable\\summary.json"
+            ],
+            "returncode": 1,
+            "stdout": "{\"error\": {\"code\": \"shader.toolchain\", \"message\": \"Validator receipt is not passing/current; prepare locked validation tooling\", \"path\": \"C:\\\\Users\\\\mrkda\\\\Projects\\\\shark\\\\out\\\\graphics-validation\\\\02d-windows-portable\\\\summary.json\"}, \"operation\": \"shader-pipeline\", \"schema_version\": 1, \"status\": \"FAIL\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "error": {
+                "code": "shader.toolchain",
+                "message": "Validator receipt is not passing/current; prepare locked validation tooling",
+                "path": "C:\\Users\\mrkda\\Projects\\shark\\out\\graphics-validation\\02d-windows-portable\\summary.json"
+              },
+              "operation": "shader-pipeline",
+              "schema_version": 1,
+              "status": "FAIL"
+            }
+          }
+        ],
+        "checks": [],
+        "tool_source_sha256": {
+          "shader_pipeline.py": "fa1d4503b834ee5f638426a50dcbfd874e4129391ebb93e77d1f8bb91b6c0bb3",
+          "graphics_probe.py": "61ba9856f77c5e1a46bd6425bcad0120b90ef602dd1bd25da6a76e30df599feb",
+          "prepare_graphics_tools.py": "0222c8f46daa079a0e82a9b8fc165238057811637ec5d0b1f911b7bab23b263b",
+          "process_runner.py": "73ccfe5050040e3f495e518d3ddfbe903ee581edda17f2aed276456ffcf9e4bb",
+          "toolchain_report.py": "59349b3f52acac3465da940c96f1cda5c7a264db89d9f3c1ca21038de50a6fe4"
+        },
+        "harness_sha256": "2d2e187953851088712b64349c9420a16df29f04dba21c8b4cccc5215b8f9db6",
+        "validation_manifest": "C:\\Users\\mrkda\\Projects\\shark\\out\\graphics-validation\\02d-windows-portable\\summary.json",
+        "validation_manifest_sha256": "587f6aeeac009d3c32ebb8f2d381b15a416783a94fdd27b01d790a63cae0557b",
+        "dependency_lock_sha256": "f2dacdc51fa9004d07ab005af81a9294945f2527cd5972e6a0f78964d7cf9db3",
+        "initial_fixture_files": {
+          "common/position.hlsli": {
+            "bytes": 137,
+            "sha256": "97432cc9d2773b8e5b69f59c1b9852cccb6e3b9a946b18bf7540858701f261fd"
+          },
+          "common/scale.hlsli": {
+            "bytes": 37,
+            "sha256": "300bbe1a6b8a7a7b6bf811aaf0c9e725b77431d9322b1a7abe0c3417c2bad2b9"
+          },
+          "independent.hlsl": {
+            "bytes": 72,
+            "sha256": "12d5e2a0b39d0fc327b779ace78897667c3ac8b67f6699bf5bfb81a1c604dcbc"
+          },
+          "main.hlsl": {
+            "bytes": 147,
+            "sha256": "057c20b02bb76369a485765506c9def34a2578b0673a31f0ae517510f0dc589b"
+          },
+          "recipe.json": {
+            "bytes": 389,
+            "sha256": "ec37ad372525af225fa16a798a4c246e9411b039838b6fc24c151b607569425c"
+          }
+        },
+        "error": "initial-build: expected success, observed {'error': {'code': 'shader.toolchain', 'message': 'Validator receipt is not passing/current; prepare locked validation tooling', 'path': 'C:\\\\Users\\\\mrkda\\\\Projects\\\\shark\\\\out\\\\graphics-validation\\\\02d-windows-portable\\\\summary.json'}, 'operation': 'shader-pipeline', 'schema_version': 1, 'status': 'FAIL'}"
+      }
+    },
+    {
+      "path": "out/06a-work/offline-integration-02/summary.json",
+      "sha256": "756629523295b0ad2c227e4f051c8e2f59a1a7213c57fae97de2e1ca006037c2",
+      "result": {
+        "schema_version": 1,
+        "assignment": "06a",
+        "status": "FAIL",
+        "qualification": "NOT_RUN",
+        "scope": "Offline shader toolchain only; no device/rendering/05c qualification",
+        "timestamp_utc": "2026-10-18T10:09:41.581710+00:00",
+        "os": "Windows-11-10.0.26200-SP0",
+        "python": "3.13.5",
+        "commands": [
+          {
+            "name": "initial-build",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-02\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-02\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 1,
+            "stdout": "{\"error\": {\"code\": \"shader.validation\", \"message\": \"validate failed (exit 1, timeout=False): error: file does not exist 'C:\\\\Users\\\\mrkda\\\\Projects\\\\shark\\\\out\\\\06a-work\\\\offline-integration-02\\\\shader artifacts O\\\\.shader-staging-ccbbbfd3f5534b0fb772a7a48a23a4e5\\\\binaries\\\\dependent-vs.spv'\\n\", \"path\": \"\"}, \"operation\": \"shader-pipeline\", \"schema_version\": 1, \"status\": \"FAIL\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "error": {
+                "code": "shader.validation",
+                "message": "validate failed (exit 1, timeout=False): error: file does not exist 'C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-02\\shader artifacts O\\.shader-staging-ccbbbfd3f5534b0fb772a7a48a23a4e5\\binaries\\dependent-vs.spv'\n",
+                "path": ""
+              },
+              "operation": "shader-pipeline",
+              "schema_version": 1,
+              "status": "FAIL"
+            }
+          }
+        ],
+        "checks": [],
+        "tool_source_sha256": {
+          "shader_pipeline.py": "fa1d4503b834ee5f638426a50dcbfd874e4129391ebb93e77d1f8bb91b6c0bb3",
+          "graphics_probe.py": "61ba9856f77c5e1a46bd6425bcad0120b90ef602dd1bd25da6a76e30df599feb",
+          "prepare_graphics_tools.py": "0222c8f46daa079a0e82a9b8fc165238057811637ec5d0b1f911b7bab23b263b",
+          "process_runner.py": "73ccfe5050040e3f495e518d3ddfbe903ee581edda17f2aed276456ffcf9e4bb",
+          "toolchain_report.py": "59349b3f52acac3465da940c96f1cda5c7a264db89d9f3c1ca21038de50a6fe4"
+        },
+        "harness_sha256": "2d2e187953851088712b64349c9420a16df29f04dba21c8b4cccc5215b8f9db6",
+        "validation_manifest": "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json",
+        "validation_manifest_sha256": "d377078744aad2fae498f8c28a2f0f70f2640c136462e9be45e0232c6f781dcb",
+        "dependency_lock_sha256": "f2dacdc51fa9004d07ab005af81a9294945f2527cd5972e6a0f78964d7cf9db3",
+        "initial_fixture_files": {
+          "common/position.hlsli": {
+            "bytes": 137,
+            "sha256": "97432cc9d2773b8e5b69f59c1b9852cccb6e3b9a946b18bf7540858701f261fd"
+          },
+          "common/scale.hlsli": {
+            "bytes": 37,
+            "sha256": "300bbe1a6b8a7a7b6bf811aaf0c9e725b77431d9322b1a7abe0c3417c2bad2b9"
+          },
+          "independent.hlsl": {
+            "bytes": 72,
+            "sha256": "12d5e2a0b39d0fc327b779ace78897667c3ac8b67f6699bf5bfb81a1c604dcbc"
+          },
+          "main.hlsl": {
+            "bytes": 147,
+            "sha256": "057c20b02bb76369a485765506c9def34a2578b0673a31f0ae517510f0dc589b"
+          },
+          "recipe.json": {
+            "bytes": 389,
+            "sha256": "ec37ad372525af225fa16a798a4c246e9411b039838b6fc24c151b607569425c"
+          }
+        },
+        "error": "initial-build: expected success, observed {'error': {'code': 'shader.validation', 'message': \"validate failed (exit 1, timeout=False): error: file does not exist 'C:\\\\Users\\\\mrkda\\\\Projects\\\\shark\\\\out\\\\06a-work\\\\offline-integration-02\\\\shader artifacts O\\\\.shader-staging-ccbbbfd3f5534b0fb772a7a48a23a4e5\\\\binaries\\\\dependent-vs.spv'\\n\", 'path': ''}, 'operation': 'shader-pipeline', 'schema_version': 1, 'status': 'FAIL'}"
+      }
+    },
+    {
+      "path": "out/06a-work/windows-cpu/summary.json",
+      "sha256": "1f6a834f144fafd3668affb526c5d2dddeda8c6380fe9b59d6251ef010b6d558",
+      "result": {
+        "schema_version": 1,
+        "assignment": "06a",
+        "status": "FAIL",
+        "scope": "Windows Debug CPU CTest; no GPU qualification",
+        "source_inputs": {
+          "tools/shader_pipeline.py": "fa1d4503b834ee5f638426a50dcbfd874e4129391ebb93e77d1f8bb91b6c0bb3",
+          "tools/tests/test_shader_pipeline.py": "542a0ce4057e5a8c88a83c83bd4f36cc54d64068617e877f8cf5f7dde86baffc",
+          "tests/CMakeLists.txt": "835b2a14101213e69c010652785c9fdd759e1051e60e8b9676b62d9ccf4c9e58",
+          "shaders/recipe.json": "305710ffbf2e100acbeb7e8fa7a0f2f50580ce0cc97802a29bda91768683dbfb",
+          "shaders/textured_cube.hlsl": "2b80ea31c708e37a375fca4205b668e6ba6423507923c72c3544e4ba376b29d6",
+          "shaders/include/globals.hlsli": "f3c7e2465c73a1f06e1a202afb93752ee0facf74272b94585643a8bd5d6f8db2"
+        },
+        "started_utc": "2026-10-18T10:10:01.262471+00:00",
+        "commands": [
+          {
+            "phase": "configure",
+            "args": [
+              "cmake",
+              "--preset",
+              "windows-debug",
+              "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+            ],
+            "returncode": 0,
+            "stdout": "Preset CMake variables:\n\n  CMAKE_BUILD_TYPE=\"Debug\"\n  CMAKE_CXX_COMPILER=\"cl\"\n  CMAKE_EXPORT_COMPILE_COMMANDS=\"ON\"\n  SHARK_BUILD_CLIENT=\"ON\"\n  SHARK_BUILD_EDITOR=\"ON\"\n  SHARK_BUILD_GRAPHICS_PROBE=\"OFF\"\n  SHARK_BUILD_SERVER=\"ON\"\n  SHARK_BUILD_TESTS=\"ON\"\n  SHARK_INJECT_TEST_FAILURE=\"OFF\"\n  SHARK_SANITIZER=\"none\"\n\n-- Including Win32 support\n-- Native client/probe graphics dependencies use shared locked sources\n-- Configuring done (1.4s)\n-- Generating done (0.1s)\n-- Build files have been written to: C:/Users/mrkda/Projects/shark/build/windows-debug\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          {
+            "phase": "build",
+            "args": [
+              "cmake",
+              "--build",
+              "--preset",
+              "windows-debug",
+              "--parallel",
+              "2"
+            ],
+            "returncode": 0,
+            "stdout": "[0/2] Re-checking globbed directories...\n[1/11] Checking headless Server/Core dependency boundaries\n-- EngineCore allowed dependency closure: EngineCore;Threads::Threads;SharkWindowsEntropy\n-- Server allowed dependency closure: Server;EngineCore;shark_check_server_boundary;Threads::Threads;SharkWindowsEntropy\n[2/11] Checking client transitive dependency boundaries\n-- Engine allowed dependency closure: Engine;EngineClient;SharkWindowDependencies;SharkGraphicsDependencies;EngineCore;glfw;nvrhi;nvrhi_vk;Vulkan::Headers;Vulkan::Vulkan;Threads::Threads;SharkWindowsEntropy;loader_specific_options;SharkWindowsDeviceConfiguration;loader_asm_gen_files;loader_common_options;asm_offset;platform_wsi\n-- EngineClient allowed dependency closure: EngineClient;SharkWindowDependencies;SharkGraphicsDependencies;EngineCore;glfw;nvrhi;nvrhi_vk;Vulkan::Headers;Vulkan::Vulkan;Threads::Threads;SharkWindowsEntropy;loader_specific_options;SharkWindowsDeviceConfiguration;loader_asm_gen_files;loader_common_options;asm_offset;platform_wsi\n-- Runtime allowed dependency closure: Runtime;Engine;shark_check_runtime_boundary;EngineClient;SharkWindowDependencies;SharkGraphicsDependencies;EngineCore;glfw;nvrhi;nvrhi_vk;Vulkan::Headers;Vulkan::Vulkan;Threads::Threads;SharkWindowsEntropy;loader_specific_options;SharkWindowsDeviceConfiguration;loader_asm_gen_files;loader_common_options;asm_offset;platform_wsi\n[3/11] Building CXX object tests\\CMakeFiles\\GraphicsDeviceSmoke.dir\\graphics_device_smoke.cpp.obj\n[4/11] Building CXX object tests\\CMakeFiles\\PresentationFaults.dir\\presentation_faults.cpp.obj\n[5/11] Building CXX object tests\\CMakeFiles\\PresentationSmoke.dir\\presentation_smoke.cpp.obj\n[6/11] Linking CXX executable bin\\PresentationFaults.exe\n[7/11] Linking CXX executable bin\\GraphicsDeviceSmoke.exe\n[8/11] Building CXX object tests\\CMakeFiles\\PresentationStress.dir\\presentation_stress.cpp.obj\n[9/11] Linking CXX executable bin\\PresentationSmoke.exe\n[10/11] Linking CXX executable bin\\PresentationStress.exe\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          {
+            "phase": "list",
+            "args": [
+              "ctest",
+              "--preset",
+              "windows-debug",
+              "--show-only"
+            ],
+            "returncode": 0,
+            "stdout": "Test project C:/Users/mrkda/Projects/shark/build/windows-debug\n  Test  #1: shark.boundary\n  Test  #2: shark.unit\n  Test  #3: shark.failure-sentinel\n  Test  #4: shark.server.unit\n  Test  #5: shark.core.contracts\n  Test  #6: shark.core.lifecycle\n  Test  #7: shark.core.timing\n  Test  #8: shark.core.work\n  Test  #9: shark.client.input\n  Test #10: shark.client.window\n  Test #11: shark.client.frame\n  Test #12: shark.client.graphics\n  Test #13: shark.client.presentation\n  Test #14: shark.runtime.cli\n  Test #15: shark.runtime.window-cli\n  Test #16: shark.runtime.presentation-cli\n  Test #17: shark.editor.cli\n  Test #18: shark.editor.window-cli\n  Test #19: shark.editor.presentation-cli\n  Test #20: shark.boundary.fixture\n  Test #21: shark.tooling.presentation-stress\n  Test #22: shark.tooling.presentation-faults\n  Test #23: shark.tooling.runtime-package\n  Test #24: shark.tooling.shader-pipeline\n  Test #25: shark.client.presentation-faults\n  Test #26: shark.client.presentation-stress-cli\n  Test #27: shark.tooling.graphics-device-evidence\n  Test #28: shark.tooling.presentation-evidence\n  Test #29: shark.client.graphics-cli\n  Test #30: shark.client.presentation-cli\n  Test #31: shark.server.lifecycle\n  Test #32: shark.tooling.processes\n  Test #33: shark.tooling.sources\n  Test #34: shark.contract\n  Test #35: shark.repository\n  Test #36: shark.tooling.server-closure\n  Test #37: shark.boundary.headers\n  Test #38: shark.tooling.headless-environment\n  Test #39: shark.tooling.graphics-evidence\n  Test #40: shark.tooling.graphics-dependencies\n  Test #41: shark.tooling.graphics-tools\n  Test #42: shark.tooling.graphics-validation\n  Test #43: shark.tooling.graphics-package\n  Test #44: shark.tooling.graphics-package-linux\n\nTotal Tests: 44\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          {
+            "phase": "test",
+            "args": [
+              "ctest",
+              "--preset",
+              "windows-debug",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\windows-cpu\\ctest.xml"
+            ],
+            "returncode": 0,
+            "stdout": "Test project C:/Users/mrkda/Projects/shark/build/windows-debug\n      Start  1: shark.boundary\n 1/44 Test  #1: shark.boundary ...........................   Passed    0.22 sec\n      Start  2: shark.unit\n 2/44 Test  #2: shark.unit ...............................   Passed    0.02 sec\n      Start  3: shark.failure-sentinel\n 3/44 Test  #3: shark.failure-sentinel ...................   Passed    0.02 sec\n      Start  4: shark.server.unit\n 4/44 Test  #4: shark.server.unit ........................   Passed    0.02 sec\n      Start  5: shark.core.contracts\n 5/44 Test  #5: shark.core.contracts .....................   Passed    0.06 sec\n      Start  6: shark.core.lifecycle\n 6/44 Test  #6: shark.core.lifecycle .....................   Passed    0.02 sec\n      Start  7: shark.core.timing\n 7/44 Test  #7: shark.core.timing ........................   Passed    0.04 sec\n      Start  8: shark.core.work\n 8/44 Test  #8: shark.core.work ..........................   Passed    0.03 sec\n      Start  9: shark.client.input\n 9/44 Test  #9: shark.client.input .......................   Passed    0.03 sec\n      Start 10: shark.client.window\n10/44 Test #10: shark.client.window ......................   Passed    0.02 sec\n      Start 11: shark.client.frame\n11/44 Test #11: shark.client.frame .......................   Passed    0.02 sec\n      Start 12: shark.client.graphics\n12/44 Test #12: shark.client.graphics ....................   Passed    0.04 sec\n      Start 13: shark.client.presentation\n13/44 Test #13: shark.client.presentation ................   Passed    1.05 sec\n      Start 14: shark.runtime.cli\n14/44 Test #14: shark.runtime.cli ........................   Passed    0.11 sec\n      Start 15: shark.runtime.window-cli\n15/44 Test #15: shark.runtime.window-cli .................   Passed    0.14 sec\n      Start 16: shark.runtime.presentation-cli\n16/44 Test #16: shark.runtime.presentation-cli ...........   Passed    0.27 sec\n      Start 17: shark.editor.cli\n17/44 Test #17: shark.editor.cli .........................   Passed    0.11 sec\n      Start 18: shark.editor.window-cli\n18/44 Test #18: shark.editor.window-cli ..................   Passed    0.13 sec\n      Start 19: shark.editor.presentation-cli\n19/44 Test #19: shark.editor.presentation-cli ............   Passed    0.22 sec\n      Start 20: shark.boundary.fixture\n20/44 Test #20: shark.boundary.fixture ...................   Passed    2.22 sec\n      Start 21: shark.tooling.presentation-stress\n21/44 Test #21: shark.tooling.presentation-stress ........   Passed    6.56 sec\n      Start 22: shark.tooling.presentation-faults\n22/44 Test #22: shark.tooling.presentation-faults ........   Passed    0.16 sec\n      Start 23: shark.tooling.runtime-package\n23/44 Test #23: shark.tooling.runtime-package ............   Passed    0.58 sec\n      Start 24: shark.tooling.shader-pipeline\n24/44 Test #24: shark.tooling.shader-pipeline ............   Passed    0.72 sec\n      Start 25: shark.client.presentation-faults\n25/44 Test #25: shark.client.presentation-faults .........   Passed    1.60 sec\n      Start 26: shark.client.presentation-stress-cli\n26/44 Test #26: shark.client.presentation-stress-cli .....   Passed    4.12 sec\n      Start 27: shark.tooling.graphics-device-evidence\n27/44 Test #27: shark.tooling.graphics-device-evidence ...   Passed    0.21 sec\n      Start 28: shark.tooling.presentation-evidence\n28/44 Test #28: shark.tooling.presentation-evidence ......   Passed    1.66 sec\n      Start 29: shark.client.graphics-cli\n29/44 Test #29: shark.client.graphics-cli ................   Passed    2.77 sec\n      Start 30: shark.client.presentation-cli\n30/44 Test #30: shark.client.presentation-cli ............   Passed    2.59 sec\n      Start 31: shark.server.lifecycle\n31/44 Test #31: shark.server.lifecycle ...................   Passed    4.82 sec\n      Start 32: shark.tooling.processes\n32/44 Test #32: shark.tooling.processes ..................   Passed    5.15 sec\n      Start 33: shark.tooling.sources\n33/44 Test #33: shark.tooling.sources ....................   Passed    0.16 sec\n      Start 34: shark.contract\n34/44 Test #34: shark.contract ...........................   Passed    0.23 sec\n      Start 35: shark.repository\n35/44 Test #35: shark.repository .........................   Passed    0.83 sec\n      Start 36: shark.tooling.server-closure\n36/44 Test #36: shark.tooling.server-closure .............   Passed    1.27 sec\n      Start 37: shark.boundary.headers\n37/44 Test #37: shark.boundary.headers ...................   Passed    2.23 sec\n      Start 38: shark.tooling.headless-environment\n38/44 Test #38: shark.tooling.headless-environment .......   Passed    0.16 sec\n      Start 39: shark.tooling.graphics-evidence\n39/44 Test #39: shark.tooling.graphics-evidence ..........   Passed    2.47 sec\n      Start 40: shark.tooling.graphics-dependencies\n40/44 Test #40: shark.tooling.graphics-dependencies ......   Passed   19.45 sec\n      Start 41: shark.tooling.graphics-tools\n41/44 Test #41: shark.tooling.graphics-tools .............   Passed    0.52 sec\n      Start 42: shark.tooling.graphics-validation\n42/44 Test #42: shark.tooling.graphics-validation ........   Passed    0.44 sec\n      Start 43: shark.tooling.graphics-package\n43/44 Test #43: shark.tooling.graphics-package ...........   Passed    0.44 sec\n      Start 44: shark.tooling.graphics-package-linux\n44/44 Test #44: shark.tooling.graphics-package-linux .....   Passed    1.30 sec\n\n100% tests passed, 0 tests failed out of 44\n\nLabel Time Summary:\nboundary       =  27.70 sec*proc (8 tests)\nclient         =  13.01 sec*proc (13 tests)\ncontract       =   1.07 sec*proc (2 tests)\ncpu            =  65.23 sec*proc (44 tests)\nintegration    =  16.89 sec*proc (11 tests)\nserver         =   8.59 sec*proc (8 tests)\ntooling        =  43.47 sec*proc (17 tests)\nunit           =   1.38 sec*proc (12 tests)\n\nTotal Test time (real) =  65.29 sec\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          }
+        ],
+        "ctest": {
+          "name": "(empty)",
+          "tests": "44",
+          "failures": "0",
+          "disabled": "0",
+          "skipped": "0",
+          "hostname": "",
+          "time": "65",
+          "timestamp": "2026-10-18T06:10:09"
+        },
+        "reason": "Verification source inputs changed during run",
+        "finished_utc": "2026-10-18T10:11:14.980368+00:00"
+      }
+    },
+    {
+      "path": "out/06a-work/offline-integration-03/summary.json",
+      "sha256": "eb7e13f94f5a1431f4d9a808906e9673c09e7345b8f78f41efdff3a0cdfd269f",
+      "result": {
+        "schema_version": 1,
+        "assignment": "06a",
+        "status": "PASS",
+        "qualification": "NOT_RUN",
+        "scope": "Offline shader toolchain only; no device/rendering/05c qualification",
+        "timestamp_utc": "2026-10-18T10:10:26.748971+00:00",
+        "os": "Windows-11-10.0.26200-SP0",
+        "python": "3.13.5",
+        "commands": [
+          {
+            "name": "initial-build",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 0,
+            "stdout": "{\"disposition\": \"BUILT\", \"generation\": \"eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9\", \"operation\": \"build\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "disposition": "BUILT",
+              "generation": "eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9",
+              "operation": "build",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "unchanged-repeat",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 0,
+            "stdout": "{\"disposition\": \"CACHED\", \"generation\": \"eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9\", \"operation\": \"build\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "disposition": "CACHED",
+              "generation": "eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9",
+              "operation": "build",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "independent-cold-build",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\independent-cold-build",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 0,
+            "stdout": "{\"disposition\": \"BUILT\", \"generation\": \"eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9\", \"operation\": \"build\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "disposition": "BUILT",
+              "generation": "eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9",
+              "operation": "build",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "unreferenced-source-edit",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 0,
+            "stdout": "{\"disposition\": \"CACHED\", \"generation\": \"eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9\", \"operation\": \"build\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "disposition": "CACHED",
+              "generation": "eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9",
+              "operation": "build",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "nested-include-edit",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 0,
+            "stdout": "{\"disposition\": \"BUILT\", \"generation\": \"d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9\", \"operation\": \"build\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "disposition": "BUILT",
+              "generation": "d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9",
+              "operation": "build",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "malformed-hlsl",
+            "expected_error_code": "shader.compile",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 1,
+            "stdout": "{\"error\": {\"code\": \"shader.compile\", \"message\": \"compile failed (exit 2147500037, timeout=False): In file included from ./main.hlsl:1:\\nIn file included from ./common/position.hlsli:1:\\n./common/scale.hlsli:1:23: error: invalid use of 'this' outside of a non-static member function\\nfloat shaderScale() { this is not HLSL; }\\n                      ^\\n\\n\", \"path\": \"\"}, \"operation\": \"shader-pipeline\", \"schema_version\": 1, \"status\": \"FAIL\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "error": {
+                "code": "shader.compile",
+                "message": "compile failed (exit 2147500037, timeout=False): In file included from ./main.hlsl:1:\nIn file included from ./common/position.hlsli:1:\n./common/scale.hlsli:1:23: error: invalid use of 'this' outside of a non-static member function\nfloat shaderScale() { this is not HLSL; }\n                      ^\n\n",
+                "path": ""
+              },
+              "operation": "shader-pipeline",
+              "schema_version": 1,
+              "status": "FAIL"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "missing-nested-include",
+            "expected_error_code": "shader.source",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 1,
+            "stdout": "{\"error\": {\"code\": \"shader.source\", \"message\": \"Missing shader source/include or file exceeds 1 MiB\", \"path\": \"common/scale.hlsli\"}, \"operation\": \"shader-pipeline\", \"schema_version\": 1, \"status\": \"FAIL\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "error": {
+                "code": "shader.source",
+                "message": "Missing shader source/include or file exceeds 1 MiB",
+                "path": "common/scale.hlsli"
+              },
+              "operation": "shader-pipeline",
+              "schema_version": 1,
+              "status": "FAIL"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "unsupported-recipe-version",
+            "expected_error_code": "shader.version",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 1,
+            "stdout": "{\"error\": {\"code\": \"shader.version\", \"message\": \"Only recipe version 1 / shark-vulkan-1 is supported\", \"path\": \"C:\\\\Users\\\\mrkda\\\\Projects\\\\shark\\\\out\\\\06a-work\\\\offline-integration-03\\\\fixture sources \\u03a9\\\\recipe.json\"}, \"operation\": \"shader-pipeline\", \"schema_version\": 1, \"status\": \"FAIL\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "error": {
+                "code": "shader.version",
+                "message": "Only recipe version 1 / shark-vulkan-1 is supported",
+                "path": "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\fixture sources \u03a9\\recipe.json"
+              },
+              "operation": "shader-pipeline",
+              "schema_version": 1,
+              "status": "FAIL"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "binding-contract-mismatch",
+            "expected_error_code": "shader.layout",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\fixture sources \u03a9\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\shader artifacts \u03a9",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 1,
+            "stdout": "{\"error\": {\"code\": \"shader.layout\", \"message\": \"SPIR-V descriptor set/binding numbers differ from the recipe\", \"path\": \"dependent-vs\"}, \"operation\": \"shader-pipeline\", \"schema_version\": 1, \"status\": \"FAIL\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "error": {
+                "code": "shader.layout",
+                "message": "SPIR-V descriptor set/binding numbers differ from the recipe",
+                "path": "dependent-vs"
+              },
+              "operation": "shader-pipeline",
+              "schema_version": 1,
+              "status": "FAIL"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "relocated-source-and-tool-free-verify",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\relocated standalone verifier\\tools\\shader_pipeline.py",
+              "verify",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\relocated standalone verifier\\artifacts"
+            ],
+            "returncode": 0,
+            "stdout": "{\"generation\": \"d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9\", \"operation\": \"verify\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "generation": "d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9",
+              "operation": "verify",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "corrupt-artifact",
+            "expected_error_code": "shader.artifact",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "verify",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\relocated standalone verifier\\artifacts"
+            ],
+            "returncode": 1,
+            "stdout": "{\"error\": {\"code\": \"shader.artifact\", \"message\": \"Evidence file missing, changed or outside its byte budget: C:\\\\Users\\\\mrkda\\\\Projects\\\\shark\\\\out\\\\06a-work\\\\offline-integration-03\\\\relocated standalone verifier\\\\artifacts\\\\generations\\\\d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9\\\\dependent-vs.spv\", \"path\": \"generations/d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9/dependent-vs.spv\"}, \"operation\": \"shader-pipeline\", \"schema_version\": 1, \"status\": \"FAIL\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "error": {
+                "code": "shader.artifact",
+                "message": "Evidence file missing, changed or outside its byte budget: C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\relocated standalone verifier\\artifacts\\generations\\d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9\\dependent-vs.spv",
+                "path": "generations/d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9/dependent-vs.spv"
+              },
+              "operation": "shader-pipeline",
+              "schema_version": 1,
+              "status": "FAIL"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "missing-artifact",
+            "expected_error_code": "shader.artifact",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "verify",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\relocated standalone verifier\\artifacts"
+            ],
+            "returncode": 1,
+            "stdout": "{\"error\": {\"code\": \"shader.artifact\", \"message\": \"Immutable generation inventory differs from recipe\", \"path\": \"C:\\\\Users\\\\mrkda\\\\Projects\\\\shark\\\\out\\\\06a-work\\\\offline-integration-03\\\\relocated standalone verifier\\\\artifacts\\\\generations\\\\d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9\"}, \"operation\": \"shader-pipeline\", \"schema_version\": 1, \"status\": \"FAIL\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "error": {
+                "code": "shader.artifact",
+                "message": "Immutable generation inventory differs from recipe",
+                "path": "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\relocated standalone verifier\\artifacts\\generations\\d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9"
+              },
+              "operation": "shader-pipeline",
+              "schema_version": 1,
+              "status": "FAIL"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "restored-artifact",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "verify",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\relocated standalone verifier\\artifacts"
+            ],
+            "returncode": 0,
+            "stdout": "{\"generation\": \"d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9\", \"operation\": \"verify\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "generation": "d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9",
+              "operation": "verify",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "checked-in-production-recipe",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "build",
+              "--recipe",
+              "C:\\Users\\mrkda\\Projects\\shark\\shaders\\recipe.json",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\production-artifacts",
+              "--validation-manifest",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json"
+            ],
+            "returncode": 0,
+            "stdout": "{\"disposition\": \"BUILT\", \"generation\": \"01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06\", \"operation\": \"build\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "disposition": "BUILT",
+              "generation": "01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06",
+              "operation": "build",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          },
+          {
+            "name": "checked-in-production-artifact-verify",
+            "expected_error_code": null,
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+              "-B",
+              "C:\\Users\\mrkda\\Projects\\shark\\tools\\shader_pipeline.py",
+              "verify",
+              "--output",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\06a-work\\offline-integration-03\\production-artifacts"
+            ],
+            "returncode": 0,
+            "stdout": "{\"generation\": \"01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06\", \"operation\": \"verify\", \"schema_version\": 1, \"shaders\": 2, \"status\": \"PASS\"}\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": [],
+            "result": {
+              "generation": "01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06",
+              "operation": "verify",
+              "schema_version": 1,
+              "shaders": 2,
+              "status": "PASS"
+            },
+            "expectation_status": "PASS"
+          }
+        ],
+        "checks": [
+          {
+            "name": "real-compile-and-nested-dependency-closure",
+            "status": "PASS",
+            "generation": "eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9",
+            "dependencies": {
+              "common/position.hlsli": {
+                "bytes": 137,
+                "sha256": "97432cc9d2773b8e5b69f59c1b9852cccb6e3b9a946b18bf7540858701f261fd"
+              },
+              "common/scale.hlsli": {
+                "bytes": 37,
+                "sha256": "300bbe1a6b8a7a7b6bf811aaf0c9e725b77431d9322b1a7abe0c3417c2bad2b9"
+              },
+              "independent.hlsl": {
+                "bytes": 72,
+                "sha256": "12d5e2a0b39d0fc327b779ace78897667c3ac8b67f6699bf5bfb81a1c604dcbc"
+              },
+              "main.hlsl": {
+                "bytes": 147,
+                "sha256": "057c20b02bb76369a485765506c9def34a2578b0673a31f0ae517510f0dc589b"
+              }
+            },
+            "artifacts": {
+              "generations/eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9/dependent-vs.spv": {
+                "bytes": 580,
+                "sha256": "03665b57acc6b87cccb4cea29783c3bd1ea4643019b0bb990de8c660c8a16ad4"
+              },
+              "generations/eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9/independent-ps.spv": {
+                "bytes": 368,
+                "sha256": "7cc25d969e40ea3bd7d2cf5b2e49af5b21381365e320a381de3b867d4598e4c0"
+              },
+              "shader-manifest.json": {
+                "bytes": 2350,
+                "sha256": "a309a610ce5ed35b96f1128f592e634e01dc1409fc7d1cad22670cb544ccecf3"
+              }
+            }
+          },
+          {
+            "name": "unchanged-inputs-reuse-identical-generation",
+            "status": "PASS"
+          },
+          {
+            "name": "independent-cold-build-byte-identical",
+            "status": "PASS"
+          },
+          {
+            "name": "unreferenced-source-does-not-invalidate",
+            "status": "PASS"
+          },
+          {
+            "name": "nested-include-invalidates-generation",
+            "status": "PASS",
+            "before": {
+              "dependent-vs": "03665b57acc6b87cccb4cea29783c3bd1ea4643019b0bb990de8c660c8a16ad4",
+              "independent-ps": "7cc25d969e40ea3bd7d2cf5b2e49af5b21381365e320a381de3b867d4598e4c0"
+            },
+            "after": {
+              "dependent-vs": "97f38ed957fa359f9327bf94d2044da91200df6fde957e6f0ffa458b2f634696",
+              "independent-ps": "7cc25d969e40ea3bd7d2cf5b2e49af5b21381365e320a381de3b867d4598e4c0"
+            },
+            "generation": "d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9",
+            "incremental_scope": "Whole generation rebuilt"
+          },
+          {
+            "name": "compile-and-source-failures-preserve-last-good-generation",
+            "status": "PASS"
+          },
+          {
+            "name": "version-and-binding-mismatch-rejected-without-publication",
+            "status": "PASS"
+          },
+          {
+            "name": "relocated-verifier-needs-no-source-lock-compiler-or-validator",
+            "status": "PASS",
+            "verifier_files": {
+              "graphics_probe.py": {
+                "bytes": 38774,
+                "sha256": "61ba9856f77c5e1a46bd6425bcad0120b90ef602dd1bd25da6a76e30df599feb"
+              },
+              "prepare_graphics_tools.py": {
+                "bytes": 22236,
+                "sha256": "0222c8f46daa079a0e82a9b8fc165238057811637ec5d0b1f911b7bab23b263b"
+              },
+              "process_runner.py": {
+                "bytes": 7997,
+                "sha256": "73ccfe5050040e3f495e518d3ddfbe903ee581edda17f2aed276456ffcf9e4bb"
+              },
+              "shader_pipeline.py": {
+                "bytes": 25218,
+                "sha256": "a4fb769823531adc87cb9533b9588a44057015e9a04b26877e559eed6f5e54dd"
+              },
+              "toolchain_report.py": {
+                "bytes": 5833,
+                "sha256": "59349b3f52acac3465da940c96f1cda5c7a264db89d9f3c1ca21038de50a6fe4"
+              }
+            },
+            "path": "C:\\WINDOWS\\System32",
+            "limits": "Current-machine isolation with installed Python, not a clean physical machine"
+          },
+          {
+            "name": "corrupt-and-missing-artifacts-rejected",
+            "status": "PASS"
+          },
+          {
+            "name": "checked-in-recipe-compiles-and-validates",
+            "status": "PASS",
+            "recipe": "C:\\Users\\mrkda\\Projects\\shark\\shaders\\recipe.json",
+            "recipe_sha256": "305710ffbf2e100acbeb7e8fa7a0f2f50580ce0cc97802a29bda91768683dbfb",
+            "generation": "01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06",
+            "artifacts": {
+              "generations/01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06/textured-cube-ps.spv": {
+                "bytes": 780,
+                "sha256": "9a08883c89af45f1b6fc3975c2146311eb2051d8b2ad36a705a51405dd212406"
+              },
+              "generations/01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06/textured-cube-vs.spv": {
+                "bytes": 1064,
+                "sha256": "e07a66c210b02f52ddf9c72ee441635b1081cc80febc37fa8d739f2944007ace"
+              },
+              "shader-manifest.json": {
+                "bytes": 2261,
+                "sha256": "7f0beb26199614149ee240df981a94b097a6ecc80b5796531f12295a7264c91c"
+              }
+            }
+          }
+        ],
+        "tool_source_sha256": {
+          "shader_pipeline.py": "a4fb769823531adc87cb9533b9588a44057015e9a04b26877e559eed6f5e54dd",
+          "graphics_probe.py": "61ba9856f77c5e1a46bd6425bcad0120b90ef602dd1bd25da6a76e30df599feb",
+          "prepare_graphics_tools.py": "0222c8f46daa079a0e82a9b8fc165238057811637ec5d0b1f911b7bab23b263b",
+          "process_runner.py": "73ccfe5050040e3f495e518d3ddfbe903ee581edda17f2aed276456ffcf9e4bb",
+          "toolchain_report.py": "59349b3f52acac3465da940c96f1cda5c7a264db89d9f3c1ca21038de50a6fe4"
+        },
+        "harness_sha256": "d31733a5814b957d5049686908c643b94529e69a736dbe0caaf87d78be84c9ac",
+        "validation_manifest": "C:\\Users\\mrkda\\Projects\\shark\\out\\05a-work\\validation-tools\\summary.json",
+        "validation_manifest_sha256": "d377078744aad2fae498f8c28a2f0f70f2640c136462e9be45e0232c6f781dcb",
+        "dependency_lock_sha256": "f2dacdc51fa9004d07ab005af81a9294945f2527cd5972e6a0f78964d7cf9db3",
+        "initial_fixture_files": {
+          "common/position.hlsli": {
+            "bytes": 137,
+            "sha256": "97432cc9d2773b8e5b69f59c1b9852cccb6e3b9a946b18bf7540858701f261fd"
+          },
+          "common/scale.hlsli": {
+            "bytes": 37,
+            "sha256": "300bbe1a6b8a7a7b6bf811aaf0c9e725b77431d9322b1a7abe0c3417c2bad2b9"
+          },
+          "independent.hlsl": {
+            "bytes": 72,
+            "sha256": "12d5e2a0b39d0fc327b779ace78897667c3ac8b67f6699bf5bfb81a1c604dcbc"
+          },
+          "main.hlsl": {
+            "bytes": 147,
+            "sha256": "057c20b02bb76369a485765506c9def34a2578b0673a31f0ae517510f0dc589b"
+          },
+          "recipe.json": {
+            "bytes": 389,
+            "sha256": "ec37ad372525af225fa16a798a4c246e9411b039838b6fc24c151b607569425c"
+          }
+        },
+        "toolchain": {
+          "compiler_archive_sha256": "ad31b1fc8443175d204f77a611fdb3ef2ec42759bdc2f1167368de24a4a7e7f1",
+          "compiler_files": {
+            "LICENCE-MIT.txt": "903df5512f7d02609fed0c780a9b704f5a3eeb6e4d84ebe42a29845c81899a3c",
+            "LICENSE-LLVM.txt": "729615317e28dd03907e46f0fc3b5e88f7853cee61d1a1471d2749335516b46f",
+            "LICENSE-MS.txt": "734f72f239fe7b07b4c7203f294c1a7ce27095687278bab7e56d630d7c672963",
+            "bin/x64/dxc.exe": "aa7965b3763d9c710baaa5a28cedcc633449962a75d1391d161a85304a41b3e2",
+            "bin/x64/dxcompiler.dll": "0689e2fee0a1c9df8662a59680469f24e2a3ad7ce6bbbcc9284f7a83172bfc59",
+            "bin/x64/dxil.dll": "64be2368211d257a038a7d4ea6bb3e24c878eb8d588c7b8414fccf759b69c2ac"
+          },
+          "host": "windows-x86_64",
+          "lock_sha256": "f2dacdc51fa9004d07ab005af81a9294945f2527cd5972e6a0f78964d7cf9db3",
+          "validator_revision": "18b08af19b08515d5a1749adbdb05bc4369a57ed",
+          "validator_sha256": "52a829ee507eb87b1f9c22bd8ec68aeee27e7a8f9eff113d288ac57c122b6586"
+        },
+        "validator": {
+          "path": "C:\\Users\\mrkda\\Projects\\shark\\build\\graphics-validation-windows-x86_64\\bin\\spirv-val.exe",
+          "sha256": "52a829ee507eb87b1f9c22bd8ec68aeee27e7a8f9eff113d288ac57c122b6586",
+          "bytes": 3829760,
+          "version": "SPIRV-Tools v2026.2 18b08af19b08515d5a1749adbdb05bc4369a57ed\nTargets:\n  SPIR-V 1.0\n  SPIR-V 1.1\n  SPIR-V 1.2\n  SPIR-V 1.3\n  SPIR-V 1.4\n  SPIR-V 1.5\n  SPIR-V 1.6\n  SPIR-V 1.2 (under OpenCL 2.2 Full Profile semantics)\n  SPIR-V 1.0 (under Vulkan 1.0 semantics)\n  SPIR-V 1.3 (under Vulkan 1.1 semantics)\n  SPIR-V 1.4 (under Vulkan 1.1 semantics)\n  SPIR-V 1.5 (under Vulkan 1.2 semantics)\n  SPIR-V 1.6 (under Vulkan 1.3 semantics) SPIR-V 1.6 (under Vulkan 1.4 semantics)\n"
+        },
+        "compiler_locked_version": "1.9.2609",
+        "compiler_source_revision": "01b62ad47db7dee3dd33f90e7339cf9e860b3f93",
+        "tool_version_commands": [
+          {
+            "name": "compiler",
+            "sha256": "aa7965b3763d9c710baaa5a28cedcc633449962a75d1391d161a85304a41b3e2",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\graphics\\dxc\\1.9.2609-windows-x86_64\\bin\\x64\\dxc.exe",
+              "--version"
+            ],
+            "returncode": 0,
+            "stdout": "dxcompiler.dll: 1.9(5512-01b62ad4)(1.9.2609.5) - 1.9.2609.5 (01b62ad47)\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          {
+            "name": "validator",
+            "sha256": "52a829ee507eb87b1f9c22bd8ec68aeee27e7a8f9eff113d288ac57c122b6586",
+            "args": [
+              "C:\\Users\\mrkda\\Projects\\shark\\build\\graphics-validation-windows-x86_64\\bin\\spirv-val.exe",
+              "--version"
+            ],
+            "returncode": 0,
+            "stdout": "SPIRV-Tools v2026.2 18b08af19b08515d5a1749adbdb05bc4369a57ed\nTargets:\n  SPIR-V 1.0\n  SPIR-V 1.1\n  SPIR-V 1.2\n  SPIR-V 1.3\n  SPIR-V 1.4\n  SPIR-V 1.5\n  SPIR-V 1.6\n  SPIR-V 1.2 (under OpenCL 2.2 Full Profile semantics)\n  SPIR-V 1.0 (under Vulkan 1.0 semantics)\n  SPIR-V 1.3 (under Vulkan 1.1 semantics)\n  SPIR-V 1.4 (under Vulkan 1.1 semantics)\n  SPIR-V 1.5 (under Vulkan 1.2 semantics)\n  SPIR-V 1.6 (under Vulkan 1.3 semantics) SPIR-V 1.6 (under Vulkan 1.4 semantics)\n",
+            "stderr": "",
+            "timed_out": false,
+            "cleanup_errors": []
+          }
+        ],
+        "final_artifacts": {
+          "generations/d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9/dependent-vs.spv": {
+            "bytes": 580,
+            "sha256": "97f38ed957fa359f9327bf94d2044da91200df6fde957e6f0ffa458b2f634696"
+          },
+          "generations/d830b4638141d20457862626e56543660ae1b880b3371d3bcbed76c6e94dd2f9/independent-ps.spv": {
+            "bytes": 368,
+            "sha256": "7cc25d969e40ea3bd7d2cf5b2e49af5b21381365e320a381de3b867d4598e4c0"
+          },
+          "generations/eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9/dependent-vs.spv": {
+            "bytes": 580,
+            "sha256": "03665b57acc6b87cccb4cea29783c3bd1ea4643019b0bb990de8c660c8a16ad4"
+          },
+          "generations/eb792f2fbcc912db84d25eb5e6e4725b18ab5a15dfaf4d3af00e7117fc1807d9/independent-ps.spv": {
+            "bytes": 368,
+            "sha256": "7cc25d969e40ea3bd7d2cf5b2e49af5b21381365e320a381de3b867d4598e4c0"
+          },
+          "shader-manifest.json": {
+            "bytes": 2350,
+            "sha256": "b9aaf1cec4866a6a129a18ba3083d8ad866a720a6a2eb6213ab2b379b6e396fc"
+          }
+        }
+      }
+    }
+  ],
+  "toolchain": {
+    "path": "out/06a-work/windows-cpu-final/toolchain.json",
+    "sha256": "e1def5a24cecbc5de36a3d068ca2f2ed67d179fafebfc01ba815ba76472a1566",
+    "result": {
+      "schema_version": 1,
+      "platform": {
+        "system": "Windows",
+        "release": "11",
+        "version": "10.0.26200",
+        "machine": "AMD64"
+      },
+      "python": {
+        "version": "3.13.5",
+        "executable": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+      },
+      "environment": {
+        "VCToolsVersion": "14.51.36231",
+        "WindowsSDKVersion": "10.0.28000.0\\",
+        "VisualStudioVersion": "18.0"
+      },
+      "git_revision": {
+        "command": [
+          "git",
+          "rev-parse",
+          "HEAD"
+        ],
+        "exit_code": 0,
+        "output": "db4117f264441c96bf2d71fcbe8659f7f78a13b2",
+        "timed_out": false,
+        "cleanup_errors": []
+      },
+      "tools": {
+        "cmake": {
+          "available": true,
+          "path": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\cmake.exe",
+          "sha256": "6acf4f627aca9d5e69693ea2956b094593589a067bf49f0deb5e6341e5c1bbc8",
+          "command": [
+            "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\cmake.exe",
+            "--version"
+          ],
+          "exit_code": 0,
+          "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
+          "timed_out": false,
+          "cleanup_errors": []
+        },
+        "ninja": {
+          "available": true,
+          "path": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\ninja.exe",
+          "sha256": "a7f084e8ee37bff0872aa8bd3d17cc19632d2a37734f6c242dd3dee22d77c0b4",
+          "command": [
+            "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\ninja.exe",
+            "--version"
+          ],
+          "exit_code": 0,
+          "output": "1.13.2.git.kitware.jobserver-pipe-1",
+          "timed_out": false,
+          "cleanup_errors": []
+        },
+        "clang-format": {
+          "available": true,
+          "path": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\clang-format.exe",
+          "sha256": "7ba5a8ec208ca26fbb00ec8012afa19c496b829c90d3ef303acf1275849e9631",
+          "command": [
+            "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\clang-format.exe",
+            "--version"
+          ],
+          "exit_code": 0,
+          "output": "clang-format version 20.1.8",
+          "timed_out": false,
+          "cleanup_errors": []
+        }
+      },
+      "packages": {
+        "cmake": "3.31.10",
+        "ninja": "1.13.2",
+        "clang-format": "20.1.8",
+        "PyYAML": "6.0.3"
+      }
+    }
+  },
+  "junit": {
+    "path": "out/06a-work/windows-cpu-final/ctest.xml",
+    "sha256": "5e0c62b73737f7ba57f27e057f0dd6cafae9dc66e6c887d775551d579d924d9c"
+  },
+  "checked_in_artifact_manifest": {
+    "path": "out/06a-work/offline-integration-04/production-artifacts/shader-manifest.json",
+    "sha256": "7f0beb26199614149ee240df981a94b097a6ecc80b5796531f12295a7264c91c",
+    "result": {
+      "convention": "shark-vulkan-1",
+      "generation": "01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06",
+      "inputs": {
+        "flags": [
+          "-spirv",
+          "-fspv-target-env=vulkan1.3",
+          "-O3",
+          "-Ges",
+          "-WX",
+          "-Zpc"
+        ],
+        "pipeline_sha256": "a4fb769823531adc87cb9533b9588a44057015e9a04b26877e559eed6f5e54dd",
+        "recipe": {
+          "convention": "shark-vulkan-1",
+          "schema_version": 1,
+          "shaders": [
+            {
+              "bindings": [
+                {
+                  "kind": "constant_buffer",
+                  "slot": 0
+                }
+              ],
+              "entry": "vsMain",
+              "id": "textured-cube-vs",
+              "source": "textured_cube.hlsl",
+              "stage": "vertex"
+            },
+            {
+              "bindings": [
+                {
+                  "kind": "texture",
+                  "slot": 0
+                },
+                {
+                  "kind": "sampler",
+                  "slot": 0
+                }
+              ],
+              "entry": "psMain",
+              "id": "textured-cube-ps",
+              "source": "textured_cube.hlsl",
+              "stage": "pixel"
+            }
+          ]
+        },
+        "sources": {
+          "include/globals.hlsli": {
+            "bytes": 299,
+            "sha256": "f3c7e2465c73a1f06e1a202afb93752ee0facf74272b94585643a8bd5d6f8db2"
+          },
+          "textured_cube.hlsl": {
+            "bytes": 901,
+            "sha256": "2b80ea31c708e37a375fca4205b668e6ba6423507923c72c3544e4ba376b29d6"
+          }
+        },
+        "toolchain": {
+          "compiler_archive_sha256": "ad31b1fc8443175d204f77a611fdb3ef2ec42759bdc2f1167368de24a4a7e7f1",
+          "compiler_files": {
+            "LICENCE-MIT.txt": "903df5512f7d02609fed0c780a9b704f5a3eeb6e4d84ebe42a29845c81899a3c",
+            "LICENSE-LLVM.txt": "729615317e28dd03907e46f0fc3b5e88f7853cee61d1a1471d2749335516b46f",
+            "LICENSE-MS.txt": "734f72f239fe7b07b4c7203f294c1a7ce27095687278bab7e56d630d7c672963",
+            "bin/x64/dxc.exe": "aa7965b3763d9c710baaa5a28cedcc633449962a75d1391d161a85304a41b3e2",
+            "bin/x64/dxcompiler.dll": "0689e2fee0a1c9df8662a59680469f24e2a3ad7ce6bbbcc9284f7a83172bfc59",
+            "bin/x64/dxil.dll": "64be2368211d257a038a7d4ea6bb3e24c878eb8d588c7b8414fccf759b69c2ac"
+          },
+          "host": "windows-x86_64",
+          "lock_sha256": "f2dacdc51fa9004d07ab005af81a9294945f2527cd5972e6a0f78964d7cf9db3",
+          "validator_revision": "18b08af19b08515d5a1749adbdb05bc4369a57ed",
+          "validator_sha256": "52a829ee507eb87b1f9c22bd8ec68aeee27e7a8f9eff113d288ac57c122b6586"
+        }
+      },
+      "schema_version": 1,
+      "shaders": [
+        {
+          "bytes": 1064,
+          "file": "generations/01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06/textured-cube-vs.spv",
+          "id": "textured-cube-vs",
+          "sha256": "e07a66c210b02f52ddf9c72ee441635b1081cc80febc37fa8d739f2944007ace"
+        },
+        {
+          "bytes": 780,
+          "file": "generations/01214ff0cd1687acdeb1a52493340a6227a8ddecc92ebafb0e77d2d7f4e2cc06/textured-cube-ps.spv",
+          "id": "textured-cube-ps",
+          "sha256": "9a08883c89af45f1b6fc3975c2146311eb2051d8b2ad36a705a51405dd212406"
+        }
+      ]
+    }
+  },
+  "not_run": [
+    "GPU execution, offscreen/window cube readback, native presentation stress or 05c closure",
+    "Runtime shader loading/pipeline/upload integration and distribution game package",
+    "C++ Release/sanitizer rebuild matrices: no C++ or target dependency changes",
+    "Linux DXC/spirv-val integration: WSL evidence is device-free controlled-tool Python/boundary fixtures",
+    "Full SPIR-V descriptor-type/member-stride/vertex-input/cross-stage reflection",
+    "Hosted CI, native Linux graphics, other physical hardware or Mac"
+  ],
+  "gitignore_review": "Existing out/build/.tools rules cover generated artifacts and caches; added explicit shader output/source guidance. Local roadmap remains ignored.",
+  "next_checkpoint": "06b owned GPU resources/offscreen rendering, subject to stated05c prerequisite",
+  "repository_checks": {
+    "path": "out/06a-work/repository-checks.json",
+    "sha256": "f23563157d5fd0c7bf62874e2812c92a53d926ebff810486d81d41b93b0c460d",
+    "result": {
+      "status": "PASS",
+      "checks": [
+        {
+          "name": "format",
+          "cmd": "& tools/windows_dev.ps1 -CommandArguments @('python', 'tools/check_format.py')",
+          "chunk_id": "01a8bc",
+          "wall_time_seconds": 9.854886,
+          "exit_code": 0,
+          "original_token_count": 9,
+          "output": "Formatting passed for 85 files.\r\n"
+        },
+        {
+          "name": "contract",
+          "cmd": "& .tools/venv/Scripts/python.exe tools/validate_contract.py --self-test",
+          "chunk_id": "d55f0f",
+          "wall_time_seconds": 0.2432149,
+          "exit_code": 0,
+          "original_token_count": 111,
+          "output": "PASS: 29 negative checks reject omissions, malformed data and false claims\r\nPASS: completed MMO insertion follows declared order rather than lexical ID order\r\nPASS: local graphics reassessment requires explicit scope and unchanged evidence references\r\nPASS: 50 requirements cover 46 ordered assignments (00-35 and M01-M10); document links resolve\r\nScope: requirement/documentation checks only; CTest and hardware qualification are separate\r\n"
+        },
+        {
+          "name": "repository",
+          "cmd": "& .tools/venv/Scripts/python.exe tools/check_repository.py --self-test",
+          "chunk_id": "2f64bd",
+          "wall_time_seconds": 0.7808669,
+          "exit_code": 0,
+          "original_token_count": 59,
+          "output": "PASS: five discoverable skill sources, AGENTS links and Git ignore boundaries\r\nSource files are eligible for version control; staging and commits belong to the user\r\nPASS: valid metadata accepted; three malformed skill cases rejected\r\n"
+        },
+        {
+          "name": "diff",
+          "cmd": "git diff --check",
+          "chunk_id": "52ec78",
+          "wall_time_seconds": 0.0658362,
+          "exit_code": 0,
+          "original_token_count": 0,
+          "output": ""
+        }
+      ]
+    }
+  },
+  "shader_ignore_checks": [
+    {
+      "path": "AI_Game_Engine_Agent_Roadmap.txt",
+      "ignored": true
+    },
+    {
+      "path": "out/shaders/example/shader-manifest.json",
+      "ignored": true
+    },
+    {
+      "path": ".tools/graphics/dxc/cache.archive",
+      "ignored": true
+    },
+    {
+      "path": "shaders/recipe.json",
+      "ignored": false
+    },
+    {
+      "path": "shaders/textured_cube.hlsl",
+      "ignored": false
+    },
+    {
+      "path": "shaders/include/globals.hlsli",
+      "ignored": false
+    },
+    {
+      "path": "tools/shader_pipeline.py",
+      "ignored": false
+    },
+    {
+      "path": "tools/tests/test_shader_pipeline.py",
+      "ignored": false
+    },
+    {
+      "path": "tools/tests/check_shader_pipeline.py",
+      "ignored": false
+    },
+    {
+      "path": "docs/shader-pipeline.md",
+      "ignored": false
+    }
+  ]
+}
