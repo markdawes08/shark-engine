@@ -6,6 +6,8 @@ Editor/Runtime/Server entry points and Catch2 tests. Editor/Runtime report
 bootstrap information; Server has validated startup and an idle lifecycle.
 02a/02b add a separate opt-in [graphics probe](graphics-probe.md) with locked
 dependencies, terminal diagnostics, analytic GPU cases and offline validation tools.
+02d adds the matching `graphics-windows-release` configure/build/test presets
+for the standalone Windows probe package; see the probe guide for packaging.
 Production rendering, gameplay, scene import, authoring UI and export remain unimplemented.
 CPU build success does not qualify a GPU, audio device or final release platform.
 

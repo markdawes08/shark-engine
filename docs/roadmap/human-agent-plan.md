@@ -101,7 +101,9 @@ checks for this planning change. The full authoring gate remains NOT_RUN.
 
 M01's hosted qualification is complete. Current implementation work is assignment
 02 graphics compatibility; 02a setup and 02b executable cases/validation preserve
-the shared terminal workflow. Native Mac feasibility is the next checkpoint (02c). The
+the shared terminal workflow. Native Mac 02c is user-deferred; Windows 02d adds a
+bounded portable terminal launcher and package verification. These remain developer
+fixtures, not public game-authoring commands. The
 [graphics plan](graphics-plan.md) and [probe commands](../graphics-probe.md)
 provide noninteractive contributor diagnostics; game-authoring APIs remain future work.
 No additional numbered chunk or change to product/player authority is necessary

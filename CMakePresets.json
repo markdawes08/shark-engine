@@ -226,6 +226,14 @@
       }
     },
     {
+      "name": "graphics-windows-release",
+      "inherits": "graphics-windows",
+      "displayName": "Release Windows graphics probe for standalone packaging",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release"
+      }
+    },
+    {
       "name": "graphics-linux",
       "inherits": "linux-debug",
       "displayName": "Opt-in linux graphics feasibility probe",
@@ -314,6 +322,10 @@
     {
       "name": "graphics-windows",
       "configurePreset": "graphics-windows"
+    },
+    {
+      "name": "graphics-windows-release",
+      "configurePreset": "graphics-windows-release"
     },
     {
       "name": "graphics-linux",
@@ -453,6 +465,16 @@
     {
       "name": "graphics-windows",
       "configurePreset": "graphics-windows",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "graphics-windows-release",
+      "configurePreset": "graphics-windows-release",
       "output": {
         "outputOnFailure": true
       },

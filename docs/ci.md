@@ -21,7 +21,11 @@ Docker/package qualification and the fifteen required checks. The
 graphics feasibility, with 02b executable cases following 02a setup. The [opt-in probe](graphics-probe.md) adds CPU checks to
 ordinary CI while graphics builds/device runs use explicit graphics presets.
 The historical M01 job/test counts above remain tied to that revision; new local
-Local 02a/02b checks do not prove a new hosted run. Network, database, world-handoff and
+Local 02a/02b/02d checks do not prove a new hosted run. Native Mac 02c is
+[deferred](handoffs/02c-mac-deferred.md); Windows relocation on a development host
+is not clean-machine or full GPU-matrix evidence. The CPU package rejection suite
+is registered as `shark.tooling.graphics-package`; native launcher integration and
+GPU soak remain opt-in. Network, database, world-handoff and
 active-load tiers remain planned.
 
 ## Jobs and required checks

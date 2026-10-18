@@ -1090,14 +1090,6 @@ void presentFrame(Context& context) {
     requireVk(vkQueueWaitIdle(context.queue), "retire presentation queue");
 }
 
-struct LifecycleResults final {
-    std::uint32_t resizeCycles = 0;
-    std::uint32_t minimized = 0;
-    std::uint32_t zeroExtents = 0;
-    std::uint32_t frames = 0;
-    double seconds = 0;
-};
-
 template <class Predicate> void awaitWindow(Predicate predicate, const char* operation) {
     const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds(5);
     while (!predicate()) {
@@ -1107,9 +1099,9 @@ template <class Predicate> void awaitWindow(Predicate predicate, const char* ope
     }
 }
 
-LifecycleResults exerciseLifecycle(Context& context, const DeviceInfo& selected,
-                                   const Options& options) {
-    LifecycleResults result;
+void exerciseLifecycle(Context& context, const DeviceInfo& selected, const Options& options,
+                       shark::probe::LifecycleProgress& result) {
+    result.phase = "readback_retirement";
     if (!context.validation->waitForIdle())
         throw Failure("device_wait", "NVRHI failed to retire readback work");
     context.validation->runGarbageCollection();
@@ -1122,11 +1114,14 @@ LifecycleResults exerciseLifecycle(Context& context, const DeviceInfo& selected,
         Array ignoredStages;
         createSwapchain(context, selected, ignoredReport, ignoredStages);
     };
+    result.phase = "initial_presentation";
     glfwShowWindow(context.window);
     glfwPollEvents();
     presentFrame(context);
     ++result.frames;
     for (std::uint32_t cycle = 0; cycle < options.lifecycleCycles; ++cycle) {
+        result.resizeCycle = cycle;
+        result.phase = "resize";
         // Stay above native window-manager minimum tracking sizes; tiny windows
         // can be clamped even when glfwSetWindowSize is otherwise successful.
         const int size = cycle % 2 == 0 ? 256 : 320;
@@ -1145,9 +1140,12 @@ LifecycleResults exerciseLifecycle(Context& context, const DeviceInfo& selected,
                               "; requested=" + std::to_string(size) + "; observed=" +
                               std::to_string(observedWidth) + "x" + std::to_string(observedHeight));
         }
+        result.phase = "resize_swapchain";
         recreate();
+        result.phase = "resize_presentation";
         presentFrame(context);
         ++result.frames;
+        result.phase = "minimize";
         glfwIconifyWindow(context.window);
         awaitWindow(
             [&] { return glfwGetWindowAttrib(context.window, GLFW_ICONIFIED) == GLFW_TRUE; },
@@ -1158,6 +1156,7 @@ LifecycleResults exerciseLifecycle(Context& context, const DeviceInfo& selected,
         if (width == 0 || height == 0)
             ++result.zeroExtents;
         // No acquire/present/recreate while minimized, including a zero framebuffer.
+        result.phase = "restore";
         glfwRestoreWindow(context.window);
         awaitWindow(
             [&] {
@@ -1171,13 +1170,15 @@ LifecycleResults exerciseLifecycle(Context& context, const DeviceInfo& selected,
                        framebufferHeight > 0;
             },
             "Restore dimensions/framebuffer were not observed within five seconds");
+        result.phase = "restore_swapchain";
         recreate();
+        result.phase = "restore_presentation";
         presentFrame(context);
         ++result.frames;
         ++result.resizeCycles;
     }
-    const auto started = std::chrono::steady_clock::now();
-    while (std::chrono::steady_clock::now() - started <
+    const shark::probe::PresentationObservation observation(result);
+    while (std::chrono::steady_clock::now() - observation.started() <
            std::chrono::seconds(options.presentSeconds)) {
         glfwPollEvents();
         if (glfwWindowShouldClose(context.window))
@@ -1189,9 +1190,6 @@ LifecycleResults exerciseLifecycle(Context& context, const DeviceInfo& selected,
         presentFrame(context);
         ++result.frames;
     }
-    result.seconds =
-        std::chrono::duration<double>(std::chrono::steady_clock::now() - started).count();
-    return result;
 }
 
 Object baseReport() {
@@ -1275,8 +1273,11 @@ int main(int argc, char** argv) {
     Diagnostics diagnostics;
     int exitCode = 0;
     std::vector<Object> executedCases;
+    shark::probe::LifecycleProgress lifecycle;
+    std::optional<Options> requestedOptions;
     try {
         const Options options = parseOptions(argc, argv);
+        requestedOptions = options;
         report["mode"] = options.mode;
         if (options.mode == "help") {
             std::cout
@@ -1303,18 +1304,19 @@ int main(int argc, char** argv) {
         if (options.mode == "describe") {
             describe(report);
         } else {
-            LifecycleResults lifecycle;
             const std::uint32_t cycles = options.mode == "cases" ? options.deviceCycles : 1;
-            std::uint32_t completedDevices = 0;
             for (std::uint32_t cycle = 0; cycle < cycles; ++cycle) {
+                lifecycle.deviceCycle = cycle;
                 Array cycleStages;
                 Array& currentStages = cycle == 0 ? stages : cycleStages;
                 {
                     Context context;
+                    lifecycle.phase = "instance_surface";
                     const auto instanceExtensions = initialize(
                         context, diagnostics,
                         (options.mode == "smoke" || options.mode == "cases") && options.validation,
                         report, currentStages);
+                    lifecycle.phase = "device_inventory";
                     const auto devices = enumerate<VkPhysicalDevice>(
                         [&context](auto* count, auto* values) {
                             return vkEnumeratePhysicalDevices(context.instance, count, values);
@@ -1351,12 +1353,15 @@ int main(int argc, char** argv) {
                             selected->missing.emplace_back(
                                 "timelineSemaphore (explicit missing-feature fixture)");
                         }
+                        lifecycle.phase = "device_setup";
                         smoke(context, diagnostics, *selected, instanceExtensions, report,
                               currentStages);
+                        lifecycle.phase = "swapchain_setup";
                         createSwapchain(context, *selected, report, currentStages);
                         if (options.mode == "cases") {
                             report["injected_failure"] = options.injectedFailure;
                             if (cycle == 0) {
+                                lifecycle.phase = "readback_cases";
                                 const auto shaderDirectory =
                                     options.injectedFailure == "shader"
                                         ? options.shaderDirectory / "injected-missing-shader"
@@ -1372,14 +1377,16 @@ int main(int argc, char** argv) {
                                     throw Failure("readback_mismatch",
                                                   "Known GPU readback differs from fixed reference "
                                                   "tolerance; inspect case checks/artifacts");
-                                lifecycle = exerciseLifecycle(context, *selected, options);
+                                exerciseLifecycle(context, *selected, options, lifecycle);
                                 stage(currentStages, "lifecycle");
                             } else {
+                                lifecycle.phase = "device_presentation";
                                 glfwShowWindow(context.window);
                                 glfwPollEvents();
                                 presentFrame(context);
                                 ++lifecycle.frames;
                             }
+                            lifecycle.phase = "device_retirement";
                             if (!context.validation->waitForIdle())
                                 throw Failure("device_wait",
                                               "Failed to retire submitted NVRHI work");
@@ -1388,32 +1395,12 @@ int main(int argc, char** argv) {
                                       "wait before device teardown");
                         }
                     }
+                    lifecycle.phase = "device_teardown";
                 }
-                ++completedDevices;
+                ++lifecycle.completedDevices;
             }
             if (options.mode == "cases") {
-                const bool fullLifecycle = lifecycle.resizeCycles >= 100 &&
-                                           completedDevices >= 20 && lifecycle.zeroExtents > 0 &&
-                                           lifecycle.minimized >= 100 && lifecycle.frames > 0 &&
-                                           lifecycle.seconds >= 600;
-                report["lifecycle"] = Object{
-                    {"requested_resize_cycles", options.lifecycleCycles},
-                    {"completed_resize_cycles", lifecycle.resizeCycles},
-                    {"requested_device_cycles", options.deviceCycles},
-                    {"completed_device_cycles", completedDevices},
-                    {"zero_extent_policy_checks", 0U},
-                    {"observed_zero_framebuffer_extents", lifecycle.zeroExtents},
-                    {"minimize_restore_cycles", lifecycle.minimized},
-                    {"presented_frames", lifecycle.frames},
-                    {"requested_present_seconds", options.presentSeconds},
-                    {"present_elapsed_seconds", lifecycle.seconds},
-                    {"fully_qualified", fullLifecycle && options.validation},
-                    {"zero_extent_note", "CPU guard tests cover zero dimensions; actual OS zero "
-                                         "framebuffer observations are counted separately"},
-                    {"presentation_path",
-                     "serialized Vulkan color-attachment clear; GPU draw/compute cases use NVRHI"},
-                    {"retirement", "submission fences and device/queue idle; no concurrent frames "
-                                   "or reusable present semaphores"}};
+                const bool fullLifecycle = lifecycle.fullWorkloadObserved();
                 executedCases.insert(
                     executedCases.begin(),
                     Object{
@@ -1456,12 +1443,14 @@ int main(int argc, char** argv) {
             }
             // Includes validation callbacks emitted during reverse-order cleanup.
             stage(stages, "teardown");
+            lifecycle.phase = "validation_review";
             if (diagnostics.errors != 0 || diagnostics.warnings != 0) {
                 throw Failure("validation_messages",
                               "Setup produced validation warnings/errors; inspect retained stderr. "
                               "No automatic waiver is applied.");
             }
             report["status"] = "PASS";
+            lifecycle.phase = "complete";
         }
     } catch (const Failure& failure) {
         exitCode = failure.exitCode;
@@ -1473,6 +1462,32 @@ int main(int argc, char** argv) {
         report["status"] = "FAIL";
         report["error"] = Object{{"code", "exception"}, {"message", failure.what()}};
         std::fprintf(stderr, "GraphicsProbe: exception: %s\n", failure.what());
+    }
+    if (requestedOptions && requestedOptions->mode == "cases") {
+        const auto& options = *requestedOptions;
+        report["lifecycle"] =
+            Object{{"requested_resize_cycles", options.lifecycleCycles},
+                   {"completed_resize_cycles", lifecycle.resizeCycles},
+                   {"requested_device_cycles", options.deviceCycles},
+                   {"completed_device_cycles", lifecycle.completedDevices},
+                   {"zero_extent_policy_checks", 0U},
+                   {"observed_zero_framebuffer_extents", lifecycle.zeroExtents},
+                   {"minimize_restore_cycles", lifecycle.minimized},
+                   {"presented_frames", lifecycle.frames},
+                   {"requested_present_seconds", options.presentSeconds},
+                   {"present_elapsed_seconds", lifecycle.seconds},
+                   {"fully_qualified",
+                    exitCode == 0 && lifecycle.fullWorkloadObserved() && options.validation},
+                   {"phase", lifecycle.phase},
+                   {"device_cycle_index", lifecycle.deviceCycle},
+                   {"resize_cycle_index", lifecycle.resizeCycle},
+                   {"progress_complete", exitCode == 0},
+                   {"zero_extent_note", "CPU guard tests cover zero dimensions; actual OS zero "
+                                        "framebuffer observations are counted separately"},
+                   {"presentation_path",
+                    "serialized Vulkan color-attachment clear; GPU draw/compute cases use NVRHI"},
+                   {"retirement", "submission fences and device/queue idle; no concurrent frames "
+                                  "or reusable present semaphores"}};
     }
     if (!executedCases.empty()) {
         Array cases;

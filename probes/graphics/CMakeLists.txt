@@ -9,7 +9,7 @@ set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
 set(shark_probe_source_material "")
 file(GLOB_RECURSE shark_probe_sources CONFIGURE_DEPENDS RELATIVE "${PROJECT_SOURCE_DIR}"
     "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp"
-    "${CMAKE_CURRENT_SOURCE_DIR}/*.hlsl")
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.hlsl" "${CMAKE_CURRENT_SOURCE_DIR}/*.manifest")
 list(APPEND shark_probe_sources "probes/graphics/CMakeLists.txt")
 list(SORT shark_probe_sources)
 foreach(shark_probe_source IN LISTS shark_probe_sources)
@@ -27,6 +27,9 @@ target_compile_definitions(GraphicsProbe PRIVATE
     SHARK_PROBE_COMPILER="${CMAKE_CXX_COMPILER_ID}-${CMAKE_CXX_COMPILER_VERSION}")
 if(WIN32)
     target_compile_definitions(GraphicsProbe PRIVATE NOMINMAX WIN32_LEAN_AND_MEAN)
+    # The pinned loader mixes UTF-8 paths with narrow Windows/CRT file APIs.
+    # Apply UTF-8 to this executable before CRT argv and dependency startup.
+    target_sources(GraphicsProbe PRIVATE windows.manifest)
 endif()
 
 if(SHARK_BUILD_TESTS)

@@ -30,8 +30,15 @@ assignments or weaken [ADR 0003](../architecture/0003-platforms.md).
 **02a is complete within its setup scope**; see its
 [handoff](../handoffs/02a-graphics-setup.md). **02b implementation and local verification are complete**;
 the [02b handoff](../handoffs/02b-graphics-cases.md) records both supplemental GPU
-passes and an earlier unresolved resize timeout. Next is **02c**, without advancing
-the full assignment gate. 02d retains the full soak and any lifecycle recurrence investigation.
+passes and an earlier unresolved resize timeout. The user deferred **02c** on
+2026-10-17 (local date) because only Windows is available; see the
+[recorded decision](../handoffs/02c-mac-deferred.md). Work continues on the
+available Windows portion of **02d**: Release packaging, full local lifecycle
+soak and relocation checks. These local Windows checks pass; see the
+[02d handoff](../handoffs/02d-windows-validation.md) and its retained evidence.
+This does not remove Mac targets or advance the full
+assignment gate. Native Mac builds, Linux GPU runs, the named matrix and a real
+clean-machine package launch remain separate required evidence.
 REQ-02 remains **NOT_RUN** until the full gate passes.
 An unavailable device, driver, display, validation layer or native runner is
 reported as unavailable with a nonzero result; it is never converted into PASS.

@@ -26,6 +26,17 @@ The minimal Ubuntu job independently inspects its source, link and ELF closure
 and starts the installed executable. It is not a game export or licensed release
 package; do not claim M08/35 acceptance from this bootstrap fixture.
 
+Assignment 02d adds an independent Windows graphics probe package, documented in
+the [probe guide](../../../docs/graphics-probe.md). Use the explicit
+`graphics-windows-release` preset and `tools/package_graphics_probe.py` inputs;
+the builder rejects Debug CRT, stale artifacts and unresolved DLLs. The package's
+PowerShell launcher verifies files/results and bounds process trees without a
+checkout, Python or SDK. Exercise real Unicode/space relocation, required
+validation, negative inputs and the full 100/20/600 workload on named hardware.
+CPU launcher tests use synthetic children and cannot qualify GPUs. Development-
+host relocation is not clean-machine evidence. Mac 02c is user-deferred and its
+rows remain open; package construction PASS never closes assignment 02.
+
 Early export 14 may use explicitly versioned engine-owned development payloads;
 31 replaces them with validated cooked dependency closure. Include declared roots
 for script-selected/dynamically assembled prefab, scene and audio IDs, precompiled

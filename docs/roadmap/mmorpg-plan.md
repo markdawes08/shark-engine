@@ -58,7 +58,8 @@ implementation/local qualification; the
 [hosted follow-up](../handoffs/M01-ci-verification.md) closes its native CPU,
 headless Docker and deliberate-failure/restored-success gate. **Current assignment
 is 02; 02a setup and 02b executable cases/local validation are complete within checkpoint scope.
-Next checkpoint is 02c native Mac feasibility.** The
+Native Mac 02c is user-deferred while working on Windows; available Windows 02d
+lifecycle and package verification is current.** The
 [graphics checkpoint plan](graphics-plan.md) preserves one final hardware gate.
 Earlier handoffs and the assessment above retain their historical repository/gate
 status. Graphics and multiplayer qualification remain NOT_RUN. The graphics

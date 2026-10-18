@@ -5,6 +5,7 @@
 # Includes minimal Ubuntu inputs in .tools/headless and server packages/evidence in out/.
 # Graphics/DXC/validation source caches stay in .tools/graphics; generated SPIR-V,
 # binary readbacks, validation layers and reports use build/ and out/graphics*/.
+# Standalone graphics probe packages and relocation receipts also belong in out/ or dist/.
 # Keep generated agent/session reports under out/; public schemas/examples stay tracked.
 /build/
 /out/

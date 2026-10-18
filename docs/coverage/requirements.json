@@ -54,7 +54,7 @@
         "After M01, keep the graphics probe and all later presentation dependencies outside EngineCore/Server; a headless pass cannot replace the retained client GPU matrix."
       ],
       "planned_fixture": "GraphicsFeasibilityProbe hardware matrix, including separate MacAppleSiliconProbe and MacIntelProbe; external fixtures are required because a CPU scene cannot validate platform GPU compatibility.",
-      "verification": {"status": "NOT_RUN", "reason": "02a setup is retained. 02b implements analytic NVRHI draw/depth/compute/format readbacks, bounded lifecycle, pinned SPIR-V/Vulkan validation tools, actual failure fixtures and schema-2 evidence. Local execution is recorded separately from the required hardware gate. All nine named target rows remain unqualified; native Mac ICD/shader-tool graphs, clean-machine packaging and the complete matrix remain open. See docs/roadmap/graphics-plan.md and docs/graphics-probe.md. Assignment 02 remains current; dependent production renderer work has not begun."}
+      "verification": {"status": "NOT_RUN", "reason": "02a setup is retained. 02b implements analytic NVRHI draw/depth/compute/format readbacks, bounded lifecycle, pinned SPIR-V/Vulkan validation tools, actual failure fixtures and schema-2 evidence. Local execution is recorded separately from the required hardware gate. 02d adds Release Windows probe packaging, verified Unicode relocation, a supplemental NVIDIA 100/20/600-second lifecycle pass and Intel short cases, recorded in docs/handoffs/02d-windows-validation.md and docs/coverage/evidence/02d-windows-local.json. All nine named target rows remain unqualified; native Mac 02c is user-deferred, and clean-machine packaging and the complete matrix remain open. See docs/roadmap/graphics-plan.md and docs/graphics-probe.md. Assignment 02 remains current; dependent production renderer work has not begun."}
     },
     {
       "id": "REQ-03",
@@ -816,6 +816,15 @@
         "test_sources": ["probes/graphics/check_cli.py", "probes/graphics/report_tests.cpp", "probes/graphics/lifecycle_tests.cpp", "tools/tests/test_graphics_probe.py", "tools/tests/test_graphics_tools.py", "tools/tests/test_graphics_validation.py"],
         "fixtures": ["probes/graphics/cases.cpp", "probes/graphics/shaders/cases.hlsl", "probes/graphics/main.cpp", "tools/graphics_probe.py", "tools/prepare_graphics_tools.py", "tools/prepare_graphics_validation.py", "cmake/GraphicsValidation.cmake", "tools/windows_unelevated.py", "tools/tests/check_windows_unelevated.py"],
         "fixture_reason": "GPU readbacks/lifecycle require explicit native-device commands and retained validation evidence outside ordinary CPU CTest. The optional Windows launcher integration fixture needs a real standard desktop and verifies identity, arguments and actual process-tree cleanup. CPU tests cover report contracts, fixed comparison/artifact acceptance, shader/tool input rejection, zero-extent policy and bounded failure behavior. Local cases do not qualify absent hardware or packaging; FeatureWorld starts in 10."
+      },
+      {
+        "id": "graphics.probe-package",
+        "name": "Release Windows graphics probe packaging and bounded portable launcher",
+        "requirement_ids": ["REQ-02"],
+        "test_ids": ["shark.tooling.graphics-package", "shark.graphics-probe.report"],
+        "test_sources": ["tools/tests/test_graphics_package.py", "probes/graphics/lifecycle_tests.cpp"],
+        "fixtures": ["tools/package_graphics_probe.py", "tools/graphics_package/Run-GraphicsProbe.ps1", "tools/tests/check_graphics_package_launcher.py", "probes/graphics/main.cpp"],
+        "fixture_reason": "CPU tests reject invalid package inputs and verify failure-progress retention. Explicit Windows integration and native GPU commands verify portable process containment, readbacks and lifecycle outside scenes. Development-host relocation does not establish a clean-machine or named hardware-row pass; FeatureWorld starts in 10."
       }
     ],
     "components": [],

@@ -45,7 +45,7 @@ def finite_float(value: str) -> float:
 def probe_source_digest() -> str:
     paths = sorted({"probes/graphics/CMakeLists.txt", *(path.relative_to(ROOT).as_posix()
                     for path in (ROOT / "probes/graphics").rglob("*")
-                    if path.is_file() and path.suffix in (".cpp", ".hpp", ".hlsl"))})
+                    if path.is_file() and path.suffix in (".cpp", ".hpp", ".hlsl", ".manifest"))})
     text = "".join(f"{path}\n{sha256(ROOT / path)}\n" for path in paths)
     return hashlib.sha256(text.encode("utf-8")).hexdigest()
 

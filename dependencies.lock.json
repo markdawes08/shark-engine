@@ -97,12 +97,15 @@
       "commit": "ebc06b83174f6b5200eb21de3e83fc0d03ddcd18",
       "url": "https://github.com/KhronosGroup/Vulkan-Loader/archive/ebc06b83174f6b5200eb21de3e83fc0d03ddcd18.tar.gz",
       "sha256": "adbbf3460816cc8a4976713826c2aa0543b277049650f610c4217693fe3d4371",
-      "license": "Apache-2.0 AND MIT",
+      "license": "Apache-2.0 AND MIT AND LicenseRef-Kevlin-Henney-Permissive",
       "license_files": [
         "LICENSE.txt",
         "LICENSES/Apache-2.0.txt",
         "LICENSES/MIT-Khronos-old.txt",
-        "loader/cJSON.c"
+        "loader/cJSON.c",
+        "loader/dirent_on_windows.c",
+        "loader/dirent_on_windows.h",
+        "loader/loader_json.c"
       ],
       "owner_target": "GraphicsProbe (02a); later EngineClient only",
       "assignment": "02",
@@ -133,6 +136,16 @@
           "path": "loader/cJSON.c",
           "license": "MIT",
           "pin": "Included in this exact source archive"
+        },
+        {
+          "path": "loader/dirent_on_windows.c and loader/dirent_on_windows.h",
+          "license": "LicenseRef-Kevlin-Henney-Permissive",
+          "pin": "Included in this exact source archive; full copyright/permission notices retained from both files"
+        },
+        {
+          "path": "loader/loader_json.c",
+          "license": "MIT",
+          "pin": "Included in this exact source archive; Khronos, Valve and LunarG copyright notice retained"
         }
       ],
       "notes": "Built from source with the same version as VulkanHeaders. VulkanHeaders package lookup is redirected to that locked target. OS display/SDK libraries and installed GPU ICDs are platform inputs, not downloaded engine dependencies; each run records the driver.",
@@ -440,6 +453,30 @@
         ],
         "generated_output_policy": "The upstream settings target regenerates these shipped files. Accept only exact archive bytes or the exact LF-to-CRLF rendering on Windows; arbitrary source differences still fail. Record the actual final hashes. No source patch."
       }
+    }
+  },
+  "graphics_distribution": {
+    "WindowsCRT": {
+      "version": "14.51.36231",
+      "file_version": "14.51.36247.0",
+      "architecture": "x86_64",
+      "license": "Microsoft Visual C++ V14 Redistributable and Runtime 2026",
+      "redistribution_source": "https://learn.microsoft.com/en-us/visualstudio/releases/2026/redistribution",
+      "license_source": "https://visualstudio.microsoft.com/wp-content/uploads/2025/10/Visual-C-V14-License-Redistributable_and_Runtime_ENU.docx",
+      "source": "Installed Visual Studio 2026 VC/Redist/MSVC/14.51.36231/x64/Microsoft.VC145.CRT; app-local Release runtime only",
+      "files": {
+        "msvcp140.dll": "7c26614e1d733892c2deac7e245ce115504b1d80592dd0a01b08e3e5a55f89ca",
+        "vcruntime140.dll": "d1f4225df2cd877dbf130d5668a021dce3f94118455ff5ec952061c30afc9ce7",
+        "vcruntime140_1.dll": "a7146c08f89fe5b04541ab507cdb59ff7b44534d4ba3c668a426c6450a03434e"
+      },
+      "license_files": [
+        {
+          "path": "tools/graphics_package/licenses/Microsoft-VC-Runtime-2026.txt",
+          "sha256": "d9363efd59ac8a01f4b89b6b41519237c2b6cf3a240554204c3708bffa8991dc",
+          "destination": "Microsoft-VC-Runtime-2026.txt"
+        }
+      ],
+      "verification": "Local file hashes, file version and Valid Authenticode signatures checked 2026-10-18. Debug CRT prohibited. Package construction recursively checks PE imports; Windows 11 system API sets and driver prerequisites are not redistributed."
     }
   }
 }

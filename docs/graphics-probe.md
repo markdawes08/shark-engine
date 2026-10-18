@@ -76,7 +76,8 @@ timestamps, source/worktree fingerprints, executable and lock hashes, compiler
 metadata when supplied, stdout, stderr and `summary.json`. It rejects stale lock
 or probe-source digests, missing/mismatched stages or device selection,
 malformed/contradictory reports and false qualification claims. The source digest
-binds the probe's CMake file and all owned C++ headers/sources and HLSL fixtures; retained configure/build
+binds the probe's CMake file, owned C++ headers/sources, HLSL fixtures and Windows
+process manifest; retained configure/build
 commands and source fingerprints still supply the surrounding build provenance. Run it
 from the configured compiler/tool environment for complete tool metadata. A raw
 executable invocation has no external driver-call watchdog; use the runner in
@@ -214,6 +215,9 @@ a claim that a named hardware matrix row or the complete assignment passed.
 
 ## Native Mac follow-up
 
+The user deferred 02c while working on Windows; see the
+[decision record](handoffs/02c-mac-deferred.md). The Mac rows stay NOT_RUN.
+
 The official DXC release supplies no native Mac binary. Native Mac shader-tool
 preparation remains NOT_RUN and requires a separately pinned source/toolchain
 route. KosmicKrisp (Apple Silicon/macOS 26) and MoltenVK (Intel Macs) remain the
@@ -228,3 +232,67 @@ The pinned NVRHI backend and probe share Vulkan-Hpp compile definitions, includi
 `VK_ENABLE_BETA_EXTENSIONS` to expose the official portability-subset queries.
 This keeps their dispatcher layout consistent; it does not enable an experimental
 Metal driver feature. No NVRHI source patch or production renderer API is introduced.
+
+## Standalone Windows probe package
+
+02d supplies a Windows 11 x64 probe package for hardware verification. It is not
+a game export. Configure/build with `graphics-windows-release`; the package
+builder rejects Debug, sanitizer, stale-input and unresolved-DLL configurations.
+Use the Windows developer wrapper for these build/construction commands:
+
+```text
+cmake --preset graphics-windows-release
+cmake --build --preset graphics-windows-release --parallel 2
+ctest --preset graphics-windows-release
+python tools/package_graphics_probe.py --executable build/graphics-windows-release/bin/GraphicsProbe.exe --build-dir build/graphics-windows-release --shader-dir out/graphics-tools/cases-01/shaders --validation-manifest out/graphics-validation/build-01/summary.json --crt-dir "C:/Program Files/Microsoft Visual Studio/18/Community/VC/Redist/MSVC/14.51.36231/x64/Microsoft.VC145.CRT" --output out/graphics-package/package-01
+```
+
+The explicit CRT directory must match `graphics_distribution.WindowsCRT` in the
+dependency lock. Changing a locally installed toolset requires an intentional
+pin/update and rebuilt evidence, not a broad DLL search or automatic download.
+The package contains the Release probe, locked Vulkan loader, pinned validation
+layer, three Release CRT DLLs, four prevalidated SPIR-V shaders and redistribution
+notices. It excludes DXC, SPIR-V validator executables, source shaders and SDKs.
+The builder recursively inspects PE imports, including the dynamically selected
+validation DLL, against packaged files and an explicit Windows 11 system list.
+Driver ICDs remain host prerequisites. App-local CRT servicing requires rebuilding
+the package when its reviewed pin changes; see Microsoft's
+[redistribution list](https://learn.microsoft.com/en-us/visualstudio/releases/2026/redistribution).
+
+Copy the complete package outside the checkout. From an ordinary standard-user
+Windows PowerShell terminal, run its launcher with a fresh output directory:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File ./Run-GraphicsProbe.ps1 -Mode describe -Output C:/probe-results/describe-01
+powershell -NoProfile -ExecutionPolicy Bypass -File ./Run-GraphicsProbe.ps1 -Mode inventory -Output C:/probe-results/inventory-01
+powershell -NoProfile -ExecutionPolicy Bypass -File ./Run-GraphicsProbe.ps1 -Mode cases -Device DEVICE_UUID_FROM_INVENTORY -Output C:/probe-results/cases-01
+powershell -NoProfile -ExecutionPolicy Bypass -File ./Run-GraphicsProbe.ps1 -Mode cases -Device DEVICE_UUID_FROM_INVENTORY -LifecycleCycles 100 -DeviceCycles 20 -PresentSeconds 600 -TimeoutSeconds 1200 -Output C:/probe-results/soak-01
+```
+
+Windows PowerShell 5.1 and built-in .NET provide the process watchdog; no Python,
+Visual Studio, Vulkan SDK or source checkout is needed to launch. The wrapper
+checks every manifest payload before and after execution, validates native JSON,
+fixed readback tolerances/artifacts and requested lifecycle counts, isolates
+validation settings, and bounds process lifetime/output. A job assigned at process
+creation contains descendants even if the launcher exits abruptly. Elevated
+validation runs return NOT_RUN with instructions to use a standard terminal.
+No global environment, registry or driver configuration is changed.
+
+Retain `summary.json`, native stdout/stderr, readbacks and the package manifest.
+Package construction PASS means the package was inspected and produced;
+`qualification` remains NOT_RUN. A passing local run qualifies only the recorded
+workload/device, not the named matrix or a clean target. Development-host
+relocation with a restricted PATH is useful evidence but cannot prove absence
+of installed tools; a genuinely clean second environment is still required.
+Failures now preserve completed lifecycle counters, phase, cycle indices and
+elapsed presentation time where the native process can report them. A hard
+driver hang can instead produce only the watchdog timeout/cleanup receipt.
+
+The separate native Windows launcher integration fixture requires the same
+standard desktop prerequisites as the elevated helper. It compiles synthetic
+CPU children solely for process/JSON/error tests, without substituting for GPU
+qualification:
+
+```text
+python tools/tests/check_graphics_package_launcher.py --output out/graphics-package-launcher/check-01
+```

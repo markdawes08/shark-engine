@@ -25,7 +25,10 @@ records the completed native CPU, headless Docker and red/green gate. The curren
 assignment is 02; checkpoint 02a dependency/probe setup is complete. The
 [02a handoff](docs/handoffs/02a-graphics-setup.md) records evidence and limits;
 02b executable graphics cases and local validation are complete within checkpoint scope; see the
-[02b handoff](docs/handoffs/02b-graphics-cases.md). Native Mac feasibility in 02c is next. Follow the
+[02b handoff](docs/handoffs/02b-graphics-cases.md). The user deferred native Mac 02c
+while working on Windows; see the [deferral](docs/handoffs/02c-mac-deferred.md).
+The [Windows 02d handoff](docs/handoffs/02d-windows-validation.md) records package
+and lifecycle work without qualifying absent Mac/Linux rows. Follow the
 [graphics checkpoint plan](docs/roadmap/graphics-plan.md) and
 [probe guide](docs/graphics-probe.md); no complete GPU row is qualified yet.
 Networking, persistence, simulation and streaming remain planned.

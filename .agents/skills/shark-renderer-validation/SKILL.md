@@ -20,6 +20,11 @@ directory. Core and synchronization validation are required for case PASS;
 close the 100/20/600-second gate. All named hardware rows remain separately open.
 Run the native CPU build/CTest commands in [building](../../../docs/building.md)
 for relevant shared code. Contract validation checks documentation only.
+Windows 02d also provides the Release package and bounded PowerShell launcher in
+the probe guide. Preserve failed/incomplete soaks, partial lifecycle progress,
+package identity and relocated raw readbacks. A close request is an incomplete
+run, not a passing soak. Native Mac 02c is deferred at the user's request while
+working on Windows; that decision does not qualify or remove its hardware rows.
 Never treat an empty selection or unavailable prerequisite as passing coverage.
 
 Assignment 02 must qualify pinned GLFW/NVRHI/Vulkan on the exact real-hardware

@@ -15,7 +15,7 @@ The [human/agent plan and foundation assessment](docs/roadmap/human-agent-plan.m
 define noninteractive tools, discoverable schemas and safe project handoff. Those
 game-authoring interfaces remain planned; terminal build/test tools work today.
 
-**Current assignment: 02; checkpoint 02b implemented and locally verified.** The headless server and Core/Client
+**Current assignment: 02; local Windows 02d work verified, full hardware gate open.** The headless server and Core/Client
 separation have passed local and hosted qualification, including deliberate test
 failure and restored success. The [graphics probe](docs/graphics-probe.md) adds
 locked dependencies, device inventory, validated GPU readbacks and bounded lifecycle; the
@@ -25,7 +25,10 @@ shutdown. Production rendering, scenes, gameplay and editor UI are future increm
 build results do not establish graphics or release-platform support.
 
 The [02b handoff](docs/handoffs/02b-graphics-cases.md) records local cases, validation
-and limits. Next is 02c native Mac feasibility and distribution.
+and limits. [Native Mac 02c is deferred](docs/handoffs/02c-mac-deferred.md) at the
+user's request while working on Windows. Its targets and qualification gates remain open.
+The [Windows 02d handoff](docs/handoffs/02d-windows-validation.md) records portable
+probe packaging, lifecycle evidence and the outstanding hardware gates.
 
 - [Architecture decisions](docs/architecture/README.md): targets, dependencies,
   platform candidates, formats, simulation conventions and the MMORPG profile.
