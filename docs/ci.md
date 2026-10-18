@@ -169,6 +169,25 @@ and [receipt](coverage/evidence/06c-window-distribution.json).
 and fixed references without graphics; `shark.client.cube-cli` and
 `shark.client.cube-faults-cli` validate native fixture arguments without a device.
 
+07a adds `shark.core.scene` and `shark.core.world-position` to both ordinary and
+headless test builds (`cpu;unit;server`, seed 1337, 20-second timeouts). They cover
+scene ownership, checked identity and lifetime, bounded deferred mutation and
+canonical global coordinates. `shark.tooling.scene-dependencies`
+(`cpu;tooling;boundary;server`, 90-second timeout) accepts only the locked EnTT
+archive, proves disconnected local extraction, rejects source overrides and
+checks that Core still configures without a C compiler or client dependencies.
+Existing graphics-dependency fixtures receive that verified archive and continue
+to reject all client source overrides before population. No fixture downloads
+EnTT during CTest.
+
+The headless closure checks compare EnTT's complete extracted source inventory
+with its pinned archive and verify the installed MIT notice. Runtime package
+tests also require the EnTT notice. Windows CPU/sanitizer, existing WSL
+CPU/headless and protected target builds qualify this checkpoint; the new CPU
+scene layer does not require repeating 06c's GPU acceptance. Full `REQ-07` remains
+NOT_RUN until 07c; see the [07 plan](roadmap/scene-plan.md) and
+[07a handoff](handoffs/07a-entity-ownership.md).
+
 ## Locked tools and hosted-image limits
 
 [requirements-dev.txt](../requirements-dev.txt) locks these distributions with
@@ -266,10 +285,15 @@ claim a read-only runtime root.
 [headless_ci.py](../tools/headless_ci.py) validates the OS/architecture, exact
 installed package inventory, image provenance and Python/tool pins. It rejects
 mapped GPU/audio devices and display sockets and clears display/audio-session
-environment variables. It runs these stages in fresh build directories:
+environment variables. Before configuring, it explicitly prepares the exact EnTT
+archive under the writable build root and passes `SHARK_ENTT_ARCHIVE` to each
+preset. This uses [the shared locked archive helper](../tools/entt_dependency.py),
+not an installed-package or source-tree fallback. It then runs these stages in
+fresh build directories:
 
 1. `server-only`: GCC Release with Client, Editor and Tests disabled, dependency
-   fetching disabled, explicit Server/Core boundary check, component install,
+   network fetching disabled (verified local EnTT extraction only), explicit
+   Server/Core boundary check, component install including the EnTT MIT notice,
    source/build/package closure inspection and a finite installed-Server run.
 2. `server-debug`: GCC Debug with the Core/Server Catch2 and process tests;
    CTest requires a nonempty selection and writes JUnit.
@@ -284,8 +308,12 @@ unsetting display variables on a desktop runner alone is insufficient.
 
 Closure checks inspect CMake's generated graph and file-api data, the compiler's
 actual source/header dependencies and linker inputs, installed package contents,
-and ELF direct/transitive library dependencies. Negative fixtures exercise
-presentation/authoring leaks. The test framework may be fetched for test-enabled
+and ELF direct/transitive library dependencies. The only permitted dependency
+source tree in `server-only` is the exactly pinned EnTT population; every file is
+compared with the verified archive. Its header-only interface adds no ELF library.
+The installed package contains the executable and exact `licenses/EnTT/LICENSE`.
+Negative fixtures exercise changed/missing EnTT inputs, extra dependency trees
+and presentation/authoring leaks. Catch2 may be fetched for test-enabled
 configurations; it must not enter `server-only` or the installed package. These
 checks qualify an idle process lifecycle and dependency boundary, not world
 simulation, networking, persistence, player capacity or release deployment.

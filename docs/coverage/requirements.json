@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "06",
+  "current_assignment": "07",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -145,7 +145,7 @@
         "Engine-owned schema metadata and immutable revisioned queries support semantic terminal inspection: property types, defaults, ranges, units, enums and mutability never require viewport or EnTT access."
       ],
       "planned_fixture": "SceneHandles, HierarchyMutation and TransformConventions fixtures; FeatureWorld/Hierarchy and later Lua/GPU stale-reference fixtures connect as their layers land.",
-      "verification": {"status": "NOT_RUN", "reason": "Scene/ECS/transform implementation is absent; owner assignment 07."}
+      "verification": {"status": "NOT_RUN", "reason": "07a is complete under current-machine scope: private EnTT, scoped identities, checked scene/slot generations and replica references, bounded deferred mutation and canonical world coordinates. Windows Debug/Release/ASan each58, WSL CPU client Debug/ASan+UBSan each51 and WSL Server Debug/ASan+UBSan each36 CTests pass (348 total), with protected Runtime/Server builds, exact dependency/license closure and isolated package launches. Evidence: docs/coverage/evidence/07a-entity-ownership.json and docs/handoffs/07a-entity-ownership.md. Full REQ-07 remains NOT_RUN: 07b Name/Transform hierarchy is next, then 07c schemas and bounded revisioned inspection under docs/roadmap/scene-plan.md. No authoring UI, network protocol or MMO capacity is claimed."}
     },
     {
       "id": "REQ-08",
@@ -808,6 +808,34 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "core.scene-ownership",
+        "name": "Scoped scene ownership, checked entity lifetime and global-cell coordinates",
+        "requirement_ids": [
+          "REQ-07"
+        ],
+        "test_ids": [
+          "shark.core.scene",
+          "shark.core.world-position",
+          "shark.tooling.scene-dependencies",
+          "shark.tooling.server-closure",
+          "shark.tooling.runtime-package"
+        ],
+        "test_sources": [
+          "tests/core_scene_tests.cpp",
+          "tests/core_world_position_tests.cpp",
+          "tools/tests/test_scene_dependencies.py",
+          "tools/tests/test_server_closure.py",
+          "tools/tests/test_runtime_package.py"
+        ],
+        "fixtures": [
+          "tests/core_scene_tests.cpp",
+          "tests/core_world_position_tests.cpp",
+          "tools/entt_dependency.py",
+          "tools/check_server_closure.py"
+        ],
+        "fixture_reason": "CPU fixtures exercise scoped authored/region/replica lifetime, stale references, checked generations and exhaustion, owner-thread rules, bounded deferred mutation and callback failure, and canonical coordinate arithmetic without EnTT or viewport access. Dependency fixtures check private header-only integration, exact source identity and package notices. This foundation has no Name/Transform schema or authoring command yet; 07b/07c add those surfaces and assignment 10 connects FeatureWorld. No networking, distributed handoff or MMO capacity is implied."
+      },
       {
         "id": "client.window-cube-distribution",
         "name": "Window cube, owned capture and verified precompiled Runtime shader distribution",

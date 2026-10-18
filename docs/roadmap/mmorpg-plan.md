@@ -101,7 +101,10 @@ local GPUs and WSL CPU/Server isolation. The user's 2026-10-18
 [handoff](../handoffs/06a-offline-shaders.md) records the scoped verification.
 **06b/06c and full REQ-06 are complete.** The [06c handoff](../handoffs/06c-window-distribution.md)
 records window/offscreen images, precompiled distribution and local qualification.
-Assignment 07 is next, followed by M02 in the existing order.
+Assignment 07 follows [07a/07b/07c](scene-plan.md): entity ownership and world
+coordinates, then Transform/hierarchy, then schemas and bounded semantic inspection.
+07a is complete with qualification recorded in its [handoff](../handoffs/07a-entity-ownership.md).
+M02 follows completed 07 in the existing order.
 Presentation stays in Client and cannot acquire authority over server time or world state.
 The [final local handoff](../handoffs/02d-final-verification.md)
 preserves the Windows lifecycle and isolated Ubuntu CPU/package evidence. The

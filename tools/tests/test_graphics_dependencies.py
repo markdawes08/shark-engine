@@ -86,7 +86,7 @@ class GraphicsDependencyTests(unittest.TestCase):
              if os.name == "nt" else "SHARK_NATIVE_WINDOW is supported only on Windows"),
         )
 
-    def test_device_free_configurations_need_no_c_compiler_or_dependencies(self):
+    def test_device_free_configurations_need_no_c_compiler_or_client_dependencies(self):
         for client in (False, True):
             with self.subTest(client=client), tempfile.TemporaryDirectory(
                 prefix="shark-device-free-dependencies-"
@@ -101,13 +101,15 @@ class GraphicsDependencyTests(unittest.TestCase):
                     "-DSHARK_BUILD_EDITOR=OFF", "-DSHARK_BUILD_TESTS=OFF",
                     "-DSHARK_BUILD_GRAPHICS_PROBE=OFF",
                     "-DFETCHCONTENT_FULLY_DISCONNECTED=ON",
+                    f"-DSHARK_ENTT_ARCHIVE={OPTIONS.entt_archive}",
                 ]
                 if client:
                     command.append("-DSHARK_NATIVE_WINDOW=OFF")
                 result = subprocess.run(command, text=True, capture_output=True, timeout=30)
                 output = result.stdout + result.stderr
                 self.assertEqual(result.returncode, 0, output)
-                self.assertFalse((build / "_deps").exists(), output)
+                self.assertEqual({path.name for path in (build / "_deps").iterdir()},
+                                 {"entt-src", "entt-build", "entt-subbuild"})
                 cache = (build / "CMakeCache.txt").read_text(encoding="utf-8")
                 self.assertIn("SHARK_NATIVE_WINDOW:BOOL=OFF", cache)
                 self.assertIn("SHARK_NATIVE_GRAPHICS:BOOL=OFF", cache)
@@ -118,5 +120,6 @@ if __name__ == "__main__":
     parser.add_argument("--cmake", required=True)
     parser.add_argument("--ninja", required=True)
     parser.add_argument("--compiler", required=True)
+    parser.add_argument("--entt-archive", type=Path, required=True)
     OPTIONS, remaining = parser.parse_known_args()
     unittest.main(argv=[__file__, *remaining])

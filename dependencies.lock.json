@@ -192,6 +192,40 @@
       "vulkan_compile_definitions": [
         "VK_ENABLE_BETA_EXTENSIONS"
       ]
+    },
+    "EnTT": {
+      "version": "4.0.0",
+      "upstream": "https://github.com/skypjack/entt",
+      "release": "https://github.com/skypjack/entt/releases/tag/v4.0.0",
+      "commit": "85c6bba014049b5de8fad49d25424df2f1f6a8c1",
+      "url": "https://github.com/skypjack/entt/archive/85c6bba014049b5de8fad49d25424df2f1f6a8c1.tar.gz",
+      "sha256": "1160aaa50e9f28dc0e250079d6bc507e1566a9ee6db5f4f968a29d357ef17a00",
+      "license": "MIT",
+      "license_files": [
+        "LICENSE"
+      ],
+      "owner_target": "EngineCore scene implementation only; EnTT::EnTT private link",
+      "assignment": "07",
+      "patches": [],
+      "transitive_dependencies": [],
+      "cxx_standard": 20,
+      "options": {
+        "ENTT_USE_LIBCPP": "OFF",
+        "ENTT_USE_SANITIZER": "OFF",
+        "ENTT_USE_CLANG_TIDY": "OFF",
+        "ENTT_INCLUDE_HEADERS": "OFF",
+        "ENTT_INCLUDE_NATVIS": "OFF",
+        "ENTT_INSTALL": "OFF",
+        "ENTT_BUILD_TESTING": "OFF",
+        "ENTT_BUILD_TESTBED": "OFF",
+        "ENTT_BUILD_BENCHMARK": "OFF",
+        "ENTT_BUILD_EXAMPLE": "OFF",
+        "ENTT_BUILD_LIB": "OFF",
+        "ENTT_BUILD_SNAPSHOT": "OFF",
+        "ENTT_BUILD_DOCS": "OFF"
+      },
+      "verification": "Official latest release and exact tag commit reviewed 2026-10-18. Official immutable commit archive downloaded and SHA-256 computed; MIT LICENSE and upstream CMake reviewed. CPU and sanitizer qualification is recorded separately in the 07a handoff.",
+      "notes": "FetchContent populates only the locked archive; Shark creates a SYSTEM C++20 header-only interface over src and does not execute the upstream CMake project (which unconditionally enables C). The listed optional upstream integrations are not evaluated, built or downloaded. No patches, code generation, installed-package fallback or transitive downloads. Core privately includes only entity/registry facilities; no third-party public types. Disconnected builds require a verified local SHARK_ENTT_ARCHIVE or the prior locked archive cache."
     }
   },
   "ci_environments": {

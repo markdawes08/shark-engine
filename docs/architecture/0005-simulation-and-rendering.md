@@ -52,6 +52,13 @@ round-trip tests. Global position calculations use this cell-plus-double-offset
 representation; never convert the entire world's coordinates to a single float
 vector. Spatial cells remain stable when region authority is reassigned.
 
+07a fixes the in-memory coordinate contract at version 1: 1024-meter cells,
+int64 storage bounded to [-2^31, 2^31-1], finite canonical double offsets in
+[0, 1024), positive zero and checked round-to-nearest arithmetic. See the
+[scene contract](../scene-contracts.md) for tested boundary rounding and failure
+rules. This representation limit is not M05's supported content extent. Transform
+TRS is 07b, schema metadata is 07c, and serialization remains assignment 08.
+
 Rendering and Jolt operate on bounded single-precision coordinates relative to
 explicit origins. The conversion records world/cell and origin generation;
 stale-origin results are rejected or explicitly transformed. Client render-origin

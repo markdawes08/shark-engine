@@ -29,6 +29,11 @@ out/server-package --component Server` for an executable-only closure fixture.
 The minimal Ubuntu job independently inspects its source, link and ELF closure
 and starts the installed executable. It is not a game export or licensed release
 package; do not claim M08/35 acceptance from this bootstrap fixture.
+07a adds the private EnTT Core dependency and its MIT license to the fixture.
+Prepare the exact archive before a disconnected Server configure as described
+in [building](../../../docs/building.md). Source closure compares populated EnTT
+files with that archive; Server installation and Runtime notices must include
+its license. This addition does not qualify a shipping MMO package.
 
 Assignment 02d adds Windows/Linux graphics probe packages, documented in
 the [probe guide](../../../docs/graphics-probe.md). Use the explicit

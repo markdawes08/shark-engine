@@ -21,6 +21,12 @@ in the implemented-surface manifest. Its foundation features already map the
 bootstrap behavior and runtime build boundary to tests.
 Connect an earlier component when its missing layer is introduced.
 
+07a now supplies [scene identity and lifetime](../../../docs/scene-contracts.md)
+through EngineCore, with private EnTT, checked scoped references and an explicit
+deferred boundary. Follow the [07 checkpoint plan](../../../docs/roadmap/scene-plan.md):
+Name/Transform and hierarchy belong to 07b, schemas and bounded revisioned
+inspection to 07c. Do not introduce a second registry or expose native entities.
+
 Follow [MMORPG authority and identity](../../../docs/architecture/0007-mmorpg-architecture.md):
 classify state as server-authoritative, predicted, replicated or presentation-only.
 Player requests are bounded authenticated intents, not authoring transactions or

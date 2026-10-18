@@ -140,7 +140,9 @@ authorizes 06b and subsequent increments under their own acceptance criteria.
 precompiled bundle preparation, machine-readable completion and compiler-free
 Runtime distribution. The [06c handoff](../handoffs/06c-window-distribution.md)
 records the local evidence. These diagnostic paths add no scene-authoring API;
-assignment 07 is next.
+assignment 07 follows the [scene checkpoints](scene-plan.md). 07a provides the
+CPU identity/lifetime foundation; 07c adds schema discovery and bounded immutable
+inspection. This does not introduce a terminal command or editor adapter early.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and

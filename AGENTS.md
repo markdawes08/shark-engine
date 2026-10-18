@@ -37,7 +37,12 @@ and [06b handoff](docs/handoffs/06b-gpu-resources.md). **06c and full `REQ-06` a
 complete** under the current-machine scope; the [06c handoff](docs/handoffs/06c-window-distribution.md)
 records both-GPU captures, shader distribution, CPU/sanitizer and package evidence.
 Runtime/Editor expose `--cube` using an executable-adjacent precompiled bundle.
-Assignment 07, ECS/schema/transform hierarchy, is next. Follow the
+Assignment 07 follows the [07 checkpoint plan](docs/roadmap/scene-plan.md).
+**07a is complete** under current-machine scope, with private EnTT scene ownership, checked scoped identities, deferred
+mutations and global-cell coordinates; follow the [scene contract](docs/scene-contracts.md)
+and [07a handoff](docs/handoffs/07a-entity-ownership.md). Name/Transform and hierarchy
+are 07b; schema metadata and bounded revisioned inspection are 07c. Full REQ-07
+remains NOT_RUN until all three checkpoints pass. Follow the
 [05 checkpoint plan](docs/roadmap/graphics-device-plan.md),
 [graphics device contract](docs/graphics-device.md),
 [presentation lifecycle contract](docs/presentation-lifecycle.md) and
@@ -198,7 +203,8 @@ has server authority or a game-world implementation.
 Its injectable window fixtures remain CPU-only; existing WSL builds report native
 window capability unavailable. Raw input is never a Server gameplay protocol. Engine is an
 interface composition target that links EngineClient and transitively EngineCore.
-Server links only EngineCore. Server/Core exclude window/GPU/audio/authoring
+Server links only EngineCore. EnTT is a private header-only Core dependency; offline builds require the locked
+archive described in [building](docs/building.md). Server/Core exclude window/GPU/audio/authoring
 libraries at configure/download, link and package time. `server-only` builds a
 Release server with tests and dependency fetching disabled; `server-debug` and
 `server-asan-ubsan` exercise actual server tests. `runtime-only` is a client preset.
@@ -273,8 +279,9 @@ Update [requirements and API coverage](docs/coverage/README.md) with behavior.
 Each supported component, command and Lua entry maps to an executable test and
 FeatureWorld case, or a justified external fixture. FeatureWorld starts in 10;
 connect earlier components then and add new cases when their feature lands.
-Keep planned fixtures separate from implemented coverage. The bootstrap does not
-provide scene/component/Lua/import/export APIs or a scene renderer.
+Keep planned fixtures separate from implemented coverage. The bootstrap has no component/Lua/import/export APIs or scene renderer.
+07a supplies CPU scene identity and lifetime services; Name/Transform schemas and
+semantic authoring adapters remain in their planned checkpoints.
 MMO requirements remain planned until executable multi-process, network-fault,
 database, streaming and load evidence exists. M09 adds MMOWorld acceptance; Tetris
 and the physics sandbox remain tooling regressions, not MMO release qualification.

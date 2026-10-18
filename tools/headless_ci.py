@@ -20,6 +20,7 @@ import sys
 import tarfile
 import time
 
+from entt_dependency import prepare as prepare_entt
 from process_runner import run_process
 from toolchain_report import PINNED_TOOLS, write_report
 
@@ -160,6 +161,7 @@ def main() -> int:
             summary["errors"] = errors
             print("\n".join(errors), file=sys.stderr)
             return 1
+        entt_archive = prepare_entt(ROOT, build_root / "dependency-cache")
         for preset in PRESETS:
             build = build_root / preset
             evidence = output / preset
@@ -177,6 +179,7 @@ def main() -> int:
                 ("configure", ["cmake", "--preset", preset, "-B", str(build),
                                f"-DCMAKE_CXX_COMPILER={compiler}",
                                f"-DPython3_EXECUTABLE={sys.executable}",
+                               f"-DSHARK_ENTT_ARCHIVE={entt_archive}",
                                "-DSHARK_INJECT_TEST_FAILURE=" + (
                                    "ON" if args.inject_test_failure and preset != "server-only" else "OFF")]),
                 ("build", ["cmake", "--build", str(build), "--parallel", str(args.jobs)]),

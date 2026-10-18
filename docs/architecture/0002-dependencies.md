@@ -6,6 +6,32 @@ Scope: Assignment 00. Assignment 01 implements the build and lock mechanism; lat
 
 ## Decision
 
+07a integrates **EnTT 4.0.0** in EngineCore's scene implementation, pinned to
+commit `85c6bba014049b5de8fad49d25424df2f1f6a8c1` and archive SHA-256
+`1160aaa50e9f28dc0e250079d6bc507e1566a9ee6db5f4f968a29d357ef17a00` in the
+single dependency lock. The official release, exact commit archive, MIT `LICENSE`
+and upstream build configuration were reviewed on 2026-10-18.
+[Release notes](https://github.com/skypjack/entt/releases/tag/v4.0.0),
+[pinned license](https://github.com/skypjack/entt/blob/85c6bba014049b5de8fad49d25424df2f1f6a8c1/LICENSE),
+[pinned CMake](https://github.com/skypjack/entt/blob/85c6bba014049b5de8fad49d25424df2f1f6a8c1/CMakeLists.txt).
+
+`SceneDependencies.cmake` uses FetchContent only to populate that archive and
+creates a SYSTEM C++20 header interface. EngineCore links `EnTT::EnTT` privately;
+public scene contracts expose only engine-owned values. The upstream CMake project
+is not executed, so its unconditional C language setup and optional tests,
+testbed/GUI, examples, documentation and downloads never enter Shark's graph.
+There are no patches or transitive dependencies. This is an integration of the
+header-only library, not a second dependency resolver. GLM remains owned by 07b.
+
+Disconnected `server-only` builds require the exact local `SHARK_ENTT_ARCHIVE` or
+a previously populated locked archive cache. Explicit preparation occurs before
+configure; local extraction does not permit network fetching or arbitrary source
+overrides. The headless closure gate verifies all populated source bytes against
+the archive and the installed MIT notice. Server components and Runtime packages
+retain `licenses/EnTT/LICENSE`. See [building](../building.md#headless-server),
+[CI](../ci.md) and the [07a handoff](../handoffs/07a-entity-ownership.md) for commands
+and qualification; pin review alone does not claim a passing build.
+
 06a reuses the exact locked DXC and SPIRV-Tools inputs for the standalone
 [offline shader builder](../shader-pipeline.md). Compilation is an explicit
 developer command using cached tools; it is absent from the Runtime/Core/Server
@@ -65,7 +91,7 @@ Retain the roadmap's requested stack. The following selections authorize integra
 | Windows and raw input | GLFW; Vulkan windows, no OpenGL context | Engine platform implementation | 02 probe, 04 lifecycle; surface creation and input/focus/resize checks on target systems |
 | Graphics | NVRHI Vulkan backend; Vulkan-Headers and loader from one recorded compatible toolchain | Engine graphics implementation | 02 pins and qualifies the combination; 05 owns production lifecycle |
 | Math | GLM, one centrally configured header interface | Engine math layer and engine-owned clients | 03/07; convention and transform tests; never serialize GLM object memory |
-| ECS | EnTT entity/registry facilities behind the engine's scene interface | Engine scene implementation only | 07; generational handles, safe mutation and hierarchy tests |
+| ECS | EnTT 4.0.0 entity/registry facilities behind the engine's scene interface | EngineCore scene implementation only, private link | 07a pins entity ownership and safe mutation; 07b adds hierarchy tests |
 | Rigid-body physics | Jolt, single-precision world, CPU options matching the platform baseline | Engine physics implementation only | 18/20; lifecycle, fixed-step and event/query checks |
 | Audio playback/mixing | miniaudio, one implementation translation unit, source decoding/encoding disabled | Engine audio implementation only | 24; offline mix and actual playback/device checks |
 | Offline audio import | dr_wav for WAV; Xiph libvorbisfile/libvorbis plus libogg for Ogg Vorbis | EngineTools audio importer only | 24; exact decoder pins, malformed-input/length/loop tests and validated PCM output |
@@ -96,8 +122,10 @@ matching Vulkan headers/loader and offline DXC inputs in the same lock, consumed
 only by the opt-in probe/tool preparation. See the [probe guide](../graphics-probe.md).
 Checkpoint 02b adds a separate, explicitly prepared SPIRV-Tools/Vulkan-ValidationLayers
 source graph with its transitive headers/utilities. It is never added to the engine
-CMake graph. [ADR 0009](0009-windows-linux-platform-scope.md) removes Mac
-driver/tool qualification and retires checkpoint 02c.
+CMake graph. Checkpoint 07a adds the private Core EnTT pin and its MIT notice;
+ordinary Core/Server builds now consume this reviewed CPU-only source dependency.
+[ADR 0009](0009-windows-linux-platform-scope.md) removes Mac driver/tool
+qualification and retires checkpoint 02c.
 
 Assignment 01 must establish one authoritative, versioned dependency manifest consumed by the CMake dependency setup. Use CMake FetchContent or locally populated source trees from that manifest; do not introduce competing package-manager resolution paths. Every dependency must record upstream URL, release label when available, full commit SHA or archive URL plus SHA-256, applicable patches, build options, license files, owning target and integration assignment. Include transitives, vendored headers, shader tools and CI tool downloads. Locally populated trees must match the same locked inputs.
 
@@ -143,6 +171,6 @@ Assignment 24 fixes and tests concrete source limits, channel conversion, sample
 
 ## Consequences and evidence
 
-Third-party types stay inside the owning implementation except centrally configured GLM types permitted by the engine math contract. Shared scene/command schemas use engine-owned types. M01 implements EngineTools -> EngineCore, Editor -> EngineTools/EngineClient, Runtime -> Engine -> EngineClient -> EngineCore and Server -> EngineCore. Client previews in Tools remain future optional integrations; all subsystem rows beyond the bootstrap are planned. Test-only and build-only libraries must not enter packaged runtime dependency closures. Assignment 01 establishes boundary checks, and 14/31 inspect exported packages and licenses.
+Third-party types stay inside the owning implementation except centrally configured GLM types permitted by the engine math contract. Shared scene/command schemas use engine-owned types. M01 implements EngineTools -> EngineCore, Editor -> EngineTools/EngineClient, Runtime -> Engine -> EngineClient -> EngineCore and Server -> EngineCore. Client previews in Tools remain future optional integrations; subsystem integration status is recorded by each owning handoff. Test-only and build-only libraries must not enter packaged runtime dependency closures. Assignment 01 establishes boundary checks, and 14/31 inspect exported packages and licenses.
 
 All upstream sources above were reviewed on 2026-10-17. This record makes architecture selections, not claims of tested combinations, performance, audio playback or platform support. No dependencies were installed and no builds or hardware checks ran in assignment 00. Unknown compatibility has explicit owning assignments; a failing gate requires evidence and a concrete decision, never a silent stack replacement.

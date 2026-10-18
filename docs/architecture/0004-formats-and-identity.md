@@ -67,6 +67,10 @@ instance generation; slot reuse increments generation. Retire a slot or scene
 token rather than wrapping a generation into a valid old handle. Authored scene
 IDs resolve to handles only within their active scene instance. Lua, physics user
 data and GPU selection records use checked IDs/handles, never borrowed component pointers.
+07a implements these process-local lifetime checks and distinct authored/world
+identity domains in the [scene contract](../scene-contracts.md). Region and replica
+scope carry immutable authority/session metadata; actual network authentication,
+replica mapping, distributed fencing and durable storage remain M02/M03/M05.
 Prefab instances remap every local entity ID and internal reference atomically;
 references outside the prefab remain asset or explicitly scoped scene references.
 

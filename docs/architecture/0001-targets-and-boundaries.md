@@ -87,6 +87,9 @@ user controls staging and committing those files.
 ## Shared behavior
 
 EngineCore will own component validation and the safe scene mutation boundary.
+07a implements the [scene ownership boundary](../scene-contracts.md) in Core:
+private EnTT, checked scope/identity/lifetime, owner-thread access and deferred
+create/destroy. Name/Transform and schema validation follow in 07b/07c.
 EngineTools wraps that behavior in revision-checked authoring transactions,
 history and project services. UI, CLI, protocol handlers and integration tests
 call those same services; widgets never edit authoritative components directly.

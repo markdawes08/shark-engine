@@ -76,6 +76,17 @@ cube-package qualification remain separate native checks; the completed
 [06c handoff](handoffs/06c-window-distribution.md) records their results. The [resource contract](gpu-resources.md#window-cube-and-capture)
 describes immutable draw ownership and actual presentation-attachment capture.
 
+07a adds the device-free [scene ownership and identity contract](scene-contracts.md)
+in EngineCore. `shark.core.scene` and `shark.core.world-position` use seed 1337
+and 20-second timeouts to exercise checked handles, scene/authority scope, bounded
+deferred mutation and canonical global-cell/local-coordinate values. They run
+in client-enabled and headless test builds. The private EnTT dependency does not
+provide authoring commands, networking or a running world simulation; Name,
+Transform and hierarchy follow in 07b under the [07 plan](roadmap/scene-plan.md).
+`shark.tooling.scene-dependencies` checks exact archive selection, offline
+population and the Core boundary without a C compiler or display (90-second
+timeout). The [07a handoff](handoffs/07a-entity-ownership.md) records qualification.
+
 06a adds the CPU-only [offline shader builder](shader-pipeline.md).
 `shark.tooling.shader-pipeline` tests recipes, dependency tracking, artifact
 integrity and failed-build publication with controlled compiler fixtures. The
@@ -258,6 +269,7 @@ scene-runner/export commands will be added with their owning increments.
 | `shark.unit`, `shark.failure-sentinel` | `cpu`, `unit` |
 | `shark.core.contracts` | `cpu`, `unit` |
 | `shark.core.lifecycle`, `shark.core.timing`, `shark.core.work` | `cpu`, `unit`, `server` |
+| `shark.core.scene`, `shark.core.world-position` | `cpu`, `unit`, `server` |
 | `shark.client.input` (client-enabled builds only) | `cpu`, `unit`, `client` |
 | `shark.client.window` (client-enabled builds only) | `cpu`, `unit`, `client` |
 | `shark.client.shader-bundle` (client-enabled builds only) | `cpu`, `unit`, `client` |
@@ -267,7 +279,7 @@ scene-runner/export commands will be added with their owning increments.
 | `shark.boundary`, `shark.boundary.fixture` | `cpu`, `boundary` |
 | `shark.contract`, `shark.repository` | `cpu`, `contract` |
 | `shark.tooling.processes`, `shark.tooling.sources` | `cpu`, `tooling` |
-| `shark.tooling.server-closure` | `cpu`, `tooling`, `boundary`, `server` |
+| `shark.tooling.server-closure`, `shark.tooling.scene-dependencies` | `cpu`, `tooling`, `boundary`, `server` |
 | `shark.boundary.headers` | `cpu`, `tooling`, `boundary`, `server` |
 | `shark.tooling.headless-environment` | `cpu`, `tooling`, `server` |
 | `shark.tooling.graphics-package`, `shark.tooling.graphics-package-linux` | `cpu`, `tooling`, `boundary` |
@@ -276,6 +288,16 @@ For a focused boundary check, use `ctest --preset windows-debug -L boundary`.
 Dependency source inputs live in [dependencies.lock.json](../dependencies.lock.json).
 Add immutable pins there before introducing new dependencies; source downloads
 must match declared hashes and must not bring in test/editor code at runtime.
+
+07a pins EnTT 4.0.0 at commit `85c6bba014049b5de8fad49d25424df2f1f6a8c1`.
+`SceneDependencies.cmake` uses FetchContent to obtain that exact archive and
+creates the C++20 `EnTT::EnTT` interface locally. Its SYSTEM headers are a private
+EngineCore usage requirement, never a public API or an include requirement of
+Runtime, Server or tests. The upstream CMake project is not configured: no C
+compiler, testbed, GUI, upstream tests, documentation or transitive downloads are
+introduced. [ADR 0002](architecture/0002-dependencies.md) records the pin and
+MIT license review. Ordinary builds can fetch a missing archive; the disconnected
+Server workflow below requires a verified archive prepared beforehand.
 
 ## Opt-in graphics package builds
 
@@ -349,22 +371,48 @@ These presets never create EngineClient, Engine, Runtime, EngineTools or Editor:
 
 | Preset | Configuration | Tests / compiler |
 | --- | --- | --- |
-| `server-only` | Release | No tests, FetchContent fully disconnected, host compiler |
+| `server-only` | Release | No tests, no network population; verified local EnTT archive, host compiler |
 | `server-debug` | Debug | Catch2/CTest enabled, host compiler |
 | `server-asan-ubsan` | Debug, ASan + UBSan | Catch2/CTest enabled, Linux Clang |
 
-```text
-cmake --preset server-only
+Prepare the exact EnTT archive before the first disconnected configure. This
+explicit command downloads only the locked bytes, or verifies an existing cache;
+configure itself makes no network request. On Windows from ordinary PowerShell:
+
+```powershell
+& ./tools/windows_dev.ps1 -CommandArguments @('python','tools/entt_dependency.py','--output','out/dependency-cache')
+$taskEnTT = (Resolve-Path 'out/dependency-cache/85c6bba014049b5de8fad49d25424df2f1f6a8c1.tar.gz').Path
+& ./tools/windows_dev.ps1 -CommandArguments @('cmake','--preset','server-only',"-DSHARK_ENTT_ARCHIVE=$taskEnTT")
+& ./tools/windows_dev.ps1 -CommandArguments @('cmake','--build','--preset','server-only')
+./build/server-only/bin/Server.exe --version
+./build/server-only/bin/Server.exe --run-for-ms 1000
+& ./tools/windows_dev.ps1 -CommandArguments @('cmake','--install','build/server-only','--prefix','out/server-package','--component','Server')
+```
+
+In the existing WSL/Linux compiler environment:
+
+```sh
+python tools/entt_dependency.py --output out/dependency-cache
+cmake --preset server-only -DSHARK_ENTT_ARCHIVE="$PWD/out/dependency-cache/85c6bba014049b5de8fad49d25424df2f1f6a8c1.tar.gz"
 cmake --build --preset server-only
 build/server-only/bin/Server --version
 build/server-only/bin/Server --run-for-ms 1000
 cmake --install build/server-only --prefix out/server-package --component Server
 ```
 
-On Windows use the developer environment and `Server.exe`. The install component
-contains only `bin/Server` (or `bin/Server.exe`), and is a dependency-closure probe,
-not a shipping distribution. Release licensing and deployment packaging remain
-future work. A clean package directory is required for closure verification.
+For a read-only source mount, prepare the archive under a writable work directory
+and pass that absolute path instead. `SHARK_ENTT_ARCHIVE` must match the lock's
+SHA-256; arbitrary extracted source overrides are rejected. A previously populated
+standard FetchContent archive cache can also satisfy disconnected reconfiguration.
+`FETCHCONTENT_FULLY_DISCONNECTED` stays enabled in the preset; the EnTT helper
+permits only local verified archive extraction on that path. It does not enable
+remote fetching or acquire client dependencies.
+
+The install component contains `bin/Server` (or `bin/Server.exe`) and
+`licenses/EnTT/LICENSE`. It is a dependency-closure probe, not a shipping
+distribution; full deployment packaging remains future work. A clean package
+directory is required for closure verification. Runtime packages also retain the
+EnTT notice alongside their existing graphics/CRT notices.
 
 Server accepts no arguments for an idle lifetime, `--help`, `--version`, or
 `--run-for-ms N`. N is 1-6 ASCII decimal digits with a value of 1..600000;
@@ -393,15 +441,19 @@ checks all available Core/Server/client roots, including in the ordinary build.
 Negative boundary fixtures exercise direct, transitive and generator-expression
 links/options, generated source/includes and manually added build dependencies.
 Compiler dependency records also reject hidden relative and generated-header
-inclusions, exercised by actual fixture compilations. CMake
+inclusions, exercised by actual fixture compilations. The server-only source
+closure permits exactly the EnTT population and verifies every extracted source
+file against its SHA-256-verified archive, plus the installed MIT notice. Extra
+dependencies, changed headers and missing source/license files fail this gate. CMake
 cannot infer arbitrary behavior hidden in shell recipes; the minimal Ubuntu
 job additionally audits configured targets, compiled source, downloaded inputs,
 installed packages and the packaged ELF's resolved libraries. See [CI](ci.md)
 for the reproducible minimal-environment command and its independent closure check.
 
-The provisional world target remains **20 Hz and 256 active players** from
-ADR 0007. The idle loop's polling interval is not a simulation tick, and these
-tests establish neither tick performance nor player capacity.
+The current workload is ADR 0007's **LOCAL-MMO-1: 16 active synthetic players
+across two regions**, with a provisional 20 Hz authoritative tick. The idle loop's
+polling interval is not a simulation tick, and these tests establish neither tick
+performance nor player capacity.
 
 ## Warnings, formatting and sanitizer policy
 

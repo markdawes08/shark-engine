@@ -4,11 +4,13 @@ add_library(EngineCore STATIC
     src/error.cpp
     src/log.cpp
     src/project_path.cpp
+    src/scene.cpp
     src/server_application.cpp
     src/server_config.cpp
     src/shutdown_signals.cpp
     src/stable_id.cpp
-    src/time.cpp)
+    src/time.cpp
+    src/world_position.cpp)
 target_include_directories(EngineCore PUBLIC ../include include PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
 # Standard-library sleeping and ordinary worker synchronization use the OS thread
 # runtime. No fetched dependency, worker pool or presentation service is introduced.
@@ -16,6 +18,7 @@ find_package(Threads REQUIRED)
 set_property(TARGET Threads::Threads PROPERTY IMPORTED_GLOBAL TRUE)
 shark_classify_target(Threads::Threads core)
 target_link_libraries(EngineCore PUBLIC Threads::Threads)
+target_link_libraries(EngineCore PRIVATE EnTT::EnTT)
 if(WIN32)
     # Windows OS entropy for persistent UUIDs; no third-party or presentation dependency.
     find_library(SHARK_WINDOWS_BCRYPT_LIBRARY NAMES bcrypt REQUIRED)

@@ -55,8 +55,9 @@ timeout --kill-after=5 1800 chroot "$task_build" /usr/bin/env -i \
     HOME=/root PYTHONDONTWRITEBYTECODE=1 PYTHONUNBUFFERED=1 \
     python /source/tools/headless_ci.py --build-root /work/build --output /evidence \
     2>&1 | tee "$task_output/headless.log"
-mkdir -p "$task_runtime/package/bin"
+mkdir -p "$task_runtime/package/bin" "$task_runtime/package/licenses/EnTT"
 cp "$task_output/server-only/package/bin/Server" "$task_runtime/package/bin/Server"
+cp "$task_output/server-only/package/licenses/EnTT/LICENSE" "$task_runtime/package/licenses/EnTT/LICENSE"
 chmod 755 "$task_runtime/package/bin/Server"
 chroot "$task_runtime" dpkg-query -W -f='${binary:Package}\t${Version}\t${Architecture}\n' > "$task_output/clean-runtime-packages.tsv"
 find "$task_runtime/package" -type f -printf '%P\n' > "$task_output/clean-runtime-files.txt"

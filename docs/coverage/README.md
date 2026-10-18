@@ -64,7 +64,11 @@ as additive schema-3 fields. REQ-02 is PASS for the amended local gate, with
 explicit scope and SHA-256-pinned references to the unchanged 02d receipts.
 The validator verifies those references and retained bytes; it does not rerun
 graphics or interpret an old aggregate NOT_RUN as a universal PASS.
-`current_assignment: 06` follows the [06 checkpoint plan](../roadmap/shader-resource-plan.md).
+`current_assignment: 07` follows the [07 checkpoint plan](../roadmap/scene-plan.md).
+`core.scene-ownership` maps checked scene/entity lifetime, deferred mutation,
+world coordinates and the private EnTT boundary to executable CPU fixtures.
+The [07a handoff](../handoffs/07a-entity-ownership.md) records checkpoint results.
+Name/Transform and schemas remain for 07b/07c; full REQ-07 remains NOT_RUN.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
 NOT_RUN. Existing presentation/device fixtures and their earlier handoffs retain
@@ -77,8 +81,8 @@ CPU ownership tests, native fault children and independent color/depth readbacks
 The [06b handoff](../handoffs/06b-gpu-resources.md) records scoped results on the
 current Windows GPUs and device-free Windows/WSL regression. These fixtures
 exercise the production device without exposing native handles or invoking a
-runtime compiler. Full `REQ-06` remains NOT_RUN until 06c completes window
-integration and distribution qualification. FeatureWorld connects these isolated
+runtime compiler. Full `REQ-06` is PASS after 06c window integration and distribution qualification;
+see the [06c handoff](../handoffs/06c-window-distribution.md). FeatureWorld connects these isolated
 fixtures in assignment 10.
 
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`
@@ -178,4 +182,5 @@ Full `REQ-06` is PASS under the current-machine scope. The
 window/offscreen references, lifetime failures, shader rebuilds and relocated
 Runtime shader closure. `client.window-cube-distribution` maps the implemented
 surface to device-free tests and explicit hardware fixtures. Scene-authoring
-component/command/Lua arrays remain empty; assignment 07 is next.
+component/command/Lua arrays remain empty. 07a introduces the CPU scene foundation;
+07b/07c add Name/Transform, hierarchy and schema inspection.

@@ -41,7 +41,10 @@ records 240 passing CPU CTests and native readback/failure/lifecycle evidence.
 **06c and full assignment 06 are complete** under the current-machine scope,
 including window cube integration and precompiled Runtime distribution. The
 [06c handoff](docs/handoffs/06c-window-distribution.md) records 261 CPU tests, both-GPU
-validation and isolated package execution. Assignment 07 is next. See the
+validation and isolated package execution. Assignment 07 now follows [three checkpoints](docs/roadmap/scene-plan.md).
+**07a is complete**: CPU scene ownership, checked identities, deferred mutation and global-cell
+coordinates. [Scene contracts](docs/scene-contracts.md) describe this foundation;
+Name/Transform hierarchy and schemas remain for 07b/07c. See the
 [cube launch workflow](docs/building.md#cube-sample-and-runtime-package).
 The [05a handoff](docs/handoffs/05a-graphics-device.md) records 211 passing CTests
 and 112 validated device lifetimes across the two local GPUs.

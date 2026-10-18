@@ -18,6 +18,7 @@ import shlex
 import shutil
 import sys
 
+from entt_dependency import verify_build as verify_entt_build
 from process_runner import run_process
 
 
@@ -77,7 +78,9 @@ def source_path(path: Path, source: Path, build: Path, *, generated=False) -> Pa
     allowed = ("engine/core/", "server/")
     if not generated:
         allowed += ("engine/include/",)
-    require(relative.startswith(allowed), f"Non-Core source/include path: {path}")
+    entt_header = (generated and relative.startswith("_deps/entt-src/src/entt/")
+                   and path.suffix in (".h", ".hpp"))
+    require(relative.startswith(allowed) or entt_header, f"Non-Core source/include path: {path}")
     require(not FORBIDDEN.search(relative), f"Forbidden source/include path: {path}")
     return path
 
@@ -85,8 +88,8 @@ def source_path(path: Path, source: Path, build: Path, *, generated=False) -> Pa
 def include_path(path: Path, source: Path, build: Path) -> Path:
     path = Path(os.path.abspath(path))
     # Directory roots themselves are valid include paths.
-    for base, allowed in ((source, ("engine/include", "engine/core/include", "server")),
-                          (build, ("engine/core", "server"))):
+    for base, allowed in ((build, ("engine/core", "server", "_deps/entt-src/src")),
+                          (source, ("engine/include", "engine/core/include", "server"))):
         if path.is_relative_to(base):
             path = plain_path(path, base)
             relative = path.relative_to(base).as_posix()
@@ -170,7 +173,12 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
         require(not FORBIDDEN.search(name), f"Forbidden discovered dependency cache key: {name}")
         if name.endswith(("_SOURCE_DIR", "_BINARY_DIR", "_DIR", "_LIBRARY", "_INCLUDE_DIR")):
             require(not FORBIDDEN.search(value), f"Forbidden discovered dependency cache input: {name}={value}")
-    require(not (build / "_deps").exists(), "Server-only build contains a dependency download tree")
+    archive = cache.get("SHARK_EnTT_ARCHIVE")
+    require(bool(archive), "Missing locked EnTT archive evidence")
+    try:
+        verify_entt_build(source, build, Path(archive))
+    except ValueError as error:
+        raise ClosureError(str(error)) from error
     for relative in ("engine/client", "engine_tools", "editor", "runtime", "tests", "probes"):
         require(not (build / relative).exists(), f"Server-only build contains forbidden build subtree: {relative}")
     return source, configuration, targets, cache
@@ -312,11 +320,12 @@ def package_inventory(package: Path) -> Path:
     for item in package.rglob("*"):
         plain_path(item, package)
         relative = item.relative_to(package).as_posix()
-        require((item.is_dir() and relative == "bin") or (item.is_file() and relative == "bin/Server"),
+        require((item.is_dir() and relative in {"bin", "licenses", "licenses/EnTT"})
+                or (item.is_file() and relative in {"bin/Server", "licenses/EnTT/LICENSE"}),
                 f"Unexpected package entry: {relative}")
         if item.is_file():
             inventory.append(relative)
-    require(inventory == ["bin/Server"], f"Incomplete Server package: {inventory}")
+    require(set(inventory) == {"bin/Server", "licenses/EnTT/LICENSE"}, f"Incomplete Server package: {inventory}")
     binary = package / "bin/Server"
     header = binary.read_bytes()[:20]
     require(len(header) == 20 and header[:6] == b"\x7fELF\x02\x01" and header[18:20] == b"\x3e\x00",
@@ -390,7 +399,10 @@ def inspect(build: Path, package: Path) -> dict:
     headers, system = compiler_headers(dependencies["stdout"], compiled, source, build, linker_outputs=linker_outputs)
     owners = probe([dpkg, "-S", *system]) if system else None
     packages = system_header_owners(owners["stdout"], system) if owners else {}
+    entt = verify_entt_build(source, build, Path(cache["SHARK_EnTT_ARCHIVE"]))
     binary = package_inventory(package)
+    require(digest(package / "licenses/EnTT/LICENSE") == entt["license_sha256"],
+            "Packaged EnTT license differs from the locked archive")
     require(digest(binary) == digest(built_binary), "Installed Server differs from the inspected build artifact")
     readelf, ldd = shutil.which("readelf"), shutil.which("ldd")
     require(bool(readelf) and bool(ldd), "readelf and ldd are mandatory for the Linux closure gate")
@@ -404,9 +416,10 @@ def inspect(build: Path, package: Path) -> dict:
             "cache": {name: cache[name] for name in ("SHARK_BUILD_CLIENT", "SHARK_BUILD_SERVER", "SHARK_BUILD_EDITOR",
                        "SHARK_BUILD_TESTS", "SHARK_BUILD_GRAPHICS_PROBE", "SHARK_SANITIZER", "CMAKE_GENERATOR")},
             "compiled_sources": compiled, "compiler_discovered_inputs": headers, "system_header_packages": packages,
-            "link_fragments": links,
+            "link_fragments": links, "dependencies": {"EnTT": entt},
             "linker_dependency_records": {name: paths for name, paths in ninja_dependencies(dependencies["stdout"]).items() if name in linker_outputs},
-            "package": [{"path": "bin/Server", "sha256": digest(binary), "size_bytes": binary.stat().st_size}],
+            "package": [{"path": name, "sha256": digest(package / name), "size_bytes": (package / name).stat().st_size}
+                        for name in ("bin/Server", "licenses/EnTT/LICENSE")],
             "elf_needed": needed, "resolved_libraries": libraries, "probes": [dependencies, *([owners] if owners else []), dynamic, loader]}
 
 

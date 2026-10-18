@@ -2,6 +2,9 @@
 
 from pathlib import Path
 import json
+import hashlib
+import io
+import tarfile
 import os
 import sys
 import tempfile
@@ -53,11 +56,33 @@ class ServerClosureTests(unittest.TestCase):
             path = self.build / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(b"built fixture")
+        self.add_entt_fixture()
         self.write_evidence()
+        (self.package / "licenses/EnTT").mkdir(parents=True)
+        (self.package / "licenses/EnTT/LICENSE").write_bytes(b"fixture license")
         (self.package / "bin").mkdir(parents=True)
         binary = self.package / "bin/Server"
         binary.write_bytes(b"\x7fELF\x02\x01" + bytes(12) + b"\x3e\x00" + bytes(64))
         binary.chmod(0o755)
+
+    def add_entt_fixture(self):
+        contents = {"LICENSE": b"fixture license", "src/entt/entity/registry.hpp": b"// fixture registry"}
+        archive = self.root / "entt.tar.gz"
+        with tarfile.open(archive, "w:gz") as stream:
+            for name, data in contents.items():
+                item = tarfile.TarInfo("entt-" + "a" * 40 + "/" + name)
+                item.size = len(data)
+                stream.addfile(item, io.BytesIO(data))
+        locked = {"version": "fixture", "commit": "a" * 40, "license": "MIT", "license_files": ["LICENSE"],
+                  "patches": [], "transitive_dependencies": [], "sha256": hashlib.sha256(archive.read_bytes()).hexdigest()}
+        (self.source / "dependencies.lock.json").write_text(json.dumps({"dependencies": {"EnTT": locked}}))
+        for name in ("entt-src", "entt-build", "entt-subbuild"):
+            (self.build / "_deps" / name).mkdir(parents=True)
+        for name, data in contents.items():
+            path = self.build / "_deps/entt-src" / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+        self.cache["entries"].append({"name": "SHARK_EnTT_ARCHIVE", "value": str(archive)})
 
     def write_evidence(self):
         data = {"index-1.json": {"objects": [
@@ -171,9 +196,31 @@ class ServerClosureTests(unittest.TestCase):
         with self.assertRaisesRegex(ClosureError, "SHARK_BUILD_TESTS=OFF"):
             file_api(self.build)
 
-    def test_rejects_dependency_download_tree(self):
-        (self.build / "_deps").mkdir()
-        with self.assertRaisesRegex(ClosureError, "download tree"):
+    def test_rejects_additional_dependency_download_tree(self):
+        (self.build / "_deps/glfw-src").mkdir()
+        with self.assertRaisesRegex(ClosureError, "exactly the locked EnTT"):
+            file_api(self.build)
+
+    def test_accepts_only_verified_entt_header_inputs(self):
+        header = self.build / "_deps/entt-src/src/entt/entity/registry.hpp"
+        self.targets[0]["compileGroups"][0]["includes"].append({"path": str(header.parents[2]), "isSystem": True})
+        self.write_evidence()
+        file_api(self.build)
+        evidence = f"core.o: #deps 1, deps mtime 1 (VALID)\n    {header}\n"
+        headers, system = compiler_headers(evidence, [{"object": "core.o"}], self.source, self.build)
+        self.assertEqual([item["path"] for item in headers], [str(header)])
+        self.assertEqual(system, [])
+        header.write_bytes(b"tampered cache header")
+        with self.assertRaisesRegex(ClosureError, "differs from the locked archive"):
+            file_api(self.build)
+
+    def test_rejects_missing_entt_source_or_archive_evidence(self):
+        (self.build / "_deps/entt-src/LICENSE").unlink()
+        with self.assertRaisesRegex(ClosureError, "inventory differs"):
+            file_api(self.build)
+        self.cache["entries"] = [item for item in self.cache["entries"] if item["name"] != "SHARK_EnTT_ARCHIVE"]
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "Missing locked EnTT"):
             file_api(self.build)
 
     def test_rejects_authoring_include(self):
