@@ -43,6 +43,7 @@ class ServerClosureTests(unittest.TestCase):
         self.model = {"paths": {"source": str(self.source), "build": str(self.build)}, "configurations": [self.configuration]}
         self.cache = {"entries": [{"name": name, "value": value} for name, value in {
             "SHARK_BUILD_CLIENT": "OFF", "SHARK_BUILD_EDITOR": "OFF", "SHARK_BUILD_TESTS": "OFF",
+            "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
             "SHARK_BUILD_SERVER": "ON", "SHARK_SANITIZER": "none", "CMAKE_GENERATOR": "Ninja",
             "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"}.items()]}
         self.commands = [{"directory": str(self.build), "file": str(self.source / relative),
@@ -76,6 +77,19 @@ class ServerClosureTests(unittest.TestCase):
         self.configuration["targets"].append({"name": "EngineClient", "id": "client", "jsonFile": "client.json"})
         self.write_evidence()
         with self.assertRaisesRegex(ClosureError, "target closure"):
+            file_api(self.build)
+
+    def test_rejects_enabled_graphics_probe_even_without_link(self):
+        for item in self.cache["entries"]:
+            if item["name"] == "SHARK_BUILD_GRAPHICS_PROBE":
+                item["value"] = "ON"
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "SHARK_BUILD_GRAPHICS_PROBE=OFF"):
+            file_api(self.build)
+
+    def test_rejects_unlinked_probe_build_subtree(self):
+        (self.build / "probes/graphics").mkdir(parents=True)
+        with self.assertRaisesRegex(ClosureError, "forbidden build subtree: probes"):
             file_api(self.build)
 
     def test_rejects_hidden_generated_build_dependency(self):

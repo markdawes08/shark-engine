@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "M01",
+  "current_assignment": "02",
   "product_profile": "seamless-open-world-mmorpg",
   "planning_document": "docs/roadmap/mmorpg-plan.md",
   "assignment_order": [
@@ -54,7 +54,7 @@
         "After M01, keep the graphics probe and all later presentation dependencies outside EngineCore/Server; a headless pass cannot replace the retained client GPU matrix."
       ],
       "planned_fixture": "GraphicsFeasibilityProbe hardware matrix, including separate MacAppleSiliconProbe and MacIntelProbe; external fixtures are required because a CPU scene cannot validate platform GPU compatibility.",
-      "verification": {"status": "NOT_RUN", "reason": "The graphics probe and real target-hardware qualification are not implemented or run; owner assignment 02."}
+      "verification": {"status": "NOT_RUN", "reason": "02a adds locked GLFW/NVRHI/Vulkan inputs, opt-in probe builds, JSON device inventory/startup diagnostics, initial offline DXC preparation and CPU evidence/dependency rejection fixtures. These are setup capabilities, not the complete P02 graphics/compute/readback/validation/lifecycle/packaging cases. All nine real target-hardware rows remain unqualified; native Mac ICD and shader-tool graphs remain open. See docs/roadmap/graphics-plan.md and docs/graphics-probe.md. Assignment 02 remains current; dependent renderer work has not begun."}
     },
     {
       "id": "REQ-03",
@@ -798,6 +798,15 @@
           "tests/boundary_fixture/header_leak/CMakeLists.txt"
         ],
         "fixture_reason": "Generated CMake graphs, isolated rejection fixtures and independently inspected Linux package/ELF are external build fixtures; minimal Ubuntu24 CI executes the real package checker."
+      },
+      {
+        "id": "graphics.probe-setup",
+        "name": "Opt-in graphics dependency, terminal diagnostic and offline shader setup fixtures",
+        "requirement_ids": ["REQ-02"],
+        "test_ids": ["shark.graphics-probe.cli", "shark.graphics-probe.report", "shark.tooling.graphics-evidence", "shark.tooling.graphics-dependencies", "shark.tooling.graphics-tools"],
+        "test_sources": ["probes/graphics/check_cli.py", "probes/graphics/report_tests.cpp", "tools/tests/test_graphics_probe.py", "tools/tests/test_graphics_dependencies.py", "tools/tests/test_graphics_tools.py"],
+        "fixtures": ["probes/graphics/main.cpp", "probes/graphics/shaders/setup.hlsl", "tools/graphics_probe.py", "tools/prepare_graphics_tools.py", "cmake/GraphicsDependencies.cmake"],
+        "fixture_reason": "Developer setup is tested outside scenes: CPU-safe CLI/error output, immutable-input rejection, shader-tool archive checks and bounded evidence handling. Actual device/setup and shader compilation use explicit external commands. No rendering/readback or hardware qualification is implied; FeatureWorld starts in assignment 10."
       }
     ],
     "components": [],

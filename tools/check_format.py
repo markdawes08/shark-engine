@@ -9,7 +9,7 @@ import sys
 
 from toolchain_report import ROOT, executable_details
 
-SOURCE_DIRECTORIES = ("engine", "engine_tools", "editor", "runtime", "server", "cli", "tests")
+SOURCE_DIRECTORIES = ("engine", "engine_tools", "editor", "runtime", "server", "cli", "tests", "probes")
 SUFFIXES = {".c", ".cc", ".cpp", ".cxx", ".h", ".hh", ".hpp", ".hxx", ".inl"}
 
 

@@ -17,7 +17,9 @@ M01's separate foundation gate is **PASS**. Local results are recorded below and
 in its [handoff](../handoffs/M01-headless-server.md); the
 [hosted follow-up](../handoffs/M01-ci-verification.md) records the native CPU
 matrix, minimal Docker Server gate and deliberate-failure/restored-success proof.
-Graphics and multiplayer qualification remain **NOT RUN**. The
+Full graphics and multiplayer qualification remain **NOT RUN**. Checkpoint 02a's
+[setup probe](../graphics-probe.md) supplies device/startup diagnostics separately;
+none of the mandatory hardware rows or P02 cases is closed by setup alone. The
 [MMORPG plan](../roadmap/mmorpg-plan.md) adds future server milestones without
 removing the native client commitments.
 

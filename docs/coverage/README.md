@@ -26,7 +26,7 @@ records; documentation checks do not qualify the new authoring gates.
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`
 means precisely that; documentation validation cannot pass a future engine gate.
 The `implemented_surface.features` entries map the bootstrap behavior and runtime
-build boundary, server lifecycle and Server/Core closure to their actual tests
+build boundary, server lifecycle, Server/Core closure and graphics probe setup to their actual tests
 and external fixtures. Component, authoring
 command and Lua arrays remain empty because those APIs do not exist yet.
 Assignment 10 connects supported scene surfaces to executable FeatureWorld
@@ -62,7 +62,7 @@ The ignored local roadmap is amended for consistency but remains optional contex
 not a CI input. REQ-00's PASS records its historical planning evidence, not MMO
 implementation. REQ-01 is PASS: the repaired hosted CPU matrix and required
 deliberate-failure/red-to-green proof are verified at the recorded historical
-revision. The current assignment remains M01 and REQ-M01 is PASS. Its
+revision. REQ-M01 is PASS. Its
 implementation and local qualification are recorded in the
 [M01 handoff](../handoffs/M01-headless-server.md). The
 [local receipt](evidence/M01-local.json) records Windows 45/45 CTests,
@@ -70,8 +70,10 @@ Ubuntu 26/26 restored CTests, the expected injected sentinel failure and package
 closure/lifecycle evidence. The [hosted follow-up](../handoffs/M01-ci-verification.md)
 and [gate receipt](evidence/M01-ci-gate.json) record all fifteen jobs passing,
 206/206 restored CTests, the expected thirteen injected sentinel failures,
-Docker/package closure and fifteen required checks. Assignment 02 is next,
-starting with 02a dependency/probe setup; it has not started.
+Docker/package closure and fifteen required checks. Current assignment is 02,
+with 02a dependency/probe setup complete and 02b next. The [graphics checkpoint plan](../roadmap/graphics-plan.md)
+and [probe guide](../graphics-probe.md) distinguish setup diagnostics from the
+remaining full hardware gate.
 Graphics and multiplayer requirements remain NOT_RUN. See the
 [CI verification handoff](../handoffs/01-ci-verification.md) for 01's tested
 revision, run URLs and qualification limits.

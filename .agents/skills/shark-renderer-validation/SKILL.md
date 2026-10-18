@@ -10,12 +10,16 @@ Read [AGENTS.md](../../../AGENTS.md), the assigned increment and
 [space/color conventions](../../../docs/architecture/0005-simulation-and-rendering.md)
 and [v1 lighting profile](../../../docs/architecture/0006-v1-profile.md).
 
-At assignment 01 there is no renderer, graphics probe or GPU test command.
-`python tools/validate_contract.py` checks contracts only. Run the native CPU
-build/CTest commands in [building](../../../docs/building.md) for relevant shared
-code, but record graphics validation as NOT RUN until its owner implements it.
-Add actual runnable graphics commands and fixture IDs when those layers land;
-do not invent test labels or treat an empty selection as coverage.
+Checkpoint 02a has an opt-in setup probe; see the exact native presets and bounded
+JSON commands in the [probe guide](../../../docs/graphics-probe.md). CPU-safe
+`shark.graphics-probe.cli` checks are registered only in graphics configurations.
+Device inventory and NVRHI/swapchain startup diagnostics do not execute the full
+P02 cases; rendering/readback, Vulkan validation and all hardware rows remain open.
+Use the runner with a fresh output directory and explicit device UUID for smoke.
+Its default requires Vulkan validation; `--validation off` is only diagnostic.
+Run the native CPU build/CTest commands in [building](../../../docs/building.md)
+for relevant shared code. Contract validation checks documentation only.
+Never treat an empty selection or unavailable prerequisite as passing coverage.
 
 Assignment 02 must qualify pinned GLFW/NVRHI/Vulkan on the exact real-hardware
 matrix, treating Apple Silicon and both Intel-Mac GPU rows independently. Capture
@@ -37,7 +41,8 @@ winding conventions and measure cost on named hardware. Update coverage and the
 handoff with PASS/FAIL/NOT RUN; absent hardware remains an open gate.
 
 For the [seamless MMORPG profile](../../../docs/architecture/0007-mmorpg-architecture.md),
-keep presentation in EngineClient once M01 introduces the split. Add origin-shift,
+keep production presentation in EngineClient; M01's split already exists. The
+02 probe has its own private presentation dependencies. Add origin-shift,
 streaming, animated-crowd and LOD-cost fixtures in their owners; a static reference
 sphere cannot qualify a populated world. Rendering/minimize must not advance or
 pause server time. Existing depth/lighting choices require measured amendments if

@@ -1,0 +1,89 @@
+"""Exercise only CPU-safe probe commands, including clean structured failures."""
+
+from __future__ import annotations
+
+import argparse
+import hashlib
+import json
+import os
+from pathlib import Path
+import subprocess
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--executable", type=Path, required=True)
+    parser.add_argument("--lock", type=Path, required=True)
+    args = parser.parse_args()
+    digest = hashlib.sha256(args.lock.read_bytes()).hexdigest()
+    sources = ("probes/graphics/CMakeLists.txt", "probes/graphics/main.cpp", "probes/graphics/report.hpp")
+    material = "".join(
+        f"{source}\n{hashlib.sha256((args.lock.parent / source).read_bytes()).hexdigest()}\n"
+        for source in sources
+    )
+    source_digest = hashlib.sha256(material.encode("utf-8")).hexdigest()
+    env = dict(os.environ)
+    # Even on a graphics workstation these cases must not initialize a loader,
+    # display or ICD. The paths intentionally name nonexistent providers.
+    env.pop("DISPLAY", None)
+    env.pop("WAYLAND_DISPLAY", None)
+    env["VK_DRIVER_FILES"] = str(args.lock.parent / "does-not-exist-02a-icd.json")
+
+    def run(arguments: list[str], expected: int, machine: bool = True) -> dict | str:
+        result = subprocess.run(
+            [str(args.executable), *arguments],
+            capture_output=True,
+            text=True,
+            encoding="utf-8",
+            timeout=5,
+            check=False,
+            env=env,
+        )
+        assert result.returncode == expected, (arguments, result)
+        if not machine:
+            assert result.stdout.strip() and not result.stderr, result
+            return result.stdout
+        report = json.loads(result.stdout)
+        assert report["schema_version"] == 1, report
+        assert report["dependency_lock_sha256"] == digest, report
+        assert report["probe_source_sha256"] == source_digest, report
+        assert report["qualification"] == "NOT_RUN", report
+        assert len(report["cases"]) == 8, report
+        assert all(case["status"] == "NOT_RUN" for case in report["cases"]), report
+        if expected == 0:
+            assert not result.stderr and report["status"] == "PASS", result
+        else:
+            assert result.stderr and report["status"] == "FAIL", result
+            assert report["error"]["code"] == "arguments", report
+        return report
+
+    assert "GraphicsProbe" in run(["--help"], 0, False)
+    assert "GraphicsProbe" in run(["--version"], 0, False)
+    description = run(["--describe"], 0)
+    assert description["mode"] == "describe" and description["devices"] == [], description
+    assert description["stages"] == [], description
+    cases = [
+        [],
+        ["--smoke"],
+        ["--device", "0" * 32],
+        ["--inventory", "--device", "0" * 32],
+        ["--describe", "--smoke"],
+        ["--describe", "--describe"],
+        ["--smoke", "--device", "0" * 32, "--device", "1" * 32],
+        ["--smoke", "--device", "short"],
+        ["--smoke", "--device", "G" * 32],
+        ["--smoke", "--device", "0" * 32, "--validation", "maybe"],
+        ["--inventory", "--validation", "off"],
+        ["--smoke", "--device", "0" * 32, "--validation"],
+        ["--help", "--surprise"],
+    ]
+    for arguments in cases:
+        run(arguments, 2)
+    hostile = '--unknown="quote"\\slash\n\r\t\x01'
+    escaped = run([hostile], 2)
+    assert hostile in escaped["error"]["message"], escaped
+    print(f"PASS: {len(cases) + 4} CPU-only CLI/report cases; no GPU qualification")
+
+
+if __name__ == "__main__":
+    main()

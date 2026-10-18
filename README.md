@@ -3,7 +3,8 @@
 Shark is a C++20 game engine project targeting a **seamless open-world MMORPG**.
 The [MMORPG plan and existing-code assessment](docs/roadmap/mmorpg-plan.md) define
 the authoritative server, persistent world and staged client/server work.
-These are planned capabilities; the current implementation is a CPU bootstrap.
+These are planned capabilities; the current engine is a CPU bootstrap with a
+separate opt-in graphics setup probe.
 The versioned
 [requirements manifest](docs/coverage/requirements.json) preserves assignment
 scope and acceptance criteria for clean checkouts.
@@ -14,13 +15,17 @@ The [human/agent plan and foundation assessment](docs/roadmap/human-agent-plan.m
 define noninteractive tools, discoverable schemas and safe project handoff. Those
 game-authoring interfaces remain planned; terminal build/test tools work today.
 
-**Current assignment: M01, complete.** The headless server and Core/Client
+**Current assignment: 02; setup checkpoint 02a is complete.** The headless server and Core/Client
 separation have passed local and hosted qualification, including deliberate test
-failure and restored success. Assignment 02 is next, starting with 02a
-dependency/probe setup; graphics work has not started. Editor/Runtime provide
+failure and restored success. The [graphics probe](docs/graphics-probe.md) adds
+locked dependencies, device inventory and startup diagnostics; the
+[full graphics gate](docs/roadmap/graphics-plan.md) remains open. Editor/Runtime provide
 version and bootstrap help; Server adds validated startup, timed execution and
-shutdown. Graphics, scenes, gameplay and editor UI are future increments. CPU
+shutdown. Rendering, scenes, gameplay and editor UI are future increments. CPU
 build results do not establish graphics or release-platform support.
+
+The [02a handoff](docs/handoffs/02a-graphics-setup.md) records verified local setup
+and its limits. Next is 02b executable graphics cases and validation.
 
 - [Architecture decisions](docs/architecture/README.md): targets, dependencies,
   platform candidates, formats, simulation conventions and the MMORPG profile.

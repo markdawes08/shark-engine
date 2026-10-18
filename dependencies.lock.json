@@ -25,6 +25,169 @@
         "CATCH_DEVELOPMENT_BUILD": "OFF"
       },
       "verification": "Official archive downloaded and SHA-256 computed on 2026-10-17; release https://github.com/catchorg/Catch2/releases/tag/v3.16.1"
+    },
+    "GLFW": {
+      "version": "3.5.1",
+      "upstream": "https://github.com/glfw/glfw",
+      "commit": "d9d6f0f1f967807ffade6598ea9a631ebaf37a56",
+      "url": "https://github.com/glfw/glfw/archive/d9d6f0f1f967807ffade6598ea9a631ebaf37a56.tar.gz",
+      "sha256": "96722514789b1aa1ad9c4debd874450156ea457aea691e546ffaf5b53892d5a3",
+      "license": "Zlib",
+      "license_files": [
+        "LICENSE.md"
+      ],
+      "owner_target": "GraphicsProbe (02a); later EngineClient only",
+      "assignment": "02",
+      "patches": [],
+      "transitive_dependencies": [],
+      "options": {
+        "GLFW_LIBRARY_TYPE": "STATIC",
+        "GLFW_BUILD_EXAMPLES": "OFF",
+        "GLFW_BUILD_TESTS": "OFF",
+        "GLFW_BUILD_DOCS": "OFF",
+        "GLFW_INSTALL": "OFF",
+        "GLFW_BUILD_WAYLAND": "OFF"
+      },
+      "verification": "Official commit archive downloaded and SHA-256 computed on 2026-10-18; source/configuration reviewed. Build and GPU qualification are separately recorded in the 02a handoff.",
+      "platform_options": {
+        "Windows": {
+          "GLFW_BUILD_WIN32": "ON",
+          "GLFW_BUILD_X11": "OFF",
+          "GLFW_BUILD_COCOA": "OFF"
+        },
+        "Linux": {
+          "GLFW_BUILD_WIN32": "OFF",
+          "GLFW_BUILD_X11": "ON",
+          "GLFW_BUILD_COCOA": "OFF"
+        },
+        "Darwin": {
+          "GLFW_BUILD_WIN32": "OFF",
+          "GLFW_BUILD_X11": "OFF",
+          "GLFW_BUILD_COCOA": "ON"
+        }
+      },
+      "notes": "Uses OS window-system headers/libraries; Linux desktop profile is X11. Gamepad mapping update is a manual upstream target and is never part of the default build."
+    },
+    "VulkanHeaders": {
+      "version": "1.4.352",
+      "upstream": "https://github.com/KhronosGroup/Vulkan-Headers",
+      "commit": "015e25c3c91b70eb1a754d36fb14c4ba6ad9b0b9",
+      "url": "https://github.com/KhronosGroup/Vulkan-Headers/archive/015e25c3c91b70eb1a754d36fb14c4ba6ad9b0b9.tar.gz",
+      "sha256": "666700236101d288dea8bb080c6f8039467cb1d29ea1e1aae6f93a819f4f9029",
+      "license": "Apache-2.0 AND MIT",
+      "license_files": [
+        "LICENSE.md",
+        "LICENSES/Apache-2.0.txt",
+        "LICENSES/MIT.txt"
+      ],
+      "owner_target": "GraphicsProbe (02a); later EngineClient only",
+      "assignment": "02",
+      "patches": [],
+      "transitive_dependencies": [],
+      "options": {
+        "VULKAN_HEADERS_ENABLE_TESTS": "OFF",
+        "VULKAN_HEADERS_ENABLE_INSTALL": "OFF",
+        "VULKAN_HEADERS_ENABLE_MODULE": "OFF"
+      },
+      "verification": "Official commit archive downloaded and SHA-256 computed on 2026-10-18; source/configuration reviewed. Build and GPU qualification are separately recorded in the 02a handoff."
+    },
+    "VulkanLoader": {
+      "version": "1.4.352",
+      "upstream": "https://github.com/KhronosGroup/Vulkan-Loader",
+      "commit": "ebc06b83174f6b5200eb21de3e83fc0d03ddcd18",
+      "url": "https://github.com/KhronosGroup/Vulkan-Loader/archive/ebc06b83174f6b5200eb21de3e83fc0d03ddcd18.tar.gz",
+      "sha256": "adbbf3460816cc8a4976713826c2aa0543b277049650f610c4217693fe3d4371",
+      "license": "Apache-2.0 AND MIT",
+      "license_files": [
+        "LICENSE.txt",
+        "LICENSES/Apache-2.0.txt",
+        "LICENSES/MIT-Khronos-old.txt",
+        "loader/cJSON.c"
+      ],
+      "owner_target": "GraphicsProbe (02a); later EngineClient only",
+      "assignment": "02",
+      "patches": [],
+      "transitive_dependencies": [
+        "VulkanHeaders"
+      ],
+      "options": {
+        "UPDATE_DEPS": "OFF",
+        "BUILD_TESTS": "OFF",
+        "BUILD_WERROR": "OFF",
+        "CODE_COVERAGE": "OFF",
+        "LOADER_CODEGEN": "OFF",
+        "LOADER_USE_UNSAFE_FILE_SEARCH": "OFF",
+        "LOADER_ENABLE_ADDRESS_SANITIZER": "OFF",
+        "LOADER_ENABLE_THREAD_SANITIZER": "OFF",
+        "ENABLE_WIN10_ONECORE": "OFF",
+        "APPLE_STATIC_LOADER": "OFF",
+        "BUILD_WSI_XCB_SUPPORT": "OFF",
+        "BUILD_WSI_XLIB_SUPPORT": "ON",
+        "BUILD_WSI_XLIB_XRANDR_SUPPORT": "ON",
+        "BUILD_WSI_WAYLAND_SUPPORT": "OFF",
+        "BUILD_WSI_DIRECTFB_SUPPORT": "OFF"
+      },
+      "verification": "Official commit archive downloaded and SHA-256 computed on 2026-10-18; source/configuration reviewed. Build and GPU qualification are separately recorded in the 02a handoff.",
+      "vendored_inputs": [
+        {
+          "path": "loader/cJSON.c",
+          "license": "MIT",
+          "pin": "Included in this exact source archive"
+        }
+      ],
+      "notes": "Built from source with the same version as VulkanHeaders. VulkanHeaders package lookup is redirected to that locked target. OS display/SDK libraries and installed GPU ICDs are platform inputs, not downloaded engine dependencies; each run records the driver.",
+      "platform_options": {
+        "Windows": {
+          "USE_GAS": "OFF",
+          "USE_MASM": "ON"
+        },
+        "Linux": {
+          "USE_GAS": "ON",
+          "USE_MASM": "OFF"
+        },
+        "Darwin": {
+          "USE_GAS": "ON",
+          "USE_MASM": "OFF"
+        }
+      }
+    },
+    "NVRHI": {
+      "version": "commit-6b96fb03",
+      "upstream": "https://github.com/NVIDIA-RTX/NVRHI",
+      "commit": "6b96fb03e07539f08327aea76c56d55f1de9d906",
+      "url": "https://github.com/NVIDIA-RTX/NVRHI/archive/6b96fb03e07539f08327aea76c56d55f1de9d906.tar.gz",
+      "sha256": "f46c733ccc555fc457aaa3df510ee7df0ca089f5d1129d92903029e4fb67c560",
+      "license": "MIT",
+      "license_files": [
+        "LICENSE.txt"
+      ],
+      "owner_target": "GraphicsProbe (02a); later EngineClient only",
+      "assignment": "02",
+      "patches": [],
+      "transitive_dependencies": [
+        "VulkanHeaders"
+      ],
+      "options": {
+        "NVRHI_BUILD_SHARED": "OFF",
+        "NVRHI_BUILD_TESTS": "OFF",
+        "NVRHI_INSTALL": "OFF",
+        "NVRHI_INSTALL_EXPORTS": "OFF",
+        "NVRHI_WITH_VALIDATION": "ON",
+        "NVRHI_WITH_VULKAN": "ON",
+        "NVRHI_WITH_DX11": "OFF",
+        "NVRHI_WITH_DX12": "OFF",
+        "NVRHI_WITH_NVAPI": "OFF",
+        "NVRHI_WITH_RTXMU": "OFF",
+        "NVRHI_WITH_AFTERMATH": "OFF",
+        "NVRHI_FETCH_VULKAN_HEADERS": "OFF",
+        "NVRHI_FETCH_DIRECTX_HEADERS": "OFF",
+        "NVRHI_D3D12_WITH_DXR12_OPACITY_MICROMAP": "OFF"
+      },
+      "verification": "Official commit archive downloaded and SHA-256 computed on 2026-10-18; source/configuration reviewed. Build and GPU qualification are separately recorded in the 02a handoff.",
+      "notes": "No submodules at this revision. VulkanHeaders 1.4.352 matches the upstream default; all upstream FetchContent paths are disabled. Backend ray-tracing source is compiled by upstream but optional RTXMU/DXR integrations and device ray-tracing features are disabled. Portability subset queries require VK_ENABLE_BETA_EXTENSIONS consistently in both NVRHI Vulkan and its consumer to preserve Vulkan-Hpp dispatch layout.",
+      "vulkan_compile_definitions": [
+        "VK_ENABLE_BETA_EXTENSIONS"
+      ]
     }
   },
   "ci_environments": {
@@ -53,6 +216,60 @@
       "license_evidence": "headless artifact provenance/system-licenses.tar.gz and provenance/python-licenses.tar.gz",
       "provenance": "Base OCI manifest/config/layer digests; signed InRelease snapshot metadata; installed package versions; fetched .deb SHA256; pip install report with wheel SHA256",
       "patches": []
+    }
+  },
+  "graphics_tools": {
+    "DXC": {
+      "version": "1.9.2609",
+      "assignment": "02a",
+      "scope": "Offline development tooling only; never linked into or packaged with Core, Server, Runtime or GraphicsProbe",
+      "upstream": "https://github.com/microsoft/DirectXShaderCompiler",
+      "source_revision": "01b62ad47db7dee3dd33f90e7339cf9e860b3f93",
+      "release": "https://github.com/microsoft/DirectXShaderCompiler/releases/tag/v1.9.2609",
+      "license": "Aggregate DXC MIT, LLVM/NCSA and Microsoft notices; preserve all license files in the selected official release asset",
+      "source_license": "https://github.com/microsoft/DirectXShaderCompiler/blob/01b62ad47db7dee3dd33f90e7339cf9e860b3f93/LICENSE.TXT",
+      "patches": [],
+      "artifacts": {
+        "windows-x86_64": {
+          "url": "https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.9.2609/dxc_2026_09_29.zip",
+          "sha256": "ad31b1fc8443175d204f77a611fdb3ef2ec42759bdc2f1167368de24a4a7e7f1",
+          "archive_format": "zip",
+          "executable": "bin/x64/dxc.exe",
+          "files": [
+            "bin/x64/dxc.exe",
+            "bin/x64/dxcompiler.dll",
+            "bin/x64/dxil.dll",
+            "LICENCE-MIT.txt",
+            "LICENSE-LLVM.txt",
+            "LICENSE-MS.txt"
+          ],
+          "license_files": [
+            "LICENCE-MIT.txt",
+            "LICENSE-LLVM.txt",
+            "LICENSE-MS.txt"
+          ]
+        },
+        "linux-x86_64": {
+          "url": "https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.9.2609/linux_dxc_2026_09_28.x86_x64.tar.gz",
+          "sha256": "96faadc7f5c282d2ffda49804beb4c3ee38127bc252b723234e3c5cdf7aa39a1",
+          "archive_format": "tar.gz",
+          "executable": "bin/dxc",
+          "files": [
+            "bin/dxc",
+            "lib/libdxcompiler.so",
+            "lib/libdxil.so",
+            "LICENSE-LLVM.txt",
+            "LICENSE-MS.txt"
+          ],
+          "license_files": [
+            "LICENSE-LLVM.txt",
+            "LICENSE-MS.txt"
+          ]
+        }
+      },
+      "macos_status": "NOT RUN: upstream release has no native macOS binaries. Pin and qualify a source build or archived SDK bundle before native macOS shader compilation; no host-global fallback.",
+      "validation": "DXC default internal validation plus repeated-byte determinism and invalid-shader rejection in 02a. Independent spirv-val and GPU shader execution remain required in 02b.",
+      "verification": "Official release API digests reviewed 2026-10-18; preparation rechecks full archive SHA-256 and all selected executable/library/license bytes on each run."
     }
   }
 }

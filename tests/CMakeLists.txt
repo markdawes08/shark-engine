@@ -81,3 +81,20 @@ add_test(NAME shark.tooling.headless-environment
     COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_headless_environment.py" -v)
 set_tests_properties(shark.tooling.headless-environment PROPERTIES LABELS "cpu;tooling;server" TIMEOUT 15
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+
+add_test(NAME shark.tooling.graphics-evidence
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_graphics_probe.py" -v)
+set_tests_properties(shark.tooling.graphics-evidence PROPERTIES LABELS "cpu;tooling" TIMEOUT 15
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+
+add_test(NAME shark.tooling.graphics-dependencies
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_graphics_dependencies.py"
+        --cmake "${CMAKE_COMMAND}" --ninja "${CMAKE_MAKE_PROGRAM}"
+        --compiler "${CMAKE_CXX_COMPILER}" -v)
+set_tests_properties(shark.tooling.graphics-dependencies PROPERTIES LABELS "cpu;tooling;boundary" TIMEOUT 90
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+
+add_test(NAME shark.tooling.graphics-tools
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_graphics_tools.py" -v)
+set_tests_properties(shark.tooling.graphics-tools PROPERTIES LABELS "cpu;tooling" TIMEOUT 15
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")

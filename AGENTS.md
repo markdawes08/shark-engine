@@ -17,12 +17,16 @@ The product target is a **seamless open-world MMORPG**. Read the versioned
 They supersede the original offline-only scope. Original assignments 00-35 retain
 their IDs; M01-M10 are inserted in the manifest's explicit `assignment_order`.
 Assignment 01's hosted CPU and red/green gate is complete; see the
-[CI verification handoff](docs/handoffs/01-ci-verification.md). The current assignment
-remains M01 and its gate is complete. The headless Server bootstrap and Core/Client
+[CI verification handoff](docs/handoffs/01-ci-verification.md). M01's gate is
+complete. The headless Server bootstrap and Core/Client
 split are implemented; the [M01 handoff](docs/handoffs/M01-headless-server.md) records
 local qualification and the [hosted follow-up](docs/handoffs/M01-ci-verification.md)
-records the completed native CPU, headless Docker and red/green gate. The next
-assignment is 02, starting with 02a dependency/probe setup; it has not started.
+records the completed native CPU, headless Docker and red/green gate. The current
+assignment is 02; checkpoint 02a dependency/probe setup is complete. The
+[02a handoff](docs/handoffs/02a-graphics-setup.md) records evidence and limits;
+02b executable graphics cases and validation is next, not yet started. Follow the
+[graphics checkpoint plan](docs/roadmap/graphics-plan.md) and
+[probe guide](docs/graphics-probe.md); no complete GPU row is qualified yet.
 Networking, persistence, simulation and streaming remain planned.
 
 Human editor users and terminal-based LLM agents are equal development audiences.
@@ -110,7 +114,8 @@ missing runner, graphics device or audio device is NOT RUN. CPU starter tests do
 not establish working graphics, audio or a supported platform. Never regenerate
 image baselines automatically to hide failures.
 
-Current labels are `cpu`, `unit`, `integration`, `boundary`, `server`, `contract` and `tooling`.
+Current labels are `cpu`, `unit`, `integration`, `boundary`, `server`, `contract`, `tooling`
+and opt-in `graphics-probe` (CPU-safe CLI checks only, not GPU qualification).
 `ctest --preset windows-debug -L boundary` runs client/Core/Server boundary checks;
 `-L unit` runs starter engine tests and the normal failure-propagation sentinel.
 
@@ -208,6 +213,7 @@ in ADR 0007 are provisional targets; tests cannot silently reduce them to pass.
 | `engine/core/`, `engine/client/`, `engine/include/` | Shared Core, client presentation and retained bootstrap public header |
 | `engine_tools/`, `editor/`, `runtime/`, `server/` | Authoring library and separate client/editor/headless executables |
 | `tests/`, `cmake/`, `tools/` | Behavior tests, target configuration and development checks |
+| `probes/graphics/` | Opt-in assignment 02 setup fixture; not the production renderer |
 | `docs/architecture/`, `docs/coverage/`, `docs/handoffs/` | Decisions, mappings/evidence and assignment handoffs |
 | `docs/roadmap/` | Versioned execution order, scope amendments and foundation assessment |
 | `.github/workflows/` | Required CI automation |

@@ -1,7 +1,7 @@
 # ADR 0002: Shark language, dependencies and integration boundaries
 
 Date: 2026-10-17  
-Status: Accepted architecture contract; dependency integration and compatibility tests have not run.  
+Status: Accepted architecture contract; implemented dependency evidence is recorded in owning handoffs, and full graphics compatibility remains unqualified.
 Scope: Assignment 00. Assignment 01 implements the build and lock mechanism; later owners integrate their subsystems.
 
 ## Decision
@@ -62,7 +62,10 @@ made immutable by choosing a runner label. This is an explicit limitation on
 the original exact-toolchain-pin intention, not a claim of reproducible hosted
 VMs. Release reproduction in 35 requires archived toolchain/build inputs or a
 controlled immutable runner image. See [CI configuration and evidence](../ci.md).
-The initial integrated dependency is Catch2; graphics pins still belong to 02.
+The initial integrated dependency is Catch2. Checkpoint 02a adds GLFW, NVRHI,
+matching Vulkan headers/loader and offline DXC inputs in the same lock, consumed
+only by the opt-in probe/tool preparation. See the [probe guide](../graphics-probe.md).
+Native Mac driver graphs and independent shader/graphics validation remain open.
 
 Assignment 01 must establish one authoritative, versioned dependency manifest consumed by the CMake dependency setup. Use CMake FetchContent or locally populated source trees from that manifest; do not introduce competing package-manager resolution paths. Every dependency must record upstream URL, release label when available, full commit SHA or archive URL plus SHA-256, applicable patches, build options, license files, owning target and integration assignment. Include transitives, vendored headers, shader tools and CI tool downloads. Locally populated trees must match the same locked inputs.
 

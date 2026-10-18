@@ -7,7 +7,7 @@ This is a planning amendment, not implementation of the authoring CLI or editor.
 [ADR 0008](../architecture/0008-human-agent-authoring.md) is the product contract.
 It supplements the [MMORPG execution plan](mmorpg-plan.md) and
 [requirements manifest](../coverage/requirements.json). Original assignment IDs,
-MMO insertions and current assignment M01 remain unchanged. At the planning
+MMO insertions and then-current assignment M01 remained unchanged. At the planning
 review, M01's hosted gate was recorded as open. Its later
 [hosted verification](../handoffs/M01-ci-verification.md) now closes that gate at
 `d658d69`; the historical assessment below remains tied to the reviewed baseline.
@@ -99,7 +99,10 @@ discovery, human/agent parity, graphics or live MMO operations. The separate
 [amendment handoff](../handoffs/human-agent-planning-amendment.md) records the
 checks for this planning change. The full authoring gate remains NOT_RUN.
 
-M01's hosted qualification is complete. Next implementation work is assignment 02
-graphics compatibility, starting with 02a dependency/probe setup; it has not started.
+M01's hosted qualification is complete. Current implementation work is assignment
+02 graphics compatibility; checkpoint 02a dependency/probe setup is complete and
+02b executable graphics cases and validation is next. The
+[graphics plan](graphics-plan.md) and [probe commands](../graphics-probe.md)
+provide noninteractive contributor diagnostics; game-authoring APIs remain future work.
 No additional numbered chunk or change to product/player authority is necessary
 for this amendment.

@@ -159,6 +159,7 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
     cache = {entry["name"]: entry["value"] for entry in cache_items}
     require(len(cache) == len(cache_items), "Duplicate CMake cache keys")
     expected = {"SHARK_BUILD_CLIENT": "OFF", "SHARK_BUILD_EDITOR": "OFF", "SHARK_BUILD_TESTS": "OFF",
+                "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
                 "SHARK_BUILD_SERVER": "ON", "CMAKE_EXPORT_COMPILE_COMMANDS": "ON", "CMAKE_GENERATOR": "Ninja"}
     for name, value in expected.items():
         require(cache.get(name) == value, f"Expected {name}={value}, found {cache.get(name)!r}")
@@ -170,7 +171,7 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
         if name.endswith(("_SOURCE_DIR", "_BINARY_DIR", "_DIR", "_LIBRARY", "_INCLUDE_DIR")):
             require(not FORBIDDEN.search(value), f"Forbidden discovered dependency cache input: {name}={value}")
     require(not (build / "_deps").exists(), "Server-only build contains a dependency download tree")
-    for relative in ("engine/client", "engine_tools", "editor", "runtime", "tests"):
+    for relative in ("engine/client", "engine_tools", "editor", "runtime", "tests", "probes"):
         require(not (build / relative).exists(), f"Server-only build contains forbidden build subtree: {relative}")
     return source, configuration, targets, cache
 
@@ -401,7 +402,7 @@ def inspect(build: Path, package: Path) -> dict:
             "source_dir": str(source), "build_dir": str(build), "package_dir": str(package),
             "configuration": configuration["name"], "targets": sorted(TARGETS),
             "cache": {name: cache[name] for name in ("SHARK_BUILD_CLIENT", "SHARK_BUILD_SERVER", "SHARK_BUILD_EDITOR",
-                       "SHARK_BUILD_TESTS", "SHARK_SANITIZER", "CMAKE_GENERATOR")},
+                       "SHARK_BUILD_TESTS", "SHARK_BUILD_GRAPHICS_PROBE", "SHARK_SANITIZER", "CMAKE_GENERATOR")},
             "compiled_sources": compiled, "compiler_discovered_inputs": headers, "system_header_packages": packages,
             "link_fragments": links,
             "linker_dependency_records": {name: paths for name, paths in ninja_dependencies(dependencies["stdout"]).items() if name in linker_outputs},

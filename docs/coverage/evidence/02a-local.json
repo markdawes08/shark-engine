@@ -1,0 +1,4502 @@
+{
+  "schema_version": 1,
+  "assignment": "02",
+  "subchunk": "02a",
+  "setup_status": "PASS",
+  "full_assignment_qualification": "NOT_RUN",
+  "recorded_at_utc": "2026-10-18T01:05:09.347873+00:00",
+  "base_revision": "f9b9ea0918433cc279336d057d0a671e3908dff9",
+  "worktree": "Uncommitted updates; no staging, commits or pushes. See code input hashes and handoff.",
+  "dependency_lock_sha256": "7ea551e86e97f3be33796d2bdcc4ce2fe8cff9f9bdf64d805f90dde1e48326c0",
+  "input_sha256": {
+    "probes/graphics/check_cli.py": "40e8613be73c2d63555661a51c4278114ac7cb05e9759e3a577c64867ba76df8",
+    "probes/graphics/CMakeLists.txt": "274f0fbb3cca6a0d77213aa4f9bb3501102b65753e9e92b1abecb2cb13ae8a4b",
+    "probes/graphics/main.cpp": "eb4029936833f50a143eef5a983ba6d8b18a0e9cce4608fa4f35805b44d7bdab",
+    "probes/graphics/report.hpp": "74ee82d7ae345758a82e9d0c0d47917669feb2392c3e0a6983f82cb5c93e7b83",
+    "probes/graphics/report_tests.cpp": "f8244ea43e0219711c7cad295962335708162fd4e51d9da52dad72aadab07cab",
+    "probes/graphics/shaders/setup.hlsl": "9110700921ac836ae8a6e22b60056c52177a0c7e8a3f7727fa4cab8e631e65bf",
+    "cmake/CheckRuntimeBoundary.cmake": "4cad7734fe867b4a92bc5949c0d44a9afa2ff4e79b5c5a433ca7da0465bf41f9",
+    "cmake/Dependencies.cmake": "a2d0149a74818b6eb60cd38d5755989402ba0ee9bb242d41a9b207f181ac0f0d",
+    "cmake/GraphicsDependencies.cmake": "fbca6deadf7e2cf776d4fa1afaf38fedfdb8e07028d39e49a8bb6a684ca7e231",
+    "cmake/SharkBoundaries.cmake": "b769a49de48d562dc5369b307214db326084d2113d5e0f3b6db0da470ac493d6",
+    "cmake/SharkOptions.cmake": "0ea2bb9f222393f36449481dffb463e13be7f335abae61be7999253c29ddbe08",
+    "tools/check_ci_config.py": "e1fc32a160a5cef9023b297ad5b44d053355bd102c784409f8ac4f975b6a3c6f",
+    "tools/check_clean_source.py": "67dad984ff7e10f9186989452e6a2da664831fef609f448732d335602fa5e049",
+    "tools/check_format.py": "4dfce4b68c84ca65032a6d3a06cfe3edbe406c1e262a6834e0d08d32fa34ffb3",
+    "tools/check_repository.py": "d3ea3271a72b8d04803c66883344051eba940f81b52fbda2b890579b85a3700f",
+    "tools/check_server_closure.py": "44d66fa19ff382f72b8e911bb0d001972113a1f32149cce29b25259af2026d34",
+    "tools/ci/headless/fetch_inputs.py": "c657a53ecc2c519043d5caa54b0ee78200b8eda6eef869e02edbeae8143ad900",
+    "tools/ci.py": "bf0728354b522061db7b78ca92c6ac3f137ed5f8ddcf222f2ff920bed1d50309",
+    "tools/graphics_probe.py": "cdef5e41d8822590cf76af52d27613620d6821e62c5810830bb0bf39806300bd",
+    "tools/headless_ci.py": "87f5304ab5178790377ce9d25cac5d33dbc34042b9ab70786f2dd2fcfd5fe6be",
+    "tools/prepare_graphics_tools.py": "15f671825dc31885e8a4d3c84323875dcc927685166dce8c29ce98a763dd5a4b",
+    "tools/process_runner.py": "73ccfe5050040e3f495e518d3ddfbe903ee581edda17f2aed276456ffcf9e4bb",
+    "tools/tests/check_server_header_fixture.py": "0e57a56555d997699909a2ecbffc1cb75cec61e0579e27328c67fdc9845d770b",
+    "tools/tests/test_clean_source.py": "96f22281221db755c4298ec51c370ad67ab7f17bf6bd732808eb25435fb5272d",
+    "tools/tests/test_graphics_dependencies.py": "212a33cc976e938b7f8db4f35b1091afa8d6e500402360e2c03cbe1b0b933e9d",
+    "tools/tests/test_graphics_probe.py": "fa6e0cfd45699388f57ba9d055e1ac549b5c4742f91d9007cc23e6d4712e753f",
+    "tools/tests/test_graphics_tools.py": "ccef3bd5f0a35abd8b456d5f14b330d3d4a1965c496513c4ccb41f8f60dbc377",
+    "tools/tests/test_headless_environment.py": "98821011318ef78a1733533e18576e502d1107cffa834cb27b7f06c83ba55334",
+    "tools/tests/test_process_runner.py": "24bc8cf5c807dbcc3c34f263e558e977af18815879ed90b16998a7946815b1cd",
+    "tools/tests/test_server_closure.py": "93858d463c4956181f81730d6024ae3bb14c56601ece94c6a19de5e6977467de",
+    "tools/toolchain_report.py": "4eefaf5528c0c22407176e8a5de99adf9f6c244da7cf71837ab941f5e5838290",
+    "tools/validate_contract.py": "2a34f02a257e76603a8e42f3280823551cce90294c792fea19364ee300d865ac",
+    "tools/windows_dev.ps1": "ed9cc7102b469e8004fc2266e31a0e3d083a5574e9b41329f67c81a75481d19b",
+    "tests/bootstrap_tests.cpp": "4e224dd0d055f8448db579e47a90f8886ad7e608628e414e61e52c1afe70bba6",
+    "tests/boundary_fixture/CMakeLists.txt": "3c69f57ad69bd5abfceab0ea14492de23db2da647f0bab536d86c4048cfa0e16",
+    "tests/boundary_fixture/header_leak/CMakeLists.txt": "56f36f0dd94b42847a64cdc30a278289145d1fa9a023bc8000c88a5b915303d5",
+    "tests/boundary_fixture/header_leak/engine/client/leak.hpp": "93db329086db5ed6f54c99bcf41a1dbb989869959360296e2330e10c7fc71ece",
+    "tests/boundary_fixture/header_leak/engine/core/include/api.hpp": "9297930d651d58f79a83e1d68b51fcaeca884413a7f334867decac38d5779837",
+    "tests/boundary_fixture/header_leak/engine/core/src/core.cpp": "50eb75e45b2c07acdbe3c9753c866a6180daf9a78292c8577f1488408a790ddd",
+    "tests/boundary_fixture/header_leak/server/main.cpp": "6ed1e068fc65a49eb8c4caf2001c20762dcd2e7bd3386915278146cc9c1ca138",
+    "tests/boundary_fixture/server_only/CMakeLists.txt": "6e589bf1f2d7757d81f52bd324fbbf861857ee004ad0b2cef39dacaa83aa56b9",
+    "tests/check_server.py": "9f185495974a950cd0ee5ec7e47bead697e8e2f1935a8fc6bf3c04525426efff",
+    "tests/CheckBoundaryFixture.cmake": "c34de92ff53b562fcb73857ad395fc6b5b9a7725f848ea089a6268d69a7c7ee5",
+    "tests/CheckCli.cmake": "9bced45211a9ff21925e7b1f9b75f0d4693e53c63a59fb1ee4d032f9ce2784c7",
+    "tests/CMakeLists.txt": "833cde2dd1ee9574c6574b03d6794496f5aa8e1787ec63ad90a67a9a3b21bef9",
+    "tests/server_tests.cpp": "3e41d9b8ddb06907fb81f3670b95eee046b144534b8176a5bbcbe07c74069c48",
+    "CMakeLists.txt": "a48721040aa579a5099266c0cb1d6934af2cb71a5b7bc214e7cf1ec49c11d1cb",
+    "CMakePresets.json": "708e8d8c8f2cfcb34fb92777d7d3f6c88944f58bc0846e9316d251ae75e95f69",
+    "dependencies.lock.json": "7ea551e86e97f3be33796d2bdcc4ce2fe8cff9f9bdf64d805f90dde1e48326c0"
+  },
+  "windows_cpu": [
+    {
+      "preset": "windows-debug",
+      "phases": [
+        {
+          "phase": "configure",
+          "command": [
+            "cmake",
+            "--preset",
+            "windows-debug",
+            "-DSHARK_INJECT_TEST_FAILURE=OFF",
+            "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 1.032,
+          "status": "PASS"
+        },
+        {
+          "phase": "build",
+          "command": [
+            "cmake",
+            "--build",
+            "--preset",
+            "windows-debug",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.535,
+          "status": "PASS"
+        },
+        {
+          "phase": "test",
+          "command": [
+            "ctest",
+            "--preset",
+            "windows-debug",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "C:\\Users\\mrkda\\Projects\\shark\\out\\ci\\windows-debug\\ctest.xml"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 20.648,
+          "status": "PASS"
+        }
+      ],
+      "summary": {
+        "path": "out/ci/windows-debug/summary.json",
+        "sha256": "093ca27e7da8928f3c330e48fcb9628353f5f2c7832aefb39ad21e65c4549978",
+        "bytes": 1276
+      },
+      "junit": {
+        "path": "out/ci/windows-debug/ctest.xml",
+        "sha256": "3ae52c090f2ee1a72784665254881455e9c39966df50e32d0e7c92f952a76f43",
+        "bytes": 12047,
+        "tests": 18,
+        "timestamp": "2026-10-17T20:53:44",
+        "status": "PASS",
+        "skipped": 0,
+        "names": [
+          "shark.boundary",
+          "shark.unit",
+          "shark.failure-sentinel",
+          "shark.server.unit",
+          "shark.runtime.cli",
+          "shark.editor.cli",
+          "shark.boundary.fixture",
+          "shark.server.lifecycle",
+          "shark.tooling.processes",
+          "shark.tooling.sources",
+          "shark.contract",
+          "shark.repository",
+          "shark.tooling.server-closure",
+          "shark.boundary.headers",
+          "shark.tooling.headless-environment",
+          "shark.tooling.graphics-evidence",
+          "shark.tooling.graphics-dependencies",
+          "shark.tooling.graphics-tools"
+        ]
+      },
+      "toolchain": {
+        "schema_version": 1,
+        "platform": {
+          "system": "Windows",
+          "release": "11",
+          "version": "10.0.26200",
+          "machine": "AMD64"
+        },
+        "python": {
+          "version": "3.13.5",
+          "executable": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+        },
+        "environment": {
+          "VCToolsVersion": "14.51.36231",
+          "WindowsSDKVersion": "10.0.28000.0\\",
+          "VisualStudioVersion": "18.0"
+        },
+        "git_revision": {
+          "command": [
+            "git",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "output": "f9b9ea0918433cc279336d057d0a671e3908dff9",
+          "timed_out": false,
+          "cleanup_errors": []
+        },
+        "tools": {
+          "cmake": {
+            "available": true,
+            "path": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\cmake.exe",
+            "sha256": "6acf4f627aca9d5e69693ea2956b094593589a067bf49f0deb5e6341e5c1bbc8",
+            "command": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\cmake.exe",
+              "--version"
+            ],
+            "exit_code": 0,
+            "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          "ninja": {
+            "available": true,
+            "path": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\ninja.exe",
+            "sha256": "a7f084e8ee37bff0872aa8bd3d17cc19632d2a37734f6c242dd3dee22d77c0b4",
+            "command": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\ninja.exe",
+              "--version"
+            ],
+            "exit_code": 0,
+            "output": "1.13.2.git.kitware.jobserver-pipe-1",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          "clang-format": {
+            "available": true,
+            "path": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\clang-format.exe",
+            "sha256": "7ba5a8ec208ca26fbb00ec8012afa19c496b829c90d3ef303acf1275849e9631",
+            "command": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\clang-format.exe",
+              "--version"
+            ],
+            "exit_code": 0,
+            "output": "clang-format version 20.1.8",
+            "timed_out": false,
+            "cleanup_errors": []
+          }
+        },
+        "packages": {
+          "cmake": "3.31.10",
+          "ninja": "1.13.2",
+          "clang-format": "20.1.8",
+          "PyYAML": "6.0.3"
+        },
+        "build_directory": "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug",
+        "configured_compilers": [
+          {
+            "CMAKE_CXX_COMPILER": "C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+            "CMAKE_CXX_COMPILER_ID": "MSVC",
+            "CMAKE_CXX_COMPILER_VERSION": "19.51.36248.0",
+            "CMAKE_CXX_PLATFORM_ID": "Windows",
+            "CMAKE_CXX_COMPILER_FRONTEND_VARIANT": "MSVC",
+            "CMAKE_CXX_LIBRARY_ARCHITECTURE": "",
+            "binary": {
+              "available": true,
+              "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+              "sha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+              "command": [
+                "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+                "/Bv"
+              ],
+              "exit_code": 2,
+              "output": "Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36248 for x64\nCopyright (C) Microsoft Corporation.  All rights reserved.\n\nCompiler Passes:\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe:        Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c1.dll:        Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c1xx.dll:      Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c2.dll:        Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c1xx.dll:      Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\link.exe:      Version 14.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\mspdb140.dll:  Version 14.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\1033\\clui.dll: Version 19.51.36248.0\n\ncl : Command line error D8003 : missing source filename",
+              "timed_out": false,
+              "cleanup_errors": []
+            }
+          }
+        ],
+        "cmake_inputs": {
+          "CMAKE_BUILD_TYPE": "Debug",
+          "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+          "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+          "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+          "CMAKE_MAKE_PROGRAM": "C:/Users/mrkda/Projects/shark/.tools/venv/Scripts/ninja.exe",
+          "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+          "SHARK_BUILD_CLIENT": "ON",
+          "SHARK_BUILD_EDITOR": "ON",
+          "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
+          "SHARK_BUILD_SERVER": "ON",
+          "SHARK_BUILD_TESTS": "ON",
+          "SHARK_INJECT_TEST_FAILURE": "OFF",
+          "SHARK_SANITIZER": "none",
+          "CMAKE_GENERATOR": "Ninja"
+        }
+      }
+    },
+    {
+      "preset": "windows-release",
+      "phases": [
+        {
+          "phase": "configure",
+          "command": [
+            "cmake",
+            "--preset",
+            "windows-release",
+            "-DSHARK_INJECT_TEST_FAILURE=OFF",
+            "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 1.422,
+          "status": "PASS"
+        },
+        {
+          "phase": "build",
+          "command": [
+            "cmake",
+            "--build",
+            "--preset",
+            "windows-release",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.637,
+          "status": "PASS"
+        },
+        {
+          "phase": "test",
+          "command": [
+            "ctest",
+            "--preset",
+            "windows-release",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "C:\\Users\\mrkda\\Projects\\shark\\out\\ci\\windows-release\\ctest.xml"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 23.143,
+          "status": "PASS"
+        }
+      ],
+      "summary": {
+        "path": "out/ci/windows-release/summary.json",
+        "sha256": "149964abfdfb2fd066a1c06e6e64db644eea1cc3bc1805b3b2b7ef728c0ed90e",
+        "bytes": 1286
+      },
+      "junit": {
+        "path": "out/ci/windows-release/ctest.xml",
+        "sha256": "0fd00d123d08b2ee8be3ec30f6b6962ecda7d1d1666b76b9a8203c5856cb7d86",
+        "bytes": 12046,
+        "tests": 18,
+        "timestamp": "2026-10-17T20:55:21",
+        "status": "PASS",
+        "skipped": 0,
+        "names": [
+          "shark.boundary",
+          "shark.unit",
+          "shark.failure-sentinel",
+          "shark.server.unit",
+          "shark.runtime.cli",
+          "shark.editor.cli",
+          "shark.boundary.fixture",
+          "shark.server.lifecycle",
+          "shark.tooling.processes",
+          "shark.tooling.sources",
+          "shark.contract",
+          "shark.repository",
+          "shark.tooling.server-closure",
+          "shark.boundary.headers",
+          "shark.tooling.headless-environment",
+          "shark.tooling.graphics-evidence",
+          "shark.tooling.graphics-dependencies",
+          "shark.tooling.graphics-tools"
+        ]
+      },
+      "toolchain": {
+        "schema_version": 1,
+        "platform": {
+          "system": "Windows",
+          "release": "11",
+          "version": "10.0.26200",
+          "machine": "AMD64"
+        },
+        "python": {
+          "version": "3.13.5",
+          "executable": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+        },
+        "environment": {
+          "VCToolsVersion": "14.51.36231",
+          "WindowsSDKVersion": "10.0.28000.0\\",
+          "VisualStudioVersion": "18.0"
+        },
+        "git_revision": {
+          "command": [
+            "git",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "output": "f9b9ea0918433cc279336d057d0a671e3908dff9",
+          "timed_out": false,
+          "cleanup_errors": []
+        },
+        "tools": {
+          "cmake": {
+            "available": true,
+            "path": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\cmake.exe",
+            "sha256": "6acf4f627aca9d5e69693ea2956b094593589a067bf49f0deb5e6341e5c1bbc8",
+            "command": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\cmake.exe",
+              "--version"
+            ],
+            "exit_code": 0,
+            "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          "ninja": {
+            "available": true,
+            "path": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\ninja.exe",
+            "sha256": "a7f084e8ee37bff0872aa8bd3d17cc19632d2a37734f6c242dd3dee22d77c0b4",
+            "command": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\ninja.exe",
+              "--version"
+            ],
+            "exit_code": 0,
+            "output": "1.13.2.git.kitware.jobserver-pipe-1",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          "clang-format": {
+            "available": true,
+            "path": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\clang-format.exe",
+            "sha256": "7ba5a8ec208ca26fbb00ec8012afa19c496b829c90d3ef303acf1275849e9631",
+            "command": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\clang-format.exe",
+              "--version"
+            ],
+            "exit_code": 0,
+            "output": "clang-format version 20.1.8",
+            "timed_out": false,
+            "cleanup_errors": []
+          }
+        },
+        "packages": {
+          "cmake": "3.31.10",
+          "ninja": "1.13.2",
+          "clang-format": "20.1.8",
+          "PyYAML": "6.0.3"
+        },
+        "build_directory": "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-release",
+        "configured_compilers": [
+          {
+            "CMAKE_CXX_COMPILER": "C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+            "CMAKE_CXX_COMPILER_ID": "MSVC",
+            "CMAKE_CXX_COMPILER_VERSION": "19.51.36248.0",
+            "CMAKE_CXX_PLATFORM_ID": "Windows",
+            "CMAKE_CXX_COMPILER_FRONTEND_VARIANT": "MSVC",
+            "CMAKE_CXX_LIBRARY_ARCHITECTURE": "",
+            "binary": {
+              "available": true,
+              "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+              "sha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+              "command": [
+                "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+                "/Bv"
+              ],
+              "exit_code": 2,
+              "output": "Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36248 for x64\nCopyright (C) Microsoft Corporation.  All rights reserved.\n\nCompiler Passes:\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe:        Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c1.dll:        Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c1xx.dll:      Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c2.dll:        Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c1xx.dll:      Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\link.exe:      Version 14.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\mspdb140.dll:  Version 14.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\1033\\clui.dll: Version 19.51.36248.0\n\ncl : Command line error D8003 : missing source filename",
+              "timed_out": false,
+              "cleanup_errors": []
+            }
+          }
+        ],
+        "cmake_inputs": {
+          "CMAKE_BUILD_TYPE": "Release",
+          "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+          "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+          "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+          "CMAKE_MAKE_PROGRAM": "C:/Users/mrkda/Projects/shark/.tools/venv/Scripts/ninja.exe",
+          "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+          "SHARK_BUILD_CLIENT": "ON",
+          "SHARK_BUILD_EDITOR": "ON",
+          "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
+          "SHARK_BUILD_SERVER": "ON",
+          "SHARK_BUILD_TESTS": "ON",
+          "SHARK_INJECT_TEST_FAILURE": "OFF",
+          "SHARK_SANITIZER": "none",
+          "CMAKE_GENERATOR": "Ninja"
+        }
+      }
+    },
+    {
+      "preset": "windows-asan",
+      "phases": [
+        {
+          "phase": "configure",
+          "command": [
+            "cmake",
+            "--preset",
+            "windows-asan",
+            "-DSHARK_INJECT_TEST_FAILURE=OFF",
+            "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 1.423,
+          "status": "PASS"
+        },
+        {
+          "phase": "build",
+          "command": [
+            "cmake",
+            "--build",
+            "--preset",
+            "windows-asan",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.642,
+          "status": "PASS"
+        },
+        {
+          "phase": "test",
+          "command": [
+            "ctest",
+            "--preset",
+            "windows-asan",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "C:\\Users\\mrkda\\Projects\\shark\\out\\ci\\windows-asan\\ctest.xml"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 24.094,
+          "status": "PASS"
+        }
+      ],
+      "summary": {
+        "path": "out/ci/windows-asan/summary.json",
+        "sha256": "2e10a399cc5d369690c3148f39c71b82c6d4dd3c080141b76960bc7908dd2100",
+        "bytes": 1271
+      },
+      "junit": {
+        "path": "out/ci/windows-asan/ctest.xml",
+        "sha256": "68e7a8a28d4c3869b04c7e6a4fce379975616d7fa5deeb0ae3faefc2290b5564",
+        "bytes": 12043,
+        "tests": 18,
+        "timestamp": "2026-10-17T20:55:21",
+        "status": "PASS",
+        "skipped": 0,
+        "names": [
+          "shark.boundary",
+          "shark.unit",
+          "shark.failure-sentinel",
+          "shark.server.unit",
+          "shark.runtime.cli",
+          "shark.editor.cli",
+          "shark.boundary.fixture",
+          "shark.server.lifecycle",
+          "shark.tooling.processes",
+          "shark.tooling.sources",
+          "shark.contract",
+          "shark.repository",
+          "shark.tooling.server-closure",
+          "shark.boundary.headers",
+          "shark.tooling.headless-environment",
+          "shark.tooling.graphics-evidence",
+          "shark.tooling.graphics-dependencies",
+          "shark.tooling.graphics-tools"
+        ]
+      },
+      "toolchain": {
+        "schema_version": 1,
+        "platform": {
+          "system": "Windows",
+          "release": "11",
+          "version": "10.0.26200",
+          "machine": "AMD64"
+        },
+        "python": {
+          "version": "3.13.5",
+          "executable": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+        },
+        "environment": {
+          "VCToolsVersion": "14.51.36231",
+          "WindowsSDKVersion": "10.0.28000.0\\",
+          "VisualStudioVersion": "18.0"
+        },
+        "git_revision": {
+          "command": [
+            "git",
+            "rev-parse",
+            "HEAD"
+          ],
+          "exit_code": 0,
+          "output": "f9b9ea0918433cc279336d057d0a671e3908dff9",
+          "timed_out": false,
+          "cleanup_errors": []
+        },
+        "tools": {
+          "cmake": {
+            "available": true,
+            "path": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\cmake.exe",
+            "sha256": "6acf4f627aca9d5e69693ea2956b094593589a067bf49f0deb5e6341e5c1bbc8",
+            "command": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\cmake.exe",
+              "--version"
+            ],
+            "exit_code": 0,
+            "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          "ninja": {
+            "available": true,
+            "path": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\ninja.exe",
+            "sha256": "a7f084e8ee37bff0872aa8bd3d17cc19632d2a37734f6c242dd3dee22d77c0b4",
+            "command": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\ninja.exe",
+              "--version"
+            ],
+            "exit_code": 0,
+            "output": "1.13.2.git.kitware.jobserver-pipe-1",
+            "timed_out": false,
+            "cleanup_errors": []
+          },
+          "clang-format": {
+            "available": true,
+            "path": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\clang-format.exe",
+            "sha256": "7ba5a8ec208ca26fbb00ec8012afa19c496b829c90d3ef303acf1275849e9631",
+            "command": [
+              "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\clang-format.exe",
+              "--version"
+            ],
+            "exit_code": 0,
+            "output": "clang-format version 20.1.8",
+            "timed_out": false,
+            "cleanup_errors": []
+          }
+        },
+        "packages": {
+          "cmake": "3.31.10",
+          "ninja": "1.13.2",
+          "clang-format": "20.1.8",
+          "PyYAML": "6.0.3"
+        },
+        "build_directory": "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan",
+        "configured_compilers": [
+          {
+            "CMAKE_CXX_COMPILER": "C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+            "CMAKE_CXX_COMPILER_ID": "MSVC",
+            "CMAKE_CXX_COMPILER_VERSION": "19.51.36248.0",
+            "CMAKE_CXX_PLATFORM_ID": "Windows",
+            "CMAKE_CXX_COMPILER_FRONTEND_VARIANT": "MSVC",
+            "CMAKE_CXX_LIBRARY_ARCHITECTURE": "",
+            "binary": {
+              "available": true,
+              "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+              "sha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+              "command": [
+                "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+                "/Bv"
+              ],
+              "exit_code": 2,
+              "output": "Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36248 for x64\nCopyright (C) Microsoft Corporation.  All rights reserved.\n\nCompiler Passes:\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe:        Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c1.dll:        Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c1xx.dll:      Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c2.dll:        Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c1xx.dll:      Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\link.exe:      Version 14.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\mspdb140.dll:  Version 14.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\1033\\clui.dll: Version 19.51.36248.0\n\ncl : Command line error D8003 : missing source filename",
+              "timed_out": false,
+              "cleanup_errors": []
+            }
+          }
+        ],
+        "cmake_inputs": {
+          "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+          "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+          "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+          "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+          "CMAKE_MAKE_PROGRAM": "C:/Users/mrkda/Projects/shark/.tools/venv/Scripts/ninja.exe",
+          "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+          "SHARK_BUILD_CLIENT": "ON",
+          "SHARK_BUILD_EDITOR": "ON",
+          "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
+          "SHARK_BUILD_SERVER": "ON",
+          "SHARK_BUILD_TESTS": "ON",
+          "SHARK_INJECT_TEST_FAILURE": "OFF",
+          "SHARK_SANITIZER": "address",
+          "CMAKE_GENERATOR": "Ninja"
+        }
+      }
+    }
+  ],
+  "graphics_cpu_suite": {
+    "path": "build/graphics-windows/out/graphics-02a-tests.xml",
+    "sha256": "3eae232487070145d0dddf74ea1f4c5068167902404f3c1bdf8a6b691b303a26",
+    "bytes": 12248,
+    "tests": 18,
+    "timestamp": "2026-10-17T21:03:54",
+    "status": "PASS",
+    "skipped": 0,
+    "names": [
+      "shark.boundary",
+      "shark.unit",
+      "shark.failure-sentinel",
+      "shark.server.unit",
+      "shark.runtime.cli",
+      "shark.boundary.fixture",
+      "shark.tooling.processes",
+      "shark.tooling.sources",
+      "shark.contract",
+      "shark.repository",
+      "shark.tooling.server-closure",
+      "shark.boundary.headers",
+      "shark.tooling.headless-environment",
+      "shark.tooling.graphics-evidence",
+      "shark.tooling.graphics-dependencies",
+      "shark.tooling.graphics-tools",
+      "shark.graphics-probe.report",
+      "shark.graphics-probe.cli"
+    ]
+  },
+  "graphics_final_focused_suite": {
+    "path": "build/graphics-windows/out/ci/02a-probe-final.xml",
+    "sha256": "7fe778f0125667e32872bd17c82c0985ff14ce0cc3a72b600bc56bce2cfc3f9e",
+    "bytes": 969,
+    "tests": 2,
+    "timestamp": "2026-10-17T21:00:02",
+    "status": "PASS",
+    "skipped": 0,
+    "names": [
+      "shark.graphics-probe.report",
+      "shark.graphics-probe.cli"
+    ]
+  },
+  "graphics_environment": {
+    "schema_version": 1,
+    "platform": {
+      "system": "Windows",
+      "release": "11",
+      "version": "10.0.26200",
+      "machine": "AMD64"
+    },
+    "python": {
+      "version": "3.13.5",
+      "executable": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+    },
+    "environment": {
+      "VCToolsVersion": "14.51.36231",
+      "WindowsSDKVersion": "10.0.28000.0\\",
+      "VisualStudioVersion": "18.0"
+    },
+    "git_revision": {
+      "command": [
+        "git",
+        "rev-parse",
+        "HEAD"
+      ],
+      "exit_code": 0,
+      "output": "f9b9ea0918433cc279336d057d0a671e3908dff9",
+      "timed_out": false,
+      "cleanup_errors": []
+    },
+    "tools": {
+      "cmake": {
+        "available": true,
+        "path": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\cmake.exe",
+        "sha256": "6acf4f627aca9d5e69693ea2956b094593589a067bf49f0deb5e6341e5c1bbc8",
+        "command": [
+          "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\cmake.exe",
+          "--version"
+        ],
+        "exit_code": 0,
+        "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
+        "timed_out": false,
+        "cleanup_errors": []
+      },
+      "ninja": {
+        "available": true,
+        "path": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\ninja.exe",
+        "sha256": "a7f084e8ee37bff0872aa8bd3d17cc19632d2a37734f6c242dd3dee22d77c0b4",
+        "command": [
+          "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\ninja.exe",
+          "--version"
+        ],
+        "exit_code": 0,
+        "output": "1.13.2.git.kitware.jobserver-pipe-1",
+        "timed_out": false,
+        "cleanup_errors": []
+      },
+      "clang-format": {
+        "available": true,
+        "path": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\clang-format.exe",
+        "sha256": "7ba5a8ec208ca26fbb00ec8012afa19c496b829c90d3ef303acf1275849e9631",
+        "command": [
+          "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\clang-format.exe",
+          "--version"
+        ],
+        "exit_code": 0,
+        "output": "clang-format version 20.1.8",
+        "timed_out": false,
+        "cleanup_errors": []
+      }
+    },
+    "packages": {
+      "cmake": "3.31.10",
+      "ninja": "1.13.2",
+      "clang-format": "20.1.8",
+      "PyYAML": "6.0.3"
+    },
+    "build_directory": "C:\\Users\\mrkda\\Projects\\shark\\build\\graphics-windows",
+    "configured_compilers": [
+      {
+        "CMAKE_CXX_COMPILER": "C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+        "CMAKE_CXX_COMPILER_ID": "MSVC",
+        "CMAKE_CXX_COMPILER_VERSION": "19.51.36248.0",
+        "CMAKE_CXX_PLATFORM_ID": "Windows",
+        "CMAKE_CXX_COMPILER_FRONTEND_VARIANT": "MSVC",
+        "CMAKE_CXX_LIBRARY_ARCHITECTURE": "",
+        "binary": {
+          "available": true,
+          "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+          "sha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+          "command": [
+            "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+            "/Bv"
+          ],
+          "exit_code": 2,
+          "output": "Microsoft (R) C/C++ Optimizing Compiler Version 19.51.36248 for x64\nCopyright (C) Microsoft Corporation.  All rights reserved.\n\nCompiler Passes:\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe:        Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c1.dll:        Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c1xx.dll:      Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c2.dll:        Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\c1xx.dll:      Version 19.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\link.exe:      Version 14.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\mspdb140.dll:  Version 14.51.36248.0\n C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\1033\\clui.dll: Version 19.51.36248.0\n\ncl : Command line error D8003 : missing source filename",
+          "timed_out": false,
+          "cleanup_errors": []
+        }
+      }
+    ],
+    "cmake_inputs": {
+      "CMAKE_BUILD_TYPE": "Debug",
+      "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+      "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+      "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+      "CMAKE_MAKE_PROGRAM": "C:/Users/mrkda/Projects/shark/.tools/venv/Scripts/ninja.exe",
+      "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+      "SHARK_BUILD_CLIENT": "ON",
+      "SHARK_BUILD_EDITOR": "OFF",
+      "SHARK_BUILD_GRAPHICS_PROBE": "ON",
+      "SHARK_BUILD_SERVER": "OFF",
+      "SHARK_BUILD_TESTS": "ON",
+      "SHARK_INJECT_TEST_FAILURE": "OFF",
+      "SHARK_SANITIZER": "none",
+      "CMAKE_GENERATOR": "Ninja"
+    }
+  },
+  "graphics_build_logs": [
+    {
+      "path": "out/02a-dependencies/configure-windows-final.log",
+      "sha256": "a1b5de57a3f4a9a6041a01d3c43a0ed189ffa2e812aa169f71eb9c8a465392dc",
+      "bytes": 1236
+    },
+    {
+      "path": "out/02a-dependencies/build-windows-final.log",
+      "sha256": "c0935cfcd648f45b13fc62d3a841f9ac7ab48d10320c453ee06ad48a5876c4a8",
+      "bytes": 1108
+    }
+  ],
+  "graphics_runtime": [
+    {
+      "fixture": "inventory",
+      "path": "out/graphics/02a-final-inventory/summary.json",
+      "sha256": "f0011e1a393455aef3754f1d7157660402761fae19fc940081cca054a5720cc3",
+      "bytes": 66162,
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\graphics-windows\\bin\\GraphicsProbe.exe",
+        "--inventory"
+      ],
+      "started_utc": "2026-10-18T01:00:38.042638+00:00",
+      "finished_utc": "2026-10-18T01:00:39.871031+00:00",
+      "exit_code": 0,
+      "status": "PASS",
+      "timeout_seconds": 30,
+      "executable_sha256": "c3d3f08052fb0ab6f04c4997cd0a8afccaf6ead9784fea37bc5f6184a74cf80d",
+      "report": {
+        "build_compiler": "MSVC-19.51.36248.0",
+        "cases": [
+          {
+            "id": "P02-01",
+            "name": "stack_device",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-02",
+            "name": "graphics_depth",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-03",
+            "name": "compute",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-04",
+            "name": "formats_shaders",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-05",
+            "name": "lifecycle",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-06",
+            "name": "validation",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-07",
+            "name": "portability_packaging",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-08",
+            "name": "failure_paths",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          }
+        ],
+        "dependency_lock_sha256": "7ea551e86e97f3be33796d2bdcc4ce2fe8cff9f9bdf64d805f90dde1e48326c0",
+        "devices": [
+          {
+            "api_version": "1.4.311",
+            "device_id": 42888,
+            "device_type": 1,
+            "driver_id": 5,
+            "driver_info": "101.6790",
+            "driver_name": "Intel Corporation",
+            "driver_version_raw": 1661574,
+            "execution_qualification": "NOT_RUN",
+            "extensions": [
+              {
+                "name": "VK_EXT_device_address_binding_report",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_full_screen_exclusive",
+                "spec_version": 4
+              },
+              {
+                "name": "VK_KHR_swapchain",
+                "spec_version": 70
+              },
+              {
+                "name": "VK_KHR_external_memory",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_external_memory_win32",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_external_memory_host",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_external_semaphore",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_external_semaphore_win32",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_external_fence",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_external_fence_win32",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_timeline_semaphore",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_win32_keyed_mutex",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_get_memory_requirements2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_bind_memory2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_dedicated_allocation",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_KHR_sampler_mirror_clamp_to_edge",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_KHR_maintenance1",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_maintenance2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_maintenance3",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_maintenance4",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_maintenance5",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_maintenance6",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_maintenance7",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_synchronization2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_draw_parameters",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_push_descriptor",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_descriptor_update_template",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_multiview",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_float16_int8",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_float_controls",
+                "spec_version": 4
+              },
+              {
+                "name": "VK_KHR_16bit_storage",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_8bit_storage",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_subgroup_ballot",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_subgroup_vote",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_storage_buffer_storage_class",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_variable_pointers",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_relaxed_block_layout",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_sampler_filter_minmax",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_device_group",
+                "spec_version": 4
+              },
+              {
+                "name": "VK_KHR_sampler_ycbcr_conversion",
+                "spec_version": 14
+              },
+              {
+                "name": "VK_EXT_ycbcr_2plane_444_formats",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_4444_formats",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_post_depth_coverage",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_viewport_index_layer",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_stencil_export",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_conservative_rasterization",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_sample_locations",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_draw_indirect_count",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_multi_draw",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_image_format_list",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_image_view_min_lod",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_vertex_attribute_divisor",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_vertex_attribute_divisor",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_EXT_descriptor_indexing",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_mutable_descriptor_type",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_inline_uniform_block",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_create_renderpass2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_dynamic_rendering",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_dynamic_rendering_local_read",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_dynamic_rendering_unused_attachments",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_load_store_op_none",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_load_store_op_none",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_swapchain_mutable_format",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_depth_stencil_resolve",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_driver_properties",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_vulkan_memory_model",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_EXT_conditional_rendering",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_hdr_metadata",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_KHR_fragment_shading_rate",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_depth_clip_enable",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_depth_clip_control",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_scalar_block_layout",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_imageless_framebuffer",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_buffer_device_address",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_buffer_device_address",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_pipeline_library",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_host_query_reset",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_performance_query",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_device_diagnostic_checkpoints",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_separate_depth_stencil_layouts",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_clock",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_spirv_1_4",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_uniform_buffer_standard_layout",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_separate_stencil_usage",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_fragment_shader_interlock",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_index_type_uint8",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_index_type_uint8",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_primitive_topology_list_restart",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_subgroup_extended_types",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_line_rasterization",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_line_rasterization",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_memory_budget",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_memory_priority",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_pageable_device_local_memory",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_texel_buffer_alignment",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_INTEL_performance_query",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_subgroup_size_control",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_shader_demote_to_helper_invocation",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_pipeline_creation_feedback",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_pipeline_creation_cache_control",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_KHR_pipeline_executable_properties",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_graphics_pipeline_library",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_transform_feedback",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_provoking_vertex",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_extended_dynamic_state",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_extended_dynamic_state2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_extended_dynamic_state3",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_vertex_input_dynamic_state",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_custom_border_color",
+                "spec_version": 12
+              },
+              {
+                "name": "VK_EXT_robustness2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_image_robustness",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_pipeline_robustness",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_calibrated_timestamps",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_calibrated_timestamps",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_shader_integer_dot_product",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_subgroup_uniform_control_flow",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_terminate_invocation",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_workgroup_memory_explicit_layout",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_atomic_float",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_copy_commands2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_non_semantic_info",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_zero_initialize_workgroup_memory",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_atomic_float2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_global_priority",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_global_priority_query",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_global_priority",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_format_feature_flags2",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_video_queue",
+                "spec_version": 8
+              },
+              {
+                "name": "VK_KHR_video_decode_queue",
+                "spec_version": 7
+              },
+              {
+                "name": "VK_KHR_video_decode_h264",
+                "spec_version": 8
+              },
+              {
+                "name": "VK_KHR_video_decode_h265",
+                "spec_version": 7
+              },
+              {
+                "name": "VK_KHR_video_decode_av1",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_color_write_enable",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_compute_shader_derivatives",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_compute_shader_derivatives",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_private_data",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_image_2d_view_of_3d",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_primitives_generated_query",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_module_identifier",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_non_seamless_cube_map",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_attachment_feedback_loop_layout",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_map_memory2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_maximal_reconvergence",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_quad_control",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_host_image_copy",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_subgroup_rotate",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_shader_expect_assume",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_float_controls2",
+                "spec_version": 1
+              }
+            ],
+            "features": {
+              "bufferDeviceAddress": true,
+              "samplerAnisotropy": true,
+              "shaderStorageImageExtendedFormats": true,
+              "synchronization2": true,
+              "timelineSemaphore": true
+            },
+            "formats": [
+              {
+                "execution": "NOT_RUN",
+                "format": 43,
+                "image_usage_supported": true,
+                "max_array_layers": 2048,
+                "max_extent": [
+                  16384,
+                  16384,
+                  1
+                ],
+                "max_mip_levels": 15,
+                "max_resource_size": 1099511627776,
+                "name": "R8G8B8A8_SRGB",
+                "optimal_tiling_features": 122241,
+                "reported_profile_supported": true,
+                "required_features": 53249,
+                "required_usage": 7
+              },
+              {
+                "execution": "NOT_RUN",
+                "format": 37,
+                "image_usage_supported": true,
+                "max_array_layers": 2048,
+                "max_extent": [
+                  16384,
+                  16384,
+                  1
+                ],
+                "max_mip_levels": 15,
+                "max_resource_size": 1099511627776,
+                "name": "R8G8B8A8_UNORM",
+                "optimal_tiling_features": 2147605891,
+                "reported_profile_supported": true,
+                "required_features": 53633,
+                "required_usage": 23
+              },
+              {
+                "execution": "NOT_RUN",
+                "format": 97,
+                "image_usage_supported": true,
+                "max_array_layers": 2048,
+                "max_extent": [
+                  16384,
+                  16384,
+                  1
+                ],
+                "max_mip_levels": 15,
+                "max_resource_size": 1099511627776,
+                "name": "R16G16B16A16_SFLOAT",
+                "optimal_tiling_features": 2147605891,
+                "reported_profile_supported": true,
+                "required_features": 53635,
+                "required_usage": 31
+              },
+              {
+                "execution": "NOT_RUN",
+                "format": 126,
+                "image_usage_supported": true,
+                "max_array_layers": 2048,
+                "max_extent": [
+                  16384,
+                  16384,
+                  1
+                ],
+                "max_mip_levels": 15,
+                "max_resource_size": 1099511627776,
+                "name": "D32_SFLOAT",
+                "optimal_tiling_features": 122369,
+                "reported_profile_supported": true,
+                "required_features": 16897,
+                "required_usage": 37
+              }
+            ],
+            "limits": {
+              "maxBoundDescriptorSets": 32,
+              "maxColorAttachments": 8,
+              "maxComputeWorkGroupInvocations": 1024,
+              "maxImageArrayLayers": 2048,
+              "maxImageDimension2D": 16384,
+              "maxImageDimensionCube": 16384,
+              "maxPerStageDescriptorSampledImages": 200,
+              "maxPerStageDescriptorSamplers": 64,
+              "maxStorageBufferRange": 1073741820,
+              "maxUniformBufferRange": 134217724
+            },
+            "missing_reported_requirements": [],
+            "name": "Intel(R) RaptorLake-S Mobile Graphics Controller",
+            "portability_subset": false,
+            "present_modes": [
+              0,
+              2
+            ],
+            "queues": [
+              {
+                "count": 1,
+                "flags": 15,
+                "index": 0,
+                "present": true
+              },
+              {
+                "count": 2,
+                "flags": 32,
+                "index": 1,
+                "present": false
+              }
+            ],
+            "reported_profile_supported": true,
+            "surface_formats": [
+              {
+                "color_space": 0,
+                "format": 44
+              },
+              {
+                "color_space": 0,
+                "format": 50
+              },
+              {
+                "color_space": 0,
+                "format": 37
+              },
+              {
+                "color_space": 0,
+                "format": 43
+              }
+            ],
+            "uuid": "868088a7040000000002000000000000",
+            "vendor_id": 32902
+          },
+          {
+            "api_version": "1.4.341",
+            "device_id": 10336,
+            "device_type": 2,
+            "driver_id": 4,
+            "driver_info": "610.62",
+            "driver_name": "NVIDIA",
+            "driver_version_raw": 2559541248,
+            "execution_qualification": "NOT_RUN",
+            "extensions": [
+              {
+                "name": "VK_KHR_16bit_storage",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_8bit_storage",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_acceleration_structure",
+                "spec_version": 13
+              },
+              {
+                "name": "VK_KHR_bind_memory2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_buffer_device_address",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_calibrated_timestamps",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_compute_shader_derivatives",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_cooperative_matrix",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_copy_commands2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_copy_memory_indirect",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_create_renderpass2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_dedicated_allocation",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_KHR_deferred_host_operations",
+                "spec_version": 4
+              },
+              {
+                "name": "VK_KHR_depth_clamp_zero_one",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_depth_stencil_resolve",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_descriptor_update_template",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_device_group",
+                "spec_version": 4
+              },
+              {
+                "name": "VK_KHR_draw_indirect_count",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_driver_properties",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_dynamic_rendering",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_dynamic_rendering_local_read",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_external_fence",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_external_fence_win32",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_external_memory",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_external_memory_win32",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_external_semaphore",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_external_semaphore_win32",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_format_feature_flags2",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_fragment_shader_barycentric",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_fragment_shading_rate",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_get_memory_requirements2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_global_priority",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_image_format_list",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_imageless_framebuffer",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_index_type_uint8",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_internally_synchronized_queues",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_line_rasterization",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_load_store_op_none",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_maintenance1",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_maintenance10",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_maintenance2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_maintenance3",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_maintenance4",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_maintenance5",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_maintenance6",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_maintenance7",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_maintenance8",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_maintenance9",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_map_memory2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_multiview",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_pipeline_binary",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_pipeline_executable_properties",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_pipeline_library",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_present_id",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_present_id2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_present_mode_fifo_latest_ready",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_present_wait",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_present_wait2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_push_descriptor",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_ray_query",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_ray_tracing_maintenance1",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_ray_tracing_pipeline",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_ray_tracing_position_fetch",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_relaxed_block_layout",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_robustness2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_sampler_mirror_clamp_to_edge",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_KHR_sampler_ycbcr_conversion",
+                "spec_version": 14
+              },
+              {
+                "name": "VK_KHR_separate_depth_stencil_layouts",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_atomic_int64",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_bfloat16",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_clock",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_draw_parameters",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_expect_assume",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_float16_int8",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_float_controls",
+                "spec_version": 4
+              },
+              {
+                "name": "VK_KHR_shader_float_controls2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_fma",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_integer_dot_product",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_maximal_reconvergence",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_non_semantic_info",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_quad_control",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_relaxed_extended_instruction",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_subgroup_extended_types",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_subgroup_rotate",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_shader_subgroup_uniform_control_flow",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_terminate_invocation",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_shader_untyped_pointers",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_spirv_1_4",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_storage_buffer_storage_class",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_swapchain",
+                "spec_version": 70
+              },
+              {
+                "name": "VK_KHR_swapchain_maintenance1",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_swapchain_mutable_format",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_synchronization2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_timeline_semaphore",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_unified_image_layouts",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_uniform_buffer_standard_layout",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_variable_pointers",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_vertex_attribute_divisor",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_video_decode_av1",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_video_decode_h264",
+                "spec_version": 9
+              },
+              {
+                "name": "VK_KHR_video_decode_h265",
+                "spec_version": 8
+              },
+              {
+                "name": "VK_KHR_video_decode_queue",
+                "spec_version": 8
+              },
+              {
+                "name": "VK_KHR_video_decode_vp9",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_video_encode_av1",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_video_encode_h264",
+                "spec_version": 14
+              },
+              {
+                "name": "VK_KHR_video_encode_h265",
+                "spec_version": 14
+              },
+              {
+                "name": "VK_KHR_video_encode_intra_refresh",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_video_encode_quantization_map",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_KHR_video_encode_queue",
+                "spec_version": 12
+              },
+              {
+                "name": "VK_KHR_video_maintenance1",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_video_maintenance2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_video_queue",
+                "spec_version": 8
+              },
+              {
+                "name": "VK_KHR_vulkan_memory_model",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_KHR_win32_keyed_mutex",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_workgroup_memory_explicit_layout",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_KHR_zero_initialize_workgroup_memory",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_4444_formats",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_attachment_feedback_loop_dynamic_state",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_attachment_feedback_loop_layout",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_blend_operation_advanced",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_border_color_swizzle",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_buffer_device_address",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_calibrated_timestamps",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_color_write_enable",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_conditional_rendering",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_conservative_rasterization",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_custom_border_color",
+                "spec_version": 12
+              },
+              {
+                "name": "VK_EXT_custom_resolve",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_depth_bias_control",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_depth_clamp_control",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_depth_clamp_zero_one",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_depth_clip_control",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_depth_clip_enable",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_depth_range_unrestricted",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_descriptor_buffer",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_descriptor_heap",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_descriptor_indexing",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_device_address_binding_report",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_device_fault",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_device_generated_commands",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_discard_rectangles",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_dynamic_rendering_unused_attachments",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_extended_dynamic_state",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_extended_dynamic_state2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_extended_dynamic_state3",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_external_memory_host",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_fragment_shader_interlock",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_full_screen_exclusive",
+                "spec_version": 4
+              },
+              {
+                "name": "VK_EXT_global_priority",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_global_priority_query",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_graphics_pipeline_library",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_hdr_metadata",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_EXT_host_image_copy",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_host_query_reset",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_image_2d_view_of_3d",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_image_robustness",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_image_sliced_view_of_3d",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_image_view_min_lod",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_index_type_uint8",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_inline_uniform_block",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_legacy_vertex_attributes",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_line_rasterization",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_load_store_op_none",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_memory_budget",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_memory_decompression",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_memory_priority",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_mesh_shader",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_multi_draw",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_mutable_descriptor_type",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_nested_command_buffer",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_non_seamless_cube_map",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_opacity_micromap",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_pageable_device_local_memory",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_pci_bus_info",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_pipeline_creation_cache_control",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_EXT_pipeline_creation_feedback",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_pipeline_library_group_handles",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_pipeline_robustness",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_post_depth_coverage",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_present_mode_fifo_latest_ready",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_present_timing",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_EXT_primitive_topology_list_restart",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_primitives_generated_query",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_private_data",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_provoking_vertex",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_queue_family_foreign",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_ray_tracing_invocation_reorder",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_robustness2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_sample_locations",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_sampler_filter_minmax",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_scalar_block_layout",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_separate_stencil_usage",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_64bit_indexing",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_atomic_float",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_demote_to_helper_invocation",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_float8",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_image_atomic_int64",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_long_vector",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_module_identifier",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_object",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_replicated_composites",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_subgroup_ballot",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_subgroup_partitioned",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_subgroup_vote",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_uniform_buffer_unsized_array",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_shader_viewport_index_layer",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_subgroup_size_control",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_swapchain_maintenance1",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_texel_buffer_alignment",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_tooling_info",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_transform_feedback",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_vertex_attribute_divisor",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_EXT_vertex_attribute_robustness",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_vertex_input_dynamic_state",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_EXT_ycbcr_2plane_444_formats",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_ycbcr_image_arrays",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_EXT_zero_initialize_device_memory",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_acquire_winrt_display",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_clip_space_w_scaling",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_cluster_acceleration_structure",
+                "spec_version": 4
+              },
+              {
+                "name": "VK_NV_compute_occupancy_priority",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_compute_shader_derivatives",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_cooperative_matrix",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_cooperative_matrix2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_cooperative_vector",
+                "spec_version": 4
+              },
+              {
+                "name": "VK_NV_copy_memory_indirect",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_corner_sampled_image",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_NV_coverage_reduction_mode",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_cuda_kernel_launch",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_NV_dedicated_allocation",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_dedicated_allocation_image_aliasing",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_descriptor_pool_overallocation",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_device_diagnostic_checkpoints",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_NV_device_diagnostics_config",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_NV_device_generated_commands",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_NV_device_generated_commands_compute",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_NV_disk_cache_utils",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_external_compute_queue",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_external_memory",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_external_memory_win32",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_fill_rectangle",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_fragment_coverage_to_color",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_fragment_shader_barycentric",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_fragment_shading_rate_enums",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_framebuffer_mixed_samples",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_geometry_shader_passthrough",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_inherited_viewport_scissor",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_internal_nvpresent",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_linear_color_attachment",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_low_latency",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_low_latency2",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_NV_memory_decompression",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_mesh_shader",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_optical_flow",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_partitioned_acceleration_structure",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_present_metering",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_push_constant_bank",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_raw_access_chains",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_ray_tracing",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_NV_ray_tracing_invocation_reorder",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_ray_tracing_motion_blur",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_representative_fragment_test",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_NV_sample_mask_override_coverage",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_scissor_exclusive",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_NV_shader_atomic_float16_vector",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_shader_image_footprint",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_NV_shader_sm_builtins",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_shader_subgroup_partitioned",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_shading_rate_image",
+                "spec_version": 3
+              },
+              {
+                "name": "VK_NV_viewport_array2",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_viewport_swizzle",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_NV_win32_keyed_mutex",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_NVX_binary_import",
+                "spec_version": 2
+              },
+              {
+                "name": "VK_NVX_image_view_handle",
+                "spec_version": 4
+              },
+              {
+                "name": "VK_NVX_multiview_per_view_attributes",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_AMD_buffer_marker",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_GOOGLE_hlsl_functionality1",
+                "spec_version": 1
+              },
+              {
+                "name": "VK_GOOGLE_user_type",
+                "spec_version": 1
+              }
+            ],
+            "features": {
+              "bufferDeviceAddress": true,
+              "samplerAnisotropy": true,
+              "shaderStorageImageExtendedFormats": true,
+              "synchronization2": true,
+              "timelineSemaphore": true
+            },
+            "formats": [
+              {
+                "execution": "NOT_RUN",
+                "format": 43,
+                "image_usage_supported": true,
+                "max_array_layers": 2048,
+                "max_extent": [
+                  32768,
+                  32768,
+                  1
+                ],
+                "max_mip_levels": 16,
+                "max_resource_size": 1099511627776,
+                "name": "R8G8B8A8_SRGB",
+                "optimal_tiling_features": 122241,
+                "reported_profile_supported": true,
+                "required_features": 53249,
+                "required_usage": 7
+              },
+              {
+                "execution": "NOT_RUN",
+                "format": 37,
+                "image_usage_supported": true,
+                "max_array_layers": 2048,
+                "max_extent": [
+                  32768,
+                  32768,
+                  1
+                ],
+                "max_mip_levels": 16,
+                "max_resource_size": 1099511627776,
+                "name": "R8G8B8A8_UNORM",
+                "optimal_tiling_features": 122243,
+                "reported_profile_supported": true,
+                "required_features": 53633,
+                "required_usage": 23
+              },
+              {
+                "execution": "NOT_RUN",
+                "format": 97,
+                "image_usage_supported": true,
+                "max_array_layers": 2048,
+                "max_extent": [
+                  32768,
+                  32768,
+                  1
+                ],
+                "max_mip_levels": 16,
+                "max_resource_size": 1099511627776,
+                "name": "R16G16B16A16_SFLOAT",
+                "optimal_tiling_features": 122247,
+                "reported_profile_supported": true,
+                "required_features": 53635,
+                "required_usage": 31
+              },
+              {
+                "execution": "NOT_RUN",
+                "format": 126,
+                "image_usage_supported": true,
+                "max_array_layers": 2048,
+                "max_extent": [
+                  32768,
+                  32768,
+                  1
+                ],
+                "max_mip_levels": 16,
+                "max_resource_size": 1099511627776,
+                "name": "D32_SFLOAT",
+                "optimal_tiling_features": 122371,
+                "reported_profile_supported": true,
+                "required_features": 16897,
+                "required_usage": 37
+              }
+            ],
+            "limits": {
+              "maxBoundDescriptorSets": 32,
+              "maxColorAttachments": 8,
+              "maxComputeWorkGroupInvocations": 1024,
+              "maxImageArrayLayers": 2048,
+              "maxImageDimension2D": 32768,
+              "maxImageDimensionCube": 32768,
+              "maxPerStageDescriptorSampledImages": 1048576,
+              "maxPerStageDescriptorSamplers": 1048576,
+              "maxStorageBufferRange": 4294967295,
+              "maxUniformBufferRange": 65536
+            },
+            "missing_reported_requirements": [],
+            "name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+            "portability_subset": false,
+            "present_modes": [
+              2,
+              3,
+              1,
+              0,
+              1000361000
+            ],
+            "queues": [
+              {
+                "count": 16,
+                "flags": 15,
+                "index": 0,
+                "present": true
+              },
+              {
+                "count": 2,
+                "flags": 12,
+                "index": 1,
+                "present": false
+              },
+              {
+                "count": 8,
+                "flags": 14,
+                "index": 2,
+                "present": true
+              },
+              {
+                "count": 1,
+                "flags": 44,
+                "index": 3,
+                "present": false
+              },
+              {
+                "count": 1,
+                "flags": 76,
+                "index": 4,
+                "present": false
+              },
+              {
+                "count": 1,
+                "flags": 268,
+                "index": 5,
+                "present": false
+              }
+            ],
+            "reported_profile_supported": true,
+            "surface_formats": [
+              {
+                "color_space": 0,
+                "format": 44
+              },
+              {
+                "color_space": 0,
+                "format": 50
+              },
+              {
+                "color_space": 0,
+                "format": 37
+              },
+              {
+                "color_space": 0,
+                "format": 43
+              },
+              {
+                "color_space": 0,
+                "format": 64
+              }
+            ],
+            "uuid": "863d6f59a51894ab8b4829aa9460c78d",
+            "vendor_id": 4318
+          }
+        ],
+        "enabled_instance_extensions": [
+          "VK_KHR_surface",
+          "VK_KHR_win32_surface",
+          "VK_KHR_portability_enumeration"
+        ],
+        "exit_code": 0,
+        "glfw_platform": 393217,
+        "glfw_version": "3.5.1 Win32 WGL Null EGL OSMesa VisualC",
+        "instance_extensions": [
+          {
+            "name": "VK_KHR_device_group_creation",
+            "spec_version": 1
+          },
+          {
+            "name": "VK_KHR_display",
+            "spec_version": 23
+          },
+          {
+            "name": "VK_KHR_external_fence_capabilities",
+            "spec_version": 1
+          },
+          {
+            "name": "VK_KHR_external_memory_capabilities",
+            "spec_version": 1
+          },
+          {
+            "name": "VK_KHR_external_semaphore_capabilities",
+            "spec_version": 1
+          },
+          {
+            "name": "VK_KHR_get_display_properties2",
+            "spec_version": 1
+          },
+          {
+            "name": "VK_KHR_get_physical_device_properties2",
+            "spec_version": 2
+          },
+          {
+            "name": "VK_KHR_get_surface_capabilities2",
+            "spec_version": 1
+          },
+          {
+            "name": "VK_KHR_surface",
+            "spec_version": 25
+          },
+          {
+            "name": "VK_KHR_surface_maintenance1",
+            "spec_version": 1
+          },
+          {
+            "name": "VK_KHR_surface_protected_capabilities",
+            "spec_version": 1
+          },
+          {
+            "name": "VK_KHR_win32_surface",
+            "spec_version": 6
+          },
+          {
+            "name": "VK_EXT_debug_report",
+            "spec_version": 10
+          },
+          {
+            "name": "VK_EXT_debug_utils",
+            "spec_version": 2
+          },
+          {
+            "name": "VK_EXT_direct_mode_display",
+            "spec_version": 1
+          },
+          {
+            "name": "VK_EXT_surface_maintenance1",
+            "spec_version": 1
+          },
+          {
+            "name": "VK_EXT_swapchain_colorspace",
+            "spec_version": 5
+          },
+          {
+            "name": "VK_NV_external_memory_capabilities",
+            "spec_version": 1
+          },
+          {
+            "name": "VK_KHR_portability_enumeration",
+            "spec_version": 1
+          },
+          {
+            "name": "VK_LUNARG_direct_driver_loading",
+            "spec_version": 1
+          }
+        ],
+        "instance_layers": [
+          {
+            "implementation_version": 1,
+            "name": "VK_LAYER_NV_optimus",
+            "spec_version": 4211029
+          },
+          {
+            "implementation_version": 1,
+            "name": "VK_LAYER_NV_present",
+            "spec_version": 4211029
+          },
+          {
+            "implementation_version": 1,
+            "name": "VK_LAYER_OBS_HOOK",
+            "spec_version": 4206808
+          },
+          {
+            "implementation_version": 1,
+            "name": "VK_LAYER_VALVE_steam_overlay",
+            "spec_version": 4206799
+          },
+          {
+            "implementation_version": 1,
+            "name": "VK_LAYER_VALVE_steam_fossilize",
+            "spec_version": 4210991
+          },
+          {
+            "implementation_version": 1,
+            "name": "VK_LAYER_ROCKSTAR_GAMES_social_club",
+            "spec_version": 4194374
+          }
+        ],
+        "loader_api_version": "1.4.352",
+        "mode": "inventory",
+        "nvrhi_validation_enabled": false,
+        "portability_enumeration_enabled": true,
+        "probe_source_sha256": "8ca1b436fcb8e4aedcfcddcc5e662b4911ae51b30bb6abba4c099e746104e147",
+        "probe_version": "0.1.0",
+        "qualification": "NOT_RUN",
+        "schema_version": 1,
+        "selected_device_uuid": null,
+        "stages": [
+          {
+            "name": "loader",
+            "status": "PASS"
+          },
+          {
+            "name": "instance",
+            "status": "PASS"
+          },
+          {
+            "name": "surface",
+            "status": "PASS"
+          },
+          {
+            "name": "inventory",
+            "status": "PASS"
+          },
+          {
+            "name": "teardown",
+            "status": "PASS"
+          }
+        ],
+        "status": "PASS",
+        "validation_errors": 0,
+        "validation_warnings": 0,
+        "vulkan_validation_enabled": false,
+        "vulkan_validation_requested": false
+      },
+      "stderr": ""
+    },
+    {
+      "fixture": "nvidia-startup",
+      "path": "out/graphics/02a-final-nvidia-startup/summary.json",
+      "sha256": "fb13fde4c53b1a17d9831b3a6a65315d1723a672ddd677098de3666a7ae2f898",
+      "bytes": 66916,
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\graphics-windows\\bin\\GraphicsProbe.exe",
+        "--smoke",
+        "--device",
+        "863d6f59a51894ab8b4829aa9460c78d",
+        "--validation",
+        "off"
+      ],
+      "started_utc": "2026-10-18T01:00:41.706759+00:00",
+      "finished_utc": "2026-10-18T01:00:43.715701+00:00",
+      "exit_code": 0,
+      "status": "PASS",
+      "timeout_seconds": 30,
+      "executable_sha256": "c3d3f08052fb0ab6f04c4997cd0a8afccaf6ead9784fea37bc5f6184a74cf80d",
+      "report": {
+        "build_compiler": "MSVC-19.51.36248.0",
+        "cases": [
+          {
+            "id": "P02-01",
+            "name": "stack_device",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-02",
+            "name": "graphics_depth",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-03",
+            "name": "compute",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-04",
+            "name": "formats_shaders",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-05",
+            "name": "lifecycle",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-06",
+            "name": "validation",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-07",
+            "name": "portability_packaging",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-08",
+            "name": "failure_paths",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          }
+        ],
+        "dependency_lock_sha256": "7ea551e86e97f3be33796d2bdcc4ce2fe8cff9f9bdf64d805f90dde1e48326c0",
+        "enabled_device_extensions": [
+          "VK_KHR_swapchain"
+        ],
+        "enabled_features": [
+          "timelineSemaphore",
+          "synchronization2"
+        ],
+        "enabled_instance_extensions": [
+          "VK_KHR_surface",
+          "VK_KHR_win32_surface",
+          "VK_KHR_portability_enumeration"
+        ],
+        "exit_code": 0,
+        "glfw_platform": 393217,
+        "glfw_version": "3.5.1 Win32 WGL Null EGL OSMesa VisualC",
+        "loader_api_version": "1.4.352",
+        "mode": "smoke",
+        "nvrhi_validation_enabled": true,
+        "portability_enumeration_enabled": true,
+        "probe_source_sha256": "8ca1b436fcb8e4aedcfcddcc5e662b4911ae51b30bb6abba4c099e746104e147",
+        "probe_version": "0.1.0",
+        "qualification": "NOT_RUN",
+        "schema_version": 1,
+        "selected_device_uuid": "863d6f59a51894ab8b4829aa9460c78d",
+        "selected_queue_family": 0,
+        "stages": [
+          {
+            "name": "loader",
+            "status": "PASS"
+          },
+          {
+            "name": "instance",
+            "status": "PASS"
+          },
+          {
+            "name": "surface",
+            "status": "PASS"
+          },
+          {
+            "name": "inventory",
+            "status": "PASS"
+          },
+          {
+            "name": "device",
+            "status": "PASS"
+          },
+          {
+            "name": "nvrhi_device_and_validation",
+            "status": "PASS"
+          },
+          {
+            "name": "swapchain",
+            "status": "PASS"
+          },
+          {
+            "name": "teardown",
+            "status": "PASS"
+          }
+        ],
+        "status": "PASS",
+        "swapchain": {
+          "color_space": 0,
+          "extent": [
+            176,
+            64
+          ],
+          "format": 50,
+          "image_count": 3,
+          "present_mode": "FIFO",
+          "presented_frames": 0
+        },
+        "validation_errors": 0,
+        "validation_warnings": 0,
+        "vulkan_validation_enabled": false,
+        "vulkan_validation_requested": false
+      },
+      "stderr": ""
+    },
+    {
+      "fixture": "intel-startup",
+      "path": "out/graphics/02a-final-intel-startup/summary.json",
+      "sha256": "06fae2990c61e0cedd8d1aca40fea908e2db639e4032f684ce2a36dc4b16f7a3",
+      "bytes": 66916,
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\graphics-windows\\bin\\GraphicsProbe.exe",
+        "--smoke",
+        "--device",
+        "868088a7040000000002000000000000",
+        "--validation",
+        "off"
+      ],
+      "started_utc": "2026-10-18T01:00:45.504637+00:00",
+      "finished_utc": "2026-10-18T01:00:47.232873+00:00",
+      "exit_code": 0,
+      "status": "PASS",
+      "timeout_seconds": 30,
+      "executable_sha256": "c3d3f08052fb0ab6f04c4997cd0a8afccaf6ead9784fea37bc5f6184a74cf80d",
+      "report": {
+        "build_compiler": "MSVC-19.51.36248.0",
+        "cases": [
+          {
+            "id": "P02-01",
+            "name": "stack_device",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-02",
+            "name": "graphics_depth",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-03",
+            "name": "compute",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-04",
+            "name": "formats_shaders",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-05",
+            "name": "lifecycle",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-06",
+            "name": "validation",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-07",
+            "name": "portability_packaging",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-08",
+            "name": "failure_paths",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          }
+        ],
+        "dependency_lock_sha256": "7ea551e86e97f3be33796d2bdcc4ce2fe8cff9f9bdf64d805f90dde1e48326c0",
+        "enabled_device_extensions": [
+          "VK_KHR_swapchain"
+        ],
+        "enabled_features": [
+          "timelineSemaphore",
+          "synchronization2"
+        ],
+        "enabled_instance_extensions": [
+          "VK_KHR_surface",
+          "VK_KHR_win32_surface",
+          "VK_KHR_portability_enumeration"
+        ],
+        "exit_code": 0,
+        "glfw_platform": 393217,
+        "glfw_version": "3.5.1 Win32 WGL Null EGL OSMesa VisualC",
+        "loader_api_version": "1.4.352",
+        "mode": "smoke",
+        "nvrhi_validation_enabled": true,
+        "portability_enumeration_enabled": true,
+        "probe_source_sha256": "8ca1b436fcb8e4aedcfcddcc5e662b4911ae51b30bb6abba4c099e746104e147",
+        "probe_version": "0.1.0",
+        "qualification": "NOT_RUN",
+        "schema_version": 1,
+        "selected_device_uuid": "868088a7040000000002000000000000",
+        "selected_queue_family": 0,
+        "stages": [
+          {
+            "name": "loader",
+            "status": "PASS"
+          },
+          {
+            "name": "instance",
+            "status": "PASS"
+          },
+          {
+            "name": "surface",
+            "status": "PASS"
+          },
+          {
+            "name": "inventory",
+            "status": "PASS"
+          },
+          {
+            "name": "device",
+            "status": "PASS"
+          },
+          {
+            "name": "nvrhi_device_and_validation",
+            "status": "PASS"
+          },
+          {
+            "name": "swapchain",
+            "status": "PASS"
+          },
+          {
+            "name": "teardown",
+            "status": "PASS"
+          }
+        ],
+        "status": "PASS",
+        "swapchain": {
+          "color_space": 0,
+          "extent": [
+            176,
+            64
+          ],
+          "format": 50,
+          "image_count": 3,
+          "present_mode": "FIFO",
+          "presented_frames": 0
+        },
+        "validation_errors": 0,
+        "validation_warnings": 0,
+        "vulkan_validation_enabled": false,
+        "vulkan_validation_requested": false
+      },
+      "stderr": ""
+    },
+    {
+      "fixture": "validation-required",
+      "path": "out/graphics/02a-final-validation-required/summary.json",
+      "sha256": "1ca27c7eeebce5a939b878b699c395a907513dbcadb8091f00e162724a1686c0",
+      "bytes": 9583,
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\graphics-windows\\bin\\GraphicsProbe.exe",
+        "--smoke",
+        "--device",
+        "863d6f59a51894ab8b4829aa9460c78d",
+        "--validation",
+        "required"
+      ],
+      "started_utc": "2026-10-18T01:00:49.045218+00:00",
+      "finished_utc": "2026-10-18T01:00:50.573452+00:00",
+      "exit_code": 3,
+      "status": "NOT_RUN",
+      "timeout_seconds": 30,
+      "executable_sha256": "c3d3f08052fb0ab6f04c4997cd0a8afccaf6ead9784fea37bc5f6184a74cf80d",
+      "report": {
+        "build_compiler": "MSVC-19.51.36248.0",
+        "cases": [
+          {
+            "id": "P02-01",
+            "name": "stack_device",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-02",
+            "name": "graphics_depth",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-03",
+            "name": "compute",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-04",
+            "name": "formats_shaders",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-05",
+            "name": "lifecycle",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-06",
+            "name": "validation",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-07",
+            "name": "portability_packaging",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-08",
+            "name": "failure_paths",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          }
+        ],
+        "dependency_lock_sha256": "7ea551e86e97f3be33796d2bdcc4ce2fe8cff9f9bdf64d805f90dde1e48326c0",
+        "error": {
+          "code": "validation_unavailable",
+          "message": "Provide VK_LAYER_KHRONOS_validation and its manifest via VK_LAYER_PATH; required layer/debug-utils support is unavailable. The layer package must be pinned in 02b before qualification. --validation off is diagnostic only."
+        },
+        "exit_code": 3,
+        "loader_api_version": "1.4.352",
+        "mode": "smoke",
+        "nvrhi_validation_enabled": false,
+        "probe_source_sha256": "8ca1b436fcb8e4aedcfcddcc5e662b4911ae51b30bb6abba4c099e746104e147",
+        "probe_version": "0.1.0",
+        "qualification": "NOT_RUN",
+        "schema_version": 1,
+        "selected_device_uuid": null,
+        "stages": [
+          {
+            "name": "loader",
+            "status": "PASS"
+          }
+        ],
+        "status": "NOT_RUN",
+        "validation_errors": 0,
+        "validation_warnings": 0,
+        "vulkan_validation_enabled": false,
+        "vulkan_validation_requested": true
+      },
+      "stderr": "GraphicsProbe: validation_unavailable: Provide VK_LAYER_KHRONOS_validation and its manifest via VK_LAYER_PATH; required layer/debug-utils support is unavailable. The layer package must be pinned in 02b before qualification. --validation off is diagnostic only.\n"
+    },
+    {
+      "fixture": "absent-device",
+      "path": "out/graphics/02a-final-absent-device/summary.json",
+      "sha256": "41cea41825d902f3b27c794aa35ee444869d85bccb138da49cf54883a252ecb2",
+      "bytes": 66379,
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\graphics-windows\\bin\\GraphicsProbe.exe",
+        "--smoke",
+        "--device",
+        "00000000000000000000000000000000",
+        "--validation",
+        "off"
+      ],
+      "started_utc": "2026-10-18T01:00:52.389000+00:00",
+      "finished_utc": "2026-10-18T01:00:53.949017+00:00",
+      "exit_code": 3,
+      "status": "NOT_RUN",
+      "timeout_seconds": 30,
+      "executable_sha256": "c3d3f08052fb0ab6f04c4997cd0a8afccaf6ead9784fea37bc5f6184a74cf80d",
+      "report": {
+        "build_compiler": "MSVC-19.51.36248.0",
+        "cases": [
+          {
+            "id": "P02-01",
+            "name": "stack_device",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-02",
+            "name": "graphics_depth",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-03",
+            "name": "compute",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-04",
+            "name": "formats_shaders",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-05",
+            "name": "lifecycle",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-06",
+            "name": "validation",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-07",
+            "name": "portability_packaging",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          },
+          {
+            "id": "P02-08",
+            "name": "failure_paths",
+            "reason": "02a setup is not full case execution or hardware qualification",
+            "status": "NOT_RUN"
+          }
+        ],
+        "dependency_lock_sha256": "7ea551e86e97f3be33796d2bdcc4ce2fe8cff9f9bdf64d805f90dde1e48326c0",
+        "enabled_instance_extensions": [
+          "VK_KHR_surface",
+          "VK_KHR_win32_surface",
+          "VK_KHR_portability_enumeration"
+        ],
+        "error": {
+          "code": "device_unavailable",
+          "message": "Requested Vulkan deviceUUID is absent; rerun --inventory and select the intended GPU explicitly"
+        },
+        "exit_code": 3,
+        "glfw_platform": 393217,
+        "glfw_version": "3.5.1 Win32 WGL Null EGL OSMesa VisualC",
+        "loader_api_version": "1.4.352",
+        "mode": "smoke",
+        "nvrhi_validation_enabled": false,
+        "portability_enumeration_enabled": true,
+        "probe_source_sha256": "8ca1b436fcb8e4aedcfcddcc5e662b4911ae51b30bb6abba4c099e746104e147",
+        "probe_version": "0.1.0",
+        "qualification": "NOT_RUN",
+        "schema_version": 1,
+        "selected_device_uuid": "00000000000000000000000000000000",
+        "stages": [
+          {
+            "name": "loader",
+            "status": "PASS"
+          },
+          {
+            "name": "instance",
+            "status": "PASS"
+          },
+          {
+            "name": "surface",
+            "status": "PASS"
+          },
+          {
+            "name": "inventory",
+            "status": "PASS"
+          }
+        ],
+        "status": "NOT_RUN",
+        "validation_errors": 0,
+        "validation_warnings": 0,
+        "vulkan_validation_enabled": false,
+        "vulkan_validation_requested": false
+      },
+      "stderr": "GraphicsProbe: device_unavailable: Requested Vulkan deviceUUID is absent; rerun --inventory and select the intended GPU explicitly\n"
+    }
+  ],
+  "offline_shader_setup": [
+    {
+      "receipt": {
+        "path": "out/graphics-tools/windows-final-lock/summary.json",
+        "sha256": "20c93bda388ee34f2c5449ba68be2084a0efb373dc7b1f7f0d67106f5a602533",
+        "bytes": 7892
+      },
+      "report": {
+        "schema_version": 1,
+        "assignment": "02a",
+        "host": "windows-x86_64",
+        "timestamp_utc": "2026-10-18T00:56:39.941831+00:00",
+        "evidence_directory": "C:\\Users\\mrkda\\Projects\\shark\\out\\graphics-tools\\windows-final-lock",
+        "os": "Windows-11-10.0.26200-SP0",
+        "python": "3.13.5",
+        "status": "PASS",
+        "scope": "offline DXC setup, no GPU qualification",
+        "dependency_lock_sha256": "7ea551e86e97f3be33796d2bdcc4ce2fe8cff9f9bdf64d805f90dde1e48326c0",
+        "version": "1.9.2609",
+        "source_revision": "01b62ad47db7dee3dd33f90e7339cf9e860b3f93",
+        "provenance": {
+          "url": "https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.9.2609/dxc_2026_09_29.zip",
+          "archive_sha256": "ad31b1fc8443175d204f77a611fdb3ef2ec42759bdc2f1167368de24a4a7e7f1",
+          "files": {
+            "LICENCE-MIT.txt": "903df5512f7d02609fed0c780a9b704f5a3eeb6e4d84ebe42a29845c81899a3c",
+            "LICENSE-LLVM.txt": "729615317e28dd03907e46f0fc3b5e88f7853cee61d1a1471d2749335516b46f",
+            "LICENSE-MS.txt": "734f72f239fe7b07b4c7203f294c1a7ce27095687278bab7e56d630d7c672963",
+            "bin/x64/dxc.exe": "aa7965b3763d9c710baaa5a28cedcc633449962a75d1391d161a85304a41b3e2",
+            "bin/x64/dxcompiler.dll": "0689e2fee0a1c9df8662a59680469f24e2a3ad7ce6bbbcc9284f7a83172bfc59",
+            "bin/x64/dxil.dll": "64be2368211d257a038a7d4ea6bb3e24c878eb8d588c7b8414fccf759b69c2ac"
+          }
+        },
+        "runtime_dependencies": {
+          "status": "PASS",
+          "commands": [
+            {
+              "args": [
+                "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\dumpbin.EXE",
+                "/NOLOGO",
+                "/DEPENDENTS",
+                "C:\\Users\\mrkda\\Projects\\shark\\.tools\\graphics\\dxc\\1.9.2609-windows-x86_64\\bin\\x64\\dxc.exe"
+              ],
+              "returncode": 0,
+              "stdout": "\nDump of file C:\\Users\\mrkda\\Projects\\shark\\.tools\\graphics\\dxc\\1.9.2609-windows-x86_64\\bin\\x64\\dxc.exe\n\nFile Type: EXECUTABLE IMAGE\n\n  Image has the following dependencies:\n\n    KERNEL32.dll\n    ole32.dll\n    OLEAUT32.dll\n    VERSION.dll\n\n  Summary\n\n        6000 .data\n        1000 .fptable\n        6000 .pdata\n       CF000 .rdata\n        4000 .reloc\n        1000 .rsrc\n       6E000 .text\n",
+              "stderr": "",
+              "timed_out": false,
+              "cleanup_errors": []
+            },
+            {
+              "args": [
+                "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\dumpbin.EXE",
+                "/NOLOGO",
+                "/DEPENDENTS",
+                "C:\\Users\\mrkda\\Projects\\shark\\.tools\\graphics\\dxc\\1.9.2609-windows-x86_64\\bin\\x64\\dxcompiler.dll"
+              ],
+              "returncode": 0,
+              "stdout": "\nDump of file C:\\Users\\mrkda\\Projects\\shark\\.tools\\graphics\\dxc\\1.9.2609-windows-x86_64\\bin\\x64\\dxcompiler.dll\n\nFile Type: DLL\n\n  Image has the following dependencies:\n\n    KERNEL32.dll\n    ole32.dll\n    OLEAUT32.dll\n    ADVAPI32.dll\n\n  Summary\n\n       50000 .data\n        1000 .fptable\n       80000 .pdata\n      37C000 .rdata\n       1C000 .reloc\n        1000 .rsrc\n     10D9000 .text\n",
+              "stderr": "",
+              "timed_out": false,
+              "cleanup_errors": []
+            },
+            {
+              "args": [
+                "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\dumpbin.EXE",
+                "/NOLOGO",
+                "/DEPENDENTS",
+                "C:\\Users\\mrkda\\Projects\\shark\\.tools\\graphics\\dxc\\1.9.2609-windows-x86_64\\bin\\x64\\dxil.dll"
+              ],
+              "returncode": 0,
+              "stdout": "\nDump of file C:\\Users\\mrkda\\Projects\\shark\\.tools\\graphics\\dxc\\1.9.2609-windows-x86_64\\bin\\x64\\dxil.dll\n\nFile Type: DLL\n\n  Image has the following dependencies:\n\n    KERNEL32.dll\n    ADVAPI32.dll\n    ole32.dll\n\n  Summary\n\n        A000 .data\n        1000 .fptable\n       10000 .pdata\n       57000 .rdata\n        3000 .reloc\n        1000 .rsrc\n      175000 .text\n",
+              "stderr": "",
+              "timed_out": false,
+              "cleanup_errors": []
+            }
+          ],
+          "scope": "Observed native tool dependencies; not a portable package or engine runtime qualification"
+        },
+        "compile": {
+          "status": "PASS",
+          "commands": [
+            {
+              "phase": "version",
+              "args": [
+                "C:\\Users\\mrkda\\Projects\\shark\\.tools\\graphics\\dxc\\1.9.2609-windows-x86_64\\bin\\x64\\dxc.exe",
+                "--version"
+              ],
+              "returncode": 0,
+              "stdout": "dxcompiler.dll: 1.9(5512-01b62ad4)(1.9.2609.5) - 1.9.2609.5 (01b62ad47)\n",
+              "stderr": "",
+              "timed_out": false,
+              "cleanup_errors": []
+            },
+            {
+              "phase": "compile-1",
+              "args": [
+                "C:\\Users\\mrkda\\Projects\\shark\\.tools\\graphics\\dxc\\1.9.2609-windows-x86_64\\bin\\x64\\dxc.exe",
+                "-spirv",
+                "-fspv-target-env=vulkan1.3",
+                "-T",
+                "cs_6_0",
+                "-E",
+                "main",
+                "-O3",
+                "-Ges",
+                "-WX",
+                "C:\\Users\\mrkda\\Projects\\shark\\probes\\graphics\\shaders\\setup.hlsl",
+                "-Fo",
+                "C:\\Users\\mrkda\\Projects\\shark\\out\\graphics-tools\\windows-final-lock\\setup-1.spv"
+              ],
+              "returncode": 0,
+              "stdout": "",
+              "stderr": "",
+              "timed_out": false,
+              "cleanup_errors": []
+            },
+            {
+              "phase": "compile-2",
+              "args": [
+                "C:\\Users\\mrkda\\Projects\\shark\\.tools\\graphics\\dxc\\1.9.2609-windows-x86_64\\bin\\x64\\dxc.exe",
+                "-spirv",
+                "-fspv-target-env=vulkan1.3",
+                "-T",
+                "cs_6_0",
+                "-E",
+                "main",
+                "-O3",
+                "-Ges",
+                "-WX",
+                "C:\\Users\\mrkda\\Projects\\shark\\probes\\graphics\\shaders\\setup.hlsl",
+                "-Fo",
+                "C:\\Users\\mrkda\\Projects\\shark\\out\\graphics-tools\\windows-final-lock\\setup-2.spv"
+              ],
+              "returncode": 0,
+              "stdout": "",
+              "stderr": "",
+              "timed_out": false,
+              "cleanup_errors": []
+            },
+            {
+              "phase": "reject-invalid",
+              "args": [
+                "C:\\Users\\mrkda\\Projects\\shark\\.tools\\graphics\\dxc\\1.9.2609-windows-x86_64\\bin\\x64\\dxc.exe",
+                "-spirv",
+                "-fspv-target-env=vulkan1.3",
+                "-T",
+                "cs_6_0",
+                "-E",
+                "main",
+                "-O3",
+                "-Ges",
+                "-WX",
+                "C:\\Users\\mrkda\\Projects\\shark\\out\\graphics-tools\\windows-final-lock\\invalid.hlsl",
+                "-Fo",
+                "C:\\Users\\mrkda\\Projects\\shark\\out\\graphics-tools\\windows-final-lock\\invalid.spv"
+              ],
+              "returncode": 2147500037,
+              "stdout": "",
+              "stderr": "C:\\Users\\mrkda\\Projects\\shark\\out\\graphics-tools\\windows-final-lock\\invalid.hlsl:1:1: error: unknown type name 'This'\nThis is deliberately invalid HLSL.\n^\nC:\\Users\\mrkda\\Projects\\shark\\out\\graphics-tools\\windows-final-lock\\invalid.hlsl:1:8: error: expected ';' after top level declarator\nThis is deliberately invalid HLSL.\n       ^\n       ;\n\n",
+              "timed_out": false,
+              "cleanup_errors": []
+            }
+          ],
+          "independent_spirv_validation": "NOT RUN; locked SPIRV-Tools integration belongs to 02b",
+          "gpu_execution": "NOT RUN; this is an offline setup fixture",
+          "fixture": "probes/graphics/shaders/setup.hlsl",
+          "fixture_sha256": "9110700921ac836ae8a6e22b60056c52177a0c7e8a3f7727fa4cab8e631e65bf",
+          "spirv_sha256": "785cd699eda7595da4428133a624daada73195caf6457708d1209b7f4eb4b795",
+          "spirv_bytes": 640,
+          "spirv_version_word": "0x10600",
+          "repeat_bytes_equal": true,
+          "invalid_shader_rejected": true,
+          "dxc_internal_validation": "enabled (no -Vd)"
+        }
+      }
+    },
+    {
+      "receipt": {
+        "path": "out/graphics-tools/linux-wsl-final-lock/summary.json",
+        "sha256": "0c709c8a08c410ec2d2aef41130811b036417032ad1b0b19867a47ab6624371d",
+        "bytes": 6345
+      },
+      "report": {
+        "schema_version": 1,
+        "assignment": "02a",
+        "host": "linux-x86_64",
+        "timestamp_utc": "2026-10-18T00:56:41.275758+00:00",
+        "evidence_directory": "/mnt/c/Users/mrkda/Projects/shark/out/graphics-tools/linux-wsl-final-lock",
+        "os": "Linux-6.18.33.2-microsoft-standard-WSL2-x86_64-with-glibc2.43",
+        "python": "3.14.4",
+        "status": "PASS",
+        "scope": "offline DXC setup, no GPU qualification",
+        "dependency_lock_sha256": "7ea551e86e97f3be33796d2bdcc4ce2fe8cff9f9bdf64d805f90dde1e48326c0",
+        "version": "1.9.2609",
+        "source_revision": "01b62ad47db7dee3dd33f90e7339cf9e860b3f93",
+        "provenance": {
+          "url": "https://github.com/microsoft/DirectXShaderCompiler/releases/download/v1.9.2609/linux_dxc_2026_09_28.x86_x64.tar.gz",
+          "archive_sha256": "96faadc7f5c282d2ffda49804beb4c3ee38127bc252b723234e3c5cdf7aa39a1",
+          "files": {
+            "LICENSE-LLVM.txt": "729615317e28dd03907e46f0fc3b5e88f7853cee61d1a1471d2749335516b46f",
+            "LICENSE-MS.txt": "734f72f239fe7b07b4c7203f294c1a7ce27095687278bab7e56d630d7c672963",
+            "bin/dxc": "3dfc856b76291ffc7e45e21fd37ab80e85b34101de76a03253df6608785c92a0",
+            "lib/libdxcompiler.so": "d40e4a7b3b46490313f4bfd08101946483a673831b3ea65c93d746de1c2f9216",
+            "lib/libdxil.so": "730b31420ea0c38f711c1eb581613bfd0797c53371a55f721838b29d10881c8c"
+          }
+        },
+        "runtime_dependencies": {
+          "status": "PASS",
+          "commands": [
+            {
+              "args": [
+                "/usr/bin/ldd",
+                "/mnt/c/Users/mrkda/Projects/shark/.tools/graphics/dxc/1.9.2609-linux-x86_64/bin/dxc"
+              ],
+              "returncode": 0,
+              "stdout": "\tlinux-vdso.so.1 (0x0000773d6d337000)\n\tlibdxcompiler.so => /mnt/c/Users/mrkda/Projects/shark/.tools/graphics/dxc/1.9.2609-linux-x86_64/bin/../lib/libdxcompiler.so (0x0000773d6b9a2000)\n\tlibz.so.1 => /usr/lib/x86_64-linux-gnu/libz.so.1 (0x0000773d6b97e000)\n\tlibm.so.6 => /usr/lib/x86_64-linux-gnu/libm.so.6 (0x0000773d6b858000)\n\tlibstdc++.so.6 => /usr/lib/x86_64-linux-gnu/libstdc++.so.6 (0x0000773d6b400000)\n\tlibgcc_s.so.1 => /usr/lib/x86_64-linux-gnu/libgcc_s.so.1 (0x0000773d6b82a000)\n\tlibc.so.6 => /usr/lib/x86_64-linux-gnu/libc.so.6 (0x0000773d6b000000)\n\t/lib64/ld-linux-x86-64.so.2 (0x0000773d6d339000)\n",
+              "stderr": "",
+              "timed_out": false,
+              "cleanup_errors": []
+            },
+            {
+              "args": [
+                "/usr/bin/dpkg-query",
+                "-W",
+                "-f=${binary:Package}\t${Version}\n",
+                "libc6",
+                "libstdc++6",
+                "libgcc-s1",
+                "zlib1g"
+              ],
+              "returncode": 0,
+              "stdout": "libc6:amd64\t2.43-2ubuntu2.4\nlibgcc-s1:amd64\t16-20260322-1ubuntu1\nlibstdc++6:amd64\t16-20260322-1ubuntu1\nzlib1g:amd64\t1:1.3.dfsg+really1.3.1-1ubuntu3\n",
+              "stderr": "",
+              "timed_out": false,
+              "cleanup_errors": []
+            }
+          ],
+          "scope": "Observed native tool dependencies; not a portable package or engine runtime qualification"
+        },
+        "compile": {
+          "status": "PASS",
+          "commands": [
+            {
+              "phase": "version",
+              "args": [
+                "/mnt/c/Users/mrkda/Projects/shark/.tools/graphics/dxc/1.9.2609-linux-x86_64/bin/dxc",
+                "--version"
+              ],
+              "returncode": 0,
+              "stdout": "libdxcompiler.so: 1.9(5512-01b62ad4)(1.9.2609.5)\n",
+              "stderr": "",
+              "timed_out": false,
+              "cleanup_errors": []
+            },
+            {
+              "phase": "compile-1",
+              "args": [
+                "/mnt/c/Users/mrkda/Projects/shark/.tools/graphics/dxc/1.9.2609-linux-x86_64/bin/dxc",
+                "-spirv",
+                "-fspv-target-env=vulkan1.3",
+                "-T",
+                "cs_6_0",
+                "-E",
+                "main",
+                "-O3",
+                "-Ges",
+                "-WX",
+                "/mnt/c/Users/mrkda/Projects/shark/probes/graphics/shaders/setup.hlsl",
+                "-Fo",
+                "/mnt/c/Users/mrkda/Projects/shark/out/graphics-tools/linux-wsl-final-lock/setup-1.spv"
+              ],
+              "returncode": 0,
+              "stdout": "",
+              "stderr": "",
+              "timed_out": false,
+              "cleanup_errors": []
+            },
+            {
+              "phase": "compile-2",
+              "args": [
+                "/mnt/c/Users/mrkda/Projects/shark/.tools/graphics/dxc/1.9.2609-linux-x86_64/bin/dxc",
+                "-spirv",
+                "-fspv-target-env=vulkan1.3",
+                "-T",
+                "cs_6_0",
+                "-E",
+                "main",
+                "-O3",
+                "-Ges",
+                "-WX",
+                "/mnt/c/Users/mrkda/Projects/shark/probes/graphics/shaders/setup.hlsl",
+                "-Fo",
+                "/mnt/c/Users/mrkda/Projects/shark/out/graphics-tools/linux-wsl-final-lock/setup-2.spv"
+              ],
+              "returncode": 0,
+              "stdout": "",
+              "stderr": "",
+              "timed_out": false,
+              "cleanup_errors": []
+            },
+            {
+              "phase": "reject-invalid",
+              "args": [
+                "/mnt/c/Users/mrkda/Projects/shark/.tools/graphics/dxc/1.9.2609-linux-x86_64/bin/dxc",
+                "-spirv",
+                "-fspv-target-env=vulkan1.3",
+                "-T",
+                "cs_6_0",
+                "-E",
+                "main",
+                "-O3",
+                "-Ges",
+                "-WX",
+                "/mnt/c/Users/mrkda/Projects/shark/out/graphics-tools/linux-wsl-final-lock/invalid.hlsl",
+                "-Fo",
+                "/mnt/c/Users/mrkda/Projects/shark/out/graphics-tools/linux-wsl-final-lock/invalid.spv"
+              ],
+              "returncode": 5,
+              "stdout": "",
+              "stderr": "/mnt/c/Users/mrkda/Projects/shark/out/graphics-tools/linux-wsl-final-lock/invalid.hlsl:1:1: error: unknown type name 'This'\nThis is deliberately invalid HLSL.\n^\n/mnt/c/Users/mrkda/Projects/shark/out/graphics-tools/linux-wsl-final-lock/invalid.hlsl:1:8: error: expected ';' after top level declarator\nThis is deliberately invalid HLSL.\n       ^\n       ;\n\n",
+              "timed_out": false,
+              "cleanup_errors": []
+            }
+          ],
+          "independent_spirv_validation": "NOT RUN; locked SPIRV-Tools integration belongs to 02b",
+          "gpu_execution": "NOT RUN; this is an offline setup fixture",
+          "fixture": "probes/graphics/shaders/setup.hlsl",
+          "fixture_sha256": "9110700921ac836ae8a6e22b60056c52177a0c7e8a3f7727fa4cab8e631e65bf",
+          "spirv_sha256": "785cd699eda7595da4428133a624daada73195caf6457708d1209b7f4eb4b795",
+          "spirv_bytes": 640,
+          "spirv_version_word": "0x10600",
+          "repeat_bytes_equal": true,
+          "invalid_shader_rejected": true,
+          "dxc_internal_validation": "enabled (no -Vd)"
+        }
+      }
+    }
+  ],
+  "linux_syntax_only": {
+    "kind": "Supplemental Linux syntax-only; no native graphics linking or execution",
+    "compiler": "g++ (Ubuntu 15.2.0-16ubuntu1) 15.2.0\nCopyright (C) 2025 Free Software Foundation, Inc.\nThis is free software; see the source for copying conditions.  There is NO\nwarranty; not even for MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.\n\n",
+    "command": [
+      "g++",
+      "-std=c++20",
+      "-fsyntax-only",
+      "-Wall",
+      "-Wextra",
+      "-Wpedantic",
+      "-Wconversion",
+      "-Wsign-conversion",
+      "-Werror",
+      "-DVULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1",
+      "-DVK_ENABLE_BETA_EXTENSIONS",
+      "-DSHARK_PROBE_VERSION=\"syntax-only\"",
+      "-DSHARK_PROBE_LOCK_SHA256=\"syntax-only\"",
+      "-DSHARK_PROBE_SOURCE_SHA256=\"syntax-only\"",
+      "-DSHARK_PROBE_COMPILER=\"GNU-15.2.0-syntax-only\"",
+      "-isystem",
+      "build/graphics-windows/_deps/vulkanheaders-src/include",
+      "-isystem",
+      "build/graphics-windows/_deps/glfw-src/include",
+      "-isystem",
+      "build/graphics-windows/_deps/nvrhi-src/include",
+      "probes/graphics/main.cpp"
+    ],
+    "exit_code": 0,
+    "stdout": "",
+    "stderr": "",
+    "elapsed_seconds": 24.14286780357361,
+    "source_sha256": "eb4029936833f50a143eef5a983ba6d8b18a0e9cce4608fa4f35805b44d7bdab"
+  },
+  "headless": {
+    "command": "wsl -u root -- bash -lc 'cd /mnt/c/Users/mrkda/Projects/shark && bash tools/ci/headless/chroot.sh /var/tmp/shark-headless-02a-20261018 .tools/headless out/ci/02a-headless'",
+    "result": {
+      "schema_version": 1,
+      "status": "PASS",
+      "phases": [
+        {
+          "name": "configure",
+          "command": [
+            "cmake",
+            "--preset",
+            "server-only",
+            "-B",
+            "/work/build/server-only",
+            "-DCMAKE_CXX_COMPILER=g++-13",
+            "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+            "-DSHARK_INJECT_TEST_FAILURE=OFF"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.271,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "build",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/build/server-only",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 3.281,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "boundary",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/build/server-only",
+            "--target",
+            "shark_check_server_boundary"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.645,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "install",
+          "command": [
+            "cmake",
+            "--install",
+            "/work/build/server-only",
+            "--prefix",
+            "/evidence/server-only/package",
+            "--component",
+            "Server"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.172,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "closure",
+          "command": [
+            "/opt/shark-headless/venv/bin/python",
+            "/source/tools/check_server_closure.py",
+            "--build-dir",
+            "/work/build/server-only",
+            "--package-dir",
+            "/evidence/server-only/package",
+            "--output",
+            "/evidence/server-only/closure.json"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.418,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "package-smoke",
+          "command": [
+            "/evidence/server-only/package/bin/Server",
+            "--run-for-ms",
+            "20"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.037,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "configure",
+          "command": [
+            "cmake",
+            "--preset",
+            "server-debug",
+            "-B",
+            "/work/build/server-debug",
+            "-DCMAKE_CXX_COMPILER=g++-13",
+            "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+            "-DSHARK_INJECT_TEST_FAILURE=OFF"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 2.792,
+          "status": "PASS",
+          "preset": "server-debug"
+        },
+        {
+          "name": "build",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/build/server-debug",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 30.875,
+          "status": "PASS",
+          "preset": "server-debug"
+        },
+        {
+          "name": "boundary",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/build/server-debug",
+            "--target",
+            "shark_check_server_boundary"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.325,
+          "status": "PASS",
+          "preset": "server-debug"
+        },
+        {
+          "name": "test",
+          "command": [
+            "ctest",
+            "--test-dir",
+            "/work/build/server-debug",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "/evidence/server-debug/ctest.xml"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 17.068,
+          "status": "PASS",
+          "preset": "server-debug"
+        },
+        {
+          "name": "configure",
+          "command": [
+            "cmake",
+            "--preset",
+            "server-asan-ubsan",
+            "-B",
+            "/work/build/server-asan-ubsan",
+            "-DCMAKE_CXX_COMPILER=clang++-18",
+            "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+            "-DSHARK_INJECT_TEST_FAILURE=OFF"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 1.875,
+          "status": "PASS",
+          "preset": "server-asan-ubsan"
+        },
+        {
+          "name": "build",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/build/server-asan-ubsan",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 36.038,
+          "status": "PASS",
+          "preset": "server-asan-ubsan"
+        },
+        {
+          "name": "boundary",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/build/server-asan-ubsan",
+            "--target",
+            "shark_check_server_boundary"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.217,
+          "status": "PASS",
+          "preset": "server-asan-ubsan"
+        },
+        {
+          "name": "test",
+          "command": [
+            "ctest",
+            "--test-dir",
+            "/work/build/server-asan-ubsan",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "/evidence/server-asan-ubsan/ctest.xml"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 12.806,
+          "status": "PASS",
+          "preset": "server-asan-ubsan"
+        }
+      ],
+      "started_utc": "2026-10-18T00:57:36.810042+00:00",
+      "injected_failure": false,
+      "input_lock_sha256": "5b0ab6341f2eebf0e1714a3621af4466c95a8d8b3c03b24b0e1097aed61d5934",
+      "limits": "Headless lifecycle/configuration only; no graphics, networking, simulation or MMO capacity qualification",
+      "exit_code": 0,
+      "finished_utc": "2026-10-18T00:59:26.721879+00:00"
+    },
+    "toolchain": {
+      "schema_version": 1,
+      "platform": {
+        "system": "Linux",
+        "release": "6.18.33.2-microsoft-standard-WSL2",
+        "version": "#1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026",
+        "machine": "x86_64"
+      },
+      "python": {
+        "version": "3.12.3",
+        "executable": "/opt/shark-headless/venv/bin/python"
+      },
+      "environment": {},
+      "git_revision": {
+        "command": [
+          "git",
+          "rev-parse",
+          "HEAD"
+        ],
+        "exit_code": 0,
+        "output": "f9b9ea0918433cc279336d057d0a671e3908dff9",
+        "timed_out": false,
+        "cleanup_errors": []
+      },
+      "tools": {
+        "cmake": {
+          "available": true,
+          "path": "/opt/shark-headless/venv/bin/cmake",
+          "sha256": "78d2c98455a108d3bf3822c44522be555df744228411c54b238a80269f4c1586",
+          "command": [
+            "/opt/shark-headless/venv/bin/cmake",
+            "--version"
+          ],
+          "exit_code": 0,
+          "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake).",
+          "timed_out": false,
+          "cleanup_errors": []
+        },
+        "ninja": {
+          "available": true,
+          "path": "/opt/shark-headless/venv/bin/ninja",
+          "sha256": "08639e194fffa7f08b259fc4abfa4803aff66b64de52549cee42ec527d55cea6",
+          "command": [
+            "/opt/shark-headless/venv/bin/ninja",
+            "--version"
+          ],
+          "exit_code": 0,
+          "output": "1.13.2.git.kitware.jobserver-pipe-1",
+          "timed_out": false,
+          "cleanup_errors": []
+        },
+        "clang-format": {
+          "available": true,
+          "path": "/opt/shark-headless/venv/bin/clang-format",
+          "sha256": "72e8b5ce2e5c4c7fd854417b5ae9f6d532a81089ab14afb6c9e2542dfb50070b",
+          "command": [
+            "/opt/shark-headless/venv/bin/clang-format",
+            "--version"
+          ],
+          "exit_code": 0,
+          "output": "clang-format version 20.1.8",
+          "timed_out": false,
+          "cleanup_errors": []
+        }
+      },
+      "packages": {
+        "cmake": "3.31.10",
+        "ninja": "1.13.2",
+        "clang-format": "20.1.8",
+        "PyYAML": "6.0.3"
+      },
+      "qualification_profile": "M01 minimal Ubuntu 24.04 image; Python 3.12.3 snapshot exception",
+      "hardware": {
+        "cpu_models": [
+          "Intel(R) Core(TM) i9-14900HX"
+        ],
+        "logical_cpus": 32,
+        "visible_memory": {
+          "MemTotal": "16221904 kB",
+          "MemAvailable": "15357800 kB"
+        },
+        "scope": "CPU/memory visible to container or WSL; shared host kernel, not bare-metal qualification"
+      },
+      "source_worktree": {
+        "exit_code": 0,
+        "status": " M .agents/skills/shark-renderer-validation/SKILL.md\n M .gitignore\n M AGENTS.md\n M CMakeLists.txt\n M CMakePresets.json\n M README.md\n M dependencies.lock.json\n M docs/architecture/0002-dependencies.md\n M docs/architecture/0003-platforms.md\n M docs/building.md\n M docs/ci.md\n M docs/coverage/README.md\n M docs/coverage/requirements.json\n M docs/roadmap/human-agent-plan.md\n M docs/roadmap/mmorpg-plan.md\n M tests/CMakeLists.txt\n M tools/check_format.py\n M tools/check_server_closure.py\n M tools/tests/test_server_closure.py\n M tools/toolchain_report.py\n M tools/validate_contract.py\n?? cmake/GraphicsDependencies.cmake\n?? docs/graphics-probe.md\n?? docs/roadmap/graphics-plan.md\n?? probes/graphics/CMakeLists.txt\n?? probes/graphics/check_cli.py\n?? probes/graphics/main.cpp\n?? probes/graphics/report.hpp\n?? probes/graphics/report_tests.cpp\n?? probes/graphics/shaders/setup.hlsl\n?? tools/graphics_probe.py\n?? tools/prepare_graphics_tools.py\n?? tools/tests/test_graphics_dependencies.py\n?? tools/tests/test_graphics_probe.py\n?? tools/tests/test_graphics_tools.py\n",
+        "scope": "Uncommitted local checks describe the worktree, not only git_revision"
+      }
+    },
+    "closure_artifact": {
+      "path": "out/ci/02a-headless/server-only/closure.json",
+      "sha256": "f64842a209a79ebf1854db8f7eac670daacb98f2679c318fee7448145d4edc05",
+      "bytes": 146396
+    },
+    "targets": [
+      "EngineCore",
+      "Server",
+      "shark_check_server_boundary"
+    ],
+    "cache": {
+      "SHARK_BUILD_CLIENT": "OFF",
+      "SHARK_BUILD_SERVER": "ON",
+      "SHARK_BUILD_EDITOR": "OFF",
+      "SHARK_BUILD_TESTS": "OFF",
+      "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
+      "SHARK_SANITIZER": "none",
+      "CMAKE_GENERATOR": "Ninja"
+    },
+    "compiler_discovered_input_count": 324,
+    "compiled_sources": [
+      {
+        "path": "/source/engine/core/src/bootstrap.cpp",
+        "sha256": "c0040b72a69f0bb8549c92c0baa5c394b743ef0f6b46b52570d28e38c86dd126",
+        "arguments": [
+          "/usr/bin/g++-13",
+          "-I/source/engine/core/../include",
+          "-I/source/engine/core/include",
+          "-I/work/build/server-only/engine/core/generated",
+          "-O3",
+          "-DNDEBUG",
+          "-std=c++20",
+          "-Wall",
+          "-Wextra",
+          "-Wpedantic",
+          "-Wconversion",
+          "-Wsign-conversion",
+          "-Werror",
+          "-o",
+          "engine/core/CMakeFiles/EngineCore.dir/src/bootstrap.cpp.o",
+          "-c",
+          "/source/engine/core/src/bootstrap.cpp"
+        ],
+        "object": "engine/core/CMakeFiles/EngineCore.dir/src/bootstrap.cpp.o"
+      },
+      {
+        "path": "/source/engine/core/src/server_config.cpp",
+        "sha256": "7923bbd4f561b51e47823e1959e8d2be05e4fa6f294bcaec39c6d1cc3c1b7fc8",
+        "arguments": [
+          "/usr/bin/g++-13",
+          "-I/source/engine/core/../include",
+          "-I/source/engine/core/include",
+          "-I/work/build/server-only/engine/core/generated",
+          "-O3",
+          "-DNDEBUG",
+          "-std=c++20",
+          "-Wall",
+          "-Wextra",
+          "-Wpedantic",
+          "-Wconversion",
+          "-Wsign-conversion",
+          "-Werror",
+          "-o",
+          "engine/core/CMakeFiles/EngineCore.dir/src/server_config.cpp.o",
+          "-c",
+          "/source/engine/core/src/server_config.cpp"
+        ],
+        "object": "engine/core/CMakeFiles/EngineCore.dir/src/server_config.cpp.o"
+      },
+      {
+        "path": "/source/server/main.cpp",
+        "sha256": "b88976c44e7761b8b3609f7f6ed068cfc88a40ac83ae24970e8e4b1391ab0804",
+        "arguments": [
+          "/usr/bin/g++-13",
+          "-I/source/engine/core/../include",
+          "-I/source/engine/core/include",
+          "-O3",
+          "-DNDEBUG",
+          "-std=c++20",
+          "-Wall",
+          "-Wextra",
+          "-Wpedantic",
+          "-Wconversion",
+          "-Wsign-conversion",
+          "-Werror",
+          "-o",
+          "server/CMakeFiles/Server.dir/main.cpp.o",
+          "-c",
+          "/source/server/main.cpp"
+        ],
+        "object": "server/CMakeFiles/Server.dir/main.cpp.o"
+      }
+    ],
+    "package": [
+      {
+        "path": "bin/Server",
+        "sha256": "405b5b069fe3ab56e38c26c96ee9e4e6d49176410e512a9292439efaf06cf213",
+        "size_bytes": 17752
+      }
+    ],
+    "elf_needed": [
+      "libstdc++.so.6",
+      "libgcc_s.so.1",
+      "libc.so.6"
+    ],
+    "resolved_libraries": [
+      {
+        "name": "libstdc++.so.6",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+        "sha256": "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11"
+      },
+      {
+        "name": "libgcc_s.so.1",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+        "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+      },
+      {
+        "name": "libc.so.6",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+        "sha256": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf"
+      },
+      {
+        "name": "libm.so.6",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+        "sha256": "fce00b6f25f459cf4ae0b7fae4257909a1a8a86f9149e7c029a5d617baf1ccd0"
+      },
+      {
+        "name": "ld-linux-x86-64.so.2",
+        "resolved_path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+        "sha256": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da"
+      }
+    ],
+    "junit": [
+      {
+        "path": "out/ci/02a-headless/server-debug/ctest.xml",
+        "sha256": "9061a00c4d120b1adb8944cb9ad1124f697b058ae71e1e622c73f25c02d8f26c",
+        "bytes": 11544,
+        "tests": 16,
+        "timestamp": "2026-10-18T00:58:18",
+        "status": "PASS",
+        "skipped": 0,
+        "names": [
+          "shark.boundary",
+          "shark.unit",
+          "shark.failure-sentinel",
+          "shark.server.unit",
+          "shark.boundary.fixture",
+          "shark.server.lifecycle",
+          "shark.tooling.processes",
+          "shark.tooling.sources",
+          "shark.contract",
+          "shark.repository",
+          "shark.tooling.server-closure",
+          "shark.boundary.headers",
+          "shark.tooling.headless-environment",
+          "shark.tooling.graphics-evidence",
+          "shark.tooling.graphics-dependencies",
+          "shark.tooling.graphics-tools"
+        ]
+      },
+      {
+        "path": "out/ci/02a-headless/server-asan-ubsan/ctest.xml",
+        "sha256": "bb0588ea6d445696cff994fa97b4fb80faece5dc6fc7a6a6bab79d9c08cbf672",
+        "bytes": 11542,
+        "tests": 16,
+        "timestamp": "2026-10-18T00:59:13",
+        "status": "PASS",
+        "skipped": 0,
+        "names": [
+          "shark.boundary",
+          "shark.unit",
+          "shark.failure-sentinel",
+          "shark.server.unit",
+          "shark.boundary.fixture",
+          "shark.server.lifecycle",
+          "shark.tooling.processes",
+          "shark.tooling.sources",
+          "shark.contract",
+          "shark.repository",
+          "shark.tooling.server-closure",
+          "shark.boundary.headers",
+          "shark.tooling.headless-environment",
+          "shark.tooling.graphics-evidence",
+          "shark.tooling.graphics-dependencies",
+          "shark.tooling.graphics-tools"
+        ]
+      }
+    ],
+    "clean_runtime": {
+      "status": "PASS",
+      "scope": "installed package in pristine pinned Ubuntu userspace chroot, isolated network, shared host kernel; rootfs is writable"
+    },
+    "package_inventory": {
+      "path": "out/ci/02a-headless/installed-packages.tsv",
+      "sha256": "28343c3c868e41beb5161811e9670cc51b57413c2848e6de2fa6b5698e1b92fa",
+      "bytes": 7400
+    },
+    "clean_runtime_packages": {
+      "path": "out/ci/02a-headless/clean-runtime-packages.tsv",
+      "sha256": "be8e1143aa04d777051479065b797bf22085bbee5a20367abf22d881a0de28e5",
+      "bytes": 3449
+    }
+  },
+  "limits": [
+    "Setup only: no draw/dispatch/readback/lifecycle stress/soak/packaged graphics qualification.",
+    "Vulkan validation unavailable; both local GPU startups explicitly used validation off with NVRHI wrapper on.",
+    "Local GPUs are supplemental, not the nine named hardware matrix rows.",
+    "Linux syntax/DXC checks are WSL Ubuntu26.04; no linked Linux graphics build or native graphics evidence.",
+    "Server checks use pinned Ubuntu24.04 userspace in WSL private chroots; runtime root is writable; not Docker/native hardware.",
+    "Native Mac graphics/compiler/driver builds, independent SPIR-V validation and Vulkan layers remain unqualified.",
+    "No hosted CI result for these uncommitted 02a changes; M01 hosted evidence remains historical."
+  ]
+}

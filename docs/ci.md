@@ -9,7 +9,7 @@ all fourteen jobs and all 120 CPU tests on the same revision. See the
 [durable gate evidence](coverage/evidence/01-ci-gate.json). The user reserves Git
 staging, committing and pushing.
 
-**M01 remains the current assignment and its hosted gate is PASS** at
+**M01's hosted gate is PASS** at
 `d658d69c21c492c844f5678f931b1ddf955d25cd`. The ordinary push and restored manual
 run pass all fifteen jobs and all 206 CTests. The intervening injected run reaches
 193 tests, failing only the thirteen intended sentinels while the other 180 pass;
@@ -17,8 +17,11 @@ headless sanitizer and clean-runtime stages stop after its Debug failure.
 The [M01 hosted follow-up](handoffs/M01-ci-verification.md) and
 [durable gate evidence](coverage/evidence/M01-ci-gate.json) record actual runs,
 Docker/package qualification and the fifteen required checks. The
-[MMORPG execution plan](roadmap/mmorpg-plan.md) places 02 next, starting with 02a
-dependency/probe setup; it has not started. Network, database, world-handoff and
+[MMORPG execution plan](roadmap/mmorpg-plan.md) now places work in 02a
+dependency/probe setup. The [opt-in probe](graphics-probe.md) adds CPU checks to
+ordinary CI while graphics builds/device runs use explicit graphics presets.
+The historical M01 job/test counts above remain tied to that revision; new local
+02a checks do not prove a new hosted run. Network, database, world-handoff and
 active-load tiers remain planned.
 
 ## Jobs and required checks

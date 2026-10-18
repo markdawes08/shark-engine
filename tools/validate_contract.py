@@ -41,11 +41,14 @@ DOCUMENTS = (
     "docs/architecture/0008-human-agent-authoring.md",
     "docs/roadmap/mmorpg-plan.md",
     "docs/roadmap/human-agent-plan.md",
+    "docs/roadmap/graphics-plan.md",
+    "docs/graphics-probe.md",
     "docs/coverage/README.md",
     "docs/handoffs/00-architecture-contract.md",
     "docs/handoffs/mmorpg-planning-amendment.md",
     "docs/handoffs/M01-headless-server.md",
     "docs/handoffs/M01-ci-verification.md",
+    "docs/handoffs/02a-graphics-setup.md",
     "docs/handoffs/human-agent-planning-amendment.md",
 )
 

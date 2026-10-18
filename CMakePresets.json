@@ -19,7 +19,8 @@
         "SHARK_INJECT_TEST_FAILURE": "OFF",
         "SHARK_SANITIZER": "none",
         "SHARK_BUILD_CLIENT": "ON",
-        "SHARK_BUILD_SERVER": "ON"
+        "SHARK_BUILD_SERVER": "ON",
+        "SHARK_BUILD_GRAPHICS_PROBE": "OFF"
       }
     },
     {
@@ -207,6 +208,54 @@
         "lhs": "${hostSystemName}",
         "rhs": "Linux"
       }
+    },
+    {
+      "name": "graphics-windows",
+      "inherits": "windows-debug",
+      "displayName": "Opt-in windows graphics feasibility probe",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Windows"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "cl",
+        "SHARK_BUILD_GRAPHICS_PROBE": "ON",
+        "SHARK_BUILD_EDITOR": "OFF",
+        "SHARK_BUILD_SERVER": "OFF"
+      }
+    },
+    {
+      "name": "graphics-linux",
+      "inherits": "linux-debug",
+      "displayName": "Opt-in linux graphics feasibility probe",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "gcc",
+        "SHARK_BUILD_GRAPHICS_PROBE": "ON",
+        "SHARK_BUILD_EDITOR": "OFF",
+        "SHARK_BUILD_SERVER": "OFF"
+      }
+    },
+    {
+      "name": "graphics-macos",
+      "inherits": "macos-debug",
+      "displayName": "Opt-in macos graphics feasibility probe",
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Darwin"
+      },
+      "cacheVariables": {
+        "CMAKE_C_COMPILER": "/usr/bin/clang",
+        "SHARK_BUILD_GRAPHICS_PROBE": "ON",
+        "SHARK_BUILD_EDITOR": "OFF",
+        "SHARK_BUILD_SERVER": "OFF"
+      }
     }
   ],
   "buildPresets": [
@@ -261,6 +310,18 @@
     {
       "name": "server-asan-ubsan",
       "configurePreset": "server-asan-ubsan"
+    },
+    {
+      "name": "graphics-windows",
+      "configurePreset": "graphics-windows"
+    },
+    {
+      "name": "graphics-linux",
+      "configurePreset": "graphics-linux"
+    },
+    {
+      "name": "graphics-macos",
+      "configurePreset": "graphics-macos"
     }
   ],
   "testPresets": [
@@ -387,6 +448,36 @@
       "environment": {
         "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
         "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+      }
+    },
+    {
+      "name": "graphics-windows",
+      "configurePreset": "graphics-windows",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "graphics-linux",
+      "configurePreset": "graphics-linux",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "graphics-macos",
+      "configurePreset": "graphics-macos",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
       }
     }
   ]
