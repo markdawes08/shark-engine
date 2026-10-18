@@ -1,6 +1,9 @@
 add_library(EngineClient STATIC
     src/bootstrap.cpp src/input.cpp src/frame_loop.cpp src/window.cpp src/window_events.cpp src/window_launch.cpp
     src/graphics.cpp src/presentation.cpp src/presentation_launch.cpp)
+if(WIN32)
+    target_sources(EngineClient PRIVATE src/graphics_queue_waiter_win32.cpp)
+endif()
 if(SHARK_NATIVE_WINDOW)
     target_sources(EngineClient PRIVATE src/window_glfw.cpp)
     target_link_libraries(EngineClient PRIVATE SharkWindowDependencies)

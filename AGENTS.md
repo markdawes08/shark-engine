@@ -26,10 +26,16 @@ swapchain, submission and presentation lifecycle, is complete under the
 current-machine scope.** **05c failure/stress fixtures are implemented, but its
 qualification gate remains open:** a minimal raw Win32/Vulkan reproducer retains
 one GDI object per NVIDIA swapchain lifetime; the pinned driver's desktop-DC
-acquisition is identified. Intel also retains USER objects after teardown, and
-an Intel ASan fault child timed out after recording native cleanup. The
-[follow-up investigation](docs/handoffs/05c-failure-investigation.md) records the
-isolations and remaining limits. Do not mark full 05 PASS or start 06 while
+acquisition is identified. Intel USER growth also reproduces in 40 raw
+Win32/Vulkan lifetimes outside Shark, GLFW and NVRHI; tracing identifies failed
+driver-owned hook removals after their driver-created target threads begin exit.
+An original Intel ASan
+fault run timed out after recording native cleanup; a fixed 64-child diagnostic
+sequence did not reproduce or explain it. The separate Windows queue-worker
+thread-exit deadline defect is fixed and regression-tested. The
+[latest investigation](docs/handoffs/05c-intel-asan-investigation.md) records these
+results and limits; the [earlier investigation](docs/handoffs/05c-failure-investigation.md)
+retains NVIDIA attribution. Do not mark full 05 PASS or start 06 while
 these remain unresolved. Read the
 [05c handoff](docs/handoffs/05c-presentation-qualification.md) and
 [qualification contract](docs/presentation-qualification.md) before continuing;

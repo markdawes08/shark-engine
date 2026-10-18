@@ -1,0 +1,1173 @@
+{
+  "schema_version": 1,
+  "checkpoint": "05c",
+  "status": "PASS",
+  "qualification": "NOT_RUN",
+  "assignment_05": "NOT_RUN",
+  "base_revision": "9613becc8fb4d59808dfc117120e92283b7b604b",
+  "result_revision": "uncommitted worktree",
+  "scope": "Separate Windows GraphicsQueueWaiter thread-exit deadline correction and focused regression. This does not resolve the original Intel ASan post-closed process-exit timeout or either GPU resource-retention gate.",
+  "behavior": "WaitForSingleObject observes the owned Windows thread handle before join. Zero/sub-millisecond requests poll; the existing one-second clamp is retained without a second wait budget. Timeout/error keeps worker and completion owned. Core/Server remain unchanged; non-Windows CPU path still bounds the action wait only.",
+  "source_inputs": {
+    "engine/client/CMakeLists.txt": "37f73283e5cc5e12a8480a720626333a6a7435511521df925fbc1dfabad7a64d",
+    "engine/client/src/graphics_queue_waiter.hpp": "7287b5cd6c38af885883918e3462631eeca0387eccaff8cf6302549932d1d4e3",
+    "engine/client/src/graphics_queue_waiter_win32.cpp": "6cb918a453bd0bb2629a802e227b4bd5099ab39a0dc6d60dfdf91b21fad1aa3f",
+    "tests/client_queue_waiter_tests.cpp": "fa3145c2c749308c062d99e6351b7470c8e07ee87fc8851cab420c67ebd8e006"
+  },
+  "original_proof": {
+    "path": "out/05c-intel-asan/queue-exit-original2/summary.json",
+    "sha256": "faeddf65b986916df3959f4aa8f88e61ab62c92971650da081c68747fd5b4095",
+    "requested_ns": 0,
+    "blocked_us": 257131,
+    "watchdog_ms": 250,
+    "cleanup_completed": true,
+    "preserved_inputs": {
+      "path": "out/05c-intel-asan/queue-exit-original2/preserved-inputs.json",
+      "sha256": "28de7987ce04f12b9990c916d2a1de4da5af72688c619f9271991a65b3730cec"
+    }
+  },
+  "red_green": {
+    "receipt": {
+      "path": "out/05c-intel-asan/queue-fix-focused4/summary.json",
+      "sha256": "1b3af7c05be8fa739b23bf331c565cced7856dde5a5f1ce10b48657cda278e15"
+    },
+    "status": "PASS",
+    "new_queue_tests": 6,
+    "green_assertions": 315,
+    "new_test_sections": [
+      "zero timeout",
+      "999999 ns floor-to-poll",
+      "1 ms timeout"
+    ],
+    "red_original_header": {
+      "path": "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-focused4\\original\\graphics_queue_waiter.hpp",
+      "sha256": "f2ff9a47e75e32a3ef517e7ba963bc2d25b16c58969ca85b50ac6cf5a68a2eef"
+    },
+    "red_expected_assertions_failed": 12,
+    "red_exit_code": 42,
+    "red_cleanup": "Clean; watchdog releases blocked TLS gate before all owned threads join.",
+    "commands": [
+      {
+        "phase": "configure",
+        "command": [
+          "cmake",
+          "--preset",
+          "windows-debug",
+          "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+        ],
+        "expected_exit": 0
+      },
+      {
+        "phase": "build-tests",
+        "command": [
+          "cmake",
+          "--build",
+          "--preset",
+          "windows-debug",
+          "--target",
+          "Tests",
+          "--parallel",
+          "2"
+        ],
+        "expected_exit": 0
+      },
+      {
+        "phase": "inventory",
+        "command": [
+          "ctest",
+          "--preset",
+          "windows-debug",
+          "--show-only"
+        ],
+        "expected_exit": 0
+      },
+      {
+        "phase": "green-queue",
+        "command": [
+          "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug\\bin\\Tests.exe",
+          "Graphics queue*",
+          "--rng-seed",
+          "1337"
+        ],
+        "expected_exit": 0
+      },
+      {
+        "phase": "green-presentation",
+        "command": [
+          "ctest",
+          "--preset",
+          "windows-debug",
+          "-R",
+          "^shark.client.presentation$",
+          "--output-on-failure",
+          "--no-tests=error"
+        ],
+        "expected_exit": 0
+      },
+      {
+        "phase": "red-compile",
+        "command": [
+          "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\HostX64\\x64\\cl.EXE",
+          "/nologo",
+          "/std:c++20",
+          "/EHsc",
+          "/MDd",
+          "/W4",
+          "/WX",
+          "/permissive-",
+          "/Zc:__cplusplus",
+          "/utf-8",
+          "/IC:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-focused4\\original",
+          "/Iengine/core/include",
+          "/external:Ibuild/windows-debug/_deps/catch2-src/src",
+          "/external:Ibuild/windows-debug/_deps/catch2-build/generated-includes",
+          "/external:W0",
+          "tests/client_queue_waiter_tests.cpp",
+          "/FoC:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-focused4\\old-queue.obj",
+          "/FeC:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-focused4\\OldQueueTests.exe",
+          "/link",
+          "/SUBSYSTEM:CONSOLE",
+          "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug\\_deps\\catch2-build\\src\\Catch2Maind.lib",
+          "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug\\_deps\\catch2-build\\src\\Catch2d.lib"
+        ],
+        "expected_exit": 0
+      },
+      {
+        "phase": "red-regression",
+        "command": [
+          "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-focused4\\OldQueueTests.exe",
+          "Graphics queue deadline includes thread-local destruction",
+          "--rng-seed",
+          "1337"
+        ],
+        "expected_exit": 42
+      }
+    ],
+    "logs": [
+      {
+        "path": "out/05c-intel-asan/queue-fix-focused4/green-queue.stdout.log",
+        "sha256": "e5cc0969a0a8c4e68f19880ce111bb010b90a378c17601697a148fb18930acf2"
+      },
+      {
+        "path": "out/05c-intel-asan/queue-fix-focused4/green-presentation.stdout.log",
+        "sha256": "a3f9c91eebe42ccffe90181763bdbe8dded2710c5ab0d4fc0dff8b4a7933088c"
+      },
+      {
+        "path": "out/05c-intel-asan/queue-fix-focused4/red-regression.stdout.log",
+        "sha256": "f512f2f1586d1f7120f9a9f294207c0f8ed7b8ffb3f2de135c1208903b531086"
+      }
+    ],
+    "retained_harness_attempts": [
+      {
+        "path": "out/05c-intel-asan/queue-fix-focused/summary.json",
+        "sha256": "370ec33ae4d5c8569b0236a3452f87df3e3210a99507ef1495fde45b2e354631"
+      },
+      {
+        "path": "out/05c-intel-asan/queue-fix-focused2/summary.json",
+        "sha256": "c545c09c8607721a9cd7fb16f43912218941f1db3d27f2f9650d69174b6c2fac"
+      },
+      {
+        "path": "out/05c-intel-asan/queue-fix-focused3/summary.json",
+        "sha256": "a085cdc72567fc6a9b26cd715437b8014ce0480c702d2ffb416b3e57f9daf820"
+      }
+    ],
+    "harness_attempt_limits": "First isolated red link lacked /SUBSYSTEM:CONSOLE; next two expected the wrong Catch failure exit code (1/12 instead of configured42). Both latter runs showed the same12 failing assertions. No production/test changes were made to obtain final red/green."
+  },
+  "windows_cpu": [
+    {
+      "preset": "windows-debug",
+      "status": "PASS",
+      "passed_test_inventory": 43,
+      "receipt": {
+        "path": "out/05c-intel-asan/queue-fix-regression/windows-debug/summary.json",
+        "sha256": "de48483fa8d3e88c02f5c2867df7776b4e10969ac98f85d8d77b5bd81c0fa069"
+      },
+      "ci_receipt": {
+        "path": "out/05c-intel-asan/queue-fix-regression/windows-debug/current-ci-failed/summary.json",
+        "sha256": "1f655638d621f7741bab4f78a6198ff71b4285e6791d07e2b92ad7c7cce5c817"
+      },
+      "ctest": {
+        "path": "out/05c-intel-asan/queue-fix-regression/windows-debug/current-ci-failed/ctest.xml",
+        "sha256": "4beac0944ecddbf0b452fe5d5c8450bad85de4ec706e3605fd390ca38ac7cd9c"
+      },
+      "original_counts": {
+        "tests": 43,
+        "failures": 1,
+        "disabled": 0,
+        "skipped": 0
+      },
+      "commands": [
+        [
+          "cmake",
+          "--preset",
+          "windows-debug",
+          "-DSHARK_INJECT_TEST_FAILURE=OFF",
+          "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+        ],
+        [
+          "cmake",
+          "--build",
+          "--preset",
+          "windows-debug",
+          "--parallel",
+          "2"
+        ],
+        [
+          "ctest",
+          "--preset",
+          "windows-debug",
+          "--output-on-failure",
+          "--no-tests=error",
+          "--output-junit",
+          "C:\\Users\\mrkda\\Projects\\shark\\out\\ci\\windows-debug\\ctest.xml"
+        ]
+      ],
+      "source_inputs_still_unchanged": true,
+      "original_status": "FAIL",
+      "correction": {
+        "path": "out/05c-intel-asan/queue-fix-contract/summary.json",
+        "sha256": "ce40f232d58ef2d4163519386e531aff6331f337957b5370f994d1c646e2f1e1"
+      },
+      "correction_command": [
+        "ctest",
+        "--preset",
+        "windows-debug",
+        "-R",
+        "^shark.contract$",
+        "--output-on-failure",
+        "--no-tests=error"
+      ],
+      "correction_reason": "Original full Debug CTest had 42/43 passes and one missing-document-link failure while another agent published the referenced evidence. No production/test sources changed."
+    },
+    {
+      "preset": "windows-release",
+      "status": "PASS",
+      "passed_test_inventory": 43,
+      "receipt": {
+        "path": "out/05c-intel-asan/queue-fix-regression/windows-release/summary.json",
+        "sha256": "e5d2c54a1c20cb055bae7aed4fa6898f66b3074f4b735e07325740148edcfa66"
+      },
+      "ci_receipt": {
+        "path": "out/05c-intel-asan/queue-fix-regression/windows-release/current-ci/summary.json",
+        "sha256": "2b9a67cb59c1f43f08e37ab1c6dee1525fb3a99fff44a1c6dc320cfd4831362d"
+      },
+      "ctest": {
+        "path": "out/05c-intel-asan/queue-fix-regression/windows-release/current-ci/ctest.xml",
+        "sha256": "de557aa8dd435aad30194fb1aa40ff06ac172bbfbe4e7d4523cd303b7161160e"
+      },
+      "original_counts": {
+        "tests": 43,
+        "failures": 0,
+        "disabled": 0,
+        "skipped": 0
+      },
+      "commands": [
+        [
+          "cmake",
+          "--preset",
+          "windows-release",
+          "-DSHARK_INJECT_TEST_FAILURE=OFF",
+          "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+        ],
+        [
+          "cmake",
+          "--build",
+          "--preset",
+          "windows-release",
+          "--parallel",
+          "2"
+        ],
+        [
+          "ctest",
+          "--preset",
+          "windows-release",
+          "--output-on-failure",
+          "--no-tests=error",
+          "--output-junit",
+          "C:\\Users\\mrkda\\Projects\\shark\\out\\ci\\windows-release\\ctest.xml"
+        ]
+      ],
+      "source_inputs_still_unchanged": true
+    },
+    {
+      "preset": "windows-asan",
+      "status": "PASS",
+      "passed_test_inventory": 43,
+      "receipt": {
+        "path": "out/05c-intel-asan/queue-fix-regression/windows-asan/summary.json",
+        "sha256": "9e3ffb69515d230fe6d0247cc2942c9f32e45534d30b8fefaf6da39686696310"
+      },
+      "ci_receipt": {
+        "path": "out/05c-intel-asan/queue-fix-regression/windows-asan/current-ci/summary.json",
+        "sha256": "7c940adac574f4e49f1de5d3a59c6c26129810da8727c2de2737ad93baccf438"
+      },
+      "ctest": {
+        "path": "out/05c-intel-asan/queue-fix-regression/windows-asan/current-ci/ctest.xml",
+        "sha256": "1998e78f54a9479537f646d9700e4daa937446bb28d345926061a8537e0ed6a3"
+      },
+      "original_counts": {
+        "tests": 43,
+        "failures": 0,
+        "disabled": 0,
+        "skipped": 0
+      },
+      "commands": [
+        [
+          "cmake",
+          "--preset",
+          "windows-asan",
+          "-DSHARK_INJECT_TEST_FAILURE=OFF",
+          "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+        ],
+        [
+          "cmake",
+          "--build",
+          "--preset",
+          "windows-asan",
+          "--parallel",
+          "2"
+        ],
+        [
+          "ctest",
+          "--preset",
+          "windows-asan",
+          "--output-on-failure",
+          "--no-tests=error",
+          "--output-junit",
+          "C:\\Users\\mrkda\\Projects\\shark\\out\\ci\\windows-asan\\ctest.xml"
+        ]
+      ],
+      "source_inputs_still_unchanged": true
+    }
+  ],
+  "wsl_cpu": {
+    "status": "PASS",
+    "verification": {
+      "path": "out/05c-intel-asan/wsl-queue-fix/verification.json",
+      "sha256": "dbefe142235d072ed5bf3f7a1d66962117b5feedacad1e668e5f3ed2e4d35ffe"
+    },
+    "receipt": {
+      "path": "out/05c-intel-asan/wsl-queue-fix/client-linux-summary.json",
+      "sha256": "2eb5fea182f353d650274807df2438d61750f506ea71739555fb76a4e691ab61"
+    },
+    "native_window": false,
+    "native_graphics": false,
+    "commands": [
+      {
+        "preset": "linux-debug",
+        "command": [
+          "cmake",
+          "--preset",
+          "linux-debug",
+          "-B",
+          "/work/build-05a-final-client/linux-debug",
+          "-DCMAKE_CXX_COMPILER=g++-13",
+          "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+          "-DSHARK_INJECT_TEST_FAILURE=OFF",
+          "-DSHARK_NATIVE_WINDOW=OFF",
+          "-DSHARK_NATIVE_GRAPHICS=OFF"
+        ]
+      },
+      {
+        "preset": "linux-debug",
+        "command": [
+          "cmake",
+          "--build",
+          "/work/build-05a-final-client/linux-debug",
+          "--parallel",
+          "2"
+        ]
+      },
+      {
+        "preset": "linux-debug",
+        "command": [
+          "ctest",
+          "--test-dir",
+          "/work/build-05a-final-client/linux-debug",
+          "--show-only=json-v1"
+        ]
+      },
+      {
+        "preset": "linux-debug",
+        "command": [
+          "ctest",
+          "--test-dir",
+          "/work/build-05a-final-client/linux-debug",
+          "--output-on-failure",
+          "--no-tests=error",
+          "--output-junit",
+          "/evidence/client-linux-debug/ctest.xml"
+        ]
+      },
+      {
+        "preset": "linux-asan-ubsan",
+        "command": [
+          "cmake",
+          "--preset",
+          "linux-asan-ubsan",
+          "-B",
+          "/work/build-05a-final-client/linux-asan-ubsan",
+          "-DCMAKE_CXX_COMPILER=clang++-18",
+          "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+          "-DSHARK_INJECT_TEST_FAILURE=OFF",
+          "-DSHARK_NATIVE_WINDOW=OFF",
+          "-DSHARK_NATIVE_GRAPHICS=OFF"
+        ]
+      },
+      {
+        "preset": "linux-asan-ubsan",
+        "command": [
+          "cmake",
+          "--build",
+          "/work/build-05a-final-client/linux-asan-ubsan",
+          "--parallel",
+          "2"
+        ]
+      },
+      {
+        "preset": "linux-asan-ubsan",
+        "command": [
+          "ctest",
+          "--test-dir",
+          "/work/build-05a-final-client/linux-asan-ubsan",
+          "--show-only=json-v1"
+        ]
+      },
+      {
+        "preset": "linux-asan-ubsan",
+        "command": [
+          "ctest",
+          "--test-dir",
+          "/work/build-05a-final-client/linux-asan-ubsan",
+          "--output-on-failure",
+          "--no-tests=error",
+          "--output-junit",
+          "/evidence/client-linux-asan-ubsan/ctest.xml"
+        ]
+      }
+    ],
+    "profiles": [
+      {
+        "preset": "linux-debug",
+        "counts": {
+          "tests": 40,
+          "failures": 0,
+          "disabled": 0,
+          "skipped": 0
+        },
+        "ctest": {
+          "path": "out/05c-intel-asan/wsl-queue-fix/client-linux-debug/ctest.xml",
+          "sha256": "95b5f83343efc0b3202cce0a8575b18d58cdc49efd7a746dba2c3be6346cec69"
+        }
+      },
+      {
+        "preset": "linux-asan-ubsan",
+        "counts": {
+          "tests": 40,
+          "failures": 0,
+          "disabled": 0,
+          "skipped": 0
+        },
+        "ctest": {
+          "path": "out/05c-intel-asan/wsl-queue-fix/client-linux-asan-ubsan/ctest.xml",
+          "sha256": "7d66dd672afe1ee4e6e79269d2d9ce387cbc1cab2e7d0f9480ba7e92c075535f"
+        }
+      }
+    ]
+  },
+  "native_short_regression": [
+    {
+      "preset": "windows-debug",
+      "mode": "presentation",
+      "device": "863d6f59a51894ab8b4829aa9460c78d",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/windows_unelevated.py",
+        "--timeout",
+        "150",
+        "--evidence",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-debug\\presentation-863d6f59a51894ab8b4829aa9460c78d-token.json",
+        "--",
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/presentation_smoke.py",
+        "--executable",
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug\\bin\\PresentationSmoke.exe",
+        "--build-dir",
+        "build/windows-debug",
+        "--validation-manifest",
+        "out/05a-work/validation-tools/summary.json",
+        "--mode",
+        "smoke",
+        "--device",
+        "863d6f59a51894ab8b4829aa9460c78d",
+        "--output",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-debug\\presentation-863d6f59a51894ab8b4829aa9460c78d"
+      ],
+      "receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-debug/presentation-863d6f59a51894ab8b4829aa9460c78d/summary.json",
+        "sha256": "04f495d05ae80e04f071fcd0b115c385e8dda27399e3e0aaf835be6a7dec5bc7"
+      },
+      "token_receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-debug/presentation-863d6f59a51894ab8b4829aa9460c78d-token.json",
+        "sha256": "7928283d02ce6c6d53fd0ad92a7e1a31efc4efbd1f05eb06964e720066cce81d"
+      },
+      "executable_sha256": "b3229baa00751bb713143553382c3a062867d4132b35ea99d4f708e68d8eba67",
+      "source_sha256": "8ab7dfc7892b2a0c6bbe7739b3949870ac3d8d1478050d31dc59d2b90ec8f0c0",
+      "lifetimes": 4,
+      "frames": 384,
+      "resizes": 16,
+      "restores": 8,
+      "validation": "required"
+    },
+    {
+      "preset": "windows-debug",
+      "mode": "presentation",
+      "device": "868088a7040000000002000000000000",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/windows_unelevated.py",
+        "--timeout",
+        "150",
+        "--evidence",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-debug\\presentation-868088a7040000000002000000000000-token.json",
+        "--",
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/presentation_smoke.py",
+        "--executable",
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug\\bin\\PresentationSmoke.exe",
+        "--build-dir",
+        "build/windows-debug",
+        "--validation-manifest",
+        "out/05a-work/validation-tools/summary.json",
+        "--mode",
+        "smoke",
+        "--device",
+        "868088a7040000000002000000000000",
+        "--output",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-debug\\presentation-868088a7040000000002000000000000"
+      ],
+      "receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-debug/presentation-868088a7040000000002000000000000/summary.json",
+        "sha256": "64721e8dfd23f73c8194bd589a0b9eb20aade21c73cc07ad9970ae8a84804113"
+      },
+      "token_receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-debug/presentation-868088a7040000000002000000000000-token.json",
+        "sha256": "59d603d60d5747fcb430446573bbd484d3497a03643f8e174fa607c5c4c1b6c1"
+      },
+      "executable_sha256": "b3229baa00751bb713143553382c3a062867d4132b35ea99d4f708e68d8eba67",
+      "source_sha256": "8ab7dfc7892b2a0c6bbe7739b3949870ac3d8d1478050d31dc59d2b90ec8f0c0",
+      "lifetimes": 4,
+      "frames": 384,
+      "resizes": 16,
+      "restores": 8,
+      "validation": "required"
+    },
+    {
+      "preset": "windows-debug",
+      "mode": "faults",
+      "device": "863d6f59a51894ab8b4829aa9460c78d",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/windows_unelevated.py",
+        "--timeout",
+        "150",
+        "--evidence",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-debug\\faults-863d6f59a51894ab8b4829aa9460c78d-token.json",
+        "--",
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/presentation_faults.py",
+        "--executable",
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug\\bin\\PresentationFaults.exe",
+        "--build-dir",
+        "build/windows-debug",
+        "--validation-manifest",
+        "out/05a-work/validation-tools/summary.json",
+        "--mode",
+        "native",
+        "--device",
+        "863d6f59a51894ab8b4829aa9460c78d",
+        "--output",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-debug\\faults-863d6f59a51894ab8b4829aa9460c78d"
+      ],
+      "receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-debug/faults-863d6f59a51894ab8b4829aa9460c78d/summary.json",
+        "sha256": "fffbd1546a422ac2bab20d740b4ee02f2260a59cc52416a06bddc8d9c5376ed4"
+      },
+      "token_receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-debug/faults-863d6f59a51894ab8b4829aa9460c78d-token.json",
+        "sha256": "f07d7f20e5f5d2a2a4b9e654daa147a1cd01be9986a71d1ca66ae42ce3856ab8"
+      },
+      "executable_sha256": "3e7590b63e87245281ba63b8c6be7f0c16658661c9232534fa48ee941509cd0e",
+      "source_sha256": "eda545abbdf3e9b808ac0c27a3378a2614f7b20b28471cf13460568e4cecdfb9",
+      "cases": [
+        {
+          "fault": "recording-error",
+          "expected_exit": 86
+        },
+        {
+          "fault": "recording-exception",
+          "expected_exit": 86
+        },
+        {
+          "fault": "surface-error",
+          "expected_exit": 1
+        },
+        {
+          "fault": "device-error",
+          "expected_exit": 1
+        }
+      ]
+    },
+    {
+      "preset": "windows-debug",
+      "mode": "faults",
+      "device": "868088a7040000000002000000000000",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/windows_unelevated.py",
+        "--timeout",
+        "150",
+        "--evidence",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-debug\\faults-868088a7040000000002000000000000-token.json",
+        "--",
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/presentation_faults.py",
+        "--executable",
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug\\bin\\PresentationFaults.exe",
+        "--build-dir",
+        "build/windows-debug",
+        "--validation-manifest",
+        "out/05a-work/validation-tools/summary.json",
+        "--mode",
+        "native",
+        "--device",
+        "868088a7040000000002000000000000",
+        "--output",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-debug\\faults-868088a7040000000002000000000000"
+      ],
+      "receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-debug/faults-868088a7040000000002000000000000/summary.json",
+        "sha256": "f2fdde875746e54ab8748157c7c7f5c6e7f0f5cf99391b2622fc206116d77b0e"
+      },
+      "token_receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-debug/faults-868088a7040000000002000000000000-token.json",
+        "sha256": "f574fed8bafe29cb29b748d3fc31420fdd3986c8f1a57381169ca49c795520e8"
+      },
+      "executable_sha256": "3e7590b63e87245281ba63b8c6be7f0c16658661c9232534fa48ee941509cd0e",
+      "source_sha256": "eda545abbdf3e9b808ac0c27a3378a2614f7b20b28471cf13460568e4cecdfb9",
+      "cases": [
+        {
+          "fault": "recording-error",
+          "expected_exit": 86
+        },
+        {
+          "fault": "recording-exception",
+          "expected_exit": 86
+        },
+        {
+          "fault": "surface-error",
+          "expected_exit": 1
+        },
+        {
+          "fault": "device-error",
+          "expected_exit": 1
+        }
+      ]
+    },
+    {
+      "preset": "windows-release",
+      "mode": "presentation",
+      "device": "863d6f59a51894ab8b4829aa9460c78d",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/windows_unelevated.py",
+        "--timeout",
+        "150",
+        "--evidence",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-release\\presentation-863d6f59a51894ab8b4829aa9460c78d-token.json",
+        "--",
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/presentation_smoke.py",
+        "--executable",
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-release\\bin\\PresentationSmoke.exe",
+        "--build-dir",
+        "build/windows-release",
+        "--validation-manifest",
+        "out/05a-work/validation-tools/summary.json",
+        "--mode",
+        "smoke",
+        "--device",
+        "863d6f59a51894ab8b4829aa9460c78d",
+        "--output",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-release\\presentation-863d6f59a51894ab8b4829aa9460c78d"
+      ],
+      "receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-release/presentation-863d6f59a51894ab8b4829aa9460c78d/summary.json",
+        "sha256": "ed4cec161c9eb1fb293ab3edce2c5a437179d31a75d840acc5d0805a1b41db6d"
+      },
+      "token_receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-release/presentation-863d6f59a51894ab8b4829aa9460c78d-token.json",
+        "sha256": "e31da994f73313b718b7e1b9cc2bf5878e874ff4b6cc4062531faea6932679a7"
+      },
+      "executable_sha256": "498f75ce0c8473cdc5950d6708db154cb55b2e12c655484bdb687620e2ea7e26",
+      "source_sha256": "8ab7dfc7892b2a0c6bbe7739b3949870ac3d8d1478050d31dc59d2b90ec8f0c0",
+      "lifetimes": 4,
+      "frames": 384,
+      "resizes": 16,
+      "restores": 8,
+      "validation": "required"
+    },
+    {
+      "preset": "windows-release",
+      "mode": "presentation",
+      "device": "868088a7040000000002000000000000",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/windows_unelevated.py",
+        "--timeout",
+        "150",
+        "--evidence",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-release\\presentation-868088a7040000000002000000000000-token.json",
+        "--",
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/presentation_smoke.py",
+        "--executable",
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-release\\bin\\PresentationSmoke.exe",
+        "--build-dir",
+        "build/windows-release",
+        "--validation-manifest",
+        "out/05a-work/validation-tools/summary.json",
+        "--mode",
+        "smoke",
+        "--device",
+        "868088a7040000000002000000000000",
+        "--output",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-release\\presentation-868088a7040000000002000000000000"
+      ],
+      "receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-release/presentation-868088a7040000000002000000000000/summary.json",
+        "sha256": "8a04a4e537612fd42f0a3db27c8a9d87da74a0b4145011b9a513b8ce67b489d0"
+      },
+      "token_receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-release/presentation-868088a7040000000002000000000000-token.json",
+        "sha256": "dc7fcde48f8f7ced1ba17dfa04fe3dbcd0399fb933c38263e8a04cc54afac8fb"
+      },
+      "executable_sha256": "498f75ce0c8473cdc5950d6708db154cb55b2e12c655484bdb687620e2ea7e26",
+      "source_sha256": "8ab7dfc7892b2a0c6bbe7739b3949870ac3d8d1478050d31dc59d2b90ec8f0c0",
+      "lifetimes": 4,
+      "frames": 384,
+      "resizes": 16,
+      "restores": 8,
+      "validation": "required"
+    },
+    {
+      "preset": "windows-release",
+      "mode": "faults",
+      "device": "863d6f59a51894ab8b4829aa9460c78d",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/windows_unelevated.py",
+        "--timeout",
+        "150",
+        "--evidence",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-release\\faults-863d6f59a51894ab8b4829aa9460c78d-token.json",
+        "--",
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/presentation_faults.py",
+        "--executable",
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-release\\bin\\PresentationFaults.exe",
+        "--build-dir",
+        "build/windows-release",
+        "--validation-manifest",
+        "out/05a-work/validation-tools/summary.json",
+        "--mode",
+        "native",
+        "--device",
+        "863d6f59a51894ab8b4829aa9460c78d",
+        "--output",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-release\\faults-863d6f59a51894ab8b4829aa9460c78d"
+      ],
+      "receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-release/faults-863d6f59a51894ab8b4829aa9460c78d/summary.json",
+        "sha256": "cb2d301381da762d8b2b28137d9b28064b9c3f37087ffb6aa46cb1b307aaba16"
+      },
+      "token_receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-release/faults-863d6f59a51894ab8b4829aa9460c78d-token.json",
+        "sha256": "6310e4bce013806ab3717232c10fdbb33221a2ed2106579696b833518c7b218b"
+      },
+      "executable_sha256": "884887ca502d98d2ace6e9d2776fdbf6d2677d637043d739811b8ad7c6665125",
+      "source_sha256": "eda545abbdf3e9b808ac0c27a3378a2614f7b20b28471cf13460568e4cecdfb9",
+      "cases": [
+        {
+          "fault": "recording-error",
+          "expected_exit": 86
+        },
+        {
+          "fault": "recording-exception",
+          "expected_exit": 86
+        },
+        {
+          "fault": "surface-error",
+          "expected_exit": 1
+        },
+        {
+          "fault": "device-error",
+          "expected_exit": 1
+        }
+      ]
+    },
+    {
+      "preset": "windows-release",
+      "mode": "faults",
+      "device": "868088a7040000000002000000000000",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/windows_unelevated.py",
+        "--timeout",
+        "150",
+        "--evidence",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-release\\faults-868088a7040000000002000000000000-token.json",
+        "--",
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/presentation_faults.py",
+        "--executable",
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-release\\bin\\PresentationFaults.exe",
+        "--build-dir",
+        "build/windows-release",
+        "--validation-manifest",
+        "out/05a-work/validation-tools/summary.json",
+        "--mode",
+        "native",
+        "--device",
+        "868088a7040000000002000000000000",
+        "--output",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-release\\faults-868088a7040000000002000000000000"
+      ],
+      "receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-release/faults-868088a7040000000002000000000000/summary.json",
+        "sha256": "54f0ce236549c9d9f8e9c7a801349d05316d18646d954cf0c9215bef3533edf4"
+      },
+      "token_receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-release/faults-868088a7040000000002000000000000-token.json",
+        "sha256": "a2a1409ad334c50daf03b700df84a3a02fed80c7eb0e46cf8169cbfc7d300512"
+      },
+      "executable_sha256": "884887ca502d98d2ace6e9d2776fdbf6d2677d637043d739811b8ad7c6665125",
+      "source_sha256": "eda545abbdf3e9b808ac0c27a3378a2614f7b20b28471cf13460568e4cecdfb9",
+      "cases": [
+        {
+          "fault": "recording-error",
+          "expected_exit": 86
+        },
+        {
+          "fault": "recording-exception",
+          "expected_exit": 86
+        },
+        {
+          "fault": "surface-error",
+          "expected_exit": 1
+        },
+        {
+          "fault": "device-error",
+          "expected_exit": 1
+        }
+      ]
+    },
+    {
+      "preset": "windows-asan",
+      "mode": "presentation",
+      "device": "863d6f59a51894ab8b4829aa9460c78d",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/windows_unelevated.py",
+        "--timeout",
+        "150",
+        "--evidence",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-asan\\presentation-863d6f59a51894ab8b4829aa9460c78d-token.json",
+        "--",
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/presentation_smoke.py",
+        "--executable",
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\bin\\PresentationSmoke.exe",
+        "--build-dir",
+        "build/windows-asan",
+        "--validation-manifest",
+        "out/05a-work/validation-tools/summary.json",
+        "--mode",
+        "smoke",
+        "--device",
+        "863d6f59a51894ab8b4829aa9460c78d",
+        "--output",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-asan\\presentation-863d6f59a51894ab8b4829aa9460c78d"
+      ],
+      "receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-asan/presentation-863d6f59a51894ab8b4829aa9460c78d/summary.json",
+        "sha256": "75121866276cdc4093a889f09264a299afc20add07cff0f87a3aed28b9f6a96e"
+      },
+      "token_receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-asan/presentation-863d6f59a51894ab8b4829aa9460c78d-token.json",
+        "sha256": "89b8b665e9de6458262622c598d8a7b4b944df6816de8fd56382aad68f4df993"
+      },
+      "executable_sha256": "78a8809938f3701229fefcafce513cf752595ebd60cc54077c7e136aaa2d5036",
+      "source_sha256": "8ab7dfc7892b2a0c6bbe7739b3949870ac3d8d1478050d31dc59d2b90ec8f0c0",
+      "lifetimes": 4,
+      "frames": 384,
+      "resizes": 16,
+      "restores": 8,
+      "validation": "required"
+    },
+    {
+      "preset": "windows-asan",
+      "mode": "presentation",
+      "device": "868088a7040000000002000000000000",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/windows_unelevated.py",
+        "--timeout",
+        "150",
+        "--evidence",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-asan\\presentation-868088a7040000000002000000000000-token.json",
+        "--",
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/presentation_smoke.py",
+        "--executable",
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\bin\\PresentationSmoke.exe",
+        "--build-dir",
+        "build/windows-asan",
+        "--validation-manifest",
+        "out/05a-work/validation-tools/summary.json",
+        "--mode",
+        "smoke",
+        "--device",
+        "868088a7040000000002000000000000",
+        "--output",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-asan\\presentation-868088a7040000000002000000000000"
+      ],
+      "receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-asan/presentation-868088a7040000000002000000000000/summary.json",
+        "sha256": "967dd2068e8d9a9cc49f507dc3544f1a1070675f5008350bd76cfef0ffb16dbf"
+      },
+      "token_receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-asan/presentation-868088a7040000000002000000000000-token.json",
+        "sha256": "70376b0de6d47ed1de9146faef9bacf0d1f1679dcbeadf841753270152ae7bee"
+      },
+      "executable_sha256": "78a8809938f3701229fefcafce513cf752595ebd60cc54077c7e136aaa2d5036",
+      "source_sha256": "8ab7dfc7892b2a0c6bbe7739b3949870ac3d8d1478050d31dc59d2b90ec8f0c0",
+      "lifetimes": 4,
+      "frames": 384,
+      "resizes": 16,
+      "restores": 8,
+      "validation": "required"
+    },
+    {
+      "preset": "windows-asan",
+      "mode": "faults",
+      "device": "863d6f59a51894ab8b4829aa9460c78d",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/windows_unelevated.py",
+        "--timeout",
+        "150",
+        "--evidence",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-asan\\faults-863d6f59a51894ab8b4829aa9460c78d-token.json",
+        "--",
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/presentation_faults.py",
+        "--executable",
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\bin\\PresentationFaults.exe",
+        "--build-dir",
+        "build/windows-asan",
+        "--validation-manifest",
+        "out/05a-work/validation-tools/summary.json",
+        "--mode",
+        "native",
+        "--device",
+        "863d6f59a51894ab8b4829aa9460c78d",
+        "--output",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-asan\\faults-863d6f59a51894ab8b4829aa9460c78d"
+      ],
+      "receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-asan/faults-863d6f59a51894ab8b4829aa9460c78d/summary.json",
+        "sha256": "3e4d0aefd6064a31a3f1ea6fe275e65df8178650e8a0b8eef2b6b7121ad623c7"
+      },
+      "token_receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-asan/faults-863d6f59a51894ab8b4829aa9460c78d-token.json",
+        "sha256": "67bce2aea6a63201cb2066279013f7cabcc8329422091942103a9b57f7ddf512"
+      },
+      "executable_sha256": "36982789976983c44a8b1d9af893ecedc86d9b5ba8fd9b492bb60e33bc5d5b99",
+      "source_sha256": "eda545abbdf3e9b808ac0c27a3378a2614f7b20b28471cf13460568e4cecdfb9",
+      "cases": [
+        {
+          "fault": "recording-error",
+          "expected_exit": 86
+        },
+        {
+          "fault": "recording-exception",
+          "expected_exit": 86
+        },
+        {
+          "fault": "surface-error",
+          "expected_exit": 1
+        },
+        {
+          "fault": "device-error",
+          "expected_exit": 1
+        }
+      ]
+    },
+    {
+      "preset": "windows-asan",
+      "mode": "faults",
+      "device": "868088a7040000000002000000000000",
+      "status": "PASS",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/windows_unelevated.py",
+        "--timeout",
+        "150",
+        "--evidence",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-asan\\faults-868088a7040000000002000000000000-token.json",
+        "--",
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/presentation_faults.py",
+        "--executable",
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\bin\\PresentationFaults.exe",
+        "--build-dir",
+        "build/windows-asan",
+        "--validation-manifest",
+        "out/05a-work/validation-tools/summary.json",
+        "--mode",
+        "native",
+        "--device",
+        "868088a7040000000002000000000000",
+        "--output",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-intel-asan\\queue-fix-native\\windows-asan\\faults-868088a7040000000002000000000000"
+      ],
+      "receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-asan/faults-868088a7040000000002000000000000/summary.json",
+        "sha256": "aa9023840391bcbe4ca34b00d5471fe13f1e62f650368844dfc480670c999321"
+      },
+      "token_receipt": {
+        "path": "out/05c-intel-asan/queue-fix-native/windows-asan/faults-868088a7040000000002000000000000-token.json",
+        "sha256": "200aff41df7d334145c4401b1a81b93914c2123d2453967b4864f29b990e81ac"
+      },
+      "executable_sha256": "36982789976983c44a8b1d9af893ecedc86d9b5ba8fd9b492bb60e33bc5d5b99",
+      "source_sha256": "eda545abbdf3e9b808ac0c27a3378a2614f7b20b28471cf13460568e4cecdfb9",
+      "cases": [
+        {
+          "fault": "recording-error",
+          "expected_exit": 86
+        },
+        {
+          "fault": "recording-exception",
+          "expected_exit": 86
+        },
+        {
+          "fault": "surface-error",
+          "expected_exit": 1
+        },
+        {
+          "fault": "device-error",
+          "expected_exit": 1
+        }
+      ]
+    }
+  ],
+  "runtime_package": {
+    "status": "PASS",
+    "qualification": "NOT_RUN",
+    "build_receipt": {
+      "path": "out/05c-intel-asan/queue-fix-regression/runtime-only/summary.json",
+      "sha256": "34545b89681d7b5aec45b39b401bd74ac7242db1aedf91fb54bc11fc6fa6ae5d"
+    },
+    "receipt": {
+      "path": "out/ci/05c-runtime-package-queue-exit-fix/summary.json",
+      "sha256": "00e27497a9059fb5ca089baf266bb915e6d1f31266ac5f0d9baea9cf826353fc"
+    },
+    "runner_receipt": {
+      "path": "out/05c-work/runtime-package-queue-exit-fix/summary.json",
+      "sha256": "5ed2ef8d51866be23aaf53f6c5785b26017bd3fc6cfa6f87b7484ff91f79d586"
+    },
+    "manifest_sha256": "ef4c0c098c2a51e3b362834a2854467288114757d551c2a057610898e6e5e0ad",
+    "commands": [
+      [
+        "cmake",
+        "--preset",
+        "runtime-only"
+      ],
+      [
+        "cmake",
+        "--build",
+        "--preset",
+        "runtime-only",
+        "--parallel",
+        "2"
+      ],
+      [
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\runtime-only\\bin\\Runtime.exe",
+        "--version"
+      ],
+      [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/package_runtime.py",
+        "build",
+        "--build-dir",
+        "build/runtime-only",
+        "--crt-dir",
+        "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Redist\\MSVC\\14.51.36231\\x64\\Microsoft.VC145.CRT",
+        "--output",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\runtime-package\\05c-queue-exit-fix"
+      ],
+      [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/windows_unelevated.py",
+        "--timeout",
+        "90",
+        "--evidence",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-work\\runtime-package-queue-exit-fix\\standard-token.json",
+        "--",
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/package_runtime.py",
+        "check",
+        "--package",
+        "C:\\Users\\mrkda\\Shark deployment 05c queue-exit-fix \u03a9",
+        "--manifest-sha256",
+        "ef4c0c098c2a51e3b362834a2854467288114757d551c2a057610898e6e5e0ad",
+        "--device",
+        "863d6f59a51894ab8b4829aa9460c78d",
+        "--device",
+        "868088a7040000000002000000000000",
+        "--output",
+        "C:\\Users\\mrkda\\Projects\\shark\\out\\ci\\05c-runtime-package-queue-exit-fix"
+      ]
+    ],
+    "checks": "Fresh Runtime-only build; package PE imports/licenses; relocation; app-local Vulkan loader; system+package-only child PATH; actual loaded-module checks; medium-token launch on both GPUs.",
+    "limits": "Development tools remain installed; child PATH/environment and observed modules are isolated. Module polling observes loaded modules, not transient unload history.",
+    "validation": "off"
+  },
+  "limitations": [
+    "No full05c PASS: NVIDIA GDI retention, Intel USER retention and original ASan post-closed timeout remain unresolved.",
+    "Native checks are short regression only; no sustained resource-limit waiver or soak pass.",
+    "Package isolation is on this development PC; installed tools remain on disk and module polling cannot observe transient unload history.",
+    "No fresh Server package was required by this EngineClient-private change; WSL CPU clients keep native window/graphics OFF."
+  ],
+  "native_short_regression_receipt": {
+    "path": "out/05c-intel-asan/queue-fix-native/summary.json",
+    "sha256": "0391b0c9681005ce818533273009557abdd700b102ecb2b7f1301229f66e4c6e"
+  },
+  "cpu_total_test_inventory": 209,
+  "collector": {
+    "path": "out/05c-intel-asan/collect-queue-fix.py",
+    "sha256": "83a0e18a0fb65a39e6a1267fb4b6d37feb7bb62f9ba55a2ef7924ae12089710e"
+  }
+}

@@ -34,8 +34,11 @@ tooling are implemented, but the gate remains open after a repeatable GDI-object
 increase in the NVIDIA swapchain path, Intel USER-resource retention and an Intel
 ASan child exit timeout. The
 [05c handoff](docs/handoffs/05c-presentation-qualification.md) and
-[follow-up investigation](docs/handoffs/05c-failure-investigation.md) record the
-evidence and remaining checks; assignment 06 has not started.
+[first investigation](docs/handoffs/05c-failure-investigation.md) retain the
+original evidence. The [latest investigation](docs/handoffs/05c-intel-asan-investigation.md)
+reproduces Intel growth outside Shark, adds capture-ready ASan exit diagnostics,
+and fixes a separate Windows queue-thread deadline defect. The original exit
+timeout remains unexplained; assignment 06 has not started.
 The [05a handoff](docs/handoffs/05a-graphics-device.md) records 211 passing CTests
 and 112 validated device lifetimes across the two local GPUs. Full `REQ-05` remains
 NOT_RUN until 05c passes.

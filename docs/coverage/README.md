@@ -81,7 +81,11 @@ The [05c handoff](../handoffs/05c-presentation-qualification.md) records the
 open native GDI-retention and ASan exit investigations; implemented tests do not imply that
 their hardware acceptance gate passed. The [05c local receipt](evidence/05c-local.json)
 preserves its FAIL result, partial stress runs and later focused fault rechecks.
-Full `REQ-05` stays NOT_RUN.
+The [latest investigation](../handoffs/05c-intel-asan-investigation.md) records
+Intel growth outside Shark, the unresolved ASan fault-run timeout and the
+separate corrected Windows queue-thread exit deadline. The existing presentation
+test family now includes controlled TLS teardown, bounded polls and retained
+worker ownership. Full `REQ-05` stays NOT_RUN.
 
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`
 means precisely that; documentation validation cannot pass a future engine gate.

@@ -1,0 +1,1937 @@
+{
+  "schema_version": 1,
+  "assignment": "05c",
+  "status": "UNRESOLVED",
+  "qualification": "NOT_RUN",
+  "generated_utc": "2026-10-18T09:40:15.738023+00:00",
+  "base_revision": "9613becc8fb4d59808dfc117120e92283b7b604b",
+  "result_revision": "Uncommitted diagnostic-only tooling; staging and commits remain user-owned",
+  "conclusion": "The retained Intel ASan process timeout after closed was not reproduced. No causal fix or failure waiver is established.",
+  "original_failure": {
+    "path": "out/ci/05c-faults-regression/windows-asan/868088a7040000000002000000000000/summary.json",
+    "sha256": "8e512efffd9f9a02ec25a3e880bbb85ef1ac9f802b0c914123c825672880e88a",
+    "bytes": 40310,
+    "status": "FAIL",
+    "child": "device-error",
+    "gpu": "868088a7040000000002000000000000",
+    "deadline_seconds": 30,
+    "observed_seconds": 30.61,
+    "last_row": "closed",
+    "last_row_observations": "One submitted/completed/presented frame, zero native owners, seven teardown calls, zero validation errors; no original process stack was captured."
+  },
+  "native_diagnostic": {
+    "receipt": {
+      "path": "out/05c-followup/asan-native-final/summary.json",
+      "sha256": "6c31adaa9cc5a531a5c54960bc22af2f9efa6332cbcffd2654e7c805f93a6eb9",
+      "bytes": 437348
+    },
+    "status": "UNRESOLVED",
+    "children": 64,
+    "expected_finite_exits": 64,
+    "exit_counts": {
+      "86": 32,
+      "1": 32
+    },
+    "per_variant_children": {
+      "current_original": 16,
+      "current_instrumented": 16,
+      "prior_original": 16,
+      "prior_instrumented": 16
+    },
+    "per_gpu_children": {
+      "863d6f59a51894ab8b4829aa9460c78d": 32,
+      "868088a7040000000002000000000000": 32
+    },
+    "deadline_seconds": 30,
+    "capture_threshold_seconds": 8,
+    "observed_seconds_min": 0.705254300031811,
+    "observed_seconds_max": 1.4285192999523133,
+    "sum_child_seconds": 67.47128170006908,
+    "timed_out_children": 0,
+    "native_captures": 0,
+    "protocol_errors": 0,
+    "marker_counts": {
+      "native_function_entered": 32,
+      "exe_tls_process_detach": 23,
+      "before_owner_reset": 16,
+      "after_owner_reset": 16,
+      "native_function_locals_destroyed": 16,
+      "main_return": 16,
+      "atexit_enter": 16,
+      "atexit_leave": 16,
+      "static_marker_destroyed": 16
+    },
+    "ordinary_instrumented_children_through_static_marker": 16,
+    "ordinary_instrumented_children_with_exe_tls_marker": 15,
+    "ordering": "Eight blocks of NVIDIA four faults then Intel four faults; no stress soak was present in the original regression sequence",
+    "source_sha256": "1d91171c2d39e660014835dffdc297fd8947a68b41e7c09654e4488403c01962",
+    "variants": [
+      {
+        "name": "current_original",
+        "executable": "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\bin\\PresentationFaults.exe",
+        "source_sha256": "1d91171c2d39e660014835dffdc297fd8947a68b41e7c09654e4488403c01962",
+        "instrumented": false,
+        "executable_sha256": "a994bbb60b49067484a6a70d0f6d3b9ab175ae426570d8f13daf3b0a6bfebd5b"
+      },
+      {
+        "name": "current_instrumented",
+        "executable": "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-followup\\asan-native-final\\current_instrumented.exe",
+        "source_sha256": "1d91171c2d39e660014835dffdc297fd8947a68b41e7c09654e4488403c01962",
+        "instrumented": true,
+        "copy_source_sha256": "36601ebfd1323be3b304cc65e4c70fe81e7af44bb47a494cda8ad4277fa1fffe",
+        "original_source_sha256": "462fcabb501a70d62bda562ff798dceec02bdba0ace0bffe4b0705667e2563fe",
+        "executable_sha256": "c118fe6844c91354ee59ac814cfdae4ff8a6ef39fb1f5e30e8f9ddc4d6513db9"
+      },
+      {
+        "name": "prior_original",
+        "executable": "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-work\\fault-observer-amendment\\prior\\windows-asan\\PresentationFaults.exe",
+        "source_sha256": "9790851fbea833a3b3487bfd7a70ba8267c118c94466da2cc93db1a4f7a8c512",
+        "instrumented": false,
+        "executable_sha256": "39795febb26899ceb8a796356820f0e75e108d86ca10ef66ecd2234f938751bc"
+      },
+      {
+        "name": "prior_instrumented",
+        "executable": "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-followup\\asan-native-final\\prior_instrumented.exe",
+        "source_sha256": "9790851fbea833a3b3487bfd7a70ba8267c118c94466da2cc93db1a4f7a8c512",
+        "instrumented": true,
+        "copy_source_sha256": "6971579390e5bf979aba9eba38eb606ad80177d67f71d6159a408d150418b833",
+        "original_source_sha256": "307c324002edc95525dd95d51a305706c6f0498723c44355a2ac4bd7529b6744",
+        "executable_sha256": "166d11d8cca42edc22a0d426027cd4b542fa2b52200515fe4e31688d3ba1d9cb"
+      }
+    ],
+    "process_security": {
+      "elevated": false,
+      "elevation_type": 3,
+      "integrity_rid": 8192,
+      "integrity_level": "medium",
+      "token_type": 1
+    },
+    "sanitizer_environment": {},
+    "layer_environment": {
+      "removed_ambient_keys": [],
+      "applied": {
+        "VK_LAYER_PATH": "C:\\Users\\mrkda\\Projects\\shark\\build\\graphics-validation-windows-x86_64\\bin",
+        "VK_LAYER_SETTINGS_PATH": "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-followup\\asan-native-final\\vk_layer_settings.txt",
+        "VK_IMPLICIT_LAYER_PATH": "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-followup\\asan-native-final\\implicit-layers-empty"
+      },
+      "driver_selection": {}
+    },
+    "validation_manifest_sha256": "d377078744aad2fae498f8c28a2f0f70f2640c136462e9be45e0232c6f781dcb"
+  },
+  "capture_selfcheck": {
+    "receipt": {
+      "path": "out/05c-followup/asan-selfcheck-final2/summary.json",
+      "sha256": "a3ff7d0a75a2503a74f549dbdf3c2566259bbdd1c842f0d8c4afe03b1057c9b9",
+      "bytes": 102571
+    },
+    "status": "DIAGNOSTIC_SELFTEST_PASS",
+    "controlled_timeouts": 2,
+    "deadline_seconds": 5,
+    "cases": [
+      {
+        "name": "native_atexit_stall",
+        "elapsed_seconds": 5.671093399985693,
+        "captures": 3,
+        "native_child_exited": false
+      },
+      {
+        "name": "worker_atexit_stall",
+        "elapsed_seconds": 5.588446100009605,
+        "captures": 2,
+        "native_child_exited": true
+      }
+    ],
+    "bound_process_dumps": 5,
+    "offline_debugger_analyses_completed": 5,
+    "mismatched_creation_time_rejected": true,
+    "stack_observations": [
+      "Native control: SleepEx in diagnostic atexit callback and CRT execute_onexit_table.",
+      "Worker control: native child already exited; actual Python worker waits in PySemaphore_Wait and venv redirector waits in WaitForSingleObjectEx."
+    ],
+    "debugger": {
+      "path": "C:\\Program Files\\WindowsApps\\Microsoft.WinDbg_1.2603.20001.0_x64__8wekyb3d8bbwe\\amd64\\cdb.exe",
+      "sha256": "3888448915165f1b0b7113a8acac87e3f40bc08bad9458cd706ef99e873482dc"
+    }
+  },
+  "cli_and_format": {
+    "path": "out/05c-followup/asan-cli-checks.json",
+    "sha256": "6549398ac2bfe735ad4883fd8591bcee51daf1881b4203fa1884647437b898ff",
+    "bytes": 5318
+  },
+  "preserved_build": {
+    "path": "out/05c-followup/frozen-asan-build/summary.json",
+    "sha256": "3cee888e51bb85bc89ef34e8729601881a2d3dcfc6e878dfb7f4546cb95aa99f",
+    "bytes": 3950
+  },
+  "observer_deduplication_amendment": {
+    "reason": "A direct Python launch may report the same worker PID/creation time as both worker_started and worker_launched; observe each identity only once to avoid CREATE_NEW collision.",
+    "executed_original_script": {
+      "path": "out/05c-followup/executed-tool/05c-asan-exit.py",
+      "sha256": "f0c7e6d5031e2a754217ef0c2a056c59ac7ac916b36f51f92ee3e10a11b3f0fe",
+      "bytes": 31241
+    },
+    "current_script": {
+      "path": "docs/coverage/reproducers/05c-asan-exit.py",
+      "sha256": "b4e9c76f636c7b8d1b764a7f19977f33a0316f3d7a304dce389e0838fcef7cea",
+      "bytes": 32340
+    },
+    "native64_rerun": "NOT_RUN: no native run triggered capture; its original exact tool source and receipt remain preserved. This observer-only change was checked with fresh CPU captures.",
+    "selfcheck": {
+      "path": "out/05c-followup/asan-selfcheck-dedup/summary.json",
+      "sha256": "10729265215f09126aa87883e2aa937f5bb7378148e7bc69d51c8d6e73e31669",
+      "bytes": 103506
+    },
+    "cli_and_format": {
+      "path": "out/05c-followup/asan-cli-dedup-checks.json",
+      "sha256": "8d5f0e9abd20d3ff889d4da130b052c6b2be5091cc29301f757313be0f6125fc",
+      "bytes": 5316
+    },
+    "duplicate_identity_check": {
+      "status": "PASS",
+      "duplicated_events": 9,
+      "distinct_targets": 3
+    },
+    "controlled_timeouts": 2,
+    "unique_process_dumps": 5,
+    "offline_debugger_analyses_completed": 5,
+    "preserved_distinct_targets": 3,
+    "rejected_wrong_creation_time": true
+  },
+  "frozen_source_inputs": {
+    "CMakeLists.txt": "8cf90b5f8e77054e559b013d802e06fa34f24ac62c3a8cc11fc5a280ea7b4fd0",
+    "cmake/CheckRuntimeBoundary.cmake": "1aa5c7eb7a00ef90edc55fe1f7eb6639f5b4a693ca441d5ded0e1eaa3d5cc1bc",
+    "cmake/Dependencies.cmake": "a2d0149a74818b6eb60cd38d5755989402ba0ee9bb242d41a9b207f181ac0f0d",
+    "cmake/GraphicsDependencies.cmake": "060d417436d33da66a3ffbcfc526eed0ae1e60a454f7350999d931f48e403505",
+    "cmake/GraphicsValidation.cmake": "de824be7509230525f980090ef54bea7accd5530e3fa20954e849b6fff8bd2d8",
+    "cmake/LockedClientDependencies.cmake": "55b4c7df5a536d343bbeaa2c0cfd9806e9baf50764e0ce11666461155eb26477",
+    "cmake/SharkBoundaries.cmake": "b769a49de48d562dc5369b307214db326084d2113d5e0f3b6db0da470ac493d6",
+    "cmake/SharkOptions.cmake": "0ea2bb9f222393f36449481dffb463e13be7f335abae61be7999253c29ddbe08",
+    "cmake/WindowDependencies.cmake": "8e9fd2ff8821675640931daa53c23a54b714ac2b6450af9629c21804afc4ab92",
+    "dependencies.lock.json": "f2dacdc51fa9004d07ab005af81a9294945f2527cd5972e6a0f78964d7cf9db3",
+    "engine/CMakeLists.txt": "ee7b45632e5ac9949e7a248ef5acf9451d0f79677e1e4e90db85238aa9a40a2e",
+    "engine/client/CMakeLists.txt": "085ba95349d8709f6932eebac47eb40cffee049c379266afc7bf8bcaf4aad3a3",
+    "engine/client/include/shark/client/bootstrap.hpp": "1e46fd4bc86844aba0b00c0e3d8ad04cf2e4668155a71d813208f5da11cbabb4",
+    "engine/client/include/shark/client/frame_loop.hpp": "9f57175088ce7901c37b438c81a39ba4ea4a047047fa53faa16c81c3bb48ea26",
+    "engine/client/include/shark/client/graphics.hpp": "3770b6ec8940efe951c2ca64c76e73108c65c9fa6f32232bd487898152042952",
+    "engine/client/include/shark/client/input.hpp": "54edddf942f0b1fc5c5b038da86284aada0356318b13ad5dddf27b31208e9234",
+    "engine/client/include/shark/client/presentation_launch.hpp": "3607a918166b2ebf3e7de9315e11663b6563fba858cf7c7dbf807e32239ec3df",
+    "engine/client/include/shark/client/window.hpp": "ab7c2b4e6db473e231d5f5e577eb394937cd0dd4bc0783a79f1f2ac0b1ab7c76",
+    "engine/client/include/shark/client/window_launch.hpp": "2220db968ca4f0b9cf6396d66ba2db24821af52f41cb643112fb719f74eb543a",
+    "engine/client/src/bootstrap.cpp": "4956f2577fdf2fb172b94d1c1d01d6c12e2290ff909d9dea4401a79dd8d405b6",
+    "engine/client/src/frame_loop.cpp": "6fe8c090c41a02647e8f71657214108ae3e0da25d826f5120316b77ce17f45cd",
+    "engine/client/src/graphics.cpp": "a29baac2187f0a22a690fdb4942b28083bb7d47da73ef15af2cb7b977d95a611",
+    "engine/client/src/graphics_backend.hpp": "06523666e697d6854833ae8a2c63fc91d7ae6263fdda935dbb1e61d1c9c64327",
+    "engine/client/src/graphics_native_test.hpp": "519dd98bc663d0bb8589452ef1347c32cba3e357ee79e5fa00f5135736162e46",
+    "engine/client/src/graphics_queue_waiter.hpp": "f2ff9a47e75e32a3ef517e7ba963bc2d25b16c58969ca85b50ac6cf5a68a2eef",
+    "engine/client/src/graphics_unavailable.cpp": "88980d983085c06b176acc8bf1a4af300088a44808e76f06a79af3b0fdd46def",
+    "engine/client/src/graphics_vulkan.cpp": "3dca161e58d5745b63f05692341c71b0849ddb354696dd1dd2336870dc971f0a",
+    "engine/client/src/input.cpp": "c6c5759fb4267a621cf5af099eb65d44c13f9f67efe08aaa47d868c200ff0fab",
+    "engine/client/src/presentation.cpp": "d3991f6294ab38c951128f0abeddad8e4dbe30a9677f434dba7cb8f93ea1ec92",
+    "engine/client/src/presentation.hpp": "80883df0cacbb7ebb51259d856c8537c1ff4f58217035c5166653d232d6d5b18",
+    "engine/client/src/presentation_launch.cpp": "9c77dc622371a3ac940ebb948ac24161c94ddbc5b88800e726e551f39db28f11",
+    "engine/client/src/window.cpp": "94e0d4f102d473f5c1f22abec7cb64817bb52808979ad9657a5f0fbe761043a2",
+    "engine/client/src/window_backend.hpp": "561f8357ca36e3db04e0261946784ae0101ab9f47f51404220338ceb8115ffe6",
+    "engine/client/src/window_events.cpp": "125d040e72861416aa776c68e8e1a004e6ff8fbcc07ec9150f12d42733c165a3",
+    "engine/client/src/window_glfw.cpp": "a930c1b2acbe5cfa0a5e1fd222865365c2ca6f1ba54e60801419a4472f02a8c8",
+    "engine/client/src/window_launch.cpp": "a746a0dc9c6c30f7c15fec6e972a2873077de38ecc63204051b74cb7c47351a3",
+    "engine/client/src/window_loop.hpp": "d37406883a193f35f38bc962e7d11ba3649a2ffbfc9f12ced44d9f77f612dc9c",
+    "engine/client/src/window_unavailable.cpp": "e4dd0ebd78faca013fd177dfba5344527d0b02683a6be2b6594954b398ffb6b4",
+    "engine/client/windows.manifest": "fd1bfdac3b91ed376e96a1e1cfdb86597ab0a6e99fa5d46f04b0426180c3ad6e",
+    "engine/core/CMakeLists.txt": "928c695ff4edb159b599b881d980087caf9838702faa278c1273584cef9b4190",
+    "engine/core/include/shark/completion_queue.hpp": "bb81aad77634549e3564603dde6b94d91f5b2935d402cb25bf161d151578ffca",
+    "engine/core/include/shark/error.hpp": "62dbfb45bfe48bc9523d969fc70642e8b648d44d0d1c2487f242e1e7d14b806e",
+    "engine/core/include/shark/log.hpp": "8a97e3118ac5145662da7e931cf4e2af69d140a0d3a541cc49b8bc6d0baa6a60",
+    "engine/core/include/shark/project_path.hpp": "2534a61372accaff09bef30e94e5d9c929b9e494780ff2b2c775e5204b070fbf",
+    "engine/core/include/shark/server_application.hpp": "ba3c9bcd9e85f698689a1dccce2a8bdcaac1ad3ba9ee5c25148edce73cec4cb5",
+    "engine/core/include/shark/server_config.hpp": "f6e3e9745cf107d0144f9a1302446104f160a1a72a58c088882102390eeeac6a",
+    "engine/core/include/shark/shutdown_signals.hpp": "7b5cc9c6ac8da1f2d9f4d6f48a93c90b7ddd3f28e8d12cea9f2d5471ad10ca63",
+    "engine/core/include/shark/stable_id.hpp": "8e49d37d6d17730cc775301287ad8871fbc451851c80ba057c003109c0f5e5b7",
+    "engine/core/include/shark/time.hpp": "c1c296c9015f41bbbd2a7b029774dfbe2ed39c2a5c74926c3abd30d01839af1c",
+    "engine/core/src/bootstrap.cpp": "f110d63d07103d53da3199bbdd8b74e6ab33131a0cd3364a3e93e50cffacf4f4",
+    "engine/core/src/error.cpp": "ad81265d1fd338e06f7922efd92f1a0cbc0fa0e108e724d1779e92b03a7691fb",
+    "engine/core/src/log.cpp": "50a478cccefe3bbbf98a082a5f96fc4c781f8e237f03652295be21abd179fd7a",
+    "engine/core/src/project_path.cpp": "746adcb03141109757c68783dec5f8e62625c21db941f694188f5a71b9024123",
+    "engine/core/src/server_application.cpp": "6c813c1bf3f067277e2e8a5afb4d2ef25938c32d3203ea0bdba9474a0b040338",
+    "engine/core/src/server_config.cpp": "badc3a728c7d460c2f42c6d3380c1fcd3503c1fc670f76b88959b0a61f071fde",
+    "engine/core/src/shutdown_signals.cpp": "56ccc01516be2c9f3cad9d2f87d2b72f3f2557be8f1bacaf7b27c60f823e0c89",
+    "engine/core/src/stable_id.cpp": "fcb8f22c989ce823031ca0ab1ad9b8d0b0deb9972f1d1299d708c51b107c9533",
+    "engine/core/src/time.cpp": "952c1f354c06f08331cb09ce7e9a34b5c854b4a0d36d2246b77e0e079952acc2",
+    "probes/graphics/report.hpp": "f2ccf9a4855b1f8bb303ce8b69110562491a5e70bfc694934a7664018275047e",
+    "tests/CMakeLists.txt": "0cf681f73d2b4e0960d123292fc018678e7f6291d33b0d9635b36c35bd4a40ca",
+    "tests/presentation_faults.cpp": "462fcabb501a70d62bda562ff798dceec02bdba0ace0bffe4b0705667e2563fe"
+  },
+  "input_sha256": {
+    "C:\\Users\\mrkda\\Projects\\shark\\docs\\coverage\\reproducers\\05c-asan-exit.py": "f0c7e6d5031e2a754217ef0c2a056c59ac7ac916b36f51f92ee3e10a11b3f0fe",
+    "C:\\Users\\mrkda\\Projects\\shark\\docs\\coverage\\reproducers\\05c-exit-capture.cpp": "c39f57eeb818e849ef9d21d7fd16fe8ce716bad0479829f182b7318a1d951d19",
+    "C:\\Users\\mrkda\\Projects\\shark\\docs\\coverage\\reproducers\\05c-exit-markers.hpp": "5c579c3d44a66cd03638c80902a3c35f9678bc7f17b21924a5dbc88a276393b5",
+    "C:\\Users\\mrkda\\Projects\\shark\\tests\\presentation_faults.cpp": "462fcabb501a70d62bda562ff798dceec02bdba0ace0bffe4b0705667e2563fe",
+    "C:\\Users\\mrkda\\Projects\\shark\\engine\\client\\windows.manifest": "fd1bfdac3b91ed376e96a1e1cfdb86597ab0a6e99fa5d46f04b0426180c3ad6e",
+    "C:\\Users\\mrkda\\Projects\\shark\\dependencies.lock.json": "f2dacdc51fa9004d07ab005af81a9294945f2527cd5972e6a0f78964d7cf9db3",
+    "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\build.ninja": "603ea8506051328d184f112936d595c6cb8f1eb9539916bfe91f3146a5c2bac7",
+    "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\CMakeCache.txt": "81186403e6a9880ee92a4b395b6b644cb56d482dcb85c1f475372ac1c3abeef2",
+    "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\bin\\PresentationFaults.exe": "a994bbb60b49067484a6a70d0f6d3b9ab175ae426570d8f13daf3b0a6bfebd5b",
+    "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\bin\\vulkan-1.dll": "489aa4338e3e8ec0e35018f75763ec9ef9299f6bfd39fb7ba3c532b1bfe9661f",
+    "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\engine\\client\\EngineClient.lib": "21b675948b9ef4e8935870bbb81759268d8de620bbcbef62bd3d29eff5906933",
+    "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\engine\\core\\EngineCore.lib": "b642361764a24eaada21992c52f3226dae82d6b409c469cbe9557bc6e3333d55",
+    "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glfw-build\\src\\glfw3.lib": "fc5fe6db4a65d6724cfdc479b54973d8cd24e0b76f3ddb31973d73a0b4f9fbd8",
+    "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\nvrhi-build\\nvrhi_vk.lib": "ef0f8ea56a4351b334374246012ea27375f2bc93b1ea8037670378ae199657ca",
+    "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\nvrhi-build\\nvrhi.lib": "9944d2cdc617aa0450c74e3edf49f4338df16602b8183c5748f2034c87328fc0",
+    "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\vulkanloader-build\\loader\\vulkan-1.lib": "2d9a624c245bf2da0fd82c148fd1b7af87af994f115927710d38282d3fcfeb58",
+    "C:\\Users\\mrkda\\Projects\\shark\\tools\\process_runner.py": "73ccfe5050040e3f495e518d3ddfbe903ee581edda17f2aed276456ffcf9e4bb",
+    "C:\\Users\\mrkda\\Projects\\shark\\tools\\presentation_faults.py": "cc55a74e7232206750ed2f61aac40b943df47a69fa9e5f765f073b9455f1fa2a",
+    "C:\\Users\\mrkda\\Projects\\shark\\tools\\graphics_device_smoke.py": "1b673e437e72da96fab2d633e9baeb0cc16d28e023f98ab32e731a695e2c674e",
+    "C:\\Users\\mrkda\\Projects\\shark\\tools\\graphics_probe.py": "61ba9856f77c5e1a46bd6425bcad0120b90ef602dd1bd25da6a76e30df599feb",
+    "C:\\Users\\mrkda\\Projects\\shark\\tools\\windows_unelevated.py": "f6a717b35e577f733415e965394c6ae57e7805e6790dd6180fd1ca5d6d6feb33",
+    "C:\\Users\\mrkda\\Projects\\shark\\tools\\toolchain_report.py": "59349b3f52acac3465da940c96f1cda5c7a264db89d9f3c1ca21038de50a6fe4",
+    "C:\\Users\\mrkda\\Projects\\shark\\out\\ci\\05c-faults-regression\\windows-asan\\868088a7040000000002000000000000\\summary.json": "8e512efffd9f9a02ec25a3e880bbb85ef1ac9f802b0c914123c825672880e88a",
+    "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-work\\fault-observer-amendment\\prior\\presentation_faults.cpp": "307c324002edc95525dd95d51a305706c6f0498723c44355a2ac4bd7529b6744",
+    "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-work\\fault-observer-amendment\\prior\\windows-asan\\PresentationFaults.exe": "39795febb26899ceb8a796356820f0e75e108d86ca10ef66ecd2234f938751bc",
+    "C:\\Users\\mrkda\\Projects\\shark\\out\\05c-work\\fault-observer-amendment\\prior\\windows-asan\\vulkan-1.dll": "489aa4338e3e8ec0e35018f75763ec9ef9299f6bfd39fb7ba3c532b1bfe9661f"
+  },
+  "source_worktree_deltas_at_native_completion": [
+    {
+      "path": "engine/client/CMakeLists.txt",
+      "before": "085ba95349d8709f6932eebac47eb40cffee049c379266afc7bf8bcaf4aad3a3",
+      "after": "37f73283e5cc5e12a8480a720626333a6a7435511521df925fbc1dfabad7a64d"
+    },
+    {
+      "path": "engine/client/src/graphics_queue_waiter.hpp",
+      "before": "f2ff9a47e75e32a3ef517e7ba963bc2d25b16c58969ca85b50ac6cf5a68a2eef",
+      "after": "7287b5cd6c38af885883918e3462631eeca0387eccaff8cf6302549932d1d4e3"
+    },
+    {
+      "path": "engine/client/src/graphics_queue_waiter_win32.cpp",
+      "before": null,
+      "after": "6cb918a453bd0bb2629a802e227b4bd5099ab39a0dc6d60dfdf91b21fad1aa3f"
+    }
+  ],
+  "audit_findings": [
+    "Original production runner redirects stdout/stderr to temporary files, not pipes; inherited pipe EOF cannot explain its timeout.",
+    "After closed, explicit cleanup has drained/joined the graphics worker and destroyed NVRHI/Vulkan/window owners; remaining owner reset is idempotent empty cleanup.",
+    "Native/CRT/ASan/DLL shutdown and the Python launch chain remain unproven boundaries because the original run has no PID-stage or stack capture.",
+    "The separately demonstrated queue-wait thread-teardown deadline defect occurs before closed and does not explain this post-closed timeout."
+  ],
+  "limitations": [
+    "Original ASAN_OPTIONS and complete host activity were not captured; exact ambient reconstruction is impossible.",
+    "Instrumentation and successful repetitions do not establish a causal fix.",
+    "Only newly added late marker functions omit ASan instrumentation; existing fixture and engine instrumentation is unchanged.",
+    "This sequence reproduces recorded adapter/fault ordering with unchanged original/current binaries, not complete original machine-wide history or a fresh preceding ASan build/CPU suite.",
+    "Original sanitizer environment was not recorded; the new run recorded no ASAN_/LSAN_/UBSAN_ variables.",
+    "The observer runner adds PID events and stage markers alter copied fixtures; unchanged original variants remain included, but successful repetitions are not a causal control.",
+    "EXE TLS callback markers prove only their own execution, not completion of every DLL detach callback.",
+    "One otherwise finite current instrumented Intel device-error exit lacks the late EXE TLS stdout marker; marker absence alone cannot identify a hang. All16 ordinary instrumented exits record owner reset, local destruction, main return, atexit and static marker destruction.",
+    "No actual GPU/device loss, host setting change, driver replacement, enlarged native deadline or healthy forced process exit was used."
+  ],
+  "raw_artifacts": [
+    {
+      "path": "out/05c-followup/asan-native-final/01-current_original-863d-recording-error/events.jsonl",
+      "sha256": "9b95215078d20a6502fb8e1969edea417c073e03dcca647f760bd0d65b2dcf1c",
+      "bytes": 1390
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/01-current_original-863d-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/01-current_original-863d-recording-error/stdout.jsonl",
+      "sha256": "af604a971e8c89f16db34ce5aba9f025d4f4ccc403f8d22f9d94acb4f0ef2c34",
+      "bytes": 2202
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/01-current_original-863d-recording-error/summary.json",
+      "sha256": "1f62e8d160262b0b6997744d7a73cbc05f24874c86aac726f0ed3024db6eaa50",
+      "bytes": 5063
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/02-current_original-863d-recording-exception/events.jsonl",
+      "sha256": "018b662680c87eed52c37580fb79538c826ccbaae8d17d3d1cb4dc9cff7ec623",
+      "bytes": 1382
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/02-current_original-863d-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/02-current_original-863d-recording-exception/stdout.jsonl",
+      "sha256": "b601f04d5e0f426ab3818bc6aa65bb78574188455951cbf6b9f0023be13485d1",
+      "bytes": 2236
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/02-current_original-863d-recording-exception/summary.json",
+      "sha256": "ebec1005782894620d5c5346f69ad0d7de19cbe0fe2567c610263a4488534a66",
+      "bytes": 5109
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/03-current_original-863d-surface-error/events.jsonl",
+      "sha256": "ee6d7421c6847f9de13ec2805242a3628f7f64908c8404dfebba8de9cfbb315f",
+      "bytes": 1389
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/03-current_original-863d-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/03-current_original-863d-surface-error/stdout.jsonl",
+      "sha256": "a23d3706952252efede3830cde8bf3b45c1ba67eec99967aa505f3679b21aee3",
+      "bytes": 2173
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/03-current_original-863d-surface-error/summary.json",
+      "sha256": "2d8d2dabbb819eed79f3b10f98059ec21f98dec2ef3586e47e3974467b74e879",
+      "bytes": 4863
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/04-current_original-863d-device-error/events.jsonl",
+      "sha256": "5e497bd9a968a113b69b3fedc924e51fa242d5694dab536aee85926b3790a2f6",
+      "bytes": 1389
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/04-current_original-863d-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/04-current_original-863d-device-error/stdout.jsonl",
+      "sha256": "6ad05590e892cbb21eb002d635fa32e3fd1b30fba132cdfbe30354fcd52f7656",
+      "bytes": 2166
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/04-current_original-863d-device-error/summary.json",
+      "sha256": "858ebe9ad170fff2418859c399e0a5cf78fa98ad5b349c21259ed8661c03b59e",
+      "bytes": 4854
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/05-current_original-8680-recording-error/events.jsonl",
+      "sha256": "e8080d7f7ff2463e85c07ece54fa024814740da1212272a89421ef4fce8a5f70",
+      "bytes": 1389
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/05-current_original-8680-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/05-current_original-8680-recording-error/stdout.jsonl",
+      "sha256": "24ef8ddc2f17e976e92bd55a730cb43ba1a20a12c049aaca2f784e397e1107aa",
+      "bytes": 2226
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/05-current_original-8680-recording-error/summary.json",
+      "sha256": "85baf045da47470c92e84e4a9e40340491cd9512805b37a5d9194e6b105d5d02",
+      "bytes": 5086
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/06-current_original-8680-recording-exception/events.jsonl",
+      "sha256": "e9dad61dc835f161c4e0fcb6a2d71787286721a6cdb4fdcb57e3111e40651a1c",
+      "bytes": 1382
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/06-current_original-8680-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/06-current_original-8680-recording-exception/stdout.jsonl",
+      "sha256": "88e2e1bf9d4c0354746ad25ef81f2efb75cca25148e4ef7057a80304ca9d0e98",
+      "bytes": 2260
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/06-current_original-8680-recording-exception/summary.json",
+      "sha256": "74ac6b02f4d73fd87daef8869c4b1da74cd4f12fbfdda84fa13e56179585b754",
+      "bytes": 5134
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/07-current_original-8680-surface-error/events.jsonl",
+      "sha256": "66adce8f89e8b067808a18af075e831ce5a6859bfb7bc44163f8026c7c3b056f",
+      "bytes": 1382
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/07-current_original-8680-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/07-current_original-8680-surface-error/stdout.jsonl",
+      "sha256": "3e6bf5104aa0f5cd3a484f74623bff59c396308a12e00e7ecfab1d9e5c4f70a6",
+      "bytes": 2197
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/07-current_original-8680-surface-error/summary.json",
+      "sha256": "8e7ea76da6c2fa00151a07bd5c7ec8578f7bedcc4aa781c5784f31a6b28cfd3c",
+      "bytes": 4880
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/08-current_original-8680-device-error/events.jsonl",
+      "sha256": "0409eeb635a5f8c2f320b588c8969b655a665075efe508509806d4b4ba5ea03c",
+      "bytes": 1388
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/08-current_original-8680-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/08-current_original-8680-device-error/stdout.jsonl",
+      "sha256": "22de5d348d717f40c9a9e6f2a5149e00506e1de6cd259b4800e6bc428f98611e",
+      "bytes": 2190
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/08-current_original-8680-device-error/summary.json",
+      "sha256": "3b771c1dd365931bfdeac61f3ce93048e59432139bdc817ff5506bd9db9b05b0",
+      "bytes": 4876
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/09-current_instrumented-863d-recording-error/events.jsonl",
+      "sha256": "48d98e78cf6af35b575a12a61fa71eeab8a8b28ef0089c1d614269fcb907a46d",
+      "bytes": 1418
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/09-current_instrumented-863d-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/09-current_instrumented-863d-recording-error/stdout.jsonl",
+      "sha256": "23049707aa0ee1818ee0e7614fd69a710dbe885c03a124a18fd49d8a1eb9f2a8",
+      "bytes": 2317
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/09-current_instrumented-863d-recording-error/summary.json",
+      "sha256": "dde5ef317ae27835a9cf938e40794498ce88d808fdefa21beea2138c4667b78d",
+      "bytes": 5240
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/10-current_instrumented-863d-recording-exception/events.jsonl",
+      "sha256": "c5572d7ee8f5b1e6bb01b9b387cfabaac628d9041d332510ee68fc40b57dd1de",
+      "bytes": 1418
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/10-current_instrumented-863d-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/10-current_instrumented-863d-recording-exception/stdout.jsonl",
+      "sha256": "60235493d14087a2a3a0ea8dc0f1292e5281ec614dbd9d0e06871d15818af2cc",
+      "bytes": 2351
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/10-current_instrumented-863d-recording-exception/summary.json",
+      "sha256": "058f1153a8570867f0b9867f9e24191569b7fd7923b164a858480d8bec609cd2",
+      "bytes": 5294
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/11-current_instrumented-863d-surface-error/events.jsonl",
+      "sha256": "8bbcf45c2ec2c150f24bf1a4e993bd884b04f6c18608e1d693f04f57097937ab",
+      "bytes": 1414
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/11-current_instrumented-863d-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/11-current_instrumented-863d-surface-error/stdout.jsonl",
+      "sha256": "5a66deca56b91fd01740d0547469e6b6589b1fe54ef3f203cdaf74ecbae4f994",
+      "bytes": 2658
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/11-current_instrumented-863d-surface-error/summary.json",
+      "sha256": "cf293a686e03a21187981198820bb637b9f7cf965daf242f0a4cbaa4875d2bc3",
+      "bytes": 5463
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/12-current_instrumented-863d-device-error/events.jsonl",
+      "sha256": "709e2a98428b7fecaab9691b7a7d0c415fe7a64643a76b44f749d7d3995b4bfd",
+      "bytes": 1418
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/12-current_instrumented-863d-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/12-current_instrumented-863d-device-error/stdout.jsonl",
+      "sha256": "9a421be5ea7e2502e50a38c615ddc62a5f730125cf9da116e9d7390cda976155",
+      "bytes": 2651
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/12-current_instrumented-863d-device-error/summary.json",
+      "sha256": "305a8186c40908fe4883a8f2effeb58b37451314e44349ef719f2b1296bc8ae1",
+      "bytes": 5458
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/13-current_instrumented-8680-recording-error/events.jsonl",
+      "sha256": "937008d7ce59354f289f3cebd154a965eb85be0a6a56ab63225ad969a48d0798",
+      "bytes": 1419
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/13-current_instrumented-8680-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/13-current_instrumented-8680-recording-error/stdout.jsonl",
+      "sha256": "bbaad316e4dc7a0c71f0e1ca060b118a4b660223e4fff1bef313893ca41a4dba",
+      "bytes": 2284
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/13-current_instrumented-8680-recording-error/summary.json",
+      "sha256": "f9b2cb52e56f1f28d3a4253490d41c3aaee9f41fce0f4bf29a119b8e685fc2ee",
+      "bytes": 5201
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/14-current_instrumented-8680-recording-exception/events.jsonl",
+      "sha256": "bd493e4bc344b620738994f755454023e9ce913dddad7e26abfb34e4543fb67a",
+      "bytes": 1418
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/14-current_instrumented-8680-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/14-current_instrumented-8680-recording-exception/stdout.jsonl",
+      "sha256": "0851e2f52a8ff00e7c5c230804488a05ffadf35818919041c1fe2baeb38b6721",
+      "bytes": 2318
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/14-current_instrumented-8680-recording-exception/summary.json",
+      "sha256": "0e4f760e28ac46eeda5ac5a0d916861a0c9abe83fcfe3798d56949fb5d92262e",
+      "bytes": 5254
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/15-current_instrumented-8680-surface-error/events.jsonl",
+      "sha256": "5eb2076c058ecdcfab4dd9e50e1d9fed245b47386dcdb7f3c1fe47a732701b09",
+      "bytes": 1416
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/15-current_instrumented-8680-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/15-current_instrumented-8680-surface-error/stdout.jsonl",
+      "sha256": "212800b68febce721b7512c0be2ac085dd6d70e460612677dedc90a5ce2348ff",
+      "bytes": 2682
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/15-current_instrumented-8680-surface-error/summary.json",
+      "sha256": "c0c3dcb21777c2397485a1439a44cb528105b6073e85c322af3f97ec6fed622a",
+      "bytes": 5489
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/16-current_instrumented-8680-device-error/events.jsonl",
+      "sha256": "0a2492d1120950d53948c351856cc098a5bbba41e3349c56a1a168be001c568f",
+      "bytes": 1416
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/16-current_instrumented-8680-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/16-current_instrumented-8680-device-error/stdout.jsonl",
+      "sha256": "a5423f03f25bb3936f843d6635b65607b480f9d0431456da812e69252530095f",
+      "bytes": 2675
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/16-current_instrumented-8680-device-error/summary.json",
+      "sha256": "2f9ec3d7e880c32d71f7c1d465e2b09d8433b57038a3daa9e99627b522e6b0fa",
+      "bytes": 5480
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/17-prior_original-863d-recording-error/events.jsonl",
+      "sha256": "0debd7c46873b47a3d387878a697f289a496cd2bbf51be6bc8a0fee8234071b1",
+      "bytes": 1463
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/17-prior_original-863d-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/17-prior_original-863d-recording-error/stdout.jsonl",
+      "sha256": "8fca9144180f97fffa74b5845ebc1c2d16ce3810ff5de5fc6feaa67645d44214",
+      "bytes": 2202
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/17-prior_original-863d-recording-error/summary.json",
+      "sha256": "3d8ba422280a42be9d9042a20bc352f8ef8fcffd8d445a3a84c70178cb004fbf",
+      "bytes": 5171
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/18-prior_original-863d-recording-exception/events.jsonl",
+      "sha256": "50e927affa118946350093b687105d0020636085f093e5f16730e79ccd8796fd",
+      "bytes": 1454
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/18-prior_original-863d-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/18-prior_original-863d-recording-exception/stdout.jsonl",
+      "sha256": "3fe3b1eed8a7c93f61b353b651c71549d4848cc42b8890abad24569890723fa3",
+      "bytes": 2236
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/18-prior_original-863d-recording-exception/summary.json",
+      "sha256": "fa169fc3d12661c338807c4086c41d80a11a50d57292b79945d295169bd7aff9",
+      "bytes": 5216
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/19-prior_original-863d-surface-error/events.jsonl",
+      "sha256": "fef1063dc14b03e00bf9bc73fd8b381d5ca559df334840ec798e10ab026d2dee",
+      "bytes": 1460
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/19-prior_original-863d-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/19-prior_original-863d-surface-error/stdout.jsonl",
+      "sha256": "39a4b2a8c816baf64b5ef59dd967553fa427530e87f6ee425e58fe2aa8ecaa2c",
+      "bytes": 2173
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/19-prior_original-863d-surface-error/summary.json",
+      "sha256": "97407be1a83af41cc0a17335fd19eba54033bbefcfd11663068d48ad36da8497",
+      "bytes": 4968
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/20-prior_original-863d-device-error/events.jsonl",
+      "sha256": "2682eeca0466ac2eda6739d7198432b405e1f82fe6c683dbfe04cf0f7c558cd5",
+      "bytes": 1462
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/20-prior_original-863d-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/20-prior_original-863d-device-error/stdout.jsonl",
+      "sha256": "fd14213ef3d2c087632d08c5ab3909f4168652c0cbac19c7074dcf11656f4ee1",
+      "bytes": 2166
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/20-prior_original-863d-device-error/summary.json",
+      "sha256": "8390e7ef51ec8c00f1fd2be8fc25c927141fdae34ca3670a53b09be6d9c535d8",
+      "bytes": 4961
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/21-prior_original-8680-recording-error/events.jsonl",
+      "sha256": "b8b5e4b16ac6fcf4d352df23ac4d6a4a808ccc33a20e96934a96e54ad45b3a50",
+      "bytes": 1463
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/21-prior_original-8680-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/21-prior_original-8680-recording-error/stdout.jsonl",
+      "sha256": "0e8d6350fa022f7df0e5f1bbb92f41268ac21f75bcf46bc48a14f6320e248ed6",
+      "bytes": 2226
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/21-prior_original-8680-recording-error/summary.json",
+      "sha256": "8067eee974bc4240ce8277cbb9b5395ef7e25567500f35afd9c762363545d18e",
+      "bytes": 5195
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/22-prior_original-8680-recording-exception/events.jsonl",
+      "sha256": "e972e06cc93148f3d9062c6a5dd6709d7632e862c495ea764a859319c2395db2",
+      "bytes": 1455
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/22-prior_original-8680-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/22-prior_original-8680-recording-exception/stdout.jsonl",
+      "sha256": "a0b7a28ecd302fdb46757935e75dc89d12e620e8916c6e1d6b528e0836392a86",
+      "bytes": 2260
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/22-prior_original-8680-recording-exception/summary.json",
+      "sha256": "fd563322e87b0e0300ceb1769ff20cab8f7d0617642fe49131a85b0195067737",
+      "bytes": 5241
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/23-prior_original-8680-surface-error/events.jsonl",
+      "sha256": "13b4a30a967d513a3160e8e36d4bb5c6ab45cab1656f16c2b2d823640837fc4a",
+      "bytes": 1462
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/23-prior_original-8680-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/23-prior_original-8680-surface-error/stdout.jsonl",
+      "sha256": "2fb923c662ed29f8184773c7252239a159ad8afdc3fb7bc3e1d079b9abb47e85",
+      "bytes": 2197
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/23-prior_original-8680-surface-error/summary.json",
+      "sha256": "96355d120994e69e773141dd3c2b15f74e6195cf421aafae1c80025f228bde26",
+      "bytes": 4994
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/24-prior_original-8680-device-error/events.jsonl",
+      "sha256": "4b1d5c0a24e48d2b1f0338101115295cc0a6cabd50e7a91527d1c2015347be03",
+      "bytes": 1460
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/24-prior_original-8680-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/24-prior_original-8680-device-error/stdout.jsonl",
+      "sha256": "7f36b9069be301d4d5ae2d37e143e2825bbddc97d634eda9d4f5f309c7d16851",
+      "bytes": 2190
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/24-prior_original-8680-device-error/summary.json",
+      "sha256": "6aff6252bc61b6cf1ecfe534cdba0d2ccd15d6ba71dfdb49371a012f050ed480",
+      "bytes": 4982
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/25-prior_instrumented-863d-recording-error/events.jsonl",
+      "sha256": "99e983712f02483557f2671a03e537144eba3fbc594ade833711cc563b123a63",
+      "bytes": 1415
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/25-prior_instrumented-863d-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/25-prior_instrumented-863d-recording-error/stdout.jsonl",
+      "sha256": "fb586ca3b120884fcf56298821e6ddaf8a13808f1faf492de72ecde21406f64c",
+      "bytes": 2317
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/25-prior_instrumented-863d-recording-error/summary.json",
+      "sha256": "37c02c70ec268d68f0eebe8095902f2c34cc0f174e979fbcc0e3e3bf991e52bc",
+      "bytes": 5234
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/26-prior_instrumented-863d-recording-exception/events.jsonl",
+      "sha256": "98a982b464ad5bd288d182daf44a36cf124845b1d48af814d2d103490b75f460",
+      "bytes": 1415
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/26-prior_instrumented-863d-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/26-prior_instrumented-863d-recording-exception/stdout.jsonl",
+      "sha256": "2c6cad926c49b6be7261390d9f0112b0324d84e65320aaad5a2860d385266370",
+      "bytes": 2351
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/26-prior_instrumented-863d-recording-exception/summary.json",
+      "sha256": "e5e107658436b789ac849d368fcf3a30eb0377a693ce316d08d72423385a1ae6",
+      "bytes": 5288
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/27-prior_instrumented-863d-surface-error/events.jsonl",
+      "sha256": "80e245ba5e915b946a51532b55af98e10ce4d26e98f8f47a95b957c8f8bfca4b",
+      "bytes": 1413
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/27-prior_instrumented-863d-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/27-prior_instrumented-863d-surface-error/stdout.jsonl",
+      "sha256": "ac1f53490a7c030b4a67ac423ef32c231c8bee0812aa4b059795097a1e0880f1",
+      "bytes": 2658
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/27-prior_instrumented-863d-surface-error/summary.json",
+      "sha256": "cd1220f2fbbec9aff26e327f44f395539dbe2e43bad8f978b897fa707dfdd98b",
+      "bytes": 5457
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/28-prior_instrumented-863d-device-error/events.jsonl",
+      "sha256": "661d1b20c5901a90c9892999bdb8382f5e8e45d7f5a4057cd84002be430dd9ce",
+      "bytes": 1414
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/28-prior_instrumented-863d-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/28-prior_instrumented-863d-device-error/stdout.jsonl",
+      "sha256": "4049f69203959238f7c6ff0ea244230441239441f50f25dfd239686beec3c5a2",
+      "bytes": 2651
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/28-prior_instrumented-863d-device-error/summary.json",
+      "sha256": "9c7b62ddd3d37521a57a520bed44c63f41e2bc0edd5f60b592b3b919d8850a60",
+      "bytes": 5450
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/29-prior_instrumented-8680-recording-error/events.jsonl",
+      "sha256": "b3fe0a87cb4968bfc0d8e687d72c19f35b2cdd47359c8833427131fba45d5c07",
+      "bytes": 1414
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/29-prior_instrumented-8680-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/29-prior_instrumented-8680-recording-error/stdout.jsonl",
+      "sha256": "24b03db742b1afef53d01b8afa389fee7874fd62eac65a2eb9d6a97e3e3a55ac",
+      "bytes": 2284
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/29-prior_instrumented-8680-recording-error/summary.json",
+      "sha256": "ff731ea3edd16689e9060a395553187501cb95de7595026d46db121e3dddf241",
+      "bytes": 5192
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/30-prior_instrumented-8680-recording-exception/events.jsonl",
+      "sha256": "5c6cedcb267f0a4b4f42d387ab1531ad04936f865d614fe24735587209ce9732",
+      "bytes": 1415
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/30-prior_instrumented-8680-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/30-prior_instrumented-8680-recording-exception/stdout.jsonl",
+      "sha256": "0e9b115dad4bbcdc8862325c43a4778dfcd555f428221cd17a84a764a757c38f",
+      "bytes": 2318
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/30-prior_instrumented-8680-recording-exception/summary.json",
+      "sha256": "11744996d9cf5db2023c298f0ba8b2c8895cf42703209ba996e14852a518730f",
+      "bytes": 5246
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/31-prior_instrumented-8680-surface-error/events.jsonl",
+      "sha256": "809c5bcbf62a4f35fbb6d9d88cc81c94e4cbd95e6a6579df5db189e9ace11fa5",
+      "bytes": 1411
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/31-prior_instrumented-8680-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/31-prior_instrumented-8680-surface-error/stdout.jsonl",
+      "sha256": "56e54d4f542647b4c00f81bcef342c7bcdd27d94ea4a2d1047456baaf5e87767",
+      "bytes": 2682
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/31-prior_instrumented-8680-surface-error/summary.json",
+      "sha256": "10d1c90d6dbf10239f6a617b2277f7cca18363b36dd353b9b3ffed627193c652",
+      "bytes": 5480
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/32-prior_instrumented-8680-device-error/events.jsonl",
+      "sha256": "6aab2cbc1eca81625d30561a03a24f308807d2869bd4400cdee19c551c40a7c8",
+      "bytes": 1414
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/32-prior_instrumented-8680-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/32-prior_instrumented-8680-device-error/stdout.jsonl",
+      "sha256": "9cbf1905afbe5d14ee8669900a398a65ac35dbfab1867f9fcca9340d10f9044a",
+      "bytes": 2675
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/32-prior_instrumented-8680-device-error/summary.json",
+      "sha256": "780ada5013892deb36353cba3d3ea347bcfd0b567994bf12177206d8690a99b5",
+      "bytes": 5474
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/33-current_original-863d-recording-error/events.jsonl",
+      "sha256": "bf3de157fb13f0bba584f1b5e034d8c967429f82c3a642581b6623ba970704b7",
+      "bytes": 1391
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/33-current_original-863d-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/33-current_original-863d-recording-error/stdout.jsonl",
+      "sha256": "af604a971e8c89f16db34ce5aba9f025d4f4ccc403f8d22f9d94acb4f0ef2c34",
+      "bytes": 2202
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/33-current_original-863d-recording-error/summary.json",
+      "sha256": "b2dd50679355c41b1bc57172c1002eb0ee427e389cdfbbcca4c570e750449fdb",
+      "bytes": 5065
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/34-current_original-863d-recording-exception/events.jsonl",
+      "sha256": "c096b389195774b26d5c474c8eb03cfb783b768001566b87aba9af3b689b4449",
+      "bytes": 1389
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/34-current_original-863d-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/34-current_original-863d-recording-exception/stdout.jsonl",
+      "sha256": "b601f04d5e0f426ab3818bc6aa65bb78574188455951cbf6b9f0023be13485d1",
+      "bytes": 2236
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/34-current_original-863d-recording-exception/summary.json",
+      "sha256": "318260798c313adee15e8778b7bd8ab09fe34c6a770759f0ef1b464e3c1a8030",
+      "bytes": 5116
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/35-current_original-863d-surface-error/events.jsonl",
+      "sha256": "49390099b5882a597e93069bd77a0599e6e4f13e26efa6d73ebf62676010f8bf",
+      "bytes": 1390
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/35-current_original-863d-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/35-current_original-863d-surface-error/stdout.jsonl",
+      "sha256": "eadcbca0e6fb4d284f850d17f380615869ede7c72d09dd023608448e0a769bc8",
+      "bytes": 2173
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/35-current_original-863d-surface-error/summary.json",
+      "sha256": "ba547d019ea2f7736933e0e80d70b1190410aae0064ae64d7c661be046d4c3c6",
+      "bytes": 4863
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/36-current_original-863d-device-error/events.jsonl",
+      "sha256": "c7ee1fb526aadd4567ff38ce319a63287cc49ca0a7a23ebde2b591436591928e",
+      "bytes": 1390
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/36-current_original-863d-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/36-current_original-863d-device-error/stdout.jsonl",
+      "sha256": "6ad05590e892cbb21eb002d635fa32e3fd1b30fba132cdfbe30354fcd52f7656",
+      "bytes": 2166
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/36-current_original-863d-device-error/summary.json",
+      "sha256": "d7494782c043544522f8cb45085ec7241f9f3650b82da15bc33cd7ecdfe9be69",
+      "bytes": 4855
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/37-current_original-8680-recording-error/events.jsonl",
+      "sha256": "d9e3cdaad2ebd250fdf7a3c1f3a677c2118da0fb3416dd5c0e13b8f2f884c0da",
+      "bytes": 1391
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/37-current_original-8680-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/37-current_original-8680-recording-error/stdout.jsonl",
+      "sha256": "24ef8ddc2f17e976e92bd55a730cb43ba1a20a12c049aaca2f784e397e1107aa",
+      "bytes": 2226
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/37-current_original-8680-recording-error/summary.json",
+      "sha256": "db50c75f383d7753d04000f56e4b7a52ce0f42c531ee8c20765248dd5e72f454",
+      "bytes": 5089
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/38-current_original-8680-recording-exception/events.jsonl",
+      "sha256": "a43d808884b42462708b00501d7cbd6405a2d6b70ca2888be54191116e595f21",
+      "bytes": 1391
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/38-current_original-8680-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/38-current_original-8680-recording-exception/stdout.jsonl",
+      "sha256": "88e2e1bf9d4c0354746ad25ef81f2efb75cca25148e4ef7057a80304ca9d0e98",
+      "bytes": 2260
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/38-current_original-8680-recording-exception/summary.json",
+      "sha256": "e830f9f282c3ea05a642115c0b481eb53a27f72c525105fb4abc32f42898e5e5",
+      "bytes": 5143
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/39-current_original-8680-surface-error/events.jsonl",
+      "sha256": "82fce0a9b492a0ae24b30a1557a85177f1ca09cd453c570e358bbf819c3f626d",
+      "bytes": 1389
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/39-current_original-8680-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/39-current_original-8680-surface-error/stdout.jsonl",
+      "sha256": "3e6bf5104aa0f5cd3a484f74623bff59c396308a12e00e7ecfab1d9e5c4f70a6",
+      "bytes": 2197
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/39-current_original-8680-surface-error/summary.json",
+      "sha256": "2df93f6e4d00f7e724b2a52c7253f7ea72c824982be8b7e8c50ef95d6c49bd3a",
+      "bytes": 4886
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/40-current_original-8680-device-error/events.jsonl",
+      "sha256": "0626beb4368c3259fca4be2290c3b77d579e0ce8a2783976ebc152b473cfeabd",
+      "bytes": 1390
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/40-current_original-8680-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/40-current_original-8680-device-error/stdout.jsonl",
+      "sha256": "22de5d348d717f40c9a9e6f2a5149e00506e1de6cd259b4800e6bc428f98611e",
+      "bytes": 2190
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/40-current_original-8680-device-error/summary.json",
+      "sha256": "eb8dfa3e3f22bf53722a3560cab434b7dd3cf709c03351cc91a960c93c17f9eb",
+      "bytes": 4879
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/41-current_instrumented-863d-recording-error/events.jsonl",
+      "sha256": "8b8edb2823162b99addaa6b129a4d44856035f7f232bd8c2f22e8f0f01f0146c",
+      "bytes": 1418
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/41-current_instrumented-863d-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/41-current_instrumented-863d-recording-error/stdout.jsonl",
+      "sha256": "c13b41aeffc4141d63a5266c9fdaa25e7130febe2eb8a4038941f7225020203f",
+      "bytes": 2317
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/41-current_instrumented-863d-recording-error/summary.json",
+      "sha256": "127080894a3f7b78be20323ae2b84353de291c4a85b7b4dffdf277a5750c586e",
+      "bytes": 5241
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/42-current_instrumented-863d-recording-exception/events.jsonl",
+      "sha256": "1c9409ae193f252cb7d8917bd2b872d08f515f0c39c000434e0b66ed657173a0",
+      "bytes": 1418
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/42-current_instrumented-863d-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/42-current_instrumented-863d-recording-exception/stdout.jsonl",
+      "sha256": "666c62bb550383ad406090bca2f10f99cf7179f09f7d792ec8c1d1a8d1dd704c",
+      "bytes": 2351
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/42-current_instrumented-863d-recording-exception/summary.json",
+      "sha256": "483cd630c57a66805ff495a13f9ee29d23914cbce328235507c9edccf133eabf",
+      "bytes": 5295
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/43-current_instrumented-863d-surface-error/events.jsonl",
+      "sha256": "37562e3b7f8035f457a57bdd733e511ed69ed292996e3cc8b33fc46ed17b28be",
+      "bytes": 1417
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/43-current_instrumented-863d-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/43-current_instrumented-863d-surface-error/stdout.jsonl",
+      "sha256": "5a66deca56b91fd01740d0547469e6b6589b1fe54ef3f203cdaf74ecbae4f994",
+      "bytes": 2658
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/43-current_instrumented-863d-surface-error/summary.json",
+      "sha256": "f9063da6dcb0cf6fa9b7e2dc5ed0a56465e764edba348371c12461727ca46a2a",
+      "bytes": 5466
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/44-current_instrumented-863d-device-error/events.jsonl",
+      "sha256": "be22e55f2b3bbbea2a4d06f839e89b3dc694f45e3c244064b3977a1f67713460",
+      "bytes": 1418
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/44-current_instrumented-863d-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/44-current_instrumented-863d-device-error/stdout.jsonl",
+      "sha256": "05c6b3fa4cadcd7491c3ad9a7b937f7c813ca71588c1304928f57db4e933c1c7",
+      "bytes": 2651
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/44-current_instrumented-863d-device-error/summary.json",
+      "sha256": "1bcd996b38978c46dc0f50cf955671279c96c92cb2f57a75d0da2efb14f798ff",
+      "bytes": 5458
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/45-current_instrumented-8680-recording-error/events.jsonl",
+      "sha256": "a2a9b79755b08e0a50ed900195ed286f5ee7ef7eebebef3f66c03e7ce30c3106",
+      "bytes": 1417
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/45-current_instrumented-8680-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/45-current_instrumented-8680-recording-error/stdout.jsonl",
+      "sha256": "bbaad316e4dc7a0c71f0e1ca060b118a4b660223e4fff1bef313893ca41a4dba",
+      "bytes": 2284
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/45-current_instrumented-8680-recording-error/summary.json",
+      "sha256": "888c1c1a51164c829dea07e1600a47411a69f8cee9510311e36e5cc2375ad0f9",
+      "bytes": 5199
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/46-current_instrumented-8680-recording-exception/events.jsonl",
+      "sha256": "320bff123d2453295072c5712d49b35de31e5080c2562cb7a53c914127d8c107",
+      "bytes": 1401
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/46-current_instrumented-8680-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/46-current_instrumented-8680-recording-exception/stdout.jsonl",
+      "sha256": "0851e2f52a8ff00e7c5c230804488a05ffadf35818919041c1fe2baeb38b6721",
+      "bytes": 2318
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/46-current_instrumented-8680-recording-exception/summary.json",
+      "sha256": "387a70a17467b365898da1ace67244855c592eddfbf8e4205e6ae734755b887d",
+      "bytes": 5237
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/47-current_instrumented-8680-surface-error/events.jsonl",
+      "sha256": "e87c49e40bee30e718c82b7691b115d5af4ddec543925b9aff6b9e90f991ce19",
+      "bytes": 1418
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/47-current_instrumented-8680-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/47-current_instrumented-8680-surface-error/stdout.jsonl",
+      "sha256": "212800b68febce721b7512c0be2ac085dd6d70e460612677dedc90a5ce2348ff",
+      "bytes": 2682
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/47-current_instrumented-8680-surface-error/summary.json",
+      "sha256": "74b52648dd7b0c3213233eb29319681a4c7d834579a41ea76b526bc15bc41feb",
+      "bytes": 5491
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/48-current_instrumented-8680-device-error/events.jsonl",
+      "sha256": "25f77b6dd6758df1a40477ba3782d89584b54d8a1125aaadc370270989efb5eb",
+      "bytes": 1415
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/48-current_instrumented-8680-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/48-current_instrumented-8680-device-error/stdout.jsonl",
+      "sha256": "948a4407e9309f55fec5505c61a616d554559979fedffcbf6d359fc115144269",
+      "bytes": 2618
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/48-current_instrumented-8680-device-error/summary.json",
+      "sha256": "847c1255c1c6b63d5bdab17f14a162c0640759572cff2bef07277acb7d38044f",
+      "bytes": 5414
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/49-prior_original-863d-recording-error/events.jsonl",
+      "sha256": "a2cbbaf9df818f0988cbb7e90c2f34e438a26d0d1f504c1345bde8c3d96cfbeb",
+      "bytes": 1463
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/49-prior_original-863d-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/49-prior_original-863d-recording-error/stdout.jsonl",
+      "sha256": "8fca9144180f97fffa74b5845ebc1c2d16ce3810ff5de5fc6feaa67645d44214",
+      "bytes": 2202
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/49-prior_original-863d-recording-error/summary.json",
+      "sha256": "bbe37464eecb45f2b83e1c450f21cb86c8a4bf5b86f3dce28f182ea18409edf2",
+      "bytes": 5170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/50-prior_original-863d-recording-exception/events.jsonl",
+      "sha256": "4660af67ac203c9906f2da5feb3429b396f95598fa1d8aed15b983dc6dc7bf3e",
+      "bytes": 1463
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/50-prior_original-863d-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/50-prior_original-863d-recording-exception/stdout.jsonl",
+      "sha256": "3fe3b1eed8a7c93f61b353b651c71549d4848cc42b8890abad24569890723fa3",
+      "bytes": 2236
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/50-prior_original-863d-recording-exception/summary.json",
+      "sha256": "d0bf3ef550fcd21ae75ed45e22ce3c707d6ed47e1048df5ba48117a206d9aa46",
+      "bytes": 5225
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/51-prior_original-863d-surface-error/events.jsonl",
+      "sha256": "c2559773563fbc3c42f54435a3d2743ad9a7fea373ec73b91d6ec840b3bd9e3d",
+      "bytes": 1462
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/51-prior_original-863d-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/51-prior_original-863d-surface-error/stdout.jsonl",
+      "sha256": "a8dd743cb86e46eddd369a26de17191ea963440c82f5856b59aeda392515be09",
+      "bytes": 2173
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/51-prior_original-863d-surface-error/summary.json",
+      "sha256": "34b8b2ce4657ef3265a05ec5ce491328431154b51c59bd7d79a9c93473627ff9",
+      "bytes": 4969
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/52-prior_original-863d-device-error/events.jsonl",
+      "sha256": "1364fb6368c68ecf10669a37847caa5b89d5b79dc53ce9b358bfee9e9d0b68dd",
+      "bytes": 1453
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/52-prior_original-863d-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/52-prior_original-863d-device-error/stdout.jsonl",
+      "sha256": "977cc25f42074cb6691049e2f824ed53235e83c26ae7f9dba9b84610c971c145",
+      "bytes": 2166
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/52-prior_original-863d-device-error/summary.json",
+      "sha256": "5981af515e5bdeb4e950623587b8c03941c8458ea5c4b391f384e38229f509ea",
+      "bytes": 4952
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/53-prior_original-8680-recording-error/events.jsonl",
+      "sha256": "884da5527cf93e12744e8cb5d17c5bbcaf2b942a311fec108d0342a1f6db5e0e",
+      "bytes": 1462
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/53-prior_original-8680-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/53-prior_original-8680-recording-error/stdout.jsonl",
+      "sha256": "0e8d6350fa022f7df0e5f1bbb92f41268ac21f75bcf46bc48a14f6320e248ed6",
+      "bytes": 2226
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/53-prior_original-8680-recording-error/summary.json",
+      "sha256": "6bbd3a917691a3d16c4e8cf0d29840746d78a1975d94f13500b08d57c3be0814",
+      "bytes": 5194
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/54-prior_original-8680-recording-exception/events.jsonl",
+      "sha256": "fef5dcd78d7effcef1691ede17a79d88b06c788b3d7419cbbef05a872d9c0e74",
+      "bytes": 1462
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/54-prior_original-8680-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/54-prior_original-8680-recording-exception/stdout.jsonl",
+      "sha256": "a0b7a28ecd302fdb46757935e75dc89d12e620e8916c6e1d6b528e0836392a86",
+      "bytes": 2260
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/54-prior_original-8680-recording-exception/summary.json",
+      "sha256": "cfb7b7ea04e6b9c1e5918480e2add2724c496e3f3b08c2111432a2d3b21f3ce8",
+      "bytes": 5247
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/55-prior_original-8680-surface-error/events.jsonl",
+      "sha256": "a4631be150b12087a61e5de69fdeeb4f8cde4a813e4656dbb0b1ddcd9624c3db",
+      "bytes": 1460
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/55-prior_original-8680-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/55-prior_original-8680-surface-error/stdout.jsonl",
+      "sha256": "2fb923c662ed29f8184773c7252239a159ad8afdc3fb7bc3e1d079b9abb47e85",
+      "bytes": 2197
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/55-prior_original-8680-surface-error/summary.json",
+      "sha256": "f66ce64a8e2c73794e92b5c435e3d6c643b8df10bc4322ac92cb375946449ff5",
+      "bytes": 4992
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/56-prior_original-8680-device-error/events.jsonl",
+      "sha256": "d850b1c21290a7cdbc29278bcb99e0433f74eee33c117e2518fe9a668c86b2e5",
+      "bytes": 1462
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/56-prior_original-8680-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/56-prior_original-8680-device-error/stdout.jsonl",
+      "sha256": "7f36b9069be301d4d5ae2d37e143e2825bbddc97d634eda9d4f5f309c7d16851",
+      "bytes": 2190
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/56-prior_original-8680-device-error/summary.json",
+      "sha256": "34526c4730545765203a46b1d7c964d8d4926dccb94f2aecaeeccb753bade70a",
+      "bytes": 4985
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/57-prior_instrumented-863d-recording-error/events.jsonl",
+      "sha256": "c44bd74a682df406c3196704292a9f45652be58e25e876335d620460d756489f",
+      "bytes": 1415
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/57-prior_instrumented-863d-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/57-prior_instrumented-863d-recording-error/stdout.jsonl",
+      "sha256": "fb586ca3b120884fcf56298821e6ddaf8a13808f1faf492de72ecde21406f64c",
+      "bytes": 2317
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/57-prior_instrumented-863d-recording-error/summary.json",
+      "sha256": "a432258f2e682bb682534e92e3fb4a848f18e2aa71cc59066934c59962c0d79d",
+      "bytes": 5234
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/58-prior_instrumented-863d-recording-exception/events.jsonl",
+      "sha256": "e9e40416fec8d264f53319612cc8da816347863aa716c08e87ed35b41ca85cd0",
+      "bytes": 1415
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/58-prior_instrumented-863d-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/58-prior_instrumented-863d-recording-exception/stdout.jsonl",
+      "sha256": "f96a745716e0229e860d8bf3a4ede57f720752af17288c9a8db0423beef2c365",
+      "bytes": 2351
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/58-prior_instrumented-863d-recording-exception/summary.json",
+      "sha256": "2caa43ab087f69b1f62c83f49387abec3ea11bb73a8b3c816521b694d6e95f97",
+      "bytes": 5288
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/59-prior_instrumented-863d-surface-error/events.jsonl",
+      "sha256": "f3485c8be2b69361fe54c47c9e2961e5dd7bcdd836c1b5db4aa8bb0b21ec1f66",
+      "bytes": 1411
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/59-prior_instrumented-863d-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/59-prior_instrumented-863d-surface-error/stdout.jsonl",
+      "sha256": "d1908ab3ec586e8ad236350a30acad7bdc4eb5438b40ad3f033d68b29b625a58",
+      "bytes": 2658
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/59-prior_instrumented-863d-surface-error/summary.json",
+      "sha256": "0f1af13bdf552ed8329cfbeec65f2e5d414b43e3be2574932b445f5fe15a6e29",
+      "bytes": 5456
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/60-prior_instrumented-863d-device-error/events.jsonl",
+      "sha256": "38b520500745014ced5d72390246cbe6bb24af7c3cc058922a0cd8789ebd3d36",
+      "bytes": 1413
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/60-prior_instrumented-863d-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/60-prior_instrumented-863d-device-error/stdout.jsonl",
+      "sha256": "4049f69203959238f7c6ff0ea244230441239441f50f25dfd239686beec3c5a2",
+      "bytes": 2651
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/60-prior_instrumented-863d-device-error/summary.json",
+      "sha256": "55912d8d667a93cbdd39e7932d273a79862eed183eb948e74b2bfa071fa0dd13",
+      "bytes": 5449
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/61-prior_instrumented-8680-recording-error/events.jsonl",
+      "sha256": "10715c0a882e90320c1302293a97744a24e70569abccd753a4c58aeccc4f81a6",
+      "bytes": 1415
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/61-prior_instrumented-8680-recording-error/stderr.log",
+      "sha256": "1c305bc51554b4676bc5925d08311a340a37b0b5016a50ddd02e47530085f07e",
+      "bytes": 158
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/61-prior_instrumented-8680-recording-error/stdout.jsonl",
+      "sha256": "24b03db742b1afef53d01b8afa389fee7874fd62eac65a2eb9d6a97e3e3a55ac",
+      "bytes": 2284
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/61-prior_instrumented-8680-recording-error/summary.json",
+      "sha256": "1a587dcaad3f4792fb47c403e768b3142708dffce839ff336ce0090e32a2b74c",
+      "bytes": 5193
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/62-prior_instrumented-8680-recording-exception/events.jsonl",
+      "sha256": "25ca164911f41f80e4867836376c9f78c942bff958b49c10d2934d401948b31a",
+      "bytes": 1414
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/62-prior_instrumented-8680-recording-exception/stderr.log",
+      "sha256": "e722bfb8670b80ada6acd3a4ef7ab79d3c8cbc516eb7a97aada8dd072f4700fd",
+      "bytes": 170
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/62-prior_instrumented-8680-recording-exception/stdout.jsonl",
+      "sha256": "0e9b115dad4bbcdc8862325c43a4778dfcd555f428221cd17a84a764a757c38f",
+      "bytes": 2318
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/62-prior_instrumented-8680-recording-exception/summary.json",
+      "sha256": "2698f312070bc9756e54f37880f14bf6cb9ed048f46a00569044dea059a0b756",
+      "bytes": 5246
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/63-prior_instrumented-8680-surface-error/events.jsonl",
+      "sha256": "134d63ada66b39b5ce0b839aff3bdd1e489067c5811cda0d3e5b4d9dc627c7cb",
+      "bytes": 1410
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/63-prior_instrumented-8680-surface-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/63-prior_instrumented-8680-surface-error/stdout.jsonl",
+      "sha256": "56e54d4f542647b4c00f81bcef342c7bcdd27d94ea4a2d1047456baaf5e87767",
+      "bytes": 2682
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/63-prior_instrumented-8680-surface-error/summary.json",
+      "sha256": "c02a4fed48cf4c40d958699e3a316895bdde144344949f3bfeae824222f9f6c5",
+      "bytes": 5479
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/64-prior_instrumented-8680-device-error/events.jsonl",
+      "sha256": "94039eec3643049a72ad4547094453d468aae58a4cb4a74cd4c97828109b9c1f",
+      "bytes": 1413
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/64-prior_instrumented-8680-device-error/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/64-prior_instrumented-8680-device-error/stdout.jsonl",
+      "sha256": "9cbf1905afbe5d14ee8669900a398a65ac35dbfab1867f9fcca9340d10f9044a",
+      "bytes": 2675
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/64-prior_instrumented-8680-device-error/summary.json",
+      "sha256": "842fccd6c4e9f265d2e8eb7ad818067aeeb5429794c2fe4a71b0a8726d9593c4",
+      "bytes": 5473
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/capture-build.json",
+      "sha256": "ea8215ac59e0a15252a051b56644b98b3adf480f21a85ebc1419cb12e5de467c",
+      "bytes": 735
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/current-build.json",
+      "sha256": "cdf1e09f8afdb4143e755a980f18c8e7857aefbe4c273588c5b0e57ebd246ff5",
+      "bytes": 2613
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/prior-build.json",
+      "sha256": "7eaa403ef97e491bfa1294c9a0613387724d789bb873d86ed08eb44b2461602a",
+      "bytes": 2603
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/source-snapshot/dependencies.lock.json",
+      "sha256": "f2dacdc51fa9004d07ab005af81a9294945f2527cd5972e6a0f78964d7cf9db3",
+      "bytes": 22675
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/summary.json",
+      "sha256": "6c31adaa9cc5a531a5c54960bc22af2f9efa6332cbcffd2654e7c805f93a6eb9",
+      "bytes": 437348
+    },
+    {
+      "path": "out/05c-followup/asan-native-final/token.json",
+      "sha256": "596aab71250c3ab229bb0b027e830280e6045a4cba5be5805350e76ad36f979e",
+      "bytes": 12126
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/capture-build.json",
+      "sha256": "3a41095bc9d39e15ad74a6a8aa89aeb1ab54c2ca4d7f645581543ee40222cd53",
+      "bytes": 743
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/current-build.json",
+      "sha256": "7f4c1e0d3e9787f7b65dbe2a4c92aaf51df37c4d56c4c1136a533c5d5e6bf265",
+      "bytes": 2629
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/native_atexit_stall/48560-capture.json",
+      "sha256": "f7b97b3f302d1842761dec6c4ffbea60e69d441a8b21f11c04e855f2bf12102d",
+      "bytes": 1502
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/native_atexit_stall/48560.dmp",
+      "sha256": "628b18a92b726a7e250632c2d163ca4c053933cda034efe2d9da46c0b9db5f10",
+      "bytes": 150584
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/native_atexit_stall/48560.stacks.log",
+      "sha256": "03ee1db5ac886302472ce4be79ae4d5385fe421612b314d91aa6212eb081ea32",
+      "bytes": 7585
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/native_atexit_stall/51112-capture.json",
+      "sha256": "609a81a178cd9035de23f07126c6fc151edea9ee0bbac3082161441a5d7c5c85",
+      "bytes": 1873
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/native_atexit_stall/51112.dmp",
+      "sha256": "a13b338386a8ce9a09eda9868e3839c72d913c76c23fd214e7733757bfa29df1",
+      "bytes": 49041
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/native_atexit_stall/51112.stacks.log",
+      "sha256": "7414cb027a767613f53df99c206210336a57d726bf4519342f2cc63c53679a56",
+      "bytes": 11531
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/native_atexit_stall/52228-capture.json",
+      "sha256": "789a497e276c1f450d55b4eaa06b53764dd882f065002ed0d450ec7d26e47bb5",
+      "bytes": 1835
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/native_atexit_stall/52228.dmp",
+      "sha256": "572fb4df4b283cd4e6df882993bef28b09a534b5836c38238d05c12851428445",
+      "bytes": 56884
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/native_atexit_stall/52228.stacks.log",
+      "sha256": "5c45a22f402e327179b222e1304ed81bfeeba4b68dcaa696c55035cb754b1a8c",
+      "bytes": 11049
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/native_atexit_stall/events.jsonl",
+      "sha256": "a840c8c979bebcd8b5a5e839dcbd993c9df666bea02ea5e6d8680754beb3c703",
+      "bytes": 721
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/native_atexit_stall/slow-processes.json",
+      "sha256": "08c2e811d02318e4c69bda1989c4f773bf18a62dfbd146b85968857d94f6db85",
+      "bytes": 1239
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/native_atexit_stall/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/native_atexit_stall/stdout.jsonl",
+      "sha256": "5176d18d26eae05ad502fc274e4fc9b3c1ab803161f33ec4f4cde60272fefcfb",
+      "bytes": 146
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/native_atexit_stall/summary.json",
+      "sha256": "7951c68643bacb8bba39afff37d8b15e374bcade0eae24924cbaa039dbe3d3d4",
+      "bytes": 7082
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/source-snapshot/dependencies.lock.json",
+      "sha256": "f2dacdc51fa9004d07ab005af81a9294945f2527cd5972e6a0f78964d7cf9db3",
+      "bytes": 22675
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/summary.json",
+      "sha256": "a3ff7d0a75a2503a74f549dbdf3c2566259bbdd1c842f0d8c4afe03b1057c9b9",
+      "bytes": 102571
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/token.json",
+      "sha256": "0c3f19a54918dd2c7735d396fdf58331b3d564177a25230a421339debd1141ac",
+      "bytes": 1374
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/worker_atexit_stall/39744-capture.json",
+      "sha256": "838f6b29c941922f410aff9ba3ac6826a4e495a108ada62df2027891b6bf2224",
+      "bytes": 1759
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/worker_atexit_stall/39744.dmp",
+      "sha256": "7e852d546d581ce2d88c16ef21ceb97943500feb1069f724aa14a6678449c141",
+      "bytes": 52365
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/worker_atexit_stall/39744.stacks.log",
+      "sha256": "e4a492ad74199a31058521aeb1e6c7ebc223f058a59495d6d31fa947472a285c",
+      "bytes": 11887
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/worker_atexit_stall/48556-capture.json",
+      "sha256": "fd17c86003a1a15a1c007857e9f2a64e2f31ec41eea75a578699e94438682c85",
+      "bytes": 1501
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/worker_atexit_stall/48556.dmp",
+      "sha256": "5491393d111be5b991e22f356710959eae29583808435ded45153a34049e380f",
+      "bytes": 151736
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/worker_atexit_stall/48556.stacks.log",
+      "sha256": "27480b364212a4e56922b6800e564a3c1a7512e359cbf091da8ae251526d5328",
+      "bytes": 7585
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/worker_atexit_stall/events.jsonl",
+      "sha256": "553be9770b2bf68b364626f1aa1c1a74b8111017bd14fe36d39159773cafdb07",
+      "bytes": 1220
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/worker_atexit_stall/slow-processes.json",
+      "sha256": "ffbfad2005536ad48ea6b9e37ba10a15c5542521817531da2658329ba2f11f6a",
+      "bytes": 1069
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/worker_atexit_stall/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/worker_atexit_stall/stdout.jsonl",
+      "sha256": "077dcd7071b990ed2e3a1f398a0c193748f4fa30ffaf306d90ce5fc2926e39f4",
+      "bytes": 459
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-final2/worker_atexit_stall/summary.json",
+      "sha256": "b9ab69bc738ea88dd61b816d7fd24d48fecfeb7b28ea48c6e0775d3c92abd17a",
+      "bytes": 6064
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/capture-build.json",
+      "sha256": "e2ba3a6f582ea09bacfd57665ab49fad3ff903a01ba9fe7152bee1f51010655d",
+      "bytes": 741
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/current-build.json",
+      "sha256": "6477c275c81b63a9ccaa114933f411af397a42bd265ce3689fe0aa5d384ab186",
+      "bytes": 2727
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/native_atexit_stall/48116-capture.json",
+      "sha256": "c5fb235577b4df2899eb30e98815108e9575ad67bef779a6c33b8cdc756c7439",
+      "bytes": 1500
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/native_atexit_stall/48116.dmp",
+      "sha256": "4a65b71880395c387042fa0ca13ac8d6dbc3ef771476dada7881f282a2f96f1c",
+      "bytes": 150344
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/native_atexit_stall/48116.stacks.log",
+      "sha256": "362c850d0c1a0e96e17588bf0d42555141a555ecae1f09a93741603f0e157d06",
+      "bytes": 7674
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/native_atexit_stall/50744-capture.json",
+      "sha256": "3a172e4ca995a8fc7b1a4c87d618629ce9ac4c969329d0ff7807744c34daa673",
+      "bytes": 1871
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/native_atexit_stall/50744.dmp",
+      "sha256": "214719a0a21c94e06e561621413074fb395c8db3c310cde31049ede071b5c996",
+      "bytes": 49441
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/native_atexit_stall/50744.stacks.log",
+      "sha256": "c83abe154e3b2c4933e4fd5e3980ee721e89c13f943ff9599ade851eb7168211",
+      "bytes": 11620
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/native_atexit_stall/53536-capture.json",
+      "sha256": "642a1489fa3739a044d2aebdce524f024f32385aceef88f6a8b9a4635f88b852",
+      "bytes": 1831
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/native_atexit_stall/53536.dmp",
+      "sha256": "6ff3083ecc8960245553acd452d7dea105b5e8cf5017d5a52d071b69b9deed5e",
+      "bytes": 59615
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/native_atexit_stall/53536.stacks.log",
+      "sha256": "aca9422b3606b98a578950108268c87b72f4c2481bbbae69fd576c57a8b3eebc",
+      "bytes": 11137
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/native_atexit_stall/events.jsonl",
+      "sha256": "d80529a72ae9ced45dd2033b82284fd7db3e98a6faf668033515bdfc77b05edc",
+      "bytes": 720
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/native_atexit_stall/slow-processes.json",
+      "sha256": "cc8d902c4d7d1588e65085d483ac4a90e7033f9c5adc875ed7712fff3b18818b",
+      "bytes": 1237
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/native_atexit_stall/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/native_atexit_stall/stdout.jsonl",
+      "sha256": "5176d18d26eae05ad502fc274e4fc9b3c1ab803161f33ec4f4cde60272fefcfb",
+      "bytes": 146
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/native_atexit_stall/summary.json",
+      "sha256": "ac23fff87f9b97776d318edb8f1020edf071bd0f43b2fdb8f7726720ad80677a",
+      "bytes": 7072
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/source-snapshot/dependencies.lock.json",
+      "sha256": "f2dacdc51fa9004d07ab005af81a9294945f2527cd5972e6a0f78964d7cf9db3",
+      "bytes": 22675
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/summary.json",
+      "sha256": "10729265215f09126aa87883e2aa937f5bb7378148e7bc69d51c8d6e73e31669",
+      "bytes": 103506
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/token.json",
+      "sha256": "fbf32e57d9ca7307a4300d14f732d528fb8b64cb7bcd6c62bced91537d5addc5",
+      "bytes": 1442
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/worker_atexit_stall/51864-capture.json",
+      "sha256": "37cc810c9bc34ed689263303f8af3bca629f69d917c14d8643a0447d17900fed",
+      "bytes": 1500
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/worker_atexit_stall/51864.dmp",
+      "sha256": "a86ac07b0d643d249230ef983b27544b8777444e0ee4a9de710a689bc03a50c6",
+      "bytes": 152104
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/worker_atexit_stall/51864.stacks.log",
+      "sha256": "0b8894a59f9524a0bcab8719c8558a7135d23e72731a30e5f60b82e0dcae5de1",
+      "bytes": 7674
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/worker_atexit_stall/52356-capture.json",
+      "sha256": "6edffcaa2e21c927d414240f4d4f41a7d65659122a15c7cdb6710c9383fe7559",
+      "bytes": 1757
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/worker_atexit_stall/52356.dmp",
+      "sha256": "432016f5fb4cc9df3be33f6ee37c0c820307e17610c866922338943c2dfc7856",
+      "bytes": 52477
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/worker_atexit_stall/52356.stacks.log",
+      "sha256": "37fc54c051ad3869b6228000287f963d73b517a1837ded7c13d5f54394ebe6bc",
+      "bytes": 11976
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/worker_atexit_stall/events.jsonl",
+      "sha256": "97a6d2f0562684f3c03312010bb44626cdfeb3710a674ba9da0550fc564adafe",
+      "bytes": 1218
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/worker_atexit_stall/slow-processes.json",
+      "sha256": "4301c096eca1349e5be8a689b8bf528cd2def56e48bbb8e763431052b5d33fb5",
+      "bytes": 1068
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/worker_atexit_stall/stderr.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "bytes": 0
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/worker_atexit_stall/stdout.jsonl",
+      "sha256": "077dcd7071b990ed2e3a1f398a0c193748f4fa30ffaf306d90ce5fc2926e39f4",
+      "bytes": 459
+    },
+    {
+      "path": "out/05c-followup/asan-selfcheck-dedup/worker_atexit_stall/summary.json",
+      "sha256": "319eaa626368f737fbeb3dee4102f762e01eb6652093f2355a3d2fa895dfbb2c",
+      "bytes": 6058
+    }
+  ]
+}

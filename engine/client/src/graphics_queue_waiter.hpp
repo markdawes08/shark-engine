@@ -65,13 +65,23 @@ class GraphicsQueueWaiter final {
         return {};
     }
 
-    // A value means the native call returned and its thread was joined. Empty
-    // means the operation remains owned. Joining occurs only after the worker
-    // has left the native call; operating-system scheduling is not a GPU wait.
+    // A value means the operation's thread exited and was joined. Empty means
+    // it remains owned. Windows waits for the OS thread to finish, including
+    // TLS and DLL detach callbacks, before joining. The non-Windows CPU fixture
+    // path bounds the action wait only; standard C++ provides no timed join.
     [[nodiscard]] Result<std::optional<int>> wait(std::uint64_t timeout_ns) {
         if (!pending()) {
             return error(ErrorCode::conflict, "No graphics queue wait is pending");
         }
+#if defined(_WIN32)
+        auto exited = wait_thread_exit(timeout_ns);
+        if (!exited) {
+            return exited.error();
+        }
+        if (!exited.value()) {
+            return std::optional<int>{};
+        }
+#else
         const auto timeout = std::chrono::nanoseconds{
             static_cast<std::int64_t>(std::min<std::uint64_t>(timeout_ns, 1'000'000'000))};
         {
@@ -80,6 +90,7 @@ class GraphicsQueueWaiter final {
                 return std::optional<int>{};
             }
         }
+#endif
         worker_.join();
         auto result = completion_.try_pop();
         if (failed_ || !result) {
@@ -89,6 +100,9 @@ class GraphicsQueueWaiter final {
     }
 
   private:
+#if defined(_WIN32)
+    [[nodiscard]] Result<bool> wait_thread_exit(std::uint64_t timeout_ns);
+#endif
     static Error error(ErrorCode code, const char* message) {
         return {code, message, {.operation = "graphics.presentation.queue_wait"}};
     }

@@ -58,6 +58,18 @@ access must wait for it to finish and join. Cleanup never detaches a live waiter
 These bound caller waits, not arbitrary driver-call duration;
 native qualification additionally runs under a process-tree watchdog.
 
+On Windows, the worker deadline includes thread-local destructors and DLL thread
+detach callbacks. Publishing its integer result alone does not prove thread exit.
+The private waiter polls or waits on the owned OS thread handle, then joins only
+after termination is observed. Nanoseconds are rounded down to whole milliseconds
+and capped at the existing one-second maximum; a zero or sub-millisecond budget
+remains a poll. Timeout or a failed native wait retains the worker and completion.
+The non-Windows, CPU-only fixture path still bounds the action wait; standard C++
+does not provide a timed thread join. This does not add native Linux GPU support.
+Microsoft documents the thread object's termination signal and native wait
+semantics in [ExitThread](https://learn.microsoft.com/en-us/windows/win32/api/processthreadsapi/nf-processthreadsapi-exitthread)
+and [WaitForSingleObject](https://learn.microsoft.com/en-us/windows/win32/api/synchapi/nf-synchapi-waitforsingleobject).
+
 Zero framebuffer size or iconification returns `suspended` without creating,
 acquiring, submitting or presenting GPU work. Window events continue to be pumped.
 An acquire timeout returns `waiting`. OUT_OF_DATE defers recreation until a later

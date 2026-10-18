@@ -14,10 +14,14 @@ checkpoint is **05c, failure and stress qualification**.
 05c's fixtures, resource observations and protected Runtime package tooling are
 implemented. Its gate remains open: NVIDIA 610.62 retains a desktop DC per
 swapchain lifetime even in an independent raw Win32/Vulkan reproducer; Intel
-retains USER objects after teardown; and an Intel ASan fault child exceeded its
-process-exit deadline after native cleanup. The
-[follow-up investigation](../handoffs/05c-failure-investigation.md) records the
-driver attribution, controls and remaining unknowns. Follow the
+retains USER objects in 40 raw Win32/Vulkan lifetimes outside Shark, GLFW and
+NVRHI, with failed driver-owned hook removals after their target threads begin
+exit; and an Intel ASan fault run exceeded its process-exit deadline after native
+cleanup. The [latest investigation](../handoffs/05c-intel-asan-investigation.md)
+records a separate corrected queue-thread exit deadline, 64 capture-ready ASan
+diagnostics without a reproduced timeout, and the remaining unknowns. The
+[earlier investigation](../handoffs/05c-failure-investigation.md) retains NVIDIA
+driver attribution. Follow the
 [qualification contract](../presentation-qualification.md) and
 [05c handoff](../handoffs/05c-presentation-qualification.md) to resolve and rerun
 the gate. Passing short presentation and CPU tests do not close this failure.

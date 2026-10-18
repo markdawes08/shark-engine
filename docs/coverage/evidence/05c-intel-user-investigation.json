@@ -1,0 +1,1293 @@
+{
+  "schema_version": 1,
+  "checkpoint": "05c",
+  "status": "EXTERNAL_LIFETIME_PROBLEM_ATTRIBUTED",
+  "qualification": "NOT_RUN",
+  "base_revision": "9613bec",
+  "result_revision": "Uncommitted working tree; no staging or commits performed",
+  "scope": "Investigation only. Fixed USER/GDI allowances and original failed 05c qualification evidence remain unchanged.",
+  "platform": "Windows-11-10.0.26200-SP0",
+  "adapter_uuid": "868088a7040000000002000000000000",
+  "driver_info": "101.6790",
+  "loaded_driver_sha256": {
+    "C:\\WINDOWS\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_749d16baad25e716\\igvk64.dll": "ee93562dce5ce214cb158fabbece462982d9e1260b80714f96b235baa17fa4c3",
+    "C:\\WINDOWS\\System32\\DriverStore\\FileRepository\\iigd_dch.inf_amd64_749d16baad25e716\\igxelpicd64.dll": "4a70fbc22ea3b6a9583338eaeff8a6df300c81dc7267d8b529cd238173021af7"
+  },
+  "conclusion": "The observed Intel USER growth is reproduced outside Shark. igxelpicd64 hook-removal attempts can follow exit entry of their igvk64-created target threads. Eleven such failed removals correlate with eleven retained USER objects in the raw trace; an independent owned-hook control reproduces three retained USER objects per post-exit triplet.",
+  "plain_raw40": {
+    "source_sha256": "e1b4b182cf42eb071af55bb3ead57119a7b054aacead54ecc58622824c11f279",
+    "executable_sha256": "83e7bc8829abcea67e7aacc1bb56160584019687059fd8f9207796ca5ef4f8ab",
+    "loader_sha256": "a3cbaeb5453618300e2b5589fb769a9c59eb826f21e043ea3dfa8804cbc65387",
+    "acquired": 0,
+    "submitted": 0,
+    "presented": 0,
+    "closed_user": [
+      10,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      11,
+      14,
+      14,
+      14,
+      17,
+      17,
+      20,
+      20,
+      20,
+      20,
+      20,
+      20,
+      20,
+      20,
+      20,
+      20,
+      20,
+      20,
+      20,
+      22,
+      22,
+      23,
+      23,
+      23,
+      23,
+      23,
+      23,
+      23
+    ],
+    "closed_gdi": [
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3,
+      3
+    ],
+    "closed_kernel": [
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314,
+      314
+    ],
+    "diagnostics": 0,
+    "cleanup_errors": 0,
+    "independence": "Exact source and link/import receipt contain no Shark, GLFW, NVRHI or engine queue-worker inputs."
+  },
+  "traced_raw40": {
+    "executable_sha256": "83e7bc8829abcea67e7aacc1bb56160584019687059fd8f9207796ca5ef4f8ab",
+    "debugger_sha256": "3888448915165f1b0b7113a8acac87e3f40bc08bad9458cd706ef99e873482dc",
+    "debugger_version": "10.0.29547.1002 AMD64",
+    "strictly_paired_api_calls": 736,
+    "module_resolution": "Module and RVA bound at API entry using the latest preceding ModLoad, not the final process module map.",
+    "thread_resolution": "Latest preceding observed CreateThread for each target ID; no target ID reuse occurs between installation and failed removal.",
+    "api_counts_by_caller": [
+      {
+        "module": "KERNEL32.DLL",
+        "api": "CreateRemoteThreadEx",
+        "success": true,
+        "count": 125
+      },
+      {
+        "module": "nvdlistx.dll",
+        "api": "CreateThread",
+        "success": true,
+        "count": 1
+      },
+      {
+        "module": "nvoglv64.dll",
+        "api": "CreateThread",
+        "success": true,
+        "count": 2
+      },
+      {
+        "module": "CRYPT32.dll",
+        "api": "CreateThread",
+        "success": true,
+        "count": 1
+      },
+      {
+        "module": "igvk64.dll",
+        "api": "CreateThread",
+        "success": true,
+        "count": 80
+      },
+      {
+        "module": "igvk64.dll",
+        "api": "SetWindowsHookExA",
+        "success": true,
+        "count": 120
+      },
+      {
+        "module": "igxelpicd64.dll",
+        "api": "CreateThread",
+        "success": true,
+        "count": 41
+      },
+      {
+        "module": "igxelpicd64.dll",
+        "api": "SetWindowsHookExA",
+        "success": true,
+        "count": 123
+      },
+      {
+        "module": "igvk64.dll",
+        "api": "UnhookWindowsHookEx",
+        "success": true,
+        "count": 120
+      },
+      {
+        "module": "igxelpicd64.dll",
+        "api": "UnhookWindowsHookEx",
+        "success": true,
+        "count": 106
+      },
+      {
+        "module": "igxelpicd64.dll",
+        "api": "UnhookWindowsHookEx",
+        "success": false,
+        "count": 17
+      }
+    ],
+    "closed_user": [
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      10,
+      12,
+      12,
+      15,
+      15,
+      18,
+      18,
+      18,
+      18,
+      18,
+      18,
+      18,
+      18,
+      22,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      21,
+      22,
+      21,
+      21,
+      21,
+      21
+    ],
+    "closed_gdi": 3,
+    "closed_kernel": 315,
+    "diagnostics": 0,
+    "cleanup_errors": 0,
+    "pre_final_failures": [
+      {
+        "handle": "0x42010d4f",
+        "hook_id": 3,
+        "target_thread": 22540,
+        "last_error": 0,
+        "install_raw_line": 2884,
+        "unhook_entry_raw_line": 2999,
+        "unhook_return_raw_line": 3010,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 7,
+          "stage": "closed",
+          "gdi": 3,
+          "user": 10,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [
+          {
+            "thread": 22540,
+            "raw_line": 2973
+          }
+        ],
+        "creator": {
+          "module": "igvk64.dll",
+          "rva": "0x1704e9",
+          "entry_line": 2767,
+          "return_line": 2815,
+          "stack": [
+            "00000019`112fe768 00007ffe`6ca404e9     KERNEL32!CreateThread",
+            "00000019`112fe770 00007ffe`6ca10a9f     igvk64!DumpRegistryKeyDefinitions+0x151bc9",
+            "00000019`112fe9b0 00007ffe`6c90ac7f     igvk64!DumpRegistryKeyDefinitions+0x12217f",
+            "00000019`112fea10 00007ffe`f1724cca     igvk64!DumpRegistryKeyDefinitions+0x1c35f",
+            "00000019`112feaf0 00007ffe`61b47ed1     vulkan_1!terminator_CreateSwapchainKHR+0x15a",
+            "00000019`112fec00 00007ffe`619b44f9     VkLayer_khronos_validation!vvl::DispatchDevice::CreateSwapchainKHR+0xb1",
+            "00000019`112fecc0 00007ffe`f1722bf3     VkLayer_khronos_validation!vulkan_layer_chassis::CreateSwapchainKHR+0x1b9",
+            "00000019`112fee50 00007ff6`605e23a0     vulkan_1!vkCreateSwapchainKHR+0xe3",
+            "00000019`112feeb0 00007ff6`605e6fc9     RawVulkanGdi+0x23a0",
+            "00000019`112ffb20 00007ff6`605e6ee2     RawVulkanGdi+0x6fc9",
+            "00000019`112ffb70 00007ff6`605e6d9e     RawVulkanGdi+0x6ee2",
+            "00000019`112ffbe0 00007ff6`605e703e     RawVulkanGdi+0x6d9e",
+            "00000019`112ffc10 00007fff`7e58cd87     RawVulkanGdi+0x703e",
+            "00000019`112ffc40 00007fff`7f98caec     KERNEL32!BaseThreadInitThunk+0x17",
+            "00000019`112ffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c"
+          ]
+        }
+      },
+      {
+        "handle": "0x54ff128d",
+        "hook_id": 4,
+        "target_thread": 22540,
+        "last_error": 0,
+        "install_raw_line": 2871,
+        "unhook_entry_raw_line": 3016,
+        "unhook_return_raw_line": 3027,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 7,
+          "stage": "closed",
+          "gdi": 3,
+          "user": 10,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [
+          {
+            "thread": 22540,
+            "raw_line": 2973
+          }
+        ],
+        "creator": {
+          "module": "igvk64.dll",
+          "rva": "0x1704e9",
+          "entry_line": 2767,
+          "return_line": 2815,
+          "stack": [
+            "00000019`112fe768 00007ffe`6ca404e9     KERNEL32!CreateThread",
+            "00000019`112fe770 00007ffe`6ca10a9f     igvk64!DumpRegistryKeyDefinitions+0x151bc9",
+            "00000019`112fe9b0 00007ffe`6c90ac7f     igvk64!DumpRegistryKeyDefinitions+0x12217f",
+            "00000019`112fea10 00007ffe`f1724cca     igvk64!DumpRegistryKeyDefinitions+0x1c35f",
+            "00000019`112feaf0 00007ffe`61b47ed1     vulkan_1!terminator_CreateSwapchainKHR+0x15a",
+            "00000019`112fec00 00007ffe`619b44f9     VkLayer_khronos_validation!vvl::DispatchDevice::CreateSwapchainKHR+0xb1",
+            "00000019`112fecc0 00007ffe`f1722bf3     VkLayer_khronos_validation!vulkan_layer_chassis::CreateSwapchainKHR+0x1b9",
+            "00000019`112fee50 00007ff6`605e23a0     vulkan_1!vkCreateSwapchainKHR+0xe3",
+            "00000019`112feeb0 00007ff6`605e6fc9     RawVulkanGdi+0x23a0",
+            "00000019`112ffb20 00007ff6`605e6ee2     RawVulkanGdi+0x6fc9",
+            "00000019`112ffb70 00007ff6`605e6d9e     RawVulkanGdi+0x6ee2",
+            "00000019`112ffbe0 00007ff6`605e703e     RawVulkanGdi+0x6d9e",
+            "00000019`112ffc10 00007fff`7e58cd87     RawVulkanGdi+0x703e",
+            "00000019`112ffc40 00007fff`7f98caec     KERNEL32!BaseThreadInitThunk+0x17",
+            "00000019`112ffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c"
+          ]
+        }
+      },
+      {
+        "handle": "0x84e10e1",
+        "hook_id": 12,
+        "target_thread": 40436,
+        "last_error": 0,
+        "install_raw_line": 3633,
+        "unhook_entry_raw_line": 3720,
+        "unhook_return_raw_line": 3731,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 9,
+          "stage": "closed",
+          "gdi": 3,
+          "user": 12,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [
+          {
+            "thread": 40436,
+            "raw_line": 3709
+          }
+        ],
+        "creator": {
+          "module": "igvk64.dll",
+          "rva": "0x1704e9",
+          "entry_line": 3503,
+          "return_line": 3551,
+          "stack": [
+            "00000019`112fe768 00007ffe`625704e9     KERNEL32!CreateThread",
+            "00000019`112fe770 00007ffe`62540a9f     igvk64!DumpRegistryKeyDefinitions+0x151bc9",
+            "00000019`112fe9b0 00007ffe`6243ac7f     igvk64!DumpRegistryKeyDefinitions+0x12217f",
+            "00000019`112fea10 00007ffe`f1724cca     igvk64!DumpRegistryKeyDefinitions+0x1c35f",
+            "00000019`112feaf0 00007ffe`60377ed1     vulkan_1!terminator_CreateSwapchainKHR+0x15a",
+            "00000019`112fec00 00007ffe`601e44f9     VkLayer_khronos_validation!vvl::DispatchDevice::CreateSwapchainKHR+0xb1",
+            "00000019`112fecc0 00007ffe`f1722bf3     VkLayer_khronos_validation!vulkan_layer_chassis::CreateSwapchainKHR+0x1b9",
+            "00000019`112fee50 00007ff6`605e23a0     vulkan_1!vkCreateSwapchainKHR+0xe3",
+            "00000019`112feeb0 00007ff6`605e6fc9     RawVulkanGdi+0x23a0",
+            "00000019`112ffb20 00007ff6`605e6ee2     RawVulkanGdi+0x6fc9",
+            "00000019`112ffb70 00007ff6`605e6d9e     RawVulkanGdi+0x6ee2",
+            "00000019`112ffbe0 00007ff6`605e703e     RawVulkanGdi+0x6d9e",
+            "00000019`112ffc10 00007fff`7e58cd87     RawVulkanGdi+0x703e",
+            "00000019`112ffc40 00007fff`7f98caec     KERNEL32!BaseThreadInitThunk+0x17",
+            "00000019`112ffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c"
+          ]
+        }
+      },
+      {
+        "handle": "0x2bf8080d",
+        "hook_id": 3,
+        "target_thread": 40436,
+        "last_error": 0,
+        "install_raw_line": 3620,
+        "unhook_entry_raw_line": 3737,
+        "unhook_return_raw_line": 3748,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 9,
+          "stage": "closed",
+          "gdi": 3,
+          "user": 12,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [
+          {
+            "thread": 40436,
+            "raw_line": 3709
+          }
+        ],
+        "creator": {
+          "module": "igvk64.dll",
+          "rva": "0x1704e9",
+          "entry_line": 3503,
+          "return_line": 3551,
+          "stack": [
+            "00000019`112fe768 00007ffe`625704e9     KERNEL32!CreateThread",
+            "00000019`112fe770 00007ffe`62540a9f     igvk64!DumpRegistryKeyDefinitions+0x151bc9",
+            "00000019`112fe9b0 00007ffe`6243ac7f     igvk64!DumpRegistryKeyDefinitions+0x12217f",
+            "00000019`112fea10 00007ffe`f1724cca     igvk64!DumpRegistryKeyDefinitions+0x1c35f",
+            "00000019`112feaf0 00007ffe`60377ed1     vulkan_1!terminator_CreateSwapchainKHR+0x15a",
+            "00000019`112fec00 00007ffe`601e44f9     VkLayer_khronos_validation!vvl::DispatchDevice::CreateSwapchainKHR+0xb1",
+            "00000019`112fecc0 00007ffe`f1722bf3     VkLayer_khronos_validation!vulkan_layer_chassis::CreateSwapchainKHR+0x1b9",
+            "00000019`112fee50 00007ff6`605e23a0     vulkan_1!vkCreateSwapchainKHR+0xe3",
+            "00000019`112feeb0 00007ff6`605e6fc9     RawVulkanGdi+0x23a0",
+            "00000019`112ffb20 00007ff6`605e6ee2     RawVulkanGdi+0x6fc9",
+            "00000019`112ffb70 00007ff6`605e6d9e     RawVulkanGdi+0x6ee2",
+            "00000019`112ffbe0 00007ff6`605e703e     RawVulkanGdi+0x6d9e",
+            "00000019`112ffc10 00007fff`7e58cd87     RawVulkanGdi+0x703e",
+            "00000019`112ffc40 00007fff`7f98caec     KERNEL32!BaseThreadInitThunk+0x17",
+            "00000019`112ffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c"
+          ]
+        }
+      },
+      {
+        "handle": "0x12081667",
+        "hook_id": 4,
+        "target_thread": 40436,
+        "last_error": 0,
+        "install_raw_line": 3607,
+        "unhook_entry_raw_line": 3754,
+        "unhook_return_raw_line": 3765,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 9,
+          "stage": "closed",
+          "gdi": 3,
+          "user": 12,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [
+          {
+            "thread": 40436,
+            "raw_line": 3709
+          }
+        ],
+        "creator": {
+          "module": "igvk64.dll",
+          "rva": "0x1704e9",
+          "entry_line": 3503,
+          "return_line": 3551,
+          "stack": [
+            "00000019`112fe768 00007ffe`625704e9     KERNEL32!CreateThread",
+            "00000019`112fe770 00007ffe`62540a9f     igvk64!DumpRegistryKeyDefinitions+0x151bc9",
+            "00000019`112fe9b0 00007ffe`6243ac7f     igvk64!DumpRegistryKeyDefinitions+0x12217f",
+            "00000019`112fea10 00007ffe`f1724cca     igvk64!DumpRegistryKeyDefinitions+0x1c35f",
+            "00000019`112feaf0 00007ffe`60377ed1     vulkan_1!terminator_CreateSwapchainKHR+0x15a",
+            "00000019`112fec00 00007ffe`601e44f9     VkLayer_khronos_validation!vvl::DispatchDevice::CreateSwapchainKHR+0xb1",
+            "00000019`112fecc0 00007ffe`f1722bf3     VkLayer_khronos_validation!vulkan_layer_chassis::CreateSwapchainKHR+0x1b9",
+            "00000019`112fee50 00007ff6`605e23a0     vulkan_1!vkCreateSwapchainKHR+0xe3",
+            "00000019`112feeb0 00007ff6`605e6fc9     RawVulkanGdi+0x23a0",
+            "00000019`112ffb20 00007ff6`605e6ee2     RawVulkanGdi+0x6fc9",
+            "00000019`112ffb70 00007ff6`605e6d9e     RawVulkanGdi+0x6ee2",
+            "00000019`112ffbe0 00007ff6`605e703e     RawVulkanGdi+0x6d9e",
+            "00000019`112ffc10 00007fff`7e58cd87     RawVulkanGdi+0x703e",
+            "00000019`112ffc40 00007fff`7f98caec     KERNEL32!BaseThreadInitThunk+0x17",
+            "00000019`112ffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c"
+          ]
+        }
+      },
+      {
+        "handle": "0xc1714e1",
+        "hook_id": 12,
+        "target_thread": 52400,
+        "last_error": 0,
+        "install_raw_line": 4373,
+        "unhook_entry_raw_line": 4460,
+        "unhook_return_raw_line": 4471,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 11,
+          "stage": "closed",
+          "gdi": 3,
+          "user": 15,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [
+          {
+            "thread": 52400,
+            "raw_line": 4449
+          }
+        ],
+        "creator": {
+          "module": "igvk64.dll",
+          "rva": "0x1704e9",
+          "entry_line": 4243,
+          "return_line": 4291,
+          "stack": [
+            "00000019`112fe768 00007ffe`625704e9     KERNEL32!CreateThread",
+            "00000019`112fe770 00007ffe`62540a9f     igvk64!DumpRegistryKeyDefinitions+0x151bc9",
+            "00000019`112fe9b0 00007ffe`6243ac7f     igvk64!DumpRegistryKeyDefinitions+0x12217f",
+            "00000019`112fea10 00007ffe`f1724cca     igvk64!DumpRegistryKeyDefinitions+0x1c35f",
+            "00000019`112feaf0 00007ffe`60377ed1     vulkan_1!terminator_CreateSwapchainKHR+0x15a",
+            "00000019`112fec00 00007ffe`601e44f9     VkLayer_khronos_validation!vvl::DispatchDevice::CreateSwapchainKHR+0xb1",
+            "00000019`112fecc0 00007ffe`f1722bf3     VkLayer_khronos_validation!vulkan_layer_chassis::CreateSwapchainKHR+0x1b9",
+            "00000019`112fee50 00007ff6`605e23a0     vulkan_1!vkCreateSwapchainKHR+0xe3",
+            "00000019`112feeb0 00007ff6`605e6fc9     RawVulkanGdi+0x23a0",
+            "00000019`112ffb20 00007ff6`605e6ee2     RawVulkanGdi+0x6fc9",
+            "00000019`112ffb70 00007ff6`605e6d9e     RawVulkanGdi+0x6ee2",
+            "00000019`112ffbe0 00007ff6`605e703e     RawVulkanGdi+0x6d9e",
+            "00000019`112ffc10 00007fff`7e58cd87     RawVulkanGdi+0x703e",
+            "00000019`112ffc40 00007fff`7f98caec     KERNEL32!BaseThreadInitThunk+0x17",
+            "00000019`112ffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c"
+          ]
+        }
+      },
+      {
+        "handle": "0xc314d9",
+        "hook_id": 3,
+        "target_thread": 52400,
+        "last_error": 0,
+        "install_raw_line": 4360,
+        "unhook_entry_raw_line": 4477,
+        "unhook_return_raw_line": 4488,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 11,
+          "stage": "closed",
+          "gdi": 3,
+          "user": 15,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [
+          {
+            "thread": 52400,
+            "raw_line": 4449
+          }
+        ],
+        "creator": {
+          "module": "igvk64.dll",
+          "rva": "0x1704e9",
+          "entry_line": 4243,
+          "return_line": 4291,
+          "stack": [
+            "00000019`112fe768 00007ffe`625704e9     KERNEL32!CreateThread",
+            "00000019`112fe770 00007ffe`62540a9f     igvk64!DumpRegistryKeyDefinitions+0x151bc9",
+            "00000019`112fe9b0 00007ffe`6243ac7f     igvk64!DumpRegistryKeyDefinitions+0x12217f",
+            "00000019`112fea10 00007ffe`f1724cca     igvk64!DumpRegistryKeyDefinitions+0x1c35f",
+            "00000019`112feaf0 00007ffe`60377ed1     vulkan_1!terminator_CreateSwapchainKHR+0x15a",
+            "00000019`112fec00 00007ffe`601e44f9     VkLayer_khronos_validation!vvl::DispatchDevice::CreateSwapchainKHR+0xb1",
+            "00000019`112fecc0 00007ffe`f1722bf3     VkLayer_khronos_validation!vulkan_layer_chassis::CreateSwapchainKHR+0x1b9",
+            "00000019`112fee50 00007ff6`605e23a0     vulkan_1!vkCreateSwapchainKHR+0xe3",
+            "00000019`112feeb0 00007ff6`605e6fc9     RawVulkanGdi+0x23a0",
+            "00000019`112ffb20 00007ff6`605e6ee2     RawVulkanGdi+0x6fc9",
+            "00000019`112ffb70 00007ff6`605e6d9e     RawVulkanGdi+0x6ee2",
+            "00000019`112ffbe0 00007ff6`605e703e     RawVulkanGdi+0x6d9e",
+            "00000019`112ffc10 00007fff`7e58cd87     RawVulkanGdi+0x703e",
+            "00000019`112ffc40 00007fff`7f98caec     KERNEL32!BaseThreadInitThunk+0x17",
+            "00000019`112ffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c"
+          ]
+        }
+      },
+      {
+        "handle": "0x2d1d10c5",
+        "hook_id": 4,
+        "target_thread": 52400,
+        "last_error": 0,
+        "install_raw_line": 4347,
+        "unhook_entry_raw_line": 4494,
+        "unhook_return_raw_line": 4505,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 11,
+          "stage": "closed",
+          "gdi": 3,
+          "user": 15,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [
+          {
+            "thread": 52400,
+            "raw_line": 4449
+          }
+        ],
+        "creator": {
+          "module": "igvk64.dll",
+          "rva": "0x1704e9",
+          "entry_line": 4243,
+          "return_line": 4291,
+          "stack": [
+            "00000019`112fe768 00007ffe`625704e9     KERNEL32!CreateThread",
+            "00000019`112fe770 00007ffe`62540a9f     igvk64!DumpRegistryKeyDefinitions+0x151bc9",
+            "00000019`112fe9b0 00007ffe`6243ac7f     igvk64!DumpRegistryKeyDefinitions+0x12217f",
+            "00000019`112fea10 00007ffe`f1724cca     igvk64!DumpRegistryKeyDefinitions+0x1c35f",
+            "00000019`112feaf0 00007ffe`60377ed1     vulkan_1!terminator_CreateSwapchainKHR+0x15a",
+            "00000019`112fec00 00007ffe`601e44f9     VkLayer_khronos_validation!vvl::DispatchDevice::CreateSwapchainKHR+0xb1",
+            "00000019`112fecc0 00007ffe`f1722bf3     VkLayer_khronos_validation!vulkan_layer_chassis::CreateSwapchainKHR+0x1b9",
+            "00000019`112fee50 00007ff6`605e23a0     vulkan_1!vkCreateSwapchainKHR+0xe3",
+            "00000019`112feeb0 00007ff6`605e6fc9     RawVulkanGdi+0x23a0",
+            "00000019`112ffb20 00007ff6`605e6ee2     RawVulkanGdi+0x6fc9",
+            "00000019`112ffb70 00007ff6`605e6d9e     RawVulkanGdi+0x6ee2",
+            "00000019`112ffbe0 00007ff6`605e703e     RawVulkanGdi+0x6d9e",
+            "00000019`112ffc10 00007fff`7e58cd87     RawVulkanGdi+0x703e",
+            "00000019`112ffc40 00007fff`7f98caec     KERNEL32!BaseThreadInitThunk+0x17",
+            "00000019`112ffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c"
+          ]
+        }
+      },
+      {
+        "handle": "0x821140b",
+        "hook_id": 12,
+        "target_thread": 52556,
+        "last_error": 0,
+        "install_raw_line": 7308,
+        "unhook_entry_raw_line": 7395,
+        "unhook_return_raw_line": 7406,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 19,
+          "stage": "closed",
+          "gdi": 3,
+          "user": 18,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [
+          {
+            "thread": 52556,
+            "raw_line": 7384
+          }
+        ],
+        "creator": {
+          "module": "igvk64.dll",
+          "rva": "0x1704e9",
+          "entry_line": 7178,
+          "return_line": 7226,
+          "stack": [
+            "00000019`112fe768 00007ffe`625704e9     KERNEL32!CreateThread",
+            "00000019`112fe770 00007ffe`62540a9f     igvk64!DumpRegistryKeyDefinitions+0x151bc9",
+            "00000019`112fe9b0 00007ffe`6243ac7f     igvk64!DumpRegistryKeyDefinitions+0x12217f",
+            "00000019`112fea10 00007ffe`f1724cca     igvk64!DumpRegistryKeyDefinitions+0x1c35f",
+            "00000019`112feaf0 00007ffe`60377ed1     vulkan_1!terminator_CreateSwapchainKHR+0x15a",
+            "00000019`112fec00 00007ffe`601e44f9     VkLayer_khronos_validation!vvl::DispatchDevice::CreateSwapchainKHR+0xb1",
+            "00000019`112fecc0 00007ffe`f1722bf3     VkLayer_khronos_validation!vulkan_layer_chassis::CreateSwapchainKHR+0x1b9",
+            "00000019`112fee50 00007ff6`605e23a0     vulkan_1!vkCreateSwapchainKHR+0xe3",
+            "00000019`112feeb0 00007ff6`605e6fc9     RawVulkanGdi+0x23a0",
+            "00000019`112ffb20 00007ff6`605e6ee2     RawVulkanGdi+0x6fc9",
+            "00000019`112ffb70 00007ff6`605e6d9e     RawVulkanGdi+0x6ee2",
+            "00000019`112ffbe0 00007ff6`605e703e     RawVulkanGdi+0x6d9e",
+            "00000019`112ffc10 00007fff`7e58cd87     RawVulkanGdi+0x703e",
+            "00000019`112ffc40 00007fff`7f98caec     KERNEL32!BaseThreadInitThunk+0x17",
+            "00000019`112ffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c"
+          ]
+        }
+      },
+      {
+        "handle": "0x301d15cb",
+        "hook_id": 3,
+        "target_thread": 52556,
+        "last_error": 0,
+        "install_raw_line": 7295,
+        "unhook_entry_raw_line": 7412,
+        "unhook_return_raw_line": 7423,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 19,
+          "stage": "closed",
+          "gdi": 3,
+          "user": 18,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [
+          {
+            "thread": 52556,
+            "raw_line": 7384
+          }
+        ],
+        "creator": {
+          "module": "igvk64.dll",
+          "rva": "0x1704e9",
+          "entry_line": 7178,
+          "return_line": 7226,
+          "stack": [
+            "00000019`112fe768 00007ffe`625704e9     KERNEL32!CreateThread",
+            "00000019`112fe770 00007ffe`62540a9f     igvk64!DumpRegistryKeyDefinitions+0x151bc9",
+            "00000019`112fe9b0 00007ffe`6243ac7f     igvk64!DumpRegistryKeyDefinitions+0x12217f",
+            "00000019`112fea10 00007ffe`f1724cca     igvk64!DumpRegistryKeyDefinitions+0x1c35f",
+            "00000019`112feaf0 00007ffe`60377ed1     vulkan_1!terminator_CreateSwapchainKHR+0x15a",
+            "00000019`112fec00 00007ffe`601e44f9     VkLayer_khronos_validation!vvl::DispatchDevice::CreateSwapchainKHR+0xb1",
+            "00000019`112fecc0 00007ffe`f1722bf3     VkLayer_khronos_validation!vulkan_layer_chassis::CreateSwapchainKHR+0x1b9",
+            "00000019`112fee50 00007ff6`605e23a0     vulkan_1!vkCreateSwapchainKHR+0xe3",
+            "00000019`112feeb0 00007ff6`605e6fc9     RawVulkanGdi+0x23a0",
+            "00000019`112ffb20 00007ff6`605e6ee2     RawVulkanGdi+0x6fc9",
+            "00000019`112ffb70 00007ff6`605e6d9e     RawVulkanGdi+0x6ee2",
+            "00000019`112ffbe0 00007ff6`605e703e     RawVulkanGdi+0x6d9e",
+            "00000019`112ffc10 00007fff`7e58cd87     RawVulkanGdi+0x703e",
+            "00000019`112ffc40 00007fff`7f98caec     KERNEL32!BaseThreadInitThunk+0x17",
+            "00000019`112ffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c"
+          ]
+        }
+      },
+      {
+        "handle": "0x305d1515",
+        "hook_id": 4,
+        "target_thread": 52556,
+        "last_error": 0,
+        "install_raw_line": 7282,
+        "unhook_entry_raw_line": 7429,
+        "unhook_return_raw_line": 7440,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 19,
+          "stage": "closed",
+          "gdi": 3,
+          "user": 18,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [
+          {
+            "thread": 52556,
+            "raw_line": 7384
+          }
+        ],
+        "creator": {
+          "module": "igvk64.dll",
+          "rva": "0x1704e9",
+          "entry_line": 7178,
+          "return_line": 7226,
+          "stack": [
+            "00000019`112fe768 00007ffe`625704e9     KERNEL32!CreateThread",
+            "00000019`112fe770 00007ffe`62540a9f     igvk64!DumpRegistryKeyDefinitions+0x151bc9",
+            "00000019`112fe9b0 00007ffe`6243ac7f     igvk64!DumpRegistryKeyDefinitions+0x12217f",
+            "00000019`112fea10 00007ffe`f1724cca     igvk64!DumpRegistryKeyDefinitions+0x1c35f",
+            "00000019`112feaf0 00007ffe`60377ed1     vulkan_1!terminator_CreateSwapchainKHR+0x15a",
+            "00000019`112fec00 00007ffe`601e44f9     VkLayer_khronos_validation!vvl::DispatchDevice::CreateSwapchainKHR+0xb1",
+            "00000019`112fecc0 00007ffe`f1722bf3     VkLayer_khronos_validation!vulkan_layer_chassis::CreateSwapchainKHR+0x1b9",
+            "00000019`112fee50 00007ff6`605e23a0     vulkan_1!vkCreateSwapchainKHR+0xe3",
+            "00000019`112feeb0 00007ff6`605e6fc9     RawVulkanGdi+0x23a0",
+            "00000019`112ffb20 00007ff6`605e6ee2     RawVulkanGdi+0x6fc9",
+            "00000019`112ffb70 00007ff6`605e6d9e     RawVulkanGdi+0x6ee2",
+            "00000019`112ffbe0 00007ff6`605e703e     RawVulkanGdi+0x6d9e",
+            "00000019`112ffc10 00007fff`7e58cd87     RawVulkanGdi+0x703e",
+            "00000019`112ffc40 00007fff`7f98caec     KERNEL32!BaseThreadInitThunk+0x17",
+            "00000019`112ffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c"
+          ]
+        }
+      }
+    ],
+    "post_final_failures": [
+      {
+        "handle": "0x3ae013df",
+        "hook_id": 12,
+        "target_thread": 5424,
+        "last_error": 1404,
+        "install_raw_line": 700,
+        "unhook_entry_raw_line": 15083,
+        "unhook_return_raw_line": 15105,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 40,
+          "stage": "final",
+          "gdi": 3,
+          "user": 21,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [],
+        "creator": null
+      },
+      {
+        "handle": "0x13b133b",
+        "hook_id": 3,
+        "target_thread": 5424,
+        "last_error": 1404,
+        "install_raw_line": 687,
+        "unhook_entry_raw_line": 15111,
+        "unhook_return_raw_line": 15133,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 40,
+          "stage": "final",
+          "gdi": 3,
+          "user": 21,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [],
+        "creator": null
+      },
+      {
+        "handle": "0x212c12ad",
+        "hook_id": 4,
+        "target_thread": 5424,
+        "last_error": 1404,
+        "install_raw_line": 674,
+        "unhook_entry_raw_line": 15139,
+        "unhook_return_raw_line": 15161,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 40,
+          "stage": "final",
+          "gdi": 3,
+          "user": 21,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [],
+        "creator": null
+      },
+      {
+        "handle": "0x734a048f",
+        "hook_id": 12,
+        "target_thread": 50556,
+        "last_error": 1404,
+        "install_raw_line": 15006,
+        "unhook_entry_raw_line": 15167,
+        "unhook_return_raw_line": 15189,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 40,
+          "stage": "final",
+          "gdi": 3,
+          "user": 21,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [],
+        "creator": {
+          "module": "igvk64.dll",
+          "rva": "0x1704e9",
+          "entry_line": 14876,
+          "return_line": 14924,
+          "stack": [
+            "00000019`112fe768 00007ffe`625704e9     KERNEL32!CreateThread",
+            "00000019`112fe770 00007ffe`62540a9f     igvk64!DumpRegistryKeyDefinitions+0x151bc9",
+            "00000019`112fe9b0 00007ffe`6243ac7f     igvk64!DumpRegistryKeyDefinitions+0x12217f",
+            "00000019`112fea10 00007ffe`f1724cca     igvk64!DumpRegistryKeyDefinitions+0x1c35f",
+            "00000019`112feaf0 00007ffe`60377ed1     vulkan_1!terminator_CreateSwapchainKHR+0x15a",
+            "00000019`112fec00 00007ffe`601e44f9     VkLayer_khronos_validation!vvl::DispatchDevice::CreateSwapchainKHR+0xb1",
+            "00000019`112fecc0 00007ffe`f1722bf3     VkLayer_khronos_validation!vulkan_layer_chassis::CreateSwapchainKHR+0x1b9",
+            "00000019`112fee50 00007ff6`605e23a0     vulkan_1!vkCreateSwapchainKHR+0xe3",
+            "00000019`112feeb0 00007ff6`605e6fc9     RawVulkanGdi+0x23a0",
+            "00000019`112ffb20 00007ff6`605e6ee2     RawVulkanGdi+0x6fc9",
+            "00000019`112ffb70 00007ff6`605e6d9e     RawVulkanGdi+0x6ee2",
+            "00000019`112ffbe0 00007ff6`605e703e     RawVulkanGdi+0x6d9e",
+            "00000019`112ffc10 00007fff`7e58cd87     RawVulkanGdi+0x703e",
+            "00000019`112ffc40 00007fff`7f98caec     KERNEL32!BaseThreadInitThunk+0x17",
+            "00000019`112ffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c"
+          ]
+        }
+      },
+      {
+        "handle": "0x274109bb",
+        "hook_id": 3,
+        "target_thread": 50556,
+        "last_error": 1404,
+        "install_raw_line": 14993,
+        "unhook_entry_raw_line": 15195,
+        "unhook_return_raw_line": 15217,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 40,
+          "stage": "final",
+          "gdi": 3,
+          "user": 21,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [],
+        "creator": {
+          "module": "igvk64.dll",
+          "rva": "0x1704e9",
+          "entry_line": 14876,
+          "return_line": 14924,
+          "stack": [
+            "00000019`112fe768 00007ffe`625704e9     KERNEL32!CreateThread",
+            "00000019`112fe770 00007ffe`62540a9f     igvk64!DumpRegistryKeyDefinitions+0x151bc9",
+            "00000019`112fe9b0 00007ffe`6243ac7f     igvk64!DumpRegistryKeyDefinitions+0x12217f",
+            "00000019`112fea10 00007ffe`f1724cca     igvk64!DumpRegistryKeyDefinitions+0x1c35f",
+            "00000019`112feaf0 00007ffe`60377ed1     vulkan_1!terminator_CreateSwapchainKHR+0x15a",
+            "00000019`112fec00 00007ffe`601e44f9     VkLayer_khronos_validation!vvl::DispatchDevice::CreateSwapchainKHR+0xb1",
+            "00000019`112fecc0 00007ffe`f1722bf3     VkLayer_khronos_validation!vulkan_layer_chassis::CreateSwapchainKHR+0x1b9",
+            "00000019`112fee50 00007ff6`605e23a0     vulkan_1!vkCreateSwapchainKHR+0xe3",
+            "00000019`112feeb0 00007ff6`605e6fc9     RawVulkanGdi+0x23a0",
+            "00000019`112ffb20 00007ff6`605e6ee2     RawVulkanGdi+0x6fc9",
+            "00000019`112ffb70 00007ff6`605e6d9e     RawVulkanGdi+0x6ee2",
+            "00000019`112ffbe0 00007ff6`605e703e     RawVulkanGdi+0x6d9e",
+            "00000019`112ffc10 00007fff`7e58cd87     RawVulkanGdi+0x703e",
+            "00000019`112ffc40 00007fff`7f98caec     KERNEL32!BaseThreadInitThunk+0x17",
+            "00000019`112ffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c"
+          ]
+        }
+      },
+      {
+        "handle": "0x3b4b1415",
+        "hook_id": 4,
+        "target_thread": 50556,
+        "last_error": 1404,
+        "install_raw_line": 14980,
+        "unhook_entry_raw_line": 15223,
+        "unhook_return_raw_line": 15245,
+        "last_sample": {
+          "kind": "sample",
+          "cycle": 40,
+          "stage": "final",
+          "gdi": 3,
+          "user": 21,
+          "handles": 315,
+          "diagnostics": 0,
+          "cleanup_errors": 0
+        },
+        "caller_rva": "0x2a26c8",
+        "target_exit_entries_before_unhook": [],
+        "creator": {
+          "module": "igvk64.dll",
+          "rva": "0x1704e9",
+          "entry_line": 14876,
+          "return_line": 14924,
+          "stack": [
+            "00000019`112fe768 00007ffe`625704e9     KERNEL32!CreateThread",
+            "00000019`112fe770 00007ffe`62540a9f     igvk64!DumpRegistryKeyDefinitions+0x151bc9",
+            "00000019`112fe9b0 00007ffe`6243ac7f     igvk64!DumpRegistryKeyDefinitions+0x12217f",
+            "00000019`112fea10 00007ffe`f1724cca     igvk64!DumpRegistryKeyDefinitions+0x1c35f",
+            "00000019`112feaf0 00007ffe`60377ed1     vulkan_1!terminator_CreateSwapchainKHR+0x15a",
+            "00000019`112fec00 00007ffe`601e44f9     VkLayer_khronos_validation!vvl::DispatchDevice::CreateSwapchainKHR+0xb1",
+            "00000019`112fecc0 00007ffe`f1722bf3     VkLayer_khronos_validation!vulkan_layer_chassis::CreateSwapchainKHR+0x1b9",
+            "00000019`112fee50 00007ff6`605e23a0     vulkan_1!vkCreateSwapchainKHR+0xe3",
+            "00000019`112feeb0 00007ff6`605e6fc9     RawVulkanGdi+0x23a0",
+            "00000019`112ffb20 00007ff6`605e6ee2     RawVulkanGdi+0x6fc9",
+            "00000019`112ffb70 00007ff6`605e6d9e     RawVulkanGdi+0x6ee2",
+            "00000019`112ffbe0 00007ff6`605e703e     RawVulkanGdi+0x6d9e",
+            "00000019`112ffc10 00007fff`7e58cd87     RawVulkanGdi+0x703e",
+            "00000019`112ffc40 00007fff`7f98caec     KERNEL32!BaseThreadInitThunk+0x17",
+            "00000019`112ffc70 00000000`00000000     ntdll!RtlUserThreadStart+0x2c"
+          ]
+        }
+      }
+    ],
+    "separation": "The six post-final ERROR_INVALID_HOOK_HANDLE(1404) failures are not counted as the eleven-object pre-final growth."
+  },
+  "owned_hook_control": {
+    "source_sha256": "5fe1d4346c994ede760e077f86084c96054bc44ecfb44120197e2acf280212e6",
+    "live_target_cycles": 10,
+    "live_successful_unhooks": 30,
+    "post_join_cycles": 10,
+    "post_join_failed_unhooks": 30,
+    "post_join_last_error": 0,
+    "closed_user": [
+      1,
+      4,
+      4,
+      7,
+      7,
+      10,
+      10,
+      13,
+      13,
+      16,
+      16,
+      19,
+      19,
+      22,
+      22,
+      25,
+      25,
+      28,
+      28,
+      31
+    ],
+    "settled_samples": [
+      {
+        "phase": "settled",
+        "cycle": 0,
+        "thread": 50072,
+        "user": 31,
+        "gdi": 0
+      },
+      {
+        "phase": "settled",
+        "cycle": 16,
+        "thread": 50072,
+        "user": 31,
+        "gdi": 0
+      },
+      {
+        "phase": "settled",
+        "cycle": 50,
+        "thread": 50072,
+        "user": 31,
+        "gdi": 0
+      },
+      {
+        "phase": "settled",
+        "cycle": 100,
+        "thread": 50072,
+        "user": 31,
+        "gdi": 0
+      },
+      {
+        "phase": "settled",
+        "cycle": 250,
+        "thread": 50072,
+        "user": 31,
+        "gdi": 0
+      },
+      {
+        "phase": "settled",
+        "cycle": 500,
+        "thread": 50072,
+        "user": 31,
+        "gdi": 0
+      },
+      {
+        "phase": "settled",
+        "cycle": 1000,
+        "thread": 50072,
+        "user": 31,
+        "gdi": 0
+      },
+      {
+        "phase": "settled",
+        "cycle": 2000,
+        "thread": 50072,
+        "user": 31,
+        "gdi": 0
+      },
+      {
+        "phase": "settled",
+        "cycle": 5000,
+        "thread": 50072,
+        "user": 31,
+        "gdi": 0
+      }
+    ],
+    "boundary": "Only its own hooks, threads and events; no Vulkan, Shark, GLFW or NVRHI linkage."
+  },
+  "earlier_controls": {
+    "one_hundred_drains_no_resize": "Required-validation execution completed100 frames; settled USER16. Nine Intel hook installs, six successful removals during cleanup, three later DLL-exit failures. No per-drain hook creation.",
+    "one_hundred_resizes_twenty_restores": "Completed1792 frames with required validation and all native owned resources zero; settled USER23. Seven pre-exit failed igxelpicd64 removals; three later process-exit failures. Target creator/last-error were not yet captured.",
+    "owner_reset": "Both drain and transition controls close GraphicsDevice, destroy its C++ owner, then pump through fixed5s observations. Retention survives owner destruction.",
+    "frozen_inputs": "Original 9613bec source/library bytes retained under intel-user-frozen-9613bec; later unrelated production builds do not relabel those runs."
+  },
+  "discarded_instrumentation": [
+    "First owned-hook attempt incorrectly expected ERROR_INVALID_HOOK_HANDLE after target exit; it stopped nonzero when observed last-error was0. Raw failure retained; subsequent control records actual errors.",
+    "Second full transition CDB trace used CT/ET events: repeated API-entry observations made strict pairing ambiguous; missing NTDLL type information makes its !gle values UNKNOWN. It is not used for the causal count claim."
+  ],
+  "reproducer_verification": {
+    "hook_control": "Current versioned source built /W4 /WX and executed with supported CDB tracing; no GPU used.",
+    "raw40": "Current runner built its generated raw40 source; source bytes equal the independently audited executed source. New executable not separately GPU-run.",
+    "generated_raw40_sha256": "e1b4b182cf42eb071af55bb3ead57119a7b054aacead54ecc58622824c11f279",
+    "selfchecks": [
+      "control_missing_row",
+      "control_extra_row",
+      "control_malformed",
+      "control_bool_count",
+      "control_wrong_phase",
+      "control_wrong_cycle",
+      "control_live_unhook_failure",
+      "control_bad_error",
+      "debug_missing_return",
+      "debug_duplicate_entry",
+      "debug_invalid_symbols",
+      "debug_missing_error",
+      "raw_missing_cycle",
+      "raw_duplicated_cycle",
+      "raw_malformed_line",
+      "raw_validation_error",
+      "raw_cleanup_error",
+      "raw_wrong_uuid",
+      "raw_invented_submission",
+      "raw_boolean_counter",
+      "raw_generated_source_exactly_matches_audited_source",
+      "cli_default",
+      "cli_help",
+      "cli_invalid"
+    ],
+    "cached_trace_api_pairs": 736
+  },
+  "limitations": [
+    "Debugger pauses change race frequency: untraced raw40 retained13 additional USER objects, traced raw40 retained11. These are separate runs, not equal-outcome requirements.",
+    "RtlExitUserThread entry proves exit has begun, not that termination has completed. The independent control joins its target and proves the post-termination case.",
+    "GetGuiResources reports aggregate counts; no unsupported USER handle-table inspection or foreign-handle cleanup was used.",
+    "This identifies the mechanism on the current Intel driver/Windows combination, not a safe engine-owned correction or a vendor-source fix.",
+    "NVIDIA GDI growth, Intel USER qualification and the original Intel ASan post-cleanup timeout remain open; no05c PASS or06 advancement."
+  ],
+  "primary_references": [
+    "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-setwindowshookexa",
+    "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-unhookwindowshookex",
+    "https://learn.microsoft.com/en-us/windows/win32/api/winuser/nf-winuser-getguiresources",
+    "https://learn.microsoft.com/en-us/windows-hardware/drivers/debuggercmds/bp--bu--bm--set-breakpoint-"
+  ],
+  "artifacts": [
+    {
+      "path": "out/05c-work/intel-raw40-hook-trace/summary.json",
+      "sha256": "f3db37524760c83b4ea2692d7b9dca9ae9e6ae7df63d3a89756ecb4fb7891a46"
+    },
+    {
+      "path": "out/05c-work/intel-raw40-hook-trace/trace.stdout.log",
+      "sha256": "dc3d42bd416cd060b65e8e9e61ceb183a1b29550463aa9bbbd9be13943af1a01"
+    },
+    {
+      "path": "out/05c-work/intel-raw40-hook-trace/trace-token.json",
+      "sha256": "585dd1fac2d5514fd3fab2f4c1e1a903900e3090f27dec27d5886658471ebb2f"
+    },
+    {
+      "path": "out/05c-work/intel-raw40-hook-trace/trace-api-audit.json",
+      "sha256": "0761e72758860e9aa437fbe552bd0864bc1f35349d272af3fba79581f0e194cd"
+    },
+    {
+      "path": "out/05c-work/intel-raw40-hook-trace/thread-timeline.json",
+      "sha256": "c21863c7c2d38ce5e9ae7dfcf581bf08b97a2b2be72d0c6f5ac8527707ff32c1"
+    },
+    {
+      "path": "out/05c-work/analyze-intel-raw40-hooks.py",
+      "sha256": "d8671cd9fc4322c3bad9c6dafd041a2c9d6c5120f72d468e3499bbcf34059e3b"
+    },
+    {
+      "path": "out/05c-work/analyze-intel-hook-thread-timeline.py",
+      "sha256": "bbcec97dc3f94ad3fc21c45e845729b73309c51b91b04be9535251b17b915e9a"
+    },
+    {
+      "path": "out/05c-followup/intel-raw40/run/summary.json",
+      "sha256": "f699e03cd88317e29cc45310f2f0bd04ba2dbaac4d50efd15144b13c2b2fb663"
+    },
+    {
+      "path": "out/05c-followup/intel-raw40/run/intel.stdout.log",
+      "sha256": "600e453d6e703cbcb8f2db948ed492d95d0de4364f4512855ada51396d7388db"
+    },
+    {
+      "path": "out/05c-followup/intel-raw40/raw40.cpp",
+      "sha256": "e1b4b182cf42eb071af55bb3ead57119a7b054aacead54ecc58622824c11f279"
+    },
+    {
+      "path": "out/05c-followup/intel-raw40/raw40.py",
+      "sha256": "40c5a8343b730e3f9b61922a27ca8fae47d5ba464d9e599954364f6a41cf2652"
+    },
+    {
+      "path": "out/05c-work/intel-user-attribution-2/summary.json",
+      "sha256": "ceb0bd9f7f8e33a0e75fb38fc8c445afd1b99ea909ad76551c242a5347edf7e3"
+    },
+    {
+      "path": "out/05c-work/intel-user-attribution-2/trace-api-audit.json",
+      "sha256": "bc86fef4dc0aa1a7bd23ba661f72c3292319efea06bddfc9c4561fb242c9e664"
+    },
+    {
+      "path": "out/05c-work/intel-user-attribution-2/control-api-audit.json",
+      "sha256": "eab8f39b984534c08f978cf7b6fe48ccaa5648b91d102eb7125f04ec7b0840fa"
+    },
+    {
+      "path": "out/05c-work/intel-user-transition-attribution-1/summary.json",
+      "sha256": "a96f8184f79941fa474ed80ad83be53a33756f091550248f7ee2147258ede50b"
+    },
+    {
+      "path": "out/05c-work/intel-user-transition-attribution-1/trace-api-audit.json",
+      "sha256": "d4bf95c8581c33cfe13a129ee2d0738d6747587383aa45fe262d8f92ff5e60e7"
+    },
+    {
+      "path": "out/05c-work/intel-user-transition-attribution-2/summary.json",
+      "sha256": "786b1059232d988a25cd6ea9953c6a2f730fe06a4c35faa9a1bc51aace4f6049"
+    },
+    {
+      "path": "out/05c-work/intel-user-frozen-9613bec/inputs.json",
+      "sha256": "99216455d24cd752fa11c99c8a08855135f1ae405825e12729279050e50b8981"
+    },
+    {
+      "path": "out/05c-work/intel-user-frozen-9613bec/source.json",
+      "sha256": "8792ac7832a495a0e4e5da68965c3d8c7a6694dd8bb15b4ab4ffd821738ad045"
+    },
+    {
+      "path": "out/05c-work/intel-owned-hook-control-token.json",
+      "sha256": "33f20e0ebab77de417fc93e9c6837f0d0212ea9084618bc6a215f62788a63d38"
+    },
+    {
+      "path": "out/05c-work/intel-owned-hook-control-2-token.json",
+      "sha256": "280467677ce6cdf420a0da21fdca6994751388d56d58355b490392e21511e564"
+    },
+    {
+      "path": "out/05c-work/intel-owned-hook-control-3-token.json",
+      "sha256": "5b6f70d8f8441a8be84f3fc1ae4acb5dfc437e75a185c2dadc46e886fa05a7d2"
+    },
+    {
+      "path": "out/05c-work/intel-owned-hook-trace/summary.json",
+      "sha256": "33d2a7e97e1ff728ecb08d7b0a1854dcf3afd472d7e64ef95e27a6cbe5f65e55"
+    },
+    {
+      "path": "out/05c-work/intel-user-reproducer-control-final/summary.json",
+      "sha256": "55acfb2afbec4d8a3dca76576221972e0a25b14a35bbbc988216540f8f4b9b9d"
+    },
+    {
+      "path": "out/05c-work/intel-user-reproducer-control-final/native-token.json",
+      "sha256": "ed0c1d86ea0190f43efce8c4c50dd2aee74dc5f2b5566232e68903bef441e727"
+    },
+    {
+      "path": "out/05c-work/intel-user-reproducer-raw40-final/summary.json",
+      "sha256": "b24b79a01ee68c57447c7b883c725ea0fad86a458fe28bf5ceead24cf1fe0cbf"
+    },
+    {
+      "path": "out/05c-work/intel-user-reproducer-selfcheck/summary.json",
+      "sha256": "dfce8e89074262f688f8787cece861680a1af1d45818f748192596295cfe5580"
+    },
+    {
+      "path": "out/05c-work/test-intel-user-reproducer.py",
+      "sha256": "2d7b8b826800cf2de4f9885ea8849e3efa8b17b975b5c2f25a138fa1c07273a6"
+    },
+    {
+      "path": "out/05c-work/collect-intel-user-evidence.py",
+      "sha256": "3a2d9df8c7dad6e71284ef108577dce82fcd9bb6b9ff1f486792d2cdf2046291"
+    }
+  ],
+  "versioned_reproducer_inputs": {
+    "docs/coverage/reproducers/05c-intel-user.cpp": "5fe1d4346c994ede760e077f86084c96054bc44ecfb44120197e2acf280212e6",
+    "docs/coverage/reproducers/05c-intel-user.py": "182baab5da6b377de36706d45a252b2689cff7c4ce1b2b8d355dce42ed363260",
+    "docs/coverage/reproducers/05c-win32-vulkan.cpp": "bf78a2821e14ff24c2f804124ef7ace529aebd4f62e36a24744759110bdd1b9b",
+    "docs/coverage/reproducers/05c-win32-vulkan.py": "3853906f5eebaea659f01d3ba26c4a21eff064e7b86bfe99733d3707a725d8ec"
+  }
+}
