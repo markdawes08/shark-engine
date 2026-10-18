@@ -8,8 +8,9 @@ The versioned
 [requirements manifest](docs/coverage/requirements.json) preserves assignment
 scope and acceptance criteria for clean checkouts.
 
-**Assignment 01 complete: repository, build system and test foundation.** The current
-executables provide build/version information and honest bootstrap help. Graphics,
+**Current assignment: M01, headless server and Core/Client separation.** Assignment
+01's build foundation is complete. Editor/Runtime provide version and bootstrap
+help; Server adds validated startup, timed execution and shutdown. Graphics,
 scenes, gameplay and editor UI are future increments. CPU build results do not
 establish graphics or release-platform support.
 
@@ -27,8 +28,9 @@ establish graphics or release-platform support.
   repaired macOS sanitizer failure, passing hosted CPU matrix and verified
   deliberate-failure/red-to-green proof.
 - [MMORPG planning handoff](docs/handoffs/mmorpg-planning-amendment.md) records
-  the scope change and repository state at that handoff. M01 is next and
-  introduces the headless server boundary before 02's graphics work.
+  the scope change and repository state at that handoff.
+- [M01 handoff](docs/handoffs/M01-headless-server.md) records the headless server
+  implementation, local evidence and outstanding hosted qualification before 02.
 
 From an x64 Visual Studio developer shell with the documented tools installed:
 
@@ -41,3 +43,10 @@ ctest --preset windows-debug
 Use `linux-debug` or `macos-debug` on those hosts. Sanitizer, release and isolated
 Runtime configurations are documented in the build guide. All staging, commits
 and pushes remain with the user; generated output and local tooling stay ignored.
+
+For a server without client/editor/test targets, use `cmake --preset server-only`,
+then `cmake --build --preset server-only`. Run
+`build/server-only/bin/Server --run-for-ms 1000` (append `.exe` on Windows)
+for a one-second headless smoke run.
+With no arguments it waits for shutdown. This is an idle process foundation;
+it has no player connections or world simulation yet.

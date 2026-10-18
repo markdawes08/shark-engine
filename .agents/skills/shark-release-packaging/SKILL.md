@@ -17,6 +17,12 @@ host's `runtime-only` configure/build preset and ALL boundary target in
 contracts. Do not invent export commands or treat a bootstrap launch as the
 acceptance gate for 14, 31 or 35. Add real commands when their owner implements them.
 
+M01 adds the `server-only` preset and `cmake --install build/server-only --prefix
+out/server-package --component Server` for an executable-only closure fixture.
+The minimal Ubuntu job independently inspects its source, link and ELF closure
+and starts the installed executable. It is not a game export or licensed release
+package; do not claim M08/35 acceptance from this bootstrap fixture.
+
 Early export 14 may use explicitly versioned engine-owned development payloads;
 31 replaces them with validated cooked dependency closure. Include declared roots
 for script-selected/dynamically assembled prefab, scene and audio IDs, precompiled

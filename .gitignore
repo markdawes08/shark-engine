@@ -2,6 +2,7 @@
 /AI_Game_Engine_Agent_Roadmap.txt
 
 # Generated builds, fetched dependencies, reports and distribution staging.
+# Includes minimal Ubuntu inputs in .tools/headless and server packages/evidence in out/.
 /build/
 /out/
 /dist/

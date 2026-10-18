@@ -18,8 +18,9 @@ They supersede the original offline-only scope. Original assignments 00-35 retai
 their IDs; M01-M10 are inserted in the manifest's explicit `assignment_order`.
 Assignment 01's hosted CPU and red/green gate is complete; see the
 [CI verification handoff](docs/handoffs/01-ci-verification.md). The current assignment
-remains 01; M01 is next, before 02. Server, networking, persistence and streaming
-remain planned, not implemented or qualified.
+is M01, before 02. The headless Server bootstrap and Core/Client split are
+implemented; qualification is recorded in the [M01 handoff](docs/handoffs/M01-headless-server.md).
+Networking, persistence, simulation and streaming remain planned.
 
 The user owns staging and commits. **Never run `git add`, stage through another
 tool, commit, or push, including from tests or temporary repositories.** Leave
@@ -94,20 +95,21 @@ missing runner, graphics device or audio device is NOT RUN. CPU starter tests do
 not establish working graphics, audio or a supported platform. Never regenerate
 image baselines automatically to hide failures.
 
-Current labels are `cpu`, `unit`, `integration`, `boundary`, `contract` and `tooling`.
-`ctest --preset windows-debug -L boundary` runs the runtime-boundary checks;
+Current labels are `cpu`, `unit`, `integration`, `boundary`, `server`, `contract` and `tooling`.
+`ctest --preset windows-debug -L boundary` runs client/Core/Server boundary checks;
 `-L unit` runs starter engine tests and the normal failure-propagation sentinel.
 
 ## Protected target and dependency boundaries
 
-Currently Engine is a static bootstrap library. M01 must split shared EngineCore
-from EngineClient presentation and introduce Server -> EngineCore before graphics
-integration. Server/Core must exclude window/GPU/audio/authoring libraries at
-configure/download, link and package time. `runtime-only` is not a server preset.
-No server commands or test labels exist yet; add and document real ones in M01.
-EngineTools owns import, cook and authoring
-facilities and depends on Engine. Editor depends on those libraries; Runtime
-depends only on Engine. Runtime must not link/load Editor, EngineTools, ImGui,
+EngineCore is the shared static bootstrap library. EngineClient is a separate
+static presentation library, currently providing client help text. Engine is an
+interface composition target that links EngineClient and transitively EngineCore.
+Server links only EngineCore. Server/Core exclude window/GPU/audio/authoring
+libraries at configure/download, link and package time. `server-only` builds a
+Release server with tests and dependency fetching disabled; `server-debug` and
+`server-asan-ubsan` exercise actual server tests. `runtime-only` is a client preset.
+EngineTools depends on EngineCore; Editor depends on EngineTools and EngineClient;
+Runtime depends on Engine. Runtime must not link/load Editor, EngineTools, ImGui,
 ImGuizmo, cgltf, source image/audio decoders or offline source shader compilers.
 Later Vulkan-on-Metal translation libraries are allowed only through the tested
 platform contract. EngineTools may never be reached through an Engine transitive
@@ -188,7 +190,8 @@ in ADR 0007 are provisional targets; tests cannot silently reduce them to pass.
 
 | Location | Ownership |
 | --- | --- |
-| `engine/`, `engine_tools/`, `editor/`, `runtime/` | Runtime library, authoring library and separate executables |
+| `engine/core/`, `engine/client/`, `engine/include/` | Shared Core, client presentation and retained bootstrap public header |
+| `engine_tools/`, `editor/`, `runtime/`, `server/` | Authoring library and separate client/editor/headless executables |
 | `tests/`, `cmake/`, `tools/` | Behavior tests, target configuration and development checks |
 | `docs/architecture/`, `docs/coverage/`, `docs/handoffs/` | Decisions, mappings/evidence and assignment handoffs |
 | `docs/roadmap/` | Versioned execution order, scope amendments and foundation assessment |
@@ -196,7 +199,7 @@ in ADR 0007 are provisional targets; tests cannot silently reduce them to pass.
 | `.agents/skills/` | Repository-scoped Codex skill sources |
 | `build/`, `out/` | Ignored generated builds and test evidence |
 | `cli/`, `assets/FeatureWorld/` | Future CLI and scene fixtures, created by their owning assignments |
-| `server/`, `assets/MMOWorld/` | Planned M01 server entry point and M09 MMO acceptance world; not implemented |
+| `assets/MMOWorld/` | Future M09 MMO acceptance world |
 
 Use the relevant focused skill:
 

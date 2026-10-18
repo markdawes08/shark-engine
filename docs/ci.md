@@ -1,4 +1,4 @@
-# CPU CI and evidence
+# CPU and headless Server CI
 
 Assignment 01's hosted gate is **PASS** on
 `3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de`. After repairing the macOS ARM Xcode
@@ -9,12 +9,13 @@ all fourteen jobs and all 120 CPU tests on the same revision. See the
 [durable gate evidence](coverage/evidence/01-ci-gate.json). The user reserves Git
 staging, committing and pushing.
 
-The [MMORPG planning amendment](handoffs/mmorpg-planning-amendment.md) retains
-assignment 01 as the current gate, followed by M01 before 02.
-The existing fourteen required jobs remain the current configuration. M01 must
-add genuine headless Server/Core checks on a minimal Ubuntu24.04 environment;
-M02-M10 introduce network, database, world-handoff and active-load tiers. Those
-jobs/commands are planned and are not provided by the present CPU workflow.
+**M01 is the current assignment; its hosted gate is open.** Its implementation
+adds a `headless-server` job beside the fourteen existing jobs. The new job and
+updated client matrix still need execution on the user-committed M01 revision;
+the completed 01 evidence does not qualify these changes. The new check has not
+yet been added to the recorded branch-protection configuration. The
+[MMORPG execution plan](roadmap/mmorpg-plan.md) places M01 before 02; later
+network, database, world-handoff and active-load tiers remain planned.
 
 ## Jobs and required checks
 
@@ -30,13 +31,18 @@ persisting credentials, and uploads logs on failure as well as success.
 | `cpu-linux-asan-ubsan` | `ubuntu-24.04` x64 | Clang 18 (`clang++-18`) | ASan + UBSan |
 | `cpu-macos-arm64-debug`, `cpu-macos-arm64-release`, `cpu-macos-arm64-asan-ubsan` | `macos-26` arm64 | Xcode 26.4.1 / Apple Clang | Debug, Release, ASan + UBSan |
 | `cpu-macos-intel-debug`, `cpu-macos-intel-release`, `cpu-macos-intel-asan-ubsan` | `macos-15-intel` x64 | Xcode 16.4 / Apple Clang | Debug, Release, ASan + UBSan |
-| `runtime-only` | `ubuntu-24.04` x64 | GCC 13 | Release, no Editor/EngineTools/Tests |
+| `runtime-only` | `ubuntu-24.04` x64 | GCC 13 | Client Release, no Server/Editor/EngineTools/Tests |
+| `headless-server` | `ubuntu-24.04` x64 host; locked Ubuntu 24.04 amd64 image | Snapshot GCC 13 and Clang 18 | Server-only Release package, Core/Server Debug tests, ASan + UBSan tests and clean-runtime smoke |
 
-All fourteen named jobs are configured as required checks on `main`, bound to
+The fourteen pre-M01 jobs are configured as required checks on `main`, bound to
 the GitHub Actions app (15368), with up-to-date branches required. Administrator
 bypass remains enabled for the owner's direct-push workflow; no approving-review
 or push-actor restriction was added. The settings were read back from GitHub and
-[recorded](coverage/evidence/01-ci-protection.json). Missing, skipped or cancelled
+[recorded](coverage/evidence/01-ci-protection.json). After the user commits/pushes
+M01 and its hosted job is verified, add `headless-server` to those fourteen
+required checks using the exact GitHub Actions check name. The workflow now
+defines fifteen checks; the older protection report proves only the fourteen
+it records. Missing, skipped or cancelled
 required jobs do not establish a passing assignment gate. The Windows Server
 runner is build evidence; it does not qualify Windows 11 graphics or deployment.
 The Mac CPU jobs do not qualify either Vulkan-on-Metal implementation.
@@ -44,14 +50,19 @@ The Mac CPU jobs do not qualify either Vulkan-on-Metal implementation.
 The matrix checks Debug and Release independently and runs sanitizers on all four
 OS/CPU rows. MSVC supplies ASan only; UBSan is exercised by Clang and Apple Clang.
 Runtime-only has no CTest preset because Tests are disabled. That job explicitly
-builds the boundary target and runs Runtime's real `--version` behavior.
+builds the client boundary target and runs Runtime's real `--version` behavior.
+Ordinary CPU presets now also build Server and run its unit/lifecycle checks.
+Windows tests cover finite-duration shutdown; POSIX SIGINT/SIGTERM and readiness
+I/O failure checks execute on Linux/macOS, not through Windows `terminate()`.
 
 ## Locked tools and hosted-image limits
 
 [requirements-dev.txt](../requirements-dev.txt) locks these distributions with
 SHA-256 hashes for Windows x64, Linux x64 and both macOS CPU architectures:
 CMake 3.31.10, Ninja 1.13.2, clang-format 20.1.8 and PyYAML 6.0.3. Python is exactly
-3.13.5. Install only wheels with the documented hash-checking command in
+3.13.5 for the retained desktop CPU workflow. The separately locked minimal
+headless image uses Ubuntu snapshot Python 3.12.3, as described below; this does
+not relax the existing CPU helper's pin. Install only wheels with the documented hash-checking command in
 [building.md](building.md). The Ninja wheel's executable identifies its vendor
 build as `1.13.2.git.kitware.jobserver-pipe-1`; the wheel version remains 1.13.2.
 The exact executable banner and hash are retained in evidence. PyYAML is only a
@@ -93,6 +104,95 @@ Apple SDK, compiler patch or Python distributor rebuild. Assignment 35 must arch
 the actual toolchain/environment and build inputs needed for release reproduction,
 or use an immutable controlled runner image. A missing bundle or changed compiler
 requires a reviewed configuration/evidence update; do not mask that failure.
+
+## Minimal Ubuntu headless gate
+
+[inputs.json](../tools/ci/headless/inputs.json) pins the Ubuntu 24.04 amd64 base
+image to `sha256:a2d43bffc46670d7108bb3c0468c67c5557c4c92e83e1e34cbff1322ad1b94dc`,
+the APT snapshot to `20261017T000000Z`, and the bootstrap CA package by SHA-256.
+The [Dockerfile](../tools/ci/headless/Dockerfile) and
+[setup script](../tools/ci/headless/setup.sh) install GCC 13, Clang 18 and its
+sanitizer runtime, Python/venv, Git and binutils from signed snapshot metadata
+with recommendations disabled. The complete installed package/version/architecture
+inventory must exactly match [packages.tsv](../tools/ci/headless/packages.tsv).
+Presentation, source-import and offline shader packages are rejected separately.
+The locked wheel tools are installed with hash checking. Python 3.12.3 is a
+specific exception for this isolated image, whose Ubuntu package revisions are
+recorded; ordinary CPU jobs continue to require Python 3.13.5.
+
+On a native Linux x86-64 host with Docker and GNU `timeout` available, run the
+same entry point used by CI, choosing a fresh evidence directory for each run:
+
+```sh
+bash tools/ci/headless/run.sh out/ci/headless-local
+```
+
+The [wrapper](../tools/ci/headless/run.sh) builds its image from a temporary
+context containing only the image recipe and locked tooling inputs. It binds
+the repository read-only at `/source`, including its existing Git metadata, and
+writes builds inside the disposable container and evidence into the selected
+host directory. It performs no staging, commits or source copies. Docker image
+setup changes the disposable environment, not host APT configuration. Do not
+run `setup.sh` against a working host installation. No Podman or macOS-host
+qualification is implied by this Linux command.
+
+When Docker is unavailable, the checked-in Linux/WSL fallback uses the same
+hash-verified base userspace and snapshot setup inside private chroots:
+
+```sh
+python tools/ci/headless/fetch_inputs.py --output .tools/headless
+sudo bash tools/ci/headless/chroot.sh /var/tmp/shark-headless-local .tools/headless out/ci/headless-chroot-local
+```
+
+Choose an unused `/var/tmp/shark-headless-*` parent and empty evidence directory.
+The [fetcher](../tools/ci/headless/fetch_inputs.py) verifies the manifest, image
+configuration, base layer and CA package against the input lock. The
+[chroot wrapper](../tools/ci/headless/chroot.sh) requires Linux privileges for a
+private mount namespace, mounts source read-only and installs packages only
+inside the disposable build root. It keeps a second pristine base root for the
+installed-Server smoke, with a separate network namespace. It retains both
+private root filesystems for inspection rather than deleting them automatically.
+This records the shared host kernel explicitly; it does not claim an independent
+VM or a successful Docker run. Unlike the Docker smoke, this fallback does not
+claim a read-only runtime root.
+
+[headless_ci.py](../tools/headless_ci.py) validates the OS/architecture, exact
+installed package inventory, image provenance and Python/tool pins. It rejects
+mapped GPU/audio devices and display sockets and clears display/audio-session
+environment variables. It runs these stages in fresh build directories:
+
+1. `server-only`: GCC Release with Client, Editor and Tests disabled, dependency
+   fetching disabled, explicit Server/Core boundary check, component install,
+   source/build/package closure inspection and a finite installed-Server run.
+2. `server-debug`: GCC Debug with the Core/Server Catch2 and process tests;
+   CTest requires a nonempty selection and writes JUnit.
+3. `server-asan-ubsan`: Clang 18 with ASan/UBSan and leak detection, running the
+   same headless tests with failure halting enabled.
+
+The wrapper then starts the installed Release Server in the unmodified pinned
+base image with networking disabled and a read-only root filesystem. This last
+smoke test uses no build tools or Python in the runtime environment. Headless
+qualification requires that smoke result as well as the build/test summary;
+unsetting display variables on a desktop runner alone is insufficient.
+
+Closure checks inspect CMake's generated graph and file-api data, the compiler's
+actual source/header dependencies and linker inputs, installed package contents,
+and ELF direct/transitive library dependencies. Negative fixtures exercise
+presentation/authoring leaks. The test framework may be fetched for test-enabled
+configurations; it must not enter `server-only` or the installed package. These
+checks qualify an idle process lifecycle and dependency boundary, not world
+simulation, networking, persistence, player capacity or release deployment.
+
+The selected output contains `summary.json`, toolchain reports, phase logs,
+JUnit, installed package inventory, input/package provenance, license records,
+the Server package and closure report. Docker adds its image inspection; the
+chroot path records its shared host kernel and pristine runtime package inventory.
+`clean-runtime.json`
+records the separate base-image smoke. CI uploads it as
+`headless-server-<run_attempt>` even on failure, with a 30-day retention period.
+Preserve required acceptance findings in the M01 handoff before artifacts expire.
+Each phase has a deadline and a nonzero result stops dependent work. An absent
+test or clean-runtime result is unrun, never a passing gate.
 
 ## Shared local and CI command
 
@@ -153,11 +253,13 @@ the second; the workflow's concurrency policy can cancel overlapping dispatches.
    configure or compilation failure does not prove test failure propagation.
 2. Save the run URL, commit, runner metadata, each CPU job's nonzero test-phase
    exit code and JUnit containing the injected test failure. `quality` and
-   `runtime-only` may remain green; the overall workflow must be red.
+   `runtime-only` may remain green; the overall workflow must be red. The M01
+   `headless-server` job also receives the injection input; its test-enabled
+   configuration must reach the real sentinel assertion, not fail preparation.
 3. Dispatch the same revision again with `inject_test_failure` **false** (the
-   default). All fourteen jobs must pass, and no injected failure may remain in
+   default). All fifteen current jobs must pass, and no injected failure may remain in
    CTest. Save this run URL and artifacts alongside the failed-run evidence.
-4. Update the assignment 01 handoff and requirement status only after checking
+4. Update the current assignment's handoff and requirement status only after checking
    both actual runs and the four native CPU rows. Ordinary failed push runs do
    not prove deliberate test failure propagation. Until the injected failure
    and restored pass are verified on the same revision, a new red/green claim
@@ -169,6 +271,20 @@ then `python tools/ci.py --preset windows-debug` must pass. The second invocatio
 explicitly resets the cached option to OFF. Preserve the first output directory
 before rerunning if both evidence sets are needed. Local proof does not replace
 the required hosted-job result.
+
+For the headless profile, use a fresh output directory for each invocation:
+
+```sh
+bash tools/ci/headless/run.sh out/ci/headless-injected --inject-test-failure
+bash tools/ci/headless/run.sh out/ci/headless-restored
+```
+
+The first command must return nonzero because CTest ran the injected assertion.
+The second must finish all normal stages, including the clean-runtime smoke.
+The package-only configuration keeps injection disabled because it has no Tests.
+The headless driver stops at the first failed test phase; phases after that point
+remain unrun in the injected evidence. The historical 01 red/green reports keep
+their original fourteen-job/120-test counts and tested revision.
 
 ## Configuration verification
 

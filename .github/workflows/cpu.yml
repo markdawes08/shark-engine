@@ -162,3 +162,29 @@ jobs:
           path: out/ci/runtime-only/
           if-no-files-found: warn
           retention-days: 30
+
+  headless-server:
+    name: headless-server
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    env:
+      SHARK_INJECT_FAILURE: ${{ inputs.inject_test_failure || false }}
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0
+        with:
+          persist-credentials: false
+      - name: Build and test in the locked minimal Ubuntu 24.04 image
+        shell: bash
+        run: |
+          set -euo pipefail
+          headless_args=(out/ci/headless)
+          if [[ "$SHARK_INJECT_FAILURE" == 'true' ]]; then headless_args+=(--inject-test-failure); fi
+          bash tools/ci/headless/run.sh "${headless_args[@]}"
+      - name: Preserve headless environment, tests and package closure evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: headless-server-${{ github.run_attempt }}
+          path: out/ci/headless/
+          if-no-files-found: error
+          retention-days: 30

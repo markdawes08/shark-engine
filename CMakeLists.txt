@@ -1,10 +1,16 @@
 cmake_minimum_required(VERSION 3.28)
 project(Shark VERSION 0.1.0 LANGUAGES CXX)
 
+# Shark uses headers, not C++ module import units. Selecting C++20 must not
+# require clang-scan-deps; Ninja still tracks ordinary compiler/header inputs.
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+
 if(CMAKE_SOURCE_DIR STREQUAL CMAKE_BINARY_DIR)
     message(FATAL_ERROR "Use an out-of-source build: cmake --preset <preset>")
 endif()
 
+option(SHARK_BUILD_CLIENT "Build EngineClient, Engine composition and Runtime" ON)
+option(SHARK_BUILD_SERVER "Build the headless Server" ON)
 option(SHARK_BUILD_EDITOR "Build the editor foundation and EngineTools" ON)
 option(SHARK_BUILD_TESTS "Build and register Shark's CPU tests" ON)
 option(SHARK_INJECT_TEST_FAILURE "Deliberately fail the CTest failure sentinel" OFF)
@@ -12,6 +18,9 @@ set(SHARK_SANITIZER "none" CACHE STRING "Sanitizer: none, address, address-undef
 set_property(CACHE SHARK_SANITIZER PROPERTY STRINGS none address address-undefined)
 if(SHARK_INJECT_TEST_FAILURE AND NOT SHARK_BUILD_TESTS)
     message(FATAL_ERROR "SHARK_INJECT_TEST_FAILURE requires SHARK_BUILD_TESTS=ON")
+endif()
+if(SHARK_BUILD_EDITOR AND NOT SHARK_BUILD_CLIENT)
+    message(FATAL_ERROR "SHARK_BUILD_EDITOR requires SHARK_BUILD_CLIENT=ON")
 endif()
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
@@ -21,7 +30,13 @@ include(SharkBoundaries)
 shark_validate_sanitizer()
 
 add_subdirectory(engine)
-add_subdirectory(runtime)
+if(SHARK_BUILD_CLIENT)
+    add_subdirectory(runtime)
+endif()
+if(SHARK_BUILD_SERVER)
+    add_subdirectory(server)
+    install(TARGETS Server RUNTIME DESTINATION bin COMPONENT Server)
+endif()
 if(SHARK_BUILD_EDITOR)
     add_subdirectory(engine_tools)
     add_subdirectory(editor)

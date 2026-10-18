@@ -2,7 +2,8 @@
 
 Date: 2026-10-17. Status: accepted product direction and planning amendment.
 The user selected an MMORPG engine and **seamless open world**. All MMO runtime
-behavior below is planned, not implemented or qualified. This amendment replaces
+behavior below is planned; M01 implements only the target split and idle Server
+lifecycle described in its [handoff](../handoffs/M01-headless-server.md). This amendment replaces
 the offline-only release assumptions in ADRs 0001-0006; unaffected client graphics,
 tooling and platform requirements remain. The [execution plan](../roadmap/mmorpg-plan.md)
 and [requirements manifest](../coverage/requirements.json) assign the work.
@@ -32,9 +33,9 @@ framework, Kubernetes platform or service mesh as a prerequisite.
 
 ## Authority and target boundaries
 
-[ADR 0001](0001-targets-and-boundaries.md) defines the planned `EngineCore`,
-`EngineClient` and `Server` separation. Existing Engine/EngineTools/Editor/Runtime
-and Tests remain the only implemented targets until M01. Server must build,
+[ADR 0001](0001-targets-and-boundaries.md) defines the implemented `EngineCore`,
+`EngineClient` and `Server` separation. Engine is an interface client composition;
+EngineTools, Editor, Runtime and Tests remain. Server must build,
 start and test without GPU/display/audio support or their SDK/download dependencies.
 The initial server qualification target is Ubuntu 24.04 x86-64, separately from
 the retained Windows/Linux/macOS client and editor hardware matrix.

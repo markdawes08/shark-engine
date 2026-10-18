@@ -1,4 +1,5 @@
 #include <shark/bootstrap.hpp>
+#include <shark/client/bootstrap.hpp>
 #include <shark/tools/build_info.hpp>
 
 #include <iostream>
@@ -15,8 +16,7 @@ int main(int argc, char* argv[]) {
         std::cout << shark::tools::editor_version_banner() << '\n';
         return 0;
     case shark::BootstrapAction::help:
-        std::cout << "Usage: Editor [--help | --version]\n"
-                     "Shark build foundation only; the graphical editor is not implemented.\n";
+        std::cout << shark::client::editor_help();
         return 0;
     case shark::BootstrapAction::invalid:
         std::cerr << "Unsupported arguments. Usage: Editor [--help | --version]\n";

@@ -1,0 +1,1195 @@
+{
+  "schema_version": 1,
+  "assignment": "M01",
+  "base_revision": "e2f4966bd99797e7109397728f4ae2babce48f17",
+  "result_revision": null,
+  "worktree": "Uncommitted implementation; no staging, commits or pushes performed",
+  "qualification": "Local foundation checks PASS; M01 hosted gate NOT_RUN pending user commit/push",
+  "windows": {
+    "windows-debug": {
+      "summary": {
+        "schema_version": 1,
+        "preset": "windows-debug",
+        "started_utc": "2026-10-17T23:56:54.173635+00:00",
+        "injected_failure": false,
+        "status": "PASS",
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "windows-debug",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 0.961,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "windows-debug",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 4.057,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "windows-debug",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\ci\\windows-debug\\ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 15.615,
+            "status": "PASS"
+          }
+        ],
+        "exit_code": 0,
+        "finished_utc": "2026-10-17T23:57:16.854531+00:00"
+      },
+      "ctest": {
+        "path": "out/ci/windows-debug/ctest.xml",
+        "sha256": "5973bf5f71a75cb4d2fa76f93f4cecaf9ba566ac7308c3ffcfe32f43eee2fcd8",
+        "tests": 15,
+        "failures": [],
+        "skipped": []
+      },
+      "toolchain": {
+        "platform": {
+          "system": "Windows",
+          "release": "11",
+          "version": "10.0.26200",
+          "machine": "AMD64"
+        },
+        "python": {
+          "version": "3.13.5",
+          "executable": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+        },
+        "packages": {
+          "cmake": "3.31.10",
+          "ninja": "1.13.2",
+          "clang-format": "20.1.8",
+          "PyYAML": "6.0.3"
+        },
+        "environment": {
+          "VCToolsVersion": "14.51.36231",
+          "WindowsSDKVersion": "10.0.28000.0\\",
+          "VisualStudioVersion": "18.0"
+        },
+        "configured_compilers": [
+          {
+            "CMAKE_CXX_COMPILER": "C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+            "CMAKE_CXX_COMPILER_ID": "MSVC",
+            "CMAKE_CXX_COMPILER_VERSION": "19.51.36248.0",
+            "CMAKE_CXX_PLATFORM_ID": "Windows",
+            "CMAKE_CXX_COMPILER_FRONTEND_VARIANT": "MSVC",
+            "CMAKE_CXX_LIBRARY_ARCHITECTURE": ""
+          }
+        ],
+        "cmake_inputs": {
+          "CMAKE_BUILD_TYPE": "Debug",
+          "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+          "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+          "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+          "CMAKE_MAKE_PROGRAM": "C:/Users/mrkda/Projects/shark/.tools/venv/Scripts/ninja.exe",
+          "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+          "SHARK_BUILD_CLIENT": "ON",
+          "SHARK_BUILD_EDITOR": "ON",
+          "SHARK_BUILD_SERVER": "ON",
+          "SHARK_BUILD_TESTS": "ON",
+          "SHARK_INJECT_TEST_FAILURE": "OFF",
+          "SHARK_SANITIZER": "none",
+          "CMAKE_GENERATOR": "Ninja"
+        }
+      }
+    },
+    "windows-release": {
+      "summary": {
+        "schema_version": 1,
+        "preset": "windows-release",
+        "started_utc": "2026-10-17T23:56:54.182165+00:00",
+        "injected_failure": false,
+        "status": "PASS",
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "windows-release",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 0.951,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "windows-release",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 3.991,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "windows-release",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\ci\\windows-release\\ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 15.676,
+            "status": "PASS"
+          }
+        ],
+        "exit_code": 0,
+        "finished_utc": "2026-10-17T23:57:16.851185+00:00"
+      },
+      "ctest": {
+        "path": "out/ci/windows-release/ctest.xml",
+        "sha256": "7390d4dcde53765837fd29c8ee3b07c250890bda9093d63057bfbf8f93f4e0b9",
+        "tests": 15,
+        "failures": [],
+        "skipped": []
+      },
+      "toolchain": {
+        "platform": {
+          "system": "Windows",
+          "release": "11",
+          "version": "10.0.26200",
+          "machine": "AMD64"
+        },
+        "python": {
+          "version": "3.13.5",
+          "executable": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+        },
+        "packages": {
+          "cmake": "3.31.10",
+          "ninja": "1.13.2",
+          "clang-format": "20.1.8",
+          "PyYAML": "6.0.3"
+        },
+        "environment": {
+          "VCToolsVersion": "14.51.36231",
+          "WindowsSDKVersion": "10.0.28000.0\\",
+          "VisualStudioVersion": "18.0"
+        },
+        "configured_compilers": [
+          {
+            "CMAKE_CXX_COMPILER": "C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+            "CMAKE_CXX_COMPILER_ID": "MSVC",
+            "CMAKE_CXX_COMPILER_VERSION": "19.51.36248.0",
+            "CMAKE_CXX_PLATFORM_ID": "Windows",
+            "CMAKE_CXX_COMPILER_FRONTEND_VARIANT": "MSVC",
+            "CMAKE_CXX_LIBRARY_ARCHITECTURE": ""
+          }
+        ],
+        "cmake_inputs": {
+          "CMAKE_BUILD_TYPE": "Release",
+          "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+          "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+          "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+          "CMAKE_MAKE_PROGRAM": "C:/Users/mrkda/Projects/shark/.tools/venv/Scripts/ninja.exe",
+          "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+          "SHARK_BUILD_CLIENT": "ON",
+          "SHARK_BUILD_EDITOR": "ON",
+          "SHARK_BUILD_SERVER": "ON",
+          "SHARK_BUILD_TESTS": "ON",
+          "SHARK_INJECT_TEST_FAILURE": "OFF",
+          "SHARK_SANITIZER": "none",
+          "CMAKE_GENERATOR": "Ninja"
+        }
+      }
+    },
+    "windows-asan": {
+      "summary": {
+        "schema_version": 1,
+        "preset": "windows-asan",
+        "started_utc": "2026-10-17T23:56:54.174008+00:00",
+        "injected_failure": false,
+        "status": "PASS",
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "windows-asan",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 0.951,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "windows-asan",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 4.149,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "windows-asan",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "C:\\Users\\mrkda\\Projects\\shark\\out\\ci\\windows-asan\\ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 16.263,
+            "status": "PASS"
+          }
+        ],
+        "exit_code": 0,
+        "finished_utc": "2026-10-17T23:57:17.606440+00:00"
+      },
+      "ctest": {
+        "path": "out/ci/windows-asan/ctest.xml",
+        "sha256": "5e7321b5dcd4034a9976012424c3cbb21b31c345ca87db78adde52b33d8639b0",
+        "tests": 15,
+        "failures": [],
+        "skipped": []
+      },
+      "toolchain": {
+        "platform": {
+          "system": "Windows",
+          "release": "11",
+          "version": "10.0.26200",
+          "machine": "AMD64"
+        },
+        "python": {
+          "version": "3.13.5",
+          "executable": "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+        },
+        "packages": {
+          "cmake": "3.31.10",
+          "ninja": "1.13.2",
+          "clang-format": "20.1.8",
+          "PyYAML": "6.0.3"
+        },
+        "environment": {
+          "VCToolsVersion": "14.51.36231",
+          "WindowsSDKVersion": "10.0.28000.0\\",
+          "VisualStudioVersion": "18.0"
+        },
+        "configured_compilers": [
+          {
+            "CMAKE_CXX_COMPILER": "C:/Program Files/Microsoft Visual Studio/18/Community/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+            "CMAKE_CXX_COMPILER_ID": "MSVC",
+            "CMAKE_CXX_COMPILER_VERSION": "19.51.36248.0",
+            "CMAKE_CXX_PLATFORM_ID": "Windows",
+            "CMAKE_CXX_COMPILER_FRONTEND_VARIANT": "MSVC",
+            "CMAKE_CXX_LIBRARY_ARCHITECTURE": ""
+          }
+        ],
+        "cmake_inputs": {
+          "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+          "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+          "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+          "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+          "CMAKE_MAKE_PROGRAM": "C:/Users/mrkda/Projects/shark/.tools/venv/Scripts/ninja.exe",
+          "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+          "SHARK_BUILD_CLIENT": "ON",
+          "SHARK_BUILD_EDITOR": "ON",
+          "SHARK_BUILD_SERVER": "ON",
+          "SHARK_BUILD_TESTS": "ON",
+          "SHARK_INJECT_TEST_FAILURE": "OFF",
+          "SHARK_SANITIZER": "address",
+          "CMAKE_GENERATOR": "Ninja"
+        }
+      }
+    }
+  },
+  "headless": {
+    "environment": {
+      "platform": {
+        "system": "Linux",
+        "release": "6.18.33.2-microsoft-standard-WSL2",
+        "version": "#1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026",
+        "machine": "x86_64"
+      },
+      "python": {
+        "version": "3.12.3",
+        "executable": "/opt/shark-headless/venv/bin/python"
+      },
+      "packages": {
+        "cmake": "3.31.10",
+        "ninja": "1.13.2",
+        "clang-format": "20.1.8",
+        "PyYAML": "6.0.3"
+      },
+      "environment": {},
+      "hardware": {
+        "cpu_models": [
+          "Intel(R) Core(TM) i9-14900HX"
+        ],
+        "logical_cpus": 32,
+        "visible_memory": {
+          "MemTotal": "16221900 kB",
+          "MemAvailable": "15191120 kB"
+        },
+        "scope": "CPU/memory visible to container or WSL; shared host kernel, not bare-metal qualification"
+      },
+      "configured_compilers": [],
+      "cmake_inputs": {}
+    },
+    "restored_summary": {
+      "schema_version": 1,
+      "status": "PASS",
+      "phases": [
+        {
+          "name": "configure",
+          "command": [
+            "cmake",
+            "--preset",
+            "server-only",
+            "-B",
+            "/work/qualified-restored/server-only",
+            "-DCMAKE_CXX_COMPILER=g++-13",
+            "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+            "-DSHARK_INJECT_TEST_FAILURE=OFF"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.474,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "build",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/qualified-restored/server-only",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 1.825,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "boundary",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/qualified-restored/server-only",
+            "--target",
+            "shark_check_server_boundary"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.18,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "install",
+          "command": [
+            "cmake",
+            "--install",
+            "/work/qualified-restored/server-only",
+            "--prefix",
+            "/evidence/server-only/package",
+            "--component",
+            "Server"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.168,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "closure",
+          "command": [
+            "/opt/shark-headless/venv/bin/python",
+            "/source/tools/check_server_closure.py",
+            "--build-dir",
+            "/work/qualified-restored/server-only",
+            "--package-dir",
+            "/evidence/server-only/package",
+            "--output",
+            "/evidence/server-only/closure.json"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.419,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "package-smoke",
+          "command": [
+            "/evidence/server-only/package/bin/Server",
+            "--run-for-ms",
+            "20"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.038,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "configure",
+          "command": [
+            "cmake",
+            "--preset",
+            "server-debug",
+            "-B",
+            "/work/qualified-restored/server-debug",
+            "-DCMAKE_CXX_COMPILER=g++-13",
+            "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+            "-DSHARK_INJECT_TEST_FAILURE=OFF"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 2.329,
+          "status": "PASS",
+          "preset": "server-debug"
+        },
+        {
+          "name": "build",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/qualified-restored/server-debug",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 32.203,
+          "status": "PASS",
+          "preset": "server-debug"
+        },
+        {
+          "name": "boundary",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/qualified-restored/server-debug",
+            "--target",
+            "shark_check_server_boundary"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.183,
+          "status": "PASS",
+          "preset": "server-debug"
+        },
+        {
+          "name": "test",
+          "command": [
+            "ctest",
+            "--test-dir",
+            "/work/qualified-restored/server-debug",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "/evidence/server-debug/ctest.xml"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 6.992,
+          "status": "PASS",
+          "preset": "server-debug"
+        },
+        {
+          "name": "configure",
+          "command": [
+            "cmake",
+            "--preset",
+            "server-asan-ubsan",
+            "-B",
+            "/work/qualified-restored/server-asan-ubsan",
+            "-DCMAKE_CXX_COMPILER=clang++-18",
+            "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+            "-DSHARK_INJECT_TEST_FAILURE=OFF"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 2.629,
+          "status": "PASS",
+          "preset": "server-asan-ubsan"
+        },
+        {
+          "name": "build",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/qualified-restored/server-asan-ubsan",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 33.535,
+          "status": "PASS",
+          "preset": "server-asan-ubsan"
+        },
+        {
+          "name": "boundary",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/qualified-restored/server-asan-ubsan",
+            "--target",
+            "shark_check_server_boundary"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.167,
+          "status": "PASS",
+          "preset": "server-asan-ubsan"
+        },
+        {
+          "name": "test",
+          "command": [
+            "ctest",
+            "--test-dir",
+            "/work/qualified-restored/server-asan-ubsan",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "/evidence/server-asan-ubsan/ctest.xml"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 12.558,
+          "status": "PASS",
+          "preset": "server-asan-ubsan"
+        }
+      ],
+      "started_utc": "2026-10-17T23:59:39.243604+00:00",
+      "injected_failure": false,
+      "input_lock_sha256": "5b0ab6341f2eebf0e1714a3621af4466c95a8d8b3c03b24b0e1097aed61d5934",
+      "limits": "Headless lifecycle/configuration only; no graphics, networking, simulation or MMO capacity qualification",
+      "exit_code": 0,
+      "finished_utc": "2026-10-18T00:01:15.479609+00:00"
+    },
+    "injected_summary": {
+      "schema_version": 1,
+      "status": "FAIL",
+      "phases": [
+        {
+          "name": "configure",
+          "command": [
+            "cmake",
+            "--preset",
+            "server-only",
+            "-B",
+            "/work/qualified-injected/server-only",
+            "-DCMAKE_CXX_COMPILER=g++-13",
+            "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+            "-DSHARK_INJECT_TEST_FAILURE=OFF"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.371,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "build",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/qualified-injected/server-only",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 1.822,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "boundary",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/qualified-injected/server-only",
+            "--target",
+            "shark_check_server_boundary"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.18,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "install",
+          "command": [
+            "cmake",
+            "--install",
+            "/work/qualified-injected/server-only",
+            "--prefix",
+            "/evidence/server-only/package",
+            "--component",
+            "Server"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.119,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "closure",
+          "command": [
+            "/opt/shark-headless/venv/bin/python",
+            "/source/tools/check_server_closure.py",
+            "--build-dir",
+            "/work/qualified-injected/server-only",
+            "--package-dir",
+            "/evidence/server-only/package",
+            "--output",
+            "/evidence/server-only/closure.json"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.469,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "package-smoke",
+          "command": [
+            "/evidence/server-only/package/bin/Server",
+            "--run-for-ms",
+            "20"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.04,
+          "status": "PASS",
+          "preset": "server-only"
+        },
+        {
+          "name": "configure",
+          "command": [
+            "cmake",
+            "--preset",
+            "server-debug",
+            "-B",
+            "/work/qualified-injected/server-debug",
+            "-DCMAKE_CXX_COMPILER=g++-13",
+            "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+            "-DSHARK_INJECT_TEST_FAILURE=ON"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 1.381,
+          "status": "PASS",
+          "preset": "server-debug"
+        },
+        {
+          "name": "build",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/qualified-injected/server-debug",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 28.94,
+          "status": "PASS",
+          "preset": "server-debug"
+        },
+        {
+          "name": "boundary",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/qualified-injected/server-debug",
+            "--target",
+            "shark_check_server_boundary"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.179,
+          "status": "PASS",
+          "preset": "server-debug"
+        },
+        {
+          "name": "test",
+          "command": [
+            "ctest",
+            "--test-dir",
+            "/work/qualified-injected/server-debug",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "/evidence/server-debug/ctest.xml"
+          ],
+          "exit_code": 8,
+          "elapsed_seconds": 6.441,
+          "status": "FAIL",
+          "preset": "server-debug"
+        }
+      ],
+      "started_utc": "2026-10-17T23:58:38.850108+00:00",
+      "injected_failure": true,
+      "input_lock_sha256": "5b0ab6341f2eebf0e1714a3621af4466c95a8d8b3c03b24b0e1097aed61d5934",
+      "limits": "Headless lifecycle/configuration only; no graphics, networking, simulation or MMO capacity qualification",
+      "exit_code": 8,
+      "finished_utc": "2026-10-17T23:59:20.176440+00:00"
+    },
+    "injected_tests": {
+      "path": "out/ci/headless-local-injected/server-debug/ctest.xml",
+      "sha256": "0f0e1716429a8fd2f248a496762997fa6f3b5cf9c9d07a5eda03b9fa02035b34",
+      "tests": 13,
+      "failures": [
+        "shark.failure-sentinel"
+      ],
+      "skipped": []
+    },
+    "tests": {
+      "server-debug": {
+        "path": "out/ci/headless-local-restored/server-debug/ctest.xml",
+        "sha256": "23cd8c074167893ea92a0fcdc6a0cc3585b921f8038e4496559d83352df29a53",
+        "tests": 13,
+        "failures": [],
+        "skipped": []
+      },
+      "server-asan-ubsan": {
+        "path": "out/ci/headless-local-restored/server-asan-ubsan/ctest.xml",
+        "sha256": "1c1028e546bec81d743eba26b81a021ffb3a0e72113153304cdb2958b4ae0ef9",
+        "tests": 13,
+        "failures": [],
+        "skipped": []
+      }
+    },
+    "toolchains": {
+      "server-only": {
+        "platform": {
+          "system": "Linux",
+          "release": "6.18.33.2-microsoft-standard-WSL2",
+          "version": "#1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026",
+          "machine": "x86_64"
+        },
+        "python": {
+          "version": "3.12.3",
+          "executable": "/opt/shark-headless/venv/bin/python"
+        },
+        "packages": {
+          "cmake": "3.31.10",
+          "ninja": "1.13.2",
+          "clang-format": "20.1.8",
+          "PyYAML": "6.0.3"
+        },
+        "environment": {
+          "CC": "gcc-13",
+          "CXX": "g++-13"
+        },
+        "configured_compilers": [
+          {
+            "CMAKE_CXX_COMPILER": "/usr/bin/g++-13",
+            "CMAKE_CXX_COMPILER_ID": "GNU",
+            "CMAKE_CXX_COMPILER_VERSION": "13.3.0",
+            "CMAKE_CXX_PLATFORM_ID": "Linux",
+            "CMAKE_CXX_COMPILER_FRONTEND_VARIANT": "GNU",
+            "CMAKE_CXX_LIBRARY_ARCHITECTURE": "x86_64-linux-gnu"
+          }
+        ],
+        "cmake_inputs": {
+          "CMAKE_BUILD_TYPE": "Release",
+          "CMAKE_CXX_FLAGS": "",
+          "CMAKE_CXX_FLAGS_DEBUG": "-g",
+          "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+          "CMAKE_MAKE_PROGRAM": "/opt/shark-headless/venv/bin/ninja",
+          "FETCHCONTENT_FULLY_DISCONNECTED": "ON",
+          "SHARK_BUILD_CLIENT": "OFF",
+          "SHARK_BUILD_EDITOR": "OFF",
+          "SHARK_BUILD_SERVER": "ON",
+          "SHARK_BUILD_TESTS": "OFF",
+          "SHARK_INJECT_TEST_FAILURE": "OFF",
+          "SHARK_SANITIZER": "none",
+          "CMAKE_GENERATOR": "Ninja"
+        }
+      },
+      "server-debug": {
+        "platform": {
+          "system": "Linux",
+          "release": "6.18.33.2-microsoft-standard-WSL2",
+          "version": "#1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026",
+          "machine": "x86_64"
+        },
+        "python": {
+          "version": "3.12.3",
+          "executable": "/opt/shark-headless/venv/bin/python"
+        },
+        "packages": {
+          "cmake": "3.31.10",
+          "ninja": "1.13.2",
+          "clang-format": "20.1.8",
+          "PyYAML": "6.0.3"
+        },
+        "environment": {
+          "CC": "gcc-13",
+          "CXX": "g++-13"
+        },
+        "configured_compilers": [
+          {
+            "CMAKE_CXX_COMPILER": "/usr/bin/g++-13",
+            "CMAKE_CXX_COMPILER_ID": "GNU",
+            "CMAKE_CXX_COMPILER_VERSION": "13.3.0",
+            "CMAKE_CXX_PLATFORM_ID": "Linux",
+            "CMAKE_CXX_COMPILER_FRONTEND_VARIANT": "GNU",
+            "CMAKE_CXX_LIBRARY_ARCHITECTURE": "x86_64-linux-gnu"
+          }
+        ],
+        "cmake_inputs": {
+          "CMAKE_BUILD_TYPE": "Debug",
+          "CMAKE_CXX_FLAGS": "",
+          "CMAKE_CXX_FLAGS_DEBUG": "-g",
+          "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+          "CMAKE_MAKE_PROGRAM": "/opt/shark-headless/venv/bin/ninja",
+          "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+          "SHARK_BUILD_CLIENT": "OFF",
+          "SHARK_BUILD_EDITOR": "OFF",
+          "SHARK_BUILD_SERVER": "ON",
+          "SHARK_BUILD_TESTS": "ON",
+          "SHARK_INJECT_TEST_FAILURE": "OFF",
+          "SHARK_SANITIZER": "none",
+          "CMAKE_GENERATOR": "Ninja"
+        }
+      },
+      "server-asan-ubsan": {
+        "platform": {
+          "system": "Linux",
+          "release": "6.18.33.2-microsoft-standard-WSL2",
+          "version": "#1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026",
+          "machine": "x86_64"
+        },
+        "python": {
+          "version": "3.12.3",
+          "executable": "/opt/shark-headless/venv/bin/python"
+        },
+        "packages": {
+          "cmake": "3.31.10",
+          "ninja": "1.13.2",
+          "clang-format": "20.1.8",
+          "PyYAML": "6.0.3"
+        },
+        "environment": {
+          "CC": "clang-18",
+          "CXX": "clang++-18"
+        },
+        "configured_compilers": [
+          {
+            "CMAKE_CXX_COMPILER": "/usr/bin/clang++-18",
+            "CMAKE_CXX_COMPILER_ID": "Clang",
+            "CMAKE_CXX_COMPILER_VERSION": "18.1.3",
+            "CMAKE_CXX_PLATFORM_ID": "Linux",
+            "CMAKE_CXX_COMPILER_FRONTEND_VARIANT": "GNU",
+            "CMAKE_CXX_LIBRARY_ARCHITECTURE": "x86_64-linux-gnu"
+          }
+        ],
+        "cmake_inputs": {
+          "CMAKE_BUILD_TYPE": "Debug",
+          "CMAKE_CXX_FLAGS": "",
+          "CMAKE_CXX_FLAGS_DEBUG": "-g",
+          "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+          "CMAKE_MAKE_PROGRAM": "/opt/shark-headless/venv/bin/ninja",
+          "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+          "SHARK_BUILD_CLIENT": "OFF",
+          "SHARK_BUILD_EDITOR": "OFF",
+          "SHARK_BUILD_SERVER": "ON",
+          "SHARK_BUILD_TESTS": "ON",
+          "SHARK_INJECT_TEST_FAILURE": "OFF",
+          "SHARK_SANITIZER": "address-undefined",
+          "CMAKE_GENERATOR": "Ninja"
+        }
+      }
+    },
+    "closure": {
+      "status": "PASS",
+      "targets": [
+        "EngineCore",
+        "Server",
+        "shark_check_server_boundary"
+      ],
+      "cache": {
+        "SHARK_BUILD_CLIENT": "OFF",
+        "SHARK_BUILD_SERVER": "ON",
+        "SHARK_BUILD_EDITOR": "OFF",
+        "SHARK_BUILD_TESTS": "OFF",
+        "SHARK_SANITIZER": "none",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "package": [
+        {
+          "path": "bin/Server",
+          "sha256": "405b5b069fe3ab56e38c26c96ee9e4e6d49176410e512a9292439efaf06cf213",
+          "size_bytes": 17752
+        }
+      ],
+      "elf_needed": [
+        "libstdc++.so.6",
+        "libgcc_s.so.1",
+        "libc.so.6"
+      ],
+      "resolved_libraries": [
+        {
+          "name": "libstdc++.so.6",
+          "resolved_path": "/usr/lib/x86_64-linux-gnu/libstdc++.so.6.0.33",
+          "sha256": "1fd75fe70354a416d75aef22bcae68c47bd25d20e2d0568c30b1a9838cf62f11"
+        },
+        {
+          "name": "libgcc_s.so.1",
+          "resolved_path": "/usr/lib/x86_64-linux-gnu/libgcc_s.so.1",
+          "sha256": "d93224d2b0dab4247598be683adca02f5cf00586f99c187579cd7e92058fb7cb"
+        },
+        {
+          "name": "libc.so.6",
+          "resolved_path": "/usr/lib/x86_64-linux-gnu/libc.so.6",
+          "sha256": "3a15d66867d83762c7f2f1e37359cb8f6c5743edb369c65285cb0b1c4f7498bf"
+        },
+        {
+          "name": "libm.so.6",
+          "resolved_path": "/usr/lib/x86_64-linux-gnu/libm.so.6",
+          "sha256": "fce00b6f25f459cf4ae0b7fae4257909a1a8a86f9149e7c029a5d617baf1ccd0"
+        },
+        {
+          "name": "ld-linux-x86-64.so.2",
+          "resolved_path": "/usr/lib/x86_64-linux-gnu/ld-linux-x86-64.so.2",
+          "sha256": "c20a2dc8917c755f02b94049356320fe1f62ac7d9f8994731f807d9df39302da"
+        }
+      ],
+      "link_fragments": [
+        {
+          "fragment": "-O3 -DNDEBUG",
+          "role": "flags"
+        },
+        {
+          "fragment": "",
+          "role": "flags"
+        },
+        {
+          "backtrace": 4,
+          "fragment": "engine/core/libEngineCore.a",
+          "role": "libraries"
+        }
+      ],
+      "compiler_discovered_input_count": 324,
+      "full_report_sha256": "440199fe40ef00c0909ece4691d8b67959e677331e3837fd759a2b68ed0e7857",
+      "full_report_path": "out/ci/headless-local-restored/server-only/closure.json"
+    },
+    "clean_runtime_smoke": {
+      "status": "PASS",
+      "scope": "installed package in pristine pinned Ubuntu userspace chroot, isolated network, shared host kernel; rootfs is writable"
+    },
+    "clean_runtime_lifecycle": {
+      "status": "PASS",
+      "scope": "real installed Server lifecycle in pristine pinned Ubuntu24 userspace; no source/compiler mounts; each process gets an isolated network; shared WSL kernel; writable rootfs",
+      "matching_package_sha256": "405b5b069fe3ab56e38c26c96ee9e4e6d49176410e512a9292439efaf06cf213"
+    }
+  },
+  "limits": [
+    "No graphics/editor GUI, simulation, networking, persistence, streaming or capacity qualification",
+    "Windows signal and read-only-descriptor cases are NOT_RUN; finite-run lifecycle tested",
+    "Ubuntu24 userspace shares WSL kernel; Docker wrapper and new GitHub workflow have not run",
+    "Historical assignment01 hosted results apply to their recorded revision only"
+  ],
+  "source_snapshots": [
+    {
+      "kind": "source-only snapshot, not a committed checkout",
+      "source": "C:\\Users\\mrkda\\Projects\\shark",
+      "snapshot": "C:\\Users\\mrkda\\Projects\\shark\\out\\clean-source-20261017T234239712435Z",
+      "preset": "windows-debug",
+      "status": "PASS",
+      "phases": [
+        {
+          "command": [
+            "git",
+            "init",
+            "-b",
+            "main"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "cmake",
+            "--preset",
+            "windows-debug",
+            "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "cmake",
+            "--build",
+            "--preset",
+            "windows-debug",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "ctest",
+            "--preset",
+            "windows-debug",
+            "--output-on-failure",
+            "--no-tests=error"
+          ],
+          "exit_code": 0
+        }
+      ],
+      "source_file_count": 96
+    },
+    {
+      "kind": "source-only snapshot, not a committed checkout",
+      "source": "C:\\Users\\mrkda\\Projects\\shark",
+      "snapshot": "C:\\Users\\mrkda\\Projects\\shark\\out\\clean-source-20261017T234617176925Z",
+      "preset": "server-debug",
+      "status": "PASS",
+      "phases": [
+        {
+          "command": [
+            "git",
+            "init",
+            "-b",
+            "main"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "cmake",
+            "--preset",
+            "server-debug",
+            "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "cmake",
+            "--build",
+            "--preset",
+            "server-debug",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0
+        },
+        {
+          "command": [
+            "ctest",
+            "--preset",
+            "server-debug",
+            "--output-on-failure",
+            "--no-tests=error"
+          ],
+          "exit_code": 0
+        }
+      ],
+      "source_file_count": 97
+    }
+  ],
+  "source_snapshots_note": "Earlier source eligibility/fresh build checks; final module-scan and closure refinements are covered by the final native runs above.",
+  "focused_boundary": {
+    "path": "build/windows-debug/out/ci/m01-final-boundary.xml",
+    "sha256": "3ca84601311043b1684385f3a8dfd25f6a1d3e60f545207c26ce0987222842c5",
+    "tests": 5,
+    "failures": [],
+    "skipped": []
+  },
+  "input_locks": {
+    "dependencies.lock.json": "f3c91f777f647a1310861b73a15494662b09e70ee1b4beab55e052b0374179f0",
+    "requirements-dev.txt": "14a794a67d9529311eca3ee022248d8f5ffa0a120923657c9acf7618a9a1df72",
+    "tools/ci/headless/inputs.json": "5b0ab6341f2eebf0e1714a3621af4466c95a8d8b3c03b24b0e1097aed61d5934",
+    "tools/ci/headless/packages.tsv": "5b06a3a7b579f7d4bbd5878471b07e03df84a98f838cd86d0bf69b952f84f29f"
+  },
+  "implementation_sha256": {
+    ".github/workflows/cpu.yml": "84450db47c2412ccc3c9dbffb506dc6ab488b861dfbd8340a107eb75c39e7ead",
+    "CMakeLists.txt": "4daf48411146e1eba78450668f8278a3b14e96cb4c0c5e2cdb0b15c6600bee05",
+    "CMakePresets.json": "36c74903d6ac96489c302fb2acbd8a3dd650977b607eabbcf1cc5a52021082e2",
+    "cmake/CheckRuntimeBoundary.cmake": "4cad7734fe867b4a92bc5949c0d44a9afa2ff4e79b5c5a433ca7da0465bf41f9",
+    "cmake/Dependencies.cmake": "a2d0149a74818b6eb60cd38d5755989402ba0ee9bb242d41a9b207f181ac0f0d",
+    "cmake/SharkBoundaries.cmake": "b769a49de48d562dc5369b307214db326084d2113d5e0f3b6db0da470ac493d6",
+    "cmake/SharkOptions.cmake": "0ea2bb9f222393f36449481dffb463e13be7f335abae61be7999253c29ddbe08",
+    "editor/CMakeLists.txt": "7982ebc0c75bae845b3ba6a88c49e1628f4bc61773469f3972fd01bdd2b535b4",
+    "editor/main.cpp": "6bd5d9df458e85118b71ab60796745fb93c4593870db837fdc6ee1c1384f66a5",
+    "engine/CMakeLists.txt": "ee7b45632e5ac9949e7a248ef5acf9451d0f79677e1e4e90db85238aa9a40a2e",
+    "engine/client/CMakeLists.txt": "03769a6427dc302d73a990e3df5ec6d7fb6ccdafb8852e419ac6e3278c0701a7",
+    "engine/client/include/shark/client/bootstrap.hpp": "1e46fd4bc86844aba0b00c0e3d8ad04cf2e4668155a71d813208f5da11cbabb4",
+    "engine/client/src/bootstrap.cpp": "378df80489dafc7276448c65b39738a97e9bc7a940b0aa6b68246ae81737b2ec",
+    "engine/core/CMakeLists.txt": "f08e90e582e16b1cfa31b3b3fd2fbd03a4ea7b2d3ccbbcecde1906412dee1194",
+    "engine/core/include/shark/server_config.hpp": "fb33eb841b574f37c424a724d1141cd7095281fe836c25608d04e086a296f0f3",
+    "engine/core/src/bootstrap.cpp": "c0040b72a69f0bb8549c92c0baa5c394b743ef0f6b46b52570d28e38c86dd126",
+    "engine/core/src/server_config.cpp": "7923bbd4f561b51e47823e1959e8d2be05e4fa6f294bcaec39c6d1cc3c1b7fc8",
+    "engine/include/shark/bootstrap.hpp": "a21cd6e3e7fdb323ed698307d3ea48ee41ab1873f2fe93a320178c7b57d4013e",
+    "engine/version_config.hpp.in": "2394b923718a6d2e092cd743ac06751a563bc3374dc2c780c2b0aa50d08c02b3",
+    "engine_tools/CMakeLists.txt": "40df0a0a09d428da36831be2161eab15361c23636e6435a28d432082910397a9",
+    "engine_tools/include/shark/tools/build_info.hpp": "f04974840adacd126c433e36949cc53e2d7250ae5365dbe739dce69757761234",
+    "engine_tools/src/build_info.cpp": "5594eeed535e828aab527cd8c403248ee0ce6c2dd0d39883831d13aec0cb1881",
+    "runtime/CMakeLists.txt": "93373dba32c57ef2f131a21445fc6d78c7f6c596e6c3b1750370d0d22ad72bce",
+    "runtime/main.cpp": "3d89556ca444b52c6d7c70da5eb285452ddde33774b8381517ab551fb45911b9",
+    "server/CMakeLists.txt": "efda3e853df70fb654284746a3dbe03c075466e1fdd65c2e9acd15ae95073f3e",
+    "server/main.cpp": "b88976c44e7761b8b3609f7f6ed068cfc88a40ac83ae24970e8e4b1391ab0804",
+    "tests/CMakeLists.txt": "434e578f47d21c97ead573de60910862b4b7065d195df53b63d15a8fd95b3dcf",
+    "tests/CheckBoundaryFixture.cmake": "c34de92ff53b562fcb73857ad395fc6b5b9a7725f848ea089a6268d69a7c7ee5",
+    "tests/CheckCli.cmake": "9bced45211a9ff21925e7b1f9b75f0d4693e53c63a59fb1ee4d032f9ce2784c7",
+    "tests/bootstrap_tests.cpp": "4e224dd0d055f8448db579e47a90f8886ad7e608628e414e61e52c1afe70bba6",
+    "tests/boundary_fixture/CMakeLists.txt": "3c69f57ad69bd5abfceab0ea14492de23db2da647f0bab536d86c4048cfa0e16",
+    "tests/boundary_fixture/header_leak/CMakeLists.txt": "56f36f0dd94b42847a64cdc30a278289145d1fa9a023bc8000c88a5b915303d5",
+    "tests/boundary_fixture/header_leak/engine/client/leak.hpp": "93db329086db5ed6f54c99bcf41a1dbb989869959360296e2330e10c7fc71ece",
+    "tests/boundary_fixture/header_leak/engine/core/include/api.hpp": "9297930d651d58f79a83e1d68b51fcaeca884413a7f334867decac38d5779837",
+    "tests/boundary_fixture/header_leak/engine/core/src/core.cpp": "50eb75e45b2c07acdbe3c9753c866a6180daf9a78292c8577f1488408a790ddd",
+    "tests/boundary_fixture/header_leak/server/main.cpp": "6ed1e068fc65a49eb8c4caf2001c20762dcd2e7bd3386915278146cc9c1ca138",
+    "tests/boundary_fixture/server_only/CMakeLists.txt": "6e589bf1f2d7757d81f52bd324fbbf861857ee004ad0b2cef39dacaa83aa56b9",
+    "tests/check_server.py": "9f185495974a950cd0ee5ec7e47bead697e8e2f1935a8fc6bf3c04525426efff",
+    "tests/server_tests.cpp": "3e41d9b8ddb06907fb81f3670b95eee046b144534b8176a5bbcbe07c74069c48",
+    "tools/check_ci_config.py": "e1fc32a160a5cef9023b297ad5b44d053355bd102c784409f8ac4f975b6a3c6f",
+    "tools/check_clean_source.py": "67dad984ff7e10f9186989452e6a2da664831fef609f448732d335602fa5e049",
+    "tools/check_format.py": "5b5d913e24f8dc4a21a810ebc82fbbe70e45e2567104b2d616a98bcc70b7533e",
+    "tools/check_repository.py": "d3ea3271a72b8d04803c66883344051eba940f81b52fbda2b890579b85a3700f",
+    "tools/check_server_closure.py": "2fd32fe2729d7c9baad4a5e2760c79a1ff536cb58d6f66f5a3f6e7f8dbea6896",
+    "tools/ci.py": "bf0728354b522061db7b78ca92c6ac3f137ed5f8ddcf222f2ff920bed1d50309",
+    "tools/ci/headless/Dockerfile": "706feab64cc2128ee23cfa7c49d396f1a90655b6ff788b7a65291fe6982fa742",
+    "tools/ci/headless/chroot.sh": "50597587d4eab4290439ed4d17d800df2074ada9d1791f1d7081b5833e7b2533",
+    "tools/ci/headless/fetch_inputs.py": "c657a53ecc2c519043d5caa54b0ee78200b8eda6eef869e02edbeae8143ad900",
+    "tools/ci/headless/inputs.json": "5b0ab6341f2eebf0e1714a3621af4466c95a8d8b3c03b24b0e1097aed61d5934",
+    "tools/ci/headless/packages.tsv": "5b06a3a7b579f7d4bbd5878471b07e03df84a98f838cd86d0bf69b952f84f29f",
+    "tools/ci/headless/run.sh": "61747c13851fac1903763d4eca01465fa61a912504020b5e050ed919b112774f",
+    "tools/ci/headless/setup.sh": "a7379292924551b9f83ee89952ffd1bcea5202664f3d6669ecd0e2bd0b0a8e4c",
+    "tools/headless_ci.py": "87f5304ab5178790377ce9d25cac5d33dbc34042b9ab70786f2dd2fcfd5fe6be",
+    "tools/process_runner.py": "73ccfe5050040e3f495e518d3ddfbe903ee581edda17f2aed276456ffcf9e4bb",
+    "tools/tests/check_server_header_fixture.py": "0e57a56555d997699909a2ecbffc1cb75cec61e0579e27328c67fdc9845d770b",
+    "tools/tests/test_clean_source.py": "96f22281221db755c4298ec51c370ad67ab7f17bf6bd732808eb25435fb5272d",
+    "tools/tests/test_headless_environment.py": "98821011318ef78a1733533e18576e502d1107cffa834cb27b7f06c83ba55334",
+    "tools/tests/test_process_runner.py": "24bc8cf5c807dbcc3c34f263e558e977af18815879ed90b16998a7946815b1cd",
+    "tools/tests/test_server_closure.py": "6ed44d3a0673586d354029b3903d1727f40e1666862fe6454017ed5d08d6d14b",
+    "tools/toolchain_report.py": "599c9995739279b24adeab93923806d8d70acd75408723f2fcfe746b41ba7cf1",
+    "tools/validate_contract.py": "81d892ba6cadddd1c227c2135d483799e423be18cb2da822a20866821960b8dc",
+    "tools/windows_dev.ps1": "ed9cc7102b469e8004fc2266e31a0e3d083a5574e9b41329f67c81a75481d19b"
+  }
+}

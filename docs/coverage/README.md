@@ -17,7 +17,8 @@ profile and plan path are explicit machine-readable fields.
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`
 means precisely that; documentation validation cannot pass a future engine gate.
 The `implemented_surface.features` entries map the bootstrap behavior and runtime
-build boundary to their actual tests and external fixtures. Component, authoring
+build boundary, server lifecycle and Server/Core closure to their actual tests
+and external fixtures. Component, authoring
 command and Lua arrays remain empty because those APIs do not exist yet.
 Assignment 10 connects supported scene surfaces to executable FeatureWorld
 coverage; 32 audits completeness. Do not register placeholder APIs.
@@ -45,13 +46,18 @@ schema 1. Schema 3 adds the MMORPG product/plan fields and ordered expanded owne
 set. This planning manifest was migrated directly; the checker explicitly rejects
 earlier/future versions, missing MMO owners, invalid ordering and unsupported
 future PASS claims. No project/scene/runtime/wire/database data format has been
-implemented or migrated by this amendment. The original two foundation features
-remain the only implemented surface; every new MMO gate is NOT_RUN.
+implemented or migrated by this amendment. M01 adds implemented server lifecycle
+and dependency-isolation features; registration alone does not pass their gate.
 
 The ignored local roadmap is amended for consistency but remains optional context,
 not a CI input. REQ-00's PASS records its historical planning evidence, not MMO
 implementation. REQ-01 is PASS: the repaired hosted CPU matrix and required
-deliberate-failure/red-to-green proof are verified. The current assignment remains
-01; M01 is next and has not started. All graphics and MMO requirements remain
-NOT_RUN. See the [CI verification handoff](../handoffs/01-ci-verification.md) for
-the tested revision, run URLs and qualification limits.
+deliberate-failure/red-to-green proof are verified at the recorded historical
+revision. The current assignment is M01; its implementation and pending hosted
+qualification are recorded in the [M01 handoff](../handoffs/M01-headless-server.md).
+Its [local receipt](evidence/M01-local.json) records Windows 45/45 CTests,
+Ubuntu 26/26 restored CTests, the expected injected sentinel failure and package
+closure/lifecycle evidence. The hosted gate remains open.
+Graphics and multiplayer requirements remain NOT_RUN. See the
+[CI verification handoff](../handoffs/01-ci-verification.md) for 01's tested
+revision, run URLs and qualification limits.

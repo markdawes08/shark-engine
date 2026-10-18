@@ -17,7 +17,9 @@
         "SHARK_BUILD_EDITOR": "ON",
         "SHARK_BUILD_TESTS": "ON",
         "SHARK_INJECT_TEST_FAILURE": "OFF",
-        "SHARK_SANITIZER": "none"
+        "SHARK_SANITIZER": "none",
+        "SHARK_BUILD_CLIENT": "ON",
+        "SHARK_BUILD_SERVER": "ON"
       }
     },
     {
@@ -156,7 +158,54 @@
       "cacheVariables": {
         "CMAKE_BUILD_TYPE": "Release",
         "SHARK_BUILD_EDITOR": "OFF",
-        "SHARK_BUILD_TESTS": "OFF"
+        "SHARK_BUILD_TESTS": "OFF",
+        "SHARK_BUILD_SERVER": "OFF"
+      }
+    },
+    {
+      "name": "server-only",
+      "inherits": "base",
+      "displayName": "Headless server-only",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "SHARK_BUILD_CLIENT": "OFF",
+        "SHARK_BUILD_SERVER": "ON",
+        "SHARK_BUILD_EDITOR": "OFF",
+        "SHARK_BUILD_TESTS": "OFF",
+        "SHARK_SANITIZER": "none",
+        "FETCHCONTENT_FULLY_DISCONNECTED": "ON"
+      }
+    },
+    {
+      "name": "server-debug",
+      "inherits": "base",
+      "displayName": "Headless server-debug",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SHARK_BUILD_CLIENT": "OFF",
+        "SHARK_BUILD_SERVER": "ON",
+        "SHARK_BUILD_EDITOR": "OFF",
+        "SHARK_BUILD_TESTS": "ON",
+        "SHARK_SANITIZER": "none"
+      }
+    },
+    {
+      "name": "server-asan-ubsan",
+      "inherits": "base",
+      "displayName": "Headless server-asan-ubsan",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "SHARK_BUILD_CLIENT": "OFF",
+        "SHARK_BUILD_SERVER": "ON",
+        "SHARK_BUILD_EDITOR": "OFF",
+        "SHARK_BUILD_TESTS": "ON",
+        "SHARK_SANITIZER": "address-undefined",
+        "CMAKE_CXX_COMPILER": "clang++"
+      },
+      "condition": {
+        "type": "equals",
+        "lhs": "${hostSystemName}",
+        "rhs": "Linux"
       }
     }
   ],
@@ -200,6 +249,18 @@
     {
       "name": "runtime-only",
       "configurePreset": "runtime-only"
+    },
+    {
+      "name": "server-only",
+      "configurePreset": "server-only"
+    },
+    {
+      "name": "server-debug",
+      "configurePreset": "server-debug"
+    },
+    {
+      "name": "server-asan-ubsan",
+      "configurePreset": "server-asan-ubsan"
     }
   ],
   "testPresets": [
@@ -301,6 +362,30 @@
       },
       "environment": {
         "ASAN_OPTIONS": "detect_leaks=0:halt_on_error=1",
+        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
+      }
+    },
+    {
+      "name": "server-debug",
+      "configurePreset": "server-debug",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "server-asan-ubsan",
+      "configurePreset": "server-asan-ubsan",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      },
+      "environment": {
+        "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
         "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
       }
     }

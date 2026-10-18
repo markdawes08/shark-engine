@@ -30,7 +30,7 @@ directory concurrently.
 
 After changes to target dependencies, configure/build `runtime-only` in the host
 compiler environment; its ALL boundary target must pass. This preset disables
-tests, so a native debug preset must still run CTest. Engine cannot depend
+tests, so a native debug preset must still run CTest. Engine/Core/Client cannot depend
 on EngineTools; Runtime cannot acquire authoring or test libraries transitively.
 Keep exact dependency inputs in the checked-in lock; do not resolve a newer
 floating version as a repair.
@@ -46,8 +46,12 @@ unverified gates. CPU tests do not qualify GPUs, audio or packaged games. Curren
 bootstrap executables are not working game/editor applications.
 
 For MMORPG work, read the [execution order](../../../docs/roadmap/mmorpg-plan.md).
-M01 must introduce a truly headless Server/Core build; existing `runtime-only`
-does not prove this. Check configure/download and final package closures as well
-as links, and reject presentation dependencies even if client-runtime-safe.
+Use `server-only` for the no-tests/no-download Release Server package and
+`server-debug` / Linux `server-asan-ubsan` for headless CTest. `runtime-only`
+does not prove this boundary. The minimal Ubuntu 24.04 command in
+[CI](../../../docs/ci.md) checks configure/download and final package closures
+as well as links, rejecting presentation dependencies even if client-runtime-safe.
+After dependency changes run both isolated builds and the actual server lifecycle
+and boundary fixtures. Keep Core/Server free of client and authoring sources.
 Add actual server/network/database/load commands only when their owners land;
 ordinary bootstrap CTest results are not simulation, capacity or seamlessness evidence.

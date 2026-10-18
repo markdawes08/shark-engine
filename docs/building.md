@@ -1,14 +1,15 @@
 # Build and test Shark
 
-Assignment 01 supplies a C++20 CPU/build foundation: static Engine and
-EngineTools libraries, separate Editor/Runtime entry points and Catch2 tests.
-The entry points report bootstrap information and usage. Graphics, gameplay,
+M01 extends the C++20 foundation with static EngineCore, EngineClient and
+EngineTools libraries, an Engine interface composition, separate
+Editor/Runtime/Server entry points and Catch2 tests. Editor/Runtime report
+bootstrap information; Server has validated startup and an idle lifecycle. Graphics, gameplay,
 scene import, authoring UI and export are not implemented by this increment.
 CPU build success does not qualify a GPU, audio device or final release platform.
 
-The [MMORPG amendment](roadmap/mmorpg-plan.md) plans a headless Server and
-EngineCore/EngineClient separation in M01. No Server target or server-only preset
-exists yet. The current `runtime-only` preset builds the graphical-client bootstrap
+The [MMORPG amendment](roadmap/mmorpg-plan.md) requires the headless Server and
+EngineCore/EngineClient separation implemented in M01. `server-only` provides the
+isolated Server build. The `runtime-only` preset builds the graphical-client bootstrap
 without authoring targets; it is not proof of headless server dependency isolation.
 
 ## Prerequisites
@@ -78,8 +79,9 @@ ctest --preset windows-debug
 
 Use the same three commands with `linux-debug` or `macos-debug` on those hosts,
 or with the corresponding release/sanitizer preset. The default build includes
-Engine, EngineTools, Editor, Runtime, Tests and the runtime dependency-boundary
-check. Catch2 is the sole engine test framework; third-party tests are not enabled.
+EngineCore, EngineClient, EngineTools, Editor, Runtime, Server, Tests and both
+dependency-boundary checks. Engine is an interface target. Catch2 is the sole
+engine test framework; third-party tests are not enabled.
 Inspect currently registered cases before applying a test filter:
 
 ```text
@@ -95,9 +97,13 @@ scene-runner/export commands will be added with their owning increments.
 | --- | --- |
 | `shark.unit`, `shark.failure-sentinel` | `cpu`, `unit` |
 | `shark.runtime.cli`, `shark.editor.cli` | `cpu`, `integration` |
+| `shark.server.unit`, `shark.server.lifecycle` | `cpu`, `server`, plus `unit` or `integration` |
 | `shark.boundary`, `shark.boundary.fixture` | `cpu`, `boundary` |
 | `shark.contract`, `shark.repository` | `cpu`, `contract` |
 | `shark.tooling.processes`, `shark.tooling.sources` | `cpu`, `tooling` |
+| `shark.tooling.server-closure` | `cpu`, `tooling`, `boundary`, `server` |
+| `shark.boundary.headers` | `cpu`, `tooling`, `boundary`, `server` |
+| `shark.tooling.headless-environment` | `cpu`, `tooling`, `server` |
 
 For a focused boundary check, use `ctest --preset windows-debug -L boundary`.
 Dependency source inputs live in [dependencies.lock.json](../dependencies.lock.json).
@@ -113,7 +119,8 @@ cmake --preset runtime-only
 cmake --build --preset runtime-only
 ```
 
-This configures Engine and Runtime without EngineTools, Editor, Tests or Catch2.
+This configures Engine/Core/Client and Runtime without EngineTools, Editor,
+Server, Tests or Catch2.
 The `shark_check_runtime_boundary` ALL target checks the actual CMake dependency
 closure. No runtime-only CTest suite is promised: run the native debug preset to
 exercise the starter tests. The boundary must also hold in the ordinary build;
@@ -124,10 +131,74 @@ developer environment. On POSIX systems select `CC`/`CXX` before its first
 configuration if the system defaults are unsuitable; use a fresh build directory
 for a compiler change. Do not edit global machine/compiler configuration.
 
+## Headless Server
+
+These presets never create EngineClient, Engine, Runtime, EngineTools or Editor:
+
+| Preset | Configuration | Tests / compiler |
+| --- | --- | --- |
+| `server-only` | Release | No tests, FetchContent fully disconnected, host compiler |
+| `server-debug` | Debug | Catch2/CTest enabled, host compiler |
+| `server-asan-ubsan` | Debug, ASan + UBSan | Catch2/CTest enabled, Linux Clang |
+
+```text
+cmake --preset server-only
+cmake --build --preset server-only
+build/server-only/bin/Server --version
+build/server-only/bin/Server --run-for-ms 1000
+cmake --install build/server-only --prefix out/server-package --component Server
+```
+
+On Windows use the developer environment and `Server.exe`. The install component
+contains only `bin/Server` (or `bin/Server.exe`), and is a dependency-closure probe,
+not a shipping distribution. Release licensing and deployment packaging remain
+future work. A clean package directory is required for closure verification.
+
+Server accepts no arguments for an idle lifetime, `--help`, `--version`, or
+`--run-for-ms N`. N is 1-6 ASCII decimal digits with a value of 1..600000;
+leading zeros are accepted within that token limit. Unknown, repeated, combined,
+missing, signed, overflowing and out-of-range options exit 2 before readiness.
+Startup/output failure exits 1; successful help/version or shutdown exits 0.
+There is no configuration file, listener, simulation tick or world state yet.
+
+On POSIX, SIGINT/SIGTERM request graceful shutdown. The handler only records the
+signal; the main loop checks it at most every 20 ms of scheduled idle time and
+releases installed handlers through RAII. Tests require ready-process shutdown
+within two seconds and impose five-second startup/smoke deadlines. These are
+test deadlines, not hard real-time guarantees under host starvation or blocked
+output. Windows tests cover finite runs; they do not emulate POSIX shutdown with
+forced process termination. Failure to write readiness exercises real partial
+startup cleanup on POSIX. Future 03 owns the full service lifecycle and scheduler.
+
+```text
+cmake --preset server-debug
+cmake --build --preset server-debug
+ctest --preset server-debug --output-on-failure
+```
+
+The `server` label selects parser/lifecycle/closure-tool tests. `shark.boundary`
+checks all available Core/Server/client roots, including in the ordinary build.
+Negative boundary fixtures exercise direct, transitive and generator-expression
+links/options, generated source/includes and manually added build dependencies.
+Compiler dependency records also reject hidden relative and generated-header
+inclusions, exercised by actual fixture compilations. CMake
+cannot infer arbitrary behavior hidden in shell recipes; the minimal Ubuntu
+job additionally audits configured targets, compiled source, downloaded inputs,
+installed packages and the packaged ELF's resolved libraries. See [CI](ci.md)
+for the reproducible minimal-environment command and its independent closure check.
+
+The provisional world target remains **20 Hz and 256 active players** from
+ADR 0007. The idle loop's polling interval is not a simulation tick, and these
+tests establish neither tick performance nor player capacity.
+
 ## Warnings, formatting and sanitizer policy
 
 C++20 is required without compiler extensions. Engine-owned code uses target-scoped
-warnings as errors: MSVC `/W4 /WX /permissive- /Zc:__cplusplus /utf-8`, or GCC/Clang
+warnings as errors. Shark uses ordinary headers, so CMake's C++ module scanning
+is explicitly disabled; normal compiler header dependency tracking remains on.
+This avoids requiring `clang-scan-deps` in the minimal Clang environment and does
+not change sanitizer instrumentation. Warning options are
+MSVC `/W4 /WX /permissive- /Zc:__cplusplus /utf-8`, or GCC/Clang
 `-Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror`. Do not impose
 these warning settings on dependency sources or disable warnings globally to
 conceal a failure.
@@ -153,7 +224,8 @@ compiler/sanitizer combinations fail configuration. Do not suppress findings or
 turn instrumentation off to mark a sanitizer job passing. Record the exact
 toolchain and whether the instrumented program actually ran.
 
-The CMake options are `SHARK_BUILD_EDITOR`, `SHARK_BUILD_TESTS`,
+The CMake options are `SHARK_BUILD_CLIENT`, `SHARK_BUILD_SERVER`,
+`SHARK_BUILD_EDITOR`, `SHARK_BUILD_TESTS`,
 `SHARK_SANITIZER` (`none`, `address`, `address-undefined`) and
 `SHARK_INJECT_TEST_FAILURE`. Prefer the checked-in presets. The last option exists
 only to prove failure propagation; never leave it enabled in ordinary evidence.

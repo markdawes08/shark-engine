@@ -1,0 +1,5 @@
+configure_file(../version_config.hpp.in "${CMAKE_CURRENT_BINARY_DIR}/generated/version_config.hpp" @ONLY)
+add_library(EngineCore STATIC src/bootstrap.cpp src/server_config.cpp)
+target_include_directories(EngineCore PUBLIC ../include include PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
+shark_configure_target(EngineCore)
+shark_classify_target(EngineCore core)

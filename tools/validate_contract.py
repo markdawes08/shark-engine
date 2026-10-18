@@ -42,6 +42,7 @@ DOCUMENTS = (
     "docs/coverage/README.md",
     "docs/handoffs/00-architecture-contract.md",
     "docs/handoffs/mmorpg-planning-amendment.md",
+    "docs/handoffs/M01-headless-server.md",
 )
 
 

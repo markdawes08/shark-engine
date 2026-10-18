@@ -34,7 +34,7 @@ def source_file(root: Path, relative: str) -> Path:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--preset", required=True, choices=("windows-debug", "linux-debug", "macos-debug"))
+    parser.add_argument("--preset", required=True, choices=("windows-debug", "linux-debug", "macos-debug", "server-debug"))
     parser.add_argument("--jobs", type=int, default=2)
     args = parser.parse_args()
     if args.jobs < 1:
@@ -46,7 +46,12 @@ def main() -> int:
     try:
         result = subprocess.run(["git", "ls-files", "--cached", "--others", "--exclude-standard", "-z"],
                                 cwd=ROOT, capture_output=True, check=True, timeout=30)
-        paths = sorted(set(name for name in result.stdout.decode("utf-8").split("\0") if name))
+        deleted = subprocess.run(["git", "ls-files", "--deleted", "-z"],
+                                 cwd=ROOT, capture_output=True, check=True, timeout=30)
+        # A working-tree move is reviewable before staging. Do not resurrect its
+        # tracked old path or require the user to update the index for this check.
+        removed = set(deleted.stdout.decode("utf-8").split("\0"))
+        paths = sorted(set(name for name in result.stdout.decode("utf-8").split("\0") if name) - removed)
         if "AI_Game_Engine_Agent_Roadmap.txt" in paths:
             raise ValueError("The local roadmap must be ignored and absent from the snapshot")
         for relative in paths:

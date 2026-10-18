@@ -12,7 +12,7 @@ to point to the same amendment; a clean checkout uses this plan and the
 00-35 keep their identities and retained requirements. M01-M10 are mandatory
 insertions, not optional work after the old release candidate.
 
-## What the existing work needs
+## Historical assessment of the pre-M01 foundation
 
 | Existing work | Assessment and action |
 | --- | --- |
@@ -46,9 +46,10 @@ manifest schema 3 because lexical/numeric order no longer expresses dependencies
 
 Assignment 01's hosted CPU acceptance and deliberate-failure/red-to-green gate
 is complete; the [CI verification handoff](../handoffs/01-ci-verification.md) records
-the tested revision and run evidence. Current assignment remains 01; **M01 is next**
-and has not started, followed by 02. Earlier handoffs retain their historical
-repository/gate status. Graphics and MMO qualification remain NOT_RUN. The graphics
+the tested revision and run evidence. **Current assignment is M01**, followed by
+02 once its gate closes. The [M01 handoff](../handoffs/M01-headless-server.md)
+records implementation and qualification separately. Earlier handoffs retain
+their historical repository/gate status. Graphics and multiplayer qualification remain NOT_RUN. The graphics
 compatibility gate still blocks dependent client renderer work; a headless server
 pass never waives it.
 

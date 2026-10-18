@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 3.28)
+project(SharkHeaderLeakFixture LANGUAGES CXX)
+set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
+add_library(EngineCore STATIC engine/core/src/core.cpp)
+target_compile_definitions(EngineCore PRIVATE "SHARK_HEADER_LEAK=${SHARK_HEADER_LEAK}")
+file(MAKE_DIRECTORY "${CMAKE_BINARY_DIR}/engine/core")
+file(WRITE "${CMAKE_BINARY_DIR}/engine/core/generated.hpp"
+    "#include \"${CMAKE_SOURCE_DIR}/engine/client/leak.hpp\"\n")
+target_include_directories(EngineCore PRIVATE "${CMAKE_BINARY_DIR}/engine/core")
+add_executable(Server server/main.cpp)
+target_link_libraries(Server PRIVATE EngineCore)

@@ -1,5 +1,5 @@
 add_library(EngineTools STATIC src/build_info.cpp)
 target_include_directories(EngineTools PUBLIC include)
-target_link_libraries(EngineTools PRIVATE Engine)
+target_link_libraries(EngineTools PRIVATE EngineCore)
 shark_configure_target(EngineTools)
 shark_classify_target(EngineTools authoring)

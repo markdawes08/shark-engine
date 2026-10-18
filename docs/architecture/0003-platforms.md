@@ -12,8 +12,10 @@ release is qualified.** The [01 handoff](../handoffs/01-build-foundation.md) rec
 passing local Windows bootstrap builds/tests and supplemental WSL Ubuntu 26.04
 CPU checks. The [CI verification handoff](../handoffs/01-ci-verification.md) records
 the completed 01 hosted CPU matrix and deliberate-failure/red-to-green gate. These
-results do not qualify client graphics, a headless server or a released game. Every graphics and
-MMO qualification result below remains **NOT RUN**. The
+results do not qualify client graphics, a headless server or a released game.
+M01's separate local foundation results are recorded below and in its
+[handoff](../handoffs/M01-headless-server.md); hosted verification is still open.
+Graphics and multiplayer qualification remain **NOT RUN**. The
 [MMORPG plan](../roadmap/mmorpg-plan.md) adds future server milestones without
 removing the native client commitments.
 
@@ -42,26 +44,26 @@ Windows/Linux ARM64, 32-bit builds, Rosetta-only qualification, mobile, consoles
 
 The selected Apple route deliberately has different OS floors. Mesa documents KosmicKrisp as an Apple Silicon implementation using Metal 4 on macOS 26+. Khronos' MoltenVK notice recommends KosmicKrisp for Apple Silicon and community-maintained MoltenVK for Intel Macs. These upstream statements establish candidates, not Shark compatibility. [Mesa KosmicKrisp](https://docs.mesa3d.org/drivers/kosmickrisp.html), [MoltenVK README](https://github.com/KhronosGroup/MoltenVK/blob/main/README.md)
 
-## Planned headless Server qualification in M01
+## Headless Server qualification in M01
 
-[ADR 0001](0001-targets-and-boundaries.md) separates future EngineCore from
-EngineClient and adds Server. The present `runtime-only` preset is a client
-bootstrap with authoring/tests disabled; it does not implement a dedicated server.
+[ADR 0001](0001-targets-and-boundaries.md) separates EngineCore from EngineClient
+and adds Server. `server-only` builds the headless process; `runtime-only` remains
+a client bootstrap with authoring/tests/server disabled.
 M01 follows closure of the 01 CPU gate. It can qualify independently of 02's
 client graphics feasibility; it neither bypasses nor closes any client GPU row.
-Server starts as one process with one writer per internal world partition. The
-player world is continuous; M05 later qualifies multi-process ownership transfer.
+M01 starts one idle process. Simulation writers for internal world partitions
+are future behavior; M05 later qualifies multi-process ownership transfer.
 Windows/macOS server deployment and Linux ARM64 server deployment are not selected
 by this amendment.
 
 | M01 evidence | Required acceptance | Result |
 | --- | --- | --- |
-| Dependency isolation | Fresh server-only configure/build with locked Core inputs; no client/authoring package discovery, download or target creation; direct/transitive boundary rejection fixtures pass | NOT RUN |
-| Native CPU build | Ubuntu 24.04 x86-64 Debug/Release with GCC and Clang ASan/UBSan; record exact compiler, standard library, SDK, OS/image and dependency lock digest | NOT RUN |
-| Headless startup | Actual Server runs with DISPLAY and WAYLAND_DISPLAY unset, without X11/Wayland, Vulkan/GLFW, GPU or audio-device services; package and dynamic-library inspection agree with the Core-only closure | NOT RUN |
-| CLI and configuration | Help/version, valid minimal configuration, unknown flags and invalid/missing configuration have tested output and exit status; configuration failure occurs before work is accepted | NOT RUN |
-| Lifecycle and smoke | Bounded process-level smoke test, partial-initialization failure and graceful stop signal all terminate within recorded deadlines; owned workers/resources are released and repeated starts/stops remain clean | NOT RUN |
-| CI evidence | Dedicated headless job exercises the real Server tests with nonempty CTest selection and archives configuration/build/test logs, JUnit, package inventory and toolchain metadata | NOT RUN |
+| Dependency isolation | Fresh server-only configure/build with locked Core inputs; no client/authoring package discovery, download or target creation; direct/transitive boundary rejection fixtures pass | PASS locally; hosted pending |
+| Native CPU build | Ubuntu 24.04 x86-64 Debug/Release with GCC and Clang ASan/UBSan; record exact compiler, standard library, SDK, OS/image and dependency lock digest | PASS in pinned Ubuntu userspace under WSL, not bare-metal Ubuntu; hosted pending |
+| Headless startup | Actual Server runs with DISPLAY and WAYLAND_DISPLAY unset, without X11/Wayland, Vulkan/GLFW, GPU or audio-device services; package and dynamic-library inspection agree with the Core-only closure | PASS locally, including pristine-base package lifecycle |
+| CLI and configuration | Help/version, valid minimal configuration, unknown flags and invalid/missing configuration have tested output and exit status; configuration failure occurs before work is accepted | PASS locally |
+| Lifecycle and smoke | Bounded process-level smoke test, partial-initialization failure and graceful stop signal all terminate within recorded deadlines; owned workers/resources are released and repeated starts/stops remain clean | PASS locally for the implemented idle lifecycle; no simulation workers yet |
+| CI evidence | Dedicated headless job exercises the real Server tests with nonempty CTest selection and archives configuration/build/test logs, JUnit, package inventory and toolchain metadata | Local stages PASS; GitHub/Docker workflow NOT RUN on M01 |
 
 Use a clean Ubuntu 24.04 server environment or minimal Ubuntu 24.04 runtime
 container with no client libraries or mapped GPU/audio devices for the deployment

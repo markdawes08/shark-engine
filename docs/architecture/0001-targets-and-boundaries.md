@@ -1,7 +1,7 @@
 # ADR 0001: Targets and protected boundaries
 
 Status: accepted contract, amended for the seamless-world MMORPG direction;
-M01 is planned, not implemented. Date: 2026-10-17.
+M01's bootstrap split is implemented; see its handoff for qualification. Date: 2026-10-17.
 
 ## Decision
 
@@ -10,17 +10,18 @@ Use C++20 and target-based CMake. The project declares CMake 3.28 as its floor;
 compiler, SDK, dependency and CI-image versions belong in the build evidence and
 dependency lock introduced in 01.
 
-The existing 01 implementation has static `Engine` and `EngineTools` libraries,
-`Editor` and `Runtime` executables, and Catch2 `Tests`. `Engine` currently contains
-only argument parsing and version reporting. Neither executable runs a game or
-server loop. Preserve this small working foundation; the target split below is
-future work in M01, the next assignment after the completed 01 CPU gate. Current
-`runtime-only` proves exclusion of authoring and tests, not dedicated-server support.
+M01 separates static `EngineCore`, `EngineClient` and `EngineTools` libraries,
+retains `Engine` as an INTERFACE client composition target, and adds `Server`
+alongside `Editor`, `Runtime` and Catch2 `Tests`. Core contains version/argument
+behavior and the strict server configuration parser. Client contains bootstrap
+help presentation; it has no graphics yet. Server has a real idle lifecycle,
+bounded execution and signal-driven shutdown. `runtime-only` proves client
+exclusion of authoring and tests; `server-only` enforces the stricter Core boundary.
 The [01 handoff](../handoffs/01-build-foundation.md) records local evidence; the
 [CI verification handoff](../handoffs/01-ci-verification.md) records hosted CPU
 qualification and deliberate-failure/red-to-green proof.
 
-## Planned M01 target split
+## M01 target split and later responsibilities
 
 The former plan placed simulation, graphics, input and audio together in Engine.
 Before those dependencies are integrated, separate device-free shared behavior
@@ -33,7 +34,7 @@ they do not impose player-visible zone transitions.
 | --- | --- | --- |
 | EngineCore | Static library, introduced in M01 | Device-free configuration, identity, lifecycle and later simulation, scene, physics, Lua and cooked simulation-data loading; no client or authoring dependencies |
 | EngineClient | Static library, introduced in M01 | EngineCore; window/input, GLFW, NVRHI/Vulkan rendering, audio and client presentation |
-| Engine | Existing library, retained as compatibility/composition target in M01 | EngineCore and EngineClient; preserves Runtime's existing engine-facing composition |
+| Engine | INTERFACE compatibility/composition target | EngineClient, transitively EngineCore; preserves Runtime's existing engine-facing composition |
 | EngineTools | Static library | EngineCore; project/source persistence, commands/undo, imports, cook/export, discovery and authoring services; client preview integration is an explicitly optional, separately gated dependency |
 | Editor | Executable | EngineTools and client presentation services; Dear ImGui/ImGuizmo views of shared services |
 | Runtime | Executable | Engine only among engine libraries; client startup and game loop |
@@ -61,19 +62,19 @@ data dependencies remain separately owned, pinned and qualified as they land.
 Test frameworks belong only to enabled test configurations, never the server
 package. Disabling graphics at runtime is not the headless build contract.
 
-Planned file locations are `engine/`, `engine_tools/`, `editor/`, `runtime/`,
-`cli/`, `server/`, `tests/`, `assets/FeatureWorld/`, `cmake/`, `tools/`, `docs/architecture/`,
-`docs/coverage/`, and `docs/handoffs/`. Assignment 01 creates the initial library,
-executable and test directories; CLI and FeatureWorld remain future work.
-M01 chooses Core/Client source subdirectories and adds `server/`; their existence
-is not claimed by this planning amendment.
+M01 uses `engine/core/`, `engine/client/` and `server/`, retaining
+`engine/include/shark/bootstrap.hpp` as the common public bootstrap header.
+`engine_tools/`, `editor/`, `runtime/`, `tests/`, `cmake/`, `tools/` and the `docs/`
+directories remain established locations. `cli/` and `assets/FeatureWorld/`
+remain future work. Table responsibilities beyond bootstrap configuration/help
+are assigned future behavior, not implemented subsystem claims.
 Assignment 01 establishes actual commands and provides local
 skills in `.agents/skills/<skill-name>/SKILL.md`, with links from AGENTS.md. The
 user controls staging and committing those files.
 
 ## Shared behavior
 
-EngineCore owns component validation and the safe scene mutation boundary.
+EngineCore will own component validation and the safe scene mutation boundary.
 EngineTools wraps that behavior in revision-checked authoring transactions,
 history and project services. UI, CLI, protocol handlers and integration tests
 call those same services; widgets never edit authoritative components directly.
@@ -150,4 +151,5 @@ an independent linked-library inventory. Native Ubuntu 24.04 headless CTests mus
 cover actual Server CLI/config validation, no-display startup, bounded smoke
 execution, partial-startup failure and clean shutdown. Preserve the existing
 client CPU matrix and runtime boundary tests. New presets, test names, CI jobs
-and evidence become executable only in M01; all MMO qualification is NOT RUN.
+and evidence are documented in the [M01 handoff](../handoffs/M01-headless-server.md).
+This does not establish any multiplayer, simulation or capacity result.

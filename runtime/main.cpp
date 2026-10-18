@@ -1,4 +1,5 @@
 #include <shark/bootstrap.hpp>
+#include <shark/client/bootstrap.hpp>
 
 #include <iostream>
 #include <string_view>
@@ -14,9 +15,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Shark Runtime " << shark::version_string() << '\n';
         return 0;
     case shark::BootstrapAction::help:
-        std::cout
-            << "Usage: Runtime [--help | --version]\n"
-               "Shark build foundation only; game loading and rendering are not implemented.\n";
+        std::cout << shark::client::runtime_help();
         return 0;
     case shark::BootstrapAction::invalid:
         std::cerr << "Unsupported arguments. Usage: Runtime [--help | --version]\n";

@@ -87,7 +87,9 @@ def collect(build_dir: Path | None = None) -> dict:
             # Compiler/deployment inputs only; never copy the whole cache into metadata.
             keys = {"CMAKE_GENERATOR", "CMAKE_BUILD_TYPE", "CMAKE_OSX_DEPLOYMENT_TARGET",
                     "CMAKE_OSX_ARCHITECTURES", "CMAKE_OSX_SYSROOT", "CMAKE_CXX_FLAGS",
-                    "CMAKE_CXX_FLAGS_DEBUG", "CMAKE_CXX_FLAGS_RELEASE", "CMAKE_MAKE_PROGRAM"}
+                    "CMAKE_CXX_FLAGS_DEBUG", "CMAKE_CXX_FLAGS_RELEASE", "CMAKE_MAKE_PROGRAM",
+                    "SHARK_BUILD_CLIENT", "SHARK_BUILD_SERVER", "SHARK_BUILD_EDITOR", "SHARK_BUILD_TESTS",
+                    "SHARK_INJECT_TEST_FAILURE", "SHARK_SANITIZER", "FETCHCONTENT_FULLY_DISCONNECTED"}
             report["cmake_inputs"] = dict((match[0], match[1]) for match in re.findall(
                 r"^([^/#:=\n]+):[^=\n]+=(.*)$", cache.read_text(encoding="utf-8"), re.M)
                 if match[0] in keys)

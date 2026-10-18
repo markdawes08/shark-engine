@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "01",
+  "current_assignment": "M01",
   "product_profile": "seamless-open-world-mmorpg",
   "planning_document": "docs/roadmap/mmorpg-plan.md",
   "assignment_order": [
@@ -39,7 +39,7 @@
         "Required CI checks are documented and configured wherever repository permissions allow; supported compiler sanitizer configurations are available."
       ],
       "planned_fixture": "CleanCheckoutBuild matrix, DeliberateCTestFailure CI fixture, RuntimeDependencyBoundary, RepositorySkillDiscovery and SanitizerConfigure fixtures; these exercise build tooling outside a scene.",
-      "verification": {"status": "PASS", "reason": "Verified revision 3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de after the Xcode 26.4.1 repair: normal push 39077290171 passed 14/14 jobs; injected run 39077652643 failed all 12 CPU jobs solely at shark.failure-sentinel (CTest exit 8, other nine tests passed per job); subsequent restored run 39078070735 passed all 14 jobs and 120/120 CPU tests without skips. Windows, Ubuntu24.04, macOS ARM64 and Intel Debug/Release/sanitizers verified. Fourteen GitHub Actions checks are configured on main with strict freshness and administrator bypass retained. Durable run, assertion, phase, toolchain and policy evidence: docs/coverage/evidence/01-ci-gate.json and docs/handoffs/01-ci-verification.md. Prior skill discovery and local foundation evidence remain in docs/handoffs/01-build-foundation.md. M01 is next; no Server or graphics/MMO qualification is claimed."}
+      "verification": {"status": "PASS", "reason": "Verified revision 3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de after the Xcode 26.4.1 repair: normal push 39077290171 passed 14/14 jobs; injected run 39077652643 failed all 12 CPU jobs solely at shark.failure-sentinel (CTest exit 8, other nine tests passed per job); subsequent restored run 39078070735 passed all 14 jobs and 120/120 CPU tests without skips. Windows, Ubuntu24.04, macOS ARM64 and Intel Debug/Release/sanitizers verified. Fourteen GitHub Actions checks are configured on main with strict freshness and administrator bypass retained. Durable run, assertion, phase, toolchain and policy evidence: docs/coverage/evidence/01-ci-gate.json and docs/handoffs/01-ci-verification.md. Prior skill discovery and local foundation evidence remain in docs/handoffs/01-build-foundation.md. That evidence covers assignment 01 only; Server and graphics/MMO qualification are recorded separately."}
     },
     {
       "id": "REQ-02",
@@ -524,7 +524,7 @@
         "The initial 20Hz/256-active-player profile is explicitly provisional; no current bootstrap test is labeled a server-simulation or capacity result."
       ],
       "planned_fixture": "HeadlessServerCleanBuild, ServerDependencyClosureNegative, MinimalLinuxServerLaunch and ServerLifecycle fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Planning amendment only; MMORPG implementation and qualification belong to M01. No server/network/persistence/streaming/load result is claimed."}
+      "verification": {"status": "NOT_RUN", "reason": "M01 implementation and local qualification complete on the uncommitted worktree based on e2f4966bd99797e7109397728f4ae2babce48f17. Windows Debug/Release/ASan pass 45/45 CTests. Pinned Ubuntu24 amd64 userspace under WSL passes GCC Release closure/package tests, GCC Debug13/13 and Clang18 ASan/UBSan13/13; installed Server passes full lifecycle in pristine base userspace. Injected helper exits8 only at the real sentinel; restored helper exits0 with all14 phases and26 CTests passing. Durable receipt: docs/coverage/evidence/M01-local.json; handoff: docs/handoffs/M01-headless-server.md. Full gate remains NOT_RUN until user commit/push enables the new headless-server and retained client hosted matrix, and the new required check is configured. Docker execution and current Mac/client hosted qualification are not claimed; no simulation, network, persistence, streaming or capacity result."}
     },
     {
       "id": "REQ-M02",
@@ -705,6 +705,54 @@
         "test_sources": ["cmake/CheckRuntimeBoundary.cmake", "tests/CheckBoundaryFixture.cmake"],
         "fixtures": ["tests/boundary_fixture/CMakeLists.txt"],
         "fixture_reason": "The generated CMake target graph and isolated forbidden-link fixture test the build boundary before any scene exists. Runtime-only is an additional configured build."
+      },
+      {
+        "id": "server.lifecycle",
+        "name": "Strict headless configuration and bounded idle process lifecycle",
+        "requirement_ids": [
+          "REQ-M01"
+        ],
+        "test_ids": [
+          "shark.server.unit",
+          "shark.server.lifecycle"
+        ],
+        "test_sources": [
+          "tests/server_tests.cpp",
+          "tests/check_server.py"
+        ],
+        "fixtures": [
+          "server/main.cpp",
+          "engine/core/src/server_config.cpp"
+        ],
+        "fixture_reason": "Real process startup/shutdown and invalid configuration occur before scenes; POSIX signals and startup I/O failure are checked on Linux, finite runs also on Windows."
+      },
+      {
+        "id": "server.dependency-boundary",
+        "name": "Server/Core configure, build, link and package closure excludes client and authoring dependencies",
+        "requirement_ids": [
+          "REQ-M01"
+        ],
+        "test_ids": [
+          "shark.boundary",
+          "shark.boundary.fixture",
+          "shark.boundary.headers",
+          "shark.tooling.headless-environment",
+          "shark.tooling.server-closure"
+        ],
+        "test_sources": [
+          "cmake/CheckRuntimeBoundary.cmake",
+          "tests/CheckBoundaryFixture.cmake",
+          "tools/tests/test_server_closure.py",
+          "tools/tests/check_server_header_fixture.py",
+          "tools/tests/test_headless_environment.py",
+          "tools/check_server_closure.py"
+        ],
+        "fixtures": [
+          "tests/boundary_fixture/CMakeLists.txt",
+          "tests/boundary_fixture/server_only/CMakeLists.txt",
+          "tests/boundary_fixture/header_leak/CMakeLists.txt"
+        ],
+        "fixture_reason": "Generated CMake graphs, isolated rejection fixtures and independently inspected Linux package/ELF are external build fixtures; minimal Ubuntu24 CI executes the real package checker."
       }
     ],
     "components": [],

@@ -24,6 +24,9 @@ IGNORED = (
     "build/example/Runtime.exe",
     "out/ci/windows-debug/junit.xml",
     ".tools/venv/pyvenv.cfg",
+    ".tools/headless/base.tar.gz",
+    "out/ci/headless/closure.json",
+    "out/server-package/bin/Server",
     "CMakeUserPresets.json",
     ".env",
 )
@@ -31,6 +34,8 @@ VISIBLE = (
     ".gitignore", "AGENTS.md", "CMakeLists.txt", "CMakePresets.json",
     "requirements-dev.txt", "dependencies.lock.json", "docs/coverage/requirements.json",
     ".github/workflows/cpu.yml", "assets/FeatureWorld/mesh.bin",
+    "engine/core/src/server_config.cpp", "engine/client/src/bootstrap.cpp",
+    "server/main.cpp", "tools/check_server_closure.py",
     "assets/FeatureWorld/reference.png", "assets/FeatureWorld/mesh.obj",
     *(f".agents/skills/{name}/SKILL.md" for name in SKILLS),
 )
