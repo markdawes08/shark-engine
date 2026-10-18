@@ -76,10 +76,23 @@ owner. Names are nonunique display text; rename and reparent preserve persistent
 identity and the live handle. Parent links stay within an active scene instance
 and matching authority incarnation. Subtree deletion invalidates all descendant
 handles before their slots can be reused; see the [transform contract](../transforms.md).
-These are C++ value/mutation contracts, not serialized component schemas. 07c owns
-schema metadata and bounded revisioned inspection, and 08 owns source persistence
-and its migration/rejection fixtures. Do not serialize GLM object memory or infer
-a scene-file version from the in-memory Transform representation.
+07c implements [schema metadata and bounded revisioned inspection](../scene-inspection.md).
+The fixed catalog identifies Name as `shark.name` / numeric ID 1 and Transform as
+`shark.transform` / numeric ID 2, each at schema version 1. Property IDs 1..4
+identify Name value and Transform translation, rotation and scale. Unknown IDs,
+unsupported versions and mismatched value types reject; there is no implicit
+migration. These are explicit C++ discovery contracts, not raw enum/struct bytes
+or a scene/gameplay format. Assignment 08 owns source persistence and its
+migration/rejection fixtures. Schema version 1 does not set the source envelope,
+authoring protocol or gameplay-wire version. Do not serialize GLM object memory
+or infer a scene-file version from the in-memory Transform representation.
+
+Query pages carry a scene-incarnation/revision pair and owned values. Continuation
+rejects after committed changes rather than silently combining revisions. Local
+handles and continuation cursors remain process-local; a returned persistent ID
+does not acquire authority or make a stale handle valid. The inspection contract
+defines bounded filtering, field selection and visible continuation separately
+from later source encoding and terminal protocol framing.
 Prefab instances remap every local entity ID and internal reference atomically;
 references outside the prefab remain asset or explicitly scoped scene references.
 

@@ -47,6 +47,18 @@ diagnostics through the same offline frame/input pump, with local F6/F7 sample
 pause/step controls. Scene rendering and authoring UI remain planned. Full `REQ-04` is PASS
 after final Windows/WSL, native-window and standalone/package qualification.
 
+Assignment 07 implements the shared CPU scene foundation: checked identities,
+mandatory Name/Transform, validated hierarchy and fixed version-1 schemas with
+bounded revisioned semantic inspection. The [inspection contract](../scene-inspection.md)
+defines the implemented discovery and query APIs; the
+[07 checkpoint plan](../roadmap/scene-plan.md) and
+[07c handoff](../handoffs/07c-schema-inspection.md) track qualification.
+07c and full REQ-07 are PASS under the current-machine scope, recorded in the
+[07c receipt](../coverage/evidence/07c-schema-inspection.json). M02 is next;
+the current assignment remains 07. Source persistence, authoring transactions, terminal
+adapters and editor UI retain their later owners; schema IDs do not establish
+file or gameplay-wire formats. The current-machine scope remains unchanged.
+
 | Record | Decision |
 | --- | --- |
 | [0001](0001-targets-and-boundaries.md) | C++20 targets, dependency direction, application services, errors and ownership |

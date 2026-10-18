@@ -64,7 +64,7 @@ no second computer or specific provider integration is part of the requirement.
 | Owner | Added work and acceptance |
 | --- | --- |
 | 03 | Owned structured errors and correlation/context usable by humans and tools; distinguish validation, capability, conflict and execution outcomes as services land. Preserve readable diagnostics. |
-| 07 | Schema metadata exposes stable IDs/types/defaults/ranges/units and mutability. Semantic inspection must not require ECS access or a viewport. |
+| 07 | Implemented fixed Name/Transform metadata exposes stable versioned IDs/types/defaults/ranges/units and scene-owner mutability. Bounded revisioned CPU inspection needs no ECS access or viewport. 07c and full REQ-07 pass current-machine qualification. |
 | 08 | Documented readable source, project-root rules, atomic saves and conflict-aware text/file updates; external changes cannot be silently overwritten. |
 | 09 | One authoritative service, expected revisions, pure validation/preview, atomic batches, shared undo/redo and precise retry identity/scope. Test stale snapshots, failed batches and lost-reply outcomes. |
 | 10 | Deterministic CPU runs with nonzero assertion failure and bounded machine results/artifacts. Separate real GPU runs and report unavailable capabilities honestly. |
@@ -148,9 +148,14 @@ mandatory Name/Transform, validated hierarchy and mutation use that owner. Its
 CTests and protected dependency/package qualification. The
 [transform contract](../transforms.md) specifies owned state
 copies, checked handles, no-op revisions and failure rollback for the shared C++
-foundation. 07c is next for schema discovery and bounded immutable revisioned
-inspection; full REQ-07 remains NOT_RUN. Transactions, terminal commands and editor
-adapters retain their owners in 09, 15 and 16.
+foundation. 07c implements [schema discovery and bounded immutable revisioned
+inspection](../scene-inspection.md), with its gate recorded in the
+[07c handoff](../handoffs/07c-schema-inspection.md).
+07c and full REQ-07 are PASS under the current-machine scope, with 376 passing
+CPU CTests and protected dependency/package checks in the
+[07c receipt](../coverage/evidence/07c-schema-inspection.json).
+These are typed CPU C++ APIs; transactions, terminal commands and editor adapters
+retain their owners in 09, 15 and 16. M02 is next; the current assignment remains 07.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and

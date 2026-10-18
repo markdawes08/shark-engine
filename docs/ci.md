@@ -176,6 +176,12 @@ canonical global coordinates. 07b adds `shark.core.transform` (20-second timeout
 and `shark.core.hierarchy` (30-second timeout), with the same labels and seed.
 They exercise numerical conventions, validated Name/Transform values, hierarchy
 lifetime, atomic rejection and immediate/deferred reparenting.
+07c adds `shark.core.schema` and `shark.core.scene-query`, each with a 20-second
+timeout, seed 1337 and `cpu;unit;server` labels. They cover fixed metadata and
+shared validation, bounded field-selected query pages, revision conflicts and
+owned snapshot lifetime under the [inspection contract](scene-inspection.md).
+Both are CPU C++ fixtures; they do not invoke terminal/editor adapters or qualify
+a source or gameplay-wire format.
 
 `shark.tooling.scene-dependencies` (`cpu;tooling;boundary;server`, 90-second
 timeout) accepts only the locked EnTT and GLM archives, proves disconnected local
@@ -192,10 +198,18 @@ The headless closure checks compare both complete extracted source inventories
 with their pinned archives and verify both installed notices. Runtime package
 tests also require the EnTT and GLM notices. Windows CPU/sanitizer, existing WSL
 CPU/headless and protected target builds qualify these checkpoints; the CPU scene
-layer does not require repeating 06c's GPU acceptance. Full `REQ-07` remains
-NOT_RUN until 07c; see the [07 plan](roadmap/scene-plan.md),
-[07a handoff](handoffs/07a-entity-ownership.md) and
-[07b handoff](handoffs/07b-transform-hierarchy.md).
+layer does not require repeating 06c's GPU acceptance.
+07c and full REQ-07 are PASS under the current-machine scope. The
+[07c receipt](coverage/evidence/07c-schema-inspection.json) records 376 passing
+CTests with no failures/skips: Windows Debug/Release/ASan 62 each, WSL client
+Debug/ASan+UBSan 55 each, and WSL Server Debug/ASan+UBSan 40 each. Protected
+Runtime/Server builds, source/link/license closure and fresh isolated package
+checks pass with all 221 qualification source inputs unchanged.
+See the [07 plan](roadmap/scene-plan.md),
+[07a handoff](handoffs/07a-entity-ownership.md),
+[07b handoff](handoffs/07b-transform-hierarchy.md) and
+[07c handoff](handoffs/07c-schema-inspection.md). M02 is next;
+hosted CI stays supplemental under the unchanged current-machine scope.
 
 ## Locked tools and hosted-image limits
 

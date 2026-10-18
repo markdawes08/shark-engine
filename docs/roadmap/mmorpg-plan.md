@@ -111,9 +111,15 @@ Name/Transform and validated hierarchy on the same single-writer scene. Its
 CTests and protected dependency/package qualification. The
 [transform contract](../transforms.md) keeps cached world matrices in a scene-local
 frame, separate from global WorldPosition. It adds no physics body, origin
-rebasing, persistence or distributed authority. The next checkpoint is 07c's
-schemas and bounded revisioned inspection; full REQ-07 remains NOT_RUN.
-M02 follows completed 07 in the existing order.
+rebasing, persistence or distributed authority. 07c implements fixed version-1
+Name/Transform schemas, pure local validation and bounded revisioned CPU queries;
+see the [inspection contract](../scene-inspection.md) and
+[07c handoff](../handoffs/07c-schema-inspection.md).
+07c and full REQ-07 are PASS under the current-machine scope. The
+[07c receipt](../coverage/evidence/07c-schema-inspection.json) records 376 passing
+CPU CTests and protected dependency/package checks. M02 is next in the existing
+order; the current assignment remains 07. These C++ APIs are not player
+messages or source persistence, and they do not grant gameplay authority.
 Presentation stays in Client and cannot acquire authority over server time or world state.
 The [final local handoff](../handoffs/02d-final-verification.md)
 preserves the Windows lifecycle and isolated Ubuntu CPU/package evidence. The
@@ -323,7 +329,7 @@ or relabel idle connections to obtain a PASS.
 | --- | --- |
 | 02, 05, 06 | Graphics work is client-only behind M01's split; use the two available Windows GPUs under ADR 0010. No native Linux graphics or external hardware requirement. |
 | 03, 04 | Separate server monotonic ticks from rendering/input. Client focus/minimize/pause cannot stop a shared world. Define cancellation/backpressure and explicit runtime role. |
-| 07, 08 | Region/world identity, authority metadata, checked replica lifetime and global-cell coordinates precede schema commitment. 07b's Name/Transform hierarchy uses a scene-local frame and requires matching authority for parent links. 07c adds schema/query coverage; source scenes in 08 are authored content, not durable player records. |
+| 07, 08 | Region/world identity, authority metadata, checked replica lifetime and global-cell coordinates precede schema commitment. 07b's Name/Transform hierarchy uses a scene-local frame and requires matching authority for parent links. 07c implements fixed schemas and revisioned CPU inspection; source scenes in 08 are authored content, not durable player records. |
 | 09, 15-17 | Local authoring services remain distinct from public gameplay and operational admin APIs. Editor previews may visualize server/region data through authorized development adapters. |
 | 10 | FeatureWorld remains; later add MMOWorld and isolated multi-process/network/database fixtures. A scene runner alone cannot test distributed ownership. |
 | 11-14 | Establish dependency graphs and separate client/server content roots; static meshes are an intermediate profile. Plan async cell streaming without blocking render/simulation or importing sources at runtime. |

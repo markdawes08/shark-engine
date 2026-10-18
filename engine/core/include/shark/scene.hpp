@@ -2,6 +2,7 @@
 
 #include "shark/name.hpp"
 #include "shark/scene_identity.hpp"
+#include "shark/scene_query.hpp"
 #include "shark/transform.hpp"
 
 #include <cstddef>
@@ -80,6 +81,14 @@ class Scene final {
     [[nodiscard]] Result<void> reparent(EntityHandle handle, std::optional<EntityHandle> parent,
                                         ReparentMode mode);
     [[nodiscard]] Result<SceneEntityState> entity_state(EntityHandle handle) const;
+    // Committed-state inspection. Pages are owned, immutable and bounded; reads
+    // are allowed during visits and while deferred work is pending.
+    [[nodiscard]] Result<SceneQueryPage>
+    query_entities(const SceneQueryOptions& options = {}) const;
+    [[nodiscard]] Result<SceneQueryPage> continue_query(const SceneQueryCursor& cursor) const;
+    [[nodiscard]] Result<SceneQueryPage>
+    inspect_entity(EntityHandle handle, SceneQueryFields fields = {},
+                   std::optional<SceneRevision> expected_revision = std::nullopt) const;
     [[nodiscard]] Result<EntityReference> reference(EntityHandle handle) const;
     [[nodiscard]] Result<EntityHandle> resolve(const EntityReference& reference) const;
     [[nodiscard]] Result<EntityHandle> find(const EntityIdentity& identity) const;
@@ -104,6 +113,8 @@ class Scene final {
   private:
     struct Impl;
     explicit Scene(std::unique_ptr<Impl> impl) noexcept;
+    [[nodiscard]] Result<SceneQueryPage> query_page(const SceneQueryOptions& options,
+                                                    std::size_t next_slot) const;
     std::unique_ptr<Impl> impl_;
 };
 

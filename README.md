@@ -11,7 +11,8 @@ the authoritative server, persistent world and staged client/server work.
 These are planned capabilities; the current engine provides Core services, raw
 input, owned Windows windows, offline frame/input scheduling, graphics-device
 ownership, clear presentation and fixed textured-cube rendering. CPU scenes provide
-checked entity ownership, Name/Transform and hierarchy. A separate opt-in graphics
+checked entity ownership, Name/Transform, hierarchy, fixed component schemas and
+bounded revisioned inspection. A separate opt-in graphics
 feasibility probe contains analytic draw/compute/readback cases.
 The versioned
 [requirements manifest](docs/coverage/requirements.json) preserves assignment
@@ -50,8 +51,14 @@ The [07b handoff](docs/handoffs/07b-transform-hierarchy.md) and
 CPU CTests, protected Runtime/Server builds and isolated package checks.
 [Scene contracts](docs/scene-contracts.md) and the
 [Name/Transform guide](docs/transforms.md) describe mandatory components, validated
-hierarchy, local/world reparenting and subtree deletion. The next checkpoint is
-07c's schemas and bounded revisioned inspection; full REQ-07 remains NOT_RUN. See the
+hierarchy, local/world reparenting and subtree deletion. 07c implements
+[schemas and bounded revisioned inspection](docs/scene-inspection.md) as CPU C++
+APIs; file formats, terminal commands and editor controls keep their later owners.
+**07c and full REQ-07 are complete under the current-machine scope.** The
+[07c handoff](docs/handoffs/07c-schema-inspection.md) and
+[receipt](docs/coverage/evidence/07c-schema-inspection.json) record 376 passing CPU
+CTests with no failures/skips, protected builds and isolated package checks.
+**M02 is next.** See the
 [cube launch workflow](docs/building.md#cube-sample-and-runtime-package).
 The [05a handoff](docs/handoffs/05a-graphics-device.md) records 211 passing CTests
 and 112 validated device lifetimes across the two local GPUs.

@@ -15,9 +15,9 @@ and its [implementation plan](../../../docs/roadmap/human-agent-plan.md) as each
 authoring layer lands; the bootstrap does not yet provide these interfaces.
 
 The implemented-surface manifest includes the mandatory Name and Transform C++
-components and their validation/mutation tests. Schema metadata, authoring
-transactions, Lua and FeatureWorld arrive in 07c, 09, 19 and 10 respectively.
-Do not fabricate bindings or schema fixtures for those later layers, or fill the
+components and their validation/mutation tests. 07c adds real fixed schema and
+bounded revisioned query coverage. Authoring transactions, Lua and FeatureWorld
+arrive in 09, 19 and 10 respectively. Do not fabricate bindings for those layers or fill the
 empty command/Lua arrays with placeholders. Connect each earlier component when
 its missing layer is introduced.
 
@@ -27,12 +27,26 @@ deferred boundary. 07b implements mandatory Name/Transform and hierarchy; follow
 the [transform contract](../../../docs/transforms.md) and
 [07 checkpoint plan](../../../docs/roadmap/scene-plan.md). Its
 [current-machine qualification is complete](../../../docs/handoffs/07b-transform-hierarchy.md).
-Schemas and bounded revisioned inspection are next
-in 07c; full REQ-07 stays NOT_RUN until that checkpoint completes. Do not introduce
+Follow the implemented [schema and inspection contract](../../../docs/scene-inspection.md)
+and [07c handoff](../../../docs/handoffs/07c-schema-inspection.md).
+07c and full REQ-07 are PASS under the current-machine scope; the
+[07c receipt](../../../docs/coverage/evidence/07c-schema-inspection.json) records
+376 passing CPU CTests and protected dependency/package checks. M02 is next;
+the current assignment remains 07. Do not introduce
 a second registry or expose native entities. Include math through `shark/math.hpp`
 and its SharkMath target so every consumer shares the central GLM configuration.
 Cached scene world matrices use a local frame; global WorldPosition, future M05
 origins and later physics constraints remain distinct.
+
+Extend the fixed schema catalog through engine-owned IDs, explicit versions and
+typed defaults/ranges/units/mutability. Name and Transform are version 1 and
+mandatory/nonremovable; unknown IDs, versions and mismatched value types reject.
+Reuse their existing validators rather than interpreting caller-edited metadata
+as validation policy. Pure validation does not reserve a scene revision or prove
+hierarchy/world feasibility. Query through the existing scene owner with bounded
+fields/results, revision checks and owned immutable pages. These are CPU C++
+contracts, not source files, terminal framing or gameplay permissions. Preserve
+explicit xyzw quaternion metadata and signed scale's absolute magnitude floor.
 
 Name and Transform cannot be removed. Reuse scene validation, checked parent
 links and the existing deferred queue for component changes. Keep-local preserves

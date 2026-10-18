@@ -48,8 +48,14 @@ Mandatory Name/Transform values,
 validated hierarchy, both reparent modes and subtree deletion use the same owner
 and deferred queue. Follow the [transform contract](docs/transforms.md) and
 [qualification receipt](docs/coverage/evidence/07b-transform-hierarchy.json).
-The next checkpoint is 07c: schema metadata and bounded revisioned inspection. Full REQ-07
-remains NOT_RUN until all three checkpoints pass. Follow the
+07c implements fixed Name/Transform schema metadata, pure local validation and
+bounded revisioned CPU inspection through the same scene owner. Follow the
+[inspection contract](docs/scene-inspection.md) and
+[07c handoff](docs/handoffs/07c-schema-inspection.md).
+**07c and full REQ-07 are complete under the current-machine scope.** The
+[07c receipt](docs/coverage/evidence/07c-schema-inspection.json) records 376 passing
+CPU CTests with no failures/skips and protected dependency/package qualification.
+The current assignment remains 07; **M02 is next** in the existing order. Follow the
 [05 checkpoint plan](docs/roadmap/graphics-device-plan.md),
 [graphics device contract](docs/graphics-device.md),
 [presentation lifecycle contract](docs/presentation-lifecycle.md) and
@@ -291,7 +297,9 @@ connect earlier components then and add new cases when their feature lands.
 Keep planned fixtures separate from implemented coverage. EngineCore provides
 scene identity/lifetime and mandatory Name/Transform C++ validation and mutation;
 the [transform contract](docs/transforms.md) defines local-frame hierarchy behavior.
-Schema discovery and bounded revisioned queries remain 07c. File persistence,
+07c provides fixed version-1 schema discovery and bounded revisioned queries;
+see the [inspection contract](docs/scene-inspection.md). Pure component validation
+does not reserve a revision or replace Scene's hierarchy validation. File persistence,
 authoring transactions, terminal/editor adapters and Lua retain their later owners;
 the bootstrap executables do not expose those interfaces or a scene renderer.
 MMO requirements remain planned until executable multi-process, network-fault,

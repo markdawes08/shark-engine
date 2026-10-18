@@ -1,12 +1,17 @@
 # Scene ownership, identity and world coordinates
 
-The 07a/07b EngineCore API is in [scene.hpp](../engine/core/include/shark/scene.hpp),
+The assignment-07 EngineCore API is in [scene.hpp](../engine/core/include/shark/scene.hpp),
 [scene_identity.hpp](../engine/core/include/shark/scene_identity.hpp) and
 [world_position.hpp](../engine/core/include/shark/world_position.hpp). It is
 CPU-only and shared by future human and terminal authoring services. EnTT is a
 private implementation dependency; callers receive engine values, never registry
 objects, component pointers or native entities. These C++ contracts are not a
 scene file format, gameplay wire protocol, authoring command or editor UI.
+07c adds [fixed component schemas and bounded revisioned inspection](scene-inspection.md)
+through [schema.hpp](../engine/core/include/shark/schema.hpp) and
+[scene_query.hpp](../engine/core/include/shark/scene_query.hpp). Schema discovery
+returns owned metadata; scene queries return owned immutable pages from the
+existing owner. Neither exposes EnTT or creates a second scene model.
 
 ## Identity and scope
 
@@ -65,6 +70,15 @@ and hierarchy changes do likewise; exact no-ops leave the revision unchanged. Cl
 work, releases entities and invalidates every handle; repeated close succeeds.
 Stats remain available on the owner after close; other operations reject it.
 
+`query_entities`, `continue_query` and `inspect_entity` read committed state on the
+scene owner, with explicit field selection, bounded results and scene-incarnation
+revision checks. They are allowed during a visit and while deferred operations
+are pending. Pending mutations do not appear until committed. A successful
+no-op leaves continuation valid; a committed change rejects stale continuation.
+The [inspection contract](scene-inspection.md) defines limits, filters, ordering,
+cursor lifetime and failure precedence. Pure schema validation never changes the
+scene or reserves its revision and cannot guarantee hierarchy/world feasibility.
+
 Default limits are 4096 entity slots and 1024 pending mutations, configurable up
 to 1,000,000 and 65,536 respectively. Zero limits are rejected. Retired slots
 consume slot capacity. Hierarchy depth defaults to 256 with a hard maximum of
@@ -91,7 +105,8 @@ splits delta cells/remainders before local addition. IEEE-754 rounding still
 applies; the contract does not promise bitwise arbitrary-platform simulation.
 
 07b implements [local Transform TRS and hierarchy](transforms.md); its world
-matrices stay within a common local scene frame. 07c publishes schemas. M05 owns render/physics
+matrices stay within a common local scene frame. 07c publishes their fixed local
+schemas and inspection; it adds no global-coordinate conversion. M05 owns render/physics
 origin selection, generation-checked bounded float conversion, streaming and
 actual region handoff. No global float vector or premature rebasing service is
 introduced here.
@@ -110,8 +125,12 @@ See the [official release](https://github.com/skypjack/entt/releases/tag/v4.0.0)
 and [license](https://github.com/skypjack/entt/blob/85c6bba014049b5de8fad49d25424df2f1f6a8c1/LICENSE).
 
 `shark.core.scene`, `shark.core.world-position`, `shark.core.hierarchy`,
-`shark.core.transform` and `shark.tooling.scene-dependencies` exercise these contracts. The
+`shark.core.transform`, `shark.core.schema`, `shark.core.scene-query` and
+`shark.tooling.scene-dependencies` exercise these contracts. The
 [07a handoff](handoffs/07a-entity-ownership.md) and
-[07b handoff](handoffs/07b-transform-hierarchy.md) record actual local results and
-limits. Full REQ-07 stays NOT_RUN until 07c completes; FeatureWorld connects
-implemented components in assignment 10.
+[07b handoff](handoffs/07b-transform-hierarchy.md) record earlier local results and
+limits; the [07c handoff](handoffs/07c-schema-inspection.md) and
+[receipt](coverage/evidence/07c-schema-inspection.json) close the final gate.
+07c and full REQ-07 are PASS under the current-machine scope, with 376 passing
+CPU CTests, protected builds and isolated package checks. FeatureWorld connects
+implemented components in assignment 10; M02 is next after completed assignment 07.

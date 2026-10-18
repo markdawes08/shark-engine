@@ -1,6 +1,7 @@
 #include "shark/scene.hpp"
 
 #include "scene_generation.hpp"
+#include "utf8.hpp"
 
 #include <entt/entity/registry.hpp>
 
@@ -293,6 +294,28 @@ struct Scene::Impl {
                 record.identity,
                 scope,
                 record.authority};
+    }
+    Result<void> check_expected_revision(std::optional<SceneRevision> expected) const {
+        if (expected && *expected != SceneRevision{instance, revision}) {
+            return scene_error(ErrorCode::conflict,
+                               "scene incarnation or committed revision differs from inspection");
+        }
+        return {};
+    }
+    SceneInspectedEntity inspect_at(std::size_t index, SceneQueryFields fields) const {
+        const auto& entity = registry.get<Record>(slots[index].entity);
+        SceneInspectedEntity result{reference_at(index), std::nullopt, std::nullopt, std::nullopt};
+        if (fields.name) {
+            result.name = entity.name;
+        }
+        if (fields.transform) {
+            result.transform = SceneInspectedTransform{entity.transform, entity.world};
+        }
+        if (fields.hierarchy) {
+            result.hierarchy =
+                SceneInspectedHierarchy{entity.parent, entity.children.size(), entity.depth};
+        }
+        return result;
     }
     Result<EntityHandle> insert(EntitySeed seed) {
         auto prepared = prepare_seed(seed);
@@ -599,6 +622,134 @@ Result<SceneEntityState> Scene::entity_state(EntityHandle handle) const {
         return impl_->contextualize(
             scene_error(ErrorCode::execution_failed, "entity state copy allocation failed"), handle,
             "scene.entity-state");
+    }
+}
+
+Result<SceneQueryPage> Scene::query_entities(const SceneQueryOptions& options) const {
+    return query_page(options, 0);
+}
+
+Result<SceneQueryPage> Scene::continue_query(const SceneQueryCursor& cursor) const {
+    auto checked = impl_->check_live();
+    if (checked) {
+        checked = impl_->check_expected_revision(cursor.revision_);
+    }
+    if (!checked) {
+        auto error = std::move(checked).error();
+        error.context.operation = "scene.query";
+        return error;
+    }
+    return query_page(cursor.options_, cursor.next_slot_);
+}
+
+Result<SceneQueryPage> Scene::query_page(const SceneQueryOptions& options,
+                                         std::size_t next_slot) const {
+    constexpr auto operation = "scene.query";
+    auto contextual = [](Error error) {
+        error.context.operation = operation;
+        return error;
+    };
+    if (auto checked = impl_->check_live(); !checked) {
+        return contextual(std::move(checked).error());
+    }
+    if (options.page_size == 0 || options.page_size > scene_query_maximum_page_size ||
+        options.scan_budget == 0 || options.scan_budget > scene_query_maximum_scan_budget ||
+        next_slot > impl_->slots.size()) {
+        return contextual(scene_error(ErrorCode::invalid_argument,
+                                      "query page size must be 1..256 and scan budget 1..4096"));
+    }
+    switch (options.selection) {
+    case SceneQuerySelection::all:
+    case SceneQuerySelection::roots:
+        if (options.parent) {
+            return contextual(
+                scene_error(ErrorCode::invalid_argument, "only a children query accepts a parent"));
+        }
+        break;
+    case SceneQuerySelection::children:
+        if (!options.parent) {
+            return contextual(scene_error(ErrorCode::invalid_argument,
+                                          "a children query requires a checked parent"));
+        }
+        break;
+    default:
+        return contextual(scene_error(ErrorCode::invalid_argument, "unknown query selection"));
+    }
+    if (options.name_prefix.size() > maximum_name_bytes ||
+        !detail::valid_utf8(options.name_prefix, true)) {
+        return contextual(
+            scene_error(ErrorCode::invalid_argument,
+                        "query name prefix must be 0..256 UTF-8 bytes without controls"));
+    }
+    if (auto checked = impl_->check_expected_revision(options.expected_revision); !checked) {
+        return contextual(std::move(checked).error());
+    }
+    if (options.parent) {
+        if (auto checked = impl_->checked_slot(*options.parent); !checked) {
+            return contextual(std::move(checked).error());
+        }
+    }
+    try {
+        std::vector<SceneInspectedEntity> entities;
+        entities.reserve(std::min(options.page_size, options.scan_budget));
+        std::size_t scanned = 0;
+        while (next_slot < impl_->slots.size() && scanned < options.scan_budget &&
+               entities.size() < options.page_size) {
+            const auto index = next_slot++;
+            ++scanned;
+            const auto& slot = impl_->slots[index];
+            if (slot.retired || slot.entity == entt::null) {
+                continue;
+            }
+            const auto& entity = impl_->registry.get<Impl::Record>(slot.entity);
+            if ((options.selection == SceneQuerySelection::roots && entity.parent) ||
+                (options.selection == SceneQuerySelection::children &&
+                 entity.parent != options.parent) ||
+                !entity.name.value.starts_with(options.name_prefix)) {
+                continue;
+            }
+            entities.push_back(impl_->inspect_at(index, options.fields));
+        }
+        const SceneRevision revision{impl_->instance, impl_->revision};
+        std::optional<SceneQueryCursor> cursor;
+        // No lookahead: holes and nonmatches also consume the explicit budget.
+        if (next_slot < impl_->slots.size()) {
+            cursor = SceneQueryCursor{revision, options, next_slot};
+        }
+        return SceneQueryPage{revision, impl_->scope, std::move(entities), scanned,
+                              std::move(cursor)};
+    } catch (...) {
+        return contextual(
+            scene_error(ErrorCode::execution_failed, "query snapshot allocation failed"));
+    }
+}
+
+Result<SceneQueryPage> Scene::inspect_entity(EntityHandle handle, SceneQueryFields fields,
+                                             std::optional<SceneRevision> expected_revision) const {
+    constexpr auto operation = "scene.inspect-entity";
+    auto contextual = [](Error error) {
+        error.context.operation = operation;
+        return error;
+    };
+    if (auto checked = impl_->check_live(); !checked) {
+        return contextual(std::move(checked).error());
+    }
+    if (auto checked = impl_->check_expected_revision(expected_revision); !checked) {
+        return contextual(std::move(checked).error());
+    }
+    const auto index = impl_->checked_slot(handle);
+    if (!index) {
+        return contextual(index.error());
+    }
+    try {
+        std::vector<SceneInspectedEntity> entities;
+        entities.push_back(impl_->inspect_at(index.value(), fields));
+        return SceneQueryPage{
+            {impl_->instance, impl_->revision}, impl_->scope, std::move(entities), 1, std::nullopt};
+    } catch (...) {
+        return impl_->contextualize(
+            scene_error(ErrorCode::execution_failed, "entity inspection allocation failed"), handle,
+            operation);
     }
 }
 

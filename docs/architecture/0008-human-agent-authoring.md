@@ -13,6 +13,17 @@ without an LLM provider SDK, model subscription, editor plugin or MCP client.
 An optional thin MCP adapter can wrap the same interface in 15 if needed.
 The engine does not embed an LLM or grant an agent special engine authority.
 
+07c implements the first [schema and semantic-inspection foundation](../scene-inspection.md)
+in EngineCore: a fixed Name/Transform catalog with explicit IDs/version 1,
+typed defaults/ranges/units/mutability, pure shared validation and bounded owned
+query pages tied to a scene revision. These CPU C++ APIs run without an editor,
+display or registry access. They provide inputs for the later shared services;
+they are not terminal commands, JSON framing, source files, transactions or
+gameplay messages. Their passing current-machine qualification is recorded in the
+[07c handoff](../handoffs/07c-schema-inspection.md) and
+[receipt](../coverage/evidence/07c-schema-inspection.json); the broader authoring gates
+below remain assigned to their original owners.
+
 This strengthens the original shared-command and agent-interface requirements;
 it does not replace the editor, [MMORPG contract](0007-mmorpg-architecture.md),
 graphics gates or assignment order. The [execution and assessment plan](../roadmap/human-agent-plan.md)

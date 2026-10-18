@@ -45,7 +45,14 @@ signed, and every affected cached world matrix is validated before mutation.
 World shear is retained; keep-world reparenting requires representable local TRS
 and checks descendant matrix preservation at the fixed documented tolerance.
 These matrices are in a common scene-local frame, not a global MMORPG location.
-07c supplies component schemas and bounded revisioned semantic inspection.
+07c implements [component schemas and bounded revisioned semantic inspection](../scene-inspection.md).
+Transform metadata exposes double local translation in meters, dimensionless
+scale with an absolute component floor of `1e-6`, and dimensionless quaternion
+values/defaults in explicit `[x,y,z,w]` order. Finite nonzero quaternion input is
+normalized and canonically signed by the existing validator. Pure schema
+validation checks local values; Scene separately validates world composition and
+the affected hierarchy before committing. Parent links remain separate Scene
+operations, and schema mutability does not grant gameplay authority.
 
 ## Seamless world positions and internal partitions
 
@@ -68,7 +75,8 @@ int64 storage bounded to [-2^31, 2^31-1], finite canonical double offsets in
 [scene contract](../scene-contracts.md) for tested boundary rounding and failure
 rules. This representation limit is not M05's supported content extent. 07b's
 local TRS and hierarchy do not replace this representation or add origin mapping;
-schema metadata is 07c, and serialization remains assignment 08.
+07c's local component schemas do not replace global-cell coordinates, and
+serialization remains assignment 08.
 
 Rendering and Jolt operate on bounded single-precision coordinates relative to
 explicit origins. The conversion records world/cell and origin generation;
@@ -243,6 +251,10 @@ and applies each operation at the explicit boundary, with its own outcome and on
 revision increment for an actual change. Visits permit inspection and enqueueing
 only; failed visitors cancel their own newly queued requests. This is not 09's
 atomic multi-operation authoring transaction or a server gameplay scheduler.
+07c's bounded queries read committed state on that same owner thread, including
+during visits or while deferred work is pending. Owned immutable pages survive
+later mutation, but their references may become stale. Actual committed changes
+invalidate continuation revisions; enqueueing or a no-op does not advance them.
 07b destruction takes effect when its operation commits; the script-specific
 pending-destruction behavior below belongs to the later script lifecycle.
 

@@ -84,14 +84,24 @@ in client-enabled and headless test builds. 07b adds Name, Transform and hierarc
 under the [transform contract](transforms.md). `shark.core.transform` has a
 20-second timeout and `shark.core.hierarchy` has a 30-second timeout; both use
 seed 1337 and the `cpu;unit;server` labels. These CPU services do not provide
-authoring commands, networking or a running world simulation. Schemas and bounded
-semantic inspection follow in 07c under the [07 plan](roadmap/scene-plan.md).
+authoring commands, networking or a running world simulation. 07c adds the
+[fixed schemas and bounded revisioned inspection](scene-inspection.md) under the
+[07 plan](roadmap/scene-plan.md). `shark.core.schema` and `shark.core.scene-query`
+both use seed 1337, 20-second timeouts and `cpu;unit;server` labels. They run in
+client and headless test builds without a display and test schema validation,
+metadata agreement, query limits, revision conflicts and owned snapshot lifetime.
 `shark.tooling.scene-dependencies` checks exact EnTT/GLM archive selection,
 offline population, private EnTT includes and public math configuration without a
 C compiler or display (90-second timeout). It compiles the math wrapper with the
 central definitions and defaults, then rejects prior GLM includes and conflicting
 configuration. The [07a handoff](handoffs/07a-entity-ownership.md) and
-[07b handoff](handoffs/07b-transform-hierarchy.md) record qualification.
+[07b handoff](handoffs/07b-transform-hierarchy.md) record their qualification;
+the [07c handoff](handoffs/07c-schema-inspection.md) and
+[receipt](coverage/evidence/07c-schema-inspection.json) close full REQ-07 as PASS
+under the current-machine scope. All 376 CTests pass with no failures/skips:
+Windows Debug/Release/ASan 62 each, WSL client Debug/ASan+UBSan 55 each, and
+WSL Server Debug/ASan+UBSan 40 each. Protected builds and isolated package checks
+also pass. M02 is next; these results do not add a terminal/editor adapter.
 
 06a adds the CPU-only [offline shader builder](shader-pipeline.md).
 `shark.tooling.shader-pipeline` tests recipes, dependency tracking, artifact

@@ -6,6 +6,7 @@ add_library(EngineCore STATIC
     src/name.cpp
     src/project_path.cpp
     src/scene.cpp
+    src/schema.cpp
     src/server_application.cpp
     src/server_config.cpp
     src/shutdown_signals.cpp

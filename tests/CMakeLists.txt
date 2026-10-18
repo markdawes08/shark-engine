@@ -5,6 +5,8 @@ add_executable(Tests
     core_hierarchy_tests.cpp
     core_path_tests.cpp
     core_scene_tests.cpp
+    core_scene_query_tests.cpp
+    core_schema_tests.cpp
     core_time_tests.cpp
     core_transform_tests.cpp
     core_work_tests.cpp
@@ -49,6 +51,10 @@ add_test(NAME shark.core.hierarchy COMMAND Tests "[hierarchy]" --rng-seed 1337)
 set_tests_properties(shark.core.hierarchy PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)
 add_test(NAME shark.core.transform COMMAND Tests "[transform]" --rng-seed 1337)
 set_tests_properties(shark.core.transform PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
+add_test(NAME shark.core.schema COMMAND Tests "[schema]" --rng-seed 1337)
+set_tests_properties(shark.core.schema PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
+add_test(NAME shark.core.scene-query COMMAND Tests "[scene-query]" --rng-seed 1337)
+set_tests_properties(shark.core.scene-query PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
 if(TARGET EngineClient)
     add_executable(PresentationFaults presentation_faults.cpp)
     target_include_directories(PresentationFaults PRIVATE "${PROJECT_SOURCE_DIR}"

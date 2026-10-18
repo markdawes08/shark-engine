@@ -3,8 +3,9 @@
 07b extends the existing [scene owner](scene-contracts.md) in EngineCore. Every
 entity has mandatory Name and Transform values. Callers use the same checked
 handles, single writer and deferred queue as 07a. This is the shared CPU foundation
-for later editor and terminal services; schemas, file persistence, transactions
-and adapters retain their owners in 07c, 08, 09, 15 and 16.
+for later editor and terminal services. 07c implements the
+[fixed schemas and bounded revisioned inspection](scene-inspection.md); file
+persistence, transactions and adapters retain their owners in 08, 09, 15 and 16.
 
 ## Name
 
@@ -69,8 +70,9 @@ deletion are iterative; depth limits do not depend on the C++ call stack.
 ordered children, world matrix and depth. Child order is ascending runtime slot;
 it is not an authored sibling-order format. Changes update all affected cached
 world matrices synchronously. The returned copy survives subsequent mutation but
-its embedded checked reference may become stale. 07c adds bounded revisioned
-semantic queries and schema discovery.
+its embedded checked reference may become stale. 07c's [bounded revisioned
+semantic queries](scene-inspection.md) provide explicit field selection and
+immutable pages when a full per-entity state copy is unnecessary.
 
 `set_name`, `set_transform` and `reparent` follow the existing immediate mutation
 boundary: no active visit and no pending deferred work. Successful changes advance
@@ -109,7 +111,15 @@ tests conventions and numerical rejection independently of the registry. Existin
 scene lifetime, coordinate, log/path and dependency/package tests remain active.
 See the [07b handoff](handoffs/07b-transform-hierarchy.md) for executed results.
 
-The two components have implemented C++ validation and mutation coverage now.
-07c supplies their schema metadata, assignment 08 persistence, 09 transactions,
+The two components have implemented C++ validation, mutation and schema/query
+coverage. Their version-1 schemas expose required/nonremovable components,
+typed defaults and scene-owner mutability. Transform's quaternion metadata is
+explicitly `[x,y,z,w]`; accepted scale uses an absolute magnitude floor, preserving
+negative/nonuniform scale. Pure schema validation reuses `validate_name` and
+`canonicalize_transform`; Scene still checks world-matrix and hierarchy feasibility.
+The [07c handoff](handoffs/07c-schema-inspection.md) and
+[receipt](coverage/evidence/07c-schema-inspection.json) record passing
+current-machine qualification. 07c and full REQ-07 are PASS; M02 is next.
+Assignment 08 supplies persistence, 09 transactions,
 10 FeatureWorld, 15 terminal adapters, 16/17 editor fields and 19 selected Lua APIs.
 Those later integrations are planned fixtures, not claimed passes.

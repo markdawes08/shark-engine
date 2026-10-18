@@ -78,7 +78,18 @@ with no skips**: Windows Debug/Release/ASan 60 each, WSL client Debug/ASan+UBSan
 53 each, and WSL Server Debug/ASan+UBSan 38 each. Protected Runtime/Server builds,
 dependency/license closure and isolated package execution also pass. The
 [transform contract](../transforms.md) specifies the delivered C++ behavior.
-07c is next for schemas and bounded revisioned inspection; full REQ-07 remains NOT_RUN.
+07c implements [fixed component schemas and bounded revisioned inspection](../scene-inspection.md).
+`shark.core.schema` and `shark.core.scene-query` cover metadata/default agreement,
+pure validation, invalid IDs/versions, bounded results, stale revisions and owned
+snapshot lifetime. The [07c handoff](../handoffs/07c-schema-inspection.md) records
+the completed gate. Full REQ-07 is PASS under the current-machine scope. The
+[07c receipt](evidence/07c-schema-inspection.json) records **376 passing CPU
+CTests with no failures/skips**: Windows Debug/Release/ASan 62 each, WSL client
+Debug/ASan+UBSan 55 each, and WSL Server Debug/ASan+UBSan 40 each. Schema coverage
+has 9 cases/654 assertions and query coverage 19 cases/3,916 assertions. Protected
+Runtime/Server builds, source/link/license closure and fresh isolated package
+checks pass; all 221 qualification source inputs were unchanged. The current
+assignment remains 07 and M02 is next. FeatureWorld integration remains assignment 10.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
 NOT_RUN. Existing presentation/device fixtures and their earlier handoffs retain
@@ -194,6 +205,7 @@ Full `REQ-06` is PASS under the current-machine scope. The
 window/offscreen references, lifetime failures, shader rebuilds and relocated
 Runtime shader closure. `client.window-cube-distribution` maps the implemented
 surface to device-free tests and explicit hardware fixtures. 07a introduces the
-CPU scene foundation; 07b implements Name/Transform and hierarchy. Their C++
-component coverage does not claim schema inspection, source persistence, terminal
-commands or Lua bindings. 07c completes the scene schema/query checkpoint.
+CPU scene foundation; 07b implements Name/Transform and hierarchy. 07c adds fixed
+schema metadata, shared pure validation and bounded revisioned CPU inspection.
+These C++ APIs do not claim source persistence, terminal/editor adapters or Lua
+bindings. Those layers retain their later assignment owners and planned fixtures.

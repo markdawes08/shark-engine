@@ -1,13 +1,17 @@
 # Assignment 07: Scene, transform and schema checkpoints
 
 Date: 2026-10-18. Starting revision: `9e08702` on `main`.
-Owner: `REQ-07`. Full assignment verification remains **NOT_RUN** until 07c.
+Owner: `REQ-07`. Full assignment verification is **PASS** under the current-machine scope.
 The current-machine scope and existing assignment order remain unchanged.
-**07a and 07b are complete under the current-machine scope. 07c is next.**
+**07a, 07b and 07c are complete. The current assignment remains 07; M02 is next.**
 The [07a handoff](../handoffs/07a-entity-ownership.md) records its 348 passing CPU
 CTests. The [07b handoff](../handoffs/07b-transform-hierarchy.md) and
 [receipt](../coverage/evidence/07b-transform-hierarchy.json) record 362 passing CPU
 CTests with no skips and protected dependency/package qualification.
+The [07c handoff](../handoffs/07c-schema-inspection.md) and
+[receipt](../coverage/evidence/07c-schema-inspection.json) close full REQ-07 with
+376 passing CPU CTests and no failures/skips, protected Runtime/Server builds and
+fresh isolated package checks. All 221 qualification source inputs were unchanged.
 
 ## 07a - Entity ownership and identity
 
@@ -47,15 +51,23 @@ or live world handoff is implied.
 
 ## 07c - Engine schemas and semantic inspection
 
-Publish Name/Transform schema IDs, fields, defaults, ranges, units, mutability and
-validation through engine-owned values. Add bounded immutable revisioned queries
-for semantic inspection without a viewport or registry access. Complete REQ-07's
-coverage and qualification, including earlier lifetime/hierarchy behavior.
+Implemented: a fixed engine-owned Name/Transform catalog publishes version-1
+schema IDs, property types, defaults, input ranges, units and scene-owner
+mutability. Pure validation reuses the existing component validators. Owned,
+immutable revisioned query pages provide bounded semantic inspection without a
+viewport or registry access. See the [inspection contract](../scene-inspection.md)
+and [07c handoff](../handoffs/07c-schema-inspection.md).
 
 Gate: schema/validation agreement, deterministic bounded query results, stale
 revision handling, owned snapshot lifetime and no EnTT or other backend leakage
 beyond the documented public math types.
-Extend the existing Name/Transform component entries with real schema/query
-coverage; assignment 10 connects FeatureWorld.
+The existing Name/Transform component entries gain real schema/query coverage in
+`shark.core.schema` and `shark.core.scene-query` (seed 1337, 20-second timeouts).
+Qualification includes earlier lifetime/hierarchy behavior and the current
+Windows/WSL protected target and package checks. Assignment 10 connects FeatureWorld.
+The final gate is PASS: Windows Debug/Release/ASan pass 62 CTests each, WSL CPU
+client Debug/ASan+UBSan pass 55 each, and WSL Server Debug/ASan+UBSan pass 40 each.
+Schema coverage has 9 cases/654 assertions; query coverage has 19 cases/3,916
+assertions. Source/link/license closure and isolated package execution pass.
 Services/transactions, terminal adapters and editor UI remain owned by 09, 15 and
 16. M02 follows the completed 07 checkpoint set and adds transport/session behavior.
