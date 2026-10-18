@@ -26,7 +26,7 @@ The [M01 hosted follow-up](handoffs/M01-ci-verification.md) and
 [durable gate evidence](coverage/evidence/M01-ci-gate.json) record actual runs,
 Docker/package qualification and the fifteen checks required at that revision. The
 [MMORPG execution plan](roadmap/mmorpg-plan.md) now places the next work in assignment
-03 following completion of 02 under the amended local scope. The [opt-in probe](graphics-probe.md) adds CPU checks to
+04c following local 03/04a/04b qualification. The [opt-in probe](graphics-probe.md) adds CPU checks to
 ordinary CI while graphics builds/device runs use explicit graphics presets.
 The historical job/test counts above remain tied to their recorded revisions.
 [ADR 0009](architecture/0009-windows-linux-platform-scope.md) removes Mac from
@@ -80,6 +80,11 @@ OS/CPU rows. MSVC supplies ASan only; UBSan is exercised by Linux Clang.
 Runtime-only has no CTest preset because Tests are disabled. That job explicitly
 builds the client boundary target and runs Runtime's real `--version` behavior.
 Ordinary CPU presets now also build Server and run its unit/lifecycle checks.
+04b adds the [window contract](window-lifecycle.md) and display-free window/CLI
+fixtures. Windows client builds compile the pinned GLFW backend but ordinary
+CTest never opens a window; explicit native smoke runs qualify the current PC.
+Linux CPU and isolated Server builds leave `SHARK_NATIVE_WINDOW=OFF`, preserving
+their device-free dependency set. No new hosted result is implied by local 04b work.
 Windows tests cover finite-duration shutdown; POSIX SIGINT/SIGTERM and readiness
 I/O failure checks execute on Linux, not through Windows `terminate()`.
 

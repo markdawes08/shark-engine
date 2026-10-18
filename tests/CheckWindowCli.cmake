@@ -1,0 +1,31 @@
+cmake_minimum_required(VERSION 3.28)
+# Every native-build command below fails validation before touching the display.
+foreach(shark_case IN ITEMS missing zero oversized negative conflicting extra)
+    if(shark_case STREQUAL "missing")
+        set(shark_args --window --window-ms)
+    elseif(shark_case STREQUAL "zero")
+        set(shark_args --window --window-ms 0)
+    elseif(shark_case STREQUAL "oversized")
+        set(shark_args --window --window-ms 60001)
+    elseif(shark_case STREQUAL "negative")
+        set(shark_args --window --window-ms -1)
+    elseif(shark_case STREQUAL "conflicting")
+        set(shark_args --window --help)
+    else()
+        set(shark_args --window --window-ms 1 --version)
+    endif()
+    execute_process(COMMAND "${SHARK_EXECUTABLE}" ${shark_args}
+        RESULT_VARIABLE shark_exit OUTPUT_VARIABLE shark_output ERROR_VARIABLE shark_error TIMEOUT 5)
+    if(NOT "${shark_exit}" STREQUAL "2" OR NOT shark_output STREQUAL "" OR
+       NOT shark_error MATCHES "invalid_argument" OR NOT shark_error MATCHES "Usage:")
+        message(FATAL_ERROR "Window ${shark_case} validation failed: ${shark_exit}; ${shark_output}; ${shark_error}")
+    endif()
+endforeach()
+if(NOT SHARK_NATIVE_WINDOW)
+    execute_process(COMMAND "${SHARK_EXECUTABLE}" --window --window-ms 1
+        RESULT_VARIABLE shark_exit OUTPUT_VARIABLE shark_output ERROR_VARIABLE shark_error TIMEOUT 5)
+    if(NOT "${shark_exit}" STREQUAL "1" OR NOT shark_output STREQUAL "" OR
+       NOT shark_error MATCHES "capability_unavailable")
+        message(FATAL_ERROR "Missing native window must report unavailable: ${shark_exit}; ${shark_output}; ${shark_error}")
+    endif()
+endif()

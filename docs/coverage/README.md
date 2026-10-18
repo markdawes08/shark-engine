@@ -24,8 +24,11 @@ simulation or production worker is inferred from those foundation tests.
 Assignment 04 follows the [window/input checkpoints](../roadmap/window-input-plan.md).
 The `client.raw-input` feature maps 04a's device-free state to `shark.client.input`
 in client-enabled builds; headless Server builds exclude it. The
-[04a handoff](../handoffs/04a-input-contracts.md) distinguishes CPU evidence from
-04b native window and 04c frame-loop qualification. Full `REQ-04` stays NOT_RUN.
+[04a handoff](../handoffs/04a-input-contracts.md) preserves its CPU evidence.
+04b's `client.native-window` feature adds owned GLFW lifecycle, CPU backend/CLI
+fixtures and explicit Windows smoke evidence in the
+[04b handoff](../handoffs/04b-native-window.md). Full `REQ-04` stays NOT_RUN pending
+04c frame/tick/pause qualification.
 
 The user selected a seamless open-world MMORPG. The
 [versioned execution plan](../roadmap/mmorpg-plan.md) and

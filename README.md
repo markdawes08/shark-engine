@@ -8,8 +8,9 @@ to available resources; other hardware, native Linux graphics, cloud deployment
 and Mac compatibility are outside current scope.
 The [MMORPG plan and existing-code assessment](docs/roadmap/mmorpg-plan.md) define
 the authoritative server, persistent world and staged client/server work.
-These are planned capabilities; the current engine is a CPU bootstrap with a
-separate opt-in graphics feasibility probe with analytic draw/compute/readback cases.
+These are planned capabilities; the current engine provides Core services, raw
+input and owned Windows windows, with a separate opt-in graphics feasibility
+probe containing analytic draw/compute/readback cases.
 The versioned
 [requirements manifest](docs/coverage/requirements.json) preserves assignment
 scope and acceptance criteria for clean checkouts.
@@ -21,22 +22,24 @@ define noninteractive tools, discoverable schemas and safe project handoff. Thos
 game-authoring interfaces remain planned; terminal build/test tools work today.
 
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
-**04a input contracts are complete; next is 04b native GLFW window integration.**
-See the [input guide](docs/input-contracts.md),
-[04a handoff](docs/handoffs/04a-input-contracts.md) and
+**04a input contracts and 04b native GLFW windows are complete; next is 04c
+frame-loop integration and qualification.** See the [input guide](docs/input-contracts.md),
+[window lifecycle guide](docs/window-lifecycle.md),
+[04b handoff](docs/handoffs/04b-native-window.md) and
 [window/input plan](docs/roadmap/window-input-plan.md). Full `REQ-04` remains
-NOT_RUN until 04b window integration and 04c frame-loop qualification pass.
+NOT_RUN pending fixed-tick input consumption, offline pause/step and final 04c qualification.
 See the [03c handoff](docs/handoffs/03c-time-and-work.md),
 [Core API guide](docs/core-contracts.md), [lifecycle guide](docs/application-lifecycle.md)
 and [timing/work guide](docs/time-and-work.md). Reusable CPU scheduling and bounded
-completions pass local qualification; native windows and frame-loop integration remain planned.
+completions pass local qualification; 04c will connect them to window/input consumption.
 Assignment 02 is complete under
 the current-machine scope. The headless server and Core/Client
 separation have passed local and hosted qualification, including deliberate test
 failure and restored success. The [graphics probe](docs/graphics-probe.md) adds
 locked dependencies, device inventory, validated GPU readbacks and bounded lifecycle; the
 [local graphics gate](docs/roadmap/graphics-plan.md) passes on both available GPUs. Editor/Runtime provide
-version and bootstrap help; Server adds validated startup, timed execution and
+version, bootstrap help and explicit `--window` native window mode;
+Server adds validated startup, timed execution and
 shutdown. Production rendering, scenes, gameplay and editor UI are future increments. CPU
 build results do not establish graphics or release-platform support.
 
@@ -81,6 +84,11 @@ cmake --preset windows-debug
 cmake --build --preset windows-debug
 ctest --preset windows-debug
 ```
+
+Open the native window with `build/windows-debug/bin/Editor.exe --window` or
+`build/windows-debug/bin/Runtime.exe --window`. These currently show a window
+without rendered game content or authoring UI; close it through its title bar.
+See the [window guide](docs/window-lifecycle.md) for bounded terminal smoke runs.
 
 Use `linux-debug` in the existing WSL Linux environment. Sanitizer, release and isolated
 Runtime configurations are documented in the build guide. All staging, commits

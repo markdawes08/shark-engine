@@ -33,8 +33,13 @@ belong to their existing integration owners. A captured input value does not
 authorize mutation of a server world. No separate scheduler or generic event bus
 is required. Source remains buildable without the ignored local roadmap.
 
-**04a input contracts are complete; next is 04b native GLFW window integration.** The
-[input guide](../input-contracts.md) specifies the delivered contract, and the
-[handoff](../handoffs/04a-input-contracts.md) records implementation and local
-verification. Full `REQ-04` remains NOT_RUN pending 04b/04c; do not advance to
-assignment 05.
+**04a input contracts and 04b native GLFW window integration are complete; next is
+04c frame-loop integration and qualification.** The [input guide](../input-contracts.md)
+and [04a handoff](../handoffs/04a-input-contracts.md) specify the raw input contract.
+The [window lifecycle guide](../window-lifecycle.md) and
+[04b handoff](../handoffs/04b-native-window.md) record ownership, callback translation,
+failure rollback and native Windows verification. Editor/Runtime expose an explicit
+`--window` mode; rendering and game-authoring UI remain with their later owners.
+Full `REQ-04` remains NOT_RUN pending 04c. Connect the existing Core clocks to
+input consumption across zero/multiple fixed ticks, offline pause/step and
+long-frame behavior, then close the current-machine gate before assignment 05.

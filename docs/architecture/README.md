@@ -25,11 +25,14 @@ are no longer requirements. Assignment 03 is split into the
 [03a handoff](../handoffs/03a-core-contracts.md) and
 [03b handoff](../handoffs/03b-application-lifecycle.md) record completed contracts
 and lifecycle verification. The [03c handoff](../handoffs/03c-time-and-work.md)
-closes scheduling, bounded work and the full Core gate. **04a input contracts are
-complete; next is 04b native GLFW window integration.** The
-[input guide](../input-contracts.md), [04a handoff](../handoffs/04a-input-contracts.md)
-and [checkpoint plan](../roadmap/window-input-plan.md) record the contract and scope.
-Full `REQ-04` remains NOT_RUN pending 04b/04c.
+closes scheduling, bounded work and the full Core gate. **04a input contracts and
+04b native GLFW window integration are complete; next is 04c frame-loop integration
+and qualification.** The [input guide](../input-contracts.md),
+[window lifecycle guide](../window-lifecycle.md),
+[04b handoff](../handoffs/04b-native-window.md) and
+[checkpoint plan](../roadmap/window-input-plan.md) record the contracts and scope.
+Editor/Runtime provide explicit `--window` mode without a production renderer or
+authoring UI. Full `REQ-04` remains NOT_RUN pending 04c.
 
 | Record | Decision |
 | --- | --- |

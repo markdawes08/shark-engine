@@ -36,7 +36,7 @@
       "license_files": [
         "LICENSE.md"
       ],
-      "owner_target": "GraphicsProbe (02a); later EngineClient only",
+      "owner_target": "EngineClient native window (04b) and GraphicsProbe (02)",
       "assignment": "02",
       "patches": [],
       "transitive_dependencies": [],
@@ -61,7 +61,7 @@
           "GLFW_BUILD_COCOA": "OFF"
         }
       },
-      "notes": "Uses OS window-system headers/libraries; Linux desktop profile is X11. Gamepad mapping update is a manual upstream target and is never part of the default build."
+      "notes": "Shared static pin for the Windows EngineClient native window and opt-in graphics probe. Device-free Client and Core/Server-only configurations do not populate GLFW. Uses OS window-system headers/libraries; the retained Linux probe profile is X11. Gamepad mapping update is a manual upstream target and is never part of the default build."
     },
     "VulkanHeaders": {
       "version": "1.4.352",

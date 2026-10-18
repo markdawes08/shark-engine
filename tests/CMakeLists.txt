@@ -11,7 +11,8 @@ add_executable(Tests
     server_tests.cpp)
 target_link_libraries(Tests PRIVATE EngineCore Catch2::Catch2WithMain)
 if(TARGET EngineClient)
-    target_sources(Tests PRIVATE client_input_tests.cpp)
+    target_sources(Tests PRIVATE client_input_tests.cpp client_window_tests.cpp client_window_launch_tests.cpp)
+    target_include_directories(Tests PRIVATE "${PROJECT_SOURCE_DIR}/engine/client/src")
     target_link_libraries(Tests PRIVATE EngineClient)
 endif()
 target_compile_definitions(Tests PRIVATE
@@ -38,6 +39,16 @@ set_tests_properties(shark.core.work PROPERTIES LABELS "cpu;unit;server" TIMEOUT
 if(TARGET EngineClient)
     add_test(NAME shark.client.input COMMAND Tests "[input]" --rng-seed 1337)
     set_tests_properties(shark.client.input PROPERTIES LABELS "cpu;unit;client" TIMEOUT 15)
+    add_test(NAME shark.client.window COMMAND Tests "[window]" --rng-seed 1337)
+    set_tests_properties(shark.client.window PROPERTIES LABELS "cpu;unit;client" TIMEOUT 20)
+    if(SHARK_NATIVE_WINDOW)
+        # Explicit developer smoke, never launched by ordinary display-free CTest.
+        add_executable(WindowSmoke window_smoke.cpp)
+        target_include_directories(WindowSmoke PRIVATE "${PROJECT_SOURCE_DIR}/engine/client/src")
+        target_link_libraries(WindowSmoke PRIVATE EngineClient)
+        shark_configure_target(WindowSmoke)
+        shark_classify_target(WindowSmoke test)
+    endif()
 endif()
 
 foreach(shark_application IN ITEMS Runtime Editor)
@@ -51,6 +62,13 @@ foreach(shark_application IN ITEMS Runtime Editor)
                 -P "${CMAKE_CURRENT_SOURCE_DIR}/CheckCli.cmake")
         set_tests_properties("shark.${shark_application_lower}.cli" PROPERTIES
             LABELS "cpu;integration" TIMEOUT 30)
+        add_test(NAME "shark.${shark_application_lower}.window-cli"
+            COMMAND "${CMAKE_COMMAND}"
+                "-DSHARK_EXECUTABLE=$<TARGET_FILE:${shark_application}>"
+                "-DSHARK_NATIVE_WINDOW=${SHARK_NATIVE_WINDOW}"
+                -P "${CMAKE_CURRENT_SOURCE_DIR}/CheckWindowCli.cmake")
+        set_tests_properties("shark.${shark_application_lower}.window-cli" PROPERTIES
+            LABELS "cpu;integration;client" TIMEOUT 30)
     endif()
 endforeach()
 add_test(NAME shark.boundary.fixture

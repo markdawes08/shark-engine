@@ -14,10 +14,13 @@ M01 separates static `EngineCore`, `EngineClient` and `EngineTools` libraries,
 retains `Engine` as an INTERFACE client composition target, and adds `Server`
 alongside `Editor`, `Runtime` and Catch2 `Tests`. Core contains version/argument
 behavior and the strict server configuration parser. Client contains bootstrap
-help presentation and, in 04a, device-free raw input state; it has no graphics yet.
+help presentation, 04a device-free raw input and 04b owned native Windows GLFW
+windows; it has no production graphics yet.
 The [input contract](../input-contracts.md) and
 [04 checkpoint plan](../roadmap/window-input-plan.md) keep native GLFW integration
-separate from CPU input tests. Raw input remains in Client, outside Core/Server.
+separate from CPU input tests. The [window lifecycle](../window-lifecycle.md)
+implements the native owner while retaining a device-free test/backend path.
+Raw input and window code remain in Client, outside Core/Server.
 Server has a real idle lifecycle,
 bounded execution and signal-driven shutdown. `runtime-only` proves client
 exclusion of authoring and tests; `server-only` enforces the stricter Core boundary.

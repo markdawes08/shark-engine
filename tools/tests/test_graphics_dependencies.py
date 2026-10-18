@@ -1,7 +1,8 @@
-"""Reject invalid graphics configurations before any dependency population."""
+"""Check window/graphics options and reject invalid inputs before population."""
 
 from pathlib import Path
 import argparse
+import os
 import subprocess
 import tempfile
 import unittest
@@ -43,6 +44,46 @@ class GraphicsDependencyTests(unittest.TestCase):
                     [f"-DFETCHCONTENT_SOURCE_DIR_{dependency}={ROOT}"],
                     "source overrides are disabled; use the locked archive/cache",
                 )
+
+    def test_headless_native_window_conflict_precedes_dependency_setup(self):
+        self.configure_failure(
+            ["-DSHARK_BUILD_CLIENT=OFF", "-DSHARK_BUILD_GRAPHICS_PROBE=OFF",
+             "-DSHARK_NATIVE_WINDOW=ON", "-DSHARK_BUILD_TESTS=OFF"],
+            "SHARK_NATIVE_WINDOW requires SHARK_BUILD_CLIENT=ON",
+        )
+
+    def test_native_window_rejects_override_or_unsupported_host_before_download(self):
+        self.configure_failure(
+            ["-DSHARK_BUILD_GRAPHICS_PROBE=OFF", "-DSHARK_NATIVE_WINDOW=ON",
+             f"-DFETCHCONTENT_SOURCE_DIR_GLFW={ROOT}"],
+            ("source overrides are disabled; use the locked archive/cache"
+             if os.name == "nt" else "SHARK_NATIVE_WINDOW is supported only on Windows"),
+        )
+
+    def test_device_free_configurations_need_no_c_compiler_or_dependencies(self):
+        for client in (False, True):
+            with self.subTest(client=client), tempfile.TemporaryDirectory(
+                prefix="shark-device-free-dependencies-"
+            ) as temporary:
+                build = Path(temporary) / "build"
+                command = [
+                    OPTIONS.cmake, "-S", str(ROOT), "-B", str(build), "-G", "Ninja",
+                    f"-DCMAKE_MAKE_PROGRAM={OPTIONS.ninja}",
+                    f"-DCMAKE_CXX_COMPILER={OPTIONS.compiler}",
+                    f"-DCMAKE_C_COMPILER={Path(temporary) / 'missing-c-compiler'}",
+                    f"-DSHARK_BUILD_CLIENT={'ON' if client else 'OFF'}",
+                    "-DSHARK_BUILD_EDITOR=OFF", "-DSHARK_BUILD_TESTS=OFF",
+                    "-DSHARK_BUILD_GRAPHICS_PROBE=OFF",
+                    "-DFETCHCONTENT_FULLY_DISCONNECTED=ON",
+                ]
+                if client:
+                    command.append("-DSHARK_NATIVE_WINDOW=OFF")
+                result = subprocess.run(command, text=True, capture_output=True, timeout=30)
+                output = result.stdout + result.stderr
+                self.assertEqual(result.returncode, 0, output)
+                self.assertFalse((build / "_deps").exists(), output)
+                cache = (build / "CMakeCache.txt").read_text(encoding="utf-8")
+                self.assertIn("SHARK_NATIVE_WINDOW:BOOL=OFF", cache)
 
 
 if __name__ == "__main__":

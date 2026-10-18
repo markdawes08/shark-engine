@@ -43,8 +43,11 @@ The [03a handoff](../handoffs/03a-core-contracts.md),
 [03b handoff](../handoffs/03b-application-lifecycle.md) and
 [03c handoff](../handoffs/03c-time-and-work.md) record interfaces, exact evidence
 and limits. Assignment 04 follows the [window/input plan](window-input-plan.md).
-**04a input contracts are complete; next is 04b native GLFW window integration.**
-The [input guide](../input-contracts.md) and
-[04a handoff](../handoffs/04a-input-contracts.md) describe that separate increment.
-Full `REQ-04` remains NOT_RUN pending 04b/04c. Reuse the tested Core timing policies;
-native window handling and frame-loop integration remain assignment 04 work.
+**04a input contracts and 04b native GLFW window integration are complete; next is
+04c frame-loop integration and qualification.** The [input guide](../input-contracts.md),
+[window lifecycle guide](../window-lifecycle.md) and
+[04b handoff](../handoffs/04b-native-window.md) describe these separate increments.
+Full `REQ-04` remains NOT_RUN pending 04c. Reuse the tested Core timing policies
+for fixed-tick input consumption, offline pause/step and long-frame behavior.
+The explicit Editor/Runtime `--window` mode supplies the native window; rendering
+and game-authoring UI remain future work.

@@ -1,0 +1,27 @@
+include_guard(GLOBAL)
+include(LockedClientDependencies)
+
+function(shark_validate_window_inputs)
+    shark_read_client_dependency_lock(shark_client_lock)
+    shark_validate_client_dependency(GLFW)
+endfunction()
+
+function(shark_setup_window_dependencies)
+    if(NOT SHARK_BUILD_CLIENT OR NOT (SHARK_NATIVE_WINDOW OR SHARK_BUILD_GRAPHICS_PROBE))
+        message(FATAL_ERROR "Window dependencies require a native client or explicit graphics probe")
+    endif()
+    # The retained Linux graphics probe shares this pin; native EngineClient
+    # window support itself is restricted to Windows by the top-level option.
+    if(NOT CMAKE_SYSTEM_NAME MATCHES "^(Windows|Linux)$")
+        message(FATAL_ERROR "Window dependencies target Windows and Linux only")
+    endif()
+    if(TARGET SharkWindowDependencies)
+        return()
+    endif()
+    shark_read_client_dependency_lock(shark_client_lock)
+    shark_client_locked_dependency(GLFW)
+    shark_classify_client_dependency_directory("${SHARK_GLFW_SOURCE_DIR}")
+    add_library(SharkWindowDependencies INTERFACE)
+    target_link_libraries(SharkWindowDependencies INTERFACE glfw)
+    shark_classify_target(SharkWindowDependencies client)
+endfunction()

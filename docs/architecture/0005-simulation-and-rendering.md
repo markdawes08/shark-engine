@@ -171,8 +171,10 @@ client closes that session; it does not discard the authoritative world.
 
 04a implements local held-control release and cancellation of unconsumed input on
 focus loss in the [client input contract](../input-contracts.md). It never changes
-a scheduler or sends a network message. Native focus callbacks land in 04b,
-frame/tick latching and offline pause in 04c, and neutral network intents in M02/M04.
+a scheduler or sends a network message. 04b connects native focus/iconify callbacks
+through the [owned window](../window-lifecycle.md); its demonstration only pumps
+events. Frame/tick latching and offline pause remain 04c, and neutral network
+intents remain M02/M04.
 
 ## Simulation ownership and mutation phases
 

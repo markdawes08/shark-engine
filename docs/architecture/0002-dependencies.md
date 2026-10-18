@@ -6,6 +6,12 @@ Scope: Assignment 00. Assignment 01 implements the build and lock mechanism; lat
 
 ## Decision
 
+04b reuses the existing exact GLFW pin through `SharkWindowDependencies` for
+Windows EngineClient windows. Shared locked source handling also serves the
+opt-in graphics probe. `SHARK_NATIVE_WINDOW` gates all native window population;
+ordinary clients fetch no Vulkan/NVRHI, and Core/Server plus WSL CPU-only clients
+never discover or download GLFW. See the [window guide](../window-lifecycle.md).
+
 03a uses native OS entropy for UUIDv4 creation: Windows SDK `bcrypt` through
 an explicitly classified Core-only imported target, and Linux `getrandom`
 through libc. This adds no fetched dependency. Installed compiler/SDK and

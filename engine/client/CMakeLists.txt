@@ -1,4 +1,11 @@
-add_library(EngineClient STATIC src/bootstrap.cpp src/input.cpp)
+add_library(EngineClient STATIC
+    src/bootstrap.cpp src/input.cpp src/window.cpp src/window_events.cpp src/window_launch.cpp)
+if(SHARK_NATIVE_WINDOW)
+    target_sources(EngineClient PRIVATE src/window_glfw.cpp)
+    target_link_libraries(EngineClient PRIVATE SharkWindowDependencies)
+else()
+    target_sources(EngineClient PRIVATE src/window_unavailable.cpp)
+endif()
 target_include_directories(EngineClient PUBLIC include)
 target_link_libraries(EngineClient PUBLIC EngineCore)
 shark_configure_target(EngineClient)

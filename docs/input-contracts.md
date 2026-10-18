@@ -10,7 +10,7 @@ nor pauses or mutates an authoritative world.
 
 `shark::client::InputState` belongs to one client/window owner. All calls are
 serialized on its controlling thread; there is no synchronization or worker.
-Tests and the future native adapter use the same `on_key`, `on_mouse_button`,
+Tests and the [04b native adapter](window-lifecycle.md) use the same `on_key`, `on_mouse_button`,
 `on_cursor`, `on_scroll`, `on_text` and `on_focus` methods. There is no hidden OS
 polling, event bus, provider SDK or dependency on a display.
 
@@ -18,8 +18,8 @@ All ingestion, capture and query methods are `noexcept` and perform no allocatio
 logging, blocking or user callbacks. State uses fixed inline arrays. Ordinary
 events take constant work; focus loss and capture visit the fixed catalog.
 `InputEventResult` reports accepted, ignored-unfocused, invalid-argument/transition
-or overflow outcomes without constructing an allocating error inside a future C
-callback. The 04b adapter must handle or translate failures into the existing
+or overflow outcomes without constructing an allocating error inside a native C
+callback. The 04b adapter aggregates rejection counts and translates failures into
 owned diagnostics outside that callback. These C++ enums are not a versioned
 authoring or gameplay-wire protocol.
 
@@ -28,7 +28,7 @@ authoring or gameplay-wire protocol.
 `Key` names 120 engine-owned keyboard locations, including letters, digits,
 navigation, function/keypad keys and separate left/right modifiers. `MouseButton`
 names eight buttons. Neither enum uses native GLFW values, characters or durable
-serialized IDs; 04b owns the explicit native mapping. `unknown`, `count` and
+serialized IDs; 04b implements the explicit native mapping. `unknown`, `count` and
 out-of-range casts are invalid. Snapshot queries return neutral state for an
 invalid ID; `valid()` distinguishes invalid queries from inactive valid controls.
 
@@ -82,7 +82,8 @@ does not grant a client control over server time; offline pause remains 04c work
 Cursor observations use finite double-precision content-area coordinates: origin
 top-left, +x right, +y down. Negative/outside coordinates are allowed. They are not
 framebuffer pixels or relative/raw mouse-motion deltas. Native scale conversion,
-framebuffer sizes, cursor capture and high-DPI smoke evidence belong to 04b.
+framebuffer sizes and high-DPI smoke evidence belong to the 04b window owner.
+Relative/disabled cursor capture remains unimplemented.
 
 Scroll uses fractional native units on two axes. Nonfinite arguments reject
 without mutation. Finite deltas accumulate until capture; if either sum becomes
@@ -108,4 +109,5 @@ configurations exclude its source, header and test. CPU client tests can execute
 in the existing minimal WSL userspace without a display; that proves the contract,
 not native Linux window support. The
 [04a handoff](handoffs/04a-input-contracts.md) records exact results and limitations.
-No editor UI, authored command, real keyboard interaction or GLFW window is claimed.
+Those CPU fixtures do not establish native-window or physical keyboard behavior;
+the [04b window handoff](handoffs/04b-native-window.md) records separate native evidence.
