@@ -81,9 +81,8 @@ no second computer or specific provider integration is part of the requirement.
 ## Reviewable parts of assignment 15
 
 Keep 15 as one manifest owner and final gate, but implement it in these dependent
-parts. This plan does not start assignment 15; assignment 02 closed under the
-explicit current-machine scope amendment and assignment 03 follows its
-[Core checkpoint plan](core-plan.md).
+parts. This plan does not start assignment 15. Assignments 02/03 and checkpoint
+04a are complete; next is 04b under the [window/input plan](window-input-plan.md).
 
 1. **Discovery and read-only access:** one-shot CLI + versioned stdio framing,
    clean stdout, capability/schema discovery, bounded project/scene queries,
@@ -115,7 +114,11 @@ M01's hosted qualification is complete. Assignment 02's recorded local evidence
 now closes its gate under ADR 0010; assignment 03 is complete across
 [03a contracts, 03b lifecycle and 03c scheduling](core-plan.md).
 [03c verification](../handoffs/03c-time-and-work.md) closes the local Core gate.
-Assignment 04 window/input integration is next and reuses those timing contracts. The
+**04a input contracts are complete; next is 04b native GLFW window integration.**
+The [input guide](../input-contracts.md), [04a handoff](../handoffs/04a-input-contracts.md)
+and [window/input plan](window-input-plan.md) define injectable device-free input
+and the remaining integration. Full `REQ-04` remains NOT_RUN pending 04b/04c;
+these contracts do not provide game-authoring commands. The
 [final local handoff](../handoffs/02d-final-verification.md) preserves full local
 Windows lifecycle runs, bounded portable terminal launchers and isolated Ubuntu
 CPU/package checks. Former external GPU and independent clean-machine gates are

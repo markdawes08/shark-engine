@@ -74,8 +74,12 @@ closed under the explicit current-machine scope amendment; assignment 03 is comp
 The [Core checkpoint plan](core-plan.md) separates 03a contracts, 03b lifecycle
 and 03c scheduling/bounded work. All three pass; the
 [03c handoff](../handoffs/03c-time-and-work.md) records the full local Core gate
-without adding game services. Assignment 04 window/input integration is next,
-reusing the distinct offline and authoritative scheduling policies.
+without adding game services. **04a input contracts are complete; next is 04b
+native GLFW window integration** in the [window/input plan](window-input-plan.md).
+The [input guide](../input-contracts.md) and
+[04a handoff](../handoffs/04a-input-contracts.md) describe device-free local input;
+it does not grant gameplay authority. Full `REQ-04` remains NOT_RUN pending 04b/04c,
+which reuse the distinct offline and authoritative scheduling policies.
 The [final local handoff](../handoffs/02d-final-verification.md)
 preserves the Windows lifecycle and isolated Ubuntu CPU/package evidence. The
 [graphics checkpoint plan](graphics-plan.md) applies the new local gate to those

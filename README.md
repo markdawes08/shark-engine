@@ -21,11 +21,15 @@ define noninteractive tools, discoverable schemas and safe project handoff. Thos
 game-authoring interfaces remain planned; terminal build/test tools work today.
 
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
-**Next: 04, window, raw input and frame scheduling integration.**
+**04a input contracts are complete; next is 04b native GLFW window integration.**
+See the [input guide](docs/input-contracts.md),
+[04a handoff](docs/handoffs/04a-input-contracts.md) and
+[window/input plan](docs/roadmap/window-input-plan.md). Full `REQ-04` remains
+NOT_RUN until 04b window integration and 04c frame-loop qualification pass.
 See the [03c handoff](docs/handoffs/03c-time-and-work.md),
 [Core API guide](docs/core-contracts.md), [lifecycle guide](docs/application-lifecycle.md)
 and [timing/work guide](docs/time-and-work.md). Reusable CPU scheduling and bounded
-completions pass local qualification; window/input integration remains next.
+completions pass local qualification; native windows and frame-loop integration remain planned.
 Assignment 02 is complete under
 the current-machine scope. The headless server and Core/Client
 separation have passed local and hosted qualification, including deliberate test

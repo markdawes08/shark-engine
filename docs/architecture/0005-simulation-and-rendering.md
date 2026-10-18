@@ -169,6 +169,11 @@ neutral/released input state; local pause-on-focus-loss defaults on only offline
 Reconnect does not rewind or restore the server from client state. Stopping a
 client closes that session; it does not discard the authoritative world.
 
+04a implements local held-control release and cancellation of unconsumed input on
+focus loss in the [client input contract](../input-contracts.md). It never changes
+a scheduler or sends a network message. Native focus callbacks land in 04b,
+frame/tick latching and offline pause in 04c, and neutral network intents in M02/M04.
+
 ## Simulation ownership and mutation phases
 
 Every authoritative region has one designated simulation owner/writer. An initial

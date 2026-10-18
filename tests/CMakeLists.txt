@@ -10,6 +10,10 @@ add_executable(Tests
     shutdown_signal_tests.cpp
     server_tests.cpp)
 target_link_libraries(Tests PRIVATE EngineCore Catch2::Catch2WithMain)
+if(TARGET EngineClient)
+    target_sources(Tests PRIVATE client_input_tests.cpp)
+    target_link_libraries(Tests PRIVATE EngineClient)
+endif()
 target_compile_definitions(Tests PRIVATE
     SHARK_EXPECTED_VERSION="${PROJECT_VERSION}"
     SHARK_INJECT_TEST_FAILURE=$<BOOL:${SHARK_INJECT_TEST_FAILURE}>)
@@ -31,6 +35,10 @@ add_test(NAME shark.core.timing COMMAND Tests "[timing]" --rng-seed 1337)
 set_tests_properties(shark.core.timing PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
 add_test(NAME shark.core.work COMMAND Tests "[work]" --rng-seed 1337)
 set_tests_properties(shark.core.work PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
+if(TARGET EngineClient)
+    add_test(NAME shark.client.input COMMAND Tests "[input]" --rng-seed 1337)
+    set_tests_properties(shark.client.input PROPERTIES LABELS "cpu;unit;client" TIMEOUT 15)
+endif()
 
 foreach(shark_application IN ITEMS Runtime Editor)
     if(TARGET "${shark_application}")

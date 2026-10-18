@@ -21,6 +21,12 @@ The [03c timing/work](../time-and-work.md) features map to `shark.core.timing`
 and `shark.core.work`, using controlled clocks and real thread fixtures. No world
 simulation or production worker is inferred from those foundation tests.
 
+Assignment 04 follows the [window/input checkpoints](../roadmap/window-input-plan.md).
+The `client.raw-input` feature maps 04a's device-free state to `shark.client.input`
+in client-enabled builds; headless Server builds exclude it. The
+[04a handoff](../handoffs/04a-input-contracts.md) distinguishes CPU evidence from
+04b native window and 04c frame-loop qualification. Full `REQ-04` stays NOT_RUN.
+
 The user selected a seamless open-world MMORPG. The
 [versioned execution plan](../roadmap/mmorpg-plan.md) and
 [ADR 0007](../architecture/0007-mmorpg-architecture.md) expand the original 00-35

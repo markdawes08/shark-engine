@@ -21,9 +21,13 @@ Assignment 01's hosted CPU and red/green gate is complete; see the
 complete. The headless Server bootstrap and Core/Client
 split are implemented; the [M01 handoff](docs/handoffs/M01-headless-server.md) records
 local qualification and the [hosted follow-up](docs/handoffs/M01-ci-verification.md)
-records the completed native CPU, headless Docker and red/green gate. The next
-assignment is 04, window/raw input and frame scheduling integration. Assignment 03
-and its [Core checkpoints](docs/roadmap/core-plan.md) are complete. Consult the
+records the completed native CPU, headless Docker and red/green gate. **04a input
+contracts are complete; next is 04b native GLFW window integration.** Follow the
+[window/input checkpoint plan](docs/roadmap/window-input-plan.md),
+[input contract](docs/input-contracts.md) and
+[04a handoff](docs/handoffs/04a-input-contracts.md). Full `REQ-04` remains NOT_RUN
+pending 04b/04c. Assignment 03 and its [Core checkpoints](docs/roadmap/core-plan.md)
+are complete. Consult the
 [03c handoff](docs/handoffs/03c-time-and-work.md) for final local qualification,
 the [lifecycle guide](docs/application-lifecycle.md) before extending ownership,
 and the [time/work guide](docs/time-and-work.md) before scheduling or queue changes.
@@ -143,7 +147,7 @@ missing runner, graphics device or audio device is NOT RUN. CPU starter tests do
 not establish working graphics, audio or a supported platform. Never regenerate
 image baselines automatically to hide failures.
 
-Current labels are `cpu`, `unit`, `integration`, `boundary`, `server`, `contract`, `tooling`
+Current labels are `cpu`, `unit`, `integration`, `boundary`, `server`, `client`, `contract`, `tooling`
 and opt-in `graphics-probe` (CPU-safe CLI checks only, not GPU qualification).
 `ctest --preset windows-debug -L boundary` runs client/Core/Server boundary checks;
 `-L unit` runs starter engine tests and the normal failure-propagation sentinel.
@@ -151,7 +155,9 @@ and opt-in `graphics-probe` (CPU-safe CLI checks only, not GPU qualification).
 ## Protected target and dependency boundaries
 
 EngineCore is the shared static bootstrap library. EngineClient is a separate
-static presentation library, currently providing client help text. Engine is an
+static presentation library, providing client help text and device-free raw input
+state under the [input contract](docs/input-contracts.md). Native window integration
+remains separate; raw input is never a Server gameplay protocol. Engine is an
 interface composition target that links EngineClient and transitively EngineCore.
 Server links only EngineCore. Server/Core exclude window/GPU/audio/authoring
 libraries at configure/download, link and package time. `server-only` builds a

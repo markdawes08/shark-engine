@@ -11,6 +11,11 @@ uses `shark.core.lifecycle`, also with seed 1337, for ownership and failure/clea
 fixtures. [03c timing/work](time-and-work.md) adds `shark.core.timing` and
 `shark.core.work`, each with seed 1337 and a 20-second CTest timeout. The latter
 uses real bounded producer/consumer threads; it does not start production workers.
+04a adds [raw input contracts](input-contracts.md) in EngineClient.
+`shark.client.input` uses seed 1337 and a 15-second timeout, registered only in
+client-enabled builds. It runs without GLFW, a display or real keyboard input;
+Server-only configurations exclude its source and test. The
+[04 plan](roadmap/window-input-plan.md) leaves native window integration to 04b.
 02a/02b add a separate opt-in [graphics probe](graphics-probe.md) with locked
 dependencies, terminal diagnostics, analytic GPU cases and offline validation tools.
 02d adds matching `graphics-windows-release` and `graphics-linux-release`
@@ -131,6 +136,9 @@ scene-runner/export commands will be added with their owning increments.
 | Current CTest cases | Labels |
 | --- | --- |
 | `shark.unit`, `shark.failure-sentinel` | `cpu`, `unit` |
+| `shark.core.contracts` | `cpu`, `unit` |
+| `shark.core.lifecycle`, `shark.core.timing`, `shark.core.work` | `cpu`, `unit`, `server` |
+| `shark.client.input` (client-enabled builds only) | `cpu`, `unit`, `client` |
 | `shark.runtime.cli`, `shark.editor.cli` | `cpu`, `integration` |
 | `shark.server.unit`, `shark.server.lifecycle` | `cpu`, `server`, plus `unit` or `integration` |
 | `shark.boundary`, `shark.boundary.fixture` | `cpu`, `boundary` |

@@ -1,4 +1,4 @@
-add_library(EngineClient STATIC src/bootstrap.cpp)
+add_library(EngineClient STATIC src/bootstrap.cpp src/input.cpp)
 target_include_directories(EngineClient PUBLIC include)
 target_link_libraries(EngineClient PUBLIC EngineCore)
 shark_configure_target(EngineClient)

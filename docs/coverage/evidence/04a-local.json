@@ -1,0 +1,1375 @@
+{
+  "schema_version": 1,
+  "checkpoint": "04a",
+  "status": "PASS",
+  "recorded_utc": "2026-10-18T05:22:27.062294+00:00",
+  "base_revision": "f6605b8178f59e70eac1b32e2e78f6cfb310c370",
+  "result_revision": "uncommitted worktree; user owns staging, commits and pushes",
+  "qualification_profile": "current-machine",
+  "overall_REQ_04": "NOT_RUN",
+  "next_checkpoint": "04b",
+  "prior_core_gate": {
+    "path": "docs/coverage/evidence/03c-local.json",
+    "sha256": "2cd5cdcf759351d77340db17773e37df02339ca96c5985c9d80e773ec12ce9cb"
+  },
+  "source_inputs": [
+    {
+      "path": "engine/client/CMakeLists.txt",
+      "sha256": "e2cc8ea3093d316bd54cddecbadf3fa502fe78e4e06f99211d77ea9c9c2002de"
+    },
+    {
+      "path": "engine/client/include/shark/client/input.hpp",
+      "sha256": "54edddf942f0b1fc5c5b038da86284aada0356318b13ad5dddf27b31208e9234"
+    },
+    {
+      "path": "engine/client/src/input.cpp",
+      "sha256": "c6c5759fb4267a621cf5af099eb65d44c13f9f67efe08aaa47d868c200ff0fab"
+    },
+    {
+      "path": "tests/CMakeLists.txt",
+      "sha256": "069a83c139fd5c6fdb6f1b3e5b4d94c96df128f3c20bb9d874697ef0fedd912b"
+    },
+    {
+      "path": "tests/client_input_tests.cpp",
+      "sha256": "4010cafc82c8811f59060059413dbee8bdbb77f8b53ae74725926eb334755e9c"
+    },
+    {
+      "path": "tools/tests/test_graphics_package_linux.py",
+      "sha256": "605882f0a42eb9623f6c7005be91db1414cb086d5c89653769a2ae0dd0bacfbd"
+    }
+  ],
+  "windows_platform": {
+    "system": "Windows",
+    "release": "11",
+    "version": "10.0.26200",
+    "machine": "AMD64"
+  },
+  "windows_environment": {
+    "VCToolsVersion": "14.51.36231",
+    "WindowsSDKVersion": "10.0.28000.0\\",
+    "VisualStudioVersion": "18.0"
+  },
+  "tool_versions": {
+    "cmake": "3.31.10",
+    "ninja": "1.13.2",
+    "clang_format": "20.1.8",
+    "windows_python": "3.13.5",
+    "wsl_python": "3.12.3",
+    "wsl_gcc": "13.3.0",
+    "wsl_clang": "18.1.3"
+  },
+  "resolved_ctests_passed_total": 176,
+  "windows": [
+    {
+      "preset": "windows-debug",
+      "status": "PASS",
+      "started_utc": "2026-10-18T05:13:34.449695+00:00",
+      "finished_utc": "2026-10-18T05:14:20.778259+00:00",
+      "phases": [
+        {
+          "phase": "configure",
+          "command": [
+            "cmake",
+            "--preset",
+            "windows-debug",
+            "-DSHARK_INJECT_TEST_FAILURE=OFF",
+            "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 1.145,
+          "status": "PASS"
+        },
+        {
+          "phase": "build",
+          "command": [
+            "cmake",
+            "--build",
+            "--preset",
+            "windows-debug",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 11.017,
+          "status": "PASS"
+        },
+        {
+          "phase": "test",
+          "command": [
+            "ctest",
+            "--preset",
+            "windows-debug",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "C:\\Users\\mrkda\\Projects\\shark\\out\\ci\\windows-debug\\ctest.xml"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 31.968,
+          "status": "PASS"
+        }
+      ],
+      "full_suite": {
+        "path": "out/ci/windows-debug/ctest.xml",
+        "sha256": "d68fe0968b928ac55dd4c2c8359d157f70c704eb7d76042aa523190210ff4ff0",
+        "ctests_passed": 26,
+        "ctests_failed": 0,
+        "failed_tests": [],
+        "families": {
+          "shark.core.contracts": {
+            "assertions": 3643,
+            "cases": 42,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.lifecycle": {
+            "assertions": 2568,
+            "cases": 26,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.timing": {
+            "assertions": 30743,
+            "cases": 33,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.work": {
+            "assertions": 2635,
+            "cases": 11,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.client.input": {
+            "assertions": 34172,
+            "cases": 17,
+            "skipped": 0,
+            "seed": 1337
+          }
+        }
+      },
+      "toolchain": {
+        "path": "out/ci/windows-debug/toolchain.json",
+        "sha256": "2da38f136e77cb117185fc53143d48adde6171771943a3102cf460d9284ac5e0"
+      }
+    },
+    {
+      "preset": "windows-release",
+      "status": "PASS",
+      "started_utc": "2026-10-18T05:14:20.942978+00:00",
+      "finished_utc": "2026-10-18T05:15:05.833908+00:00",
+      "phases": [
+        {
+          "phase": "configure",
+          "command": [
+            "cmake",
+            "--preset",
+            "windows-release",
+            "-DSHARK_INJECT_TEST_FAILURE=OFF",
+            "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 1.373,
+          "status": "PASS"
+        },
+        {
+          "phase": "build",
+          "command": [
+            "cmake",
+            "--build",
+            "--preset",
+            "windows-release",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 11.384,
+          "status": "PASS"
+        },
+        {
+          "phase": "test",
+          "command": [
+            "ctest",
+            "--preset",
+            "windows-release",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "C:\\Users\\mrkda\\Projects\\shark\\out\\ci\\windows-release\\ctest.xml"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 29.67,
+          "status": "PASS"
+        }
+      ],
+      "full_suite": {
+        "path": "out/ci/windows-release/ctest.xml",
+        "sha256": "60b217f9c823f60a905386144b4011afb874c292e60129d769ba4bf8433cb894",
+        "ctests_passed": 26,
+        "ctests_failed": 0,
+        "failed_tests": [],
+        "families": {
+          "shark.core.contracts": {
+            "assertions": 3643,
+            "cases": 42,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.lifecycle": {
+            "assertions": 2568,
+            "cases": 26,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.timing": {
+            "assertions": 30743,
+            "cases": 33,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.work": {
+            "assertions": 2635,
+            "cases": 11,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.client.input": {
+            "assertions": 34172,
+            "cases": 17,
+            "skipped": 0,
+            "seed": 1337
+          }
+        }
+      },
+      "toolchain": {
+        "path": "out/ci/windows-release/toolchain.json",
+        "sha256": "f7712fdc2e93a4550470e31c6f32ec9031a5ab344e9c0301b74508b6769dfddc"
+      }
+    },
+    {
+      "preset": "windows-asan",
+      "status": "PASS",
+      "started_utc": "2026-10-18T05:15:05.976800+00:00",
+      "finished_utc": "2026-10-18T05:15:59.414123+00:00",
+      "phases": [
+        {
+          "phase": "configure",
+          "command": [
+            "cmake",
+            "--preset",
+            "windows-asan",
+            "-DSHARK_INJECT_TEST_FAILURE=OFF",
+            "-DPython3_EXECUTABLE=C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 1.105,
+          "status": "PASS"
+        },
+        {
+          "phase": "build",
+          "command": [
+            "cmake",
+            "--build",
+            "--preset",
+            "windows-asan",
+            "--parallel",
+            "1"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 19.369,
+          "status": "PASS"
+        },
+        {
+          "phase": "test",
+          "command": [
+            "ctest",
+            "--preset",
+            "windows-asan",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "C:\\Users\\mrkda\\Projects\\shark\\out\\ci\\windows-asan\\ctest.xml"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 30.906,
+          "status": "PASS"
+        }
+      ],
+      "full_suite": {
+        "path": "out/ci/windows-asan/ctest.xml",
+        "sha256": "35decac7a6d157312236524dc5094cedd4bec509b348a371bf5b9918f814ee7c",
+        "ctests_passed": 26,
+        "ctests_failed": 0,
+        "failed_tests": [],
+        "families": {
+          "shark.core.contracts": {
+            "assertions": 3643,
+            "cases": 42,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.lifecycle": {
+            "assertions": 2568,
+            "cases": 26,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.timing": {
+            "assertions": 30743,
+            "cases": 33,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.work": {
+            "assertions": 2635,
+            "cases": 11,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.client.input": {
+            "assertions": 34172,
+            "cases": 17,
+            "skipped": 0,
+            "seed": 1337
+          }
+        }
+      },
+      "toolchain": {
+        "path": "out/ci/windows-asan/toolchain.json",
+        "sha256": "9b72b4e3474572863bf8881535b05a77affa59e1e0b2877c199d45939652185f"
+      }
+    }
+  ],
+  "windows_commands": [
+    {
+      "name": "windows-debug",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/ci.py",
+        "--preset",
+        "windows-debug",
+        "--jobs",
+        "2"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "windows-release",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/ci.py",
+        "--preset",
+        "windows-release",
+        "--jobs",
+        "2"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "windows-asan",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/ci.py",
+        "--preset",
+        "windows-asan",
+        "--jobs",
+        "1"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "runtime-only-configure",
+      "command": [
+        "cmake",
+        "--preset",
+        "runtime-only"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "runtime-only-build",
+      "command": [
+        "cmake",
+        "--build",
+        "--preset",
+        "runtime-only",
+        "--parallel",
+        "1"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "server-only-configure",
+      "command": [
+        "cmake",
+        "--preset",
+        "server-only"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "server-only-build",
+      "command": [
+        "cmake",
+        "--build",
+        "--preset",
+        "server-only",
+        "--parallel",
+        "1"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "runtime-smoke",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\runtime-only\\bin\\Runtime.exe",
+        "--version"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "server-smoke",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\build\\server-only\\bin\\Server.exe",
+        "--run-for-ms",
+        "20"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "windows_command_logs": [
+    {
+      "path": "out/04a-work/final-windows/windows-debug.log",
+      "sha256": "e839a9add85f38607acbc1213f2cb5027c5336831cb6c43cf2ef209bb5910fbb"
+    },
+    {
+      "path": "out/04a-work/final-windows/windows-release.log",
+      "sha256": "b507fedabd7f5ec9dcb26e6ec3a4433897c7914151b90396c3e1f25a7879e332"
+    },
+    {
+      "path": "out/04a-work/final-windows/windows-asan.log",
+      "sha256": "5403c9f4bb4aab126f841f307f1a43218654b7b47f8e6d0cde2cf4dd34445fb9"
+    },
+    {
+      "path": "out/04a-work/final-windows/runtime-only-configure.log",
+      "sha256": "21ed8a60b05861fb25ed3b8077ef5bcbb21afe8cf702ff40e7b315776700af07"
+    },
+    {
+      "path": "out/04a-work/final-windows/runtime-only-build.log",
+      "sha256": "e78de4afa474bbf769e2764fa9c097c1452ff994591bcf9861a3377bd148df65"
+    },
+    {
+      "path": "out/04a-work/final-windows/server-only-configure.log",
+      "sha256": "c6a5f78885dfcf413d92db6e4521f66fef36b80e3788f09a238d7ff1e54b39a6"
+    },
+    {
+      "path": "out/04a-work/final-windows/server-only-build.log",
+      "sha256": "a68558756db8808247054fdc99f4367d4c019593cc650a5c3df3ea405b1a5c53"
+    },
+    {
+      "path": "out/04a-work/final-windows/runtime-smoke.log",
+      "sha256": "a9f18f7d60a3d5416095a6f463e8524fa097ba0145b4c6e794be957be0d12912"
+    },
+    {
+      "path": "out/04a-work/final-windows/server-smoke.log",
+      "sha256": "e6c6dd549f216d16d0a53ca9b7dae3e8dd5cb89ec7badf4e89da2a267e6c712d"
+    }
+  ],
+  "wsl_kernel": "Linux DESKTOP-9RJSA7C 6.18.33.2-microsoft-standard-WSL2 #1 SMP PREEMPT_DYNAMIC Thu Jun 18 21:54:43 UTC 2026 x86_64 GNU/Linux",
+  "linux": [
+    {
+      "preset": "server-debug",
+      "status": "PASS",
+      "full_suite": {
+        "path": "out/ci/04a-headless/server-debug/ctest.xml",
+        "sha256": "0a2f94f4b17b1986b0328b67fe6ae55d57424c35380cc1f060f72e9419e20406",
+        "ctests_passed": 23,
+        "ctests_failed": 0,
+        "failed_tests": [],
+        "families": {
+          "shark.core.contracts": {
+            "assertions": 3643,
+            "cases": 42,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.lifecycle": {
+            "assertions": 2568,
+            "cases": 26,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.timing": {
+            "assertions": 30743,
+            "cases": 33,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.work": {
+            "assertions": 2635,
+            "cases": 11,
+            "skipped": 0,
+            "seed": 1337
+          }
+        }
+      }
+    },
+    {
+      "preset": "server-asan-ubsan",
+      "status": "PASS",
+      "full_suite": {
+        "path": "out/ci/04a-headless/server-asan-ubsan/ctest.xml",
+        "sha256": "12edf956845a513e24a661d8db1ff5abb08d3e47ca965972970a7af9730d7edc",
+        "ctests_passed": 23,
+        "ctests_failed": 0,
+        "failed_tests": [],
+        "families": {
+          "shark.core.contracts": {
+            "assertions": 3643,
+            "cases": 42,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.lifecycle": {
+            "assertions": 2568,
+            "cases": 26,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.timing": {
+            "assertions": 30743,
+            "cases": 33,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.work": {
+            "assertions": 2635,
+            "cases": 11,
+            "skipped": 0,
+            "seed": 1337
+          }
+        }
+      }
+    },
+    {
+      "preset": "client-linux-debug",
+      "status": "PASS",
+      "full_suite": {
+        "path": "out/ci/04a-headless/client-linux-debug/ctest.xml",
+        "sha256": "5aec824380945a6eae9dae4978c26721f4fb798915490f51bd6671274548b939",
+        "ctests_passed": 26,
+        "ctests_failed": 0,
+        "failed_tests": [],
+        "families": {
+          "shark.core.contracts": {
+            "assertions": 3643,
+            "cases": 42,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.lifecycle": {
+            "assertions": 2568,
+            "cases": 26,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.timing": {
+            "assertions": 30743,
+            "cases": 33,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.work": {
+            "assertions": 2635,
+            "cases": 11,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.client.input": {
+            "assertions": 34172,
+            "cases": 17,
+            "skipped": 0,
+            "seed": 1337
+          }
+        }
+      }
+    },
+    {
+      "preset": "client-linux-asan-ubsan",
+      "status": "PASS_AFTER_FOCUSED_FIXTURE_REPAIR",
+      "initial_full_suite": {
+        "path": "out/ci/04a-headless/client-linux-asan-ubsan/ctest.xml",
+        "sha256": "691ad5a61276a33e6e3d8f4506071750fa11d36447ee4b969cf2bc29cc9dcfde",
+        "ctests_passed": 25,
+        "ctests_failed": 1,
+        "failed_tests": [
+          "shark.tooling.graphics-package-linux"
+        ],
+        "families": {
+          "shark.core.contracts": {
+            "assertions": 3643,
+            "cases": 42,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.lifecycle": {
+            "assertions": 2568,
+            "cases": 26,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.timing": {
+            "assertions": 30743,
+            "cases": 33,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.core.work": {
+            "assertions": 2635,
+            "cases": 11,
+            "skipped": 0,
+            "seed": 1337
+          },
+          "shark.client.input": {
+            "assertions": 34172,
+            "cases": 17,
+            "skipped": 0,
+            "seed": 1337
+          }
+        }
+      },
+      "corrective_verification": {
+        "path": "out/04a-work/package-fixture-correction.json",
+        "sha256": "eb24929e1b41208ad09dcc11e736bc14d9704ed19d38857b6f1aa20821895f15"
+      },
+      "resolved_ctests_passed": 26,
+      "unresolved_ctests_failed": 0
+    }
+  ],
+  "linux_headless_phases": [
+    {
+      "name": "configure",
+      "command": [
+        "cmake",
+        "--preset",
+        "server-only",
+        "-B",
+        "/work/build-04a/server-only",
+        "-DCMAKE_CXX_COMPILER=g++-13",
+        "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+        "-DSHARK_INJECT_TEST_FAILURE=OFF"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.626,
+      "status": "PASS",
+      "preset": "server-only"
+    },
+    {
+      "name": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/work/build-04a/server-only",
+        "--parallel",
+        "2"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 12.117,
+      "status": "PASS",
+      "preset": "server-only"
+    },
+    {
+      "name": "boundary",
+      "command": [
+        "cmake",
+        "--build",
+        "/work/build-04a/server-only",
+        "--target",
+        "shark_check_server_boundary"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.728,
+      "status": "PASS",
+      "preset": "server-only"
+    },
+    {
+      "name": "install",
+      "command": [
+        "cmake",
+        "--install",
+        "/work/build-04a/server-only",
+        "--prefix",
+        "/evidence/server-only/package",
+        "--component",
+        "Server"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.328,
+      "status": "PASS",
+      "preset": "server-only"
+    },
+    {
+      "name": "closure",
+      "command": [
+        "/opt/shark-headless/venv/bin/python",
+        "/source/tools/check_server_closure.py",
+        "--build-dir",
+        "/work/build-04a/server-only",
+        "--package-dir",
+        "/evidence/server-only/package",
+        "--output",
+        "/evidence/server-only/closure.json"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.379,
+      "status": "PASS",
+      "preset": "server-only"
+    },
+    {
+      "name": "package-smoke",
+      "command": [
+        "/evidence/server-only/package/bin/Server",
+        "--run-for-ms",
+        "20"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.048,
+      "status": "PASS",
+      "preset": "server-only"
+    },
+    {
+      "name": "configure",
+      "command": [
+        "cmake",
+        "--preset",
+        "server-debug",
+        "-B",
+        "/work/build-04a/server-debug",
+        "-DCMAKE_CXX_COMPILER=g++-13",
+        "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+        "-DSHARK_INJECT_TEST_FAILURE=OFF"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 3.473,
+      "status": "PASS",
+      "preset": "server-debug"
+    },
+    {
+      "name": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/work/build-04a/server-debug",
+        "--parallel",
+        "2"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 60.341,
+      "status": "PASS",
+      "preset": "server-debug"
+    },
+    {
+      "name": "boundary",
+      "command": [
+        "cmake",
+        "--build",
+        "/work/build-04a/server-debug",
+        "--target",
+        "shark_check_server_boundary"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.784,
+      "status": "PASS",
+      "preset": "server-debug"
+    },
+    {
+      "name": "test",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/work/build-04a/server-debug",
+        "--output-on-failure",
+        "--no-tests=error",
+        "--output-junit",
+        "/evidence/server-debug/ctest.xml"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 24.795,
+      "status": "PASS",
+      "preset": "server-debug"
+    },
+    {
+      "name": "configure",
+      "command": [
+        "cmake",
+        "--preset",
+        "server-asan-ubsan",
+        "-B",
+        "/work/build-04a/server-asan-ubsan",
+        "-DCMAKE_CXX_COMPILER=clang++-18",
+        "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+        "-DSHARK_INJECT_TEST_FAILURE=OFF"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.634,
+      "status": "PASS",
+      "preset": "server-asan-ubsan"
+    },
+    {
+      "name": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/work/build-04a/server-asan-ubsan",
+        "--parallel",
+        "2"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 51.967,
+      "status": "PASS",
+      "preset": "server-asan-ubsan"
+    },
+    {
+      "name": "boundary",
+      "command": [
+        "cmake",
+        "--build",
+        "/work/build-04a/server-asan-ubsan",
+        "--target",
+        "shark_check_server_boundary"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.418,
+      "status": "PASS",
+      "preset": "server-asan-ubsan"
+    },
+    {
+      "name": "test",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/work/build-04a/server-asan-ubsan",
+        "--output-on-failure",
+        "--no-tests=error",
+        "--output-junit",
+        "/evidence/server-asan-ubsan/ctest.xml"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 15.815,
+      "status": "PASS",
+      "preset": "server-asan-ubsan"
+    }
+  ],
+  "linux_client_phases": [
+    {
+      "name": "configure",
+      "command": [
+        "cmake",
+        "--preset",
+        "linux-debug",
+        "-B",
+        "/work/build-04a-client/linux-debug",
+        "-DCMAKE_CXX_COMPILER=g++-13",
+        "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+        "-DSHARK_INJECT_TEST_FAILURE=OFF"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 1.926,
+      "status": "PASS",
+      "preset": "linux-debug"
+    },
+    {
+      "name": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/work/build-04a-client/linux-debug",
+        "--parallel",
+        "2"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 56.731,
+      "status": "PASS",
+      "preset": "linux-debug"
+    },
+    {
+      "name": "inventory",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/work/build-04a-client/linux-debug",
+        "--show-only"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.127,
+      "status": "PASS",
+      "preset": "linux-debug"
+    },
+    {
+      "name": "test",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/work/build-04a-client/linux-debug",
+        "--output-on-failure",
+        "--no-tests=error",
+        "--output-junit",
+        "/evidence/client-linux-debug/ctest.xml"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 16.919,
+      "status": "PASS",
+      "preset": "linux-debug"
+    },
+    {
+      "name": "configure",
+      "command": [
+        "cmake",
+        "--preset",
+        "linux-asan-ubsan",
+        "-B",
+        "/work/build-04a-client/linux-asan-ubsan",
+        "-DCMAKE_CXX_COMPILER=clang++-18",
+        "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+        "-DSHARK_INJECT_TEST_FAILURE=OFF"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 2.327,
+      "status": "PASS",
+      "preset": "linux-asan-ubsan"
+    },
+    {
+      "name": "build",
+      "command": [
+        "cmake",
+        "--build",
+        "/work/build-04a-client/linux-asan-ubsan",
+        "--parallel",
+        "2"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 50.659,
+      "status": "PASS",
+      "preset": "linux-asan-ubsan"
+    },
+    {
+      "name": "inventory",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/work/build-04a-client/linux-asan-ubsan",
+        "--show-only"
+      ],
+      "exit_code": 0,
+      "elapsed_seconds": 0.119,
+      "status": "PASS",
+      "preset": "linux-asan-ubsan"
+    },
+    {
+      "name": "test",
+      "command": [
+        "ctest",
+        "--test-dir",
+        "/work/build-04a-client/linux-asan-ubsan",
+        "--output-on-failure",
+        "--no-tests=error",
+        "--output-junit",
+        "/evidence/client-linux-asan-ubsan/ctest.xml"
+      ],
+      "exit_code": 8,
+      "elapsed_seconds": 24.327,
+      "status": "FAIL",
+      "preset": "linux-asan-ubsan"
+    }
+  ],
+  "wsl_verification": {
+    "status": "FAIL",
+    "exit_code": 8,
+    "command": "wsl --user root --exec bash /mnt/c/Users/mrkda/Projects/shark/out/04a-work/run-headless.sh",
+    "started_utc": "2026-10-18T05:13:31.039444+00:00",
+    "finished_utc": "2026-10-18T05:19:10.358618+00:00",
+    "changed_inputs_since_start": [],
+    "registration_errors": [],
+    "tests": [
+      {
+        "preset": "server-debug",
+        "ctest_count": "23",
+        "failures": "0",
+        "skipped": "0",
+        "families": {
+          "shark.core.contracts": "Filters: [core]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (3643 assertions in 42 test cases)\n\n",
+          "shark.core.lifecycle": "Filters: [lifecycle]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (2568 assertions in 26 test cases)\n\n",
+          "shark.core.timing": "Filters: [timing]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (30743 assertions in 33 test cases)\n\n",
+          "shark.core.work": "Filters: [work]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (2635 assertions in 11 test cases)\n\n"
+        },
+        "input_registered": false
+      },
+      {
+        "preset": "server-asan-ubsan",
+        "ctest_count": "23",
+        "failures": "0",
+        "skipped": "0",
+        "families": {
+          "shark.core.contracts": "Filters: [core]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (3643 assertions in 42 test cases)\n\n",
+          "shark.core.lifecycle": "Filters: [lifecycle]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (2568 assertions in 26 test cases)\n\n",
+          "shark.core.timing": "Filters: [timing]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (30743 assertions in 33 test cases)\n\n",
+          "shark.core.work": "Filters: [work]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (2635 assertions in 11 test cases)\n\n"
+        },
+        "input_registered": false
+      },
+      {
+        "preset": "client-linux-debug",
+        "ctest_count": "26",
+        "failures": "0",
+        "skipped": "0",
+        "families": {
+          "shark.core.contracts": "Filters: [core]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (3643 assertions in 42 test cases)\n\n",
+          "shark.core.lifecycle": "Filters: [lifecycle]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (2568 assertions in 26 test cases)\n\n",
+          "shark.core.timing": "Filters: [timing]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (30743 assertions in 33 test cases)\n\n",
+          "shark.core.work": "Filters: [work]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (2635 assertions in 11 test cases)\n\n",
+          "shark.client.input": "Filters: [input]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (34172 assertions in 17 test cases)\n\n"
+        },
+        "input_registered": true
+      },
+      {
+        "preset": "client-linux-asan-ubsan",
+        "ctest_count": "26",
+        "failures": "1",
+        "skipped": "0",
+        "families": {
+          "shark.core.contracts": "Filters: [core]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (3643 assertions in 42 test cases)\n\n",
+          "shark.core.lifecycle": "Filters: [lifecycle]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (2568 assertions in 26 test cases)\n\n",
+          "shark.core.timing": "Filters: [timing]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (30743 assertions in 33 test cases)\n\n",
+          "shark.core.work": "Filters: [work]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (2635 assertions in 11 test cases)\n\n",
+          "shark.client.input": "Filters: [input]\nRandomness seeded to: 1337\n===============================================================================\nAll tests passed (34172 assertions in 17 test cases)\n\n"
+        },
+        "input_registered": true
+      }
+    ],
+    "sdk_free_runtime": {
+      "status": "PASS",
+      "scope": "fresh 04a installed package path in retained SDK-free pinned Ubuntu runtime userspace; reused unchanged pinned headless build userspace with fresh build directories; isolated network; shared WSL kernel; writable rootfs"
+    },
+    "artifacts": [
+      {
+        "path": "out/04a-work/run-headless.sh",
+        "sha256": "9cdb59a79cfe6b8b70a7879aaf7bfb8be201ef1e2cd3e1f45b182abef9c34f3f"
+      },
+      {
+        "path": "out/04a-work/wsl-inputs.json",
+        "sha256": "dc48979cbca0da893b43d4df062db75db6f469c95de78b1a7e4a9c08da347d0d"
+      },
+      {
+        "path": "out/04a-work/wsl-launch.log",
+        "sha256": "7bcd2733f2e7fc2e10fdd1d6581ecc63147df319a12465d8261d5d61be064cd8"
+      },
+      {
+        "path": "out/ci/04a-headless/summary.json",
+        "sha256": "219ef199a11b638e7bec2fe777ad2aad9681f7f2f5a12ba6ad53947cd5cfa28c"
+      },
+      {
+        "path": "out/ci/04a-headless/toolchain.json",
+        "sha256": "5c46f04fd21f1d0c43ac37b283b75ed3ac7ec51d94b7e3605f19e28c5cd660a8"
+      },
+      {
+        "path": "out/ci/04a-headless/server-debug/ctest.xml",
+        "sha256": "0a2f94f4b17b1986b0328b67fe6ae55d57424c35380cc1f060f72e9419e20406"
+      },
+      {
+        "path": "out/ci/04a-headless/server-asan-ubsan/ctest.xml",
+        "sha256": "12edf956845a513e24a661d8db1ff5abb08d3e47ca965972970a7af9730d7edc"
+      },
+      {
+        "path": "out/ci/04a-headless/server-only/closure.json",
+        "sha256": "f29995cd0733a7678440045543f041a9c3f15a3b34d67abc134989f7dd3e8904"
+      },
+      {
+        "path": "out/ci/04a-headless/server-only/package/bin/Server",
+        "sha256": "70fdc83b89b2131339b0ccdc59756c8d28d2305a3e502fb4ece3fb87ea1a7b11"
+      },
+      {
+        "path": "out/ci/04a-headless/clean-runtime.json",
+        "sha256": "2cee9719ff9545308f73b1e1ad689244af00bec8a5775c96c8e3162e2caff383"
+      },
+      {
+        "path": "out/ci/04a-headless/clean-runtime.log",
+        "sha256": "e6c6dd549f216d16d0a53ca9b7dae3e8dd5cb89ec7badf4e89da2a267e6c712d"
+      },
+      {
+        "path": "out/ci/04a-headless/clean-runtime-packages.tsv",
+        "sha256": "be8e1143aa04d777051479065b797bf22085bbee5a20367abf22d881a0de28e5"
+      },
+      {
+        "path": "out/ci/04a-headless/clean-runtime-files.txt",
+        "sha256": "117c84832235b499ac93c3e70df62bddb5e3f8296a272c40ecd730bac27107e4"
+      },
+      {
+        "path": "out/ci/04a-headless/chroot-host-kernel.txt",
+        "sha256": "fa3a882bbbf4c7e1ab5046bbb44a6adbc09105d3524a56123d9a7b9f409f07a9"
+      },
+      {
+        "path": "out/04a-work/verify-client-linux.py",
+        "sha256": "318ee12052e642733b6a1ec1fe7eea14c18baa8820867f103ac6384b96e3960a"
+      },
+      {
+        "path": "out/04a-work/run-wsl-verification.py",
+        "sha256": "1da7b073c09ae0e52c055690e20d126efe458ad825813747000c86243a51e92b"
+      },
+      {
+        "path": "out/ci/04a-headless/client-linux-summary.json",
+        "sha256": "1d0852c2197ffe498695402f9753721eee2e40bc80b23346ca70a10830dde958"
+      },
+      {
+        "path": "out/ci/04a-headless/client-linux-debug/ctest.xml",
+        "sha256": "5aec824380945a6eae9dae4978c26721f4fb798915490f51bd6671274548b939"
+      },
+      {
+        "path": "out/ci/04a-headless/client-linux-debug/toolchain.json",
+        "sha256": "9f58a3ba5226b6f9d222f35561896c280769ab5de729315ecea3181d8eb29d1c"
+      },
+      {
+        "path": "out/ci/04a-headless/client-linux-debug/summary.json",
+        "sha256": "03093dc0ce847e336addc9e8737ee588cd34062251d049d838b79df1b82d3a4b"
+      },
+      {
+        "path": "out/ci/04a-headless/client-linux-asan-ubsan/ctest.xml",
+        "sha256": "691ad5a61276a33e6e3d8f4506071750fa11d36447ee4b969cf2bc29cc9dcfde"
+      },
+      {
+        "path": "out/ci/04a-headless/client-linux-asan-ubsan/toolchain.json",
+        "sha256": "0f3cefe5c0eb06109e49bd447ab529e9055ebd55d7e91c332066fe266f739667"
+      },
+      {
+        "path": "out/ci/04a-headless/client-linux-asan-ubsan/summary.json",
+        "sha256": "8038e5f65af5f7d06d63af13d631b0da8c78092d5810235db1dc317a0abc2d10"
+      }
+    ]
+  },
+  "package_fixture_correction": {
+    "status": "PASS",
+    "started_utc": "2026-10-18T05:21:10.987709+00:00",
+    "reason": "Successful Linux fixture process disappearance raced an exists/read_text pair in an existing test; only that tooling CTest failed. The helper now treats FileNotFoundError or zombie as retired while preserving other errors and the existing deadline. The helper is shared by stdout-descendant and signal-interruption fixtures.",
+    "scope": "Python test fixture only. Initial WSL failed full-suite receipt/JUnit remain unchanged; no C++ rebuild or claim of full suites after this correction.",
+    "fixture": {
+      "path": "tools/tests/test_graphics_package_linux.py",
+      "base_blob_sha256": "7a81332e4bf9e4021bdd9e45650f4e678ea7b2a717e2e989b73fcfef27523c94",
+      "final_sha256": "605882f0a42eb9623f6c7005be91db1414cb086d5c89653769a2ae0dd0bacfbd"
+    },
+    "unchanged_prior_source_inputs": true,
+    "changed_prior_source_inputs": [],
+    "commands": [
+      {
+        "name": "windows-package-fixture-correction",
+        "command": [
+          "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+          "C:\\Users\\mrkda\\Projects\\shark\\tools\\tests\\test_graphics_package_linux.py",
+          "-v"
+        ],
+        "exit_code": 0,
+        "status": "PASS",
+        "started_utc": "2026-10-18T05:21:10.987910+00:00",
+        "finished_utc": "2026-10-18T05:21:12.197077+00:00",
+        "log": "out/04a-work/windows-package-fixture-correction.log"
+      },
+      {
+        "name": "wsl-package-fixture-correction",
+        "command": [
+          "wsl",
+          "--user",
+          "root",
+          "--exec",
+          "bash",
+          "/mnt/c/Users/mrkda/Projects/shark/out/04a-work/run-package-fixture-correction.sh"
+        ],
+        "exit_code": 0,
+        "status": "PASS",
+        "started_utc": "2026-10-18T05:21:12.197158+00:00",
+        "finished_utc": "2026-10-18T05:21:18.577834+00:00",
+        "log": "out/04a-work/wsl-package-fixture-correction.log"
+      },
+      {
+        "name": "collect-untruncated-focused-log",
+        "command": [
+          "wsl",
+          "--user",
+          "root",
+          "--exec",
+          "cat",
+          "/var/tmp/shark-headless-02b-20261018/build-root/work/build-04a-client/linux-asan-ubsan/Testing/Temporary/LastTest.log"
+        ],
+        "exit_code": 0,
+        "status": "PASS"
+      }
+    ],
+    "initial_failed_junit": "out/ci/04a-headless/client-linux-asan-ubsan/ctest.xml",
+    "final_focused_junit": "out/ci/04a-headless/package-fixture-correction/ctest.xml",
+    "final_focused_tests": {
+      "ctest_count": "1",
+      "failures": "0",
+      "skipped": "0",
+      "output": "test_bounded_native_process_timeout_and_output_cap (__main__.LinuxPackageTests.test_bounded_native_process_timeout_and_output_cap) ... ok\ntest_child_environment_cannot_inherit_driver_or_loader_overrides (__main__.LinuxPackageTests.test_child_environment_cannot_inherit_driver_or_loader_overrides) ... ok\ntest_cli_normalizes_own_directory_before_rejecting_internal_output (__main__.LinuxPackageTests.test_cli_normalizes_own_directory_before_rejecting_internal_output) ... ok\ntest_cli_rejects_unrequested_workload_and_loader_delimiters (__main__.LinuxPackageTests.test_cli_rejects_unrequested_workload_and_loader_delimiters) ... ok\ntest_descendant_holding_stdout_is_retired (__main__.LinuxPackageTests.test_descendant_holding_stdout_is_retired) ... ok\ntest_elf_machine_and_endianness_required (__main__.LinuxPackageTests.test_elf_machine_and_endianness_required) ... ok\ntest_inspector_timeout_or_failure_cannot_pass (__main__.LinuxPackageTests.test_inspector_timeout_or_failure_cannot_pass) ... ok\ntest_isolated_standalone_lau...\n[This part of the test output was removed since it exceeds the threshold of 1024 bytes.]\n",
+      "python_test_count": 21,
+      "python_summary": "OK"
+    },
+    "artifacts": [
+      {
+        "path": "tools/tests/test_graphics_package_linux.py",
+        "sha256": "605882f0a42eb9623f6c7005be91db1414cb086d5c89653769a2ae0dd0bacfbd"
+      },
+      {
+        "path": "out/04a-work/run-package-fixture-correction.sh",
+        "sha256": "4895c0f6787fd556b6929e57d73b93ba518c67cf1fd7e3223495bc84423a5758"
+      },
+      {
+        "path": "out/04a-work/verify-package-fixture-correction.py",
+        "sha256": "2672051164d020219a352fc383524605d13d78c5d2fae75ec3eb86f1cfb6cd64"
+      },
+      {
+        "path": "out/04a-work/wsl-verification.json",
+        "sha256": "dddf6d18ff1ba5c4186d578146d5a452d47eb00d5d5dc4db5f48484debe6a90f"
+      },
+      {
+        "path": "out/04a-work/wsl-inputs.json",
+        "sha256": "dc48979cbca0da893b43d4df062db75db6f469c95de78b1a7e4a9c08da347d0d"
+      },
+      {
+        "path": "out/04a-work/windows-package-fixture-correction.log",
+        "sha256": "131ceb869fbc9ae57330803aa5905fde521cf29bbc0164ba98b96acc49426281"
+      },
+      {
+        "path": "out/04a-work/wsl-package-fixture-correction.log",
+        "sha256": "ede8fd1620364b4852666a0ac09d071902216e916877409adf1bb3a4cb6236ba"
+      },
+      {
+        "path": "out/ci/04a-headless/client-linux-asan-ubsan/ctest.xml",
+        "sha256": "691ad5a61276a33e6e3d8f4506071750fa11d36447ee4b969cf2bc29cc9dcfde"
+      },
+      {
+        "path": "out/ci/04a-headless/package-fixture-correction/ctest.xml",
+        "sha256": "f1a980408b50a0c1670d603b2acd8484181f848c27f5365ddf3af7715f897877"
+      },
+      {
+        "path": "out/ci/04a-headless/package-fixture-correction/test.log",
+        "sha256": "ede8fd1620364b4852666a0ac09d071902216e916877409adf1bb3a4cb6236ba"
+      },
+      {
+        "path": "out/ci/04a-headless/package-fixture-correction/LastTest.log",
+        "sha256": "4ae0a75b710f452e9b57918d7322d727871a253b0fd081ae842b3cfe1b6d12d5"
+      }
+    ],
+    "finished_utc": "2026-10-18T05:21:18.579452+00:00"
+  },
+  "repository_checks": [
+    {
+      "name": "format",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/check_format.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "contract",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/validate_contract.py"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "contract-self-test",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/validate_contract.py",
+        "--self-test"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "repository-self-test",
+      "command": [
+        "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+        "tools/check_repository.py",
+        "--self-test"
+      ],
+      "exit_code": 0
+    },
+    {
+      "name": "diff-whitespace",
+      "command": [
+        "git",
+        "diff",
+        "--check"
+      ],
+      "exit_code": 0
+    }
+  ],
+  "repository_check_logs": [
+    {
+      "path": "out/04a-work/repository-checks/format.log",
+      "sha256": "33f6215096a5044c4ad780ae4811e33af0c4bcb92c96263892dd82b890d68b19"
+    },
+    {
+      "path": "out/04a-work/repository-checks/contract.log",
+      "sha256": "d3b1f522b1783f48dcca226e10557173f9a0d7a324ed5a72cd0e974c000efff8"
+    },
+    {
+      "path": "out/04a-work/repository-checks/contract-self-test.log",
+      "sha256": "84775577893a632452acc2be38687ff7230575f7e14503a9e666b64bb66ab4b4"
+    },
+    {
+      "path": "out/04a-work/repository-checks/repository-self-test.log",
+      "sha256": "e3335999b82240bb5405c72497d1f698775c5daeee4328e32e98b985968995f9"
+    },
+    {
+      "path": "out/04a-work/repository-checks/diff-whitespace.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    }
+  ],
+  "intermediate_document_link_check": {
+    "reason": "New handoff linked receipt before collection; final checks pass with receipt present.",
+    "initial_result": {
+      "path": "out/04a-work/repository-checks-before-receipt/contract.log",
+      "sha256": "006cc029f81ca054edd59f3435a5d1ef5aa2bc49a1388fdfe8f015c8e3560e94"
+    }
+  },
+  "verification_helpers": [
+    {
+      "path": "out/04a-work/verify-windows.py",
+      "sha256": "31b26b9445fb70acb066412c37492686769bb07b76cdabdaaec231eb669646df"
+    },
+    {
+      "path": "out/04a-work/run-headless.sh",
+      "sha256": "9cdb59a79cfe6b8b70a7879aaf7bfb8be201ef1e2cd3e1f45b182abef9c34f3f"
+    },
+    {
+      "path": "out/04a-work/run-wsl-verification.py",
+      "sha256": "1da7b073c09ae0e52c055690e20d126efe458ad825813747000c86243a51e92b"
+    },
+    {
+      "path": "out/04a-work/verify-client-linux.py",
+      "sha256": "318ee12052e642733b6a1ec1fe7eea14c18baa8820867f103ac6384b96e3960a"
+    },
+    {
+      "path": "out/04a-work/check-final-repository.py",
+      "sha256": "b05fc19270467b11023b82d66fec438224ac766ebb62026d3858579c5906fa7f"
+    },
+    {
+      "path": "out/04a-work/collect-evidence.py",
+      "sha256": "0a2945d555a1c617f4f499676280e77a0edcda98b143337990d0ed5b25f35682"
+    }
+  ],
+  "limits": [
+    "Current Windows11 PC and existing WSL2 Ubuntu24.04 userspaces only; no hosted CI, other hardware or production capacity claimed.",
+    "04a qualifies only device-free injectable EngineClient raw input. Overall REQ-04 remains NOT_RUN until native GLFW/window integration in 04b and frame/tick/pause integration in 04c pass.",
+    "All seven full suites tested final C++/CMake/input test source. Input17 cases/34172 assertions pass without skips in all five client-enabled configurations, using fixed seed1337; the two Server-only suites intentionally exclude client input.",
+    "Initial WSL client sanitizer suite passed25/26; the sole failure was a pre-existing Python process-retirement fixture racing /proc disappearance. Original failing evidence remains unchanged. A narrow fixture repair and focused corrective checks close that test; other suites were not repeated after this Python-only change.",
+    "All prior Core/lifecycle/timing/work families pass without skips. Work cases overlap the existing Core contracts family; family counts are not unique-case totals.",
+    "Existing platform-specific tooling fixtures retain declared internal skips; actual POSIX signal and descriptor-failure process tests run in WSL.",
+    "SDK-free smoke uses a fresh installed package path in retained pinned Ubuntu runtime userspace, isolated network and the shared WSL kernel; not independent-machine qualification.",
+    "No GLFW/native keyboard or mouse callback, real window, high-DPI, GPU, editor UI, authoring API or gameplay protocol is implemented or qualified by this checkpoint.",
+    "Input ingestion is single-owner, allocation-free and nonthrowing, with fixed text storage and explicit overflow. Snapshots coalesce button transitions; frame/tick latching and UI/action routing remain integration work.",
+    "Focus loss neutralizes raw controls without touching scheduling or server authority; network release messages belong to the later online input/session layer.",
+    "No source format, dependency pin, host package, driver, WSL setting, hosted workflow or remote branch policy changed."
+  ]
+}

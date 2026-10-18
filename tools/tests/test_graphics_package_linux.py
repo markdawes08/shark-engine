@@ -57,6 +57,15 @@ def retire_fixture(pid: int, command_marker: str) -> None:
         pass
 
 
+def process_retired(path: Path) -> bool:
+    """A disappearing proc record or zombie both mean the child has retired."""
+    try:
+        record = path.read_text()
+    except FileNotFoundError:
+        return True
+    return record.rsplit(")", 1)[1].split()[0] == "Z"
+
+
 def fixture_payload() -> tuple[dict, dict]:
     lock = b'{"test_fixture":true}\n'
     lock_hash = package.digest(lock)
@@ -86,6 +95,17 @@ def fixture_payload() -> tuple[dict, dict]:
 
 
 class LinuxPackageTests(unittest.TestCase):
+    def test_retirement_observation_handles_disappearance_without_hiding_errors(self):
+        path = Path("/proc/123/stat")
+        with patch.object(Path, "read_text", side_effect=FileNotFoundError):
+            self.assertTrue(process_retired(path))
+        for state, retired in (("S", False), ("R", False), ("Z", True)):
+            with self.subTest(state=state), patch.object(Path, "read_text", return_value=f"123 (fixture) {state} 1 2 3"):
+                self.assertEqual(process_retired(path), retired)
+        with patch.object(Path, "read_text", side_effect=PermissionError):
+            with self.assertRaises(PermissionError):
+                process_retired(path)
+
     def test_elf_machine_and_endianness_required(self):
         package.elf_x64(elf_fixture(), "fixture")
         wrong = bytearray(elf_fixture())
@@ -263,9 +283,9 @@ class LinuxPackageTests(unittest.TestCase):
                 self.assertFalse(result.timed_out)
                 deadline = time.monotonic() + 1
                 path = Path(f"/proc/{pid}/stat")
-                while path.exists() and path.read_text().split(")", 1)[1].split()[0] != "Z" and time.monotonic() < deadline:
+                while not process_retired(path) and time.monotonic() < deadline:
                     time.sleep(0.01)
-                self.assertTrue(not path.exists() or path.read_text().split(")", 1)[1].split()[0] == "Z")
+                self.assertTrue(process_retired(path))
             finally:
                 retire_fixture(pid, script)
 
@@ -375,9 +395,9 @@ class LinuxPackageTests(unittest.TestCase):
                 self.assertTrue(any("interrupted" in error for error in summary["cleanup_errors"]))
                 path = Path(f"/proc/{pid}/stat")
                 deadline = time.monotonic() + 1
-                while path.exists() and path.read_text().split(")", 1)[1].split()[0] != "Z" and time.monotonic() < deadline:
+                while not process_retired(path) and time.monotonic() < deadline:
                     time.sleep(0.01)
-                self.assertTrue(not path.exists() or path.read_text().split(")", 1)[1].split()[0] == "Z")
+                self.assertTrue(process_retired(path))
             finally:
                 if process.poll() is None:
                     process.terminate()

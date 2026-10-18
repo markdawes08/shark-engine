@@ -104,7 +104,7 @@
         "Window focus/minimize and local pause never stop an online authoritative world. Separate server ticks, client prediction, network snapshots and rendering; the offline 60 Hz policy is not the server clock."
       ],
       "planned_fixture": "WindowLifecycle hardware smoke, InputFocusRelease and FixedStepAccumulator fixtures; FeatureWorld/FrameTiming is connected when assignment 10 adds the scene runner.",
-      "verification": {"status": "NOT_RUN", "reason": "Window/input/frame scheduling is not implemented; owner assignment 04."}
+      "verification": {"status": "NOT_RUN", "reason": "Assignment04 is split into 04a input contracts, 04b native GLFW window integration and 04c frame-loop/final qualification. 04a passes the current-machine gate for bounded injectable raw input in EngineClient: Windows Debug/Release/ASan and WSL client GCC Debug pass26 CTests each. WSL client Clang ASan+UBSan initially passed25/26; its existing Python process-retirement fixture race was repaired and a focused rerun closes the remaining test, with original failure preserved. Input17 cases/34172 assertions pass in all five client-enabled configurations with seed1337 and no skips; WSL headless each23 CTests intentionally excludes client input. Runtime/Server standalone boundaries, WSL Release closure and SDK-free smoke pass. Evidence: docs/coverage/evidence/04a-local.json and docs/handoffs/04a-input-contracts.md. Full REQ-04 remains NOT_RUN pending 04b native window/focus/framebuffer/high-DPI smoke and 04c frame/tick/pause integration. Next checkpoint: 04b; see docs/roadmap/window-input-plan.md."}
     },
     {
       "id": "REQ-05",
@@ -808,6 +808,15 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "client.raw-input",
+        "name": "Injectable bounded raw client input with owned snapshots and focus cancellation",
+        "requirement_ids": ["REQ-04"],
+        "test_ids": ["shark.client.input"],
+        "test_sources": ["tests/client_input_tests.cpp"],
+        "fixtures": ["engine/client/src/input.cpp", "engine/client/include/shark/client/input.hpp"],
+        "fixture_reason": "Deterministic device-free injection covers held/edge/repeat state, focus-loss releases and cancellation, bounded Unicode text, cursor/scroll validation, overflow and independent snapshots. The Client-only fixture never enters the headless Server build. Native GLFW mappings/window smoke and frame/tick consumption remain 04b/04c; FeatureWorld begins in 10. No authoring command or gameplay protocol is claimed."
+      },
       {
         "id": "core.time-policies",
         "name": "Injectable monotonic idle clock and separate offline/server fixed-step policies",
