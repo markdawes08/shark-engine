@@ -63,8 +63,12 @@ sessions, is complete under the current-machine scope**: 425 CPU CTests and
 protected package checks pass. The [handoff](docs/handoffs/M02b-owned-sessions.md)
 records exact evidence. Follow the [session contract](docs/network-sessions.md) and
 [ADR 0012](docs/architecture/0012-owned-sessions.md). Full REQ-M02 remains NOT_RUN. Read [ADR 0011](docs/architecture/0011-network-foundation.md)
-before extending transport/authentication. **M02c, authoritative replication and
-resynchronization, is next**; interest and full adversity retain M02d/M02e. Follow the
+before extending transport/authentication. **M02c is complete under the current-machine
+scope**: 446 passing CPU CTests and protected package checks. Follow
+[ADR 0013](docs/architecture/0013-authoritative-replication.md), the
+[replication contract](docs/network-replication.md) and
+[handoff](docs/handoffs/M02c-authoritative-replication.md). **M02d spatial interest,
+privacy and connection budgets is next**; integrated adversity retains M02e. Follow the
 [05 checkpoint plan](docs/roadmap/graphics-device-plan.md),
 [graphics device contract](docs/graphics-device.md),
 [presentation lifecycle contract](docs/presentation-lifecycle.md) and
@@ -113,8 +117,9 @@ not retroactive passes. Follow the
 [probe guide](docs/graphics-probe.md); local feasibility does not claim support
 on other machines or a production MMO release.
 The bounded local TLS/wire foundation is implemented in M02a. M02b adds mutual
-TLS and owned sessions; local qualification is complete. Replication, persistence,
-simulation and streaming retain their later owners.
+TLS and owned sessions; M02c adds explicitly selected public pose replication and
+bounded resynchronization. Local qualification is complete. Spatial interest,
+persistence, simulation and streaming retain their later owners.
 
 Keep all remaining gates achievable on this PC: local processes, loopback or
 Windows/WSL connections, deterministic network faults, local storage and backups,

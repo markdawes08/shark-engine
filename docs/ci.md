@@ -57,7 +57,9 @@ process-cleanup suite in `shark.tooling.graphics-package-linux`; Windows launche
 GPU soak remain opt-in. M02a's [local TLS/wire foundation](handoffs/M02a-transport-wire.md)
 passes current-machine CPU/sanitizer and protected package qualification.
 M02b [owned sessions](handoffs/M02b-owned-sessions.md) is **PASS** under the
-current-machine scope. M02c replication is next; database,
+current-machine scope. M02c [replication](handoffs/M02c-authoritative-replication.md)
+is also PASS locally: 446 CPU CTests and protected package checks. M02d
+interest/budgets is next; database,
 world-handoff and active-load tiers retain their later gates.
 
 ## Jobs and required checks
@@ -248,7 +250,12 @@ belong to the source-input receipt; test credentials and SessionProbe must not
 enter installed packages. [ADR 0012](architecture/0012-owned-sessions.md) and the
 [session contract](network-sessions.md) define the acceptance boundary. The
 [M02b handoff](handoffs/M02b-owned-sessions.md) records the observed results.
-M02c replication is next. Full REQ-M02 remains NOT_RUN pending the remaining checkpoints;
+M02c replication is PASS under the current-machine scope: Windows Debug/Release/ASan
+pass 72 CTests each, WSL CPU client Debug/ASan+UBSan pass 65 each and WSL
+Server Debug/ASan+UBSan pass 50 each, totaling 446 with no failures or skips.
+The [M02c handoff](handoffs/M02c-authoritative-replication.md) records protected
+build, package and real-process convergence checks. M02d spatial interest, privacy
+and connection budgets is next. Full REQ-M02 remains NOT_RUN;
 existing hosted CI stays supplemental.
 
 ## Locked tools and hosted-image limits

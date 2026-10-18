@@ -110,7 +110,11 @@ M02b adds `shark.core.net-mtls`, `shark.core.net-session` and
 `shark.core.net-sessions-process` to the same prefix. The last test launches the
 test-only `SessionProbe` in separate processes with explicit public fixture keys;
 it does not add a login flag or test bypass to Runtime/Server. Follow the
-[session contract](network-sessions.md). Check all seven network families
+[session contract](network-sessions.md). M02c adds `shark.core.net-replication-wire`, `shark.core.net-replication` and
+`shark.core.net-replication-process`. The last launches the test-only
+`ReplicationProbe` and writes `replication-process.json`; it uses the same public
+fixture certificates and no production listener. See the
+[replication contract](network-replication.md). Check all ten network families
 noninteractively after a native build:
 
 ```text

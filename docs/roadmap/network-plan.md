@@ -7,7 +7,11 @@ The [handoff](../handoffs/M02a-transport-wire.md) and
 CTests and protected dependency/package qualification. **M02b is complete**: its
 [handoff](../handoffs/M02b-owned-sessions.md) and
 [receipt](../coverage/evidence/M02b-owned-sessions.json) record 425 passing CPU
-CTests and protected package checks. **M02c replication is next.**
+CTests and protected package checks. **M02c replication is complete**: 446 CPU
+CTests and protected package checks pass in its
+[handoff](../handoffs/M02c-authoritative-replication.md) and
+[receipt](../coverage/evidence/M02c-authoritative-replication.json).
+**M02d spatial interest, privacy and connection budgets is next.**
 Full M02 remains NOT_RUN until all five checkpoints pass. Assignment 07 is complete.
 The [MMORPG plan](mmorpg-plan.md) retains the assignment order and the
 [current-machine scope](../architecture/0010-current-machine-scope.md).
@@ -51,6 +55,12 @@ authority. Session controls do not grant source-authoring or administrative acce
 Durable account/character storage remains M03.
 
 ## M02c — Authoritative replication and resynchronization
+
+Implemented under [ADR 0013](../architecture/0013-authoritative-replication.md)
+and the [replication contract](../network-replication.md). Qualification is PASS
+under current-machine scope. The public schema contains only validated affine
+world poses from an explicit trusted selection of at most 32 entities; spatial
+selection remains M02d and global origin/region transfer remains M05.
 
 Add explicit replicated-field allowlists, stable session replica identities,
 baseline/delta state, spawn/despawn, acknowledgements and bounded reconnect

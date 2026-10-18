@@ -496,7 +496,9 @@ struct TlsTransport::Impl {
                 config->authenticated
                     ? (config->server ? MessageKind::session_request : MessageKind::session_reply)
                     : (config->server ? MessageKind::probe : MessageKind::probe_reply);
-            if (frame.kind != expected) {
+            const auto replication =
+                config->server ? MessageKind::replication_control : MessageKind::replication_state;
+            if (frame.kind != expected && !(config->authenticated && frame.kind == replication)) {
                 return net_error(ErrorCode::invalid_argument, "net.transport.receive",
                                  "Message kind is unavailable for this connection role");
             }
@@ -789,7 +791,9 @@ Result<void> TlsTransport::send(MessageKind kind, std::span<const std::byte> pay
         self.config->authenticated
             ? (self.config->server ? MessageKind::session_reply : MessageKind::session_request)
             : (self.config->server ? MessageKind::probe_reply : MessageKind::probe);
-    if (kind != expected) {
+    const auto replication =
+        self.config->server ? MessageKind::replication_state : MessageKind::replication_control;
+    if (kind != expected && !(self.config->authenticated && kind == replication)) {
         return net_error(ErrorCode::invalid_argument, "net.transport.send",
                          "Message kind is unavailable for this connection role");
     }

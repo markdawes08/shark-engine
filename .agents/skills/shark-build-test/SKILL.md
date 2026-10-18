@@ -83,5 +83,9 @@ retain separate-process evidence for enrollment, ownership, revocation, expiry,
 replay, reconnect and rate-limit behavior. Include public certificate fixtures and
 their generator in source-input freeze hashes. Keep test keys and SessionProbe
 out of installed packages. Preserve the existing Windows/WSL CPU, sanitizer and
-protected package gates when extending these services. M02c replication is next;
-session readiness alone does not qualify gameplay or capacity.
+protected package gates when extending these services. M02c replication is PASS
+under current-machine scope: see the [replication contract](../../../docs/network-replication.md)
+and [handoff](../../../docs/handoffs/M02c-authoritative-replication.md). Its three
+additional CTest families use 20/30/90-second timeouts for wire, service and real
+process cases; include all ten network families and freeze source/fixture hashes
+for the full qualification. Session readiness alone does not qualify gameplay or capacity.

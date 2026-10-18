@@ -72,7 +72,9 @@ account/character state; internal diagnostics retain stable error operations.
 
 No mutation retry or durable exactly-once promise follows from these session
 controls. Lost outcomes can require a new login; later durable operations belong
-to M03. Replication and resynchronization remain M02c, spatial interest and budgets
+to M03. M02c [replication and resynchronization](../network-replication.md) now
+extend these session checks and are locally qualified under
+[ADR 0013](0013-authoritative-replication.md). Spatial interest and budgets remain
 M02d, and integrated adversity M02e. Full REQ-M02 remains NOT_RUN.
 
 The [M02b handoff](../handoffs/M02b-owned-sessions.md) records completed

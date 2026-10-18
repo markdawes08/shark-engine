@@ -95,5 +95,8 @@ The outer wire remains version 1 with additive session request/reply kinds 5 and
 and authenticated modes reject each other's application messages. Session readiness
 does not grant movement, combat, component mutation or administrative access.
 Enrollment and ownership remain in memory until M03 supplies durable storage.
-M02c replication is next; full REQ-M02 remains NOT_RUN through the remaining
-checkpoint gates.
+M02c [replication](../network-replication.md) is now locally qualified under
+[ADR 0013](0013-authoritative-replication.md); the
+[handoff](../handoffs/M02c-authoritative-replication.md) retains its separate evidence.
+M02d spatial interest/budgets is next; full REQ-M02 remains NOT_RUN through the
+remaining checkpoint gates.

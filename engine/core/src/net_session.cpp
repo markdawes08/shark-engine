@@ -357,6 +357,26 @@ Result<SessionSnapshot> SessionAuthority::apply(TlsTransport& transport,
     return rejection("net.session.request", ErrorCode::invalid_argument);
 }
 
+Result<SessionSnapshot> SessionAuthority::current(TlsTransport& transport, MonotonicTime now) {
+    if (auto owner = impl_->check_owner(); !owner) {
+        return owner.error();
+    }
+    if (auto time = impl_->advance(now); !time) {
+        return time.error();
+    }
+    auto peer = transport.authenticated_peer();
+    if (!peer) {
+        return rejection("net.session.peer");
+    }
+    auto session =
+        std::ranges::find(impl_->sessions, peer.value().connection_id,
+                          [](const Impl::Session& value) { return value.peer.connection_id; });
+    if (session == impl_->sessions.end() || session->peer.certificate != peer.value().certificate) {
+        return rejection("net.session.connection");
+    }
+    return session->snapshot;
+}
+
 Result<std::size_t> SessionAuthority::expire(MonotonicTime now) {
     if (auto owner = impl_->check_owner(); !owner) {
         return owner.error();

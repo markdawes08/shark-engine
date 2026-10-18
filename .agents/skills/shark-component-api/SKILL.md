@@ -33,7 +33,11 @@ and [07c handoff](../../../docs/handoffs/07c-schema-inspection.md).
 [07c receipt](../../../docs/coverage/evidence/07c-schema-inspection.json) records
 376 passing CPU CTests and protected dependency/package checks. M02 is current;
 [M02b owned sessions](../../../docs/handoffs/M02b-owned-sessions.md) is **PASS**
-under the current-machine scope, and M02c replication is next.
+under the current-machine scope. M02c [replication](../../../docs/network-replication.md)
+is also locally qualified; follow [ADR 0013](../../../docs/architecture/0013-authoritative-replication.md).
+Only explicitly selected validated affine poses enter its public schema; authoring
+metadata never grants player visibility or mutation authority. The bounded client
+cache is presentation-only. Preserve stream/session fences and atomic updates.
 Do not introduce a second registry or expose
 native entities. Include math through `shark/math.hpp`
 and its SharkMath target so every consumer shares the central GLM configuration.

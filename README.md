@@ -14,7 +14,8 @@ ownership, clear presentation and fixed textured-cube rendering. CPU scenes prov
 checked entity ownership, Name/Transform, hierarchy, fixed component schemas and
 bounded revisioned inspection. M02a adds bounded loopback TLS/wire APIs and a
 deterministic fault model. M02b adds [mutual TLS and owned sessions](docs/network-sessions.md);
-local qualification is complete. Entity replication is next in M02c.
+local qualification is complete. M02c adds [authoritative pose replication](docs/network-replication.md)
+with bounded baselines, deltas and resynchronization.
 A separate opt-in graphics
 feasibility probe contains analytic draw/compute/readback cases.
 The versioned
@@ -66,7 +67,10 @@ sanitizers and real TLS client/server processes, with protected builds and isola
 package checks. The [handoff](docs/handoffs/M02a-transport-wire.md) records the
 results. **M02b, authentication and owned sessions, is complete**: 425 CPU CTests
 and protected package checks pass. Its [handoff](docs/handoffs/M02b-owned-sessions.md)
-records the evidence. **M02c, authoritative replication and resynchronization, is next**, following the
+records the evidence. **M02c, authoritative replication and resynchronization, is complete**:
+446 CPU CTests and protected package checks pass. The
+[handoff](docs/handoffs/M02c-authoritative-replication.md) records the evidence.
+**M02d spatial interest, privacy and connection budgets is next**, following the
 [five network checkpoints](docs/roadmap/network-plan.md). Full REQ-M02 remains NOT_RUN.
 See the [transport contract](docs/network-transport.md) and the
 [cube launch workflow](docs/building.md#cube-sample-and-runtime-package).

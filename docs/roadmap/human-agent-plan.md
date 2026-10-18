@@ -49,7 +49,9 @@ provider account or model SDK. M02b adds the shared [session authority](../netwo
 and noninteractive real-process authentication fixtures; its completed
 [qualification](../handoffs/M02b-owned-sessions.md) records 425 passing CPU CTests
 and protected package checks.
-Replication/interest/integrated adversity remain M02c-M02e;
+M02c adds shared [replication APIs](../network-replication.md), a compiled public
+C++ example and real-process JSON evidence with 446 passing CTests.
+Spatial interest and integrated adversity remain M02d/M02e;
 authoring adapters retain their existing assignment owners.
 
 A terminal agent discovers capabilities and schemas, opens or creates a project,
@@ -169,7 +171,9 @@ These are typed CPU C++ APIs; transactions, terminal commands and editor adapter
 retain their owners in 09, 15 and 16. The current assignment is M02. Its
 [transport foundation](../handoffs/M02a-transport-wire.md) passes 404 CPU CTests and
 protected dependency/package qualification. M02b authentication and owned sessions
-is also complete; M02c replication is next.
+is also complete. M02c [authoritative replication](../network-replication.md) is
+locally qualified through the same CPU C++ services and noninteractive fixtures;
+M02d spatial interest, privacy and connection budgets is next.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and

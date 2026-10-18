@@ -10,7 +10,8 @@ The [06c handoff](../handoffs/06c-window-distribution.md) closes window and dist
 for both-GPU and CPU verification. **06c and the subsequent assignment 07 are complete.**
 The [network plan](network-plan.md) tracks the current assignment M02.
 [M02b owned sessions](../handoffs/M02b-owned-sessions.md) is **PASS** under the
-current-machine scope; M02c replication is next.
+current-machine scope. [M02c replication](../handoffs/M02c-authoritative-replication.md)
+is also complete; M02d spatial interest, privacy and connection budgets is next.
 
 ## Sequencing decision
 

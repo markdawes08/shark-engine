@@ -111,5 +111,14 @@ returned values and never interpret TLS or authoring state as session authority.
 `SessionProbe` and `tools/test_network_sessions.py` exercise actual local
 processes. All keys under `tests/fixtures/network/session` are explicitly public
 test fixtures, not deployment credentials. Build/package closure excludes them.
-The [checkpoint plan](roadmap/network-plan.md) retains M02c replication, M02d
-interest/privacy/budgets and M02e full qualification.
+M02c [replication](network-replication.md) is implemented and locally qualified.
+The [checkpoint plan](roadmap/network-plan.md) retains M02d interest/privacy/budgets
+and M02e full qualification.
+
+M02c adds `SessionAuthority::current(transport, now)` for trusted services to
+validate the actual live mTLS connection and inspect its current session. It
+performs expiry maintenance but consumes no command sequence/rate or lease
+refresh; callers must explicitly require readiness. The [replication service](network-replication.md)
+uses this accessor, then admits validated ACK/resync controls through Heartbeat
+with the same exact next session sequence. Readiness alone grants no arbitrary
+scene mutation.

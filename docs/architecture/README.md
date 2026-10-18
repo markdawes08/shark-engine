@@ -61,7 +61,9 @@ and [M02b authentication and owned sessions](../handoffs/M02b-owned-sessions.md)
 is **PASS** under the current-machine scope. [ADR 0012](0012-owned-sessions.md) and the
 [session contract](../network-sessions.md) define explicit certificate enrollment,
 transport-bound ownership, revocation and reconnect fencing. M02c replication is
-next; full REQ-M02 remains NOT_RUN. Source persistence,
+PASS under current-machine scope, following [ADR 0013](0013-authoritative-replication.md)
+and its [handoff](../handoffs/M02c-authoritative-replication.md). M02d interest/budgets
+is next; full REQ-M02 remains NOT_RUN. Source persistence,
 authoring transactions, terminal adapters and editor UI retain their later owners;
 schema IDs do not establish file or gameplay-wire formats. The current-machine
 scope remains unchanged.
@@ -80,6 +82,7 @@ scope remains unchanged.
 | [0010](0010-current-machine-scope.md) | Current PC/WSL targets, local MMO workload and packaging gates; revised 02 completion |
 | [0011](0011-network-foundation.md) | Private Mbed TLS, bounded local gameplay-wire foundation, trust boundaries and transport tradeoffs |
 | [0012](0012-owned-sessions.md) | Mutual TLS, explicit account enrollment, bounded owned sessions and reconnect fencing |
+| [0013](0013-authoritative-replication.md) | Bounded pose replication, session/stream fences, application acknowledgements and resynchronization |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

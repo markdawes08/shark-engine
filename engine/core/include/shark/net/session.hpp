@@ -122,6 +122,10 @@ class SessionAuthority final {
     // sequence, refresh its lease or replace existing ownership.
     [[nodiscard]] Result<SessionSnapshot> apply(TlsTransport& transport,
                                                 const SessionRequest& request, MonotonicTime now);
+    // Trusted read for downstream services. Rechecks actual live mTLS provenance
+    // and expires ended leases, without spending a command sequence/rate budget
+    // or extending lifetime/idle time. Readiness is returned, never implied.
+    [[nodiscard]] Result<SessionSnapshot> current(TlsTransport& transport, MonotonicTime now);
     [[nodiscard]] Result<std::size_t> expire(MonotonicTime now);
     [[nodiscard]] Result<SessionStats> stats() const;
 

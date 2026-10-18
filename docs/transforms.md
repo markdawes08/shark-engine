@@ -123,7 +123,9 @@ current-machine qualification. 07c and full REQ-07 are PASS. M02 is active;
 its [transport foundation](handoffs/M02a-transport-wire.md) is complete and
 [M02b owned sessions](handoffs/M02b-owned-sessions.md) is **PASS** under the
 current-machine scope. Session readiness grants no Transform mutation or gameplay
-authority. M02c replication is next.
+authority. M02c [replication](network-replication.md) now publishes explicitly
+selected affine world matrices, preserving shear without exposing local TRS or
+hierarchy. Its current-machine gate is complete; M02d spatial interest/budgets is next.
 Assignment 08 supplies persistence, 09 transactions,
 10 FeatureWorld, 15 terminal adapters, 16/17 editor fields and 19 selected Lua APIs.
 Those later integrations are planned fixtures, not claimed passes.

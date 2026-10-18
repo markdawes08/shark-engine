@@ -138,5 +138,8 @@ limits; the [07c handoff](handoffs/07c-schema-inspection.md) and
 CPU CTests, protected builds and isolated package checks. FeatureWorld connects
 implemented components in assignment 10. M02 is active: the transport foundation
 is complete, and [M02b owned sessions](handoffs/M02b-owned-sessions.md) is **PASS**
-under the current-machine scope. M02c replication is next under the
+under the current-machine scope. M02c [replication](network-replication.md) is also
+complete: explicit server-selected affine world poses are read through this owner.
+Names, durable IDs, hierarchy and private scene revisions stay off the public state
+wire. M02d spatial interest/budgets is next under the
 [network plan](roadmap/network-plan.md); full REQ-M02 remains NOT_RUN.

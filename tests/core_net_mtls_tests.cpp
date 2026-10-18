@@ -135,6 +135,45 @@ TEST_CASE("diagnostic TLS cannot furnish a player identity or admit session traf
     CHECK_FALSE(pair.server->authenticated_peer());
     CHECK_FALSE(pair.client->send(MessageKind::session_request, {}));
     CHECK_FALSE(pair.server->send(MessageKind::session_reply, {}));
+    CHECK_FALSE(pair.client->send(MessageKind::replication_control, {}));
+    CHECK_FALSE(pair.server->send(MessageKind::replication_state, {}));
+}
+
+TEST_CASE("mutual TLS replication channels preserve server and client message directions",
+          "[net-mtls]") {
+    MutualPair pair;
+    REQUIRE(pair.ready());
+    CHECK_FALSE(pair.client->send(MessageKind::replication_state, {}));
+    CHECK_FALSE(pair.server->send(MessageKind::replication_control, {}));
+    const std::vector<std::byte> state{std::byte{7}, std::byte{9}};
+    const std::vector<std::byte> control{std::byte{2}};
+    REQUIRE(pair.client->send(MessageKind::replication_control, control));
+    REQUIRE(pair.server->send(MessageKind::replication_state, state));
+    bool received_state = false;
+    bool received_control = false;
+    const auto deadline = std::chrono::steady_clock::now() + 5s;
+    while ((!received_state || !received_control) && std::chrono::steady_clock::now() < deadline) {
+        pair.now += 1us;
+        REQUIRE(pair.client->poll(pair.now));
+        REQUIRE(pair.server->poll(pair.now));
+        auto client = pair.client->receive();
+        auto server = pair.server->receive();
+        REQUIRE(client);
+        REQUIRE(server);
+        if (client.value()) {
+            CHECK(client.value()->kind == MessageKind::replication_state);
+            CHECK(client.value()->payload == state);
+            received_state = true;
+        }
+        if (server.value()) {
+            CHECK(server.value()->kind == MessageKind::replication_control);
+            CHECK(server.value()->payload == control);
+            received_control = true;
+        }
+        std::this_thread::yield();
+    }
+    CHECK(received_state);
+    CHECK(received_control);
 }
 
 TEST_CASE("enrollment fingerprint and mutual TLS configuration reject ambiguous or invalid inputs",

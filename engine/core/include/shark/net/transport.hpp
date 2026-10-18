@@ -93,7 +93,8 @@ class TlsTransport final {
     [[nodiscard]] Result<TransportStats> poll(MonotonicTime now, std::size_t budget = 16);
     // Reliable FIFO admission, not a peer/application acknowledgement. hello is
     // automatic. Diagnostic mode accepts probe/reply; mutual-TLS session mode
-    // accepts session_request/reply. Neither admission nor TLS grants ownership.
+    // accepts session_request/reply and replication_control/state in their
+    // respective client/server directions. Admission and TLS grant no ownership.
     [[nodiscard]] Result<void> send(MessageKind kind, std::span<const std::byte> payload);
     // Validated frames remain drainable after authenticated peer close-notify.
     // An explicit local close or a failed stream discards pending input.

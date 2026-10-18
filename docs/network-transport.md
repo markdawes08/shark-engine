@@ -19,7 +19,7 @@ authoring protocol and database versions.
 | --- | --- | --- |
 | 0 | 4 | ASCII `SHRK` magic |
 | 4 | 2 | Exact version `1` |
-| 6 | 1 | Kind: hello=1, hello_ack=2, probe=3, probe_reply=4, session_request=5, session_reply=6 |
+| 6 | 1 | Kind: hello=1, hello_ack=2, probe=3, probe_reply=4, session_request=5, session_reply=6, replication_control=7, replication_state=8 |
 | 7 | 1 | Reserved flags, must be zero |
 | 8 | 8 | Nonzero sequence |
 | 16 | 4 | Payload size, at most 4096 bytes |
@@ -27,6 +27,8 @@ authoring protocol and database versions.
 Hello and hello_ack have empty payloads. Probes/replies carry 0..4096 opaque bytes
 for diagnostics only. Session kinds carry separately versioned, bounded M02b
 payloads and are accepted only by explicit mutual-TLS session-mode transports.
+M02c adds client replication controls (7) and server replication state (8),
+with their own [versioned public-field schema](network-replication.md).
 Unknown kinds, versions, flags, zero sequences and oversized
 claims fail before reading/allocating a body. `decode_frame` requires exactly one
 complete frame. `FrameDecoder::consume` returns one owned frame at most, a consumed
@@ -83,7 +85,9 @@ connections begin handshaking. TLS verifies the server and, in M02b session mode
 the client certificate; then the client sends hello and the server returns
 hello_ack automatically. Ready diagnostic clients can send probe, and servers
 probe_reply. Ready session clients can send session_request, and servers
-session_reply. Unsupported direction or mode/kind rejects. Player authorization
+session_reply. Session clients also send replication_control; session servers
+send replication_state. Negotiation still admits only hello/hello_ack.
+Unsupported direction or mode/kind rejects. Player authorization
 uses the separate [session authority](network-sessions.md). Incoming queue
 pressure stops reads until the owner drains frames, preserving order and bounds.
 
@@ -136,6 +140,7 @@ M02a passes current-machine qualification: 404 CPU CTests and protected
 dependency/package checks. See the [handoff](handoffs/M02a-transport-wire.md) and
 [coverage receipt](coverage/evidence/M02a-transport-wire.json).
 M02b's [handoff](handoffs/M02b-owned-sessions.md) records completed player
-authentication and owned-session qualification. M02c is next, adding explicit
-replication fields/baselines/deltas; M02d adds spatial interest/budgets; M02e closes the full
+authentication and owned-session qualification. M02c [replication](network-replication.md)
+is also locally qualified, with explicit public fields, baselines, deltas and bounded
+resynchronization. M02d spatial interest/budgets is next; M02e closes the full
 gate. See the [checkpoint plan](roadmap/network-plan.md).

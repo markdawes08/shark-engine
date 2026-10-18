@@ -12,6 +12,8 @@ add_executable(Tests
     core_net_transport_tests.cpp
     core_net_mtls_tests.cpp
     core_net_session_tests.cpp
+    core_net_replication_tests.cpp
+    core_net_replication_wire_tests.cpp
     core_time_tests.cpp
     core_transform_tests.cpp
     core_work_tests.cpp
@@ -71,6 +73,10 @@ add_test(NAME shark.core.net-mtls COMMAND Tests "[net-mtls]" --rng-seed 1337)
 set_tests_properties(shark.core.net-mtls PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)
 add_test(NAME shark.core.net-session COMMAND Tests "[net-session]" --rng-seed 1337)
 set_tests_properties(shark.core.net-session PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)
+add_test(NAME shark.core.net-replication-wire COMMAND Tests "[net-replication-wire]" --rng-seed 1337)
+set_tests_properties(shark.core.net-replication-wire PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
+add_test(NAME shark.core.net-replication COMMAND Tests "[net-replication]" --rng-seed 1337)
+set_tests_properties(shark.core.net-replication PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)
 if(TARGET EngineClient)
     add_executable(PresentationFaults presentation_faults.cpp)
     target_include_directories(PresentationFaults PRIVATE "${PROJECT_SOURCE_DIR}"
@@ -282,6 +288,16 @@ add_test(NAME shark.core.net-sessions-process
         --fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures/network"
         --output "${CMAKE_CURRENT_BINARY_DIR}/network-sessions.json")
 set_tests_properties(shark.core.net-sessions-process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 90)
+add_executable(ReplicationProbe replication_probe.cpp)
+target_link_libraries(ReplicationProbe PRIVATE EngineCore)
+shark_configure_target(ReplicationProbe)
+shark_classify_target(ReplicationProbe test)
+add_test(NAME shark.core.net-replication-process
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/test_network_replication.py"
+        --probe "$<TARGET_FILE:ReplicationProbe>"
+        --fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures/network"
+        --output "${CMAKE_CURRENT_BINARY_DIR}/replication-process.json")
+set_tests_properties(shark.core.net-replication-process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 90)
 foreach(shark_tooling_fixture IN ITEMS presentation-stress presentation-faults runtime-package shader-pipeline offscreen-smoke offscreen-faults cube-smoke cube-faults)
     string(REPLACE "-" "_" shark_tooling_source "${shark_tooling_fixture}")
     add_test(NAME "shark.tooling.${shark_tooling_fixture}"
