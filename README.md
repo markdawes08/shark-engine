@@ -1,9 +1,11 @@
 # Shark
 
 Shark is a C++20 game engine project targeting a **seamless open-world MMORPG**.
-Client and editor targets are **Windows and Linux**, with a Linux headless server.
-Mac compatibility is outside the project scope under
-[ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md).
+Development and acceptance target **this Windows PC**, with its RTX 4070 Laptop
+and Intel GPUs for the editor/client and existing **WSL2 Ubuntu** for the headless
+server. [ADR 0010](docs/architecture/0010-current-machine-scope.md) limits the plan
+to available resources; other hardware, native Linux graphics, cloud deployment
+and Mac compatibility are outside current scope.
 The [MMORPG plan and existing-code assessment](docs/roadmap/mmorpg-plan.md) define
 the authoritative server, persistent world and staged client/server work.
 These are planned capabilities; the current engine is a CPU bootstrap with a
@@ -18,11 +20,11 @@ The [human/agent plan and foundation assessment](docs/roadmap/human-agent-plan.m
 define noninteractive tools, discoverable schemas and safe project handoff. Those
 game-authoring interfaces remain planned; terminal build/test tools work today.
 
-**Current assignment: 02; portable probe packages implemented, full hardware gate open.** The headless server and Core/Client
+**Next assignment: 03; assignment 02 is complete under the current-machine scope.** The headless server and Core/Client
 separation have passed local and hosted qualification, including deliberate test
 failure and restored success. The [graphics probe](docs/graphics-probe.md) adds
 locked dependencies, device inventory, validated GPU readbacks and bounded lifecycle; the
-[full graphics gate](docs/roadmap/graphics-plan.md) remains open. Editor/Runtime provide
+[local graphics gate](docs/roadmap/graphics-plan.md) passes on both available GPUs. Editor/Runtime provide
 version and bootstrap help; Server adds validated startup, timed execution and
 shutdown. Production rendering, scenes, gameplay and editor UI are future increments. CPU
 build results do not establish graphics or release-platform support.
@@ -30,11 +32,15 @@ build results do not establish graphics or release-platform support.
 The [02b handoff](docs/handoffs/02b-graphics-cases.md) records local cases, validation
 and limits. Checkpoint 02c is retired by the
 [platform scope amendment](docs/handoffs/windows-linux-scope-amendment.md);
-the six named Windows/Linux GPU rows and clean-machine checks remain open.
+the former six hardware rows and independent-machine checks were subsequently
+removed from mandatory scope by the user's current-machine decision.
 The [final 02d local handoff](docs/handoffs/02d-final-verification.md) records
-Windows/Linux probe packaging, supplemental Windows lifecycle evidence, isolated
-Ubuntu CPU/package checks and the outstanding hardware gates. Only the current
-Windows PC is available; WSL evidence does not qualify native Linux graphics.
+Windows/Linux probe packaging, Windows lifecycle evidence and isolated Ubuntu
+CPU/package checks under its original scope. The
+[current-machine handoff](docs/handoffs/current-machine-scope-amendment.md) records
+the amended gate and local MMO plan. The planned workload is 16 active synthetic
+players across two local region processes, with a separate two-client graphical
+fixture; this is a development target, not a production capacity claim.
 
 - [Architecture decisions](docs/architecture/README.md): targets, dependencies,
   platform candidates, formats, simulation conventions and the MMORPG profile.
@@ -65,7 +71,7 @@ cmake --build --preset windows-debug
 ctest --preset windows-debug
 ```
 
-Use `linux-debug` on Linux. Sanitizer, release and isolated
+Use `linux-debug` in the existing WSL Linux environment. Sanitizer, release and isolated
 Runtime configurations are documented in the build guide. All staging, commits
 and pushes remain with the user; generated output and local tooling stay ignored.
 

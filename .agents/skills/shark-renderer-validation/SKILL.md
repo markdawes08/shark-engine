@@ -1,6 +1,6 @@
 ---
 name: shark-renderer-validation
-description: Validate Shark graphics changes against Vulkan/NVRHI requirements, readback and visual tolerances, and the separate Windows/Linux hardware gates.
+description: Validate Shark graphics changes against Vulkan/NVRHI requirements, readback and visual tolerances, and both GPUs on the current Windows PC.
 ---
 
 # Shark renderer validation
@@ -9,6 +9,10 @@ Read [AGENTS.md](../../../AGENTS.md), the assigned increment and
 [platform evidence](../../../docs/architecture/0003-platforms.md),
 [space/color conventions](../../../docs/architecture/0005-simulation-and-rendering.md)
 and [v1 lighting profile](../../../docs/architecture/0006-v1-profile.md).
+The user-directed [current-machine scope](../../../docs/architecture/0010-current-machine-scope.md)
+selects this Windows PC's RTX 4070 Laptop and Intel Raptor Lake-S Mobile GPUs.
+Existing WSL environments provide Linux CPU/headless/package checks; native Linux
+GPU shipping and other physical hardware are outside the active plan.
 
 The opt-in probe has executable 02b draw/compute/readback and lifecycle cases; see
 the native presets and bounded JSON commands in the [probe guide](../../../docs/graphics-probe.md).
@@ -17,7 +21,9 @@ Prepare the locked standalone validation tools and shader manifest, then use
 `--mode cases`, an explicit device UUID, its validation receipt and a fresh output
 directory. Core and synchronization validation are required for case PASS;
 `--validation off` retains diagnostic execution only. Short lifecycle runs do not
-close the 100/20/600-second gate. All named hardware rows remain separately open.
+close the 100/20/600-second gate. Both active local rows have passed that workload
+in the retained 02d receipts; later graphics changes require relevant regression
+evidence on these devices.
 Run the native CPU build/CTest commands in [building](../../../docs/building.md)
 for relevant shared code. Contract validation checks documentation only.
 02d provides Release packages with a bounded PowerShell launcher on Windows and
@@ -33,12 +39,16 @@ run, not a passing soak. The user removed Mac compatibility from scope under
 02c is retired and no Mac hardware qualification is required.
 Never treat an empty selection or unavailable prerequisite as passing coverage.
 Linux package CPU tests exercise real deadline/output/cancellation cleanup with
-synthetic children. They do not replace native GPU runs or an independent clean
-target's full graphics launch. Retain process-group limitations separately from
-Windows job containment; neither allows failed evidence to be discarded.
+synthetic children. They do not replace native GPU runs. ADR 0010 accepts Windows
+dependency-isolated relocation and the SDK-free WSL runtime as local package
+evidence; an independent physical clean target is no longer required. Retain
+process-group limitations separately from Windows job containment; neither allows
+failed evidence to be discarded.
 
-Assignment 02 must qualify pinned GLFW/NVRHI/Vulkan on the exact real-hardware
-six-row Windows/Linux matrix, treating each OS/GPU row independently. Capture
+Assignment 02 is complete under the narrowed local scope, using the same pinned
+GLFW/NVRHI/Vulkan cases on both available GPUs. Preserve historical NOT_RUN
+outcomes for retired hardware rows and raw aggregate qualification fields;
+do not rewrite them as native passes. For future graphics changes capture
 OS/CPU/GPU/driver, lock digest, compiler/shader versions, capabilities/formats,
 validation settings and logs, commands, exit status and readback evidence. A bare
 triangle or software renderer cannot replace required compute, depth, HDR,
@@ -54,7 +64,10 @@ Test resize, minimize/restore, teardown and resource retirement as well as image
 As lighting lands, exercise PBR, IBL, shadows, AO and tonemapping separately and
 combined in FeatureWorld and isolated fixtures. Preserve explicit color/depth/
 winding conventions and measure cost on named hardware. Update coverage and the
-handoff with PASS/FAIL/NOT RUN; absent hardware remains an open gate.
+handoff with PASS/FAIL/NOT RUN; an unavailable active local GPU leaves its check
+open. Other machines are outside the current contract. RTX is the primary
+performance target; Intel is the correctness/fallback target without an equal-FPS
+promise. Hosted CI remains supplemental to local progression.
 
 For the [seamless MMORPG profile](../../../docs/architecture/0007-mmorpg-architecture.md),
 keep production presentation in EngineClient; M01's split already exists. The

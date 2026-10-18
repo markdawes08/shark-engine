@@ -1,0 +1,663 @@
+{
+  "schema_version": 1,
+  "recorded_at_utc": "2026-10-18T03:59:41.047871+00:00",
+  "base_revision": "2ef281b3dec517b5ebfdfd29d853103523a13cb6",
+  "result_revision": "Uncommitted planning/contract changes; user owns staging, commits and pushes",
+  "user_direction": "adjust the gameplan for this engine to be limited to what is currently available on this machine",
+  "scope_document": "docs/architecture/0010-current-machine-scope.md",
+  "inventory": {
+    "captured_utc": "2026-10-18T03:54:17.1827620Z",
+    "cpu": [
+      {
+        "Name": "Intel(R) Core(TM) i9-14900HX",
+        "NumberOfCores": 24,
+        "NumberOfLogicalProcessors": 32
+      }
+    ],
+    "memory": [
+      {
+        "TotalPhysicalMemory": 34053414912
+      }
+    ],
+    "os": [
+      {
+        "Caption": "Microsoft Windows 11 Home",
+        "Version": "10.0.26200",
+        "BuildNumber": "26200",
+        "OSArchitecture": "64-bit"
+      }
+    ],
+    "gpus": [
+      {
+        "Name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+        "DriverVersion": "32.0.16.1062"
+      },
+      {
+        "Name": "Intel(R) UHD Graphics",
+        "DriverVersion": "32.0.101.6790"
+      }
+    ],
+    "disk": [
+      {
+        "DriveLetter": "C",
+        "Size": 562717208576,
+        "SizeRemaining": 124531351552
+      }
+    ]
+  },
+  "nvidia_smi": {
+    "name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+    "memory_total_mib": 8188,
+    "driver": "610.62",
+    "command": "nvidia-smi --query-gpu=name,memory.total,driver_version --format=csv,noheader"
+  },
+  "linux_environment": {
+    "host": "Windows desktop with Ubuntu26.04 WSL host, Linux6.18.33.2-microsoft-standard-WSL2 shared kernel",
+    "build_userspace": "Ubuntu24.04.5 x86-64; fresh clone of pinned headless build root; original preserved",
+    "runtime_userspace": "Fresh original pinned Ubuntu24 OCI layer plus distro Python3 and runtime libraries only; no source checkout, compiler, CMake, Ninja, Git, DXC, SDK tools or GPU devices",
+    "base_layer_sha256": "f2b4ef06ff01a67d4bed7657a4ae379a7d07934b7c3e743454a22a0d5275fb2b",
+    "apt_snapshot": "https://snapshot.ubuntu.com/ubuntu/20261017T000000Z/",
+    "apt_suites": [
+      "noble",
+      "noble-updates",
+      "noble-security"
+    ],
+    "added_build_packages": {
+      "libpkgconf3:amd64": [
+        "1.8.1-2build1",
+        "amd64"
+      ],
+      "libpthread-stubs0-dev:amd64": [
+        "0.4-1build3",
+        "amd64"
+      ],
+      "libx11-6:amd64": [
+        "2:1.8.7-1ubuntu0.1",
+        "amd64"
+      ],
+      "libx11-data": [
+        "2:1.8.7-1ubuntu0.1",
+        "all"
+      ],
+      "libx11-dev:amd64": [
+        "2:1.8.7-1ubuntu0.1",
+        "amd64"
+      ],
+      "libxau-dev:amd64": [
+        "1:1.0.9-1build6",
+        "amd64"
+      ],
+      "libxau6:amd64": [
+        "1:1.0.9-1build6",
+        "amd64"
+      ],
+      "libxcb1:amd64": [
+        "1.15-1ubuntu2",
+        "amd64"
+      ],
+      "libxcb1-dev:amd64": [
+        "1.15-1ubuntu2",
+        "amd64"
+      ],
+      "libxcursor-dev:amd64": [
+        "1:1.2.1-1build1",
+        "amd64"
+      ],
+      "libxcursor1:amd64": [
+        "1:1.2.1-1build1",
+        "amd64"
+      ],
+      "libxdmcp-dev:amd64": [
+        "1:1.1.3-0ubuntu6",
+        "amd64"
+      ],
+      "libxdmcp6:amd64": [
+        "1:1.1.3-0ubuntu6",
+        "amd64"
+      ],
+      "libxext-dev:amd64": [
+        "2:1.3.4-1build2",
+        "amd64"
+      ],
+      "libxext6:amd64": [
+        "2:1.3.4-1build2",
+        "amd64"
+      ],
+      "libxfixes-dev:amd64": [
+        "1:6.0.0-2build1",
+        "amd64"
+      ],
+      "libxfixes3:amd64": [
+        "1:6.0.0-2build1",
+        "amd64"
+      ],
+      "libxi-dev:amd64": [
+        "2:1.8.1-1build1",
+        "amd64"
+      ],
+      "libxi6:amd64": [
+        "2:1.8.1-1build1",
+        "amd64"
+      ],
+      "libxinerama-dev:amd64": [
+        "2:1.1.4-3build1",
+        "amd64"
+      ],
+      "libxinerama1:amd64": [
+        "2:1.1.4-3build1",
+        "amd64"
+      ],
+      "libxrandr-dev:amd64": [
+        "2:1.5.2-2build1",
+        "amd64"
+      ],
+      "libxrandr2:amd64": [
+        "2:1.5.2-2build1",
+        "amd64"
+      ],
+      "libxrender-dev:amd64": [
+        "1:0.9.10-1.1build1",
+        "amd64"
+      ],
+      "libxrender1:amd64": [
+        "1:0.9.10-1.1build1",
+        "amd64"
+      ],
+      "pkg-config:amd64": [
+        "1.8.1-2build1",
+        "amd64"
+      ],
+      "pkgconf:amd64": [
+        "1.8.1-2build1",
+        "amd64"
+      ],
+      "pkgconf-bin": [
+        "1.8.1-2build1",
+        "amd64"
+      ],
+      "x11proto-dev": [
+        "2023.2-1",
+        "all"
+      ],
+      "xorg-sgml-doctools": [
+        "1:1.11-1.1",
+        "all"
+      ],
+      "xtrans-dev": [
+        "1.4.0-1",
+        "all"
+      ]
+    },
+    "changed_existing_build_packages": {},
+    "toolchain": {
+      "gcc": "13.3.0-6ubuntu2~24.04.1",
+      "cmake": "3.31.10",
+      "ninja": "1.13.2",
+      "python": "3.12.3"
+    },
+    "mounts": {
+      "/source": "Read-only current repository",
+      "/source/build": "Fresh Linux-native /work/build",
+      "/source/.tools/graphics": "Fresh cache copied from verified local archive inputs",
+      "/source/out": "Writable generated evidence only"
+    },
+    "host_changes": "No Windows or WSL-host package installation/configuration changes; added packages are confined to fresh isolated roots"
+  },
+  "scope_reassessment": {
+    "REQ-02": "PASS for current-machine scope",
+    "next_assignment": "03",
+    "next_assignment_implemented": false,
+    "new_gpu_execution": false,
+    "reason": "Explicit user scope change plus unchanged existing local evidence; no retired row relabeled PASS"
+  },
+  "retained_evidence": [
+    {
+      "path": "docs/coverage/evidence/02d-windows-refresh.json",
+      "sha256": "82edcd4f680da6001729075e966772b25890f15d3d9af215160c2195a2272794"
+    },
+    {
+      "path": "docs/coverage/evidence/02d-linux-local.json",
+      "sha256": "925b15f3d33f340c131761c46448f960ea885fba1eaa247b67c4776647061c30"
+    }
+  ],
+  "current_source_identity": {
+    "docs/coverage/evidence/02d-windows-refresh.json": {
+      "status": "PASS",
+      "compared_current_source_files": 27,
+      "hashes": {
+        "CMakePresets.json": "7714fc869aacda5072439b72fb92fb3a8653b52b4b29a3b4dfedeb6db60cac66",
+        "cmake/GraphicsDependencies.cmake": "b1491b5b20a358d1fc30b89e6f0ac38cea9dda808725a29a910aa797e9478f17",
+        "cmake/GraphicsValidation.cmake": "de824be7509230525f980090ef54bea7accd5530e3fa20954e849b6fff8bd2d8",
+        "dependencies.lock.json": "1231da5703cd19d9da35a03e623815fff70f82a8aca72c33421d631c2249fc56",
+        "probes/graphics/CMakeLists.txt": "d497621e5154971c42e99726234152385f240d577bb3b5ce3a3f9951a20ae5d6",
+        "probes/graphics/cases.cpp": "c85c747421c3f023fc8b2a1f192730b64925863c33c4989e02e92d41bef282f4",
+        "probes/graphics/cases.hpp": "323a4e42f498d8d16425d2b4e840e1d4d97152aacbd9f3c53deec4c5fbf0796e",
+        "probes/graphics/check_cli.py": "104e2f6cb5a7236fecea388fad4fc3401fb027c6d616f20faba2cf8e644d6f77",
+        "probes/graphics/lifecycle_policy.hpp": "c98dd88e814df3da5ff633c3f898b2f8aeca6b5eeab62be02d60796e001ae32c",
+        "probes/graphics/lifecycle_tests.cpp": "095d95d2f840abada99ef1742866d424d19432333b0c34a3e90bcc67f7a40794",
+        "probes/graphics/main.cpp": "578bd03c3bc29fa9333b2a8983287956df11d61081e095112602f30bf4ed0455",
+        "probes/graphics/report.hpp": "f2ccf9a4855b1f8bb303ce8b69110562491a5e70bfc694934a7664018275047e",
+        "probes/graphics/report_tests.cpp": "890b2d57a0b9e4a96c327e95d3a4ab031f3a1d6153d5fe6850544a11aeaca93b",
+        "probes/graphics/shaders/cases.hlsl": "8a4cdda5773154450f7caf8b84b01d000fc622430d5e53f584e74f01dbc43685",
+        "probes/graphics/shaders/setup.hlsl": "9110700921ac836ae8a6e22b60056c52177a0c7e8a3f7727fa4cab8e631e65bf",
+        "probes/graphics/windows.manifest": "ae18e973ee276ee777cf40fa0ccf4c73e23ec0280d3abd4bca39f205145ebf9a",
+        "tests/CMakeLists.txt": "b84e77efefa5ccd98bed34fb00ec754c52a249b1955f462b961808fd0fffc26d",
+        "tools/graphics_package/Run-GraphicsProbe.ps1": "ef2072082adf209efe8d46e9f894bcd4fe56d57ce7e3fa570328336a5d1825a5",
+        "tools/graphics_package/licenses/Microsoft-VC-Runtime-2026.txt": "d9363efd59ac8a01f4b89b6b41519237c2b6cf3a240554204c3708bffa8991dc",
+        "tools/graphics_package/run_graphics_probe.py": "81056b22e1a911cdf617bc0fd3b651a6d6e84dde5552ff266d8382dbbd920961",
+        "tools/graphics_probe.py": "61ba9856f77c5e1a46bd6425bcad0120b90ef602dd1bd25da6a76e30df599feb",
+        "tools/package_graphics_probe.py": "f4b182c2b3af4058cd3c1b00249e2c8b615beff67a4601c2f8f4378495ea2c14",
+        "tools/package_graphics_probe_linux.py": "f56d24f4aee4bd3e4ac81ba3cf5158624748ae4a443cced6c17101b5528908cc",
+        "tools/prepare_graphics_validation.py": "6d06f86f77bbcedf26519cb03760a1740a45439e24a1fcd3e4dfc413f6a0197f",
+        "tools/process_runner.py": "73ccfe5050040e3f495e518d3ddfbe903ee581edda17f2aed276456ffcf9e4bb",
+        "tools/tests/test_graphics_package_linux.py": "7a81332e4bf9e4021bdd9e45650f4e678ea7b2a717e2e989b73fcfef27523c94",
+        "tools/windows_unelevated.py": "f6a717b35e577f733415e965394c6ae57e7805e6790dd6180fd1ca5d6d6feb33"
+      }
+    },
+    "docs/coverage/evidence/02d-linux-local.json": {
+      "status": "PASS",
+      "compared_current_source_files": 14,
+      "hashes": {
+        "CMakePresets.json": "7714fc869aacda5072439b72fb92fb3a8653b52b4b29a3b4dfedeb6db60cac66",
+        "cmake/GraphicsDependencies.cmake": "b1491b5b20a358d1fc30b89e6f0ac38cea9dda808725a29a910aa797e9478f17",
+        "cmake/GraphicsValidation.cmake": "de824be7509230525f980090ef54bea7accd5530e3fa20954e849b6fff8bd2d8",
+        "tests/CMakeLists.txt": "b84e77efefa5ccd98bed34fb00ec754c52a249b1955f462b961808fd0fffc26d",
+        "tools/package_graphics_probe_linux.py": "f56d24f4aee4bd3e4ac81ba3cf5158624748ae4a443cced6c17101b5528908cc",
+        "tools/package_graphics_probe.py": "f4b182c2b3af4058cd3c1b00249e2c8b615beff67a4601c2f8f4378495ea2c14",
+        "tools/graphics_package/run_graphics_probe.py": "81056b22e1a911cdf617bc0fd3b651a6d6e84dde5552ff266d8382dbbd920961",
+        "tools/tests/test_graphics_package_linux.py": "7a81332e4bf9e4021bdd9e45650f4e678ea7b2a717e2e989b73fcfef27523c94",
+        "tools/graphics_probe.py": "61ba9856f77c5e1a46bd6425bcad0120b90ef602dd1bd25da6a76e30df599feb",
+        "tools/process_runner.py": "73ccfe5050040e3f495e518d3ddfbe903ee581edda17f2aed276456ffcf9e4bb",
+        "tools/toolchain_report.py": "59349b3f52acac3465da940c96f1cda5c7a264db89d9f3c1ca21038de50a6fe4",
+        "tools/prepare_graphics_validation.py": "6d06f86f77bbcedf26519cb03760a1740a45439e24a1fcd3e4dfc413f6a0197f",
+        "tools/prepare_graphics_tools.py": "0222c8f46daa079a0e82a9b8fc165238057811637ec5d0b1f911b7bab23b263b",
+        "dependencies.lock.json": "1231da5703cd19d9da35a03e623815fff70f82a8aca72c33421d631c2249fc56"
+      }
+    }
+  },
+  "gpu_rows": [
+    {
+      "id": "LOCAL-W-NV",
+      "reassessed_status": "PASS",
+      "scope": "This PC, amended assignment02 only",
+      "device": {
+        "name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+        "uuid": "863d6f59a51894ab8b4829aa9460c78d",
+        "driver_info": "610.62",
+        "api_version": "1.4.341"
+      },
+      "lifecycle": {
+        "completed_device_cycles": 20,
+        "completed_resize_cycles": 100,
+        "device_cycle_index": 19,
+        "fully_qualified": true,
+        "minimize_restore_cycles": 100,
+        "observed_zero_framebuffer_extents": 100,
+        "phase": "complete",
+        "present_elapsed_seconds": 600.0008163,
+        "presentation_path": "serialized Vulkan color-attachment clear; GPU draw/compute cases use NVRHI",
+        "presented_frames": 212351,
+        "progress_complete": true,
+        "requested_device_cycles": 20,
+        "requested_present_seconds": 600,
+        "requested_resize_cycles": 100,
+        "resize_cycle_index": 99,
+        "retirement": "submission fences and device/queue idle; no concurrent frames or reusable present semaphores",
+        "zero_extent_note": "CPU guard tests cover zero dimensions; actual OS zero framebuffer observations are counted separately",
+        "zero_extent_policy_checks": 0
+      },
+      "validation_warnings": 0,
+      "validation_errors": 0,
+      "readback_checks": 14,
+      "artifacts": [
+        {
+          "path": "graphics.rgba8",
+          "bytes": 16384,
+          "sha256": "7bf729ee9f42c036fde5dc1962f965de6983c1da5d1f75e37418bcf0296b411b"
+        },
+        {
+          "path": "graphics.d32",
+          "bytes": 16384,
+          "sha256": "9e6828df32315c71296ddb0c383babe084f66c66f12960f2fdf916c9aa559979"
+        },
+        {
+          "path": "compute.u32",
+          "bytes": 1024,
+          "sha256": "8192a79765fa03429294c19bd343f5ea08e3f0a14f5dddb1bf68ecb01b5d630c"
+        },
+        {
+          "path": "compute-storage.rgba16f",
+          "bytes": 2048,
+          "sha256": "550c2bf877a83ce11dea6774204af934b54763a64d643e09d98fbd882327e0f8"
+        },
+        {
+          "path": "compute-consumed.rgba16f",
+          "bytes": 2048,
+          "sha256": "550c2bf877a83ce11dea6774204af934b54763a64d643e09d98fbd882327e0f8"
+        },
+        {
+          "path": "formats-hdr.rgba16f",
+          "bytes": 128,
+          "sha256": "e3a3ef077ed264353948132d3e3833616a8163241e5b7c2019cf9a086b6985a7"
+        },
+        {
+          "path": "formats-unorm.rgba8",
+          "bytes": 64,
+          "sha256": "b55d8ed309bf13f0b7de1b34ba52f79ef67ba2f76c3c4fa69b115ecdf7cf63e5"
+        },
+        {
+          "path": "formats-srgb-upload.rgba8",
+          "bytes": 16,
+          "sha256": "55b6bccf034f3462bafa0826d96b772eafc18f2bbd1f1db560f55cc9c49a88c9"
+        },
+        {
+          "path": "formats-linear-upload.rgba8",
+          "bytes": 16,
+          "sha256": "55b6bccf034f3462bafa0826d96b772eafc18f2bbd1f1db560f55cc9c49a88c9"
+        },
+        {
+          "path": "formats-samples.rgba16f",
+          "bytes": 4352,
+          "sha256": "d64294ed0c6b13c0e44dc4a9b44918d1d07e59aabc6fb985c15f4ddb7d45e6fa"
+        },
+        {
+          "path": "formats-depth-crops.d32",
+          "bytes": 3072,
+          "sha256": "4c77dd54d827c02f74f54f5f69675cd051edcfcbd25347278586d727aa568ae6"
+        }
+      ],
+      "package_manifest_sha256": "0bd36726f65567a1b0f9dd2dac60ed882c49708e8e8d3d1fc6a129188db9beee",
+      "original_native_cases": [
+        {
+          "id": "P02-01",
+          "status": "PASS"
+        },
+        {
+          "id": "P02-02",
+          "status": "PASS"
+        },
+        {
+          "id": "P02-03",
+          "status": "PASS"
+        },
+        {
+          "id": "P02-04",
+          "status": "PASS"
+        },
+        {
+          "id": "P02-05",
+          "status": "PASS"
+        },
+        {
+          "id": "P02-06",
+          "status": "PASS"
+        },
+        {
+          "id": "P02-07",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P02-08",
+          "status": "NOT_RUN"
+        }
+      ]
+    },
+    {
+      "id": "LOCAL-W-INTEL",
+      "reassessed_status": "PASS",
+      "scope": "This PC, amended assignment02 only",
+      "device": {
+        "name": "Intel(R) RaptorLake-S Mobile Graphics Controller",
+        "uuid": "868088a7040000000002000000000000",
+        "driver_info": "101.6790",
+        "api_version": "1.4.311"
+      },
+      "lifecycle": {
+        "completed_device_cycles": 20,
+        "completed_resize_cycles": 100,
+        "device_cycle_index": 19,
+        "fully_qualified": true,
+        "minimize_restore_cycles": 100,
+        "observed_zero_framebuffer_extents": 100,
+        "phase": "complete",
+        "present_elapsed_seconds": 600.0028867,
+        "presentation_path": "serialized Vulkan color-attachment clear; GPU draw/compute cases use NVRHI",
+        "presented_frames": 94717,
+        "progress_complete": true,
+        "requested_device_cycles": 20,
+        "requested_present_seconds": 600,
+        "requested_resize_cycles": 100,
+        "resize_cycle_index": 99,
+        "retirement": "submission fences and device/queue idle; no concurrent frames or reusable present semaphores",
+        "zero_extent_note": "CPU guard tests cover zero dimensions; actual OS zero framebuffer observations are counted separately",
+        "zero_extent_policy_checks": 0
+      },
+      "validation_warnings": 0,
+      "validation_errors": 0,
+      "readback_checks": 14,
+      "artifacts": [
+        {
+          "path": "graphics.rgba8",
+          "bytes": 16384,
+          "sha256": "7bf729ee9f42c036fde5dc1962f965de6983c1da5d1f75e37418bcf0296b411b"
+        },
+        {
+          "path": "graphics.d32",
+          "bytes": 16384,
+          "sha256": "9e6828df32315c71296ddb0c383babe084f66c66f12960f2fdf916c9aa559979"
+        },
+        {
+          "path": "compute.u32",
+          "bytes": 1024,
+          "sha256": "8192a79765fa03429294c19bd343f5ea08e3f0a14f5dddb1bf68ecb01b5d630c"
+        },
+        {
+          "path": "compute-storage.rgba16f",
+          "bytes": 2048,
+          "sha256": "550c2bf877a83ce11dea6774204af934b54763a64d643e09d98fbd882327e0f8"
+        },
+        {
+          "path": "compute-consumed.rgba16f",
+          "bytes": 2048,
+          "sha256": "550c2bf877a83ce11dea6774204af934b54763a64d643e09d98fbd882327e0f8"
+        },
+        {
+          "path": "formats-hdr.rgba16f",
+          "bytes": 128,
+          "sha256": "e3a3ef077ed264353948132d3e3833616a8163241e5b7c2019cf9a086b6985a7"
+        },
+        {
+          "path": "formats-unorm.rgba8",
+          "bytes": 64,
+          "sha256": "898c9f301e63a1c1f230ad3343997b96edf87fc0987a2aefde9051795004c9c5"
+        },
+        {
+          "path": "formats-srgb-upload.rgba8",
+          "bytes": 16,
+          "sha256": "55b6bccf034f3462bafa0826d96b772eafc18f2bbd1f1db560f55cc9c49a88c9"
+        },
+        {
+          "path": "formats-linear-upload.rgba8",
+          "bytes": 16,
+          "sha256": "55b6bccf034f3462bafa0826d96b772eafc18f2bbd1f1db560f55cc9c49a88c9"
+        },
+        {
+          "path": "formats-samples.rgba16f",
+          "bytes": 4352,
+          "sha256": "6edbe8c25cfa8b173c491d9cd8d361d3a33050522c77580c829a04bf20202500"
+        },
+        {
+          "path": "formats-depth-crops.d32",
+          "bytes": 3072,
+          "sha256": "4c77dd54d827c02f74f54f5f69675cd051edcfcbd25347278586d727aa568ae6"
+        }
+      ],
+      "package_manifest_sha256": "0bd36726f65567a1b0f9dd2dac60ed882c49708e8e8d3d1fc6a129188db9beee",
+      "original_native_cases": [
+        {
+          "id": "P02-01",
+          "status": "PASS"
+        },
+        {
+          "id": "P02-02",
+          "status": "PASS"
+        },
+        {
+          "id": "P02-03",
+          "status": "PASS"
+        },
+        {
+          "id": "P02-04",
+          "status": "PASS"
+        },
+        {
+          "id": "P02-05",
+          "status": "PASS"
+        },
+        {
+          "id": "P02-06",
+          "status": "PASS"
+        },
+        {
+          "id": "P02-07",
+          "status": "NOT_RUN"
+        },
+        {
+          "id": "P02-08",
+          "status": "NOT_RUN"
+        }
+      ]
+    }
+  ],
+  "package_and_failure_aggregation": {
+    "windows_local_relocation": "PASS: actual Unicode/space relocation, standard user, restricted PATH and verified PE closure",
+    "windows_failures": "PASS: corrupt shader/missing CRT rejected, elevated validation unavailable, real watchdog124 with cleanup",
+    "linux_local_userspace": [
+      {
+        "name": "Actual GNU13 Release configure/build/link",
+        "status": "PASS",
+        "notes": "Explicit compilers; fresh cache restores default -O3 -DNDEBUG; static NVRHI Vulkan-to-common target edge fixes observed undefined references"
+      },
+      {
+        "name": "Native graphics CTest final",
+        "status": "PASS",
+        "tests": 21,
+        "skipped": 0
+      },
+      {
+        "name": "Native Linux packaging/launcher unit and process fixtures",
+        "status": "PASS",
+        "tests": 20,
+        "skipped": 0
+      },
+      {
+        "name": "Locked SPIR-V validator and Vulkan validation layer preparation",
+        "status": "PASS",
+        "notes": "Offline verified source archives; original RelWithDebInfo compile configuration retained; Linux-only versioned layer link option strips non-runtime debug sections"
+      },
+      {
+        "name": "Locked Linux DXC and four SPIR-V shader fixtures",
+        "status": "PASS"
+      },
+      {
+        "name": "ELF dependency closure and package publication",
+        "status": "PASS",
+        "notes": "No RPATH/RUNPATH; explicit Ubuntu24 symbol ceilings and app-local loader/layer; precompiled shaders and notices"
+      },
+      {
+        "name": "Tar archive completeness",
+        "status": "PASS",
+        "notes": "Manifest payloads byte-checked; explicit 0755 directories/native executable and 0644 other payload modes"
+      },
+      {
+        "name": "SDK-free ordinary-user Unicode/space relocation describe",
+        "status": "PASS",
+        "notes": "UID65534, unrelated working directory, system-only PATH and poisoned inherited driver/layer/Python variables"
+      },
+      {
+        "name": "Missing display prerequisite behavior",
+        "status": "PASS",
+        "expected_native_qualification": "NOT_RUN",
+        "expected_exit": 3
+      },
+      {
+        "name": "Actual corrupt shader and missing packaged loader rejection",
+        "status": "PASS",
+        "expected_exit": 1
+      }
+    ],
+    "native_report_policy": "Original P02-07/P02-08 NOT_RUN values remain; separate package/failure fixtures satisfy amended aggregate scope",
+    "independent_physical_clean_machine": "OUT_OF_SCOPE; never claimed tested"
+  },
+  "retired_hardware_rows": [
+    {
+      "id": "W-NV",
+      "platform": "Windows x86-64",
+      "required_gpu": "NVIDIA GeForce GTX 1660",
+      "status": "NOT_RUN",
+      "reason": "Only current Windows PC available; supplemental GPUs do not replace named baselines",
+      "current_requirement": false
+    },
+    {
+      "id": "W-AMD",
+      "platform": "Windows x86-64",
+      "required_gpu": "AMD Radeon RX 5500 XT",
+      "status": "NOT_RUN",
+      "reason": "Only current Windows PC available; supplemental GPUs do not replace named baselines",
+      "current_requirement": false
+    },
+    {
+      "id": "W-INTEL",
+      "platform": "Windows x86-64",
+      "required_gpu": "Intel Iris Xe, Tiger Lake",
+      "status": "NOT_RUN",
+      "reason": "Only current Windows PC available; supplemental GPUs do not replace named baselines",
+      "current_requirement": false
+    },
+    {
+      "id": "L-NV",
+      "platform": "Ubuntu x86-64",
+      "required_gpu": "NVIDIA GeForce GTX 1660",
+      "status": "NOT_RUN",
+      "reason": "Only current Windows PC available; supplemental GPUs do not replace named baselines",
+      "current_requirement": false
+    },
+    {
+      "id": "L-AMD",
+      "platform": "Ubuntu x86-64",
+      "required_gpu": "AMD Radeon RX 5500 XT",
+      "status": "NOT_RUN",
+      "reason": "Only current Windows PC available; supplemental GPUs do not replace named baselines",
+      "current_requirement": false
+    },
+    {
+      "id": "L-INTEL",
+      "platform": "Ubuntu x86-64",
+      "required_gpu": "Intel Iris Xe, Tiger Lake",
+      "status": "NOT_RUN",
+      "reason": "Only current Windows PC available; supplemental GPUs do not replace named baselines",
+      "current_requirement": false
+    }
+  ],
+  "historical_failure": "Earlier02b resize timeout remains preserved and unexplained; no retrospective fix claimed",
+  "future_workload": {
+    "id": "LOCAL-MMO-1",
+    "status": "NOT_RUN",
+    "active_synthetic_players": 16,
+    "region_processes": 2,
+    "npcs": 16,
+    "hotspot_players": 16,
+    "visible_animated_actors": 32,
+    "separate_graphical_client_fixture": 2,
+    "crossings": 100,
+    "soak_hours": 2,
+    "capacity_claim": false
+  },
+  "limits": [
+    "Windows native graphics only on this PC; no broader GPU/OS compatibility claim",
+    "WSL userspace qualifies CPU/headless/package paths, not native Linux graphical deployment",
+    "Local faults/restore tests do not prove real WAN, independent host failure or production availability",
+    "No new runtime implementation, third-party package install, host settings, CI workflow or remote protection change",
+    "Existing hosted CI remains supplemental; no new hosted execution claimed"
+  ]
+}

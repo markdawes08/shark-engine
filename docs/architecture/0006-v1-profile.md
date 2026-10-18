@@ -8,6 +8,11 @@ Amended 2026-10-17 for the user's seamless open-world MMORPG direction.
 [execution plan](../roadmap/mmorpg-plan.md) add mandatory M01-M10 gates. Original
 client features below remain required; static assets, primitive collision and
 the minimal HUD are intermediate milestones rather than the complete MMO profile.
+The later [current-machine scope](0010-current-machine-scope.md) limits acceptance
+to the Windows client/editor on this PC and its WSL headless Server. Here
+"release" means a local development release candidate, not a public service or
+qualification on unavailable platforms. LOCAL-MMO-1 replaces the former large
+load target; correctness and feature contracts below remain required.
 
 ## Required release behavior
 
@@ -148,8 +153,9 @@ licensed Poly Haven reference with origin metadata; startup needs no network.
   console, local/world gizmos and snapping, play/pause/one-tick-step/stop,
   reload/recovery, local CLI/JSON-RPC discovery and project-scoped text editing.
   Add a thin MCP adapter in 15 if required by the chosen agent environment.
-- Export: host-platform packages first, reproducible final cooked content,
-  dynamic asset roots, licenses and clean-machine runs on every release baseline.
+- Export: local Windows client/editor and WSL Server packages, reproducible final
+  cooked content, dynamic asset roots, licenses and relocated dependency-isolation
+  checks on the available machine, following ADR 0010.
   M08 separates client and headless server packages/content; server rules and
   credentials cannot enter client exports. Cross-host toolchain/export support
   is not implied.
@@ -174,8 +180,10 @@ with movement/rotation, line clearing, scoring, pause/restart, game over and sou
 A separate 3D physics sandbox proves collision/spawning/audio behavior. Assignment
 34 sets quantitative frame-time/memory budgets from named hardware measurements
 and enforces them; no performance figure is claimed in 00. Assignment 35 requires
-clean-machine installation, any required platform signing, notices, samples,
-references and archived build inputs/symbols on every qualified release row.
+relocated local installation/launch, isolated WSL Server closure, notices, samples,
+references and archived build inputs/symbols on the current baseline. Public
+signing certificates and independent physical machines are outside current scope;
+content-trust behavior uses explicit local development keys and tamper rejection.
 It also depends on M08-M10's server packages, multi-client world acceptance,
 capacity/soak, recovery and operational evidence. The provisional targets in
 ADR 0007 are not observed performance or a claim of production readiness.

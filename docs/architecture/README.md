@@ -16,10 +16,11 @@ and terminal LLM workflows equal product requirements. They strengthen existing
 authoring assignments without changing order or implying a working CLI/editor.
 
 Platform amendment, 2026-10-17: [ADR 0009](0009-windows-linux-platform-scope.md)
-records the user's removal of Mac compatibility and qualification work. Current
-targets are Windows/Linux clients and editor, plus the Linux headless server.
-The six remaining GPU rows and clean-target gates remain unqualified; historical
-Mac CPU results and deferred work records are preserved as history.
+records the user's removal of Mac compatibility and qualification work. The later
+[ADR 0010](0010-current-machine-scope.md) limits required acceptance to the current
+Windows PC and its WSL2 environment. The two actual local GPUs and local package
+gates pass assignment 02; the former six rows remain historically untested but
+are no longer requirements. Assignment 03 is next, not implemented.
 
 | Record | Decision |
 | --- | --- |
@@ -32,6 +33,7 @@ Mac CPU results and deferred work records are preserved as history.
 | [0007](0007-mmorpg-architecture.md) | Seamless world, authority, server boundary, replication, persistence and provisional capacity gates |
 | [0008](0008-human-agent-authoring.md) | Shared human/terminal authoring, discovery, noninteractive results, project ownership and parity gates |
 | [0009](0009-windows-linux-platform-scope.md) | User-directed Windows/Linux platform scope, retired Mac obligations and preserved evidence |
+| [0010](0010-current-machine-scope.md) | Current PC/WSL targets, local MMO workload and packaging gates; revised 02 completion |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

@@ -21,22 +21,36 @@ Assignment 01's hosted CPU and red/green gate is complete; see the
 complete. The headless Server bootstrap and Core/Client
 split are implemented; the [M01 handoff](docs/handoffs/M01-headless-server.md) records
 local qualification and the [hosted follow-up](docs/handoffs/M01-ci-verification.md)
-records the completed native CPU, headless Docker and red/green gate. The current
-assignment is 02; checkpoint 02a dependency/probe setup is complete. The
+records the completed native CPU, headless Docker and red/green gate. The next
+assignment is 03, not yet implemented; 02 is complete under the user-directed
+[current-machine scope](docs/architecture/0010-current-machine-scope.md). The
 [02a handoff](docs/handoffs/02a-graphics-setup.md) records evidence and limits;
 02b executable graphics cases and local validation are complete within checkpoint scope; see the
 [02b handoff](docs/handoffs/02b-graphics-cases.md). The user removed Mac compatibility
 from scope; [ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md)
-supersedes the earlier deferral and retires checkpoint 02c. Target Windows and
-Linux clients/editor and the Linux headless Server. Do not plan, implement or
+supersedes the earlier deferral and retires checkpoint 02c. ADR 0010 subsequently
+limits client/editor qualification to this Windows PC's RTX 4070 Laptop and Intel
+GPUs, with CPU/headless Server qualification in existing WSL2 Ubuntu. Do not plan, implement or
 require Mac compatibility, CI, packaging or hardware qualification.
 The [final 02d local handoff](docs/handoffs/02d-final-verification.md) records
-Windows/Linux package work, supplemental Windows lifecycle runs and isolated
-Ubuntu CPU/package checks. Only the current Windows PC is available; all six
-named GPU rows and independent clean graphical deployment remain open. Follow the
+Windows/Linux package work, full Windows lifecycle runs and isolated Ubuntu
+CPU/package checks. The [scope handoff](docs/handoffs/current-machine-scope-amendment.md)
+reuses that evidence for the two available GPU rows and local package gates.
+The former six GPU rows and independent-machine checks are retired requirements,
+not retroactive passes. Follow the
 [graphics checkpoint plan](docs/roadmap/graphics-plan.md) and
-[probe guide](docs/graphics-probe.md); no complete GPU row is qualified yet.
+[probe guide](docs/graphics-probe.md); local feasibility does not claim support
+on other machines or a production MMO release.
 Networking, persistence, simulation and streaming remain planned.
+
+Keep all remaining gates achievable on this PC: local processes, loopback or
+Windows/WSL connections, deterministic network faults, local storage and backups,
+and available desktop/audio devices. Use ADR 0007's explicit LOCAL-MMO-1 workload.
+Do not require additional hardware, native Linux graphics, cloud services,
+external accounts, public certificates or hosted-runner access. Existing CI remains
+supplemental; remote branch protection is unchanged and is not a local roadmap
+gate. Investigate failures affecting in-scope behavior. Do not change host/WSL
+resource settings or claim production capacity from local tests.
 
 Human editor users and terminal-based LLM agents are equal development audiences.
 Read [ADR 0008](docs/architecture/0008-human-agent-authoring.md) and the
@@ -147,7 +161,8 @@ integration owners. Add exact immutable inputs, licenses, options and patches to
 [dependencies.lock.json](dependencies.lock.json) before first use. Do not add floating tags,
 competing package resolution, hidden transitive downloads or future subsystem
 stubs. Catch2 is test-only. GLFW/NVRHI/Vulkan must pass assignment 02 before
-dependent renderer work on the selected Windows/Linux targets.
+dependent renderer work on the two local Windows GPU targets; that amended
+feasibility gate is now complete. Preserve the Linux CPU/Server boundary.
 
 Keep EnTT/Jolt/NVRHI details inside their subsystem implementations. Shared public
 contracts use engine-owned types; centrally configured GLM is the math exception.

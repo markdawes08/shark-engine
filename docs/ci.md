@@ -1,5 +1,13 @@
 # CPU and headless Server CI
 
+Under [ADR 0010](architecture/0010-current-machine-scope.md), roadmap acceptance
+uses this PC's native Windows and existing WSL Ubuntu checks. The nine-job hosted
+workflow is retained as supplemental regression coverage; hosted availability is
+not a prerequisite for local assignment progression. Existing remote branch
+protection still governs GitHub merges and is unchanged. Do not label an absent
+or failing hosted run PASS, and investigate real failures affecting the local
+targets. No hosted run is required for this planning-only scope amendment.
+
 Assignment 01's hosted gate is **PASS** on
 `3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de`. After repairing the macOS ARM Xcode
 selection, the ordinary push passed all fourteen jobs. The subsequent injected
@@ -17,8 +25,8 @@ headless sanitizer and clean-runtime stages stop after its Debug failure.
 The [M01 hosted follow-up](handoffs/M01-ci-verification.md) and
 [durable gate evidence](coverage/evidence/M01-ci-gate.json) record actual runs,
 Docker/package qualification and the fifteen checks required at that revision. The
-[MMORPG execution plan](roadmap/mmorpg-plan.md) now places work in assignment 02
-graphics feasibility, with 02b executable cases following 02a setup. The [opt-in probe](graphics-probe.md) adds CPU checks to
+[MMORPG execution plan](roadmap/mmorpg-plan.md) now places the next work in assignment
+03 following completion of 02 under the amended local scope. The [opt-in probe](graphics-probe.md) adds CPU checks to
 ordinary CI while graphics builds/device runs use explicit graphics presets.
 The historical job/test counts above remain tied to their recorded revisions.
 [ADR 0009](architecture/0009-windows-linux-platform-scope.md) removes Mac from
@@ -28,9 +36,11 @@ The current workflow has nine jobs, described below. At `39110d4`,
 passed all nine jobs and 156/156 CTests; the
 [02d audit](coverage/evidence/02d-hosted-ci.json) preserves artifact digests,
 toolchains, boundary results and protection readback. This verifies the platform
-scope amendment, not the later uncommitted Linux package and link changes.
-Windows relocation on a development host is not clean-machine
-or full GPU-matrix evidence. The CPU package rejection suite
+scope amendment, not the later Linux package and link changes committed at
+`2ef281b`. No new hosted execution of that revision is claimed here. Windows
+relocation and SDK-free WSL package checks meet the amended local acceptance
+scope; they remain distinct from independent-machine or native Linux GPU evidence.
+The CPU package rejection suite
 is registered as `shark.tooling.graphics-package`, with the Linux package and
 process-cleanup suite in `shark.tooling.graphics-package-linux`; Windows launcher integration and
 GPU soak remain opt-in. Network, database, world-handoff and
@@ -57,12 +67,13 @@ The [scope amendment handoff](handoffs/windows-linux-scope-amendment.md) and
 [protection readback](coverage/evidence/windows-linux-ci-protection.json) record
 removal of only the six Mac check names. Administrator bypass and all other
 protection settings are unchanged. No approving-review or push-actor restriction
-was added. The revised workflow passed at `39110d4`; later local 02d implementation
-changes require a new user commit/push and hosted run.
+was added. The revised workflow passed at `39110d4`; a later revision needs its
+own actual run before a hosted PASS can be claimed. This is separate from local
+roadmap completion under ADR 0010.
 The historical [M01 gate evidence](coverage/evidence/M01-ci-gate.json) and
 [01 protection report](coverage/evidence/01-ci-protection.json) retain their
 original fifteen- and fourteen-check policies. Missing, skipped or cancelled required jobs
-do not establish a passing assignment gate. The Windows Server
+do not establish a hosted PASS or satisfy those remote required checks. The Windows Server
 runner is build evidence; it does not qualify Windows 11 graphics or deployment.
 The matrix checks Debug and Release independently and runs sanitizers on both
 OS/CPU rows. MSVC supplies ASan only; UBSan is exercised by Linux Clang.
@@ -282,8 +293,9 @@ The same real failure can be checked locally, for example in a Windows developer
 shell: `python tools/ci.py --preset windows-debug --inject-test-failure` must fail;
 then `python tools/ci.py --preset windows-debug` must pass. The second invocation
 explicitly resets the cached option to OFF. Preserve the first output directory
-before rerunning if both evidence sets are needed. Local proof does not replace
-the required hosted-job result.
+before rerunning if both evidence sets are needed. Local proof meets the amended local failure-propagation gate; it does not claim
+that a hosted job executed. Repeat a hosted proof only when separately verifying
+hosted CI, without making access to a runner a local roadmap prerequisite.
 
 For the headless profile, use a fresh output directory for each invocation:
 

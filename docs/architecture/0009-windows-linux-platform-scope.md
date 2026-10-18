@@ -1,5 +1,10 @@
 # ADR 0009: Windows/Linux platform scope
 
+Later scope note: [ADR 0010](0010-current-machine-scope.md) limits required client
+qualification to the current Windows PC and retains WSL Linux CPU/headless work.
+It supersedes the six-row/independent-machine gates and current-assignment status
+below. This record preserves the earlier decision; its removal of Mac remains.
+
 - Date: 2026-10-17
 - Status: accepted user-directed scope amendment
 - Reviewed base: `21239e7` on `main`

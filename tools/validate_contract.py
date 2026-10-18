@@ -4,10 +4,12 @@ from __future__ import annotations
 
 import argparse
 import copy
+import hashlib
 import json
 from pathlib import Path
 import re
 import sys
+import tempfile
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -25,6 +27,13 @@ INSERT_AFTER = {
     "M10": "34", "35": "M10",
 }
 SURFACES = {"features", "components", "commands", "lua_api"}
+SCOPE_DOCUMENT = "docs/architecture/0010-current-machine-scope.md"
+# Immutable historical receipts were reassessed under the explicit scope change.
+# These pins preserve their original NOT_RUN limits; this is not a GPU test.
+GRAPHICS_EVIDENCE = {
+    "docs/coverage/evidence/02d-windows-refresh.json": "82edcd4f680da6001729075e966772b25890f15d3d9af215160c2195a2272794",
+    "docs/coverage/evidence/02d-linux-local.json": "925b15f3d33f340c131761c46448f960ea885fba1eaa247b67c4776647061c30",
+}
 DOCUMENTS = (
     "README.md",
     "AGENTS.md",
@@ -40,6 +49,7 @@ DOCUMENTS = (
     "docs/architecture/0007-mmorpg-architecture.md",
     "docs/architecture/0008-human-agent-authoring.md",
     "docs/architecture/0009-windows-linux-platform-scope.md",
+    SCOPE_DOCUMENT,
     "docs/roadmap/mmorpg-plan.md",
     "docs/roadmap/human-agent-plan.md",
     "docs/roadmap/graphics-plan.md",
@@ -56,6 +66,7 @@ DOCUMENTS = (
     "docs/handoffs/02d-final-verification.md",
     "docs/handoffs/human-agent-planning-amendment.md",
     "docs/handoffs/windows-linux-scope-amendment.md",
+    "docs/handoffs/current-machine-scope-amendment.md",
 )
 
 
@@ -82,6 +93,10 @@ def validate_manifest(data: object) -> list[str]:
         errors.append("product_profile must be seamless-open-world-mmorpg")
     if data.get("planning_document") != "docs/roadmap/mmorpg-plan.md":
         errors.append("planning_document must identify the versioned MMORPG plan")
+    if data.get("qualification_profile") != "current-machine":
+        errors.append("qualification_profile must be current-machine")
+    if data.get("scope_document") != SCOPE_DOCUMENT:
+        errors.append("scope_document must identify ADR0010")
     order = data.get("assignment_order")
     positions = {}
     if not isinstance(order, list) or not all(isinstance(value, str) for value in order):
@@ -143,6 +158,12 @@ def validate_manifest(data: object) -> list[str]:
             errors.append(f"{context}: future assignment must remain NOT_RUN")
         if not nonempty_text(verification.get("reason")):
             errors.append(f"{context}: verification reason must be nonempty text")
+        if identifier == "REQ-02" and status == "PASS":
+            if verification.get("scope_document") != SCOPE_DOCUMENT:
+                errors.append(f"{context}: graphics PASS requires the explicit ADR0010 scope")
+            expected_evidence = [{"path": path, "sha256": digest} for path, digest in GRAPHICS_EVIDENCE.items()]
+            if verification.get("evidence") != expected_evidence:
+                errors.append(f"{context}: graphics PASS requires both unchanged pinned 02d receipts")
     missing = sorted(OWNERS - seen_owners)
     if missing:
         errors.append("missing assignment owners: " + ", ".join(missing))
@@ -218,6 +239,23 @@ def validate_surface_files(data: dict, root: Path) -> list[str]:
     return errors
 
 
+def validate_evidence_files(data: dict, root: Path) -> list[str]:
+    """Bind the local-scope reassessment to preserved evidence, not new behavior."""
+    if not any(entry["id"] == "REQ-02" and entry["verification"]["status"] == "PASS"
+               for entry in data["requirements"]):
+        return []
+    errors = []
+    for relative, expected in GRAPHICS_EVIDENCE.items():
+        try:
+            actual = hashlib.sha256((root / relative).read_bytes()).hexdigest()
+        except OSError as error:
+            errors.append(f"cannot read graphics evidence {relative}: {error}")
+            continue
+        if actual != expected:
+            errors.append(f"graphics evidence changed: {relative}; preserve historical receipts")
+    return errors
+
+
 def self_test(data: dict) -> list[str]:
     """In-memory mutations prove omissions/false claims do not pass the gate."""
     # Keep the fixtures stable as real assignments advance and gain evidence.
@@ -244,6 +282,8 @@ def self_test(data: dict) -> list[str]:
     changed("misordered MMO dependency", lambda d: d["assignment_order"].reverse(), "must follow")
     changed("false future MMO pass", lambda d: next(r for r in d["requirements"] if r["owner"] == "M01")["verification"].update(status="PASS"), "future assignment must remain NOT_RUN")
     changed("wrong product profile", lambda d: d.update(product_profile="offline-only"), "product_profile must be")
+    changed("missing local scope", lambda d: d.pop("qualification_profile"), "qualification_profile must be")
+    changed("wrong scope document", lambda d: d.update(scope_document="docs/architecture/0009-windows-linux-platform-scope.md"), "scope_document must identify")
     changed("missing fixture", lambda d: d["requirements"][0].pop("planned_fixture"), "planned_fixture must be")
     changed("false future pass", lambda d: next(r for r in d["requirements"] if r["owner"] == "02")["verification"].update(status="PASS"), "future assignment must remain NOT_RUN")
     changed("missing evidence reason", lambda d: d["requirements"][0]["verification"].update(reason=""), "verification reason must be")
@@ -251,6 +291,28 @@ def self_test(data: dict) -> list[str]:
     changed("missing surface category", lambda d: d["implemented_surface"].pop("commands"), "implemented_surface must contain")
     changed("invalid schema", lambda d: d.update(schema_version=True), "schema_version must be integer")
     changed("malformed requirement", lambda d: d["requirements"].append(None), "must be an object")
+    local_pass = copy.deepcopy(data)
+    local_pass["current_assignment"] = "03"
+    next(r for r in local_pass["requirements"] if r["id"] == "REQ-02")["verification"]["status"] = "PASS"
+    for label, field, value, expected in (
+        ("graphics pass without scope", "scope_document", "", "graphics PASS requires the explicit"),
+        ("graphics pass without evidence", "evidence", [], "graphics PASS requires both unchanged"),
+        ("graphics pass with malformed evidence", "evidence", "PASS", "graphics PASS requires both unchanged"),
+        ("graphics pass with altered receipt", "evidence", [{"path": path, "sha256": "0" * 64} for path in GRAPHICS_EVIDENCE], "graphics PASS requires both unchanged"),
+    ):
+        candidate = copy.deepcopy(local_pass)
+        next(r for r in candidate["requirements"] if r["id"] == "REQ-02")["verification"][field] = value
+        cases.append((label, validate_manifest(candidate), expected))
+    later_pass = copy.deepcopy(local_pass)
+    next(r for r in later_pass["requirements"] if r["owner"] == "04")["verification"]["status"] = "PASS"
+    cases.append(("future pass after local rescope", validate_manifest(later_pass), "future assignment must remain NOT_RUN"))
+    with tempfile.TemporaryDirectory(prefix="shark-contract-") as directory:
+        fixture_root = Path(directory)
+        cases.append(("missing retained receipt", validate_evidence_files(local_pass, fixture_root), "cannot read graphics evidence"))
+        altered_receipt = fixture_root / next(iter(GRAPHICS_EVIDENCE))
+        altered_receipt.parent.mkdir(parents=True)
+        altered_receipt.write_bytes(b'{"qualification":"PASS"}\n')
+        cases.append(("rewritten retained receipt", validate_evidence_files(local_pass, fixture_root), "graphics evidence changed"))
     cases.append(("non-object manifest", validate_manifest([]), "manifest must be an object"))
     try:
         json.loads('{"id": 1, "id": 2}', object_pairs_hook=unique_object)
@@ -266,9 +328,12 @@ def self_test(data: dict) -> list[str]:
     next(r for r in reordered["requirements"] if r["owner"] == "M01")["verification"]["status"] = "PASS"
     if validate_manifest(reordered):
         failures.append("completed earlier MMO assignment rejected by lexical ordering")
+    if validate_manifest(local_pass):
+        failures.append("documented local graphics reassessment rejected")
     if not failures:
         print(f"PASS: {len(cases)} negative checks reject omissions, malformed data and false claims")
         print("PASS: completed MMO insertion follows declared order rather than lexical ID order")
+        print("PASS: local graphics reassessment requires explicit scope and unchanged evidence references")
     return [f"negative check did not fail as expected: {label}" for label in failures]
 
 
@@ -284,6 +349,7 @@ def main() -> int:
     errors = validate_manifest(data) + validate_documents(ROOT)
     if not errors:
         errors.extend(validate_surface_files(data, ROOT))
+        errors.extend(validate_evidence_files(data, ROOT))
     if not errors and arguments.self_test:
         errors.extend(self_test(data))
     if errors:

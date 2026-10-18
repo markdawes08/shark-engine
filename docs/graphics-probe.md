@@ -4,10 +4,16 @@ The opt-in `GraphicsProbe` is a developer fixture using GLFW, NVRHI and Vulkan.
 It inventories devices, creates the GLFW/Vulkan/NVRHI stack, executes analytic
 graphics/compute/readback cases and exercises bounded presentation lifecycle.
 The JSON distinguishes individual case execution from the complete hardware gate.
-Full assignment qualification remains `NOT_RUN`; the six named Windows/Linux
-hardware rows and clean-machine packaged launch remain open. The
-[checkpoint plan](roadmap/graphics-plan.md) and
-[platform contract](architecture/0003-platforms.md) retain that gate.
+The revised assignment 02 feasibility gate is PASS for this machine using the
+retained 02b/02d evidence. The raw probe reports continue to leave aggregate
+`qualification` and P02-07/08 as `NOT_RUN`; package/failure assessment is separate.
+The [checkpoint plan](roadmap/graphics-plan.md) and
+[platform contract](architecture/0003-platforms.md) define that gate.
+[ADR 0010](architecture/0010-current-machine-scope.md) selects this PC's RTX 4070
+Laptop and Intel Raptor Lake-S Mobile GPUs, dependency-isolated Windows package
+relocation and existing SDK-free WSL CPU/package checks. The former six hardware
+rows and independent physical clean-machine requirement are retired, with their
+historical NOT_RUN outcomes preserved. Native Linux GPU shipping is outside scope.
 [ADR 0009](architecture/0009-windows-linux-platform-scope.md) removes Mac
 compatibility and retires checkpoint 02c.
 
@@ -23,7 +29,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/windows_dev.ps1 cmake 
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/windows_dev.ps1 ctest --preset graphics-windows --output-on-failure
 ```
 
-Use `graphics-linux` on native Linux. It requires
+Use `graphics-linux` in the existing isolated Ubuntu userspace for Linux CPU/build
+checks. Native Linux desktop/GPU qualification is outside the current plan. It requires
 X11 development headers/libraries for the GLFW build; Wayland is disabled.
 Presets establish build commands, not evidence that every native build has run.
 Source archives and options come from [the dependency lock](../dependencies.lock.json),
@@ -87,7 +94,7 @@ automation. Serialize builds and commands sharing a build directory.
 
 | Exit | Meaning |
 | --- | --- |
-| 0 | Requested discovery, setup or executable cases succeeded; full gate remains NOT_RUN |
+| 0 | Requested discovery, setup or executable cases succeeded; this invocation does not assess the aggregate assignment gate |
 | 1 | Observed operation failure or rejected evidence |
 | 2 | Invalid arguments |
 | 3 | Device/display/driver/validation prerequisite unavailable; NOT_RUN |
@@ -186,7 +193,7 @@ Vulkan attachment clear, fences and queue/device idle; actual draw/compute cases
 use NVRHI. This deliberately simple fixture does not provide production frames
 in flight. Acquire uses a host fence and submission completion precedes present;
 there are no recycled present semaphores. Portability of swapchain destruction
-and the maintenance-extension route remain part of the Windows/Linux gate and
+and the maintenance-extension route remain part of the local Windows gate and
 assignment 05. See the
 [Khronos synchronization guidance](https://docs.vulkan.org/guide/latest/swapchain_semaphore_reuse.html).
 
@@ -218,10 +225,13 @@ a claim that a named hardware matrix row or the complete assignment passed.
 
 ## Platform scope and shared compile definitions
 
-Windows and Linux are the active probe targets. The
+Native Windows is the active graphics target; existing Linux build/package
+fixtures remain available for WSL CPU checks. The
 [scope amendment](handoffs/windows-linux-scope-amendment.md) supersedes the former
 Mac deferral; no native Mac toolchain, translation-library or distribution work
-remains required. Earlier receipts retain their original platform lists as history.
+remains required. [ADR 0010](architecture/0010-current-machine-scope.md) further
+limits acceptance to the current machine. Earlier receipts retain their original
+platform lists as history.
 
 The pinned NVRHI backend and probe share Vulkan-Hpp compile definitions, including
 `VK_ENABLE_BETA_EXTENSIONS` to expose the official portability-subset queries.
@@ -275,10 +285,12 @@ No global environment, registry or driver configuration is changed.
 
 Retain `summary.json`, native stdout/stderr, readbacks and the package manifest.
 Package construction PASS means the package was inspected and produced;
-`qualification` remains NOT_RUN. A passing local run qualifies only the recorded
-workload/device, not the named matrix or a clean target. Development-host
-relocation with a restricted PATH is useful evidence but cannot prove absence
-of installed tools; a genuinely clean second environment is still required.
+`qualification` remains NOT_RUN in the raw report. A passing local run establishes
+the recorded workload/device. ADR 0010 accepts relocation outside the checkout,
+system-only PATH, cleared development overrides and explicit dependency closure
+as the local package gate. This does not prove absence of installed tools on the
+Windows host or execution on another machine. Preserve that limitation without
+requiring a second machine for local roadmap progression.
 Failures now preserve completed lifecycle counters, phase, cycle indices and
 elapsed presentation time where the native process can report them. A hard
 driver hang can instead produce only the watchdog timeout/cleanup receipt.
@@ -294,11 +306,13 @@ python tools/tests/check_graphics_package_launcher.py --output out/graphics-pack
 
 ## Standalone Linux probe package
 
-02d also supplies an Ubuntu 24.04 x86-64 probe package. The source/build host
+02d also supplies an Ubuntu 24.04 x86-64 probe package, retained for local WSL
+build, CPU and dependency-isolation checks under ADR 0010. The source/build host
 needs the pinned compiler/build tools, X11 development libraries and `readelf`.
 The destination needs Python 3.12+ with its standard library, glibc 2.39,
-Ubuntu's `libstdc++6` / `libgcc-s1` runtimes, X11 client libraries and the installed
-vendor Vulkan driver/ICD. Native Wayland is outside the selected profile.
+Ubuntu's `libstdc++6` / `libgcc-s1` runtimes and X11 client libraries. Graphical
+modes additionally need a display and installed vendor Vulkan driver/ICD; local
+description and unavailable-display checks do not. Native Wayland is outside the selected profile.
 The recorded Ubuntu runtime versions bound the accepted ELF symbol requirements;
 changing that baseline requires renewed build and target evidence.
 
@@ -343,7 +357,10 @@ libraries remain host prerequisites. DXC, `spirv-val`, source HLSL and SDKs are
 absent. Executable permissions are set before atomic publication.
 
 Copy the complete directory outside the checkout, preserving executable
-permissions. From an ordinary unprivileged X11 terminal, run:
+permissions. The local SDK-free runtime uses `describe` and expected-unavailable
+inventory without a display or GPU. The retained commands for graphical modes
+require an ordinary unprivileged X11 terminal; they are not a current Linux GPU
+qualification requirement:
 
 ```sh
 python3 -I -B run_graphics_probe.py --mode describe --output "$HOME/shark-results/describe-01"
@@ -372,6 +389,6 @@ Retain `summary.json`, native stdout/stderr, artifacts and the package manifest.
 `shark.tooling.graphics-package-linux` exercises package rejection, actual Linux
 process cleanup, strict JSON and isolated Unicode-path relocation with synthetic
 CPU children. These fixtures do not qualify graphics. An SDK-free runtime
-userspace can establish dependency closure and description startup; without a
-native supported display/GPU it cannot supply P02-07's clean-machine graphics
-launch or qualify any of the six required hardware rows.
+userspace establishes dependency closure and description startup for the revised
+local package gate. It supplies no native Linux graphics or independent physical
+clean-machine evidence. Unavailable display/device results remain NOT_RUN.

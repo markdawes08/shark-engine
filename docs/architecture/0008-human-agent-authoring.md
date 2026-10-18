@@ -18,6 +18,10 @@ it does not replace the editor, [MMORPG contract](0007-mmorpg-architecture.md),
 graphics gates or assignment order. The [execution and assessment plan](../roadmap/human-agent-plan.md)
 assigns each addition to an existing owner. None of these authoring capabilities
 is provided by the current Editor/Runtime/Server bootstrap flags.
+The later [current-machine scope](0010-current-machine-scope.md) qualifies these
+workflows on the available Windows PC, with CPU/server fixtures in its existing
+WSL environment. It requires no new machine, external model service, hosted agent
+runner or provider account. Human and terminal parity remains mandatory.
 
 ## One behavior, two interfaces
 
@@ -130,6 +134,8 @@ silent software-renderer substitution or CPU-only graphics PASS. In 15's termina
 GPU test a separate render process may use a qualified graphics/display backend;
 no manual GUI interaction is required. Nonvisual assertions and structured
 readbacks complement images; visual acceptance still requires actual GPU evidence.
+Use the two recorded local Windows GPU profiles for these device cases. WSL CPU
+authoring/server execution does not establish native Linux graphics support.
 
 ## Trust and MMORPG separation
 
@@ -161,6 +167,10 @@ Negative fixtures cover malformed/oversized input, mixed stdout, unsupported
 versions/capabilities, stale revisions, second writers, lost replies/retries,
 cancellation before/after commit, EOF, worker failure and path escapes. 16/17
 compare human/editor and terminal semantic outcomes and exercise both directions
-of project handoff. 32 audits parity; 33 uses a fresh terminal agent with only
-public docs/tools and a separate human continuation check; M09 repeats this for
-the seamless MMORPG loop. Missing UI, GPU or agent-session evidence stays NOT_RUN.
+of project handoff. 32 audits parity; 33 uses the available terminal agent in a
+fresh context with only public docs/tools and a separate human continuation check;
+M09 repeats this for
+the local seamless MMORPG loop. Both interfaces and their packaged getting-started
+paths run on this PC. No particular model/provider integration is part of the
+engine contract; no additional subscription or hosted session is a prerequisite.
+Missing required local UI, GPU or agent-session evidence stays NOT_RUN.

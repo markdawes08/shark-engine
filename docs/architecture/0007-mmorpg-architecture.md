@@ -7,6 +7,11 @@ lifecycle described in its [handoff](../handoffs/M01-headless-server.md). This a
 the offline-only release assumptions in ADRs 0001-0006; unaffected client graphics,
 tooling and platform requirements remain. The [execution plan](../roadmap/mmorpg-plan.md)
 and [requirements manifest](../coverage/requirements.json) assign the work.
+The later [current-machine scope](0010-current-machine-scope.md) limits required
+implementation and qualification to the available Windows PC and its existing
+WSL environment. It explicitly replaces the original capacity and deployment
+targets below with a local development profile; it does not claim those older
+targets passed.
 
 ## Product boundary
 
@@ -14,7 +19,11 @@ Shark is an engine and authoring toolchain for a persistent multiplayer world,
 with an authoritative dedicated server and graphical clients. Deliver a small
 playable MMORPG reference world to prove the engine. A commercial game's content,
 monetization, customer support and global hosting operation are separate product
-work; the engine still needs tested deployment, recovery and observability hooks.
+work; the engine still needs tested local deployment, recovery and observability
+hooks. The current deliverable is a locally playable MMORPG development engine,
+with real separate client/server processes and durable state on this PC. Remote
+players, external hosts, cloud accounts and production operations are outside the
+required scope until the user deliberately expands it.
 
 Humans and terminal LLM agents author that world through the shared development
 contract in [ADR 0008](0008-human-agent-authoring.md). Terminal reachability extends
@@ -43,10 +52,14 @@ framework, Kubernetes platform or service mesh as a prerequisite.
 `EngineClient` and `Server` separation. Engine is an interface client composition;
 EngineTools, Editor, Runtime and Tests remain. Server must build,
 start and test without GPU/display/audio support or their SDK/download dependencies.
-The initial server qualification target is Ubuntu 24.04 x86-64, separately from
-the Windows/Linux client and editor hardware matrix. The later user-directed
-[ADR 0009](0009-windows-linux-platform-scope.md) removes Mac requirements without
-changing server authority, seamless-world behavior or the remaining platform gates.
+The server qualification target is an isolated Ubuntu 24.04 x86-64 userspace in
+the existing WSL environment; Windows also exercises the Core/Server boundary.
+Client/editor qualification uses the current Windows PC and its two recorded
+GPUs. [ADR 0010](0010-current-machine-scope.md) supersedes the wider Windows/Linux
+hardware matrix in [ADR 0009](0009-windows-linux-platform-scope.md). Native Linux
+graphics and independent hosts are outside the active scope. This does not change
+server authority or seamless-world behavior, and WSL evidence must be identified
+as such.
 
 Server owns position acceptance, collision, combat, cooldowns, AI, inventory,
 currency, loot, progression and persistent world mutations. Clients send bounded,
@@ -70,6 +83,9 @@ library is selected by this amendment. The logical services may initially be
 modules in a few processes; a separate microservice per responsibility is not a
 requirement. Tests use explicit isolated identities and data, never production
 credentials or a hidden authentication bypass in a shipping configuration.
+Select integrations that can run locally without provider credentials or paid
+services. Use a real local identity/session fixture and real transactional store;
+local deployment does not excuse authentication, authorization or durability.
 
 ## Simulation, replication and interest
 
@@ -200,33 +216,59 @@ Logs redact credentials/tokens and expose operational identifiers needed for
 diagnosis. Signed content/manifests and executable update trust are distinct from
 ordinary cache hashes. Source asset import and arbitrary remote script execution
 are never part of the player protocol.
+Qualification runs these operations on local processes and the local persistent
+store. Backups restore into an isolated directory/database on this PC; test keys
+exercise update trust without an external signing service. These tests establish
+the exercised restart/restore behavior, not off-site backup, independent failure
+domains, high availability or a production disaster-recovery guarantee.
 
 ## Capacity and acceptance policy
 
-The user's world choice is settled. Combat style, total world size, target
-concurrency, geographic latency, client hardware and operational cost ceilings
-remain open. M01 records the initial load profile; M02/M04/M05 revise it from
-measured protocol, simulation and streaming baselines. Do not market a capacity
-number, silently reduce a gate or substitute idle sockets for active players.
+The user's world choice is settled. [ADR 0010](0010-current-machine-scope.md)
+explicitly replaces the former provisional 256-player/128-actor, 1,000-crossing
+and 24-hour profile with **LOCAL-MMO-1**, a conservative development workload for
+the available PC. The former targets are future expansion work, not failed tests
+relabeled as passes. Product combat style and final world/content dimensions still
+need decisions at their owners. Do not market a capacity number, silently reduce
+a gate or substitute idle sockets for active players.
 
-Use these **provisional engineering targets**, to be confirmed or explicitly
-amended before M09/M10 qualification:
+The recorded host is an Intel Core i9-14900HX (24 cores/32 logical processors),
+approximately 32 GiB physical RAM, an NVIDIA RTX 4070 Laptop GPU with 8,188 MiB
+reported dedicated VRAM, and Intel UHD/Raptor Lake-S Mobile graphics, running
+Windows 11 build 26200 with the existing WSL 2 Ubuntu environment. All processes
+share that CPU, RAM and storage. Do not change WSL limits or reserve host resources
+implicitly. Available memory/disk and other workload are recorded at run time.
+
+These **provisional local targets** remain NOT_RUN until their owning assignments
+implement and exercise the actual behavior:
 
 | Workload | Initial target and evidence |
 | --- | --- |
-| Multi-region slice | 256 active synthetic players across at least two adjacent regions; 128 players concentrated in one area; client render fixture includes 128 visible animated actors |
+| Functional topology | Two real graphical client processes and at least two separate authoritative region processes on this PC; Linux server processes run in WSL. Real authenticated sessions and a real local transactional store. Run the graphical functional fixture separately from the headless population/load fixture. |
+| Active load | 16 active synthetic players across two adjacent regions with 16 bounded NPCs; concentrate all 16 players in one area for the hot-spot case. Clients issue movement/combat and durable operations according to a versioned seeded schedule, rather than holding idle connections. |
+| Client presentation | 32 visible animated actors. Set exact resolution, content, quality, frame-time, memory, streaming-stall and LOD-error budgets in M06 before qualification. RTX 4070 Laptop is the performance target; Intel runs correctness and a recorded reduced-quality profile, without a presumed equal frame-rate target. |
 | Server scheduling | 20 Hz; on named hardware p95 tick work <= 35 ms and p99 <= 50 ms, bounded lag and no sustained tick backlog under the declared simulation/NPC workload |
 | Replication | Steady-state per-player p95 <= 64 KiB/s server-to-client and <= 16 KiB/s client-to-server; record content/join bursts separately with explicit caps |
-| Network adversity | Baseline plus 100/200 ms RTT, 30 ms jitter, 1/5% loss, reorder, duplicates and temporary disconnection; correctness holds and correction/latency distributions are reported |
-| Seam travel | At least 1,000 adjacent-region crossings with no duplicate authority, durable effect or forced reconnect; record stalls, correction distances and asset/collision readiness |
-| Endurance | 24-hour active-client/NPC soak plus measured overload ramp and crash/restore drills; after warm-up no sustained unbounded memory, handle, queue or durable-state growth |
+| Network adversity | Loopback/Windows-to-WSL transport with seeded shaping: baseline plus 100/200 ms RTT, 30 ms jitter, 1/5% loss, reorder, duplicates and temporary disconnection. Correctness holds and correction/latency distributions are reported; shaped local traffic is not real WAN evidence. |
+| Seam travel | At least 100 adjacent-region crossings with no duplicate authority, durable effect or forced reconnect; record stalls, correction distances and asset/collision readiness |
+| Endurance | Two-hour active-client/NPC soak plus a bounded overload ramp and process crash/restart/restore drills; after warm-up no sustained unbounded memory, handle, queue or durable-state growth |
 
-M06/M10 must set client frame, streaming stall, memory and visual LOD budgets on
-named hardware before accepting their gates. All figures are targets, currently
-NOT RUN. Thousands of concurrent players, global single-shard operation and
-large-scale PvP battles require additional measured profiles; the initial fixture
-does not establish those capacities. M10 records achievable capacity, limits,
-cost per active player and the remaining gap to the chosen product target.
+Before M06/M10 acceptance, record maximum simultaneous processes, aggregate and
+per-process memory, WSL available memory, disk/fixture/artifact caps and cleanup
+ownership alongside the exact asset/NPC workload. A bounded ramp has a declared
+upper population and duration; it must test rejection/backpressure without
+exhausting the workstation. Establish client performance at 34 on the RTX profile,
+then include it in M10; reduced-quality Intel correctness remains a separate case.
+If these provisional targets fail, record the failure and fix it or make an
+explicit evidence-backed plan amendment before rerunning. No result is inferred
+from this inventory or the earlier graphics probe.
+
+M10 reports achieved local workload, CPU time, memory, disk and bandwidth per
+active player, with limits and contention. Thousands of players, global shards,
+large-scale PvP, real WAN conditions, independent host failure and high-availability
+recovery require a separately authorized expansion and additional evidence. No
+hosting cost, production concurrency or disaster-recovery capacity is certified
+by this same-machine profile.
 
 ## References and decision scope
 

@@ -12,9 +12,12 @@ review, M01's hosted gate was recorded as open. Its later
 [hosted verification](../handoffs/M01-ci-verification.md) now closes that gate at
 `d658d69`; the historical assessment below remains tied to the reviewed baseline.
 No authoring implementation or parity evidence is inferred from the CI result.
-The later [platform scope decision](../architecture/0009-windows-linux-platform-scope.md)
-applies these authoring requirements to Windows and Linux. Mac compatibility is
-outside the product scope; the human/terminal parity requirements are unchanged.
+The later [current-machine decision](../architecture/0010-current-machine-scope.md)
+limits qualification to Windows editor/client/terminal workflows on the available
+PC and CPU/server fixtures in existing WSL Ubuntu. It supersedes the wider
+Windows/Linux platform matrix. Mac and native Linux graphics are outside active
+scope; human/terminal parity is unchanged. No additional hardware, provider
+account, external model service or hosted runner is needed to complete the plan.
 
 ## Assessment of existing work
 
@@ -51,6 +54,10 @@ result. Silent competing writable copies are unacceptable.
 These are future workflows, not runnable command examples. Actual command names,
 request/response examples and schemas ship alongside the implementing features.
 The engine works without an LLM service; agents consume ordinary developer tools.
+For 33/M09, use the currently available terminal agent in a fresh context with
+only public documentation and tool access, then verify the human continuation on
+the same PC. The authored project and local execution evidence cross that handoff;
+no second computer or specific provider integration is part of the requirement.
 
 ## Ownership and gates
 
@@ -67,14 +74,15 @@ The engine works without an LLM service; agents consume ordinary developer tools
 | 18-31, M05-M07 | Add terminal discovery and semantic authoring alongside each supported physics, script, prefab, play, HUD/audio, material/light, world/cell, animation and MMORPG-content feature. No later feature may become editor-only. |
 | 30/31 | Reload/cook/export preserve conflicts and emit reproducible result/artifact metadata. Offline tooling remains separate from live MMO deployment and administration. |
 | 32 | Audit schema/service/CLI/editor/serialization/test parity for all supported authoring features. Map intentional presentation-only exceptions. Missing paths block feature completeness. |
-| 33 | Fresh terminal agent builds the samples using only public docs/tools, then a human opens and continues them in the editor. Preserve invocation/result evidence, public API gaps and both outcomes. |
-| M08/M09 | Keep local authoring separate from authorized operations. A fresh terminal agent authors the MMORPG reference world and a human continues it; real clients, network/persistence/handoff tests still supply MMO proof. |
-| 34/35 | Bound protocol/query/job workloads and audit packaged developer-tool docs, schemas and sample scripts. Release includes independent human and terminal getting-started paths; no model/provider/plugin prerequisite. |
+| 33 | The available terminal agent in a fresh context builds samples using only public docs/tools, then a human opens and continues them in the editor on this PC. Preserve invocation/result evidence, public API gaps and both outcomes. |
+| M08/M09 | Keep local authoring separate from authorized operations. A fresh agent context authors the MMORPG reference world and a human continues it; real local clients, WSL server processes, shaped network faults and a real local store supply the scoped MMO proof. |
+| 34/35 | Bound protocol/query/job workloads and audit packaged developer-tool docs, schemas and sample scripts. The local development release includes separate human and terminal getting-started paths on this PC; no model/provider/plugin or external deployment prerequisite. |
 
 ## Reviewable parts of assignment 15
 
 Keep 15 as one manifest owner and final gate, but implement it in these dependent
-parts. This plan does not start assignment 15 or waive 02's graphics feasibility gate.
+parts. This plan does not start assignment 15; assignment 02 closed under the
+explicit current-machine scope amendment and assignment 03 is next, unstarted.
 
 1. **Discovery and read-only access:** one-shot CLI + versioned stdio framing,
    clean stdout, capability/schema discovery, bounded project/scene queries,
@@ -102,15 +110,14 @@ discovery, human/agent parity, graphics or live MMO operations. The separate
 [amendment handoff](../handoffs/human-agent-planning-amendment.md) records the
 checks for this planning change. The full authoring gate remains NOT_RUN.
 
-M01's hosted qualification is complete. Current implementation work is assignment
-02 graphics compatibility; 02a setup and 02b executable cases/validation preserve
-the shared terminal workflow. 02c is retired by the platform scope decision;
-02d adds bounded portable terminal launchers and package verification for Windows
-and Linux, with machine-readable outcomes and explicit unavailable-device results.
-The [final local handoff](../handoffs/02d-final-verification.md) separates tested
-CPU/package behavior from the still-open native graphics and clean-target gates.
-These remain developer
-fixtures, not public game-authoring commands. The
+M01's hosted qualification is complete. Assignment 02's recorded local evidence
+now closes its gate under ADR 0010; assignment 03 is next and unstarted. The
+[final local handoff](../handoffs/02d-final-verification.md) preserves full local
+Windows lifecycle runs, bounded portable terminal launchers and isolated Ubuntu
+CPU/package checks. Former external GPU and independent clean-machine gates are
+outside current scope, not passed. Existing hosted CI is supplemental and does
+not block local increments. These remain developer fixtures, not public
+game-authoring commands. The
 [graphics plan](graphics-plan.md) and [probe commands](../graphics-probe.md)
 provide noninteractive contributor diagnostics; game-authoring APIs remain future work.
 No additional numbered chunk or change to product/player authority is necessary

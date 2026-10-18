@@ -12,9 +12,13 @@ configure/build/test presets for standalone probe packages; see the
 Production rendering, gameplay, scene import, authoring UI and export remain unimplemented.
 CPU build success does not qualify a GPU, audio device or final release platform.
 
-The active client/editor targets are Windows and Linux; the dedicated server
-targets Linux. [ADR 0009](architecture/0009-windows-linux-platform-scope.md)
-records the user's removal of Mac compatibility from the project scope.
+The active client/editor target is this Windows 11 x64 PC. Existing WSL2 Ubuntu
+environments cover CPU/headless Server and local package checks.
+[ADR 0010](architecture/0010-current-machine-scope.md) limits the plan to these
+available resources; native Linux client/GPU shipping and additional machines
+are outside scope. [ADR 0009](architecture/0009-windows-linux-platform-scope.md)
+continues to exclude Mac compatibility. Existing Linux presets and package code
+are retained; their presence does not create a broader platform commitment.
 
 The [MMORPG amendment](roadmap/mmorpg-plan.md) requires the headless Server and
 EngineCore/EngineClient separation implemented in M01. `server-only` provides the
@@ -68,7 +72,7 @@ the pinned workflow.
 | Host | Native compiler preparation |
 | --- | --- |
 | Windows x86-64 | Install Visual Studio C++ desktop tools and Windows SDK. Open an x64 Native Tools command prompt or x64 Developer PowerShell, then activate the Python environment. Ninja must find `cl`, the linker and SDK libraries. |
-| Ubuntu 24.04 x86-64 | Use GCC for debug/release and Clang for `linux-asan-ubsan`, with the native C++ standard library and development tools available. |
+| Existing WSL Ubuntu 24.04 x86-64 userspace | Use GCC for debug/release and Clang for `linux-asan-ubsan`, with that userspace's C++ standard library and development tools available. |
 
 On Windows, the optional repository wrapper locates the installed Visual Studio
 C++ tools, initializes the x64 developer environment and selects `.tools/venv`
@@ -101,7 +105,7 @@ cmake --build --preset windows-debug
 ctest --preset windows-debug
 ```
 
-Use the same three commands with `linux-debug` on Linux,
+Use the same three commands with `linux-debug` in the existing Linux userspace,
 or with the corresponding release/sanitizer preset. The default build includes
 EngineCore, EngineClient, EngineTools, Editor, Runtime, Server, Tests and both
 dependency-boundary checks. Engine is an interface target. Catch2 is the sole
@@ -142,7 +146,8 @@ presets and `graphics-windows-release` / `graphics-linux-release` package preset
 Ordinary CPU, Server and Runtime configurations keep these dependencies disabled.
 Ubuntu 24.04 requires its native C/C++ compiler and X11 development libraries for
 GLFW (`libx11-dev`, `libxrandr-dev`, `libxinerama-dev`, `libxcursor-dev`, `libxi-dev`).
-The locked backend is X11; native Wayland is not selected.
+The retained backend is X11; native Wayland is not selected. These Linux commands
+support local WSL CPU/build checks, not a native Linux graphics shipping gate.
 
 ```text
 cmake --preset graphics-linux-release
@@ -168,13 +173,16 @@ Both builders require fresh outputs and retain source, dependency, toolchain and
 license provenance. These packages are assignment 02 fixtures, not game exports.
 
 The Linux package runs with an ordinary account, Python 3.12+ and its standard
-library, Ubuntu 24.04 x86-64 system runtimes, an X11 desktop and the selected GPU's
-installed Vulkan driver. Its launcher needs neither a compiler nor a Vulkan SDK.
+library, and Ubuntu 24.04 x86-64 system runtimes. Graphical modes additionally need
+an X11 desktop and the selected GPU's installed Vulkan driver; the local CPU
+checks do not. Its launcher needs neither a compiler nor a Vulkan SDK.
 Python 3.12+ is a package runtime prerequisite, independent of the pinned
 development Python version above. Windows packages instead use Windows
-PowerShell 5.1 and built-in .NET. Missing displays/devices are NOT_RUN; a successful
-description in an isolated runtime userspace does not close a native GPU or
-clean-machine graphics gate.
+PowerShell 5.1 and built-in .NET. Missing displays/devices are NOT_RUN. The revised
+local gate accepts Windows dependency-isolated relocation and SDK-free Linux
+description startup. Those checks do not establish native Linux graphics,
+absence of installed Windows development tools or another physical machine's
+behavior. The full graphics workload remains required on both local Windows GPUs.
 
 ## Runtime-only boundary
 
@@ -312,8 +320,11 @@ commit or push, even to manufacture CI evidence; the user owns those operations.
 
 Report exact commands, exit results, starting/result revision or absence of a
 commit, compiler/SDK, OS/CPU, relevant logs and PASS/FAIL/NOT RUN per gate. A local
-Windows pass does not establish Ubuntu. Keep unavailable hosted jobs and hardware
-visible in the handoff. Generated output belongs under
+Windows pass does not establish Ubuntu. Hosted automation is supplemental to
+local progression; its revision-specific results remain separate and existing
+GitHub policies are unchanged. Keep unavailable checks and retired hardware
+outcomes visible in the handoff without treating out-of-scope machines as active
+blockers. Generated output belongs under
 ignored build/evidence paths, and `.gitignore` is reviewed each increment.
 
 To verify source eligibility and a fresh build before the user creates a commit:

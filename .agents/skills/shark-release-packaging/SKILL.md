@@ -1,6 +1,6 @@
 ---
 name: shark-release-packaging
-description: Validate Shark standalone exports and release packages for cooked dependency completeness, runtime separation, licenses and clean-target behavior.
+description: Validate Shark standalone exports and packages for cooked dependency completeness, runtime separation, licenses and isolated deployment on the current machine.
 ---
 
 # Shark export and release packaging
@@ -9,6 +9,10 @@ Read [AGENTS.md](../../../AGENTS.md), the exact assigned export/release incremen
 [target boundaries](../../../docs/architecture/0001-targets-and-boundaries.md),
 [platform matrix](../../../docs/architecture/0003-platforms.md) and
 [cooked-format rules](../../../docs/architecture/0004-formats-and-identity.md).
+Apply [ADR 0010](../../../docs/architecture/0010-current-machine-scope.md): Windows
+client/editor acceptance uses this PC, while Linux headless/CPU/package acceptance
+uses its existing WSL environments. No additional physical machine, native Linux
+desktop/GPU or broad shipping compatibility gate is active.
 Follow the [human and terminal-agent contract](../../../docs/architecture/0008-human-agent-authoring.md)
 and [implementation plan](../../../docs/roadmap/human-agent-plan.md) at the owning
 export and acceptance gates; those authoring interfaces remain planned.
@@ -26,7 +30,7 @@ The minimal Ubuntu job independently inspects its source, link and ELF closure
 and starts the installed executable. It is not a game export or licensed release
 package; do not claim M08/35 acceptance from this bootstrap fixture.
 
-Assignment 02d adds independent Windows/Linux graphics probe packages, documented in
+Assignment 02d adds Windows/Linux graphics probe packages, documented in
 the [probe guide](../../../docs/graphics-probe.md). Use the explicit
 `graphics-windows-release` preset and `tools/package_graphics_probe.py` inputs;
 the builder rejects Debug CRT, stale artifacts and unresolved DLLs. The package's
@@ -35,19 +39,25 @@ checkout, Python or SDK. Linux uses `graphics-linux-release`,
 `tools/package_graphics_probe_linux.py` and the package's
 `python3 -I -B run_graphics_probe.py` launcher. Inspect every bundled ELF and
 reject RPATHs, unsupported imports and newer-than-baseline symbol requirements.
-Require Ubuntu 24.04 x86-64, Python 3.12+ standard library, OS runtime/X11 libraries
-and installed vendor ICDs; no compiler/SDK/source checkout is needed to launch.
+Require Ubuntu 24.04 x86-64, Python 3.12+ standard library and OS runtime/X11
+libraries; graphical modes additionally need an installed vendor ICD and display.
+The accepted local describe/unavailable-display checks do not require a GPU.
+No compiler/SDK/source checkout is needed to launch.
 The Linux launcher verifies helper/payload hashes, uses the shared native
 evidence validator and bounds output/process groups, including SIGINT/SIGTERM.
 Retain its documented limits for escaping descendants, SIGKILL and machine loss.
-Exercise real Unicode/space relocation, required
-validation, negative inputs and the full 100/20/600 workload on named hardware.
-CPU launcher tests use synthetic children and cannot qualify GPUs. Development-
-host relocation is not clean-machine evidence. An SDK-free Linux runtime
-userspace passing description startup establishes only that CPU/dependency path;
-it does not close a native clean-target graphics launch. Mac 02c is retired under
+Exercise real Unicode/space relocation, required validation, negative inputs and
+the full 100/20/600 workload on both active Windows GPUs.
+CPU launcher tests use synthetic children and cannot qualify GPUs. Windows
+relocation outside the checkout with system-only PATH, cleared development
+overrides and inspected DLL closure is accepted for the local package gate.
+The SDK-free Linux runtime userspace establishes its CPU/dependency path. Neither
+claims independent physical clean-machine execution or broad compatibility.
+Native Linux GPU launch is outside scope. Mac 02c is retired under
 [ADR 0009](../../../docs/architecture/0009-windows-linux-platform-scope.md);
-the six Windows/Linux rows remain open. Package construction PASS never closes assignment 02.
+the former six hardware rows retain historical NOT_RUN outcomes but no longer
+block progression. Assignment 02 closes by aggregating local package, failure and
+both full GPU workloads under ADR 0010; package construction alone is insufficient.
 
 Early export 14 may use explicitly versioned engine-owned development payloads;
 31 replaces them with validated cooked dependency closure. Include declared roots
@@ -55,10 +65,14 @@ for script-selected/dynamically assembled prefab, scene and audio IDs, precompil
 shaders, derived IBL, scripts, fonts/audio and redistribution notices. Missing
 dependencies fail atomically with machine-readable errors and progress status.
 Keep source importers, authoring services, GUI libraries and offline compilers out
-of Runtime. Package and release qualification target Windows/Linux only.
+of Runtime. Client/editor packages target this Windows PC; headless Server
+packages target the existing isolated WSL Ubuntu runtime.
 
-Launch exports outside the checkout on clean targets without editor, source,
-compiler or Vulkan SDK. Verify host/target restrictions, startup scenes and a
+Launch future Windows exports outside the checkout with explicit dependency
+closure, isolated PATH/developer overrides and no runtime access to editor/source
+payloads. Launch Linux Server packages in the separate SDK-free WSL runtime
+userspace. Record that Windows development tools remain installed; do not claim a
+physical clean-machine test. Verify host/target restrictions, startup scenes and a
 prefab plus sound chosen only by script. Test repeatable cooking under pinned
 inputs; signing does not need byte-identical package output. Preserve
 logs, build inputs, symbols and precise OS/CPU/GPU/driver evidence per matrix row.
@@ -73,15 +87,17 @@ status/cancellation results and artifact manifests so terminal automation can
 determine success without parsing UI text. Missing GUI/hardware qualification
 remains NOT RUN even when the terminal workflow passes.
 
-Apply signing only through the selected authorized channel, with
-secrets outside the repository. Missing credentials or hardware remain explicit
-release blockers. Do not stage, commit or push: the user's repository policy
-reserves these source-control actions to them. Provide a reviewable change set,
+External distribution/signing infrastructure is outside this local plan. If a
+later scope amendment selects signing, use only its authorized channel with
+secrets outside the repository. Missing active local prerequisites remain
+explicit blockers; unavailable out-of-scope machines do not. Do not stage, commit
+or push: the user's repository policy reserves these source-control actions to
+them. Provide a reviewable change set,
 remaining release gates, handoff and suggested commit text.
 
 The [MMORPG release plan](../../../docs/roadmap/mmorpg-plan.md) also requires separate
 client/server packages in M08, compatible wire/content/database versions, private
 server roots, authenticated content, drain/restart and tested backup/restore.
-The Server package must run on its qualified Linux target without presentation
-dependencies. M09/M10 supply multi-client seamless-world, failure and active-load
+The Server package must run in its qualified local WSL Ubuntu environment without
+presentation dependencies. M09/M10 supply multi-client seamless-world, failure and active-load
 evidence; Tetris/desktop install checks alone cannot qualify an MMORPG release.

@@ -1,6 +1,8 @@
 {
   "schema_version": 3,
-  "current_assignment": "02",
+  "current_assignment": "03",
+  "qualification_profile": "current-machine",
+  "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
   "planning_document": "docs/roadmap/mmorpg-plan.md",
   "assignment_order": [
@@ -16,7 +18,7 @@
     {
       "id": "REQ-00",
       "owner": "00",
-      "requirement": "Record the engine name and architecture decisions for executable/library targets, dependency choices, explicit OS/CPU/GPU baselines, source/imported/cooked formats, complete v1 scope, meters/axes/handedness/quaternion/matrix/Vulkan depth/color conventions, fixed simulation/render timing, stable IDs, ownership and the scene-mutation thread. Current platform scope is Windows/Linux clients and editor plus the Linux headless server, as amended by ADR0009.",
+      "requirement": "Record the engine name and architecture decisions for executable/library targets, dependency choices, explicit OS/CPU/GPU baselines, source/imported/cooked formats, complete v1 scope, meters/axes/handedness/quaternion/matrix/Vulkan depth/color conventions, fixed simulation/render timing, stable IDs, ownership and the scene-mutation thread. ADR0010 limits qualification to this Windows 11 PC: native Windows client/editor on its RTX 4070 Laptop and Intel Raptor Lake-S Mobile GPUs, with existing WSL2 Ubuntu CPU/headless-server and isolated package checks.",
       "acceptance": [
         "Architecture records make each listed choice explicit, including the supported glTF profile, alpha modes, extensions and future exclusions.",
         "Every mandatory roadmap requirement has an owner assignment and an observable acceptance criterion in this manifest.",
@@ -24,37 +26,57 @@
         "The assignment handoff records the starting repository state, reviewable changes, validation results, unresolved limitations and assignment 01 as the next task."
       ],
       "planned_fixture": "ArchitectureContract review and machine-readable requirements-manifest validation; architecture decisions are documents rather than a running scene.",
-      "verification": {"status": "PASS", "reason": "Assignment 00 only: six ADRs reviewed against the complete roadmap; 39 owned requirements cover 00-35 and recurring contracts. python tools/validate_contract.py and --self-test pass on Windows 11/Python 3.13.5, including 14 negative checks. Evidence: docs/handoffs/00-architecture-contract.md. No engine implementation or platform support is claimed. Historical baseline only; the seamless MMORPG planning amendment is recorded in ADR0007, docs/roadmap/mmorpg-plan.md and docs/handoffs/mmorpg-planning-amendment.md. New MMO implementation gates remain NOT_RUN."}
+      "verification": {
+        "status": "PASS",
+        "reason": "Assignment 00 only: six ADRs reviewed against the complete roadmap; 39 owned requirements cover 00-35 and recurring contracts. python tools/validate_contract.py and --self-test pass on Windows 11/Python 3.13.5, including 14 negative checks. Evidence: docs/handoffs/00-architecture-contract.md. No engine implementation or platform support is claimed. Historical baseline only; the seamless MMORPG planning amendment is recorded in ADR0007, docs/roadmap/mmorpg-plan.md and docs/handoffs/mmorpg-planning-amendment.md. New MMO implementation gates remain NOT_RUN."
+      }
     },
     {
       "id": "REQ-01",
       "owner": "01",
       "requirement": "Create C++20 target-based CMake Engine, EngineTools, Editor, Runtime and Tests targets, exact dependency pins, configure/build/test presets, formatting, compiler warnings, one primary test framework registered with CTest, sanitizer configurations, test labels and CPU CI for Windows and Ubuntu 24.04. Provide AGENTS.md, architecture/handoff directories and actual repository-discoverable build/test, renderer-validation, component/API, import and release SKILL.md guidance.",
       "acceptance": [
-        "A clean checkout configures, builds and runs a real starter test on every build platform using documented commands.",
+        "A fresh checkout configures, builds and runs real tests on the available Windows host and existing WSL2 Ubuntu CPU/headless environment; hosted jobs remain supplemental evidence under ADR0010.",
         "A deliberately failing test fails the CI job before the temporary failure is removed; evidence identifies the job and revision.",
         "Build dependency inspection proves Runtime links neither Editor nor EngineTools nor editor GUI libraries.",
         "AGENTS.md contains exact presets/commands, warnings/formatting, ownership/threading, errors, allowed dependencies, file locations, schema/version policy, test requirements, protected boundaries and handoff format.",
         "The repository skill discovery location is documented, linked from AGENTS.md, versioned and verified discoverable; entry points remain minimal and do not pretend future APIs exist.",
-        "Required CI checks are documented and configured wherever repository permissions allow; supported compiler sanitizer configurations are available."
+        "Keep the existing nine hosted checks and branch policy unchanged, plus supported local sanitizer configurations; a hosted run is supplemental rather than a local-roadmap gate under ADR0010."
       ],
       "planned_fixture": "CleanCheckoutBuild matrix, DeliberateCTestFailure CI fixture, RuntimeDependencyBoundary, RepositorySkillDiscovery and SanitizerConfigure fixtures; these exercise build tooling outside a scene.",
-      "verification": {"status": "PASS", "reason": "Historical assignment 01 gate at revision 3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de after the Xcode 26.4.1 repair: normal push 39077290171 passed 14/14 jobs; injected run 39077652643 failed all 12 CPU jobs solely at shark.failure-sentinel (CTest exit 8, other nine tests passed per job); subsequent restored run 39078070735 passed all 14 jobs and 120/120 CPU tests without skips. Windows, Ubuntu24.04, macOS ARM64 and Intel Debug/Release/sanitizers were verified at that revision. Fourteen GitHub Actions checks were configured on main with strict freshness and administrator bypass retained in that historical policy. ADR0009 subsequently removes Mac jobs and compatibility obligations; current checks are documented in docs/ci.md. Durable historical run, assertion, phase, toolchain and policy evidence: docs/coverage/evidence/01-ci-gate.json and docs/handoffs/01-ci-verification.md. Prior skill discovery and local foundation evidence remain in docs/handoffs/01-build-foundation.md. That evidence covers assignment 01 only; Server and graphics/MMO qualification are recorded separately."}
+      "verification": {
+        "status": "PASS",
+        "reason": "Historical assignment 01 gate at revision 3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de after the Xcode 26.4.1 repair: normal push 39077290171 passed 14/14 jobs; injected run 39077652643 failed all 12 CPU jobs solely at shark.failure-sentinel (CTest exit 8, other nine tests passed per job); subsequent restored run 39078070735 passed all 14 jobs and 120/120 CPU tests without skips. Windows, Ubuntu24.04, macOS ARM64 and Intel Debug/Release/sanitizers were verified at that revision. Fourteen GitHub Actions checks were configured on main with strict freshness and administrator bypass retained in that historical policy. ADR0009 subsequently removes Mac jobs and compatibility obligations; current checks are documented in docs/ci.md. Durable historical run, assertion, phase, toolchain and policy evidence: docs/coverage/evidence/01-ci-gate.json and docs/handoffs/01-ci-verification.md. Prior skill discovery and local foundation evidence remain in docs/handoffs/01-build-foundation.md. That evidence covers assignment 01 only; Server and graphics/MMO qualification are recorded separately."
+      }
     },
     {
       "id": "REQ-02",
       "owner": "02",
-      "requirement": "Qualify the pinned GLFW/NVRHI/Vulkan stack with a maintained real-hardware probe on each selected Windows and Linux baseline. Evaluate the shipping native Vulkan paths actually tested, including shader execution, formats/features/device limits, portability, patches, redistribution and maintenance. Mac qualification is removed by ADR0009.",
+      "requirement": "Qualify the pinned GLFW/NVRHI/Vulkan stack on this Windows 11 PC using both actual GPUs, LOCAL-W-NV (RTX 4070 Laptop) and LOCAL-W-INTEL (Intel Raptor Lake-S Mobile), under ADR0010. Evaluate shader execution, formats/features/device limits, patches, redistribution and maintenance. Native Linux client/GPU, other hardware and independent clean physical machines are outside the current scope; Mac remains excluded.",
       "acceptance": [
-        "Each target creates a surface/device/swapchain, draws a textured primitive and a depth-tested draw, executes representative compute and reads back a known result.",
-        "HDR color/depth formats and shader compilation work; resize, minimize/restore and exit complete with clean validation for exercised paths.",
-        "Results identify exact OS/CPU/GPU/driver/dependency revisions and the tested Windows/Linux native Vulkan paths for all six mandatory hardware rows.",
-        "Missing features and shipping constraints are recorded; a failing combination yields a minimal reproducer and concrete explicit decision request.",
-        "No dependent renderer architecture proceeds on assumed Windows/Linux compatibility, and no unsupported platform is represented as qualified.",
-        "After M01, keep the graphics probe and all later presentation dependencies outside EngineCore/Server; a headless pass cannot replace the retained client GPU matrix."
+        "Both available GPUs create a surface/device/swapchain, draw a textured primitive and a depth-tested draw, execute representative compute and read back known results.",
+        "HDR color/depth formats and shader compilation work; each GPU completes 100 resize/minimize/restore cycles, 20 device lifecycles and at least 600 measured presentation seconds with actual zero-framebuffer observations and no validation warnings/errors.",
+        "Evidence identifies exact OS/CPU/GPU/driver/dependency revisions and native Windows Vulkan execution for LOCAL-W-NV and LOCAL-W-INTEL; historical missing hardware remains NOT_RUN in unchanged receipts.",
+        "Package and failure-path evidence includes dependency closure, standard-user relocation outside the checkout, isolated system PATH, corrupt/missing payload rejection, bounded timeout cleanup and retained diagnostics. WSL CPU/package checks retain their explicit nongraphical scope.",
+        "Missing features and shipping constraints remain documented. No unsupported platform or other GPU is represented as qualified; later rendering changes must pass the active local GPU gates.",
+        "Keep the graphics probe and all later presentation dependencies outside EngineCore/Server; real local GPU evidence and headless boundary evidence have distinct conclusions."
       ],
-      "planned_fixture": "GraphicsFeasibilityProbe hardware matrix for W-NV, W-AMD, W-INTEL, L-NV, L-AMD and L-INTEL; external fixtures are required because a CPU scene cannot validate platform GPU compatibility.",
-      "verification": {"status": "NOT_RUN", "reason": "02a setup and 02b analytic NVRHI readbacks, bounded lifecycle and pinned shader/Vulkan validation fixtures are retained. 02d implements Windows/Linux Release probe packages and standalone terminal launchers. docs/handoffs/02d-final-verification.md records refreshed supplemental Windows lifecycle/relocation evidence, isolated Ubuntu build/CPU/package checks and the GNU static-link dependency fix. Hosted CPU CI at base 39110d4 passed nine jobs and 156 CTests; later local changes need a user push for hosted verification. Only the current Windows PC is available. All six named native Windows/Linux GPU rows and independent clean graphical deployment remain open; WSL userspace is not native Linux graphics evidence. ADR0009 removes Mac obligations and retires 02c. Historical receipts retain original scope and hashes; the earlier resize failure remains unexplained. See docs/roadmap/graphics-plan.md and docs/graphics-probe.md. Assignment 02 remains current; dependent production renderer work has not begun."}
+      "planned_fixture": "GraphicsFeasibilityProbe on LOCAL-W-NV and LOCAL-W-INTEL, relocated Windows package and failure fixtures, plus existing WSL2 Ubuntu CPU/isolated-package checks. ADR0010 replaces the former six-row and independent clean-machine gates; it does not change historical observations.",
+      "verification": {
+        "status": "PASS",
+        "reason": "PASS only for the user-authorized current-machine scope in ADR0010. The unchanged 02d Windows refresh receipt records both actual GPUs passing P02-01 through P02-06 and full 100/20/600 lifecycle runs, zero validation warnings/errors, relocated package, negative fixtures and watchdog cleanup; the Linux receipt records WSL Ubuntu build/CPU/isolated package checks, not Linux graphics. The old six-row and independent clean-machine NOT_RUN results remain historical. docs/handoffs/current-machine-scope-amendment.md records the reassessment at 2ef281b; no new graphics run or production renderer is claimed. Assignment 03 is next and unstarted. Hosted CI remains supplemental under this scope, with branch protection unchanged.",
+        "scope_document": "docs/architecture/0010-current-machine-scope.md",
+        "evidence": [
+          {
+            "path": "docs/coverage/evidence/02d-windows-refresh.json",
+            "sha256": "82edcd4f680da6001729075e966772b25890f15d3d9af215160c2195a2272794"
+          },
+          {
+            "path": "docs/coverage/evidence/02d-linux-local.json",
+            "sha256": "925b15f3d33f340c131761c46448f960ea885fba1eaa247b67c4776647061c30"
+          }
+        ]
+      }
     },
     {
       "id": "REQ-03",
@@ -221,14 +243,17 @@
       "owner": "14",
       "requirement": "Implement minimal current-host standalone export staging Runtime, startup project, scene/assets and runtime libraries using a documented temporary development asset representation, with final cooking replacement assigned to 31.",
       "acceptance": [
-        "On each target OS an export launches from outside the checkout and a different working directory without Editor, source code, build tools or Vulkan SDK installation.",
+        "The Windows export launches on this PC from a relocated package outside the checkout and a different working directory, using only declared runtime/system paths, with no source/build root on search paths or authoring/compiler/SDK dependency. Audit actual binary closure; this is local isolation, not an independent clean-machine claim.",
         "Only declared runtime/driver prerequisites are needed and dependency inspection finds no editor/authoring libraries.",
         "Host/target restrictions are explicit; one host is not represented as exporting arbitrary platforms.",
         "The early exported client is not a dedicated server or MMO release; retain separate server-only content roots for the later M08 packages.",
         "The initial export command is noninteractive and exposes structured completion/failure and artifact metadata. CPU staging/export does not require an editor window or graphics-device initialization; target/toolchain prerequisites remain explicit."
       ],
-      "planned_fixture": "EarlyStandaloneExport clean-target matrix; packaging/environment boundaries require an external process and clean machine rather than a FeatureWorld-only assertion.",
-      "verification": {"status": "NOT_RUN", "reason": "Early export is not implemented; owner assignment 14."}
+      "planned_fixture": "EarlyStandaloneExport on the current Windows PC, with relocated package, isolated environment and dependency inspection; no additional machine is a gate under ADR0010.",
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Early export is not implemented; owner assignment 14."
+      }
     },
     {
       "id": "REQ-15",
@@ -370,7 +395,7 @@
       "requirement": "Implement miniaudio AudioSource/AudioListener components, supported audio import, play/pause/stop/loop/volume, basic 3D attenuation and Lua controls. Define source lifetime, voice limits and scene-to-audio queue; prohibit blocking file I/O and general scene mutation inside real-time audio callbacks.",
       "acceptance": [
         "Offline/null-device tests verify playback state, mixing, attenuation and cleanup.",
-        "Real-device checks establish audible output on supported platforms and verify missing-device/device-change behavior.",
+        "Real-device checks establish audible output through this Windows PC's available audio endpoint; bounded missing-device/device-change fixtures and actual endpoint results are distinguished. Additional audio hardware or operating systems are outside the current gate.",
         "Repeated play/stop and scene unload retain no voices; voice limits and callback/thread ownership rules are exercised.",
         "FeatureWorld includes audible and script-driven examples, and all exposed audio APIs map to behavior tests.",
         "Audio is client-only; headless Server never initializes audio devices. Replicated semantic events drive bounded client playback without replay duplication."
@@ -464,9 +489,9 @@
     {
       "id": "REQ-31",
       "owner": "31",
-      "requirement": "Replace early export with versioned validated cooked manifests, reachable dependency closure, explicit dynamic cook roots/include-list or labels, precompiled shaders, derived IBL, scripts/fonts/audio and missing-reference validation. Package runtime redistributables/licenses per platform with editor/CLI export progress and machine-readable failure status; shipped Runtime imports no source assets and links no authoring tools.",
+      "requirement": "Replace early export with versioned validated cooked manifests, reachable dependency closure, explicit dynamic cook roots/include-list or labels, precompiled shaders, derived IBL, scripts/fonts/audio and missing-reference validation. Package runtime redistributables/licenses for the current Windows target with editor/CLI export progress and machine-readable failure status; shipped Runtime imports no source assets and links no authoring tools.",
       "acceptance": [
-        "Each supported build host exports a game that launches on a clean target outside the checkout without compiler, editor, SDK or source asset dependencies.",
+        "Windows exports launch from relocated, environment-isolated packages on this PC; dependency inspection excludes compiler, editor, SDK and source asset dependencies. Separate SDK-free WSL userspaces validate headless packages; no native Linux graphical or independent physical-machine check is required.",
         "All startup scenes and prefab-referenced assets load, including a prefab and a sound selected only by script through runtime-assembled asset IDs.",
         "Explicit cook roots/include-lists capture dynamic dependencies that static scene references cannot discover, and missing dependencies fail with useful diagnostics.",
         "Cooking is reproducible for pinned inputs, invalid export fails atomically and progress/failure status is machine-readable.",
@@ -474,8 +499,11 @@
         "Prepare separate client/server dependency roots and exclude private server rules/secrets from client payloads. Assignment 31 requalifies M05 streaming with final cooked cell manifests; M08 qualifies headless server packages, authentic content updates and compatible rollout.",
         "Human and terminal exports use the same validation/jobs and produce versioned result/artifact metadata for reproducible inputs. Supported CPU cooking/packaging is independent of editor/device startup; device-specific preprocessing remains explicitly qualified."
       ],
-      "planned_fixture": "FinalCookReproducibility, DynamicPrefabAndSoundRoots, AtomicExportFailure, RuntimeCookedBoundary and CleanTargetGameLaunch platform fixtures; packaging checks require an external clean-machine environment.",
-      "verification": {"status": "NOT_RUN", "reason": "Final cooking/distribution is not implemented; owner assignment 31."}
+      "planned_fixture": "FinalCookReproducibility, DynamicPrefabAndSoundRoots, AtomicExportFailure, RuntimeCookedBoundary and LocalRelocatedGameLaunch fixtures; use actual external processes and isolated environments available on this PC.",
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Final cooking/distribution is not implemented; owner assignment 31."
+      }
     },
     {
       "id": "REQ-32",
@@ -502,40 +530,50 @@
         "A separate physics sandbox proves 3D collisions, spawning and sound interactions that grid-based Tetris gameplay does not naturally exercise.",
         "The run uses only public documented tools and discovered tool gaps are fixed before accepting the gate.",
         "Retain Tetris and physics samples as public-tooling regressions. M09 additionally requires fresh-agent-authored MMORPG content and multi-client seamless-world acceptance; these offline samples cannot qualify an MMO.",
-        "Use an ordinary fresh terminal-agent session without GUI automation, mandatory MCP or provider integration. Retain public requests/results, errors/recovery and saved artifacts; a human then opens, inspects and continues each sample in the editor and hands it back without lost content or stale overwrites."
+        "Use an ordinary fresh terminal-agent session without GUI automation, mandatory MCP or provider integration. Retain public requests/results, errors/recovery and saved artifacts; a human then opens, inspects and continues each sample in the editor and hands it back without lost content or stale overwrites.",
+        "Run the fresh terminal session, human editor continuation and exported samples on this Windows PC; freshness concerns session/context and public tooling, not another physical host or paid provider."
       ],
       "planned_fixture": "FreshAgentTetrisAcceptance and FreshAgentPhysicsSandboxAcceptance external authoring scenarios with saved projects/input recordings/results; a fresh-agent workflow cannot be established by a preauthored FeatureWorld scene alone. Add FreshTerminalHumanContinuation for both samples.",
-      "verification": {"status": "NOT_RUN", "reason": "Public authoring stack and autonomous game-build acceptance are not implemented; owner assignment 33."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Public authoring stack and autonomous game-build acceptance are not implemented; owner assignment 33."
+      }
     },
     {
       "id": "REQ-34",
       "owner": "34",
-      "requirement": "Qualify measured frame-time/memory budgets on named hardware with CPU/GPU profiling, sanitizers, bounded parser/protocol fuzzing, repeated open/play/stop/export, long spawn/destroy runs, import/storage failure tests and graphics/device diagnostics. Tie fixes and budgets to measured release problems.",
+      "requirement": "Qualify measured frame-time/memory budgets on the recorded current PC with CPU/GPU profiling, sanitizers, bounded parser/protocol fuzzing, repeated open/play/stop/export, long spawn/destroy runs, import/storage failure tests and graphics/device diagnostics. Tie fixes and budgets to measured release problems.",
       "acceptance": [
         "The agreed suite has no unresolved critical crash, corruption, unsafe lifetime or sustained resource-growth issue.",
-        "Quantitative performance/memory budgets are established from measured baselines and enforced.",
+        "Establish and enforce measured quantitative budgets on the current PC. RTX 4070 Laptop is the rendering-performance target; Intel requires correct reduced-quality operation without a promised 60 fps. Record local process, memory and disk budgets before acceptance.",
         "Results identify remaining limitations, exact hardware/platform coverage and failures; critical failures are fixed before release-candidate declaration.",
         "Tests are not made to pass through widened tolerances, automatic baseline replacement or retries masking real failures.",
-        "Establish named-hardware server tick/lag, active-player bandwidth, streaming/crowd and durable-recovery metrics. M10 runs the explicit active-load/24-hour soak and overload profile before release.",
+        "Establish current-PC server tick/lag, active-player bandwidth, streaming/crowd and durable-recovery metrics for ADR0007 LOCAL-MMO-1. M10 runs the explicit 2-hour active soak and overload profile before local release.",
         "Measure bounded authoring request/query/job workloads, repeated disconnect/cancel/retry and alternating editor/terminal ownership; no protocol-output contamination, unbounded queues or silent lost edits is accepted."
       ],
       "planned_fixture": "NamedHardwarePerformanceBudget, LifecycleSoak, SpawnDestroySoak, ParserProtocolFuzz, StorageFaultInjection and DeviceFailureDiagnostics qualification suites; these measure release properties beyond a short scene run.",
-      "verification": {"status": "NOT_RUN", "reason": "Reliability/performance qualification awaits implemented engine features; owner assignment 34."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Reliability/performance qualification awaits implemented engine features; owner assignment 34."
+      }
     },
     {
       "id": "REQ-35",
       "owner": "35",
-      "requirement": "Deliver versioned editor/runtime packages, samples, quickstart/build instructions, public Lua/automation reference, troubleshooting, supported-platform matrix, dependency notices, release notes and migration/upgrade policy. Automate selected platform signing where authorized credentials exist, keep secrets out of the repository and archive evidence/build inputs/symbols before tagging the reviewed release candidate.",
+      "requirement": "Deliver versioned Windows editor/runtime packages, the WSL2 Ubuntu headless-server package, samples, quickstart/build instructions, public Lua/automation reference, troubleshooting, the current-machine qualification matrix, dependency notices, release notes and migration/upgrade policy. Archive exact inputs, evidence and symbols for a reviewable local release; the user owns all commits, tags and publishing. Public storefront distribution, code-signing credentials and remote deployment are outside current scope under ADR0010.",
       "acceptance": [
-        "Clean-machine install/launch and exported-game checks pass on every declared OS/CPU/GPU baseline, including Ubuntu 24.04 and only explicitly tested later releases.",
-        "Required distribution-channel signing is verified with the actual selected path.",
-        "Missing credentials or target hardware remain explicit release blockers rather than waived checks.",
-        "Documentation, sample projects, notices, upgrade policy, test evidence, exact build inputs and symbols accompany a reviewed tagged release candidate.",
-        "MMORPG release also requires M08-M10 headless server packages, wire/content/database compatibility, seamless multi-client acceptance, measured capacity, backup/restore and operations evidence. No offline-only release may satisfy the amended profile.",
+        "Local relocated Windows install/launch and exported-game checks pass on both actual GPUs; the headless Server runs in the existing isolated SDK-free WSL2 Ubuntu runtime environment. Do not claim independent clean physical-machine or native Linux graphical qualification.",
+        "Local package hashes, dependency closure, notices and declared runtime prerequisites are verified. The current local distribution path requires no external signing account or paid credentials.",
+        "Only the resources on this PC are mandatory. Missing external hardware, remote services or signing credentials are recorded as outside scope, not silently reported tested or required to finish the local roadmap.",
+        "Documentation, sample projects, notices, upgrade policy, test evidence, exact build inputs and symbols accompany a reviewable local release candidate; the user handles tagging and publication.",
+        "The local MMORPG release requires M08-M10 headless packages, wire/content/database compatibility, seamless multi-client acceptance, LOCAL-MMO-1 load/soak, backup/restore and local operations evidence. It does not establish internet-scale or production-service readiness; offline-only samples cannot satisfy the MMORPG contract.",
         "Ship tested human-editor and terminal quickstarts, CLI help/examples, machine schemas/protocol reference and handoff/conflict guidance. Developer tools require no LLM provider or MCP client, and packaged public-tool examples run on qualified hosts."
       ],
-      "planned_fixture": "ReleaseCleanInstall matrix, ReleasedSampleExport, DistributionSigningVerification and ReleaseEvidenceArchive fixtures; installer/channel checks need external target systems.",
-      "verification": {"status": "NOT_RUN", "reason": "Release packaging/installation/handoff is not implemented; owner assignment 35."}
+      "planned_fixture": "LocalReleaseInstall, ReleasedSampleExport, LocalPackageIntegrity and ReleaseEvidenceArchive fixtures using the current Windows PC and existing WSL2 Ubuntu userspaces.",
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Release packaging/installation/handoff is not implemented; owner assignment 35."
+      }
     },
     {
       "id": "REQ-M01",
@@ -545,10 +583,13 @@
         "Clean Ubuntu24.04 x64 configures, builds and starts without installed/fetched window, GPU, audio, editor/import or offline shader dependencies; existing client presets still pass.",
         "Server/Core dependency closure rejects transitive presentation links, including dependencies previously classified as client-runtime-safe, with meaningful negative fixtures and package inspection.",
         "Document actual server-only presets and CI; exercise strict CLI/config errors, bounded shutdown, tests and sanitizer execution in a minimal headless environment.",
-        "The initial 20Hz/256-active-player profile is explicitly provisional; no current bootstrap test is labeled a server-simulation or capacity result."
+        "The current 20 Hz LOCAL-MMO-1 profile (16 active synthetic players across two region processes and 16 bounded NPCs) is provisional under ADR0007/ADR0010; no bootstrap test is a server-simulation or capacity result. The earlier 256-player planning target is retired, not passed."
       ],
       "planned_fixture": "HeadlessServerCleanBuild, ServerDependencyClosureNegative, MinimalLinuxServerLaunch and ServerLifecycle fixtures.",
-      "verification": {"status": "PASS", "reason": "Historical M01 PASS at d658d69c21c492c844f5678f931b1ddf955d25cd: ordinary push 39082339515 and restored run 39083098689 pass all 15 jobs and 206 CTests without skips. Injected run 39082507455 on the same revision fails only 13 real sentinels while 180 other tests pass; later headless phases correctly stop. Hosted Docker Ubuntu 24 Release closure/package/pristine read-only-runtime smoke and GCC Debug 13/13 plus Clang 18 ASan/UBSan 13/13 pass. All 15 then-required checks, including headless-server, were verified on main under app 15368; that policy preserved strict freshness and administrator bypass. ADR0009 subsequently removes Mac jobs and compatibility obligations; current checks are documented in docs/ci.md. Durable historical evidence: docs/coverage/evidence/M01-ci-gate.json; handoff: docs/handoffs/M01-ci-verification.md. Earlier local Windows 45 and WSL 26 tests remain historical evidence. This qualifies idle lifecycle and dependency isolation, not graphics, simulation, networking, persistence, streaming, capacity or a shipping release."}
+      "verification": {
+        "status": "PASS",
+        "reason": "Historical M01 PASS at d658d69c21c492c844f5678f931b1ddf955d25cd: ordinary push 39082339515 and restored run 39083098689 pass all 15 jobs and 206 CTests without skips. Injected run 39082507455 on the same revision fails only 13 real sentinels while 180 other tests pass; later headless phases correctly stop. Hosted Docker Ubuntu 24 Release closure/package/pristine read-only-runtime smoke and GCC Debug 13/13 plus Clang 18 ASan/UBSan 13/13 pass. All 15 then-required checks, including headless-server, were verified on main under app 15368; that policy preserved strict freshness and administrator bypass. ADR0009 subsequently removes Mac jobs and compatibility obligations; current checks are documented in docs/ci.md. Durable historical evidence: docs/coverage/evidence/M01-ci-gate.json; handoff: docs/handoffs/M01-ci-verification.md. Earlier local Windows 45 and WSL 26 tests remain historical evidence. This qualifies idle lifecycle and dependency isolation, not graphics, simulation, networking, persistence, streaming, capacity or a shipping release."
+      }
     },
     {
       "id": "REQ-M02",
@@ -558,10 +599,14 @@
         "Two real client processes observe authoritative entity changes via the server; the public game protocol is separate from local authoring RPC and administrative capability.",
         "Version mismatch, expired/revoked credentials, forged ownership, replay, malformed/oversized input and shipping test-auth bypass are rejected.",
         "Loss, jitter, reorder, duplicates, sequence wrap, reconnect and slow readers preserve bounded memory/queues/history and defined convergence.",
-        "Interest/visibility filters protect private data and enforce per-connection budgets; record actual wire bytes and replication cost with active entity updates."
+        "Interest/visibility filters protect private data and enforce per-connection budgets; record actual wire bytes and replication cost with active entity updates.",
+        "Authentication/session services and test credentials run locally. Separate real client/server processes communicate through loopback or the existing WSL network with seeded fault injection; no public identity provider, paid service, WAN or remote account is mandatory."
       ],
       "planned_fixture": "TwoProcessReplication, AuthenticationOwnershipReject, NetworkAdversity, ReconnectBaseline and InterestPrivacyBudget fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Planning amendment only; MMORPG implementation and qualification belong to M02. No server/network/persistence/streaming/load result is claimed."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Planning amendment only; MMORPG implementation and qualification belong to M02. No server/network/persistence/streaming/load result is claimed."
+      }
     },
     {
       "id": "REQ-M03",
@@ -571,10 +616,14 @@
         "Character create/select/save/reconnect survives real server/store restart with authorization and stable identity.",
         "Concurrent stale writes, replay and retry cannot duplicate modeled inventory/currency; each acknowledged durable mutation survives crash and has one auditable outcome.",
         "Faults before/after commit and database outage preserve defined failure/retry semantics; dedup expiry rejects stale operations instead of enabling economic replay.",
-        "Run migration, backup/restore and recovery on the real selected store, with explicit checkpoint-loss windows and rollback constraints; in-memory mocks alone cannot pass."
+        "Run migration, backup/restore and recovery on the real selected store, with explicit checkpoint-loss windows and rollback constraints; in-memory mocks alone cannot pass.",
+        "The actual transactional store, local credentials, migrations and backup/restore run on this PC or its existing WSL environment; no cloud database or remote host is a prerequisite."
       ],
       "planned_fixture": "CharacterRestartRecovery, ConcurrentEconomyTransaction, CommitCrashMatrix, DatabaseOutage and RealStoreMigrationRestore fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Planning amendment only; MMORPG implementation and qualification belong to M03. No server/network/persistence/streaming/load result is claimed."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Planning amendment only; MMORPG implementation and qualification belong to M03. No server/network/persistence/streaming/load result is claimed."
+      }
     },
     {
       "id": "REQ-M04",
@@ -598,10 +647,14 @@
         "Movement, combat/projectiles, AI pursuit and durable interactions cross a region boundary; collision/navigation readiness gates traversal.",
         "A consistent tick/input-sequence cut captures final state and pending operations. Source/destination loss or partition before/after prepare, cut and ownership commit yields one owner and one durable effect; stale writers are fenced and post-cut inputs/late completions cannot lose acknowledged outcomes.",
         "Asset prefetch/cancel/failure, IO pressure, distant-coordinate precision and resident memory budgets are measured; rendering-only streaming cannot satisfy multi-process authority.",
-        "Supported authored cell/world/collision/navigation settings use shared schemas and semantic terminal/editor operations; query bounds and cell identity support large worlds without whole-world dumps."
+        "Supported authored cell/world/collision/navigation settings use shared schemas and semantic terminal/editor operations; query bounds and cell identity support large worlds without whole-world dumps.",
+        "Run separate region processes and shaped network failures on this PC/WSL. The result qualifies process-boundary authority under the tested local fault model, not physical-host failover, WAN conditions or high availability."
       ],
       "planned_fixture": "MMOWorld/ContinuousTraversal, RegionAuthorityTransferFaultMatrix, CrossBoundaryCombatAI, OriginShiftPrecision and CellStreamingBudget fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Planning amendment only; MMORPG implementation and qualification belong to M05. No server/network/persistence/streaming/load result is claimed."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Planning amendment only; MMORPG implementation and qualification belong to M05. No server/network/persistence/streaming/load result is claimed."
+      }
     },
     {
       "id": "REQ-M06",
@@ -610,12 +663,15 @@
       "acceptance": [
         "Licensed valid/malformed fixtures exercise joint/weight/bind-pose limits, STEP/LINEAR interpolation, clip loop/transitions, attachments and unsupported-content rejection through import/cook/render.",
         "Server movement drives displacement; client root motion and animation events cannot grant authoritative damage/rewards.",
-        "Measure the provisional 128-visible-actor fixture and establish client frame/memory/streaming budgets and LOD error thresholds on named hardware before acceptance.",
+        "Measure LOCAL-MMO-1 with 32 visible animated actors on the current RTX 4070 Laptop and establish frame/memory/streaming budgets and LOD error thresholds before acceptance; Intel validates correctness at a documented reduced-quality profile without a 60 fps promise.",
         "Origin shifts, streaming and network corrections preserve attachments/continuity without unbounded GPU uploads; static assets and retained renderer features regress correctly.",
         "Supported character/clip/attachment/LOD authoring is discoverable through public terminal schemas and shared editor services, with equivalent validation and saved content."
       ],
-      "planned_fixture": "SkinnedCharacterProfile, AnimationBlendLOD, MMOWorld/Crowd128 and AnimatedOriginCorrection fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Planning amendment only; MMORPG implementation and qualification belong to M06. No server/network/persistence/streaming/load result is claimed."}
+      "planned_fixture": "SkinnedCharacterProfile, AnimationBlendLOD, MMOWorld/Crowd32 and AnimatedOriginCorrection fixtures.",
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Planning amendment only; MMORPG implementation and qualification belong to M06. No server/network/persistence/streaming/load result is claimed."
+      }
     },
     {
       "id": "REQ-M07",
@@ -636,40 +692,50 @@
       "owner": "M08",
       "requirement": "MMORPG packages and operational recovery: Ship separate client/headless-server packages with compatible wire/content/database versions, content authenticity, health/readiness, drain, metrics, audited administration and tested migration/restore/rollback.",
       "acceptance": [
-        "Clean client/server hosts run the reference world; Server excludes presentation/authoring dependencies and client cooks exclude server-only rules, credentials and private data.",
+        "Relocated Windows client packages and isolated SDK-free WSL2 Ubuntu Server packages run the reference world on this PC; Server excludes presentation/authoring dependencies and client cooks exclude server-only rules, credentials and private data.",
         "Unready/draining processes reject new admission/ownership; process termination, content rollout and restart have bounded observable recovery.",
         "Real backup/restore and migration/rollback drills preserve the stated durability/compatibility contract; incompatible versions reject or use a tested compatibility window.",
-        "Update authenticity is verified independently of cache hashes; operational logs redact credentials and authorized admin actions are auditable."
+        "Update authenticity is verified independently of cache hashes; operational logs redact credentials and authorized admin actions are auditable.",
+        "Operational drills, locally generated development signing keys, credentials and the real store stay on this PC/WSL; verify content authenticity without requiring cloud deployment, public signing credentials or another host. This is local recovery evidence, not production high availability."
       ],
-      "planned_fixture": "CleanClientServerPackages, DrainRestartRecovery, ContentAuthenticityCompatibility, DatabaseRestoreRollout and AdminAudit fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Planning amendment only; MMORPG implementation and qualification belong to M08. No server/network/persistence/streaming/load result is claimed."}
+      "planned_fixture": "LocalIsolatedClientServerPackages, DrainRestartRecovery, ContentAuthenticityCompatibility, DatabaseRestoreRollout and AdminAudit fixtures.",
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Planning amendment only; MMORPG implementation and qualification belong to M08. No server/network/persistence/streaming/load result is claimed."
+      }
     },
     {
       "id": "REQ-M09",
       "owner": "M09",
       "requirement": "Multi-client seamless MMORPG acceptance: Add a fresh-agent-authored MMORPG world through public tools and a real multi-client/multi-process acceptance run; retain original Tetris/physics tooling regressions.",
       "acceptance": [
-        "Create/save/cook/export/start and authenticate two graphical clients; move/fight/loot/quest/trade/chat/party across regions, reconnect and restore correct durable state.",
+        "On this PC create/save/cook/export/start and authenticate two real graphical client processes; move/fight/loot/quest/trade/chat/party across separate authoritative region processes, reconnect and restore correct durable state. Run this semantic scenario separately from the headless synthetic load.",
         "Seeded network adversity and server failure preserve single authority, identity and durable effects.",
-        "Exercise provisional 256 active synthetic players, 128 concentrated players, at least two regions and 1000 crossings; report actual workload and results, not a production-capacity claim.",
+        "Exercise provisional LOCAL-MMO-1: 16 active synthetic players across two region processes plus 16 bounded NPCs, a 16-player hotspot and 100 adjacent-region crossings. Report actual process topology and workload, not a production-capacity claim.",
         "Supported APIs map to executable tests and FeatureWorld/MMOWorld or justified external fixtures; preauthored demos cannot replace fresh-agent public-tool acceptance.",
         "Fresh terminal-agent authoring requires no GUI automation or mandatory MCP/provider integration. A human opens and continues the same MMORPG project, then hands it back with preserved revisions/content; actual client/server acceptance remains independently required."
       ],
-      "planned_fixture": "FreshAgentMMORPGAcceptance, MMOWorldMultiClient, ActivePopulation256, HotSpot128 and SeamCrossings1000 fixtures. Add FreshTerminalMMOWorldHumanContinuation.",
-      "verification": {"status": "NOT_RUN", "reason": "Planning amendment only; MMORPG implementation and qualification belong to M09. No server/network/persistence/streaming/load result is claimed."}
+      "planned_fixture": "FreshAgentMMORPGAcceptance, MMOWorldMultiClient, LocalActivePopulation16, LocalHotSpot16 and SeamCrossings100 fixtures. Add FreshTerminalMMOWorldHumanContinuation on the same Windows PC.",
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Planning amendment only; MMORPG implementation and qualification belong to M09. No server/network/persistence/streaming/load result is claimed."
+      }
     },
     {
       "id": "REQ-M10",
       "owner": "M10",
-      "requirement": "Capacity, soak and failure qualification: Qualify the provisional ADR0007 server/client/streaming/network profile with named hardware, active workloads, 24-hour soak, overload ramps and recovery drills before assignment35.",
+      "requirement": "Local capacity, soak and failure qualification: Qualify ADR0007 LOCAL-MMO-1 on this PC and existing WSL environment with active workloads, a 2-hour soak, overload ramps and actual process/store recovery before assignment 35. No remote service or additional hardware is a gate.",
       "acceptance": [
-        "Record p95/p99 tick work and wall-clock lag, bandwidth/queues, actor/NPC workload, client frame/streaming/memory/correction metrics and exact process topology against explicitly declared budgets.",
-        "A 24-hour active soak and hot-spot/population ramps show bounded resource use and defined overload/admission behavior; idle sockets cannot represent active players.",
+        "Record p95/p99 tick work and wall-clock lag, bandwidth/queues, actor/NPC workload, frame/streaming/memory/correction metrics and exact local process topology against LOCAL-MMO-1 budgets. Establish memory/disk limits from this PC before qualification.",
+        "A 2-hour active soak of 16 synthetic players across two region processes plus 16 bounded NPCs, with hotspot/population ramps, shows bounded resource use and defined overload/admission behavior; idle sockets cannot represent active players.",
         "No unresolved split authority, duplication, acknowledged durable-state loss, critical exploit or sustained resource growth remains; recovery/restore drills actually run.",
-        "Publish achieved capacity/cost and untested limits; failed budgets require fixes or explicit evidence-based amendment, never silent load/tolerance reduction."
+        "Publish achieved local capacity, resource use and untested limits, including absent WAN/multihost/24-hour/production testing. Failed current budgets require fixes or an explicit evidence-based amendment, never silent load/tolerance reduction."
       ],
-      "planned_fixture": "ActiveMMOSoak24h, NamedHardwareCapacityRamp, CrowdedWorldStreamingBudget, OverloadAdmission and CrashBackupRecovery qualification suites.",
-      "verification": {"status": "NOT_RUN", "reason": "Planning amendment only; MMORPG implementation and qualification belong to M10. No server/network/persistence/streaming/load result is claimed."}
+      "planned_fixture": "LocalActiveMMOSoak2h, CurrentMachineCapacityRamp, Crowd32StreamingBudget, OverloadAdmission and LocalCrashBackupRecovery qualification suites; real separate processes, local store and shaped faults are required.",
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Planning amendment only; MMORPG implementation and qualification belong to M10. No server/network/persistence/streaming/load result is claimed."
+      }
     },
     {
       "id": "REQ-CROSS-HUMAN-AGENT",
@@ -696,26 +762,32 @@
         "Each assignment provides one reviewable change set or PR, updates docs/public-format migration-or-rejection policy and coverage/handoff records, and states the exact next task.",
         "Each assignment's evidence records exact commands, revision, platform, PASS/FAIL/NOT_RUN, unverified hardware and blockers; a missing device/runner is never reported PASS.",
         "No-op APIs, fake success and silently skipped error/lifetime/cleanup behavior cannot satisfy a gate.",
-        "An assignment does not advance while its required gate is unmet; later layers connect earlier components when those layers are introduced.",
+        "An assignment does not advance while its currently authorized gate is unmet; explicit user scope changes update ADRs/manifest without rewriting historical evidence. Later layers connect earlier components when introduced.",
         "Apply the workflow to all 46 assignments using assignment_order in schema 3, not lexical ID comparison. The versioned MMORPG plan supersedes the old offline-only exclusions."
       ],
       "planned_fixture": "AssignmentHandoffReview for each increment; process evidence is reviewed outside FeatureWorld.",
-      "verification": {"status": "NOT_RUN", "reason": "Recurring repository workflow must be established in assignment 01 and followed throughout assignments 01-35 and inserted M01-M10."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Recurring repository workflow must be established in assignment 01 and followed throughout assignments 01-35 and inserted M01-M10."
+      }
     },
     {
       "id": "REQ-CROSS-TEST-POLICY",
       "owner": "01",
       "requirement": "Establish meaningful engine-owned unit tests, interaction/loading/callback/lifecycle integration tests, fixed seeds/controllable clocks/explicit timeouts and tiered CI. Add subsystem-specific suites in their owner assignments instead of claiming unsupported generic coverage.",
       "acceptance": [
-        "Fast CPU checks run in ordinary CI; GPU/hardware/soak/packaged checks run on appropriate named runners.",
+        "Fast CPU checks and appropriate sanitizers run locally on Windows and existing WSL; GPU/audio/soak/package checks use this PC. Existing hosted CI is retained as supplemental evidence, with branch protection unchanged.",
         "GPU validation includes Vulkan/NVRHI messages, readback checks and visual comparisons with explicit tolerances/platform baselines; approving a baseline change is intentional, never automatic failure recovery.",
         "Audio qualification includes both offline/null-device and real-device checks, with their conclusions kept distinct.",
         "Tests avoid arbitrary sleeps and do not require identical pixels or bitwise physics outcomes across all architectures; software rendering is not substituted for target-GPU qualification.",
         "Components, script bindings, command schemas and scene cases are tested as soon as those layers exist; incompatible/error configurations use isolated fixtures.",
-        "Add headless, authentication/authority, lossy-network, transactional-store, seamless-handoff, crowd and active-load tiers in their owners; idle connections and client-only scene passes do not establish MMO capacity."
+        "Add local headless, authentication/authority, shaped-network, real-store, seamless-handoff, crowd and active-load tiers in their owners. Loopback/WSL fault injection does not establish WAN or multihost behavior; idle connections and client-only scenes do not establish capacity."
       ],
       "planned_fixture": "TestingPolicyReview plus CI tier configuration; concrete renderer, audio and lifecycle fixtures are owned by their subsystem assignments and referenced above.",
-      "verification": {"status": "NOT_RUN", "reason": "Testing policy/tooling begins in assignment 01 and is enforced with subsystem suites as each owner assignment lands."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Testing policy/tooling begins in assignment 01 and is enforced with subsystem suites as each owner assignment lands."
+      }
     },
     {
       "id": "REQ-CROSS-RUNTIME-BOUNDARY",
@@ -727,8 +799,11 @@
         "No runtime-only API depends on EnTT implementation details or editor state, and final source/cooked schema validation rejects unsupported versions.",
         "M01 separately enforces Server/EngineCore exclusion of client window/GPU/audio dependencies at configure/download/link/package stages; M08 verifies distinct server and client distributions."
       ],
-      "planned_fixture": "RuntimeDependencyBoundary and FinalCookedRuntimeBoundary fixtures, using binary/link inspection and clean-target launches rather than scene assertions alone.",
-      "verification": {"status": "NOT_RUN", "reason": "Boundary checks start in assignment 01 and final cooked-only enforcement is owned by assignment 31."}
+      "planned_fixture": "RuntimeDependencyBoundary and FinalCookedRuntimeBoundary fixtures use binary/link inspection and relocated Windows/isolated WSL launches available on this PC, with explicit limits; scene assertions alone do not prove package closure.",
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Boundary checks start in assignment 01 and final cooked-only enforcement is owned by assignment 31."
+      }
     }
   ],
   "implemented_surface": {
@@ -824,7 +899,7 @@
         "test_ids": ["shark.tooling.graphics-package", "shark.tooling.graphics-package-linux", "shark.graphics-probe.report"],
         "test_sources": ["tools/tests/test_graphics_package.py", "tools/tests/test_graphics_package_linux.py", "probes/graphics/lifecycle_tests.cpp"],
         "fixtures": ["tools/package_graphics_probe.py", "tools/package_graphics_probe_linux.py", "tools/graphics_package/Run-GraphicsProbe.ps1", "tools/graphics_package/run_graphics_probe.py", "tools/tests/check_graphics_package_launcher.py", "probes/graphics/main.cpp"],
-        "fixture_reason": "CPU tests reject invalid package inputs, PE/ELF dependency leaks, stale hashes and unsafe paths, and verify bounded native-child cleanup and failure-progress retention. Explicit package/GPU commands verify relocated execution, readbacks and lifecycle outside scenes. Development-host relocation and SDK-free Ubuntu userspace under WSL do not establish a native clean graphical machine or named hardware-row pass; FeatureWorld starts in 10."
+        "fixture_reason": "CPU tests reject invalid package inputs, PE/ELF dependency leaks, stale hashes and unsafe paths, and verify bounded native-child cleanup and failure-progress retention. Explicit package/GPU commands verify relocated execution, readbacks and lifecycle outside scenes. The preserved receipts support ADR0010's current-PC scope; relocation and SDK-free WSL userspace do not establish independent clean-machine or retired hardware-row qualification. FeatureWorld starts in 10."
       }
     ],
     "components": [],

@@ -13,6 +13,11 @@ Use matching configure/build/test preset names: `windows-debug` or `linux-debug`
 corresponding `-release` variants; `windows-asan` or `linux-asan-ubsan` for sanitizers.
 Mac compatibility and CI are outside scope under
 [ADR 0009](../../../docs/architecture/0009-windows-linux-platform-scope.md).
+The later [current-machine scope](../../../docs/architecture/0010-current-machine-scope.md)
+uses native Windows builds and the existing WSL2 Ubuntu CPU/headless environments.
+Local checks determine roadmap progression; existing hosted CI is supplemental
+and remote branch protection is unchanged. Do not require another computer,
+hosted runner or native Linux display to finish an increment.
 
 ```text
 cmake --preset windows-debug

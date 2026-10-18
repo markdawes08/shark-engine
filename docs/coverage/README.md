@@ -22,8 +22,22 @@ as their layers land; 33/M09 add fresh terminal and human continuation evidence.
 This adds no assignment or implemented API and does not change schema 3.
 Historical PASS records are retained; documentation checks do not qualify the new
 authoring gates. The later [ADR 0009](../architecture/0009-windows-linux-platform-scope.md)
-removes Mac requirements and retires 02c. Windows/Linux clients and editor plus
-the Linux headless server remain in scope; all six active GPU rows are unqualified.
+removes Mac requirements and retires 02c. The user then limited the project to
+resources already available on this PC in
+[ADR 0010](../architecture/0010-current-machine-scope.md). Active targets are the
+native Windows client/editor on its RTX 4070 Laptop and Intel Raptor Lake-S Mobile
+GPUs, plus CPU/headless-server and isolated package checks in the existing WSL2
+Ubuntu environment. Native Linux graphics, other hardware and independent clean
+physical machines are outside the current gate. Their historical NOT_RUN records
+remain unchanged.
+
+`qualification_profile: current-machine` and `scope_document` record that scope
+as additive schema-3 fields. REQ-02 is PASS for the amended local gate, with
+explicit scope and SHA-256-pinned references to the unchanged 02d receipts.
+The validator verifies those references and retained bytes; it does not rerun
+graphics or interpret an old aggregate NOT_RUN as a universal PASS.
+`current_assignment: 03` identifies the next, unstarted increment. All later
+implementation requirements remain NOT_RUN.
 
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`
 means precisely that; documentation validation cannot pass a future engine gate.
@@ -51,6 +65,8 @@ assignment coverage, unsupported verification claims, missing ADRs, and broken
 relative Markdown document links. Its negative cases confirm that omissions
 actually fail. It does not parse natural language to prove all requirements are
 present; the handoff records a separate review against the source roadmap.
+Local-scope negative cases reject absent/altered scope and evidence references,
+and retain rejection of future PASS claims after assignment 02 closes.
 
 Schema 2 added `current_assignment` and structured implemented-surface entries to
 schema 1. Schema 3 adds the MMORPG product/plan fields and ordered expanded owner
@@ -73,25 +89,43 @@ closure/lifecycle evidence. The [hosted follow-up](../handoffs/M01-ci-verificati
 and [gate receipt](evidence/M01-ci-gate.json) record the historical fifteen jobs passing,
 206/206 restored CTests, the expected thirteen injected sentinel failures,
 Docker/package closure and the then-required fifteen checks. The current Windows/Linux
-CI policy is documented in [CI](../ci.md). Current assignment is 02,
-with 02a setup, 02b executable GPU/validation fixtures and Windows/Linux 02d packages.
+CI policy is documented in [CI](../ci.md). Existing hosted jobs and branch
+protection remain unchanged; hosted runs are supplemental to local roadmap gates.
+Assignment 02 delivered setup, executable GPU/validation fixtures and probe packages.
 Native Mac 02c is retired by ADR 0009; the earlier
 [deferral](../handoffs/02c-mac-deferred.md) remains a historical record.
 The [02b handoff](../handoffs/02b-graphics-cases.md) separates local evidence from
-the required native hardware matrix. The [graphics checkpoint plan](../roadmap/graphics-plan.md)
+the hardware matrix required at that time. The [graphics checkpoint plan](../roadmap/graphics-plan.md)
 and [probe guide](../graphics-probe.md) distinguish setup diagnostics from the
-remaining full hardware gate.
+current local hardware gate.
 The [Windows 02d handoff](../handoffs/02d-windows-validation.md) and
 [receipt](evidence/02d-windows-local.json) record the portable package, supplemental
 NVIDIA full soak, Intel short cases and retained failures at their recorded input
-hashes. Those receipts retain their original nine-row scope. The active six-row
-Windows/Linux matrix and clean-machine qualification remain open. The
+hashes. Those receipts retain their original nine-row scope. The later six-row
+Windows/Linux matrix and independent clean-machine results also remain NOT_RUN
+in their original evidence; ADR 0010 removes those unavailable targets from the
+current plan. The
 [final local handoff](../handoffs/02d-final-verification.md) records the current
-package/link changes, refreshed supplemental Windows evidence and isolated Ubuntu
+package/link changes, refreshed Windows evidence and isolated Ubuntu
 CPU/package checks. The [hosted audit](evidence/02d-hosted-ci.json) verifies nine
-jobs and 156 CTests at `39110d4`; it does not cover the later uncommitted changes.
-Only the current Windows PC is available, so native Linux GPU and independent
-clean graphical deployment remain untested.
-Graphics and multiplayer requirements remain NOT_RUN. See the
+jobs and 156 CTests at `39110d4`; it does not cover the subsequent 02d changes.
+The [scope amendment](../handoffs/current-machine-scope-amendment.md) reassesses
+the [Windows refresh](evidence/02d-windows-refresh.json) and
+[Linux local](evidence/02d-linux-local.json) receipts at `2ef281b`. Both actual
+Windows GPUs passed the complete 100 resize / 20 device / 600-second lifecycle
+and readback/validation cases; local package isolation and failure checks passed.
+This closes REQ-02 only for LOCAL-W-NV and LOCAL-W-INTEL plus the stated local
+package/CPU evidence. It is not a new run, production renderer or general Windows
+support claim. Future renderer work revalidates those devices as features land.
+
+Future packaging, release and MMORPG gates use this PC, separate real local
+processes, the actual local store, shaped network faults and existing WSL
+userspaces. ADR 0007's provisional LOCAL-MMO-1 profile uses 16 active synthetic
+players, 16 NPCs, two region processes, 32 visible animated actors, 100 crossings
+and a two-hour active soak. The two real graphical-client semantic test runs
+separately from synthetic load. These are planned tests, not achieved capacity;
+external hosting, multihost failover, WAN testing, paid services and public signing
+credentials are not prerequisites. Human/terminal parity and seamless authoritative
+world behavior remain required. Multiplayer requirements remain NOT_RUN. See the
 [CI verification handoff](../handoffs/01-ci-verification.md) for 01's tested
 revision, run URLs and qualification limits.

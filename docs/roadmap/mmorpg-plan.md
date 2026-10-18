@@ -17,9 +17,19 @@ The later [human/terminal-agent amendment](human-agent-plan.md) and
 authoring requirements across these owners. Both human editor use and independent
 terminal development are mandatory; assignment order and MMO authority stay intact.
 The pre-M01 assessment below is historical; the later plan assesses `d9f53ef`.
-The subsequent [platform scope decision](../architecture/0009-windows-linux-platform-scope.md)
-limits client/editor targets to Windows and Linux, with Linux dedicated servers.
-Mac compatibility and checkpoint 02c are retired, not deferred.
+The [current-machine decision](../architecture/0010-current-machine-scope.md)
+supersedes the wider Windows/Linux qualification targets in the earlier
+[platform decision](../architecture/0009-windows-linux-platform-scope.md).
+Required work uses the available Windows PC: Windows clients/editor, the RTX
+4070 Laptop and Intel UHD/Raptor Lake-S Mobile GPUs, and isolated Ubuntu server/CPU
+tests inside existing WSL. Native Linux graphics, additional machines, cloud
+services, paid accounts and new hardware are not prerequisites. Mac and checkpoint
+02c remain outside scope.
+
+The engine retains seamless travel, authoritative servers, persistent state and
+equal human/terminal authoring. A local development release is the current
+deliverable. Same-machine multiprocess tests exercise real boundaries; they do
+not establish production scale, real WAN behavior or independent failure recovery.
 
 ## Historical assessment of the pre-M01 foundation
 
@@ -59,18 +69,18 @@ the tested revision and run evidence. **M01's gate is complete.** The
 [M01 handoff](../handoffs/M01-headless-server.md) records
 implementation/local qualification; the
 [hosted follow-up](../handoffs/M01-ci-verification.md) closes its native CPU,
-headless Docker and deliberate-failure/restored-success gate. **Current assignment
-is 02; 02a setup and 02b executable cases/local validation are complete within checkpoint scope.
-02c is retired by the platform scope decision. 02d implements Windows/Linux probe
-packages, with supplemental Windows lifecycle and isolated Ubuntu CPU/package
-evidence in the [final local handoff](../handoffs/02d-final-verification.md).
-The six named Windows/Linux GPU rows and independent clean graphical launch
-remain open; only the current Windows PC is available.** The
-[graphics checkpoint plan](graphics-plan.md) preserves one final hardware gate.
+headless Docker and deliberate-failure/restored-success gate. **Assignment 02 is
+closed under the explicit current-machine scope amendment; assignment 03 is next
+and unstarted.** The [final local handoff](../handoffs/02d-final-verification.md)
+preserves the Windows lifecycle and isolated Ubuntu CPU/package evidence. The
+[graphics checkpoint plan](graphics-plan.md) applies the new local gate to those
+observed results. Former baseline GPU rows and independent clean-machine work
+are outside active scope, not retrospectively passed. Existing hosted CI remains
+useful supplemental evidence; local progress does not require another hosted run.
 Earlier handoffs and the assessment above retain their historical repository/gate
-status. Graphics and multiplayer qualification remain NOT_RUN. The graphics
-compatibility gate still blocks dependent client renderer work; a headless server
-pass never waives it.
+status. The probe qualifies its exercised local graphics cases, not a production
+renderer, editor or any multiplayer feature. Future gates use the same available
+machine and still require actual behavior evidence.
 
 ## Inserted assignments and gates
 
@@ -98,11 +108,14 @@ baseline/delta state, spatial interest and a deterministic network-fault harness
 Use simple engine-owned entity fixtures before full physics/gameplay integration.
 
 Gate: two real client processes see authoritative entity changes through the
-server. Incompatible versions, invalid/expired/revoked credentials, forged ownership,
+server on this PC using loopback or Windows-to-WSL transport. The selected identity
+and transport implementation must run locally without an external account or
+service. Incompatible versions, invalid/expired/revoked credentials, forged ownership,
 malformed/oversized packets, replay and slow readers reject safely. Loss, jitter,
 reorder, duplication, sequence wrap and reconnect preserve bounded memory and
 defined state convergence. Private/uninterested fields do not leak. Record actual
 bandwidth and replication work; no public editor RPC or shipping test-auth bypass.
+Seeded local loss/jitter/partition fixtures are required; real WAN links are not.
 
 ### M03 - Durable characters and transactional state
 
@@ -111,6 +124,9 @@ authored content from live state, define account/character ownership, database
 schema migration, operation identity, revision checks and crash recovery. Preserve
 durable world/entity IDs across server lifetimes. A module boundary is sufficient;
 do not require a service fleet for the first vertical slice.
+The store must run in a local process or embedded integration without cloud
+credentials. Pin its real dependency when selected; no in-memory substitute for
+durable acceptance.
 
 Gate: create/select/save/reconnect a character across actual process restart.
 Concurrent stale writes and duplicate requests cannot duplicate inventory or
@@ -118,7 +134,9 @@ currency in the transaction fixture. Inject crash/timeout before and after durab
 commit; retries resolve one outcome and acknowledged durable effects survive.
 Database outage fails critical operations safely. Run real-store migration and
 backup/restore fixtures, not only an in-memory mock; record recoverable checkpoint
-loss windows and migration rollback constraints.
+loss windows and migration rollback constraints. Restore into an isolated local
+database/directory; this verifies software recovery, not survival of host or disk
+loss.
 
 ### M04 - Authoritative character movement and gameplay
 
@@ -139,7 +157,8 @@ client while the world continues. Server runs these cases without graphics/audio
 After 11-13, 18/20 and M04. Implement in reviewable internal steps: (1) global
 cell/local coordinates and origin-safe content/collision/navigation streaming,
 (2) adjacent regions in one process with overlapping interest and continuous
-travel, (3) the same transfer across processes with fencing and crash recovery.
+travel, (3) the same transfer across separate local processes with fencing and
+crash recovery.
 These are parts of one gate; local streaming alone does not complete M05. Use
 validated engine-owned development payloads prepared by EngineTools at this stage;
 31/M08 replace and requalify them as final cooked cell/dependency manifests.
@@ -149,8 +168,9 @@ and at least two authoritative regions without a loading screen, reconnect, scen
 reset or character-ID change. Collision/nav and nearby interactions remain valid
 at edges. AI pursuit, targeting, combat/projectiles, interest visibility and a
 durable-operation fixture cross the boundary. Actual party/trade continuity is
-integrated in M07/M09 after those features exist. Inject destination/source loss and network
-partition before/after ownership commit; one owner and one durable outcome remain.
+integrated in M07/M09 after those features exist. Inject destination/source
+process loss and shaped local network partition before/after ownership commit;
+one owner and one durable outcome remain.
 Stale owners cannot write. A consistent tick/input-sequence cut captures final
 source state and pending operations; post-cut inputs/completions are routed and
 reconciled without losing acknowledged outcomes. Inject mutations and late durable
@@ -168,8 +188,9 @@ visual root motion and animation events.
 
 Gate: licensed fixtures cover joint limits/weights, bind pose, interpolation,
 attachments, loop/transitions and invalid data. Import/cook/reload/renderer behavior
-agrees with the profile; 128 visible actors is the provisional measurement fixture,
-not a proven capacity. Record named hardware, client frame/memory/streaming budgets
+agrees with the profile; LOCAL-MMO-1 uses 32 visible animated actors as the
+provisional measurement fixture, not a proven capacity. Record RTX 4070 Laptop
+frame/memory/streaming budgets and the Intel correctness/reduced-quality profile
 and LOD quality/error thresholds before accepting. Validate origin shifts and
 network corrections without broken attachments, unbounded uploads or actor popping
 that hides gameplay-relevant entities. Original static assets remain supported.
@@ -182,7 +203,8 @@ trade, party and bounded authenticated chat. Add HUD/input focus for health,
 targeting, actions, confirmed inventory and connection/recovery status. EngineCore
 provides contracts; game-specific formulas/content belong to the reference module.
 
-Gate: two users complete the loop across an internal region boundary, including
+Gate: two distinct authenticated players in real local client processes complete
+the loop across an internal region boundary, including
 trade in flight and party visibility during handoff, then log out
 and reconnect with correct state. Concurrent trade, full inventory, disconnect
 during reward/trade, invalid ownership and chat flood fixtures preserve integrity
@@ -197,53 +219,65 @@ redacted logs, administration authorization/audit, database migration, backup/re
 content authenticity and rollback. Select deployment infrastructure only from
 the measured requirements; no hosted deployment is authorized by writing this plan.
 
-Gate: clean client and Linux server hosts run the reference world. Client package
+Gate: relocate the Windows client package outside the checkout with development
+paths removed, and run the Linux server package in an isolated SDK-free Ubuntu
+userspace on existing WSL. Both run the reference world on this PC. Client package
 contains no server-only rules, credentials or private data; Server excludes all
 presentation/authoring dependencies. Failures during drain, content rollout,
 migration, restart and restore have observable recovery. Incompatible versions
 reject or follow an explicitly tested compatibility window; cached hashes alone
 do not establish update authenticity. Exercise process termination and a restored
-backup, not just configuration/documentation checks.
+backup, not just configuration/documentation checks. Local test keys qualify
+signature/update-trust behavior without an external signing provider. No additional
+machine, public deployment, managed service or off-site backup is required; report
+the retained shared-host limitations explicitly.
 
 ### M09 - Multi-client seamless MMORPG acceptance
 
 After 32/33 and M08. Retain the original fresh-agent Tetris and physics tests as
 tooling regressions. Add a fresh-agent-authored small MMORPG world using documented
 public tools and the reference game contracts, with automated real-client/load
-drivers and separate multi-process server execution.
+drivers and separate multi-process server execution on the same PC.
 
-The fresh agent must use an ordinary terminal with public discovery/docs/results,
+The available terminal agent uses a fresh context with public discovery/docs/results,
 without GUI automation or a required MCP/provider integration. A human then opens,
 inspects and continues the same authored world in the editor; both directions of
 handoff preserve revisions and content. This complements real-client MMO proof.
 
 Gate: create/save/cook/export/start, authenticate two graphical clients, move/fight/
 loot/quest/trade/chat/party, cross regions, reconnect and restore durable state.
-Replay with seeded network adversity and server failure. Exercise the provisional
-256-active-player load profile with 128-player concentration, at least two regions
-and 1,000 crossings; measure rather than claim production capacity. Map each
+Replay with seeded local network adversity and server process failure. Exercise
+ADR 0007's provisional LOCAL-MMO-1 profile: 16 active synthetic players and 16
+NPCs, all 16 players in a hot spot, at least two separate region processes and
+100 crossings. Run the two graphical clients' functional case separately from
+the headless load case. Measure rather than claim production capacity. Map each
 supported API to tests and a FeatureWorld/MMOWorld or justified external fixture.
 
-### M10 - Capacity, endurance and release qualification
+### M10 - Local capacity, endurance and development release qualification
 
 After 34 and M09, before 35. Turn the provisional budgets in ADR 0007 into recorded
-results on named CPU/GPU/memory/network/storage, with exact workload/client counts,
-NPC density, content and process topology. Compare client and server versions and
-separate wall-clock tick lag from tick computation time.
+results on this PC's named CPU/GPU/memory/network/storage, with exact workload,
+client counts, NPC density, content and process topology. Compare client and server versions and
+separate wall-clock tick lag from tick computation time. Set aggregate memory,
+process count, disk/artifact and bounded overload-ramp limits before execution;
+do not change workstation/WSL configuration implicitly to achieve them.
 
-Gate: 24-hour active workload soak, population/hot-spot ramps, bandwidth/queue/memory
-bounds, p95/p99 tick/interaction/correction metrics, overload/admission behavior,
+Gate: two-hour LOCAL-MMO-1 active workload soak, bounded population/hot-spot ramps,
+bandwidth/queue/memory bounds, p95/p99 tick/interaction/correction metrics,
+overload/admission behavior,
 streaming stalls and recovery/backup drills. No unresolved duplication, acknowledged
 durable-state loss, split authority, critical exploit or sustained resource growth.
-Publish achieved capacity and cost measurements, remaining limits and untested
-rows. If provisional budgets fail, fix or explicitly amend them with evidence;
-never lower load, widen tolerances or relabel idle connections to obtain a PASS.
+Publish achieved local workload and CPU/memory/disk/bandwidth costs, remaining limits
+and untested conditions. No production concurrency, hosting price, WAN, multi-host
+or high-availability claim follows from a same-machine run. If provisional budgets
+fail, fix or explicitly amend them with evidence; never lower load, widen tolerances
+or relabel idle connections to obtain a PASS.
 
 ## Amendments to retained assignments
 
 | Original owner | Added planning constraint |
 | --- | --- |
-| 02, 05, 06 | Graphics work is client-only behind M01's split; retain all active Windows/Linux GPU feasibility requirements under ADR 0009. |
+| 02, 05, 06 | Graphics work is client-only behind M01's split; use the two available Windows GPUs under ADR 0010. No native Linux graphics or external hardware requirement. |
 | 03, 04 | Separate server monotonic ticks from rendering/input. Client focus/minimize/pause cannot stop a shared world. Define cancellation/backpressure and explicit runtime role. |
 | 07, 08 | Region/world identity, authority metadata, checked replica lifetime and global-cell coordinates precede schema commitment. Source scenes are authored content, not durable player records. |
 | 09, 15-17 | Local authoring services remain distinct from public gameplay and operational admin APIs. Editor previews may visualize server/region data through authorized development adapters. |
@@ -253,14 +287,15 @@ never lower load, widen tolerances or relabel idle connections to obtain a PASS.
 | 22-24 | Pause/step applies only to offline/editor sessions. Live clients display world/session state; server never opens an audio device. Add RPG UI and chat in M07. |
 | 25-29 | Preserve visual features; measure dense actors, large-world depth/precision, culling/LOD and streaming cost. Revisit depth/lighting limits only with evidence, not a speculative renderer rewrite. |
 | 30, 31 | Coordinate content versions, separate server rules from client payloads, never live-reload critical server state arbitrarily. Requalify M05 streaming against final cooked cell manifests. M08 owns controlled rollout/migration/recovery. |
-| 32-35 | Include MMO coverage, M09 acceptance and M10 capacity/recovery gates; original offline demos and desktop installs remain useful but insufficient release evidence. |
+| 32-35 | Include MMO coverage, local M09 acceptance and M10 workload/recovery gates. Assignment 34 measures the RTX performance profile and Intel correctness/reduced-quality profile. Assignment 35 qualifies a Windows/WSL local development release through relocated packages and an isolated SDK-free server userspace; independent clean machines, remote hosting and production certification are outside scope. Original offline demos alone remain insufficient MMO evidence. |
 
 ## Still open, without blocking this planning update
 
-Combat model, world dimensions/travel speed, total concurrent-player target,
-maximum crowd density, regional hosting/cost, client hardware and content/team
-capacity need refinement before their owning implementation gates. The plan uses
-explicit provisional budgets rather than claiming answers from the word MMORPG.
+Combat model, world dimensions/travel speed, content/NPC workload and precise
+frame/memory/IO budgets need refinement before their owning implementation gates.
+LOCAL-MMO-1 fixes the current small test population; it does not promise final
+production concurrency. External hosting, additional platforms and larger-scale
+capacity are separate future scope decisions rather than blockers in this plan.
 Transport/auth/database/terrain/navigation dependencies require measurements and
 pinning at first integration. Neither the current bootstrap nor the new documents
 prove any MMO feature, scale or release support.
