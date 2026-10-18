@@ -27,25 +27,17 @@ are no longer requirements. Assignment 03 is split into the
 and lifecycle verification. The [03c handoff](../handoffs/03c-time-and-work.md)
 closes scheduling, bounded work and the full Core gate. **05b, swapchain,
 submission and presentation lifecycle, is complete under the current-machine
-scope.** **05c, failure and stress qualification, remains open.**
+scope.**
 The [device guide](../graphics-device.md),
 [presentation contract](../presentation-lifecycle.md),
 [05 checkpoint plan](../roadmap/graphics-device-plan.md) and
 [05b handoff](../handoffs/05b-presentation-lifecycle.md) record the lifecycle and
 passing local gate. The [05a handoff](../handoffs/05a-graphics-device.md) retains the
-completed device-foundation evidence. Full `REQ-05` remains NOT_RUN until 05c.
-The [05c qualification guide](../presentation-qualification.md) and
-[handoff](../handoffs/05c-presentation-qualification.md) describe its implemented
-fixtures. The [follow-up investigation](../handoffs/05c-failure-investigation.md)
-isolates NVIDIA desktop-DC retention in the pinned driver. The
-[latest investigation](../handoffs/05c-intel-asan-investigation.md) attributes
-Intel USER retention outside Shark and leaves the original ASan timeout unresolved.
-Sequencing amendment, 2026-10-18: the user's next-subchunk request starts only
-CPU/offline **06a** while 05c stays open. The
+completed device-foundation evidence. The user's 2026-10-18
+[backlog decision](../backlog.md) defers remaining qualification work and authorizes
+06b and later development, superseding the earlier CPU-only exception. The
 [06 checkpoint plan](../roadmap/shader-resource-plan.md) and
 [06a handoff](../handoffs/06a-offline-shaders.md) record the completed offline checkpoint and its verification limits.
-No failed evidence, resource budget or platform scope changes; 06b GPU work
-still requires 05c closure or a later explicit sequencing decision.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and

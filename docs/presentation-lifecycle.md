@@ -1,8 +1,8 @@
 # Presentation lifecycle
 
 Assignment 05b extends the [owned graphics device](graphics-device.md) with a
-clear-only presentation path. Full `REQ-05` remains NOT_RUN until the
-[05c failure/stress gate](roadmap/graphics-device-plan.md) passes. Shader pipelines,
+clear-only presentation path. Deferred qualification work is tracked in the
+[nonblocking backlog](backlog.md). Shader pipelines,
 scene rendering, uploads and readback belong to 06. No frame-rate or visual
 correctness claim follows from successful presentation calls.
 

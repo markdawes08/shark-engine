@@ -64,38 +64,22 @@ as additive schema-3 fields. REQ-02 is PASS for the amended local gate, with
 explicit scope and SHA-256-pinned references to the unchanged 02d receipts.
 The validator verifies those references and retained bytes; it does not rerun
 graphics or interpret an old aggregate NOT_RUN as a universal PASS.
-`current_assignment: 06` records the CPU-only shader checkpoint authorized by the
-user's next-subchunk instruction. The [06 plan](../roadmap/shader-resource-plan.md)
-records this limited sequencing change while assignment 05 remains unqualified.
-The [05 checkpoints](../roadmap/graphics-device-plan.md) separate device ownership,
-presentation, and final failure/stress qualification. The `client.graphics-device`
-feature maps real CPU/native device fixtures and bounded evidence tooling.
-`client.presentation-lifecycle` maps the [05b lifecycle](../presentation-lifecycle.md),
-shared graphical launch sample and exact native workload parser. Full `REQ-05`
-remains NOT_RUN until 05c. The [05b handoff](../handoffs/05b-presentation-lifecycle.md)
-and [local evidence](evidence/05b-local.json) record the completed checkpoint;
-short clear presentation does not establish sustained
-resource-growth behavior, shaders or scene rendering. All later
-implementation requirements remain NOT_RUN.
-`client.presentation-qualification` and `foundation.runtime-package` now map
-05c's implemented stress/failure fixtures and protected deployment tooling.
-The [05c handoff](../handoffs/05c-presentation-qualification.md) records the
-open native GDI-retention and ASan exit investigations; implemented tests do not imply that
-their hardware acceptance gate passed. The [05c local receipt](evidence/05c-local.json)
-preserves its FAIL result, partial stress runs and later focused fault rechecks.
-The [latest investigation](../handoffs/05c-intel-asan-investigation.md) records
-Intel growth outside Shark, the unresolved ASan fault-run timeout and the
-separate corrected Windows queue-thread exit deadline. The existing presentation
-test family now includes controlled TLS teardown, bounded polls and retained
-worker ownership. Full `REQ-05` stays NOT_RUN.
+`current_assignment: 06` follows the [06 checkpoint plan](../roadmap/shader-resource-plan.md).
+The user's sequencing amendment moved remaining 05c work to the
+[nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
+NOT_RUN. Existing presentation/device fixtures and their earlier handoffs retain
+scope-specific evidence; backlog status is not a retroactive qualification pass.
 
 `tooling.offline-shaders` maps the [06a shader builder](../shader-pipeline.md) to
-its CPU tests and explicit real-tool fixture. Recipes and content dependencies,
-compiler/validator provenance, SPIR-V validation and atomic artifact publication
-are offline tooling behavior. They do not implement GPU resource loading, cube
-rendering, authoring commands or FeatureWorld. Full `REQ-06` remains NOT_RUN;
-06b/06c own the remaining resource, rendering and distribution acceptance. See
-the [06a handoff](../handoffs/06a-offline-shaders.md) for actual scoped results.
+CPU and explicit real-tool fixtures. `client.gpu-resources` maps the
+[06b resource contract](../gpu-resources.md) to typed shader/upload validation,
+CPU ownership tests, native fault children and independent color/depth readbacks.
+The [06b handoff](../handoffs/06b-gpu-resources.md) records scoped results on the
+current Windows GPUs and device-free Windows/WSL regression. These fixtures
+exercise the production device without exposing native handles or invoking a
+runtime compiler. Full `REQ-06` remains NOT_RUN until 06c completes window
+integration and distribution qualification. FeatureWorld connects these isolated
+fixtures in assignment 10.
 
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`
 means precisely that; documentation validation cannot pass a future engine gate.

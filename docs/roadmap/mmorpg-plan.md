@@ -88,24 +88,17 @@ sample controls. Scene rendering, world simulation and game-authoring UI remain
 planned. Full `REQ-04` is PASS after final Windows/WSL, native-window and standalone/package
 qualification. **05b, swapchain, submission and presentation lifecycle, is
 complete under the current-machine scope.**
-**05c, failure and stress qualification, remains open.** The
+The
 [05 checkpoints](graphics-device-plan.md), [device contract](../graphics-device.md),
 [presentation contract](../presentation-lifecycle.md) and
 [05b handoff](../handoffs/05b-presentation-lifecycle.md) record the delivered
 lifecycle and qualification limits. The completed
 [05a handoff](../handoffs/05a-graphics-device.md) retains device validation on both
-local GPUs and WSL CPU/Server isolation. Full `REQ-05` remains NOT_RUN until 05c.
-05c's [implemented qualification fixtures](../presentation-qualification.md) found
-NVIDIA GDI-object and Intel USER-object retention, plus an Intel
-ASan fault-child exit timeout; its
-[handoff](../handoffs/05c-presentation-qualification.md) records that open gate.
-Sequencing amendment, 2026-10-18: the user's next-subchunk request starts only
-**06a, CPU/offline shader tooling**, under the
-[06 checkpoint plan](shader-resource-plan.md). Its
-[handoff](../handoffs/06a-offline-shaders.md) records the completed offline checkpoint and its verification limits. Existing
-failed evidence, resource limits and the two-GPU/current-machine target remain
-unchanged. 06b GPU work still requires 05c closure or a later explicit sequencing
-decision; full `REQ-05` is not passed by this exception.
+local GPUs and WSL CPU/Server isolation. The user's 2026-10-18
+[nonblocking backlog decision](../backlog.md) authorizes 06b and later development.
+**06a, CPU/offline shader tooling, is complete** under the
+[06 checkpoint plan](shader-resource-plan.md); its
+[handoff](../handoffs/06a-offline-shaders.md) records the scoped verification.
 Presentation stays in Client and cannot acquire authority over server time or world state.
 The [final local handoff](../handoffs/02d-final-verification.md)
 preserves the Windows lifecycle and isolated Ubuntu CPU/package evidence. The

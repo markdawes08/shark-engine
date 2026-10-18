@@ -110,7 +110,7 @@ PresentationReport Presentation::report(PresentationStatus status, bool recreate
     return {status, stats_, recreated};
 }
 Result<DrainStatus> Presentation::drain_for(std::uint64_t timeout) {
-    if (!attempted_) {
+    if (!attempted_ && !backend_.offscreen_pending()) {
         return DrainStatus::complete;
     }
     auto drained = backend_.drain_presentation(timeout);

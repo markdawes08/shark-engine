@@ -563,6 +563,10 @@ Result<PresentationReport> GraphicsDevice::present(ClearColor color) {
     if (auto value = impl_->check_live(); !value) {
         return value.error();
     }
+    if (impl_->backend->offscreen_pending()) {
+        return graphics_error(ErrorCode::conflict, "graphics.presentation.offscreen_pending",
+                              "Offscreen resources require an explicit drain before presentation");
+    }
     return impl_->presentation.frame(color);
 }
 Result<PresentationStats> GraphicsDevice::presentation_stats() const {
@@ -576,6 +580,40 @@ Result<void> GraphicsDevice::drain() {
         return value.error();
     }
     return impl_->presentation.drain();
+}
+
+Result<OffscreenReadback> detail::GraphicsBackend::render_offscreen(const OffscreenRequest&) {
+    return graphics_error(ErrorCode::capability_unavailable, "graphics.offscreen.backend",
+                          "Offscreen rendering backend is unavailable");
+}
+Result<OffscreenReadback> GraphicsDevice::render_offscreen(const OffscreenRequest& request) {
+    if (auto checked = impl_->check_live(); !checked) {
+        return checked.error();
+    }
+    if (auto checked = validate_offscreen_request(request); !checked) {
+        return checked.error();
+    }
+    if (impl_->presentation.stats().faulted) {
+        return graphics_error(ErrorCode::conflict, "graphics.offscreen.device",
+                              "Presentation fault must be resolved before offscreen rendering");
+    }
+    try {
+        if (auto checked = impl_->check_diagnostics(); !checked) {
+            return checked.error();
+        }
+        auto result = impl_->backend->render_offscreen(request);
+        if (!result) {
+            return result.error();
+        }
+        if (auto checked = impl_->check_diagnostics(); !checked) {
+            return checked.error();
+        }
+        return result;
+    } catch (...) {
+        return graphics_error(
+            ErrorCode::execution_failed, "graphics.offscreen.render",
+            "Offscreen rendering threw; GPU resources retain ownership until safe cleanup");
+    }
 }
 
 } // namespace shark::client

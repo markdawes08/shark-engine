@@ -17,7 +17,7 @@ class Presentation final {
         return stats_;
     }
     [[nodiscard]] bool safe_to_destroy() const noexcept {
-        return !attempted_;
+        return !attempted_ && !backend_.offscreen_pending();
     }
 
   private:

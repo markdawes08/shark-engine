@@ -1,4 +1,5 @@
 #include "graphics_backend.hpp"
+#include "graphics_offscreen.hpp"
 #include "graphics_queue_waiter.hpp"
 #if defined(SHARK_GRAPHICS_TEST_HOOKS)
 #include "graphics_native_test.hpp"
@@ -297,7 +298,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
     explicit VulkanBackend(detail::NativeGraphicsTestControl& test) noexcept : test_(&test) {}
 #endif
     ~VulkanBackend() noexcept override {
-        if (queue_waiter_.pending()) {
+        if (queue_waiter_.pending() || offscreen_) {
             std::terminate();
         }
     }
@@ -976,7 +977,98 @@ class VulkanBackend final : public detail::GraphicsBackend {
         });
     }
 
+    bool offscreen_pending() const noexcept override {
+        return static_cast<bool>(offscreen_);
+    }
+
+    Result<OffscreenReadback> render_offscreen(const OffscreenRequest& request) override {
+        return phase<OffscreenReadback>([&]() -> Result<OffscreenReadback> {
+            if (offscreen_ || queue_waiter_.pending() || device_lost_) {
+                return failure(ErrorCode::conflict, "graphics.offscreen.pending",
+                               "GPU owners are pending retirement or the device is lost; drain "
+                               "before retrying");
+            }
+            for (const auto& frame : frames_) {
+                if (frame.unretired_recording) {
+                    return failure(ErrorCode::conflict, "graphics.offscreen.recording",
+                                   "An unresolved presentation recording retains the device");
+                }
+            }
+            bool fail_partial = false;
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+            fail_partial = inject(detail::NativeGraphicsFault::offscreen_partial_creation);
+#endif
+            offscreen_ = detail::create_offscreen_resources(*validation_, request, fail_partial);
+            if (nvrhi_diagnostics_.sink->has_errors()) {
+                // No command list has been opened: partial creation may unwind.
+                offscreen_.reset();
+                return failure(ErrorCode::execution_failed, "graphics.offscreen.create",
+                               "Validation reported an error while creating offscreen resources");
+            }
+            auto& resources = *offscreen_;
+            resources.unretired_recording = true;
+            resources.commands->open();
+            if (nvrhi_diagnostics_.sink->has_errors()) {
+                return failure(ErrorCode::execution_failed, "graphics.offscreen.record",
+                               "Validation reported an error while opening offscreen commands");
+            }
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+            if (inject(detail::NativeGraphicsFault::offscreen_recording_error)) {
+                return failure(ErrorCode::execution_failed,
+                               "graphics.test.offscreen_recording_error",
+                               "Injected failure after opening an owned offscreen command list");
+            }
+#endif
+            detail::record_offscreen_resources(resources, request);
+            if (nvrhi_diagnostics_.sink->has_errors()) {
+                return failure(ErrorCode::execution_failed, "graphics.offscreen.record",
+                               "Validation reported an error while recording offscreen commands");
+            }
+            try {
+                resources.submitted = validation_->executeCommandList(resources.commands);
+            } catch (const vk::DeviceLostError&) {
+                device_lost_ = true;
+                return failure(ErrorCode::execution_failed, "graphics.offscreen.device_lost",
+                               "Vulkan device was lost during offscreen submission");
+            }
+            if (resources.submitted == 0) {
+                return failure(ErrorCode::execution_failed, "graphics.offscreen.submit",
+                               "NVRHI did not return a valid offscreen submission serial");
+            }
+            resources.unretired_recording = false;
+            if (nvrhi_diagnostics_.sink->has_errors()) {
+                return failure(ErrorCode::execution_failed, "graphics.offscreen.submit",
+                               "Validation reported an error during offscreen submission");
+            }
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+            if (inject(detail::NativeGraphicsFault::offscreen_submission_timeout)) {
+                return failure(
+                    ErrorCode::execution_failed, "graphics.offscreen.wait_timeout",
+                    "Injected unsatisfied completion observation; submitted owners are retained");
+            }
+#endif
+            if (!wait_timeline(resources.submitted, 1'000'000'000ULL)) {
+                return failure(
+                    ErrorCode::execution_failed, "graphics.offscreen.wait_timeout",
+                    "Offscreen submission did not complete within one second; owners are retained");
+            }
+            validation_->runGarbageCollection();
+            auto result = detail::read_offscreen_resources(*validation_, resources);
+            VkPhysicalDeviceProperties properties{};
+            vkGetPhysicalDeviceProperties(selected_, &properties);
+            result.subpixel_precision_bits = properties.limits.subPixelPrecisionBits;
+            offscreen_.reset();
+            result.retired_resources = result.created_resources;
+            return result;
+        });
+    }
+
     Result<detail::DrainStatus> drain_presentation(std::uint64_t timeout_ns) override {
+        if (offscreen_ && offscreen_->unretired_recording) {
+            return failure(
+                ErrorCode::execution_failed, "graphics.offscreen.drain",
+                "Offscreen recording or submission is unresolved; live resources are retained");
+        }
         for (const auto& frame : frames_) {
             if (frame.unretired_recording) {
                 return failure(
@@ -992,7 +1084,11 @@ class VulkanBackend final : public detail::GraphicsBackend {
                 return detail::DrainStatus::waiting;
             }
             if (device_lost_) {
+                offscreen_.reset();
                 return detail::DrainStatus::device_lost;
+            }
+            if (offscreen_ && !wait_timeline(offscreen_->submitted, remaining(deadline))) {
+                return detail::DrainStatus::waiting;
             }
             for (auto& frame : frames_) {
                 if (!wait_timeline(frame.submitted, remaining(deadline))) {
@@ -1021,12 +1117,17 @@ class VulkanBackend final : public detail::GraphicsBackend {
             if (validation_) {
                 validation_->runGarbageCollection();
             }
+            offscreen_.reset();
             return detail::DrainStatus::complete;
         } catch (Error& error) {
+            if (device_lost_) {
+                offscreen_.reset();
+            }
             return device_lost_ ? Result<detail::DrainStatus>{detail::DrainStatus::device_lost}
                                 : Result<detail::DrainStatus>{std::move(error)};
         } catch (const vk::DeviceLostError&) {
             device_lost_ = true;
+            offscreen_.reset();
             return detail::DrainStatus::device_lost;
         }
     }
@@ -1035,6 +1136,11 @@ class VulkanBackend final : public detail::GraphicsBackend {
         detail::GraphicsResourceSnapshot result;
         result.live_swapchains = swapchain_ != VK_NULL_HANDLE ? 1U : 0U;
         result.pending_queue_workers = queue_waiter_.pending() ? 1U : 0U;
+        if (offscreen_) {
+            result.offscreen_resources = offscreen_->created;
+            result.offscreen_submissions = offscreen_->submitted != 0 ? 1U : 0U;
+            result.offscreen_recordings = offscreen_->unretired_recording ? 1U : 0U;
+        }
         for (const auto& frame : frames_) {
             result.command_lists += frame.commands ? 1U : 0U;
             result.acquire_semaphores += frame.acquired != VK_NULL_HANDLE ? 1U : 0U;
@@ -1096,6 +1202,9 @@ class VulkanBackend final : public detail::GraphicsBackend {
 
     void destroy_nvrhi() noexcept override {
         record_teardown();
+        if (offscreen_) {
+            std::terminate();
+        }
         // Presentation has already completed its bounded drain or reported
         // device loss, and any legacy queue-idle worker has joined. NVRHI's
         // unbounded waitForIdle is never called on the owning thread.
@@ -1255,6 +1364,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
         bool initialized{false};
     };
     std::array<Frame, 2> frames_{};
+    std::unique_ptr<detail::OffscreenResources> offscreen_;
     std::vector<Image> images_;
     VkSwapchainKHR swapchain_{VK_NULL_HANDLE};
     VkExtent2D extent_{};

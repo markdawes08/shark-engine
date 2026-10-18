@@ -10,7 +10,7 @@ The [MMORPG plan and existing-code assessment](docs/roadmap/mmorpg-plan.md) defi
 the authoritative server, persistent world and staged client/server work.
 These are planned capabilities; the current engine provides Core services, raw
 input, owned Windows windows, offline frame/input scheduling, graphics-device
-ownership and clear presentation, with a separate opt-in graphics feasibility
+ownership, clear presentation and offscreen textured rendering, with a separate opt-in graphics feasibility
 probe containing analytic draw/compute/readback cases.
 The versioned
 [requirements manifest](docs/coverage/requirements.json) preserves assignment
@@ -29,26 +29,18 @@ game-authoring interfaces remain planned; terminal build/test tools work today.
 current-machine scope.** The [05b handoff](docs/handoffs/05b-presentation-lifecycle.md)
 records 236 passing CTests and 2,304 validated presentations across both local
 GPUs, with repeated resize, minimize/restore and teardown.
-**05c: failure and stress qualification** remains open. Its fixtures and Runtime package
-tooling are implemented, but the gate remains open after a repeatable GDI-object
-increase in the NVIDIA swapchain path, Intel USER-resource retention and an Intel
-ASan child exit timeout. The
-[05c handoff](docs/handoffs/05c-presentation-qualification.md) and
-[first investigation](docs/handoffs/05c-failure-investigation.md) retain the
-original evidence. The [latest investigation](docs/handoffs/05c-intel-asan-investigation.md)
-reproduces Intel growth outside Shark, adds capture-ready ASan exit diagnostics,
-and fixes a separate Windows queue-thread deadline defect. The original exit
-timeout remains unexplained.
-On 2026-10-18, the user's request to proceed starts **06a, CPU/offline shader
-tooling**, under a limited sequencing amendment. The
+**06a, CPU/offline shader tooling, is complete.** The
 [06 checkpoint plan](docs/roadmap/shader-resource-plan.md),
 [shader contract](docs/shader-pipeline.md) and
-[06a handoff](docs/handoffs/06a-offline-shaders.md) record the completed offline checkpoint and its verification limits.
-Existing failed evidence, resource limits and the two-GPU target remain unchanged;
-06b GPU work still requires 05c closure or a later explicit sequencing decision.
+[06a handoff](docs/handoffs/06a-offline-shaders.md) record the offline checkpoint
+and its verification limits. The user has authorized continued development under
+the [nonblocking backlog decision](docs/backlog.md). **06b is complete:**
+[owned GPU resources and offscreen rendering](docs/gpu-resources.md) pass on both
+local GPUs in Debug, Release and ASan. The [06b handoff](docs/handoffs/06b-gpu-resources.md)
+records 240 passing CPU CTests and native readback/failure/lifecycle evidence.
+06c is next: window integration and complete distribution qualification.
 The [05a handoff](docs/handoffs/05a-graphics-device.md) records 211 passing CTests
-and 112 validated device lifetimes across the two local GPUs. Full `REQ-05` remains
-NOT_RUN until 05c passes.
+and 112 validated device lifetimes across the two local GPUs.
 The [05 checkpoint plan](docs/roadmap/graphics-device-plan.md) separates device
 ownership, presentation in 05b, and full failure/stress qualification in 05c.
 See the [device API and terminal commands](docs/graphics-device.md) and

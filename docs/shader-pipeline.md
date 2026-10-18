@@ -2,8 +2,9 @@
 
 Assignment 06a provides an offline developer tool. It compiles HLSL into validated
 SPIR-V without a window, Vulkan device, Editor or game process. The
-[checkpoint plan](roadmap/shader-resource-plan.md) records the limited sequencing
-exception: 05c remains open and full assignments 05/06 remain NOT_RUN.
+[checkpoint plan](roadmap/shader-resource-plan.md) defines the subsequent GPU and
+package checkpoints. Full assignment 06 remains NOT_RUN until its own acceptance
+criteria are complete.
 
 Use the repository Python environment from the repository root. Tool preparation
 is explicit and separate; the build command never downloads tools or searches

@@ -56,6 +56,9 @@ struct GraphicsResourceSnapshot {
     std::uint32_t acquire_fences{0};
     std::uint32_t pending_queue_workers{0};
     std::uint32_t retained_recordings{0};
+    std::uint32_t offscreen_resources{0};
+    std::uint32_t offscreen_submissions{0};
+    std::uint32_t offscreen_recordings{0};
 };
 
 // Failed/throwing stages may partially acquire resources. The owner marks each
@@ -75,6 +78,10 @@ class GraphicsBackend {
     [[nodiscard]] virtual Result<GraphicsWindowFrame> poll_window();
     [[nodiscard]] virtual Result<WindowState> window_state();
     [[nodiscard]] virtual Result<void> window_command(WindowCommand, WindowExtent);
+    [[nodiscard]] virtual Result<OffscreenReadback> render_offscreen(const OffscreenRequest&);
+    [[nodiscard]] virtual bool offscreen_pending() const noexcept {
+        return false;
+    }
     [[nodiscard]] virtual Result<PresentationSync> create_presentation();
     // Empty optional means a transient unavailable/zero extent or out-of-date
     // surface. No live new swapchain resources remain in that case.
@@ -85,7 +92,7 @@ class GraphicsBackend {
     [[nodiscard]] virtual Result<void> submit(std::uint32_t slot, std::uint32_t image, ClearColor);
     [[nodiscard]] virtual Result<PresentStatus> present(std::uint32_t slot, std::uint32_t image,
                                                         std::uint64_t timeout_ns);
-    // Includes acquisition completion, submitted GPU use and (when used)
+    // Includes offscreen ownership, acquisition completion, submitted GPU use and (when used)
     // presentation fences. Uses a single total deadline. Device-lost permits
     // destruction but is never success. Failed/timeout drain MUST retain owners.
     [[nodiscard]] virtual Result<DrainStatus> drain_presentation(std::uint64_t timeout_ns);

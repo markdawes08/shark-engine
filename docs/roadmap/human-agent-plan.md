@@ -85,14 +85,9 @@ parts. This plan does not start assignment 15. Assignments 02/03/04 are complete
 under the current-machine scope; the [window/input plan](window-input-plan.md)
 records the completed 04c gate. 05a device ownership and 05b presentation
 lifecycle are complete under the current-machine scope.
-05c failure and stress qualification remains open, as recorded in the
-[05b handoff](../handoffs/05b-presentation-lifecycle.md).
-The [05c handoff](../handoffs/05c-presentation-qualification.md) now records its
-implemented machine-readable stress/failure/package tools and the open native
-resource/finite-exit gate. These tools are usable by a human or terminal agent;
-they do not add authoring APIs or close failed native qualification.
-The 2026-10-18 sequencing amendment below permits only independent CPU/offline
-06a work while that gate stays open.
+Existing machine-readable stress/failure/package tools are usable by a human or
+terminal agent; they do not add authoring APIs. The user has authorized continued
+development under the [nonblocking backlog decision](../backlog.md).
 
 1. **Discovery and read-only access:** one-shot CLI + versioned stdio framing,
    clean stdout, capability/schema discovery, bounded project/scene queries,
@@ -126,7 +121,7 @@ now closes its gate under ADR 0010; assignment 03 is complete across
 [03c verification](../handoffs/03c-time-and-work.md) closes the local Core gate.
 **04c and full assignment 04 are complete under the current-machine scope.**
 **05b, swapchain, submission and presentation lifecycle, is complete under the
-current-machine scope.** **05c, failure and stress qualification, remains open.** The
+current-machine scope.** The
 [presentation contract](../presentation-lifecycle.md) and
 [05b handoff](../handoffs/05b-presentation-lifecycle.md) describe the owned lifecycle,
 bounded native JSON fixture and separate qualifying GPU workload.
@@ -134,16 +129,13 @@ The [device guide](../graphics-device.md), [05 plan](graphics-device-plan.md) an
 [05a handoff](../handoffs/05a-graphics-device.md) add noninteractive description,
 inventory and bounded JSON device-lifetime fixtures usable by humans or agents.
 Inventory/smoke explicitly require a device; pure capability checks, CPU tests
-and future CPU authoring remain display-free. Full `REQ-05` stays NOT_RUN until 05c.
-Sequencing amendment, 2026-10-18: the user's next-subchunk request starts only
-**06a, CPU/offline shader tooling**, described by the
+and future CPU authoring remain display-free.
+**06a, CPU/offline shader tooling, is complete**, described by the
 [06 checkpoint plan](shader-resource-plan.md),
 [shader contract](../shader-pipeline.md) and
-[06a handoff](../handoffs/06a-offline-shaders.md). Work is in progress, with
-noninteractive inputs and machine-readable results; it adds no scene-authoring
-API. Existing failed evidence, fixed resource limits and platform scope remain
-unchanged. 06b GPU work still requires 05c closure or a later explicit sequencing
-decision.
+[06a handoff](../handoffs/06a-offline-shaders.md). Its noninteractive inputs and
+machine-readable results add no scene-authoring API. The user's backlog decision
+authorizes 06b and subsequent increments under their own acceptance criteria.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and

@@ -4,22 +4,17 @@ Date: 2026-10-18. Starting revision: `db4117f` on `main`.
 Owner: `REQ-06`; full assignment verification remains NOT_RUN.
 **06a is complete for offline tooling.** The
 [handoff](../handoffs/06a-offline-shaders.md) records its scoped verification.
+**06b is complete for owned resources and offscreen rendering.** See the
+[resource contract](../gpu-resources.md) and [06b handoff](../handoffs/06b-gpu-resources.md)
+for both-GPU and CPU verification. **06c is next.**
 
 ## Sequencing decision
 
-The user's instruction to proceed with the next subchunk starts **06a, offline
-shader tooling**, while the [05c qualification gate](../presentation-qualification.md)
-remains open. This is a limited change to execution order: CPU shader preparation
-does not depend on swapchain stress or native process-exit qualification. It does
-not pass assignment 05, remove either GPU, change resource budgets, or qualify a
-release. The [latest investigation](../handoffs/05c-intel-asan-investigation.md)
-and all original failed receipts remain intact.
-
-The NVIDIA desktop-DC retention, attributed Intel hook retention and unexplained
-original Intel ASan exit timeout remain outstanding. **06b GPU implementation
-still requires 05c closure or a subsequent explicit sequencing decision.** Neither
-offline compilation nor a future cube image can close the native lifetime gate.
-Original assignment IDs and the final acceptance criteria remain unchanged.
+On 2026-10-18, the user placed the remaining 05c work in the
+[nonblocking backlog](../backlog.md) and authorized **06b and later development**.
+This supersedes the earlier CPU-only 06a exception. Historical evidence and fixed
+acceptance limits are preserved; original assignment IDs remain unchanged.
+Each subsequent checkpoint must satisfy its own acceptance criteria.
 
 ## 06a - Offline shader inputs and artifacts
 
@@ -43,7 +38,7 @@ or public game-authoring interface. See the [contract](../shader-pipeline.md) an
 
 ## 06b - Owned resources and offscreen rendering
 
-After the sequencing prerequisite above, extend the existing EngineClient device,
+Extend the existing EngineClient device,
 submission and retirement owners with validated shader artifact loading, typed
 buffer/texture uploads, binding layouts and graphics pipelines. Do not duplicate
 the device, scheduler or queue-waiting implementation. Keep NVRHI/Vulkan private;
@@ -68,7 +63,7 @@ Gate: both-GPU window/offscreen readbacks, resize/minimize/restore and resource
 retirement, malformed shader/layout/artifact failures, dependency rebuild checks,
 and relocated Runtime packages with no source shader compiler. Run the relevant
 Windows and WSL CPU/sanitizer/boundary regression. Full `REQ-06` becomes PASS only
-after its complete acceptance criteria and the outstanding 05c prerequisite are
-met. FeatureWorld integration follows in 10; these earlier isolated fixtures have
+after its complete acceptance criteria are met. FeatureWorld integration follows
+in 10; these earlier isolated fixtures have
 explicit coverage until then. No MMO world, material editor or authoring UI is
 implied by this milestone.

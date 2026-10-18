@@ -5,11 +5,8 @@ EngineClient. The [05a handoff](handoffs/05a-graphics-device.md) records its pas
 local gate. Assignment **05b** extends it with
 [clear-only presentation](presentation-lifecycle.md), owned submission and
 swapchain retirement; the [05b handoff](handoffs/05b-presentation-lifecycle.md)
-records that checkpoint. Full `REQ-05` remains **NOT_RUN** until the
-[05c failure/stress gate](roadmap/graphics-device-plan.md) is complete.
-Its [qualification fixtures](presentation-qualification.md) are implemented;
-the [05c handoff](handoffs/05c-presentation-qualification.md) records an unresolved
-native GDI-retention finding rather than a completed sustained-resource gate.
+records that checkpoint. The [05 checkpoint plan](roadmap/graphics-device-plan.md)
+and [nonblocking backlog](backlog.md) record remaining qualification scope.
 Public contracts still expose no native GPU
 handles or authoring APIs. Editor/Runtime `--window` retains its empty-window
 sample; explicit `--graphics` uses the same [offline pump](frame-loop.md) and

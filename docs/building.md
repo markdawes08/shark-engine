@@ -37,7 +37,7 @@ dependencies, terminal diagnostics, analytic GPU cases and offline validation to
 02d adds matching `graphics-windows-release` and `graphics-linux-release`
 configure/build/test presets for standalone probe packages; see the
 [probe guide](graphics-probe.md) for packaging and bounded launch commands.
-Production rendering, gameplay, scene import, authoring UI and export remain unimplemented.
+Scene rendering, gameplay, scene import, authoring UI and export remain unimplemented.
 CPU build success does not qualify a GPU, audio device or final release platform.
 
 05a adds the [owned graphics device](graphics-device.md), with CPU lifecycle and
@@ -60,13 +60,22 @@ CTest entries remain device-free. The three `shark.tooling.presentation-stress`,
 verify evidence and deployment inputs without initializing graphics.
 Native tests require separate, explicit commands and retained raw output.
 
+06b adds [owned resources and offscreen rendering](gpu-resources.md).
+The CPU-only `shark.client.gpu-resources` and `shark.client.offscreen` tests
+exercise shader/upload validation and ownership. Native `OffscreenSmoke` and
+`OffscreenFaults` require explicit commands; ordinary CTest never starts a GPU.
+Their readback/failure wrappers preserve source, shader, device and validation
+identity. Window cube integration belongs to 06c. The
+[06b handoff](handoffs/06b-gpu-resources.md) records final local results.
+
 06a adds the CPU-only [offline shader builder](shader-pipeline.md).
 `shark.tooling.shader-pipeline` tests recipes, dependency tracking, artifact
 integrity and failed-build publication with controlled compiler fixtures. The
 explicit offline integration command exercises the cached pinned DXC and SPIR-V
 validator separately. Neither the normal build nor the Runtime/Server distribution
-targets discover or invoke shader tools. This checkpoint follows the limited
-[06 sequencing decision](roadmap/shader-resource-plan.md); 05c remains open.
+targets discover or invoke shader tools. The
+[06 checkpoint plan](roadmap/shader-resource-plan.md) defines subsequent GPU work
+under the user's [nonblocking backlog decision](backlog.md).
 
 The active client/editor target is this Windows 11 x64 PC. Existing WSL2 Ubuntu
 environments cover CPU/headless Server and local package checks.

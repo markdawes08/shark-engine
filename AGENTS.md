@@ -23,35 +23,25 @@ split are implemented; the [M01 handoff](docs/handoffs/M01-headless-server.md) r
 local qualification and the [hosted follow-up](docs/handoffs/M01-ci-verification.md)
 records the completed native CPU, headless Docker and red/green gate. **05b,
 swapchain, submission and presentation lifecycle, is complete under the
-current-machine scope.** **05c failure/stress fixtures are implemented, but its
-qualification gate remains open:** a minimal raw Win32/Vulkan reproducer retains
-one GDI object per NVIDIA swapchain lifetime; the pinned driver's desktop-DC
-acquisition is identified. Intel USER growth also reproduces in 40 raw
-Win32/Vulkan lifetimes outside Shark, GLFW and NVRHI; tracing identifies failed
-driver-owned hook removals after their driver-created target threads begin exit.
-An original Intel ASan
-fault run timed out after recording native cleanup; a fixed 64-child diagnostic
-sequence did not reproduce or explain it. The separate Windows queue-worker
-thread-exit deadline defect is fixed and regression-tested. The
-[latest investigation](docs/handoffs/05c-intel-asan-investigation.md) records these
-results and limits; the [earlier investigation](docs/handoffs/05c-failure-investigation.md)
-retains NVIDIA attribution. Do not mark full 05 PASS while these remain unresolved.
-**Sequencing amendment, 2026-10-18:** the user's next-subchunk request starts only
-**06a, CPU/offline shader tooling**, while 05c stays open. Follow the
+current-machine scope.** **Sequencing amendment, 2026-10-18:** the user deferred
+the remaining 05c work to the [nonblocking backlog](docs/backlog.md) and authorized
+06b and later development. This supersedes the earlier CPU-only 06a exception.
+Preserve historical evidence and fixed acceptance limits; full `REQ-05` remains
+NOT_RUN. Do not repeat deferred items in routine updates or handoffs; revisit
+them only under the backlog's triggers or at the user's request. Follow the
 [06 checkpoint plan](docs/roadmap/shader-resource-plan.md),
 [shader pipeline contract](docs/shader-pipeline.md) and
-[06a handoff](docs/handoffs/06a-offline-shaders.md). This exception changes no
-failed receipt, resource budget or platform requirement. 06b GPU resource work
-still requires 05c closure or a later explicit sequencing decision. Read the
-[05c handoff](docs/handoffs/05c-presentation-qualification.md) and
-[qualification contract](docs/presentation-qualification.md) before continuing;
-preserve its failed evidence and fixed resource limits. Follow the
+[06a handoff](docs/handoffs/06a-offline-shaders.md). **06b is complete** under the
+current-machine scope. Follow the [GPU resource contract](docs/gpu-resources.md)
+and [06b handoff](docs/handoffs/06b-gpu-resources.md). The next checkpoint is
+06c window integration and distribution qualification; full `REQ-06` remains
+NOT_RUN until that gate passes. Follow the
 [05 checkpoint plan](docs/roadmap/graphics-device-plan.md),
 [graphics device contract](docs/graphics-device.md),
 [presentation lifecycle contract](docs/presentation-lifecycle.md) and
 [05b handoff](docs/handoffs/05b-presentation-lifecycle.md). The completed
 [05a handoff](docs/handoffs/05a-graphics-device.md) retains device-foundation
-evidence. Full `REQ-05` remains NOT_RUN until 05c passes. Native
+evidence. Native
 Windows clients privately use the exact pinned Vulkan/NVRHI stack; Core/Server
 and WSL CPU clients keep both native options OFF. Required device validation
 passes on both current-PC GPUs. 04c and full assignment 04 remain complete. Follow the
@@ -335,7 +325,7 @@ Update the assignment handoff with: assignment and base/result revision (or no
 commit); behavior delivered; changed files/public contracts; exact commands and
 results; platforms/hardware verified; checks not run and why; coverage/FeatureWorld
 changes; blockers/limitations; and the exact next assignment. Do not advance until
-the current assignment's required gate is met, except for the explicitly recorded
-CPU/offline 06a sequencing amendment above. End the user response with the
+the current assignment's required gate is met, except for the user-authorized
+nonblocking backlog amendment above. End the user response with the
 important changes, verification limits and suggested commit message, leaving
 all staging, committing and pushing to the user.

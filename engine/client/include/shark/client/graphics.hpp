@@ -1,5 +1,6 @@
 #pragma once
 
+#include <shark/client/gpu_resources.hpp>
 #include <shark/client/window.hpp>
 
 #include <array>
@@ -141,6 +142,11 @@ class GraphicsDevice final {
     // recreate_pending requires a later event-pump pass, never an internal spin.
     [[nodiscard]] Result<PresentationReport> present(ClearColor color = {});
     [[nodiscard]] Result<PresentationStats> presentation_stats() const;
+    // Bounded offscreen diagnostic draw on this device's owned graphics queue.
+    // Uploads and returns tightly packed RGBA8/D32 readback. A one-second GPU
+    // wait timeout retains owners until drain/close proves completion; retry
+    // rendering requires first draining the retained submission.
+    [[nodiscard]] Result<OffscreenReadback> render_offscreen(const OffscreenRequest& request);
     // Waits up to one second for application GPU/presentation synchronization.
     // A timeout retains live resources; callers must exit or retry explicitly.
     [[nodiscard]] Result<void> drain();

@@ -11,7 +11,10 @@ enum class NativeGraphicsFault {
     recording_error,
     recording_exception,
     surface_error,
-    device_error
+    device_error,
+    offscreen_partial_creation,
+    offscreen_submission_timeout,
+    offscreen_recording_error
 };
 struct NativeGraphicsTestControl {
     NativeGraphicsFault fault{NativeGraphicsFault::recording_error};
