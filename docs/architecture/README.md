@@ -7,8 +7,9 @@ Platform feasibility remains an explicit assignment 02 gate.
 MMORPG amendment, 2026-10-17: the user selected a seamless open world. ADR 0007
 and the [versioned execution plan](../roadmap/mmorpg-plan.md) supersede the original
 offline-only v1 scope. Earlier records are amended in place where their contracts
-conflicted; historical handoffs keep their original evidence. All MMO behavior
-remains planned. Original 00-35 IDs are retained with M01-M10 inserted by dependency.
+conflicted; historical handoffs keep their original evidence. MMO behavior was
+planned at that amendment; the current implementation status appears below.
+Original 00-35 IDs are retained with M01-M10 inserted by dependency.
 
 Human/agent amendment, 2026-10-17: [ADR 0008](0008-human-agent-authoring.md) and
 the [terminal-development plan](../roadmap/human-agent-plan.md) make human editor
@@ -56,9 +57,14 @@ defines the implemented discovery and query APIs; the
 07c and full REQ-07 are PASS under the current-machine scope, recorded in the
 [07c receipt](../coverage/evidence/07c-schema-inspection.json). M02 is active; the
 [M02a handoff](../handoffs/M02a-transport-wire.md) closes the transport foundation,
-and M02b authentication and owned sessions is next. Source persistence, authoring transactions, terminal
-adapters and editor UI retain their later owners; schema IDs do not establish
-file or gameplay-wire formats. The current-machine scope remains unchanged.
+and [M02b authentication and owned sessions](../handoffs/M02b-owned-sessions.md)
+is **PASS** under the current-machine scope. [ADR 0012](0012-owned-sessions.md) and the
+[session contract](../network-sessions.md) define explicit certificate enrollment,
+transport-bound ownership, revocation and reconnect fencing. M02c replication is
+next; full REQ-M02 remains NOT_RUN. Source persistence,
+authoring transactions, terminal adapters and editor UI retain their later owners;
+schema IDs do not establish file or gameplay-wire formats. The current-machine
+scope remains unchanged.
 
 | Record | Decision |
 | --- | --- |
@@ -73,6 +79,7 @@ file or gameplay-wire formats. The current-machine scope remains unchanged.
 | [0009](0009-windows-linux-platform-scope.md) | User-directed Windows/Linux platform scope, retired Mac obligations and preserved evidence |
 | [0010](0010-current-machine-scope.md) | Current PC/WSL targets, local MMO workload and packaging gates; revised 02 completion |
 | [0011](0011-network-foundation.md) | Private Mbed TLS, bounded local gameplay-wire foundation, trust boundaries and transport tradeoffs |
+| [0012](0012-owned-sessions.md) | Mutual TLS, explicit account enrollment, bounded owned sessions and reconnect fencing |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

@@ -85,9 +85,10 @@ TEST_CASE("wire v1 matches independent network byte order golden bytes", "[net-w
     CHECK(shark::net::wire_version == 1);
 }
 
-TEST_CASE("wire diagnostic kinds preserve empty and maximum owned payloads", "[net-wire]") {
+TEST_CASE("wire diagnostic and session kinds preserve bounded owned payloads", "[net-wire]") {
     for (const auto kind : std::array{MessageKind::hello, MessageKind::hello_ack,
-                                      MessageKind::probe, MessageKind::probe_reply}) {
+                                      MessageKind::probe, MessageKind::probe_reply,
+                                      MessageKind::session_request, MessageKind::session_reply}) {
         for (const auto sequence :
              std::array<std::uint64_t, 2>{1, std::numeric_limits<std::uint64_t>::max()}) {
             const Frame frame{kind, sequence, {}};
@@ -98,7 +99,8 @@ TEST_CASE("wire diagnostic kinds preserve empty and maximum owned payloads", "[n
             CHECK(result.value() == frame);
         }
     }
-    for (const auto kind : std::array{MessageKind::probe, MessageKind::probe_reply}) {
+    for (const auto kind : std::array{MessageKind::probe, MessageKind::probe_reply,
+                                      MessageKind::session_request, MessageKind::session_reply}) {
         for (const auto size : std::array<std::size_t, 4>{0, 1, 255, 4096}) {
             const Frame frame{kind, 2, payload(size)};
             auto bytes = encode(frame);
@@ -113,18 +115,20 @@ TEST_CASE("wire diagnostic kinds preserve empty and maximum owned payloads", "[n
 
 TEST_CASE("wire encoder rejects unknown kinds zero sequence and illegal body lengths",
           "[net-wire]") {
-    for (const auto kind : std::array{0U, 5U, 255U}) {
+    for (const auto kind : std::array{0U, 7U, 255U}) {
         invalid(shark::net::encode_frame({static_cast<MessageKind>(kind), 1, {}}),
                 "net.wire.encode");
     }
     for (const auto kind : std::array{MessageKind::hello, MessageKind::hello_ack,
-                                      MessageKind::probe, MessageKind::probe_reply}) {
+                                      MessageKind::probe, MessageKind::probe_reply,
+                                      MessageKind::session_request, MessageKind::session_reply}) {
         invalid(shark::net::encode_frame({kind, 0, {}}), "net.wire.encode");
     }
     for (const auto kind : std::array{MessageKind::hello, MessageKind::hello_ack}) {
         invalid(shark::net::encode_frame({kind, 1, payload(1)}), "net.wire.encode");
     }
-    for (const auto kind : std::array{MessageKind::probe, MessageKind::probe_reply}) {
+    for (const auto kind : std::array{MessageKind::probe, MessageKind::probe_reply,
+                                      MessageKind::session_request, MessageKind::session_reply}) {
         invalid(shark::net::encode_frame({kind, 1, payload(4097)}), "net.wire.encode");
     }
 }
@@ -142,7 +146,7 @@ TEST_CASE("wire parser fails closed on magic version kind flags and zero sequenc
         bytes[5] = static_cast<std::byte>(version & 0xffU);
         rejects_header(bytes);
     }
-    for (const auto kind : std::array{0U, 5U, 255U}) {
+    for (const auto kind : std::array{0U, 7U, 255U}) {
         auto bytes = valid;
         bytes[6] = static_cast<std::byte>(kind);
         rejects_header(bytes);

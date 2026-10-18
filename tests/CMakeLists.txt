@@ -10,6 +10,8 @@ add_executable(Tests
     core_net_wire_tests.cpp
     core_net_fault_tests.cpp
     core_net_transport_tests.cpp
+    core_net_mtls_tests.cpp
+    core_net_session_tests.cpp
     core_time_tests.cpp
     core_transform_tests.cpp
     core_work_tests.cpp
@@ -65,6 +67,10 @@ add_test(NAME shark.core.net-fault COMMAND Tests "[net-fault]" --rng-seed 1337)
 set_tests_properties(shark.core.net-fault PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
 add_test(NAME shark.core.net-transport COMMAND Tests "[net-transport]" --rng-seed 1337)
 set_tests_properties(shark.core.net-transport PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)
+add_test(NAME shark.core.net-mtls COMMAND Tests "[net-mtls]" --rng-seed 1337)
+set_tests_properties(shark.core.net-mtls PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)
+add_test(NAME shark.core.net-session COMMAND Tests "[net-session]" --rng-seed 1337)
+set_tests_properties(shark.core.net-session PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)
 if(TARGET EngineClient)
     add_executable(PresentationFaults presentation_faults.cpp)
     target_include_directories(PresentationFaults PRIVATE "${PROJECT_SOURCE_DIR}"
@@ -266,6 +272,16 @@ add_test(NAME shark.core.net-process
         --fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures/network"
         --output "${CMAKE_CURRENT_BINARY_DIR}/network-process.json")
 set_tests_properties(shark.core.net-process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 60)
+add_executable(SessionProbe session_probe.cpp)
+target_link_libraries(SessionProbe PRIVATE EngineCore)
+shark_configure_target(SessionProbe)
+shark_classify_target(SessionProbe test)
+add_test(NAME shark.core.net-sessions-process
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/test_network_sessions.py"
+        --probe "$<TARGET_FILE:SessionProbe>"
+        --fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures/network"
+        --output "${CMAKE_CURRENT_BINARY_DIR}/network-sessions.json")
+set_tests_properties(shark.core.net-sessions-process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 90)
 foreach(shark_tooling_fixture IN ITEMS presentation-stress presentation-faults runtime-package shader-pipeline offscreen-smoke offscreen-faults cube-smoke cube-faults)
     string(REPLACE "-" "_" shark_tooling_source "${shark_tooling_fixture}")
     add_test(NAME "shark.tooling.${shark_tooling_fixture}"

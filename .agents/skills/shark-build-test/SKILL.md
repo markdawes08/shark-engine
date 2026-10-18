@@ -69,5 +69,19 @@ archives through `tools/core_dependencies.py`; disconnected configurations pass
 The headless driver selects matching pinned GCC/Clang C and C++ compilers.
 Source closure validates the bundled TF-PSA/framework inputs; package checks
 require every locked nested Mbed TLS notice while excluding test credentials
-and shared TLS libraries. Local TLS diagnostics do not qualify account
+and shared TLS libraries. M02a's local TLS diagnostics do not qualify account
 authentication, gameplay authorization, replication or production capacity.
+
+M02b [owned sessions](../../../docs/network-sessions.md) is **PASS** under the
+current-machine scope; the [handoff](../../../docs/handoffs/M02b-owned-sessions.md)
+records 425 passing CTests and protected package qualification. Follow
+[ADR 0012](../../../docs/architecture/0012-owned-sessions.md).
+Its `shark.core.net-mtls` and `shark.core.net-session` CTests use seed 1337 and
+30-second timeouts; `shark.core.net-sessions-process` has a 90-second timeout.
+Use actual mutual TLS peers and controlled monotonic clocks for service tests;
+retain separate-process evidence for enrollment, ownership, revocation, expiry,
+replay, reconnect and rate-limit behavior. Include public certificate fixtures and
+their generator in source-input freeze hashes. Keep test keys and SessionProbe
+out of installed packages. Preserve the existing Windows/WSL CPU, sanitizer and
+protected package gates when extending these services. M02c replication is next;
+session readiness alone does not qualify gameplay or capacity.

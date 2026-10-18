@@ -39,6 +39,8 @@ Result<void> validate_fields(const MessageKind kind, const std::uint64_t sequenc
         break;
     case MessageKind::probe:
     case MessageKind::probe_reply:
+    case MessageKind::session_request:
+    case MessageKind::session_reply:
         break;
     default:
         return wire_error(operation, "Unknown wire message kind");

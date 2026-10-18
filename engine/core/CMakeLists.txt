@@ -10,6 +10,8 @@ add_library(EngineCore STATIC
     src/net_wire.cpp
     src/net_fault_link.cpp
     src/net_transport.cpp
+    src/net_session.cpp
+    src/net_session_wire.cpp
     src/server_application.cpp
     src/server_config.cpp
     src/shutdown_signals.cpp

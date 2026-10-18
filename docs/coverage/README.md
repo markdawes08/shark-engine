@@ -71,8 +71,17 @@ and package checks. M02a is PASS: the [handoff](../handoffs/M02a-transport-wire.
 and [receipt](evidence/M02a-transport-wire.json) record 404 passing CPU CTests
 without failures/skips, protected builds and isolated packages. The narrow
 postqualification CI compiler-forwarding amendment is recorded separately from
-the unchanged compiled inputs. Full REQ-M02 remains NOT_RUN pending M02b-M02e. The prior
+the unchanged compiled inputs. Full REQ-M02 remains NOT_RUN pending M02c-M02e. The prior
 [07 checkpoint plan](../roadmap/scene-plan.md) is complete.
+M02b's `core.owned-sessions` feature maps mutual TLS, explicit enrollment, typed
+owned session controls, expiry/revocation and reconnect fencing to two new unit
+families and a separate-process fixture. Its [contract](../network-sessions.md)
+and [ADR](../architecture/0012-owned-sessions.md) separate session authority from
+authoring, administration and future gameplay. M02b is PASS: the
+[handoff](../handoffs/M02b-owned-sessions.md) and
+[receipt](evidence/M02b-owned-sessions.json) record 425 passing CPU CTests, no
+failures/skips, protected builds and isolated package checks;
+full REQ-M02 still requires replication, interest and integrated adversity.
 `core.scene-ownership` maps checked scene/entity lifetime, deferred mutation,
 world coordinates and the private EnTT boundary to executable CPU fixtures.
 The [07a handoff](../handoffs/07a-entity-ownership.md) records checkpoint results.
@@ -97,7 +106,7 @@ Debug/ASan+UBSan 55 each, and WSL Server Debug/ASan+UBSan 40 each. Schema covera
 has 9 cases/654 assertions and query coverage 19 cases/3,916 assertions. Protected
 Runtime/Server builds, source/link/license closure and fresh isolated package
 checks pass; all 221 qualification source inputs were unchanged in that record.
-The current assignment is M02; M02b follows the completed transport foundation.
+The current assignment is M02; M02a/M02b are complete and M02c replication is next.
 FeatureWorld integration remains assignment 10.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`

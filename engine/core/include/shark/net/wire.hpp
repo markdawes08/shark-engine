@@ -17,10 +17,17 @@ inline constexpr std::size_t wire_header_bytes = 20;
 inline constexpr std::size_t wire_max_payload = 4096;
 inline constexpr std::size_t wire_max_frame_bytes = wire_header_bytes + wire_max_payload;
 
-enum class MessageKind : std::uint8_t { hello = 1, hello_ack = 2, probe = 3, probe_reply = 4 };
+enum class MessageKind : std::uint8_t {
+    hello = 1,
+    hello_ack = 2,
+    probe = 3,
+    probe_reply = 4,
+    session_request = 5,
+    session_reply = 6
+};
 
-// M02a diagnostic messages only; no authentication or gameplay authorization.
-// Hello/hello_ack have empty payloads. Probe/probe_reply hold 0..4096 opaque bytes.
+// Hello/hello_ack are empty. Diagnostic and independently versioned session
+// payloads are bounded to 4096 bytes; session decoding/authorization is separate.
 struct Frame {
     MessageKind kind{MessageKind::hello};
     std::uint64_t sequence{0};

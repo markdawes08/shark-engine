@@ -120,7 +120,10 @@ negative/nonuniform scale. Pure schema validation reuses `validate_name` and
 The [07c handoff](handoffs/07c-schema-inspection.md) and
 [receipt](coverage/evidence/07c-schema-inspection.json) record passing
 current-machine qualification. 07c and full REQ-07 are PASS. M02 is active;
-M02b follows its completed [transport foundation](handoffs/M02a-transport-wire.md).
+its [transport foundation](handoffs/M02a-transport-wire.md) is complete and
+[M02b owned sessions](handoffs/M02b-owned-sessions.md) is **PASS** under the
+current-machine scope. Session readiness grants no Transform mutation or gameplay
+authority. M02c replication is next.
 Assignment 08 supplies persistence, 09 transactions,
 10 FeatureWorld, 15 terminal adapters, 16/17 editor fields and 19 selected Lua APIs.
 Those later integrations are planned fixtures, not claimed passes.

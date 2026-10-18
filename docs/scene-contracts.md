@@ -25,8 +25,11 @@ accepts WorldEntityId and derives its AuthorityStamp from the scene's region,
 region instance and strictly positive epoch. A replica scene accepts WorldEntityId
 plus the source AuthorityStamp and binds every entity to its world/session scope.
 Scope and stamps are immutable. Replacing an incarnation or ownership stamp
-requires destruction and recreation at this layer; M02/M05 later own actual
-session protocols, authentication, distributed fencing and seamless handoff.
+requires destruction and recreation at this layer. M02b implements local
+[authentication and owned sessions](network-sessions.md); its AccountId,
+CharacterId and SessionId remain distinct from scene identities and ReplicaSessionId.
+Session authority does not authorize arbitrary scene mutations. M02c replication
+and M05 distributed fencing and seamless handoff retain their later ownership.
 
 EntityHandle contains a process-local scene-instance token, slot and generation.
 Every access checks all three. Every scene creation gets a fresh monotonic token,
@@ -134,4 +137,6 @@ limits; the [07c handoff](handoffs/07c-schema-inspection.md) and
 07c and full REQ-07 are PASS under the current-machine scope, with 376 passing
 CPU CTests, protected builds and isolated package checks. FeatureWorld connects
 implemented components in assignment 10. M02 is active: the transport foundation
-is complete and M02b is next under the [network plan](roadmap/network-plan.md).
+is complete, and [M02b owned sessions](handoffs/M02b-owned-sessions.md) is **PASS**
+under the current-machine scope. M02c replication is next under the
+[network plan](roadmap/network-plan.md); full REQ-M02 remains NOT_RUN.

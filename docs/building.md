@@ -106,16 +106,22 @@ WSL Server Debug/ASan+UBSan 40 each. Protected builds and isolated package check
 also pass. M02 follows the [network checkpoints](roadmap/network-plan.md);
 these results do not add a terminal/editor adapter.
 
-M02a's network foundation can be checked noninteractively after a native build:
+M02b adds `shark.core.net-mtls`, `shark.core.net-session` and
+`shark.core.net-sessions-process` to the same prefix. The last test launches the
+test-only `SessionProbe` in separate processes with explicit public fixture keys;
+it does not add a login flag or test bypass to Runtime/Server. Follow the
+[session contract](network-sessions.md). Check all seven network families
+noninteractively after a native build:
 
 ```text
 ctest --preset windows-debug -R "^shark.core.net-" --output-on-failure
 ```
 
-Use the corresponding WSL preset for CPU/headless checks. The integration test
-launches separate local TLS processes and writes `build/<preset>/tests/network-process.json`.
-Its public credentials live only in test fixtures. The [network contract](network-transport.md)
-documents the C++ interfaces, limits and remaining player-session work.
+Use the corresponding WSL preset for CPU/headless checks. The integration tests
+launch separate local TLS processes and write `network-process.json` and
+`network-sessions.json` under `build/<preset>/tests/`. Public credentials live only
+in test fixtures. The [transport](network-transport.md) and
+[session](network-sessions.md) contracts document the C++ interfaces and limits.
 
 06a adds the CPU-only [offline shader builder](shader-pipeline.md).
 `shark.tooling.shader-pipeline` tests recipes, dependency tracking, artifact

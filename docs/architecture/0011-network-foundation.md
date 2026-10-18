@@ -78,3 +78,22 @@ connection starts a fresh sequence domain without restoring player authority.
 
 See the [transport contract](../network-transport.md) for exact limits and
 [M02 checkpoint plan](../roadmap/network-plan.md) for remaining gates.
+
+## M02b extension
+
+M02b implements a separate authenticated session mode under
+[ADR 0012](0012-owned-sessions.md) and the [session contract](../network-sessions.md).
+Its current-machine qualification is **PASS** in the
+[M02b handoff](../handoffs/M02b-owned-sessions.md); the M02a evidence above retains
+its original diagnostic scope. Mutual TLS verifies explicitly enrolled
+client certificates. A bounded owner-thread authority maps certificate fingerprints
+to accounts and owned characters, binds sessions to actual ready server transports,
+and enforces expiry, revocation, exact request sequences and reconnect fencing.
+
+The outer wire remains version 1 with additive session request/reply kinds 5 and
+6; their typed payload has an independent session-protocol version 1. Diagnostic
+and authenticated modes reject each other's application messages. Session readiness
+does not grant movement, combat, component mutation or administrative access.
+Enrollment and ownership remain in memory until M03 supplies durable storage.
+M02c replication is next; full REQ-M02 remains NOT_RUN through the remaining
+checkpoint gates.

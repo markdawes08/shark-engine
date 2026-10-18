@@ -15,6 +15,7 @@
 #include <unistd.h>
 #endif
 
+#include <mbedtls/oid.h>
 #include <mbedtls/pk.h>
 #include <mbedtls/ssl.h>
 #include <mbedtls/x509_crt.h>
@@ -23,6 +24,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cstring>
 #include <deque>
 #include <limits>
 #include <mutex>
@@ -45,6 +47,7 @@ Error tls_error(const char* operation, const char* message, int code) {
 struct CryptoRuntime {
     std::mutex mutex;
     bool initialized{false};
+    std::uint64_t last_connection_id{0};
     ~CryptoRuntime() {
         if (initialized) {
             mbedtls_psa_crypto_free();
@@ -195,35 +198,45 @@ bool valid_pem(const std::string& pem) {
 struct Configuration {
     mbedtls_ssl_config tls;
     mbedtls_x509_crt certificates;
+    mbedtls_x509_crt authorities;
     mbedtls_pk_context key;
     bool server{false};
+    bool authenticated{false};
     std::size_t live_connections{0};
     Configuration() {
         mbedtls_ssl_config_init(&tls);
         mbedtls_x509_crt_init(&certificates);
+        mbedtls_x509_crt_init(&authorities);
         mbedtls_pk_init(&key);
     }
     ~Configuration() {
         mbedtls_ssl_config_free(&tls);
         mbedtls_x509_crt_free(&certificates);
+        mbedtls_x509_crt_free(&authorities);
         mbedtls_pk_free(&key);
     }
 };
 
-Result<std::shared_ptr<Configuration>> make_configuration(bool server, const std::string& pem,
-                                                          const std::string& key) {
+Result<std::shared_ptr<Configuration>> make_configuration(bool server, const std::string& ca,
+                                                          const std::string& pem,
+                                                          const std::string& key,
+                                                          bool authenticated) {
     auto initialized = initialize_crypto();
     if (!initialized) {
         return initialized.error();
     }
     auto config = std::make_shared<Configuration>();
     config->server = server;
+    config->authenticated = authenticated;
     if (mbedtls_ssl_config_defaults(
             &config->tls, server ? MBEDTLS_SSL_IS_SERVER : MBEDTLS_SSL_IS_CLIENT,
             MBEDTLS_SSL_TRANSPORT_STREAM, MBEDTLS_SSL_PRESET_DEFAULT) != 0 ||
-        mbedtls_x509_crt_parse(&config->certificates,
-                               reinterpret_cast<const unsigned char*>(pem.c_str()),
-                               pem.size() + 1) != 0) {
+        (!ca.empty() && mbedtls_x509_crt_parse(&config->authorities,
+                                               reinterpret_cast<const unsigned char*>(ca.c_str()),
+                                               ca.size() + 1) != 0) ||
+        (!pem.empty() && mbedtls_x509_crt_parse(&config->certificates,
+                                                reinterpret_cast<const unsigned char*>(pem.c_str()),
+                                                pem.size() + 1) != 0)) {
         return net_error(ErrorCode::invalid_configuration, "net.tls.configure",
                          "Invalid TLS configuration or certificate input");
     }
@@ -235,23 +248,58 @@ Result<std::shared_ptr<Configuration>> make_configuration(bool server, const std
     mbedtls_ssl_conf_ciphersuites(&config->tls, ciphersuites);
     mbedtls_ssl_conf_groups(&config->tls, groups);
     mbedtls_ssl_conf_sig_algs(&config->tls, signatures);
-    if (server) {
+    mbedtls_ssl_conf_tls13_key_exchange_modes(&config->tls,
+                                              MBEDTLS_SSL_TLS1_3_KEY_EXCHANGE_MODE_EPHEMERAL);
+    if (!pem.empty()) {
         if (mbedtls_pk_parse_key(&config->key, reinterpret_cast<const unsigned char*>(key.c_str()),
                                  key.size() + 1, nullptr, 0) != 0 ||
             mbedtls_pk_check_pair(&config->certificates.pk, &config->key) != 0 ||
             mbedtls_ssl_conf_own_cert(&config->tls, &config->certificates, &config->key) != 0) {
             return net_error(ErrorCode::invalid_configuration, "net.tls.identity",
-                             "Invalid TLS server identity");
+                             "Invalid TLS certificate and private key pair");
         }
-        // Player credentials/ownership are not part of this TLS-only foundation.
-        mbedtls_ssl_conf_authmode(&config->tls, MBEDTLS_SSL_VERIFY_NONE);
+    }
+    if (!ca.empty()) {
+        mbedtls_ssl_conf_ca_chain(&config->tls, &config->authorities, nullptr);
+    }
+    mbedtls_ssl_conf_authmode(&config->tls, !server || authenticated ? MBEDTLS_SSL_VERIFY_REQUIRED
+                                                                     : MBEDTLS_SSL_VERIFY_NONE);
+    if (server) {
         mbedtls_ssl_conf_new_session_tickets(&config->tls, 0);
     } else {
-        mbedtls_ssl_conf_authmode(&config->tls, MBEDTLS_SSL_VERIFY_REQUIRED);
-        mbedtls_ssl_conf_ca_chain(&config->tls, &config->certificates, nullptr);
         mbedtls_ssl_conf_session_tickets(&config->tls, MBEDTLS_SSL_SESSION_TICKETS_DISABLED);
     }
     return config;
+}
+
+Result<CertificateFingerprint> fingerprint(const mbedtls_x509_crt& certificate) {
+    CertificateFingerprint result{};
+    std::size_t written = 0;
+    if (psa_hash_compute(PSA_ALG_SHA_256, certificate.raw.p, certificate.raw.len,
+                         reinterpret_cast<unsigned char*>(result.data()), result.size(),
+                         &written) != PSA_SUCCESS ||
+        written != result.size()) {
+        return net_error(ErrorCode::execution_failed, "net.tls.fingerprint",
+                         "Certificate fingerprint computation failed");
+    }
+    return result;
+}
+
+bool client_certificate_profile(const mbedtls_x509_crt& certificate) {
+    if (mbedtls_x509_crt_get_ca_istrue(&certificate) != 0 ||
+        !mbedtls_x509_crt_has_ext_type(&certificate, MBEDTLS_X509_EXT_KEY_USAGE) ||
+        !mbedtls_x509_crt_has_ext_type(&certificate, MBEDTLS_X509_EXT_EXTENDED_KEY_USAGE) ||
+        mbedtls_x509_crt_check_key_usage(&certificate, MBEDTLS_X509_KU_DIGITAL_SIGNATURE) != 0) {
+        return false;
+    }
+    // Missing EKU and anyExtendedKeyUsage are deliberately insufficient.
+    for (auto* usage = &certificate.ext_key_usage; usage != nullptr; usage = usage->next) {
+        if (usage->buf.len == MBEDTLS_OID_SIZE(MBEDTLS_OID_CLIENT_AUTH) &&
+            std::memcmp(usage->buf.p, MBEDTLS_OID_CLIENT_AUTH, usage->buf.len) == 0) {
+            return true;
+        }
+    }
+    return false;
 }
 
 void add_bytes(std::uint64_t& destination, std::size_t amount) {
@@ -260,6 +308,26 @@ void add_bytes(std::uint64_t& destination, std::size_t amount) {
 }
 
 } // namespace
+
+Result<CertificateFingerprint> certificate_fingerprint(const std::string& certificate_pem) {
+    if (!valid_pem(certificate_pem)) {
+        return net_error(ErrorCode::invalid_argument, "net.tls.fingerprint",
+                         "Invalid bounded certificate input");
+    }
+    std::lock_guard lock(crypto().mutex);
+    if (auto initialized = initialize_crypto(); !initialized) {
+        return initialized.error();
+    }
+    Configuration temporary;
+    if (mbedtls_x509_crt_parse(&temporary.certificates,
+                               reinterpret_cast<const unsigned char*>(certificate_pem.c_str()),
+                               certificate_pem.size() + 1) != 0 ||
+        temporary.certificates.next != nullptr) {
+        return net_error(ErrorCode::invalid_argument, "net.tls.fingerprint",
+                         "Enrollment requires exactly one certificate");
+    }
+    return fingerprint(temporary.certificates);
+}
 
 struct TlsTransport::Impl {
     struct Pending {
@@ -286,6 +354,10 @@ struct TlsTransport::Impl {
     std::size_t read_offset{0};
     bool counted{false};
     bool clean_peer_closed{false};
+    std::uint64_t connection_id{0};
+    std::optional<CertificateFingerprint> verified_client{};
+    mbedtls_x509_time client_valid_from{};
+    mbedtls_x509_time client_valid_to{};
 
     Impl() {
         mbedtls_ssl_init(&tls);
@@ -363,10 +435,15 @@ struct TlsTransport::Impl {
         return static_cast<int>(result);
     }
     Result<void> setup() {
+        if (crypto().last_connection_id == std::numeric_limits<std::uint64_t>::max()) {
+            return net_error(ErrorCode::capability_unavailable, "net.tls.setup",
+                             "Connection identity domain exhausted");
+        }
         if (mbedtls_ssl_setup(&tls, &config->tls) != 0) {
             return net_error(ErrorCode::execution_failed, "net.tls.setup", "TLS setup failed");
         }
         mbedtls_ssl_set_bio(&tls, this, write_socket, read_socket, nullptr);
+        connection_id = ++crypto().last_connection_id;
         ++config->live_connections;
         counted = true;
         return {};
@@ -415,7 +492,10 @@ struct TlsTransport::Impl {
             }
             counters.state = TransportState::ready;
         } else {
-            const auto expected = config->server ? MessageKind::probe : MessageKind::probe_reply;
+            const auto expected =
+                config->authenticated
+                    ? (config->server ? MessageKind::session_request : MessageKind::session_reply)
+                    : (config->server ? MessageKind::probe : MessageKind::probe_reply);
             if (frame.kind != expected) {
                 return net_error(ErrorCode::invalid_argument, "net.transport.receive",
                                  "Message kind is unavailable for this connection role");
@@ -438,11 +518,28 @@ TlsTransport::~TlsTransport() {
 Result<std::unique_ptr<TlsTransport>>
 TlsTransport::connect_loopback(std::uint16_t port, const ClientTrust& trust, MonotonicTime now,
                                const TransportLimits& limits) {
+    return connect_impl(port, trust, nullptr, now, limits);
+}
+
+Result<std::unique_ptr<TlsTransport>>
+TlsTransport::connect_loopback_authenticated(std::uint16_t port, const ClientTrust& trust,
+                                             const ClientIdentity& identity, MonotonicTime now,
+                                             const TransportLimits& limits) {
+    return connect_impl(port, trust, &identity, now, limits);
+}
+
+Result<std::unique_ptr<TlsTransport>> TlsTransport::connect_impl(std::uint16_t port,
+                                                                 const ClientTrust& trust,
+                                                                 const ClientIdentity* identity,
+                                                                 MonotonicTime now,
+                                                                 const TransportLimits& limits) {
     auto valid = validate_limits(limits);
     if (!valid) {
         return valid.error();
     }
     if (port == 0 || now < MonotonicTime::zero() || !valid_pem(trust.ca_pem) ||
+        (identity != nullptr &&
+         (!valid_pem(identity->certificate_pem) || !valid_pem(identity->private_key_pem))) ||
         trust.server_name.empty() || trust.server_name.size() > 253 ||
         !std::all_of(trust.server_name.begin(), trust.server_name.end(), [](char value) {
             return (value >= 'a' && value <= 'z') || (value >= 'A' && value <= 'Z') ||
@@ -452,7 +549,9 @@ TlsTransport::connect_loopback(std::uint16_t port, const ClientTrust& trust, Mon
                          "Invalid loopback endpoint, trust configuration or initial time");
     }
     std::lock_guard lock(crypto().mutex);
-    auto config = make_configuration(false, trust.ca_pem, {});
+    auto config = make_configuration(
+        false, trust.ca_pem, identity != nullptr ? identity->certificate_pem : "",
+        identity != nullptr ? identity->private_key_pem : "", identity != nullptr);
     if (!config) {
         return config.error();
     }
@@ -565,9 +664,24 @@ Result<TransportStats> TlsTransport::poll(MonotonicTime now, std::size_t budget)
                                            result));
             }
             if (mbedtls_ssl_is_handshake_over(&self.tls)) {
-                if (!self.config->server && mbedtls_ssl_get_verify_result(&self.tls) != 0) {
+                if ((!self.config->server || self.config->authenticated) &&
+                    mbedtls_ssl_get_verify_result(&self.tls) != 0) {
                     return self.fail(net_error(ErrorCode::io_failure, "net.tls.verify",
-                                               "Server certificate verification failed"));
+                                               "Peer certificate verification failed"));
+                }
+                if (self.config->server && self.config->authenticated) {
+                    const auto* peer = mbedtls_ssl_get_peer_cert(&self.tls);
+                    if (peer == nullptr || !client_certificate_profile(*peer)) {
+                        return self.fail(net_error(ErrorCode::io_failure, "net.tls.client-profile",
+                                                   "Client certificate profile rejected"));
+                    }
+                    auto digest = fingerprint(*peer);
+                    if (!digest) {
+                        return self.fail(digest.error());
+                    }
+                    self.verified_client = digest.value();
+                    self.client_valid_from = peer->valid_from;
+                    self.client_valid_to = peer->valid_to;
                 }
                 self.counters.state = TransportState::negotiating;
                 if (!self.config->server) {
@@ -671,7 +785,11 @@ Result<void> TlsTransport::send(MessageKind kind, std::span<const std::byte> pay
         return net_error(ErrorCode::conflict, "net.transport.send",
                          "Wire negotiation is not ready");
     }
-    if (kind != (self.config->server ? MessageKind::probe_reply : MessageKind::probe)) {
+    const auto expected =
+        self.config->authenticated
+            ? (self.config->server ? MessageKind::session_reply : MessageKind::session_request)
+            : (self.config->server ? MessageKind::probe_reply : MessageKind::probe);
+    if (kind != expected) {
         return net_error(ErrorCode::invalid_argument, "net.transport.send",
                          "Message kind is unavailable for this connection role");
     }
@@ -704,6 +822,22 @@ Result<TransportStats> TlsTransport::stats() const {
                          "Transport has another owner thread");
     }
     return impl_->snapshot();
+}
+
+Result<PeerIdentity> TlsTransport::authenticated_peer() const {
+    const auto& self = *impl_;
+    if (!self.owned() || !self.config->server || !self.config->authenticated ||
+        self.counters.state != TransportState::ready || !self.verified_client) {
+        return net_error(ErrorCode::conflict, "net.tls.authenticated-peer",
+                         "A live authenticated server-side transport is required");
+    }
+    std::lock_guard lock(crypto().mutex);
+    if (mbedtls_x509_time_is_past(&self.client_valid_to) ||
+        mbedtls_x509_time_is_future(&self.client_valid_from)) {
+        return net_error(ErrorCode::conflict, "net.tls.authenticated-peer",
+                         "Client certificate is outside its validity interval");
+    }
+    return PeerIdentity{self.connection_id, *self.verified_client};
 }
 
 Result<void> TlsTransport::close() {
@@ -739,17 +873,34 @@ Result<std::unique_ptr<TlsListener>> TlsListener::listen_loopback(std::uint16_t 
                                                                   const ServerIdentity& identity,
                                                                   const TransportLimits& limits,
                                                                   std::size_t max_connections) {
+    return listen_impl(port, identity, nullptr, limits, max_connections);
+}
+
+Result<std::unique_ptr<TlsListener>> TlsListener::listen_loopback_authenticated(
+    std::uint16_t port, const ServerIdentity& identity, const std::string& client_ca_pem,
+    const TransportLimits& limits, std::size_t max_connections) {
+    return listen_impl(port, identity, &client_ca_pem, limits, max_connections);
+}
+
+Result<std::unique_ptr<TlsListener>> TlsListener::listen_impl(std::uint16_t port,
+                                                              const ServerIdentity& identity,
+                                                              const std::string* client_ca_pem,
+                                                              const TransportLimits& limits,
+                                                              std::size_t max_connections) {
     auto valid = validate_limits(limits);
     if (!valid) {
         return valid.error();
     }
     if (!valid_pem(identity.certificate_pem) || !valid_pem(identity.private_key_pem) ||
-        max_connections == 0 || max_connections > 16) {
+        (client_ca_pem != nullptr && !valid_pem(*client_ca_pem)) || max_connections == 0 ||
+        max_connections > 16) {
         return net_error(ErrorCode::invalid_configuration, "net.transport.listen",
                          "Invalid server identity or connection limit");
     }
     std::lock_guard lock(crypto().mutex);
-    auto config = make_configuration(true, identity.certificate_pem, identity.private_key_pem);
+    auto config = make_configuration(true, client_ca_pem != nullptr ? *client_ca_pem : "",
+                                     identity.certificate_pem, identity.private_key_pem,
+                                     client_ca_pem != nullptr);
     if (!config) {
         return config.error();
     }

@@ -55,9 +55,10 @@ The CPU package rejection suite
 is registered as `shark.tooling.graphics-package`, with the Linux package and
 process-cleanup suite in `shark.tooling.graphics-package-linux`; Windows launcher integration and
 GPU soak remain opt-in. M02a's [local TLS/wire foundation](handoffs/M02a-transport-wire.md)
-passes current-machine CPU/sanitizer and protected package qualification;
-player sessions, replication, database, world-handoff and active-load tiers
-remain planned.
+passes current-machine CPU/sanitizer and protected package qualification.
+M02b [owned sessions](handoffs/M02b-owned-sessions.md) is **PASS** under the
+current-machine scope. M02c replication is next; database,
+world-handoff and active-load tiers retain their later gates.
 
 ## Jobs and required checks
 
@@ -222,8 +223,33 @@ and `shark.core.net-process`. The first three use seed 1337 and bounded CPU/loop
 fixtures; the process suite drives separate server/client processes and independent
 TLS peers, with JSON evidence and process-tree watchdogs. They cover diagnostic
 wire negotiation, TLS trust, bounded queues/deadlines and deterministic virtual-time
-fault modeling, not player sessions or entity replication. Full REQ-M02 remains
-NOT_RUN pending M02b-M02e. See the [network contract](network-transport.md).
+fault modeling, not player sessions or entity replication. See the
+[network contract](network-transport.md).
+
+M02b adds `shark.core.net-mtls` and `shark.core.net-session`
+(`cpu;unit;server`, seed 1337, 30-second timeouts), plus
+`shark.core.net-sessions-process` (`cpu;integration;server`, 90-second timeout).
+The unit fixtures use actual mutual TLS peers and controlled monotonic session
+time. The process suite drives separate authenticated server/client processes
+with bounded watchdogs and JSON evidence. These exercise certificate rejection,
+enrollment and ownership, revocation, malformed/replayed requests, expiry, rate
+bounds and reconnect fencing. Session readiness is the only mutable admitted
+state; movement, combat and entity replication remain outside this checkpoint.
+
+Qualification is **PASS**: native Windows Debug/Release/ASan pass 69 CTests each,
+existing WSL CPU client Debug/ASan+UBSan pass 62 each and Server Debug/ASan+UBSan
+pass 47 each, totaling **425 with zero failures or skips**. Protected builds,
+lifecycle checks, source/link/license closure and isolated package audits pass.
+The fresh Runtime package passes relocation and ten missing-notice rejection cases;
+the SDK-free WSL audit verifies the 11-file Server package and unchanged 92-package
+runtime inventory. Compile-input and sanitizer audits pass, including all 116
+private TLS C units. Public certificate fixtures and their generator
+belong to the source-input receipt; test credentials and SessionProbe must not
+enter installed packages. [ADR 0012](architecture/0012-owned-sessions.md) and the
+[session contract](network-sessions.md) define the acceptance boundary. The
+[M02b handoff](handoffs/M02b-owned-sessions.md) records the observed results.
+M02c replication is next. Full REQ-M02 remains NOT_RUN pending the remaining checkpoints;
+existing hosted CI stays supplemental.
 
 ## Locked tools and hosted-image limits
 
@@ -358,7 +384,7 @@ under `licenses/MbedTLS/`.
 Negative fixtures exercise changed/missing locked inputs, extra dependency trees
 and presentation/authoring leaks. Catch2 may be fetched for test-enabled
 configurations; it must not enter `server-only` or the installed package. These
-checks qualify an idle process lifecycle and dependency boundary, not world
+package and closure checks qualify an idle process lifecycle and dependency boundary, not world
 simulation, networking, persistence, player capacity or release deployment.
 
 The selected output contains `summary.json`, toolchain reports, phase logs,

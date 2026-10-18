@@ -45,7 +45,11 @@ M02a provides the [bounded network foundation](../network-transport.md) through
 engine-owned CPU C++ interfaces and noninteractive JSON test fixtures. It does not
 reuse source-authoring RPC as a player protocol. Both human contributors and
 terminal agents can drive the same diagnostic tests without an editor, device,
-provider account or model SDK. Player sessions/replication remain M02b-M02e;
+provider account or model SDK. M02b adds the shared [session authority](../network-sessions.md)
+and noninteractive real-process authentication fixtures; its completed
+[qualification](../handoffs/M02b-owned-sessions.md) records 425 passing CPU CTests
+and protected package checks.
+Replication/interest/integrated adversity remain M02c-M02e;
 authoring adapters retain their existing assignment owners.
 
 A terminal agent discovers capabilities and schemas, opens or creates a project,
@@ -164,7 +168,8 @@ CPU CTests and protected dependency/package checks in the
 These are typed CPU C++ APIs; transactions, terminal commands and editor adapters
 retain their owners in 09, 15 and 16. The current assignment is M02. Its
 [transport foundation](../handoffs/M02a-transport-wire.md) passes 404 CPU CTests and
-protected dependency/package qualification; M02b authentication and owned sessions is next.
+protected dependency/package qualification. M02b authentication and owned sessions
+is also complete; M02c replication is next.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and

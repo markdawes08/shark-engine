@@ -4,7 +4,10 @@ Date: 2026-10-18. Base: `3c5767a` on `main`, initially clean.
 Owner: `REQ-M02`. **M02a is complete under the current-machine scope.**
 The [handoff](../handoffs/M02a-transport-wire.md) and
 [receipt](../coverage/evidence/M02a-transport-wire.json) record 404 passing CPU
-CTests and protected dependency/package qualification. **Next checkpoint: M02b.**
+CTests and protected dependency/package qualification. **M02b is complete**: its
+[handoff](../handoffs/M02b-owned-sessions.md) and
+[receipt](../coverage/evidence/M02b-owned-sessions.json) record 425 passing CPU
+CTests and protected package checks. **M02c replication is next.**
 Full M02 remains NOT_RUN until all five checkpoints pass. Assignment 07 is complete.
 The [MMORPG plan](mmorpg-plan.md) retains the assignment order and the
 [current-machine scope](../architecture/0010-current-machine-scope.md).
@@ -30,6 +33,11 @@ Follow [ADR 0011](../architecture/0011-network-foundation.md) and the
 player, replicated entity, persistence, authoring RPC or playable networked client.
 
 ## M02b — Authentication and owned sessions
+
+The selected design is [mutual TLS and explicit enrollment](../architecture/0012-owned-sessions.md),
+with the [session contract](../network-sessions.md) defining ownership, bounds,
+expiry, revocation and reconnect fencing. Qualification is PASS under the
+current-machine scope, including 19 real-process scenarios in every full profile.
 
 Build local player identity/session services on the selected TLS/X.509 foundation.
 Define account/session/character ownership separately from sockets and scene slots.

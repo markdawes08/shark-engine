@@ -59,9 +59,12 @@ The current assignment is **M02**, following the [five network checkpoints](docs
 **M02a is complete under the current-machine scope.** The [TLS/wire foundation](docs/network-transport.md)
 and [M02a handoff](docs/handoffs/M02a-transport-wire.md) record 404 passing CPU CTests,
 protected builds and isolated package qualification. **M02b, authentication and owned
-sessions, is next.** Full REQ-M02 remains NOT_RUN. Read [ADR 0011](docs/architecture/0011-network-foundation.md)
-before extending transport/authentication. Player sessions, replication and interest
-retain M02b/M02c/M02d; full adversity qualification is M02e. Follow the
+sessions, is complete under the current-machine scope**: 425 CPU CTests and
+protected package checks pass. The [handoff](docs/handoffs/M02b-owned-sessions.md)
+records exact evidence. Follow the [session contract](docs/network-sessions.md) and
+[ADR 0012](docs/architecture/0012-owned-sessions.md). Full REQ-M02 remains NOT_RUN. Read [ADR 0011](docs/architecture/0011-network-foundation.md)
+before extending transport/authentication. **M02c, authoritative replication and
+resynchronization, is next**; interest and full adversity retain M02d/M02e. Follow the
 [05 checkpoint plan](docs/roadmap/graphics-device-plan.md),
 [graphics device contract](docs/graphics-device.md),
 [presentation lifecycle contract](docs/presentation-lifecycle.md) and
@@ -109,8 +112,9 @@ not retroactive passes. Follow the
 [graphics checkpoint plan](docs/roadmap/graphics-plan.md) and
 [probe guide](docs/graphics-probe.md); local feasibility does not claim support
 on other machines or a production MMO release.
-The bounded local TLS/wire foundation is implemented in M02a; player sessions,
-replication, persistence, simulation and streaming remain planned.
+The bounded local TLS/wire foundation is implemented in M02a. M02b adds mutual
+TLS and owned sessions; local qualification is complete. Replication, persistence,
+simulation and streaming retain their later owners.
 
 Keep all remaining gates achievable on this PC: local processes, loopback or
 Windows/WSL connections, deterministic network faults, local storage and backups,

@@ -16,6 +16,7 @@
 # EnTT/GLM caches and scene/schema/query qualification reports stay under out/ or build/.
 # TLS source caches, generated local identities and network receipts stay under out/ or build/.
 # Explicitly public test-only certificates in tests/fixtures/network remain versioned.
+# Session enrollment experiments, local credentials and process receipts stay under out/.
 /build/
 /out/
 /dist/

@@ -120,7 +120,10 @@ see the [inspection contract](../scene-inspection.md) and
 CPU CTests and protected dependency/package checks. M02 is now active under its
 [five checkpoints](network-plan.md); M02a is complete with 404 passing CPU CTests
 and protected dependency/package checks in the [handoff](../handoffs/M02a-transport-wire.md).
-M02b authentication and owned sessions is next. These C++ APIs are not player
+M02b [authentication and owned sessions](../network-sessions.md) is complete; its
+[handoff](../handoffs/M02b-owned-sessions.md) records 425 passing CTests and protected
+package checks. M02c replication is next.
+The completed scene C++ APIs are not player
 messages or source persistence, and they do not grant gameplay authority.
 Presentation stays in Client and cannot acquire authority over server time or world state.
 The [final local handoff](../handoffs/02d-final-verification.md)
@@ -156,7 +159,8 @@ presets continue to pass. Do not publish command names before they actually exis
 Execute the [M02a-M02e checkpoint plan](network-plan.md). M02a selects the private
 Mbed TLS foundation in [ADR 0011](../architecture/0011-network-foundation.md) and
 implements bounded loopback TLS/wire diagnostics plus deterministic fault modeling.
-Player authentication, replication and interest retain the subsequent checkpoints;
+M02b implements [mutual TLS and owned sessions](../network-sessions.md), with
+completed local qualification. Replication and interest retain subsequent checkpoints;
 full REQ-M02 remains NOT_RUN until the integrated M02e gate passes.
 
 After 03/07 and M01. Select and pin maintained transport/authentication components

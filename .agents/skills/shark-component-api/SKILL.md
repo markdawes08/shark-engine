@@ -31,9 +31,11 @@ Follow the implemented [schema and inspection contract](../../../docs/scene-insp
 and [07c handoff](../../../docs/handoffs/07c-schema-inspection.md).
 07c and full REQ-07 are PASS under the current-machine scope; the
 [07c receipt](../../../docs/coverage/evidence/07c-schema-inspection.json) records
-376 passing CPU CTests and protected dependency/package checks. M02 is next;
-the current assignment remains 07. Do not introduce
-a second registry or expose native entities. Include math through `shark/math.hpp`
+376 passing CPU CTests and protected dependency/package checks. M02 is current;
+[M02b owned sessions](../../../docs/handoffs/M02b-owned-sessions.md) is **PASS**
+under the current-machine scope, and M02c replication is next.
+Do not introduce a second registry or expose
+native entities. Include math through `shark/math.hpp`
 and its SharkMath target so every consumer shares the central GLM configuration.
 Cached scene world matrices use a local frame; global WorldPosition, future M05
 origins and later physics constraints remain distinct.
@@ -62,6 +64,16 @@ Player requests are bounded authenticated intents, not authoring transactions or
 arbitrary component setters. Separate durable identity from local/replica handles;
 test stale ownership epochs, reconnect, region handoff and duplicate durable actions
 when those layers exist. Render-frame Lua must not decide live gameplay outcomes.
+
+For M02b, follow [ADR 0012](../../../docs/architecture/0012-owned-sessions.md) and
+the [session contract](../../../docs/network-sessions.md). SessionAuthority takes
+the actual ready server-side mutual TLS transport for each request; copied peer
+identity values cannot establish provenance. AccountId, CharacterId and SessionId
+are separate from scene and replica identities. Readiness changes session state
+only; it grants no gameplay outcome, arbitrary component mutation or authoring
+access. Preserve bounded enrollment, revocation, lifetime, rate limits and
+reconnect fencing when extending admitted intents. Editor/terminal adapters and
+durable ownership still require their assigned later services.
 
 For an implemented surface, trace valid and invalid behavior through engine
 validation, serialization/versioning, editor fields, typed commands, selected
