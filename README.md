@@ -10,8 +10,9 @@ The [MMORPG plan and existing-code assessment](docs/roadmap/mmorpg-plan.md) defi
 the authoritative server, persistent world and staged client/server work.
 These are planned capabilities; the current engine provides Core services, raw
 input, owned Windows windows, offline frame/input scheduling, graphics-device
-ownership, clear presentation and fixed textured-cube rendering, with a separate opt-in graphics feasibility
-probe containing analytic draw/compute/readback cases.
+ownership, clear presentation and fixed textured-cube rendering. CPU scenes provide
+checked entity ownership, Name/Transform and hierarchy. A separate opt-in graphics
+feasibility probe contains analytic draw/compute/readback cases.
 The versioned
 [requirements manifest](docs/coverage/requirements.json) preserves assignment
 scope and acceptance criteria for clean checkouts.
@@ -42,9 +43,15 @@ records 240 passing CPU CTests and native readback/failure/lifecycle evidence.
 including window cube integration and precompiled Runtime distribution. The
 [06c handoff](docs/handoffs/06c-window-distribution.md) records 261 CPU tests, both-GPU
 validation and isolated package execution. Assignment 07 now follows [three checkpoints](docs/roadmap/scene-plan.md).
-**07a is complete**: CPU scene ownership, checked identities, deferred mutation and global-cell
-coordinates. [Scene contracts](docs/scene-contracts.md) describe this foundation;
-Name/Transform hierarchy and schemas remain for 07b/07c. See the
+**07a is complete**: CPU scene ownership, checked identities, deferred mutation and
+global-cell coordinates. **07b is complete under the current-machine scope.**
+The [07b handoff](docs/handoffs/07b-transform-hierarchy.md) and
+[receipt](docs/coverage/evidence/07b-transform-hierarchy.json) record 362 passing
+CPU CTests, protected Runtime/Server builds and isolated package checks.
+[Scene contracts](docs/scene-contracts.md) and the
+[Name/Transform guide](docs/transforms.md) describe mandatory components, validated
+hierarchy, local/world reparenting and subtree deletion. The next checkpoint is
+07c's schemas and bounded revisioned inspection; full REQ-07 remains NOT_RUN. See the
 [cube launch workflow](docs/building.md#cube-sample-and-runtime-package).
 The [05a handoff](docs/handoffs/05a-graphics-device.md) records 211 passing CTests
 and 112 validated device lifetimes across the two local GPUs.
@@ -73,7 +80,7 @@ locked dependencies, device inventory, validated GPU readbacks and bounded lifec
 version, bootstrap help, explicit `--cube` textured rendering, `--graphics` clear presentation and `--window`
 diagnostics through a shared offline frame/input pump;
 Server adds validated startup, timed execution and
-shutdown. Scene rendering, scenes, gameplay and editor UI are future increments. CPU
+shutdown. Scene rendering, gameplay, scene persistence and editor UI remain future increments. CPU
 build results do not establish graphics or release-platform support.
 
 The [02b handoff](docs/handoffs/02b-graphics-cases.md) records local cases, validation
@@ -92,9 +99,9 @@ fixture; this is a development target, not a production capacity claim.
 - [Architecture decisions](docs/architecture/README.md): targets, dependencies,
   platform candidates, formats, simulation conventions and the MMORPG profile.
 - [Requirements and coverage](docs/coverage/README.md): every roadmap assignment
-  has owned requirements and observable acceptance criteria. Bootstrap and runtime
-  boundary features are mapped to tests; component, command and Lua entries remain
-  empty until their APIs exist.
+  has owned requirements and observable acceptance criteria. Foundation features
+  and the Name/Transform components map to executable tests; terminal/editor and
+  Lua integration retain their later owners.
 - [Build instructions](docs/building.md), [CI](docs/ci.md) and [agent guidance](AGENTS.md)
   describe native presets, tool versions, checks and ownership policies.
 - [Assignment 01 handoff](docs/handoffs/01-build-foundation.md) records local
@@ -142,7 +149,9 @@ Use `linux-debug` in the existing WSL Linux environment. Sanitizer, release and 
 Runtime configurations are documented in the build guide. All staging, commits
 and pushes remain with the user; generated output and local tooling stay ignored.
 
-For a server without client/editor/test targets, use `cmake --preset server-only`,
+After provisioning the locked Core dependency archives described in
+[building](docs/building.md), use `cmake --preset server-only`
+for a server without client/editor/test targets,
 then `cmake --build --preset server-only`. Run
 `build/server-only/bin/Server --run-for-ms 1000` (append `.exe` on Windows)
 for a one-second headless smoke run.

@@ -1,5 +1,7 @@
 #include <shark/log.hpp>
 
+#include "utf8.hpp"
+
 #include <array>
 #include <cstdint>
 #include <ostream>
@@ -21,50 +23,6 @@ std::string_view level_name(LogLevel level) noexcept {
         return "error";
     }
     return {};
-}
-
-bool is_utf8(std::string_view text) noexcept {
-    std::size_t index = 0;
-    while (index < text.size()) {
-        const auto first = static_cast<std::uint8_t>(text[index]);
-        if (first < 0x80U) {
-            ++index;
-            continue;
-        }
-        std::size_t count = 0;
-        std::uint32_t point = 0;
-        std::uint32_t minimum = 0;
-        if (first >= 0xc2U && first <= 0xdfU) {
-            count = 2;
-            point = first & 0x1fU;
-            minimum = 0x80U;
-        } else if (first >= 0xe0U && first <= 0xefU) {
-            count = 3;
-            point = first & 0x0fU;
-            minimum = 0x800U;
-        } else if (first >= 0xf0U && first <= 0xf4U) {
-            count = 4;
-            point = first & 0x07U;
-            minimum = 0x10000U;
-        } else {
-            return false;
-        }
-        if (count > text.size() - index) {
-            return false;
-        }
-        for (std::size_t offset = 1; offset < count; ++offset) {
-            const auto next = static_cast<std::uint8_t>(text[index + offset]);
-            if ((next & 0xc0U) != 0x80U) {
-                return false;
-            }
-            point = (point << 6U) | (next & 0x3fU);
-        }
-        if (point < minimum || point > 0x10ffffU || (point >= 0xd800U && point <= 0xdfffU)) {
-            return false;
-        }
-        index += count;
-    }
-    return true;
 }
 
 void append_string(std::string& output, std::string_view value) {
@@ -132,7 +90,7 @@ Result<void> Logger::write(LogLevel level, const Error& error) {
             return invalid_field(field.name, field.name == "path" ? "exceeds the 4096-byte limit"
                                                                   : "exceeds the 1024-byte limit");
         }
-        if (!is_utf8(field.value)) {
+        if (!detail::valid_utf8(field.value)) {
             return invalid_field(field.name, "malformed UTF-8");
         }
     }

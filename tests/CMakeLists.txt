@@ -2,9 +2,11 @@ add_executable(Tests
     bootstrap_tests.cpp
     core_error_tests.cpp
     core_identity_tests.cpp
+    core_hierarchy_tests.cpp
     core_path_tests.cpp
     core_scene_tests.cpp
     core_time_tests.cpp
+    core_transform_tests.cpp
     core_work_tests.cpp
     core_world_position_tests.cpp
     server_application_tests.cpp
@@ -43,6 +45,10 @@ add_test(NAME shark.core.scene COMMAND Tests "[scene]" --rng-seed 1337)
 set_tests_properties(shark.core.scene PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
 add_test(NAME shark.core.world-position COMMAND Tests "[world-position]" --rng-seed 1337)
 set_tests_properties(shark.core.world-position PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
+add_test(NAME shark.core.hierarchy COMMAND Tests "[hierarchy]" --rng-seed 1337)
+set_tests_properties(shark.core.hierarchy PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)
+add_test(NAME shark.core.transform COMMAND Tests "[transform]" --rng-seed 1337)
+set_tests_properties(shark.core.transform PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
 if(TARGET EngineClient)
     add_executable(PresentationFaults presentation_faults.cpp)
     target_include_directories(PresentationFaults PRIVATE "${PROJECT_SOURCE_DIR}"
@@ -356,14 +362,16 @@ set_tests_properties(shark.tooling.graphics-evidence PROPERTIES LABELS "cpu;tool
 add_test(NAME shark.tooling.graphics-dependencies
     COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_graphics_dependencies.py"
         --cmake "${CMAKE_COMMAND}" --ninja "${CMAKE_MAKE_PROGRAM}"
-        --compiler "${CMAKE_CXX_COMPILER}" --entt-archive "${SHARK_EnTT_ARCHIVE}" -v)
+        --compiler "${CMAKE_CXX_COMPILER}" --entt-archive "${SHARK_EnTT_ARCHIVE}"
+        --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}" -v)
 set_tests_properties(shark.tooling.graphics-dependencies PROPERTIES LABELS "cpu;tooling;boundary" TIMEOUT 90
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
 add_test(NAME shark.tooling.scene-dependencies
     COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_scene_dependencies.py"
         --cmake "${CMAKE_COMMAND}" --ninja "${CMAKE_MAKE_PROGRAM}"
-        --compiler "${CMAKE_CXX_COMPILER}" --entt-archive "${SHARK_EnTT_ARCHIVE}" -v)
+        --compiler "${CMAKE_CXX_COMPILER}" --entt-archive "${SHARK_EnTT_ARCHIVE}"
+        --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}" -v)
 set_tests_properties(shark.tooling.scene-dependencies PROPERTIES LABELS "cpu;tooling;boundary;server" TIMEOUT 90
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 

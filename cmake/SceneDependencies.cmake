@@ -1,90 +1,28 @@
-# The only 07a Core dependency is EnTT's header-only entity implementation.
-# Do not configure its upstream project: that enables C and optional testbed,
-# documentation and download paths which Shark does not consume.
+# EnTT stays private to the Core scene implementation; upstream is not configured.
 include_guard(GLOBAL)
-include(FetchContent)
+include(CoreHeaderDependencies)
 
 function(shark_validate_scene_inputs)
-    set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
-        "${PROJECT_SOURCE_DIR}/dependencies.lock.json")
-    file(READ "${PROJECT_SOURCE_DIR}/dependencies.lock.json" shark_scene_lock)
-    string(JSON shark_schema GET "${shark_scene_lock}" schema_version)
-    if(NOT shark_schema EQUAL 1)
-        message(FATAL_ERROR "Unsupported dependencies.lock.json schema: ${shark_schema}")
-    endif()
-    if(DEFINED FETCHCONTENT_SOURCE_DIR_ENTT AND NOT FETCHCONTENT_SOURCE_DIR_ENTT STREQUAL "")
-        message(FATAL_ERROR "Unverified EnTT source overrides are disabled; use the locked archive/cache")
-    endif()
-    string(JSON shark_sha GET "${shark_scene_lock}" dependencies EnTT sha256)
-    string(LENGTH "${shark_sha}" shark_sha_length)
-    if(NOT shark_sha_length EQUAL 64 OR NOT shark_sha MATCHES "^[0-9a-f]+$")
-        message(FATAL_ERROR "EnTT must have an exact SHA-256 archive pin")
-    endif()
-    set(SHARK_ENTT_ARCHIVE "" CACHE FILEPATH "Optional local EnTT archive; must match the dependency lock")
-    if(NOT SHARK_ENTT_ARCHIVE STREQUAL "")
-        if(NOT EXISTS "${SHARK_ENTT_ARCHIVE}" OR IS_DIRECTORY "${SHARK_ENTT_ARCHIVE}"
-                OR IS_SYMLINK "${SHARK_ENTT_ARCHIVE}")
-            message(FATAL_ERROR "SHARK_ENTT_ARCHIVE must name a regular locked archive")
-        endif()
-        file(SHA256 "${SHARK_ENTT_ARCHIVE}" shark_actual_sha)
-        if(NOT shark_actual_sha STREQUAL shark_sha)
-            message(FATAL_ERROR "SHARK_ENTT_ARCHIVE SHA-256 differs from the EnTT lock")
-        endif()
-    endif()
+    shark_validate_core_header_input(EnTT)
 endfunction()
 
 function(shark_setup_scene_dependencies)
     if(TARGET EnTT)
         message(FATAL_ERROR "EnTT target already exists outside the reviewed Core integration")
     endif()
-    shark_validate_scene_inputs()
-    file(READ "${PROJECT_SOURCE_DIR}/dependencies.lock.json" shark_scene_lock)
-    string(JSON shark_url GET "${shark_scene_lock}" dependencies EnTT url)
-    string(JSON shark_sha GET "${shark_scene_lock}" dependencies EnTT sha256)
-    cmake_path(GET shark_url FILENAME shark_archive_name)
-    set(shark_cached_archive
-        "${FETCHCONTENT_BASE_DIR}/entt-subbuild/entt-populate-prefix/src/${shark_archive_name}")
-    set(shark_archive "${SHARK_ENTT_ARCHIVE}")
-    if(shark_archive STREQUAL "" AND EXISTS "${shark_cached_archive}")
-        set(shark_archive "${shark_cached_archive}")
-    endif()
-    if(NOT shark_archive STREQUAL "")
-        file(SHA256 "${shark_archive}" shark_actual_sha)
-        if(NOT shark_actual_sha STREQUAL shark_sha)
-            message(FATAL_ERROR "Cached EnTT archive SHA-256 differs from the dependency lock")
-        endif()
-        cmake_path(ABSOLUTE_PATH shark_archive BASE_DIRECTORY "${PROJECT_SOURCE_DIR}" NORMALIZE)
-        set(shark_url "${shark_archive}")
-        # The disconnected profile may extract an already verified local archive;
-        # no remote URL or arbitrary source override is permitted on this path.
-        set(FETCHCONTENT_FULLY_DISCONNECTED OFF)
-    elseif(FETCHCONTENT_FULLY_DISCONNECTED)
-        message(FATAL_ERROR "Offline EnTT population requires SHARK_ENTT_ARCHIVE or a previously populated locked archive cache")
-    endif()
-    FetchContent_Declare(EnTT
-        URL "${shark_url}"
-        URL_HASH "SHA256=${shark_sha}"
-        DOWNLOAD_EXTRACT_TIMESTAMP FALSE
-        SOURCE_SUBDIR shark-header-only-integration
-        EXCLUDE_FROM_ALL SYSTEM)
-    FetchContent_MakeAvailable(EnTT)
-    if(NOT EXISTS "${entt_SOURCE_DIR}/src/entt/entity/registry.hpp"
-            OR NOT EXISTS "${entt_SOURCE_DIR}/LICENSE")
+    shark_populate_core_header_input(EnTT)
+    if(NOT EXISTS "${SHARK_EnTT_SOURCE_DIR}/src/entt/entity/registry.hpp"
+            OR NOT EXISTS "${SHARK_EnTT_SOURCE_DIR}/LICENSE")
         message(FATAL_ERROR "Locked EnTT source is incomplete")
     endif()
     add_library(EnTT INTERFACE)
     add_library(EnTT::EnTT ALIAS EnTT)
-    target_include_directories(EnTT SYSTEM INTERFACE "${entt_SOURCE_DIR}/src")
+    target_include_directories(EnTT SYSTEM INTERFACE "${SHARK_EnTT_SOURCE_DIR}/src")
     target_compile_features(EnTT INTERFACE cxx_std_20)
     shark_classify_target(EnTT core)
     shark_classify_target(EnTT::EnTT core)
-    # A stable archive location is also consumed by license/closure qualification.
-    if(shark_archive STREQUAL "")
-        set(shark_archive "${shark_cached_archive}")
-    endif()
-    set(SHARK_EnTT_SOURCE_DIR "${entt_SOURCE_DIR}" CACHE INTERNAL "Locked EnTT source" FORCE)
-    set(SHARK_EnTT_ARCHIVE "${shark_archive}" CACHE INTERNAL "Locked EnTT archive" FORCE)
+    set(SHARK_EnTT_ARCHIVE "${SHARK_EnTT_ARCHIVE_INPUT}" CACHE INTERNAL "Locked EnTT archive" FORCE)
     if(SHARK_BUILD_SERVER)
-        install(FILES "${entt_SOURCE_DIR}/LICENSE" DESTINATION licenses/EnTT COMPONENT Server)
+        install(FILES "${SHARK_EnTT_SOURCE_DIR}/LICENSE" DESTINATION licenses/EnTT COMPONENT Server)
     endif()
 endfunction()

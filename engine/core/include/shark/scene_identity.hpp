@@ -48,11 +48,6 @@ struct EntityHandle {
     std::uint64_t generation{0};
     auto operator<=>(const EntityHandle&) const = default;
 };
-struct EntitySeed {
-    EntityIdentity identity;
-    // Required only for replicas. Authoritative entities derive this from scope.
-    std::optional<AuthorityStamp> replica_authority{};
-};
 struct EntityReference {
     EntityHandle handle;
     EntityIdentity identity;

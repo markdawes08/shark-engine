@@ -62,12 +62,13 @@ def cache_values(build: Path) -> dict[str, str]:
 
 def production_notices(build: Path, lock: dict) -> tuple[dict[str, bytes], dict]:
     payload, records = {}, {}
-    for name in ("EnTT", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader"):
+    for name in ("EnTT", "GLM", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader"):
         entry = lock["dependencies"][name]
         lower = name.lower()
         archive = build / f"_deps/{lower}-subbuild/{lower}-populate-prefix/src" / entry["url"].rsplit("/", 1)[-1]
-        if name == "EnTT":
-            archive = Path(cache_values(build).get("SHARK_EnTT_ARCHIVE", str(archive)))
+        if name in ("EnTT", "GLM"):
+            cache_key = "SHARK_EnTT_ARCHIVE" if name == "EnTT" else "SHARK_GLM_ARCHIVE_INPUT"
+            archive = Path(cache_values(build).get(cache_key, str(archive)))
         notices = archive_notices(archive, entry)
         if not notices:
             raise ValueError(f"Missing redistribution notices for {name}")
@@ -229,7 +230,7 @@ def inspect_package(directory: Path, expected_manifest: str) -> dict:
         total += len(data)
     if total > MAX_PACKAGE:
         raise ValueError("Package exceeds byte budget")
-    for name in ("EnTT", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader", "MicrosoftVC"):
+    for name in ("EnTT", "GLM", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader", "MicrosoftVC"):
         if not any(path.startswith(f"licenses/{name}/") for path in files):
             raise ValueError(f"Package lacks {name} license notices")
     if has_shaders:

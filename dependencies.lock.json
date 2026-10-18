@@ -226,6 +226,47 @@
       },
       "verification": "Official latest release and exact tag commit reviewed 2026-10-18. Official immutable commit archive downloaded and SHA-256 computed; MIT LICENSE and upstream CMake reviewed. CPU and sanitizer qualification is recorded separately in the 07a handoff.",
       "notes": "FetchContent populates only the locked archive; Shark creates a SYSTEM C++20 header-only interface over src and does not execute the upstream CMake project (which unconditionally enables C). The listed optional upstream integrations are not evaluated, built or downloaded. No patches, code generation, installed-package fallback or transitive downloads. Core privately includes only entity/registry facilities; no third-party public types. Disconnected builds require a verified local SHARK_ENTT_ARCHIVE or the prior locked archive cache."
+    },
+    "GLM": {
+      "version": "1.0.3",
+      "upstream": "https://github.com/g-truc/glm",
+      "release": "https://github.com/g-truc/glm/releases/tag/1.0.3",
+      "commit": "8d1fd52e5ab5590e2c81768ace50c72bae28f2ed",
+      "url": "https://github.com/g-truc/glm/archive/8d1fd52e5ab5590e2c81768ace50c72bae28f2ed.tar.gz",
+      "sha256": "36eefbae41503e6822e8d9e1b4cc85c6a6621f17676f6258aaf0a64c2de0a09c",
+      "license": "MIT",
+      "license_files": [
+        "copying.txt"
+      ],
+      "owner_target": "SharkMath public interface, linked publicly by EngineCore; all GLM access through shark/math.hpp",
+      "assignment": "07",
+      "patches": [],
+      "transitive_dependencies": [],
+      "cxx_standard": 20,
+      "options": {
+        "GLM_BUILD_LIBRARY": "OFF",
+        "GLM_BUILD_TESTS": "OFF",
+        "GLM_BUILD_INSTALL": "OFF",
+        "GLM_ENABLE_LANG_EXTENSIONS": "OFF",
+        "GLM_ENABLE_FAST_MATH": "OFF",
+        "GLM_ENABLE_SIMD_SSE2": "OFF",
+        "GLM_ENABLE_SIMD_SSE3": "OFF",
+        "GLM_ENABLE_SIMD_SSSE3": "OFF",
+        "GLM_ENABLE_SIMD_SSE4_1": "OFF",
+        "GLM_ENABLE_SIMD_SSE4_2": "OFF",
+        "GLM_ENABLE_SIMD_AVX": "OFF",
+        "GLM_ENABLE_SIMD_AVX2": "OFF",
+        "GLM_ENABLE_SIMD_NEON": "OFF"
+      },
+      "compile_definitions": [
+        "GLM_FORCE_RADIANS",
+        "GLM_FORCE_DEPTH_ZERO_TO_ONE",
+        "GLM_FORCE_EXPLICIT_CTOR",
+        "GLM_FORCE_CTOR_INIT",
+        "GLM_FORCE_PURE"
+      ],
+      "verification": "Official latest release and exact tag commit reviewed 2026-10-18. Official immutable commit archive downloaded and SHA-256 computed; complete copying.txt and upstream CMake reviewed. CPU and sanitizer qualification is recorded separately in the 07b handoff.",
+      "notes": "MIT option selected from the dual Happy Bunny/MIT offer; preserve the entire copying.txt. FetchContent populates only the locked archive; SharkMath supplies a SYSTEM C++20 header interface and the locked compile definitions. Upstream CMake is not executed, so library/tests/install/optional SIMD/global compiler options are not evaluated. No patches, installed-package fallback, transitive downloads or compiler ISA flags. Default right-handed, packed math types; the central public wrapper rejects conflicting configuration. Disconnected builds require verified SHARK_GLM_ARCHIVE or the prior locked archive cache."
     }
   },
   "ci_environments": {

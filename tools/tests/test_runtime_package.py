@@ -21,23 +21,33 @@ class RuntimePackageTests(unittest.TestCase):
     def test_production_notices_include_private_core_entt_from_verified_cache(self):
         lock = {"dependencies": {name: {"url": f"https://example.invalid/{name}.tar.gz",
                                        "sha256": name, "license": "MIT"}
-                                  for name in ("EnTT", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader")}}
+                                  for name in ("EnTT", "GLM", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader")}}
         local_archive = Path("local cache/entt.tar.gz")
-        with patch.object(package, "cache_values", return_value={"SHARK_EnTT_ARCHIVE": str(local_archive)}), \
+        glm_archive = Path("local cache/glm.tar.gz")
+        with patch.object(package, "cache_values", return_value={"SHARK_EnTT_ARCHIVE": str(local_archive),
+                                                                "SHARK_GLM_ARCHIVE_INPUT": str(glm_archive)}), \
                 patch.object(package, "archive_notices", return_value={"LICENSE": b"license"}) as notices:
             payload, records = package.production_notices(Path("build"), lock)
         self.assertIn("licenses/EnTT/LICENSE", payload)
         self.assertEqual(records["EnTT"]["archive_sha256"], "EnTT")
         self.assertEqual(notices.call_args_list[0].args[0], local_archive)
+        self.assertEqual(notices.call_args_list[1].args[0], glm_archive)
+        self.assertIn("licenses/GLM/LICENSE", payload)
+        self.assertEqual(records["GLM"]["archive_sha256"], "GLM")
 
-    def test_missing_manifested_entt_license_is_rejected(self):
+    def test_missing_manifested_core_dependency_license_is_rejected(self):
+        for name in ("EnTT", "GLM"):
+            with self.subTest(name=name):
+                self.missing_license(name)
+
+    def missing_license(self, name):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary) / "package"
             payload = self.payload()
-            del payload["licenses/EnTT/LICENSE.txt"]
+            del payload[f"licenses/{name}/LICENSE.txt"]
             package.publish(directory, payload, {"schema_version": 1, "kind": "runtime-deployment-fixture",
                                                  "status": "PASS", "qualification": "NOT_RUN"})
-            with self.assertRaisesRegex(ValueError, "EnTT license notices"):
+            with self.assertRaisesRegex(ValueError, name + " license notices"):
                 package.inspect_package(directory, package.sha256(directory / "package-manifest.json"))
 
     def test_build_freshness_allows_only_the_always_run_boundary_check(self):
@@ -84,7 +94,7 @@ class RuntimePackageTests(unittest.TestCase):
 
     def payload(self):
         files = {name: b"synthetic CPU fixture" for name in package.BINARIES}
-        for name in ("EnTT", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader", "MicrosoftVC"):
+        for name in ("EnTT", "GLM", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader", "MicrosoftVC"):
             files[f"licenses/{name}/LICENSE.txt"] = b"synthetic license fixture"
         return files
 

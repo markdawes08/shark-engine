@@ -13,7 +13,7 @@
 # Window cube captures and packaged .sharkshader bundles stay in build/, out/ or dist/.
 # Keep shaders/ source recipes and HLSL fixtures eligible for versioning.
 # Keep generated agent/session reports under out/; public schemas/examples stay tracked.
-# EnTT archive caches and scene qualification reports also stay under out/ or build/.
+# EnTT/GLM archive caches and scene/transform qualification reports stay under out/ or build/.
 /build/
 /out/
 /dist/

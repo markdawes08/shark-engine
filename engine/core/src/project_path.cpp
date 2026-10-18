@@ -1,5 +1,7 @@
 #include "shark/project_path.hpp"
 
+#include "utf8.hpp"
+
 #include <algorithm>
 #include <cstdint>
 #include <system_error>
@@ -10,48 +12,6 @@ namespace {
 std::string utf8(const std::filesystem::path& path) {
     const auto encoded = path.generic_u8string();
     return {reinterpret_cast<const char*>(encoded.data()), encoded.size()};
-}
-
-bool valid_utf8(std::string_view text) {
-    std::size_t index = 0;
-    while (index < text.size()) {
-        const auto first = static_cast<unsigned char>(text[index++]);
-        if (first < 0x80) {
-            continue;
-        }
-        unsigned int remaining = 0;
-        std::uint32_t code = 0;
-        std::uint32_t minimum = 0;
-        if (first >= 0xc2 && first <= 0xdf) {
-            remaining = 1;
-            code = first & 0x1fU;
-            minimum = 0x80;
-        } else if (first >= 0xe0 && first <= 0xef) {
-            remaining = 2;
-            code = first & 0x0fU;
-            minimum = 0x800;
-        } else if (first >= 0xf0 && first <= 0xf4) {
-            remaining = 3;
-            code = first & 0x07U;
-            minimum = 0x10000;
-        } else {
-            return false;
-        }
-        if (remaining > text.size() - index) {
-            return false;
-        }
-        for (unsigned int byte = 0; byte < remaining; ++byte) {
-            const auto next = static_cast<unsigned char>(text[index++]);
-            if ((next & 0xc0U) != 0x80U) {
-                return false;
-            }
-            code = (code << 6U) | (next & 0x3fU);
-        }
-        if (code < minimum || code > 0x10ffff || (code >= 0xd800 && code <= 0xdfff)) {
-            return false;
-        }
-    }
-    return true;
 }
 
 bool reserved_name(std::string_view component) {
@@ -103,7 +63,7 @@ bool valid_native_encoding(const std::filesystem::path& path) {
     }
     return true;
 #else
-    return valid_utf8(text);
+    return detail::valid_utf8(text);
 #endif
 }
 
@@ -129,7 +89,7 @@ Result<ProjectPath> ProjectPath::parse(std::string_view text, ErrorContext conte
     if (context.operation.empty()) {
         context.operation = "project_path.parse";
     }
-    if (text.empty() || text.size() > 4096 || !valid_utf8(text)) {
+    if (text.empty() || text.size() > 4096 || !detail::valid_utf8(text)) {
         return path_error(ErrorCode::invalid_path, "expected 1..4096 bytes of valid UTF-8",
                           std::move(context));
     }

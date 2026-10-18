@@ -14,18 +14,33 @@ Follow the [human and terminal-agent contract](../../../docs/architecture/0008-h
 and its [implementation plan](../../../docs/roadmap/human-agent-plan.md) as each
 authoring layer lands; the bootstrap does not yet provide these interfaces.
 
-Assignment 01 has no ECS, component schema, command service, Lua VM or
-FeatureWorld. They arrive in 07, 09, 19 and 10 respectively. Do not fabricate
-bindings or schema fixtures to fill the empty component, command and Lua entries
-in the implemented-surface manifest. Its foundation features already map the
-bootstrap behavior and runtime build boundary to tests.
-Connect an earlier component when its missing layer is introduced.
+The implemented-surface manifest includes the mandatory Name and Transform C++
+components and their validation/mutation tests. Schema metadata, authoring
+transactions, Lua and FeatureWorld arrive in 07c, 09, 19 and 10 respectively.
+Do not fabricate bindings or schema fixtures for those later layers, or fill the
+empty command/Lua arrays with placeholders. Connect each earlier component when
+its missing layer is introduced.
 
 07a now supplies [scene identity and lifetime](../../../docs/scene-contracts.md)
 through EngineCore, with private EnTT, checked scoped references and an explicit
-deferred boundary. Follow the [07 checkpoint plan](../../../docs/roadmap/scene-plan.md):
-Name/Transform and hierarchy belong to 07b, schemas and bounded revisioned
-inspection to 07c. Do not introduce a second registry or expose native entities.
+deferred boundary. 07b implements mandatory Name/Transform and hierarchy; follow
+the [transform contract](../../../docs/transforms.md) and
+[07 checkpoint plan](../../../docs/roadmap/scene-plan.md). Its
+[current-machine qualification is complete](../../../docs/handoffs/07b-transform-hierarchy.md).
+Schemas and bounded revisioned inspection are next
+in 07c; full REQ-07 stays NOT_RUN until that checkpoint completes. Do not introduce
+a second registry or expose native entities. Include math through `shark/math.hpp`
+and its SharkMath target so every consumer shares the central GLM configuration.
+Cached scene world matrices use a local frame; global WorldPosition, future M05
+origins and later physics constraints remain distinct.
+
+Name and Transform cannot be removed. Reuse scene validation, checked parent
+links and the existing deferred queue for component changes. Keep-local preserves
+local TRS; keep-world rejects nonrepresentable local TRS before publishing links
+or any descendant world matrix. Delete removes the subtree in one operation.
+Actual changes advance the revision once; no-ops do not. Test stale/cyclic/foreign
+parents, authority mismatch, depth/scale failures and complete rollback, alongside
+owned state copies and deferred FIFO revalidation.
 
 Follow [MMORPG authority and identity](../../../docs/architecture/0007-mmorpg-architecture.md):
 classify state as server-authoritative, predicted, replicated or presentation-only.

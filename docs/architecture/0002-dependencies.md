@@ -15,22 +15,47 @@ and upstream build configuration were reviewed on 2026-10-18.
 [pinned license](https://github.com/skypjack/entt/blob/85c6bba014049b5de8fad49d25424df2f1f6a8c1/LICENSE),
 [pinned CMake](https://github.com/skypjack/entt/blob/85c6bba014049b5de8fad49d25424df2f1f6a8c1/CMakeLists.txt).
 
-`SceneDependencies.cmake` uses FetchContent only to populate that archive and
-creates a SYSTEM C++20 header interface. EngineCore links `EnTT::EnTT` privately;
-public scene contracts expose only engine-owned values. The upstream CMake project
-is not executed, so its unconditional C language setup and optional tests,
-testbed/GUI, examples, documentation and downloads never enter Shark's graph.
-There are no patches or transitive dependencies. This is an integration of the
-header-only library, not a second dependency resolver. GLM remains owned by 07b.
+07b integrates **GLM 1.0.3**, pinned to commit
+`8d1fd52e5ab5590e2c81768ace50c72bae28f2ed` and archive SHA-256
+`36eefbae41503e6822e8d9e1b4cc85c6a6621f17676f6258aaf0a64c2de0a09c` in the
+same lock. The official release, exact archive, license and upstream build
+configuration were reviewed on 2026-10-18. Shark selects the MIT option from the
+dual Happy Bunny/MIT license and retains the complete upstream `copying.txt`.
+[Release notes](https://github.com/g-truc/glm/releases/tag/1.0.3),
+[pinned license](https://github.com/g-truc/glm/blob/8d1fd52e5ab5590e2c81768ace50c72bae28f2ed/copying.txt),
+[pinned CMake](https://github.com/g-truc/glm/blob/8d1fd52e5ab5590e2c81768ace50c72bae28f2ed/CMakeLists.txt).
 
-Disconnected `server-only` builds require the exact local `SHARK_ENTT_ARCHIVE` or
-a previously populated locked archive cache. Explicit preparation occurs before
-configure; local extraction does not permit network fetching or arbitrary source
-overrides. The headless closure gate verifies all populated source bytes against
-the archive and the installed MIT notice. Server components and Runtime packages
-retain `licenses/EnTT/LICENSE`. See [building](../building.md#headless-server),
-[CI](../ci.md) and the [07a handoff](../handoffs/07a-entity-ownership.md) for commands
-and qualification; pin review alone does not claim a passing build.
+`SceneDependencies.cmake` and `MathDependencies.cmake` share the fixed
+`CoreHeaderDependencies.cmake` helper. FetchContent only populates these archives;
+Shark creates their SYSTEM C++20 header interfaces. EngineCore links `EnTT::EnTT`
+privately, keeping registry and component storage details out of public contracts.
+Neither upstream CMake project executes, so no C language setup, upstream library,
+tests, testbed/GUI, examples, documentation, global flags or downloads enter
+Shark's graph. Neither integration has patches or transitive dependencies. This
+helper implements the existing lock policy for these two dependencies.
+
+GLM is the public math exception. EngineCore publicly links `SharkMath`; consumers
+include `<shark/math.hpp>` as the single GLM include point. The interface exports
+`GLM_FORCE_RADIANS`, `GLM_FORCE_DEPTH_ZERO_TO_ONE`, `GLM_FORCE_EXPLICIT_CTOR`,
+`GLM_FORCE_CTOR_INIT` and `GLM_FORCE_PURE`. The wrapper supplies matching defaults
+for direct header consumers and rejects prior GLM setup or incompatible
+handedness, layout, precision, swizzle and SIMD definitions. Public math uses
+packed scalar doubles, right-handed coordinates and zero-to-one depth. See the
+[transform contract](../transforms.md) for quaternion, matrix and numerical rules.
+GLM object memory is never a serialized format or network protocol. This exception
+does not expose EnTT or authorize per-target math configuration.
+
+Disconnected `server-only` builds require the exact local `SHARK_ENTT_ARCHIVE`
+and `SHARK_GLM_ARCHIVE`, or previously populated locked archive caches. Explicit
+preparation with `tools/core_dependencies.py` occurs before configure; local
+extraction permits neither network fetching nor arbitrary source overrides. The
+headless closure gate verifies every populated file against its archive and checks
+both installed notices. Server components and Runtime packages retain
+`licenses/EnTT/LICENSE` and `licenses/GLM/copying.txt`. See
+[building](../building.md#headless-server), [CI](../ci.md), the
+[07a handoff](../handoffs/07a-entity-ownership.md) and
+[07b handoff](../handoffs/07b-transform-hierarchy.md) for commands and qualification;
+pin review alone does not claim a passing build.
 
 06a reuses the exact locked DXC and SPIRV-Tools inputs for the standalone
 [offline shader builder](../shader-pipeline.md). Compilation is an explicit
@@ -90,7 +115,7 @@ Retain the roadmap's requested stack. The following selections authorize integra
 | --- | --- | --- | --- |
 | Windows and raw input | GLFW; Vulkan windows, no OpenGL context | Engine platform implementation | 02 probe, 04 lifecycle; surface creation and input/focus/resize checks on target systems |
 | Graphics | NVRHI Vulkan backend; Vulkan-Headers and loader from one recorded compatible toolchain | Engine graphics implementation | 02 pins and qualifies the combination; 05 owns production lifecycle |
-| Math | GLM, one centrally configured header interface | Engine math layer and engine-owned clients | 03/07; convention and transform tests; never serialize GLM object memory |
+| Math | GLM 1.0.3, centrally configured `SharkMath` interface and `<shark/math.hpp>` | EngineCore and public math consumers, the documented third-party type exception | 07b; convention, configuration and transform tests; never serialize GLM object memory |
 | ECS | EnTT 4.0.0 entity/registry facilities behind the engine's scene interface | EngineCore scene implementation only, private link | 07a pins entity ownership and safe mutation; 07b adds hierarchy tests |
 | Rigid-body physics | Jolt, single-precision world, CPU options matching the platform baseline | Engine physics implementation only | 18/20; lifecycle, fixed-step and event/query checks |
 | Audio playback/mixing | miniaudio, one implementation translation unit, source decoding/encoding disabled | Engine audio implementation only | 24; offline mix and actual playback/device checks |
@@ -123,7 +148,8 @@ only by the opt-in probe/tool preparation. See the [probe guide](../graphics-pro
 Checkpoint 02b adds a separate, explicitly prepared SPIRV-Tools/Vulkan-ValidationLayers
 source graph with its transitive headers/utilities. It is never added to the engine
 CMake graph. Checkpoint 07a adds the private Core EnTT pin and its MIT notice;
-ordinary Core/Server builds now consume this reviewed CPU-only source dependency.
+07b adds the approved public GLM math interface and its MIT notice. Ordinary
+Core/Server builds consume these two reviewed CPU-only source dependencies.
 [ADR 0009](0009-windows-linux-platform-scope.md) removes Mac driver/tool
 qualification and retires checkpoint 02c.
 
@@ -173,4 +199,4 @@ Assignment 24 fixes and tests concrete source limits, channel conversion, sample
 
 Third-party types stay inside the owning implementation except centrally configured GLM types permitted by the engine math contract. Shared scene/command schemas use engine-owned types. M01 implements EngineTools -> EngineCore, Editor -> EngineTools/EngineClient, Runtime -> Engine -> EngineClient -> EngineCore and Server -> EngineCore. Client previews in Tools remain future optional integrations; subsystem integration status is recorded by each owning handoff. Test-only and build-only libraries must not enter packaged runtime dependency closures. Assignment 01 establishes boundary checks, and 14/31 inspect exported packages and licenses.
 
-All upstream sources above were reviewed on 2026-10-17. This record makes architecture selections, not claims of tested combinations, performance, audio playback or platform support. No dependencies were installed and no builds or hardware checks ran in assignment 00. Unknown compatibility has explicit owning assignments; a failing gate requires evidence and a concrete decision, never a silent stack replacement.
+The original assignment 00 selections were reviewed on 2026-10-17; later pin reviews are dated with their integration decisions above. Architecture selection alone does not establish tested combinations, performance, audio playback or platform support. No dependencies were installed and no builds or hardware checks ran in assignment 00. Unknown compatibility has explicit owning assignments; a failing gate requires evidence and a concrete decision, never a silent stack replacement.

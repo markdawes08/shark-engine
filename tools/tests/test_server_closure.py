@@ -56,33 +56,43 @@ class ServerClosureTests(unittest.TestCase):
             path = self.build / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(b"built fixture")
-        self.add_entt_fixture()
+        self.add_core_dependency_fixtures()
         self.write_evidence()
         (self.package / "licenses/EnTT").mkdir(parents=True)
         (self.package / "licenses/EnTT/LICENSE").write_bytes(b"fixture license")
+        (self.package / "licenses/GLM").mkdir()
+        (self.package / "licenses/GLM/copying.txt").write_bytes(b"fixture license")
         (self.package / "bin").mkdir(parents=True)
         binary = self.package / "bin/Server"
         binary.write_bytes(b"\x7fELF\x02\x01" + bytes(12) + b"\x3e\x00" + bytes(64))
         binary.chmod(0o755)
 
-    def add_entt_fixture(self):
-        contents = {"LICENSE": b"fixture license", "src/entt/entity/registry.hpp": b"// fixture registry"}
-        archive = self.root / "entt.tar.gz"
-        with tarfile.open(archive, "w:gz") as stream:
-            for name, data in contents.items():
-                item = tarfile.TarInfo("entt-" + "a" * 40 + "/" + name)
-                item.size = len(data)
-                stream.addfile(item, io.BytesIO(data))
-        locked = {"version": "fixture", "commit": "a" * 40, "license": "MIT", "license_files": ["LICENSE"],
-                  "patches": [], "transitive_dependencies": [], "sha256": hashlib.sha256(archive.read_bytes()).hexdigest()}
-        (self.source / "dependencies.lock.json").write_text(json.dumps({"dependencies": {"EnTT": locked}}))
-        for name in ("entt-src", "entt-build", "entt-subbuild"):
-            (self.build / "_deps" / name).mkdir(parents=True)
-        for name, data in contents.items():
-            path = self.build / "_deps/entt-src" / name
-            path.parent.mkdir(parents=True, exist_ok=True)
-            path.write_bytes(data)
-        self.cache["entries"].append({"name": "SHARK_EnTT_ARCHIVE", "value": str(archive)})
+    def add_core_dependency_fixtures(self):
+        dependencies = {}
+        for name, license_file, header in (("EnTT", "LICENSE", "src/entt/entity/registry.hpp"),
+                                          ("GLM", "copying.txt", "glm/glm.hpp")):
+            lower = name.lower()
+            contents = {license_file: b"fixture license", header: b"// fixture header"}
+            if name == "GLM":
+                contents["glm/detail/fixture.inl"] = b"// fixture inline header"
+            archive = self.root / (lower + ".tar.gz")
+            with tarfile.open(archive, "w:gz") as stream:
+                for path, data in contents.items():
+                    item = tarfile.TarInfo(lower + "-" + "a" * 40 + "/" + path)
+                    item.size = len(data)
+                    stream.addfile(item, io.BytesIO(data))
+            dependencies[name] = {"version": "fixture", "commit": "a" * 40, "license": "MIT",
+                                  "license_files": [license_file], "patches": [], "transitive_dependencies": [],
+                                  "sha256": hashlib.sha256(archive.read_bytes()).hexdigest()}
+            for suffix in ("-src", "-build", "-subbuild"):
+                (self.build / "_deps" / (lower + suffix)).mkdir(parents=True)
+            for path, data in contents.items():
+                target = self.build / "_deps" / (lower + "-src") / path
+                target.parent.mkdir(parents=True, exist_ok=True)
+                target.write_bytes(data)
+            key = "SHARK_EnTT_ARCHIVE" if name == "EnTT" else "SHARK_GLM_ARCHIVE_INPUT"
+            self.cache["entries"].append({"name": key, "value": str(archive)})
+        (self.source / "dependencies.lock.json").write_text(json.dumps({"dependencies": dependencies}))
 
     def write_evidence(self):
         data = {"index-1.json": {"objects": [
@@ -213,6 +223,31 @@ class ServerClosureTests(unittest.TestCase):
         header.write_bytes(b"tampered cache header")
         with self.assertRaisesRegex(ClosureError, "differs from the locked archive"):
             file_api(self.build)
+
+    def test_accepts_glm_inline_headers_but_rejects_tampered_population(self):
+        header = self.build / "_deps/glm-src/glm/detail/fixture.inl"
+        self.targets[0]["compileGroups"][0]["includes"].append({"path": str(header.parents[2]), "isSystem": True})
+        self.write_evidence()
+        file_api(self.build)
+        evidence = f"core.o: #deps 1, deps mtime 1 (VALID)\n    {header}\n"
+        headers, system = compiler_headers(evidence, [{"object": "core.o"}], self.source, self.build)
+        self.assertEqual([item["path"] for item in headers], [str(header)])
+        self.assertEqual(system, [])
+        header.write_bytes(b"tampered GLM header")
+        with self.assertRaisesRegex(ClosureError, "Populated GLM source differs"):
+            file_api(self.build)
+
+    def test_missing_glm_source_archive_or_package_license_is_rejected(self):
+        (self.build / "_deps/glm-src/copying.txt").unlink()
+        with self.assertRaisesRegex(ClosureError, "GLM source inventory differs"):
+            file_api(self.build)
+        self.cache["entries"] = [item for item in self.cache["entries"] if item["name"] != "SHARK_GLM_ARCHIVE_INPUT"]
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "Missing locked EnTT/GLM"):
+            file_api(self.build)
+        (self.package / "licenses/GLM/copying.txt").unlink()
+        with self.assertRaisesRegex(ClosureError, "Incomplete Server package"):
+            package_inventory(self.package)
 
     def test_rejects_missing_entt_source_or_archive_evidence(self):
         (self.build / "_deps/entt-src/LICENSE").unlink()

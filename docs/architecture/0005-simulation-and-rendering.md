@@ -28,14 +28,24 @@ Existing local rendering and authoring conventions remain applicable.
   world matrix and inverse-transpose normal matrix. A world-space gizmo or
   keep-world reparent that cannot decompose into local TRS fails atomically with
   a diagnostic. A keep-local reparent preserves local TRS. Delete defaults to the
-  full subtree through one transaction; removing only a parent requires an
-  explicit reparent operation first.
+  full subtree through one atomic operation; removing only a parent requires an
+  explicit reparent operation first. Authoring transactions/history arrive in 09.
 - Nonzero negative/nonuniform scales are allowed for static renderable entities;
   mirrored determinants reverse culling and tangent handedness. Reject singular
-  or near-singular scale (absolute local component below `1e-6`). Initial rigid
-  bodies are scene roots with positive uniform scale; collider dimensions bake
+  or near-singular scale (absolute local component below `1e-6`). At physics
+  integration, initial rigid bodies are scene roots with positive uniform scale; collider dimensions bake
   that scale. Parenting, shear and negative/nonuniform rigid-body scale reject
-  explicitly. This restriction is checked in editor, commands and Lua.
+  explicitly. Those physics restrictions are implemented with the owning physics,
+  editor, command and Lua increments; 07b adds no rigid bodies.
+
+07b implements the [Name/Transform and hierarchy contract](../transforms.md) in
+EngineCore. Centrally configured GLM supplies double local translation, quaternion
+rotation and scale. Inputs are finite, quaternions are normalized and canonically
+signed, and every affected cached world matrix is validated before mutation.
+World shear is retained; keep-world reparenting requires representable local TRS
+and checks descendant matrix preservation at the fixed documented tolerance.
+These matrices are in a common scene-local frame, not a global MMORPG location.
+07c supplies component schemas and bounded revisioned semantic inspection.
 
 ## Seamless world positions and internal partitions
 
@@ -44,8 +54,8 @@ internal partitions, not player-visible zone boundaries or mandatory loading
 screens. This does not promise an unbounded world or that every player shares
 one process. M05 defines finite supported world extents and partition budgets.
 
-Before assignment 07 fixes transform storage, distinguish global world location
-from a local transform: world ID, integer cell coordinates and a normalized
+Global world location remains distinct from a local Transform: world ID,
+integer cell coordinates and a normalized
 double-precision offset within that cell. The cell size, integer bounds, offset
 range and canonical boundary rounding are versioned schema decisions with
 round-trip tests. Global position calculations use this cell-plus-double-offset
@@ -56,8 +66,9 @@ vector. Spatial cells remain stable when region authority is reassigned.
 int64 storage bounded to [-2^31, 2^31-1], finite canonical double offsets in
 [0, 1024), positive zero and checked round-to-nearest arithmetic. See the
 [scene contract](../scene-contracts.md) for tested boundary rounding and failure
-rules. This representation limit is not M05's supported content extent. Transform
-TRS is 07b, schema metadata is 07c, and serialization remains assignment 08.
+rules. This representation limit is not M05's supported content extent. 07b's
+local TRS and hierarchy do not replace this representation or add origin mapping;
+schema metadata is 07c, and serialization remains assignment 08.
 
 Rendering and Jolt operate on bounded single-precision coordinates relative to
 explicit origins. The conversion records world/cell and origin generation;
@@ -225,6 +236,15 @@ buffered contact/trigger events in documented stable pair/event order; then comm
 deferred structural changes. Input sequencing, cutoff and deterministic queue
 ordering are specified in M02/M04, not inferred from packet arrival races.
 Publish immutable replication/render observations after the commit boundary.
+
+The implemented 07b scene owner is a CPU mutation foundation for these later
+simulation phases. Its bounded FIFO owns deferred Name/Transform/reparent inputs
+and applies each operation at the explicit boundary, with its own outcome and one
+revision increment for an actual change. Visits permit inspection and enqueueing
+only; failed visitors cancel their own newly queued requests. This is not 09's
+atomic multi-operation authoring transaction or a server gameplay scheduler.
+07b destruction takes effect when its operation commits; the script-specific
+pending-destruction behavior below belongs to the later script lifecycle.
 
 Script removal requests mark handles pending destruction immediately; subsequent
 access fails while storage removal and destruction callbacks wait for the safe

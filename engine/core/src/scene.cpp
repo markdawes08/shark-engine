@@ -10,6 +10,7 @@
 #include <limits>
 #include <map>
 #include <thread>
+#include <type_traits>
 #include <utility>
 
 namespace shark {
@@ -38,15 +39,40 @@ struct Scene::Impl {
     struct Record {
         EntityIdentity identity;
         std::optional<AuthorityStamp> authority;
+        Name name;
+        Transform transform;
+        std::optional<EntityHandle> parent;
+        std::vector<EntityHandle> children;
+        math::Mat4 world;
+        std::size_t depth;
     };
     struct Slot {
         entt::entity entity{entt::null};
         std::uint64_t generation{1};
         bool retired{false};
     };
+    struct Rename {
+        EntityHandle handle;
+        Name name;
+    };
+    struct ChangeTransform {
+        EntityHandle handle;
+        Transform transform;
+    };
+    struct ChangeParent {
+        EntityHandle handle;
+        std::optional<EntityHandle> parent;
+        ReparentMode mode;
+    };
+    using Mutation = std::variant<EntitySeed, EntityHandle, Rename, ChangeTransform, ChangeParent>;
     struct Pending {
         SceneMutationTicket ticket;
-        std::variant<EntitySeed, EntityHandle> mutation;
+        Mutation mutation;
+    };
+    struct WorldUpdate {
+        EntityHandle handle;
+        math::Mat4 world;
+        std::size_t depth;
     };
 
     SceneScope scope;
@@ -105,6 +131,12 @@ struct Scene::Impl {
         }
         return {};
     }
+    std::optional<AuthorityStamp> seed_authority(const EntitySeed& seed) const {
+        if (const auto* region = std::get_if<RegionSceneScope>(&scope)) {
+            return region->authority;
+        }
+        return seed.replica_authority;
+    }
     Result<std::size_t> checked_slot(EntityHandle handle) const {
         if (handle.scene_instance != instance || handle.generation == 0 ||
             handle.slot >= slots.size()) {
@@ -117,6 +149,143 @@ struct Scene::Impl {
         }
         return static_cast<std::size_t>(handle.slot);
     }
+    Record& record(EntityHandle handle) {
+        return registry.get<Record>(slots[handle.slot].entity);
+    }
+    const Record& record(EntityHandle handle) const {
+        return registry.get<Record>(slots[handle.slot].entity);
+    }
+    Result<void> check_revision() const {
+        if (revision == std::numeric_limits<std::uint64_t>::max()) {
+            return scene_error(ErrorCode::conflict, "scene revision capacity exhausted");
+        }
+        return {};
+    }
+    Error contextualize(Error error, EntityHandle handle, const char* operation) const {
+        error.context.operation = operation;
+        if (checked_slot(handle)) {
+            return entity_error(std::move(error), operation, record(handle).identity);
+        }
+        return error;
+    }
+    Result<void> finish_change(Result<EntityHandle> result, EntityHandle handle,
+                               const char* operation) const {
+        if (!result) {
+            return contextualize(std::move(result).error(), handle, operation);
+        }
+        return {};
+    }
+    Result<void> check_parent(std::optional<EntityHandle> parent,
+                              const std::optional<AuthorityStamp>& authority) const {
+        if (parent) {
+            if (auto checked = checked_slot(*parent); !checked) {
+                return checked.error();
+            }
+            if (record(*parent).authority != authority) {
+                return scene_error(ErrorCode::conflict,
+                                   "parent must have the same authority incarnation");
+            }
+        }
+        return {};
+    }
+    Result<void> check_parent_request(const ChangeParent& request) const {
+        if (auto checked = checked_slot(request.handle); !checked) {
+            return checked.error();
+        }
+        if (request.mode != ReparentMode::keep_local && request.mode != ReparentMode::keep_world) {
+            return scene_error(ErrorCode::invalid_argument, "unsupported reparent mode");
+        }
+        if (auto checked = check_parent(request.parent, record(request.handle).authority);
+            !checked) {
+            return checked;
+        }
+        for (auto ancestor = request.parent; ancestor; ancestor = record(*ancestor).parent) {
+            if (*ancestor == request.handle) {
+                return scene_error(ErrorCode::conflict, "reparent would create a hierarchy cycle");
+            }
+        }
+        return {};
+    }
+    Result<WorldUpdate> prepare_seed(EntitySeed& seed) const {
+        if (auto checked = check_seed(seed); !checked) {
+            return checked.error();
+        }
+        if (auto checked = validate_name(seed.name); !checked) {
+            return checked.error();
+        }
+        auto canonical = canonicalize_transform(seed.transform);
+        if (!canonical) {
+            return canonical.error();
+        }
+        seed.transform = canonical.value();
+        if (auto checked = check_parent(seed.parent, seed_authority(seed)); !checked) {
+            return checked.error();
+        }
+        const auto depth = seed.parent ? record(*seed.parent).depth + 1 : 1;
+        if (depth > limits.max_hierarchy_depth) {
+            return scene_error(ErrorCode::conflict, "scene hierarchy depth exhausted");
+        }
+        auto local = transform_matrix(seed.transform);
+        if (!local) {
+            return local.error();
+        }
+        auto world = seed.parent ? record(*seed.parent).world * local.value() : local.value();
+        if (auto checked = validate_transform_matrix(world); !checked) {
+            return checked.error();
+        }
+        return WorldUpdate{{}, world, depth};
+    }
+    // Compute every affected descendant before publishing any component/link.
+    Result<std::vector<WorldUpdate>> prepare_subtree(EntityHandle root, const Transform& local,
+                                                     std::optional<EntityHandle> parent) const {
+        auto root_matrix = transform_matrix(local);
+        if (!root_matrix) {
+            return root_matrix.error();
+        }
+        try {
+            std::vector<WorldUpdate> updates;
+            updates.push_back(
+                {root, parent ? record(*parent).world * root_matrix.value() : root_matrix.value(),
+                 parent ? record(*parent).depth + 1 : 1});
+            for (std::size_t index = 0; index < updates.size(); ++index) {
+                const auto update = updates[index];
+                if (update.depth > limits.max_hierarchy_depth) {
+                    return scene_error(ErrorCode::conflict, "scene hierarchy depth exhausted");
+                }
+                if (auto checked = validate_transform_matrix(update.world); !checked) {
+                    return checked.error();
+                }
+                for (const auto child : record(update.handle).children) {
+                    auto child_local = transform_matrix(record(child).transform);
+                    if (!child_local) {
+                        return child_local.error();
+                    }
+                    updates.push_back(
+                        {child, update.world * child_local.value(), update.depth + 1});
+                }
+            }
+            return updates;
+        } catch (...) {
+            return scene_error(ErrorCode::execution_failed, "subtree validation allocation failed");
+        }
+    }
+    void publish_worlds(const std::vector<WorldUpdate>& updates) {
+        for (const auto& update : updates) {
+            auto& entity = record(update.handle);
+            entity.world = update.world;
+            entity.depth = update.depth;
+        }
+    }
+    void remove_child(EntityHandle parent, EntityHandle child) {
+        auto& children = record(parent).children;
+        children.erase(std::find(children.begin(), children.end(), child));
+    }
+    void append_child(EntityHandle parent, EntityHandle child) {
+        auto& children = record(parent).children;
+        children.push_back(child); // Capacity is reserved before publication.
+        std::sort(children.begin(), children.end(),
+                  [](EntityHandle left, EntityHandle right) { return left.slot < right.slot; });
+    }
     EntityReference reference_at(std::size_t index) const {
         const auto& slot = slots[index];
         const auto& record = registry.get<Record>(slot.entity);
@@ -126,8 +295,9 @@ struct Scene::Impl {
                 record.authority};
     }
     Result<EntityHandle> insert(EntitySeed seed) {
-        if (auto result = check_seed(seed); !result) {
-            return result.error();
+        auto prepared = prepare_seed(seed);
+        if (!prepared) {
+            return prepared.error();
         }
         if (identities.contains(seed.identity)) {
             return scene_error(ErrorCode::conflict,
@@ -149,20 +319,26 @@ struct Scene::Impl {
         entt::entity native = entt::null;
         bool appended = false;
         try {
+            if (seed.parent) {
+                auto& children = record(*seed.parent).children;
+                children.reserve(children.size() + 1);
+            }
             if (append) {
                 slots.emplace_back();
                 appended = true;
             }
-            auto authority = seed.replica_authority;
-            if (const auto* region = std::get_if<RegionSceneScope>(&scope)) {
-                authority = region->authority;
-            }
             native = registry.create();
-            registry.emplace<Record>(native, seed.identity, authority);
+            registry.emplace<Record>(native, seed.identity, seed_authority(seed),
+                                     std::move(seed.name), seed.transform, seed.parent,
+                                     std::vector<EntityHandle>{}, prepared.value().world,
+                                     prepared.value().depth);
             const EntityHandle handle{instance, static_cast<std::uint32_t>(index),
                                       slots[index].generation};
             identities.emplace(seed.identity, handle);
             slots[index].entity = native;
+            if (seed.parent) {
+                append_child(*seed.parent, handle);
+            }
             ++revision;
             return handle;
         } catch (...) {
@@ -180,18 +356,139 @@ struct Scene::Impl {
         if (!index) {
             return index.error();
         }
-        if (revision == std::numeric_limits<std::uint64_t>::max()) {
-            return scene_error(ErrorCode::conflict, "scene revision capacity exhausted");
+        if (auto checked = check_revision(); !checked) {
+            return checked.error();
         }
-        auto& slot = slots[index.value()];
-        identities.erase(registry.get<Record>(slot.entity).identity);
-        registry.destroy(slot.entity);
-        slot.entity = entt::null;
-        slot.retired = !detail::advance_entity_generation(slot.generation);
+        std::vector<EntityHandle> subtree;
+        try {
+            subtree.push_back(handle);
+            for (std::size_t cursor = 0; cursor < subtree.size(); ++cursor) {
+                const auto& children = record(subtree[cursor]).children;
+                subtree.insert(subtree.end(), children.begin(), children.end());
+            }
+        } catch (...) {
+            return scene_error(ErrorCode::execution_failed,
+                               "subtree destruction allocation failed");
+        }
+        if (const auto parent = record(handle).parent) {
+            remove_child(*parent, handle);
+        }
+        for (auto current = subtree.rbegin(); current != subtree.rend(); ++current) {
+            auto& slot = slots[current->slot];
+            identities.erase(registry.get<Record>(slot.entity).identity);
+            registry.destroy(slot.entity);
+            slot.entity = entt::null;
+            slot.retired = !detail::advance_entity_generation(slot.generation);
+        }
         ++revision;
         return handle;
     }
-    Result<SceneMutationTicket> enqueue(std::variant<EntitySeed, EntityHandle> mutation) {
+    Result<EntityHandle> rename(Rename change) {
+        if (auto checked = checked_slot(change.handle); !checked) {
+            return checked.error();
+        }
+        if (auto checked = validate_name(change.name); !checked) {
+            return checked.error();
+        }
+        auto& entity = record(change.handle);
+        if (entity.name == change.name) {
+            return change.handle;
+        }
+        if (auto checked = check_revision(); !checked) {
+            return checked.error();
+        }
+        entity.name = std::move(change.name);
+        ++revision;
+        return change.handle;
+    }
+    Result<EntityHandle> transform(ChangeTransform change) {
+        if (auto checked = checked_slot(change.handle); !checked) {
+            return checked.error();
+        }
+        auto& entity = record(change.handle);
+        if (entity.transform == change.transform) {
+            return change.handle;
+        }
+        auto canonical = canonicalize_transform(change.transform);
+        if (!canonical) {
+            return canonical.error();
+        }
+        if (entity.transform == canonical.value()) {
+            return change.handle;
+        }
+        if (auto checked = check_revision(); !checked) {
+            return checked.error();
+        }
+        auto updates = prepare_subtree(change.handle, canonical.value(), entity.parent);
+        if (!updates) {
+            return updates.error();
+        }
+        entity.transform = canonical.value();
+        publish_worlds(updates.value());
+        ++revision;
+        return change.handle;
+    }
+    Result<EntityHandle> reparent(ChangeParent change) {
+        if (auto checked = check_parent_request(change); !checked) {
+            return checked.error();
+        }
+        auto& entity = record(change.handle);
+        if (entity.parent == change.parent) {
+            return change.handle;
+        }
+        if (auto checked = check_revision(); !checked) {
+            return checked.error();
+        }
+        auto local = entity.transform;
+        if (change.mode == ReparentMode::keep_world) {
+            auto matrix = entity.world;
+            if (change.parent) {
+                auto inverse = inverse_transform_matrix(record(*change.parent).world);
+                if (!inverse) {
+                    return inverse.error();
+                }
+                matrix = inverse.value() * matrix;
+            }
+            auto decomposed = decompose_transform(matrix);
+            if (!decomposed) {
+                return decomposed.error();
+            }
+            local = decomposed.value();
+        }
+        auto updates = prepare_subtree(change.handle, local, change.parent);
+        if (!updates) {
+            return updates.error();
+        }
+        if (change.mode == ReparentMode::keep_world) {
+            for (const auto& update : updates.value()) {
+                if (!transform_matrices_equivalent(update.world, record(update.handle).world)) {
+                    return scene_error(
+                        ErrorCode::invalid_argument,
+                        "keep-world reparent exceeds the world preservation tolerance");
+                }
+            }
+        }
+        try {
+            if (change.parent) {
+                auto& children = record(*change.parent).children;
+                children.reserve(children.size() + 1);
+            }
+        } catch (...) {
+            return scene_error(ErrorCode::execution_failed, "parent link allocation failed");
+        }
+        if (entity.parent) {
+            remove_child(*entity.parent, change.handle);
+        }
+        if (change.parent) {
+            append_child(*change.parent, change.handle);
+        }
+        entity.parent = change.parent;
+        entity.transform = local;
+        publish_worlds(updates.value());
+        ++revision;
+        return change.handle;
+    }
+    Result<SceneMutationTicket> enqueue(Mutation mutation) {
         if (pending.size() >= limits.max_pending_mutations || next_ticket == 0) {
             return scene_error(ErrorCode::conflict,
                                "scene deferred queue or ticket capacity exhausted");
@@ -209,7 +506,8 @@ struct Scene::Impl {
 
 Result<std::unique_ptr<Scene>> Scene::create(SceneScope scope, SceneLimits limits) {
     if (limits.max_entities == 0 || limits.max_entities > 1'000'000 ||
-        limits.max_pending_mutations == 0 || limits.max_pending_mutations > 65'536) {
+        limits.max_pending_mutations == 0 || limits.max_pending_mutations > 65'536 ||
+        limits.max_hierarchy_depth == 0 || limits.max_hierarchy_depth > 1024) {
         return scene_error(ErrorCode::invalid_configuration,
                            "scene bounds must be within supported storage limits");
     }
@@ -255,6 +553,53 @@ Result<void> Scene::destroy_entity(EntityHandle handle) {
     }
     auto result = impl_->erase(handle);
     return result ? Result<void>{} : Result<void>{result.error()};
+}
+
+Result<void> Scene::set_name(EntityHandle handle, Name name) {
+    if (auto checked = impl_->check_immediate(); !checked) {
+        return checked;
+    }
+    return impl_->finish_change(impl_->rename({handle, std::move(name)}), handle, "scene.set-name");
+}
+
+Result<void> Scene::set_transform(EntityHandle handle, Transform transform) {
+    if (auto checked = impl_->check_immediate(); !checked) {
+        return checked;
+    }
+    return impl_->finish_change(impl_->transform({handle, transform}), handle,
+                                "scene.set-transform");
+}
+
+Result<void> Scene::reparent(EntityHandle handle, std::optional<EntityHandle> parent,
+                             ReparentMode mode) {
+    if (auto checked = impl_->check_immediate(); !checked) {
+        return checked;
+    }
+    return impl_->finish_change(impl_->reparent({handle, parent, mode}), handle, "scene.reparent");
+}
+
+Result<SceneEntityState> Scene::entity_state(EntityHandle handle) const {
+    if (auto checked = impl_->check_live(); !checked) {
+        return checked.error();
+    }
+    auto index = impl_->checked_slot(handle);
+    if (!index) {
+        return index.error();
+    }
+    try {
+        const auto& entity = impl_->record(handle);
+        return SceneEntityState{impl_->reference_at(index.value()),
+                                entity.name,
+                                entity.transform,
+                                entity.parent,
+                                entity.children,
+                                entity.world,
+                                entity.depth};
+    } catch (...) {
+        return impl_->contextualize(
+            scene_error(ErrorCode::execution_failed, "entity state copy allocation failed"), handle,
+            "scene.entity-state");
+    }
 }
 
 Result<EntityReference> Scene::reference(EntityHandle handle) const {
@@ -312,7 +657,7 @@ Result<SceneMutationTicket> Scene::defer_create(EntitySeed seed) {
     if (auto result = impl_->check_live(); !result) {
         return entity_error(std::move(result).error(), "scene.defer-create", seed.identity);
     }
-    if (auto result = impl_->check_seed(seed); !result) {
+    if (auto result = impl_->prepare_seed(seed); !result) {
         return entity_error(std::move(result).error(), "scene.defer-create", seed.identity);
     }
     const auto identity = seed.identity;
@@ -333,6 +678,45 @@ Result<SceneMutationTicket> Scene::defer_destroy(EntityHandle handle) {
     return impl_->enqueue(handle);
 }
 
+Result<SceneMutationTicket> Scene::defer_set_name(EntityHandle handle, Name name) {
+    if (auto checked = impl_->check_live(); !checked) {
+        return checked.error();
+    }
+    if (auto checked = impl_->checked_slot(handle); !checked) {
+        return checked.error();
+    }
+    if (auto checked = validate_name(name); !checked) {
+        return impl_->contextualize(std::move(checked).error(), handle, "scene.defer-set-name");
+    }
+    return impl_->enqueue(Impl::Rename{handle, std::move(name)});
+}
+
+Result<SceneMutationTicket> Scene::defer_set_transform(EntityHandle handle, Transform transform) {
+    if (auto checked = impl_->check_live(); !checked) {
+        return checked.error();
+    }
+    if (auto checked = impl_->checked_slot(handle); !checked) {
+        return checked.error();
+    }
+    auto canonical = canonicalize_transform(transform);
+    if (!canonical) {
+        return impl_->contextualize(std::move(canonical).error(), handle,
+                                    "scene.defer-set-transform");
+    }
+    return impl_->enqueue(Impl::ChangeTransform{handle, canonical.value()});
+}
+
+Result<SceneMutationTicket>
+Scene::defer_reparent(EntityHandle handle, std::optional<EntityHandle> parent, ReparentMode mode) {
+    if (auto checked = impl_->check_live(); !checked) {
+        return checked.error();
+    }
+    if (auto checked = impl_->check_parent_request({handle, parent, mode}); !checked) {
+        return impl_->contextualize(std::move(checked).error(), handle, "scene.defer-reparent");
+    }
+    return impl_->enqueue(Impl::ChangeParent{handle, parent, mode});
+}
+
 Result<SceneMutationReport> Scene::apply_deferred() {
     if (auto result = impl_->check_live(); !result) {
         return result.error();
@@ -347,18 +731,42 @@ Result<SceneMutationReport> Scene::apply_deferred() {
         return scene_error(ErrorCode::execution_failed, "deferred outcome allocation failed");
     }
     for (const auto& pending : impl_->pending) {
-        if (const auto* seed = std::get_if<EntitySeed>(&pending.mutation)) {
-            auto result = impl_->insert(*seed);
-            if (!result) {
-                result = entity_error(std::move(result).error(), "scene.apply-deferred.create",
-                                      seed->identity);
-            }
-            report.outcomes.push_back(
-                {pending.ticket, SceneMutationKind::create, std::move(result)});
-        } else {
-            report.outcomes.push_back({pending.ticket, SceneMutationKind::destroy,
-                                       impl_->erase(std::get<EntityHandle>(pending.mutation))});
-        }
+        auto outcome = std::visit(
+            [&](const auto& mutation) -> SceneMutationOutcome {
+                using Type = std::decay_t<decltype(mutation)>;
+                if constexpr (std::is_same_v<Type, EntitySeed>) {
+                    auto result = impl_->insert(mutation);
+                    if (!result) {
+                        result = entity_error(std::move(result).error(),
+                                              "scene.apply-deferred.create", mutation.identity);
+                    }
+                    return {pending.ticket, SceneMutationKind::create, std::move(result)};
+                } else if constexpr (std::is_same_v<Type, EntityHandle>) {
+                    return {pending.ticket, SceneMutationKind::destroy, impl_->erase(mutation)};
+                } else {
+                    const auto perform = [&]() -> SceneMutationOutcome {
+                        if constexpr (std::is_same_v<Type, Impl::Rename>) {
+                            return {pending.ticket, SceneMutationKind::set_name,
+                                    impl_->rename(mutation)};
+                        } else if constexpr (std::is_same_v<Type, Impl::ChangeTransform>) {
+                            return {pending.ticket, SceneMutationKind::set_transform,
+                                    impl_->transform(mutation)};
+                        } else {
+                            return {pending.ticket, SceneMutationKind::reparent,
+                                    impl_->reparent(mutation)};
+                        }
+                    };
+                    auto result = perform();
+                    if (!result.result) {
+                        result.result =
+                            impl_->contextualize(std::move(result.result).error(), mutation.handle,
+                                                 "scene.apply-deferred");
+                    }
+                    return result;
+                }
+            },
+            pending.mutation);
+        report.outcomes.push_back(std::move(outcome));
     }
     impl_->pending.clear();
     report.revision_after = impl_->revision;

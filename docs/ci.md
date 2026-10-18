@@ -172,21 +172,30 @@ and fixed references without graphics; `shark.client.cube-cli` and
 07a adds `shark.core.scene` and `shark.core.world-position` to both ordinary and
 headless test builds (`cpu;unit;server`, seed 1337, 20-second timeouts). They cover
 scene ownership, checked identity and lifetime, bounded deferred mutation and
-canonical global coordinates. `shark.tooling.scene-dependencies`
-(`cpu;tooling;boundary;server`, 90-second timeout) accepts only the locked EnTT
-archive, proves disconnected local extraction, rejects source overrides and
-checks that Core still configures without a C compiler or client dependencies.
-Existing graphics-dependency fixtures receive that verified archive and continue
-to reject all client source overrides before population. No fixture downloads
-EnTT during CTest.
+canonical global coordinates. 07b adds `shark.core.transform` (20-second timeout)
+and `shark.core.hierarchy` (30-second timeout), with the same labels and seed.
+They exercise numerical conventions, validated Name/Transform values, hierarchy
+lifetime, atomic rejection and immediate/deferred reparenting.
 
-The headless closure checks compare EnTT's complete extracted source inventory
-with its pinned archive and verify the installed MIT notice. Runtime package
-tests also require the EnTT notice. Windows CPU/sanitizer, existing WSL
-CPU/headless and protected target builds qualify this checkpoint; the new CPU
-scene layer does not require repeating 06c's GPU acceptance. Full `REQ-07` remains
-NOT_RUN until 07c; see the [07 plan](roadmap/scene-plan.md) and
-[07a handoff](handoffs/07a-entity-ownership.md).
+`shark.tooling.scene-dependencies` (`cpu;tooling;boundary;server`, 90-second
+timeout) accepts only the locked EnTT and GLM archives, proves disconnected local
+extraction, rejects source overrides and checks that Core still configures without
+a C compiler or client dependencies. EnTT includes stay private; the approved
+public `SharkMath` interface propagates GLM includes and its five central compile
+definitions. Real C++ fixture compilations accept the wrapper with central
+definitions and defaults, reject a prior GLM include, and reject each of the 20
+incompatible configuration definitions. Existing graphics-dependency fixtures
+receive both verified archives and continue to reject all client source overrides
+before population. No fixture downloads dependencies during CTest.
+
+The headless closure checks compare both complete extracted source inventories
+with their pinned archives and verify both installed notices. Runtime package
+tests also require the EnTT and GLM notices. Windows CPU/sanitizer, existing WSL
+CPU/headless and protected target builds qualify these checkpoints; the CPU scene
+layer does not require repeating 06c's GPU acceptance. Full `REQ-07` remains
+NOT_RUN until 07c; see the [07 plan](roadmap/scene-plan.md),
+[07a handoff](handoffs/07a-entity-ownership.md) and
+[07b handoff](handoffs/07b-transform-hierarchy.md).
 
 ## Locked tools and hosted-image limits
 
@@ -286,14 +295,15 @@ claim a read-only runtime root.
 installed package inventory, image provenance and Python/tool pins. It rejects
 mapped GPU/audio devices and display sockets and clears display/audio-session
 environment variables. Before configuring, it explicitly prepares the exact EnTT
-archive under the writable build root and passes `SHARK_ENTT_ARCHIVE` to each
-preset. This uses [the shared locked archive helper](../tools/entt_dependency.py),
+and GLM archives under the writable build root and passes `SHARK_ENTT_ARCHIVE` and
+`SHARK_GLM_ARCHIVE` to each preset. This uses
+[the shared locked archive helper](../tools/core_dependencies.py),
 not an installed-package or source-tree fallback. It then runs these stages in
 fresh build directories:
 
 1. `server-only`: GCC Release with Client, Editor and Tests disabled, dependency
-   network fetching disabled (verified local EnTT extraction only), explicit
-   Server/Core boundary check, component install including the EnTT MIT notice,
+   network fetching disabled (verified local EnTT/GLM extraction only), explicit
+   Server/Core boundary check, component install including both dependency notices,
    source/build/package closure inspection and a finite installed-Server run.
 2. `server-debug`: GCC Debug with the Core/Server Catch2 and process tests;
    CTest requires a nonempty selection and writes JUnit.
@@ -309,10 +319,11 @@ unsetting display variables on a desktop runner alone is insufficient.
 Closure checks inspect CMake's generated graph and file-api data, the compiler's
 actual source/header dependencies and linker inputs, installed package contents,
 and ELF direct/transitive library dependencies. The only permitted dependency
-source tree in `server-only` is the exactly pinned EnTT population; every file is
-compared with the verified archive. Its header-only interface adds no ELF library.
-The installed package contains the executable and exact `licenses/EnTT/LICENSE`.
-Negative fixtures exercise changed/missing EnTT inputs, extra dependency trees
+source trees in `server-only` are the exactly pinned EnTT and GLM populations;
+every file is compared with its verified archive. Their header interfaces add no
+ELF libraries. The installed package contains the executable and exact
+`licenses/EnTT/LICENSE` and `licenses/GLM/copying.txt` notices.
+Negative fixtures exercise changed/missing EnTT and GLM inputs, extra dependency trees
 and presentation/authoring leaks. Catch2 may be fetched for test-enabled
 configurations; it must not enter `server-only` or the installed package. These
 checks qualify an idle process lifecycle and dependency boundary, not world

@@ -141,8 +141,16 @@ precompiled bundle preparation, machine-readable completion and compiler-free
 Runtime distribution. The [06c handoff](../handoffs/06c-window-distribution.md)
 records the local evidence. These diagnostic paths add no scene-authoring API;
 assignment 07 follows the [scene checkpoints](scene-plan.md). 07a provides the
-CPU identity/lifetime foundation; 07c adds schema discovery and bounded immutable
-inspection. This does not introduce a terminal command or editor adapter early.
+CPU identity/lifetime foundation. 07b is complete under the current-machine scope:
+mandatory Name/Transform, validated hierarchy and mutation use that owner. Its
+[handoff](../handoffs/07b-transform-hierarchy.md) and
+[receipt](../coverage/evidence/07b-transform-hierarchy.json) record 362 passing CPU
+CTests and protected dependency/package qualification. The
+[transform contract](../transforms.md) specifies owned state
+copies, checked handles, no-op revisions and failure rollback for the shared C++
+foundation. 07c is next for schema discovery and bounded immutable revisioned
+inspection; full REQ-07 remains NOT_RUN. Transactions, terminal commands and editor
+adapters retain their owners in 09, 15 and 16.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and
@@ -153,8 +161,9 @@ accessible to a human or terminal agent, with bounded run options and diagnostic
 JSON lines for F6/F7 sample pause/step controls. Graphical launches require an
 explicit device capability; help and argument validation remain device-free.
 Deterministic CPU tests inject input and time without an editor/display. These controls are neither
-game-authoring commands nor a live-world protocol; no scene renderer or game-authoring
-UI/API exists. Full `REQ-04` is PASS after final local qualification. The
+game-authoring commands nor a live-world protocol; scene rendering and user-facing
+authoring UI/CLI adapters remain planned. EngineCore's scene/component C++ APIs
+do not expose those interfaces. Full `REQ-04` is PASS after final local qualification. The
 [final local handoff](../handoffs/02d-final-verification.md) preserves full local
 Windows lifecycle runs, bounded portable terminal launchers and isolated Ubuntu
 CPU/package checks. Former external GPU and independent clean-machine gates are
@@ -162,6 +171,7 @@ outside current scope, not passed. Existing hosted CI is supplemental and does
 not block local increments. These remain developer fixtures, not public
 game-authoring commands. The
 [graphics plan](graphics-plan.md) and [probe commands](../graphics-probe.md)
-provide noninteractive contributor diagnostics; game-authoring APIs remain future work.
+provide noninteractive contributor diagnostics; public authoring commands and
+protocol/editor adapters remain future work.
 No additional numbered chunk or change to product/player authority is necessary
 for this amendment.

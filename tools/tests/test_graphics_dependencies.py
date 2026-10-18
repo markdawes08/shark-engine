@@ -21,7 +21,9 @@ class GraphicsDependencyTests(unittest.TestCase):
                 f"-DCMAKE_CXX_COMPILER={OPTIONS.compiler}",
                 "-DSHARK_BUILD_EDITOR=OFF", "-DSHARK_BUILD_GRAPHICS_PROBE=ON",
                 # A missed early rejection must fail offline, never fetch on a test host.
-                "-DFETCHCONTENT_FULLY_DISCONNECTED=ON", *arguments,
+                "-DFETCHCONTENT_FULLY_DISCONNECTED=ON",
+                f"-DSHARK_ENTT_ARCHIVE={OPTIONS.entt_archive}",
+                f"-DSHARK_GLM_ARCHIVE={OPTIONS.glm_archive}", *arguments,
             ]
             result = subprocess.run(command, text=True, capture_output=True, timeout=30)
             output = result.stdout + result.stderr
@@ -102,6 +104,7 @@ class GraphicsDependencyTests(unittest.TestCase):
                     "-DSHARK_BUILD_GRAPHICS_PROBE=OFF",
                     "-DFETCHCONTENT_FULLY_DISCONNECTED=ON",
                     f"-DSHARK_ENTT_ARCHIVE={OPTIONS.entt_archive}",
+                    f"-DSHARK_GLM_ARCHIVE={OPTIONS.glm_archive}",
                 ]
                 if client:
                     command.append("-DSHARK_NATIVE_WINDOW=OFF")
@@ -109,7 +112,7 @@ class GraphicsDependencyTests(unittest.TestCase):
                 output = result.stdout + result.stderr
                 self.assertEqual(result.returncode, 0, output)
                 self.assertEqual({path.name for path in (build / "_deps").iterdir()},
-                                 {"entt-src", "entt-build", "entt-subbuild"})
+                                 {"entt-src", "entt-build", "entt-subbuild", "glm-src", "glm-build", "glm-subbuild"})
                 cache = (build / "CMakeCache.txt").read_text(encoding="utf-8")
                 self.assertIn("SHARK_NATIVE_WINDOW:BOOL=OFF", cache)
                 self.assertIn("SHARK_NATIVE_GRAPHICS:BOOL=OFF", cache)
@@ -121,5 +124,6 @@ if __name__ == "__main__":
     parser.add_argument("--ninja", required=True)
     parser.add_argument("--compiler", required=True)
     parser.add_argument("--entt-archive", type=Path, required=True)
+    parser.add_argument("--glm-archive", type=Path, required=True)
     OPTIONS, remaining = parser.parse_known_args()
     unittest.main(argv=[__file__, *remaining])

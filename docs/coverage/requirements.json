@@ -145,7 +145,7 @@
         "Engine-owned schema metadata and immutable revisioned queries support semantic terminal inspection: property types, defaults, ranges, units, enums and mutability never require viewport or EnTT access."
       ],
       "planned_fixture": "SceneHandles, HierarchyMutation and TransformConventions fixtures; FeatureWorld/Hierarchy and later Lua/GPU stale-reference fixtures connect as their layers land.",
-      "verification": {"status": "NOT_RUN", "reason": "07a is complete under current-machine scope: private EnTT, scoped identities, checked scene/slot generations and replica references, bounded deferred mutation and canonical world coordinates. Windows Debug/Release/ASan each58, WSL CPU client Debug/ASan+UBSan each51 and WSL Server Debug/ASan+UBSan each36 CTests pass (348 total), with protected Runtime/Server builds, exact dependency/license closure and isolated package launches. Evidence: docs/coverage/evidence/07a-entity-ownership.json and docs/handoffs/07a-entity-ownership.md. Full REQ-07 remains NOT_RUN: 07b Name/Transform hierarchy is next, then 07c schemas and bounded revisioned inspection under docs/roadmap/scene-plan.md. No authoring UI, network protocol or MMO capacity is claimed."}
+      "verification": {"status": "NOT_RUN", "reason": "07a and 07b are complete under current-machine scope. 07b adds mandatory Name/Transform values, centrally configured pinned GLM, validated hierarchy and atomic immediate/deferred subtree mutation. Windows Debug/Release/ASan each pass 60 CTests, WSL CPU client Debug/ASan+UBSan each 53 and WSL Server Debug/ASan+UBSan each 38 (362 total), with protected Runtime/Server builds, exact dependency/license closure and isolated launches. Evidence: docs/coverage/evidence/07b-transform-hierarchy.json and docs/handoffs/07b-transform-hierarchy.md. Full REQ-07 remains NOT_RUN until 07c schemas and bounded revisioned inspection under docs/roadmap/scene-plan.md. No authoring UI, network protocol or MMO capacity is claimed."}
     },
     {
       "id": "REQ-08",
@@ -809,6 +809,33 @@
   "implemented_surface": {
     "features": [
       {
+        "id": "core.transform-hierarchy",
+        "name": "Validated local TRS, authority-scoped hierarchy and atomic subtree mutations",
+        "requirement_ids": [
+          "REQ-07"
+        ],
+        "test_ids": [
+          "shark.core.hierarchy",
+          "shark.core.transform",
+          "shark.tooling.scene-dependencies",
+          "shark.tooling.server-closure",
+          "shark.tooling.runtime-package"
+        ],
+        "test_sources": [
+          "tests/core_hierarchy_tests.cpp",
+          "tests/core_transform_tests.cpp",
+          "tools/tests/test_scene_dependencies.py",
+          "tools/tests/test_server_closure.py",
+          "tools/tests/test_runtime_package.py"
+        ],
+        "fixtures": [
+          "tests/core_hierarchy_tests.cpp",
+          "tests/core_transform_tests.cpp",
+          "tools/core_dependencies.py"
+        ],
+        "fixture_reason": "CPU fixtures test independent matrix expectations, parent/child consistency, both reparent policies, authority isolation, cycles, deep iterative deletion, finite/scale/shear rejection and unchanged state after failure. Shared immediate/deferred mutation uses checked lifetime and one writer. Dependency fixtures compile public math consumers, reject conflicting GLM configuration and verify exact source/license closure. 07c adds schemas, 08 persistence, 09 transactions, 10 FeatureWorld, 15 terminal and 16/17 editor adapters; no renderer, world-origin, physics or distributed MMO claim."
+      },
+      {
         "id": "core.scene-ownership",
         "name": "Scoped scene ownership, checked entity lifetime and global-cell coordinates",
         "requirement_ids": [
@@ -834,7 +861,7 @@
           "tools/entt_dependency.py",
           "tools/check_server_closure.py"
         ],
-        "fixture_reason": "CPU fixtures exercise scoped authored/region/replica lifetime, stale references, checked generations and exhaustion, owner-thread rules, bounded deferred mutation and callback failure, and canonical coordinate arithmetic without EnTT or viewport access. Dependency fixtures check private header-only integration, exact source identity and package notices. This foundation has no Name/Transform schema or authoring command yet; 07b/07c add those surfaces and assignment 10 connects FeatureWorld. No networking, distributed handoff or MMO capacity is implied."
+        "fixture_reason": "CPU fixtures exercise scoped authored/region/replica lifetime, stale references, checked generations and exhaustion, owner-thread rules, bounded deferred mutation and callback failure, and canonical coordinate arithmetic without EnTT or viewport access. Dependency fixtures check private header-only integration, exact source identity and package notices. 07b adds mandatory Name/Transform values and hierarchy through the same writer; 07c adds schemas and bounded revisioned inspection. Authoring commands retain assignment 09 and FeatureWorld connects in assignment 10. No networking, distributed handoff or MMO capacity is implied."
       },
       {
         "id": "client.window-cube-distribution",
@@ -1147,7 +1174,45 @@
         "fixture_reason": "CPU tests reject invalid package inputs, PE/ELF dependency leaks, stale hashes and unsafe paths, and verify bounded native-child cleanup and failure-progress retention. Explicit package/GPU commands verify relocated execution, readbacks and lifecycle outside scenes. The preserved receipts support ADR0010's current-PC scope; relocation and SDK-free WSL userspace do not establish independent clean-machine or retired hardware-row qualification. FeatureWorld starts in 10."
       }
     ],
-    "components": [],
+    "components": [
+      {
+        "id": "component.name",
+        "name": "Name",
+        "requirement_ids": [
+          "REQ-07"
+        ],
+        "test_ids": [
+          "shark.core.hierarchy"
+        ],
+        "test_sources": [
+          "tests/core_hierarchy_tests.cpp"
+        ],
+        "fixtures": [
+          "tests/core_hierarchy_tests.cpp"
+        ],
+        "fixture_reason": "Mandatory owned Name is validated and mutated through EngineCore Scene, including UTF-8 byte/control limits, repeated names, no-op revisions, deferred ownership and rollback. 07c adds schema metadata; assignments 08, 09, 10, 15, 16/17 and 19 connect persistence, transactions, FeatureWorld, terminal/editor adapters and selected Lua as those layers land."
+      },
+      {
+        "id": "component.transform",
+        "name": "Transform",
+        "requirement_ids": [
+          "REQ-07"
+        ],
+        "test_ids": [
+          "shark.core.transform",
+          "shark.core.hierarchy"
+        ],
+        "test_sources": [
+          "tests/core_transform_tests.cpp",
+          "tests/core_hierarchy_tests.cpp"
+        ],
+        "fixtures": [
+          "tests/core_transform_tests.cpp",
+          "tests/core_hierarchy_tests.cpp"
+        ],
+        "fixture_reason": "Mandatory double local TRS has finite and scale guards, normalized canonical quaternions, independent numeric oracles and validated scene hierarchy/world propagation. Invalid reparent/descendant results roll back atomically. 07c adds schema metadata; assignments 08, 09, 10, 15, 16/17, 19 and M05 connect persistence, transactions, FeatureWorld, terminal/editor adapters, selected Lua and world origins as those layers land. These are scene-local matrices, not global float positions or live physics bodies."
+      }
+    ],
     "commands": [],
     "lua_api": []
   }

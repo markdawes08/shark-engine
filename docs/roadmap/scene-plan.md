@@ -3,8 +3,11 @@
 Date: 2026-10-18. Starting revision: `9e08702` on `main`.
 Owner: `REQ-07`. Full assignment verification remains **NOT_RUN** until 07c.
 The current-machine scope and existing assignment order remain unchanged.
-**07a is complete. 07b is next.** The [07a handoff](../handoffs/07a-entity-ownership.md)
-records the 348 passing CPU CTests and protected dependency/package qualification.
+**07a and 07b are complete under the current-machine scope. 07c is next.**
+The [07a handoff](../handoffs/07a-entity-ownership.md) records its 348 passing CPU
+CTests. The [07b handoff](../handoffs/07b-transform-hierarchy.md) and
+[receipt](../coverage/evidence/07b-transform-hierarchy.json) record 362 passing CPU
+CTests with no skips and protected dependency/package qualification.
 
 ## 07a - Entity ownership and identity
 
@@ -27,16 +30,20 @@ out of public headers and public usage requirements. See the
 
 ## 07b - Name, Transform and hierarchy
 
-Add centrally configured GLM, Name and local TRS, validated parent/child ownership,
-cycle prevention and subtree deletion. Implement keep-local and keep-world
-reparenting, rejecting nonrepresentable local TRS rather than silently introducing
-shear. Reuse the existing scene writer and deferred boundary. Follow ADR 0005's
-meters, axes, handedness, quaternion/matrix and scale conventions.
+Implemented: centrally configured GLM, mandatory Name and local TRS, validated
+parent/child ownership, cycle prevention and atomic subtree deletion. Keep-local
+and keep-world reparenting reject nonrepresentable local TRS before publication.
+The existing scene writer, deferred queue and revision own these operations.
+The [transform contract](../transforms.md) applies ADR 0005's meters, axes,
+handedness, quaternion/matrix and scale conventions. Cached world matrices remain
+in the scene's local frame; global WorldPosition and future M05 origins are separate.
 
 Gate: parent/child consistency, cycles, stale parents, deletion, scene isolation,
 nonuniform/negative scale, nonfinite/degenerate transforms, matrix propagation and
 both reparent policies. Update independent lifetime tests and the future schema
-inputs without exposing EnTT. No physics body or live world handoff is implied.
+inputs without exposing EnTT. Current-machine CPU/sanitizer, dependency and
+package qualification is PASS in the linked handoff and receipt. No physics body
+or live world handoff is implied.
 
 ## 07c - Engine schemas and semantic inspection
 
@@ -46,7 +53,9 @@ for semantic inspection without a viewport or registry access. Complete REQ-07's
 coverage and qualification, including earlier lifetime/hierarchy behavior.
 
 Gate: schema/validation agreement, deterministic bounded query results, stale
-revision handling, owned snapshot lifetime and no third-party public API leakage.
-Register real implemented components; assignment 10 connects FeatureWorld.
+revision handling, owned snapshot lifetime and no EnTT or other backend leakage
+beyond the documented public math types.
+Extend the existing Name/Transform component entries with real schema/query
+coverage; assignment 10 connects FeatureWorld.
 Services/transactions, terminal adapters and editor UI remain owned by 09, 15 and
 16. M02 follows the completed 07 checkpoint set and adds transport/session behavior.

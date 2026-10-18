@@ -25,15 +25,24 @@ contracts. Do not invent export commands or treat a bootstrap launch as the
 acceptance gate for 14, 31 or 35. Add real commands when their owner implements them.
 
 M01 adds the `server-only` preset and `cmake --install build/server-only --prefix
-out/server-package --component Server` for an executable-only closure fixture.
+out/server-package --component Server` for a Server closure fixture.
 The minimal Ubuntu job independently inspects its source, link and ELF closure
 and starts the installed executable. It is not a game export or licensed release
 package; do not claim M08/35 acceptance from this bootstrap fixture.
-07a adds the private EnTT Core dependency and its MIT license to the fixture.
-Prepare the exact archive before a disconnected Server configure as described
-in [building](../../../docs/building.md). Source closure compares populated EnTT
-files with that archive; Server installation and Runtime notices must include
-its license. This addition does not qualify a shipping MMO package.
+07a adds the private EnTT Core dependency; 07b adds centrally configured GLM as
+the approved public math exception through `SharkMath` and `<shark/math.hpp>`.
+Prepare both exact archives with `python tools/core_dependencies.py --output
+out/dependency-cache` before a disconnected Server configure, then pass
+`SHARK_ENTT_ARCHIVE` and `SHARK_GLM_ARCHIVE` as described in
+[building](../../../docs/building.md#headless-server). Read-only source mounts
+require a writable archive directory and absolute input paths. Source closure
+compares every populated EnTT/GLM file with its verified archive; missing,
+changed or additional inputs fail. Server installation and Runtime notices must
+retain `licenses/EnTT/LICENSE` and the complete `licenses/GLM/copying.txt` under
+GLM's selected MIT option. Both dependencies are header-only and add no shared
+library payload. The GLM exception does not authorize other public third-party
+types or presentation/authoring dependencies in Core. These additions do not
+qualify a shipping MMO package.
 
 Assignment 02d adds Windows/Linux graphics probe packages, documented in
 the [probe guide](../../../docs/graphics-probe.md). Use the explicit

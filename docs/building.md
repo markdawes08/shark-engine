@@ -80,12 +80,18 @@ describes immutable draw ownership and actual presentation-attachment capture.
 in EngineCore. `shark.core.scene` and `shark.core.world-position` use seed 1337
 and 20-second timeouts to exercise checked handles, scene/authority scope, bounded
 deferred mutation and canonical global-cell/local-coordinate values. They run
-in client-enabled and headless test builds. The private EnTT dependency does not
-provide authoring commands, networking or a running world simulation; Name,
-Transform and hierarchy follow in 07b under the [07 plan](roadmap/scene-plan.md).
-`shark.tooling.scene-dependencies` checks exact archive selection, offline
-population and the Core boundary without a C compiler or display (90-second
-timeout). The [07a handoff](handoffs/07a-entity-ownership.md) records qualification.
+in client-enabled and headless test builds. 07b adds Name, Transform and hierarchy
+under the [transform contract](transforms.md). `shark.core.transform` has a
+20-second timeout and `shark.core.hierarchy` has a 30-second timeout; both use
+seed 1337 and the `cpu;unit;server` labels. These CPU services do not provide
+authoring commands, networking or a running world simulation. Schemas and bounded
+semantic inspection follow in 07c under the [07 plan](roadmap/scene-plan.md).
+`shark.tooling.scene-dependencies` checks exact EnTT/GLM archive selection,
+offline population, private EnTT includes and public math configuration without a
+C compiler or display (90-second timeout). It compiles the math wrapper with the
+central definitions and defaults, then rejects prior GLM includes and conflicting
+configuration. The [07a handoff](handoffs/07a-entity-ownership.md) and
+[07b handoff](handoffs/07b-transform-hierarchy.md) record qualification.
 
 06a adds the CPU-only [offline shader builder](shader-pipeline.md).
 `shark.tooling.shader-pipeline` tests recipes, dependency tracking, artifact
@@ -270,6 +276,7 @@ scene-runner/export commands will be added with their owning increments.
 | `shark.core.contracts` | `cpu`, `unit` |
 | `shark.core.lifecycle`, `shark.core.timing`, `shark.core.work` | `cpu`, `unit`, `server` |
 | `shark.core.scene`, `shark.core.world-position` | `cpu`, `unit`, `server` |
+| `shark.core.transform`, `shark.core.hierarchy` | `cpu`, `unit`, `server` |
 | `shark.client.input` (client-enabled builds only) | `cpu`, `unit`, `client` |
 | `shark.client.window` (client-enabled builds only) | `cpu`, `unit`, `client` |
 | `shark.client.shader-bundle` (client-enabled builds only) | `cpu`, `unit`, `client` |
@@ -289,15 +296,27 @@ Dependency source inputs live in [dependencies.lock.json](../dependencies.lock.j
 Add immutable pins there before introducing new dependencies; source downloads
 must match declared hashes and must not bring in test/editor code at runtime.
 
-07a pins EnTT 4.0.0 at commit `85c6bba014049b5de8fad49d25424df2f1f6a8c1`.
-`SceneDependencies.cmake` uses FetchContent to obtain that exact archive and
-creates the C++20 `EnTT::EnTT` interface locally. Its SYSTEM headers are a private
-EngineCore usage requirement, never a public API or an include requirement of
-Runtime, Server or tests. The upstream CMake project is not configured: no C
-compiler, testbed, GUI, upstream tests, documentation or transitive downloads are
-introduced. [ADR 0002](architecture/0002-dependencies.md) records the pin and
-MIT license review. Ordinary builds can fetch a missing archive; the disconnected
-Server workflow below requires a verified archive prepared beforehand.
+07a pins EnTT 4.0.0 at commit `85c6bba014049b5de8fad49d25424df2f1f6a8c1`;
+07b pins GLM 1.0.3 at commit `8d1fd52e5ab5590e2c81768ace50c72bae28f2ed`.
+`SceneDependencies.cmake` and `MathDependencies.cmake` share the fixed Core archive
+helper and create C++20 header interfaces locally. `EnTT::EnTT` remains private to
+EngineCore: its SYSTEM headers are never a public API or an include requirement
+of Runtime, Server or tests. GLM is the documented public math exception.
+
+Consumers link `EngineCore` and include `<shark/math.hpp>`; the public `SharkMath`
+interface transitively supplies the locked GLM include path and
+`GLM_FORCE_RADIANS`, `GLM_FORCE_DEPTH_ZERO_TO_ONE`, `GLM_FORCE_EXPLICIT_CTOR`,
+`GLM_FORCE_CTOR_INIT` and `GLM_FORCE_PURE`. The wrapper is the single GLM include
+point, supplies those defaults for direct header consumers and rejects prior GLM
+setup or incompatible definitions. Math uses right-handed, packed scalar double
+values; see [the transform contract](transforms.md). Do not serialize GLM object
+memory or add per-target math configuration.
+
+Neither upstream CMake project is configured: no C compiler, upstream library,
+testbed, GUI, tests, documentation or transitive downloads are introduced.
+[ADR 0002](architecture/0002-dependencies.md) records both pins and the selected
+MIT licenses. Ordinary builds can fetch a missing archive; the disconnected
+Server workflow below requires both verified archives prepared beforehand.
 
 ## Opt-in graphics package builds
 
@@ -371,18 +390,19 @@ These presets never create EngineClient, Engine, Runtime, EngineTools or Editor:
 
 | Preset | Configuration | Tests / compiler |
 | --- | --- | --- |
-| `server-only` | Release | No tests, no network population; verified local EnTT archive, host compiler |
+| `server-only` | Release | No tests, no network population; verified local EnTT/GLM archives, host compiler |
 | `server-debug` | Debug | Catch2/CTest enabled, host compiler |
 | `server-asan-ubsan` | Debug, ASan + UBSan | Catch2/CTest enabled, Linux Clang |
 
-Prepare the exact EnTT archive before the first disconnected configure. This
-explicit command downloads only the locked bytes, or verifies an existing cache;
-configure itself makes no network request. On Windows from ordinary PowerShell:
+Prepare the exact EnTT and GLM archives before the first disconnected configure.
+This explicit command downloads only the locked bytes, or verifies an existing
+cache; configure itself makes no network request. On Windows from ordinary PowerShell:
 
 ```powershell
-& ./tools/windows_dev.ps1 -CommandArguments @('python','tools/entt_dependency.py','--output','out/dependency-cache')
+& ./tools/windows_dev.ps1 -CommandArguments @('python','tools/core_dependencies.py','--output','out/dependency-cache')
 $taskEnTT = (Resolve-Path 'out/dependency-cache/85c6bba014049b5de8fad49d25424df2f1f6a8c1.tar.gz').Path
-& ./tools/windows_dev.ps1 -CommandArguments @('cmake','--preset','server-only',"-DSHARK_ENTT_ARCHIVE=$taskEnTT")
+$taskGLM = (Resolve-Path 'out/dependency-cache/8d1fd52e5ab5590e2c81768ace50c72bae28f2ed.tar.gz').Path
+& ./tools/windows_dev.ps1 -CommandArguments @('cmake','--preset','server-only',"-DSHARK_ENTT_ARCHIVE=$taskEnTT","-DSHARK_GLM_ARCHIVE=$taskGLM")
 & ./tools/windows_dev.ps1 -CommandArguments @('cmake','--build','--preset','server-only')
 ./build/server-only/bin/Server.exe --version
 ./build/server-only/bin/Server.exe --run-for-ms 1000
@@ -392,27 +412,31 @@ $taskEnTT = (Resolve-Path 'out/dependency-cache/85c6bba014049b5de8fad49d25424df2
 In the existing WSL/Linux compiler environment:
 
 ```sh
-python tools/entt_dependency.py --output out/dependency-cache
-cmake --preset server-only -DSHARK_ENTT_ARCHIVE="$PWD/out/dependency-cache/85c6bba014049b5de8fad49d25424df2f1f6a8c1.tar.gz"
+python tools/core_dependencies.py --output out/dependency-cache
+cmake --preset server-only \
+  -DSHARK_ENTT_ARCHIVE="$PWD/out/dependency-cache/85c6bba014049b5de8fad49d25424df2f1f6a8c1.tar.gz" \
+  -DSHARK_GLM_ARCHIVE="$PWD/out/dependency-cache/8d1fd52e5ab5590e2c81768ace50c72bae28f2ed.tar.gz"
 cmake --build --preset server-only
 build/server-only/bin/Server --version
 build/server-only/bin/Server --run-for-ms 1000
 cmake --install build/server-only --prefix out/server-package --component Server
 ```
 
-For a read-only source mount, prepare the archive under a writable work directory
-and pass that absolute path instead. `SHARK_ENTT_ARCHIVE` must match the lock's
-SHA-256; arbitrary extracted source overrides are rejected. A previously populated
-standard FetchContent archive cache can also satisfy disconnected reconfiguration.
-`FETCHCONTENT_FULLY_DISCONNECTED` stays enabled in the preset; the EnTT helper
-permits only local verified archive extraction on that path. It does not enable
-remote fetching or acquire client dependencies.
+For a read-only source mount, prepare both archives under a writable work directory
+and pass their absolute paths instead. `SHARK_ENTT_ARCHIVE` and `SHARK_GLM_ARCHIVE`
+must each match the lock's SHA-256; arbitrary extracted source overrides are
+rejected. Previously populated standard FetchContent archive caches can also
+satisfy disconnected reconfiguration. `FETCHCONTENT_FULLY_DISCONNECTED` stays
+enabled in the preset; the Core helper permits only local verified archive
+extraction on that path. It does not enable remote fetching or acquire client
+dependencies.
 
-The install component contains `bin/Server` (or `bin/Server.exe`) and
-`licenses/EnTT/LICENSE`. It is a dependency-closure probe, not a shipping
-distribution; full deployment packaging remains future work. A clean package
-directory is required for closure verification. Runtime packages also retain the
-EnTT notice alongside their existing graphics/CRT notices.
+The install component contains `bin/Server` (or `bin/Server.exe`),
+`licenses/EnTT/LICENSE` and `licenses/GLM/copying.txt`. It is a dependency-closure
+probe, not a shipping distribution; full deployment packaging remains future work.
+A clean package directory is required for closure verification. Runtime packages also retain the
+EnTT and GLM notices alongside their existing graphics/CRT notices. GLM is used
+under its MIT option; preserve the complete upstream `copying.txt`.
 
 Server accepts no arguments for an idle lifetime, `--help`, `--version`, or
 `--run-for-ms N`. N is 1-6 ASCII decimal digits with a value of 1..600000;
@@ -442,8 +466,8 @@ Negative boundary fixtures exercise direct, transitive and generator-expression
 links/options, generated source/includes and manually added build dependencies.
 Compiler dependency records also reject hidden relative and generated-header
 inclusions, exercised by actual fixture compilations. The server-only source
-closure permits exactly the EnTT population and verifies every extracted source
-file against its SHA-256-verified archive, plus the installed MIT notice. Extra
+closure permits exactly the EnTT and GLM populations and verifies every extracted
+source file against its SHA-256-verified archive, plus both installed notices. Extra
 dependencies, changed headers and missing source/license files fail this gate. CMake
 cannot infer arbitrary behavior hidden in shell recipes; the minimal Ubuntu
 job additionally audits configured targets, compiled source, downloaded inputs,

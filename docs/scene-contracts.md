@@ -1,6 +1,6 @@
 # Scene ownership, identity and world coordinates
 
-The 07a EngineCore API is in [scene.hpp](../engine/core/include/shark/scene.hpp),
+The 07a/07b EngineCore API is in [scene.hpp](../engine/core/include/shark/scene.hpp),
 [scene_identity.hpp](../engine/core/include/shark/scene_identity.hpp) and
 [world_position.hpp](../engine/core/include/shark/world_position.hpp). It is
 CPU-only and shared by future human and terminal authoring services. EnTT is a
@@ -47,7 +47,8 @@ closed object may be destroyed elsewhere with normal caller synchronization.
 Concurrent object destruction is never supported.
 The scene must outlive all active calls, including its visitor callbacks.
 
-Immediate create/destroy requires no active visit and no pending deferred work.
+Immediate create/destroy, Name/Transform edits and reparenting require no active
+visit and no pending deferred work. See the [transform and hierarchy contract](transforms.md).
 Visits use ascending slot order and pass owned reference values. Callbacks may
 inspect and enqueue bounded mutations; they cannot mutate immediately, apply the
 queue, close the scene or nest a visit. The scene remains unchanged during a visit.
@@ -59,13 +60,15 @@ operation revalidates current identity/lifetime/capacity and returns an outcome
 with its ticket. A failed operation does not prevent later valid operations.
 This is per-operation commit, not the atomic authoring transaction system planned
 for 09. A failed outcome allocation leaves the queue untouched. Successful create
-or destroy increments the scene revision exactly once. Close cancels pending
+or subtree destroy increments the scene revision exactly once. Name/Transform
+and hierarchy changes do likewise; exact no-ops leave the revision unchanged. Close cancels pending
 work, releases entities and invalidates every handle; repeated close succeeds.
 Stats remain available on the owner after close; other operations reject it.
 
 Default limits are 4096 entity slots and 1024 pending mutations, configurable up
 to 1,000,000 and 65,536 respectively. Zero limits are rejected. Retired slots
-consume slot capacity. These are storage bounds, not measured MMORPG capacity.
+consume slot capacity. Hierarchy depth defaults to 256 with a hard maximum of
+1024 and root depth one. These are storage bounds, not measured MMORPG capacity.
 Expected failures return the existing owned Result/Error with operation `scene`
 or its specific create/find/resolve/deferred operation and known persistent entity ID;
 stale identities use `invalid_id`, owner/boundary/capacity conflicts use `conflict`.
@@ -87,7 +90,8 @@ to the next cell at positive zero. Translation requires canonical input and
 splits delta cells/remainders before local addition. IEEE-754 rounding still
 applies; the contract does not promise bitwise arbitrary-platform simulation.
 
-07b defines local Transform TRS and 07c publishes schemas. M05 owns render/physics
+07b implements [local Transform TRS and hierarchy](transforms.md); its world
+matrices stay within a common local scene frame. 07c publishes schemas. M05 owns render/physics
 origin selection, generation-checked bounded float conversion, streaming and
 actual region handoff. No global float vector or premature rebasing service is
 introduced here.
@@ -98,13 +102,16 @@ EnTT 4.0.0 is pinned to commit
 `85c6bba014049b5de8fad49d25424df2f1f6a8c1` and an exact SHA-256 archive in
 [dependencies.lock.json](../dependencies.lock.json). Only its header-only registry
 implementation is consumed; its upstream C/testbed project is not configured.
-The MIT license accompanies Runtime and Server packages.
+The MIT license accompanies Runtime and Server packages. 07b also pins GLM
+through the public, centrally configured math wrapper; see [transforms](transforms.md)
+and [building](building.md) for its independent archive and package notice.
 See the [official release](https://github.com/skypjack/entt/releases/tag/v4.0.0),
 [pinned build file](https://github.com/skypjack/entt/blob/85c6bba014049b5de8fad49d25424df2f1f6a8c1/CMakeLists.txt)
 and [license](https://github.com/skypjack/entt/blob/85c6bba014049b5de8fad49d25424df2f1f6a8c1/LICENSE).
 
-`shark.core.scene`, `shark.core.world-position` and
-`shark.tooling.scene-dependencies` exercise these contracts. The
-[07a handoff](handoffs/07a-entity-ownership.md) records actual local results and
-limits. Full REQ-07 stays NOT_RUN until 07b/07c complete; FeatureWorld connects
+`shark.core.scene`, `shark.core.world-position`, `shark.core.hierarchy`,
+`shark.core.transform` and `shark.tooling.scene-dependencies` exercise these contracts. The
+[07a handoff](handoffs/07a-entity-ownership.md) and
+[07b handoff](handoffs/07b-transform-hierarchy.md) record actual local results and
+limits. Full REQ-07 stays NOT_RUN until 07c completes; FeatureWorld connects
 implemented components in assignment 10.

@@ -68,7 +68,17 @@ graphics or interpret an old aggregate NOT_RUN as a universal PASS.
 `core.scene-ownership` maps checked scene/entity lifetime, deferred mutation,
 world coordinates and the private EnTT boundary to executable CPU fixtures.
 The [07a handoff](../handoffs/07a-entity-ownership.md) records checkpoint results.
-Name/Transform and schemas remain for 07b/07c; full REQ-07 remains NOT_RUN.
+07b's `core.transform-hierarchy` feature and `component.name` / `component.transform`
+entries map mandatory values, validated hierarchy and mutation behavior to
+`shark.core.hierarchy`, `shark.core.transform` and their dependency fixtures.
+07b is complete under the current-machine scope. The
+[handoff](../handoffs/07b-transform-hierarchy.md) and
+[receipt](evidence/07b-transform-hierarchy.json) record **362 passing CPU CTests
+with no skips**: Windows Debug/Release/ASan 60 each, WSL client Debug/ASan+UBSan
+53 each, and WSL Server Debug/ASan+UBSan 38 each. Protected Runtime/Server builds,
+dependency/license closure and isolated package execution also pass. The
+[transform contract](../transforms.md) specifies the delivered C++ behavior.
+07c is next for schemas and bounded revisioned inspection; full REQ-07 remains NOT_RUN.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
 NOT_RUN. Existing presentation/device fixtures and their earlier handoffs retain
@@ -89,8 +99,10 @@ fixtures in assignment 10.
 means precisely that; documentation validation cannot pass a future engine gate.
 The `implemented_surface.features` entries map the bootstrap behavior and runtime
 build boundary, server lifecycle, Server/Core closure and graphics setup/executable cases to their actual tests
-and external fixtures. Component, authoring
-command and Lua arrays remain empty because those APIs do not exist yet.
+and external fixtures. Name and Transform have implemented component entries with
+C++ validation/mutation fixtures. Their schemas, serialization and adapters remain
+planned at their owning increments. Authoring command and Lua arrays remain empty
+because those interfaces do not exist yet.
 Assignment 10 connects supported scene surfaces to executable FeatureWorld
 coverage; 32 audits completeness. Do not register placeholder APIs.
 
@@ -181,6 +193,7 @@ Full `REQ-06` is PASS under the current-machine scope. The
 [receipt](evidence/06c-window-distribution.json) record 261 CPU CTests, both-GPU
 window/offscreen references, lifetime failures, shader rebuilds and relocated
 Runtime shader closure. `client.window-cube-distribution` maps the implemented
-surface to device-free tests and explicit hardware fixtures. Scene-authoring
-component/command/Lua arrays remain empty. 07a introduces the CPU scene foundation;
-07b/07c add Name/Transform, hierarchy and schema inspection.
+surface to device-free tests and explicit hardware fixtures. 07a introduces the
+CPU scene foundation; 07b implements Name/Transform and hierarchy. Their C++
+component coverage does not claim schema inspection, source persistence, terminal
+commands or Lua bindings. 07c completes the scene schema/query checkpoint.
