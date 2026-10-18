@@ -6,6 +6,12 @@ Scope: Assignment 00. Assignment 01 implements the build and lock mechanism; lat
 
 ## Decision
 
+03a uses native OS entropy for UUIDv4 creation: Windows SDK `bcrypt` through
+an explicitly classified Core-only imported target, and Linux `getrandom`
+through libc. This adds no fetched dependency. Installed compiler/SDK and
+headless userspace identities are recorded with local test evidence. It does
+not select an authentication or network cryptography library for M02.
+
 MMORPG amendment: the product now follows [ADR 0007](0007-mmorpg-architecture.md).
 The existing dependency lock and working bootstrap are retained. M01 introduces
 EngineCore/EngineClient/Server before client subsystem integration: GLFW, NVRHI,

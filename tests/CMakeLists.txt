@@ -1,4 +1,9 @@
-add_executable(Tests bootstrap_tests.cpp server_tests.cpp)
+add_executable(Tests
+    bootstrap_tests.cpp
+    core_error_tests.cpp
+    core_identity_tests.cpp
+    core_path_tests.cpp
+    server_tests.cpp)
 target_link_libraries(Tests PRIVATE EngineCore Catch2::Catch2WithMain)
 target_compile_definitions(Tests PRIVATE
     SHARK_EXPECTED_VERSION="${PROJECT_VERSION}"
@@ -13,6 +18,8 @@ add_test(NAME shark.failure-sentinel COMMAND Tests "[failure-sentinel]" --rng-se
 set_tests_properties(shark.failure-sentinel PROPERTIES LABELS "cpu;unit" TIMEOUT 10)
 add_test(NAME shark.server.unit COMMAND Tests "[server]" --rng-seed 1337)
 set_tests_properties(shark.server.unit PROPERTIES LABELS "cpu;server;unit" TIMEOUT 10)
+add_test(NAME shark.core.contracts COMMAND Tests "[core]" --rng-seed 1337)
+set_tests_properties(shark.core.contracts PROPERTIES LABELS "cpu;unit" TIMEOUT 15)
 
 foreach(shark_application IN ITEMS Runtime Editor)
     if(TARGET "${shark_application}")

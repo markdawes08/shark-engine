@@ -20,7 +20,9 @@ records the user's removal of Mac compatibility and qualification work. The late
 [ADR 0010](0010-current-machine-scope.md) limits required acceptance to the current
 Windows PC and its WSL2 environment. The two actual local GPUs and local package
 gates pass assignment 02; the former six rows remain historically untested but
-are no longer requirements. Assignment 03 is next, not implemented.
+are no longer requirements. Assignment 03 is split into the
+[Core checkpoints](../roadmap/core-plan.md); the
+[03a handoff](../handoffs/03a-core-contracts.md) records implementation and verification.
 
 | Record | Decision |
 | --- | --- |

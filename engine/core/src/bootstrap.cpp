@@ -4,20 +4,19 @@
 
 namespace shark {
 
-BootstrapAction parse_bootstrap_arguments(std::span<const std::string_view> arguments) noexcept {
+Result<BootstrapAction> parse_bootstrap_arguments(std::span<const std::string_view> arguments) {
     if (arguments.empty()) {
         return BootstrapAction::help;
     }
-    if (arguments.size() != 1) {
-        return BootstrapAction::invalid;
-    }
-    if (arguments.front() == "--help") {
+    if (arguments.size() == 1 && arguments.front() == "--help") {
         return BootstrapAction::help;
     }
-    if (arguments.front() == "--version") {
+    if (arguments.size() == 1 && arguments.front() == "--version") {
         return BootstrapAction::version;
     }
-    return BootstrapAction::invalid;
+    return Error{ErrorCode::invalid_argument,
+                 "Unsupported arguments: expected --help or --version",
+                 {.operation = "bootstrap.arguments.parse"}};
 }
 
 std::string_view version_string() noexcept {

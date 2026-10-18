@@ -20,7 +20,12 @@ The [human/agent plan and foundation assessment](docs/roadmap/human-agent-plan.m
 define noninteractive tools, discoverable schemas and safe project handoff. Those
 game-authoring interfaces remain planned; terminal build/test tools work today.
 
-**Next assignment: 03; assignment 02 is complete under the current-machine scope.** The headless server and Core/Client
+**Current assignment: 03, split into [three checkpoints](docs/roadmap/core-plan.md).**
+**03a Core contracts are complete; 03b application lifecycle is next.**
+See the [03a handoff](docs/handoffs/03a-core-contracts.md) and
+[Core API guide](docs/core-contracts.md). 03c owns scheduling, bounded work and
+full qualification. Assignment 02 is complete under
+the current-machine scope. The headless server and Core/Client
 separation have passed local and hosted qualification, including deliberate test
 failure and restored success. The [graphics probe](docs/graphics-probe.md) adds
 locked dependencies, device inventory, validated GPU readbacks and bounded lifecycle; the

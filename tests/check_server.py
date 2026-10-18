@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import json
 import os
 from pathlib import Path
 import signal
@@ -22,6 +23,25 @@ STOPPED = "Shark Server stopped: "
 def require(condition: bool, message: str) -> None:
     if not condition:
         raise RuntimeError(message)
+
+
+def require_diagnostic(text: str, code: str, category: str,
+                       operations: tuple[str, ...], *, usage: bool = False) -> None:
+    lines = text.splitlines()
+    expected_lines = 2 if usage else 1
+    require(len(lines) == expected_lines, f"Unexpected diagnostic framing: {text!r}")
+    try:
+        record = json.loads(lines[0])
+    except json.JSONDecodeError as error:
+        raise RuntimeError(f"Diagnostic is not a JSON record: {text!r}") from error
+    require(isinstance(record, dict), f"Diagnostic is not an object: {record!r}")
+    require(record.get("level") == "error" and record.get("code") == code
+            and record.get("category") == category and record.get("operation") in operations
+            and isinstance(record.get("message"), str) and bool(record["message"]),
+            f"Diagnostic lacks stable structured context: {record!r}")
+    if usage:
+        require(lines[1] == "Usage: Server [--help | --version | --run-for-ms N]",
+                f"Invalid configuration omitted readable usage: {text!r}")
 
 
 def check_cli(executable: Path, version: str, environment: dict[str, str]) -> None:
@@ -55,9 +75,10 @@ def check_invalid_configuration(executable: Path, environment: dict[str, str]) -
         result = run_process([str(executable), *arguments], timeout=5, env=environment)
         require(result.returncode == 2 and not result.timed_out and not result.cleanup_errors,
                 f"Invalid arguments did not exit 2: {arguments!r}: {result}")
-        require(not result.stdout and result.stderr.startswith("Shark Server: invalid configuration:")
-                and "Usage: Server" in result.stderr,
+        require(not result.stdout,
                 f"Invalid arguments started Server or omitted diagnostics: {arguments!r}: {result}")
+        require_diagnostic(result.stderr, "invalid_configuration", "validation",
+                           ("server.arguments.parse", "server.configuration.validate"), usage=True)
     print(f"PASS: {len(invalid)} invalid configurations reject before readiness")
 
 
@@ -137,13 +158,43 @@ def check_failed_readiness(executable: Path, environment: dict[str, str]) -> Non
             try:
                 code = process.wait(timeout=2)
                 require(code == 1, f"Readiness failure must exit 1, got {code}")
-                require(error_path.read_text(encoding="utf-8") ==
-                        "Shark Server: startup failed: cannot report readiness\n",
-                        "Startup I/O failure lacks its diagnostic")
+                require_diagnostic(error_path.read_text(encoding="utf-8"), "io_failure",
+                                   "execution", ("server.startup.readiness",))
                 require(output_path.read_bytes() == b"", "Read-only output was unexpectedly written")
             finally:
                 cleanup_posix_process(process)
     print("PASS: readiness I/O failure unwinds startup and exits 1")
+
+
+def check_failed_output(executable: Path, environment: dict[str, str]) -> None:
+    with tempfile.TemporaryDirectory(prefix="shark-server-output-") as temporary:
+        output_path = Path(temporary) / "read-only.txt"
+        output_path.write_bytes(b"")
+        error_path = Path(temporary) / "stderr.txt"
+        for option in ("--help", "--version"):
+            with output_path.open("rb") as invalid_stdout, error_path.open("wb") as stderr:
+                process = subprocess.Popen([str(executable), option], stdin=subprocess.DEVNULL,
+                                           stdout=invalid_stdout, stderr=stderr, env=environment,
+                                           start_new_session=True)
+                try:
+                    code = process.wait(timeout=2)
+                    require(code == 1, f"Informational output failure must exit 1, got {code}")
+                    require_diagnostic(error_path.read_text(encoding="utf-8"), "io_failure",
+                                       "execution", ("server.output",))
+                    require(output_path.read_bytes() == b"", "Read-only output was written")
+                finally:
+                    cleanup_posix_process(process)
+        with output_path.open("rb") as invalid_stderr:
+            process = subprocess.Popen([str(executable), "--unknown"], stdin=subprocess.DEVNULL,
+                                       stdout=subprocess.DEVNULL, stderr=invalid_stderr,
+                                       env=environment, start_new_session=True)
+            try:
+                require(process.wait(timeout=2) == 1,
+                        "Failed diagnostic sink must exit 1 without recursive logging")
+                require(output_path.read_bytes() == b"", "Read-only diagnostic sink was written")
+            finally:
+                cleanup_posix_process(process)
+    print("PASS: informational and diagnostic I/O failures exit 1")
 
 
 def main() -> int:
@@ -165,6 +216,7 @@ def main() -> int:
             check_signal_shutdown(executable, environment, signal.SIGTERM,
                                   ["--run-for-ms", "600000"])
             check_failed_readiness(executable, environment)
+            check_failed_output(executable, environment)
         else:
             print("NOT RUN: POSIX signal and read-only descriptor checks on this host; "
                   "Windows coverage is finite-run shutdown, not terminate() signal emulation")

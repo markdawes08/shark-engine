@@ -58,7 +58,7 @@ timeout remains preserved; later successful full runs do not establish its cause
 The hosted CPU workflow at `39110d4` passes all nine jobs and 156 CTests;
 that result is revision-specific. Existing hosted automation remains supplemental
 and does not block local roadmap progression or imply a GitHub policy change.
-**Assignment 03 is next and unstarted.** Dependent renderer architecture has not
+**Assignment 03 follows the [Core checkpoint plan](core-plan.md).** Dependent renderer architecture has not
 started. RTX 4070 Laptop is the primary future performance target; Intel remains
 a correctness/fallback target without an equal-frame-rate guarantee.
 

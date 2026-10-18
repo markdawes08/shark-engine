@@ -82,7 +82,8 @@ no second computer or specific provider integration is part of the requirement.
 
 Keep 15 as one manifest owner and final gate, but implement it in these dependent
 parts. This plan does not start assignment 15; assignment 02 closed under the
-explicit current-machine scope amendment and assignment 03 is next, unstarted.
+explicit current-machine scope amendment and assignment 03 follows its
+[Core checkpoint plan](core-plan.md).
 
 1. **Discovery and read-only access:** one-shot CLI + versioned stdio framing,
    clean stdout, capability/schema discovery, bounded project/scene queries,
@@ -111,7 +112,8 @@ discovery, human/agent parity, graphics or live MMO operations. The separate
 checks for this planning change. The full authoring gate remains NOT_RUN.
 
 M01's hosted qualification is complete. Assignment 02's recorded local evidence
-now closes its gate under ADR 0010; assignment 03 is next and unstarted. The
+now closes its gate under ADR 0010; assignment 03 is current, split into
+[03a contracts, 03b lifecycle and 03c scheduling](core-plan.md). The
 [final local handoff](../handoffs/02d-final-verification.md) preserves full local
 Windows lifecycle runs, bounded portable terminal launchers and isolated Ubuntu
 CPU/package checks. Former external GPU and independent clean-machine gates are

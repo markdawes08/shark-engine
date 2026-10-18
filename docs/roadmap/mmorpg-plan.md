@@ -70,8 +70,10 @@ the tested revision and run evidence. **M01's gate is complete.** The
 implementation/local qualification; the
 [hosted follow-up](../handoffs/M01-ci-verification.md) closes its native CPU,
 headless Docker and deliberate-failure/restored-success gate. **Assignment 02 is
-closed under the explicit current-machine scope amendment; assignment 03 is next
-and unstarted.** The [final local handoff](../handoffs/02d-final-verification.md)
+closed under the explicit current-machine scope amendment; assignment 03 is current.**
+The [Core checkpoint plan](core-plan.md) separates 03a contracts, 03b lifecycle
+and 03c scheduling/bounded work. The full gate remains open until all three pass.
+The [final local handoff](../handoffs/02d-final-verification.md)
 preserves the Windows lifecycle and isolated Ubuntu CPU/package evidence. The
 [graphics checkpoint plan](graphics-plan.md) applies the new local gate to those
 observed results. Former baseline GPU rows and independent clean-machine work

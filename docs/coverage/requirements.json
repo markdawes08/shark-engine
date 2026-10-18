@@ -64,7 +64,7 @@
       "planned_fixture": "GraphicsFeasibilityProbe on LOCAL-W-NV and LOCAL-W-INTEL, relocated Windows package and failure fixtures, plus existing WSL2 Ubuntu CPU/isolated-package checks. ADR0010 replaces the former six-row and independent clean-machine gates; it does not change historical observations.",
       "verification": {
         "status": "PASS",
-        "reason": "PASS only for the user-authorized current-machine scope in ADR0010. The unchanged 02d Windows refresh receipt records both actual GPUs passing P02-01 through P02-06 and full 100/20/600 lifecycle runs, zero validation warnings/errors, relocated package, negative fixtures and watchdog cleanup; the Linux receipt records WSL Ubuntu build/CPU/isolated package checks, not Linux graphics. The old six-row and independent clean-machine NOT_RUN results remain historical. docs/handoffs/current-machine-scope-amendment.md records the reassessment at 2ef281b; no new graphics run or production renderer is claimed. Assignment 03 is next and unstarted. Hosted CI remains supplemental under this scope, with branch protection unchanged.",
+        "reason": "PASS only for the user-authorized current-machine scope in ADR0010. The unchanged 02d Windows refresh receipt records both actual GPUs passing P02-01 through P02-06 and full 100/20/600 lifecycle runs, zero validation warnings/errors, relocated package, negative fixtures and watchdog cleanup; the Linux receipt records WSL Ubuntu build/CPU/isolated package checks, not Linux graphics. The old six-row and independent clean-machine NOT_RUN results remain historical. docs/handoffs/current-machine-scope-amendment.md records the reassessment at 2ef281b; no new graphics run or production renderer is claimed. Assignment 03 follows this gate; its checkpoint progress is recorded separately. Hosted CI remains supplemental under this scope, with branch protection unchanged.",
         "scope_document": "docs/architecture/0010-current-machine-scope.md",
         "evidence": [
           {
@@ -91,7 +91,7 @@
         "Structured errors retain stable codes, operation/request context and readable messages through later terminal, protocol and editor adapters; unavailable capabilities and validation/conflict/execution failures remain distinguishable."
       ],
       "planned_fixture": "CoreLifecycle, StartupFailureInjection, ProjectPathResolution and ConfigurationErrors unit/integration fixtures; startup and ownership failures occur before a scene can run.",
-      "verification": {"status": "NOT_RUN", "reason": "Core services are not implemented; owner assignment 03."}
+      "verification": {"status": "NOT_RUN", "reason": "03a implements owned errors/results, structured diagnostics, validated bootstrap/server configuration, stable UUIDs and project-relative paths; local verification is recorded in docs/handoffs/03a-core-contracts.md. The overall gate remains NOT_RUN pending 03b application ownership/partial-start rollback and 03c controllable clocks, bounded queues and final qualification. See docs/roadmap/core-plan.md."}
     },
     {
       "id": "REQ-04",
@@ -808,6 +808,24 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "core.diagnostics-configuration",
+        "name": "Owned errors/results, bounded structured logs and validated startup configuration",
+        "requirement_ids": ["REQ-03"],
+        "test_ids": ["shark.core.contracts", "shark.unit", "shark.server.unit", "shark.server.lifecycle", "shark.runtime.cli", "shark.editor.cli"],
+        "test_sources": ["tests/core_error_tests.cpp", "tests/bootstrap_tests.cpp", "tests/server_tests.cpp", "tests/check_server.py", "tests/CheckCli.cmake"],
+        "fixtures": ["engine/core/src/log.cpp", "engine/core/src/server_config.cpp", "server/main.cpp", "runtime/main.cpp", "editor/main.cpp"],
+        "fixture_reason": "Core values and real bootstrap processes exercise lifetime, invalid configuration, machine-readable Release diagnostics and sink failures before scenes exist. These are not authoring commands; FeatureWorld begins in 10. Lifecycle ownership and queue qualification remain in 03b/03c."
+      },
+      {
+        "id": "core.stable-identity-project-paths",
+        "name": "Persistent UUIDv4 primitives and portable project-relative path resolution",
+        "requirement_ids": ["REQ-03"],
+        "test_ids": ["shark.core.contracts"],
+        "test_sources": ["tests/core_identity_tests.cpp", "tests/core_path_tests.cpp"],
+        "fixtures": ["engine/core/src/stable_id.cpp", "engine/core/src/project_path.cpp"],
+        "fixture_reason": "Injected/OS entropy and temporary real filesystem roots exercise IDs, Unicode/spaces, malformed input and symlink escapes outside a scene. Domain handles, persistent game state and project document schemas belong to later owners."
+      },
       {
         "id": "foundation.bootstrap",
         "name": "Engine version metadata and strict informational bootstrap arguments",

@@ -6,6 +6,12 @@ acceptance criteria, a planned FeatureWorld case or external fixture, and an
 honest verification state. Related assignments can contribute without changing
 which assignment owns the gate.
 
+Assignment 03 is split into [03a/03b/03c](../roadmap/core-plan.md). The implemented
+Core diagnostics/configuration and identity/path features map to real unit and
+process fixtures. The [03a handoff](../handoffs/03a-core-contracts.md) records their
+local results. Full `REQ-03` remains NOT_RUN until lifecycle ownership, clocks,
+bounded queues and final qualification pass in the following checkpoints.
+
 The user selected a seamless open-world MMORPG. The
 [versioned execution plan](../roadmap/mmorpg-plan.md) and
 [ADR 0007](../architecture/0007-mmorpg-architecture.md) expand the original 00-35
@@ -36,7 +42,7 @@ as additive schema-3 fields. REQ-02 is PASS for the amended local gate, with
 explicit scope and SHA-256-pinned references to the unchanged 02d receipts.
 The validator verifies those references and retained bytes; it does not rerun
 graphics or interpret an old aggregate NOT_RUN as a universal PASS.
-`current_assignment: 03` identifies the next, unstarted increment. All later
+`current_assignment: 03` identifies the active Core increment. All later
 implementation requirements remain NOT_RUN.
 
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`

@@ -1,4 +1,5 @@
 #include <shark/bootstrap.hpp>
+#include <shark/log.hpp>
 #include <shark/server_config.hpp>
 
 #include <algorithm>
@@ -57,26 +58,43 @@ class SignalHandlers {
 
 constexpr std::string_view usage = "Usage: Server [--help | --version | --run-for-ms N]\n";
 
-int invalid_configuration(std::string_view error) {
-    std::cerr << "Shark Server: invalid configuration: " << error << '\n' << usage;
-    return 2;
+int invalid_configuration(shark::Logger& logger, const shark::Error& error) {
+    if (!logger.write(shark::LogLevel::error, error)) {
+        return 1;
+    }
+    std::cerr << usage << std::flush;
+    return std::cerr ? 2 : 1;
 }
 
-int run_server(const shark::ServerConfig& config) {
+int report_failure(shark::Logger& logger, const shark::Error& error) {
+    // Do not recursively log a failed diagnostic sink; failure still exits nonzero.
+    const auto diagnostic = logger.write(shark::LogLevel::error, error);
+    static_cast<void>(diagnostic);
+    return 1;
+}
+
+int run_server(shark::Logger& logger, const shark::ServerConfig& config) {
+    const auto validated = shark::validate_server_config(config);
+    if (!validated) {
+        return invalid_configuration(logger, validated.error());
+    }
     SignalHandlers signals;
     if (!signals.install()) {
-        std::cerr << "Shark Server: startup failed: cannot install shutdown signal handlers\n";
-        return 1;
+        return report_failure(logger, {shark::ErrorCode::execution_failed,
+                                       "cannot install shutdown signal handlers",
+                                       {.operation = "server.startup.signals"}});
     }
     std::cout << "Shark Server ready (headless idle)\n" << std::flush;
     if (!std::cout) {
-        std::cerr << "Shark Server: startup failed: cannot report readiness\n";
-        return 1;
+        return report_failure(logger, {shark::ErrorCode::io_failure,
+                                       "cannot report readiness",
+                                       {.operation = "server.startup.readiness"}});
     }
 
     using Clock = std::chrono::steady_clock;
     const auto started = Clock::now();
-    const auto deadline = config.run_for ? started + *config.run_for : Clock::time_point::max();
+    const auto duration = validated.value().run_for;
+    const auto deadline = duration ? started + *duration : Clock::time_point::max();
     constexpr auto poll_interval = std::chrono::milliseconds{20};
     while (shutdown_signal == 0) {
         const auto now = Clock::now();
@@ -92,8 +110,9 @@ int run_server(const shark::ServerConfig& config) {
                                             : "run duration elapsed";
     std::cout << "Shark Server stopped: " << reason << '\n' << std::flush;
     if (!std::cout) {
-        std::cerr << "Shark Server: shutdown failed: cannot report completion\n";
-        return 1;
+        return report_failure(logger, {shark::ErrorCode::io_failure,
+                                       "cannot report completion",
+                                       {.operation = "server.shutdown.completion"}});
     }
     return 0;
 }
@@ -101,12 +120,17 @@ int run_server(const shark::ServerConfig& config) {
 } // namespace
 
 int main(int argc, char* argv[]) {
+    shark::Logger logger{std::cerr};
     // Bound argument storage before constructing views or parsing token text.
     if (argc < 1) {
-        return invalid_configuration("missing executable argument");
+        return invalid_configuration(logger, {shark::ErrorCode::invalid_configuration,
+                                              "missing executable argument",
+                                              {.operation = "server.arguments.parse"}});
     }
     if (argc > 3) {
-        return invalid_configuration("too many arguments");
+        return invalid_configuration(logger, {shark::ErrorCode::invalid_configuration,
+                                              "too many arguments",
+                                              {.operation = "server.arguments.parse"}});
     }
     std::array<std::string_view, 2> arguments;
     for (int index = 1; index < argc; ++index) {
@@ -114,21 +138,27 @@ int main(int argc, char* argv[]) {
     }
     const auto parsed = shark::parse_server_arguments(
         std::span{arguments}.first(static_cast<std::size_t>(argc - 1)));
-    switch (parsed.action) {
+    if (!parsed) {
+        return invalid_configuration(logger, parsed.error());
+    }
+    switch (parsed.value().action) {
     case shark::ServerAction::help:
         std::cout << usage
                   << "Shark headless idle process; networking and simulation are not implemented.\n"
                      "With no arguments, wait for SIGINT or SIGTERM.\n"
                      "--run-for-ms N stops after N milliseconds (1..600000; 1-6 decimal digits).\n"
                   << std::flush;
-        return std::cout ? 0 : 1;
+        break;
     case shark::ServerAction::version:
         std::cout << "Shark Server " << shark::version_string() << '\n' << std::flush;
-        return std::cout ? 0 : 1;
-    case shark::ServerAction::invalid:
-        return invalid_configuration(parsed.error);
+        break;
     case shark::ServerAction::run:
-        return run_server(parsed.config);
+        return run_server(logger, parsed.value().config);
     }
-    return 2;
+    if (!std::cout) {
+        return report_failure(logger, {shark::ErrorCode::io_failure,
+                                       "cannot write Server output",
+                                       {.operation = "server.output"}});
+    }
+    return 0;
 }

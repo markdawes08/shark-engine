@@ -1,5 +1,20 @@
 configure_file(../version_config.hpp.in "${CMAKE_CURRENT_BINARY_DIR}/generated/version_config.hpp" @ONLY)
-add_library(EngineCore STATIC src/bootstrap.cpp src/server_config.cpp)
+add_library(EngineCore STATIC
+    src/bootstrap.cpp
+    src/error.cpp
+    src/log.cpp
+    src/project_path.cpp
+    src/server_config.cpp
+    src/stable_id.cpp)
 target_include_directories(EngineCore PUBLIC ../include include PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
+if(WIN32)
+    # Windows OS entropy for persistent UUIDs; no third-party or presentation dependency.
+    find_library(SHARK_WINDOWS_BCRYPT_LIBRARY NAMES bcrypt REQUIRED)
+    add_library(SharkWindowsEntropy STATIC IMPORTED GLOBAL)
+    set_target_properties(SharkWindowsEntropy PROPERTIES
+        IMPORTED_LOCATION "${SHARK_WINDOWS_BCRYPT_LIBRARY}")
+    shark_classify_target(SharkWindowsEntropy core)
+    target_link_libraries(EngineCore PRIVATE SharkWindowsEntropy)
+endif()
 shark_configure_target(EngineCore)
 shark_classify_target(EngineCore core)

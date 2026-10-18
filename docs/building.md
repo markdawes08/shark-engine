@@ -4,6 +4,9 @@ M01 extends the C++20 foundation with static EngineCore, EngineClient and
 EngineTools libraries, an Engine interface composition, separate
 Editor/Runtime/Server entry points and Catch2 tests. Editor/Runtime report
 bootstrap information; Server has validated startup and an idle lifecycle.
+03a adds shared [Core contracts](core-contracts.md), including owned errors,
+structured stderr diagnostics, UUIDs and project paths. `shark.core.contracts`
+runs their CPU fixtures with seed 1337; lifecycle expansion remains in 03b/03c.
 02a/02b add a separate opt-in [graphics probe](graphics-probe.md) with locked
 dependencies, terminal diagnostics, analytic GPU cases and offline validation tools.
 02d adds matching `graphics-windows-release` and `graphics-linux-release`

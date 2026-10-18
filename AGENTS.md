@@ -22,7 +22,11 @@ complete. The headless Server bootstrap and Core/Client
 split are implemented; the [M01 handoff](docs/handoffs/M01-headless-server.md) records
 local qualification and the [hosted follow-up](docs/handoffs/M01-ci-verification.md)
 records the completed native CPU, headless Docker and red/green gate. The next
-assignment is 03, not yet implemented; 02 is complete under the user-directed
+assignment is 03, split into the [Core checkpoints](docs/roadmap/core-plan.md).
+03a errors/logging, configuration, identity and paths are complete; 03b application
+lifecycle is next and 03c owns scheduling/queues plus the final gate. Consult the
+[03a handoff](docs/handoffs/03a-core-contracts.md) for its verification status.
+02 is complete under the user-directed
 [current-machine scope](docs/architecture/0010-current-machine-scope.md). The
 [02a handoff](docs/handoffs/02a-graphics-setup.md) records evidence and limits;
 02b executable graphics cases and local validation are complete within checkpoint scope; see the
@@ -194,10 +198,11 @@ Render callbacks are presentation-only for live gameplay. Use stable global cell
 coordinates and bounded local origins; internal regions must not create visible
 zone breaks or duplicate authority during seamless travel.
 
-Expected failures return structured engine errors with stable code, message,
-operation and relevant entity/asset/path/request context once assignment 03
-introduces the owned result type. Until then keep bootstrap diagnostics honest
-and nonzero process failure codes. Do not introduce fake result APIs early.
+Expected failures return the owned `Result<T>`/`Error` introduced in 03a, with
+stable code, message, operation and relevant entity/asset/path/request context.
+Follow the [Core contracts](docs/core-contracts.md) for bounded UTF-8 diagnostics,
+explicit sink ownership, configuration, IDs and paths. Keep nonzero process
+failure codes; bootstrap logs are not game-authoring protocol results.
 Assertions cover programmer invariants, not validation of files or commands.
 Exceptions must not cross Lua C, worker or real-time callbacks; cleanup must not
 throw. Fatal device failures receive diagnostics and bounded teardown.
