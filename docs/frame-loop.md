@@ -11,7 +11,8 @@ They are not authoritative MMO simulation, client prediction or network messages
 The serialized client owner polls the window, captures input once, then calls
 `advance(now, input, control, callback)`. Each capture is supplied exactly once.
 The caller keeps that owned frame snapshot for presentation even when no fixed
-tick executes; consuming tick input never changes it. There is no renderer yet.
+tick executes; consuming tick input never changes it. Current graphics are bounded
+diagnostic samples; there is no scene/world renderer yet.
 The callback borrows its snapshot only for that synchronous call; copy to retain
 it. Do not destroy the coordinator from its callback or call it concurrently.
 Nested advance returns conflict without disturbing the outer pass.
@@ -92,7 +93,10 @@ output, not an authoring command API. The callback currently performs no world
 work, so `--window` stays empty. The 05b [`--graphics` sample](presentation-lifecycle.md)
 uses the same snapshot/control helper and offline scheduler, then presents a clear
 color through the owned device. F6/F7 pause or step empty offline callbacks;
-they do not freeze visible presentation or a Server. Neither mode is an authoring UI.
+they do not freeze visible presentation or a Server. The 06c [`--cube` sample](gpu-resources.md#window-cube-and-capture)
+uses this same pump and a precompiled [shader bundle](shader-pipeline.md).
+It presents fixed textured geometry; F6/F7 retain the same empty callback behavior.
+`--graphics-ms 1000` bounds either graphics sample. No sample is an authoring UI.
 
 The pump reports callback diagnostics outside native callbacks and stops before
 another tick when close is observed. Runtime/Editor own RAII cleanup on failure.

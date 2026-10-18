@@ -2,7 +2,8 @@
 [CmdletBinding()]
 param(
     [Parameter(Mandatory = $true)][string]$Package,
-    [Parameter(Mandatory = $true)][ValidatePattern('^[0-9a-f]{32}$')][string]$Device
+    [Parameter(Mandatory = $true)][ValidatePattern('^[0-9a-f]{32}$')][string]$Device,
+    [switch]$Cube
 )
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
@@ -12,10 +13,13 @@ $taskSystem = [Environment]::GetEnvironmentVariable('SystemRoot')
 $taskInfo = [Diagnostics.ProcessStartInfo]::new()
 $taskInfo.FileName = Join-Path $taskPackage 'bin\Runtime.exe'
 $taskInfo.Arguments = "--graphics --graphics-ms 1000 --device $Device --validation off"
+if ($Cube) { $taskInfo.Arguments = "--cube --graphics-ms 1000 --device $Device --validation off" }
 $taskInfo.WorkingDirectory = $taskPackage
 $taskInfo.UseShellExecute = $false
 $taskInfo.RedirectStandardOutput = $true
 $taskInfo.RedirectStandardError = $true
+$taskInfo.StandardOutputEncoding = [System.Text.UTF8Encoding]::new($false)
+$taskInfo.StandardErrorEncoding = [System.Text.UTF8Encoding]::new($false)
 $taskInfo.EnvironmentVariables.Clear()
 $taskInfo.EnvironmentVariables['SystemRoot'] = $taskSystem
 $taskInfo.EnvironmentVariables['WINDIR'] = $taskSystem

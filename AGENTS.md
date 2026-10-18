@@ -33,9 +33,11 @@ them only under the backlog's triggers or at the user's request. Follow the
 [shader pipeline contract](docs/shader-pipeline.md) and
 [06a handoff](docs/handoffs/06a-offline-shaders.md). **06b is complete** under the
 current-machine scope. Follow the [GPU resource contract](docs/gpu-resources.md)
-and [06b handoff](docs/handoffs/06b-gpu-resources.md). The next checkpoint is
-06c window integration and distribution qualification; full `REQ-06` remains
-NOT_RUN until that gate passes. Follow the
+and [06b handoff](docs/handoffs/06b-gpu-resources.md). **06c and full `REQ-06` are
+complete** under the current-machine scope; the [06c handoff](docs/handoffs/06c-window-distribution.md)
+records both-GPU captures, shader distribution, CPU/sanitizer and package evidence.
+Runtime/Editor expose `--cube` using an executable-adjacent precompiled bundle.
+Assignment 07, ECS/schema/transform hierarchy, is next. Follow the
 [05 checkpoint plan](docs/roadmap/graphics-device-plan.md),
 [graphics device contract](docs/graphics-device.md),
 [presentation lifecycle contract](docs/presentation-lifecycle.md) and

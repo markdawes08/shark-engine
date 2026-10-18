@@ -16,19 +16,20 @@ int main(int argc, char* argv[]) {
             return 1;
         }
         std::cerr << "Usage: Editor [--help | --version | --window [--window-ms 1..60000] | "
-                     "--graphics [--graphics-ms 1..60000] [--device UUID|auto] "
-                     "[--validation required|off]]\n"
+                     "--graphics | --cube [--graphics-ms 1..60000] [--device UUID|auto] "
+                     "[--validation required|off] [--shader-bundle PATH]]\n"
                   << std::flush;
         return std::cerr ? 2 : 1;
     };
     // Explicit opt-in: informational commands never initialize a display.
-    if (argc >= 2 && std::string_view{argv[1]} == "--graphics") {
-        if (argc > 8) {
+    if (argc >= 2 &&
+        (std::string_view{argv[1]} == "--graphics" || std::string_view{argv[1]} == "--cube")) {
+        if (argc > 10) {
             return invalid_arguments({shark::ErrorCode::invalid_argument,
                                       "Too many presentation launch arguments",
                                       {.operation = "client.graphics.arguments.parse"}});
         }
-        std::array<std::string_view, 7> graphics_arguments;
+        std::array<std::string_view, 9> graphics_arguments;
         for (int index = 1; index < argc; ++index) {
             graphics_arguments[static_cast<std::size_t>(index - 1)] = argv[index];
         }

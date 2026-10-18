@@ -137,10 +137,12 @@ def snap_vertex(vertex: tuple) -> tuple:
     return (round(vertex[0] * scale) / scale, round(vertex[1] * scale) / scale, *vertex[2:])
 
 
-@lru_cache(maxsize=2)
-def rasterize(case: int) -> Reference:
+@lru_cache(maxsize=8)
+def rasterize(case: int, extent: tuple[int, int] | None = None) -> Reference:
     data = fixture(case)
-    width, height = EXTENTS[case]
+    width, height = EXTENTS[case] if extent is None else extent
+    require(type(width) is int and type(height) is int and 1 <= width <= 1024 and 1 <= height <= 1024,
+            "Oracle extent exceeds the bounded resource contract")
     count = width * height
     color = bytearray((0, 0, 0, 255) * count)
     depths = [1.0] * count

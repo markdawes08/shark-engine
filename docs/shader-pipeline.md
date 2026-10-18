@@ -68,7 +68,62 @@ The `verify` command checks the artifact closure without requiring shader source
 DXC, spirv-val, or a graphics device. Copy the published manifest and its referenced
 generation together for relocation. Hashes detect missing or modified bytes;
 they are integrity metadata, not signatures or an authenticated content channel.
-The final game package and EngineClient artifact loader belong to 06b/06c.
+The native [resource loader](gpu-resources.md) validates the supported typed
+interface. The distribution bundle below carries the fixed cube sample's two
+precompiled stages; this is not a general asset cooker or game export format.
+
+## Prepare and distribute the cube sample
+
+After building the desired C++ preset, explicitly prepare its adjacent bundle:
+
+```powershell
+.tools/venv/Scripts/python.exe tools/shader_pipeline.py prepare --recipe shaders/recipe.json --output out/shaders/development --validation-manifest out/05a-work/validation-tools/summary.json --bin-dir build/windows-debug/bin
+.\build\windows-debug\bin\Editor.exe --cube
+.\build\windows-debug\bin\Runtime.exe --cube --graphics-ms 1000
+```
+
+`prepare` runs the existing cached-input build, verifies the generation, then
+atomically exports `assets/cube.sharkshader` below the selected executable
+directory. Source/include changes use the existing generation rebuild rules;
+unchanged verified output is reused. A failed build/export leaves the previously
+published bundle usable. Normal CMake builds and application startup never invoke
+this command implicitly. Repeat it explicitly after shader edits.
+
+Exporting an already verified generation requires no source, compiler, validator,
+validation-layer installation or device:
+
+```powershell
+.tools/venv/Scripts/python.exe tools/shader_pipeline.py export --output out/shaders/development --destination out/cube-distribution/cube.sharkshader
+```
+
+The exporter selects the recipe's `textured-cube-vs` and `textured-cube-ps` with
+their supported stages and interfaces, verifies their manifest hashes, and
+publishes one binary file. A destination writer lock rejects conflicting exports.
+The format has an exact 88-byte header followed by vertex then pixel SPIR-V:
+
+| Offset | Encoding |
+| --- | --- |
+| 0 | Eight bytes `SHRKSHD` followed by NUL |
+| 8 | Little-endian uint32 version, exactly 1 |
+| 12, 16 | Little-endian uint32 vertex and pixel byte lengths |
+| 20 | Little-endian uint32 reserved value, exactly 0 |
+| 24, 56 | Raw 32-byte SHA-256 of each corresponding payload |
+| 88 | Vertex payload, then pixel payload; no trailing bytes |
+
+Each payload is 20..4,194,304 bytes, aligned to four bytes. Unknown versions,
+reserved values, truncation, extra bytes, hash mismatches and unsupported native
+shader interfaces fail before device creation. The Runtime computes and reports
+SHA-256 of the complete loaded file. These hashes detect corruption; they do not
+authenticate the publisher or make arbitrary GPU programs safe to execute.
+The loader discovers no source files or shader tools.
+
+`--cube` resolves the running executable, independent of its working directory
+or `argv[0]`, and loads `assets/cube.sharkshader` beside it. An explicit
+`--shader-bundle PATH` overrides that location. Native Unicode paths are bounded
+to 4,096 UTF-8 bytes and reject invalid encoding/NUL. Missing files return an
+owned `shader.bundle.load` error; no fallback compilation occurs. The
+[Runtime package workflow](building.md#cube-sample-and-runtime-package) exports
+the same bundle into its verified distribution closure.
 
 The builder's binding convention retains the pinned probe/NVRHI offsets: within
 descriptor set 0, sampled/read-only resources start at 0, samplers at 128,
@@ -77,9 +132,10 @@ explicit column-major layout and matrix-times-column-vector multiplication.
 Each kind permits slots 0..127. The builder checks SPIR-V entry/stage and exact
 descriptor set/binding numbers against the recipe, then runs independent
 `spirv-val`. This is not full resource-type, member-offset/stride, vertex-input or
-cross-stage reflection. Those checks belong with the GPU loader/pipeline in 06b.
-The supplied vertex shader performs the one projection-Y inversion; 06b must
-avoid also flipping the supplied matrix or viewport.
+cross-stage reflection. The native loader adds those typed-interface checks.
+The supplied vertex shader performs the one projection-Y inversion; the native
+NVRHI viewport compensates for its backend inversion to retain a positive Vulkan
+viewport height without another projection inversion.
 The convention is versioned; it does not select a material schema, bindless
 resource system, streaming policy or world-coordinate representation.
 The existing [space/depth/color contract](architecture/0005-simulation-and-rendering.md)
@@ -122,10 +178,12 @@ validator, checks independent cold-build equality, nested-include rebuilds,
 failed-build preservation and source/tool-free artifact relocation. It is opt-in
 and does not open a graphics device.
 
-Runtime, Core and Server do not invoke or link this tool. Their CMake graph and
-install/package closure remain unchanged. Normal test configurations register
+Runtime, Core and Server do not invoke or link this tool. Normal test configurations register
 CPU checks without preparing DXC or SPIRV-Tools; Runtime-only and Server-only
 builds do not discover Python for this feature. Generated shader output and
 evidence belong under ignored `out/`; the recipe, shader sources, tools and tests
-stay versioned. Full GPU pipeline/layout, upload, offscreen/window readback and
-compiler-free game-package acceptance remain in 06b/06c.
+stay versioned. `shark.client.shader-bundle` tests the portable native reader,
+known SHA-256 vectors, damaged framing/payloads, stage mismatch and Unicode paths
+without a compiler or device. Offscreen acceptance is recorded in the
+[06b handoff](handoffs/06b-gpu-resources.md). The separate window/distribution gate
+is complete in the [06c handoff](handoffs/06c-window-distribution.md).

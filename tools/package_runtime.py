@@ -27,8 +27,11 @@ from package_graphics_probe import (CRT_NAMES, MAX_FILE, MAX_FILES, MAX_PACKAGE,
 from graphics_probe import finite_float, reject_constant, unique_object
 from process_runner import run_process
 from toolchain_report import collect
+from shader_pipeline import bundle_payload, canonical, inspect_bundle, verify as verify_shaders
 
 BINARIES = {"bin/Runtime.exe", "bin/vulkan-1.dll", *("bin/" + name for name in CRT_NAMES)}
+SHADER_BUNDLE = "bin/assets/cube.sharkshader"
+SHADER_MANIFEST = "provenance/shader-manifest.json"
 
 
 def current_build(output: str) -> bool:
@@ -107,7 +110,7 @@ def publish(output: Path, payload: dict[str, bytes], manifest: dict) -> dict:
     return manifest
 
 
-def build_package(build: Path, crt_dir: Path, output: Path) -> dict:
+def build_package(build: Path, crt_dir: Path, output: Path, shaders: Path | None = None) -> dict:
     build = build.absolute()
     cache_values(build)
     lock_data = regular_file(ROOT / "dependencies.lock.json")
@@ -139,11 +142,25 @@ def build_package(build: Path, crt_dir: Path, output: Path) -> dict:
     payload["provenance/dependency-closure.json"] = json_bytes(closure)
     payload["provenance/toolchain.json"] = json_bytes(collect(build))
     payload["provenance/crt-manifest.json"] = json_bytes({**crt, "binary_metadata": metadata})
+    shader_record = None
+    if shaders is not None:
+        bundle, shader_record = bundle_payload(shaders.absolute())
+        shader_manifest = verify_shaders(shaders.absolute())
+        if (digest(canonical(shader_manifest)) != shader_record["artifact_manifest_sha256"]
+                or shader_manifest["inputs"]["toolchain"]["lock_sha256"] != digest(lock_data)):
+            raise ValueError("Shader artifact generation changed or belongs to a different dependency lock")
+        payload[SHADER_BUNDLE] = bundle
+        payload[SHADER_MANIFEST] = canonical(shader_manifest)
+    sample = ("Run bin\\Runtime.exe --cube --graphics-ms 1000 --device <Vulkan UUID> --validation off\n"
+              "The sample presents a textured cube using bin\\assets\\cube.sharkshader.\n"
+              if shader_record is not None else
+              "Run bin\\Runtime.exe --graphics --graphics-ms 1000 --device <Vulkan UUID> --validation off\n"
+              "The sample presents a clear color.\n")
     payload["README.txt"] = (
-        "Shark 05c local Windows x64 Runtime deployment fixture\n\n"
+        "Shark local Windows x64 Runtime deployment fixture\n\n"
         "Requires the current Windows 11 PC, an interactive desktop and installed vendor Vulkan driver.\n"
-        "Run bin\\Runtime.exe --graphics --graphics-ms 1000 --device <Vulkan UUID> --validation off\n"
-        "The sample presents a clear color; it has no scene, game, editor UI or authoring API.\n"
+        + sample +
+        "It has no scene, game, editor UI or authoring API.\n"
         "No Python, compiler, Vulkan SDK, source checkout or Editor is required by Runtime.\n"
         "Validation layers, shader compilers and source payloads are absent. Native correctness\n"
         "qualification is a separate required-validation fixture; this launch is diagnostic.\n"
@@ -153,13 +170,15 @@ def build_package(build: Path, crt_dir: Path, output: Path) -> dict:
     for name, binary in binaries.items():
         regular_file(binary, digest(payload[name]))
     regular_file(ROOT / "dependencies.lock.json", digest(lock_data))
-    manifest = {"schema_version": 1, "checkpoint": "05c", "kind": "runtime-deployment-fixture",
+    manifest = {"schema_version": 1, "checkpoint": "06c" if shaders is not None else "05c", "kind": "runtime-deployment-fixture",
                 "status": "PASS", "qualification": "NOT_RUN", "platform": "windows-x86_64",
                 "timestamp_utc": datetime.now(timezone.utc).isoformat(), "configuration": "Release",
                 "dependency_lock_sha256": digest(lock_data), "dependencies": dependencies,
                 "commands": commands, "build_directory": str(build),
                 "cache_sha256": sha256(build / "CMakeCache.txt"),
                 "builder_sha256": sha256(Path(__file__))}
+    if shader_record is not None:
+        manifest["shader_bundle"] = shader_record
     return publish(output.absolute(), payload, manifest)
 
 
@@ -187,11 +206,19 @@ def inspect_package(directory: Path, expected_manifest: str) -> dict:
     if native != BINARIES:
         raise ValueError("Runtime package contains unexpected or missing native payload")
     total = 0
+    has_shaders = "shader_bundle" in manifest
+    if has_shaders != (SHADER_BUNDLE in files and SHADER_MANIFEST in files):
+        raise ValueError("Runtime shader bundle declaration and payload closure differ")
     for name, record in files.items():
         relative_name(name)
+        if (not isinstance(record, dict) or set(record) != {"sha256", "bytes"}
+                or not isinstance(record["sha256"], str) or not re.fullmatch("[0-9a-f]{64}", record["sha256"])
+                or type(record["bytes"]) is not int or not 0 <= record["bytes"] <= MAX_FILE):
+            raise ValueError(f"Invalid Runtime package file record: {name}")
         if (name not in BINARIES | {"README.txt", "provenance/dependencies.lock.json",
                                    "provenance/dependency-closure.json", "provenance/toolchain.json",
                                    "provenance/crt-manifest.json"}
+                and not (has_shaders and name in {SHADER_BUNDLE, SHADER_MANIFEST})
                 and not name.startswith("licenses/")):
             raise ValueError(f"Unexpected Runtime source or auxiliary payload: {name}")
         data = regular_file(directory / name, record["sha256"])
@@ -203,10 +230,37 @@ def inspect_package(directory: Path, expected_manifest: str) -> dict:
     for name in ("GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader", "MicrosoftVC"):
         if not any(path.startswith(f"licenses/{name}/") for path in files):
             raise ValueError(f"Package lacks {name} license notices")
+    if has_shaders:
+        bundle = inspect_bundle(regular_file(directory / SHADER_BUNDLE))
+        record = manifest["shader_bundle"]
+        if not isinstance(record, dict) or set(record) != set(bundle) | {"generation", "artifact_manifest_sha256"}:
+            raise ValueError("Invalid packaged shader bundle metadata")
+        if {key: record[key] for key in bundle} != bundle:
+            raise ValueError("Packaged shader bundle metadata differs from its payload")
+        source = regular_file(directory / SHADER_MANIFEST, record["artifact_manifest_sha256"])
+        provenance = json.loads(source, object_pairs_hook=unique_object,
+                                parse_constant=reject_constant, parse_float=finite_float)
+        if not isinstance(provenance, dict) or not isinstance(provenance.get("inputs"), dict):
+            raise ValueError("Packaged shader generation provenance is invalid")
+        inputs = provenance["inputs"]
+        if (manifest.get("checkpoint") != "06c" or provenance.get("schema_version") != 1
+                or not isinstance(inputs.get("toolchain"), dict)
+                or provenance.get("generation") != record["generation"]
+                or digest(canonical(inputs)) != record["generation"]
+                or inputs["toolchain"].get("lock_sha256") != manifest.get("dependency_lock_sha256")):
+            raise ValueError("Packaged shader generation provenance differs")
+        rows = provenance.get("shaders")
+        if not isinstance(rows, list) or any(not isinstance(row, dict) for row in rows):
+            raise ValueError("Packaged shader generation inventory is invalid")
+        for shader in bundle["shaders"]:
+            matches = [row for row in rows if row.get("id") == shader["id"]]
+            if (len(matches) != 1 or any(matches[0].get(key) != value for key, value in shader.items())
+                    or matches[0].get("file") != f"generations/{record['generation']}/{shader['id']}.spv"):
+                raise ValueError("Packaged shader dependency closure differs from bundle")
     return manifest
 
 
-def completion(stdout: str, device: str) -> dict:
+def completion(stdout: str, device: str, shader_hash: str | None = None) -> dict:
     lines = [line for line in stdout.splitlines() if line.strip()]
     if len(lines) != 1:
         raise ValueError("Expected exactly one Runtime completion record")
@@ -216,10 +270,14 @@ def completion(stdout: str, device: str) -> dict:
         raise ValueError("Runtime completion must be an object")
     keys = {"event", "validation", "adapter_uuid", "submitted", "presented", "completed",
             "generations", "retired_generations", "synchronization", "qualification"}
-    if (set(row) != keys or row["event"] != "graphics-sample-complete" or row["adapter_uuid"] != device
+    if shader_hash is not None:
+        keys |= {"draw", "shader_bundle_sha256"}
+    if (set(row) != keys or row["event"] != ("cube-sample-complete" if shader_hash else "graphics-sample-complete") or row["adapter_uuid"] != device
             or row["validation"] != "off" or row["qualification"] != "NOT_RUN"
             or row["synchronization"] not in {"present_fence", "host_completion"}):
         raise ValueError("Runtime completion identity or validation policy differs")
+    if shader_hash is not None and (row["draw"] != "textured-cube" or row["shader_bundle_sha256"] != shader_hash):
+        raise ValueError("Runtime completion shader bundle identity differs")
     for name in ("submitted", "presented", "completed", "generations", "retired_generations"):
         if type(row[name]) is not int or row[name] <= 0:
             raise ValueError(f"Runtime completion requires positive integer {name}")
@@ -260,7 +318,8 @@ def check_package(directory: Path, expected_manifest: str, devices: list[str], o
         raise ValueError("Deployment check requires two distinct explicit GPU UUIDs")
     manifest = inspect_package(directory, expected_manifest)
     output.mkdir(parents=True, exist_ok=False)
-    summary = {"schema_version": 1, "checkpoint": "05c", "status": "FAIL", "qualification": "NOT_RUN",
+    cube = manifest.get("shader_bundle")
+    summary = {"schema_version": 1, "checkpoint": "06c" if cube else "05c", "status": "FAIL", "qualification": "NOT_RUN",
                "scope": "Local relocated Runtime dependency and launch evidence; no independent clean machine or native correctness qualification",
                "package_directory": str(directory), "manifest_sha256": expected_manifest,
                "validation": "off", "runs": [], "errors": [],
@@ -277,6 +336,8 @@ def check_package(directory: Path, expected_manifest: str, devices: list[str], o
         for device in devices:
             command = [str(powershell), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(helper),
                        "-Package", str(directory), "-Device", device]
+            if cube:
+                command.append("-Cube")
             result = run_process(command, cwd=directory, timeout=30)
             (output / (device + ".stdout.json")).write_text(result.stdout, encoding="utf-8")
             (output / (device + ".stderr.log")).write_text(result.stderr, encoding="utf-8")
@@ -289,7 +350,7 @@ def check_package(directory: Path, expected_manifest: str, devices: list[str], o
             row["launch"] = report
             if report["exit_code"] != 0 or report["timed_out"] or report["stderr"].strip():
                 raise ValueError(f"Runtime process failed for {device}")
-            row["completion"] = completion(report["stdout"], device)
+            row["completion"] = completion(report["stdout"], device, cube["sha256"] if cube else None)
             errors = module_errors(report["modules"], directory, system)
             if errors:
                 raise ValueError("; ".join(errors))
@@ -311,6 +372,7 @@ def main() -> int:
     build = commands.add_parser("build")
     for name in ("build-dir", "crt-dir", "output"):
         build.add_argument("--" + name, type=Path, required=True)
+    build.add_argument("--shaders", type=Path, help="Verified offline artifact cache to package the cube sample")
     check = commands.add_parser("check")
     check.add_argument("--package", type=Path, required=True)
     check.add_argument("--manifest-sha256", required=True)
@@ -322,7 +384,7 @@ def main() -> int:
         return 3
     try:
         if args.mode == "build":
-            manifest = build_package(args.build_dir, args.crt_dir, args.output)
+            manifest = build_package(args.build_dir, args.crt_dir, args.output, args.shaders)
             report = {"status": "PASS", "qualification": "NOT_RUN", "files": len(manifest["files"]),
                       "package_directory": str(args.output.absolute()),
                       "manifest_sha256": sha256(args.output / "package-manifest.json")}

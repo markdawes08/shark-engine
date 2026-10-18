@@ -34,6 +34,14 @@ MAX_SHADERS = 32
 HASH = re.compile(r"[0-9a-f]{64}\Z")
 IDENTIFIER = re.compile(r"[A-Za-z_][A-Za-z_0-9]{0,63}\Z")
 ASSET_ID = re.compile(r"[a-z][a-z0-9_-]{0,63}\Z")
+BUNDLE_MAGIC = b"SHRKSHD\0"
+BUNDLE_HEADER = struct.Struct("<8sIIII32s32s")
+BUNDLE_SHADERS = (
+    {"id": "textured-cube-vs", "entry": "vsMain", "stage": "vertex",
+     "bindings": [{"kind": "constant_buffer", "slot": 0}]},
+    {"id": "textured-cube-ps", "entry": "psMain", "stage": "pixel",
+     "bindings": [{"kind": "texture", "slot": 0}, {"kind": "sampler", "slot": 0}]},
+)
 
 
 class ShaderError(ValueError):
@@ -335,6 +343,101 @@ def verify(output: Path) -> dict:
     return manifest
 
 
+def inspect_bundle(data: bytes) -> dict:
+    """Check the fixed diagnostic bundle without sources, tools or a device.
+
+    Runtime additionally checks the supported typed SPIR-V interface. These
+    digests detect inconsistent payloads; they are not signatures.
+    """
+    if not BUNDLE_HEADER.size <= len(data) <= BUNDLE_HEADER.size + 2 * MAX_BINARY:
+        fail("shader.bundle", "Shader bundle length is outside its bounded format")
+    magic, version, vertex_size, pixel_size, reserved, vertex_hash, pixel_hash = BUNDLE_HEADER.unpack_from(data)
+    if magic != BUNDLE_MAGIC or version != 1 or reserved != 0:
+        fail("shader.bundle", "Unsupported shader bundle magic, version or reserved field")
+    if (any(size < 20 or size > MAX_BINARY or size % 4 for size in (vertex_size, pixel_size))
+            or len(data) != BUNDLE_HEADER.size + vertex_size + pixel_size):
+        fail("shader.bundle", "Shader bundle payload sizes differ from its exact framing")
+    rows = []
+    offset = BUNDLE_HEADER.size
+    for shader, size, expected in zip(BUNDLE_SHADERS, (vertex_size, pixel_size),
+                                      (vertex_hash, pixel_hash), strict=True):
+        binary = data[offset:offset + size]
+        if hashlib.sha256(binary).digest() != expected:
+            fail("shader.bundle", "Shader bundle payload digest differs", shader["id"])
+        if struct.unpack_from("<I", binary, 4)[0] != 0x10600:
+            fail("shader.bundle", "Runtime shader bundles require SPIR-V 1.6", shader["id"])
+        inspect_spirv(binary, shader)
+        rows.append({"id": shader["id"], "sha256": expected.hex(), "bytes": size})
+        offset += size
+    return {"schema_version": 1, "format": "shark-shader-bundle", "bytes": len(data),
+            "sha256": digest(data), "shaders": rows}
+
+
+def bundle_payload(output: Path) -> tuple[bytes, dict]:
+    """Export only the fixed VS/PS closure from a complete verified generation."""
+    manifest = verify(output)
+    definitions = {row["id"]: row for row in manifest["inputs"]["recipe"]["shaders"]}
+    artifacts = {row["id"]: row for row in manifest["shaders"]}
+    binaries = []
+    for expected in BUNDLE_SHADERS:
+        definition = definitions.get(expected["id"])
+        if definition is None or {key: definition[key] for key in expected} != expected:
+            fail("shader.bundle", "Generation lacks the supported textured cube shader contract", expected["id"])
+        row = artifacts[expected["id"]]
+        with contained(output, row["file"]).open("rb") as stream:
+            binary = stream.read(MAX_BINARY + 1)
+        if len(binary) != row["bytes"] or digest(binary) != row["sha256"]:
+            fail("shader.bundle", "Shader input changed during bundle preparation", row["file"])
+        binaries.append(binary)
+    vertex, pixel = binaries
+    data = BUNDLE_HEADER.pack(BUNDLE_MAGIC, 1, len(vertex), len(pixel), 0,
+                              hashlib.sha256(vertex).digest(), hashlib.sha256(pixel).digest()) + vertex + pixel
+    record = inspect_bundle(data)
+    if verify(output) != manifest:
+        fail("shader.bundle", "Shader generation changed during bundle preparation")
+    return data, {**record, "generation": manifest["generation"],
+                  "artifact_manifest_sha256": digest(canonical(manifest))}
+
+
+def export_bundle(output: Path, destination: Path) -> dict:
+    """Atomically stage a verified bundle beside a developer executable."""
+    no_links(destination)
+    if destination.resolve().is_relative_to(output.resolve()):
+        fail("shader.path", "Bundle destination must be outside the artifact cache", destination)
+    data, record = bundle_payload(output)
+    destination.parent.mkdir(parents=True, exist_ok=True)
+    no_links(destination.parent)
+    lock = destination.with_name(destination.name + ".lock")
+    staging = destination.with_name(".shader-bundle-" + uuid.uuid4().hex)
+    try:
+        with lock.open("xb"):
+            pass
+    except FileExistsError:
+        fail("shader.busy", "Shader bundle destination already has an active writer", destination)
+    try:
+        existing = None
+        if destination.is_file() and destination.stat().st_size == len(data):
+            with destination.open("rb") as stream:
+                existing = stream.read(len(data) + 1)
+        if existing == data:
+            disposition = "CACHED"
+        else:
+            with staging.open("xb") as stream:
+                stream.write(data)
+                stream.flush()
+                os.fsync(stream.fileno())
+            if inspect_bundle(staging.read_bytes()) != inspect_bundle(data):
+                fail("shader.bundle", "Staged shader bundle differs before publication")
+            no_links(destination)
+            os.replace(staging, destination)
+            disposition = "EXPORTED"
+    finally:
+        staging.unlink(missing_ok=True)
+        lock.unlink()
+    return {"schema_version": 1, "status": "PASS", "operation": "export", "disposition": disposition,
+            "destination": str(destination), **record}
+
+
 @contextmanager
 def output_owner(output: Path):
     no_links(output)
@@ -457,9 +560,24 @@ def main(argv: list[str] | None = None) -> int:
         compile_parser.add_argument("--validation-manifest", type=Path, required=True)
         verify_parser = commands.add_parser("verify")
         verify_parser.add_argument("--output", type=Path, required=True)
+        export_parser = commands.add_parser("export")
+        export_parser.add_argument("--output", type=Path, required=True)
+        export_parser.add_argument("--destination", type=Path, required=True)
+        prepare_parser = commands.add_parser("prepare")
+        prepare_parser.add_argument("--recipe", type=Path, required=True)
+        prepare_parser.add_argument("--output", type=Path, required=True)
+        prepare_parser.add_argument("--validation-manifest", type=Path, required=True)
+        prepare_parser.add_argument("--bin-dir", type=Path, required=True)
         args = parser.parse_args(argv)
         if args.operation == "build":
             result = build(args.recipe.absolute(), args.output.absolute(), args.validation_manifest.absolute())
+        elif args.operation == "export":
+            result = export_bundle(args.output.absolute(), args.destination.absolute())
+        elif args.operation == "prepare":
+            built = build(args.recipe.absolute(), args.output.absolute(), args.validation_manifest.absolute())
+            exported = export_bundle(args.output.absolute(), args.bin_dir.absolute() / "assets/cube.sharkshader")
+            result = {"schema_version": 1, "status": "PASS", "operation": "prepare",
+                      "build": built, "bundle": exported}
         else:
             manifest = verify(args.output.absolute())
             result = {"schema_version": 1, "status": "PASS", "operation": "verify", "generation": manifest["generation"],

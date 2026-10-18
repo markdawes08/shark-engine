@@ -1,12 +1,13 @@
 # Assignment 06: Shader and GPU resource checkpoints
 
 Date: 2026-10-18. Starting revision: `db4117f` on `main`.
-Owner: `REQ-06`; full assignment verification remains NOT_RUN.
+Owner: `REQ-06`; **full assignment verification is PASS** under the current-machine scope.
+The [06c handoff](../handoffs/06c-window-distribution.md) closes window and distribution qualification.
 **06a is complete for offline tooling.** The
 [handoff](../handoffs/06a-offline-shaders.md) records its scoped verification.
 **06b is complete for owned resources and offscreen rendering.** See the
 [resource contract](../gpu-resources.md) and [06b handoff](../handoffs/06b-gpu-resources.md)
-for both-GPU and CPU verification. **06c is next.**
+for both-GPU and CPU verification. **06c is complete; assignment 07 is next.**
 
 ## Sequencing decision
 

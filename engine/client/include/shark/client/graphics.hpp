@@ -142,6 +142,17 @@ class GraphicsDevice final {
     // recreate_pending requires a later event-pump pass, never an internal spin.
     [[nodiscard]] Result<PresentationReport> present(ClearColor color = {});
     [[nodiscard]] Result<PresentationStats> presentation_stats() const;
+    // Installs one immutable diagnostic draw before the first present attempt.
+    // Geometry, texture and shaders remain owned until close. Draw extent comes
+    // from the window (bounded to 4096 per dimension), not request.extent.
+    // RGB is encoded once by the sRGB swapchain attachment. Optional readback
+    // requires surface TRANSFER_SRC support and retains capture staging.
+    [[nodiscard]] Result<void> set_presentation_draw(const OffscreenRequest& request,
+                                                     bool enable_readback = false);
+    // Reads the actual last successfully presented attachment, not another
+    // render. A bounded wait proves submission completion. Returns RGBA8 sRGB
+    // RGB / linear alpha and D32; resources stay live (retired count is zero).
+    [[nodiscard]] Result<OffscreenReadback> capture_presented();
     // Bounded offscreen diagnostic draw on this device's owned graphics queue.
     // Uploads and returns tightly packed RGBA8/D32 readback. A one-second GPU
     // wait timeout retains owners until drain/close proves completion; retry

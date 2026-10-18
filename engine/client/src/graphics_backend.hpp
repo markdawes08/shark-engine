@@ -59,6 +59,8 @@ struct GraphicsResourceSnapshot {
     std::uint32_t offscreen_resources{0};
     std::uint32_t offscreen_submissions{0};
     std::uint32_t offscreen_recordings{0};
+    std::uint32_t window_draw_resources{0};
+    std::uint32_t window_draw_submissions{0};
 };
 
 // Failed/throwing stages may partially acquire resources. The owner marks each
@@ -79,6 +81,8 @@ class GraphicsBackend {
     [[nodiscard]] virtual Result<WindowState> window_state();
     [[nodiscard]] virtual Result<void> window_command(WindowCommand, WindowExtent);
     [[nodiscard]] virtual Result<OffscreenReadback> render_offscreen(const OffscreenRequest&);
+    [[nodiscard]] virtual Result<void> set_presentation_draw(const OffscreenRequest&, bool);
+    [[nodiscard]] virtual Result<OffscreenReadback> capture_presented();
     [[nodiscard]] virtual bool offscreen_pending() const noexcept {
         return false;
     }

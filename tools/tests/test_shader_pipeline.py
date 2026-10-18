@@ -293,6 +293,117 @@ class ShaderPipelineTests(unittest.TestCase):
         self.assertEqual(result["status"], "FAIL")
         self.assertIn("code", result["error"])
 
+    def cube_artifacts(self):
+        self.definition["shaders"] = [{**row, "source": "main.hlsl"} for row in pipeline.BUNDLE_SHADERS]
+        self.save_recipe()
+
+        def cube_tool(command, **kwargs):
+            self.calls.append(command)
+            if command[0] == "dxc":
+                entry = command[command.index("-E") + 1]
+                vertex = entry == "vsMain"
+                binary = bytearray(shader_binary(entry, 0 if vertex else 4, (256,) if vertex else (0, 128)))
+                content = (Path(kwargs["cwd"]) / "include/value.hlsli").read_bytes()
+                struct.pack_into("<I", binary, 8, int(pipeline.digest(content)[:8], 16))
+                Path(command[command.index("-Fo") + 1]).write_bytes(binary)
+            return ProcessResult(command, 0, "", "", False)
+
+        with patch.object(pipeline, "run_process", side_effect=cube_tool):
+            return self.build()
+
+    def test_bundle_export_is_deterministic_source_and_tool_free(self):
+        self.cube_artifacts()
+        destination = self.root / "bin/assets/cube.sharkshader"
+        self.recipe.unlink()
+        with patch.object(pipeline, "tool_inputs", side_effect=AssertionError("export must not discover tools")):
+            first = pipeline.export_bundle(self.output, destination)
+            original = destination.read_bytes()
+            second = pipeline.export_bundle(self.output, destination)
+        self.assertEqual(first["disposition"], "EXPORTED")
+        self.assertEqual(second["disposition"], "CACHED")
+        self.assertEqual(original, destination.read_bytes())
+        self.assertEqual(original[:12], b"SHRKSHD\0\x01\0\0\0")
+        self.assertEqual(pipeline.inspect_bundle(original)["sha256"], first["sha256"])
+        self.assertFalse(destination.with_name(destination.name + ".lock").exists())
+
+    def test_bundle_export_rebuild_and_failed_input_preserve_prior_publication(self):
+        self.cube_artifacts()
+        destination = self.root / "cube.sharkshader"
+        first = pipeline.export_bundle(self.output, destination)
+        (self.source / "include/value.hlsli").write_text("changed dependency")
+        self.cube_artifacts()
+        second = pipeline.export_bundle(self.output, destination)
+        self.assertNotEqual(first["sha256"], second["sha256"])
+        previous = destination.read_bytes()
+        manifest = pipeline.verify(self.output)
+        (self.output / manifest["shaders"][0]["file"]).write_bytes(b"corrupted")
+        with self.assertRaises(pipeline.ShaderError):
+            pipeline.export_bundle(self.output, destination)
+        self.assertEqual(destination.read_bytes(), previous)
+
+    def test_bundle_failed_atomic_replacement_preserves_previous_file_and_releases_writer(self):
+        self.cube_artifacts()
+        destination = self.root / "cube.sharkshader"
+        pipeline.export_bundle(self.output, destination)
+        previous = destination.read_bytes()
+        (self.source / "include/value.hlsli").write_text("changed dependency")
+        self.cube_artifacts()
+        with patch.object(pipeline.os, "replace", side_effect=OSError("fixture publication failure")):
+            with self.assertRaisesRegex(OSError, "publication failure"):
+                pipeline.export_bundle(self.output, destination)
+        self.assertEqual(destination.read_bytes(), previous)
+        self.assertFalse(destination.with_name(destination.name + ".lock").exists())
+        self.assertFalse(list(destination.parent.glob(".shader-bundle-*")))
+        self.assertEqual(pipeline.export_bundle(self.output, destination)["disposition"], "EXPORTED")
+
+    def test_bundle_requires_fixed_cube_contract_and_rejects_active_writer(self):
+        self.build()
+        with self.assertRaisesRegex(pipeline.ShaderError, "supported textured cube"):
+            pipeline.bundle_payload(self.output)
+        self.cube_artifacts()
+        destination = self.root / "cube.sharkshader"
+        destination.with_name(destination.name + ".lock").write_bytes(b"writer")
+        with self.assertRaisesRegex(pipeline.ShaderError, "active writer"):
+            pipeline.export_bundle(self.output, destination)
+        with self.assertRaisesRegex(pipeline.ShaderError, "outside the artifact cache"):
+            pipeline.export_bundle(self.output, self.output / "cube.sharkshader")
+
+    def test_bundle_rejects_size_version_hash_and_shader_interface_mutations(self):
+        self.cube_artifacts()
+        original, _ = pipeline.bundle_payload(self.output)
+        mutations = [b"", original[:87], original + b"extra", b"X" + original[1:]]
+        for offset, value in ((8, 2), (12, 16), (16, pipeline.MAX_BINARY + 4), (20, 1)):
+            changed = bytearray(original)
+            struct.pack_into("<I", changed, offset, value)
+            mutations.append(bytes(changed))
+        for offset in (24, 56, 88, len(original) - 1):
+            changed = bytearray(original)
+            changed[offset] ^= 1
+            mutations.append(bytes(changed))
+        wrong_vertex = shader_binary("psMain", 4, (256,))
+        pixel = shader_binary("psMain", 4, (0, 128))
+        mutations.append(pipeline.BUNDLE_HEADER.pack(pipeline.BUNDLE_MAGIC, 1, len(wrong_vertex), len(pixel), 0,
+                         bytes.fromhex(pipeline.digest(wrong_vertex)), bytes.fromhex(pipeline.digest(pixel))) + wrong_vertex + pixel)
+        old_vertex = bytearray(shader_binary("vsMain", 0, (256,)))
+        struct.pack_into("<I", old_vertex, 4, 0x10500)
+        mutations.append(pipeline.BUNDLE_HEADER.pack(pipeline.BUNDLE_MAGIC, 1, len(old_vertex), len(pixel), 0,
+                         bytes.fromhex(pipeline.digest(old_vertex)), bytes.fromhex(pipeline.digest(pixel))) + old_vertex + pixel)
+        for index, data in enumerate(mutations):
+            with self.subTest(index=index), self.assertRaises(pipeline.ShaderError):
+                pipeline.inspect_bundle(data)
+
+    def test_prepare_cli_builds_and_stages_explicit_bin_directory(self):
+        self.cube_artifacts()
+        stream = io.StringIO()
+        with redirect_stdout(stream):
+            result = pipeline.main(["prepare", "--recipe", str(self.recipe), "--output", str(self.output),
+                                    "--validation-manifest", str(self.receipt), "--bin-dir", str(self.root / "bin")])
+        self.assertEqual(result, 0)
+        report = json.loads(stream.getvalue())
+        self.assertEqual(report["build"]["disposition"], "CACHED")
+        self.assertEqual(report["bundle"]["disposition"], "EXPORTED")
+        self.assertTrue((self.root / "bin/assets/cube.sharkshader").is_file())
+
 
 class ShaderToolInputTests(unittest.TestCase):
     def test_compiler_only_receipt_and_explicit_offline_preparation(self):

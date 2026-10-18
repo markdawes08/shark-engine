@@ -136,6 +136,11 @@ and future CPU authoring remain display-free.
 [06a handoff](../handoffs/06a-offline-shaders.md). Its noninteractive inputs and
 machine-readable results add no scene-authoring API. The user's backlog decision
 authorizes 06b and subsequent increments under their own acceptance criteria.
+**Full REQ-06 is now complete**, including shared `--cube` launches, bounded
+precompiled bundle preparation, machine-readable completion and compiler-free
+Runtime distribution. The [06c handoff](../handoffs/06c-window-distribution.md)
+records the local evidence. These diagnostic paths add no scene-authoring API;
+assignment 07 is next.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and

@@ -171,3 +171,11 @@ credentials are not prerequisites. Human/terminal parity and seamless authoritat
 world behavior remain required. Multiplayer requirements remain NOT_RUN. See the
 [CI verification handoff](../handoffs/01-ci-verification.md) for 01's tested
 revision, run URLs and qualification limits.
+
+Full `REQ-06` is PASS under the current-machine scope. The
+[06c handoff](../handoffs/06c-window-distribution.md) and
+[receipt](evidence/06c-window-distribution.json) record 261 CPU CTests, both-GPU
+window/offscreen references, lifetime failures, shader rebuilds and relocated
+Runtime shader closure. `client.window-cube-distribution` maps the implemented
+surface to device-free tests and explicit hardware fixtures. Scene-authoring
+component/command/Lua arrays remain empty; assignment 07 is next.

@@ -262,6 +262,9 @@ struct GraphicsDevice::Impl {
     GraphicsAdapter selected;
     std::array<bool, 5> attempted{};
     const char* operation{"graphics.startup"};
+    bool presentation_started{false};
+    bool draw_configured{false};
+    bool capture_enabled{false};
 
     explicit Impl(std::unique_ptr<detail::GraphicsBackend> value)
         : backend(std::move(value)), presentation(*backend, sink) {}
@@ -567,7 +570,71 @@ Result<PresentationReport> GraphicsDevice::present(ClearColor color) {
         return graphics_error(ErrorCode::conflict, "graphics.presentation.offscreen_pending",
                               "Offscreen resources require an explicit drain before presentation");
     }
+    impl_->presentation_started = true;
     return impl_->presentation.frame(color);
+}
+Result<void> detail::GraphicsBackend::set_presentation_draw(const OffscreenRequest&, bool) {
+    return graphics_error(ErrorCode::capability_unavailable, "graphics.window_draw.backend",
+                          "Window draw backend is unavailable");
+}
+Result<OffscreenReadback> detail::GraphicsBackend::capture_presented() {
+    return graphics_error(ErrorCode::capability_unavailable, "graphics.capture.backend",
+                          "Window readback backend is unavailable");
+}
+Result<void> GraphicsDevice::set_presentation_draw(const OffscreenRequest& request,
+                                                   bool enable_readback) {
+    if (auto checked = impl_->check_live(); !checked) {
+        return checked.error();
+    }
+    if (impl_->presentation_started || impl_->draw_configured ||
+        impl_->backend->offscreen_pending()) {
+        return graphics_error(ErrorCode::conflict, "graphics.window_draw.configuration",
+                              "Configure one draw before presentation, with no pending owners");
+    }
+    if (auto checked = validate_offscreen_request(request); !checked) {
+        return checked.error();
+    }
+    try {
+        if (auto checked = impl_->check_diagnostics(); !checked) {
+            return checked.error();
+        }
+        auto configured = impl_->backend->set_presentation_draw(request, enable_readback);
+        if (!configured) {
+            return configured;
+        }
+        impl_->draw_configured = true;
+        impl_->capture_enabled = enable_readback;
+        return impl_->check_diagnostics();
+    } catch (...) {
+        return graphics_error(ErrorCode::execution_failed, "graphics.window_draw.configure",
+                              "Window draw configuration threw before presentation");
+    }
+}
+Result<OffscreenReadback> GraphicsDevice::capture_presented() {
+    if (auto checked = impl_->check_live(); !checked) {
+        return checked.error();
+    }
+    if (!impl_->capture_enabled || impl_->presentation.stats().presented == 0 ||
+        impl_->presentation.stats().faulted || impl_->backend->offscreen_pending()) {
+        return graphics_error(ErrorCode::conflict, "graphics.capture.state",
+                              "Capture needs an enabled, successfully presented, healthy draw");
+    }
+    try {
+        if (auto checked = impl_->check_diagnostics(); !checked) {
+            return checked.error();
+        }
+        auto result = impl_->backend->capture_presented();
+        if (!result) {
+            return result.error();
+        }
+        if (auto checked = impl_->check_diagnostics(); !checked) {
+            return checked.error();
+        }
+        return result;
+    } catch (...) {
+        return graphics_error(ErrorCode::execution_failed, "graphics.capture.readback",
+                              "Window capture threw; presentation owners remain retained");
+    }
 }
 Result<PresentationStats> GraphicsDevice::presentation_stats() const {
     if (auto value = impl_->check_thread(); !value) {

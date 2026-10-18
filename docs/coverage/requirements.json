@@ -130,7 +130,7 @@
         "Shader/GPU resources are client-only; keep server content and Core independent of shader toolchains and GPU resource types."
       ],
       "planned_fixture": "TexturedCubeReadback GPU fixture, ShaderCompileErrors, ShaderDependencyRebuild and DistributionShaderBoundary; cube case joins FeatureWorld in assignment 10.",
-      "verification": {"status": "NOT_RUN", "reason": "06a passes its offline checkpoint with bounded shader recipes, include dependencies, pinned cached DXC/SPIR-V validation and atomic verified artifact generations, with scoped evidence in docs/handoffs/06a-offline-shaders.md. 06b passes its owned resource/offscreen checkpoint: 240 Windows/WSL CPU CTests, both current-PC GPUs in Debug/Release/ASan with independent fixed color/depth readbacks, 18 native fault children and relevant presentation lifecycle regression. Native shader/resource ownership uses the existing device and queue. Scoped evidence is recorded in docs/handoffs/06b-gpu-resources.md and docs/coverage/evidence/06b-gpu-resources.json. Window integration and complete distribution qualification remain 06c work. Full REQ-06 remains NOT_RUN."}
+      "verification": {"status": "PASS", "reason": "Full assignment 06 passes under ADR0010 current-machine scope: 06a offline tooling, 06b owned resources and 06c actual window cube plus verified shader distribution. Final Windows Debug/Release/ASan each55 and WSL GCC Debug/Clang ASan+UBSan each48 CTests pass (261 total). Both actual GPUs pass window/offscreen readbacks at fixed one-byte color and 0.00001 depth limits, resize/minimize/retirement, 36 native window/offscreen fault children and 2304 clear presentation regression frames across all three Windows profiles. Real shader dependency/rebuild/failure checks, protected Runtime/Server builds, both production application launches and both-GPU relocated compiler-free Runtime package checks pass. Commands, hashes, retained failures and limits are in docs/coverage/evidence/06c-window-distribution.json and docs/handoffs/06c-window-distribution.md. This is not scene authoring, MMO capacity or other-machine qualification. Assignment 07 is next."}
     },
     {
       "id": "REQ-07",
@@ -809,6 +809,47 @@
   "implemented_surface": {
     "features": [
       {
+        "id": "client.window-cube-distribution",
+        "name": "Window cube, owned capture and verified precompiled Runtime shader distribution",
+        "requirement_ids": [
+          "REQ-06"
+        ],
+        "test_ids": [
+          "shark.client.shader-bundle",
+          "shark.client.offscreen",
+          "shark.client.presentation",
+          "shark.client.cube-cli",
+          "shark.client.cube-faults-cli",
+          "shark.tooling.cube-smoke",
+          "shark.tooling.cube-faults",
+          "shark.tooling.shader-pipeline",
+          "shark.tooling.runtime-package",
+          "shark.runtime.presentation-cli",
+          "shark.editor.presentation-cli"
+        ],
+        "test_sources": [
+          "tests/client_shader_bundle_tests.cpp",
+          "tests/client_offscreen_tests.cpp",
+          "tests/client_presentation_launch_tests.cpp",
+          "tests/check_cube_cli.py",
+          "tests/CheckPresentationLaunchCli.cmake",
+          "tools/tests/test_cube_smoke.py",
+          "tools/tests/test_cube_faults.py",
+          "tools/tests/test_shader_pipeline.py",
+          "tools/tests/test_runtime_package.py"
+        ],
+        "fixtures": [
+          "tests/cube_smoke.cpp",
+          "tests/cube_faults.cpp",
+          "tools/cube_smoke.py",
+          "tools/cube_faults.py",
+          "tools/package_runtime.py",
+          "tools/runtime_package/Run-IsolatedRuntime.ps1",
+          "shaders/recipe.json"
+        ],
+        "fixture_reason": "Device-free tests cover versioned bounded bundles, SHA integrity, typed interfaces, Unicode paths, launch validation and immutable draw ownership. Explicit native fixtures capture actual sRGB window attachments and independent linear offscreen draws, compare fixed color/depth expectations, exercise resize/minimize and owner retention/retirement on both current-PC GPUs. Relocated Runtime verifies complete precompiled closure without sources/compiler and useful missing/corrupt failures. These are developer diagnostics, not scene-authoring APIs or an MMO world; FeatureWorld connects in assignment 10."
+      },
+      {
         "id": "client.gpu-resources",
         "name": "Owned shader interfaces, bounded GPU uploads and offscreen color/depth readback",
         "requirement_ids": [
@@ -836,7 +877,7 @@
           "tools/offscreen_faults.py",
           "shaders/recipe.json"
         ],
-        "fixture_reason": "CPU fixtures reject malformed or mismatched shader interfaces, invalid upload bounds and unsafe owner transitions without a GPU. Native offscreen fixtures use the production GraphicsDevice, exact shader artifacts, independent fixed CPU rasterization and both current-PC devices with required validation. Native fault children exercise partial creation, retained submitted work and fatal recording ownership. These are isolated developer fixtures, not public authoring commands, scene rendering or MMO capacity evidence; FeatureWorld connects in 10 and 06c owns window/package qualification."
+        "fixture_reason": "CPU fixtures reject malformed or mismatched shader interfaces, invalid upload bounds and unsafe owner transitions without a GPU. Native offscreen fixtures use the production GraphicsDevice, exact shader artifacts, independent fixed CPU rasterization and both current-PC devices with required validation. Native fault children exercise partial creation, retained submitted work and fatal recording ownership. These are isolated developer fixtures, not public authoring commands, scene rendering or MMO capacity evidence; FeatureWorld connects in 10; the separate window/package fixtures are registered below."
       },
       {
         "id": "tooling.offline-shaders",
@@ -855,7 +896,7 @@
           "tools/tests/check_shader_pipeline.py",
           "shaders/recipe.json"
         ],
-        "fixture_reason": "Device-free tooling fixtures exercise recipe/version/path rejection, tracked includes, cache/artifact integrity and failed-build publication. The explicit real-tool fixture compiles with cached locked DXC and independently validates SPIR-V, tests dependency changes and compiler rejection, and verifies relocated artifacts without source/compiler requirements. No GPU execution, Runtime shader loading, public authoring command or MMO behavior is claimed. FeatureWorld starts in 10; resource and image acceptance remain in 06b/06c."
+        "fixture_reason": "Device-free tooling fixtures exercise recipe/version/path rejection, tracked includes, cache/artifact integrity and failed-build publication. The explicit real-tool fixture compiles with cached locked DXC and independently validates SPIR-V, tests dependency changes and compiler rejection, and verifies relocated artifacts without source/compiler requirements. No GPU execution, Runtime shader loading, public authoring command or MMO behavior is claimed. FeatureWorld starts in 10; separate 06b/06c fixtures qualify resources and images."
       },
       {
         "id": "client.presentation-qualification",

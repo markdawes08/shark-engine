@@ -39,7 +39,17 @@ struct OffscreenResources final {
 // the backend to install ownership and mark unretired_recording first.
 [[nodiscard]] std::unique_ptr<OffscreenResources>
 create_offscreen_resources(nvrhi::IDevice&, const OffscreenRequest&, bool fail_partial);
+// The swapchain color handle is borrowed from its existing image owner and is
+// excluded from created-resource counts. Frame command lists also stay owned by
+// presentation. Other immutable resources survive until swapchain retirement.
+[[nodiscard]] std::unique_ptr<OffscreenResources>
+create_window_draw_resources(nvrhi::IDevice&, const OffscreenRequest&, nvrhi::ITexture*,
+                             WindowExtent, bool capture, bool fail_partial = false);
 void record_offscreen_resources(OffscreenResources&, const OffscreenRequest&);
+// Records on an already-open presentation command list. The caller clears the
+// borrowed color attachment without requiring TRANSFER_DST surface support.
+void record_window_draw_resources(OffscreenResources&, const OffscreenRequest&,
+                                  nvrhi::ICommandList&, bool upload);
 // Caller must first prove the submission timeline completed. Staging map's
 // pinned NVRHI internal wait then observes an already-complete submission.
 [[nodiscard]] OffscreenReadback read_offscreen_resources(nvrhi::IDevice&,

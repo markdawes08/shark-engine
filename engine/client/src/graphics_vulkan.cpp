@@ -601,6 +601,51 @@ class VulkanBackend final : public detail::GraphicsBackend {
                        "Unknown window command");
     }
 
+    Result<void> set_presentation_draw(const OffscreenRequest& request,
+                                       bool enable_readback) override {
+        if (window_draw_ || swapchain_ != VK_NULL_HANDLE) {
+            return failure(ErrorCode::conflict, "graphics.window_draw.configuration",
+                           "Window draw is immutable after configuration");
+        }
+        window_draw_ = request;
+        capture_enabled_ = enable_readback;
+        return {};
+    }
+
+    Result<OffscreenReadback> capture_presented() override {
+        return phase<OffscreenReadback>([&]() -> Result<OffscreenReadback> {
+            if (!capture_enabled_ || !captured_image_ || device_lost_) {
+                return failure(ErrorCode::conflict, "graphics.capture.state",
+                               "There is no completed presentation candidate to capture");
+            }
+            const auto& image = images_.at(*captured_image_);
+            if (!image.draw || image.draw->submitted == 0) {
+                return failure(ErrorCode::conflict, "graphics.capture.state",
+                               "Presented draw has no capture submission");
+            }
+            bool force_timeout = false;
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+            force_timeout = inject(detail::NativeGraphicsFault::window_capture_timeout);
+#endif
+            if (force_timeout || !wait_timeline(image.draw->submitted, 1'000'000'000ULL)) {
+                return failure(ErrorCode::execution_failed, "graphics.capture.wait",
+                               "Capture wait timed out; all presentation owners remain live");
+            }
+            auto result = detail::read_offscreen_resources(*validation_, *image.draw);
+            result.color_encoding = ReadbackColorEncoding::srgb;
+            VkPhysicalDeviceProperties properties{};
+            vkGetPhysicalDeviceProperties(selected_, &properties);
+            result.subpixel_precision_bits = properties.limits.subPixelPrecisionBits;
+            if (image.texture->getDesc().format == nvrhi::Format::SBGRA8_UNORM) {
+                for (std::size_t index = 0; index < result.rgba8.size(); index += 4) {
+                    std::swap(result.rgba8[index], result.rgba8[index + 2]);
+                }
+            }
+            // Readback does not retire reusable per-image owners.
+            return result;
+        });
+    }
+
     Result<PresentationSync> create_presentation() override {
         return phase<PresentationSync>([&]() -> Result<PresentationSync> {
             for (auto& frame : frames_) {
@@ -643,9 +688,18 @@ class VulkanBackend final : public detail::GraphicsBackend {
                 if (extent.width == 0 || extent.height == 0) {
                     return std::optional<detail::SwapchainInfo>{};
                 }
+                if (window_draw_ && (extent.width > 4096 || extent.height > 4096)) {
+                    return failure(ErrorCode::capability_unavailable, "graphics.window_draw.extent",
+                                   "Diagnostic window draw extent exceeds 4096 per dimension");
+                }
                 if ((capabilities.supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) == 0) {
                     return failure(ErrorCode::capability_unavailable, "graphics.swapchain.usage",
                                    "Surface does not support color attachment images");
+                }
+                if (capture_enabled_ &&
+                    (capabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_SRC_BIT) == 0) {
+                    return failure(ErrorCode::capability_unavailable, "graphics.capture.usage",
+                                   "Surface cannot copy presentation images for explicit capture");
                 }
                 const auto formats = enumerate<VkSurfaceFormatKHR>(
                     [&](auto* count, auto* values) {
@@ -689,6 +743,9 @@ class VulkanBackend final : public detail::GraphicsBackend {
                 info.imageExtent = extent;
                 info.imageArrayLayers = 1;
                 info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+                if (capture_enabled_) {
+                    info.imageUsage |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+                }
                 info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
                 info.preTransform = capabilities.currentTransform;
                 info.compositeAlpha = *alpha;
@@ -832,6 +889,21 @@ class VulkanBackend final : public detail::GraphicsBackend {
                 }
                 image.present_pending = false;
             }
+            if (window_draw_ && !image.draw) {
+                bool fail_partial = false;
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+                fail_partial = inject(detail::NativeGraphicsFault::window_draw_partial_creation);
+#endif
+                image.draw = detail::create_window_draw_resources(
+                    *validation_, *window_draw_, image.texture, {extent_.width, extent_.height},
+                    capture_enabled_, fail_partial);
+                if (nvrhi_diagnostics_.sink->has_errors()) {
+                    image.draw.reset();
+                    return failure(ErrorCode::execution_failed, "graphics.window_draw.create",
+                                   "Validation reported an error while creating draw resources");
+                }
+            }
+            captured_image_.reset();
             auto& commands = frame.commands;
             // NVRHI retains a self-reference from the opened command buffer
             // until successful execution. Its public API has no discard path,
@@ -865,7 +937,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
             }
             // Dynamic-rendering loadOp CLEAR needs only the existing required
             // COLOR_ATTACHMENT usage. NVRHI clearTextureFloat would impose an
-            // additional TRANSFER_DST surface requirement. No shader is used.
+            // additional TRANSFER_DST surface requirement.
             const auto native = static_cast<VkCommandBuffer>(
                 commands->getNativeObject(nvrhi::ObjectTypes::VK_CommandBuffer));
             if (native == VK_NULL_HANDLE) {
@@ -878,7 +950,9 @@ class VulkanBackend final : public detail::GraphicsBackend {
             attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
             attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
             attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-            attachment.clearValue.color = {{clear.red, clear.green, clear.blue, clear.alpha}};
+            attachment.clearValue.color =
+                window_draw_ ? VkClearColorValue{{0.0F, 0.0F, 0.0F, 1.0F}}
+                             : VkClearColorValue{{clear.red, clear.green, clear.blue, clear.alpha}};
             VkRenderingInfo rendering{};
             rendering.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
             rendering.renderArea.extent = extent_;
@@ -887,6 +961,25 @@ class VulkanBackend final : public detail::GraphicsBackend {
             rendering.pColorAttachments = &attachment;
             vkCmdBeginRendering(native, &rendering);
             vkCmdEndRendering(native);
+            if (image.draw) {
+                // The native loadOp clear writes the same attachment that the
+                // shared NVRHI draw subsequently loads. Preserve that explicit
+                // write/load dependency without requiring TRANSFER_DST usage.
+                VkMemoryBarrier2 barrier{};
+                barrier.sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER_2;
+                barrier.srcStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                barrier.srcAccessMask = VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+                barrier.dstStageMask = VK_PIPELINE_STAGE_2_COLOR_ATTACHMENT_OUTPUT_BIT;
+                barrier.dstAccessMask =
+                    VK_ACCESS_2_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_2_COLOR_ATTACHMENT_WRITE_BIT;
+                VkDependencyInfo dependency{};
+                dependency.sType = VK_STRUCTURE_TYPE_DEPENDENCY_INFO;
+                dependency.memoryBarrierCount = 1;
+                dependency.pMemoryBarriers = &barrier;
+                vkCmdPipelineBarrier2(native, &dependency);
+                detail::record_window_draw_resources(*image.draw, *window_draw_, *commands,
+                                                     !image.uploaded);
+            }
             commands->setTextureState(image.texture, nvrhi::AllSubresources,
                                       nvrhi::ResourceStates::Present);
             commands->commitBarriers();
@@ -924,6 +1017,10 @@ class VulkanBackend final : public detail::GraphicsBackend {
                                "Validation reported an error during command submission");
             }
             image.initialized = true;
+            if (image.draw) {
+                image.uploaded = true;
+                image.draw->submitted = frame.submitted;
+            }
             return {};
         });
     }
@@ -970,9 +1067,11 @@ class VulkanBackend final : public detail::GraphicsBackend {
                 return detail::PresentStatus::out_of_date;
             }
             if (status == VK_SUBOPTIMAL_KHR) {
+                captured_image_ = capture_enabled_ ? std::optional{index} : std::nullopt;
                 return detail::PresentStatus::suboptimal;
             }
             check(status, "graphics.present");
+            captured_image_ = capture_enabled_ ? std::optional{index} : std::nullopt;
             return detail::PresentStatus::presented;
         });
     }
@@ -1148,6 +1247,10 @@ class VulkanBackend final : public detail::GraphicsBackend {
             result.retained_recordings += frame.unretired_recording ? 1U : 0U;
         }
         for (const auto& image : images_) {
+            if (image.draw) {
+                result.window_draw_resources += image.draw->created;
+                result.window_draw_submissions += image.draw->submitted != 0 ? 1U : 0U;
+            }
             result.image_wrappers += image.texture ? 1U : 0U;
             result.image_views += image.view != VK_NULL_HANDLE ? 1U : 0U;
             result.present_semaphores += image.rendered != VK_NULL_HANDLE ? 1U : 0U;
@@ -1162,6 +1265,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
             std::terminate();
         }
         for (auto& image : images_) {
+            image.draw.reset();
             image.texture = nullptr;
             if (image.view != VK_NULL_HANDLE) {
                 vkDestroyImageView(device_, image.view, nullptr);
@@ -1174,6 +1278,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
             }
         }
         images_.clear();
+        captured_image_.reset();
         if (swapchain_ != VK_NULL_HANDLE) {
             // All application uses and, if enabled, present-fence payloads
             // have completed. The legacy queue-idle worker has also joined.
@@ -1198,6 +1303,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
             }
             frame = {};
         }
+        window_draw_.reset();
     }
 
     void destroy_nvrhi() noexcept override {
@@ -1205,6 +1311,9 @@ class VulkanBackend final : public detail::GraphicsBackend {
         if (offscreen_) {
             std::terminate();
         }
+        // Configuration may have succeeded without any present attempt, in
+        // which case the presentation phase itself was never initialized.
+        window_draw_.reset();
         // Presentation has already completed its bounded drain or reported
         // device loss, and any legacy queue-idle worker has joined. NVRHI's
         // unbounded waitForIdle is never called on the owning thread.
@@ -1358,13 +1467,18 @@ class VulkanBackend final : public detail::GraphicsBackend {
     struct Image {
         VkImageView view{VK_NULL_HANDLE};
         nvrhi::TextureHandle texture;
+        std::unique_ptr<detail::OffscreenResources> draw;
         VkSemaphore rendered{VK_NULL_HANDLE};
         VkFence present_fence{VK_NULL_HANDLE};
         bool present_pending{false};
         bool initialized{false};
+        bool uploaded{false};
     };
     std::array<Frame, 2> frames_{};
     std::unique_ptr<detail::OffscreenResources> offscreen_;
+    std::optional<OffscreenRequest> window_draw_;
+    std::optional<std::uint32_t> captured_image_;
+    bool capture_enabled_{false};
     std::vector<Image> images_;
     VkSwapchainKHR swapchain_{VK_NULL_HANDLE};
     VkExtent2D extent_{};

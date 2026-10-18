@@ -55,8 +55,13 @@ struct OffscreenRequest {
 // multiple of three. Texture storage is exactly width * height * 4 bytes.
 [[nodiscard]] Result<void> validate_offscreen_request(const OffscreenRequest& request);
 
+enum class ReadbackColorEncoding { linear, srgb };
+
 struct OffscreenReadback {
     WindowExtent extent{};
+    // RGB transfer only; alpha is always linear UNORM. Window captures use
+    // sRGB attachment encoding, offscreen diagnostic draws use linear UNORM.
+    ReadbackColorEncoding color_encoding{ReadbackColorEncoding::linear};
     // Native rasterizer framebuffer-coordinate precision, queried from the
     // selected device. Required by an independent reference rasterizer.
     std::uint32_t subpixel_precision_bits{0};

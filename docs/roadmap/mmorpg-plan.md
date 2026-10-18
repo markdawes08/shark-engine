@@ -99,6 +99,9 @@ local GPUs and WSL CPU/Server isolation. The user's 2026-10-18
 **06a, CPU/offline shader tooling, is complete** under the
 [06 checkpoint plan](shader-resource-plan.md); its
 [handoff](../handoffs/06a-offline-shaders.md) records the scoped verification.
+**06b/06c and full REQ-06 are complete.** The [06c handoff](../handoffs/06c-window-distribution.md)
+records window/offscreen images, precompiled distribution and local qualification.
+Assignment 07 is next, followed by M02 in the existing order.
 Presentation stays in Client and cannot acquire authority over server time or world state.
 The [final local handoff](../handoffs/02d-final-verification.md)
 preserves the Windows lifecycle and isolated Ubuntu CPU/package evidence. The

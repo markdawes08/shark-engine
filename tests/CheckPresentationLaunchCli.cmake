@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 # All native-build cases reject before opening a display or a Vulkan loader.
-foreach(shark_case IN ITEMS missing zero oversized negative invalid_uuid uppercase_uuid invalid_validation duplicate_device duplicate_duration duplicate_validation unknown conflicting extra)
+foreach(shark_case IN ITEMS missing zero oversized negative invalid_uuid uppercase_uuid invalid_validation duplicate_device duplicate_duration duplicate_validation unknown conflicting extra cube_missing cube_duplicate cube_conflicting clear_bundle cube_extra)
     if(shark_case STREQUAL "missing")
         set(shark_args --graphics --device)
     elseif(shark_case STREQUAL "zero")
@@ -25,6 +25,16 @@ foreach(shark_case IN ITEMS missing zero oversized negative invalid_uuid upperca
         set(shark_args --graphics --unknown 1)
     elseif(shark_case STREQUAL "conflicting")
         set(shark_args --graphics --window)
+    elseif(shark_case STREQUAL "cube_missing")
+        set(shark_args --cube --shader-bundle)
+    elseif(shark_case STREQUAL "cube_duplicate")
+        set(shark_args --cube --shader-bundle one --shader-bundle two)
+    elseif(shark_case STREQUAL "cube_conflicting")
+        set(shark_args --cube --graphics one)
+    elseif(shark_case STREQUAL "clear_bundle")
+        set(shark_args --graphics --shader-bundle one)
+    elseif(shark_case STREQUAL "cube_extra")
+        set(shark_args --cube --graphics-ms 1 --device auto --validation off --shader-bundle one --help)
     else()
         set(shark_args --graphics --graphics-ms 1 --device auto --validation off --help)
     endif()
@@ -36,6 +46,12 @@ foreach(shark_case IN ITEMS missing zero oversized negative invalid_uuid upperca
         message(FATAL_ERROR "Presentation ${shark_case} validation failed: ${shark_exit}; ${shark_output}; ${shark_error}")
     endif()
 endforeach()
+execute_process(COMMAND "${SHARK_EXECUTABLE}" --cube --shader-bundle "${SHARK_EXECUTABLE}.missing-shader-bundle"
+    RESULT_VARIABLE shark_exit OUTPUT_VARIABLE shark_output ERROR_VARIABLE shark_error TIMEOUT 5)
+if(NOT "${shark_exit}" STREQUAL "1" OR NOT shark_output STREQUAL "" OR
+   NOT shark_error MATCHES "io_failure" OR NOT shark_error MATCHES "shader.bundle.load")
+    message(FATAL_ERROR "Missing cube bundle must fail before any graphics request: ${shark_exit}; ${shark_output}; ${shark_error}")
+endif()
 if(NOT SHARK_NATIVE_GRAPHICS)
     execute_process(COMMAND "${SHARK_EXECUTABLE}" --graphics --graphics-ms 1
         RESULT_VARIABLE shark_exit OUTPUT_VARIABLE shark_output ERROR_VARIABLE shark_error TIMEOUT 5)

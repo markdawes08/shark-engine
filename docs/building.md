@@ -65,8 +65,16 @@ The CPU-only `shark.client.gpu-resources` and `shark.client.offscreen` tests
 exercise shader/upload validation and ownership. Native `OffscreenSmoke` and
 `OffscreenFaults` require explicit commands; ordinary CTest never starts a GPU.
 Their readback/failure wrappers preserve source, shader, device and validation
-identity. Window cube integration belongs to 06c. The
+identity. The
 [06b handoff](handoffs/06b-gpu-resources.md) records final local results.
+
+06c adds `--cube` to Runtime/Editor, using the shared offline frame/presentation
+loop and executable-adjacent precompiled shader bundle. Device-free
+`shark.client.shader-bundle` tests framing, integrity, typed stage/layout validation,
+Unicode paths and the shared diagnostic geometry. Window readback and relocated
+cube-package qualification remain separate native checks; the completed
+[06c handoff](handoffs/06c-window-distribution.md) records their results. The [resource contract](gpu-resources.md#window-cube-and-capture)
+describes immutable draw ownership and actual presentation-attachment capture.
 
 06a adds the CPU-only [offline shader builder](shader-pipeline.md).
 `shark.tooling.shader-pipeline` tests recipes, dependency tracking, artifact
@@ -74,8 +82,8 @@ integrity and failed-build publication with controlled compiler fixtures. The
 explicit offline integration command exercises the cached pinned DXC and SPIR-V
 validator separately. Neither the normal build nor the Runtime/Server distribution
 targets discover or invoke shader tools. The
-[06 checkpoint plan](roadmap/shader-resource-plan.md) defines subsequent GPU work
-under the user's [nonblocking backlog decision](backlog.md).
+[06 checkpoint plan](roadmap/shader-resource-plan.md) records the completed
+offline, resource and window/distribution checkpoints.
 
 The active client/editor target is this Windows 11 x64 PC. Existing WSL2 Ubuntu
 environments cover CPU/headless Server and local package checks.
@@ -103,6 +111,57 @@ keys are sample controls, not authoring commands or an action-binding API.
 The [window guide](window-lifecycle.md) documents lifecycle and explicit native
 smoke commands, including their brief visible-window behavior and evidence paths.
 The dedicated Server is not an authoring host.
+
+## Cube sample and Runtime package
+
+Build a Windows preset normally, then explicitly prepare the fixed sample's
+shaders with cached, locked tools. No ordinary CMake configuration/build, Runtime
+startup or package inspection discovers or invokes a source compiler.
+
+```powershell
+.tools/venv/Scripts/python.exe tools/shader_pipeline.py prepare --recipe shaders/recipe.json --output out/shaders/development --validation-manifest out/05a-work/validation-tools/summary.json --bin-dir build/windows-debug/bin
+.\build\windows-debug\bin\Editor.exe --cube
+.\build\windows-debug\bin\Runtime.exe --cube --graphics-ms 1000 --device auto --validation off
+```
+
+`prepare` reuses the established source/include generation rules, verifies outputs
+and atomically stages `assets/cube.sharkshader` beside both executables. Repeat it
+after shader edits. Pass `--shader-bundle PATH` to select another verified bundle;
+the default resolves the executable location independently of the launch directory.
+Missing or damaged bundles fail before any window/device is created. The
+[shader guide](shader-pipeline.md#prepare-and-distribute-the-cube-sample) documents
+the binary format and compiler-free `export` command. Required validation remains
+an explicit qualification option; interactive launches default to `off`.
+
+The cube is a static diagnostic draw, not a scene or editor UI. It shares F6/F7
+offline controls with `--graphics` and `--window`. Its final JSON record reports
+the loaded bundle SHA-256 and safely retired presentation counters, with
+`qualification: NOT_RUN`; actual native fixtures supply qualification evidence.
+
+For a standalone Release payload, first configure/build `runtime-only` and then
+include the verified artifact generation explicitly:
+
+```powershell
+& ./tools/windows_dev.ps1 -CommandArguments @('cmake','--preset','runtime-only')
+& ./tools/windows_dev.ps1 -CommandArguments @('cmake','--build','--preset','runtime-only')
+& ./tools/windows_dev.ps1 -CommandArguments @('python','tools/package_runtime.py','build','--build-dir','build/runtime-only','--crt-dir','C:/Program Files/Microsoft Visual Studio/18/Community/VC/Redist/MSVC/14.51.36231/x64/Microsoft.VC145.CRT','--shaders','out/shaders/development','--output','out/runtime-package/cube')
+```
+
+The builder copies only precompiled cube stages in the bundle, runtime DLLs and
+the verified license/provenance closure. Shader source paths/hashes and tool
+identities are metadata; source HLSL, DXC, spirv-val, Python and authoring libraries
+are absent from the payload. Shader-tools preparation is not needed to export
+or check a previously verified generation. Omitting `--shaders` retains the
+older clear-only deployment fixture.
+
+Copy the package to a fresh directory outside the checkout with spaces and
+Unicode in its path. `tools/package_runtime.py check --package <relocation>
+--manifest-sha256 <builder-reported-hash> --device <UUID> --device <other-UUID>
+--output <fresh-output>` verifies exact inventory and loaded modules and selects
+`--cube` when bundle metadata is present. Run the checker through the documented
+standard-user wrapper. It uses a system-only PATH and cleared development
+overrides; inspection tooling runs outside the payload. This is local dependency
+isolation on the current PC, not an additional clean machine or a game exporter.
 
 Use the documented repository root and preset explicitly in automation; on
 Windows the wrapper below initializes the compiler without opening an IDE.
@@ -201,6 +260,7 @@ scene-runner/export commands will be added with their owning increments.
 | `shark.core.lifecycle`, `shark.core.timing`, `shark.core.work` | `cpu`, `unit`, `server` |
 | `shark.client.input` (client-enabled builds only) | `cpu`, `unit`, `client` |
 | `shark.client.window` (client-enabled builds only) | `cpu`, `unit`, `client` |
+| `shark.client.shader-bundle` (client-enabled builds only) | `cpu`, `unit`, `client` |
 | `shark.runtime.window-cli`, `shark.editor.window-cli` | `cpu`, `integration`, `client` |
 | `shark.runtime.cli`, `shark.editor.cli` | `cpu`, `integration` |
 | `shark.server.unit`, `shark.server.lifecycle` | `cpu`, `server`, plus `unit` or `integration` |

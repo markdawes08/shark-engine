@@ -14,7 +14,9 @@ enum class NativeGraphicsFault {
     device_error,
     offscreen_partial_creation,
     offscreen_submission_timeout,
-    offscreen_recording_error
+    offscreen_recording_error,
+    window_draw_partial_creation,
+    window_capture_timeout
 };
 struct NativeGraphicsTestControl {
     NativeGraphicsFault fault{NativeGraphicsFault::recording_error};

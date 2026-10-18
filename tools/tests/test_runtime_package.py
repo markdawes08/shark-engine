@@ -7,9 +7,13 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+import copy
+import hashlib
+import struct
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import package_runtime as package
+import shader_pipeline as pipeline
 
 
 class RuntimePackageTests(unittest.TestCase):
@@ -145,6 +149,84 @@ class RuntimePackageTests(unittest.TestCase):
     def test_completed_positive_sample_keeps_qualification_not_run(self):
         self.assertEqual(package.completion(self.completion(), "a" * 32)["qualification"], "NOT_RUN")
         package.completion(self.completion(synchronization="host_completion"), "a" * 32)
+
+    def cube_payload(self):
+        binaries = []
+        for shader, stage, bindings in ((pipeline.BUNDLE_SHADERS[0], 0, (256,)),
+                                        (pipeline.BUNDLE_SHADERS[1], 4, (0, 128))):
+            name = shader["entry"].encode() + b"\0"
+            name += b"\0" * (-len(name) % 4)
+            args = [stage, 1, *struct.unpack(f"<{len(name) // 4}I", name)]
+            words = [0x07230203, 0x10600, 0, 64, 0, ((len(args) + 1) << 16) | 15, *args]
+            for index, binding in enumerate(bindings, 2):
+                words.extend([(4 << 16) | 71, index, 33, binding, (4 << 16) | 71, index, 34, 0])
+            binaries.append(struct.pack(f"<{len(words)}I", *words))
+        vertex, pixel = binaries
+        data = pipeline.BUNDLE_HEADER.pack(pipeline.BUNDLE_MAGIC, 1, len(vertex), len(pixel), 0,
+                                            hashlib.sha256(vertex).digest(), hashlib.sha256(pixel).digest()) + vertex + pixel
+        record = pipeline.inspect_bundle(data)
+        inputs = {"toolchain": {"lock_sha256": "a" * 64}}
+        generation = package.digest(pipeline.canonical(inputs))
+        provenance = {"schema_version": 1, "generation": generation, "inputs": inputs,
+                      "shaders": [{**row, "file": f"generations/{generation}/{row['id']}.spv"}
+                                  for row in record["shaders"]]}
+        source = pipeline.canonical(provenance)
+        files = self.payload()
+        files.update({package.SHADER_BUNDLE: data, package.SHADER_MANIFEST: source})
+        manifest = {"schema_version": 1, "checkpoint": "06c", "kind": "runtime-deployment-fixture",
+                    "status": "PASS", "qualification": "NOT_RUN", "dependency_lock_sha256": "a" * 64,
+                    "shader_bundle": {**record, "generation": generation, "artifact_manifest_sha256": package.digest(source)}}
+        return files, manifest
+
+    def test_packaged_cube_bundle_and_dependency_provenance_round_trip(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / "package"
+            files, manifest = self.cube_payload()
+            package.publish(output, files, manifest)
+            actual = package.inspect_package(output, package.sha256(output / "package-manifest.json"))
+            self.assertEqual(actual["shader_bundle"]["sha256"], manifest["shader_bundle"]["sha256"])
+
+    def test_manifested_shader_corruption_incomplete_closure_and_provenance_are_rejected(self):
+        for mutation in ("corrupt", "missing", "undeclared", "metadata", "generation", "provenance", "identity", "source"):
+            with self.subTest(mutation=mutation), tempfile.TemporaryDirectory() as temporary:
+                output = Path(temporary) / "package"
+                files, manifest = self.cube_payload()
+                if mutation == "corrupt":
+                    files[package.SHADER_BUNDLE] = files[package.SHADER_BUNDLE][:-1] + b"x"
+                elif mutation == "missing":
+                    del files[package.SHADER_BUNDLE]
+                elif mutation == "undeclared":
+                    del manifest["shader_bundle"]
+                elif mutation == "metadata":
+                    manifest["shader_bundle"]["sha256"] = "0" * 64
+                elif mutation == "generation":
+                    manifest["shader_bundle"]["generation"] = "0" * 64
+                elif mutation in {"provenance", "identity"}:
+                    provenance = json.loads(files[package.SHADER_MANIFEST])
+                    if mutation == "provenance":
+                        provenance["inputs"] = []
+                    else:
+                        provenance["shaders"][0]["sha256"] = "0" * 64
+                    files[package.SHADER_MANIFEST] = pipeline.canonical(provenance)
+                    manifest["shader_bundle"]["artifact_manifest_sha256"] = package.digest(files[package.SHADER_MANIFEST])
+                else:
+                    files["bin/assets/source.hlsl"] = b"source"
+                package.publish(output, files, manifest)
+                with self.assertRaises(ValueError):
+                    package.inspect_package(output, package.sha256(output / "package-manifest.json"))
+
+    def test_cube_completion_requires_exact_bundle_draw_and_retired_gpu_work(self):
+        row = json.loads(self.completion())
+        row.update(event="cube-sample-complete", draw="textured-cube", shader_bundle_sha256="f" * 64)
+        self.assertEqual(package.completion(json.dumps(row), "a" * 32, "f" * 64)["draw"], "textured-cube")
+        for changes in ({"event": "graphics-sample-complete"}, {"draw": "clear"},
+                        {"shader_bundle_sha256": "e" * 64}, {"completed": 59}, {"retired_generations": 0}):
+            changed = copy.deepcopy(row)
+            changed.update(changes)
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                package.completion(json.dumps(changed), "a" * 32, "f" * 64)
+        with self.assertRaises(ValueError):
+            package.completion(json.dumps(row), "a" * 32)
 
     def test_completion_rejects_wrong_device_validation_and_incomplete_work(self):
         for changes in ({"adapter_uuid": "b" * 32}, {"validation": "required"}, {"qualification": "PASS"},

@@ -72,6 +72,55 @@ TEST_CASE("presentation launch validates bounded duration device and validation 
     invalid(arguments);
 }
 
+TEST_CASE("cube launch accepts a bounded optional distribution bundle path", "[presentation]") {
+    const std::array default_bundle{"--cube"sv};
+    auto parsed = shark::client::parse_presentation_arguments(default_bundle);
+    REQUIRE(parsed);
+    CHECK(parsed.value().cube);
+    CHECK(parsed.value().shader_bundle.empty());
+    const std::array explicit_bundle{
+        "--cube"sv,       "--shader-bundle"sv, "assets/cube.sharkshader"sv, "--device"sv, uuid,
+        "--validation"sv, "required"sv,        "--graphics-ms"sv,           "100"sv};
+    parsed = shark::client::parse_presentation_arguments(explicit_bundle);
+    REQUIRE(parsed);
+    CHECK(parsed.value().cube);
+    CHECK(parsed.value().shader_bundle == "assets/cube.sharkshader");
+    CHECK(parsed.value().duration == 100ms);
+    const std::string embedded_nul{"cube\0.sharkshader", 17};
+    const std::string oversized(4097, 'x');
+    for (const auto path :
+         {""sv, std::string_view{embedded_nul}, std::string_view{oversized}, "\xc0\xaf"sv}) {
+        const std::array arguments{"--cube"sv, "--shader-bundle"sv, path};
+        invalid(arguments);
+    }
+    const std::array not_cube{"--graphics"sv, "--shader-bundle"sv, "cube.sharkshader"sv};
+    invalid(not_cube);
+    const std::array duplicate{"--cube"sv, "--shader-bundle"sv, "one"sv, "--shader-bundle"sv,
+                               "two"sv};
+    invalid(duplicate);
+    const std::array missing{"--cube"sv, "--shader-bundle"sv};
+    invalid(missing);
+    const std::array conflicting{"--cube"sv, "--graphics"sv, "one"sv};
+    invalid(conflicting);
+}
+
+TEST_CASE("cube launch reports missing bundles before requesting any device", "[presentation]") {
+    shark::client::PresentationLaunchOptions options;
+    options.cube = true;
+    // An empty native path is the default, so use an invalid NUL-containing
+    // explicit path. It must be rejected before a WSL/native capability call.
+    options.shader_bundle = std::filesystem::path::string_type{
+        std::filesystem::path::value_type{'a'}, {}, std::filesystem::path::value_type{'b'}};
+    const auto result = shark::client::run_presentation_sample("CPU bundle validation", options);
+    REQUIRE_FALSE(result);
+    CHECK(result.error().code == shark::ErrorCode::invalid_path);
+    CHECK(result.error().context.operation == "shader.bundle.load");
+    options.cube = false;
+    const auto clear = shark::client::run_presentation_sample("CPU clear validation", options);
+    REQUIRE_FALSE(clear);
+    CHECK(clear.error().code == shark::ErrorCode::invalid_argument);
+}
+
 TEST_CASE("presentation launch rejects repeated conflicting missing and unknown flags",
           "[presentation]") {
     invalid({});
@@ -222,6 +271,34 @@ TEST_CASE("presentation completion reports measured work without claiming qualif
                                     : "\"synchronization\":\"host_completion\"") !=
               std::string::npos);
         CHECK(output.str().size() < 512);
+    }
+}
+
+TEST_CASE("cube completion records the loaded bundle identity after retirement", "[presentation]") {
+    using namespace shark::client;
+    constexpr std::string_view hash =
+        "a8d21d517000d305f00b27bb9f1eb402e284f68e8c4bf6d41c5e3e9b5a6d6fa2";
+    PresentationStats stats;
+    stats.closed = true;
+    stats.submitted = 3;
+    stats.presented = 3;
+    stats.completed = 3;
+    stats.generation = 1;
+    stats.retired_generations = 1;
+    std::ostringstream output;
+    REQUIRE(
+        detail::write_presentation_completion(uuid, GraphicsValidation::off, stats, output, hash));
+    CHECK(output.str().find("\"event\":\"cube-sample-complete\"") != std::string::npos);
+    CHECK(output.str().find("\"draw\":\"textured-cube\"") != std::string::npos);
+    CHECK(output.str().find(hash) != std::string::npos);
+    CHECK(output.str().find("\"qualification\":\"NOT_RUN\"") != std::string::npos);
+    for (const auto invalid_hash :
+         {"short"sv, "\"injected"sv,
+          "A8d21d517000d305f00b27bb9f1eb402e284f68e8c4bf6d41c5e3e9b5a6d6fa2"sv}) {
+        output.str("");
+        REQUIRE_FALSE(detail::write_presentation_completion(uuid, GraphicsValidation::off, stats,
+                                                            output, invalid_hash));
+        CHECK(output.str().empty());
     }
 }
 

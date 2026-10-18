@@ -10,7 +10,7 @@ The [MMORPG plan and existing-code assessment](docs/roadmap/mmorpg-plan.md) defi
 the authoritative server, persistent world and staged client/server work.
 These are planned capabilities; the current engine provides Core services, raw
 input, owned Windows windows, offline frame/input scheduling, graphics-device
-ownership, clear presentation and offscreen textured rendering, with a separate opt-in graphics feasibility
+ownership, clear presentation and fixed textured-cube rendering, with a separate opt-in graphics feasibility
 probe containing analytic draw/compute/readback cases.
 The versioned
 [requirements manifest](docs/coverage/requirements.json) preserves assignment
@@ -38,7 +38,11 @@ the [nonblocking backlog decision](docs/backlog.md). **06b is complete:**
 [owned GPU resources and offscreen rendering](docs/gpu-resources.md) pass on both
 local GPUs in Debug, Release and ASan. The [06b handoff](docs/handoffs/06b-gpu-resources.md)
 records 240 passing CPU CTests and native readback/failure/lifecycle evidence.
-06c is next: window integration and complete distribution qualification.
+**06c and full assignment 06 are complete** under the current-machine scope,
+including window cube integration and precompiled Runtime distribution. The
+[06c handoff](docs/handoffs/06c-window-distribution.md) records 261 CPU tests, both-GPU
+validation and isolated package execution. Assignment 07 is next. See the
+[cube launch workflow](docs/building.md#cube-sample-and-runtime-package).
 The [05a handoff](docs/handoffs/05a-graphics-device.md) records 211 passing CTests
 and 112 validated device lifetimes across the two local GPUs.
 The [05 checkpoint plan](docs/roadmap/graphics-device-plan.md) separates device
@@ -63,7 +67,7 @@ separation have passed local and hosted qualification, including deliberate test
 failure and restored success. The [graphics probe](docs/graphics-probe.md) adds
 locked dependencies, device inventory, validated GPU readbacks and bounded lifecycle; the
 [local graphics gate](docs/roadmap/graphics-plan.md) passes on both available GPUs. Editor/Runtime provide
-version, bootstrap help, explicit `--graphics` clear presentation and `--window`
+version, bootstrap help, explicit `--cube` textured rendering, `--graphics` clear presentation and `--window`
 diagnostics through a shared offline frame/input pump;
 Server adds validated startup, timed execution and
 shutdown. Scene rendering, scenes, gameplay and editor UI are future increments. CPU
@@ -111,8 +115,19 @@ cmake --build --preset windows-debug
 ctest --preset windows-debug
 ```
 
-Open the clear-presentation sample with `build/windows-debug/bin/Editor.exe --graphics`.
-For a bounded run, use `build/windows-debug/bin/Runtime.exe --graphics --graphics-ms 1000`.
+Prepare the fixed cube sample explicitly after the C++ build:
+
+```powershell
+.tools/venv/Scripts/python.exe tools/shader_pipeline.py prepare --recipe shaders/recipe.json --output out/shaders/development --validation-manifest out/05a-work/validation-tools/summary.json --bin-dir build/windows-debug/bin
+.\build\windows-debug\bin\Editor.exe --cube
+```
+
+The receipt path identifies the retained locked tools on this machine; the
+[shader guide](docs/shader-pipeline.md) describes preparation and compiler-free
+export. `--cube` loads precompiled `assets/cube.sharkshader` beside the executable;
+startup never compiles shaders. For a bounded run use
+`build/windows-debug/bin/Runtime.exe --cube --graphics-ms 1000`.
+The existing `--graphics` flag opens the clear-presentation sample.
 F6 toggles offline pause and F7 advances one empty tick while paused; presentation
 continues while visible. Diagnostic JSON is available in the terminal. No game
 world or authoring UI runs. See the [presentation guide](docs/presentation-lifecycle.md)

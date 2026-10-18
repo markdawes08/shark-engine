@@ -147,6 +147,28 @@ fixed color/depth tolerances and retained failure evidence; see the
 [resource contract](gpu-resources.md) and [06b handoff](handoffs/06b-gpu-resources.md).
 Hosted CI remains supplemental to these local gates.
 
+06c adds `shark.client.shader-bundle` for device-free distribution framing,
+SHA-256, Unicode paths and native shader-interface checks. Runtime/Editor CLI
+tests reject malformed cube options and missing bundles before device creation.
+The shader tooling suite covers explicit `prepare`/`export`, dependency rebuilds,
+atomic bundle publication and source/tool-free export. Existing package tests
+cover the additional precompiled closure and completion identity. None of these
+CPU cases opens a graphics device or claims hardware qualification.
+
+Actual 06c acceptance separately presents and captures the same textured cube on
+both GPUs, checks resize/minimize/restore, resource lifetime and failure behavior,
+and runs a relocated Release Runtime payload with the bundle and no source shader
+compiler. The [build workflow](building.md#cube-sample-and-runtime-package) and
+[resource contract](gpu-resources.md#window-cube-and-capture) define those paths.
+Windows Debug/Release/ASan, WSL CPU/sanitizer and protected target boundaries remain
+required regression. All passed for 06c: Windows 55 tests in each configuration,
+WSL 48 tests in each configuration, six window/offscreen GPU suites, native failure
+children and isolated Runtime launches. See the [06c handoff](handoffs/06c-window-distribution.md)
+and [receipt](coverage/evidence/06c-window-distribution.json).
+`shark.tooling.cube-smoke` and `shark.tooling.cube-faults` validate strict evidence
+and fixed references without graphics; `shark.client.cube-cli` and
+`shark.client.cube-faults-cli` validate native fixture arguments without a device.
+
 ## Locked tools and hosted-image limits
 
 [requirements-dev.txt](../requirements-dev.txt) locks these distributions with

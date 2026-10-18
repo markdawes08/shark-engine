@@ -49,26 +49,27 @@ void read_rows(nvrhi::IDevice& device, nvrhi::IStagingTexture* staging, WindowEx
         std::memcpy(output + row * packed_pitch, mapped + row * pitch, packed_pitch);
     }
 }
-} // namespace
-
-std::unique_ptr<OffscreenResources> create_offscreen_resources(nvrhi::IDevice& device,
-                                                               const OffscreenRequest& request,
-                                                               bool fail_partial) {
+std::unique_ptr<OffscreenResources> create_resources(nvrhi::IDevice& device,
+                                                     const OffscreenRequest& request,
+                                                     bool fail_partial, nvrhi::ITexture* target,
+                                                     WindowExtent extent, bool capture) {
     static_assert(std::is_standard_layout_v<ResourceVertex> && sizeof(ResourceVertex) == 20);
     static_assert(sizeof(float) == 4);
     auto owner = std::make_unique<OffscreenResources>();
     auto& resources = *owner;
-    resources.extent = request.extent;
+    resources.extent = extent;
     resources.color =
-        checked(device.createTexture(texture_desc(request.extent, nvrhi::Format::RGBA8_UNORM,
-                                                  "Shark offscreen color", true)),
-                resources);
-    resources.depth = checked(device.createTexture(texture_desc(request.extent, nvrhi::Format::D32,
+        target ? nvrhi::TextureHandle(target)
+               : checked(device.createTexture(texture_desc(extent, nvrhi::Format::RGBA8_UNORM,
+                                                           "Shark offscreen color", true)),
+                         resources);
+    resources.depth = checked(device.createTexture(texture_desc(extent, nvrhi::Format::D32,
                                                                 "Shark offscreen depth", true)),
                               resources);
     if (fail_partial) {
-        throw failure("graphics.test.offscreen_partial_creation",
-                      "Injected failure after creating owned color and depth targets");
+        throw failure(target ? "graphics.test.window_draw_partial_creation"
+                             : "graphics.test.offscreen_partial_creation",
+                      "Injected failure after creating owned render targets");
     }
     const auto shader = [&device, &resources](const ShaderArtifact& artifact,
                                               nvrhi::ShaderType type) {
@@ -129,12 +130,14 @@ std::unique_ptr<OffscreenResources> create_offscreen_resources(nvrhi::IDevice& d
         device.createTexture(texture_desc(request.texture_extent, nvrhi::Format::RGBA8_UNORM,
                                           "Shark offscreen texture", false)),
         resources);
-    resources.color_readback =
-        checked(device.createStagingTexture(resources.color->getDesc(), nvrhi::CpuAccessMode::Read),
-                resources);
-    resources.depth_readback =
-        checked(device.createStagingTexture(resources.depth->getDesc(), nvrhi::CpuAccessMode::Read),
-                resources);
+    if (capture) {
+        resources.color_readback = checked(
+            device.createStagingTexture(resources.color->getDesc(), nvrhi::CpuAccessMode::Read),
+            resources);
+        resources.depth_readback = checked(
+            device.createStagingTexture(resources.depth->getDesc(), nvrhi::CpuAccessMode::Read),
+            resources);
+    }
     resources.sampler =
         checked(device.createSampler(nvrhi::SamplerDesc().setAllFilters(false).setAllAddressModes(
                     nvrhi::SamplerAddressMode::Clamp)),
@@ -162,21 +165,29 @@ std::unique_ptr<OffscreenResources> create_offscreen_resources(nvrhi::IDevice& d
     resources.pipeline = checked(
         device.createGraphicsPipeline(pipeline, resources.framebuffer->getFramebufferInfo()),
         resources);
-    resources.commands = checked(device.createCommandList(), resources);
+    if (!target) {
+        resources.commands = checked(device.createCommandList(), resources);
+    }
     return owner;
 }
 
-void record_offscreen_resources(OffscreenResources& resources, const OffscreenRequest& request) {
-    auto& commands = resources.commands;
+void record_resources(OffscreenResources& resources, const OffscreenRequest& request,
+                      nvrhi::ICommandList* commands, bool upload, bool clear_color) {
     // The backend already opened this command list with ownership retained.
-    commands->writeBuffer(resources.vertices, request.vertices.data(),
-                          request.vertices.size() * sizeof(ResourceVertex));
-    commands->writeBuffer(resources.indices, request.indices.data(),
-                          request.indices.size() * sizeof(std::uint32_t));
-    commands->writeBuffer(resources.constants, request.transform.data(), sizeof(request.transform));
-    commands->writeTexture(resources.texture, 0, 0, request.texture_rgba8.data(),
-                           static_cast<std::size_t>(request.texture_extent.width) * 4);
-    commands->clearTextureFloat(resources.color, nvrhi::AllSubresources, nvrhi::Color(0, 0, 0, 1));
+    if (upload) {
+        commands->writeBuffer(resources.vertices, request.vertices.data(),
+                              request.vertices.size() * sizeof(ResourceVertex));
+        commands->writeBuffer(resources.indices, request.indices.data(),
+                              request.indices.size() * sizeof(std::uint32_t));
+        commands->writeBuffer(resources.constants, request.transform.data(),
+                              sizeof(request.transform));
+        commands->writeTexture(resources.texture, 0, 0, request.texture_rgba8.data(),
+                               static_cast<std::size_t>(request.texture_extent.width) * 4);
+    }
+    if (clear_color) {
+        commands->clearTextureFloat(resources.color, nvrhi::AllSubresources,
+                                    nvrhi::Color(0, 0, 0, 1));
+    }
     commands->clearDepthStencilTexture(resources.depth, nvrhi::AllSubresources, true, 1.0F, false,
                                        0);
     nvrhi::GraphicsState state;
@@ -191,19 +202,42 @@ void record_offscreen_resources(OffscreenResources& resources, const OffscreenRe
                             .setOffset(0));
     // Cancel NVRHI's Vulkan viewport inversion. The shader provides the sole
     // projection Y inversion and native Vulkan receives a positive height.
-    state.viewport.addViewport(nvrhi::Viewport(0.0F, static_cast<float>(request.extent.width),
-                                               static_cast<float>(request.extent.height), 0.0F,
+    state.viewport.addViewport(nvrhi::Viewport(0.0F, static_cast<float>(resources.extent.width),
+                                               static_cast<float>(resources.extent.height), 0.0F,
                                                0.0F, 1.0F));
-    state.viewport.addScissorRect(nvrhi::Rect(0, static_cast<int>(request.extent.width), 0,
-                                              static_cast<int>(request.extent.height)));
+    state.viewport.addScissorRect(nvrhi::Rect(0, static_cast<int>(resources.extent.width), 0,
+                                              static_cast<int>(resources.extent.height)));
     commands->setGraphicsState(state);
     commands->drawIndexed(
         nvrhi::DrawArguments().setVertexCount(static_cast<std::uint32_t>(request.indices.size())));
-    commands->copyTexture(resources.color_readback, nvrhi::TextureSlice(), resources.color,
-                          nvrhi::TextureSlice());
-    commands->copyTexture(resources.depth_readback, nvrhi::TextureSlice(), resources.depth,
-                          nvrhi::TextureSlice());
-    commands->close();
+    if (resources.color_readback) {
+        commands->copyTexture(resources.color_readback, nvrhi::TextureSlice(), resources.color,
+                              nvrhi::TextureSlice());
+        commands->copyTexture(resources.depth_readback, nvrhi::TextureSlice(), resources.depth,
+                              nvrhi::TextureSlice());
+    }
+}
+} // namespace
+
+std::unique_ptr<OffscreenResources> create_offscreen_resources(nvrhi::IDevice& device,
+                                                               const OffscreenRequest& request,
+                                                               bool fail_partial) {
+    return create_resources(device, request, fail_partial, nullptr, request.extent, true);
+}
+std::unique_ptr<OffscreenResources> create_window_draw_resources(nvrhi::IDevice& device,
+                                                                 const OffscreenRequest& request,
+                                                                 nvrhi::ITexture* target,
+                                                                 WindowExtent extent, bool capture,
+                                                                 bool fail_partial) {
+    return create_resources(device, request, fail_partial, target, extent, capture);
+}
+void record_offscreen_resources(OffscreenResources& resources, const OffscreenRequest& request) {
+    record_resources(resources, request, resources.commands, true, true);
+    resources.commands->close();
+}
+void record_window_draw_resources(OffscreenResources& resources, const OffscreenRequest& request,
+                                  nvrhi::ICommandList& commands, bool upload) {
+    record_resources(resources, request, &commands, upload, false);
 }
 
 OffscreenReadback read_offscreen_resources(nvrhi::IDevice& device,

@@ -19,10 +19,10 @@ advance_offline_window(GraphicsWindowFrame frame, OfflineFrameLoop& loop, Monoto
 
 // One final sample summary after successful close. NOT_RUN is deliberate:
 // interactive samples do not execute the hardware qualification workload.
-[[nodiscard]] Result<void> write_presentation_completion(std::string_view adapter_uuid,
-                                                         GraphicsValidation validation,
-                                                         const PresentationStats& stats,
-                                                         std::ostream& output);
+[[nodiscard]] Result<void>
+write_presentation_completion(std::string_view adapter_uuid, GraphicsValidation validation,
+                              const PresentationStats& stats, std::ostream& output,
+                              std::string_view shader_bundle_sha256 = {});
 
 // Shared by Runtime/Editor and the explicit native smoke. No global state.
 // Null report means close requested: no further input tick was dispatched.

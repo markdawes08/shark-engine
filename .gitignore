@@ -10,6 +10,7 @@
 # Stress/resource traces and Runtime relocation packages also stay in out/ or dist/.
 # Offline shader generations, dependency manifests and build receipts stay in out/.
 # GPU resource readbacks and offscreen qualification traces also stay in out/.
+# Window cube captures and packaged .sharkshader bundles stay in build/, out/ or dist/.
 # Keep shaders/ source recipes and HLSL fixtures eligible for versioning.
 # Keep generated agent/session reports under out/; public schemas/examples stay tracked.
 /build/
