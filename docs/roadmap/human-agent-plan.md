@@ -105,7 +105,10 @@ checks for this planning change. The full authoring gate remains NOT_RUN.
 M01's hosted qualification is complete. Current implementation work is assignment
 02 graphics compatibility; 02a setup and 02b executable cases/validation preserve
 the shared terminal workflow. 02c is retired by the platform scope decision;
-Windows 02d adds a bounded portable terminal launcher and package verification.
+02d adds bounded portable terminal launchers and package verification for Windows
+and Linux, with machine-readable outcomes and explicit unavailable-device results.
+The [final local handoff](../handoffs/02d-final-verification.md) separates tested
+CPU/package behavior from the still-open native graphics and clean-target gates.
 These remain developer
 fixtures, not public game-authoring commands. The
 [graphics plan](graphics-plan.md) and [probe commands](../graphics-probe.md)

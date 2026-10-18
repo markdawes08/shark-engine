@@ -108,3 +108,8 @@ add_test(NAME shark.tooling.graphics-package
     COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_graphics_package.py" -v)
 set_tests_properties(shark.tooling.graphics-package PROPERTIES LABELS "cpu;tooling;boundary" TIMEOUT 30
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+
+add_test(NAME shark.tooling.graphics-package-linux
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_graphics_package_linux.py" -v)
+set_tests_properties(shark.tooling.graphics-package-linux PROPERTIES LABELS "cpu;tooling;boundary" TIMEOUT 30
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")

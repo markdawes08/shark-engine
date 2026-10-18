@@ -30,10 +30,15 @@ records the user's removal of Mac compatibility and retirement of 02c.
 the [02b handoff](../handoffs/02b-graphics-cases.md) records both supplemental GPU
 passes and an earlier unresolved resize timeout. The later user-directed
 [scope amendment](../handoffs/windows-linux-scope-amendment.md) supersedes the
-earlier Mac deferral and retires **02c**. The available Windows portion of **02d**
-adds Release packaging, full local lifecycle soak and relocation checks.
-These local Windows checks pass; see the
-[02d handoff](../handoffs/02d-windows-validation.md) and its retained evidence.
+earlier Mac deferral and retires **02c**. **02d** implements Release packages and
+bounded standalone launchers for Windows and Linux. The
+[final local handoff](../handoffs/02d-final-verification.md) records refreshed
+Windows lifecycle/relocation evidence and isolated Ubuntu build, CPU and package
+checks. Both available Windows GPUs pass the full 100/20/600 workload with required
+validation; Ubuntu passes 21 CTests and SDK-free description startup. The
+[earlier Windows handoff](../handoffs/02d-windows-validation.md)
+retains its original evidence and input hashes. Only the current Windows PC is
+available; Ubuntu userspace under WSL does not qualify native Linux graphics.
 All six named Windows/Linux GPU rows remain NOT_RUN, and a real clean-machine
 package launch remains required. The supplemental Windows results do not
 advance the full assignment gate.
@@ -41,6 +46,8 @@ REQ-02 remains **NOT_RUN** until the full gate passes.
 An unavailable device, driver, display, validation layer or native runner is
 reported as unavailable with a nonzero result; it is never converted into PASS.
 Supplemental hardware and WSL builds cannot replace the declared native rows.
+The hosted CPU workflow at `39110d4` passes all nine jobs and 156 CTests;
+the later local Linux packaging/link changes still need a user push and hosted run.
 Assignment 03 and dependent renderer architecture have not started.
 
 The [probe guide](../graphics-probe.md) documents the concrete developer commands.

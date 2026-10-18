@@ -54,7 +54,7 @@
         "After M01, keep the graphics probe and all later presentation dependencies outside EngineCore/Server; a headless pass cannot replace the retained client GPU matrix."
       ],
       "planned_fixture": "GraphicsFeasibilityProbe hardware matrix for W-NV, W-AMD, W-INTEL, L-NV, L-AMD and L-INTEL; external fixtures are required because a CPU scene cannot validate platform GPU compatibility.",
-      "verification": {"status": "NOT_RUN", "reason": "02a setup is retained. 02b implements analytic NVRHI draw/depth/compute/format readbacks, bounded lifecycle, pinned SPIR-V/Vulkan validation tools, actual failure fixtures and schema-2 evidence. Local execution is recorded separately from the required hardware gate. 02d adds Release Windows probe packaging, verified Unicode relocation, a supplemental NVIDIA 100/20/600-second lifecycle pass and Intel short cases, recorded in docs/handoffs/02d-windows-validation.md and docs/coverage/evidence/02d-windows-local.json. ADR0009 removes all Mac qualification obligations and retires 02c. All six remaining named Windows/Linux target rows remain unqualified; clean-machine packaging and the complete active matrix remain open. Historical receipts retain their original nine-row scope and input hashes. See docs/roadmap/graphics-plan.md and docs/graphics-probe.md. Assignment 02 remains current; dependent production renderer work has not begun."}
+      "verification": {"status": "NOT_RUN", "reason": "02a setup and 02b analytic NVRHI readbacks, bounded lifecycle and pinned shader/Vulkan validation fixtures are retained. 02d implements Windows/Linux Release probe packages and standalone terminal launchers. docs/handoffs/02d-final-verification.md records refreshed supplemental Windows lifecycle/relocation evidence, isolated Ubuntu build/CPU/package checks and the GNU static-link dependency fix. Hosted CPU CI at base 39110d4 passed nine jobs and 156 CTests; later local changes need a user push for hosted verification. Only the current Windows PC is available. All six named native Windows/Linux GPU rows and independent clean graphical deployment remain open; WSL userspace is not native Linux graphics evidence. ADR0009 removes Mac obligations and retires 02c. Historical receipts retain original scope and hashes; the earlier resize failure remains unexplained. See docs/roadmap/graphics-plan.md and docs/graphics-probe.md. Assignment 02 remains current; dependent production renderer work has not begun."}
     },
     {
       "id": "REQ-03",
@@ -819,12 +819,12 @@
       },
       {
         "id": "graphics.probe-package",
-        "name": "Release Windows graphics probe packaging and bounded portable launcher",
+        "name": "Release Windows/Linux graphics probe packages and bounded portable launchers",
         "requirement_ids": ["REQ-02"],
-        "test_ids": ["shark.tooling.graphics-package", "shark.graphics-probe.report"],
-        "test_sources": ["tools/tests/test_graphics_package.py", "probes/graphics/lifecycle_tests.cpp"],
-        "fixtures": ["tools/package_graphics_probe.py", "tools/graphics_package/Run-GraphicsProbe.ps1", "tools/tests/check_graphics_package_launcher.py", "probes/graphics/main.cpp"],
-        "fixture_reason": "CPU tests reject invalid package inputs and verify failure-progress retention. Explicit Windows integration and native GPU commands verify portable process containment, readbacks and lifecycle outside scenes. Development-host relocation does not establish a clean-machine or named hardware-row pass; FeatureWorld starts in 10."
+        "test_ids": ["shark.tooling.graphics-package", "shark.tooling.graphics-package-linux", "shark.graphics-probe.report"],
+        "test_sources": ["tools/tests/test_graphics_package.py", "tools/tests/test_graphics_package_linux.py", "probes/graphics/lifecycle_tests.cpp"],
+        "fixtures": ["tools/package_graphics_probe.py", "tools/package_graphics_probe_linux.py", "tools/graphics_package/Run-GraphicsProbe.ps1", "tools/graphics_package/run_graphics_probe.py", "tools/tests/check_graphics_package_launcher.py", "probes/graphics/main.cpp"],
+        "fixture_reason": "CPU tests reject invalid package inputs, PE/ELF dependency leaks, stale hashes and unsafe paths, and verify bounded native-child cleanup and failure-progress retention. Explicit package/GPU commands verify relocated execution, readbacks and lifecycle outside scenes. Development-host relocation and SDK-free Ubuntu userspace under WSL do not establish a native clean graphical machine or named hardware-row pass; FeatureWorld starts in 10."
       }
     ],
     "components": [],

@@ -53,6 +53,7 @@ DOCUMENTS = (
     "docs/handoffs/02b-graphics-cases.md",
     "docs/handoffs/02c-mac-deferred.md",
     "docs/handoffs/02d-windows-validation.md",
+    "docs/handoffs/02d-final-verification.md",
     "docs/handoffs/human-agent-planning-amendment.md",
     "docs/handoffs/windows-linux-scope-amendment.md",
 )

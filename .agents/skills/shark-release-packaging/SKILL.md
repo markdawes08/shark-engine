@@ -26,15 +26,26 @@ The minimal Ubuntu job independently inspects its source, link and ELF closure
 and starts the installed executable. It is not a game export or licensed release
 package; do not claim M08/35 acceptance from this bootstrap fixture.
 
-Assignment 02d adds an independent Windows graphics probe package, documented in
+Assignment 02d adds independent Windows/Linux graphics probe packages, documented in
 the [probe guide](../../../docs/graphics-probe.md). Use the explicit
 `graphics-windows-release` preset and `tools/package_graphics_probe.py` inputs;
 the builder rejects Debug CRT, stale artifacts and unresolved DLLs. The package's
 PowerShell launcher verifies files/results and bounds process trees without a
-checkout, Python or SDK. Exercise real Unicode/space relocation, required
+checkout, Python or SDK. Linux uses `graphics-linux-release`,
+`tools/package_graphics_probe_linux.py` and the package's
+`python3 -I -B run_graphics_probe.py` launcher. Inspect every bundled ELF and
+reject RPATHs, unsupported imports and newer-than-baseline symbol requirements.
+Require Ubuntu 24.04 x86-64, Python 3.12+ standard library, OS runtime/X11 libraries
+and installed vendor ICDs; no compiler/SDK/source checkout is needed to launch.
+The Linux launcher verifies helper/payload hashes, uses the shared native
+evidence validator and bounds output/process groups, including SIGINT/SIGTERM.
+Retain its documented limits for escaping descendants, SIGKILL and machine loss.
+Exercise real Unicode/space relocation, required
 validation, negative inputs and the full 100/20/600 workload on named hardware.
 CPU launcher tests use synthetic children and cannot qualify GPUs. Development-
-host relocation is not clean-machine evidence. Mac 02c is retired under
+host relocation is not clean-machine evidence. An SDK-free Linux runtime
+userspace passing description startup establishes only that CPU/dependency path;
+it does not close a native clean-target graphics launch. Mac 02c is retired under
 [ADR 0009](../../../docs/architecture/0009-windows-linux-platform-scope.md);
 the six Windows/Linux rows remain open. Package construction PASS never closes assignment 02.
 

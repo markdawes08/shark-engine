@@ -101,6 +101,11 @@ function(shark_setup_graphics_dependencies)
     shark_graphics_locked_dependency(GLFW)
     shark_graphics_locked_dependency(NVRHI)
 
+    # The pinned static Vulkan backend calls the common NVRHI implementation,
+    # but upstream does not declare that link edge. Model it explicitly so ELF
+    # linkers place the common archive after its backend consumers.
+    target_link_libraries(nvrhi_vk PRIVATE nvrhi)
+
     if(NOT TARGET Vulkan::Vulkan)
         add_library(Vulkan::Vulkan ALIAS vulkan)
     endif()

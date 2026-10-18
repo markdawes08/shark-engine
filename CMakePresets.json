@@ -205,6 +205,15 @@
         "SHARK_BUILD_EDITOR": "OFF",
         "SHARK_BUILD_SERVER": "OFF"
       }
+    },
+    {
+      "name": "graphics-linux-release",
+      "inherits": "graphics-linux",
+      "displayName": "Release Linux graphics probe for standalone packaging",
+      "cacheVariables": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_SKIP_RPATH": "ON"
+      }
     }
   ],
   "buildPresets": [
@@ -259,6 +268,10 @@
     {
       "name": "graphics-linux",
       "configurePreset": "graphics-linux"
+    },
+    {
+      "name": "graphics-linux-release",
+      "configurePreset": "graphics-linux-release"
     }
   ],
   "testPresets": [
@@ -381,6 +394,19 @@
       },
       "execution": {
         "noTestsAction": "error"
+      }
+    },
+    {
+      "name": "graphics-linux-release",
+      "configurePreset": "graphics-linux-release",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
+      },
+      "environment": {
+        "LD_LIBRARY_PATH": "${sourceDir}/build/graphics-linux-release/bin"
       }
     }
   ]

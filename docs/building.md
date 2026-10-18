@@ -6,8 +6,9 @@ Editor/Runtime/Server entry points and Catch2 tests. Editor/Runtime report
 bootstrap information; Server has validated startup and an idle lifecycle.
 02a/02b add a separate opt-in [graphics probe](graphics-probe.md) with locked
 dependencies, terminal diagnostics, analytic GPU cases and offline validation tools.
-02d adds the matching `graphics-windows-release` configure/build/test presets
-for the standalone Windows probe package; see the probe guide for packaging.
+02d adds matching `graphics-windows-release` and `graphics-linux-release`
+configure/build/test presets for standalone probe packages; see the
+[probe guide](graphics-probe.md) for packaging and bounded launch commands.
 Production rendering, gameplay, scene import, authoring UI and export remain unimplemented.
 CPU build success does not qualify a GPU, audio device or final release platform.
 
@@ -127,11 +128,53 @@ scene-runner/export commands will be added with their owning increments.
 | `shark.tooling.server-closure` | `cpu`, `tooling`, `boundary`, `server` |
 | `shark.boundary.headers` | `cpu`, `tooling`, `boundary`, `server` |
 | `shark.tooling.headless-environment` | `cpu`, `tooling`, `server` |
+| `shark.tooling.graphics-package`, `shark.tooling.graphics-package-linux` | `cpu`, `tooling`, `boundary` |
 
 For a focused boundary check, use `ctest --preset windows-debug -L boundary`.
 Dependency source inputs live in [dependencies.lock.json](../dependencies.lock.json).
 Add immutable pins there before introducing new dependencies; source downloads
 must match declared hashes and must not bring in test/editor code at runtime.
+
+## Opt-in graphics package builds
+
+The graphics fixtures use separate `graphics-windows` / `graphics-linux` debug
+presets and `graphics-windows-release` / `graphics-linux-release` package presets.
+Ordinary CPU, Server and Runtime configurations keep these dependencies disabled.
+Ubuntu 24.04 requires its native C/C++ compiler and X11 development libraries for
+GLFW (`libx11-dev`, `libxrandr-dev`, `libxinerama-dev`, `libxcursor-dev`, `libxi-dev`).
+The locked backend is X11; native Wayland is not selected.
+
+```text
+cmake --preset graphics-linux-release
+cmake --build --preset graphics-linux-release --parallel 2
+ctest --preset graphics-linux-release --output-on-failure
+```
+
+The Linux Release preset disables RPATH/RUNPATH. Its CTest preset explicitly
+selects the build's `bin` directory through the test process's `LD_LIBRARY_PATH`.
+Direct native execution needs the same process-local loader selection; the
+standalone package launcher supplies its own `lib` directory. The Linux builder
+uses `readelf` to inspect every bundled ELF and rejects unresolved imports,
+unexpected interpreters, RPATHs and runtime symbol requirements beyond the
+recorded Ubuntu 24.04 baseline. It does not search a developer SDK for missing
+libraries. Native GPU execution remains separate from these build/CPU checks.
+
+Prepare the pinned validation tools and four case shaders, then run
+`tools/package_graphics_probe_linux.py` with explicit build, loader, shader and
+validation-receipt paths; the [complete commands](graphics-probe.md#standalone-linux-probe-package)
+also describe relocation and workload options. Windows uses
+`tools/package_graphics_probe.py` and its pinned app-local Release CRT inputs.
+Both builders require fresh outputs and retain source, dependency, toolchain and
+license provenance. These packages are assignment 02 fixtures, not game exports.
+
+The Linux package runs with an ordinary account, Python 3.12+ and its standard
+library, Ubuntu 24.04 x86-64 system runtimes, an X11 desktop and the selected GPU's
+installed Vulkan driver. Its launcher needs neither a compiler nor a Vulkan SDK.
+Python 3.12+ is a package runtime prerequisite, independent of the pinned
+development Python version above. Windows packages instead use Windows
+PowerShell 5.1 and built-in .NET. Missing displays/devices are NOT_RUN; a successful
+description in an isolated runtime userspace does not close a native GPU or
+clean-machine graphics gate.
 
 ## Runtime-only boundary
 

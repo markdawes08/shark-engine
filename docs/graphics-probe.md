@@ -1,4 +1,4 @@
-# Graphics feasibility probe (02a / 02b)
+# Graphics feasibility probe (02a / 02b / 02d)
 
 The opt-in `GraphicsProbe` is a developer fixture using GLFW, NVRHI and Vulkan.
 It inventories devices, creates the GLFW/Vulkan/NVRHI stack, executes analytic
@@ -291,3 +291,87 @@ qualification:
 ```text
 python tools/tests/check_graphics_package_launcher.py --output out/graphics-package-launcher/check-01
 ```
+
+## Standalone Linux probe package
+
+02d also supplies an Ubuntu 24.04 x86-64 probe package. The source/build host
+needs the pinned compiler/build tools, X11 development libraries and `readelf`.
+The destination needs Python 3.12+ with its standard library, glibc 2.39,
+Ubuntu's `libstdc++6` / `libgcc-s1` runtimes, X11 client libraries and the installed
+vendor Vulkan driver/ICD. Native Wayland is outside the selected profile.
+The recorded Ubuntu runtime versions bound the accepted ELF symbol requirements;
+changing that baseline requires renewed build and target evidence.
+
+Prepare the Linux validation tools and shaders using fresh output paths, then
+construct the package from the explicit Release build:
+
+```text
+cmake --preset graphics-linux-release
+cmake --build --preset graphics-linux-release --parallel 2
+ctest --preset graphics-linux-release --output-on-failure
+python tools/prepare_graphics_validation.py --jobs 2 --output out/graphics-validation/linux-build-01
+python tools/prepare_graphics_tools.py --cases --validation-manifest out/graphics-validation/linux-build-01/summary.json --output out/graphics-tools/linux-cases-01
+python tools/package_graphics_probe_linux.py --executable build/graphics-linux-release/bin/GraphicsProbe --build-dir build/graphics-linux-release --loader build/graphics-linux-release/bin/libvulkan.so.1.4.352 --shader-dir out/graphics-tools/linux-cases-01/shaders --validation-manifest out/graphics-validation/linux-build-01/summary.json --output out/graphics-package/linux-package-01
+```
+
+`--loader` names the actual regular loader file from this build, not its SONAME
+symlink or a system Vulkan installation. After initial preparation, use `--offline`
+for the validation/shader helpers. Preserve both failed and successful preparation
+receipts; never change a tool binary after its recorded hash was produced.
+The owned Linux validation-build configuration strips debug sections at the
+layer's final link to keep the distributed library within the package byte bound.
+It retains the locked RelWithDebInfo configuration and compiled debug objects;
+the preparation receipt binds that CMake source and resulting library hash.
+This does not disable validation checks or change Windows link options.
+
+The Release preset omits RPATH/RUNPATH, including source-checkout paths. CTest
+selects the built loader with its preset environment. Direct executable commands
+outside CTest need an explicit process-local path, for example:
+
+```sh
+LD_LIBRARY_PATH="$PWD/build/graphics-linux-release/bin" build/graphics-linux-release/bin/GraphicsProbe --describe
+```
+
+The builder checks every bundled ELF, including the dynamically selected
+validation layer. Only bundled libraries and the declared Ubuntu system import
+allowlist satisfy dependencies. It rejects unsupported ELF architectures,
+unexpected interpreters, RPATH/RUNPATH, sanitizer/non-Release builds, stale inputs
+and symbols newer than the baseline. The package retains the locked loader,
+validation layer, four SPIR-V files, notices, source/toolchain records, ELF closure
+and complete shader/validation preparation receipts. Vendor ICDs and X11/OS
+libraries remain host prerequisites. DXC, `spirv-val`, source HLSL and SDKs are
+absent. Executable permissions are set before atomic publication.
+
+Copy the complete directory outside the checkout, preserving executable
+permissions. From an ordinary unprivileged X11 terminal, run:
+
+```sh
+python3 -I -B run_graphics_probe.py --mode describe --output "$HOME/shark-results/describe-01"
+python3 -I -B run_graphics_probe.py --mode inventory --output "$HOME/shark-results/inventory-01"
+python3 -I -B run_graphics_probe.py --mode cases --device DEVICE_UUID_FROM_INVENTORY --output "$HOME/shark-results/cases-01"
+python3 -I -B run_graphics_probe.py --mode cases --device DEVICE_UUID_FROM_INVENTORY --lifecycle-cycles 100 --device-cycles 20 --present-seconds 600 --timeout 1200 --output "$HOME/shark-results/soak-01"
+```
+
+The output must be fresh and outside the package. Spaces and Unicode are
+supported; package directories containing `:`, `;` or `$` are rejected because
+Linux loader paths interpret those characters. Description needs no display/GPU.
+GPU modes reject root or mismatched real/effective user/group identities with
+NOT_RUN. An unavailable display, driver or device also remains NOT_RUN.
+
+The launcher verifies all payloads before importing its bundled standard-library
+Python helpers, then uses the shared native-report/readback validator. It verifies
+the package again after execution, keeps required Vulkan validation enabled and
+selects the local loader/layer only in the child environment. Inherited loader,
+driver/layer and SDK overrides cannot replace that selection. Stdout and stderr
+each have an 8 MiB cap; the process deadline is at most 1,200 seconds. Owned
+process groups are retired on completion, timeout, output overflow and
+SIGINT/SIGTERM. Descendants must not deliberately escape their group; SIGKILL of
+the launcher or machine loss is outside this cleanup guarantee.
+
+Retain `summary.json`, native stdout/stderr, artifacts and the package manifest.
+`shark.tooling.graphics-package-linux` exercises package rejection, actual Linux
+process cleanup, strict JSON and isolated Unicode-path relocation with synthetic
+CPU children. These fixtures do not qualify graphics. An SDK-free runtime
+userspace can establish dependency closure and description startup; without a
+native supported display/GPU it cannot supply P02-07's clean-machine graphics
+launch or qualify any of the six required hardware rows.

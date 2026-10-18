@@ -80,6 +80,12 @@ function(shark_setup_graphics_validation)
     set_target_properties(spirv-val vvl PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")
+    if(CMAKE_SYSTEM_NAME STREQUAL "Linux")
+        # Keep the locked RelWithDebInfo compilation and its debug object files,
+        # but omit non-runtime debug sections from the distributed ELF layer.
+        # The unstripped layer exceeds the bounded portable package file size.
+        target_link_options(vvl PRIVATE "LINKER:--strip-debug")
+    endif()
     add_custom_target(shark_graphics_validation DEPENDS spirv-val vvl)
     file(GENERATE OUTPUT "${CMAKE_BINARY_DIR}/validation-products.json" CONTENT
         "{\n  \"spirv_val\": \"$<TARGET_FILE:spirv-val>\",\n  \"validation_library\": \"$<TARGET_FILE:vvl>\",\n  \"validation_manifest\": \"$<TARGET_FILE_DIR:vvl>/VkLayer_khronos_validation.json\",\n  \"compiler\": \"${CMAKE_CXX_COMPILER_ID} ${CMAKE_CXX_COMPILER_VERSION}\"\n}\n")

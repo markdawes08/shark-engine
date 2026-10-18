@@ -18,7 +18,7 @@ The [human/agent plan and foundation assessment](docs/roadmap/human-agent-plan.m
 define noninteractive tools, discoverable schemas and safe project handoff. Those
 game-authoring interfaces remain planned; terminal build/test tools work today.
 
-**Current assignment: 02; local Windows 02d work verified, full hardware gate open.** The headless server and Core/Client
+**Current assignment: 02; portable probe packages implemented, full hardware gate open.** The headless server and Core/Client
 separation have passed local and hosted qualification, including deliberate test
 failure and restored success. The [graphics probe](docs/graphics-probe.md) adds
 locked dependencies, device inventory, validated GPU readbacks and bounded lifecycle; the
@@ -31,8 +31,10 @@ The [02b handoff](docs/handoffs/02b-graphics-cases.md) records local cases, vali
 and limits. Checkpoint 02c is retired by the
 [platform scope amendment](docs/handoffs/windows-linux-scope-amendment.md);
 the six named Windows/Linux GPU rows and clean-machine checks remain open.
-The [Windows 02d handoff](docs/handoffs/02d-windows-validation.md) records portable
-probe packaging, lifecycle evidence and the outstanding hardware gates.
+The [final 02d local handoff](docs/handoffs/02d-final-verification.md) records
+Windows/Linux probe packaging, supplemental Windows lifecycle evidence, isolated
+Ubuntu CPU/package checks and the outstanding hardware gates. Only the current
+Windows PC is available; WSL evidence does not qualify native Linux graphics.
 
 - [Architecture decisions](docs/architecture/README.md): targets, dependencies,
   platform candidates, formats, simulation conventions and the MMORPG profile.

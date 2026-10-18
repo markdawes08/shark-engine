@@ -20,13 +20,22 @@ directory. Core and synchronization validation are required for case PASS;
 close the 100/20/600-second gate. All named hardware rows remain separately open.
 Run the native CPU build/CTest commands in [building](../../../docs/building.md)
 for relevant shared code. Contract validation checks documentation only.
-Windows 02d also provides the Release package and bounded PowerShell launcher in
-the probe guide. Preserve failed/incomplete soaks, partial lifecycle progress,
+02d provides Release packages with a bounded PowerShell launcher on Windows and
+a Python 3.12+ standard-library launcher on Ubuntu 24.04 x86-64, documented in the
+probe guide. Use `graphics-windows-release` or `graphics-linux-release` and their
+respective package builders. Linux uses the selected X11 backend, explicit
+app-local loader selection and an unprivileged account; no native Wayland or
+GPU claim follows from a successful ELF build or SDK-free description startup.
+Preserve failed/incomplete soaks, partial lifecycle progress,
 package identity and relocated raw readbacks. A close request is an incomplete
 run, not a passing soak. The user removed Mac compatibility from scope under
 [ADR 0009](../../../docs/architecture/0009-windows-linux-platform-scope.md);
 02c is retired and no Mac hardware qualification is required.
 Never treat an empty selection or unavailable prerequisite as passing coverage.
+Linux package CPU tests exercise real deadline/output/cancellation cleanup with
+synthetic children. They do not replace native GPU runs or an independent clean
+target's full graphics launch. Retain process-group limitations separately from
+Windows job containment; neither allows failed evidence to be discarded.
 
 Assignment 02 must qualify pinned GLFW/NVRHI/Vulkan on the exact real-hardware
 six-row Windows/Linux matrix, treating each OS/GPU row independently. Capture

@@ -1,0 +1,2164 @@
+{
+  "schema_version": 1,
+  "assignment": "02",
+  "checkpoint": "02d",
+  "status": "PASS",
+  "scope": "Hosted Windows/Linux CPU, sanitizer, runtime boundary and headless Server regression only. This receipt does not pass REQ-02, a GPU row, graphics soak or clean-machine graphics packaging.",
+  "repository": "markdawes08/shark-engine",
+  "tested_revision": "39110d4619fdcc8340b21409172e484af416c980",
+  "verified_at_utc": "2026-10-18T03:14:32.805157+00:00",
+  "run": {
+    "id": 39092472102,
+    "html_url": "https://github.com/markdawes08/shark-engine/actions/runs/39092472102",
+    "head_branch": "main",
+    "head_sha": "39110d4619fdcc8340b21409172e484af416c980",
+    "event": "push",
+    "run_attempt": 1,
+    "status": "completed",
+    "conclusion": "success",
+    "created_at": "2026-10-18T03:06:51Z",
+    "run_started_at": "2026-10-18T03:06:51Z",
+    "updated_at": "2026-10-18T03:10:05Z"
+  },
+  "checks": {
+    "all_nine_expected_jobs_success": true,
+    "all_nine_commit_checks_success_from_actions_app_15368": true,
+    "main_tip_matches_tested_revision_at_readback": true,
+    "all_156_ctests_pass_without_ctest_skips": true,
+    "all_eight_downloaded_artifact_digests_match_github": true,
+    "all_recorded_toolchains_match_revision_and_locked_tools": true,
+    "headless_server_release_closure_and_clean_runtime_pass": true,
+    "required_checks_match_nine_job_scope_with_strict_freshness": true
+  },
+  "jobs": [
+    {
+      "id": 117571926400,
+      "name": "cpu-linux-asan-ubsan",
+      "html_url": "https://github.com/markdawes08/shark-engine/actions/runs/39092472102/job/117571926400",
+      "head_sha": "39110d4619fdcc8340b21409172e484af416c980",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T03:06:53Z",
+      "completed_at": "2026-10-18T03:07:48Z",
+      "labels": [
+        "ubuntu-24.04"
+      ]
+    },
+    {
+      "id": 117571926361,
+      "name": "cpu-linux-debug",
+      "html_url": "https://github.com/markdawes08/shark-engine/actions/runs/39092472102/job/117571926361",
+      "head_sha": "39110d4619fdcc8340b21409172e484af416c980",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T03:06:53Z",
+      "completed_at": "2026-10-18T03:08:06Z",
+      "labels": [
+        "ubuntu-24.04"
+      ]
+    },
+    {
+      "id": 117571926284,
+      "name": "cpu-linux-release",
+      "html_url": "https://github.com/markdawes08/shark-engine/actions/runs/39092472102/job/117571926284",
+      "head_sha": "39110d4619fdcc8340b21409172e484af416c980",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T03:06:53Z",
+      "completed_at": "2026-10-18T03:08:15Z",
+      "labels": [
+        "ubuntu-24.04"
+      ]
+    },
+    {
+      "id": 117571926370,
+      "name": "cpu-windows-asan",
+      "html_url": "https://github.com/markdawes08/shark-engine/actions/runs/39092472102/job/117571926370",
+      "head_sha": "39110d4619fdcc8340b21409172e484af416c980",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T03:06:53Z",
+      "completed_at": "2026-10-18T03:09:31Z",
+      "labels": [
+        "windows-2025-vs2026"
+      ]
+    },
+    {
+      "id": 117571926408,
+      "name": "cpu-windows-debug",
+      "html_url": "https://github.com/markdawes08/shark-engine/actions/runs/39092472102/job/117571926408",
+      "head_sha": "39110d4619fdcc8340b21409172e484af416c980",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T03:06:53Z",
+      "completed_at": "2026-10-18T03:10:04Z",
+      "labels": [
+        "windows-2025-vs2026"
+      ]
+    },
+    {
+      "id": 117571926429,
+      "name": "cpu-windows-release",
+      "html_url": "https://github.com/markdawes08/shark-engine/actions/runs/39092472102/job/117571926429",
+      "head_sha": "39110d4619fdcc8340b21409172e484af416c980",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T03:06:54Z",
+      "completed_at": "2026-10-18T03:09:32Z",
+      "labels": [
+        "windows-2025-vs2026"
+      ]
+    },
+    {
+      "id": 117571926323,
+      "name": "headless-server",
+      "html_url": "https://github.com/markdawes08/shark-engine/actions/runs/39092472102/job/117571926323",
+      "head_sha": "39110d4619fdcc8340b21409172e484af416c980",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T03:06:53Z",
+      "completed_at": "2026-10-18T03:09:54Z",
+      "labels": [
+        "ubuntu-24.04"
+      ]
+    },
+    {
+      "id": 117571926167,
+      "name": "quality",
+      "html_url": "https://github.com/markdawes08/shark-engine/actions/runs/39092472102/job/117571926167",
+      "head_sha": "39110d4619fdcc8340b21409172e484af416c980",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T03:06:53Z",
+      "completed_at": "2026-10-18T03:07:06Z",
+      "labels": [
+        "ubuntu-24.04"
+      ]
+    },
+    {
+      "id": 117571926344,
+      "name": "runtime-only",
+      "html_url": "https://github.com/markdawes08/shark-engine/actions/runs/39092472102/job/117571926344",
+      "head_sha": "39110d4619fdcc8340b21409172e484af416c980",
+      "status": "completed",
+      "conclusion": "success",
+      "started_at": "2026-10-18T03:06:53Z",
+      "completed_at": "2026-10-18T03:07:12Z",
+      "labels": [
+        "ubuntu-24.04"
+      ]
+    }
+  ],
+  "required_status_checks": {
+    "url": "https://api.github.com/repos/markdawes08/shark-engine/branches/main/protection/required_status_checks",
+    "strict": true,
+    "contexts": [
+      "cpu-linux-asan-ubsan",
+      "cpu-linux-debug",
+      "cpu-linux-release",
+      "cpu-windows-asan",
+      "cpu-windows-debug",
+      "cpu-windows-release",
+      "quality",
+      "runtime-only",
+      "headless-server"
+    ],
+    "contexts_url": "https://api.github.com/repos/markdawes08/shark-engine/branches/main/protection/required_status_checks/contexts",
+    "checks": [
+      {
+        "context": "cpu-linux-asan-ubsan",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-linux-debug",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-linux-release",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-windows-asan",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-windows-debug",
+        "app_id": 15368
+      },
+      {
+        "context": "cpu-windows-release",
+        "app_id": 15368
+      },
+      {
+        "context": "quality",
+        "app_id": 15368
+      },
+      {
+        "context": "runtime-only",
+        "app_id": 15368
+      },
+      {
+        "context": "headless-server",
+        "app_id": 15368
+      }
+    ]
+  },
+  "ctest_totals": {
+    "cpu": 120,
+    "headless": 36,
+    "total": 156,
+    "passed": 156,
+    "failed": 0,
+    "skipped": 0,
+    "disabled": 0
+  },
+  "ctest_names_by_family": {
+    "cpu": [
+      "shark.boundary",
+      "shark.unit",
+      "shark.failure-sentinel",
+      "shark.server.unit",
+      "shark.runtime.cli",
+      "shark.editor.cli",
+      "shark.boundary.fixture",
+      "shark.server.lifecycle",
+      "shark.tooling.processes",
+      "shark.tooling.sources",
+      "shark.contract",
+      "shark.repository",
+      "shark.tooling.server-closure",
+      "shark.boundary.headers",
+      "shark.tooling.headless-environment",
+      "shark.tooling.graphics-evidence",
+      "shark.tooling.graphics-dependencies",
+      "shark.tooling.graphics-tools",
+      "shark.tooling.graphics-validation",
+      "shark.tooling.graphics-package"
+    ],
+    "headless": [
+      "shark.boundary",
+      "shark.unit",
+      "shark.failure-sentinel",
+      "shark.server.unit",
+      "shark.boundary.fixture",
+      "shark.server.lifecycle",
+      "shark.tooling.processes",
+      "shark.tooling.sources",
+      "shark.contract",
+      "shark.repository",
+      "shark.tooling.server-closure",
+      "shark.boundary.headers",
+      "shark.tooling.headless-environment",
+      "shark.tooling.graphics-evidence",
+      "shark.tooling.graphics-dependencies",
+      "shark.tooling.graphics-tools",
+      "shark.tooling.graphics-validation",
+      "shark.tooling.graphics-package"
+    ]
+  },
+  "junit": [
+    {
+      "path": "39092472102/extracted/cpu-linux-asan-ubsan-1/out/ci/linux-asan-ubsan/ctest.xml",
+      "sha256": "e2898870bfdbce2518aaa1d34db97c72541716e40b587b65a85850e238187ef0",
+      "tests": 20,
+      "passed": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "disabled": 0,
+      "family": "cpu"
+    },
+    {
+      "path": "39092472102/extracted/cpu-linux-debug-1/out/ci/linux-debug/ctest.xml",
+      "sha256": "03dec9cfd4f283c76eea89185ec53c2d51ed442d1feda17c4c089875fdd3b684",
+      "tests": 20,
+      "passed": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "disabled": 0,
+      "family": "cpu"
+    },
+    {
+      "path": "39092472102/extracted/cpu-linux-release-1/out/ci/linux-release/ctest.xml",
+      "sha256": "662011d013bb87e08e40d547ba342b8b86d8f4206fec19953ad5a36ea5dd64ed",
+      "tests": 20,
+      "passed": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "disabled": 0,
+      "family": "cpu"
+    },
+    {
+      "path": "39092472102/extracted/cpu-windows-asan-1/out/ci/windows-asan/ctest.xml",
+      "sha256": "bf153bbaf5eaf627c11d8b4b876d3870ddd9e82ffa23cb801e65843f06d8ad35",
+      "tests": 20,
+      "passed": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "disabled": 0,
+      "family": "cpu"
+    },
+    {
+      "path": "39092472102/extracted/cpu-windows-debug-1/out/ci/windows-debug/ctest.xml",
+      "sha256": "47b923dc8e664e808d2610fe4732f19560029107e24ce2f63d6643c6f1954e22",
+      "tests": 20,
+      "passed": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "disabled": 0,
+      "family": "cpu"
+    },
+    {
+      "path": "39092472102/extracted/cpu-windows-release-1/out/ci/windows-release/ctest.xml",
+      "sha256": "65512dfbd4d95e54e4ac8c3de3362e31895ed1d3d7966bd8f54f2c49fde12620",
+      "tests": 20,
+      "passed": 20,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "disabled": 0,
+      "family": "cpu"
+    },
+    {
+      "path": "39092472102/extracted/headless-server-1/server-asan-ubsan/ctest.xml",
+      "sha256": "77ffc7635db0b860790a997dbe150cc219e139bfc1c366d19695413fd7151773",
+      "tests": 18,
+      "passed": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "disabled": 0,
+      "family": "headless"
+    },
+    {
+      "path": "39092472102/extracted/headless-server-1/server-debug/ctest.xml",
+      "sha256": "83af7fb72316d3e80133b6f4c7dafa6d02676467379851dba1a36e77724a9c95",
+      "tests": 18,
+      "passed": 18,
+      "failures": 0,
+      "errors": 0,
+      "skipped": 0,
+      "disabled": 0,
+      "family": "headless"
+    }
+  ],
+  "artifacts": [
+    {
+      "id": 12122794923,
+      "name": "cpu-linux-asan-ubsan-1",
+      "size_in_bytes": 14282,
+      "digest": "sha256:d191e7eb5bff8f3383c305b7a61f128d8493b6a37e91a7ab5ebff8ecf5847209",
+      "created_at": "2026-10-18T03:07:45Z",
+      "expires_at": "2026-11-17T03:07:44Z"
+    },
+    {
+      "id": 12123650608,
+      "name": "cpu-linux-debug-1",
+      "size_in_bytes": 14254,
+      "digest": "sha256:68b2ed5ca5d490fd000353ceb2a468120894b5e667b6a56c19a5cca8df8e676a",
+      "created_at": "2026-10-18T03:08:04Z",
+      "expires_at": "2026-11-17T03:08:04Z"
+    },
+    {
+      "id": 12123168233,
+      "name": "cpu-linux-release-1",
+      "size_in_bytes": 14293,
+      "digest": "sha256:a95c1b9387816295070687ad8d66a05e9a0ebc7a4b74b7c9dec2212965704af9",
+      "created_at": "2026-10-18T03:08:13Z",
+      "expires_at": "2026-11-17T03:08:12Z"
+    },
+    {
+      "id": 12123745517,
+      "name": "cpu-windows-asan-1",
+      "size_in_bytes": 14743,
+      "digest": "sha256:057e765568fd591c78fad087bf0bee2101e730b809f96dcbf84e4b1974f72d05",
+      "created_at": "2026-10-18T03:09:27Z",
+      "expires_at": "2026-11-17T03:09:27Z"
+    },
+    {
+      "id": 12122334961,
+      "name": "cpu-windows-debug-1",
+      "size_in_bytes": 14752,
+      "digest": "sha256:759dbd305165299c8f4672c0c37fdebfb62d7673bf95d2c63189e2b6d75c2c32",
+      "created_at": "2026-10-18T03:10:01Z",
+      "expires_at": "2026-11-17T03:10:01Z"
+    },
+    {
+      "id": 12123322415,
+      "name": "cpu-windows-release-1",
+      "size_in_bytes": 14755,
+      "digest": "sha256:f67fc3268e6473d62fcdd331925c0cd1a35f2cc25908604c10dbc172ec15cac0",
+      "created_at": "2026-10-18T03:09:29Z",
+      "expires_at": "2026-11-17T03:09:28Z"
+    },
+    {
+      "id": 12123595831,
+      "name": "headless-server-1",
+      "size_in_bytes": 802269,
+      "digest": "sha256:80817f8417806da3efd4e747a899b4be952532e15d6942153c0c203c98269cf4",
+      "created_at": "2026-10-18T03:09:52Z",
+      "expires_at": "2026-11-17T03:09:51Z"
+    },
+    {
+      "id": 12123705361,
+      "name": "runtime-only-1",
+      "size_in_bytes": 1596,
+      "digest": "sha256:c32ca81be7e2ab8fbc70cd6e199174b12e6701afd2dcc891337d35aca16947be",
+      "created_at": "2026-10-18T03:07:10Z",
+      "expires_at": "2026-11-17T03:07:10Z"
+    }
+  ],
+  "phase_summaries": [
+    {
+      "path": "39092472102/extracted/cpu-linux-asan-ubsan-1/out/ci/linux-asan-ubsan/summary.json",
+      "sha256": "760faca08edfec7b3b74f30aca72188e25ea58583b8510546eb304718482590f",
+      "summary": {
+        "schema_version": 1,
+        "preset": "linux-asan-ubsan",
+        "started_utc": "2026-10-18T03:07:04.999554+00:00",
+        "injected_failure": false,
+        "status": "PASS",
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "linux-asan-ubsan",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=/opt/hostedtoolcache/Python/3.13.5/x64/bin/python",
+              "-DCMAKE_CXX_COMPILER=clang++-18"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 2.618,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "linux-asan-ubsan",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 30.692,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "linux-asan-ubsan",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/home/runner/work/shark-engine/shark-engine/out/ci/linux-asan-ubsan/ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 5.826,
+            "status": "PASS"
+          }
+        ],
+        "exit_code": 0,
+        "finished_utc": "2026-10-18T03:07:44.459160+00:00"
+      }
+    },
+    {
+      "path": "39092472102/extracted/cpu-linux-debug-1/out/ci/linux-debug/summary.json",
+      "sha256": "6aed511d276846dd9723434117935f9d5a961a4b8fccbea9a92e3a2b9b7f54c1",
+      "summary": {
+        "schema_version": 1,
+        "preset": "linux-debug",
+        "started_utc": "2026-10-18T03:07:06.580275+00:00",
+        "injected_failure": false,
+        "status": "PASS",
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "linux-debug",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=/opt/hostedtoolcache/Python/3.13.5/x64/bin/python",
+              "-DCMAKE_CXX_COMPILER=g++-13"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 1.618,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "linux-debug",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 47.943,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "linux-debug",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/home/runner/work/shark-engine/shark-engine/out/ci/linux-debug/ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 7.683,
+            "status": "PASS"
+          }
+        ],
+        "exit_code": 0,
+        "finished_utc": "2026-10-18T03:08:04.259068+00:00"
+      }
+    },
+    {
+      "path": "39092472102/extracted/cpu-linux-release-1/out/ci/linux-release/summary.json",
+      "sha256": "d4312eb96aecbbb9d274044c14bc592bc4914713b8cc801aa769506a59233d11",
+      "summary": {
+        "schema_version": 1,
+        "preset": "linux-release",
+        "started_utc": "2026-10-18T03:07:08.976931+00:00",
+        "injected_failure": false,
+        "status": "PASS",
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "linux-release",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=/opt/hostedtoolcache/Python/3.13.5/x64/bin/python",
+              "-DCMAKE_CXX_COMPILER=g++-13"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 2.218,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "linux-release",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 50.191,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "linux-release",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/home/runner/work/shark-engine/shark-engine/out/ci/linux-release/ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 10.538,
+            "status": "PASS"
+          }
+        ],
+        "exit_code": 0,
+        "finished_utc": "2026-10-18T03:08:12.693407+00:00"
+      }
+    },
+    {
+      "path": "39092472102/extracted/cpu-windows-asan-1/out/ci/windows-asan/summary.json",
+      "sha256": "036979b721bf3ea702d95f20b3c31ff11af7a8b6a9cb87cb18a1c032aa221354",
+      "summary": {
+        "schema_version": 1,
+        "preset": "windows-asan",
+        "started_utc": "2026-10-18T03:07:58.872683+00:00",
+        "injected_failure": false,
+        "status": "PASS",
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "windows-asan",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=C:\\hostedtoolcache\\windows\\Python\\3.13.5\\x64\\python.exe"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 6.465,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "windows-asan",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 61.789,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "windows-asan",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "D:\\a\\shark-engine\\shark-engine\\out\\ci\\windows-asan\\ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 18.789,
+            "status": "PASS"
+          }
+        ],
+        "exit_code": 0,
+        "finished_utc": "2026-10-18T03:09:27.108915+00:00"
+      }
+    },
+    {
+      "path": "39092472102/extracted/cpu-windows-debug-1/out/ci/windows-debug/summary.json",
+      "sha256": "cd8e0691d03347bc669a25eae2717d227f1565712d3a5629ab9d4ef54390dda3",
+      "summary": {
+        "schema_version": 1,
+        "preset": "windows-debug",
+        "started_utc": "2026-10-18T03:08:02.298250+00:00",
+        "injected_failure": false,
+        "status": "PASS",
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "windows-debug",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=C:\\hostedtoolcache\\windows\\Python\\3.13.5\\x64\\python.exe"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 7.366,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "windows-debug",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 86.552,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "windows-debug",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "D:\\a\\shark-engine\\shark-engine\\out\\ci\\windows-debug\\ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 23.139,
+            "status": "PASS"
+          }
+        ],
+        "exit_code": 0,
+        "finished_utc": "2026-10-18T03:10:01.053749+00:00"
+      }
+    },
+    {
+      "path": "39092472102/extracted/cpu-windows-release-1/out/ci/windows-release/summary.json",
+      "sha256": "16b60d4359bf19f2c8f2ecbd1b45a76abd7be3f0557c5a9319df6adc86bda5cc",
+      "summary": {
+        "schema_version": 1,
+        "preset": "windows-release",
+        "started_utc": "2026-10-18T03:08:04.835789+00:00",
+        "injected_failure": false,
+        "status": "PASS",
+        "phases": [
+          {
+            "phase": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "windows-release",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF",
+              "-DPython3_EXECUTABLE=C:\\hostedtoolcache\\windows\\Python\\3.13.5\\x64\\python.exe"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 7.214,
+            "status": "PASS"
+          },
+          {
+            "phase": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "--preset",
+              "windows-release",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 57.823,
+            "status": "PASS"
+          },
+          {
+            "phase": "test",
+            "command": [
+              "ctest",
+              "--preset",
+              "windows-release",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "D:\\a\\shark-engine\\shark-engine\\out\\ci\\windows-release\\ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 17.233,
+            "status": "PASS"
+          }
+        ],
+        "exit_code": 0,
+        "finished_utc": "2026-10-18T03:09:28.171450+00:00"
+      }
+    },
+    {
+      "path": "39092472102/extracted/headless-server-1/summary.json",
+      "sha256": "7c86e20243b17767136b68e60c5e0cad6de71e934ba861417cf538b7d8597388",
+      "summary": {
+        "schema_version": 1,
+        "status": "PASS",
+        "phases": [
+          {
+            "name": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "server-only",
+              "-B",
+              "/work/build/server-only",
+              "-DCMAKE_CXX_COMPILER=g++-13",
+              "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 0.316,
+            "status": "PASS",
+            "preset": "server-only"
+          },
+          {
+            "name": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "/work/build/server-only",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 1.319,
+            "status": "PASS",
+            "preset": "server-only"
+          },
+          {
+            "name": "boundary",
+            "command": [
+              "cmake",
+              "--build",
+              "/work/build/server-only",
+              "--target",
+              "shark_check_server_boundary"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 0.165,
+            "status": "PASS",
+            "preset": "server-only"
+          },
+          {
+            "name": "install",
+            "command": [
+              "cmake",
+              "--install",
+              "/work/build/server-only",
+              "--prefix",
+              "/evidence/server-only/package",
+              "--component",
+              "Server"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 0.164,
+            "status": "PASS",
+            "preset": "server-only"
+          },
+          {
+            "name": "closure",
+            "command": [
+              "/opt/shark-headless/venv/bin/python",
+              "/source/tools/check_server_closure.py",
+              "--build-dir",
+              "/work/build/server-only",
+              "--package-dir",
+              "/evidence/server-only/package",
+              "--output",
+              "/evidence/server-only/closure.json"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 0.165,
+            "status": "PASS",
+            "preset": "server-only"
+          },
+          {
+            "name": "package-smoke",
+            "command": [
+              "/evidence/server-only/package/bin/Server",
+              "--run-for-ms",
+              "20"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 0.032,
+            "status": "PASS",
+            "preset": "server-only"
+          },
+          {
+            "name": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "server-debug",
+              "-B",
+              "/work/build/server-debug",
+              "-DCMAKE_CXX_COMPILER=g++-13",
+              "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 1.166,
+            "status": "PASS",
+            "preset": "server-debug"
+          },
+          {
+            "name": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "/work/build/server-debug",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 39.521,
+            "status": "PASS",
+            "preset": "server-debug"
+          },
+          {
+            "name": "boundary",
+            "command": [
+              "cmake",
+              "--build",
+              "/work/build/server-debug",
+              "--target",
+              "shark_check_server_boundary"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 0.165,
+            "status": "PASS",
+            "preset": "server-debug"
+          },
+          {
+            "name": "test",
+            "command": [
+              "ctest",
+              "--test-dir",
+              "/work/build/server-debug",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/evidence/server-debug/ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 5.776,
+            "status": "PASS",
+            "preset": "server-debug"
+          },
+          {
+            "name": "configure",
+            "command": [
+              "cmake",
+              "--preset",
+              "server-asan-ubsan",
+              "-B",
+              "/work/build/server-asan-ubsan",
+              "-DCMAKE_CXX_COMPILER=clang++-18",
+              "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+              "-DSHARK_INJECT_TEST_FAILURE=OFF"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 1.116,
+            "status": "PASS",
+            "preset": "server-asan-ubsan"
+          },
+          {
+            "name": "build",
+            "command": [
+              "cmake",
+              "--build",
+              "/work/build/server-asan-ubsan",
+              "--parallel",
+              "2"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 58.014,
+            "status": "PASS",
+            "preset": "server-asan-ubsan"
+          },
+          {
+            "name": "boundary",
+            "command": [
+              "cmake",
+              "--build",
+              "/work/build/server-asan-ubsan",
+              "--target",
+              "shark_check_server_boundary"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 0.164,
+            "status": "PASS",
+            "preset": "server-asan-ubsan"
+          },
+          {
+            "name": "test",
+            "command": [
+              "ctest",
+              "--test-dir",
+              "/work/build/server-asan-ubsan",
+              "--output-on-failure",
+              "--no-tests=error",
+              "--output-junit",
+              "/evidence/server-asan-ubsan/ctest.xml"
+            ],
+            "exit_code": 0,
+            "elapsed_seconds": 6.929,
+            "status": "PASS",
+            "preset": "server-asan-ubsan"
+          }
+        ],
+        "started_utc": "2026-10-18T03:07:53.426938+00:00",
+        "injected_failure": false,
+        "input_lock_sha256": "5b0ab6341f2eebf0e1714a3621af4466c95a8d8b3c03b24b0e1097aed61d5934",
+        "limits": "Headless lifecycle/configuration only; no graphics, networking, simulation or MMO capacity qualification",
+        "exit_code": 0,
+        "finished_utc": "2026-10-18T03:09:49.449733+00:00"
+      }
+    }
+  ],
+  "toolchains": [
+    {
+      "path": "39092472102/extracted/cpu-linux-asan-ubsan-1/out/ci/linux-asan-ubsan/toolchain.json",
+      "sha256": "b6649d83c4f02edd9f51101b5eb18ee43bd551391b0daaae46e432de3bc9ae14",
+      "platform": {
+        "system": "Linux",
+        "release": "6.17.0-1022-azure",
+        "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+        "machine": "x86_64"
+      },
+      "python": {
+        "version": "3.13.5",
+        "executable": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/python"
+      },
+      "environment": {
+        "ImageOS": "ubuntu24",
+        "ImageVersion": "20261012.334.1",
+        "RUNNER_OS": "Linux",
+        "RUNNER_ARCH": "X64",
+        "GITHUB_SHA": "39110d4619fdcc8340b21409172e484af416c980",
+        "GITHUB_RUN_ID": "39092472102",
+        "GITHUB_RUN_ATTEMPT": "1",
+        "GITHUB_WORKFLOW": "CPU foundation",
+        "CC": "clang-18",
+        "CXX": "clang++-18"
+      },
+      "packages": {
+        "cmake": "3.31.10",
+        "ninja": "1.13.2",
+        "clang-format": "20.1.8",
+        "PyYAML": "6.0.3"
+      },
+      "compilers": [
+        {
+          "CMAKE_CXX_COMPILER": "/usr/bin/clang++-18",
+          "CMAKE_CXX_COMPILER_ID": "Clang",
+          "CMAKE_CXX_COMPILER_VERSION": "18.1.3",
+          "binary_sha256": "8ef402d453d1ba4902e4ee0f0f847f6cfa01400c95aa43c24e97818b9c0e3f45"
+        }
+      ],
+      "cmake_inputs": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_MAKE_PROGRAM": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+        "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+        "SHARK_BUILD_CLIENT": "ON",
+        "SHARK_BUILD_EDITOR": "ON",
+        "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
+        "SHARK_BUILD_SERVER": "ON",
+        "SHARK_BUILD_TESTS": "ON",
+        "SHARK_INJECT_TEST_FAILURE": "OFF",
+        "SHARK_SANITIZER": "address-undefined",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "tools": {
+        "cmake": {
+          "sha256": "50d2857e4078b680ee0ffac785855f242baf2807d5643e2e8af712cf96c54e0a",
+          "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake)."
+        },
+        "ninja": {
+          "sha256": "08639e194fffa7f08b259fc4abfa4803aff66b64de52549cee42ec527d55cea6",
+          "output": "1.13.2.git.kitware.jobserver-pipe-1"
+        },
+        "clang-format": {
+          "sha256": "b43128177c8fa0907a3a88c7795656702b464a6edc04c688baa528526309212e",
+          "output": "clang-format version 20.1.8"
+        }
+      }
+    },
+    {
+      "path": "39092472102/extracted/cpu-linux-debug-1/out/ci/linux-debug/toolchain.json",
+      "sha256": "7220602abec3ece9e6df9888ec300308072d5c881a7e91a99edf31c9d532701f",
+      "platform": {
+        "system": "Linux",
+        "release": "6.17.0-1022-azure",
+        "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+        "machine": "x86_64"
+      },
+      "python": {
+        "version": "3.13.5",
+        "executable": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/python"
+      },
+      "environment": {
+        "ImageOS": "ubuntu24",
+        "ImageVersion": "20261012.334.1",
+        "RUNNER_OS": "Linux",
+        "RUNNER_ARCH": "X64",
+        "GITHUB_SHA": "39110d4619fdcc8340b21409172e484af416c980",
+        "GITHUB_RUN_ID": "39092472102",
+        "GITHUB_RUN_ATTEMPT": "1",
+        "GITHUB_WORKFLOW": "CPU foundation",
+        "CC": "gcc-13",
+        "CXX": "g++-13"
+      },
+      "packages": {
+        "cmake": "3.31.10",
+        "ninja": "1.13.2",
+        "clang-format": "20.1.8",
+        "PyYAML": "6.0.3"
+      },
+      "compilers": [
+        {
+          "CMAKE_CXX_COMPILER": "/usr/bin/g++-13",
+          "CMAKE_CXX_COMPILER_ID": "GNU",
+          "CMAKE_CXX_COMPILER_VERSION": "13.3.0",
+          "binary_sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769"
+        }
+      ],
+      "cmake_inputs": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_MAKE_PROGRAM": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+        "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+        "SHARK_BUILD_CLIENT": "ON",
+        "SHARK_BUILD_EDITOR": "ON",
+        "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
+        "SHARK_BUILD_SERVER": "ON",
+        "SHARK_BUILD_TESTS": "ON",
+        "SHARK_INJECT_TEST_FAILURE": "OFF",
+        "SHARK_SANITIZER": "none",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "tools": {
+        "cmake": {
+          "sha256": "50d2857e4078b680ee0ffac785855f242baf2807d5643e2e8af712cf96c54e0a",
+          "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake)."
+        },
+        "ninja": {
+          "sha256": "08639e194fffa7f08b259fc4abfa4803aff66b64de52549cee42ec527d55cea6",
+          "output": "1.13.2.git.kitware.jobserver-pipe-1"
+        },
+        "clang-format": {
+          "sha256": "b43128177c8fa0907a3a88c7795656702b464a6edc04c688baa528526309212e",
+          "output": "clang-format version 20.1.8"
+        }
+      }
+    },
+    {
+      "path": "39092472102/extracted/cpu-linux-release-1/out/ci/linux-release/toolchain.json",
+      "sha256": "a60fa663bac130a90cd78d61d0bc144898cac1a932967746d3e387c1fe5b1615",
+      "platform": {
+        "system": "Linux",
+        "release": "6.17.0-1022-azure",
+        "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+        "machine": "x86_64"
+      },
+      "python": {
+        "version": "3.13.5",
+        "executable": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/python"
+      },
+      "environment": {
+        "ImageOS": "ubuntu24",
+        "ImageVersion": "20261012.334.1",
+        "RUNNER_OS": "Linux",
+        "RUNNER_ARCH": "X64",
+        "GITHUB_SHA": "39110d4619fdcc8340b21409172e484af416c980",
+        "GITHUB_RUN_ID": "39092472102",
+        "GITHUB_RUN_ATTEMPT": "1",
+        "GITHUB_WORKFLOW": "CPU foundation",
+        "CC": "gcc-13",
+        "CXX": "g++-13"
+      },
+      "packages": {
+        "cmake": "3.31.10",
+        "ninja": "1.13.2",
+        "clang-format": "20.1.8",
+        "PyYAML": "6.0.3"
+      },
+      "compilers": [
+        {
+          "CMAKE_CXX_COMPILER": "/usr/bin/g++-13",
+          "CMAKE_CXX_COMPILER_ID": "GNU",
+          "CMAKE_CXX_COMPILER_VERSION": "13.3.0",
+          "binary_sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769"
+        }
+      ],
+      "cmake_inputs": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_MAKE_PROGRAM": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+        "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+        "SHARK_BUILD_CLIENT": "ON",
+        "SHARK_BUILD_EDITOR": "ON",
+        "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
+        "SHARK_BUILD_SERVER": "ON",
+        "SHARK_BUILD_TESTS": "ON",
+        "SHARK_INJECT_TEST_FAILURE": "OFF",
+        "SHARK_SANITIZER": "none",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "tools": {
+        "cmake": {
+          "sha256": "50d2857e4078b680ee0ffac785855f242baf2807d5643e2e8af712cf96c54e0a",
+          "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake)."
+        },
+        "ninja": {
+          "sha256": "08639e194fffa7f08b259fc4abfa4803aff66b64de52549cee42ec527d55cea6",
+          "output": "1.13.2.git.kitware.jobserver-pipe-1"
+        },
+        "clang-format": {
+          "sha256": "b43128177c8fa0907a3a88c7795656702b464a6edc04c688baa528526309212e",
+          "output": "clang-format version 20.1.8"
+        }
+      }
+    },
+    {
+      "path": "39092472102/extracted/cpu-windows-asan-1/out/ci/windows-asan/toolchain.json",
+      "sha256": "d0632b6e13a35c1a4a7c5379874c3bda01ea75042081ce48eafa19ef4acebfa0",
+      "platform": {
+        "system": "Windows",
+        "release": "2025Server",
+        "version": "10.0.26100",
+        "machine": "AMD64"
+      },
+      "python": {
+        "version": "3.13.5",
+        "executable": "C:\\hostedtoolcache\\windows\\Python\\3.13.5\\x64\\python.exe"
+      },
+      "environment": {
+        "ImageOS": "win25-vs2026",
+        "ImageVersion": "20261007.264.1",
+        "RUNNER_OS": "Windows",
+        "RUNNER_ARCH": "X64",
+        "GITHUB_SHA": "39110d4619fdcc8340b21409172e484af416c980",
+        "GITHUB_RUN_ID": "39092472102",
+        "GITHUB_RUN_ATTEMPT": "1",
+        "GITHUB_WORKFLOW": "CPU foundation",
+        "CC": "",
+        "CXX": "",
+        "VCToolsVersion": "14.51.36231",
+        "WindowsSDKVersion": "10.0.26100.0\\",
+        "VisualStudioVersion": "18.0"
+      },
+      "packages": {
+        "cmake": "3.31.10",
+        "ninja": "1.13.2",
+        "clang-format": "20.1.8",
+        "PyYAML": "6.0.3"
+      },
+      "compilers": [
+        {
+          "CMAKE_CXX_COMPILER": "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+          "CMAKE_CXX_COMPILER_ID": "MSVC",
+          "CMAKE_CXX_COMPILER_VERSION": "19.51.36260.0",
+          "binary_sha256": "b0a1818ebae6da7f18230a84e76ce839212584ac4c2ab55b97a0d5268085da57"
+        }
+      ],
+      "cmake_inputs": {
+        "CMAKE_BUILD_TYPE": "RelWithDebInfo",
+        "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+        "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+        "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+        "CMAKE_MAKE_PROGRAM": "C:/hostedtoolcache/windows/Python/3.13.5/x64/Scripts/ninja.exe",
+        "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+        "SHARK_BUILD_CLIENT": "ON",
+        "SHARK_BUILD_EDITOR": "ON",
+        "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
+        "SHARK_BUILD_SERVER": "ON",
+        "SHARK_BUILD_TESTS": "ON",
+        "SHARK_INJECT_TEST_FAILURE": "OFF",
+        "SHARK_SANITIZER": "address",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "tools": {
+        "cmake": {
+          "sha256": "1557195f6aae1707de223456fe74abea5703567eccd28abfc35c7b4f95daf8d0",
+          "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake)."
+        },
+        "ninja": {
+          "sha256": "a7f084e8ee37bff0872aa8bd3d17cc19632d2a37734f6c242dd3dee22d77c0b4",
+          "output": "1.13.2.git.kitware.jobserver-pipe-1"
+        },
+        "clang-format": {
+          "sha256": "ae768ae09cfc4ec87327fcff7b4f6024343f61047db6f1f3b68613c2daa85b90",
+          "output": "clang-format version 20.1.8"
+        }
+      }
+    },
+    {
+      "path": "39092472102/extracted/cpu-windows-debug-1/out/ci/windows-debug/toolchain.json",
+      "sha256": "05a6e866b126898bf9b21c5ea874fadab096fdcd8ddab0c349f4301aecc9c7bc",
+      "platform": {
+        "system": "Windows",
+        "release": "2025Server",
+        "version": "10.0.26100",
+        "machine": "AMD64"
+      },
+      "python": {
+        "version": "3.13.5",
+        "executable": "C:\\hostedtoolcache\\windows\\Python\\3.13.5\\x64\\python.exe"
+      },
+      "environment": {
+        "ImageOS": "win25-vs2026",
+        "ImageVersion": "20261007.264.1",
+        "RUNNER_OS": "Windows",
+        "RUNNER_ARCH": "X64",
+        "GITHUB_SHA": "39110d4619fdcc8340b21409172e484af416c980",
+        "GITHUB_RUN_ID": "39092472102",
+        "GITHUB_RUN_ATTEMPT": "1",
+        "GITHUB_WORKFLOW": "CPU foundation",
+        "CC": "",
+        "CXX": "",
+        "VCToolsVersion": "14.51.36231",
+        "WindowsSDKVersion": "10.0.26100.0\\",
+        "VisualStudioVersion": "18.0"
+      },
+      "packages": {
+        "cmake": "3.31.10",
+        "ninja": "1.13.2",
+        "clang-format": "20.1.8",
+        "PyYAML": "6.0.3"
+      },
+      "compilers": [
+        {
+          "CMAKE_CXX_COMPILER": "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+          "CMAKE_CXX_COMPILER_ID": "MSVC",
+          "CMAKE_CXX_COMPILER_VERSION": "19.51.36260.0",
+          "binary_sha256": "b0a1818ebae6da7f18230a84e76ce839212584ac4c2ab55b97a0d5268085da57"
+        }
+      ],
+      "cmake_inputs": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+        "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+        "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+        "CMAKE_MAKE_PROGRAM": "C:/hostedtoolcache/windows/Python/3.13.5/x64/Scripts/ninja.exe",
+        "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+        "SHARK_BUILD_CLIENT": "ON",
+        "SHARK_BUILD_EDITOR": "ON",
+        "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
+        "SHARK_BUILD_SERVER": "ON",
+        "SHARK_BUILD_TESTS": "ON",
+        "SHARK_INJECT_TEST_FAILURE": "OFF",
+        "SHARK_SANITIZER": "none",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "tools": {
+        "cmake": {
+          "sha256": "9e0415bbb156624186766b4cf6d8317a59eefb8557fa1fdf635953ff0025b2ee",
+          "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake)."
+        },
+        "ninja": {
+          "sha256": "a7f084e8ee37bff0872aa8bd3d17cc19632d2a37734f6c242dd3dee22d77c0b4",
+          "output": "1.13.2.git.kitware.jobserver-pipe-1"
+        },
+        "clang-format": {
+          "sha256": "92bffbd8edd6e7ebaf7a0c62651ed7c411f60c5e6db32bb1a014d6b6c2e43190",
+          "output": "clang-format version 20.1.8"
+        }
+      }
+    },
+    {
+      "path": "39092472102/extracted/cpu-windows-release-1/out/ci/windows-release/toolchain.json",
+      "sha256": "69e3f49db836ef2b6abc8eb9687dedf1f80dbd0d033d9494caf041cec45d752e",
+      "platform": {
+        "system": "Windows",
+        "release": "2025Server",
+        "version": "10.0.26100",
+        "machine": "AMD64"
+      },
+      "python": {
+        "version": "3.13.5",
+        "executable": "C:\\hostedtoolcache\\windows\\Python\\3.13.5\\x64\\python.exe"
+      },
+      "environment": {
+        "ImageOS": "win25-vs2026",
+        "ImageVersion": "20261007.264.1",
+        "RUNNER_OS": "Windows",
+        "RUNNER_ARCH": "X64",
+        "GITHUB_SHA": "39110d4619fdcc8340b21409172e484af416c980",
+        "GITHUB_RUN_ID": "39092472102",
+        "GITHUB_RUN_ATTEMPT": "1",
+        "GITHUB_WORKFLOW": "CPU foundation",
+        "CC": "",
+        "CXX": "",
+        "VCToolsVersion": "14.51.36231",
+        "WindowsSDKVersion": "10.0.26100.0\\",
+        "VisualStudioVersion": "18.0"
+      },
+      "packages": {
+        "cmake": "3.31.10",
+        "ninja": "1.13.2",
+        "clang-format": "20.1.8",
+        "PyYAML": "6.0.3"
+      },
+      "compilers": [
+        {
+          "CMAKE_CXX_COMPILER": "C:/Program Files/Microsoft Visual Studio/18/Enterprise/VC/Tools/MSVC/14.51.36231/bin/Hostx64/x64/cl.exe",
+          "CMAKE_CXX_COMPILER_ID": "MSVC",
+          "CMAKE_CXX_COMPILER_VERSION": "19.51.36260.0",
+          "binary_sha256": "b0a1818ebae6da7f18230a84e76ce839212584ac4c2ab55b97a0d5268085da57"
+        }
+      ],
+      "cmake_inputs": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_FLAGS": "/DWIN32 /D_WINDOWS /EHsc",
+        "CMAKE_CXX_FLAGS_DEBUG": "/Ob0 /Od /RTC1",
+        "CMAKE_CXX_FLAGS_RELEASE": "/O2 /Ob2 /DNDEBUG",
+        "CMAKE_MAKE_PROGRAM": "C:/hostedtoolcache/windows/Python/3.13.5/x64/Scripts/ninja.exe",
+        "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+        "SHARK_BUILD_CLIENT": "ON",
+        "SHARK_BUILD_EDITOR": "ON",
+        "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
+        "SHARK_BUILD_SERVER": "ON",
+        "SHARK_BUILD_TESTS": "ON",
+        "SHARK_INJECT_TEST_FAILURE": "OFF",
+        "SHARK_SANITIZER": "none",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "tools": {
+        "cmake": {
+          "sha256": "1557195f6aae1707de223456fe74abea5703567eccd28abfc35c7b4f95daf8d0",
+          "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake)."
+        },
+        "ninja": {
+          "sha256": "a7f084e8ee37bff0872aa8bd3d17cc19632d2a37734f6c242dd3dee22d77c0b4",
+          "output": "1.13.2.git.kitware.jobserver-pipe-1"
+        },
+        "clang-format": {
+          "sha256": "31bb66c54266ae43ed1c5a1ce00e4bb453f3ab86e1728cabcd4f92a3df7427a5",
+          "output": "clang-format version 20.1.8"
+        }
+      }
+    },
+    {
+      "path": "39092472102/extracted/headless-server-1/server-asan-ubsan/toolchain.json",
+      "sha256": "0950514495a8bf376456d16e0848a46aa5d39208b60d5ddc05c4e3be4f7882cd",
+      "platform": {
+        "system": "Linux",
+        "release": "6.17.0-1022-azure",
+        "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+        "machine": "x86_64"
+      },
+      "python": {
+        "version": "3.12.3",
+        "executable": "/opt/shark-headless/venv/bin/python"
+      },
+      "environment": {
+        "GITHUB_SHA": "39110d4619fdcc8340b21409172e484af416c980",
+        "GITHUB_RUN_ID": "39092472102",
+        "GITHUB_RUN_ATTEMPT": "1",
+        "CC": "clang-18",
+        "CXX": "clang++-18"
+      },
+      "packages": {
+        "cmake": "3.31.10",
+        "ninja": "1.13.2",
+        "clang-format": "20.1.8",
+        "PyYAML": "6.0.3"
+      },
+      "compilers": [
+        {
+          "CMAKE_CXX_COMPILER": "/usr/bin/clang++-18",
+          "CMAKE_CXX_COMPILER_ID": "Clang",
+          "CMAKE_CXX_COMPILER_VERSION": "18.1.3",
+          "binary_sha256": "8ef402d453d1ba4902e4ee0f0f847f6cfa01400c95aa43c24e97818b9c0e3f45"
+        }
+      ],
+      "cmake_inputs": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_MAKE_PROGRAM": "/opt/shark-headless/venv/bin/ninja",
+        "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+        "SHARK_BUILD_CLIENT": "OFF",
+        "SHARK_BUILD_EDITOR": "OFF",
+        "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
+        "SHARK_BUILD_SERVER": "ON",
+        "SHARK_BUILD_TESTS": "ON",
+        "SHARK_INJECT_TEST_FAILURE": "OFF",
+        "SHARK_SANITIZER": "address-undefined",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "tools": {
+        "cmake": {
+          "sha256": "78d2c98455a108d3bf3822c44522be555df744228411c54b238a80269f4c1586",
+          "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake)."
+        },
+        "ninja": {
+          "sha256": "08639e194fffa7f08b259fc4abfa4803aff66b64de52549cee42ec527d55cea6",
+          "output": "1.13.2.git.kitware.jobserver-pipe-1"
+        },
+        "clang-format": {
+          "sha256": "72e8b5ce2e5c4c7fd854417b5ae9f6d532a81089ab14afb6c9e2542dfb50070b",
+          "output": "clang-format version 20.1.8"
+        }
+      }
+    },
+    {
+      "path": "39092472102/extracted/headless-server-1/server-debug/toolchain.json",
+      "sha256": "7f835b6d1417d092085d87192030de7855c8de1c1078a1c8c039d8304bfdab73",
+      "platform": {
+        "system": "Linux",
+        "release": "6.17.0-1022-azure",
+        "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+        "machine": "x86_64"
+      },
+      "python": {
+        "version": "3.12.3",
+        "executable": "/opt/shark-headless/venv/bin/python"
+      },
+      "environment": {
+        "GITHUB_SHA": "39110d4619fdcc8340b21409172e484af416c980",
+        "GITHUB_RUN_ID": "39092472102",
+        "GITHUB_RUN_ATTEMPT": "1",
+        "CC": "gcc-13",
+        "CXX": "g++-13"
+      },
+      "packages": {
+        "cmake": "3.31.10",
+        "ninja": "1.13.2",
+        "clang-format": "20.1.8",
+        "PyYAML": "6.0.3"
+      },
+      "compilers": [
+        {
+          "CMAKE_CXX_COMPILER": "/usr/bin/g++-13",
+          "CMAKE_CXX_COMPILER_ID": "GNU",
+          "CMAKE_CXX_COMPILER_VERSION": "13.3.0",
+          "binary_sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769"
+        }
+      ],
+      "cmake_inputs": {
+        "CMAKE_BUILD_TYPE": "Debug",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_MAKE_PROGRAM": "/opt/shark-headless/venv/bin/ninja",
+        "FETCHCONTENT_FULLY_DISCONNECTED": "OFF",
+        "SHARK_BUILD_CLIENT": "OFF",
+        "SHARK_BUILD_EDITOR": "OFF",
+        "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
+        "SHARK_BUILD_SERVER": "ON",
+        "SHARK_BUILD_TESTS": "ON",
+        "SHARK_INJECT_TEST_FAILURE": "OFF",
+        "SHARK_SANITIZER": "none",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "tools": {
+        "cmake": {
+          "sha256": "78d2c98455a108d3bf3822c44522be555df744228411c54b238a80269f4c1586",
+          "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake)."
+        },
+        "ninja": {
+          "sha256": "08639e194fffa7f08b259fc4abfa4803aff66b64de52549cee42ec527d55cea6",
+          "output": "1.13.2.git.kitware.jobserver-pipe-1"
+        },
+        "clang-format": {
+          "sha256": "72e8b5ce2e5c4c7fd854417b5ae9f6d532a81089ab14afb6c9e2542dfb50070b",
+          "output": "clang-format version 20.1.8"
+        }
+      }
+    },
+    {
+      "path": "39092472102/extracted/headless-server-1/server-only/toolchain.json",
+      "sha256": "b9b7b6ed2ac93e6996ff67aa1190630fdd5a36a9544e91286467bae96893e31d",
+      "platform": {
+        "system": "Linux",
+        "release": "6.17.0-1022-azure",
+        "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+        "machine": "x86_64"
+      },
+      "python": {
+        "version": "3.12.3",
+        "executable": "/opt/shark-headless/venv/bin/python"
+      },
+      "environment": {
+        "GITHUB_SHA": "39110d4619fdcc8340b21409172e484af416c980",
+        "GITHUB_RUN_ID": "39092472102",
+        "GITHUB_RUN_ATTEMPT": "1",
+        "CC": "gcc-13",
+        "CXX": "g++-13"
+      },
+      "packages": {
+        "cmake": "3.31.10",
+        "ninja": "1.13.2",
+        "clang-format": "20.1.8",
+        "PyYAML": "6.0.3"
+      },
+      "compilers": [
+        {
+          "CMAKE_CXX_COMPILER": "/usr/bin/g++-13",
+          "CMAKE_CXX_COMPILER_ID": "GNU",
+          "CMAKE_CXX_COMPILER_VERSION": "13.3.0",
+          "binary_sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769"
+        }
+      ],
+      "cmake_inputs": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_MAKE_PROGRAM": "/opt/shark-headless/venv/bin/ninja",
+        "FETCHCONTENT_FULLY_DISCONNECTED": "ON",
+        "SHARK_BUILD_CLIENT": "OFF",
+        "SHARK_BUILD_EDITOR": "OFF",
+        "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
+        "SHARK_BUILD_SERVER": "ON",
+        "SHARK_BUILD_TESTS": "OFF",
+        "SHARK_INJECT_TEST_FAILURE": "OFF",
+        "SHARK_SANITIZER": "none",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "tools": {
+        "cmake": {
+          "sha256": "78d2c98455a108d3bf3822c44522be555df744228411c54b238a80269f4c1586",
+          "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake)."
+        },
+        "ninja": {
+          "sha256": "08639e194fffa7f08b259fc4abfa4803aff66b64de52549cee42ec527d55cea6",
+          "output": "1.13.2.git.kitware.jobserver-pipe-1"
+        },
+        "clang-format": {
+          "sha256": "72e8b5ce2e5c4c7fd854417b5ae9f6d532a81089ab14afb6c9e2542dfb50070b",
+          "output": "clang-format version 20.1.8"
+        }
+      }
+    },
+    {
+      "path": "39092472102/extracted/headless-server-1/toolchain.json",
+      "sha256": "08ab73c51b2d091d772df836f52bf489f451d8a2779b35772605db1c0abf8ea6",
+      "platform": {
+        "system": "Linux",
+        "release": "6.17.0-1022-azure",
+        "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+        "machine": "x86_64"
+      },
+      "python": {
+        "version": "3.12.3",
+        "executable": "/opt/shark-headless/venv/bin/python"
+      },
+      "environment": {
+        "GITHUB_SHA": "39110d4619fdcc8340b21409172e484af416c980",
+        "GITHUB_RUN_ID": "39092472102",
+        "GITHUB_RUN_ATTEMPT": "1"
+      },
+      "packages": {
+        "cmake": "3.31.10",
+        "ninja": "1.13.2",
+        "clang-format": "20.1.8",
+        "PyYAML": "6.0.3"
+      },
+      "compilers": [],
+      "cmake_inputs": {},
+      "tools": {
+        "cmake": {
+          "sha256": "78d2c98455a108d3bf3822c44522be555df744228411c54b238a80269f4c1586",
+          "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake)."
+        },
+        "ninja": {
+          "sha256": "08639e194fffa7f08b259fc4abfa4803aff66b64de52549cee42ec527d55cea6",
+          "output": "1.13.2.git.kitware.jobserver-pipe-1"
+        },
+        "clang-format": {
+          "sha256": "72e8b5ce2e5c4c7fd854417b5ae9f6d532a81089ab14afb6c9e2542dfb50070b",
+          "output": "clang-format version 20.1.8"
+        }
+      }
+    },
+    {
+      "path": "39092472102/extracted/runtime-only-1/toolchain.json",
+      "sha256": "acfedf7f49bbf8c51992194164b9e8c6a551e2d5f14a368a9117c7d94154ec2c",
+      "platform": {
+        "system": "Linux",
+        "release": "6.17.0-1022-azure",
+        "version": "#22-Ubuntu SMP Mon Jul 27 17:24:03 UTC 2026",
+        "machine": "x86_64"
+      },
+      "python": {
+        "version": "3.13.5",
+        "executable": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/python"
+      },
+      "environment": {
+        "ImageOS": "ubuntu24",
+        "ImageVersion": "20261012.334.1",
+        "RUNNER_OS": "Linux",
+        "RUNNER_ARCH": "X64",
+        "GITHUB_SHA": "39110d4619fdcc8340b21409172e484af416c980",
+        "GITHUB_RUN_ID": "39092472102",
+        "GITHUB_RUN_ATTEMPT": "1",
+        "GITHUB_WORKFLOW": "CPU foundation",
+        "CC": "gcc-13",
+        "CXX": "g++-13"
+      },
+      "packages": {
+        "cmake": "3.31.10",
+        "ninja": "1.13.2",
+        "clang-format": "20.1.8",
+        "PyYAML": "6.0.3"
+      },
+      "compilers": [
+        {
+          "CMAKE_CXX_COMPILER": "/usr/bin/g++-13",
+          "CMAKE_CXX_COMPILER_ID": "GNU",
+          "CMAKE_CXX_COMPILER_VERSION": "13.3.0",
+          "binary_sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769"
+        }
+      ],
+      "cmake_inputs": {
+        "CMAKE_BUILD_TYPE": "Release",
+        "CMAKE_CXX_FLAGS": "",
+        "CMAKE_CXX_FLAGS_DEBUG": "-g",
+        "CMAKE_CXX_FLAGS_RELEASE": "-O3 -DNDEBUG",
+        "CMAKE_MAKE_PROGRAM": "/opt/hostedtoolcache/Python/3.13.5/x64/bin/ninja",
+        "SHARK_BUILD_CLIENT": "ON",
+        "SHARK_BUILD_EDITOR": "OFF",
+        "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
+        "SHARK_BUILD_SERVER": "OFF",
+        "SHARK_BUILD_TESTS": "OFF",
+        "SHARK_INJECT_TEST_FAILURE": "OFF",
+        "SHARK_SANITIZER": "none",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "tools": {
+        "cmake": {
+          "sha256": "50d2857e4078b680ee0ffac785855f242baf2807d5643e2e8af712cf96c54e0a",
+          "output": "cmake version 3.31.10\n\nCMake suite maintained and supported by Kitware (kitware.com/cmake)."
+        },
+        "ninja": {
+          "sha256": "08639e194fffa7f08b259fc4abfa4803aff66b64de52549cee42ec527d55cea6",
+          "output": "1.13.2.git.kitware.jobserver-pipe-1"
+        },
+        "clang-format": {
+          "sha256": "b43128177c8fa0907a3a88c7795656702b464a6edc04c688baa528526309212e",
+          "output": "clang-format version 20.1.8"
+        }
+      }
+    }
+  ],
+  "headless": {
+    "closure_source": {
+      "path": "39092472102/extracted/headless-server-1/server-only/closure.json",
+      "sha256": "c210aef6fbdcdfe220a7a74609c4e36cb1f8fa90a79ab432ad609790de6b685f"
+    },
+    "closure": {
+      "status": "PASS",
+      "scope": "M01 Linux x86-64 server-only source/build/package closure",
+      "targets": [
+        "EngineCore",
+        "Server",
+        "shark_check_server_boundary"
+      ],
+      "cache": {
+        "SHARK_BUILD_CLIENT": "OFF",
+        "SHARK_BUILD_SERVER": "ON",
+        "SHARK_BUILD_EDITOR": "OFF",
+        "SHARK_BUILD_TESTS": "OFF",
+        "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
+        "SHARK_SANITIZER": "none",
+        "CMAKE_GENERATOR": "Ninja"
+      },
+      "elf_needed": [
+        "libstdc++.so.6",
+        "libgcc_s.so.1",
+        "libc.so.6"
+      ],
+      "package": [
+        {
+          "path": "bin/Server",
+          "sha256": "405b5b069fe3ab56e38c26c96ee9e4e6d49176410e512a9292439efaf06cf213",
+          "size_bytes": 17752
+        }
+      ]
+    },
+    "clean_runtime": {
+      "status": "PASS",
+      "scope": "installed package in immutable base, network disabled, read-only root"
+    },
+    "clean_runtime_source": {
+      "path": "39092472102/extracted/headless-server-1/clean-runtime.json",
+      "sha256": "a2a790b8ef1e64d24a283fa26b1910cacaec10e5d23cb0e17aebc663394cd683"
+    },
+    "clean_runtime_log_source": {
+      "path": "39092472102/extracted/headless-server-1/clean-runtime.log",
+      "sha256": "e6c6dd549f216d16d0a53ca9b7dae3e8dd5cb89ec7badf4e89da2a267e6c712d"
+    },
+    "source_worktree": {
+      "exit_code": 0,
+      "status": "",
+      "scope": "Uncommitted local checks describe the worktree, not only git_revision"
+    },
+    "input_lock_sha256": "5b0ab6341f2eebf0e1714a3621af4466c95a8d8b3c03b24b0e1097aed61d5934",
+    "input_profile": {
+      "schema_version": 1,
+      "architecture": "amd64",
+      "ubuntu_version": "24.04",
+      "image": "ubuntu@sha256:a2d43bffc46670d7108bb3c0468c67c5557c4c92e83e1e34cbff1322ad1b94dc",
+      "image_config_sha256": "6277ab668b2ad3c3ab851d370faa1690d324b30db29d342527f61fed28f20f36",
+      "image_layer_sha256": "f2b4ef06ff01a67d4bed7657a4ae379a7d07934b7c3e743454a22a0d5275fb2b",
+      "snapshot": "20261017T000000Z",
+      "snapshot_uri": "https://snapshot.ubuntu.com/ubuntu/20261017T000000Z/",
+      "bootstrap_ca_url": "https://snapshot.ubuntu.com/ubuntu/20261017T000000Z/pool/main/c/ca-certificates/ca-certificates_20240203_all.deb",
+      "bootstrap_ca_sha256": "641de77d8f142cfd62a1a6f964ba67b20754d3337c480efb529d086075a06c9a",
+      "suites": [
+        "noble",
+        "noble-updates",
+        "noble-security"
+      ],
+      "components": [
+        "main",
+        "universe"
+      ],
+      "packages": [
+        "ca-certificates",
+        "g++-13",
+        "clang-18",
+        "libclang-rt-18-dev",
+        "python3",
+        "python3-venv",
+        "git",
+        "binutils"
+      ],
+      "compiler_packages": {
+        "g++-13": "13.3.0-6ubuntu2~24.04.1",
+        "clang-18": "1:18.1.3-1ubuntu1",
+        "libclang-rt-18-dev": "1:18.1.3-1ubuntu1"
+      },
+      "python_version": "3.12.3",
+      "python_package": "3.12.3-1ubuntu0.17",
+      "python_profile": "Ubuntu snapshot CPython 3.12; desktop CPU Python 3.13.5 policy remains unchanged",
+      "sources": [
+        "https://hub.docker.com/_/ubuntu",
+        "https://ubuntu.com/server/docs/how-to/software/snapshot-service/",
+        "https://snapshot.ubuntu.com/",
+        "https://pypi.org/pypi/PyYAML/6.0.3/json"
+      ]
+    },
+    "build_image": [
+      {
+        "Id": "sha256:e661f87d450aad58026dbc316c8a48dc93643c2615f2a87953dea2159552a9ab",
+        "RepoTags": [
+          "shark-headless-39092472102-2304:latest"
+        ],
+        "RepoDigests": [],
+        "Architecture": "amd64",
+        "Os": "linux"
+      }
+    ],
+    "clean_runtime_output": "Shark Server ready (headless idle)\nShark Server stopped: run duration elapsed\n"
+  },
+  "quality_log_excerpt": [
+    "2026-10-18T03:07:04.2351624Z PASS: 20 negative checks reject omissions, malformed data and false claims",
+    "2026-10-18T03:07:04.2352435Z PASS: completed MMO insertion follows declared order rather than lexical ID order",
+    "2026-10-18T03:07:04.2353111Z PASS: 50 requirements cover 46 ordered assignments (00-35 and M01-M10); document links resolve",
+    "2026-10-18T03:07:04.2824587Z CI YAML and wiring for 9 Windows/Linux jobs passed; this check does not execute hosted CI.",
+    "2026-10-18T03:07:05.2452210Z Formatting passed for 24 files."
+  ],
+  "runtime_only_log_excerpt": [
+    "2026-10-18T03:07:08.1570122Z -- Engine allowed dependency closure: Engine;EngineClient;EngineCore",
+    "2026-10-18T03:07:08.1570948Z -- EngineClient allowed dependency closure: EngineClient;EngineCore",
+    "2026-10-18T03:07:08.1571690Z -- Runtime allowed dependency closure: Runtime;Engine;shark_check_runtime_boundary;EngineClient;EngineCore",
+    "2026-10-18T03:07:08.8312122Z -- EngineCore allowed dependency closure: EngineCore",
+    "2026-10-18T03:07:09.7989707Z -- Engine allowed dependency closure: Engine;EngineClient;EngineCore",
+    "2026-10-18T03:07:09.7990596Z -- EngineClient allowed dependency closure: EngineClient;EngineCore",
+    "2026-10-18T03:07:09.7991406Z -- Runtime allowed dependency closure: Runtime;Engine;shark_check_runtime_boundary;EngineClient;EngineCore",
+    "2026-10-18T03:07:09.8010620Z Shark Runtime 0.1.0"
+  ],
+  "historical_failed_runs": [
+    {
+      "run_id": 39091897522,
+      "revision": "21239e7359c4d46afb3e2cdb3221dcc0f08d465d",
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39091897522",
+      "conclusion": "failure",
+      "successful_jobs": [
+        "cpu-linux-asan-ubsan",
+        "cpu-linux-debug",
+        "cpu-linux-release",
+        "cpu-windows-asan",
+        "cpu-windows-debug",
+        "cpu-windows-release",
+        "headless-server",
+        "quality",
+        "runtime-only"
+      ],
+      "failures": [
+        {
+          "job": "cpu-macos-intel-debug",
+          "url": "https://github.com/markdawes08/shark-engine/actions/runs/39091897522/job/117570220237",
+          "failed_ctests": [
+            "shark.tooling.graphics-package",
+            "shark.tooling.graphics-tools",
+            "shark.tooling.graphics-validation"
+          ],
+          "observed_exceptions": [
+            "ValueError: DXC installed path contains a symlink",
+            "ValueError: Validation cache path contains a link: /var"
+          ]
+        },
+        {
+          "job": "cpu-macos-intel-asan-ubsan",
+          "url": "https://github.com/markdawes08/shark-engine/actions/runs/39091897522/job/117570220253",
+          "failed_ctests": [
+            "shark.tooling.graphics-package",
+            "shark.tooling.graphics-tools",
+            "shark.tooling.graphics-validation"
+          ],
+          "observed_exceptions": [
+            "ValueError: DXC installed path contains a symlink",
+            "ValueError: Validation cache path contains a link: /var"
+          ]
+        },
+        {
+          "job": "cpu-macos-intel-release",
+          "url": "https://github.com/markdawes08/shark-engine/actions/runs/39091897522/job/117570220282",
+          "failed_ctests": [
+            "shark.tooling.graphics-package",
+            "shark.tooling.graphics-tools",
+            "shark.tooling.graphics-validation"
+          ],
+          "observed_exceptions": [
+            "ValueError: DXC installed path contains a symlink",
+            "ValueError: Validation cache path contains a link: /var"
+          ]
+        },
+        {
+          "job": "cpu-macos-arm64-asan-ubsan",
+          "url": "https://github.com/markdawes08/shark-engine/actions/runs/39091897522/job/117570220295",
+          "failed_ctests": [
+            "shark.tooling.graphics-package",
+            "shark.tooling.graphics-tools",
+            "shark.tooling.graphics-validation"
+          ],
+          "observed_exceptions": [
+            "ValueError: DXC installed path contains a symlink",
+            "ValueError: Validation cache path contains a link: /var"
+          ]
+        },
+        {
+          "job": "cpu-macos-arm64-release",
+          "url": "https://github.com/markdawes08/shark-engine/actions/runs/39091897522/job/117570220308",
+          "failed_ctests": [
+            "shark.tooling.graphics-package",
+            "shark.tooling.graphics-tools",
+            "shark.tooling.graphics-validation"
+          ],
+          "observed_exceptions": [
+            "ValueError: DXC installed path contains a symlink",
+            "ValueError: Validation cache path contains a link: /var"
+          ]
+        },
+        {
+          "job": "cpu-macos-arm64-debug",
+          "url": "https://github.com/markdawes08/shark-engine/actions/runs/39091897522/job/117570220383",
+          "failed_ctests": [
+            "shark.tooling.graphics-package",
+            "shark.tooling.graphics-tools",
+            "shark.tooling.graphics-validation"
+          ],
+          "observed_exceptions": [
+            "ValueError: DXC installed path contains a symlink",
+            "ValueError: Validation cache path contains a link: /var"
+          ]
+        }
+      ],
+      "disposition": "Historical failures preserved. Temporary fixture paths crossed the Mac /var symlink and were rejected by the existing no-link cache checks. Mac work was explicitly removed by ADR 0009; no compatibility repair or retest is claimed.",
+      "sources": [
+        {
+          "path": "39091897522/run.json",
+          "sha256": "5c20415aa449138dccbc69f2150f46d127664da2b652d0b2f958e81f5590a1d8"
+        },
+        {
+          "path": "39091897522/jobs.json",
+          "sha256": "d01458cd44024c8fb7212fbc12460183fe907c17c592e1c1e0bd653b4522e802"
+        },
+        {
+          "path": "39091897522/artifacts.json",
+          "sha256": "5c8732451fd7013af7ea44ceafeac1c4146fe3032e51695e3b5d99564e2a58f5"
+        },
+        {
+          "path": "39091897522/logs.txt",
+          "sha256": "9b8a573f4a7c9f0e9c856cf3bab7ac50c443ac861b8ae42229f4e62de8e488d1"
+        }
+      ]
+    },
+    {
+      "run_id": 39089402093,
+      "revision": "b6aabd71ff6106744bd9a609e38711da521a213e",
+      "url": "https://github.com/markdawes08/shark-engine/actions/runs/39089402093",
+      "conclusion": "failure",
+      "successful_jobs": [
+        "cpu-linux-asan-ubsan",
+        "cpu-linux-debug",
+        "cpu-linux-release",
+        "cpu-windows-asan",
+        "cpu-windows-debug",
+        "cpu-windows-release",
+        "headless-server",
+        "quality",
+        "runtime-only"
+      ],
+      "failures": [
+        {
+          "job": "cpu-macos-arm64-debug",
+          "url": "https://github.com/markdawes08/shark-engine/actions/runs/39089402093/job/117562709004",
+          "failed_ctests": [
+            "shark.tooling.graphics-tools",
+            "shark.tooling.graphics-validation"
+          ],
+          "observed_exceptions": [
+            "ValueError: DXC installed path contains a symlink",
+            "ValueError: Validation cache path contains a link: /var"
+          ]
+        },
+        {
+          "job": "cpu-macos-intel-release",
+          "url": "https://github.com/markdawes08/shark-engine/actions/runs/39089402093/job/117562709127",
+          "failed_ctests": [
+            "shark.tooling.graphics-tools",
+            "shark.tooling.graphics-validation"
+          ],
+          "observed_exceptions": [
+            "ValueError: DXC installed path contains a symlink",
+            "ValueError: Validation cache path contains a link: /var"
+          ]
+        },
+        {
+          "job": "cpu-macos-intel-debug",
+          "url": "https://github.com/markdawes08/shark-engine/actions/runs/39089402093/job/117562709153",
+          "failed_ctests": [
+            "shark.tooling.graphics-tools",
+            "shark.tooling.graphics-validation"
+          ],
+          "observed_exceptions": [
+            "ValueError: DXC installed path contains a symlink",
+            "ValueError: Validation cache path contains a link: /var"
+          ]
+        },
+        {
+          "job": "cpu-macos-arm64-asan-ubsan",
+          "url": "https://github.com/markdawes08/shark-engine/actions/runs/39089402093/job/117562709155",
+          "failed_ctests": [
+            "shark.tooling.graphics-tools",
+            "shark.tooling.graphics-validation"
+          ],
+          "observed_exceptions": [
+            "ValueError: DXC installed path contains a symlink",
+            "ValueError: Validation cache path contains a link: /var"
+          ]
+        },
+        {
+          "job": "cpu-macos-arm64-release",
+          "url": "https://github.com/markdawes08/shark-engine/actions/runs/39089402093/job/117562709163",
+          "failed_ctests": [
+            "shark.tooling.graphics-tools",
+            "shark.tooling.graphics-validation"
+          ],
+          "observed_exceptions": [
+            "ValueError: DXC installed path contains a symlink",
+            "ValueError: Validation cache path contains a link: /var"
+          ]
+        },
+        {
+          "job": "cpu-macos-intel-asan-ubsan",
+          "url": "https://github.com/markdawes08/shark-engine/actions/runs/39089402093/job/117562709296",
+          "failed_ctests": [
+            "shark.tooling.graphics-tools",
+            "shark.tooling.graphics-validation"
+          ],
+          "observed_exceptions": [
+            "ValueError: DXC installed path contains a symlink",
+            "ValueError: Validation cache path contains a link: /var"
+          ]
+        }
+      ],
+      "disposition": "Historical failures preserved. Temporary fixture paths crossed the Mac /var symlink and were rejected by the existing no-link cache checks. Mac work was explicitly removed by ADR 0009; no compatibility repair or retest is claimed.",
+      "sources": [
+        {
+          "path": "39089402093/run.json",
+          "sha256": "f2d8b5e3339020dbff54f75e77f5817c7eb018e087da83a7ae7e3c3fee65e1f7"
+        },
+        {
+          "path": "39089402093/jobs.json",
+          "sha256": "e0e80d95f027a096af247ffad997d19bcd3212de89a21a0c0b4356ed2b60935d"
+        },
+        {
+          "path": "39089402093/artifacts.json",
+          "sha256": "063ff2ea821f265ecf74774f15a7a001d50f8937fe9308eca72166f8e4df7896"
+        },
+        {
+          "path": "39089402093/logs.txt",
+          "sha256": "f9f15d286cca2e2138480c2ec2ead08c5977aad40ddaf1f2e3d93be7c5d44de3"
+        }
+      ]
+    }
+  ],
+  "tested_inputs": [
+    {
+      "path": ".github/workflows/cpu.yml",
+      "revision": "39110d4619fdcc8340b21409172e484af416c980",
+      "git_blob_sha256": "882234e7bb425a4a9fee439fd48497c146109bdb2ee9ab3e5d61f4d633368c9c"
+    },
+    {
+      "path": "CMakePresets.json",
+      "revision": "39110d4619fdcc8340b21409172e484af416c980",
+      "git_blob_sha256": "4dbaa339d4a62780e69a5fe5b86a37c9cd21ade77dfaaa7826f532d2065d23c0"
+    },
+    {
+      "path": "dependencies.lock.json",
+      "revision": "39110d4619fdcc8340b21409172e484af416c980",
+      "git_blob_sha256": "1231da5703cd19d9da35a03e623815fff70f82a8aca72c33421d631c2249fc56"
+    },
+    {
+      "path": "requirements-dev.txt",
+      "revision": "39110d4619fdcc8340b21409172e484af416c980",
+      "git_blob_sha256": "461fc236b481fa5cc273b29dde8f6ab4116ae7a2b34e9ce58ae66e8122d3f191"
+    },
+    {
+      "path": "tools/ci.py",
+      "revision": "39110d4619fdcc8340b21409172e484af416c980",
+      "git_blob_sha256": "2dcc5178434563986201a728104b41c82ad5839a458fe3cf184b21c08d44e6f3"
+    },
+    {
+      "path": "tools/ci/headless/inputs.json",
+      "revision": "39110d4619fdcc8340b21409172e484af416c980",
+      "git_blob_sha256": "5b0ab6341f2eebf0e1714a3621af4466c95a8d8b3c03b24b0e1097aed61d5934"
+    }
+  ],
+  "raw_evidence_root": "out/ci/02d-hosted-20261018",
+  "raw_sources": [
+    {
+      "path": "39092472102/run.json",
+      "sha256": "d21b5db5d14fddc6a432f42682f2471d557850b2e8fa9c71b231c8733bdf41e3"
+    },
+    {
+      "path": "39092472102/jobs.json",
+      "sha256": "d72af3da6c5854539f2e41533de0122da0e8993b8f39552139348941a063234f"
+    },
+    {
+      "path": "39092472102/artifacts.json",
+      "sha256": "849dc5850f50a071372ffc1a04f2aa336dc52e7b5d35533b174c6d1431f788f4"
+    },
+    {
+      "path": "39092472102/logs.txt",
+      "sha256": "a31ea42f4823b59967f900b102b93326863405ff473959e5c32a9707b17ed945"
+    },
+    {
+      "path": "required-status-checks.json",
+      "sha256": "b5c5405e14abeeb70aa6072946bf561b7ef0048868a5a33435c06f7e3850a347"
+    },
+    {
+      "path": "main.json",
+      "sha256": "780d1184669de562ac5e6650046a0b836e6bc25bb71262b6fc0e78568047322d"
+    },
+    {
+      "path": "check-runs.json",
+      "sha256": "111ab725e2e19c13ee9b372598174f096921d68e1c11de48193f09a80d38bfd7"
+    }
+  ],
+  "audit_utility_sha256": "ac67e43f4bf32b71bfe0b47b4c25abd3f6b033eed4ba8f1f91c7aa4a6311c20b",
+  "commands": [
+    "gh api repos/markdawes08/shark-engine/actions/runs/{run_id}",
+    "gh api repos/markdawes08/shark-engine/actions/runs/{run_id}/jobs?per_page=100",
+    "gh api repos/markdawes08/shark-engine/actions/runs/{run_id}/artifacts?per_page=100",
+    "gh run view {run_id} --log",
+    "gh api repos/markdawes08/shark-engine/actions/artifacts/{artifact_id}/zip",
+    "gh api repos/markdawes08/shark-engine/branches/main/protection/required_status_checks",
+    "gh api repos/markdawes08/shark-engine/branches/main",
+    "gh api repos/markdawes08/shark-engine/commits/39110d4619fdcc8340b21409172e484af416c980/check-runs?per_page=100",
+    ".tools/venv/Scripts/python.exe -X utf8 out/ci/02d-hosted-20261018/audit.py"
+  ],
+  "limits": [
+    "No workflow dispatch, rerun, source-control staging/commit/push or remote mutation was performed.",
+    "Historical 01/M01 deliberate red/green evidence is unchanged; this is an ordinary push verification.",
+    "All 156 CTest entries ran; platform-inapplicable nested fixtures are not promoted into supported behavior.",
+    "Raw ZIPs/logs remain in ignored out/; GitHub artifacts have the recorded expiration dates.",
+    "CPU builds explicitly disable SHARK_BUILD_GRAPHICS_PROBE. Native Windows 11/Linux GPU and clean-machine graphics gates remain separate."
+  ]
+}

@@ -23,10 +23,16 @@ ordinary CI while graphics builds/device runs use explicit graphics presets.
 The historical job/test counts above remain tied to their recorded revisions.
 [ADR 0009](architecture/0009-windows-linux-platform-scope.md) removes Mac from
 the active product and CI scope, retiring 02c and removing the six Mac CPU jobs.
-The current workflow has nine jobs, described below. Local 02a/02b/02d checks do not prove a
-new hosted run. Windows relocation on a development host is not clean-machine
+The current workflow has nine jobs, described below. At `39110d4`,
+[run 39092472102](https://github.com/markdawes08/shark-engine/actions/runs/39092472102)
+passed all nine jobs and 156/156 CTests; the
+[02d audit](coverage/evidence/02d-hosted-ci.json) preserves artifact digests,
+toolchains, boundary results and protection readback. This verifies the platform
+scope amendment, not the later uncommitted Linux package and link changes.
+Windows relocation on a development host is not clean-machine
 or full GPU-matrix evidence. The CPU package rejection suite
-is registered as `shark.tooling.graphics-package`; native launcher integration and
+is registered as `shark.tooling.graphics-package`, with the Linux package and
+process-cleanup suite in `shark.tooling.graphics-package-linux`; Windows launcher integration and
 GPU soak remain opt-in. Network, database, world-handoff and
 active-load tiers remain planned.
 
@@ -51,8 +57,8 @@ The [scope amendment handoff](handoffs/windows-linux-scope-amendment.md) and
 [protection readback](coverage/evidence/windows-linux-ci-protection.json) record
 removal of only the six Mac check names. Administrator bypass and all other
 protection settings are unchanged. No approving-review or push-actor restriction
-was added. The revised workflow will run after the user's commit/push; this policy
-readback is not evidence of hosted execution of the local changes.
+was added. The revised workflow passed at `39110d4`; later local 02d implementation
+changes require a new user commit/push and hosted run.
 The historical [M01 gate evidence](coverage/evidence/M01-ci-gate.json) and
 [01 protection report](coverage/evidence/01-ci-protection.json) retain their
 original fifteen- and fourteen-check policies. Missing, skipped or cancelled required jobs

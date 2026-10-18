@@ -74,7 +74,7 @@ and [gate receipt](evidence/M01-ci-gate.json) record the historical fifteen jobs
 206/206 restored CTests, the expected thirteen injected sentinel failures,
 Docker/package closure and the then-required fifteen checks. The current Windows/Linux
 CI policy is documented in [CI](../ci.md). Current assignment is 02,
-with 02a setup, 02b executable GPU/validation fixtures and Windows 02d package work.
+with 02a setup, 02b executable GPU/validation fixtures and Windows/Linux 02d packages.
 Native Mac 02c is retired by ADR 0009; the earlier
 [deferral](../handoffs/02c-mac-deferred.md) remains a historical record.
 The [02b handoff](../handoffs/02b-graphics-cases.md) separates local evidence from
@@ -85,7 +85,13 @@ The [Windows 02d handoff](../handoffs/02d-windows-validation.md) and
 [receipt](evidence/02d-windows-local.json) record the portable package, supplemental
 NVIDIA full soak, Intel short cases and retained failures at their recorded input
 hashes. Those receipts retain their original nine-row scope. The active six-row
-Windows/Linux matrix and clean-machine qualification remain open.
+Windows/Linux matrix and clean-machine qualification remain open. The
+[final local handoff](../handoffs/02d-final-verification.md) records the current
+package/link changes, refreshed supplemental Windows evidence and isolated Ubuntu
+CPU/package checks. The [hosted audit](evidence/02d-hosted-ci.json) verifies nine
+jobs and 156 CTests at `39110d4`; it does not cover the later uncommitted changes.
+Only the current Windows PC is available, so native Linux GPU and independent
+clean graphical deployment remain untested.
 Graphics and multiplayer requirements remain NOT_RUN. See the
 [CI verification handoff](../handoffs/01-ci-verification.md) for 01's tested
 revision, run URLs and qualification limits.

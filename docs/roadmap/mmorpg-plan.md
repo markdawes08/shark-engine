@@ -61,9 +61,11 @@ implementation/local qualification; the
 [hosted follow-up](../handoffs/M01-ci-verification.md) closes its native CPU,
 headless Docker and deliberate-failure/restored-success gate. **Current assignment
 is 02; 02a setup and 02b executable cases/local validation are complete within checkpoint scope.
-02c is retired by the platform scope decision. Local Windows 02d lifecycle and
-package verification pass; the six named Windows/Linux GPU rows and real
-clean-machine launch remain open.** The
+02c is retired by the platform scope decision. 02d implements Windows/Linux probe
+packages, with supplemental Windows lifecycle and isolated Ubuntu CPU/package
+evidence in the [final local handoff](../handoffs/02d-final-verification.md).
+The six named Windows/Linux GPU rows and independent clean graphical launch
+remain open; only the current Windows PC is available.** The
 [graphics checkpoint plan](graphics-plan.md) preserves one final hardware gate.
 Earlier handoffs and the assessment above retain their historical repository/gate
 status. Graphics and multiplayer qualification remain NOT_RUN. The graphics

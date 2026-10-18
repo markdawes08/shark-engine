@@ -30,8 +30,10 @@ from scope; [ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md)
 supersedes the earlier deferral and retires checkpoint 02c. Target Windows and
 Linux clients/editor and the Linux headless Server. Do not plan, implement or
 require Mac compatibility, CI, packaging or hardware qualification.
-The [Windows 02d handoff](docs/handoffs/02d-windows-validation.md) records package
-and lifecycle work; the six named Windows/Linux GPU rows remain open. Follow the
+The [final 02d local handoff](docs/handoffs/02d-final-verification.md) records
+Windows/Linux package work, supplemental Windows lifecycle runs and isolated
+Ubuntu CPU/package checks. Only the current Windows PC is available; all six
+named GPU rows and independent clean graphical deployment remain open. Follow the
 [graphics checkpoint plan](docs/roadmap/graphics-plan.md) and
 [probe guide](docs/graphics-probe.md); no complete GPU row is qualified yet.
 Networking, persistence, simulation and streaming remain planned.
