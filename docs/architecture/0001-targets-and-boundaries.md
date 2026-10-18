@@ -103,8 +103,10 @@ system as a foundation requirement.
 and readiness transition; see the [lifecycle contract](../application-lifecycle.md)
 and [handoff](../handoffs/03b-application-lifecycle.md). Application roots explicitly
 own their resources; there is no registry, service lookup or dependency graph.
-Later subsystems extend that ownership at their integration gates. Thread/queue
-scheduling and final assignment-03 qualification remain in 03c.
+Later subsystems extend that ownership at their integration gates.
+[03c time/work](../time-and-work.md) adds monotonic timing, distinct scheduling
+profiles and bounded value completions with real producer/owner fixtures. The
+Server remains worker-free until a real subsystem requires asynchronous work.
 
 Each application root exclusively owns its services. A scene owns its entity
 registry and per-scene script/physics state; resource managers own shared immutable
@@ -121,8 +123,8 @@ cannot call Lua or touch authoritative scene storage. The audio callback consume
 preallocated bounded messages, never file I/O, blocking locks, general allocation
 or scene mutation. GPU resources retire after their last submission completes.
 The scheduling details are in [0005](0005-simulation-and-rendering.md). This also
-satisfies GLFW's main-thread initialization/window/event requirements, which
-matter particularly for Cocoa. [GLFW threading contract](https://www.glfw.org/docs/latest/intro_guide.html#thread_safety)
+satisfies GLFW's main-thread initialization/window/event requirements.
+[GLFW threading contract](https://www.glfw.org/docs/latest/intro_guide.html#thread_safety)
 
 The Server prototype starts in one process with one writer per internal world
 partition; the initial simulation writer can run on its process main thread.

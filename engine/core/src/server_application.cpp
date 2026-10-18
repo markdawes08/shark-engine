@@ -1,5 +1,9 @@
 #include <shark/server_application.hpp>
+#include <shark/time.hpp>
 
+#include <algorithm>
+#include <chrono>
+#include <csignal>
 #include <ostream>
 #include <string_view>
 #include <utility>
@@ -131,6 +135,12 @@ LifecycleReport ServerApplication::start(ServerConfig candidate) {
 }
 
 LifecycleReport ServerApplication::stop(const ServerStopReason reason) {
+    if (polling_) {
+        return {Error{ErrorCode::conflict,
+                      "Server idle loop must return before releasing its resources",
+                      {.operation = "server.shutdown.state"}},
+                {}};
+    }
     if (state_ == ServerState::stopped) {
         return {};
     }
@@ -157,6 +167,81 @@ LifecycleReport ServerApplication::stop(const ServerStopReason reason) {
                 {}};
     }
     return {};
+}
+
+Result<ServerStopReason> ServerApplication::run_idle(MonotonicClock& clock,
+                                                     const std::stop_token stop) {
+    if (state_ != ServerState::running || polling_) {
+        return Error{ErrorCode::conflict,
+                     "Server idle loop requires a running application with no active loop",
+                     {.operation = "server.timing.state"}};
+    }
+    struct PollGuard {
+        bool& flag;
+        explicit PollGuard(bool& value) noexcept : flag(value) {
+            flag = true;
+        }
+        ~PollGuard() noexcept {
+            flag = false;
+        }
+    } guard{polling_};
+
+    if (stop.stop_requested()) {
+        return ServerStopReason::requested;
+    }
+    const auto started = clock.now();
+    if (started < MonotonicTime::zero()) {
+        return Error{ErrorCode::execution_failed,
+                     "Server monotonic clock epoch must be nonnegative",
+                     {.operation = "server.timing.clock"}};
+    }
+    std::optional<MonotonicTime> deadline;
+    if (config_.run_for) {
+        const auto duration = std::chrono::duration_cast<MonotonicTime>(*config_.run_for);
+        if (started > MonotonicTime::max() - duration) {
+            return Error{ErrorCode::execution_failed,
+                         "Server deadline exceeds monotonic clock range",
+                         {.operation = "server.timing.deadline"}};
+        }
+        deadline = started + duration;
+    }
+    auto previous = started;
+    bool waited = false;
+    constexpr MonotonicTime poll_interval = std::chrono::milliseconds{20};
+    while (true) {
+        const auto signal = requested_signal();
+        if (signal == SIGINT) {
+            return ServerStopReason::interrupt;
+        }
+        if (signal == SIGTERM) {
+            return ServerStopReason::terminate;
+        }
+        if (stop.stop_requested()) {
+            return ServerStopReason::requested;
+        }
+        const auto now = clock.now();
+        if (now < previous || (waited && now == previous)) {
+            return Error{ErrorCode::execution_failed,
+                         "Server monotonic clock regressed or did not advance after a wait",
+                         {.operation = "server.timing.clock"}};
+        }
+        if (deadline && now >= *deadline) {
+            return ServerStopReason::duration_elapsed;
+        }
+        const auto delay = deadline ? std::min(poll_interval, *deadline - now) : poll_interval;
+        previous = now;
+        try {
+            const auto result = clock.wait_for(delay);
+            if (!result) {
+                return result.error();
+            }
+        } catch (...) {
+            return Error{ErrorCode::execution_failed,
+                         "Server clock wait threw an exception",
+                         {.operation = "server.timing.wait"}};
+        }
+        waited = true;
+    }
 }
 
 ServerState ServerApplication::state() const noexcept {

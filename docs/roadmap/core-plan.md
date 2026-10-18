@@ -3,7 +3,8 @@
 Assignment 02 is complete under the [current-machine scope](../architecture/0010-current-machine-scope.md).
 Assignment 03 retains one owner and one overall requirement, `REQ-03`; the
 checkpoints below provide independently reviewable implementation steps. The
-whole assignment remains NOT_RUN until all three checkpoints pass. Native
+whole assignment requires all three checkpoints to pass; that local gate is now
+complete in the [03c handoff](../handoffs/03c-time-and-work.md). Native
 Windows and the existing WSL Ubuntu CPU/headless environment provide the gates;
 hosted CI is supplemental. No GPU run is needed for changes confined to Core.
 
@@ -37,8 +38,10 @@ Assertions diagnose programmer invariants, while validation returns errors in
 both Debug and Release. Synchronous logging/entropy/filesystem calls are not
 permitted in real-time callbacks or signal handlers.
 
-**03a and 03b are complete within their checkpoint scopes.** The
-[03a handoff](../handoffs/03a-core-contracts.md) and
-[03b handoff](../handoffs/03b-application-lifecycle.md) record the delivered
-interfaces, exact local evidence and limitations. **03c is next**; do not advance
-directly to assignment 04. Full `REQ-03` remains NOT_RUN pending 03c.
+**03a, 03b and 03c are complete; full `REQ-03` is PASS under the current-machine scope.**
+The [03a handoff](../handoffs/03a-core-contracts.md),
+[03b handoff](../handoffs/03b-application-lifecycle.md) and
+[03c handoff](../handoffs/03c-time-and-work.md) record interfaces, exact evidence
+and limits. **Assignment 04 is next:** window/raw input and frame scheduling
+integration. Reuse the tested Core timing policies; window focus/pause handling,
+presentation and input integration remain 04 work, not implemented by this gate.

@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "03",
+  "current_assignment": "04",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -91,7 +91,7 @@
         "Structured errors retain stable codes, operation/request context and readable messages through later terminal, protocol and editor adapters; unavailable capabilities and validation/conflict/execution failures remain distinguishable."
       ],
       "planned_fixture": "CoreLifecycle, StartupFailureInjection, ProjectPathResolution and ConfigurationErrors unit/integration fixtures; startup and ownership failures occur before a scene can run.",
-      "verification": {"status": "NOT_RUN", "reason": "03a Core contracts and 03b explicit application ownership, partial-start rollback and reverse cleanup are implemented; local verification is recorded in docs/handoffs/03a-core-contracts.md and docs/handoffs/03b-application-lifecycle.md. The overall gate remains NOT_RUN pending 03c controllable clocks, bounded work and final qualification. See docs/roadmap/core-plan.md."}
+      "verification": {"status": "PASS", "reason": "Full assignment03 local gate passes across 03a contracts, 03b ownership/rollback and 03c controllable clocks, separate offline/server scheduling, bounded completions and callback/thread rules. Final Windows Debug/Release/ASan each25 CTests and pinned WSL GCC Debug/Clang ASan+UBSan each23 CTests pass, including prior error/configuration/identity/path and lifecycle regressions. Timing33 cases/30743 assertions and work11 cases/2635 assertions pass with seed1337 and no skips in all five configurations. Runtime-only/Server-only boundaries, Release Server closure and separate SDK-free WSL runtime smoke pass. Exact commands, hashes, scope and limits are in docs/coverage/evidence/03c-local.json and docs/handoffs/03c-time-and-work.md. No production world simulation, workers, authoring or MMO capacity is claimed. Assignment04 is next."}
     },
     {
       "id": "REQ-04",
@@ -809,6 +809,24 @@
   "implemented_surface": {
     "features": [
       {
+        "id": "core.time-policies",
+        "name": "Injectable monotonic idle clock and separate offline/server fixed-step policies",
+        "requirement_ids": ["REQ-03"],
+        "test_ids": ["shark.core.timing", "shark.server.lifecycle"],
+        "test_sources": ["tests/core_time_tests.cpp", "tests/server_timing_tests.cpp", "tests/check_server.py"],
+        "fixtures": ["engine/core/src/time.cpp", "engine/core/src/server_application.cpp", "server/main.cpp"],
+        "fixture_reason": "Controllable clocks and real callback consumers prove tick commit, debt limits, overload, cancellation, rational rates and idle deadline failures without a window. The Server integrates the clock only; its idle polls are not simulated world ticks. Window/input integration belongs to 04 and authoritative game simulation to later owners. FeatureWorld begins in 10."
+      },
+      {
+        "id": "core.bounded-completions",
+        "name": "Bounded value completion channel with backpressure and explicit producer teardown",
+        "requirement_ids": ["REQ-03"],
+        "test_ids": ["shark.core.work"],
+        "test_sources": ["tests/core_work_tests.cpp"],
+        "fixtures": ["engine/core/include/shark/completion_queue.hpp", "tests/core_work_tests.cpp"],
+        "fixture_reason": "Actual jthread producer/owner fixtures verify bounded inline values, full/closed/cancelled outcomes, blocked wakeups, contained worker exceptions and close/stop/join/drain lifetimes. The primitive is not a job framework and does not invent production workers before a subsystem needs one; scene/authority validation arrives with those owners."
+      },
+      {
         "id": "core.application-lifecycle",
         "name": "Owned Server startup, signal resources, reverse rollback and observable cleanup failures",
         "requirement_ids": ["REQ-03", "REQ-M01"],
@@ -824,7 +842,7 @@
         "test_ids": ["shark.core.contracts", "shark.unit", "shark.server.unit", "shark.server.lifecycle", "shark.runtime.cli", "shark.editor.cli"],
         "test_sources": ["tests/core_error_tests.cpp", "tests/bootstrap_tests.cpp", "tests/server_tests.cpp", "tests/check_server.py", "tests/CheckCli.cmake"],
         "fixtures": ["engine/core/src/log.cpp", "engine/core/src/server_config.cpp", "server/main.cpp", "runtime/main.cpp", "editor/main.cpp"],
-        "fixture_reason": "Core values and real bootstrap processes exercise lifetime, invalid configuration, machine-readable Release diagnostics and sink failures before scenes exist. These are not authoring commands; FeatureWorld begins in 10. Lifecycle ownership is covered separately by core.application-lifecycle; scheduling and queue qualification remain in 03c."
+        "fixture_reason": "Core values and real bootstrap processes exercise lifetime, invalid configuration, machine-readable Release diagnostics and sink failures before scenes exist. These are not authoring commands; FeatureWorld begins in 10. Lifecycle, scheduling and completion coverage is recorded by core.application-lifecycle, core.time-policies and core.bounded-completions."
       },
       {
         "id": "core.stable-identity-project-paths",

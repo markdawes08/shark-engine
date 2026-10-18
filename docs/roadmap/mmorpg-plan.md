@@ -70,11 +70,12 @@ the tested revision and run evidence. **M01's gate is complete.** The
 implementation/local qualification; the
 [hosted follow-up](../handoffs/M01-ci-verification.md) closes its native CPU,
 headless Docker and deliberate-failure/restored-success gate. **Assignment 02 is
-closed under the explicit current-machine scope amendment; assignment 03 is current.**
+closed under the explicit current-machine scope amendment; assignment 03 is complete.**
 The [Core checkpoint plan](core-plan.md) separates 03a contracts, 03b lifecycle
-and 03c scheduling/bounded work. 03a and 03b are complete; 03c is next and retains
-the full gate. The [03b handoff](../handoffs/03b-application-lifecycle.md) records
-owned Server lifecycle and local verification, without adding game services.
+and 03c scheduling/bounded work. All three pass; the
+[03c handoff](../handoffs/03c-time-and-work.md) records the full local Core gate
+without adding game services. Assignment 04 window/input integration is next,
+reusing the distinct offline and authoritative scheduling policies.
 The [final local handoff](../handoffs/02d-final-verification.md)
 preserves the Windows lifecycle and isolated Ubuntu CPU/package evidence. The
 [graphics checkpoint plan](graphics-plan.md) applies the new local gate to those

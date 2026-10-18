@@ -3,8 +3,9 @@
 These CPU-only C++20 contracts live in EngineCore and are shared by the
 bootstrap executables. [03b application lifecycle](application-lifecycle.md)
 extends these contracts with explicit ownership and failure cleanup; the
-[checkpoint plan](roadmap/core-plan.md) leaves scheduling/queues to 03c. Source project
-schemas, runtime entity handles, networking and authoring protocol remain with
+[03c timing/work guide](time-and-work.md) describes clocks, scheduling and bounded
+completion ownership. Source project schemas, runtime entity handles, networking
+and authoring protocol remain with
 their existing owners.
 
 ## Results and diagnostics

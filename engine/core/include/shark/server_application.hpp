@@ -8,8 +8,11 @@
 #include <iosfwd>
 #include <memory>
 #include <optional>
+#include <stop_token>
 
 namespace shark {
+
+class MonotonicClock;
 
 enum class ServerState { stopped, starting, running, stopping, faulted };
 enum class ServerStopReason { duration_elapsed, interrupt, terminate, requested };
@@ -47,6 +50,11 @@ class ServerApplication final {
 
     [[nodiscard]] LifecycleReport start(ServerConfig candidate);
     [[nodiscard]] LifecycleReport stop(ServerStopReason reason = ServerStopReason::requested);
+    // Runs only the bootstrap idle deadline; it does not execute simulation ticks.
+    // Expected wait/clock failures leave ownership running so the caller can stop
+    // explicitly and retain cleanup diagnostics. The clock is borrowed for this call.
+    [[nodiscard]] Result<ServerStopReason> run_idle(MonotonicClock& clock,
+                                                    std::stop_token stop = {});
     [[nodiscard]] ServerState state() const noexcept;
     [[nodiscard]] int requested_signal() const noexcept;
     // Last validated candidate; only running state authorizes using its duration.
@@ -57,6 +65,7 @@ class ServerApplication final {
     ShutdownSignals signals_;
     ServerConfig config_;
     ServerState state_{ServerState::stopped};
+    bool polling_{false};
 };
 
 } // namespace shark

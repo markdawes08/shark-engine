@@ -29,8 +29,9 @@ Failed cleanup suppresses that success line and leaves the application faulted.
 A destructor performs bounded, silent cleanup for an active object. Call explicit
 stop to obtain diagnostic results; destructors do not log, write output or throw.
 There is no worker, network connection, window, GPU or audio lifetime to join or
-drain yet. The existing idle deadline/poll algorithm is unchanged; controllable
-clocks, bounded asynchronous work and deadlines for future producers belong to 03c.
+drain yet. [03c timing/work](time-and-work.md) adds an injectable idle clock and
+bounded completion primitive. The deadline/poll behavior is preserved; future
+subsystems must own their producer deadlines and recovery policy.
 
 ## State and error behavior
 

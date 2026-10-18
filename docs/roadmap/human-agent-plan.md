@@ -112,10 +112,10 @@ discovery, human/agent parity, graphics or live MMO operations. The separate
 checks for this planning change. The full authoring gate remains NOT_RUN.
 
 M01's hosted qualification is complete. Assignment 02's recorded local evidence
-now closes its gate under ADR 0010; assignment 03 is current, split into
-[03a contracts, 03b lifecycle and 03c scheduling](core-plan.md). 03a and 03b are
-complete; [03b verification](../handoffs/03b-application-lifecycle.md) covers
-application ownership and rollback. 03c scheduling and the full gate are next. The
+now closes its gate under ADR 0010; assignment 03 is complete across
+[03a contracts, 03b lifecycle and 03c scheduling](core-plan.md).
+[03c verification](../handoffs/03c-time-and-work.md) closes the local Core gate.
+Assignment 04 window/input integration is next and reuses those timing contracts. The
 [final local handoff](../handoffs/02d-final-verification.md) preserves full local
 Windows lifecycle runs, bounded portable terminal launchers and isolated Ubuntu
 CPU/package checks. Former external GPU and independent clean-machine gates are

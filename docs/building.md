@@ -8,7 +8,9 @@ bootstrap information; Server has validated startup and an idle lifecycle.
 structured stderr diagnostics, UUIDs and project paths. `shark.core.contracts`
 runs their CPU fixtures with seed 1337. The [03b lifecycle](application-lifecycle.md)
 uses `shark.core.lifecycle`, also with seed 1337, for ownership and failure/cleanup
-fixtures. Scheduling and bounded work remain in 03c.
+fixtures. [03c timing/work](time-and-work.md) adds `shark.core.timing` and
+`shark.core.work`, each with seed 1337 and a 20-second CTest timeout. The latter
+uses real bounded producer/consumer threads; it does not start production workers.
 02a/02b add a separate opt-in [graphics probe](graphics-probe.md) with locked
 dependencies, terminal diagnostics, analytic GPU cases and offline validation tools.
 02d adds matching `graphics-windows-release` and `graphics-linux-release`

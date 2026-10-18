@@ -110,6 +110,12 @@ in 25–29; 00 establishes no visual baseline.
 
 ## Simulation, network and rendering clocks
 
+03c implements the reusable scheduler and bounded completion primitives below;
+see the [time/work contract](../time-and-work.md) and
+[handoff](../handoffs/03c-time-and-work.md). These have real CPU callback/thread
+fixtures; world simulation, replication and persistence remain planned. The
+Server bootstrap uses only the injectable idle clock until those services land.
+
 The planned authoritative server uses a configured fixed timestep, provisionally
 20 Hz (`1/20` second), with integer tick indices and a monotonic scheduling clock.
 This is an initial tuning target, not a chosen combat model, capacity claim or
@@ -224,4 +230,6 @@ the reusable headless scheduler and ownership primitives. M02 owns session and
 message boundaries, M03 durable lifecycle, M04 authority/prediction, M05 seamless
 partition/streaming/navigation behavior, M06 animated actors, M07 the RPG slice,
 M08 live operations, M09 MMO acceptance and M10 measured load qualification.
-All server behavior above remains planned until its executable gates pass.
+The 03c clock/scheduler/queue primitives have their own executable gates. Remaining
+server gameplay, network, persistence and partition behavior stays planned until
+its owning gates pass.

@@ -2,14 +2,11 @@
 #include <shark/log.hpp>
 #include <shark/server_application.hpp>
 #include <shark/server_config.hpp>
+#include <shark/time.hpp>
 
-#include <algorithm>
 #include <array>
-#include <chrono>
-#include <csignal>
 #include <iostream>
 #include <string_view>
-#include <thread>
 
 namespace {
 
@@ -52,25 +49,18 @@ int run_server(shark::Logger& logger, const shark::ServerConfig& config) {
         return report_lifecycle_failure(logger, startup);
     }
 
-    using Clock = std::chrono::steady_clock;
-    const auto started = Clock::now();
-    const auto duration = application.config().run_for;
-    const auto deadline = duration ? started + *duration : Clock::time_point::max();
-    constexpr auto poll_interval = std::chrono::milliseconds{20};
-    while (application.requested_signal() == 0) {
-        const auto now = Clock::now();
-        if (now >= deadline) {
-            break;
-        }
-        std::this_thread::sleep_until(std::min(now + poll_interval, deadline));
+    shark::SteadyMonotonicClock clock;
+    const auto idle = application.run_idle(clock);
+    const auto shutdown =
+        application.stop(idle ? idle.value() : shark::ServerStopReason::requested);
+    int exit_code = 0;
+    if (!idle) {
+        exit_code = report_failure(logger, idle.error());
     }
-
-    const auto signal = application.requested_signal();
-    const auto reason = signal == SIGINT    ? shark::ServerStopReason::interrupt
-                        : signal == SIGTERM ? shark::ServerStopReason::terminate
-                                            : shark::ServerStopReason::duration_elapsed;
-    const auto shutdown = application.stop(reason);
-    return shutdown ? 0 : report_lifecycle_failure(logger, shutdown);
+    if (!shutdown) {
+        exit_code = report_lifecycle_failure(logger, shutdown);
+    }
+    return exit_code;
 }
 
 } // namespace

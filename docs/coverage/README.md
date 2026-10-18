@@ -9,14 +9,17 @@ which assignment owns the gate.
 Assignment 03 is split into [03a/03b/03c](../roadmap/core-plan.md). The implemented
 Core diagnostics/configuration and identity/path features map to real unit and
 process fixtures. The [03a handoff](../handoffs/03a-core-contracts.md) records their
-local results. Full `REQ-03` remains NOT_RUN until clocks, bounded work and final
-qualification pass in 03c.
+local results. The [03c handoff](../handoffs/03c-time-and-work.md) closes full
+`REQ-03` with final local Windows/WSL regressions, separate clock policies,
+bounded completions and callback/thread rules.
 
 The 03b [application lifecycle](../application-lifecycle.md) feature adds
 `shark.core.lifecycle` and extends the real Server process path. Its
 [handoff](../handoffs/03b-application-lifecycle.md) records native/injected signal
 ownership, partial-start rollback, repeated cycles and cleanup-failure evidence.
-The final 03c timing/work gate remains separate.
+The [03c timing/work](../time-and-work.md) features map to `shark.core.timing`
+and `shark.core.work`, using controlled clocks and real thread fixtures. No world
+simulation or production worker is inferred from those foundation tests.
 
 The user selected a seamless open-world MMORPG. The
 [versioned execution plan](../roadmap/mmorpg-plan.md) and
@@ -48,7 +51,7 @@ as additive schema-3 fields. REQ-02 is PASS for the amended local gate, with
 explicit scope and SHA-256-pinned references to the unchanged 02d receipts.
 The validator verifies those references and retained bytes; it does not rerun
 graphics or interpret an old aggregate NOT_RUN as a universal PASS.
-`current_assignment: 03` identifies the active Core increment. All later
+`current_assignment: 04` identifies the next window/input increment. All later
 implementation requirements remain NOT_RUN.
 
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`

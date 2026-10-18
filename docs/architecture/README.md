@@ -24,7 +24,8 @@ are no longer requirements. Assignment 03 is split into the
 [Core checkpoints](../roadmap/core-plan.md); the
 [03a handoff](../handoffs/03a-core-contracts.md) and
 [03b handoff](../handoffs/03b-application-lifecycle.md) record completed contracts
-and lifecycle verification. 03c scheduling and final qualification remain.
+and lifecycle verification. The [03c handoff](../handoffs/03c-time-and-work.md)
+closes scheduling, bounded work and the full Core gate. Assignment 04 is next.
 
 | Record | Decision |
 | --- | --- |
