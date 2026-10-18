@@ -267,6 +267,63 @@
       ],
       "verification": "Official latest release and exact tag commit reviewed 2026-10-18. Official immutable commit archive downloaded and SHA-256 computed; complete copying.txt and upstream CMake reviewed. CPU and sanitizer qualification is recorded separately in the 07b handoff.",
       "notes": "MIT option selected from the dual Happy Bunny/MIT offer; preserve the entire copying.txt. FetchContent populates only the locked archive; SharkMath supplies a SYSTEM C++20 header interface and the locked compile definitions. Upstream CMake is not executed, so library/tests/install/optional SIMD/global compiler options are not evaluated. No patches, installed-package fallback, transitive downloads or compiler ISA flags. Default right-handed, packed math types; the central public wrapper rejects conflicting configuration. Disconnected builds require verified SHARK_GLM_ARCHIVE or the prior locked archive cache."
+    },
+    "MbedTLS": {
+      "version": "4.1.1",
+      "upstream": "https://github.com/Mbed-TLS/mbedtls",
+      "release": "https://github.com/Mbed-TLS/mbedtls/releases/tag/mbedtls-4.1.1",
+      "commit": "0a8fda272a5a0abef3b47c91bed37185d5a726b1",
+      "url": "https://github.com/Mbed-TLS/mbedtls/releases/download/mbedtls-4.1.1/mbedtls-4.1.1.tar.bz2",
+      "sha256": "3359a349e23db3d5536fcee032ae7b2ecbfc08972fab643089b5cbf2a375c98c",
+      "archive_prefix": "mbedtls-4.1.1",
+      "license": "Apache-2.0",
+      "license_files": [
+        "LICENSE",
+        "framework/LICENSE",
+        "tf-psa-crypto/LICENSE",
+        "tf-psa-crypto/framework/LICENSE",
+        "tf-psa-crypto/drivers/everest/library/Hacl_Curve25519.c",
+        "tf-psa-crypto/drivers/everest/library/legacy/Hacl_Curve25519.c",
+        "tf-psa-crypto/drivers/everest/include/tf-psa-crypto/private/everest/kremlib.h",
+        "tf-psa-crypto/drivers/pqcp/mldsa-native/LICENSE"
+      ],
+      "owner_target": "EngineCore private TLS transport; no public Mbed TLS or PSA types",
+      "assignment": "M02",
+      "patches": [],
+      "transitive_dependencies": [],
+      "vendored_inputs": [
+        {
+          "path": "framework",
+          "commit": "dde0c4a0e448a0552f18817dcea633bb851fd288",
+          "license": "Apache-2.0",
+          "pin": "Bundled in the verified official release archive"
+        },
+        {
+          "path": "tf-psa-crypto",
+          "commit": "a0632be94d883daa0295ac1eabf70359ad94f91b",
+          "version": "1.1.1 (bundled CMake metadata)",
+          "license": "Apache-2.0",
+          "pin": "Bundled in the verified official release archive; generated files and nested framework included"
+        }
+      ],
+      "options": {
+        "ENABLE_PROGRAMS": "OFF",
+        "ENABLE_TESTING": "OFF",
+        "GEN_FILES": "OFF",
+        "MBEDTLS_FATAL_WARNINGS": "OFF",
+        "TF_PSA_CRYPTO_FATAL_WARNINGS": "OFF",
+        "DISABLE_PACKAGE_CONFIG_AND_INSTALL": "ON",
+        "USE_STATIC_MBEDTLS_LIBRARY": "ON",
+        "USE_SHARED_MBEDTLS_LIBRARY": "OFF",
+        "USE_STATIC_TF_PSA_CRYPTO_LIBRARY": "ON",
+        "USE_SHARED_TF_PSA_CRYPTO_LIBRARY": "OFF",
+        "TF_PSA_CRYPTO_TEST_DRIVER": "OFF",
+        "LINK_WITH_PTHREAD": "OFF",
+        "LINK_WITH_TRUSTED_STORAGE": "OFF",
+        "MSVC_STATIC_RUNTIME": "OFF"
+      },
+      "verification": "Official release/API digest and tag commit reviewed 2026-10-18. LTS maintenance ends March2029. Official full release archive includes generated files and pinned submodules; GitHub automatic source archives are not equivalent.",
+      "notes": "Apache-2.0 option selected from Mbed TLS/TF-PSA dual Apache-2.0 OR GPL-2.0-or-later offer; retain complete license text and embedded permissive notices. Exact regular files are verified before configure and by source closure; 147 symlinks solely under unused PQC test/example directories are intentionally not materialized. No upstream source changes, test/example targets, transitive downloads, package fallback, shared crypto libraries or public TLS types. Config uses fixed16384-byte record buffers; runtime restricts TLS1.3, authenticated server certificates, P256 and AES128GCM/SHA256. No tickets/resumption/early data; account auth belongs to M02b. TCP head-of-line behavior is an explicit provisional local foundation limit."
     }
   },
   "ci_environments": {

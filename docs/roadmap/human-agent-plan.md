@@ -41,6 +41,13 @@ exist. Existing bootstrap consumers and historical CI receipts remain unchanged.
 
 ## Workflow to deliver
 
+M02a provides the [bounded network foundation](../network-transport.md) through
+engine-owned CPU C++ interfaces and noninteractive JSON test fixtures. It does not
+reuse source-authoring RPC as a player protocol. Both human contributors and
+terminal agents can drive the same diagnostic tests without an editor, device,
+provider account or model SDK. Player sessions/replication remain M02b-M02e;
+authoring adapters retain their existing assignment owners.
+
 A terminal agent discovers capabilities and schemas, opens or creates a project,
 queries a bounded state snapshot, validates and commits revision-checked edits,
 waits for import/build jobs, runs tests, reads diagnostics/artifacts and saves or
@@ -155,7 +162,9 @@ inspection](../scene-inspection.md), with its gate recorded in the
 CPU CTests and protected dependency/package checks in the
 [07c receipt](../coverage/evidence/07c-schema-inspection.json).
 These are typed CPU C++ APIs; transactions, terminal commands and editor adapters
-retain their owners in 09, 15 and 16. M02 is next; the current assignment remains 07.
+retain their owners in 09, 15 and 16. The current assignment is M02. Its
+[transport foundation](../handoffs/M02a-transport-wire.md) passes 404 CPU CTests and
+protected dependency/package qualification; M02b authentication and owned sessions is next.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and

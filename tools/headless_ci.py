@@ -1,4 +1,4 @@
-"""Build and qualify M01 Server/Core inside the locked Ubuntu 24.04 environment.
+"""Build and qualify Server/Core inside the locked Ubuntu 24.04 environment.
 
 Local Docker entry: bash tools/ci/headless/run.sh [out/ci/headless]
 An isolated chroot prepared by tools/ci/headless/setup.sh can run this directly.
@@ -145,7 +145,7 @@ def main() -> int:
                "started_utc": datetime.now(timezone.utc).isoformat(),
                "injected_failure": args.inject_test_failure,
                "input_lock_sha256": hashlib.sha256(INPUTS.read_bytes()).hexdigest(),
-               "limits": "Headless lifecycle/configuration only; no graphics, networking, simulation or MMO capacity qualification"}
+               "limits": "CPU/headless and loopback TLS diagnostics only; no graphics, player authentication, gameplay, replication or MMO capacity qualification"}
     code = 1
     try:
         # The read-only source bind may belong to another UID. Trust only this
@@ -163,6 +163,7 @@ def main() -> int:
             return 1
         entt_archive = prepare_core_dependency(ROOT, build_root / "dependency-cache", "EnTT")
         glm_archive = prepare_core_dependency(ROOT, build_root / "dependency-cache", "GLM")
+        mbedtls_archive = prepare_core_dependency(ROOT, build_root / "dependency-cache", "MbedTLS")
         for preset in PRESETS:
             build = build_root / preset
             evidence = output / preset
@@ -174,14 +175,17 @@ def main() -> int:
             for name in ("codemodel-v2", "cache-v2"):
                 (query / name).touch()
             compiler = "clang++-18" if preset == "server-asan-ubsan" else "g++-13"
+            c_compiler = "clang-18" if preset == "server-asan-ubsan" else "gcc-13"
             os.environ["CXX"] = compiler
-            os.environ["CC"] = "clang-18" if preset == "server-asan-ubsan" else "gcc-13"
+            os.environ["CC"] = c_compiler
             commands = [
                 ("configure", ["cmake", "--preset", preset, "-B", str(build),
                                f"-DCMAKE_CXX_COMPILER={compiler}",
+                               f"-DCMAKE_C_COMPILER={c_compiler}",
                                f"-DPython3_EXECUTABLE={sys.executable}",
                                f"-DSHARK_ENTT_ARCHIVE={entt_archive}",
                                f"-DSHARK_GLM_ARCHIVE={glm_archive}",
+                               f"-DSHARK_MBEDTLS_ARCHIVE={mbedtls_archive}",
                                "-DSHARK_INJECT_TEST_FAILURE=" + (
                                    "ON" if args.inject_test_failure and preset != "server-only" else "OFF")]),
                 ("build", ["cmake", "--build", str(build), "--parallel", str(args.jobs)]),

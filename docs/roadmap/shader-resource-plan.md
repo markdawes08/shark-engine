@@ -7,7 +7,8 @@ The [06c handoff](../handoffs/06c-window-distribution.md) closes window and dist
 [handoff](../handoffs/06a-offline-shaders.md) records its scoped verification.
 **06b is complete for owned resources and offscreen rendering.** See the
 [resource contract](../gpu-resources.md) and [06b handoff](../handoffs/06b-gpu-resources.md)
-for both-GPU and CPU verification. **06c is complete; assignment 07 is next.**
+for both-GPU and CPU verification. **06c and the subsequent assignment 07 are complete.**
+The [network plan](network-plan.md) tracks the current assignment M02; M02b is next.
 
 ## Sequencing decision
 

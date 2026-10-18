@@ -47,6 +47,12 @@ function(shark_generate_boundary_check)
         string(APPEND shark_graph
             "set(SHARK_DOMAIN_${shark_target} [==[${shark_domain}]==])\n"
             "set(SHARK_SOURCE_DIR_${shark_target} [==[${shark_source_dir}]==])\n")
+        if(shark_target STREQUAL "SharkTLS_tfpsacrypto")
+            foreach(shark_object IN ITEMS builtin everest p256-m pqcp extras platform utilities)
+                string(APPEND shark_graph
+                    "list(APPEND SHARK_TLS_REVIEWED_OBJECTS [==[$<TARGET_OBJECTS:SharkTLS_${shark_object}>]==])\n")
+            endforeach()
+        endif()
         foreach(shark_property IN ITEMS LINK_LIBRARIES INTERFACE_LINK_LIBRARIES LINK_OPTIONS INTERFACE_LINK_OPTIONS
                 LINK_DIRECTORIES INTERFACE_LINK_DIRECTORIES
                 MANUALLY_ADDED_DEPENDENCIES SOURCES INTERFACE_SOURCES

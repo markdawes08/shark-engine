@@ -23,9 +23,10 @@ class GraphicsDependencyTests(unittest.TestCase):
                 # A missed early rejection must fail offline, never fetch on a test host.
                 "-DFETCHCONTENT_FULLY_DISCONNECTED=ON",
                 f"-DSHARK_ENTT_ARCHIVE={OPTIONS.entt_archive}",
-                f"-DSHARK_GLM_ARCHIVE={OPTIONS.glm_archive}", *arguments,
+                f"-DSHARK_GLM_ARCHIVE={OPTIONS.glm_archive}",
+                       f"-DSHARK_MBEDTLS_ARCHIVE={OPTIONS.mbedtls_archive}", *arguments,
             ]
-            result = subprocess.run(command, text=True, capture_output=True, timeout=30)
+            result = subprocess.run(command, text=True, capture_output=True, timeout=120)
             output = result.stdout + result.stderr
             self.assertNotEqual(result.returncode, 0, output)
             self.assertIn(diagnostic, " ".join(output.split()))
@@ -88,7 +89,7 @@ class GraphicsDependencyTests(unittest.TestCase):
              if os.name == "nt" else "SHARK_NATIVE_WINDOW is supported only on Windows"),
         )
 
-    def test_device_free_configurations_need_no_c_compiler_or_client_dependencies(self):
+    def test_device_free_configurations_need_no_client_dependencies(self):
         for client in (False, True):
             with self.subTest(client=client), tempfile.TemporaryDirectory(
                 prefix="shark-device-free-dependencies-"
@@ -98,21 +99,22 @@ class GraphicsDependencyTests(unittest.TestCase):
                     OPTIONS.cmake, "-S", str(ROOT), "-B", str(build), "-G", "Ninja",
                     f"-DCMAKE_MAKE_PROGRAM={OPTIONS.ninja}",
                     f"-DCMAKE_CXX_COMPILER={OPTIONS.compiler}",
-                    f"-DCMAKE_C_COMPILER={Path(temporary) / 'missing-c-compiler'}",
+                    f"-DCMAKE_C_COMPILER={OPTIONS.c_compiler}",
                     f"-DSHARK_BUILD_CLIENT={'ON' if client else 'OFF'}",
                     "-DSHARK_BUILD_EDITOR=OFF", "-DSHARK_BUILD_TESTS=OFF",
                     "-DSHARK_BUILD_GRAPHICS_PROBE=OFF",
                     "-DFETCHCONTENT_FULLY_DISCONNECTED=ON",
                     f"-DSHARK_ENTT_ARCHIVE={OPTIONS.entt_archive}",
                     f"-DSHARK_GLM_ARCHIVE={OPTIONS.glm_archive}",
+                       f"-DSHARK_MBEDTLS_ARCHIVE={OPTIONS.mbedtls_archive}",
                 ]
                 if client:
                     command.append("-DSHARK_NATIVE_WINDOW=OFF")
-                result = subprocess.run(command, text=True, capture_output=True, timeout=30)
+                result = subprocess.run(command, text=True, capture_output=True, timeout=120)
                 output = result.stdout + result.stderr
                 self.assertEqual(result.returncode, 0, output)
                 self.assertEqual({path.name for path in (build / "_deps").iterdir()},
-                                 {"entt-src", "entt-build", "entt-subbuild", "glm-src", "glm-build", "glm-subbuild"})
+                                 {"entt-src", "entt-build", "entt-subbuild", "glm-src", "glm-build", "glm-subbuild", "mbedtls-src", "mbedtls-build"})
                 cache = (build / "CMakeCache.txt").read_text(encoding="utf-8")
                 self.assertIn("SHARK_NATIVE_WINDOW:BOOL=OFF", cache)
                 self.assertIn("SHARK_NATIVE_GRAPHICS:BOOL=OFF", cache)
@@ -123,6 +125,8 @@ if __name__ == "__main__":
     parser.add_argument("--cmake", required=True)
     parser.add_argument("--ninja", required=True)
     parser.add_argument("--compiler", required=True)
+    parser.add_argument("--c-compiler", required=True)
+    parser.add_argument("--mbedtls-archive", type=Path, required=True)
     parser.add_argument("--entt-archive", type=Path, required=True)
     parser.add_argument("--glm-archive", type=Path, required=True)
     OPTIONS, remaining = parser.parse_known_args()

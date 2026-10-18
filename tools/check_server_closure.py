@@ -18,7 +18,7 @@ import shlex
 import shutil
 import sys
 
-from core_dependencies import DEPENDENCIES, verify_build as verify_core_build
+from core_dependencies import DEPENDENCIES, MBEDTLS_LICENSE_FILES, verify_build as verify_core_build
 from process_runner import run_process
 
 
@@ -26,7 +26,18 @@ class ClosureError(ValueError):
     pass
 
 
-TARGETS = {"EngineCore", "Server", "shark_check_server_boundary"}
+TLS_STATIC = {"SharkTLS_mbedtls", "SharkTLS_mbedx509", "SharkTLS_tfpsacrypto"}
+TLS_OBJECT = {"SharkTLS_" + name for name in ("builtin", "everest", "p256-m", "pqcp", "extras", "platform", "utilities")}
+TLS_UTILITIES = {"SharkTLS_lib", "SharkTLS_mbedtls-apidoc", "SharkTLS_tfpsacrypto-apidoc"}
+TLS_DIRECTORIES = {"", "framework", "include", "library", "pkgconfig", "tf-psa-crypto",
+                   "tf-psa-crypto/framework", "tf-psa-crypto/include", "tf-psa-crypto/drivers",
+                   "tf-psa-crypto/drivers/everest", "tf-psa-crypto/drivers/p256-m",
+                   "tf-psa-crypto/drivers/builtin", "tf-psa-crypto/drivers/pqcp",
+                   "tf-psa-crypto/extras", "tf-psa-crypto/platform", "tf-psa-crypto/utilities",
+                   "tf-psa-crypto/core", "tf-psa-crypto/pkgconfig"}
+TARGETS = {"EngineCore", "Server", "shark_check_server_boundary"} | TLS_STATIC | TLS_OBJECT | TLS_UTILITIES
+PACKAGE_FILES = {"bin/Server", "licenses/EnTT/LICENSE", "licenses/GLM/copying.txt"} | {
+    "licenses/MbedTLS/" + item for item in MBEDTLS_LICENSE_FILES}
 FORBIDDEN = re.compile(
     r"(?:^|[/\\\s;:=_-])(?:engineclient|engine_tools|editor|runtime|catch2|"
     r"glfw|vulkan|nvrhi|imgui|imguizmo|cgltf|stb|dr_wav|miniaudio|openal|"
@@ -72,6 +83,8 @@ def plain_path(path: Path, root: Path) -> Path:
 
 
 def source_path(path: Path, source: Path, build: Path, *, generated=False) -> Path:
+    if path.is_absolute() and path.is_relative_to(build):
+        generated = True
     base = build if generated else source
     path = plain_path(path if path.is_absolute() else base / path, base)
     relative = path.relative_to(base).as_posix()
@@ -80,7 +93,12 @@ def source_path(path: Path, source: Path, build: Path, *, generated=False) -> Pa
         allowed += ("engine/include/",)
     dependency_header = (generated and relative.startswith(("_deps/entt-src/src/entt/", "_deps/glm-src/glm/"))
                          and path.suffix in (".h", ".hpp", ".inl"))
-    require(relative.startswith(allowed) or dependency_header, f"Non-Core source/include path: {path}")
+    network_input = (generated and relative.startswith("_deps/mbedtls-src/")
+                     and path.suffix in (".h", ".c")
+                     and not set(Path(relative).parts) & {"framework", "tests", "test", "examples", "programs"})
+    network_config = not generated and relative == "cmake/mbedtls_user_config.h"
+    require(relative.startswith(allowed) or dependency_header or network_input or network_config,
+            f"Non-Core source/include path: {path}")
     require(not FORBIDDEN.search(relative), f"Forbidden source/include path: {path}")
     return path
 
@@ -88,7 +106,14 @@ def source_path(path: Path, source: Path, build: Path, *, generated=False) -> Pa
 def include_path(path: Path, source: Path, build: Path) -> Path:
     path = Path(os.path.abspath(path))
     # Directory roots themselves are valid include paths.
-    for base, allowed in ((build, ("engine/core", "server", "_deps/entt-src/src", "_deps/glm-src")),
+    for base, allowed in ((build, ("engine/core", "server", "_deps/entt-src/src", "_deps/glm-src",
+                                  "_deps/mbedtls-src/include", "_deps/mbedtls-src/library",
+                                  "_deps/mbedtls-src/tf-psa-crypto/include", "_deps/mbedtls-src/tf-psa-crypto/core",
+                                  "_deps/mbedtls-src/tf-psa-crypto/extras", "_deps/mbedtls-src/tf-psa-crypto/platform",
+                                  "_deps/mbedtls-src/tf-psa-crypto/utilities",
+                                  "_deps/mbedtls-src/tf-psa-crypto/dispatch", "_deps/mbedtls-src/tf-psa-crypto/drivers",
+                                  "_deps/mbedtls-build/include", "_deps/mbedtls-build/library", "_deps/mbedtls-build/tf-psa-crypto/include",
+                                  "_deps/mbedtls-build/tf-psa-crypto/core")),
                           (source, ("engine/include", "engine/core/include", "server"))):
         if path.is_relative_to(base):
             path = plain_path(path, base)
@@ -96,6 +121,8 @@ def include_path(path: Path, source: Path, build: Path) -> Path:
             require(any(relative == item or relative.startswith(item + "/") for item in allowed),
                     f"Non-Core include directory: {path}")
             require(not FORBIDDEN.search(relative), f"Forbidden include directory: {path}")
+            require(not set(Path(relative).parts) & {"tests", "test", "examples", "programs"},
+                    f"Unbuilt network source include: {path}")
             return path
     raise ClosureError(f"External include directory: {path}")
 
@@ -131,32 +158,46 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
     require(len(names) == len(set(names)) and set(names) == TARGETS,
             f"Server-only target closure changed: {names}")
     targets = [read_json(plain_path(reply / item["jsonFile"], reply)) for item in references]
+    network_objects = {Path(os.path.abspath(build / artifact["path"]))
+               for item in targets if item["name"] in TLS_OBJECT for artifact in item.get("artifacts", [])}
     target_ids = {item["id"] for item in targets}
     require(len(target_ids) == len(targets), "Duplicate target IDs")
     for item in targets:
         require(item["name"] in TARGETS, "File-api target identity mismatch")
+        if item["name"] in TLS_STATIC | TLS_OBJECT | TLS_UTILITIES:
+            expected_type = "STATIC_LIBRARY" if item["name"] in TLS_STATIC else (
+                "OBJECT_LIBRARY" if item["name"] in TLS_OBJECT else "UTILITY")
+            require(item.get("type") == expected_type, "Unexpected reviewed TLS target type")
         for dependency in item.get("dependencies", []):
             require(dependency["id"] in target_ids, f"External build dependency: {dependency}")
         for group in item.get("compileGroups", []):
-            require(group.get("language") == "CXX", "Unexpected Core source language")
+            language = "C" if item["name"] in TLS_STATIC | TLS_OBJECT else "CXX"
+            require(group.get("language") == language, "Unexpected Core source language")
             for include in group.get("includes", []):
                 include_path(Path(include["path"]), source, build)
         for entry in item.get("sources", []):
             path = Path(entry["path"])
-            if item["name"] == "shark_check_server_boundary":
+            if item["name"] in TLS_UTILITIES | {"shark_check_server_boundary"}:
                 # CMake may expose the utility's generated .rule pseudo-source.
                 full = path if path.is_absolute() else source / path
                 relative = os.path.relpath(full, build).replace("\\", "/")
-                require(entry.get("isGenerated") and relative in (
-                    "CMakeFiles/shark_check_server_boundary", "CMakeFiles/shark_check_server_boundary.rule"),
+                utility = item.get("paths", {}).get("build", ".") + "/CMakeFiles/" + item["name"]
+                utility = os.path.normpath(utility).replace("\\", "/")
+                require(entry.get("isGenerated") and relative in (utility, utility + ".rule"),
                     f"Unexpected boundary utility input: {entry}")
+            elif item["name"] == "SharkTLS_tfpsacrypto" and entry.get("isGenerated") and path.suffix == ".o":
+                full = Path(os.path.abspath(path if path.is_absolute() else source / path))
+                require(full in network_objects, f"Unreviewed network object source: {full}")
             else:
-                suffixes = (".cpp", ".cc", ".cxx") if "compileGroupIndex" in entry else (".h", ".hh", ".hpp", ".hxx", ".inl")
+                suffixes = ((".c",) if item["name"] in TLS_STATIC | TLS_OBJECT else (".cpp", ".cc", ".cxx")) if "compileGroupIndex" in entry else (".h", ".hh", ".hpp", ".hxx", ".inl")
                 require(path.suffix in suffixes, f"Unreviewed prebuilt/noncompiled source input: {path}")
                 codemodel_source(entry, source, build)
     for directory in configuration.get("directories", []):
         relative = directory["source"].replace("\\", "/")
-        require(relative in (".", "engine", "engine/core", "server"),
+        full = Path(os.path.abspath(source / relative))
+        network = build / "_deps/mbedtls-src"
+        network_directory = full.is_relative_to(network) and full.relative_to(network).as_posix().replace(".", "", 1) in TLS_DIRECTORIES
+        require(relative in (".", "engine", "engine/core", "server") or network_directory,
                 f"Non-Core configured directory: {relative}")
     cache_items = objects["cache"].get("entries", [])
     cache = {entry["name"]: entry["value"] for entry in cache_items}
@@ -164,6 +205,9 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
     expected = {"SHARK_BUILD_CLIENT": "OFF", "SHARK_BUILD_EDITOR": "OFF", "SHARK_BUILD_TESTS": "OFF",
                 "SHARK_BUILD_GRAPHICS_PROBE": "OFF",
                 "SHARK_BUILD_SERVER": "ON", "CMAKE_EXPORT_COMPILE_COMMANDS": "ON", "CMAKE_GENERATOR": "Ninja"}
+    # Upstream's CRT option name contains "runtime"; review its exact locked
+    # disabled value rather than treating it as a presentation discovery.
+    expected.update(read_json(source / "dependencies.lock.json")["dependencies"]["MbedTLS"].get("options", {}))
     for name, value in expected.items():
         require(cache.get(name) == value, f"Expected {name}={value}, found {cache.get(name)!r}")
     require(cache.get("SHARK_SANITIZER") in ("none", "address", "address-undefined"), "Unknown sanitizer configuration")
@@ -174,7 +218,7 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
         if name.endswith(("_SOURCE_DIR", "_BINARY_DIR", "_DIR", "_LIBRARY", "_INCLUDE_DIR")):
             require(not FORBIDDEN.search(value), f"Forbidden discovered dependency cache input: {name}={value}")
     archives = {name: Path(cache[spec["cache"]]) for name, spec in DEPENDENCIES.items() if cache.get(spec["cache"])}
-    require(set(archives) == set(DEPENDENCIES), "Missing locked EnTT/GLM archive evidence")
+    require(set(archives) == set(DEPENDENCIES), "Missing locked Core archive evidence")
     try:
         verify_core_build(source, build, archives)
     except ValueError as error:
@@ -191,7 +235,7 @@ def compile_inventory(build: Path, source: Path, targets: list[dict]) -> list[di
     for entry in commands:
         directory = plain_path(Path(entry["directory"]), build)
         path = source_path(Path(entry["file"]), source, build)
-        require(path.suffix in (".cpp", ".cc", ".cxx"), f"Unexpected compile input: {path}")
+        require(path.suffix in (".cpp", ".cc", ".cxx", ".c"), f"Unexpected compile input: {path}")
         args = entry.get("arguments") or shlex.split(entry["command"])
         require(args and not any(arg.startswith("@") for arg in args), "Opaque compiler response file")
         require(not FORBIDDEN.search(" ".join(args)), "Forbidden compiler dependency")
@@ -225,6 +269,15 @@ def compile_inventory(build: Path, source: Path, targets: list[dict]) -> list[di
     actual = [item["path"] for item in compiled]
     require(len(actual) == len(set(actual)) and set(actual) == expected and len(actual) >= 2,
             "Compile commands do not exactly cover Core/Server codemodel sources")
+    for target in targets:
+        if target["name"] not in TLS_OBJECT:
+            continue
+        inputs = {str(codemodel_source(item, source, build)) for item in target.get("sources", [])
+                  if "compileGroupIndex" in item}
+        outputs = {Path(os.path.abspath(build / item["object"])) for item in compiled if item["path"] in inputs}
+        artifacts = {Path(os.path.abspath(build / item["path"])) for item in target.get("artifacts", [])}
+        require(bool(inputs) and len(inputs) == len(outputs) and outputs == artifacts,
+                "Reviewed TLS objects differ from actual compiler outputs: " + target["name"])
     return compiled
 
 
@@ -232,10 +285,12 @@ def link_inventory(targets: list[dict], build: Path) -> list[dict]:
     server = next(item for item in targets if item["name"] == "Server")
     fragments = server.get("link", {}).get("commandFragments", [])
     require(bool(fragments), "Missing actual Server linker inputs")
-    core = next(item for item in targets if item["name"] == "EngineCore")
-    artifacts = core.get("artifacts", [])
-    require(core.get("type") == "STATIC_LIBRARY" and len(artifacts) == 1, "Expected one static Core artifact")
-    archive = plain_path(build / artifacts[0]["path"], build)
+    archives = []
+    for name in ("EngineCore", "SharkTLS_mbedtls", "SharkTLS_mbedx509", "SharkTLS_tfpsacrypto"):
+        core = next(item for item in targets if item["name"] == name)
+        artifacts = core.get("artifacts", [])
+        require(core.get("type") == "STATIC_LIBRARY" and len(artifacts) == 1, "Expected one static Core/TLS artifact")
+        archives.append(plain_path(build / artifacts[0]["path"], build))
     libraries = []
     for entry in fragments:
         tokens = shlex.split(entry["fragment"])
@@ -243,14 +298,14 @@ def link_inventory(targets: list[dict], build: Path) -> list[dict]:
             for token in tokens:
                 path = Path(token)
                 path = plain_path(path if path.is_absolute() else build / path, build)
-                require(path == archive, f"Unreviewed static/linker input: {token}")
+                require(path in archives, f"Unreviewed static/linker input: {token}")
                 libraries.append(path)
         else:
             require(entry["role"] == "flags", f"Unreviewed linker search input: {entry}")
             for token in tokens:
                 require(bool(re.fullmatch(r"(?:-O[0-3sg]|-g|-DNDEBUG|-pthread|-fsanitize=address(?:,undefined)?|-fno-omit-frame-pointer)", token)),
                         f"Unreviewed actual link option: {token}")
-    require(libraries == [archive], "Server must link exactly the reviewed Core archive")
+    require(libraries == archives, "Server must link exactly the reviewed Core/TLS archives")
     return fragments
 
 
@@ -320,12 +375,13 @@ def package_inventory(package: Path) -> Path:
     for item in package.rglob("*"):
         plain_path(item, package)
         relative = item.relative_to(package).as_posix()
-        require((item.is_dir() and relative in {"bin", "licenses", "licenses/EnTT", "licenses/GLM"})
-                or (item.is_file() and relative in {"bin/Server", "licenses/EnTT/LICENSE", "licenses/GLM/copying.txt"}),
+        directories = {parent.as_posix() for name in PACKAGE_FILES for parent in Path(name).parents if str(parent) != "."}
+        require((item.is_dir() and relative in directories)
+                or (item.is_file() and relative in PACKAGE_FILES),
                 f"Unexpected package entry: {relative}")
         if item.is_file():
             inventory.append(relative)
-    require(set(inventory) == {"bin/Server", "licenses/EnTT/LICENSE", "licenses/GLM/copying.txt"}, f"Incomplete Server package: {inventory}")
+    require(set(inventory) == PACKAGE_FILES, f"Incomplete Server package: {inventory}")
     binary = package / "bin/Server"
     header = binary.read_bytes()[:20]
     require(len(header) == 20 and header[:6] == b"\x7fELF\x02\x01" and header[18:20] == b"\x3e\x00",
@@ -403,8 +459,9 @@ def inspect(build: Path, package: Path) -> dict:
                                                     for name, spec in DEPENDENCIES.items()})
     binary = package_inventory(package)
     for name, record in core_dependencies.items():
-        require(digest(package / "licenses" / name / record["license_file"]) == record["license_sha256"],
-                "Packaged " + name + " license differs from the locked archive")
+        for license_file, expected_sha in record["license_files"].items():
+            require(digest(package / "licenses" / name / license_file) == expected_sha,
+                    "Packaged " + name + " license differs from the locked archive")
     require(digest(binary) == digest(built_binary), "Installed Server differs from the inspected build artifact")
     readelf, ldd = shutil.which("readelf"), shutil.which("ldd")
     require(bool(readelf) and bool(ldd), "readelf and ldd are mandatory for the Linux closure gate")
@@ -421,7 +478,7 @@ def inspect(build: Path, package: Path) -> dict:
             "link_fragments": links, "dependencies": core_dependencies,
             "linker_dependency_records": {name: paths for name, paths in ninja_dependencies(dependencies["stdout"]).items() if name in linker_outputs},
             "package": [{"path": name, "sha256": digest(package / name), "size_bytes": (package / name).stat().st_size}
-                        for name in ("bin/Server", "licenses/EnTT/LICENSE", "licenses/GLM/copying.txt")],
+                        for name in sorted(PACKAGE_FILES)],
             "elf_needed": needed, "resolved_libraries": libraries, "probes": [dependencies, *([owners] if owners else []), dynamic, loader]}
 
 

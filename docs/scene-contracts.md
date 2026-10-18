@@ -133,4 +133,5 @@ limits; the [07c handoff](handoffs/07c-schema-inspection.md) and
 [receipt](coverage/evidence/07c-schema-inspection.json) close the final gate.
 07c and full REQ-07 are PASS under the current-machine scope, with 376 passing
 CPU CTests, protected builds and isolated package checks. FeatureWorld connects
-implemented components in assignment 10; M02 is next after completed assignment 07.
+implemented components in assignment 10. M02 is active: the transport foundation
+is complete and M02b is next under the [network plan](roadmap/network-plan.md).

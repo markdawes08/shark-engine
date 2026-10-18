@@ -7,6 +7,9 @@ add_library(EngineCore STATIC
     src/project_path.cpp
     src/scene.cpp
     src/schema.cpp
+    src/net_wire.cpp
+    src/net_fault_link.cpp
+    src/net_transport.cpp
     src/server_application.cpp
     src/server_config.cpp
     src/shutdown_signals.cpp
@@ -21,7 +24,7 @@ find_package(Threads REQUIRED)
 set_property(TARGET Threads::Threads PROPERTY IMPORTED_GLOBAL TRUE)
 shark_classify_target(Threads::Threads core)
 target_link_libraries(EngineCore PUBLIC Threads::Threads SharkMath)
-target_link_libraries(EngineCore PRIVATE EnTT::EnTT)
+target_link_libraries(EngineCore PRIVATE EnTT::EnTT SharkTLS_mbedtls)
 if(WIN32)
     # Windows OS entropy for persistent UUIDs; no third-party or presentation dependency.
     find_library(SHARK_WINDOWS_BCRYPT_LIBRARY NAMES bcrypt REQUIRED)

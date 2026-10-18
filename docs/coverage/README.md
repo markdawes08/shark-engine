@@ -64,7 +64,15 @@ as additive schema-3 fields. REQ-02 is PASS for the amended local gate, with
 explicit scope and SHA-256-pinned references to the unchanged 02d receipts.
 The validator verifies those references and retained bytes; it does not rerun
 graphics or interpret an old aggregate NOT_RUN as a universal PASS.
-`current_assignment: 07` follows the [07 checkpoint plan](../roadmap/scene-plan.md).
+`current_assignment: M02` follows the [five network checkpoints](../roadmap/network-plan.md).
+The `core.network-foundation` feature maps M02a's bounded TLS/wire/fault APIs to
+three unit families and a real-process encrypted fixture, plus exact dependency
+and package checks. M02a is PASS: the [handoff](../handoffs/M02a-transport-wire.md)
+and [receipt](evidence/M02a-transport-wire.json) record 404 passing CPU CTests
+without failures/skips, protected builds and isolated packages. The narrow
+postqualification CI compiler-forwarding amendment is recorded separately from
+the unchanged compiled inputs. Full REQ-M02 remains NOT_RUN pending M02b-M02e. The prior
+[07 checkpoint plan](../roadmap/scene-plan.md) is complete.
 `core.scene-ownership` maps checked scene/entity lifetime, deferred mutation,
 world coordinates and the private EnTT boundary to executable CPU fixtures.
 The [07a handoff](../handoffs/07a-entity-ownership.md) records checkpoint results.
@@ -88,8 +96,9 @@ CTests with no failures/skips**: Windows Debug/Release/ASan 62 each, WSL client
 Debug/ASan+UBSan 55 each, and WSL Server Debug/ASan+UBSan 40 each. Schema coverage
 has 9 cases/654 assertions and query coverage 19 cases/3,916 assertions. Protected
 Runtime/Server builds, source/link/license closure and fresh isolated package
-checks pass; all 221 qualification source inputs were unchanged. The current
-assignment remains 07 and M02 is next. FeatureWorld integration remains assignment 10.
+checks pass; all 221 qualification source inputs were unchanged in that record.
+The current assignment is M02; M02b follows the completed transport foundation.
+FeatureWorld integration remains assignment 10.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
 NOT_RUN. Existing presentation/device fixtures and their earlier handoffs retain

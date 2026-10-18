@@ -20,7 +20,8 @@ Server-only configurations exclude its source and test. The
 04b adds the [owned GLFW window](window-lifecycle.md). `shark.client.window` uses
 seed 1337 and a 20-second timeout for display-free ownership/callback fixtures.
 On Windows, `SHARK_NATIVE_WINDOW=ON` by default for client builds: this enables
-the C compiler and the pinned static GLFW dependency. 05a also defaults
+the pinned static GLFW dependency. All Core builds now require a C compiler for
+M02a's private TLS graph. 05a also defaults
 `SHARK_NATIVE_GRAPHICS=ON` for these Windows clients, privately adding the locked
 Vulkan loader/headers and NVRHI. Set both native options OFF for a device-free
 client build; graphics requires native windows. Server-only and WSL CPU
@@ -90,9 +91,10 @@ authoring commands, networking or a running world simulation. 07c adds the
 both use seed 1337, 20-second timeouts and `cpu;unit;server` labels. They run in
 client and headless test builds without a display and test schema validation,
 metadata agreement, query limits, revision conflicts and owned snapshot lifetime.
-`shark.tooling.scene-dependencies` checks exact EnTT/GLM archive selection,
-offline population, private EnTT includes and public math configuration without a
-C compiler or display (90-second timeout). It compiles the math wrapper with the
+`shark.tooling.scene-dependencies` checks exact EnTT/GLM/TLS archive selection,
+offline population, private EnTT/TLS includes and public math configuration without a
+display (240-second tooling timeout). M02a requires C/C++ compilers. The fixture
+compiles the math wrapper with the
 central definitions and defaults, then rejects prior GLM includes and conflicting
 configuration. The [07a handoff](handoffs/07a-entity-ownership.md) and
 [07b handoff](handoffs/07b-transform-hierarchy.md) record their qualification;
@@ -101,7 +103,19 @@ the [07c handoff](handoffs/07c-schema-inspection.md) and
 under the current-machine scope. All 376 CTests pass with no failures/skips:
 Windows Debug/Release/ASan 62 each, WSL client Debug/ASan+UBSan 55 each, and
 WSL Server Debug/ASan+UBSan 40 each. Protected builds and isolated package checks
-also pass. M02 is next; these results do not add a terminal/editor adapter.
+also pass. M02 follows the [network checkpoints](roadmap/network-plan.md);
+these results do not add a terminal/editor adapter.
+
+M02a's network foundation can be checked noninteractively after a native build:
+
+```text
+ctest --preset windows-debug -R "^shark.core.net-" --output-on-failure
+```
+
+Use the corresponding WSL preset for CPU/headless checks. The integration test
+launches separate local TLS processes and writes `build/<preset>/tests/network-process.json`.
+Its public credentials live only in test fixtures. The [network contract](network-transport.md)
+documents the C++ interfaces, limits and remaining player-session work.
 
 06a adds the CPU-only [offline shader builder](shader-pipeline.md).
 `shark.tooling.shader-pipeline` tests recipes, dependency tracking, artifact
@@ -322,11 +336,24 @@ setup or incompatible definitions. Math uses right-handed, packed scalar double
 values; see [the transform contract](transforms.md). Do not serialize GLM object
 memory or add per-target math configuration.
 
-Neither upstream CMake project is configured: no C compiler, upstream library,
-testbed, GUI, tests, documentation or transitive downloads are introduced.
-[ADR 0002](architecture/0002-dependencies.md) records both pins and the selected
-MIT licenses. Ordinary builds can fetch a missing archive; the disconnected
-Server workflow below requires both verified archives prepared beforehand.
+Neither EnTT nor GLM upstream CMake project is configured. M02a separately adds
+the private static Mbed TLS/TF-PSA graph and requires a C compiler alongside C++.
+No upstream tests, programs or transitive downloads are enabled; upstream
+documentation utility targets are excluded from the default dependency build.
+[ADR 0002](architecture/0002-dependencies.md) records the header pins and selected
+MIT licenses, plus the TLS pin and selected Apache-2.0 option.
+Ordinary builds can fetch a missing archive; the disconnected
+Server workflow below requires all three verified archives prepared beforehand.
+
+M02a uses the exact official Mbed TLS 4.1.1 release archive and bundled crypto
+sources recorded in the lock. `tools/core_dependencies.py` verifies and prepares
+the archive; configure checks all 3,927 populated regular source files. The 147 reviewed
+unused upstream test/example symlinks are omitted for portable Windows population;
+regular files remain exact archive bytes. Eight redistribution notices under
+`licenses/MbedTLS/` must accompany Runtime/Server packages. See
+[ADR 0011](architecture/0011-network-foundation.md) and the
+[network contract](network-transport.md). The test-only `NetworkProbe` target
+does not add network command-line flags to Runtime or Server.
 
 ## Opt-in graphics package builds
 
@@ -400,11 +427,11 @@ These presets never create EngineClient, Engine, Runtime, EngineTools or Editor:
 
 | Preset | Configuration | Tests / compiler |
 | --- | --- | --- |
-| `server-only` | Release | No tests, no network population; verified local EnTT/GLM archives, host compiler |
+| `server-only` | Release | No tests or network downloads; verified local EnTT/GLM/TLS archives, host C/C++ compilers |
 | `server-debug` | Debug | Catch2/CTest enabled, host compiler |
 | `server-asan-ubsan` | Debug, ASan + UBSan | Catch2/CTest enabled, Linux Clang |
 
-Prepare the exact EnTT and GLM archives before the first disconnected configure.
+Prepare the exact EnTT, GLM and Mbed TLS archives before the first disconnected configure.
 This explicit command downloads only the locked bytes, or verifies an existing
 cache; configure itself makes no network request. On Windows from ordinary PowerShell:
 
@@ -412,7 +439,8 @@ cache; configure itself makes no network request. On Windows from ordinary Power
 & ./tools/windows_dev.ps1 -CommandArguments @('python','tools/core_dependencies.py','--output','out/dependency-cache')
 $taskEnTT = (Resolve-Path 'out/dependency-cache/85c6bba014049b5de8fad49d25424df2f1f6a8c1.tar.gz').Path
 $taskGLM = (Resolve-Path 'out/dependency-cache/8d1fd52e5ab5590e2c81768ace50c72bae28f2ed.tar.gz').Path
-& ./tools/windows_dev.ps1 -CommandArguments @('cmake','--preset','server-only',"-DSHARK_ENTT_ARCHIVE=$taskEnTT","-DSHARK_GLM_ARCHIVE=$taskGLM")
+$taskTLS = (Resolve-Path 'out/dependency-cache/mbedtls-4.1.1.tar.bz2').Path
+& ./tools/windows_dev.ps1 -CommandArguments @('cmake','--preset','server-only',"-DSHARK_ENTT_ARCHIVE=$taskEnTT","-DSHARK_GLM_ARCHIVE=$taskGLM","-DSHARK_MBEDTLS_ARCHIVE=$taskTLS")
 & ./tools/windows_dev.ps1 -CommandArguments @('cmake','--build','--preset','server-only')
 ./build/server-only/bin/Server.exe --version
 ./build/server-only/bin/Server.exe --run-for-ms 1000
@@ -425,27 +453,31 @@ In the existing WSL/Linux compiler environment:
 python tools/core_dependencies.py --output out/dependency-cache
 cmake --preset server-only \
   -DSHARK_ENTT_ARCHIVE="$PWD/out/dependency-cache/85c6bba014049b5de8fad49d25424df2f1f6a8c1.tar.gz" \
-  -DSHARK_GLM_ARCHIVE="$PWD/out/dependency-cache/8d1fd52e5ab5590e2c81768ace50c72bae28f2ed.tar.gz"
+  -DSHARK_GLM_ARCHIVE="$PWD/out/dependency-cache/8d1fd52e5ab5590e2c81768ace50c72bae28f2ed.tar.gz" \
+  -DSHARK_MBEDTLS_ARCHIVE="$PWD/out/dependency-cache/mbedtls-4.1.1.tar.bz2"
 cmake --build --preset server-only
 build/server-only/bin/Server --version
 build/server-only/bin/Server --run-for-ms 1000
 cmake --install build/server-only --prefix out/server-package --component Server
 ```
 
-For a read-only source mount, prepare both archives under a writable work directory
-and pass their absolute paths instead. `SHARK_ENTT_ARCHIVE` and `SHARK_GLM_ARCHIVE`
+For a read-only source mount, prepare all three archives under a writable work directory
+and pass their absolute paths instead. `SHARK_ENTT_ARCHIVE`, `SHARK_GLM_ARCHIVE` and `SHARK_MBEDTLS_ARCHIVE`
 must each match the lock's SHA-256; arbitrary extracted source overrides are
-rejected. Previously populated standard FetchContent archive caches can also
-satisfy disconnected reconfiguration. `FETCHCONTENT_FULLY_DISCONNECTED` stays
+rejected. Previously populated standard FetchContent archive caches satisfy
+EnTT/GLM reconfiguration; Mbed TLS uses the verified archive under
+`build/<preset>/shark-dependency-archives/` unless an explicit archive was supplied.
+`FETCHCONTENT_FULLY_DISCONNECTED` stays
 enabled in the preset; the Core helper permits only local verified archive
 extraction on that path. It does not enable remote fetching or acquire client
 dependencies.
 
 The install component contains `bin/Server` (or `bin/Server.exe`),
-`licenses/EnTT/LICENSE` and `licenses/GLM/copying.txt`. It is a dependency-closure
+`licenses/EnTT/LICENSE`, `licenses/GLM/copying.txt` and the eight locked notices
+under `licenses/MbedTLS/`. It is a dependency-closure
 probe, not a shipping distribution; full deployment packaging remains future work.
 A clean package directory is required for closure verification. Runtime packages also retain the
-EnTT and GLM notices alongside their existing graphics/CRT notices. GLM is used
+EnTT, GLM and Mbed TLS notices alongside their existing graphics/CRT notices. GLM is used
 under its MIT option; preserve the complete upstream `copying.txt`.
 
 Server accepts no arguments for an idle lifetime, `--help`, `--version`, or
@@ -476,9 +508,12 @@ Negative boundary fixtures exercise direct, transitive and generator-expression
 links/options, generated source/includes and manually added build dependencies.
 Compiler dependency records also reject hidden relative and generated-header
 inclusions, exercised by actual fixture compilations. The server-only source
-closure permits exactly the EnTT and GLM populations and verifies every extracted
-source file against its SHA-256-verified archive, plus both installed notices. Extra
-dependencies, changed headers and missing source/license files fail this gate. CMake
+closure permits exactly the EnTT, GLM and Mbed TLS populations, compares every
+populated regular file with its SHA-256-verified archive, and verifies all
+installed notices. Only the 147 reviewed unused TLS source symlinks are omitted.
+It checks the three private TLS archives and seven object targets against actual
+C compiler outputs. Extra dependencies, changed source/headers and missing
+source/license files fail this gate. CMake
 cannot infer arbitrary behavior hidden in shell recipes; the minimal Ubuntu
 job additionally audits configured targets, compiled source, downloaded inputs,
 installed packages and the packaged ELF's resolved libraries. See [CI](ci.md)
@@ -500,6 +535,13 @@ MSVC `/W4 /WX /permissive- /Zc:__cplusplus /utf-8`, or GCC/Clang
 `-Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror`. Do not impose
 these warning settings on dependency sources or disable warnings globally to
 conceal a failure.
+
+Use matching C/C++ compiler families for every configuration. The Linux sanitizer
+presets explicitly select `clang` and `clang++`; versioned environments must use
+the matching pair, for example `-DCMAKE_C_COMPILER=clang-18` and
+`-DCMAKE_CXX_COMPILER=clang++-18`. The retained headless driver supplies both.
+The private TLS C targets receive the selected sanitizer instrumentation without
+inheriting engine C++ warning flags.
 
 ```text
 python tools/check_format.py

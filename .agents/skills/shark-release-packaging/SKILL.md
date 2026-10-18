@@ -31,16 +31,25 @@ and starts the installed executable. It is not a game export or licensed release
 package; do not claim M08/35 acceptance from this bootstrap fixture.
 07a adds the private EnTT Core dependency; 07b adds centrally configured GLM as
 the approved public math exception through `SharkMath` and `<shark/math.hpp>`.
-Prepare both exact archives with `python tools/core_dependencies.py --output
+M02a adds private static Mbed TLS and its bundled TF-PSA Crypto implementation.
+Prepare all three exact archives with `python tools/core_dependencies.py --output
 out/dependency-cache` before a disconnected Server configure, then pass
-`SHARK_ENTT_ARCHIVE` and `SHARK_GLM_ARCHIVE` as described in
+`SHARK_ENTT_ARCHIVE`, `SHARK_GLM_ARCHIVE` and `SHARK_MBEDTLS_ARCHIVE` as described in
 [building](../../../docs/building.md#headless-server). Read-only source mounts
 require a writable archive directory and absolute input paths. Source closure
-compares every populated EnTT/GLM file with its verified archive; missing,
+compares populated dependency files with their verified archives; missing,
 changed or additional inputs fail. Server installation and Runtime notices must
 retain `licenses/EnTT/LICENSE` and the complete `licenses/GLM/copying.txt` under
 GLM's selected MIT option. Both dependencies are header-only and add no shared
-library payload. The GLM exception does not authorize other public third-party
+library payload. Mbed TLS uses the official complete release archive, including
+the pinned TF-PSA/framework inputs, and its dependency verifier records the
+reviewed unused test/example symlinks that are not populated. Preserve every
+locked notice under `licenses/MbedTLS/`, including nested bundled notices; the
+Runtime inspector rejects each missing notice and unexpected TLS payloads.
+TLS libraries are static and private to Core, so no third-party TLS DLLs, test
+certificates or private keys belong in Runtime/Server packages. The dependency
+needs a C compiler in the build environment, not in the installed runtime.
+The GLM exception does not authorize other public third-party
 types or presentation/authoring dependencies in Core. These additions do not
 qualify a shipping MMO package.
 

@@ -10,6 +10,13 @@ Use C++20 and target-based CMake. The project declares CMake 3.28 as its floor;
 compiler, SDK, dependency and CI-image versions belong in the build evidence and
 dependency lock introduced in 01.
 
+M02a adds C compilation for the private, pinned Mbed TLS/TF-PSA-Crypto graph in
+every Core configuration, including `server-only`. Engine-owned interfaces stay
+C++20. TLS/socket implementation types do not escape Core; GLM through
+`SharkMath` remains the documented public math exception. The
+[M02a handoff](../handoffs/M02a-transport-wire.md) records completed current-machine
+qualification under [ADR 0011](0011-network-foundation.md).
+
 M01 separates static `EngineCore`, `EngineClient` and `EngineTools` libraries,
 retains `Engine` as an INTERFACE client composition target, and adds `Server`
 alongside `Editor`, `Runtime` and Catch2 `Tests`. Core contains version/argument
@@ -44,13 +51,13 @@ they do not impose player-visible zone transitions.
 
 | Target | Kind | Responsibility and allowed direct engine dependencies |
 | --- | --- | --- |
-| EngineCore | Static library, introduced in M01 | Device-free configuration, identity, lifecycle and later simulation, scene, physics, Lua and cooked simulation-data loading; no client or authoring dependencies |
+| EngineCore | Static library, introduced in M01 | Device-free configuration, identity, lifecycle, scene/schema/hierarchy and M02a's private TLS/wire foundation; later simulation, physics, Lua and cooked simulation-data loading; no client or authoring dependencies |
 | EngineClient | Static library, introduced in M01 | EngineCore; window/input, GLFW, NVRHI/Vulkan rendering, audio and client presentation |
 | Engine | INTERFACE compatibility/composition target | EngineClient, transitively EngineCore; preserves Runtime's existing engine-facing composition |
 | EngineTools | Static library | EngineCore; device-free project/source persistence, commands/undo, imports, cook/export, discovery and authoring services; client preview is a separately gated adapter/target and cannot enter the CPU host's dependency closure |
 | Editor | Executable | EngineTools and client presentation services; Dear ImGui/ImGuizmo views of shared services |
 | Runtime | Executable | Engine only among engine libraries; client startup and game loop |
-| Server | Executable, introduced in M01 | EngineCore only among engine libraries; headless configuration and lifecycle first, authoritative simulation and private network/persistence integration in later milestones |
+| Server | Executable, introduced in M01 | EngineCore only among engine libraries; headless configuration and lifecycle; gameplay listener, authoritative simulation and persistence remain later work |
 | SharkCLI | Executable, introduced in 14/15 | EngineTools; export first, then CLI and JSON-RPC stdio authoring host |
 | Tests | Test target(s) under one CTest suite | Split engine-only tests from authoring integration tests; one primary C++ framework |
 
@@ -74,6 +81,13 @@ data dependencies remain separately owned, pinned and qualified as they land.
 Test frameworks belong only to enabled test configurations, never the server
 package. Disabling graphics at runtime is not the headless build contract.
 
+The permitted current Core dependency graph is private EnTT, public `SharkMath`
+over GLM, and private static Mbed TLS/TF-PSA-Crypto. The TLS graph contains three
+static libraries and seven explicitly reviewed object targets; the Windows
+`ws2_32`/`bcrypt` imports are classified OS dependencies. It adds no display,
+client or authoring dependency. A test-only `NetworkProbe` exercises real local
+connections; this does not make the Server executable a gameplay listener.
+
 M01 uses `engine/core/`, `engine/client/` and `server/`, retaining
 `engine/include/shark/bootstrap.hpp` as the common public bootstrap header.
 `engine_tools/`, `editor/`, `runtime/`, `tests/`, `cmake/`, `tools/` and the `docs/`
@@ -86,10 +100,11 @@ user controls staging and committing those files.
 
 ## Shared behavior
 
-EngineCore will own component validation and the safe scene mutation boundary.
+EngineCore owns component validation and the safe scene mutation boundary.
 07a implements the [scene ownership boundary](../scene-contracts.md) in Core:
 private EnTT, checked scope/identity/lifetime, owner-thread access and deferred
-create/destroy. Name/Transform and schema validation follow in 07b/07c.
+create/destroy. 07b adds Name/Transform and hierarchy; 07c adds schema validation
+and immutable revisioned queries.
 EngineTools wraps that behavior in revision-checked authoring transactions,
 history and project services. UI, CLI, protocol handlers and integration tests
 call those same services; widgets never edit authoritative components directly.

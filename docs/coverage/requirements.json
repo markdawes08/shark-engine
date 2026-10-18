@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "07",
+  "current_assignment": "M02",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -605,7 +605,7 @@
       "planned_fixture": "TwoProcessReplication, AuthenticationOwnershipReject, NetworkAdversity, ReconnectBaseline and InterestPrivacyBudget fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "Planning amendment only; MMORPG implementation and qualification belong to M02. No server/network/persistence/streaming/load result is claimed."
+        "reason": "M02a PASS under current-machine scope: bounded loopback TLS 1.3, independently versioned diagnostic wire frames and a deterministic semantic fault model. All 404 CPU CTests pass without failures/skips (Windows Debug/Release/ASan 66 each, WSL client Debug/ASan+UBSan 59 each, WSL Server Debug/ASan+UBSan 44 each), with real-process TLS fixtures, protected builds and isolated package/source/link/license closure. Evidence: docs/coverage/evidence/M02a-transport-wire.json and docs/handoffs/M02a-transport-wire.md. The separately checked two-line CI CC-forwarding amendment is recorded apart from the unchanged compiled inputs. M02b player authentication/session ownership, M02c replication, M02d interest/privacy/budgets and M02e integrated qualification remain required. This foundation confers no player authority and makes no replicated-state, persistence, streaming or MMO capacity claim. See docs/roadmap/network-plan.md."
       }
     },
     {
@@ -808,6 +808,15 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "core.network-foundation",
+        "name": "Bounded loopback TLS transport, gameplay-wire framing and deterministic fault model",
+        "requirement_ids": ["REQ-M02"],
+        "test_ids": ["shark.core.net-wire", "shark.core.net-fault", "shark.core.net-transport", "shark.core.net-process", "shark.tooling.scene-dependencies", "shark.tooling.server-closure", "shark.tooling.runtime-package"],
+        "test_sources": ["tests/core_net_wire_tests.cpp", "tests/core_net_fault_tests.cpp", "tests/core_net_transport_tests.cpp", "tools/test_network_transport.py", "tools/tests/test_scene_dependencies.py", "tools/tests/test_server_closure.py", "tools/tests/test_runtime_package.py"],
+        "fixtures": ["tests/network_probe.cpp", "tests/fixtures/network/README.md", "tests/fixtures/network/ca.pem", "tests/fixtures/network/server.pem", "tests/fixtures/network/server-key.pem", "tests/fixtures/network/wrong-ca.pem", "tests/fixtures/network/expired-server.pem", "tools/core_dependencies.py", "tools/check_server_closure.py"],
+        "fixture_reason": "External CPU/process fixtures are required to exercise real TLS/socket ownership, certificate validation, fragmented/malformed wire input, bounded queues/deadlines, explicit sequence exhaustion, clean/abrupt EOF and deterministic virtual-time faults. Public test credentials remain test-only and are rejected in packages. No player authentication, authoritative replication or MMO capacity is implied; M02b-M02e retain those gates. Human/terminal use shares these C++ contracts and machine-readable diagnostics; authoring commands remain assignment15 and FeatureWorld/MMOWorld retain10/M09."
+      },
       {
         "id": "core.schema-inspection",
         "name": "Owned component schemas and bounded revisioned scene queries",

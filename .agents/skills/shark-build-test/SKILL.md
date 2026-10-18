@@ -61,3 +61,13 @@ After dependency changes run both isolated builds and the actual server lifecycl
 and boundary fixtures. Keep Core/Server free of client and authoring sources.
 Add actual server/network/database/load commands only when their owners land;
 ordinary bootstrap CTest results are not simulation, capacity or seamlessness evidence.
+
+M02a's private static Mbed TLS integration adds a required C compiler alongside
+C++ in Core/Server builds. Prepare the exact EnTT, GLM and complete Mbed TLS
+archives through `tools/core_dependencies.py`; disconnected configurations pass
+`SHARK_ENTT_ARCHIVE`, `SHARK_GLM_ARCHIVE` and `SHARK_MBEDTLS_ARCHIVE` explicitly.
+The headless driver selects matching pinned GCC/Clang C and C++ compilers.
+Source closure validates the bundled TF-PSA/framework inputs; package checks
+require every locked nested Mbed TLS notice while excluding test credentials
+and shared TLS libraries. Local TLS diagnostics do not qualify account
+authentication, gameplay authorization, replication or production capacity.

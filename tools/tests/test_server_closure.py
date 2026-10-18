@@ -13,7 +13,8 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from check_server_closure import (ClosureError, codemodel_source, compile_inventory, compiler_headers, dynamic_needed,
                                   file_api, link_inventory, ninja_dependencies, package_inventory,
-                                  resolved_libraries, system_header_owners)
+                                  resolved_libraries, system_header_owners, TLS_STATIC, TLS_OBJECT, TLS_UTILITIES)
+from core_dependencies import MBEDTLS_LICENSE_FILES, DEPENDENCIES
 
 
 class ServerClosureTests(unittest.TestCase):
@@ -40,6 +41,20 @@ class ServerClosureTests(unittest.TestCase):
                 {"path": "server/main.cpp", "compileGroupIndex": 0}], "dependencies": [{"id": "core"}, {"id": "guard"}]},
             {"name": "shark_check_server_boundary", "id": "guard", "type": "UTILITY"},
         ]
+        for name in sorted(TLS_STATIC | TLS_OBJECT | TLS_UTILITIES):
+            target = {"name": name, "id": name, "type": "UTILITY"}
+            if name in TLS_STATIC | TLS_OBJECT:
+                relative = "_deps/mbedtls-src/library/" + name + ".c"
+                artifact = "_deps/mbedtls-build/" + name + (".a" if name in TLS_STATIC else ".o")
+                target.update(type="STATIC_LIBRARY" if name in TLS_STATIC else "OBJECT_LIBRARY",
+                              artifacts=[{"path": artifact}], sources=[{"path": str(self.build / relative), "compileGroupIndex": 0}],
+                              compileGroups=[{"language": "C"}])
+                path = self.build / artifact
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_bytes(b"built TLS fixture")
+            self.targets.append(target)
+        self.targets[1]["link"]["commandFragments"][1]["fragment"] += " " + " ".join(
+            "_deps/mbedtls-build/" + name + ".a" for name in ("SharkTLS_mbedtls", "SharkTLS_mbedx509", "SharkTLS_tfpsacrypto"))
         self.configuration = {"name": "Release", "directories": [{"source": value} for value in (".", "engine", "engine/core", "server")],
                               "targets": [{"name": item["name"], "id": item["id"], "jsonFile": item["id"] + ".json"}
                                           for item in self.targets]}
@@ -57,11 +72,24 @@ class ServerClosureTests(unittest.TestCase):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(b"built fixture")
         self.add_core_dependency_fixtures()
+        for target in self.targets:
+            if target["name"] in TLS_STATIC | TLS_OBJECT:
+                path = target["sources"][0]["path"]
+                artifact = target["artifacts"][0]["path"]
+                object_path = artifact if target["name"] in TLS_OBJECT else artifact + ".o"
+                output = self.build / object_path
+                output.write_bytes(b"built TLS object")
+                self.commands.append({"directory": str(self.build), "file": path,
+                                      "arguments": ["cc", "-c", path, "-o", object_path]})
         self.write_evidence()
         (self.package / "licenses/EnTT").mkdir(parents=True)
         (self.package / "licenses/EnTT/LICENSE").write_bytes(b"fixture license")
         (self.package / "licenses/GLM").mkdir()
         (self.package / "licenses/GLM/copying.txt").write_bytes(b"fixture license")
+        for relative in MBEDTLS_LICENSE_FILES:
+            path = self.package / "licenses/MbedTLS" / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(b"fixture license")
         (self.package / "bin").mkdir(parents=True)
         binary = self.package / "bin/Server"
         binary.write_bytes(b"\x7fELF\x02\x01" + bytes(12) + b"\x3e\x00" + bytes(64))
@@ -70,27 +98,40 @@ class ServerClosureTests(unittest.TestCase):
     def add_core_dependency_fixtures(self):
         dependencies = {}
         for name, license_file, header in (("EnTT", "LICENSE", "src/entt/entity/registry.hpp"),
-                                          ("GLM", "copying.txt", "glm/glm.hpp")):
+                                          ("GLM", "copying.txt", "glm/glm.hpp"),
+                                          ("MbedTLS", "LICENSE", "include/mbedtls/ssl.h")):
             lower = name.lower()
             contents = {license_file: b"fixture license", header: b"// fixture header"}
             if name == "GLM":
                 contents["glm/detail/fixture.inl"] = b"// fixture inline header"
+            if name == "MbedTLS":
+                contents.update({item: b"fixture license" for item in MBEDTLS_LICENSE_FILES})
+                contents.update({"library/" + item + ".c": b"int tls_fixture;" for item in TLS_STATIC | TLS_OBJECT})
             archive = self.root / (lower + ".tar.gz")
             with tarfile.open(archive, "w:gz") as stream:
                 for path, data in contents.items():
                     item = tarfile.TarInfo(lower + "-" + "a" * 40 + "/" + path)
                     item.size = len(data)
                     stream.addfile(item, io.BytesIO(data))
-            dependencies[name] = {"version": "fixture", "commit": "a" * 40, "license": "MIT",
-                                  "license_files": [license_file], "patches": [], "transitive_dependencies": [],
+                if name == "MbedTLS":
+                    for index in range(147):
+                        item = tarfile.TarInfo(lower + "-" + "a" * 40 + "/tf-psa-crypto/drivers/pqcp/mldsa-native/test/link-" + str(index))
+                        item.type = tarfile.SYMTYPE
+                        item.linkname = "../LICENSE"
+                        stream.addfile(item)
+            dependencies[name] = {"version": "fixture", "commit": "a" * 40, "license": "Apache-2.0" if name == "MbedTLS" else "MIT",
+                                  "license_files": list(MBEDTLS_LICENSE_FILES) if name == "MbedTLS" else [license_file],
+                                  "archive_prefix": lower + "-" + "a" * 40, "patches": [], "transitive_dependencies": [],
                                   "sha256": hashlib.sha256(archive.read_bytes()).hexdigest()}
             for suffix in ("-src", "-build", "-subbuild"):
-                (self.build / "_deps" / (lower + suffix)).mkdir(parents=True)
+                if name == "MbedTLS" and suffix == "-subbuild":
+                    continue
+                (self.build / "_deps" / (lower + suffix)).mkdir(parents=True, exist_ok=True)
             for path, data in contents.items():
                 target = self.build / "_deps" / (lower + "-src") / path
                 target.parent.mkdir(parents=True, exist_ok=True)
                 target.write_bytes(data)
-            key = "SHARK_EnTT_ARCHIVE" if name == "EnTT" else "SHARK_GLM_ARCHIVE_INPUT"
+            key = DEPENDENCIES[name]["cache"]
             self.cache["entries"].append({"name": key, "value": str(archive)})
         (self.source / "dependencies.lock.json").write_text(json.dumps({"dependencies": dependencies}))
 
@@ -106,7 +147,7 @@ class ServerClosureTests(unittest.TestCase):
 
     def test_accepts_exact_core_server_graph_and_compile_inventory(self):
         source, _, targets, _ = file_api(self.build)
-        self.assertEqual(len(compile_inventory(self.build, source, targets)), 2)
+        self.assertEqual(len(compile_inventory(self.build, source, targets)), 12)
 
     def test_rejects_client_target_even_if_unlinked(self):
         self.configuration["targets"].append({"name": "EngineClient", "id": "client", "jsonFile": "client.json"})
@@ -208,7 +249,7 @@ class ServerClosureTests(unittest.TestCase):
 
     def test_rejects_additional_dependency_download_tree(self):
         (self.build / "_deps/glfw-src").mkdir()
-        with self.assertRaisesRegex(ClosureError, "exactly the locked EnTT"):
+        with self.assertRaisesRegex(ClosureError, "exactly the locked Core"):
             file_api(self.build)
 
     def test_accepts_only_verified_entt_header_inputs(self):
@@ -223,6 +264,40 @@ class ServerClosureTests(unittest.TestCase):
         header.write_bytes(b"tampered cache header")
         with self.assertRaisesRegex(ClosureError, "differs from the locked archive"):
             file_api(self.build)
+
+    def test_tls_c_source_drift_is_rejected(self):
+        path = self.build / "_deps/mbedtls-src/library/SharkTLS_mbedtls.c"
+        path.write_bytes(b"unreviewed TLS code")
+        with self.assertRaisesRegex(ClosureError, "Populated MbedTLS source differs"):
+            file_api(self.build)
+
+    def test_tls_objects_must_be_actual_compiler_outputs_and_reject_injection(self):
+        target = next(item for item in self.targets if item["name"] == "SharkTLS_builtin")
+        target["artifacts"] = [{"path": "engine/core/src/core.cpp.o"}]
+        with self.assertRaisesRegex(ClosureError, "TLS objects differ from actual compiler outputs"):
+            compile_inventory(self.build, self.source, self.targets)
+        crypto = next(item for item in self.targets if item["name"] == "SharkTLS_tfpsacrypto")
+        crypto["sources"].append({"path": str(self.build / "hidden.o"), "isGenerated": True})
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "Unreviewed network object"):
+            file_api(self.build)
+
+    def test_tls_examples_and_missing_notices_do_not_enter_the_server_closure(self):
+        path = self.build / "_deps/mbedtls-src/programs/ssl/example.c"
+        path.parent.mkdir(parents=True)
+        path.write_bytes(b"int example;")
+        tls = next(item for item in self.targets if item["name"] == "SharkTLS_mbedtls")
+        tls["sources"].append({"path": str(path), "compileGroupIndex": 0})
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "Non-Core source"):
+            file_api(self.build)
+        for relative in MBEDTLS_LICENSE_FILES:
+            notice = self.package / "licenses/MbedTLS" / relative
+            data = notice.read_bytes()
+            notice.unlink()
+            with self.subTest(notice=relative), self.assertRaisesRegex(ClosureError, "Incomplete Server package"):
+                package_inventory(self.package)
+            notice.write_bytes(data)
 
     def test_accepts_glm_inline_headers_but_rejects_tampered_population(self):
         header = self.build / "_deps/glm-src/glm/detail/fixture.inl"
@@ -243,7 +318,7 @@ class ServerClosureTests(unittest.TestCase):
             file_api(self.build)
         self.cache["entries"] = [item for item in self.cache["entries"] if item["name"] != "SHARK_GLM_ARCHIVE_INPUT"]
         self.write_evidence()
-        with self.assertRaisesRegex(ClosureError, "Missing locked EnTT/GLM"):
+        with self.assertRaisesRegex(ClosureError, "Missing locked Core"):
             file_api(self.build)
         (self.package / "licenses/GLM/copying.txt").unlink()
         with self.assertRaisesRegex(ClosureError, "Incomplete Server package"):
@@ -255,7 +330,7 @@ class ServerClosureTests(unittest.TestCase):
             file_api(self.build)
         self.cache["entries"] = [item for item in self.cache["entries"] if item["name"] != "SHARK_EnTT_ARCHIVE"]
         self.write_evidence()
-        with self.assertRaisesRegex(ClosureError, "Missing locked EnTT"):
+        with self.assertRaisesRegex(ClosureError, "Missing locked Core"):
             file_api(self.build)
 
     def test_rejects_authoring_include(self):

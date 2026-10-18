@@ -54,8 +54,10 @@ scope; they remain distinct from independent-machine or native Linux GPU evidenc
 The CPU package rejection suite
 is registered as `shark.tooling.graphics-package`, with the Linux package and
 process-cleanup suite in `shark.tooling.graphics-package-linux`; Windows launcher integration and
-GPU soak remain opt-in. Network, database, world-handoff and
-active-load tiers remain planned.
+GPU soak remain opt-in. M02a's [local TLS/wire foundation](handoffs/M02a-transport-wire.md)
+passes current-machine CPU/sanitizer and protected package qualification;
+player sessions, replication, database, world-handoff and active-load tiers
+remain planned.
 
 ## Jobs and required checks
 
@@ -183,20 +185,23 @@ owned snapshot lifetime under the [inspection contract](scene-inspection.md).
 Both are CPU C++ fixtures; they do not invoke terminal/editor adapters or qualify
 a source or gameplay-wire format.
 
-`shark.tooling.scene-dependencies` (`cpu;tooling;boundary;server`, 90-second
-timeout) accepts only the locked EnTT and GLM archives, proves disconnected local
-extraction, rejects source overrides and checks that Core still configures without
-a C compiler or client dependencies. EnTT includes stay private; the approved
+`shark.tooling.scene-dependencies` (`cpu;tooling;boundary;server`, 240-second
+timeout) accepts only the locked EnTT, GLM and Mbed TLS archives, proves disconnected local
+extraction, rejects source overrides and checks that Core configures without
+client dependencies. M02a adds a C compiler for the static TLS graph. EnTT/TLS includes stay private; the approved
 public `SharkMath` interface propagates GLM includes and its five central compile
 definitions. Real C++ fixture compilations accept the wrapper with central
 definitions and defaults, reject a prior GLM include, and reject each of the 20
 incompatible configuration definitions. Existing graphics-dependency fixtures
-receive both verified archives and continue to reject all client source overrides
-before population. No fixture downloads dependencies during CTest.
+receive all three verified archives and continue to reject all client source overrides
+before population. Both dependency tooling families have 240-second suite
+timeouts and 120-second configure deadlines, accounting for fresh exact TLS
+source population; these are tooling limits, not transport budgets.
+No fixture downloads dependencies during CTest.
 
-The headless closure checks compare both complete extracted source inventories
-with their pinned archives and verify both installed notices. Runtime package
-tests also require the EnTT and GLM notices. Windows CPU/sanitizer, existing WSL
+The headless closure checks compare all three extracted source inventories
+with their pinned archives and verify their installed notices. Runtime package
+tests also require EnTT, GLM and all eight TLS notices. Windows CPU/sanitizer, existing WSL
 CPU/headless and protected target builds qualify these checkpoints; the CPU scene
 layer does not require repeating 06c's GPU acceptance.
 07c and full REQ-07 are PASS under the current-machine scope. The
@@ -208,8 +213,17 @@ checks pass with all 221 qualification source inputs unchanged.
 See the [07 plan](roadmap/scene-plan.md),
 [07a handoff](handoffs/07a-entity-ownership.md),
 [07b handoff](handoffs/07b-transform-hierarchy.md) and
-[07c handoff](handoffs/07c-schema-inspection.md). M02 is next;
+[07c handoff](handoffs/07c-schema-inspection.md). M02 follows its
+[five checkpoints](roadmap/network-plan.md);
 hosted CI stays supplemental under the unchanged current-machine scope.
+
+M02a adds `shark.core.net-wire`, `shark.core.net-fault`, `shark.core.net-transport`
+and `shark.core.net-process`. The first three use seed 1337 and bounded CPU/loopback
+fixtures; the process suite drives separate server/client processes and independent
+TLS peers, with JSON evidence and process-tree watchdogs. They cover diagnostic
+wire negotiation, TLS trust, bounded queues/deadlines and deterministic virtual-time
+fault modeling, not player sessions or entity replication. Full REQ-M02 remains
+NOT_RUN pending M02b-M02e. See the [network contract](network-transport.md).
 
 ## Locked tools and hosted-image limits
 
@@ -308,16 +322,16 @@ claim a read-only runtime root.
 [headless_ci.py](../tools/headless_ci.py) validates the OS/architecture, exact
 installed package inventory, image provenance and Python/tool pins. It rejects
 mapped GPU/audio devices and display sockets and clears display/audio-session
-environment variables. Before configuring, it explicitly prepares the exact EnTT
-and GLM archives under the writable build root and passes `SHARK_ENTT_ARCHIVE` and
-`SHARK_GLM_ARCHIVE` to each preset. This uses
+environment variables. Before configuring, it explicitly prepares the exact EnTT,
+GLM and Mbed TLS archives under the writable build root and passes `SHARK_ENTT_ARCHIVE`,
+`SHARK_GLM_ARCHIVE` and `SHARK_MBEDTLS_ARCHIVE` to each preset. This uses
 [the shared locked archive helper](../tools/core_dependencies.py),
 not an installed-package or source-tree fallback. It then runs these stages in
 fresh build directories:
 
 1. `server-only`: GCC Release with Client, Editor and Tests disabled, dependency
-   network fetching disabled (verified local EnTT/GLM extraction only), explicit
-   Server/Core boundary check, component install including both dependency notices,
+   network fetching disabled (verified local EnTT/GLM/TLS extraction only), explicit
+   Server/Core boundary check, component install including all dependency notices,
    source/build/package closure inspection and a finite installed-Server run.
 2. `server-debug`: GCC Debug with the Core/Server Catch2 and process tests;
    CTest requires a nonempty selection and writes JUnit.
@@ -333,11 +347,15 @@ unsetting display variables on a desktop runner alone is insufficient.
 Closure checks inspect CMake's generated graph and file-api data, the compiler's
 actual source/header dependencies and linker inputs, installed package contents,
 and ELF direct/transitive library dependencies. The only permitted dependency
-source trees in `server-only` are the exactly pinned EnTT and GLM populations;
-every file is compared with its verified archive. Their header interfaces add no
-ELF libraries. The installed package contains the executable and exact
-`licenses/EnTT/LICENSE` and `licenses/GLM/copying.txt` notices.
-Negative fixtures exercise changed/missing EnTT and GLM inputs, extra dependency trees
+source trees in `server-only` are the exactly pinned EnTT, GLM and Mbed TLS populations;
+every regular file is compared with its verified archive, with only the 147 locked,
+unused upstream symlinks omitted for portable extraction. The TLS archive supplies
+3,927 verified regular files. EnTT/GLM are header-only;
+the private TLS graph has three static libraries and seven reviewed object targets.
+No shared TLS library enters the ELF closure. The installed package contains the
+executable, `licenses/EnTT/LICENSE`, `licenses/GLM/copying.txt` and eight exact notices
+under `licenses/MbedTLS/`.
+Negative fixtures exercise changed/missing locked inputs, extra dependency trees
 and presentation/authoring leaks. Catch2 may be fetched for test-enabled
 configurations; it must not enter `server-only` or the installed package. These
 checks qualify an idle process lifecycle and dependency boundary, not world
@@ -370,8 +388,11 @@ python tools/ci.py --preset linux-asan-ubsan
 Run only the presets for the current OS. Windows requires the native x64 MSVC
 developer environment; a plain shell with MSYS CMake earlier on PATH is not a
 valid substitute. The helper verifies the Python and tool pins before configuring.
-An explicit `CXX` environment value overrides the preset's portable compiler name;
-CI uses this to select the versioned GCC/Clang binary.
+Explicit `CC` and `CXX` environment values override the preset's portable C and
+C++ compiler names. Select matching compiler families/versions for the TLS build;
+Linux sanitizer presets use `clang` with `clang++`, and the retained headless
+driver explicitly selects both versioned compilers. The M02a handoff records the
+separately checked two-line `CC` forwarding amendment to the general CPU helper.
 
 The helper configures with `SHARK_INJECT_TEST_FAILURE=OFF` unless explicitly
 requested, builds with two parallel jobs, and runs CTest with `--no-tests=error`

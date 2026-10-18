@@ -54,8 +54,9 @@ defines the implemented discovery and query APIs; the
 [07 checkpoint plan](../roadmap/scene-plan.md) and
 [07c handoff](../handoffs/07c-schema-inspection.md) track qualification.
 07c and full REQ-07 are PASS under the current-machine scope, recorded in the
-[07c receipt](../coverage/evidence/07c-schema-inspection.json). M02 is next;
-the current assignment remains 07. Source persistence, authoring transactions, terminal
+[07c receipt](../coverage/evidence/07c-schema-inspection.json). M02 is active; the
+[M02a handoff](../handoffs/M02a-transport-wire.md) closes the transport foundation,
+and M02b authentication and owned sessions is next. Source persistence, authoring transactions, terminal
 adapters and editor UI retain their later owners; schema IDs do not establish
 file or gameplay-wire formats. The current-machine scope remains unchanged.
 
@@ -71,6 +72,7 @@ file or gameplay-wire formats. The current-machine scope remains unchanged.
 | [0008](0008-human-agent-authoring.md) | Shared human/terminal authoring, discovery, noninteractive results, project ownership and parity gates |
 | [0009](0009-windows-linux-platform-scope.md) | User-directed Windows/Linux platform scope, retired Mac obligations and preserved evidence |
 | [0010](0010-current-machine-scope.md) | Current PC/WSL targets, local MMO workload and packaging gates; revised 02 completion |
+| [0011](0011-network-foundation.md) | Private Mbed TLS, bounded local gameplay-wire foundation, trust boundaries and transport tradeoffs |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

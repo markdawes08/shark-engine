@@ -55,7 +55,13 @@ bounded revisioned CPU inspection through the same scene owner. Follow the
 **07c and full REQ-07 are complete under the current-machine scope.** The
 [07c receipt](docs/coverage/evidence/07c-schema-inspection.json) records 376 passing
 CPU CTests with no failures/skips and protected dependency/package qualification.
-The current assignment remains 07; **M02 is next** in the existing order. Follow the
+The current assignment is **M02**, following the [five network checkpoints](docs/roadmap/network-plan.md).
+**M02a is complete under the current-machine scope.** The [TLS/wire foundation](docs/network-transport.md)
+and [M02a handoff](docs/handoffs/M02a-transport-wire.md) record 404 passing CPU CTests,
+protected builds and isolated package qualification. **M02b, authentication and owned
+sessions, is next.** Full REQ-M02 remains NOT_RUN. Read [ADR 0011](docs/architecture/0011-network-foundation.md)
+before extending transport/authentication. Player sessions, replication and interest
+retain M02b/M02c/M02d; full adversity qualification is M02e. Follow the
 [05 checkpoint plan](docs/roadmap/graphics-device-plan.md),
 [graphics device contract](docs/graphics-device.md),
 [presentation lifecycle contract](docs/presentation-lifecycle.md) and
@@ -103,7 +109,8 @@ not retroactive passes. Follow the
 [graphics checkpoint plan](docs/roadmap/graphics-plan.md) and
 [probe guide](docs/graphics-probe.md); local feasibility does not claim support
 on other machines or a production MMO release.
-Networking, persistence, simulation and streaming remain planned.
+The bounded local TLS/wire foundation is implemented in M02a; player sessions,
+replication, persistence, simulation and streaming remain planned.
 
 Keep all remaining gates achievable on this PC: local processes, loopback or
 Windows/WSL connections, deterministic network faults, local storage and backups,
@@ -218,7 +225,9 @@ window capability unavailable. Raw input is never a Server gameplay protocol. En
 interface composition target that links EngineClient and transitively EngineCore.
 Server links only EngineCore. EnTT is a private header-only Core dependency;
 centrally configured GLM supplies public CPU math through SharkMath and
-`shark/math.hpp`. Offline builds require their locked archives described in
+`shark/math.hpp`. M02a privately links the exact Mbed TLS/TF-PSA static graph;
+Core/Server now require a C compiler as well as C++. Public headers contain no TLS
+or native socket types. Offline builds require all three locked archives described in
 [building](docs/building.md). Server/Core exclude window/GPU/audio/authoring
 libraries at configure/download, link and package time. `server-only` builds a
 Release server with tests and dependency fetching disabled; `server-debug` and

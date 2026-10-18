@@ -14,6 +14,8 @@
 # Keep shaders/ source recipes and HLSL fixtures eligible for versioning.
 # Keep generated agent/session reports under out/; public schemas/examples stay tracked.
 # EnTT/GLM caches and scene/schema/query qualification reports stay under out/ or build/.
+# TLS source caches, generated local identities and network receipts stay under out/ or build/.
+# Explicitly public test-only certificates in tests/fixtures/network remain versioned.
 /build/
 /out/
 /dist/

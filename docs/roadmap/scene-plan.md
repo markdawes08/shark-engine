@@ -3,7 +3,8 @@
 Date: 2026-10-18. Starting revision: `9e08702` on `main`.
 Owner: `REQ-07`. Full assignment verification is **PASS** under the current-machine scope.
 The current-machine scope and existing assignment order remain unchanged.
-**07a, 07b and 07c are complete. The current assignment remains 07; M02 is next.**
+**07a, 07b and 07c are complete. The current assignment is M02; its transport
+foundation is complete and M02b is next.** Follow the [network plan](network-plan.md).
 The [07a handoff](../handoffs/07a-entity-ownership.md) records its 348 passing CPU
 CTests. The [07b handoff](../handoffs/07b-transform-hierarchy.md) and
 [receipt](../coverage/evidence/07b-transform-hierarchy.json) record 362 passing CPU

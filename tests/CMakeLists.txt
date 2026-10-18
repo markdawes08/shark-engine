@@ -7,6 +7,9 @@ add_executable(Tests
     core_scene_tests.cpp
     core_scene_query_tests.cpp
     core_schema_tests.cpp
+    core_net_wire_tests.cpp
+    core_net_fault_tests.cpp
+    core_net_transport_tests.cpp
     core_time_tests.cpp
     core_transform_tests.cpp
     core_work_tests.cpp
@@ -23,6 +26,7 @@ if(TARGET EngineClient)
     target_link_libraries(Tests PRIVATE EngineClient)
 endif()
 target_compile_definitions(Tests PRIVATE
+    SHARK_NETWORK_FIXTURE_DIRECTORY="${PROJECT_SOURCE_DIR}/tests/fixtures/network"
     SHARK_EXPECTED_VERSION="${PROJECT_VERSION}"
     SHARK_INJECT_TEST_FAILURE=$<BOOL:${SHARK_INJECT_TEST_FAILURE}>)
 shark_configure_target(Tests)
@@ -55,6 +59,12 @@ add_test(NAME shark.core.schema COMMAND Tests "[schema]" --rng-seed 1337)
 set_tests_properties(shark.core.schema PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
 add_test(NAME shark.core.scene-query COMMAND Tests "[scene-query]" --rng-seed 1337)
 set_tests_properties(shark.core.scene-query PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
+add_test(NAME shark.core.net-wire COMMAND Tests "[net-wire]" --rng-seed 1337)
+set_tests_properties(shark.core.net-wire PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
+add_test(NAME shark.core.net-fault COMMAND Tests "[net-fault]" --rng-seed 1337)
+set_tests_properties(shark.core.net-fault PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
+add_test(NAME shark.core.net-transport COMMAND Tests "[net-transport]" --rng-seed 1337)
+set_tests_properties(shark.core.net-transport PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)
 if(TARGET EngineClient)
     add_executable(PresentationFaults presentation_faults.cpp)
     target_include_directories(PresentationFaults PRIVATE "${PROJECT_SOURCE_DIR}"
@@ -246,6 +256,16 @@ set(Python3_FIND_STRATEGY LOCATION)
 set(Python3_FIND_REGISTRY NEVER)
 set(Python3_FIND_FRAMEWORK NEVER)
 find_package(Python3 3.11 COMPONENTS Interpreter REQUIRED)
+add_executable(NetworkProbe network_probe.cpp)
+target_link_libraries(NetworkProbe PRIVATE EngineCore)
+shark_configure_target(NetworkProbe)
+shark_classify_target(NetworkProbe test)
+add_test(NAME shark.core.net-process
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/test_network_transport.py"
+        --probe "$<TARGET_FILE:NetworkProbe>"
+        --fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures/network"
+        --output "${CMAKE_CURRENT_BINARY_DIR}/network-process.json")
+set_tests_properties(shark.core.net-process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 60)
 foreach(shark_tooling_fixture IN ITEMS presentation-stress presentation-faults runtime-package shader-pipeline offscreen-smoke offscreen-faults cube-smoke cube-faults)
     string(REPLACE "-" "_" shark_tooling_source "${shark_tooling_fixture}")
     add_test(NAME "shark.tooling.${shark_tooling_fixture}"
@@ -369,16 +389,18 @@ add_test(NAME shark.tooling.graphics-dependencies
     COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_graphics_dependencies.py"
         --cmake "${CMAKE_COMMAND}" --ninja "${CMAKE_MAKE_PROGRAM}"
         --compiler "${CMAKE_CXX_COMPILER}" --entt-archive "${SHARK_EnTT_ARCHIVE}"
-        --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}" -v)
-set_tests_properties(shark.tooling.graphics-dependencies PROPERTIES LABELS "cpu;tooling;boundary" TIMEOUT 90
+        --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}" --c-compiler "${CMAKE_C_COMPILER}"
+        --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}" -v)
+set_tests_properties(shark.tooling.graphics-dependencies PROPERTIES LABELS "cpu;tooling;boundary" TIMEOUT 240
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
 add_test(NAME shark.tooling.scene-dependencies
     COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_scene_dependencies.py"
         --cmake "${CMAKE_COMMAND}" --ninja "${CMAKE_MAKE_PROGRAM}"
         --compiler "${CMAKE_CXX_COMPILER}" --entt-archive "${SHARK_EnTT_ARCHIVE}"
-        --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}" -v)
-set_tests_properties(shark.tooling.scene-dependencies PROPERTIES LABELS "cpu;tooling;boundary;server" TIMEOUT 90
+        --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}" --c-compiler "${CMAKE_C_COMPILER}"
+        --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}" -v)
+set_tests_properties(shark.tooling.scene-dependencies PROPERTIES LABELS "cpu;tooling;boundary;server" TIMEOUT 240
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
 add_test(NAME shark.tooling.graphics-tools

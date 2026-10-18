@@ -72,6 +72,8 @@ def main() -> int:
         configure = ["cmake", "--preset", args.preset,
                      "-DSHARK_INJECT_TEST_FAILURE=" + ("ON" if args.inject_test_failure else "OFF"),
                      "-DPython3_EXECUTABLE=" + sys.executable]
+        if os.environ.get("CC"):
+            configure.append("-DCMAKE_C_COMPILER=" + os.environ["CC"])
         if os.environ.get("CXX"):
             configure.append("-DCMAKE_CXX_COMPILER=" + os.environ["CXX"])
         commands = [

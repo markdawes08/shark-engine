@@ -28,6 +28,7 @@ from graphics_probe import finite_float, reject_constant, unique_object
 from process_runner import run_process
 from toolchain_report import collect
 from shader_pipeline import bundle_payload, canonical, inspect_bundle, verify as verify_shaders
+from core_dependencies import archive_files as core_archive_files, entry as core_dependency_entry
 
 BINARIES = {"bin/Runtime.exe", "bin/vulkan-1.dll", *("bin/" + name for name in CRT_NAMES)}
 SHADER_BUNDLE = "bin/assets/cube.sharkshader"
@@ -62,20 +63,34 @@ def cache_values(build: Path) -> dict[str, str]:
 
 def production_notices(build: Path, lock: dict) -> tuple[dict[str, bytes], dict]:
     payload, records = {}, {}
-    for name in ("EnTT", "GLM", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader"):
+    cache = cache_values(build)
+    for name in ("EnTT", "GLM", "MbedTLS", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader"):
         entry = lock["dependencies"][name]
         lower = name.lower()
         archive = build / f"_deps/{lower}-subbuild/{lower}-populate-prefix/src" / entry["url"].rsplit("/", 1)[-1]
-        if name in ("EnTT", "GLM"):
-            cache_key = "SHARK_EnTT_ARCHIVE" if name == "EnTT" else "SHARK_GLM_ARCHIVE_INPUT"
-            archive = Path(cache_values(build).get(cache_key, str(archive)))
-        notices = archive_notices(archive, entry)
+        if name in ("EnTT", "GLM", "MbedTLS"):
+            cache_key = {"EnTT": "SHARK_EnTT_ARCHIVE", "GLM": "SHARK_GLM_ARCHIVE_INPUT",
+                         "MbedTLS": "SHARK_MbedTLS_ARCHIVE_INPUT"}[name]
+            archive = Path(cache.get(cache_key, str(archive)))
+        if name == "MbedTLS":
+            # The official bz2 archive includes reviewed unused test symlinks;
+            # use the dependency owner's exact-file verifier, not the graphics
+            # tar.gz reader or the mutable populated build tree.
+            verified = core_archive_files(archive, entry, name)
+            notices = {path: verified[path] for path in entry["license_files"]}
+        else:
+            notices = archive_notices(archive, entry)
         if not notices:
             raise ValueError(f"Missing redistribution notices for {name}")
         payload.update({f"licenses/{name}/{path}": data for path, data in notices.items()})
         records[name] = {"archive_sha256": entry["sha256"], "license": entry["license"],
                          "license_files": {path: digest(data) for path, data in notices.items()}}
     return payload, records
+
+
+def required_core_notices() -> dict[str, tuple[str, ...]]:
+    return {"EnTT": ("LICENSE",), "GLM": ("copying.txt",),
+            "MbedTLS": tuple(core_dependency_entry(ROOT, "MbedTLS")["license_files"])}
 
 
 def publish(output: Path, payload: dict[str, bytes], manifest: dict) -> dict:
@@ -230,6 +245,12 @@ def inspect_package(directory: Path, expected_manifest: str) -> dict:
         total += len(data)
     if total > MAX_PACKAGE:
         raise ValueError("Package exceeds byte budget")
+    for name, required in required_core_notices().items():
+        expected = {f"licenses/{name}/{path}" for path in required}
+        if not expected <= files.keys():
+            raise ValueError(f"Package lacks {name} license notices: {sorted(expected - files.keys())}")
+        if name == "MbedTLS" and {path for path in files if path.startswith("licenses/MbedTLS/")} != expected:
+            raise ValueError("Unexpected MbedTLS notice or test credential payload")
     for name in ("EnTT", "GLM", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader", "MicrosoftVC"):
         if not any(path.startswith(f"licenses/{name}/") for path in files):
             raise ValueError(f"Package lacks {name} license notices")

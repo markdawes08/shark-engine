@@ -18,33 +18,48 @@ import shader_pipeline as pipeline
 
 
 class RuntimePackageTests(unittest.TestCase):
-    def test_production_notices_include_private_core_entt_from_verified_cache(self):
+    def test_production_notices_include_core_headers_and_bundled_tls_from_verified_caches(self):
         lock = {"dependencies": {name: {"url": f"https://example.invalid/{name}.tar.gz",
                                        "sha256": name, "license": "MIT"}
-                                  for name in ("EnTT", "GLM", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader")}}
+                                  for name in ("EnTT", "GLM", "MbedTLS", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader")}}
+        tls_notices = {name: b"tls license " + name.encode("utf-8")
+                       for name in package.required_core_notices()["MbedTLS"]}
+        lock["dependencies"]["MbedTLS"]["license_files"] = list(tls_notices)
         local_archive = Path("local cache/entt.tar.gz")
         glm_archive = Path("local cache/glm.tar.gz")
+        tls_archive = Path("local cache/mbedtls-4.1.1.tar.bz2")
         with patch.object(package, "cache_values", return_value={"SHARK_EnTT_ARCHIVE": str(local_archive),
-                                                                "SHARK_GLM_ARCHIVE_INPUT": str(glm_archive)}), \
-                patch.object(package, "archive_notices", return_value={"LICENSE": b"license"}) as notices:
+                                                                "SHARK_GLM_ARCHIVE_INPUT": str(glm_archive),
+                                                                "SHARK_MbedTLS_ARCHIVE_INPUT": str(tls_archive)}), \
+                patch.object(package, "archive_notices", side_effect=lambda archive, entry: {
+                    "copying.txt" if entry["sha256"] == "GLM" else "LICENSE": b"license"}) as notices, \
+                patch.object(package, "core_archive_files", return_value={
+                    **tls_notices, "tests/test-server.key": b"must not be packaged"}) as tls_files:
             payload, records = package.production_notices(Path("build"), lock)
         self.assertIn("licenses/EnTT/LICENSE", payload)
         self.assertEqual(records["EnTT"]["archive_sha256"], "EnTT")
         self.assertEqual(notices.call_args_list[0].args[0], local_archive)
         self.assertEqual(notices.call_args_list[1].args[0], glm_archive)
-        self.assertIn("licenses/GLM/LICENSE", payload)
+        self.assertIn("licenses/GLM/copying.txt", payload)
         self.assertEqual(records["GLM"]["archive_sha256"], "GLM")
+        tls_files.assert_called_once_with(tls_archive, lock["dependencies"]["MbedTLS"], "MbedTLS")
+        self.assertEqual({name.removeprefix("licenses/MbedTLS/"): data for name, data in payload.items()
+                          if name.startswith("licenses/MbedTLS/")}, tls_notices)
+        self.assertEqual(records["MbedTLS"]["license_files"],
+                         {name: package.digest(data) for name, data in tls_notices.items()})
+        self.assertNotIn("licenses/MbedTLS/tests/test-server.key", payload)
 
     def test_missing_manifested_core_dependency_license_is_rejected(self):
-        for name in ("EnTT", "GLM"):
-            with self.subTest(name=name):
-                self.missing_license(name)
+        for name, notices in package.required_core_notices().items():
+            for notice in notices:
+                with self.subTest(name=name, notice=notice):
+                    self.missing_license(name, notice)
 
-    def missing_license(self, name):
+    def missing_license(self, name, notice):
         with tempfile.TemporaryDirectory() as temporary:
             directory = Path(temporary) / "package"
             payload = self.payload()
-            del payload[f"licenses/{name}/LICENSE.txt"]
+            del payload[f"licenses/{name}/{notice}"]
             package.publish(directory, payload, {"schema_version": 1, "kind": "runtime-deployment-fixture",
                                                  "status": "PASS", "qualification": "NOT_RUN"})
             with self.assertRaisesRegex(ValueError, name + " license notices"):
@@ -94,9 +109,24 @@ class RuntimePackageTests(unittest.TestCase):
 
     def payload(self):
         files = {name: b"synthetic CPU fixture" for name in package.BINARIES}
-        for name in ("EnTT", "GLM", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader", "MicrosoftVC"):
+        for name, notices in package.required_core_notices().items():
+            for notice in notices:
+                files[f"licenses/{name}/{notice}"] = b"synthetic license fixture"
+        for name in ("GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader", "MicrosoftVC"):
             files[f"licenses/{name}/LICENSE.txt"] = b"synthetic license fixture"
         return files
+
+    def test_manifested_tls_shared_libraries_and_test_credentials_are_rejected(self):
+        for name in ("bin/mbedtls.dll", "bin/tfpsacrypto.dll", "tests/test-server.key",
+                     "licenses/MbedTLS/test-server.key"):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temporary:
+                output = Path(temporary) / "package"
+                files = self.payload()
+                files[name] = b"not a permitted deployment payload"
+                package.publish(output, files, {"schema_version": 1, "kind": "runtime-deployment-fixture",
+                                               "status": "PASS", "qualification": "NOT_RUN"})
+                with self.assertRaisesRegex(ValueError, "unexpected|Unexpected"):
+                    package.inspect_package(output, package.sha256(output / "package-manifest.json"))
 
     def publish(self, output, **changes):
         manifest = {"schema_version": 1, "kind": "runtime-deployment-fixture",

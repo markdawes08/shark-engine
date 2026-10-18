@@ -29,7 +29,7 @@ dual Happy Bunny/MIT license and retains the complete upstream `copying.txt`.
 `CoreHeaderDependencies.cmake` helper. FetchContent only populates these archives;
 Shark creates their SYSTEM C++20 header interfaces. EngineCore links `EnTT::EnTT`
 privately, keeping registry and component storage details out of public contracts.
-Neither upstream CMake project executes, so no C language setup, upstream library,
+Neither header dependency's upstream CMake project executes, so no C language setup, upstream library,
 tests, testbed/GUI, examples, documentation, global flags or downloads enter
 Shark's graph. Neither integration has patches or transitive dependencies. This
 helper implements the existing lock policy for these two dependencies.
@@ -45,13 +45,15 @@ packed scalar doubles, right-handed coordinates and zero-to-one depth. See the
 GLM object memory is never a serialized format or network protocol. This exception
 does not expose EnTT or authorize per-target math configuration.
 
-Disconnected `server-only` builds require the exact local `SHARK_ENTT_ARCHIVE`
-and `SHARK_GLM_ARCHIVE`, or previously populated locked archive caches. Explicit
+Disconnected `server-only` builds require the exact local `SHARK_ENTT_ARCHIVE`,
+`SHARK_GLM_ARCHIVE` and `SHARK_MBEDTLS_ARCHIVE`, or their previously populated
+locked archive caches. Explicit
 preparation with `tools/core_dependencies.py` occurs before configure; local
 extraction permits neither network fetching nor arbitrary source overrides. The
-headless closure gate verifies every populated file against its archive and checks
-both installed notices. Server components and Runtime packages retain
-`licenses/EnTT/LICENSE` and `licenses/GLM/copying.txt`. See
+headless closure gate verifies every populated regular file against its archive
+and checks all installed notices. Server components and Runtime packages retain
+`licenses/EnTT/LICENSE`, `licenses/GLM/copying.txt` and eight notices under
+`licenses/MbedTLS/`. See
 [building](../building.md#headless-server), [CI](../ci.md), the
 [07a handoff](../handoffs/07a-entity-ownership.md) and
 [07b handoff](../handoffs/07b-transform-hierarchy.md) for commands and qualification;
@@ -84,7 +86,8 @@ loader path handling. Headless builds acquire none of these dependencies.
 an explicitly classified Core-only imported target, and Linux `getrandom`
 through libc. This adds no fetched dependency. Installed compiler/SDK and
 headless userspace identities are recorded with local test evidence. It does
-not select an authentication or network cryptography library for M02.
+not supply the network cryptography implementation; M02a separately selects
+Mbed TLS under ADR 0011.
 
 MMORPG amendment: the product now follows [ADR 0007](0007-mmorpg-architecture.md).
 The existing dependency lock and working bootstrap are retained. M01 introduces
@@ -101,7 +104,8 @@ MMO additions require deliberate selections at their owners: maintained transpor
 session authentication and cryptography in M02; transactional persistence and
 migration tooling in M03; terrain/collision/navigation and bounded streaming in
 M05; skeletal-animation processing in M06; deployment/content authenticity in
-M08. No network, database, navmesh, hosting vendor or new package is selected here.
+M08. M02a selects Mbed TLS below; database, navmesh and hosting providers remain
+unselected.
 Use the existing single dependency lock before first integration. License, patch,
 CPU/platform and offline/server package tests apply to these dependencies too.
 Single-precision Jolt is confined to bounded local origins; it does not select
@@ -117,6 +121,7 @@ Retain the roadmap's requested stack. The following selections authorize integra
 | Graphics | NVRHI Vulkan backend; Vulkan-Headers and loader from one recorded compatible toolchain | Engine graphics implementation | 02 pins and qualifies the combination; 05 owns production lifecycle |
 | Math | GLM 1.0.3, centrally configured `SharkMath` interface and `<shark/math.hpp>` | EngineCore and public math consumers, the documented third-party type exception | 07b; convention, configuration and transform tests; never serialize GLM object memory |
 | ECS | EnTT 4.0.0 entity/registry facilities behind the engine's scene interface | EngineCore scene implementation only, private link | 07a pins entity ownership and safe mutation; 07b adds hierarchy tests |
+| Transport security | Mbed TLS 4.1.1 LTS with its bundled pinned TF-PSA-Crypto; TLS 1.3 over nonblocking TCP | EngineCore transport implementation only, private static link | [M02a foundation qualified](../handoffs/M02a-transport-wire.md); M02b owns player authentication and sessions |
 | Rigid-body physics | Jolt, single-precision world, CPU options matching the platform baseline | Engine physics implementation only | 18/20; lifecycle, fixed-step and event/query checks |
 | Audio playback/mixing | miniaudio, one implementation translation unit, source decoding/encoding disabled | Engine audio implementation only | 24; offline mix and actual playback/device checks |
 | Offline audio import | dr_wav for WAV; Xiph libvorbisfile/libvorbis plus libogg for Ogg Vorbis | EngineTools audio importer only | 24; exact decoder pins, malformed-input/length/loop tests and validated PCM output |
@@ -134,6 +139,22 @@ GLFW supplies the selected Windows windowing route; the retained Linux probe is 
 
 ## Immutable dependency inputs
 
+M02a adds privately integrated Mbed TLS 4.1.1 and its bundled TF-PSA-Crypto from
+the exact official release archive. [ADR 0011](0011-network-foundation.md) records
+the transport/threat assessment and [network contract](../network-transport.md)
+records the TLS/wire limits. This CPU-only dependency requires C alongside C++,
+uses three static libraries and seven reviewed object targets, and adds eight
+redistribution notices. All public network interfaces remain engine-owned.
+The single lock records the complete archive/commit/options/license graph; no
+installed TLS library, provider account, floating source or custom crypto is used.
+Shark selects the Apache-2.0 license option and preserves the complete bundled
+license/notice files. The portable population verifies all 3,927 regular files
+and omits only the 147 pinned symlinks in unused PQC tests/examples. Upstream
+tests, programs and generation are disabled; its documentation utility targets
+are not part of the default or protected dependency build. Both C and C++ use
+matching compiler families; sanitizer configurations instrument the private
+TLS libraries and object targets as well as engine code.
+
 Assignment 01 qualification amendment: source dependencies, development-tool
 wheels and GitHub actions have immutable hash pins. Hosted CI selects explicit
 compiler families/vendor bundles and records their full observed versions,
@@ -149,7 +170,8 @@ Checkpoint 02b adds a separate, explicitly prepared SPIRV-Tools/Vulkan-Validatio
 source graph with its transitive headers/utilities. It is never added to the engine
 CMake graph. Checkpoint 07a adds the private Core EnTT pin and its MIT notice;
 07b adds the approved public GLM math interface and its MIT notice. Ordinary
-Core/Server builds consume these two reviewed CPU-only source dependencies.
+Core/Server builds now consume those header inputs and M02a's reviewed CPU-only
+TLS source dependency.
 [ADR 0009](0009-windows-linux-platform-scope.md) removes Mac driver/tool
 qualification and retires checkpoint 02c.
 
