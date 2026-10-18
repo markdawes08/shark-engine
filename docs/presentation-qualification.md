@@ -5,6 +5,10 @@ This document declares the workload and acceptance limits before execution.
 The current checkpoint result is **FAIL; qualification remains open**. The
 [05c handoff](handoffs/05c-presentation-qualification.md) records observed resource
 growth and an ASan child exit timeout; full `REQ-05` remains **NOT_RUN**. The
+[follow-up investigation](handoffs/05c-failure-investigation.md) isolates a
+desktop DC retained by NVIDIA 610.62 and confirms that five seconds of event
+pumping does not resolve Intel USER growth. Its diagnostic reproducer does not
+replace the workload or acceptance limits below. The
 [presentation lifecycle contract](presentation-lifecycle.md)
 defines the production behavior; the [05b handoff](handoffs/05b-presentation-lifecycle.md)
 preserves the earlier short-run evidence.

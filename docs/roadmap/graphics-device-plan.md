@@ -12,9 +12,12 @@ records the passing gate and remaining limits. The exact next
 checkpoint is **05c, failure and stress qualification**.
 
 05c's fixtures, resource observations and protected Runtime package tooling are
-implemented. Its gate remains open because native investigation found one GDI
-object retained per NVIDIA swapchain/window lifetime and an Intel ASan fault
-child exceeded its process-exit deadline after native cleanup. Follow the
+implemented. Its gate remains open: NVIDIA 610.62 retains a desktop DC per
+swapchain lifetime even in an independent raw Win32/Vulkan reproducer; Intel
+retains USER objects after teardown; and an Intel ASan fault child exceeded its
+process-exit deadline after native cleanup. The
+[follow-up investigation](../handoffs/05c-failure-investigation.md) records the
+driver attribution, controls and remaining unknowns. Follow the
 [qualification contract](../presentation-qualification.md) and
 [05c handoff](../handoffs/05c-presentation-qualification.md) to resolve and rerun
 the gate. Passing short presentation and CPU tests do not close this failure.

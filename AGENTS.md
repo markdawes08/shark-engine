@@ -24,9 +24,12 @@ local qualification and the [hosted follow-up](docs/handoffs/M01-ci-verification
 records the completed native CPU, headless Docker and red/green gate. **05b,
 swapchain, submission and presentation lifecycle, is complete under the
 current-machine scope.** **05c failure/stress fixtures are implemented, but its
-qualification gate remains open:** native investigation found one retained GDI
-object per NVIDIA swapchain/window lifetime, and an Intel ASan fault child timed
-out after recording native cleanup. Do not mark full 05 PASS or start 06 while
+qualification gate remains open:** a minimal raw Win32/Vulkan reproducer retains
+one GDI object per NVIDIA swapchain lifetime; the pinned driver's desktop-DC
+acquisition is identified. Intel also retains USER objects after teardown, and
+an Intel ASan fault child timed out after recording native cleanup. The
+[follow-up investigation](docs/handoffs/05c-failure-investigation.md) records the
+isolations and remaining limits. Do not mark full 05 PASS or start 06 while
 these remain unresolved. Read the
 [05c handoff](docs/handoffs/05c-presentation-qualification.md) and
 [qualification contract](docs/presentation-qualification.md) before continuing;

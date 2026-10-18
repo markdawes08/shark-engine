@@ -1,5 +1,10 @@
 # 05c: presentation failure and stress qualification
 
+Follow-up: the [failure investigation](05c-failure-investigation.md) records work
+after commit `cd97e87`, including the independent NVIDIA reproducer, persistent
+Intel USER-resource observations and bounded ASan exit diagnostics. This handoff
+and its original failed evidence remain the historical implementation record.
+
 Date: 2026-10-18. Base revision: `e05df12ce1d5977d23cdcac76ed8bba94bd917b2`
 on `main`, initially clean. Changes remain uncommitted; the user owns staging,
 committing and pushing. Current checkpoint status: **FAIL; qualification remains

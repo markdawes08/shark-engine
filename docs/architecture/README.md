@@ -36,7 +36,9 @@ passing local gate. The [05a handoff](../handoffs/05a-graphics-device.md) retain
 completed device-foundation evidence. Full `REQ-05` remains NOT_RUN until 05c.
 The [05c qualification guide](../presentation-qualification.md) and
 [handoff](../handoffs/05c-presentation-qualification.md) describe its implemented
-fixtures and open NVIDIA GDI-retention/Intel ASan exit investigations. Assignment 06 remains
+fixtures. The [follow-up investigation](../handoffs/05c-failure-investigation.md)
+isolates NVIDIA desktop-DC retention in the pinned driver and records the open
+Intel USER-resource and ASan exit investigations. Assignment 06 remains
 blocked by that native gate; this is not a platform-scope reduction.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
