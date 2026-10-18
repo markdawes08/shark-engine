@@ -43,11 +43,14 @@ The [03a handoff](../handoffs/03a-core-contracts.md),
 [03b handoff](../handoffs/03b-application-lifecycle.md) and
 [03c handoff](../handoffs/03c-time-and-work.md) record interfaces, exact evidence
 and limits. Assignment 04 follows the [window/input plan](window-input-plan.md).
-**04a input contracts and 04b native GLFW window integration are complete; next is
-04c frame-loop integration and qualification.** The [input guide](../input-contracts.md),
-[window lifecycle guide](../window-lifecycle.md) and
-[04b handoff](../handoffs/04b-native-window.md) describe these separate increments.
-Full `REQ-04` remains NOT_RUN pending 04c. Reuse the tested Core timing policies
-for fixed-tick input consumption, offline pause/step and long-frame behavior.
-The explicit Editor/Runtime `--window` mode supplies the native window; rendering
-and game-authoring UI remain future work.
+**04c and full assignment 04 are complete under the current-machine scope.**
+Next is **05: production graphics device and presentation lifecycle**.
+The [input guide](../input-contracts.md), [window lifecycle guide](../window-lifecycle.md),
+[frame-loop guide](../frame-loop.md) and [04c handoff](../handoffs/04c-frame-loop.md)
+describe these increments. Core's existing `OfflineScheduler` now accepts
+`OfflineControl` for pause and single-step; Client's `OfflineFrameLoop` owns
+input latching without a second scheduler. Paused elapsed time is not admitted,
+and the first resumed pass executes no ticks. The Server policy stays independent.
+Full `REQ-04` is PASS after final Windows/WSL and native-window qualification.
+Editor/Runtime `--window` supplies native F6/F7 sample pause/step controls;
+rendering and game-authoring UI remain future work.

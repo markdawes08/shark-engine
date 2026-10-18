@@ -172,9 +172,29 @@ client closes that session; it does not discard the authoritative world.
 04a implements local held-control release and cancellation of unconsumed input on
 focus loss in the [client input contract](../input-contracts.md). It never changes
 a scheduler or sends a network message. 04b connects native focus/iconify callbacks
-through the [owned window](../window-lifecycle.md); its demonstration only pumps
-events. Frame/tick latching and offline pause remain 04c, and neutral network
-intents remain M02/M04.
+through the [owned window](../window-lifecycle.md). 04c adds
+`OfflineControl` to the existing Core scheduler and an EngineClient
+[`OfflineFrameLoop`](../frame-loop.md). Pending one-shot input survives frames
+with zero ticks and is consumed once by the first catch-up tick; later ticks get
+held/cursor state. Presentation retains an independent current-frame snapshot.
+Focus cancellation removes older pending positive actions before accepting any
+fresh post-regain input. Text and scroll remain bounded across captures.
+
+Manual, unfocused or iconified offline pause admits no elapsed time and clears
+whole/fractional time debt. The first resumed pass executes zero ticks and anchors
+fresh elapsed time. Explicit single-step requires manual pause and an active
+window, executes one successful tick with zero interpolation alpha, and remains
+paused. Paused interval positives do not replay; a step consumes only current
+positive actions with latest held state and pending releases. Existing callback
+fault, cancellation and tick-index rules remain in force. These are compatible
+extensions to the offline C++ scheduler API; the original unpaused poll overload
+retains its behavior. There is no persistent-format or wire-protocol change.
+
+The native sample reserves F6/F7 for pause/step and reports diagnostic JSON lines.
+These controls are not authoring commands, action bindings or server gameplay
+messages. No world simulation or production presentation is implemented. Final
+04c local qualification is PASS in the [handoff](../handoffs/04c-frame-loop.md);
+neutral network intents remain M02/M04.
 
 ## Simulation ownership and mutation phases
 

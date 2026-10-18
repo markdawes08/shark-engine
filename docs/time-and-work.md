@@ -57,10 +57,36 @@ Cancellation stops before another callback. The scheduler retains its remaining
 debt and becomes terminally cancelled; deliberately construct a new instance to
 restart. It cannot preempt a callback already running. Callback work must be
 bounded by its subsystem; the callback budget alone cannot bound arbitrary code.
-Offline discarded time never advances indices over unexecuted callbacks. Offline
-pause/step, window focus/input and presentation integration belong to 04; server
-scheduling has no such pause input. Network snapshots, prediction and durable
-wall-time policies remain separate later implementations.
+Offline discarded time never advances indices over unexecuted callbacks. Network
+snapshots, prediction and durable wall-time policies remain separate later
+implementations.
+
+## Offline pause and single-step
+
+04c extends `OfflineScheduler::poll` with `OfflineControl{paused, single_step}`;
+the original overload remains equivalent to unpaused polling. Spell an explicit
+third argument as `OfflineControl{...}` or `std::stop_token{...}`; an untyped `{}`
+cannot select between the overloads. This adds no second
+scheduler and does not change `ServerScheduler`. Pause discards accumulated whole
+and fractional time without advancing the integer tick index, then admits no
+elapsed time. The first resumed pass updates the high-water clock and executes
+zero ticks. Only later passes admit fresh elapsed time. Clock regressions never
+lower that high-water value, including while paused and on resume.
+
+Single-step requires `paused=true`. It invokes exactly one successful callback,
+retains pause and reports zero interpolation alpha. It consumes no elapsed-time
+debt. Invalid running single-step requests reject before consuming elapsed time.
+Existing reentrancy, callback error/exception, tick overflow and terminal
+cancellation/fault rules apply to stepped ticks too. A callback error cannot be
+retried by toggling pause. No paused/focus control is added to Server timing.
+
+EngineClient's [`OfflineFrameLoop`](frame-loop.md) combines this policy with raw
+input. It interprets manual pause and inactive-window state, retains input across
+zero-tick frames and consumes interval actions only on the first executed tick.
+Native callbacks themselves still never touch a scheduler. The shared window
+sample's F6/F7 controls exercise this local policy without a scene, gameplay
+simulation or authoring API. Final 04c local qualification is PASS in the
+[handoff](handoffs/04c-frame-loop.md).
 
 ## Bounded completions and backpressure
 

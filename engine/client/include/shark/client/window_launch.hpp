@@ -17,8 +17,8 @@ struct WindowLaunchOptions {
 [[nodiscard]] Result<WindowLaunchOptions>
 parse_window_arguments(std::span<const std::string_view> arguments);
 
-// A window/event demonstration only. No rendering, scene, simulation or pause
-// policy is introduced here; frame/tick consumption belongs to checkpoint 04c.
+// Native window with the local offline frame policy: F6 toggles manual pause,
+// F7 steps once while paused. No rendering, scene or game-authoring UI exists.
 [[nodiscard]] Result<void> run_window_sample(std::string_view title,
                                              const WindowLaunchOptions& options);
 

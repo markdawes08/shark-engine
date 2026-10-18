@@ -195,6 +195,12 @@ Result<StepReport> OfflineScheduler::fail(const ErrorCode code, const char* oper
 
 Result<StepReport> OfflineScheduler::poll(const MonotonicTime now, const TickCallback& callback,
                                           const std::stop_token stop) {
+    return poll(now, callback, OfflineControl{}, stop);
+}
+
+Result<StepReport> OfflineScheduler::poll(const MonotonicTime now, const TickCallback& callback,
+                                          const OfflineControl control,
+                                          const std::stop_token stop) {
     if (polling_) {
         return timing_error(ErrorCode::conflict, "timing.offline.reentrant",
                             "A scheduling pass is already active");
@@ -203,6 +209,10 @@ Result<StepReport> OfflineScheduler::poll(const MonotonicTime now, const TickCal
         return failure_ ? Result<StepReport>{*failure_}
                         : fail(ErrorCode::execution_failed, "timing.offline.faulted",
                                "The offline schedule is faulted");
+    }
+    if (control.single_step && !control.paused) {
+        return timing_error(ErrorCode::invalid_argument, "timing.offline.control",
+                            "Single-step requires a paused offline schedule");
     }
     if (cancelled_ || stop.stop_requested()) {
         cancelled_ = true;
@@ -216,17 +226,25 @@ Result<StepReport> OfflineScheduler::poll(const MonotonicTime now, const TickCal
     MonotonicTime elapsed{0};
     bool clamped = now < last_;
     if (now >= last_) {
-        elapsed = now - last_;
+        if (!control.paused && !paused_) {
+            elapsed = now - last_;
+        }
         last_ = now;
     }
+    if (control.paused) {
+        pending_ = 0;
+        remainder_ = 0;
+    }
+    paused_ = control.paused;
     constexpr auto maximum_delta = std::chrono::milliseconds{250};
     if (elapsed > maximum_delta) {
         elapsed = maximum_delta;
         clamped = true;
     }
     accrue(elapsed, 60, pending_, remainder_);
+    const bool single_step = control.single_step;
     std::uint32_t executed = 0;
-    while (pending_ != 0 && executed < 8) {
+    while ((pending_ != 0 || (single_step && executed == 0)) && executed < 8) {
         if (stop.stop_requested()) {
             cancelled_ = true;
             break;
@@ -248,7 +266,9 @@ Result<StepReport> OfflineScheduler::poll(const MonotonicTime now, const TickCal
             return *failure_;
         }
         ++next_tick_;
-        --pending_;
+        if (!single_step) {
+            --pending_;
+        }
         ++executed;
     }
     cancelled_ = cancelled_ || stop.stop_requested();

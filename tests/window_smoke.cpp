@@ -7,12 +7,14 @@
 #include <shark/time.hpp>
 
 #include "window_backend.hpp"
+#include "window_loop.hpp"
 
 #include <cmath>
 #include <iostream>
 #include <stdexcept>
 #include <string>
 #include <utility>
+#include <vector>
 
 namespace {
 using namespace shark::client;
@@ -85,10 +87,10 @@ class AuxiliaryWindow {
     HWND handle_;
 };
 
-void key(HWND handle, UINT message, bool repeated = false) {
+void key(HWND handle, UINT message, bool repeated = false, UINT code = 'A') {
     // Owned window messages exercise GLFW's real Win32 translation. They are
     // synthetic events, not proof of a physical keyboard or system-wide input.
-    const auto scan = MapVirtualKeyW('A', MAPVK_VK_TO_VSC);
+    const auto scan = MapVirtualKeyW(code, MAPVK_VK_TO_VSC);
     auto flags = static_cast<LPARAM>(1 | (scan << 16));
     if (repeated || message == WM_KEYUP) {
         flags |= static_cast<LPARAM>(1ULL << 30);
@@ -96,7 +98,7 @@ void key(HWND handle, UINT message, bool repeated = false) {
     if (message == WM_KEYUP) {
         flags |= static_cast<LPARAM>(1ULL << 31);
     }
-    SendMessageW(handle, message, 'A', flags);
+    SendMessageW(handle, message, code, flags);
 }
 
 void run() {
@@ -106,7 +108,7 @@ void run() {
     require(!Window::create(invalid), "invalid configuration must fail before native startup");
     AuxiliaryWindow auxiliary;
     WindowConfig config;
-    config.title = "Shark 04b - \u6D4B\u8BD5";
+    config.title = "Shark 04c - \u6D4B\u8BD5";
     config.content = {640, 400};
     auto window = take(Window::create(config));
     const auto handle = static_cast<HWND>(take(shark::client::detail::native_test_handle(*window)));
@@ -116,7 +118,7 @@ void run() {
     await_state(*window, [](const auto& state) { return state.visible && state.focused; });
     wchar_t title[128]{};
     require(GetWindowTextW(handle, title, 128) > 0 &&
-                std::wstring{title} == L"Shark 04b - \u6D4B\u8BD5",
+                std::wstring{title} == L"Shark 04c - \u6D4B\u8BD5",
             "UTF-8 window title");
     auto conflict = Window::create(config);
     require(!conflict && conflict.error().code == shark::ErrorCode::conflict,
@@ -228,9 +230,95 @@ void run() {
             "callback rejection visible outside callback");
     passed("bounded-callback-diagnostics");
 
+    using namespace std::chrono_literals;
+    auto loop = take(OfflineFrameLoop::create(0ns));
+    bool manual_pause = false;
+    shark::Logger logger{std::cerr};
+    std::vector<InputSnapshot> delivered;
+    const OfflineInputCallback tick = [&](std::uint64_t,
+                                          const InputSnapshot& value) -> shark::Result<void> {
+        delivered.push_back(value);
+        return {};
+    };
+    const auto pump = [&](shark::MonotonicTime now) {
+        auto report =
+            take(detail::pump_offline_window(*window, *loop, now, manual_pause, tick, logger));
+        require(report.has_value(), "window remains open during frame smoke");
+        return *report;
+    };
+    key(handle, WM_KEYDOWN);
+    require(pump(1ms).timing.executed == 0, "zero tick retains native input");
+    require(pump(50ms).timing.executed == 3 && delivered.size() == 3,
+            "native input consumed by three offline ticks");
+    require(delivered[0].key(Key::a).pressed && !delivered[1].key(Key::a).pressed &&
+                !delivered[2].key(Key::a).pressed && delivered[2].key(Key::a).held,
+            "first native catch-up tick alone receives pressed edge");
+    key(handle, WM_KEYUP);
+    key(handle, WM_KEYDOWN, false, VK_F6);
+    require(pump(60ms).paused && manual_pause, "F6 pauses actual shared sample pump");
+    key(handle, WM_KEYUP, false, VK_F6);
+    key(handle, WM_KEYDOWN, false, VK_F7);
+    require(pump(10s).timing.executed == 1 && manual_pause,
+            "F7 steps exactly once after a long paused interval");
+    require(delivered.back().key(Key::a).released && !delivered.back().key(Key::f6).held &&
+                !delivered.back().key(Key::f7).pressed,
+            "sample controls are excluded from local tick input");
+    key(handle, WM_KEYDOWN, true, VK_F7);
+    require(pump(11s).timing.executed == 0, "F7 OS repeat does not create repeated steps");
+    key(handle, WM_KEYUP, false, VK_F7);
+    key(handle, WM_KEYDOWN, false, VK_F6);
+    require(pump(12s).timing.executed == 0 && !manual_pause, "resume discards paused wall time");
+    key(handle, WM_KEYUP, false, VK_F6);
+    require(pump(12017ms).timing.executed == 1, "offline ticks resume at normal rate");
+    passed("native-frame-input-and-controls");
+
+    key(handle, WM_KEYDOWN);
+    require(pump(12018ms).timing.executed == 0, "pending press before focus loss");
+    auxiliary.focus();
+    await_state(*window, [](const auto& current) { return !current.focused; });
+    require(pump(13s).paused, "real focus loss pauses only local offline loop");
+    auto server = take(shark::ServerScheduler::create({}, 0ns));
+    std::uint32_t server_ticks = 0;
+    const shark::TickCallback server_tick = [&](std::uint64_t) -> shark::Result<void> {
+        ++server_ticks;
+        return {};
+    };
+    require(take(server->poll(50ms, server_tick)).executed == 1,
+            "server clock progresses during local focus pause");
+    check(window->iconify());
+    await_state(*window, [](const auto& current) { return current.iconified; });
+    const auto minimized = pump(14s);
+    require(minimized.paused && minimized.presentation_suspended,
+            "real iconify suspends local presentation and offline callbacks");
+    require(take(server->poll(100ms, server_tick)).executed == 1 && server_ticks == 2,
+            "server clock progresses during minimize");
+    check(window->restore());
+    check(window->focus());
+    await_state(*window, [](const auto& current) { return !current.iconified && current.focused; });
+    require(pump(15s).timing.executed == 0, "restore has no paused catch-up");
+    require(pump(15017ms).timing.executed == 1 && !delivered.back().key(Key::a).held &&
+                !delivered.back().key(Key::a).pressed && delivered.back().key(Key::a).released,
+            "focus cancellation survives frame latch");
+    passed("native-frame-focus-and-server-independence");
+
+    delivered.clear();
+    key(handle, WM_KEYDOWN);
+    const auto stalled = pump(20s);
+    require(stalled.timing.executed == 8 && stalled.timing.discarded == 7 &&
+                stalled.timing.clamped_delta && delivered.size() == 8,
+            "native pump uses bounded long-frame offline policy");
+    require(delivered.front().key(Key::a).pressed && !delivered.back().key(Key::a).pressed,
+            "long frame cannot replay a native action");
+    key(handle, WM_KEYUP);
+    passed("native-frame-long-stall");
+
     SendMessageW(handle, WM_CLOSE, 0, 0);
     require(take(window->state()).close_requested, "native close request observed");
     require(IsWindow(handle) != FALSE, "close request retains owned resource until teardown");
+    const auto before_close = loop->next_tick();
+    require(!take(detail::pump_offline_window(*window, *loop, 30s, manual_pause, tick, logger)) &&
+                loop->next_tick() == before_close,
+            "close prevents another local tick");
     check(window->close());
     require(IsWindow(handle) == FALSE, "explicit close destroys HWND");
     check(window->close());
@@ -246,7 +334,7 @@ void run() {
         require(IsWindow(owned) == FALSE, "RAII teardown destroys HWND");
     }
     passed("repeated-native-lifetimes");
-    std::cout << "{\"status\":\"PASS\",\"native_windows\":17,\"cases\":8,"
+    std::cout << "{\"status\":\"PASS\",\"native_windows\":17,\"cases\":11,"
                  "\"physical_input\":false,\"rendering\":false}\n"
               << std::flush;
     require(static_cast<bool>(std::cout), "evidence output");

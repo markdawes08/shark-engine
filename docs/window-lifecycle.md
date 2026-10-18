@@ -3,8 +3,9 @@
 04b connects EngineClient's [input contract](input-contracts.md) to the pinned
 GLFW backend on Windows. Editor and Runtime use the same owned `Window` and
 explicit launch mode. This opens an empty native window without a graphics
-context. Scene authoring, rendering and gameplay remain later increments;
-[04c](roadmap/window-input-plan.md) owns frame/tick input consumption and pause.
+context. Scene authoring, rendering and gameplay remain later increments.
+[04c's frame loop](frame-loop.md) now connects input to existing Core timing;
+final local qualification is PASS in the [handoff](handoffs/04c-frame-loop.md).
 
 ## Launch and build capability
 
@@ -20,8 +21,12 @@ Close the window normally to exit. `--window-ms` accepts an integer from 1 throu
 can stall; qualification uses an external watchdog to bound the whole process.
 Invalid arguments fail before
 display initialization. No arguments, `--help` and `--version` retain informational
-behavior without opening a window. This is a contributor smoke interface, not a
-project-authoring CLI or usable editor UI.
+behavior without opening a window. F6 toggles manual offline pause and F7 steps
+once while manually paused and active. They are reserved sample keys and are
+removed from the tick snapshot. Pause/step changes emit diagnostic JSON lines
+containing the manual pause state and next tick index. Focus/minimize can pause
+offline ticks without clearing the manual pause choice. This is a contributor
+smoke interface, not a project-authoring CLI or usable editor UI.
 
 `SHARK_NATIVE_WINDOW` defaults ON for Windows client builds and OFF elsewhere.
 Turning it OFF keeps injectable client tests and returns `capability_unavailable`
@@ -126,17 +131,24 @@ The native test target is deliberately separate from ordinary CTest:
 ```
 
 The output directory must be fresh. This opens owned windows briefly and has a
-60-second external process watchdog. Eight cases exercise actual startup/title,
+60-second external process watchdog. Cases exercise actual startup/title,
 resize/DPI, Win32-to-GLFW input callbacks, focus transfer, minimize/restore,
 overflow diagnostics, close and 16 further RAII lifetimes. Synthetic messages
 target only the test's HWND; no system-wide keyboard/mouse injection or display
 setting change occurs. It verifies native callbacks and observed current-monitor
-scale, not physical input hardware or multiple monitors. Reports retain JSON
+scale, not physical input hardware or multiple monitors. 04c extends the native
+fixture through the same launch helper for first-tick input, F6/F7 pause/step,
+focus/minimize/resume and close-before-tick behavior. Reports retain JSON
 records, logs, binary hash and failure status. The
-[04b handoff](handoffs/04b-native-window.md) records exact local results.
+[04b handoff](handoffs/04b-native-window.md) records its original local results;
+the [04c handoff](handoffs/04c-frame-loop.md) tracks the extended gate.
 
-The launch demonstration drains input and uses the existing monotonic clock for
-short event-pump waits. It does not schedule simulation. Input across zero or
-multiple fixed ticks, offline pause/step and long-frame policies remain 04c.
-Window focus/minimize never controls authoritative server time. Production
-surface/device/presentation ownership starts in 05.
+The launch sample uses the existing monotonic clock for short event-pump waits
+and passes snapshots to `OfflineFrameLoop`. Input survives zero-tick frames and
+one-shot actions reach only the first catch-up tick; manual/focus/iconify pause
+admits no elapsed time. The first resumed frame executes no ticks. A close request
+is handled before scheduling another tick. The sample's callback is intentionally
+empty because no local scene exists yet; diagnostic tick indices are not MMO
+simulation progress. Window focus/minimize never controls authoritative server
+time. The full 04 gate is complete. Production surface/device/presentation
+ownership starts in the next assignment, 05.

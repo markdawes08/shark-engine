@@ -46,10 +46,14 @@ therefore expose held controls with no repeated one-shot edges.
 Events apply in injection order, while snapshots coalesce multiple occurrences.
 A press/release within one interval preserves both edges even though held is false;
 a release/press can preserve both while held is true. A snapshot is not an ordered
-key-event log or a count of taps. Text order is retained separately. Frame/tick
-latching, modifier-aware action routing, UI capture and action bindings need their
-own explicit integration; callers must not consume the same pressed edge once per
-catch-up tick. 04c defines frame/tick consumption using the existing schedulers.
+key-event log or a count of taps. Text order is retained separately.
+04c's [offline frame loop](frame-loop.md) retains a bounded pending snapshot
+across frames with zero ticks and consumes interval data only on the first
+catch-up tick. Later ticks receive latest held/cursor state, while presentation
+keeps its independent current-frame snapshot. Cross-frame text keeps its accepted
+64-scalar prefix; overflowing scroll sums reject both new components atomically.
+Both overflows retain sticky diagnostics until tick consumption.
+Modifier-aware action routing, UI capture and action bindings remain later work.
 
 ## Focus cancellation
 
@@ -75,7 +79,13 @@ can produce positive actions.
 
 An online input/session layer will translate neutral state into its defined
 released-input message. No such network protocol is implemented here. Focus loss
-does not grant a client control over server time; offline pause remains 04c work.
+does not grant a client control over server time. The offline frame loop cancels
+older pending positives on a focus-loss snapshot before merging any newly accepted
+post-regain input. Unfocused/iconified offline frames pause and neutralize held
+input; manual pause discards pending positive actions while preserving latest
+held state and release edges. An explicit paused step uses only that frame's
+positive actions. See the [frame-loop guide](frame-loop.md) for time and resume
+semantics. `InputState` itself still never changes a scheduler.
 
 ## Cursor, scroll and text bounds
 
@@ -111,3 +121,7 @@ not native Linux window support. The
 [04a handoff](handoffs/04a-input-contracts.md) records exact results and limitations.
 Those CPU fixtures do not establish native-window or physical keyboard behavior;
 the [04b window handoff](handoffs/04b-native-window.md) records separate native evidence.
+`shark.client.frame` adds deterministic input/time integration under seed 1337
+and a 20-second timeout. Final 04c local qualification is PASS in the
+[04c handoff](handoffs/04c-frame-loop.md); neither family establishes physical
+input hardware, rendered gameplay or online authority.

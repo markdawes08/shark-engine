@@ -9,7 +9,7 @@ and Mac compatibility are outside current scope.
 The [MMORPG plan and existing-code assessment](docs/roadmap/mmorpg-plan.md) define
 the authoritative server, persistent world and staged client/server work.
 These are planned capabilities; the current engine provides Core services, raw
-input and owned Windows windows, with a separate opt-in graphics feasibility
+input, owned Windows windows and offline frame/input scheduling, with a separate opt-in graphics feasibility
 probe containing analytic draw/compute/readback cases.
 The versioned
 [requirements manifest](docs/coverage/requirements.json) preserves assignment
@@ -22,16 +22,20 @@ define noninteractive tools, discoverable schemas and safe project handoff. Thos
 game-authoring interfaces remain planned; terminal build/test tools work today.
 
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
-**04a input contracts and 04b native GLFW windows are complete; next is 04c
-frame-loop integration and qualification.** See the [input guide](docs/input-contracts.md),
+**04c and full assignment 04 are complete under the current-machine scope.**
+Next is **05: production graphics device and presentation lifecycle**.
+See the [input guide](docs/input-contracts.md),
 [window lifecycle guide](docs/window-lifecycle.md),
-[04b handoff](docs/handoffs/04b-native-window.md) and
-[window/input plan](docs/roadmap/window-input-plan.md). Full `REQ-04` remains
-NOT_RUN pending fixed-tick input consumption, offline pause/step and final 04c qualification.
+[frame-loop guide](docs/frame-loop.md),
+[04c handoff](docs/handoffs/04c-frame-loop.md) and
+[window/input plan](docs/roadmap/window-input-plan.md). Full `REQ-04` is PASS:
+196 Windows/WSL CTests, three native window smoke runs and protected
+standalone/package checks passed.
 See the [03c handoff](docs/handoffs/03c-time-and-work.md),
 [Core API guide](docs/core-contracts.md), [lifecycle guide](docs/application-lifecycle.md)
 and [timing/work guide](docs/time-and-work.md). Reusable CPU scheduling and bounded
-completions pass local qualification; 04c will connect them to window/input consumption.
+completions pass local qualification. The client frame loop now reuses Core
+timing for bounded 60 Hz ticks, pause/step and input consumption across frames.
 Assignment 02 is complete under
 the current-machine scope. The headless server and Core/Client
 separation have passed local and hosted qualification, including deliberate test
@@ -88,6 +92,8 @@ ctest --preset windows-debug
 Open the native window with `build/windows-debug/bin/Editor.exe --window` or
 `build/windows-debug/bin/Runtime.exe --window`. These currently show a window
 without rendered game content or authoring UI; close it through its title bar.
+F6 toggles the sample's offline pause and F7 advances one tick while paused.
+Control changes produce diagnostic JSON lines in the terminal; no game world runs.
 See the [window guide](docs/window-lifecycle.md) for bounded terminal smoke runs.
 
 Use `linux-debug` in the existing WSL Linux environment. Sanitizer, release and isolated

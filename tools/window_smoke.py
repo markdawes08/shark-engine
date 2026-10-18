@@ -20,6 +20,8 @@ CASES = {
     "startup-owner-and-title", "resize-and-dpi", "native-input-callbacks",
     "focus-release-and-regain", "minimize-and-restore", "bounded-callback-diagnostics",
     "native-close-and-idempotent-cleanup", "repeated-native-lifetimes",
+    "native-frame-input-and-controls", "native-frame-focus-and-server-independence",
+    "native-frame-long-stall",
 }
 
 

@@ -14,8 +14,10 @@ M01 separates static `EngineCore`, `EngineClient` and `EngineTools` libraries,
 retains `Engine` as an INTERFACE client composition target, and adds `Server`
 alongside `Editor`, `Runtime` and Catch2 `Tests`. Core contains version/argument
 behavior and the strict server configuration parser. Client contains bootstrap
-help presentation, 04a device-free raw input and 04b owned native Windows GLFW
-windows; it has no production graphics yet.
+help presentation, 04a device-free raw input, 04b owned native Windows GLFW
+windows and 04c's [offline frame coordinator](../frame-loop.md), which reuses
+Core timing for first-tick input consumption and local pause/step. It has no
+production graphics yet.
 The [input contract](../input-contracts.md) and
 [04 checkpoint plan](../roadmap/window-input-plan.md) keep native GLFW integration
 separate from CPU input tests. The [window lifecycle](../window-lifecycle.md)

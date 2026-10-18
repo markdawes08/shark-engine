@@ -57,6 +57,13 @@ struct ServerTimingConfig {
     std::uint32_t max_pending_ticks{200};
 };
 
+struct OfflineControl {
+    bool paused{false};
+    // A request for this pass, valid only while paused. A successful step advances
+    // exactly one tick without creating elapsed-time debt or leaving pause.
+    bool single_step{false};
+};
+
 // Both schedules are single-owner objects. Never destroy one inside its callback.
 // Calls from a callback are rejected without changing the outer pass. Successful
 // poll paths allocate no storage except whatever the user callback does.
@@ -110,6 +117,14 @@ class OfflineScheduler final {
 
     [[nodiscard]] Result<StepReport> poll(MonotonicTime now, const TickCallback& callback,
                                           std::stop_token stop = {});
+    // Pause clears accumulated time and admits none while paused. The first
+    // resumed pass resets the clock anchor and executes no ticks; later passes
+    // admit only fresh elapsed time. Regressions never lower the high-water
+    // clock, including paused and resumed passes. A single step has zero alpha.
+    // Invalid running single-step requests reject before consuming elapsed time.
+    // Fault/cancellation remain terminal and preserve their existing snapshots.
+    [[nodiscard]] Result<StepReport> poll(MonotonicTime now, const TickCallback& callback,
+                                          OfflineControl control, std::stop_token stop = {});
     [[nodiscard]] std::uint64_t next_tick() const noexcept;
     [[nodiscard]] StepReport backlog() const noexcept;
     [[nodiscard]] bool faulted() const noexcept;
@@ -126,6 +141,7 @@ class OfflineScheduler final {
     bool polling_{false};
     bool cancelled_{false};
     bool faulted_{false};
+    bool paused_{false};
     std::optional<Error> failure_;
 };
 

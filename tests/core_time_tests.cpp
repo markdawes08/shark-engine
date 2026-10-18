@@ -470,3 +470,263 @@ TEST_CASE("offline tick exhaustion cannot overflow a committed index", "[timing]
     CHECK(schedule->backlog().pending == 3);
     CHECK(schedule->faulted());
 }
+
+TEST_CASE("offline pause clears fractional time and resume admits no paused wall time",
+          "[timing]") {
+    auto schedule = offline();
+    const auto fractional = schedule->poll(10ms, complete);
+    REQUIRE(fractional);
+    REQUIRE(fractional.value().remainder_units == 600'000'000);
+
+    for (const auto now : std::array{100ms, 100'000ms}) {
+        const auto paused = schedule->poll(now, complete, shark::OfflineControl{true});
+        REQUIRE(paused);
+        CHECK(paused.value().executed == 0);
+        CHECK(paused.value().pending == 0);
+        CHECK(paused.value().discarded == 0);
+        CHECK(paused.value().interpolation_alpha() == 0.0);
+        CHECK_FALSE(paused.value().clamped_delta);
+    }
+    const auto resumed = schedule->poll(200s, complete);
+    REQUIRE(resumed);
+    CHECK(resumed.value().executed == 0);
+    CHECK(resumed.value().remainder_units == 0);
+    CHECK_FALSE(resumed.value().clamped_delta);
+    const auto fresh = schedule->poll(200s + 16'666'667ns, complete);
+    REQUIRE(fresh);
+    CHECK(fresh.value().executed == 1);
+    CHECK(fresh.value().remainder_units == 20);
+    CHECK(schedule->next_tick() == 1);
+}
+
+TEST_CASE("offline single step advances once per explicit paused pass without debt", "[timing]") {
+    auto schedule = offline(0ns, 42);
+    std::vector<std::uint64_t> ticks;
+    const auto record = [&](const std::uint64_t tick) -> shark::Result<void> {
+        ticks.push_back(tick);
+        return {};
+    };
+    for (const auto now : std::array{0ns, 0ns, 10'000'000'000ns}) {
+        const auto stepped = schedule->poll(now, record, shark::OfflineControl{true, true});
+        REQUIRE(stepped);
+        CHECK(stepped.value().executed == 1);
+        CHECK(stepped.value().pending == 0);
+        CHECK(stepped.value().discarded == 0);
+        CHECK(stepped.value().interpolation_alpha() == 0.0);
+        CHECK(schedule->backlog().pending == 0);
+    }
+    CHECK(ticks == std::vector<std::uint64_t>{42, 43, 44});
+    const auto paused = schedule->poll(20s, record, shark::OfflineControl{true});
+    REQUIRE(paused);
+    CHECK(paused.value().executed == 0);
+    const auto resumed = schedule->poll(30s, record);
+    REQUIRE(resumed);
+    CHECK(resumed.value().executed == 0);
+    REQUIRE(schedule->poll(30s + 50ms, record));
+    CHECK(ticks == std::vector<std::uint64_t>{42, 43, 44, 45, 46, 47});
+}
+
+TEST_CASE("offline invalid controls and empty callbacks do not alter clock or pause state",
+          "[timing]") {
+    auto schedule = offline();
+    std::stop_source stop;
+    static_cast<void>(stop.request_stop());
+    const auto invalid =
+        schedule->poll(100ms, complete, shark::OfflineControl{false, true}, stop.get_token());
+    REQUIRE_FALSE(invalid);
+    CHECK(invalid.error().code == shark::ErrorCode::invalid_argument);
+    CHECK(invalid.error().context.operation == "timing.offline.control");
+    CHECK_FALSE(schedule->backlog().cancelled);
+    CHECK_FALSE(schedule->faulted());
+    CHECK_FALSE(schedule->poll(100ms, {}, shark::OfflineControl{true}));
+    const auto running = schedule->poll(100ms, complete);
+    REQUIRE(running);
+    CHECK(running.value().executed == 6);
+
+    REQUIRE(schedule->poll(125ms, complete, shark::OfflineControl{true}));
+    CHECK_FALSE(schedule->poll(150ms, complete, shark::OfflineControl{false, true}));
+    CHECK_FALSE(schedule->poll(150ms, {}, shark::OfflineControl{}));
+    const auto resumed = schedule->poll(200ms, complete);
+    REQUIRE(resumed);
+    CHECK(resumed.value().executed == 0);
+    const auto fresh = schedule->poll(250ms, complete);
+    REQUIRE(fresh);
+    CHECK(fresh.value().executed == 3);
+    CHECK(schedule->next_tick() == 9);
+}
+
+TEST_CASE("offline paused and resumed regressions preserve the clock high water", "[timing]") {
+    auto schedule = offline();
+    REQUIRE(schedule->poll(110ms, complete, shark::OfflineControl{true}));
+    const auto backwards =
+        schedule->poll(shark::MonotonicTime::min(), complete, shark::OfflineControl{true});
+    REQUIRE(backwards);
+    CHECK(backwards.value().clamped_delta);
+    CHECK(backwards.value().executed == 0);
+    const auto stepped = schedule->poll(90ms, complete, shark::OfflineControl{true, true});
+    REQUIRE(stepped);
+    CHECK(stepped.value().clamped_delta);
+    CHECK(stepped.value().executed == 1);
+    CHECK(stepped.value().remainder_units == 0);
+    const auto resumed = schedule->poll(100ms, complete);
+    REQUIRE(resumed);
+    CHECK(resumed.value().clamped_delta);
+    CHECK(resumed.value().executed == 0);
+    const auto recovered = schedule->poll(110ms, complete);
+    REQUIRE(recovered);
+    CHECK(recovered.value().executed == 0);
+    CHECK_FALSE(recovered.value().clamped_delta);
+    const auto fresh = schedule->poll(127ms, complete);
+    REQUIRE(fresh);
+    CHECK(fresh.value().executed == 1);
+    CHECK(fresh.value().remainder_units == 20'000'000);
+    CHECK(schedule->next_tick() == 2);
+}
+
+TEST_CASE("offline single step faults retain the original error without fabricated debt",
+          "[timing]") {
+    auto schedule = offline(0ns, 7);
+    std::uint64_t calls = 0;
+    const auto callback = [&](const std::uint64_t tick) -> shark::Result<void> {
+        ++calls;
+        CHECK(tick == 7);
+        return shark::Error{shark::ErrorCode::io_failure, "step failure",
+                            shark::ErrorContext{"test.offline.step", "step-7"}};
+    };
+    const auto failed = schedule->poll(10s, callback, shark::OfflineControl{true, true});
+    REQUIRE_FALSE(failed);
+    CHECK(failed.error().context.operation == "test.offline.step");
+    CHECK(failed.error().context.request_id == "step-7");
+    CHECK(schedule->faulted());
+    CHECK(schedule->next_tick() == 7);
+    CHECK(schedule->backlog().pending == 0);
+    CHECK(schedule->backlog().remainder_units == 0);
+    const auto again = schedule->poll(20s, callback, shark::OfflineControl{true, true});
+    REQUIRE_FALSE(again);
+    CHECK(again.error().message == "step failure");
+    CHECK_FALSE(schedule->poll(30s, callback));
+    CHECK(calls == 1);
+
+    auto throwing = offline();
+    const auto thrown = throwing->poll(
+        1s, [](std::uint64_t) -> shark::Result<void> { throw 7; },
+        shark::OfflineControl{true, true});
+    REQUIRE_FALSE(thrown);
+    CHECK(thrown.error().context.operation == "timing.offline.callback");
+    CHECK(throwing->faulted());
+    CHECK(throwing->next_tick() == 0);
+    CHECK(throwing->backlog().pending == 0);
+}
+
+TEST_CASE("offline pause and step preserve terminal cancellation semantics", "[timing]") {
+    std::stop_source stop;
+    auto schedule = offline();
+    const auto stepped = schedule->poll(
+        10s,
+        [&](std::uint64_t) -> shark::Result<void> {
+            static_cast<void>(stop.request_stop());
+            return {};
+        },
+        shark::OfflineControl{true, true}, stop.get_token());
+    REQUIRE(stepped);
+    CHECK(stepped.value().executed == 1);
+    CHECK(stepped.value().cancelled);
+    CHECK(stepped.value().pending == 0);
+    CHECK(stepped.value().discarded == 0);
+    const auto again = schedule->poll(20s, complete, shark::OfflineControl{true, true});
+    REQUIRE(again);
+    CHECK(again.value().executed == 0);
+    CHECK(again.value().cancelled);
+    CHECK(schedule->next_tick() == 1);
+
+    auto stopped = offline();
+    const auto before_first =
+        stopped->poll(1s, complete, shark::OfflineControl{true, true}, stop.get_token());
+    REQUIRE(before_first);
+    CHECK(before_first.value().cancelled);
+    CHECK(before_first.value().executed == 0);
+    CHECK(before_first.value().pending == 0);
+    CHECK(stopped->next_tick() == 0);
+
+    std::stop_source debt_stop;
+    auto with_debt = offline();
+    REQUIRE(with_debt->poll(
+        250ms,
+        [&](std::uint64_t) -> shark::Result<void> {
+            static_cast<void>(debt_stop.request_stop());
+            return {};
+        },
+        debt_stop.get_token()));
+    REQUIRE(with_debt->backlog().pending == 14);
+    const auto terminal = with_debt->poll(1s, complete, shark::OfflineControl{true});
+    REQUIRE(terminal);
+    CHECK(terminal.value().pending == 14);
+    CHECK(terminal.value().cancelled);
+}
+
+TEST_CASE("offline nested pause and step requests cannot change an active pass", "[timing]") {
+    auto schedule = offline();
+    const auto callback = [&](std::uint64_t) -> shark::Result<void> {
+        for (const auto control :
+             std::array{shark::OfflineControl{true}, shark::OfflineControl{true, true}}) {
+            const auto nested = schedule->poll(10s, complete, control);
+            REQUIRE_FALSE(nested);
+            CHECK(nested.error().code == shark::ErrorCode::conflict);
+            CHECK(nested.error().context.operation == "timing.offline.reentrant");
+        }
+        return {};
+    };
+    const auto running = schedule->poll(50ms, callback);
+    REQUIRE(running);
+    CHECK(running.value().executed == 3);
+    const auto fresh = schedule->poll(100ms, complete);
+    REQUIRE(fresh);
+    CHECK(fresh.value().executed == 3);
+    const auto stepped = schedule->poll(100ms, callback, shark::OfflineControl{true, true});
+    REQUIRE(stepped);
+    CHECK(stepped.value().executed == 1);
+    CHECK(schedule->next_tick() == 7);
+    const auto resumed = schedule->poll(1s, complete);
+    REQUIRE(resumed);
+    CHECK(resumed.value().executed == 0);
+}
+
+TEST_CASE("offline single step checks index overflow before invoking the callback", "[timing]") {
+    auto schedule = offline(0ns, std::numeric_limits<std::uint64_t>::max());
+    std::uint64_t calls = 0;
+    const auto result = schedule->poll(
+        1s,
+        [&](std::uint64_t) -> shark::Result<void> {
+            ++calls;
+            return {};
+        },
+        shark::OfflineControl{true, true});
+    REQUIRE_FALSE(result);
+    CHECK(result.error().context.operation == "timing.offline.tick_overflow");
+    CHECK(calls == 0);
+    CHECK(schedule->backlog().pending == 0);
+    CHECK(schedule->backlog().remainder_units == 0);
+    CHECK(schedule->faulted());
+}
+
+TEST_CASE("offline pause and step do not affect independent authoritative server time",
+          "[timing]") {
+    auto local = offline();
+    auto authoritative = server();
+    ManualClock clock;
+    for (int pass = 0; pass < 4; ++pass) {
+        REQUIRE(clock.wait_for(50ms));
+        const bool step = pass == 1;
+        const auto local_pass =
+            local->poll(clock.now(), complete, shark::OfflineControl{true, step});
+        REQUIRE(local_pass);
+        CHECK(local_pass.value().executed == (step ? 1U : 0U));
+        const auto server_pass = authoritative->poll(clock.now(), complete);
+        REQUIRE(server_pass);
+        CHECK(server_pass.value().executed == 1);
+        CHECK(server_pass.value().discarded == 0);
+        CHECK(server_pass.value().pending == 0);
+    }
+    CHECK(local->next_tick() == 1);
+    CHECK(authoritative->next_tick() == 4);
+}

@@ -16,13 +16,19 @@ uses real bounded producer/consumer threads; it does not start production worker
 `shark.client.input` uses seed 1337 and a 15-second timeout, registered only in
 client-enabled builds. It runs without initializing GLFW, a display or real keyboard input;
 Server-only configurations exclude its source and test. The
-[04 plan](roadmap/window-input-plan.md) tracks the remaining frame-loop work in 04c.
+[04 plan](roadmap/window-input-plan.md) records the completed 04c gate.
 04b adds the [owned GLFW window](window-lifecycle.md). `shark.client.window` uses
 seed 1337 and a 20-second timeout for display-free ownership/callback fixtures.
 On Windows, `SHARK_NATIVE_WINDOW=ON` by default for client builds: this enables
 the C compiler and the pinned static GLFW dependency, without NVRHI or Vulkan.
 Set it OFF for a device-free client build. Server-only and WSL CPU configurations
 leave it OFF and never fetch GLFW. Ordinary CTest does not open native windows.
+04c adds the [offline frame loop](frame-loop.md). `shark.client.frame` uses seed
+1337 and a 20-second timeout for deterministic input/time, pause/step, overflow,
+failure and server-independence fixtures. `shark.core.timing` also covers the
+compatible Core pause/step extension. These tests use controlled times without
+display initialization or wall-clock sleeps. Final local qualification is PASS
+in the [04c handoff](handoffs/04c-frame-loop.md).
 02a/02b add a separate opt-in [graphics probe](graphics-probe.md) with locked
 dependencies, terminal diagnostics, analytic GPU cases and offline validation tools.
 02d adds matching `graphics-windows-release` and `graphics-linux-release`
@@ -50,6 +56,10 @@ assigns game-authoring CLI/discovery to 14/15 and editor integration to 16/17.
 There is no game-authoring CLI or usable graphical editor in the current foundation.
 `build/windows-debug/bin/Editor.exe --window` opens an empty native window;
 Runtime supports the same flag. Add `--window-ms 1000` for a bounded smoke run.
+F6 toggles manual offline pause and F7 advances one tick while paused and active.
+The sample prints diagnostic JSON lines for those controls; no scene or gameplay
+simulation runs. The first resumed frame admits no elapsed time. These reserved
+keys are sample controls, not authoring commands or an action-binding API.
 The [window guide](window-lifecycle.md) documents lifecycle and explicit native
 smoke commands, including their brief visible-window behavior and evidence paths.
 The dedicated Server is not an authoring host.

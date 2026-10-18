@@ -4,6 +4,8 @@
 #include <shark/log.hpp>
 #include <shark/time.hpp>
 
+#include "window_loop.hpp"
+
 #include <algorithm>
 #include <charconv>
 #include <iostream>
@@ -17,6 +19,52 @@ Error argument_error() {
             {.operation = "client.window.arguments.parse"}};
 }
 } // namespace
+
+Result<std::optional<OfflineFrameReport>>
+detail::pump_offline_window(Window& window, OfflineFrameLoop& loop, MonotonicTime now,
+                            bool& manual_pause, const OfflineInputCallback& callback,
+                            Logger& diagnostics) {
+    if (auto polled = window.poll_events(); !polled) {
+        return polled.error();
+    }
+    auto state = window.state();
+    if (!state) {
+        return state.error();
+    }
+    auto input = window.capture_input();
+    if (!input) {
+        return input.error();
+    }
+    auto pending = window.take_diagnostics();
+    if (!pending) {
+        return pending.error();
+    }
+    for (const auto* error : {&pending.value().input_error, &pending.value().window_error}) {
+        if (*error) {
+            if (auto logged = diagnostics.write(LogLevel::warning, **error); !logged) {
+                return logged.error();
+            }
+        }
+    }
+    if (state.value().close_requested) {
+        return std::optional<OfflineFrameReport>{};
+    }
+    // Development sample controls, not action bindings or editor commands.
+    // Poll continues during pause/minimize; there is no shared server clock here.
+    const bool active = input.value().focused && !state.value().iconified;
+    if (active && input.value().key(Key::f6).pressed) {
+        manual_pause = !manual_pause;
+    }
+    const bool step = active && manual_pause && input.value().key(Key::f7).pressed;
+    input.value().keys[static_cast<std::size_t>(Key::f6) - 1] = {};
+    input.value().keys[static_cast<std::size_t>(Key::f7) - 1] = {};
+    auto report =
+        loop.advance(now, input.value(), {manual_pause, step, state.value().iconified}, callback);
+    if (!report) {
+        return report.error();
+    }
+    return std::optional<OfflineFrameReport>{report.value()};
+}
 
 Result<WindowLaunchOptions> parse_window_arguments(std::span<const std::string_view> arguments) {
     if (arguments.empty() || arguments.front() != "--window") {
@@ -55,36 +103,43 @@ Result<void> run_window_sample(std::string_view title, const WindowLaunchOptions
         }
         auto window = std::move(created).value();
         SteadyMonotonicClock clock;
+        auto created_loop = OfflineFrameLoop::create(clock.now());
+        if (!created_loop) {
+            return created_loop.error();
+        }
+        auto loop = std::move(created_loop).value();
         Logger diagnostics{std::cerr};
+        bool manual_pause = false;
+        // The callback is deliberately empty until a local play world exists.
+        // Scheduler indices are diagnostic callbacks, never simulated MMO ticks.
+        const OfflineInputCallback tick = [](std::uint64_t, const InputSnapshot&) -> Result<void> {
+            return {};
+        };
         while (true) {
-            if (auto polled = window->poll_events(); !polled) {
-                return polled.error();
-            }
-            auto state = window->state();
-            if (!state) {
-                return state.error();
-            }
-            // This demonstration drains captures without gameplay consumers.
-            // Checkpoint 04c owns latching edges across simulation ticks.
-            auto input = window->capture_input();
-            if (!input) {
-                return input.error();
-            }
-            auto pending = window->take_diagnostics();
-            if (!pending) {
-                return pending.error();
-            }
-            for (const auto* error :
-                 {&pending.value().input_error, &pending.value().window_error}) {
-                if (*error) {
-                    if (auto logged = diagnostics.write(LogLevel::warning, **error); !logged) {
-                        return logged.error();
-                    }
-                }
-            }
             const auto now = clock.now();
-            if (state.value().close_requested || (options.duration && now >= *options.duration)) {
+            if (options.duration && now >= *options.duration) {
                 return window->close();
+            }
+            const auto prior_pause = manual_pause;
+            auto frame =
+                detail::pump_offline_window(*window, *loop, now, manual_pause, tick, diagnostics);
+            if (!frame) {
+                return frame.error();
+            }
+            if (!frame.value()) {
+                return window->close();
+            }
+            if (prior_pause != manual_pause ||
+                (manual_pause && frame.value()->timing.executed != 0)) {
+                std::cout << "{\"event\":\"offline-sample-control\",\"paused\":"
+                          << (manual_pause ? "true" : "false")
+                          << ",\"next_tick\":" << loop->next_tick() << "}\n"
+                          << std::flush;
+                if (!std::cout) {
+                    return Error{ErrorCode::io_failure,
+                                 "Window control output failed",
+                                 {.operation = "client.window.output"}};
+                }
             }
             auto wait = std::chrono::duration_cast<MonotonicTime>(std::chrono::milliseconds{10});
             if (options.duration) {

@@ -25,8 +25,9 @@ headless sanitizer and clean-runtime stages stop after its Debug failure.
 The [M01 hosted follow-up](handoffs/M01-ci-verification.md) and
 [durable gate evidence](coverage/evidence/M01-ci-gate.json) record actual runs,
 Docker/package qualification and the fifteen checks required at that revision. The
-[MMORPG execution plan](roadmap/mmorpg-plan.md) now places the next work in assignment
-04c following local 03/04a/04b qualification. The [opt-in probe](graphics-probe.md) adds CPU checks to
+[MMORPG execution plan](roadmap/mmorpg-plan.md) records the completed 04c and full
+assignment-04 local gate, following local 03/04a/04b qualification.
+Assignment 05 is next. The [opt-in probe](graphics-probe.md) adds CPU checks to
 ordinary CI while graphics builds/device runs use explicit graphics presets.
 The historical job/test counts above remain tied to their recorded revisions.
 [ADR 0009](architecture/0009-windows-linux-platform-scope.md) removes Mac from
@@ -84,7 +85,13 @@ Ordinary CPU presets now also build Server and run its unit/lifecycle checks.
 fixtures. Windows client builds compile the pinned GLFW backend but ordinary
 CTest never opens a window; explicit native smoke runs qualify the current PC.
 Linux CPU and isolated Server builds leave `SHARK_NATIVE_WINDOW=OFF`, preserving
-their device-free dependency set. No new hosted result is implied by local 04b work.
+their device-free dependency set. 04c adds `shark.client.frame` with seed 1337,
+labels `cpu;unit;client` and a 20-second timeout. Its deterministic input/time
+fixtures and the expanded `shark.core.timing` cover pause/step, first-tick input,
+failure/cancellation and server independence. Native window smoke separately
+exercises the shared launch helper and reserved F6/F7 sample controls. Final local
+qualification is PASS in the [04c handoff](handoffs/04c-frame-loop.md).
+No new hosted result is implied by local 04c work.
 Windows tests cover finite-duration shutdown; POSIX SIGINT/SIGTERM and readiness
 I/O failure checks execute on Linux, not through Windows `terminate()`.
 

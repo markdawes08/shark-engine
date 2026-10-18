@@ -1,14 +1,17 @@
 #include <shark/client/window.hpp>
 
 #include "../engine/client/src/window_backend.hpp"
+#include "../engine/client/src/window_loop.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
 #include <array>
+#include <chrono>
 #include <cstddef>
 #include <cstdint>
 #include <limits>
 #include <memory>
+#include <sstream>
 #include <string>
 #include <thread>
 #include <type_traits>
@@ -24,14 +27,17 @@ using shark::client::ContentScale;
 using shark::client::CursorPosition;
 using shark::client::Key;
 using shark::client::MouseButton;
+using shark::client::OfflineFrameLoop;
 using shark::client::Window;
 using shark::client::WindowConfig;
 using shark::client::WindowExtent;
 using shark::client::WindowState;
 using shark::client::detail::BackendClaim;
+using shark::client::detail::pump_offline_window;
 using shark::client::detail::WindowBackend;
 using shark::client::detail::WindowCommand;
 using shark::client::detail::WindowEventSink;
+using namespace std::chrono_literals;
 
 enum class Step {
     claim,
@@ -212,6 +218,12 @@ template <typename T> void check_error(const shark::Result<T>& result, const Err
     const auto result = window.capture_input();
     REQUIRE(result);
     return result.value();
+}
+
+[[nodiscard]] std::unique_ptr<OfflineFrameLoop> frame_loop() {
+    auto result = OfflineFrameLoop::create(0ns);
+    REQUIRE(result);
+    return std::move(result).value();
 }
 
 // Values are the locked GLFW 3.4 key catalog. The fixture deliberately does not
@@ -1098,4 +1110,233 @@ TEST_CASE("framebuffer conversion rejects zero dimensions invalid cursors and ov
         CHECK_FALSE(result.error().message.empty());
         CHECK_FALSE(result.error().context.operation.empty());
     }
+}
+
+TEST_CASE("window frame pump propagates polling and query failures before dispatch",
+          "[window][frame]") {
+    for (const bool query_failure : std::array{false, true}) {
+        BackendState backend;
+        auto window = open(backend);
+        auto loop = frame_loop();
+        backend.fail_poll = !query_failure;
+        backend.fail_query = query_failure;
+        backend.native_error_code = 713;
+        std::ostringstream output;
+        shark::Logger logger{output};
+        bool paused = false;
+        std::uint64_t calls = 0;
+        const auto result = pump_offline_window(
+            *window, *loop, 50ms, paused,
+            [&](std::uint64_t, const shark::client::InputSnapshot&) -> shark::Result<void> {
+                ++calls;
+                return {};
+            },
+            logger);
+        REQUIRE_FALSE(result);
+        CHECK(result.error().code == ErrorCode::execution_failed);
+        CHECK(result.error().context.operation == (query_failure ? "window.query" : "window.poll"));
+        CHECK(result.error().message.find("713") != std::string::npos);
+        CHECK(calls == 0);
+        CHECK(loop->next_tick() == 0);
+        CHECK_FALSE(paused);
+        CHECK(output.str().empty());
+        REQUIRE(window->close());
+        CHECK_FALSE(backend.lease);
+    }
+}
+
+TEST_CASE("window frame pump propagates diagnostic sink failure before dispatch",
+          "[window][frame]") {
+    for (const bool window_diagnostic : std::array{false, true}) {
+        BackendState backend;
+        auto window = open(backend);
+        auto loop = frame_loop();
+        if (window_diagnostic) {
+            backend.sink->content_scale(0.0F, 1.0F);
+        } else {
+            backend.sink->key(-1, 1);
+        }
+        std::ostringstream output;
+        output.setstate(std::ios::badbit);
+        shark::Logger logger{output};
+        bool paused = false;
+        std::uint64_t calls = 0;
+        const auto result = pump_offline_window(
+            *window, *loop, 50ms, paused,
+            [&](std::uint64_t, const shark::client::InputSnapshot&) -> shark::Result<void> {
+                ++calls;
+                return {};
+            },
+            logger);
+        REQUIRE_FALSE(result);
+        CHECK(result.error().code == ErrorCode::io_failure);
+        CHECK(result.error().context.operation == "log.write");
+        CHECK(calls == 0);
+        CHECK(loop->next_tick() == 0);
+        REQUIRE(window->close());
+        CHECK_FALSE(backend.lease);
+    }
+}
+
+TEST_CASE("window frame pump logs deferred diagnostics and preserves callback failures",
+          "[window][frame]") {
+    BackendState backend;
+    auto window = open(backend);
+    auto loop = frame_loop();
+    backend.sink->key(-1, 1);
+    backend.sink->content_scale(0.0F, 1.0F);
+    std::ostringstream output;
+    shark::Logger logger{output};
+    bool paused = false;
+    std::uint64_t calls = 0;
+    const auto result = pump_offline_window(
+        *window, *loop, 50ms, paused,
+        [&](std::uint64_t, const shark::client::InputSnapshot&) -> shark::Result<void> {
+            ++calls;
+            return shark::Error{ErrorCode::conflict,
+                                "play tick rejected",
+                                {.operation = "test.window.tick", .request_id = "tick-0"}};
+        },
+        logger);
+    REQUIRE_FALSE(result);
+    CHECK(result.error().code == ErrorCode::conflict);
+    CHECK(result.error().context.operation == "test.window.tick");
+    CHECK(result.error().context.request_id == "tick-0");
+    CHECK(calls == 1);
+    CHECK(loop->next_tick() == 0);
+    CHECK(loop->faulted());
+    const auto records = output.str();
+    CHECK(records.find("\"level\":\"warning\"") != std::string::npos);
+    const auto first_newline = records.find('\n');
+    REQUIRE(first_newline != std::string::npos);
+    CHECK(records.find('\n', first_newline + 1) == records.size() - 1);
+}
+
+TEST_CASE("window frame pump closes without ticking or handling simultaneous controls",
+          "[window][frame]") {
+    BackendState backend;
+    auto window = open(backend);
+    auto loop = frame_loop();
+    backend.sink->key(295, 1);
+    backend.sink->key(296, 1);
+    backend.sink->close_requested();
+    std::ostringstream output;
+    shark::Logger logger{output};
+    bool paused = false;
+    std::uint64_t calls = 0;
+    const auto result = pump_offline_window(
+        *window, *loop, 1s, paused,
+        [&](std::uint64_t, const shark::client::InputSnapshot&) -> shark::Result<void> {
+            ++calls;
+            return {};
+        },
+        logger);
+    REQUIRE(result);
+    CHECK_FALSE(result.value());
+    CHECK(calls == 0);
+    CHECK(loop->next_tick() == 0);
+    CHECK_FALSE(paused);
+    const auto steps = backend.recorded();
+    REQUIRE(steps.size() >= 2);
+    CHECK(steps[steps.size() - 2] == Step::poll);
+    CHECK(steps.back() == Step::query);
+}
+
+TEST_CASE("window frame pump handles F6 F7 edges and continues polling while paused",
+          "[window][frame]") {
+    BackendState backend;
+    auto window = open(backend);
+    auto loop = frame_loop();
+    std::ostringstream output;
+    shark::Logger logger{output};
+    bool paused = false;
+    std::vector<shark::client::InputSnapshot> ticks;
+    const shark::client::OfflineInputCallback callback =
+        [&](std::uint64_t, const shark::client::InputSnapshot& input) -> shark::Result<void> {
+        ticks.push_back(input);
+        CHECK(input.key(Key::f6) == ButtonState{});
+        CHECK(input.key(Key::f7) == ButtonState{});
+        return {};
+    };
+    const auto pump = [&](shark::MonotonicTime now) {
+        const auto previous_steps = backend.step_count;
+        const auto result = pump_offline_window(*window, *loop, now, paused, callback, logger);
+        REQUIRE(result);
+        REQUIRE(result.value());
+        REQUIRE(backend.step_count == previous_steps + 2);
+        CHECK(backend.steps[previous_steps] == Step::poll);
+        CHECK(backend.steps[previous_steps + 1] == Step::query);
+        return *result.value();
+    };
+    backend.sink->key(295, 1);
+    CHECK(pump(50ms).timing.executed == 0);
+    CHECK(paused);
+    backend.sink->key(295, 2);
+    backend.sink->key(296, 1);
+    backend.sink->key(65, 1);
+    CHECK(pump(100ms).timing.executed == 1);
+    CHECK(paused);
+    REQUIRE(ticks.size() == 1);
+    CHECK(ticks.front().key(Key::a).pressed);
+    backend.sink->key(296, 2);
+    CHECK(pump(1s).timing.executed == 0);
+    CHECK(pump(2s).timing.executed == 0);
+    backend.sink->key(296, 0);
+    backend.sink->key(296, 1);
+    CHECK(pump(3s).timing.executed == 1);
+    REQUIRE(ticks.size() == 2);
+    CHECK(ticks.back().key(Key::a) == ButtonState{true, false, false, false});
+    backend.sink->key(295, 0);
+    backend.sink->key(295, 1);
+    CHECK(pump(4s).timing.executed == 0);
+    CHECK_FALSE(paused);
+    backend.sink->key(296, 2);
+    CHECK(pump(4s + 50ms).timing.executed == 3);
+    CHECK(loop->next_tick() == 5);
+    CHECK(output.str().empty());
+}
+
+TEST_CASE("window frame pump polls minimized windows and excludes inactive control presses",
+          "[window][frame]") {
+    BackendState backend;
+    auto window = open(backend);
+    auto loop = frame_loop();
+    std::ostringstream output;
+    shark::Logger logger{output};
+    bool paused = false;
+    std::uint64_t calls = 0;
+    const shark::client::OfflineInputCallback callback =
+        [&](std::uint64_t, const shark::client::InputSnapshot&) -> shark::Result<void> {
+        ++calls;
+        return {};
+    };
+    REQUIRE(window->iconify());
+    for (const auto now : std::array{1s, 2s, 3s}) {
+        backend.sink->key(295, 1);
+        backend.sink->key(296, 1);
+        const auto previous_steps = backend.step_count;
+        const auto result = pump_offline_window(*window, *loop, now, paused, callback, logger);
+        REQUIRE(result);
+        REQUIRE(result.value());
+        CHECK(result.value()->paused);
+        CHECK(result.value()->presentation_suspended);
+        CHECK(result.value()->timing.executed == 0);
+        REQUIRE(backend.step_count == previous_steps + 2);
+        CHECK(backend.steps[previous_steps] == Step::poll);
+        CHECK(backend.steps[previous_steps + 1] == Step::query);
+        CHECK_FALSE(paused);
+    }
+    REQUIRE(window->restore());
+    const auto resumed = pump_offline_window(*window, *loop, 4s, paused, callback, logger);
+    REQUIRE(resumed);
+    REQUIRE(resumed.value());
+    CHECK_FALSE(resumed.value()->paused);
+    CHECK_FALSE(resumed.value()->presentation_suspended);
+    CHECK(resumed.value()->timing.executed == 0);
+    const auto fresh = pump_offline_window(*window, *loop, 4s + 50ms, paused, callback, logger);
+    REQUIRE(fresh);
+    REQUIRE(fresh.value());
+    CHECK(fresh.value()->timing.executed == 3);
+    CHECK(calls == 3);
+    CHECK(output.str().empty());
 }

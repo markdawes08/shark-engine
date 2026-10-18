@@ -27,8 +27,12 @@ in client-enabled builds; headless Server builds exclude it. The
 [04a handoff](../handoffs/04a-input-contracts.md) preserves its CPU evidence.
 04b's `client.native-window` feature adds owned GLFW lifecycle, CPU backend/CLI
 fixtures and explicit Windows smoke evidence in the
-[04b handoff](../handoffs/04b-native-window.md). Full `REQ-04` stays NOT_RUN pending
-04c frame/tick/pause qualification.
+[04b handoff](../handoffs/04b-native-window.md). The `client.offline-frame-loop`
+feature maps 04c's frame/tick input, pause/step and shared sample pump to
+`shark.client.frame`, window fixtures and Core timing tests. The
+[04c handoff](../handoffs/04c-frame-loop.md) records its final qualification.
+Full `REQ-04` is PASS under the current-machine gate: all three checkpoints are
+complete, with final evidence in [04c-local.json](evidence/04c-local.json).
 
 The user selected a seamless open-world MMORPG. The
 [versioned execution plan](../roadmap/mmorpg-plan.md) and
@@ -60,7 +64,8 @@ as additive schema-3 fields. REQ-02 is PASS for the amended local gate, with
 explicit scope and SHA-256-pinned references to the unchanged 02d receipts.
 The validator verifies those references and retained bytes; it does not rerun
 graphics or interpret an old aggregate NOT_RUN as a universal PASS.
-`current_assignment: 04` identifies the next window/input increment. All later
+`current_assignment: 04` records the completed window/input assignment. Assignment
+05, production graphics device and presentation lifecycle, is next. All later
 implementation requirements remain NOT_RUN.
 
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`

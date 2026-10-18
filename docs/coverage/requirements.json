@@ -104,7 +104,7 @@
         "Window focus/minimize and local pause never stop an online authoritative world. Separate server ticks, client prediction, network snapshots and rendering; the offline 60 Hz policy is not the server clock."
       ],
       "planned_fixture": "WindowLifecycle hardware smoke, InputFocusRelease and FixedStepAccumulator fixtures; FeatureWorld/FrameTiming is connected when assignment 10 adds the scene runner.",
-      "verification": {"status": "NOT_RUN", "reason": "04a input contracts and 04b native GLFW windows pass their current-machine gates. Windows Debug/Release/ASan and WSL client CPU GCC Debug/Clang ASan+UBSan each pass29 CTests; WSL headless configurations pass23 each with no GLFW/C language. Input17 cases/34172 assertions and window29 cases/1765 assertions pass in all five client configurations with seed1337 and no skips. Native Windows Debug/Release/ASan each pass eight window smoke cases, current-monitor144DPI/1.5scale, actual focus/minimize/resize/close and repeated teardown; targeted Win32 input is synthetic, not physical-device qualification. Runtime/Editor bounded windows, standalone boundaries, shared GraphicsProbe build, WSL Release closure and SDK-free smoke pass. Evidence: docs/coverage/evidence/04b-local.json and docs/handoffs/04b-native-window.md. Full REQ-04 remains NOT_RUN pending04c frame/tick input consumption, offline pause/step and long-frame qualification; see docs/roadmap/window-input-plan.md."}
+      "verification": {"status": "PASS", "reason": "Full assignment04 current-machine gate passes across04a raw input,04b native GLFW lifecycle and04c frame/tick consumption, offline pause/single-step and long-frame qualification. Windows Debug/Release/ASan and WSL client GCC Debug/Clang ASan+UBSan each pass30 CTests; WSL headless configurations pass23 each:196 total. Frame26 cases/6220 assertions, window35/1941, input17/34172 and timing42/30942 pass with seed1337 and no family skips; six pump cases overlap frame/window tags. Three native Windows smoke runs each pass11 cases and17 engine-window lifetimes, including current144DPI/1.5scale, actual focus/minimize/resize/close, targeted synthetic callbacks, shared F6/F7 pump, bounded stalled-frame scheduling and independent ServerScheduler progress. Runtime/Editor bounded windows, standalone boundaries, WSL Release closure and isolated SDK-free runtime pass. All captured source/test/tool hashes match. Exact commands, scope and limits: docs/coverage/evidence/04c-local.json and docs/handoffs/04c-frame-loop.md. No production renderer, authoring UI, physical input qualification or MMO simulation/capacity is claimed. Assignment05 is next."}
     },
     {
       "id": "REQ-05",
@@ -809,13 +809,22 @@
   "implemented_surface": {
     "features": [
       {
+        "id": "client.offline-frame-loop",
+        "name": "Fixed-tick input consumption and offline pause/step through the shared window pump",
+        "requirement_ids": ["REQ-04"],
+        "test_ids": ["shark.client.frame", "shark.client.window", "shark.core.timing"],
+        "test_sources": ["tests/client_frame_tests.cpp", "tests/client_window_tests.cpp", "tests/core_time_tests.cpp"],
+        "fixtures": ["engine/client/src/frame_loop.cpp", "engine/client/src/window_launch.cpp", "engine/core/src/time.cpp", "tests/window_smoke.cpp", "tools/window_smoke.py"],
+        "fixture_reason": "Controllable observations and injected input prove first-tick-only edges across zero/multiple callbacks, bounded merged text/scroll, pause/step, resume without paused debt, long frames, faults/cancellation and independent Server scheduling. The actual Runtime/Editor pump is covered by injected-backend CPU cases and explicit native Windows smoke. FeatureWorld/FrameTiming connects in10; there is no renderer, local play world, authoring API or MMO simulation claim."
+      },
+      {
         "id": "client.native-window",
         "name": "Owned native Windows GLFW window with injectable lifecycle and bounded callbacks",
         "requirement_ids": ["REQ-04"],
         "test_ids": ["shark.client.window", "shark.runtime.window-cli", "shark.editor.window-cli"],
         "test_sources": ["tests/client_window_tests.cpp", "tests/client_window_launch_tests.cpp", "tests/CheckWindowCli.cmake"],
         "fixtures": ["engine/client/src/window.cpp", "engine/client/src/window_glfw.cpp", "tests/window_smoke.cpp", "tools/window_smoke.py"],
-        "fixture_reason": "Device-free tests inject startup failures, rollback, native mapping, focus/minimize release, dimensions/DPI and bounded diagnostics. Explicit native Windows smoke exercises owned HWND lifecycle, targeted synthetic Win32 callbacks, current-monitor DPI and repeated teardown; it is not physical input or rendering evidence. Core/Server and WSL CPU-only configurations exclude GLFW. Frame/tick/pause integration remains04c; FeatureWorld begins in10."
+        "fixture_reason": "Device-free tests inject startup failures, rollback, native mapping, focus/minimize release, dimensions/DPI and bounded diagnostics. Explicit native Windows smoke exercises owned HWND lifecycle, targeted synthetic Win32 callbacks, current-monitor DPI, repeated teardown and the shared offline frame pump; it is not physical input or rendering evidence. Core/Server and WSL CPU-only configurations exclude GLFW. FeatureWorld begins in10."
       },
       {
         "id": "client.raw-input",
@@ -824,16 +833,16 @@
         "test_ids": ["shark.client.input"],
         "test_sources": ["tests/client_input_tests.cpp"],
         "fixtures": ["engine/client/src/input.cpp", "engine/client/include/shark/client/input.hpp"],
-        "fixture_reason": "Deterministic device-free injection covers held/edge/repeat state, focus-loss releases and cancellation, bounded Unicode text, cursor/scroll validation, overflow and independent snapshots. The Client-only fixture never enters the headless Server build. 04b implements native GLFW mappings and separate window smoke; frame/tick consumption remains04c. FeatureWorld begins in10. No authoring command or gameplay protocol is claimed."
+        "fixture_reason": "Deterministic device-free injection covers held/edge/repeat state, focus-loss releases and cancellation, bounded Unicode text, cursor/scroll validation, overflow and independent snapshots. The Client-only fixture never enters the headless Server build. Native GLFW mappings and separate window smoke are implemented; client.offline-frame-loop covers frame/tick consumption. FeatureWorld begins in10. No authoring command or gameplay protocol is claimed."
       },
       {
         "id": "core.time-policies",
         "name": "Injectable monotonic idle clock and separate offline/server fixed-step policies",
-        "requirement_ids": ["REQ-03"],
+        "requirement_ids": ["REQ-03", "REQ-04"],
         "test_ids": ["shark.core.timing", "shark.server.lifecycle"],
         "test_sources": ["tests/core_time_tests.cpp", "tests/server_timing_tests.cpp", "tests/check_server.py"],
         "fixtures": ["engine/core/src/time.cpp", "engine/core/src/server_application.cpp", "server/main.cpp"],
-        "fixture_reason": "Controllable clocks and real callback consumers prove tick commit, debt limits, overload, cancellation, rational rates and idle deadline failures without a window. The Server integrates the clock only; its idle polls are not simulated world ticks. Window/input integration belongs to 04 and authoritative game simulation to later owners. FeatureWorld begins in 10."
+        "fixture_reason": "Controllable clocks and real callback consumers prove tick commit, debt limits, overload, cancellation, rational rates and idle deadline failures without a window. 04c adds offline pause/single-step while preserving the separate Server policy. The Server integrates the clock only; its idle polls are not simulated world ticks. Authoritative game simulation belongs to later owners. FeatureWorld begins in10."
       },
       {
         "id": "core.bounded-completions",

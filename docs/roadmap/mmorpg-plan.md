@@ -74,15 +74,18 @@ closed under the explicit current-machine scope amendment; assignment 03 is comp
 The [Core checkpoint plan](core-plan.md) separates 03a contracts, 03b lifecycle
 and 03c scheduling/bounded work. All three pass; the
 [03c handoff](../handoffs/03c-time-and-work.md) records the full local Core gate
-without adding game services. **04a input contracts and 04b native GLFW windows
-are complete; next is 04c frame-loop integration and qualification** in the
-[window/input plan](window-input-plan.md). The [input guide](../input-contracts.md),
-[window lifecycle guide](../window-lifecycle.md) and
-[04b handoff](../handoffs/04b-native-window.md) describe local input and owned windows;
-neither grants gameplay authority. Editor/Runtime expose explicit `--window`
-mode without a production renderer or game-authoring UI. Full `REQ-04` remains
-NOT_RUN pending 04c, which must reuse the distinct offline and authoritative
-scheduling policies for input consumption, pause/step and long-frame behavior.
+without adding game services. **04c and full assignment 04 are complete under
+the current-machine scope.** The [window/input plan](window-input-plan.md)
+records all three completed checkpoints.
+The [input guide](../input-contracts.md), [window lifecycle guide](../window-lifecycle.md),
+[frame-loop guide](../frame-loop.md) and [04c handoff](../handoffs/04c-frame-loop.md)
+describe local input, windows and offline frame scheduling. None grants gameplay
+authority. The frame loop reuses Core's existing 60 Hz offline scheduler with
+bounded catch-up, first-tick input and explicit pause/step; Server timing retains
+its separate policy. Editor/Runtime expose `--window` with F6/F7 sample controls
+without a production renderer, world simulation or game-authoring UI. Full
+`REQ-04` is PASS after final Windows/WSL, native-window and standalone/package
+qualification. Next is **05: production graphics device and presentation lifecycle**.
 The [final local handoff](../handoffs/02d-final-verification.md)
 preserves the Windows lifecycle and isolated Ubuntu CPU/package evidence. The
 [graphics checkpoint plan](graphics-plan.md) applies the new local gate to those

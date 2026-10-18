@@ -81,8 +81,9 @@ no second computer or specific provider integration is part of the requirement.
 ## Reviewable parts of assignment 15
 
 Keep 15 as one manifest owner and final gate, but implement it in these dependent
-parts. This plan does not start assignment 15. Assignments 02/03 and checkpoints
-04a/04b are complete; next is 04c under the [window/input plan](window-input-plan.md).
+parts. This plan does not start assignment 15. Assignments 02/03/04 are complete
+under the current-machine scope; the [window/input plan](window-input-plan.md)
+records the completed 04c gate. Assignment 05 is next.
 
 1. **Discovery and read-only access:** one-shot CLI + versioned stdio framing,
    clean stdout, capability/schema discovery, bounded project/scene queries,
@@ -114,15 +115,18 @@ M01's hosted qualification is complete. Assignment 02's recorded local evidence
 now closes its gate under ADR 0010; assignment 03 is complete across
 [03a contracts, 03b lifecycle and 03c scheduling](core-plan.md).
 [03c verification](../handoffs/03c-time-and-work.md) closes the local Core gate.
-**04a input contracts and 04b native GLFW windows are complete; next is 04c
-frame-loop integration and qualification.** The [input guide](../input-contracts.md),
+**04c and full assignment 04 are complete under the current-machine scope.**
+Next is **05: production graphics device and presentation lifecycle**.
+The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
-[04b handoff](../handoffs/04b-native-window.md) and
+[frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and
 [window/input plan](window-input-plan.md) define injectable input and owned native
-windows. Explicit Editor/Runtime `--window` mode is accessible to a human or
-terminal agent, with bounded smoke options; it provides no renderer or
-game-authoring UI/API. Full `REQ-04` remains NOT_RUN pending 04c fixed-tick input,
-offline pause/step and final qualification. The
+windows with offline frame scheduling. Explicit Editor/Runtime `--window` mode
+is accessible to a human or terminal agent, with bounded smoke options and
+diagnostic JSON lines for F6/F7 sample pause/step controls. Deterministic CPU tests
+inject input and time without an editor/display. These controls are neither
+game-authoring commands nor a live-world protocol; no renderer or game-authoring
+UI/API exists. Full `REQ-04` is PASS after final local qualification. The
 [final local handoff](../handoffs/02d-final-verification.md) preserves full local
 Windows lifecycle runs, bounded portable terminal launchers and isolated Ubuntu
 CPU/package checks. Former external GPU and independent clean-machine gates are
