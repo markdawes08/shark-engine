@@ -25,16 +25,22 @@ are no longer requirements. Assignment 03 is split into the
 [03a handoff](../handoffs/03a-core-contracts.md) and
 [03b handoff](../handoffs/03b-application-lifecycle.md) record completed contracts
 and lifecycle verification. The [03c handoff](../handoffs/03c-time-and-work.md)
-closes scheduling, bounded work and the full Core gate. **05a device ownership is complete under the current-machine scope; next is
-05b, swapchain, submission and presentation lifecycle.** The
-[device guide](../graphics-device.md), [05 checkpoint plan](../roadmap/graphics-device-plan.md)
-and [05a handoff](../handoffs/05a-graphics-device.md) distinguish the qualified device
-foundation from pending presentation/stress work. Full `REQ-05` remains NOT_RUN. The [input guide](../input-contracts.md),
+closes scheduling, bounded work and the full Core gate. **05b, swapchain,
+submission and presentation lifecycle, is complete under the current-machine
+scope.** The next checkpoint is **05c, failure and stress
+qualification**. The [device guide](../graphics-device.md),
+[presentation contract](../presentation-lifecycle.md),
+[05 checkpoint plan](../roadmap/graphics-device-plan.md) and
+[05b handoff](../handoffs/05b-presentation-lifecycle.md) record the lifecycle and
+passing local gate. The [05a handoff](../handoffs/05a-graphics-device.md) retains the
+completed device-foundation evidence. Full `REQ-05` remains NOT_RUN until 05c.
+The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and
 [checkpoint plan](../roadmap/window-input-plan.md) record the contracts and scope.
-Editor/Runtime provide explicit `--window` mode with local F6/F7 sample pause/step
-controls, without a production renderer or authoring UI. Full `REQ-04` is PASS
+Editor/Runtime provide explicit `--graphics` clear presentation and `--window`
+diagnostics through the same offline frame/input pump, with local F6/F7 sample
+pause/step controls. Scene rendering and authoring UI remain planned. Full `REQ-04` is PASS
 after final Windows/WSL, native-window and standalone/package qualification.
 
 | Record | Decision |

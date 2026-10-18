@@ -9,8 +9,8 @@ and Mac compatibility are outside current scope.
 The [MMORPG plan and existing-code assessment](docs/roadmap/mmorpg-plan.md) define
 the authoritative server, persistent world and staged client/server work.
 These are planned capabilities; the current engine provides Core services, raw
-input, owned Windows windows, offline frame/input scheduling and graphics-device
-ownership, with a separate opt-in graphics feasibility
+input, owned Windows windows, offline frame/input scheduling, graphics-device
+ownership and clear presentation, with a separate opt-in graphics feasibility
 probe containing analytic draw/compute/readback cases.
 The versioned
 [requirements manifest](docs/coverage/requirements.json) preserves assignment
@@ -25,13 +25,18 @@ game-authoring interfaces remain planned; terminal build/test tools work today.
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
 **04c and full assignment 04 are complete under the current-machine scope.**
 **05a, graphics device foundation, is complete under the current-machine scope.**
-Next is **05b: swapchain, submission and presentation lifecycle**.
+**05b, swapchain, submission and presentation lifecycle, is complete under the
+current-machine scope.** The [05b handoff](docs/handoffs/05b-presentation-lifecycle.md)
+records 236 passing CTests and 2,304 validated presentations across both local
+GPUs, with repeated resize, minimize/restore and teardown. The next checkpoint is
+**05c: failure and stress qualification**.
 The [05a handoff](docs/handoffs/05a-graphics-device.md) records 211 passing CTests
 and 112 validated device lifetimes across the two local GPUs. Full `REQ-05` remains
-NOT_RUN until presentation and final stress qualification are complete.
+NOT_RUN until 05c passes.
 The [05 checkpoint plan](docs/roadmap/graphics-device-plan.md) separates device
 ownership, presentation in 05b, and full failure/stress qualification in 05c.
-See the [device API and terminal commands](docs/graphics-device.md).
+See the [device API and terminal commands](docs/graphics-device.md) and
+[presentation lifecycle and sample](docs/presentation-lifecycle.md).
 See the [input guide](docs/input-contracts.md),
 [window lifecycle guide](docs/window-lifecycle.md),
 [frame-loop guide](docs/frame-loop.md),
@@ -50,9 +55,10 @@ separation have passed local and hosted qualification, including deliberate test
 failure and restored success. The [graphics probe](docs/graphics-probe.md) adds
 locked dependencies, device inventory, validated GPU readbacks and bounded lifecycle; the
 [local graphics gate](docs/roadmap/graphics-plan.md) passes on both available GPUs. Editor/Runtime provide
-version, bootstrap help and explicit `--window` native window mode;
+version, bootstrap help, explicit `--graphics` clear presentation and `--window`
+diagnostics through a shared offline frame/input pump;
 Server adds validated startup, timed execution and
-shutdown. Production rendering, scenes, gameplay and editor UI are future increments. CPU
+shutdown. Scene rendering, scenes, gameplay and editor UI are future increments. CPU
 build results do not establish graphics or release-platform support.
 
 The [02b handoff](docs/handoffs/02b-graphics-cases.md) records local cases, validation
@@ -97,12 +103,14 @@ cmake --build --preset windows-debug
 ctest --preset windows-debug
 ```
 
-Open the native window with `build/windows-debug/bin/Editor.exe --window` or
-`build/windows-debug/bin/Runtime.exe --window`. These currently show a window
-without rendered game content or authoring UI; close it through its title bar.
-F6 toggles the sample's offline pause and F7 advances one tick while paused.
-Control changes produce diagnostic JSON lines in the terminal; no game world runs.
-See the [window guide](docs/window-lifecycle.md) for bounded terminal smoke runs.
+Open the clear-presentation sample with `build/windows-debug/bin/Editor.exe --graphics`.
+For a bounded run, use `build/windows-debug/bin/Runtime.exe --graphics --graphics-ms 1000`.
+F6 toggles offline pause and F7 advances one empty tick while paused; presentation
+continues while visible. Diagnostic JSON is available in the terminal. No game
+world or authoring UI runs. See the [presentation guide](docs/presentation-lifecycle.md)
+for explicit device selection, validation and qualifying native fixtures.
+The existing `--window` option retains the empty-window diagnostic described in
+the [window guide](docs/window-lifecycle.md).
 
 Use `linux-debug` in the existing WSL Linux environment. Sanitizer, release and isolated
 Runtime configurations are documented in the build guide. All staging, commits

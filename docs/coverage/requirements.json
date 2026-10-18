@@ -117,7 +117,7 @@
         "Production graphics belongs to EngineClient and cannot become a configure/download/link requirement of EngineCore or Server."
       ],
       "planned_fixture": "PresentationLifecycle hardware stress, CapabilityRejection and GraphicsLossPolicy fixtures; these validate device infrastructure outside ordinary scene behavior.",
-      "verification": {"status": "NOT_RUN", "reason": "05a checkpoint PASS under current-machine scope:211 CTests across Windows Debug/Release/ASan and WSL client/headless suites;29 graphics cases with904 assertions onWindows and912 onWSL;112 required-validation device lifetimes across both local GPUs including auto-selection; zero warnings/errors/dropped diagnostics. Native missing UUID/layer rejection, device-free CLI, evidence parser, protected standalone/WSL package and existing window/probe regressions pass. Full REQ-05 remains NOT_RUN until05b submission/presentation/retirement and05c failure/stress qualification. Evidence:docs/coverage/evidence/05a-local.json; docs/handoffs/05a-graphics-device.md; docs/roadmap/graphics-device-plan.md."}
+      "verification": {"status": "NOT_RUN", "reason": "05a and 05b checkpoints PASS under current-machine scope. Final 05b gate: 236 CTests across Windows Debug/Release/ASan and WSL client/headless suites; 36 presentation cases with 1548 assertions per client configuration; 24 required-validation presentation lifetimes across both local GPUs and all three Windows configurations, totaling 2304 presentations, 96 resizes and 48 minimize/restore pairs, with zero warnings/errors/dropped diagnostics. 96 device-foundation lifetimes, native-window regressions, 14 graphical application samples, device-free CLI/parser fixtures, Runtime-only/Server-only boundaries and SDK-free WSL Server package pass. Final source/tool inputs match after the recording-ownership audit correction; native recording failure was not induced. Full REQ-05 remains NOT_RUN until 05c sustained presentation, measured resource behavior and broader failure qualification. Evidence: docs/coverage/evidence/05b-local.json; docs/handoffs/05b-presentation-lifecycle.md; docs/roadmap/graphics-device-plan.md. Historical 05a evidence remains in docs/coverage/evidence/05a-local.json."}
     },
     {
       "id": "REQ-06",
@@ -808,6 +808,15 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "client.presentation-lifecycle",
+        "name": "Owned clear presentation, bounded submission and swapchain retirement",
+        "requirement_ids": ["REQ-05"],
+        "test_ids": ["shark.client.presentation", "shark.client.presentation-cli", "shark.runtime.presentation-cli", "shark.editor.presentation-cli", "shark.tooling.presentation-evidence"],
+        "test_sources": ["tests/client_presentation_tests.cpp", "tests/client_presentation_launch_tests.cpp", "tests/client_queue_waiter_tests.cpp", "tests/check_presentation_cli.py", "tests/CheckPresentationLaunchCli.cmake", "tools/tests/test_presentation_smoke.py"],
+        "fixtures": ["engine/client/src/presentation.cpp", "engine/client/src/graphics_vulkan.cpp", "engine/client/src/graphics_queue_waiter.hpp", "engine/client/src/presentation_launch.cpp", "tests/presentation_smoke.cpp", "tools/presentation_smoke.py"],
+        "fixture_reason": "Injected CPU lifecycle fixtures prove bounded slot reuse, resize retirement, pending-image retry, zero-extent/minimize suspension, partial failures, validation faults and safe timeout/device-loss cleanup. Explicit native workload presents96 clear frames with4 resizes and2 minimize/restore cycles in each of4 device lifetimes per GPU/build; strict JSONL verifies counters, selection, validation and retirement. Runtime/Editor share the existing offline pump and explicit graphical sample with device-free argument validation. No scene, shader pipeline, authoring API, readback, sustained stress or resource-growth claim; FeatureWorld attaches in10 and05c owns further qualification."
+      },
       {
         "id": "client.graphics-device",
         "name": "Owned Vulkan/NVRHI device with explicit capability selection and bounded diagnostics",

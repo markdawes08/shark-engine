@@ -192,7 +192,9 @@ retains its behavior. There is no persistent-format or wire-protocol change.
 
 The native sample reserves F6/F7 for pause/step and reports diagnostic JSON lines.
 These controls are not authoring commands, action bindings or server gameplay
-messages. No world simulation or production presentation is implemented. Final
+messages. No world simulation is implemented. 05b's
+[clear presentation lifecycle](../presentation-lifecycle.md) uses this same
+offline pump with independent GPU submission; it adds no Server authority. Final
 04c local qualification is PASS in the [handoff](../handoffs/04c-frame-loop.md);
 neutral network intents remain M02/M04.
 

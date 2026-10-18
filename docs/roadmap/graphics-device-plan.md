@@ -6,7 +6,10 @@ graphics ownership on the proven assignment-02 stack. The requirement owner
 remains `05`; these checkpoints do not add assignment IDs. Full `REQ-05` is
 **NOT_RUN** until all three checkpoints pass. **05a is complete** under the
 current-machine scope; the [handoff](../handoffs/05a-graphics-device.md) records
-its passing gate. The exact next checkpoint is **05b**.
+its passing gate. **05b presentation lifecycle is complete under the
+current-machine scope.** The [05b handoff](../handoffs/05b-presentation-lifecycle.md)
+records the passing gate and remaining limits. The exact next
+checkpoint is **05c, failure and stress qualification**.
 
 The accepted [platform/capability contract](../architecture/0003-platforms.md) and
 [current-machine scope](../architecture/0010-current-machine-scope.md) apply to
@@ -46,6 +49,15 @@ FPS, resource-retirement, device-recovery or sustained-presentation claim.
 
 ## 05b - Presentation lifecycle
 
+The implementation and local qualification below are complete under the
+current-machine scope. The [handoff](../handoffs/05b-presentation-lifecycle.md)
+records both-GPU native validation, CPU regressions and protected package checks.
+The [presentation lifecycle contract](../presentation-lifecycle.md) describes the
+owned API, synchronization strategies, bounded errors and native evidence format.
+Editor/Runtime share `--graphics` clear presentation through the existing offline
+frame/input pump, with bounded terminal runs and F6/F7 sample pause/step controls.
+These are development diagnostics, not scene rendering or authoring APIs.
+
 Extend the owned device/window infrastructure with swapchain creation/recreation,
 command submission, bounded frames in flight, fences and safe retirement after
 submitted use completes. Keep these changes together because submission,
@@ -62,7 +74,10 @@ switches or endless recreation.
 Checkpoint gate: deterministic lifecycle/failure fixtures and actual native
 presentation/resize/minimize/restore on both local GPUs pass required validation,
 including repeated teardown. Select and document the exact bounded stress workload
-before running it. Existing CPU/server timing and dependency-boundary regressions
+before running it. The [05b lifecycle contract](../presentation-lifecycle.md)
+declares four lifetimes, 96 clear frames/four resizes/two minimize-restore cycles
+per lifetime on each GPU and Windows configuration, with required validation.
+Existing CPU/server timing and dependency-boundary regressions
 must pass; client focus/minimize cannot pause authoritative Server time. Basic
 shader/resource rendering remains assignment 06 rather than a premature engine
 feature in 05.

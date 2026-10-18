@@ -21,12 +21,16 @@ Assignment 01's hosted CPU and red/green gate is complete; see the
 complete. The headless Server bootstrap and Core/Client
 split are implemented; the [M01 handoff](docs/handoffs/M01-headless-server.md) records
 local qualification and the [hosted follow-up](docs/handoffs/M01-ci-verification.md)
-records the completed native CPU, headless Docker and red/green gate. **05a is complete under the current-machine scope; next is
-05b, swapchain, submission and presentation lifecycle.** Follow the
+records the completed native CPU, headless Docker and red/green gate. **05b,
+swapchain, submission and presentation lifecycle, is complete under the
+current-machine scope.** The next checkpoint is **05c, failure and stress
+qualification**. Follow the
 [05 checkpoint plan](docs/roadmap/graphics-device-plan.md),
-[graphics device contract](docs/graphics-device.md) and
-[05a handoff](docs/handoffs/05a-graphics-device.md). Full `REQ-05` remains NOT_RUN
-until 05b/05c; device ownership does not yet submit or present GPU work. Native
+[graphics device contract](docs/graphics-device.md),
+[presentation lifecycle contract](docs/presentation-lifecycle.md) and
+[05b handoff](docs/handoffs/05b-presentation-lifecycle.md). The completed
+[05a handoff](docs/handoffs/05a-graphics-device.md) retains device-foundation
+evidence. Full `REQ-05` remains NOT_RUN until 05c passes. Native
 Windows clients privately use the exact pinned Vulkan/NVRHI stack; Core/Server
 and WSL CPU clients keep both native options OFF. Required device validation
 passes on both current-PC GPUs. 04c and full assignment 04 remain complete. Follow the
@@ -39,8 +43,9 @@ Windows/WSL CPU, native window and protected standalone/package qualification.
 `OfflineFrameLoop` retains input over zero-tick frames and consumes one-shot
 actions on the first fixed tick. Existing Core timing owns offline pause/step;
 the first resumed frame admits no elapsed time. Editor/Runtime expose explicit
-`--window` mode with F6 pause/F7 step sample controls; these are not authoring
-commands. There is no game-authoring editor UI or production renderer yet.
+`--graphics` clear presentation and `--window` diagnostics through the same offline
+frame/input pump, with F6 pause/F7 step sample controls. These are not authoring
+commands; there is no game-authoring editor UI, scene renderer or world simulation.
 Assignment 03 and its [Core checkpoints](docs/roadmap/core-plan.md)
 are complete. Consult the
 [03c handoff](docs/handoffs/03c-time-and-work.md) for final local qualification,
@@ -173,8 +178,10 @@ EngineCore is the shared static bootstrap library. EngineClient is a separate
 static presentation library, providing client help text, device-free raw input
 state under the [input contract](docs/input-contracts.md), and owned Windows GLFW
 window integration under the [window lifecycle contract](docs/window-lifecycle.md).
-Its [offline frame loop](docs/frame-loop.md) reuses Core timing and has no server
-authority or game-world implementation.
+Its [owned presentation lifecycle](docs/presentation-lifecycle.md) provides bounded
+clear submission, resize/minimize handling and resource retirement. The graphical
+sample reuses the [offline frame loop](docs/frame-loop.md) and Core timing; neither
+has server authority or a game-world implementation.
 Its injectable window fixtures remain CPU-only; existing WSL builds report native
 window capability unavailable. Raw input is never a Server gameplay protocol. Engine is an
 interface composition target that links EngineClient and transitively EngineCore.
@@ -254,7 +261,7 @@ Each supported component, command and Lua entry maps to an executable test and
 FeatureWorld case, or a justified external fixture. FeatureWorld starts in 10;
 connect earlier components then and add new cases when their feature lands.
 Keep planned fixtures separate from implemented coverage. The bootstrap does not
-provide scene/component/Lua/import/export APIs or a renderer.
+provide scene/component/Lua/import/export APIs or a scene renderer.
 MMO requirements remain planned until executable multi-process, network-fault,
 database, streaming and load evidence exists. M09 adds MMOWorld acceptance; Tetris
 and the physics sandbox remain tooling regressions, not MMO release qualification.

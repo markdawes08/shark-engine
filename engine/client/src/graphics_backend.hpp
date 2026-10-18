@@ -2,6 +2,7 @@
 
 #include <shark/client/graphics.hpp>
 
+#include "window_backend.hpp"
 #include <atomic>
 
 namespace shark::client::detail {
@@ -14,6 +15,9 @@ class GraphicsDiagnosticSink final {
   public:
     void record(bool error, const char* message) noexcept;
     [[nodiscard]] GraphicsDiagnostics snapshot() const;
+    [[nodiscard]] bool has_errors() const noexcept {
+        return errors_.load(std::memory_order_relaxed) != 0;
+    }
 
   private:
     struct Slot {
@@ -25,6 +29,18 @@ class GraphicsDiagnosticSink final {
     std::atomic<std::uint64_t> dropped_{0};
     std::atomic<std::uint64_t> warnings_{0};
     std::atomic<std::uint64_t> errors_{0};
+};
+
+enum class AcquireStatus { ready, suboptimal, out_of_date, waiting };
+struct AcquiredImage {
+    AcquireStatus status{AcquireStatus::waiting};
+    std::uint32_t image_index{0};
+};
+enum class PresentStatus { presented, suboptimal, out_of_date, waiting };
+enum class DrainStatus { complete, waiting, device_lost };
+struct SwapchainInfo {
+    WindowExtent extent{};
+    std::uint32_t image_count{0};
 };
 
 // Failed/throwing stages may partially acquire resources. The owner marks each
@@ -40,6 +56,26 @@ class GraphicsBackend {
     [[nodiscard]] virtual Result<std::vector<GraphicsAdapter>> enumerate_adapters() = 0;
     [[nodiscard]] virtual Result<void> create_device(std::size_t adapter_index) = 0;
     [[nodiscard]] virtual Result<void> create_nvrhi(GraphicsDiagnosticSink&) = 0;
+    // Optional device-free seam defaults preserve foundation-only fixtures.
+    [[nodiscard]] virtual Result<GraphicsWindowFrame> poll_window();
+    [[nodiscard]] virtual Result<WindowState> window_state();
+    [[nodiscard]] virtual Result<void> window_command(WindowCommand, WindowExtent);
+    [[nodiscard]] virtual Result<PresentationSync> create_presentation();
+    // Empty optional means a transient unavailable/zero extent or out-of-date
+    // surface. No live new swapchain resources remain in that case.
+    [[nodiscard]] virtual Result<std::optional<SwapchainInfo>> create_swapchain(WindowExtent);
+    [[nodiscard]] virtual Result<bool> wait_slot(std::uint32_t slot, std::uint64_t timeout_ns);
+    [[nodiscard]] virtual Result<AcquiredImage> acquire(std::uint32_t slot,
+                                                        std::uint64_t timeout_ns);
+    [[nodiscard]] virtual Result<void> submit(std::uint32_t slot, std::uint32_t image, ClearColor);
+    [[nodiscard]] virtual Result<PresentStatus> present(std::uint32_t slot, std::uint32_t image,
+                                                        std::uint64_t timeout_ns);
+    // Includes acquisition completion, submitted GPU use and (when used)
+    // presentation fences. Uses a single total deadline. Device-lost permits
+    // destruction but is never success. Failed/timeout drain MUST retain owners.
+    [[nodiscard]] virtual Result<DrainStatus> drain_presentation(std::uint64_t timeout_ns);
+    virtual void destroy_swapchain() noexcept;
+    virtual void destroy_presentation() noexcept;
     virtual void destroy_nvrhi() noexcept = 0;
     virtual void destroy_device() noexcept = 0;
     virtual void destroy_surface() noexcept = 0;

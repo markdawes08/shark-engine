@@ -21,6 +21,37 @@ Error argument_error() {
 } // namespace
 
 Result<std::optional<OfflineFrameReport>>
+detail::advance_offline_window(GraphicsWindowFrame frame, OfflineFrameLoop& loop, MonotonicTime now,
+                               bool& manual_pause, const OfflineInputCallback& callback,
+                               Logger& diagnostics) {
+    for (const auto* error : {&frame.diagnostics.input_error, &frame.diagnostics.window_error}) {
+        if (*error) {
+            if (auto logged = diagnostics.write(LogLevel::warning, **error); !logged) {
+                return logged.error();
+            }
+        }
+    }
+    if (frame.state.close_requested) {
+        return std::optional<OfflineFrameReport>{};
+    }
+    // Development sample controls, not action bindings or editor commands.
+    // Poll continues during pause/minimize; there is no shared server clock here.
+    const bool active = frame.input.focused && !frame.state.iconified;
+    if (active && frame.input.key(Key::f6).pressed) {
+        manual_pause = !manual_pause;
+    }
+    const bool step = active && manual_pause && frame.input.key(Key::f7).pressed;
+    frame.input.keys[static_cast<std::size_t>(Key::f6) - 1] = {};
+    frame.input.keys[static_cast<std::size_t>(Key::f7) - 1] = {};
+    auto report =
+        loop.advance(now, frame.input, {manual_pause, step, frame.state.iconified}, callback);
+    if (!report) {
+        return report.error();
+    }
+    return std::optional<OfflineFrameReport>{report.value()};
+}
+
+Result<std::optional<OfflineFrameReport>>
 detail::pump_offline_window(Window& window, OfflineFrameLoop& loop, MonotonicTime now,
                             bool& manual_pause, const OfflineInputCallback& callback,
                             Logger& diagnostics) {
@@ -39,31 +70,25 @@ detail::pump_offline_window(Window& window, OfflineFrameLoop& loop, MonotonicTim
     if (!pending) {
         return pending.error();
     }
-    for (const auto* error : {&pending.value().input_error, &pending.value().window_error}) {
-        if (*error) {
-            if (auto logged = diagnostics.write(LogLevel::warning, **error); !logged) {
-                return logged.error();
-            }
+    return advance_offline_window(
+        {state.value(), std::move(input).value(), std::move(pending).value()}, loop, now,
+        manual_pause, callback, diagnostics);
+}
+
+Result<void> detail::write_offline_control(bool prior_pause, bool manual_pause,
+                                           const OfflineFrameReport& frame, std::uint64_t next_tick,
+                                           std::ostream& output) {
+    if (prior_pause != manual_pause || (manual_pause && frame.timing.executed != 0)) {
+        output << "{\"event\":\"offline-sample-control\",\"paused\":"
+               << (manual_pause ? "true" : "false") << ",\"next_tick\":" << next_tick << "}\n"
+               << std::flush;
+        if (!output) {
+            return Error{ErrorCode::io_failure,
+                         "Window control output failed",
+                         {.operation = "client.window.output"}};
         }
     }
-    if (state.value().close_requested) {
-        return std::optional<OfflineFrameReport>{};
-    }
-    // Development sample controls, not action bindings or editor commands.
-    // Poll continues during pause/minimize; there is no shared server clock here.
-    const bool active = input.value().focused && !state.value().iconified;
-    if (active && input.value().key(Key::f6).pressed) {
-        manual_pause = !manual_pause;
-    }
-    const bool step = active && manual_pause && input.value().key(Key::f7).pressed;
-    input.value().keys[static_cast<std::size_t>(Key::f6) - 1] = {};
-    input.value().keys[static_cast<std::size_t>(Key::f7) - 1] = {};
-    auto report =
-        loop.advance(now, input.value(), {manual_pause, step, state.value().iconified}, callback);
-    if (!report) {
-        return report.error();
-    }
-    return std::optional<OfflineFrameReport>{report.value()};
+    return {};
 }
 
 Result<WindowLaunchOptions> parse_window_arguments(std::span<const std::string_view> arguments) {
@@ -129,17 +154,10 @@ Result<void> run_window_sample(std::string_view title, const WindowLaunchOptions
             if (!frame.value()) {
                 return window->close();
             }
-            if (prior_pause != manual_pause ||
-                (manual_pause && frame.value()->timing.executed != 0)) {
-                std::cout << "{\"event\":\"offline-sample-control\",\"paused\":"
-                          << (manual_pause ? "true" : "false")
-                          << ",\"next_tick\":" << loop->next_tick() << "}\n"
-                          << std::flush;
-                if (!std::cout) {
-                    return Error{ErrorCode::io_failure,
-                                 "Window control output failed",
-                                 {.operation = "client.window.output"}};
-                }
+            if (auto written = detail::write_offline_control(
+                    prior_pause, manual_pause, *frame.value(), loop->next_tick(), std::cout);
+                !written) {
+                return written.error();
             }
             auto wait = std::chrono::duration_cast<MonotonicTime>(std::chrono::milliseconds{10});
             if (options.duration) {

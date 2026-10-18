@@ -1,8 +1,10 @@
 #include <shark/client/graphics.hpp>
 
 #include "graphics_backend.hpp"
+#include "presentation.hpp"
 
 #include <algorithm>
+#include <cstdio>
 #include <exception>
 #include <limits>
 #include <thread>
@@ -255,13 +257,28 @@ GraphicsDiagnostics detail::GraphicsDiagnosticSink::snapshot() const {
 struct GraphicsDevice::Impl {
     detail::GraphicsDiagnosticSink sink;
     std::unique_ptr<detail::GraphicsBackend> backend;
+    detail::Presentation presentation;
     std::thread::id thread{std::this_thread::get_id()};
     GraphicsAdapter selected;
     std::array<bool, 5> attempted{};
     const char* operation{"graphics.startup"};
 
-    explicit Impl(std::unique_ptr<detail::GraphicsBackend> value) : backend(std::move(value)) {}
+    explicit Impl(std::unique_ptr<detail::GraphicsBackend> value)
+        : backend(std::move(value)), presentation(*backend, sink) {}
     ~Impl() noexcept {
+        const auto closed = presentation.close();
+        if (!presentation.safe_to_destroy()) {
+            // The caller may be unwinding before it can print its primary
+            // error. Publish bounded context before fail-fast process teardown.
+            std::fputs("Shark graphics cleanup cannot safely release live resources: ", stderr);
+            if (!closed) {
+                const auto& message = closed.error().message;
+                std::fwrite(message.data(), 1, std::min(message.size(), std::size_t{1024}), stderr);
+            }
+            std::fputs("\nTerminating with GPU owners retained.\n", stderr);
+            std::fflush(stderr);
+            std::terminate();
+        }
         unwind();
     }
     bool live() const noexcept {
@@ -295,6 +312,27 @@ struct GraphicsDevice::Impl {
                                   "Graphics calls require the creating main thread");
         }
         return {};
+    }
+    Result<void> check_live() const {
+        if (auto checked = check_thread(); !checked) {
+            return checked;
+        }
+        if (!live()) {
+            return graphics_error(ErrorCode::conflict, "graphics.closed",
+                                  "Graphics device is closed");
+        }
+        return {};
+    }
+    Result<void> command(detail::WindowCommand command, WindowExtent extent = {}) {
+        if (auto checked = check_live(); !checked) {
+            return checked;
+        }
+        try {
+            return backend->window_command(command, extent);
+        } catch (...) {
+            return graphics_error(ErrorCode::execution_failed, "graphics.window.command",
+                                  "Window command threw");
+        }
     }
     Result<void> check_diagnostics() const {
         auto report = sink.snapshot();
@@ -470,8 +508,74 @@ Result<void> GraphicsDevice::close() {
     if (auto value = impl_->check_thread(); !value) {
         return value.error();
     }
+    auto closed = impl_->presentation.close();
+    if (!impl_->presentation.safe_to_destroy()) {
+        return closed;
+    }
     impl_->unwind();
+    if (!closed) {
+        return closed;
+    }
     return impl_->check_diagnostics();
+}
+
+Result<GraphicsWindowFrame> GraphicsDevice::poll_window() {
+    if (auto value = impl_->check_live(); !value) {
+        return value.error();
+    }
+    try {
+        return impl_->backend->poll_window();
+    } catch (...) {
+        return graphics_error(ErrorCode::execution_failed, "graphics.window.poll",
+                              "Window poll threw");
+    }
+}
+Result<WindowState> GraphicsDevice::window_state() const {
+    if (auto value = impl_->check_live(); !value) {
+        return value.error();
+    }
+    try {
+        return impl_->backend->window_state();
+    } catch (...) {
+        return graphics_error(ErrorCode::execution_failed, "graphics.window.state",
+                              "Window query threw");
+    }
+}
+Result<void> GraphicsDevice::resize(WindowExtent content) {
+    return impl_->command(detail::WindowCommand::resize, content);
+}
+Result<void> GraphicsDevice::iconify() {
+    return impl_->command(detail::WindowCommand::iconify);
+}
+Result<void> GraphicsDevice::restore() {
+    return impl_->command(detail::WindowCommand::restore);
+}
+Result<void> GraphicsDevice::show() {
+    return impl_->command(detail::WindowCommand::show);
+}
+Result<void> GraphicsDevice::focus() {
+    return impl_->command(detail::WindowCommand::focus);
+}
+Result<void> GraphicsDevice::request_close() {
+    return impl_->command(detail::WindowCommand::request_close);
+}
+Result<PresentationReport> GraphicsDevice::present(ClearColor color) {
+    if (auto value = impl_->check_live(); !value) {
+        return value.error();
+    }
+    return impl_->presentation.frame(color);
+}
+Result<PresentationStats> GraphicsDevice::presentation_stats() const {
+    if (auto value = impl_->check_thread(); !value) {
+        return value.error();
+    }
+    return impl_->presentation.stats();
+}
+Result<void> GraphicsDevice::drain() {
+    if (auto value = impl_->check_thread(); !value) {
+        return value.error();
+    }
+    return impl_->presentation.drain();
 }
 
 } // namespace shark::client

@@ -1,4 +1,5 @@
 #include "graphics_backend.hpp"
+#include "graphics_queue_waiter.hpp"
 
 #ifndef NOMINMAX
 #define NOMINMAX
@@ -12,6 +13,8 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
+#include <limits>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -285,6 +288,11 @@ GraphicsAdapter inspect_adapter(VkPhysicalDevice handle, VkSurfaceKHR surface) {
 
 class VulkanBackend final : public detail::GraphicsBackend {
   public:
+    ~VulkanBackend() noexcept override {
+        if (queue_waiter_.pending()) {
+            std::terminate();
+        }
+    }
     Result<void> create_window(const WindowConfig& config) override {
         auto created = Window::create(config);
         if (!created) {
@@ -320,6 +328,16 @@ class VulkanBackend final : public detail::GraphicsBackend {
                                    "graphics.instance.extensions",
                                    "Missing required instance extension: " + std::string(required));
                 }
+            }
+            // Optional present fences are used only when both the instance
+            // dependencies and selected device feature are available. The
+            // current Intel driver instead uses host-completed submissions.
+            surface_maintenance_ =
+                contains_extension(extensions, VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME) &&
+                contains_extension(extensions, VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME);
+            if (surface_maintenance_) {
+                instance_extensions_.push_back(VK_KHR_GET_SURFACE_CAPABILITIES_2_EXTENSION_NAME);
+                instance_extensions_.push_back(VK_EXT_SURFACE_MAINTENANCE_1_EXTENSION_NAME);
             }
             const bool validate = validation == GraphicsValidation::required;
             constexpr const char* layer_name = "VK_LAYER_KHRONOS_validation";
@@ -449,6 +467,22 @@ class VulkanBackend final : public detail::GraphicsBackend {
             }
             selected_ = physical_devices_[adapter_index];
             queue_family_ = adapters_[adapter_index].queue_family;
+            const auto extensions = enumerate<VkExtensionProperties>(
+                [&](auto* count, auto* values) {
+                    return vkEnumerateDeviceExtensionProperties(selected_, nullptr, count, values);
+                },
+                "graphics.device.extensions");
+            VkPhysicalDeviceSwapchainMaintenance1FeaturesEXT maintenance{};
+            maintenance.sType =
+                VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_SWAPCHAIN_MAINTENANCE_1_FEATURES_EXT;
+            if (surface_maintenance_ &&
+                contains_extension(extensions, VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME)) {
+                VkPhysicalDeviceFeatures2 features{};
+                features.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2;
+                features.pNext = &maintenance;
+                vkGetPhysicalDeviceFeatures2(selected_, &features);
+            }
+            present_fences_ = maintenance.swapchainMaintenance1 == VK_TRUE;
             const float priority = 1.0F;
             VkDeviceQueueCreateInfo queue_info{};
             queue_info.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
@@ -459,11 +493,15 @@ class VulkanBackend final : public detail::GraphicsBackend {
             enabled13.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES;
             enabled13.synchronization2 = VK_TRUE;
             enabled13.dynamicRendering = VK_TRUE;
+            enabled13.pNext = present_fences_ ? &maintenance : nullptr;
             VkPhysicalDeviceVulkan12Features enabled12{};
             enabled12.sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES;
             enabled12.pNext = &enabled13;
             enabled12.timelineSemaphore = VK_TRUE;
             device_extensions_ = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+            if (present_fences_) {
+                device_extensions_.push_back(VK_EXT_SWAPCHAIN_MAINTENANCE_1_EXTENSION_NAME);
+            }
             VkDeviceCreateInfo info{};
             info.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
             info.pNext = &enabled12;
@@ -511,15 +549,511 @@ class VulkanBackend final : public detail::GraphicsBackend {
         });
     }
 
+    Result<GraphicsWindowFrame> poll_window() override {
+        if (auto polled = window_->poll_events(); !polled) {
+            return polled.error();
+        }
+        auto state = window_->state();
+        if (!state) {
+            return state.error();
+        }
+        auto input = window_->capture_input();
+        if (!input) {
+            return input.error();
+        }
+        auto diagnostics = window_->take_diagnostics();
+        if (!diagnostics) {
+            return diagnostics.error();
+        }
+        return GraphicsWindowFrame{state.value(), std::move(input).value(),
+                                   std::move(diagnostics).value()};
+    }
+
+    Result<WindowState> window_state() override {
+        return window_->state();
+    }
+
+    Result<void> window_command(detail::WindowCommand command, WindowExtent extent) override {
+        switch (command) {
+        case detail::WindowCommand::resize:
+            return window_->resize(extent);
+        case detail::WindowCommand::iconify:
+            return window_->iconify();
+        case detail::WindowCommand::restore:
+            return window_->restore();
+        case detail::WindowCommand::show:
+            return window_->show();
+        case detail::WindowCommand::focus:
+            return window_->focus();
+        case detail::WindowCommand::request_close:
+            return window_->request_close();
+        }
+        return failure(ErrorCode::invalid_argument, "graphics.window.command",
+                       "Unknown window command");
+    }
+
+    Result<PresentationSync> create_presentation() override {
+        return phase<PresentationSync>([&]() -> Result<PresentationSync> {
+            for (auto& frame : frames_) {
+                VkSemaphoreCreateInfo semaphore{};
+                semaphore.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+                check(vkCreateSemaphore(device_, &semaphore, nullptr, &frame.acquired),
+                      "graphics.presentation.acquire_semaphore");
+                VkFenceCreateInfo fence{};
+                fence.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+                check(vkCreateFence(device_, &fence, nullptr, &frame.acquire_fence),
+                      "graphics.presentation.acquire_fence");
+                frame.commands = validation_->createCommandList();
+                if (!frame.commands) {
+                    return failure(ErrorCode::execution_failed, "graphics.presentation.commands",
+                                   "NVRHI command list creation returned null");
+                }
+            }
+            return present_fences_ ? PresentationSync::present_fence
+                                   : PresentationSync::host_completion;
+        });
+    }
+
+    Result<std::optional<detail::SwapchainInfo>> create_swapchain(WindowExtent requested) override {
+        return phase<std::optional<detail::SwapchainInfo>>(
+            [&]() -> Result<std::optional<detail::SwapchainInfo>> {
+                VkSurfaceCapabilitiesKHR capabilities{};
+                const auto status = observe(
+                    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(selected_, surface_, &capabilities));
+                if (status == VK_ERROR_OUT_OF_DATE_KHR) {
+                    return std::optional<detail::SwapchainInfo>{};
+                }
+                check(status, "graphics.swapchain.capabilities");
+                auto extent = capabilities.currentExtent;
+                if (extent.width == std::numeric_limits<std::uint32_t>::max()) {
+                    extent = {std::clamp(requested.width, capabilities.minImageExtent.width,
+                                         capabilities.maxImageExtent.width),
+                              std::clamp(requested.height, capabilities.minImageExtent.height,
+                                         capabilities.maxImageExtent.height)};
+                }
+                if (extent.width == 0 || extent.height == 0) {
+                    return std::optional<detail::SwapchainInfo>{};
+                }
+                if ((capabilities.supportedUsageFlags & VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT) == 0) {
+                    return failure(ErrorCode::capability_unavailable, "graphics.swapchain.usage",
+                                   "Surface does not support color attachment images");
+                }
+                const auto formats = enumerate<VkSurfaceFormatKHR>(
+                    [&](auto* count, auto* values) {
+                        return vkGetPhysicalDeviceSurfaceFormatsKHR(selected_, surface_, count,
+                                                                    values);
+                    },
+                    "graphics.swapchain.formats");
+                const auto format = std::find_if(formats.begin(), formats.end(), [](const auto& f) {
+                    return (f.format == VK_FORMAT_B8G8R8A8_SRGB ||
+                            f.format == VK_FORMAT_R8G8B8A8_SRGB ||
+                            f.format == VK_FORMAT_UNDEFINED) &&
+                           f.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR;
+                });
+                if (format == formats.end()) {
+                    return failure(ErrorCode::capability_unavailable, "graphics.swapchain.format",
+                                   "Surface no longer supports an sRGB presentation format");
+                }
+                constexpr std::array alpha_modes{
+                    VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR, VK_COMPOSITE_ALPHA_PRE_MULTIPLIED_BIT_KHR,
+                    VK_COMPOSITE_ALPHA_POST_MULTIPLIED_BIT_KHR, VK_COMPOSITE_ALPHA_INHERIT_BIT_KHR};
+                const auto alpha =
+                    std::find_if(alpha_modes.begin(), alpha_modes.end(), [&](auto candidate) {
+                        return (capabilities.supportedCompositeAlpha & candidate) != 0;
+                    });
+                if (alpha == alpha_modes.end() || capabilities.minImageCount > 8) {
+                    return failure(
+                        ErrorCode::capability_unavailable, "graphics.swapchain.bounds",
+                        "Surface composite alpha or image count exceeds supported bounds");
+                }
+                auto count = std::min(capabilities.minImageCount + 1, 8U);
+                if (capabilities.maxImageCount != 0) {
+                    count = std::min(count, capabilities.maxImageCount);
+                }
+                VkSwapchainCreateInfoKHR info{};
+                info.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+                info.surface = surface_;
+                info.minImageCount = count;
+                info.imageFormat = format->format == VK_FORMAT_UNDEFINED ? VK_FORMAT_B8G8R8A8_SRGB
+                                                                         : format->format;
+                info.imageColorSpace = format->colorSpace;
+                info.imageExtent = extent;
+                info.imageArrayLayers = 1;
+                info.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+                info.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+                info.preTransform = capabilities.currentTransform;
+                info.compositeAlpha = *alpha;
+                info.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+                info.clipped = VK_TRUE;
+                const auto created =
+                    observe(vkCreateSwapchainKHR(device_, &info, nullptr, &swapchain_));
+                if (created == VK_ERROR_OUT_OF_DATE_KHR) {
+                    return std::optional<detail::SwapchainInfo>{};
+                }
+                check(created, "graphics.swapchain.create");
+                const auto handles = enumerate<VkImage>(
+                    [&](auto* image_count, auto* values) {
+                        return vkGetSwapchainImagesKHR(device_, swapchain_, image_count, values);
+                    },
+                    "graphics.swapchain.images");
+                if (handles.empty() || handles.size() > 8) {
+                    return failure(ErrorCode::capability_unavailable, "graphics.swapchain.images",
+                                   "Swapchain image count must be between one and eight");
+                }
+                extent_ = extent;
+                images_.resize(handles.size());
+                for (std::size_t index = 0; index < handles.size(); ++index) {
+                    auto& image = images_[index];
+                    VkImageViewCreateInfo view{};
+                    view.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+                    view.image = handles[index];
+                    view.viewType = VK_IMAGE_VIEW_TYPE_2D;
+                    view.format = info.imageFormat;
+                    view.subresourceRange = {VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1};
+                    check(vkCreateImageView(device_, &view, nullptr, &image.view),
+                          "graphics.swapchain.image_view");
+                    nvrhi::TextureDesc description;
+                    description.width = extent.width;
+                    description.height = extent.height;
+                    description.format = info.imageFormat == VK_FORMAT_B8G8R8A8_SRGB
+                                             ? nvrhi::Format::SBGRA8_UNORM
+                                             : nvrhi::Format::SRGBA8_UNORM;
+                    description.isRenderTarget = true;
+                    description.isShaderResource = false;
+                    description.debugName = "Shark swapchain image";
+                    image.texture = validation_->createHandleForNativeTexture(
+                        nvrhi::ObjectTypes::VK_Image, nvrhi::Object(handles[index]), description);
+                    if (!image.texture) {
+                        return failure(ErrorCode::execution_failed, "graphics.swapchain.texture",
+                                       "NVRHI swapchain image wrapper creation returned null");
+                    }
+                    if (present_fences_) {
+                        VkSemaphoreCreateInfo semaphore{};
+                        semaphore.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+                        check(vkCreateSemaphore(device_, &semaphore, nullptr, &image.rendered),
+                              "graphics.swapchain.present_semaphore");
+                        VkFenceCreateInfo fence{};
+                        fence.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+                        check(vkCreateFence(device_, &fence, nullptr, &image.present_fence),
+                              "graphics.swapchain.present_fence");
+                    }
+                }
+                return std::optional{detail::SwapchainInfo{
+                    {extent.width, extent.height}, static_cast<std::uint32_t>(images_.size())}};
+            });
+    }
+
+    Result<bool> wait_slot(std::uint32_t slot, std::uint64_t timeout_ns) override {
+        return phase<bool>([&]() -> Result<bool> {
+            auto& frame = frames_.at(slot);
+            const auto deadline = make_deadline(timeout_ns);
+            if (!wait_queue_idle(remaining(deadline), false)) {
+                return false;
+            }
+            if (!wait_timeline(frame.submitted, remaining(deadline))) {
+                return false;
+            }
+            if (frame.acquire_pending && !wait_fence(frame.acquire_fence, remaining(deadline))) {
+                return false;
+            }
+            frame.acquire_pending = false;
+            frame.submitted = 0;
+            validation_->runGarbageCollection();
+            return true;
+        });
+    }
+
+    Result<detail::AcquiredImage> acquire(std::uint32_t slot, std::uint64_t timeout_ns) override {
+        return phase<detail::AcquiredImage>([&]() -> Result<detail::AcquiredImage> {
+            auto& frame = frames_.at(slot);
+            check(vkResetFences(device_, 1, &frame.acquire_fence), "graphics.acquire.reset_fence");
+            std::uint32_t image = 0;
+            const auto status = observe(vkAcquireNextImageKHR(
+                device_, swapchain_, timeout_ns, frame.acquired, frame.acquire_fence, &image));
+            if (status == VK_TIMEOUT || status == VK_NOT_READY) {
+                return detail::AcquiredImage{detail::AcquireStatus::waiting};
+            }
+            if (status == VK_ERROR_OUT_OF_DATE_KHR) {
+                return detail::AcquiredImage{detail::AcquireStatus::out_of_date};
+            }
+            if (status != VK_SUBOPTIMAL_KHR) {
+                check(status, "graphics.acquire");
+            }
+            frame.acquire_pending = true;
+            if (image >= images_.size()) {
+                return failure(ErrorCode::execution_failed, "graphics.acquire.image",
+                               "Vulkan returned an invalid swapchain image index");
+            }
+            return detail::AcquiredImage{status == VK_SUBOPTIMAL_KHR
+                                             ? detail::AcquireStatus::suboptimal
+                                             : detail::AcquireStatus::ready,
+                                         image};
+        });
+    }
+
+    Result<void> submit(std::uint32_t slot, std::uint32_t index, ClearColor clear) override {
+        return phase<void>([&]() -> Result<void> {
+            if (queue_waiter_.pending()) {
+                return failure(ErrorCode::conflict, "graphics.submit",
+                               "The owned queue retirement wait has not completed");
+            }
+            auto& frame = frames_.at(slot);
+            auto& image = images_.at(index);
+            // Acquiring an image makes its previous presentation complete. The
+            // explicit present fence also proves ownership of the semaphore
+            // payload before reuse, independently of the frame-slot fence.
+            if (image.present_pending) {
+                if (!wait_fence(image.present_fence, 1'000'000'000ULL)) {
+                    return failure(ErrorCode::execution_failed, "graphics.submit.present_fence",
+                                   "Previous presentation did not retire within one second");
+                }
+                image.present_pending = false;
+            }
+            auto& commands = frame.commands;
+            // NVRHI retains a self-reference from the opened command buffer
+            // until successful execution. Its public API has no discard path,
+            // so failed recording must retain ownership even after device loss.
+            frame.unretired_recording = true;
+            commands->open();
+            if (nvrhi_diagnostics_.sink->has_errors()) {
+                return failure(ErrorCode::execution_failed, "graphics.submit.validation",
+                               "Validation reported an error while opening presentation commands");
+            }
+            commands->beginTrackingTextureState(image.texture, nvrhi::AllSubresources,
+                                                image.initialized ? nvrhi::ResourceStates::Present
+                                                                  : nvrhi::ResourceStates::Common);
+            commands->setTextureState(image.texture, nvrhi::AllSubresources,
+                                      nvrhi::ResourceStates::RenderTarget);
+            commands->commitBarriers();
+            if (nvrhi_diagnostics_.sink->has_errors()) {
+                return failure(
+                    ErrorCode::execution_failed, "graphics.submit.validation",
+                    "Validation reported an error while preparing presentation commands");
+            }
+            // Dynamic-rendering loadOp CLEAR needs only the existing required
+            // COLOR_ATTACHMENT usage. NVRHI clearTextureFloat would impose an
+            // additional TRANSFER_DST surface requirement. No shader is used.
+            const auto native = static_cast<VkCommandBuffer>(
+                commands->getNativeObject(nvrhi::ObjectTypes::VK_CommandBuffer));
+            if (native == VK_NULL_HANDLE) {
+                return failure(ErrorCode::execution_failed, "graphics.submit.command_buffer",
+                               "NVRHI did not provide a native presentation command buffer");
+            }
+            VkRenderingAttachmentInfo attachment{};
+            attachment.sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO;
+            attachment.imageView = image.view;
+            attachment.imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+            attachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+            attachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+            attachment.clearValue.color = {{clear.red, clear.green, clear.blue, clear.alpha}};
+            VkRenderingInfo rendering{};
+            rendering.sType = VK_STRUCTURE_TYPE_RENDERING_INFO;
+            rendering.renderArea.extent = extent_;
+            rendering.layerCount = 1;
+            rendering.colorAttachmentCount = 1;
+            rendering.pColorAttachments = &attachment;
+            vkCmdBeginRendering(native, &rendering);
+            vkCmdEndRendering(native);
+            commands->setTextureState(image.texture, nvrhi::AllSubresources,
+                                      nvrhi::ResourceStates::Present);
+            commands->commitBarriers();
+            commands->close();
+            if (nvrhi_diagnostics_.sink->has_errors()) {
+                return failure(
+                    ErrorCode::execution_failed, "graphics.submit.validation",
+                    "Validation reported an error while recording presentation commands");
+            }
+            nvrhi_->queueWaitForSemaphore(nvrhi::CommandQueue::Graphics, frame.acquired, 0);
+            if (present_fences_) {
+                nvrhi_->queueSignalSemaphore(nvrhi::CommandQueue::Graphics, image.rendered, 0);
+            }
+            // A third-party exception can occur after vkQueueSubmit but before
+            // NVRHI returns its serial. Never treat that ambiguous state as no
+            // work: retain ownership until process exit rather than free live
+            // command pools or swapchain views.
+            try {
+                frame.submitted = validation_->executeCommandList(commands);
+            } catch (const vk::DeviceLostError&) {
+                device_lost_ = true;
+                return failure(ErrorCode::execution_failed, "graphics.submit.device_lost",
+                               "Vulkan device was lost during submission");
+            }
+            if (frame.submitted == 0) {
+                return failure(ErrorCode::execution_failed, "graphics.submit",
+                               "NVRHI did not return a valid submission serial");
+            }
+            frame.unretired_recording = false;
+            if (nvrhi_diagnostics_.sink->has_errors()) {
+                // The pinned NVRHI queue catches DeviceLostError and reports
+                // it through the callback. Stop before presenting a possibly
+                // unsignaled semaphore; the finite drain observes device loss.
+                return failure(ErrorCode::execution_failed, "graphics.submit.validation",
+                               "Validation reported an error during command submission");
+            }
+            image.initialized = true;
+            return {};
+        });
+    }
+
+    Result<detail::PresentStatus> present(std::uint32_t slot, std::uint32_t index,
+                                          std::uint64_t timeout_ns) override {
+        return phase<detail::PresentStatus>([&]() -> Result<detail::PresentStatus> {
+            auto& image = images_.at(index);
+            const auto deadline = make_deadline(timeout_ns);
+            if (!wait_queue_idle(remaining(deadline), false)) {
+                return detail::PresentStatus::waiting;
+            }
+            if (!present_fences_ &&
+                !wait_timeline(frames_.at(slot).submitted, remaining(deadline))) {
+                return detail::PresentStatus::waiting;
+            }
+            VkSwapchainPresentFenceInfoEXT fence{};
+            fence.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_PRESENT_FENCE_INFO_EXT;
+            fence.swapchainCount = 1;
+            fence.pFences = &image.present_fence;
+            if (present_fences_) {
+                check(vkResetFences(device_, 1, &image.present_fence),
+                      "graphics.present.reset_fence");
+            }
+            VkPresentInfoKHR info{};
+            info.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+            info.pNext = present_fences_ ? &fence : nullptr;
+            info.waitSemaphoreCount = present_fences_ ? 1U : 0U;
+            info.pWaitSemaphores = present_fences_ ? &image.rendered : nullptr;
+            info.swapchainCount = 1;
+            info.pSwapchains = &swapchain_;
+            info.pImageIndices = &index;
+            const auto status = observe(vkQueuePresentKHR(queue_, &info));
+            if (!present_fences_ && status != VK_ERROR_OUT_OF_HOST_MEMORY &&
+                status != VK_ERROR_OUT_OF_DEVICE_MEMORY && status != VK_ERROR_DEVICE_LOST) {
+                legacy_present_pending_ = true;
+            }
+            // These WSI failures still enqueue their queue operations. Memory
+            // exhaustion leaves the synchronization primitives unaffected.
+            image.present_pending = present_fences_ && status != VK_ERROR_OUT_OF_HOST_MEMORY &&
+                                    status != VK_ERROR_OUT_OF_DEVICE_MEMORY &&
+                                    status != VK_ERROR_DEVICE_LOST;
+            if (status == VK_ERROR_OUT_OF_DATE_KHR) {
+                return detail::PresentStatus::out_of_date;
+            }
+            if (status == VK_SUBOPTIMAL_KHR) {
+                return detail::PresentStatus::suboptimal;
+            }
+            check(status, "graphics.present");
+            return detail::PresentStatus::presented;
+        });
+    }
+
+    Result<detail::DrainStatus> drain_presentation(std::uint64_t timeout_ns) override {
+        for (const auto& frame : frames_) {
+            if (frame.unretired_recording) {
+                return failure(
+                    ErrorCode::execution_failed, "graphics.presentation.drain",
+                    "Recording or submission ownership is unresolved; live resources are retained");
+            }
+        }
+        try {
+            const auto deadline = make_deadline(timeout_ns);
+            // Even device-loss teardown cannot destroy the queue while its
+            // owned legacy wait thread is still inside the driver.
+            if (!wait_queue_idle(remaining(deadline), false)) {
+                return detail::DrainStatus::waiting;
+            }
+            if (device_lost_) {
+                return detail::DrainStatus::device_lost;
+            }
+            for (auto& frame : frames_) {
+                if (!wait_timeline(frame.submitted, remaining(deadline))) {
+                    return detail::DrainStatus::waiting;
+                }
+                if (frame.acquire_pending &&
+                    !wait_fence(frame.acquire_fence, remaining(deadline))) {
+                    return detail::DrainStatus::waiting;
+                }
+                frame.acquire_pending = false;
+                frame.submitted = 0;
+            }
+            for (auto& image : images_) {
+                if (image.present_pending &&
+                    !wait_fence(image.present_fence, remaining(deadline))) {
+                    return detail::DrainStatus::waiting;
+                }
+                image.present_pending = false;
+            }
+            if (!wait_queue_idle(remaining(deadline), true)) {
+                return detail::DrainStatus::waiting;
+            }
+            // Clears NVRHI's submitted resource references only after the
+            // timeline proves completion. Native image views remain owned by
+            // this backend until the coordinator subsequently destroys them.
+            if (validation_) {
+                validation_->runGarbageCollection();
+            }
+            return detail::DrainStatus::complete;
+        } catch (Error& error) {
+            return device_lost_ ? Result<detail::DrainStatus>{detail::DrainStatus::device_lost}
+                                : Result<detail::DrainStatus>{std::move(error)};
+        } catch (const vk::DeviceLostError&) {
+            device_lost_ = true;
+            return detail::DrainStatus::device_lost;
+        }
+    }
+
+    void destroy_swapchain() noexcept override {
+        if (queue_waiter_.pending()) {
+            std::terminate();
+        }
+        for (auto& image : images_) {
+            image.texture = nullptr;
+            if (image.view != VK_NULL_HANDLE) {
+                vkDestroyImageView(device_, image.view, nullptr);
+            }
+            if (image.rendered != VK_NULL_HANDLE) {
+                vkDestroySemaphore(device_, image.rendered, nullptr);
+            }
+            if (image.present_fence != VK_NULL_HANDLE) {
+                vkDestroyFence(device_, image.present_fence, nullptr);
+            }
+        }
+        images_.clear();
+        if (swapchain_ != VK_NULL_HANDLE) {
+            // All application uses and, if enabled, present-fence payloads
+            // have completed. The legacy queue-idle worker has also joined.
+            // With no present wait semaphores on the fallback,
+            // the implementation retains presented image memory until the
+            // presentation engine releases it (vkDestroySwapchainKHR contract).
+            vkDestroySwapchainKHR(device_, swapchain_, nullptr);
+            swapchain_ = VK_NULL_HANDLE;
+        }
+        extent_ = {};
+    }
+
+    void destroy_presentation() noexcept override {
+        for (auto& frame : frames_) {
+            frame.commands = nullptr;
+            if (frame.acquire_fence != VK_NULL_HANDLE) {
+                vkDestroyFence(device_, frame.acquire_fence, nullptr);
+            }
+            if (frame.acquired != VK_NULL_HANDLE) {
+                vkDestroySemaphore(device_, frame.acquired, nullptr);
+            }
+            frame = {};
+        }
+    }
+
     void destroy_nvrhi() noexcept override {
-        // No commands can be created or submitted in 05a. All NVRHI-owned
-        // initialization objects may therefore be destroyed without a GPU wait.
+        // Presentation has already completed its bounded drain or reported
+        // device loss, and any legacy queue-idle worker has joined. NVRHI's
+        // unbounded waitForIdle is never called on the owning thread.
         validation_ = nullptr;
         nvrhi_ = nullptr;
         nvrhi_diagnostics_.sink = nullptr;
     }
 
     void destroy_device() noexcept override {
+        if (queue_waiter_.pending()) {
+            std::terminate();
+        }
         if (device_ != VK_NULL_HANDLE) {
             vkDestroyDevice(device_, nullptr);
             device_ = VK_NULL_HANDLE;
@@ -554,6 +1088,104 @@ class VulkanBackend final : public detail::GraphicsBackend {
     }
 
   private:
+    using Clock = std::chrono::steady_clock;
+    static Clock::time_point make_deadline(std::uint64_t timeout_ns) noexcept {
+        // The coordinator supplies millisecond/one-second bounds. Clamp this
+        // private seam too, avoiding duration overflow from malformed fixtures.
+        return Clock::now() + std::chrono::nanoseconds(std::min(timeout_ns, 1'000'000'000ULL));
+    }
+    static std::uint64_t remaining(Clock::time_point deadline) noexcept {
+        const auto now = Clock::now();
+        return now >= deadline
+                   ? 0
+                   : static_cast<std::uint64_t>(
+                         std::chrono::duration_cast<std::chrono::nanoseconds>(deadline - now)
+                             .count());
+    }
+    VkResult observe(VkResult status) noexcept {
+        device_lost_ = device_lost_ || status == VK_ERROR_DEVICE_LOST;
+        return status;
+    }
+    void check(VkResult status, std::string_view operation) {
+        require_vk(observe(status), operation);
+    }
+    bool wait_queue_idle(std::uint64_t timeout_ns, bool start_if_needed) {
+        if (!queue_waiter_.pending()) {
+            if (!start_if_needed || !legacy_present_pending_ || device_lost_) {
+                return true;
+            }
+            // Unextended WSI offers no present fence. This is the documented
+            // legacy queue-idle compatibility route, isolated from the main
+            // thread and used only for generation retirement/explicit drain.
+            // It does not prove display scanout completion. There are no
+            // presentation wait semaphores whose PE payload could outlive it.
+            const auto queue = queue_;
+            auto started =
+                queue_waiter_.start([queue] { return static_cast<int>(vkQueueWaitIdle(queue)); });
+            if (!started) {
+                throw started.error();
+            }
+        }
+        auto waited = queue_waiter_.wait(timeout_ns);
+        if (!waited) {
+            throw waited.error();
+        }
+        if (!waited.value()) {
+            return false;
+        }
+        const auto status = observe(static_cast<VkResult>(*waited.value()));
+        check(status, "graphics.presentation.queue_idle");
+        legacy_present_pending_ = false;
+        return true;
+    }
+    bool wait_fence(VkFence fence, std::uint64_t timeout_ns) {
+        const auto status = observe(vkWaitForFences(device_, 1, &fence, VK_TRUE, timeout_ns));
+        if (status == VK_TIMEOUT) {
+            return false;
+        }
+        check(status, "graphics.presentation.wait_fence");
+        return true;
+    }
+    bool wait_timeline(std::uint64_t value, std::uint64_t timeout_ns) {
+        if (value == 0) {
+            return true;
+        }
+        const auto semaphore = nvrhi_->getQueueSemaphore(nvrhi::CommandQueue::Graphics);
+        VkSemaphoreWaitInfo info{};
+        info.sType = VK_STRUCTURE_TYPE_SEMAPHORE_WAIT_INFO;
+        info.semaphoreCount = 1;
+        info.pSemaphores = &semaphore;
+        info.pValues = &value;
+        const auto status = observe(vkWaitSemaphores(device_, &info, timeout_ns));
+        if (status == VK_TIMEOUT) {
+            return false;
+        }
+        check(status, "graphics.presentation.wait_submission");
+        return true;
+    }
+    struct Frame {
+        VkSemaphore acquired{VK_NULL_HANDLE};
+        VkFence acquire_fence{VK_NULL_HANDLE};
+        nvrhi::CommandListHandle commands;
+        std::uint64_t submitted{0};
+        bool acquire_pending{false};
+        bool unretired_recording{false};
+    };
+    struct Image {
+        VkImageView view{VK_NULL_HANDLE};
+        nvrhi::TextureHandle texture;
+        VkSemaphore rendered{VK_NULL_HANDLE};
+        VkFence present_fence{VK_NULL_HANDLE};
+        bool present_pending{false};
+        bool initialized{false};
+    };
+    std::array<Frame, 2> frames_{};
+    std::vector<Image> images_;
+    VkSwapchainKHR swapchain_{VK_NULL_HANDLE};
+    VkExtent2D extent_{};
+    bool device_lost_{false};
+    bool legacy_present_pending_{false};
+    detail::GraphicsQueueWaiter queue_waiter_;
     std::unique_ptr<Window> window_;
     VkInstance instance_{VK_NULL_HANDLE};
     VkDebugUtilsMessengerEXT messenger_{VK_NULL_HANDLE};
@@ -567,6 +1199,8 @@ class VulkanBackend final : public detail::GraphicsBackend {
     VkDevice device_{VK_NULL_HANDLE};
     VkQueue queue_{VK_NULL_HANDLE};
     std::uint32_t queue_family_{0};
+    bool surface_maintenance_{false};
+    bool present_fences_{false};
     NvrhiDiagnostics nvrhi_diagnostics_;
     nvrhi::vulkan::DeviceHandle nvrhi_;
     nvrhi::DeviceHandle validation_;

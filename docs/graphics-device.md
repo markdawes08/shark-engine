@@ -1,12 +1,16 @@
-# Graphics device foundation
+# Graphics device and presentation
 
 Assignment **05a** adds an owned Windows Vulkan/NVRHI device foundation in
 EngineClient. The [05a handoff](handoffs/05a-graphics-device.md) records its passing
-local gate. Full `REQ-05` remains **NOT_RUN** until
-the [05 checkpoint plan](roadmap/graphics-device-plan.md) is complete. This
-foundation does not expose GPU commands, swapchains, rendering or authoring APIs.
-The existing Editor/Runtime `--window` sample still runs the
-[offline window/frame pump](frame-loop.md) with an empty window.
+local gate. Assignment **05b** extends it with
+[clear-only presentation](presentation-lifecycle.md), owned submission and
+swapchain retirement; the [05b handoff](handoffs/05b-presentation-lifecycle.md)
+records that checkpoint. Full `REQ-05` remains **NOT_RUN** until the
+[05c failure/stress gate](roadmap/graphics-device-plan.md) is complete.
+Public contracts still expose no native GPU
+handles or authoring APIs. Editor/Runtime `--window` retains its empty-window
+sample; explicit `--graphics` uses the same [offline pump](frame-loop.md) and
+adds a clear-color window.
 
 The accepted capability profile is unchanged from
 [ADR 0003](architecture/0003-platforms.md) and the assignment-02 probe. Native
@@ -42,9 +46,10 @@ be destroyed elsewhere. `adapter()` returns an owned copy of the selected metada
 Every attempted startup phase is marked before entry. Failure, exceptions or normal
 shutdown release NVRHI, device, surface, instance and Window in reverse order.
 `close()` is idempotent and retains diagnostics. The callback storage outlives all
-native destruction callbacks. No idle wait is needed in 05a because its API cannot
-submit GPU work. This is not the retirement policy for future submitted resources:
-05b must wait for proven completion before releasing those resources.
+native destruction callbacks. Once presentation has started, bounded drain proves
+submitted use complete before retirement; timeout retains resources. The
+[presentation contract](presentation-lifecycle.md) defines terminal failure and
+destructor behavior. An owner that never presents needs no GPU wait.
 
 `GraphicsDevice::inventory(config)` uses the same ownership path through surface
 creation, with a hidden window, then returns owned adapter values after cleanup.
@@ -71,9 +76,11 @@ opens a window nor initializes Vulkan. Native enumeration caps each result at
 
 The profile checks Vulkan 1.3, `timelineSemaphore`, `synchronization2`,
 `dynamicRendering`, `VK_KHR_swapchain`, one graphics/compute/present queue, an sRGB
-surface format and FIFO presentation. Device creation enables only the three
-required feature bits and swapchain extension; ray tracing, bindless descriptors
-and optional vendor features are not enabled. A usable surface/format query is
+surface format and FIFO presentation. Device creation enables the three required
+feature bits and swapchain extension, plus optional EXT swapchain-maintenance
+feature/fences when available. Missing maintenance support selects bounded host
+completion without changing admission requirements. Ray tracing, bindless
+descriptors and vendor features are not enabled. A usable surface/format query is
 admission evidence, not proof of presented images.
 
 | Limit | Minimum |
@@ -118,9 +125,10 @@ validation prerequisites use `capability_unavailable`; conflicting ownership use
 Unexpected startup exceptions become `execution_failed` and unwind attempted
 phases. Explicit callers can report the error and terminate with a nonzero status.
 
-05a never silently replaces a GPU, disables validation, reduces the profile or
-retries a failed enumeration/create operation. It has no device-recovery or surface-
-recovery loop. 05b/05c own the concrete presentation recovery policy. Native driver
+The device never silently replaces a GPU, disables validation, reduces the profile
+or retries a failed enumeration/create operation. Presentation defers out-of-date
+recreation to a later call and treats device/surface loss as fatal; it has no
+device-recovery loop. 05c qualifies further stress and failure behavior. Native driver
 calls are not preemptible by a C++ destructor; qualification uses an external
 process-tree deadline to bound a stalled process. A timeout is retained as a
 failure, not retried into a pass.
@@ -182,6 +190,6 @@ rejects a second owner, checks explicit selection/profile results and verifies
 idempotent close plus clean cumulative diagnostics after destruction. Both local
 GPU UUIDs require their own run. Auto-selection is separately testable with
 `--device auto`. These are terminal-accessible diagnostics for human and agent
-contributors, not game-authoring commands or player protocols. 05b next adds the
-production presentation lifecycle; 05c closes full `REQ-05` only after its stress
+contributors, not game-authoring commands or player protocols. The separate
+[05b fixture](presentation-lifecycle.md) qualifies presentation; 05c closes full `REQ-05` only after its stress
 and failure gates pass.

@@ -54,6 +54,48 @@ struct GraphicsDiagnostics {
     std::vector<std::string> messages;
 };
 
+enum class PresentationSync { present_fence, host_completion };
+enum class PresentationStatus { presented, suspended, waiting, recreate_pending, closed };
+
+// Linear clear color for the presentation-only sample; no shader/scene API.
+struct ClearColor {
+    float red{0.02F};
+    float green{0.06F};
+    float blue{0.12F};
+    float alpha{1.0F};
+};
+
+struct PresentationStats {
+    PresentationSync synchronization{PresentationSync::host_completion};
+    WindowExtent extent{};
+    std::uint32_t image_count{0};
+    std::uint32_t frame_limit{2};
+    std::uint32_t in_flight{0};
+    std::uint32_t peak_in_flight{0};
+    std::uint64_t submitted{0};
+    std::uint64_t completed{0};
+    std::uint64_t presented{0};
+    std::uint64_t generation{0};
+    std::uint64_t retired_generations{0};
+    std::uint64_t suspended_frames{0};
+    std::uint64_t waiting_frames{0};
+    bool active{false};
+    bool faulted{false};
+    bool closed{false};
+};
+
+struct PresentationReport {
+    PresentationStatus status{PresentationStatus::waiting};
+    PresentationStats stats{};
+    bool recreated{false};
+};
+
+struct GraphicsWindowFrame {
+    WindowState state{};
+    InputSnapshot input{};
+    WindowDiagnostics diagnostics{};
+};
+
 // Pure bounded profile check; it neither initializes a loader nor accesses GPU.
 [[nodiscard]] std::vector<std::string>
 missing_graphics_requirements(const GraphicsAdapter& adapter);
@@ -70,7 +112,7 @@ inventory_graphics(const GraphicsConfig& config, std::unique_ptr<GraphicsBackend
 } // namespace detail
 
 // One nonmovable main-thread owner of Window -> instance -> surface -> device
-// -> NVRHI. No Vulkan/NVRHI handles escape. No GPU submission is exposed in05a.
+// -> NVRHI -> presentation. No Vulkan/NVRHI handles escape.
 // Initial creation on the process main thread is a caller precondition; methods
 // enforce that creating thread. Live destruction elsewhere terminates.
 class GraphicsDevice final {
@@ -87,8 +129,23 @@ class GraphicsDevice final {
 
     [[nodiscard]] Result<GraphicsAdapter> adapter() const;
     [[nodiscard]] Result<GraphicsDiagnostics> diagnostics() const;
-    // Retains cumulative diagnostics, including destruction callbacks, after
-    // close. No device wait is needed: this increment exposes no submissions.
+    [[nodiscard]] Result<GraphicsWindowFrame> poll_window();
+    [[nodiscard]] Result<WindowState> window_state() const;
+    [[nodiscard]] Result<void> resize(WindowExtent content);
+    [[nodiscard]] Result<void> iconify();
+    [[nodiscard]] Result<void> restore();
+    [[nodiscard]] Result<void> show();
+    [[nodiscard]] Result<void> focus();
+    [[nodiscard]] Result<void> request_close();
+    // Lazy presentation startup. One bounded attempt per call; waiting or
+    // recreate_pending requires a later event-pump pass, never an internal spin.
+    [[nodiscard]] Result<PresentationReport> present(ClearColor color = {});
+    [[nodiscard]] Result<PresentationStats> presentation_stats() const;
+    // Waits up to one second for application GPU/presentation synchronization.
+    // A timeout retains live resources; callers must exit or retry explicitly.
+    [[nodiscard]] Result<void> drain();
+    // Retains diagnostics/stats after close. Destruction fails fast if a final
+    // bounded drain cannot prove resources safe to release.
     [[nodiscard]] Result<void> close();
 
   private:

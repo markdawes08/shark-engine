@@ -83,7 +83,10 @@ no second computer or specific provider integration is part of the requirement.
 Keep 15 as one manifest owner and final gate, but implement it in these dependent
 parts. This plan does not start assignment 15. Assignments 02/03/04 are complete
 under the current-machine scope; the [window/input plan](window-input-plan.md)
-records the completed 04c gate. 05a device ownership is complete; 05b presentation is next.
+records the completed 04c gate. 05a device ownership and 05b presentation
+lifecycle are complete under the current-machine scope.
+05c failure and stress qualification is next, as recorded in the
+[05b handoff](../handoffs/05b-presentation-lifecycle.md).
 
 1. **Discovery and read-only access:** one-shot CLI + versioned stdio framing,
    clean stdout, capability/schema discovery, bounded project/scene queries,
@@ -116,7 +119,12 @@ now closes its gate under ADR 0010; assignment 03 is complete across
 [03a contracts, 03b lifecycle and 03c scheduling](core-plan.md).
 [03c verification](../handoffs/03c-time-and-work.md) closes the local Core gate.
 **04c and full assignment 04 are complete under the current-machine scope.**
-**05a device ownership is complete; next is 05b, swapchain/submission/presentation.**
+**05b, swapchain, submission and presentation lifecycle, is complete under the
+current-machine scope.** The next checkpoint is **05c,
+failure and stress qualification**. The
+[presentation contract](../presentation-lifecycle.md) and
+[05b handoff](../handoffs/05b-presentation-lifecycle.md) describe the owned lifecycle,
+bounded native JSON fixture and separate qualifying GPU workload.
 The [device guide](../graphics-device.md), [05 plan](graphics-device-plan.md) and
 [05a handoff](../handoffs/05a-graphics-device.md) add noninteractive description,
 inventory and bounded JSON device-lifetime fixtures usable by humans or agents.
@@ -126,11 +134,13 @@ The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and
 [window/input plan](window-input-plan.md) define injectable input and owned native
-windows with offline frame scheduling. Explicit Editor/Runtime `--window` mode
-is accessible to a human or terminal agent, with bounded smoke options and
-diagnostic JSON lines for F6/F7 sample pause/step controls. Deterministic CPU tests
-inject input and time without an editor/display. These controls are neither
-game-authoring commands nor a live-world protocol; no renderer or game-authoring
+windows with offline frame scheduling. Explicit Editor/Runtime `--graphics` clear
+presentation and `--window` diagnostics share that frame/input pump. Both are
+accessible to a human or terminal agent, with bounded run options and diagnostic
+JSON lines for F6/F7 sample pause/step controls. Graphical launches require an
+explicit device capability; help and argument validation remain device-free.
+Deterministic CPU tests inject input and time without an editor/display. These controls are neither
+game-authoring commands nor a live-world protocol; no scene renderer or game-authoring
 UI/API exists. Full `REQ-04` is PASS after final local qualification. The
 [final local handoff](../handoffs/02d-final-verification.md) preserves full local
 Windows lifecycle runs, bounded portable terminal launchers and isolated Ubuntu

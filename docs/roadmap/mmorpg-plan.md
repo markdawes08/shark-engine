@@ -82,12 +82,18 @@ The [input guide](../input-contracts.md), [window lifecycle guide](../window-lif
 describe local input, windows and offline frame scheduling. None grants gameplay
 authority. The frame loop reuses Core's existing 60 Hz offline scheduler with
 bounded catch-up, first-tick input and explicit pause/step; Server timing retains
-its separate policy. Editor/Runtime expose `--window` with F6/F7 sample controls
-without a production renderer, world simulation or game-authoring UI. Full
-`REQ-04` is PASS after final Windows/WSL, native-window and standalone/package
-qualification. **05a device ownership is now complete; next is 05b, swapchain/submission/presentation.**
-The [05 checkpoints](graphics-device-plan.md), [device contract](../graphics-device.md)
-and [05a handoff](../handoffs/05a-graphics-device.md) record native validation on both
+its separate policy. Editor/Runtime expose `--graphics` clear presentation and
+`--window` diagnostics through that shared offline frame/input pump, with F6/F7
+sample controls. Scene rendering, world simulation and game-authoring UI remain
+planned. Full `REQ-04` is PASS after final Windows/WSL, native-window and standalone/package
+qualification. **05b, swapchain, submission and presentation lifecycle, is
+complete under the current-machine scope.** The next
+checkpoint is **05c, failure and stress qualification**. The
+[05 checkpoints](graphics-device-plan.md), [device contract](../graphics-device.md),
+[presentation contract](../presentation-lifecycle.md) and
+[05b handoff](../handoffs/05b-presentation-lifecycle.md) record the delivered
+lifecycle and qualification limits. The completed
+[05a handoff](../handoffs/05a-graphics-device.md) retains device validation on both
 local GPUs and WSL CPU/Server isolation. Full `REQ-05` remains NOT_RUN until 05c.
 Presentation stays in Client and cannot acquire authority over server time or world state.
 The [final local handoff](../handoffs/02d-final-verification.md)

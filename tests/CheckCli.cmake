@@ -27,7 +27,8 @@ foreach(shark_mode IN ITEMS version help default invalid extra)
         endif()
     elseif(shark_expected_exit EQUAL 0)
         if(NOT shark_output MATCHES "Usage: ${SHARK_APPLICATION}" OR
-           NOT shark_output MATCHES "foundation only" OR NOT shark_error STREQUAL "")
+           NOT shark_output MATCHES "foundation only" OR NOT shark_output MATCHES "--graphics" OR
+           NOT shark_error STREQUAL "")
             message(FATAL_ERROR "Missing honest foundation help: '${shark_output}' '${shark_error}'")
         endif()
     else()

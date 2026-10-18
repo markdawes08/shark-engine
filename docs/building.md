@@ -46,8 +46,11 @@ device-free native CLI checks, and evidence-parser tests. `GraphicsDeviceSmoke`
 explicitly opens hidden windows and exercises Vulkan/NVRHI ownership on a named
 GPU. Its bounded wrapper requires a current locked validation receipt and retains
 JSON evidence. See the [05 checkpoint plan](roadmap/graphics-device-plan.md).
-Swapchain/submission integration is 05b; Editor/Runtime `--window` still uses the
-existing empty-window sample.
+05b adds [clear presentation](presentation-lifecycle.md), CPU lifecycle/launch
+checks in `shark.client.presentation`, device-free native fixture CLI checks and
+`shark.tooling.presentation-evidence`. `PresentationSmoke` explicitly qualifies
+the declared presentation workload on each GPU. Editor/Runtime `--graphics`
+opens the clear sample; `--window` retains the existing empty-window sample.
 
 The active client/editor target is this Windows 11 x64 PC. Existing WSL2 Ubuntu
 environments cover CPU/headless Server and local package checks.

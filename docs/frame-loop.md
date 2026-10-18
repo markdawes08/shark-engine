@@ -89,7 +89,10 @@ active; OS key repeat does not generate extra steps. These two keys are reserved
 by the sample and removed from tick input. Control changes emit a small JSON
 diagnostic with pause state and next callback index. This is development sample
 output, not an authoring command API. The callback currently performs no world
-work, so the visible window stays empty. There are no editor controls or rendering.
+work, so `--window` stays empty. The 05b [`--graphics` sample](presentation-lifecycle.md)
+uses the same snapshot/control helper and offline scheduler, then presents a clear
+color through the owned device. F6/F7 pause or step empty offline callbacks;
+they do not freeze visible presentation or a Server. Neither mode is an authoring UI.
 
 The pump reports callback diagnostics outside native callbacks and stops before
 another tick when close is observed. Runtime/Editor own RAII cleanup on failure.

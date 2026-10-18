@@ -27,7 +27,11 @@ The [M01 hosted follow-up](handoffs/M01-ci-verification.md) and
 Docker/package qualification and the fifteen checks required at that revision. The
 [MMORPG execution plan](roadmap/mmorpg-plan.md) records the completed 04c and full
 assignment-04 local gate, following local 03/04a/04b qualification.
-05a device ownership is complete locally; 05b presentation is next.
+05a device ownership is complete locally. **05b presentation lifecycle is
+complete under the current-machine scope.** The
+[05b handoff](handoffs/05b-presentation-lifecycle.md) records 236 passing CTests,
+2,304 validated presentations across both local GPUs, application and protected
+package checks. **05c failure and stress qualification** is next.
 The [05a handoff](handoffs/05a-graphics-device.md) records 211 CTests and both-GPU
 device qualification; full `REQ-05` remains NOT_RUN until 05c. The [opt-in probe](graphics-probe.md) adds CPU checks to
 ordinary CI while graphics builds/device runs use explicit graphics presets.
@@ -102,6 +106,16 @@ compile Vulkan/NVRHI by default; WSL CPU and Server builds keep
 synchronization and NVRHI validation. It is separate from ordinary CTest and
 does not establish presentation or GPU submission. No new hosted result is
 implied by local work.
+05b adds `shark.client.presentation` with seed 1337, labels `cpu;unit;client` and
+a 20-second timeout for injected lifecycle, launch and owned queue-waiter cases.
+Device-free CLI checks cover `PresentationSmoke` and Editor/Runtime `--graphics`;
+`shark.tooling.presentation-evidence` checks the strict native-evidence parser.
+Actual presentation qualification separately runs the
+[presentation lifecycle fixture](presentation-lifecycle.md) on both local GPUs
+in Windows Debug, Release and ASan with required validation. Ordinary CTest does
+not open a window or replace those hardware runs. Editor/Runtime's clear sample
+uses the shared offline frame/input pump; its diagnostic completion is NOT_RUN
+for qualification. Full `REQ-05` remains NOT_RUN until 05c's sustained/fault gate.
 Windows tests cover finite-duration shutdown; POSIX SIGINT/SIGTERM and readiness
 I/O failure checks execute on Linux, not through Windows `terminate()`.
 

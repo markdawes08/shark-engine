@@ -68,8 +68,12 @@ graphics or interpret an old aggregate NOT_RUN as a universal PASS.
 The [05 checkpoints](../roadmap/graphics-device-plan.md) separate device ownership,
 presentation, and final failure/stress qualification. The `client.graphics-device`
 feature maps real CPU/native device fixtures and bounded evidence tooling.
-Full `REQ-05` remains NOT_RUN until 05c; device creation does not establish
-submission, safe resource retirement or working presentation. All later
+`client.presentation-lifecycle` maps the [05b lifecycle](../presentation-lifecycle.md),
+shared graphical launch sample and exact native workload parser. Full `REQ-05`
+remains NOT_RUN until 05c. The [05b handoff](../handoffs/05b-presentation-lifecycle.md)
+and [local evidence](evidence/05b-local.json) record the completed checkpoint;
+short clear presentation does not establish sustained
+resource-growth behavior, shaders or scene rendering. All later
 implementation requirements remain NOT_RUN.
 
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`

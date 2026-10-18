@@ -1,5 +1,9 @@
 # Native client window lifecycle
 
+05b's [graphics sample](presentation-lifecycle.md) reuses this owner inside
+`GraphicsDevice`; it does not create another GLFW lifecycle. `--window` remains
+the standalone empty-window diagnostic described below.
+
 04b connects EngineClient's [input contract](input-contracts.md) to the pinned
 GLFW backend on Windows. Editor and Runtime use the same owned `Window` and
 explicit launch mode. This opens an empty native window without a graphics
