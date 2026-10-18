@@ -57,7 +57,8 @@ the tested revision and run evidence. **M01's gate is complete.** The
 implementation/local qualification; the
 [hosted follow-up](../handoffs/M01-ci-verification.md) closes its native CPU,
 headless Docker and deliberate-failure/restored-success gate. **Current assignment
-is 02; checkpoint 02a dependency/probe setup is complete and 02b is next.** The
+is 02; 02a setup and 02b executable cases/local validation are complete within checkpoint scope.
+Next checkpoint is 02c native Mac feasibility.** The
 [graphics checkpoint plan](graphics-plan.md) preserves one final hardware gate.
 Earlier handoffs and the assessment above retain their historical repository/gate
 status. Graphics and multiplayer qualification remain NOT_RUN. The graphics

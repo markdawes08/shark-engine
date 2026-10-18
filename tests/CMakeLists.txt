@@ -98,3 +98,8 @@ add_test(NAME shark.tooling.graphics-tools
     COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_graphics_tools.py" -v)
 set_tests_properties(shark.tooling.graphics-tools PROPERTIES LABELS "cpu;tooling" TIMEOUT 15
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+
+add_test(NAME shark.tooling.graphics-validation
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_graphics_validation.py" -v)
+set_tests_properties(shark.tooling.graphics-validation PROPERTIES LABELS "cpu;tooling" TIMEOUT 30
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")

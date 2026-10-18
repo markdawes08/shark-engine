@@ -100,8 +100,8 @@ discovery, human/agent parity, graphics or live MMO operations. The separate
 checks for this planning change. The full authoring gate remains NOT_RUN.
 
 M01's hosted qualification is complete. Current implementation work is assignment
-02 graphics compatibility; checkpoint 02a dependency/probe setup is complete and
-02b executable graphics cases and validation is next. The
+02 graphics compatibility; 02a setup and 02b executable cases/validation preserve
+the shared terminal workflow. Native Mac feasibility is the next checkpoint (02c). The
 [graphics plan](graphics-plan.md) and [probe commands](../graphics-probe.md)
 provide noninteractive contributor diagnostics; game-authoring APIs remain future work.
 No additional numbered chunk or change to product/player authority is necessary

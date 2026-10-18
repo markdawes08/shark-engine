@@ -271,5 +271,175 @@
       "validation": "DXC default internal validation plus repeated-byte determinism and invalid-shader rejection in 02a. Independent spirv-val and GPU shader execution remain required in 02b.",
       "verification": "Official release API digests reviewed 2026-10-18; preparation rechecks full archive SHA-256 and all selected executable/library/license bytes on each run."
     }
+  },
+  "graphics_validation": {
+    "assignment": "02b",
+    "scope": "Separate opt-in source-built development tools. Never fetched or linked by CPU/Core/Server/Runtime configurations.",
+    "build_configuration": "RelWithDebInfo",
+    "upstream_graph": "https://github.com/KhronosGroup/Vulkan-ValidationLayers/blob/aaf110dd4cd281df184373715d5ae26bd7d0aff3/scripts/known_good.json",
+    "existing_inputs": [
+      "VulkanHeaders"
+    ],
+    "dependencies": {
+      "VulkanUtilityLibraries": {
+        "version": "1.4.352",
+        "upstream": "https://github.com/KhronosGroup/Vulkan-Utility-Libraries",
+        "commit": "28d3b5930a6da0e4f15040679d8b51dda0b29c86",
+        "url": "https://github.com/KhronosGroup/Vulkan-Utility-Libraries/archive/28d3b5930a6da0e4f15040679d8b51dda0b29c86.tar.gz",
+        "sha256": "66a89b8ee9224c179eee6c2751cc799011c86406739d30cfcf0f6efb82646eab",
+        "license": "Apache-2.0 AND CC-BY-4.0",
+        "license_files": [
+          "LICENSE.md",
+          "LICENSES/Apache-2.0.txt",
+          "LICENSES/CC-BY-4.0.txt"
+        ],
+        "owner_target": "SharkGraphicsValidation standalone development tools; never engine runtime",
+        "assignment": "02b",
+        "patches": [],
+        "transitive_dependencies": [
+          "VulkanHeaders"
+        ],
+        "options": {
+          "UPDATE_DEPS": "OFF",
+          "BUILD_TESTS": "OFF",
+          "VUL_ENABLE_INSTALL": "OFF",
+          "VUL_CODEGEN": "OFF",
+          "VUL_ENABLE_ASAN": "OFF",
+          "VUL_ENABLE_UBSAN": "OFF"
+        },
+        "verification": "Official immutable commit archive downloaded and SHA-256 computed 2026-10-18. Revisions follow Vulkan-ValidationLayers1.4.352 scripts/known_good.json; compilation and device validation are separately recorded."
+      },
+      "SPIRVHeaders": {
+        "version": "commit-fe44b200",
+        "upstream": "https://github.com/KhronosGroup/SPIRV-Headers",
+        "commit": "fe44b2002bf7871e2e92fc001bc9f6e09f92194f",
+        "url": "https://github.com/KhronosGroup/SPIRV-Headers/archive/fe44b2002bf7871e2e92fc001bc9f6e09f92194f.tar.gz",
+        "sha256": "78a19a22810130602110761b7eaa47e49b778ea61bc7b05377c9794f54d2a426",
+        "license": "MIT AND CC-BY-4.0",
+        "license_files": [
+          "LICENSE",
+          "LICENSES/MIT.txt",
+          "LICENSES/CC-BY-4.0.txt"
+        ],
+        "owner_target": "SharkGraphicsValidation standalone development tools; never engine runtime",
+        "assignment": "02b",
+        "patches": [],
+        "transitive_dependencies": [],
+        "options": {
+          "SPIRV_HEADERS_ENABLE_TESTS": "OFF",
+          "SPIRV_HEADERS_ENABLE_INSTALL": "OFF"
+        },
+        "verification": "Official immutable commit archive downloaded and SHA-256 computed 2026-10-18. Revisions follow Vulkan-ValidationLayers1.4.352 scripts/known_good.json; compilation and device validation are separately recorded."
+      },
+      "SPIRVTools": {
+        "version": "commit-18b08af1",
+        "upstream": "https://github.com/KhronosGroup/SPIRV-Tools",
+        "commit": "18b08af19b08515d5a1749adbdb05bc4369a57ed",
+        "url": "https://github.com/KhronosGroup/SPIRV-Tools/archive/18b08af19b08515d5a1749adbdb05bc4369a57ed.tar.gz",
+        "sha256": "3445457d807912b879f526eade9e191235e1bd272ff8e70e7fd8b7e5435e2397",
+        "license": "Apache-2.0",
+        "license_files": [
+          "LICENSE"
+        ],
+        "owner_target": "SharkGraphicsValidation standalone development tools; never engine runtime",
+        "assignment": "02b",
+        "patches": [],
+        "transitive_dependencies": [
+          "SPIRVHeaders"
+        ],
+        "options": {
+          "SPIRV_SKIP_TESTS": "ON",
+          "SPIRV_SKIP_EXECUTABLES": "OFF",
+          "SPIRV_TOOLS_BUILD_STATIC": "ON",
+          "BUILD_SHARED_LIBS": "OFF",
+          "SPIRV_BUILD_FUZZER": "OFF",
+          "SPIRV_BUILD_LIBFUZZER_TARGETS": "OFF",
+          "SPIRV_TOOLS_USE_MIMALLOC": "OFF",
+          "SPIRV_TOOLS_USE_MIMALLOC_IN_STATIC_BUILD": "OFF",
+          "SPIRV_WERROR": "OFF",
+          "SKIP_SPIRV_TOOLS_INSTALL": "ON",
+          "SPIRV_COLOR_TERMINAL": "OFF"
+        },
+        "verification": "Official immutable commit archive downloaded and SHA-256 computed 2026-10-18. Revisions follow Vulkan-ValidationLayers1.4.352 scripts/known_good.json; compilation and device validation are separately recorded.",
+        "notes": "Uses the SPIRV-Headers revision explicitly selected by the matching VVL known_good graph, overriding its standalone DEPS suggestion. Upstream tests, fuzzers, optional allocators and their dependencies are disabled; no gclient/update_deps/download step is run."
+      },
+      "VulkanValidationLayers": {
+        "version": "1.4.352",
+        "upstream": "https://github.com/KhronosGroup/Vulkan-ValidationLayers",
+        "commit": "aaf110dd4cd281df184373715d5ae26bd7d0aff3",
+        "url": "https://github.com/KhronosGroup/Vulkan-ValidationLayers/archive/aaf110dd4cd281df184373715d5ae26bd7d0aff3.tar.gz",
+        "sha256": "47372ea1906d4058cb34a0094749c81ab6f57411ccd9ca2ab94764169acfaa90",
+        "license": "Apache-2.0 AND BSD-2-Clause AND BSL-1.0 AND MIT AND (Apache-2.0 WITH LLVM-exception)",
+        "license_files": [
+          "LICENSE.txt",
+          "LICENSES/Apache-2.0.txt",
+          "LICENSES/BSD-2-Clause.txt",
+          "LICENSES/BSL-1.0.txt",
+          "LICENSES/MIT.txt",
+          "LICENSES/LLVM-exception.txt",
+          "layers/external/xxhash.h",
+          "layers/external/inplace_function.h",
+          "layers/external/vma/vk_mem_alloc.h",
+          "layers/external/parallel_hashmap/phmap.h",
+          "layers/external/parallel_hashmap/phmap_base.h"
+        ],
+        "owner_target": "SharkGraphicsValidation standalone development tools; never engine runtime",
+        "assignment": "02b",
+        "patches": [],
+        "transitive_dependencies": [
+          "VulkanHeaders",
+          "VulkanUtilityLibraries",
+          "SPIRVHeaders",
+          "SPIRVTools"
+        ],
+        "options": {
+          "UPDATE_DEPS": "OFF",
+          "BUILD_TESTS": "OFF",
+          "BUILD_WERROR": "OFF",
+          "VVL_CODEGEN": "OFF",
+          "VVL_ENABLE_TRACY": "OFF",
+          "VVL_ENABLE_TRACY_CPU_MEMORY": "OFF",
+          "VVL_ENABLE_ASAN": "OFF",
+          "VVL_ENABLE_UBSAN": "OFF",
+          "USE_MIMALLOC": "OFF",
+          "USE_CUSTOM_HASH_MAP": "ON",
+          "BUILD_SELF_VVL": "OFF",
+          "DEBUG_CAPTURE_KEYBOARD": "OFF",
+          "BUILD_WSI_XCB_SUPPORT": "OFF",
+          "BUILD_WSI_XLIB_SUPPORT": "OFF",
+          "BUILD_WSI_XLIB_XRANDR_SUPPORT": "OFF",
+          "BUILD_WSI_WAYLAND_SUPPORT": "OFF"
+        },
+        "verification": "Official immutable commit archive downloaded and SHA-256 computed 2026-10-18. Revisions follow Vulkan-ValidationLayers1.4.352 scripts/known_good.json; compilation and device validation are separately recorded.",
+        "vendored_inputs": [
+          {
+            "path": "layers/external/xxhash.h",
+            "license": "BSD-2-Clause",
+            "pin": "Included in this exact source archive"
+          },
+          {
+            "path": "layers/external/inplace_function.h",
+            "license": "BSL-1.0",
+            "pin": "Included in this exact source archive"
+          },
+          {
+            "path": "layers/external/vma/vk_mem_alloc.h",
+            "license": "MIT",
+            "pin": "Included in this exact source archive"
+          },
+          {
+            "path": "layers/external/parallel_hashmap",
+            "license": "Apache-2.0 AND (Apache-2.0 WITH LLVM-exception)",
+            "pin": "Included in this exact source archive"
+          }
+        ],
+        "notes": "All shipped validation modules including synchronization are retained. GPU-assisted validation is available upstream but not enabled by the 02b baseline. Linux WSI-specific validation declarations are disabled for a display-independent tool build; the common Vulkan/swapchain validation is retained. The source-built layer is selected by process-local VK_LAYER_PATH; no registry/system installation.",
+        "generated_outputs": [
+          "layers/layer_options_validation.h",
+          "layers/vk_layer_settings.txt"
+        ],
+        "generated_output_policy": "The upstream settings target regenerates these shipped files. Accept only exact archive bytes or the exact LF-to-CRLF rendering on Windows; arbitrary source differences still fail. Record the actual final hashes. No source patch."
+      }
+    }
   }
 }

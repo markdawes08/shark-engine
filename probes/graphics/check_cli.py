@@ -16,7 +16,10 @@ def main() -> None:
     parser.add_argument("--lock", type=Path, required=True)
     args = parser.parse_args()
     digest = hashlib.sha256(args.lock.read_bytes()).hexdigest()
-    sources = ("probes/graphics/CMakeLists.txt", "probes/graphics/main.cpp", "probes/graphics/report.hpp")
+    sources = sorted(["probes/graphics/CMakeLists.txt", *(
+        path.relative_to(args.lock.parent).as_posix()
+        for path in (args.lock.parent / "probes/graphics").rglob("*")
+        if path.is_file() and path.suffix in (".cpp", ".hpp", ".hlsl"))])
     material = "".join(
         f"{source}\n{hashlib.sha256((args.lock.parent / source).read_bytes()).hexdigest()}\n"
         for source in sources
@@ -44,7 +47,7 @@ def main() -> None:
             assert result.stdout.strip() and not result.stderr, result
             return result.stdout
         report = json.loads(result.stdout)
-        assert report["schema_version"] == 1, report
+        assert report["schema_version"] == 2, report
         assert report["dependency_lock_sha256"] == digest, report
         assert report["probe_source_sha256"] == source_digest, report
         assert report["qualification"] == "NOT_RUN", report
@@ -65,6 +68,15 @@ def main() -> None:
     cases = [
         [],
         ["--smoke"],
+        ["--cases"],
+        ["--cases", "--device", "0" * 32],
+        ["--smoke", "--device", "0" * 32, "--shader-dir", "."],
+        ["--cases", "--device", "0" * 32, "--shader-dir", ".", "--artifacts-dir", ".", "--lifecycle-cycles", "101"],
+        ["--cases", "--device", "0" * 32, "--shader-dir", ".", "--artifacts-dir", ".", "--device-cycles", "0"],
+        ["--cases", "--device", "0" * 32, "--shader-dir", ".", "--artifacts-dir", ".", "--present-seconds", "601"],
+        ["--cases", "--device", "0" * 32, "--shader-dir", ".", "--artifacts-dir", ".", "--inject-failure", "unknown"],
+        ["--cases", "--device", "0" * 32, "--shader-dir", ".", "--artifacts-dir", ".", "--lifecycle-cycles", "-1"],
+        ["--cases", "--device", "0" * 32, "--shader-dir", ".", "--artifacts-dir", ".", "--lifecycle-cycles", "1junk"],
         ["--device", "0" * 32],
         ["--inventory", "--device", "0" * 32],
         ["--describe", "--smoke"],

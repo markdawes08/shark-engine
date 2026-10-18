@@ -30,3 +30,13 @@ TEST_CASE("Probe reports escape controls and preserve unknown driver bytes", "[g
     Json(std::move(bytes)).write(stream);
     REQUIRE(stream.str() == R"("quote\" slash\\ newline\u000a tab\u0009\u0000\u007f\u00ff")");
 }
+
+TEST_CASE("Probe reports preserve finite readback numbers and reject nonfinite values",
+          "[graphics-probe]") {
+    std::ostringstream stream;
+    Json(Json::Array{0.0, -0.25, 1e-5, 2e-3, 1024.5}).write(stream);
+    REQUIRE(stream.str() == "[0,-0.25,1.0000000000000001e-05,0.002,1024.5]");
+    REQUIRE_THROWS_AS(Json(std::numeric_limits<double>::infinity()), std::invalid_argument);
+    REQUIRE_THROWS_AS(Json(-std::numeric_limits<double>::infinity()), std::invalid_argument);
+    REQUIRE_THROWS_AS(Json(std::numeric_limits<double>::quiet_NaN()), std::invalid_argument);
+}

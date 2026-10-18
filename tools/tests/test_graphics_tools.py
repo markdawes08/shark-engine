@@ -113,7 +113,8 @@ class GraphicsToolsTests(unittest.TestCase):
             cache = Path(temporary)
             (cache / (artifact["sha256"] + ".archive")).write_bytes(data)
             tool = {"version": "test", "artifacts": {"fixture": artifact}}
-            with patch.object(setup.urllib.request, "urlopen", side_effect=AssertionError("No download allowed")):
+            with patch.object(setup.urllib.request, "urlopen", side_effect=AssertionError("No download allowed")), \
+                    patch.object(setup.tempfile, "mkdtemp", side_effect=AssertionError("Persistent cache must inherit its parent ACL")):
                 compiler, evidence = setup.prepare(tool, "fixture", cache, offline=True)
                 self.assertEqual(evidence["files"]["bin/dxc"], setup.digest(b"compiler"))
                 setup.prepare(tool, "fixture", cache, offline=True)
@@ -192,6 +193,101 @@ class GraphicsToolsTests(unittest.TestCase):
                     setup.compile_fixture(Path("fixture-dxc"), Path(temporary), evidence)
                 self.assertEqual(evidence["status"], "FAIL")
                 self.assertEqual(evidence["commands"][-1]["returncode"], -11)
+
+    def case_compiler(self, command, **unused):
+        if command[0].endswith("spirv-val"):
+            if command[-1].endswith("invalid-case-binary.spv"):
+                return ProcessResult(command, 1, "", "error: zero instruction word count", False)
+            return ProcessResult(command, 0, "", "", False)
+        if any(str(argument).endswith("invalid-case.hlsl") for argument in command):
+            code = 0x80004005 if setup.os.name == "nt" else 5
+            return ProcessResult(command, code, "", "error: invalid token", False)
+        Path(command[-1]).write_bytes(struct.pack("<5I", 0x07230203, 0x10600, 0, 1, 0))
+        return ProcessResult(command, 0, "", "", False)
+
+    def case_setup(self, directory):
+        executable = directory / "dxc"
+        executable.write_bytes(b"fixture compiler")
+        validator = directory / "spirv-val"
+        validator.write_bytes(b"fixture validator")
+        source = directory / "probes/graphics/shaders/cases.hlsl"
+        source.parent.mkdir(parents=True)
+        source.write_text("fixture source")
+        manifest = directory / "validation.json"
+        manifest.write_text("{}")
+        tools = {"tools": {"spirv_val": {"path": str(validator)}}}
+        output = directory / "output"
+        output.mkdir()
+        return executable, manifest, tools, output
+
+    def test_case_preparation_publishes_only_validated_repeatable_shaders(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            executable, receipt, tools, output = self.case_setup(directory)
+            with patch.object(setup, "ROOT", directory), patch.object(setup, "validation_tools", return_value=tools), \
+                    patch.object(setup, "run_process", side_effect=self.case_compiler):
+                result = setup.compile_cases(executable, output, receipt, "a" * 64)
+            manifest = json.loads((output / "shaders/shader-manifest.json").read_text())
+            self.assertEqual(result["status"], "PASS")
+            self.assertEqual(len(manifest["shaders"]), 4)
+            self.assertTrue(manifest["invalid_shader_rejected"])
+            self.assertTrue(manifest["invalid_spirv_rejected"])
+            self.assertTrue(all(shader["validation_status"] == "PASS" for shader in manifest["shaders"]))
+
+    def test_independent_validator_failure_never_publishes_passing_manifest(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            executable, receipt, tools, output = self.case_setup(directory)
+
+            def invalid(command, **kwargs):
+                if command[0].endswith("spirv-val"):
+                    return ProcessResult(command, 1, "", "error: invalid shader", False)
+                return self.case_compiler(command, **kwargs)
+
+            with patch.object(setup, "ROOT", directory), patch.object(setup, "validation_tools", return_value=tools), \
+                    patch.object(setup, "run_process", side_effect=invalid):
+                with self.assertRaisesRegex(ValueError, "Independent SPIR-V validation failed"):
+                    setup.compile_cases(executable, output, receipt, "a" * 64)
+            self.assertFalse((output / "shaders/shader-manifest.json").exists())
+
+    def test_validator_crash_is_not_successful_corrupt_shader_rejection(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            executable, receipt, tools, output = self.case_setup(directory)
+
+            def crashed(command, **kwargs):
+                if command[-1].endswith("invalid-case-binary.spv"):
+                    return ProcessResult(command, -11, "", "error: crash", False)
+                return self.case_compiler(command, **kwargs)
+
+            with patch.object(setup, "ROOT", directory), patch.object(setup, "validation_tools", return_value=tools), \
+                    patch.object(setup, "run_process", side_effect=crashed):
+                with self.assertRaisesRegex(ValueError, "did not reject the corrupt binary normally"):
+                    setup.compile_cases(executable, output, receipt, "a" * 64)
+            self.assertFalse((output / "shaders/shader-manifest.json").exists())
+
+    def test_compiler_nonrepeatability_and_timeout_fail_before_publishing(self):
+        for problem in ("changed", "timeout", "cleanup"):
+            with self.subTest(problem=problem), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                executable, receipt, tools, output = self.case_setup(directory)
+
+                def broken(command, **kwargs):
+                    result = self.case_compiler(command, **kwargs)
+                    if command[-1].endswith(".repeat"):
+                        if problem == "changed":
+                            Path(command[-1]).write_bytes(b"changed")
+                        elif problem == "timeout":
+                            return ProcessResult(command, 124, "", "", True)
+                        else:
+                            return ProcessResult(command, 0, "", "", False, ("cleanup failed",))
+                    return result
+
+                with patch.object(setup, "ROOT", directory), patch.object(setup, "validation_tools", return_value=tools), \
+                        patch.object(setup, "run_process", side_effect=broken):
+                    with self.assertRaises(ValueError):
+                        setup.compile_cases(executable, output, receipt, "a" * 64)
+                self.assertFalse((output / "shaders/shader-manifest.json").exists())
 
 
 if __name__ == "__main__":

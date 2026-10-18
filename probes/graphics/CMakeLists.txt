@@ -1,4 +1,4 @@
-add_executable(GraphicsProbe main.cpp)
+add_executable(GraphicsProbe main.cpp cases.cpp)
 target_link_libraries(GraphicsProbe PRIVATE SharkGraphicsDependencies)
 shark_configure_target(GraphicsProbe)
 shark_classify_target(GraphicsProbe client)
@@ -7,8 +7,12 @@ file(SHA256 "${PROJECT_SOURCE_DIR}/dependencies.lock.json" shark_probe_lock_sha2
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${PROJECT_SOURCE_DIR}/dependencies.lock.json")
 set(shark_probe_source_material "")
-foreach(shark_probe_source IN ITEMS
-        probes/graphics/CMakeLists.txt probes/graphics/main.cpp probes/graphics/report.hpp)
+file(GLOB_RECURSE shark_probe_sources CONFIGURE_DEPENDS RELATIVE "${PROJECT_SOURCE_DIR}"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/*.hpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/*.hlsl")
+list(APPEND shark_probe_sources "probes/graphics/CMakeLists.txt")
+list(SORT shark_probe_sources)
+foreach(shark_probe_source IN LISTS shark_probe_sources)
     file(SHA256 "${PROJECT_SOURCE_DIR}/${shark_probe_source}" shark_probe_file_sha256)
     string(APPEND shark_probe_source_material "${shark_probe_source}\n${shark_probe_file_sha256}\n")
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
@@ -30,7 +34,8 @@ if(SHARK_BUILD_TESTS)
     set(Python3_FIND_REGISTRY NEVER)
     set(Python3_FIND_FRAMEWORK NEVER)
     find_package(Python3 3.11 COMPONENTS Interpreter REQUIRED)
-    target_sources(Tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/report_tests.cpp")
+    target_sources(Tests PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/report_tests.cpp"
+        "${CMAKE_CURRENT_SOURCE_DIR}/lifecycle_tests.cpp")
     add_test(NAME shark.graphics-probe.report COMMAND Tests "[graphics-probe]" --rng-seed 1337)
     set_tests_properties(shark.graphics-probe.report PROPERTIES
         LABELS "cpu;unit;graphics-probe" TIMEOUT 10)

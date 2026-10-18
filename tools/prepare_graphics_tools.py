@@ -1,7 +1,7 @@
-"""Prepare locked offline DXC and compile the 02a shader setup fixture.
+"""Prepare locked offline DXC and independently validate executable probe shaders.
 
-This is development tooling only. It does not qualify shader execution or replace
-the independent SPIR-V validation and graphics/compute probes required in 02b.
+This is development tooling only. Offline compilation is not GPU execution or
+hardware qualification. Use --cases with the locked validation tools receipt.
 """
 
 from __future__ import annotations
@@ -22,9 +22,11 @@ import sys
 import tarfile
 import tempfile
 import urllib.request
+import uuid
 import zipfile
 
 from process_runner import run_process
+from graphics_probe import SHADERS, sha256, validation_tools
 
 ROOT = Path(__file__).resolve().parents[1]
 MAX_ARCHIVE = 64 * 1024 * 1024
@@ -176,7 +178,12 @@ def prepare(tool: dict, host: str, cache: Path, *, offline: bool) -> tuple[Path,
             if digest(target.read_bytes()) != digest(content):
                 raise ValueError(f"DXC installed file hash mismatch: {name}")
     else:
-        temporary = Path(tempfile.mkdtemp(prefix="dxc-", dir=cache))
+        # Python 3.13 creates mkdtemp directories with an explicit private ACL on
+        # Windows. Renaming one into a persistent cache can make administrator-
+        # prepared tools unreadable to the same user's standard token. Inherit
+        # the workspace/cache ACL instead; do not rewrite ACLs after extraction.
+        temporary = cache / ("dxc-" + uuid.uuid4().hex)
+        temporary.mkdir()
         try:
             for name, content in files.items():
                 target = temporary / name
@@ -277,16 +284,103 @@ def runtime_dependencies(executable: Path, output: Path) -> dict:
             "scope": "Observed native tool dependencies; not a portable package or engine runtime qualification"}
 
 
+def compile_cases(executable: Path, output: Path, manifest_path: Path, lock_digest: str,
+                  evidence: dict | None = None) -> dict:
+    tools = validation_tools(manifest_path, lock_digest)
+    validator = Path(tools["tools"]["spirv_val"]["path"])
+    fixture = ROOT / "probes/graphics/shaders/cases.hlsl"
+    directory = output / "shaders"
+    directory.mkdir(exist_ok=False)
+    commands = []
+    evidence = {} if evidence is None else evidence
+    evidence.update(status="FAIL", commands=commands, shaders=[])
+    shader_records = evidence["shaders"]
+
+    def invoke(command: list[str], name: str):
+        result = run_process(command, cwd=ROOT, timeout=30)
+        (output / f"{name}.log").write_text(result.stdout + result.stderr, encoding="utf-8")
+        commands.append({"phase": name, **asdict(result)})
+        if result.timed_out or result.cleanup_errors:
+            raise ValueError(f"Shader tool {name} timed out or failed process cleanup")
+        return result
+
+    source_hash = sha256(fixture)
+    compiler_hash = sha256(executable)
+    for name, (entry, profile) in SHADERS.items():
+        flags = ["-spirv", "-fspv-target-env=vulkan1.3", "-T", profile,
+                 "-E", entry, "-O3", "-Ges", "-WX"]
+        destination = directory / name
+        command = [str(executable), *flags, str(fixture), "-Fo", str(destination)]
+        compiled = invoke(command, name + "-compile")
+        if compiled.returncode or not destination.is_file():
+            raise ValueError(f"DXC compilation failed for {name}")
+        binary = destination.read_bytes()
+        if (not 20 <= len(binary) <= 4 * 1024 * 1024 or len(binary) % 4
+                or struct.unpack_from("<I", binary)[0] != 0x07230203):
+            raise ValueError(f"Invalid SPIR-V output for {name}")
+        repeated = output / (name + ".repeat")
+        repeat_command = [str(executable), *flags, str(fixture), "-Fo", str(repeated)]
+        repeat = invoke(repeat_command, name + "-repeat")
+        if repeat.returncode or not repeated.is_file() or repeated.read_bytes() != binary:
+            raise ValueError(f"Repeated shader compilation was not byte-identical for {name}")
+        validation_command = [str(validator), "--target-env", "vulkan1.3", str(destination)]
+        validated = invoke(validation_command, name + "-validate")
+        if validated.returncode:
+            raise ValueError(f"Independent SPIR-V validation failed for {name}")
+        shader_records.append({"file": name, "sha256": digest(binary), "bytes": len(binary),
+                               "source": fixture.relative_to(ROOT).as_posix(), "source_sha256": source_hash,
+                               "entry": entry, "profile": profile, "compile_status": "PASS",
+                               "validation_status": "PASS", "repeat_bytes_equal": True,
+                               "compile_command": command, "validation_command": validation_command})
+    invalid_hlsl = output / "invalid-case.hlsl"
+    invalid_hlsl.write_text("Deliberately invalid HLSL for bounded rejection.\n", encoding="utf-8")
+    invalid_output = output / "invalid-case.spv"
+    rejected = invoke([str(executable), "-spirv", "-fspv-target-env=vulkan1.3", "-T", "cs_6_0",
+                       "-E", "main", "-Ges", "-WX", str(invalid_hlsl), "-Fo", str(invalid_output)],
+                      "cases-reject-invalid-hlsl")
+    expected_rejection = 0x80004005 if os.name == "nt" else 5
+    if rejected.returncode != expected_rejection or "error:" not in rejected.stderr or invalid_output.exists():
+        raise ValueError("DXC did not reject the invalid case shader normally")
+    invalid_spirv = output / "invalid-case-binary.spv"
+    # A real SPIR-V header followed by an instruction with invalid zero word count.
+    invalid_spirv.write_bytes(struct.pack("<6I", 0x07230203, 0x10600, 0, 1, 0, 0))
+    rejected = invoke([str(validator), "--target-env", "vulkan1.3", str(invalid_spirv)],
+                      "cases-reject-invalid-spirv")
+    if rejected.returncode != 1 or "error" not in (rejected.stdout + rejected.stderr).lower():
+        raise ValueError("Independent SPIR-V validator did not reject the corrupt binary normally")
+    if sha256(fixture) != source_hash:
+        raise ValueError("Shader source changed during compilation")
+    if sha256(executable) != compiler_hash:
+        raise ValueError("Shader compiler changed during compilation")
+    # Recheck the receipt and files after execution as well as before it.
+    if validation_tools(manifest_path, lock_digest) != tools:
+        raise ValueError("Validation tools receipt changed during shader preparation")
+    manifest = {"schema_version": 1, "status": "PASS", "dependency_lock_sha256": lock_digest,
+                "compiler": {"path": str(executable.resolve()), "sha256": compiler_hash},
+                "validator": {"path": str(validator), "sha256": sha256(validator),
+                              "manifest_sha256": sha256(manifest_path)},
+                "shaders": shader_records, "invalid_shader_rejected": True, "invalid_spirv_rejected": True}
+    manifest_file = directory / "shader-manifest.json"
+    manifest_file.write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    evidence.update(status="PASS", manifest_path=str(manifest_file), manifest_sha256=sha256(manifest_file),
+                    invalid_shader_rejected=True, invalid_spirv_rejected=True)
+    return evidence
+
+
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--offline", action="store_true", help="Require the already cached immutable archive")
+    parser.add_argument("--cases", action="store_true", help="Compile and independently validate all executable graphics fixtures")
+    parser.add_argument("--validation-manifest", type=Path, help="Locked validation tools preparation receipt, required by --cases")
     parser.add_argument("--output", type=Path, help="Fresh evidence directory (default out/graphics-tools/<host>-<timestamp>)")
     args = parser.parse_args()
+    if args.cases != bool(args.validation_manifest):
+        parser.error("--cases and --validation-manifest must be provided together")
     host = native_host()
     timestamp = datetime.now(timezone.utc)
     output = (args.output or ROOT / "out/graphics-tools" /
               f"{host}-{timestamp.strftime('%Y%m%dT%H%M%S%fZ')}").resolve()
-    report = {"schema_version": 1, "assignment": "02a", "host": host,
+    report = {"schema_version": 1, "assignment": "02b" if args.cases else "02a", "host": host,
               "timestamp_utc": timestamp.isoformat(), "evidence_directory": str(output),
               "os": platform.platform(), "python": platform.python_version(),
               "status": "FAIL", "scope": "offline DXC setup, no GPU qualification"}
@@ -314,6 +408,9 @@ def main() -> int:
                 raise ValueError("Available native tool dependency inspection failed")
             report["compile"] = {}
             compile_fixture(executable, output, report["compile"])
+            if args.cases:
+                report["cases"] = {}
+                compile_cases(executable, output, args.validation_manifest.resolve(), digest(lock_bytes), report["cases"])
             report["status"] = "PASS"
             code = 0
     except (OSError, ValueError, KeyError, tarfile.TarError, zipfile.BadZipFile) as error:

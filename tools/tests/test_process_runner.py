@@ -35,15 +35,36 @@ class ProcessRunnerTests(unittest.TestCase):
             finally:
                 api.CloseHandle(handle)
         else:
-            try:
-                os.kill(pid, 0)
-            except ProcessLookupError:
-                return
-            # Orphaned grandchildren may remain briefly as reaped-by-init zombies;
-            # they are terminated, cannot run and cannot retain open output handles.
-            state = run_process(["ps", "-o", "stat=", "-p", str(pid)], timeout=2)
-            self.assertTrue(not state.stdout.strip() or state.stdout.strip().startswith("Z"),
-                            f"Fixture process {pid} survived cleanup: {state.stdout}")
+            # SIGKILL delivery does not synchronously retire an orphaned child.
+            # Observe its actual exit within the runner's one-second termination
+            # budget, rather than interpreting one immediate kernel state sample
+            # (including an uninterruptible I/O wait) as the final outcome.
+            deadline = time.monotonic() + 1.0
+            last_state = "not inspected"
+            while True:
+                try:
+                    os.kill(pid, 0)
+                except ProcessLookupError:
+                    return
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    self.fail(f"Fixture process {pid} survived cleanup: {last_state}")
+                # Use an independent observer, not the runner under test. A
+                # disappearing PID can make ps return 1 with an empty result.
+                state = subprocess.run(["ps", "-o", "stat=", "-p", str(pid)],
+                                       capture_output=True, text=True, timeout=remaining,
+                                       check=False)
+                self.assertIn(state.returncode, (0, 1),
+                              f"Could not inspect fixture process: {state.stderr}")
+                last_state = state.stdout.strip()
+                # Orphaned grandchildren may await init's reap as zombies;
+                # these have terminated and retain no open output handles.
+                if not last_state or last_state.startswith("Z"):
+                    return
+                remaining = deadline - time.monotonic()
+                if remaining <= 0:
+                    self.fail(f"Fixture process {pid} survived cleanup: {last_state}")
+                time.sleep(min(0.01, remaining))  # Bounded exit-condition polling.
 
     def cleanup_fixture(self, pid: int) -> None:
         """Even a broken runner must not leave the regression fixture running."""

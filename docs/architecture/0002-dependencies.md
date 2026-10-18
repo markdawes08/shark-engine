@@ -65,7 +65,9 @@ controlled immutable runner image. See [CI configuration and evidence](../ci.md)
 The initial integrated dependency is Catch2. Checkpoint 02a adds GLFW, NVRHI,
 matching Vulkan headers/loader and offline DXC inputs in the same lock, consumed
 only by the opt-in probe/tool preparation. See the [probe guide](../graphics-probe.md).
-Native Mac driver graphs and independent shader/graphics validation remain open.
+Checkpoint 02b adds a separate, explicitly prepared SPIRV-Tools/Vulkan-ValidationLayers
+source graph with its transitive headers/utilities. It is never added to the engine
+CMake graph. Native Mac driver/tool graphs remain open in 02c.
 
 Assignment 01 must establish one authoritative, versioned dependency manifest consumed by the CMake dependency setup. Use CMake FetchContent or locally populated source trees from that manifest; do not introduce competing package-manager resolution paths. Every dependency must record upstream URL, release label when available, full commit SHA or archive URL plus SHA-256, applicable patches, build options, license files, owning target and integration assignment. Include transitives, vendored headers, shader tools and CI tool downloads. Locally populated trees must match the same locked inputs.
 

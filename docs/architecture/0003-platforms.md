@@ -17,9 +17,10 @@ M01's separate foundation gate is **PASS**. Local results are recorded below and
 in its [handoff](../handoffs/M01-headless-server.md); the
 [hosted follow-up](../handoffs/M01-ci-verification.md) records the native CPU
 matrix, minimal Docker Server gate and deliberate-failure/restored-success proof.
-Full graphics and multiplayer qualification remain **NOT RUN**. Checkpoint 02a's
-[setup probe](../graphics-probe.md) supplies device/startup diagnostics separately;
-none of the mandatory hardware rows or P02 cases is closed by setup alone. The
+Full graphics and multiplayer qualification remain **NOT RUN**. The
+[graphics probe](../graphics-probe.md) adds executable local cases in 02b after
+02a's setup diagnostics. Individual case execution is separate from the required
+nine-row hardware gate; no complete mandatory row is qualified yet. The
 [MMORPG plan](../roadmap/mmorpg-plan.md) adds future server milestones without
 removing the native client commitments.
 
@@ -111,7 +112,7 @@ The initial profile is Vulkan API 1.3 with the functionality exercised below. A 
 
 - GLFW surface creation, a graphics/compute-capable queue, presentation support, `VK_KHR_swapchain`, FIFO presentation, transfer uploads and readbacks. A single queue is sufficient; dedicated compute/transfer queues are not mandatory.
 - Vertex, fragment and compute shaders using FP32 arithmetic, 16/32-bit index buffers, uniform/storage buffers, sampled 2D/cube textures, mipmaps, linear filtering, alpha blending, depth testing and storage-image writes. Offline shaders target the selected Vulkan/SPIR-V environment; no runtime source-shader compiler dependency ships with Shark.
-- `timelineSemaphore` and `synchronization2` supported and explicitly enabled where used; NVRHI's pinned revision must be audited for any additional required features/extensions and its actual synchronization paths. Do not enable an entire feature struct or treat successful extension enumeration as successful execution.
+- `timelineSemaphore`, `synchronization2` and `dynamicRendering` supported and explicitly enabled where used. The pinned NVRHI graphics pipeline uses dynamic rendering; 02b validation exposed and corrected its missing feature enablement. Continue auditing the pinned revision for any additional required features/extensions and actual synchronization paths. Do not enable an entire feature struct or treat successful extension enumeration as successful execution.
 - At least 4096-pixel 2D images, 2048-pixel cube faces, 12 layers of a 2048-pixel D32 depth array with per-layer attachment views and a sampled-array view, four color attachments, four bound descriptor sets, 16 sampled images and 16 samplers per shader stage, 16 KiB uniform-buffer range, 128 MiB storage-buffer range and 128 compute invocations per workgroup. Descriptor layouts and compute dispatches must stay inside the measured limits. The shared shadow array occupies one sampled-image binding; separately bound shadow maps must not exceed this budget.
 - No required ray tracing, mesh/geometry/tessellation shaders, bindless descriptors, descriptor indexing, sparse residency, subgroup-width assumption, float64, vendor-specific feature or dedicated GPU. If the chosen NVRHI revision imposes a conflicting requirement, 02 must expose it before later renderer work.
 

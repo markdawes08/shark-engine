@@ -49,6 +49,7 @@ DOCUMENTS = (
     "docs/handoffs/M01-headless-server.md",
     "docs/handoffs/M01-ci-verification.md",
     "docs/handoffs/02a-graphics-setup.md",
+    "docs/handoffs/02b-graphics-cases.md",
     "docs/handoffs/human-agent-planning-amendment.md",
 )
 

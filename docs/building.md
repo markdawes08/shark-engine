@@ -4,9 +4,9 @@ M01 extends the C++20 foundation with static EngineCore, EngineClient and
 EngineTools libraries, an Engine interface composition, separate
 Editor/Runtime/Server entry points and Catch2 tests. Editor/Runtime report
 bootstrap information; Server has validated startup and an idle lifecycle.
-02a adds a separate opt-in [graphics setup probe](graphics-probe.md) with locked
-dependencies and terminal diagnostics. Rendering, gameplay, scene import,
-authoring UI and export remain unimplemented.
+02a/02b add a separate opt-in [graphics probe](graphics-probe.md) with locked
+dependencies, terminal diagnostics, analytic GPU cases and offline validation tools.
+Production rendering, gameplay, scene import, authoring UI and export remain unimplemented.
 CPU build success does not qualify a GPU, audio device or final release platform.
 
 The [MMORPG amendment](roadmap/mmorpg-plan.md) requires the headless Server and

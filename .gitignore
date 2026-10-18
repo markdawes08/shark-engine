@@ -3,7 +3,8 @@
 
 # Generated builds, fetched dependencies, reports and distribution staging.
 # Includes minimal Ubuntu inputs in .tools/headless and server packages/evidence in out/.
-# Graphics archives/tools stay in .tools/graphics; probe builds/reports use build/ and out/graphics/.
+# Graphics/DXC/validation source caches stay in .tools/graphics; generated SPIR-V,
+# binary readbacks, validation layers and reports use build/ and out/graphics*/.
 # Keep generated agent/session reports under out/; public schemas/examples stay tracked.
 /build/
 /out/

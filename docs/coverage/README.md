@@ -26,7 +26,7 @@ records; documentation checks do not qualify the new authoring gates.
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`
 means precisely that; documentation validation cannot pass a future engine gate.
 The `implemented_surface.features` entries map the bootstrap behavior and runtime
-build boundary, server lifecycle, Server/Core closure and graphics probe setup to their actual tests
+build boundary, server lifecycle, Server/Core closure and graphics setup/executable cases to their actual tests
 and external fixtures. Component, authoring
 command and Lua arrays remain empty because those APIs do not exist yet.
 Assignment 10 connects supported scene surfaces to executable FeatureWorld
@@ -71,7 +71,9 @@ closure/lifecycle evidence. The [hosted follow-up](../handoffs/M01-ci-verificati
 and [gate receipt](evidence/M01-ci-gate.json) record all fifteen jobs passing,
 206/206 restored CTests, the expected thirteen injected sentinel failures,
 Docker/package closure and fifteen required checks. Current assignment is 02,
-with 02a dependency/probe setup complete and 02b next. The [graphics checkpoint plan](../roadmap/graphics-plan.md)
+with 02a setup and 02b executable GPU/validation fixtures; 02c is next.
+The [02b handoff](../handoffs/02b-graphics-cases.md) separates local evidence from
+the required native hardware matrix. The [graphics checkpoint plan](../roadmap/graphics-plan.md)
 and [probe guide](../graphics-probe.md) distinguish setup diagnostics from the
 remaining full hardware gate.
 Graphics and multiplayer requirements remain NOT_RUN. See the

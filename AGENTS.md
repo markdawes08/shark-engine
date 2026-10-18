@@ -24,7 +24,8 @@ local qualification and the [hosted follow-up](docs/handoffs/M01-ci-verification
 records the completed native CPU, headless Docker and red/green gate. The current
 assignment is 02; checkpoint 02a dependency/probe setup is complete. The
 [02a handoff](docs/handoffs/02a-graphics-setup.md) records evidence and limits;
-02b executable graphics cases and validation is next, not yet started. Follow the
+02b executable graphics cases and local validation are complete within checkpoint scope; see the
+[02b handoff](docs/handoffs/02b-graphics-cases.md). Native Mac feasibility in 02c is next. Follow the
 [graphics checkpoint plan](docs/roadmap/graphics-plan.md) and
 [probe guide](docs/graphics-probe.md); no complete GPU row is qualified yet.
 Networking, persistence, simulation and streaming remain planned.
@@ -213,7 +214,7 @@ in ADR 0007 are provisional targets; tests cannot silently reduce them to pass.
 | `engine/core/`, `engine/client/`, `engine/include/` | Shared Core, client presentation and retained bootstrap public header |
 | `engine_tools/`, `editor/`, `runtime/`, `server/` | Authoring library and separate client/editor/headless executables |
 | `tests/`, `cmake/`, `tools/` | Behavior tests, target configuration and development checks |
-| `probes/graphics/` | Opt-in assignment 02 setup fixture; not the production renderer |
+| `probes/graphics/` | Opt-in assignment 02 graphics, readback and lifecycle fixtures; not the production renderer |
 | `docs/architecture/`, `docs/coverage/`, `docs/handoffs/` | Decisions, mappings/evidence and assignment handoffs |
 | `docs/roadmap/` | Versioned execution order, scope amendments and foundation assessment |
 | `.github/workflows/` | Required CI automation |

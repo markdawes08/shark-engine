@@ -17,11 +17,11 @@ headless sanitizer and clean-runtime stages stop after its Debug failure.
 The [M01 hosted follow-up](handoffs/M01-ci-verification.md) and
 [durable gate evidence](coverage/evidence/M01-ci-gate.json) record actual runs,
 Docker/package qualification and the fifteen required checks. The
-[MMORPG execution plan](roadmap/mmorpg-plan.md) now places work in 02a
-dependency/probe setup. The [opt-in probe](graphics-probe.md) adds CPU checks to
+[MMORPG execution plan](roadmap/mmorpg-plan.md) now places work in assignment 02
+graphics feasibility, with 02b executable cases following 02a setup. The [opt-in probe](graphics-probe.md) adds CPU checks to
 ordinary CI while graphics builds/device runs use explicit graphics presets.
 The historical M01 job/test counts above remain tied to that revision; new local
-02a checks do not prove a new hosted run. Network, database, world-handoff and
+Local 02a/02b checks do not prove a new hosted run. Network, database, world-handoff and
 active-load tiers remain planned.
 
 ## Jobs and required checks

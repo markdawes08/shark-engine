@@ -1,8 +1,12 @@
 #pragma once
 
+#include <charconv>
+#include <cmath>
 #include <cstdint>
+#include <limits>
 #include <map>
 #include <ostream>
+#include <stdexcept>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -21,6 +25,11 @@ class Json final {
     Json(bool value) : value_(value) {}
     Json(std::uint32_t value) : value_(static_cast<std::uint64_t>(value)) {}
     Json(std::uint64_t value) : value_(value) {}
+    Json(double value) : value_(value) {
+        if (!std::isfinite(value)) {
+            throw std::invalid_argument("JSON numbers must be finite");
+        }
+    }
     Json(const char* value) : value_(std::string(value)) {}
     Json(std::string value) : value_(std::move(value)) {}
     Json(Array value) : value_(std::move(value)) {}
@@ -39,6 +48,18 @@ class Json final {
     }
     static void writeValue(std::ostream& stream, std::uint64_t value) {
         stream << value;
+    }
+    static void writeValue(std::ostream& stream, double value) {
+        // to_chars is locale independent and preserves enough precision for
+        // independently checking the fixed readback tolerances.
+        char buffer[64]{};
+        const auto result =
+            std::to_chars(buffer, buffer + sizeof(buffer), value, std::chars_format::general,
+                          std::numeric_limits<double>::max_digits10);
+        if (result.ec != std::errc{}) {
+            throw std::runtime_error("Cannot encode JSON floating-point value");
+        }
+        stream.write(buffer, result.ptr - buffer);
     }
     static void writeValue(std::ostream& stream, const std::string& value) {
         constexpr std::string_view hex = "0123456789abcdef";
@@ -84,7 +105,7 @@ class Json final {
         stream << '}';
     }
 
-    std::variant<std::nullptr_t, bool, std::uint64_t, std::string, Array, Object> value_;
+    std::variant<std::nullptr_t, bool, std::uint64_t, double, std::string, Array, Object> value_;
 };
 
 } // namespace shark::probe

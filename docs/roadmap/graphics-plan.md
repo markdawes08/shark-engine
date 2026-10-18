@@ -28,7 +28,10 @@ assignments or weaken [ADR 0003](../architecture/0003-platforms.md).
    readbacks, licenses, results and outstanding failures in durable records.
 
 **02a is complete within its setup scope**; see its
-[handoff](../handoffs/02a-graphics-setup.md). Next is **02b**, not yet started.
+[handoff](../handoffs/02a-graphics-setup.md). **02b implementation and local verification are complete**;
+the [02b handoff](../handoffs/02b-graphics-cases.md) records both supplemental GPU
+passes and an earlier unresolved resize timeout. Next is **02c**, without advancing
+the full assignment gate. 02d retains the full soak and any lifecycle recurrence investigation.
 REQ-02 remains **NOT_RUN** until the full gate passes.
 An unavailable device, driver, display, validation layer or native runner is
 reported as unavailable with a nonzero result; it is never converted into PASS.

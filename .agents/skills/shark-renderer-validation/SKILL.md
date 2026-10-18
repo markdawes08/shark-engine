@@ -10,13 +10,14 @@ Read [AGENTS.md](../../../AGENTS.md), the assigned increment and
 [space/color conventions](../../../docs/architecture/0005-simulation-and-rendering.md)
 and [v1 lighting profile](../../../docs/architecture/0006-v1-profile.md).
 
-Checkpoint 02a has an opt-in setup probe; see the exact native presets and bounded
-JSON commands in the [probe guide](../../../docs/graphics-probe.md). CPU-safe
-`shark.graphics-probe.cli` checks are registered only in graphics configurations.
-Device inventory and NVRHI/swapchain startup diagnostics do not execute the full
-P02 cases; rendering/readback, Vulkan validation and all hardware rows remain open.
-Use the runner with a fresh output directory and explicit device UUID for smoke.
-Its default requires Vulkan validation; `--validation off` is only diagnostic.
+The opt-in probe has executable 02b draw/compute/readback and lifecycle cases; see
+the native presets and bounded JSON commands in the [probe guide](../../../docs/graphics-probe.md).
+CPU-safe `shark.graphics-probe.cli` checks run only in graphics configurations.
+Prepare the locked standalone validation tools and shader manifest, then use
+`--mode cases`, an explicit device UUID, its validation receipt and a fresh output
+directory. Core and synchronization validation are required for case PASS;
+`--validation off` retains diagnostic execution only. Short lifecycle runs do not
+close the 100/20/600-second gate. All named hardware rows remain separately open.
 Run the native CPU build/CTest commands in [building](../../../docs/building.md)
 for relevant shared code. Contract validation checks documentation only.
 Never treat an empty selection or unavailable prerequisite as passing coverage.
