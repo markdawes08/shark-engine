@@ -4,9 +4,12 @@ The opt-in `GraphicsProbe` is a developer fixture using GLFW, NVRHI and Vulkan.
 It inventories devices, creates the GLFW/Vulkan/NVRHI stack, executes analytic
 graphics/compute/readback cases and exercises bounded presentation lifecycle.
 The JSON distinguishes individual case execution from the complete hardware gate.
-Full assignment qualification remains `NOT_RUN`; Mac feasibility, the nine named
-hardware rows and packaged launch are separate checkpoints. The [checkpoint plan](roadmap/graphics-plan.md)
-and [platform contract](architecture/0003-platforms.md) retain the full gate.
+Full assignment qualification remains `NOT_RUN`; the six named Windows/Linux
+hardware rows and clean-machine packaged launch remain open. The
+[checkpoint plan](roadmap/graphics-plan.md) and
+[platform contract](architecture/0003-platforms.md) retain that gate.
+[ADR 0009](architecture/0009-windows-linux-platform-scope.md) removes Mac
+compatibility and retires checkpoint 02c.
 
 ## Build
 
@@ -20,9 +23,8 @@ powershell -NoProfile -ExecutionPolicy Bypass -File tools/windows_dev.ps1 cmake 
 powershell -NoProfile -ExecutionPolicy Bypass -File tools/windows_dev.ps1 ctest --preset graphics-windows --output-on-failure
 ```
 
-Use `graphics-linux` or `graphics-macos` on those native systems. Linux requires
+Use `graphics-linux` on native Linux. It requires
 X11 development headers/libraries for the GLFW build; Wayland is disabled.
-Mac requires Xcode/Cocoa development tools and a separately qualified Vulkan ICD.
 Presets establish build commands, not evidence that every native build has run.
 Source archives and options come from [the dependency lock](../dependencies.lock.json),
 including a source-built Vulkan loader with matching headers. An arbitrary
@@ -55,7 +57,7 @@ python tools/graphics_probe.py --executable build/graphics-windows/bin/GraphicsP
 ```
 
 Replace the device placeholder with its exact 32-character lowercase hexadecimal
-Vulkan UUID. There is no implicit first-device selection. On Linux/macOS use the
+Vulkan UUID. There is no implicit first-device selection. On Linux use the
 matching build path and omit `.exe`. Inventory creates a hidden GLFW window and
 surface, enumerates actual device/driver/features/limits/formats and then exits;
 it does not create a logical device. Smoke selects the explicit device and tests
@@ -142,7 +144,7 @@ python tools/windows_unelevated.py --timeout 220 --evidence out/graphics/cases-0
 
 Use a fresh token receipt path and allow the outer deadline enough time for the
 runner's metadata collection and cleanup. Already standard-user terminals use the
-same helper without changing identity; Linux and macOS run the probe runner directly.
+same helper without changing identity; Linux runs the probe runner directly.
 When combining it with the compiler wrapper in PowerShell, pass an explicit array:
 `& ./tools/windows_dev.ps1 -CommandArguments @('python', 'tools/windows_unelevated.py', ... , '--', 'python', 'tools/graphics_probe.py', ...)`,
 replacing the ellipses with the arguments above. The ordinary `-File` wrapper form
@@ -184,7 +186,8 @@ Vulkan attachment clear, fences and queue/device idle; actual draw/compute cases
 use NVRHI. This deliberately simple fixture does not provide production frames
 in flight. Acquire uses a host fence and submission completion precedes present;
 there are no recycled present semaphores. Portability of swapchain destruction
-and the maintenance-extension route remain part of 02c/05. See the
+and the maintenance-extension route remain part of the Windows/Linux gate and
+assignment 05. See the
 [Khronos synchronization guidance](https://docs.vulkan.org/guide/latest/swapchain_semaphore_reuse.html).
 
 P02-02 verifies foreground/background, conventional depth, counterclockwise
@@ -213,25 +216,17 @@ nonresponsive process are covered separately. `--validation off` retains measure
 execution results but leaves every case status `NOT_RUN`. Case statuses are never
 a claim that a named hardware matrix row or the complete assignment passed.
 
-## Native Mac follow-up
+## Platform scope and shared compile definitions
 
-The user deferred 02c while working on Windows; see the
-[decision record](handoffs/02c-mac-deferred.md). The Mac rows stay NOT_RUN.
-
-The official DXC release supplies no native Mac binary. Native Mac shader-tool
-preparation remains NOT_RUN and requires a separately pinned source/toolchain
-route. KosmicKrisp (Apple Silicon/macOS 26) and MoltenVK (Intel Macs) remain the
-ADR's candidates. Their complete build dependencies, validation, maintenance and
-redistribution need the native 02c evidence. Do not invoke floating upstream fetch
-scripts or substitute a system package graph. See the
-[DXC release](https://github.com/microsoft/DirectXShaderCompiler/releases/tag/v1.9.2609),
-[KosmicKrisp guide](https://docs.mesa3d.org/drivers/kosmickrisp.html) and
-[MoltenVK sources](https://github.com/KhronosGroup/MoltenVK/tree/v1.4.2).
+Windows and Linux are the active probe targets. The
+[scope amendment](handoffs/windows-linux-scope-amendment.md) supersedes the former
+Mac deferral; no native Mac toolchain, translation-library or distribution work
+remains required. Earlier receipts retain their original platform lists as history.
 
 The pinned NVRHI backend and probe share Vulkan-Hpp compile definitions, including
 `VK_ENABLE_BETA_EXTENSIONS` to expose the official portability-subset queries.
-This keeps their dispatcher layout consistent; it does not enable an experimental
-Metal driver feature. No NVRHI source patch or production renderer API is introduced.
+This keeps their dispatcher layout consistent. No NVRHI source patch or production
+renderer API is introduced.
 
 ## Standalone Windows probe package
 

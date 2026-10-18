@@ -39,6 +39,7 @@ DOCUMENTS = (
     "docs/architecture/0006-v1-profile.md",
     "docs/architecture/0007-mmorpg-architecture.md",
     "docs/architecture/0008-human-agent-authoring.md",
+    "docs/architecture/0009-windows-linux-platform-scope.md",
     "docs/roadmap/mmorpg-plan.md",
     "docs/roadmap/human-agent-plan.md",
     "docs/roadmap/graphics-plan.md",
@@ -53,6 +54,7 @@ DOCUMENTS = (
     "docs/handoffs/02c-mac-deferred.md",
     "docs/handoffs/02d-windows-validation.md",
     "docs/handoffs/human-agent-planning-amendment.md",
+    "docs/handoffs/windows-linux-scope-amendment.md",
 )
 
 

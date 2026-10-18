@@ -16,14 +16,16 @@ run pass all fifteen jobs and all 206 CTests. The intervening injected run reach
 headless sanitizer and clean-runtime stages stop after its Debug failure.
 The [M01 hosted follow-up](handoffs/M01-ci-verification.md) and
 [durable gate evidence](coverage/evidence/M01-ci-gate.json) record actual runs,
-Docker/package qualification and the fifteen required checks. The
+Docker/package qualification and the fifteen checks required at that revision. The
 [MMORPG execution plan](roadmap/mmorpg-plan.md) now places work in assignment 02
 graphics feasibility, with 02b executable cases following 02a setup. The [opt-in probe](graphics-probe.md) adds CPU checks to
 ordinary CI while graphics builds/device runs use explicit graphics presets.
-The historical M01 job/test counts above remain tied to that revision; new local
-Local 02a/02b/02d checks do not prove a new hosted run. Native Mac 02c is
-[deferred](handoffs/02c-mac-deferred.md); Windows relocation on a development host
-is not clean-machine or full GPU-matrix evidence. The CPU package rejection suite
+The historical job/test counts above remain tied to their recorded revisions.
+[ADR 0009](architecture/0009-windows-linux-platform-scope.md) removes Mac from
+the active product and CI scope, retiring 02c and removing the six Mac CPU jobs.
+The current workflow has nine jobs, described below. Local 02a/02b/02d checks do not prove a
+new hosted run. Windows relocation on a development host is not clean-machine
+or full GPU-matrix evidence. The CPU package rejection suite
 is registered as `shark.tooling.graphics-package`; native launcher integration and
 GPU soak remain opt-in. Network, database, world-handoff and
 active-load tiers remain planned.
@@ -40,35 +42,34 @@ persisting credentials, and uploads logs on failure as well as success.
 | `cpu-windows-debug`, `cpu-windows-release`, `cpu-windows-asan` | `windows-2025-vs2026` x64 | VS 2026, MSVC toolset 14.51, Windows SDK 10.0.26100.0 | Debug, Release, ASan |
 | `cpu-linux-debug`, `cpu-linux-release` | `ubuntu-24.04` x64 | GCC 13 (`g++-13`) | Debug, Release |
 | `cpu-linux-asan-ubsan` | `ubuntu-24.04` x64 | Clang 18 (`clang++-18`) | ASan + UBSan |
-| `cpu-macos-arm64-debug`, `cpu-macos-arm64-release`, `cpu-macos-arm64-asan-ubsan` | `macos-26` arm64 | Xcode 26.4.1 / Apple Clang | Debug, Release, ASan + UBSan |
-| `cpu-macos-intel-debug`, `cpu-macos-intel-release`, `cpu-macos-intel-asan-ubsan` | `macos-15-intel` x64 | Xcode 16.4 / Apple Clang | Debug, Release, ASan + UBSan |
 | `runtime-only` | `ubuntu-24.04` x64 | GCC 13 | Client Release, no Server/Editor/EngineTools/Tests |
 | `headless-server` | `ubuntu-24.04` x64 host; locked Ubuntu 24.04 amd64 image | Snapshot GCC 13 and Clang 18 | Server-only Release package, Core/Server Debug tests, ASan + UBSan tests and clean-runtime smoke |
 
-All fifteen jobs, including `headless-server`, are configured as required checks
-on `main`, bound to GitHub Actions app 15368, with up-to-date branches required.
-Administrator bypass remains enabled for the owner's direct-push workflow; no
-approving-review or push-actor restriction was added. The M01 update preserves
-the earlier policy, adds the verified headless check and records GitHub readback
-in the [hosted gate evidence](coverage/evidence/M01-ci-gate.json). The historical
-[01 protection report](coverage/evidence/01-ci-protection.json) continues to prove
-only its original fourteen checks. Missing, skipped or cancelled required jobs
+All nine jobs, including `headless-server`, are configured as required checks on
+`main`, bound to GitHub Actions app 15368, with up-to-date branches required.
+The [scope amendment handoff](handoffs/windows-linux-scope-amendment.md) and
+[protection readback](coverage/evidence/windows-linux-ci-protection.json) record
+removal of only the six Mac check names. Administrator bypass and all other
+protection settings are unchanged. No approving-review or push-actor restriction
+was added. The revised workflow will run after the user's commit/push; this policy
+readback is not evidence of hosted execution of the local changes.
+The historical [M01 gate evidence](coverage/evidence/M01-ci-gate.json) and
+[01 protection report](coverage/evidence/01-ci-protection.json) retain their
+original fifteen- and fourteen-check policies. Missing, skipped or cancelled required jobs
 do not establish a passing assignment gate. The Windows Server
 runner is build evidence; it does not qualify Windows 11 graphics or deployment.
-The Mac CPU jobs do not qualify either Vulkan-on-Metal implementation.
-
-The matrix checks Debug and Release independently and runs sanitizers on all four
-OS/CPU rows. MSVC supplies ASan only; UBSan is exercised by Clang and Apple Clang.
+The matrix checks Debug and Release independently and runs sanitizers on both
+OS/CPU rows. MSVC supplies ASan only; UBSan is exercised by Linux Clang.
 Runtime-only has no CTest preset because Tests are disabled. That job explicitly
 builds the client boundary target and runs Runtime's real `--version` behavior.
 Ordinary CPU presets now also build Server and run its unit/lifecycle checks.
 Windows tests cover finite-duration shutdown; POSIX SIGINT/SIGTERM and readiness
-I/O failure checks execute on Linux/macOS, not through Windows `terminate()`.
+I/O failure checks execute on Linux, not through Windows `terminate()`.
 
 ## Locked tools and hosted-image limits
 
 [requirements-dev.txt](../requirements-dev.txt) locks these distributions with
-SHA-256 hashes for Windows x64, Linux x64 and both macOS CPU architectures:
+SHA-256 hashes for Windows x64 and Linux x64:
 CMake 3.31.10, Ninja 1.13.2, clang-format 20.1.8 and PyYAML 6.0.3. Python is exactly
 3.13.5 for the retained desktop CPU workflow. The separately locked minimal
 headless image uses Ubuntu snapshot Python 3.12.3, as described below; this does
@@ -90,29 +91,22 @@ release tags on 2026-10-17:
 
 Hosted runner OS labels select a platform, not an immutable VM snapshot. GitHub
 updates these images regularly. The workflow explicitly selects an installed
-Xcode bundle, MSVC toolset family/SDK and GCC/Clang executable family; it fails
-when a requested bundle is absent instead of silently choosing another Xcode or
-Visual Studio major version. Full compiler patch/build versions, compiler binary
+MSVC toolset family/SDK and GCC/Clang executable family; it fails when a requested
+toolchain is absent instead of silently choosing another Visual Studio major
+version. Full compiler patch/build versions, compiler binary
 hashes, SDK selection and `ImageOS`/`ImageVersion` are recorded after configure.
 Upstream inventory documents the selected labels and installed tools; actual
 results and recorded images are linked in the handoff.
 [GitHub runner image policy and inventory](https://github.com/actions/runner-images)
 
-The ARM64 Xcode pin is 26.4.1 because Apple documents sanitizer hangs on macOS
-26.4 with binaries built by Xcode 26.3 or older (issue 171762808), and recommends
-Xcode 26.4. The observed failures used Xcode 26.0.1 on macOS 26.6.2 and match
-the reported issue. Native CI now passes with Xcode 26.4.1 on the same OS/image.
-All three ARM configurations select the same updated bundle. Sanitizers and
-existing test deadlines remain enabled. [Apple Xcode 26.4 release notes](https://developer.apple.com/documentation/xcode-release-notes/xcode-26_4-release-notes)
-
 Qualification amendment to ADR 0002: exact project tools and source dependencies
-are immutable inputs; hosted CI compiler families/bundles are explicitly selected
+are immutable inputs; hosted CI compiler families are explicitly selected
 and their exact observed binaries recorded per run. This is a controlled rolling
 CI configuration, not a claim that a hosted VM can be recreated from its label.
 Pinning the action or Python version does not freeze the OS, standard library,
-Apple SDK, compiler patch or Python distributor rebuild. Assignment 35 must archive
+OS SDK, compiler patch or Python distributor rebuild. Assignment 35 must archive
 the actual toolchain/environment and build inputs needed for release reproduction,
-or use an immutable controlled runner image. A missing bundle or changed compiler
+or use an immutable controlled runner image. A missing toolchain or changed compiler
 requires a reviewed configuration/evidence update; do not mask that failure.
 
 ## Minimal Ubuntu headless gate
@@ -143,7 +137,7 @@ the repository read-only at `/source`, including its existing Git metadata, and
 writes builds inside the disposable container and evidence into the selected
 host directory. It performs no staging, commits or source copies. Docker image
 setup changes the disposable environment, not host APT configuration. Do not
-run `setup.sh` against a working host installation. No Podman or macOS-host
+run `setup.sh` against a working host installation. No Podman or alternate-host
 qualification is implied by this Linux command.
 
 When Docker is unavailable, the checked-in Linux/WSL fallback uses the same
@@ -215,16 +209,13 @@ python tools/ci.py --preset windows-asan
 python tools/ci.py --preset linux-debug
 python tools/ci.py --preset linux-release
 python tools/ci.py --preset linux-asan-ubsan
-python tools/ci.py --preset macos-debug
-python tools/ci.py --preset macos-release
-python tools/ci.py --preset macos-asan-ubsan
 ```
 
 Run only the presets for the current OS. Windows requires the native x64 MSVC
 developer environment; a plain shell with MSYS CMake earlier on PATH is not a
 valid substitute. The helper verifies the Python and tool pins before configuring.
 An explicit `CXX` environment value overrides the preset's portable compiler name;
-CI uses this to select the versioned GCC/Clang binary or Xcode's compiler.
+CI uses this to select the versioned GCC/Clang binary.
 
 The helper configures with `SHARK_INJECT_TEST_FAILURE=OFF` unless explicitly
 requested, builds with two parallel jobs, and runs CTest with `--no-tests=error`
@@ -264,7 +255,7 @@ failure-propagation evidence. Finish the first dispatch before starting the
 second; the workflow's concurrency policy can cancel overlapping dispatches.
 
 1. Open the repository's **Actions > CPU foundation > Run workflow** on the
-   intended revision. Set `inject_test_failure` to **true**. The twelve CPU jobs
+   intended revision. Set `inject_test_failure` to **true**. The six CPU jobs
    must reach CTest, execute the deliberately failing test and fail. A tool-install,
    configure or compilation failure does not prove test failure propagation.
 2. Save the run URL, commit, runner metadata, each CPU job's nonzero test-phase
@@ -273,10 +264,10 @@ second; the workflow's concurrency policy can cancel overlapping dispatches.
    `headless-server` job also receives the injection input; its test-enabled
    configuration must reach the real sentinel assertion, not fail preparation.
 3. Dispatch the same revision again with `inject_test_failure` **false** (the
-   default). All fifteen current jobs must pass, and no injected failure may remain in
+   default). All nine current jobs must pass, and no injected failure may remain in
    CTest. Save this run URL and artifacts alongside the failed-run evidence.
 4. Update the current assignment's handoff and requirement status only after checking
-   both actual runs and the four native CPU rows. Ordinary failed push runs do
+   both actual runs and the two native CPU rows. Ordinary failed push runs do
    not prove deliberate test failure propagation. Until the injected failure
    and restored pass are verified on the same revision, a new red/green claim
    remains unverified. Keep the previously verified revision explicit.

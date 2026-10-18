@@ -184,10 +184,10 @@ class GraphicsValidationTests(unittest.TestCase):
                 self.assertEqual(setup.main(), 2)
             self.assertEqual((evidence / "summary.json").read_text(), "existing")
 
-    def test_unavailable_native_route_reports_not_run_without_fetching(self):
+    def test_unsupported_native_host_reports_not_run_without_fetching(self):
         with tempfile.TemporaryDirectory() as temporary:
             evidence = Path(temporary) / "new"
-            with (patch.object(setup, "native_host", return_value="macos-arm64"),
+            with (patch.object(setup, "native_host", return_value="darwin-arm64"),
                   patch.object(setup, "prepare_source") as prepare,
                   patch.object(sys, "argv", ["prepare", "--output", str(evidence)]),
                   redirect_stdout(io.StringIO())):

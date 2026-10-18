@@ -1,5 +1,6 @@
 # CPython 3.13 development tools. Wheel SHA-256 values from PyPI JSON metadata,
-# checked 2026-10-17. Only Windows x64, Linux x64 and macOS x64/arm64 are locked.
+# checked 2026-10-17. Active development targets are Windows x64 and Linux x64.
+# Previously verified wheel hashes are retained; hashes do not expand platform scope.
 # Install into a virtual environment with --require-hashes --only-binary=:all:.
 cmake==3.31.10 \
     --hash=sha256:ad697643a00d9ba85179590a383c4f7401169b55ebf4b8b2938daf28c6bdeb6d \

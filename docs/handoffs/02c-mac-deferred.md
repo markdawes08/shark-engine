@@ -1,5 +1,9 @@
 # 02c native Mac work deferred
 
+Historical scope note: the later [Windows/Linux amendment](windows-linux-scope-amendment.md)
+removes all Mac compatibility requirements and retires 02c. The deferral below
+is historical; no Mac work or hardware qualification remains required.
+
 Base revision: `b6aabd7` (`feat(graphics): add validated GPU cases and lifecycle probes`).
 Decision recorded 2026-10-18 UTC / 2026-10-17 America/New_York. The user is on
 Windows and instructed: "if this means you cant create the mac portion then skip".

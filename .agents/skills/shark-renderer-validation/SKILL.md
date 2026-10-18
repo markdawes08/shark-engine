@@ -1,6 +1,6 @@
 ---
 name: shark-renderer-validation
-description: Validate Shark graphics changes against Vulkan/NVRHI requirements, readback and visual tolerances, and the separate Windows/Linux/Mac hardware gates.
+description: Validate Shark graphics changes against Vulkan/NVRHI requirements, readback and visual tolerances, and the separate Windows/Linux hardware gates.
 ---
 
 # Shark renderer validation
@@ -23,17 +23,18 @@ for relevant shared code. Contract validation checks documentation only.
 Windows 02d also provides the Release package and bounded PowerShell launcher in
 the probe guide. Preserve failed/incomplete soaks, partial lifecycle progress,
 package identity and relocated raw readbacks. A close request is an incomplete
-run, not a passing soak. Native Mac 02c is deferred at the user's request while
-working on Windows; that decision does not qualify or remove its hardware rows.
+run, not a passing soak. The user removed Mac compatibility from scope under
+[ADR 0009](../../../docs/architecture/0009-windows-linux-platform-scope.md);
+02c is retired and no Mac hardware qualification is required.
 Never treat an empty selection or unavailable prerequisite as passing coverage.
 
 Assignment 02 must qualify pinned GLFW/NVRHI/Vulkan on the exact real-hardware
-matrix, treating Apple Silicon and both Intel-Mac GPU rows independently. Capture
+six-row Windows/Linux matrix, treating each OS/GPU row independently. Capture
 OS/CPU/GPU/driver, lock digest, compiler/shader versions, capabilities/formats,
 validation settings and logs, commands, exit status and readback evidence. A bare
 triangle or software renderer cannot replace required compute, depth, HDR,
-texture-array, lifecycle and portability checks. A failing Mac path needs a
-reproducer and explicit decision; never silently remove the target or swap NVRHI.
+texture-array, lifecycle and portability checks. A failing required path needs a
+reproducer and explicit decision; never silently remove a target or swap NVRHI.
 
 Use Vulkan and NVRHI validation, explicit timeouts, controlled input/time and
 known readbacks. Apply the ADR's per-case tolerances and approved platform image

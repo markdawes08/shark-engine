@@ -34,8 +34,9 @@ PowerShell launcher verifies files/results and bounds process trees without a
 checkout, Python or SDK. Exercise real Unicode/space relocation, required
 validation, negative inputs and the full 100/20/600 workload on named hardware.
 CPU launcher tests use synthetic children and cannot qualify GPUs. Development-
-host relocation is not clean-machine evidence. Mac 02c is user-deferred and its
-rows remain open; package construction PASS never closes assignment 02.
+host relocation is not clean-machine evidence. Mac 02c is retired under
+[ADR 0009](../../../docs/architecture/0009-windows-linux-platform-scope.md);
+the six Windows/Linux rows remain open. Package construction PASS never closes assignment 02.
 
 Early export 14 may use explicitly versioned engine-owned development payloads;
 31 replaces them with validated cooked dependency closure. Include declared roots
@@ -43,12 +44,12 @@ for script-selected/dynamically assembled prefab, scene and audio IDs, precompil
 shaders, derived IBL, scripts, fonts/audio and redistribution notices. Missing
 dependencies fail atomically with machine-readable errors and progress status.
 Keep source importers, authoring services, GUI libraries and offline compilers out
-of Runtime; distinguish qualified Vulkan-on-Metal runtime translation libraries.
+of Runtime. Package and release qualification target Windows/Linux only.
 
 Launch exports outside the checkout on clean targets without editor, source,
 compiler or Vulkan SDK. Verify host/target restrictions, startup scenes and a
 prefab plus sound chosen only by script. Test repeatable cooking under pinned
-inputs; signing/notarization does not need byte-identical package output. Preserve
+inputs; signing does not need byte-identical package output. Preserve
 logs, build inputs, symbols and precise OS/CPU/GPU/driver evidence per matrix row.
 
 Qualify authoring from a fresh terminal-agent session using only documented
@@ -61,7 +62,7 @@ status/cancellation results and artifact manifests so terminal automation can
 determine success without parsing UI text. Missing GUI/hardware qualification
 remains NOT RUN even when the terminal workflow passes.
 
-Apply signing/notarization only through the selected authorized channel, with
+Apply signing only through the selected authorized channel, with
 secrets outside the repository. Missing credentials or hardware remain explicit
 release blockers. Do not stage, commit or push: the user's repository policy
 reserves these source-control actions to them. Provide a reviewable change set,

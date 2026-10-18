@@ -1,5 +1,9 @@
 # 02d Windows probe packaging and lifecycle evidence
 
+Historical scope note: the later [Windows/Linux amendment](windows-linux-scope-amendment.md)
+removes Mac requirements and retires 02c. The results and hashes below describe
+their original inputs; the current hardware gate has six Windows/Linux rows.
+
 Base revision: `b6aabd7` (`feat(graphics): add validated GPU cases and lifecycle probes`).
 The changes remain uncommitted; the user owns staging, committing and pushing.
 This is the available Windows portion of 02d, following the user-directed

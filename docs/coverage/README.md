@@ -19,9 +19,11 @@ profile and plan path are explicit machine-readable fields.
 owners and add `REQ-CROSS-HUMAN-AGENT` (audit owner 32). Shared services, terminal
 discovery/results, one project owner and semantic editor/CLI parity are required
 as their layers land; 33/M09 add fresh terminal and human continuation evidence.
-This adds no assignment or implemented API and does not change schema 3. All
-original criteria and verification states are retained, including historical PASS
-records; documentation checks do not qualify the new authoring gates.
+This adds no assignment or implemented API and does not change schema 3.
+Historical PASS records are retained; documentation checks do not qualify the new
+authoring gates. The later [ADR 0009](../architecture/0009-windows-linux-platform-scope.md)
+removes Mac requirements and retires 02c. Windows/Linux clients and editor plus
+the Linux headless server remain in scope; all six active GPU rows are unqualified.
 
 `planned_fixture` describes future evidence, not an existing test. `NOT_RUN`
 means precisely that; documentation validation cannot pass a future engine gate.
@@ -68,19 +70,22 @@ implementation and local qualification are recorded in the
 [local receipt](evidence/M01-local.json) records Windows 45/45 CTests,
 Ubuntu 26/26 restored CTests, the expected injected sentinel failure and package
 closure/lifecycle evidence. The [hosted follow-up](../handoffs/M01-ci-verification.md)
-and [gate receipt](evidence/M01-ci-gate.json) record all fifteen jobs passing,
+and [gate receipt](evidence/M01-ci-gate.json) record the historical fifteen jobs passing,
 206/206 restored CTests, the expected thirteen injected sentinel failures,
-Docker/package closure and fifteen required checks. Current assignment is 02,
+Docker/package closure and the then-required fifteen checks. The current Windows/Linux
+CI policy is documented in [CI](../ci.md). Current assignment is 02,
 with 02a setup, 02b executable GPU/validation fixtures and Windows 02d package work.
-[Native Mac 02c is deferred](../handoffs/02c-mac-deferred.md) at the user's request; its qualification remains open.
+Native Mac 02c is retired by ADR 0009; the earlier
+[deferral](../handoffs/02c-mac-deferred.md) remains a historical record.
 The [02b handoff](../handoffs/02b-graphics-cases.md) separates local evidence from
 the required native hardware matrix. The [graphics checkpoint plan](../roadmap/graphics-plan.md)
 and [probe guide](../graphics-probe.md) distinguish setup diagnostics from the
 remaining full hardware gate.
 The [Windows 02d handoff](../handoffs/02d-windows-validation.md) and
 [receipt](evidence/02d-windows-local.json) record the portable package, supplemental
-NVIDIA full soak, Intel short cases and retained failures. Named matrix and
-clean-machine qualification remain open.
+NVIDIA full soak, Intel short cases and retained failures at their recorded input
+hashes. Those receipts retain their original nine-row scope. The active six-row
+Windows/Linux matrix and clean-machine qualification remain open.
 Graphics and multiplayer requirements remain NOT_RUN. See the
 [CI verification handoff](../handoffs/01-ci-verification.md) for 01's tested
 revision, run URLs and qualification limits.

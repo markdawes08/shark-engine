@@ -21,7 +21,7 @@ PINNED_TOOLS = {"cmake": "3.31.10", "ninja": "1.13.2", "clang-format": "20.1.8"}
 ENVIRONMENT_KEYS = (
     "ImageOS", "ImageVersion", "RUNNER_OS", "RUNNER_ARCH", "GITHUB_SHA",
     "GITHUB_RUN_ID", "GITHUB_RUN_ATTEMPT", "GITHUB_WORKFLOW", "CC", "CXX",
-    "VCToolsVersion", "WindowsSDKVersion", "VisualStudioVersion", "DEVELOPER_DIR",
+    "VCToolsVersion", "WindowsSDKVersion", "VisualStudioVersion",
 )
 
 
@@ -62,9 +62,6 @@ def collect(build_dir: Path | None = None) -> dict:
             report["packages"][name] = importlib.metadata.version(name)
         except importlib.metadata.PackageNotFoundError:
             report["packages"][name] = None
-    if platform.system() == "Darwin":
-        report["xcode"] = command_output(["xcodebuild", "-version"])
-        report["sdk"] = command_output(["xcrun", "--show-sdk-version"])
     if build_dir is not None:
         report["build_directory"] = str(build_dir)
         compilers = []
@@ -85,8 +82,7 @@ def collect(build_dir: Path | None = None) -> dict:
         cache = build_dir / "CMakeCache.txt"
         if cache.is_file():
             # Compiler/deployment inputs only; never copy the whole cache into metadata.
-            keys = {"CMAKE_GENERATOR", "CMAKE_BUILD_TYPE", "CMAKE_OSX_DEPLOYMENT_TARGET",
-                    "CMAKE_OSX_ARCHITECTURES", "CMAKE_OSX_SYSROOT", "CMAKE_CXX_FLAGS",
+            keys = {"CMAKE_GENERATOR", "CMAKE_BUILD_TYPE", "CMAKE_CXX_FLAGS",
                     "CMAKE_CXX_FLAGS_DEBUG", "CMAKE_CXX_FLAGS_RELEASE", "CMAKE_MAKE_PROGRAM",
                     "SHARK_BUILD_CLIENT", "SHARK_BUILD_SERVER", "SHARK_BUILD_EDITOR", "SHARK_BUILD_TESTS",
                     "SHARK_INJECT_TEST_FAILURE", "SHARK_SANITIZER", "SHARK_BUILD_GRAPHICS_PROBE",

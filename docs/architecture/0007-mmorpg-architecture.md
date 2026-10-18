@@ -44,7 +44,9 @@ framework, Kubernetes platform or service mesh as a prerequisite.
 EngineTools, Editor, Runtime and Tests remain. Server must build,
 start and test without GPU/display/audio support or their SDK/download dependencies.
 The initial server qualification target is Ubuntu 24.04 x86-64, separately from
-the retained Windows/Linux/macOS client and editor hardware matrix.
+the Windows/Linux client and editor hardware matrix. The later user-directed
+[ADR 0009](0009-windows-linux-platform-scope.md) removes Mac requirements without
+changing server authority, seamless-world behavior or the remaining platform gates.
 
 Server owns position acceptance, collision, combat, cooldowns, AI, inventory,
 currency, loot, progression and persistent world mutations. Clients send bounded,

@@ -59,11 +59,6 @@
           "GLFW_BUILD_WIN32": "OFF",
           "GLFW_BUILD_X11": "ON",
           "GLFW_BUILD_COCOA": "OFF"
-        },
-        "Darwin": {
-          "GLFW_BUILD_WIN32": "OFF",
-          "GLFW_BUILD_X11": "OFF",
-          "GLFW_BUILD_COCOA": "ON"
         }
       },
       "notes": "Uses OS window-system headers/libraries; Linux desktop profile is X11. Gamepad mapping update is a manual upstream target and is never part of the default build."
@@ -155,10 +150,6 @@
           "USE_MASM": "ON"
         },
         "Linux": {
-          "USE_GAS": "ON",
-          "USE_MASM": "OFF"
-        },
-        "Darwin": {
           "USE_GAS": "ON",
           "USE_MASM": "OFF"
         }
@@ -280,7 +271,6 @@
           ]
         }
       },
-      "macos_status": "NOT RUN: upstream release has no native macOS binaries. Pin and qualify a source build or archived SDK bundle before native macOS shader compilation; no host-global fallback.",
       "validation": "DXC default internal validation plus repeated-byte determinism and invalid-shader rejection in 02a. Independent spirv-val and GPU shader execution remain required in 02b.",
       "verification": "Official release API digests reviewed 2026-10-18; preparation rechecks full archive SHA-256 and all selected executable/library/license bytes on each run."
     }

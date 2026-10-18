@@ -12,6 +12,9 @@ review, M01's hosted gate was recorded as open. Its later
 [hosted verification](../handoffs/M01-ci-verification.md) now closes that gate at
 `d658d69`; the historical assessment below remains tied to the reviewed baseline.
 No authoring implementation or parity evidence is inferred from the CI result.
+The later [platform scope decision](../architecture/0009-windows-linux-platform-scope.md)
+applies these authoring requirements to Windows and Linux. Mac compatibility is
+outside the product scope; the human/terminal parity requirements are unchanged.
 
 ## Assessment of existing work
 
@@ -101,8 +104,9 @@ checks for this planning change. The full authoring gate remains NOT_RUN.
 
 M01's hosted qualification is complete. Current implementation work is assignment
 02 graphics compatibility; 02a setup and 02b executable cases/validation preserve
-the shared terminal workflow. Native Mac 02c is user-deferred; Windows 02d adds a
-bounded portable terminal launcher and package verification. These remain developer
+the shared terminal workflow. 02c is retired by the platform scope decision;
+Windows 02d adds a bounded portable terminal launcher and package verification.
+These remain developer
 fixtures, not public game-authoring commands. The
 [graphics plan](graphics-plan.md) and [probe commands](../graphics-probe.md)
 provide noninteractive contributor diagnostics; game-authoring APIs remain future work.

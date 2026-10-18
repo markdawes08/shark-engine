@@ -25,10 +25,13 @@ records the completed native CPU, headless Docker and red/green gate. The curren
 assignment is 02; checkpoint 02a dependency/probe setup is complete. The
 [02a handoff](docs/handoffs/02a-graphics-setup.md) records evidence and limits;
 02b executable graphics cases and local validation are complete within checkpoint scope; see the
-[02b handoff](docs/handoffs/02b-graphics-cases.md). The user deferred native Mac 02c
-while working on Windows; see the [deferral](docs/handoffs/02c-mac-deferred.md).
+[02b handoff](docs/handoffs/02b-graphics-cases.md). The user removed Mac compatibility
+from scope; [ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md)
+supersedes the earlier deferral and retires checkpoint 02c. Target Windows and
+Linux clients/editor and the Linux headless Server. Do not plan, implement or
+require Mac compatibility, CI, packaging or hardware qualification.
 The [Windows 02d handoff](docs/handoffs/02d-windows-validation.md) records package
-and lifecycle work without qualifying absent Mac/Linux rows. Follow the
+and lifecycle work; the six named Windows/Linux GPU rows remain open. Follow the
 [graphics checkpoint plan](docs/roadmap/graphics-plan.md) and
 [probe guide](docs/graphics-probe.md); no complete GPU row is qualified yet.
 Networking, persistence, simulation and streaming remain planned.
@@ -77,10 +80,9 @@ python tools/validate_contract.py --self-test
 python tools/check_repository.py --self-test
 ```
 
-Use matching configure/build/test presets `linux-debug` or `macos-debug` on
-those hosts. Release presets are `windows-release`, `linux-release` and
-`macos-release`; sanitizer presets are `windows-asan`, `linux-asan-ubsan` and
-`macos-asan-ubsan`. The Linux sanitizer preset uses Clang. To run the automated
+Use matching configure/build/test preset `linux-debug` on Linux. Release presets
+are `windows-release` and `linux-release`; sanitizer presets are `windows-asan`
+and `linux-asan-ubsan`. The Linux sanitizer preset uses Clang. To run the automated
 CPU workflow with recorded evidence:
 
 ```text
@@ -135,8 +137,7 @@ Release server with tests and dependency fetching disabled; `server-debug` and
 EngineTools depends on EngineCore; Editor depends on EngineTools and EngineClient;
 Runtime depends on Engine. Runtime must not link/load Editor, EngineTools, ImGui,
 ImGuizmo, cgltf, source image/audio decoders or offline source shader compilers.
-Later Vulkan-on-Metal translation libraries are allowed only through the tested
-platform contract. EngineTools may never be reached through an Engine transitive
+EngineTools may never be reached through an Engine transitive
 dependency, generated header or plugin.
 
 Follow [ADR 0002](docs/architecture/0002-dependencies.md) for allowed libraries and
@@ -144,7 +145,7 @@ integration owners. Add exact immutable inputs, licenses, options and patches to
 [dependencies.lock.json](dependencies.lock.json) before first use. Do not add floating tags,
 competing package resolution, hidden transitive downloads or future subsystem
 stubs. Catch2 is test-only. GLFW/NVRHI/Vulkan must pass assignment 02 before
-dependent renderer work; neither Mac CPU family is silently dropped.
+dependent renderer work on the selected Windows/Linux targets.
 
 Keep EnTT/Jolt/NVRHI details inside their subsystem implementations. Shared public
 contracts use engine-owned types; centrally configured GLM is the math exception.

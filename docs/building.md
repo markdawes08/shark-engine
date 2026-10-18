@@ -11,6 +11,10 @@ for the standalone Windows probe package; see the probe guide for packaging.
 Production rendering, gameplay, scene import, authoring UI and export remain unimplemented.
 CPU build success does not qualify a GPU, audio device or final release platform.
 
+The active client/editor targets are Windows and Linux; the dedicated server
+targets Linux. [ADR 0009](architecture/0009-windows-linux-platform-scope.md)
+records the user's removal of Mac compatibility from the project scope.
+
 The [MMORPG amendment](roadmap/mmorpg-plan.md) requires the headless Server and
 EngineCore/EngineClient separation implemented in M01. `server-only` provides the
 isolated Server build. The `runtime-only` preset builds the graphical-client bootstrap
@@ -64,7 +68,6 @@ the pinned workflow.
 | --- | --- |
 | Windows x86-64 | Install Visual Studio C++ desktop tools and Windows SDK. Open an x64 Native Tools command prompt or x64 Developer PowerShell, then activate the Python environment. Ninja must find `cl`, the linker and SDK libraries. |
 | Ubuntu 24.04 x86-64 | Use GCC for debug/release and Clang for `linux-asan-ubsan`, with the native C++ standard library and development tools available. |
-| macOS arm64 / x86-64 | Use native Apple Clang from the selected Xcode/Command Line Tools. Test each CPU family natively; an arm64 build does not qualify Intel. |
 
 On Windows, the optional repository wrapper locates the installed Visual Studio
 C++ tools, initializes the x64 developer environment and selects `.tools/venv`
@@ -83,11 +86,11 @@ Each normal build has matching configure, build and test presets and uses Ninja
 under `build/<preset>`. Do not reuse one build directory for different compilers
 or invoke concurrent builds in it.
 
-| Configuration | Windows | Ubuntu | macOS |
-| --- | --- | --- | --- |
-| Debug | `windows-debug` | `linux-debug` | `macos-debug` |
-| Release | `windows-release` | `linux-release` | `macos-release` |
-| Sanitizers | `windows-asan` | `linux-asan-ubsan` | `macos-asan-ubsan` |
+| Configuration | Windows | Ubuntu |
+| --- | --- | --- |
+| Debug | `windows-debug` | `linux-debug` |
+| Release | `windows-release` | `linux-release` |
+| Sanitizers | `windows-asan` | `linux-asan-ubsan` |
 
 For Windows debug:
 
@@ -97,7 +100,7 @@ cmake --build --preset windows-debug
 ctest --preset windows-debug
 ```
 
-Use the same three commands with `linux-debug` or `macos-debug` on those hosts,
+Use the same three commands with `linux-debug` on Linux,
 or with the corresponding release/sanitizer preset. The default build includes
 EngineCore, EngineClient, EngineTools, Editor, Runtime, Server, Tests and both
 dependency-boundary checks. Engine is an interface target. Catch2 is the sole
@@ -239,8 +242,8 @@ under `.gitignore`. Neither proves future feature execution; run focused behavio
 tests alongside these checks.
 
 Windows uses MSVC AddressSanitizer; it does not claim UBSan. Linux uses Clang ASan
-plus UBSan; macOS uses the native supported Apple Clang combination. Unsupported
-compiler/sanitizer combinations fail configuration. Do not suppress findings or
+plus UBSan. Unsupported compiler/sanitizer combinations fail configuration.
+Do not suppress findings or
 turn instrumentation off to mark a sanitizer job passing. Record the exact
 toolchain and whether the instrumented program actually ran.
 
@@ -266,8 +269,8 @@ commit or push, even to manufacture CI evidence; the user owns those operations.
 
 Report exact commands, exit results, starting/result revision or absence of a
 commit, compiler/SDK, OS/CPU, relevant logs and PASS/FAIL/NOT RUN per gate. A local
-Windows pass does not establish Ubuntu or either Mac build. Keep unavailable
-hosted jobs and hardware visible in the handoff. Generated output belongs under
+Windows pass does not establish Ubuntu. Keep unavailable hosted jobs and hardware
+visible in the handoff. Generated output belongs under
 ignored build/evidence paths, and `.gitignore` is reviewed each increment.
 
 To verify source eligibility and a fresh build before the user creates a commit:

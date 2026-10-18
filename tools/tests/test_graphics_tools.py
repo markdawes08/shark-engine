@@ -141,7 +141,7 @@ class GraphicsToolsTests(unittest.TestCase):
                     setup.prepare({"version": "test", "artifacts": {"fixture": artifact}},
                                   "fixture", Path(temporary), offline=True)
 
-    def test_unavailable_native_macos_tool_reports_not_run_without_download(self):
+    def test_unsupported_native_host_reports_not_run_without_download(self):
         with tempfile.TemporaryDirectory(prefix="shark-shader-tool-test-") as temporary:
             output = Path(temporary) / "evidence"
             with patch.object(setup, "native_host", return_value="darwin-arm64"), \

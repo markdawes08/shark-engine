@@ -34,7 +34,7 @@ def source_file(root: Path, relative: str) -> Path:
 
 def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--preset", required=True, choices=("windows-debug", "linux-debug", "macos-debug", "server-debug"))
+    parser.add_argument("--preset", required=True, choices=("windows-debug", "linux-debug", "server-debug"))
     parser.add_argument("--jobs", type=int, default=2)
     args = parser.parse_args()
     if args.jobs < 1:

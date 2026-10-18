@@ -239,7 +239,7 @@ def main() -> int:
                 "cmake/GraphicsValidation.cmake", "tools/graphics_validation/CMakeLists.txt",
                 "tools/prepare_graphics_validation.py", "tools/process_runner.py")}
         if host not in ("windows-x86_64", "linux-x86_64"):
-            report.update(status="NOT_RUN", reason="Native Mac validation tool qualification belongs to 02c")
+            report.update(status="NOT_RUN", reason="Unsupported native host; validation tooling targets Windows x64 and Linux x64")
             code = 3
         else:
             cache = ROOT / ".tools/graphics/validation/sources"

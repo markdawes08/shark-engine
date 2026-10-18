@@ -398,7 +398,7 @@ def main() -> int:
         report["version"] = tool["version"]
         report["source_revision"] = tool["source_revision"]
         if host not in tool["artifacts"]:
-            report.update(status="NOT_RUN", reason="No locked official DXC binary for this native host; macOS source/toolchain qualification remains open")
+            report.update(status="NOT_RUN", reason="Unsupported native host; locked DXC tooling targets Windows x64 and Linux x64")
             code = 3
         else:
             executable, provenance = prepare(tool, host, ROOT / ".tools/graphics/dxc", offline=args.offline)

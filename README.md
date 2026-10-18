@@ -1,6 +1,9 @@
 # Shark
 
 Shark is a C++20 game engine project targeting a **seamless open-world MMORPG**.
+Client and editor targets are **Windows and Linux**, with a Linux headless server.
+Mac compatibility is outside the project scope under
+[ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md).
 The [MMORPG plan and existing-code assessment](docs/roadmap/mmorpg-plan.md) define
 the authoritative server, persistent world and staged client/server work.
 These are planned capabilities; the current engine is a CPU bootstrap with a
@@ -25,8 +28,9 @@ shutdown. Production rendering, scenes, gameplay and editor UI are future increm
 build results do not establish graphics or release-platform support.
 
 The [02b handoff](docs/handoffs/02b-graphics-cases.md) records local cases, validation
-and limits. [Native Mac 02c is deferred](docs/handoffs/02c-mac-deferred.md) at the
-user's request while working on Windows. Its targets and qualification gates remain open.
+and limits. Checkpoint 02c is retired by the
+[platform scope amendment](docs/handoffs/windows-linux-scope-amendment.md);
+the six named Windows/Linux GPU rows and clean-machine checks remain open.
 The [Windows 02d handoff](docs/handoffs/02d-windows-validation.md) records portable
 probe packaging, lifecycle evidence and the outstanding hardware gates.
 
@@ -41,7 +45,7 @@ probe packaging, lifecycle evidence and the outstanding hardware gates.
 - [Assignment 01 handoff](docs/handoffs/01-build-foundation.md) records local
   verification and the hosted CI gate that was open at that handoff.
 - [CI verification follow-up](docs/handoffs/01-ci-verification.md) records the
-  repaired macOS sanitizer failure, passing hosted CPU matrix and verified
+  historical hosted CPU matrix, sanitizer repair and verified
   deliberate-failure/red-to-green proof.
 - [MMORPG planning handoff](docs/handoffs/mmorpg-planning-amendment.md) records
   the scope change and repository state at that handoff.
@@ -59,7 +63,7 @@ cmake --build --preset windows-debug
 ctest --preset windows-debug
 ```
 
-Use `linux-debug` or `macos-debug` on those hosts. Sanitizer, release and isolated
+Use `linux-debug` on Linux. Sanitizer, release and isolated
 Runtime configurations are documented in the build guide. All staging, commits
 and pushes remain with the user; generated output and local tooling stay ignored.
 

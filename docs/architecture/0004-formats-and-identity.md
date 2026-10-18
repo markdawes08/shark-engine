@@ -43,9 +43,9 @@ prepared by EngineTools. It is a temporary, explicitly versioned export mode.
 Assignment 31 replaces it with cooked dependency closure, including script-selected
 assets declared as explicit roots. Final Runtime excludes source project/scene
 readers, external importers, cookers and offline source shader compilers such as
-DXC. Qualified Vulkan-on-Metal translation libraries and system driver compilation
-remain permitted runtime dependencies; they must not require an installed
-developer SDK. Source Lua scripts may
+DXC. System driver compilation remains permitted and must not require an installed
+developer SDK. [ADR 0009](0009-windows-linux-platform-scope.md) removes the former
+Vulkan-on-Metal shipping path. Source Lua scripts may
 ship as script payloads for portability; no native Lua bytecode compatibility is
 promised between CPU architectures or Lua releases.
 

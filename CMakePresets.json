@@ -110,49 +110,6 @@
       }
     },
     {
-      "name": "macos-debug",
-      "inherits": "base",
-      "displayName": "macos debug",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      },
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
-        "CMAKE_BUILD_TYPE": "Debug"
-      }
-    },
-    {
-      "name": "macos-release",
-      "inherits": "base",
-      "displayName": "macos release",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      },
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
-        "CMAKE_BUILD_TYPE": "Release"
-      }
-    },
-    {
-      "name": "macos-asan-ubsan",
-      "inherits": "base",
-      "displayName": "macos asan",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      },
-      "cacheVariables": {
-        "CMAKE_CXX_COMPILER": "/usr/bin/clang++",
-        "CMAKE_BUILD_TYPE": "Debug",
-        "SHARK_SANITIZER": "address-undefined"
-      }
-    },
-    {
       "name": "runtime-only",
       "inherits": "base",
       "displayName": "Host-native runtime boundary build",
@@ -248,22 +205,6 @@
         "SHARK_BUILD_EDITOR": "OFF",
         "SHARK_BUILD_SERVER": "OFF"
       }
-    },
-    {
-      "name": "graphics-macos",
-      "inherits": "macos-debug",
-      "displayName": "Opt-in macos graphics feasibility probe",
-      "condition": {
-        "type": "equals",
-        "lhs": "${hostSystemName}",
-        "rhs": "Darwin"
-      },
-      "cacheVariables": {
-        "CMAKE_C_COMPILER": "/usr/bin/clang",
-        "SHARK_BUILD_GRAPHICS_PROBE": "ON",
-        "SHARK_BUILD_EDITOR": "OFF",
-        "SHARK_BUILD_SERVER": "OFF"
-      }
     }
   ],
   "buildPresets": [
@@ -292,18 +233,6 @@
       "configurePreset": "linux-asan-ubsan"
     },
     {
-      "name": "macos-debug",
-      "configurePreset": "macos-debug"
-    },
-    {
-      "name": "macos-release",
-      "configurePreset": "macos-release"
-    },
-    {
-      "name": "macos-asan-ubsan",
-      "configurePreset": "macos-asan-ubsan"
-    },
-    {
       "name": "runtime-only",
       "configurePreset": "runtime-only"
     },
@@ -330,10 +259,6 @@
     {
       "name": "graphics-linux",
       "configurePreset": "graphics-linux"
-    },
-    {
-      "name": "graphics-macos",
-      "configurePreset": "graphics-macos"
     }
   ],
   "testPresets": [
@@ -405,40 +330,6 @@
       }
     },
     {
-      "name": "macos-debug",
-      "configurePreset": "macos-debug",
-      "output": {
-        "outputOnFailure": true
-      },
-      "execution": {
-        "noTestsAction": "error"
-      }
-    },
-    {
-      "name": "macos-release",
-      "configurePreset": "macos-release",
-      "output": {
-        "outputOnFailure": true
-      },
-      "execution": {
-        "noTestsAction": "error"
-      }
-    },
-    {
-      "name": "macos-asan-ubsan",
-      "configurePreset": "macos-asan-ubsan",
-      "output": {
-        "outputOnFailure": true
-      },
-      "execution": {
-        "noTestsAction": "error"
-      },
-      "environment": {
-        "ASAN_OPTIONS": "detect_leaks=0:halt_on_error=1",
-        "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1"
-      }
-    },
-    {
       "name": "server-debug",
       "configurePreset": "server-debug",
       "output": {
@@ -485,16 +376,6 @@
     {
       "name": "graphics-linux",
       "configurePreset": "graphics-linux",
-      "output": {
-        "outputOnFailure": true
-      },
-      "execution": {
-        "noTestsAction": "error"
-      }
-    },
-    {
-      "name": "graphics-macos",
-      "configurePreset": "graphics-macos",
       "output": {
         "outputOnFailure": true
       },

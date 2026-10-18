@@ -21,12 +21,22 @@ def main() -> int:
         jobs = workflow["jobs"]
         assert set(jobs) == {"quality", "cpu", "runtime-only", "headless-server"}
         rows = jobs["cpu"]["strategy"]["matrix"]["include"]
-        assert len(rows) == 12
+        assert len(rows) == 6
         assert len({row["id"] for row in rows}) == len(rows)
         assert {(row["os"], row["arch"]) for row in rows} == {
             ("windows-2025-vs2026", "x64"), ("ubuntu-24.04", "x64"),
-            ("macos-26", "arm64"), ("macos-15-intel", "x64"),
         }
+        expected_cpu_presets = {
+            "windows-debug", "windows-release", "windows-asan",
+            "linux-debug", "linux-release", "linux-asan-ubsan",
+        }
+        assert {row["preset"] for row in rows} == expected_cpu_presets
+        assert all(row["id"] == row["preset"] for row in rows)
+        presets = json.loads((ROOT / "CMakePresets.json").read_text())
+        for kind in ("configurePresets", "buildPresets", "testPresets"):
+            names = {preset["name"] for preset in presets[kind]}
+            assert expected_cpu_presets <= names
+            assert not any("macos" in name for name in names)
         for job in jobs.values():
             assert "timeout-minutes" in job
             for step in job["steps"]:
@@ -71,7 +81,7 @@ def main() -> int:
     except (AssertionError, KeyError, TypeError, OSError, yaml.YAMLError) as error:
         print(f"CI configuration check failed: {type(error).__name__}: {error}", file=sys.stderr)
         return 1
-    print("CI YAML and 14 existing + 1 headless job wiring passed; this check does not execute hosted CI.")
+    print("CI YAML and wiring for 9 Windows/Linux jobs passed; this check does not execute hosted CI.")
     return 0
 
 

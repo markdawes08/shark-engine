@@ -50,7 +50,7 @@ Retain the roadmap's requested stack. The following selections authorize integra
 | glTF fixture validation | Khronos glTF-Validator, local CLI/package | Development/CI only | 12; pin tool and its runtime; keep validation reports with fixture provenance |
 | Offline shader compilation | HLSL through DXC to SPIR-V; SPIR-V validation tools | Build/cook tooling only | 02 probe pins the initial toolchain; 06 owns reproducible shader pipeline |
 
-GLFW lists Windows, macOS, Linux, X11 and Wayland; this does not qualify the engine on those platforms. GLM supplies the selected math types. Jolt lists macOS x64/ARM64 as well as Windows and Linux. miniaudio provides playback, mixing and spatialization. Their broader advertised features do not expand the v1 profile. [GLFW](https://github.com/glfw/glfw), [GLM](https://github.com/g-truc/glm), [Jolt platform requirements](https://github.com/jrouwe/JoltPhysics#supported-platforms), [miniaudio](https://github.com/mackron/miniaudio).
+GLFW supplies the selected Windows/Linux windowing route; this does not qualify the engine on those platforms. GLM supplies the selected math types. Jolt supplies the selected physics implementation. miniaudio provides playback, mixing and spatialization. Their broader advertised platform support and features do not expand the v1 profile. [GLFW](https://github.com/glfw/glfw), [GLM](https://github.com/g-truc/glm), [Jolt platform requirements](https://github.com/jrouwe/JoltPhysics#supported-platforms), [miniaudio](https://github.com/mackron/miniaudio).
 
 ## Immutable dependency inputs
 
@@ -67,7 +67,8 @@ matching Vulkan headers/loader and offline DXC inputs in the same lock, consumed
 only by the opt-in probe/tool preparation. See the [probe guide](../graphics-probe.md).
 Checkpoint 02b adds a separate, explicitly prepared SPIRV-Tools/Vulkan-ValidationLayers
 source graph with its transitive headers/utilities. It is never added to the engine
-CMake graph. Native Mac driver/tool graphs remain open in 02c.
+CMake graph. [ADR 0009](0009-windows-linux-platform-scope.md) removes Mac
+driver/tool qualification and retires checkpoint 02c.
 
 Assignment 01 must establish one authoritative, versioned dependency manifest consumed by the CMake dependency setup. Use CMake FetchContent or locally populated source trees from that manifest; do not introduce competing package-manager resolution paths. Every dependency must record upstream URL, release label when available, full commit SHA or archive URL plus SHA-256, applicable patches, build options, license files, owning target and integration assignment. Include transitives, vendored headers, shader tools and CI tool downloads. Locally populated trees must match the same locked inputs.
 
@@ -85,9 +86,9 @@ The versioned gameplay API exposes engine values and checked entity handles, nev
 
 ## Graphics and editor compatibility contract
 
-Upstream NVRHI currently describes Vulkan 1.3 on Windows/Linux and does not establish macOS support. Pin NVRHI, its Vulkan inputs, offline compiler and any portability driver together in 02. Enable only the Vulkan backend; disable DX11, DX12, NVAPI and optional ray-tracing integrations unless a later approved scope change requires them. Any macOS patch must be recorded and maintained. The platform ADR and assignment 02 decide the shipping path using actual hardware evidence. Choosing Vulkan or GLFW alone cannot satisfy this gate. [NVRHI requirements and CMake options](https://github.com/NVIDIA-RTX/NVRHI/blob/main/README.md).
+Upstream NVRHI describes Vulkan 1.3 on Windows/Linux. Pin NVRHI, its Vulkan inputs and offline compiler together in 02, and identify tested native drivers in hardware evidence. Enable only the Vulkan backend; disable DX11, DX12, NVAPI and optional ray-tracing integrations unless a later approved scope change requires them. The platform ADR and assignment 02 decide the shipping path using actual Windows/Linux hardware evidence. Choosing Vulkan or GLFW alone cannot satisfy this gate. Mac compatibility patches and Vulkan-on-Metal drivers have no current integration or maintenance obligation under ADR 0009. [NVRHI requirements and CMake options](https://github.com/NVIDIA-RTX/NVRHI/blob/main/README.md).
 
-DXC documents HLSL-to-SPIR-V support, which justifies the toolchain candidate. It does not prove that particular shader features, layouts or Metal translation work on the target Macs. Assignment 02 verifies representative graphics/compute shaders and 06 fixes layout/compilation conventions. Shipped games consume precompiled shader assets and do not require a compiler or Vulkan SDK installation. [DXC SPIR-V mapping](https://github.com/microsoft/DirectXShaderCompiler/blob/main/docs/SPIR-V.rst).
+DXC documents HLSL-to-SPIR-V support, which justifies the toolchain candidate. It does not prove that particular shader features or layouts work on the selected Windows/Linux targets. Assignment 02 verifies representative graphics/compute shaders and 06 fixes layout/compilation conventions. Shipped games consume precompiled shader assets and do not require a compiler or Vulkan SDK installation. [DXC SPIR-V mapping](https://github.com/microsoft/DirectXShaderCompiler/blob/main/docs/SPIR-V.rst).
 
 Select Dear ImGui docking in one host window. Multi-viewport OS windows are disabled in v1. Use a release's docking tag resolved to an immutable commit, or a documented docking-branch commit, rather than following the branch. Pin ImGuizmo and that exact ImGui revision as a compatibility pair in 16; test transform behavior in 17 and update the pair together. Upstream offers docking release tags, while ImGuizmo uses Dear ImGui and manipulates matrices. No particular pair has been compiled here. [Dear ImGui docking](https://github.com/ocornut/imgui/wiki/Docking), [ImGuizmo](https://github.com/CedricGuillemet/ImGuizmo).
 

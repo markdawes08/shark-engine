@@ -9,9 +9,10 @@ Read [AGENTS.md](../../../AGENTS.md), [building](../../../docs/building.md) and
 [CI](../../../docs/ci.md). Run from the repository root with the native compiler
 environment; Windows Ninja presets need an x64 MSVC developer shell.
 
-Use matching configure/build/test preset names: `windows-debug`, `linux-debug`
-or `macos-debug`; corresponding `-release` variants; `windows-asan`,
-`linux-asan-ubsan` or `macos-asan-ubsan` for sanitizers.
+Use matching configure/build/test preset names: `windows-debug` or `linux-debug`;
+corresponding `-release` variants; `windows-asan` or `linux-asan-ubsan` for sanitizers.
+Mac compatibility and CI are outside scope under
+[ADR 0009](../../../docs/architecture/0009-windows-linux-platform-scope.md).
 
 ```text
 cmake --preset windows-debug

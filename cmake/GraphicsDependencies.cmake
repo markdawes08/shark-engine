@@ -81,8 +81,8 @@ function(shark_setup_graphics_dependencies)
     if(NOT SHARK_BUILD_CLIENT OR NOT SHARK_BUILD_GRAPHICS_PROBE)
         message(FATAL_ERROR "Graphics dependencies require the explicit client probe configuration")
     endif()
-    if(NOT CMAKE_SYSTEM_NAME MATCHES "^(Windows|Linux|Darwin)$")
-        message(FATAL_ERROR "The graphics probe has presets only for Windows, Linux and macOS")
+    if(NOT CMAKE_SYSTEM_NAME MATCHES "^(Windows|Linux)$")
+        message(FATAL_ERROR "The graphics probe targets Windows and Linux only")
     endif()
     set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
         "${PROJECT_SOURCE_DIR}/dependencies.lock.json")
@@ -105,7 +105,7 @@ function(shark_setup_graphics_dependencies)
         add_library(Vulkan::Vulkan ALIAS vulkan)
     endif()
     # Keep the pinned loader beside the probe on Windows, and use CMake's build
-    # RPATH for the same source-built loader on Linux/macOS.
+    # RPATH for the same source-built loader on Linux.
     set_target_properties(vulkan PROPERTIES
         RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin"
         LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/bin")

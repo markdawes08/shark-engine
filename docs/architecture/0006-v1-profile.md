@@ -162,9 +162,11 @@ Runtime consumes engine-owned PCM. Source imports stay out of distributed games.
 
 Networking, skeletal characters and streamed terrain/world data are now mandatory
 MMORPG scope in M01-M10, replacing the original exclusions. Morph animation,
-advanced retargeting, ray tracing, vehicles, soft bodies, a marketplace and a native
-Metal backend remain future projects. No exclusion removes the retained client
-features or the new authoritative server, persistence and seamless-world gates.
+advanced retargeting, ray tracing, vehicles, soft bodies and a marketplace remain
+future projects. Mac compatibility and a native Metal backend are outside the
+current scope under [ADR 0009](0009-windows-linux-platform-scope.md). No exclusion
+removes the retained client features or the new authoritative server, persistence
+and seamless-world gates.
 
 Assignment 33 must have a fresh agent create, save, reopen, test, capture, export
 and launch a playable Tetris-style game through documented public tools only,
@@ -172,7 +174,7 @@ with movement/rotation, line clearing, scoring, pause/restart, game over and sou
 A separate 3D physics sandbox proves collision/spawning/audio behavior. Assignment
 34 sets quantitative frame-time/memory budgets from named hardware measurements
 and enforces them; no performance figure is claimed in 00. Assignment 35 requires
-clean-machine installation, any required signing/notarization, notices, samples,
+clean-machine installation, any required platform signing, notices, samples,
 references and archived build inputs/symbols on every qualified release row.
 It also depends on M08-M10's server packages, multi-client world acceptance,
 capacity/soak, recovery and operational evidence. The provisional targets in

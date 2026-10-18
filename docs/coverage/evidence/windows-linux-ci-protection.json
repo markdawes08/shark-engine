@@ -1,0 +1,238 @@
+{
+    "schema_version":  1,
+    "recorded_utc":  "2026-10-18T03:04:12.4414197Z",
+    "repository":  "markdawes08/shark-engine",
+    "branch":  "main",
+    "base_revision":  "21239e7",
+    "reason":  "User explicitly removed all Mac work and compatibility requirements; ADR 0009",
+    "operation":  "PATCH required_status_checks only",
+    "status":  "PASS",
+    "removed_contexts":  [
+                             "cpu-macos-arm64-asan-ubsan",
+                             "cpu-macos-arm64-debug",
+                             "cpu-macos-arm64-release",
+                             "cpu-macos-intel-asan-ubsan",
+                             "cpu-macos-intel-debug",
+                             "cpu-macos-intel-release"
+                         ],
+    "retained_contexts":  [
+                              "cpu-linux-asan-ubsan",
+                              "cpu-linux-debug",
+                              "cpu-linux-release",
+                              "cpu-windows-asan",
+                              "cpu-windows-debug",
+                              "cpu-windows-release",
+                              "headless-server",
+                              "quality",
+                              "runtime-only"
+                          ],
+    "assertions":  [
+                       "Only six Mac required checks removed",
+                       "All nine retained checks bound to GitHub Actions app 15368",
+                       "Strict freshness preserved",
+                       "All other returned branch-protection fields unchanged",
+                       "No Git staging, commit or push performed"
+                   ],
+    "before":  {
+                   "url":  "https://api.github.com/repos/markdawes08/shark-engine/branches/main/protection",
+                   "required_status_checks":  {
+                                                  "url":  "https://api.github.com/repos/markdawes08/shark-engine/branches/main/protection/required_status_checks",
+                                                  "strict":  true,
+                                                  "contexts":  [
+                                                                   "cpu-linux-asan-ubsan",
+                                                                   "cpu-linux-debug",
+                                                                   "cpu-linux-release",
+                                                                   "cpu-macos-arm64-asan-ubsan",
+                                                                   "cpu-macos-arm64-debug",
+                                                                   "cpu-macos-arm64-release",
+                                                                   "cpu-macos-intel-asan-ubsan",
+                                                                   "cpu-macos-intel-debug",
+                                                                   "cpu-macos-intel-release",
+                                                                   "cpu-windows-asan",
+                                                                   "cpu-windows-debug",
+                                                                   "cpu-windows-release",
+                                                                   "quality",
+                                                                   "runtime-only",
+                                                                   "headless-server"
+                                                               ],
+                                                  "contexts_url":  "https://api.github.com/repos/markdawes08/shark-engine/branches/main/protection/required_status_checks/contexts",
+                                                  "checks":  [
+                                                                 {
+                                                                     "context":  "cpu-linux-asan-ubsan",
+                                                                     "app_id":  15368
+                                                                 },
+                                                                 {
+                                                                     "context":  "cpu-linux-debug",
+                                                                     "app_id":  15368
+                                                                 },
+                                                                 {
+                                                                     "context":  "cpu-linux-release",
+                                                                     "app_id":  15368
+                                                                 },
+                                                                 {
+                                                                     "context":  "cpu-macos-arm64-asan-ubsan",
+                                                                     "app_id":  15368
+                                                                 },
+                                                                 {
+                                                                     "context":  "cpu-macos-arm64-debug",
+                                                                     "app_id":  15368
+                                                                 },
+                                                                 {
+                                                                     "context":  "cpu-macos-arm64-release",
+                                                                     "app_id":  15368
+                                                                 },
+                                                                 {
+                                                                     "context":  "cpu-macos-intel-asan-ubsan",
+                                                                     "app_id":  15368
+                                                                 },
+                                                                 {
+                                                                     "context":  "cpu-macos-intel-debug",
+                                                                     "app_id":  15368
+                                                                 },
+                                                                 {
+                                                                     "context":  "cpu-macos-intel-release",
+                                                                     "app_id":  15368
+                                                                 },
+                                                                 {
+                                                                     "context":  "cpu-windows-asan",
+                                                                     "app_id":  15368
+                                                                 },
+                                                                 {
+                                                                     "context":  "cpu-windows-debug",
+                                                                     "app_id":  15368
+                                                                 },
+                                                                 {
+                                                                     "context":  "cpu-windows-release",
+                                                                     "app_id":  15368
+                                                                 },
+                                                                 {
+                                                                     "context":  "quality",
+                                                                     "app_id":  15368
+                                                                 },
+                                                                 {
+                                                                     "context":  "runtime-only",
+                                                                     "app_id":  15368
+                                                                 },
+                                                                 {
+                                                                     "context":  "headless-server",
+                                                                     "app_id":  15368
+                                                                 }
+                                                             ]
+                                              },
+                   "required_signatures":  {
+                                               "url":  "https://api.github.com/repos/markdawes08/shark-engine/branches/main/protection/required_signatures",
+                                               "enabled":  false
+                                           },
+                   "enforce_admins":  {
+                                          "url":  "https://api.github.com/repos/markdawes08/shark-engine/branches/main/protection/enforce_admins",
+                                          "enabled":  false
+                                      },
+                   "required_linear_history":  {
+                                                   "enabled":  false
+                                               },
+                   "allow_force_pushes":  {
+                                              "enabled":  false
+                                          },
+                   "allow_deletions":  {
+                                           "enabled":  false
+                                       },
+                   "block_creations":  {
+                                           "enabled":  false
+                                       },
+                   "required_conversation_resolution":  {
+                                                            "enabled":  false
+                                                        },
+                   "lock_branch":  {
+                                       "enabled":  false
+                                   },
+                   "allow_fork_syncing":  {
+                                              "enabled":  false
+                                          }
+               },
+    "after":  {
+                  "url":  "https://api.github.com/repos/markdawes08/shark-engine/branches/main/protection",
+                  "required_status_checks":  {
+                                                 "url":  "https://api.github.com/repos/markdawes08/shark-engine/branches/main/protection/required_status_checks",
+                                                 "strict":  true,
+                                                 "contexts":  [
+                                                                  "cpu-linux-asan-ubsan",
+                                                                  "cpu-linux-debug",
+                                                                  "cpu-linux-release",
+                                                                  "cpu-windows-asan",
+                                                                  "cpu-windows-debug",
+                                                                  "cpu-windows-release",
+                                                                  "quality",
+                                                                  "runtime-only",
+                                                                  "headless-server"
+                                                              ],
+                                                 "contexts_url":  "https://api.github.com/repos/markdawes08/shark-engine/branches/main/protection/required_status_checks/contexts",
+                                                 "checks":  [
+                                                                {
+                                                                    "context":  "cpu-linux-asan-ubsan",
+                                                                    "app_id":  15368
+                                                                },
+                                                                {
+                                                                    "context":  "cpu-linux-debug",
+                                                                    "app_id":  15368
+                                                                },
+                                                                {
+                                                                    "context":  "cpu-linux-release",
+                                                                    "app_id":  15368
+                                                                },
+                                                                {
+                                                                    "context":  "cpu-windows-asan",
+                                                                    "app_id":  15368
+                                                                },
+                                                                {
+                                                                    "context":  "cpu-windows-debug",
+                                                                    "app_id":  15368
+                                                                },
+                                                                {
+                                                                    "context":  "cpu-windows-release",
+                                                                    "app_id":  15368
+                                                                },
+                                                                {
+                                                                    "context":  "quality",
+                                                                    "app_id":  15368
+                                                                },
+                                                                {
+                                                                    "context":  "runtime-only",
+                                                                    "app_id":  15368
+                                                                },
+                                                                {
+                                                                    "context":  "headless-server",
+                                                                    "app_id":  15368
+                                                                }
+                                                            ]
+                                             },
+                  "required_signatures":  {
+                                              "url":  "https://api.github.com/repos/markdawes08/shark-engine/branches/main/protection/required_signatures",
+                                              "enabled":  false
+                                          },
+                  "enforce_admins":  {
+                                         "url":  "https://api.github.com/repos/markdawes08/shark-engine/branches/main/protection/enforce_admins",
+                                         "enabled":  false
+                                     },
+                  "required_linear_history":  {
+                                                  "enabled":  false
+                                              },
+                  "allow_force_pushes":  {
+                                             "enabled":  false
+                                         },
+                  "allow_deletions":  {
+                                          "enabled":  false
+                                      },
+                  "block_creations":  {
+                                          "enabled":  false
+                                      },
+                  "required_conversation_resolution":  {
+                                                           "enabled":  false
+                                                       },
+                  "lock_branch":  {
+                                      "enabled":  false
+                                  },
+                  "allow_fork_syncing":  {
+                                             "enabled":  false
+                                         }
+              }
+}

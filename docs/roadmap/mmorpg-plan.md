@@ -17,6 +17,9 @@ The later [human/terminal-agent amendment](human-agent-plan.md) and
 authoring requirements across these owners. Both human editor use and independent
 terminal development are mandatory; assignment order and MMO authority stay intact.
 The pre-M01 assessment below is historical; the later plan assesses `d9f53ef`.
+The subsequent [platform scope decision](../architecture/0009-windows-linux-platform-scope.md)
+limits client/editor targets to Windows and Linux, with Linux dedicated servers.
+Mac compatibility and checkpoint 02c are retired, not deferred.
 
 ## Historical assessment of the pre-M01 foundation
 
@@ -58,8 +61,9 @@ implementation/local qualification; the
 [hosted follow-up](../handoffs/M01-ci-verification.md) closes its native CPU,
 headless Docker and deliberate-failure/restored-success gate. **Current assignment
 is 02; 02a setup and 02b executable cases/local validation are complete within checkpoint scope.
-Native Mac 02c is user-deferred while working on Windows; available Windows 02d
-lifecycle and package verification is current.** The
+02c is retired by the platform scope decision. Local Windows 02d lifecycle and
+package verification pass; the six named Windows/Linux GPU rows and real
+clean-machine launch remain open.** The
 [graphics checkpoint plan](graphics-plan.md) preserves one final hardware gate.
 Earlier handoffs and the assessment above retain their historical repository/gate
 status. Graphics and multiplayer qualification remain NOT_RUN. The graphics
@@ -237,7 +241,7 @@ never lower load, widen tolerances or relabel idle connections to obtain a PASS.
 
 | Original owner | Added planning constraint |
 | --- | --- |
-| 02, 05, 06 | Graphics work is client-only behind M01's split; retain all Mac/GPU feasibility requirements. |
+| 02, 05, 06 | Graphics work is client-only behind M01's split; retain all active Windows/Linux GPU feasibility requirements under ADR 0009. |
 | 03, 04 | Separate server monotonic ticks from rendering/input. Client focus/minimize/pause cannot stop a shared world. Define cancellation/backpressure and explicit runtime role. |
 | 07, 08 | Region/world identity, authority metadata, checked replica lifetime and global-cell coordinates precede schema commitment. Source scenes are authored content, not durable player records. |
 | 09, 15-17 | Local authoring services remain distinct from public gameplay and operational admin APIs. Editor previews may visualize server/region data through authorized development adapters. |

@@ -16,7 +16,7 @@
     {
       "id": "REQ-00",
       "owner": "00",
-      "requirement": "Record the engine name and architecture decisions for executable/library targets, dependency choices, explicit OS/CPU/GPU baselines, source/imported/cooked formats, complete v1 scope, meters/axes/handedness/quaternion/matrix/Vulkan depth/color conventions, fixed simulation/render timing, stable IDs, ownership and the scene-mutation thread. Treat macOS Apple Silicon and Intel separately.",
+      "requirement": "Record the engine name and architecture decisions for executable/library targets, dependency choices, explicit OS/CPU/GPU baselines, source/imported/cooked formats, complete v1 scope, meters/axes/handedness/quaternion/matrix/Vulkan depth/color conventions, fixed simulation/render timing, stable IDs, ownership and the scene-mutation thread. Current platform scope is Windows/Linux clients and editor plus the Linux headless server, as amended by ADR0009.",
       "acceptance": [
         "Architecture records make each listed choice explicit, including the supported glTF profile, alpha modes, extensions and future exclusions.",
         "Every mandatory roadmap requirement has an owner assignment and an observable acceptance criterion in this manifest.",
@@ -29,7 +29,7 @@
     {
       "id": "REQ-01",
       "owner": "01",
-      "requirement": "Create C++20 target-based CMake Engine, EngineTools, Editor, Runtime and Tests targets, exact dependency pins, configure/build/test presets, formatting, compiler warnings, one primary test framework registered with CTest, sanitizer configurations, test labels and CPU CI for Windows, macOS and Ubuntu 24.04. Provide AGENTS.md, architecture/handoff directories and actual repository-discoverable build/test, renderer-validation, component/API, import and release SKILL.md guidance.",
+      "requirement": "Create C++20 target-based CMake Engine, EngineTools, Editor, Runtime and Tests targets, exact dependency pins, configure/build/test presets, formatting, compiler warnings, one primary test framework registered with CTest, sanitizer configurations, test labels and CPU CI for Windows and Ubuntu 24.04. Provide AGENTS.md, architecture/handoff directories and actual repository-discoverable build/test, renderer-validation, component/API, import and release SKILL.md guidance.",
       "acceptance": [
         "A clean checkout configures, builds and runs a real starter test on every build platform using documented commands.",
         "A deliberately failing test fails the CI job before the temporary failure is removed; evidence identifies the job and revision.",
@@ -39,22 +39,22 @@
         "Required CI checks are documented and configured wherever repository permissions allow; supported compiler sanitizer configurations are available."
       ],
       "planned_fixture": "CleanCheckoutBuild matrix, DeliberateCTestFailure CI fixture, RuntimeDependencyBoundary, RepositorySkillDiscovery and SanitizerConfigure fixtures; these exercise build tooling outside a scene.",
-      "verification": {"status": "PASS", "reason": "Verified revision 3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de after the Xcode 26.4.1 repair: normal push 39077290171 passed 14/14 jobs; injected run 39077652643 failed all 12 CPU jobs solely at shark.failure-sentinel (CTest exit 8, other nine tests passed per job); subsequent restored run 39078070735 passed all 14 jobs and 120/120 CPU tests without skips. Windows, Ubuntu24.04, macOS ARM64 and Intel Debug/Release/sanitizers verified. Fourteen GitHub Actions checks are configured on main with strict freshness and administrator bypass retained. Durable run, assertion, phase, toolchain and policy evidence: docs/coverage/evidence/01-ci-gate.json and docs/handoffs/01-ci-verification.md. Prior skill discovery and local foundation evidence remain in docs/handoffs/01-build-foundation.md. That evidence covers assignment 01 only; Server and graphics/MMO qualification are recorded separately."}
+      "verification": {"status": "PASS", "reason": "Historical assignment 01 gate at revision 3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de after the Xcode 26.4.1 repair: normal push 39077290171 passed 14/14 jobs; injected run 39077652643 failed all 12 CPU jobs solely at shark.failure-sentinel (CTest exit 8, other nine tests passed per job); subsequent restored run 39078070735 passed all 14 jobs and 120/120 CPU tests without skips. Windows, Ubuntu24.04, macOS ARM64 and Intel Debug/Release/sanitizers were verified at that revision. Fourteen GitHub Actions checks were configured on main with strict freshness and administrator bypass retained in that historical policy. ADR0009 subsequently removes Mac jobs and compatibility obligations; current checks are documented in docs/ci.md. Durable historical run, assertion, phase, toolchain and policy evidence: docs/coverage/evidence/01-ci-gate.json and docs/handoffs/01-ci-verification.md. Prior skill discovery and local foundation evidence remain in docs/handoffs/01-build-foundation.md. That evidence covers assignment 01 only; Server and graphics/MMO qualification are recorded separately."}
     },
     {
       "id": "REQ-02",
       "owner": "02",
-      "requirement": "Qualify the pinned GLFW/NVRHI/Vulkan stack with a maintained real-hardware probe on each selected Windows, Linux, macOS Apple Silicon and macOS Intel baseline. Evaluate and pin the shipping Vulkan-on-Metal path actually tested, including shader translation, formats/features/device limits, portability, patches, redistribution and maintenance.",
+      "requirement": "Qualify the pinned GLFW/NVRHI/Vulkan stack with a maintained real-hardware probe on each selected Windows and Linux baseline. Evaluate the shipping native Vulkan paths actually tested, including shader execution, formats/features/device limits, portability, patches, redistribution and maintenance. Mac qualification is removed by ADR0009.",
       "acceptance": [
         "Each target creates a surface/device/swapchain, draws a textured primitive and a depth-tested draw, executes representative compute and reads back a known result.",
         "HDR color/depth formats and shader compilation work; resize, minimize/restore and exit complete with clean validation for exercised paths.",
-        "Results identify exact OS/CPU/GPU/driver/dependency revisions and tested Apple Silicon versus Intel Vulkan-on-Metal paths.",
+        "Results identify exact OS/CPU/GPU/driver/dependency revisions and the tested Windows/Linux native Vulkan paths for all six mandatory hardware rows.",
         "Missing features and shipping constraints are recorded; a failing combination yields a minimal reproducer and concrete explicit decision request.",
-        "No dependent renderer architecture proceeds on assumed macOS compatibility, and no unsupported platform is represented as qualified.",
+        "No dependent renderer architecture proceeds on assumed Windows/Linux compatibility, and no unsupported platform is represented as qualified.",
         "After M01, keep the graphics probe and all later presentation dependencies outside EngineCore/Server; a headless pass cannot replace the retained client GPU matrix."
       ],
-      "planned_fixture": "GraphicsFeasibilityProbe hardware matrix, including separate MacAppleSiliconProbe and MacIntelProbe; external fixtures are required because a CPU scene cannot validate platform GPU compatibility.",
-      "verification": {"status": "NOT_RUN", "reason": "02a setup is retained. 02b implements analytic NVRHI draw/depth/compute/format readbacks, bounded lifecycle, pinned SPIR-V/Vulkan validation tools, actual failure fixtures and schema-2 evidence. Local execution is recorded separately from the required hardware gate. 02d adds Release Windows probe packaging, verified Unicode relocation, a supplemental NVIDIA 100/20/600-second lifecycle pass and Intel short cases, recorded in docs/handoffs/02d-windows-validation.md and docs/coverage/evidence/02d-windows-local.json. All nine named target rows remain unqualified; native Mac 02c is user-deferred, and clean-machine packaging and the complete matrix remain open. See docs/roadmap/graphics-plan.md and docs/graphics-probe.md. Assignment 02 remains current; dependent production renderer work has not begun."}
+      "planned_fixture": "GraphicsFeasibilityProbe hardware matrix for W-NV, W-AMD, W-INTEL, L-NV, L-AMD and L-INTEL; external fixtures are required because a CPU scene cannot validate platform GPU compatibility.",
+      "verification": {"status": "NOT_RUN", "reason": "02a setup is retained. 02b implements analytic NVRHI draw/depth/compute/format readbacks, bounded lifecycle, pinned SPIR-V/Vulkan validation tools, actual failure fixtures and schema-2 evidence. Local execution is recorded separately from the required hardware gate. 02d adds Release Windows probe packaging, verified Unicode relocation, a supplemental NVIDIA 100/20/600-second lifecycle pass and Intel short cases, recorded in docs/handoffs/02d-windows-validation.md and docs/coverage/evidence/02d-windows-local.json. ADR0009 removes all Mac qualification obligations and retires 02c. All six remaining named Windows/Linux target rows remain unqualified; clean-machine packaging and the complete active matrix remain open. Historical receipts retain their original nine-row scope and input hashes. See docs/roadmap/graphics-plan.md and docs/graphics-probe.md. Assignment 02 remains current; dependent production renderer work has not begun."}
     },
     {
       "id": "REQ-03",
@@ -470,7 +470,7 @@
         "All startup scenes and prefab-referenced assets load, including a prefab and a sound selected only by script through runtime-assembled asset IDs.",
         "Explicit cook roots/include-lists capture dynamic dependencies that static scene references cannot discover, and missing dependencies fail with useful diagnostics.",
         "Cooking is reproducible for pinned inputs, invalid export fails atomically and progress/failure status is machine-readable.",
-        "Packages contain appropriate redistributables and licenses, with no claim that signed/notarized packages are byte-identical.",
+        "Packages contain appropriate redistributables and licenses, with no claim that signed packages are byte-identical.",
         "Prepare separate client/server dependency roots and exclude private server rules/secrets from client payloads. Assignment 31 requalifies M05 streaming with final cooked cell manifests; M08 qualifies headless server packages, authentic content updates and compatible rollout.",
         "Human and terminal exports use the same validation/jobs and produce versioned result/artifact metadata for reproducible inputs. Supported CPU cooking/packaging is independent of editor/device startup; device-specific preprocessing remains explicitly qualified."
       ],
@@ -525,10 +525,10 @@
     {
       "id": "REQ-35",
       "owner": "35",
-      "requirement": "Deliver versioned editor/runtime packages, samples, quickstart/build instructions, public Lua/automation reference, troubleshooting, supported-platform matrix, dependency notices, release notes and migration/upgrade policy. Automate selected signing/notarization where authorized credentials exist, keep secrets out of the repository and archive evidence/build inputs/symbols before tagging the reviewed release candidate.",
+      "requirement": "Deliver versioned editor/runtime packages, samples, quickstart/build instructions, public Lua/automation reference, troubleshooting, supported-platform matrix, dependency notices, release notes and migration/upgrade policy. Automate selected platform signing where authorized credentials exist, keep secrets out of the repository and archive evidence/build inputs/symbols before tagging the reviewed release candidate.",
       "acceptance": [
         "Clean-machine install/launch and exported-game checks pass on every declared OS/CPU/GPU baseline, including Ubuntu 24.04 and only explicitly tested later releases.",
-        "Required distribution-channel signing/notarization is verified with the actual selected path.",
+        "Required distribution-channel signing is verified with the actual selected path.",
         "Missing credentials or target hardware remain explicit release blockers rather than waived checks.",
         "Documentation, sample projects, notices, upgrade policy, test evidence, exact build inputs and symbols accompany a reviewed tagged release candidate.",
         "MMORPG release also requires M08-M10 headless server packages, wire/content/database compatibility, seamless multi-client acceptance, measured capacity, backup/restore and operations evidence. No offline-only release may satisfy the amended profile.",
@@ -548,7 +548,7 @@
         "The initial 20Hz/256-active-player profile is explicitly provisional; no current bootstrap test is labeled a server-simulation or capacity result."
       ],
       "planned_fixture": "HeadlessServerCleanBuild, ServerDependencyClosureNegative, MinimalLinuxServerLaunch and ServerLifecycle fixtures.",
-      "verification": {"status": "PASS", "reason": "PASS at d658d69c21c492c844f5678f931b1ddf955d25cd: ordinary push 39082339515 and restored run 39083098689 pass all 15 jobs and 206 CTests without skips. Injected run 39082507455 on the same revision fails only 13 real sentinels while 180 other tests pass; later headless phases correctly stop. Hosted Docker Ubuntu 24 Release closure/package/pristine read-only-runtime smoke and GCC Debug 13/13 plus Clang 18 ASan/UBSan 13/13 pass. All 15 required checks, including headless-server, are verified on main under app 15368; strict freshness and administrator bypass are preserved. Durable evidence: docs/coverage/evidence/M01-ci-gate.json; handoff: docs/handoffs/M01-ci-verification.md. Earlier local Windows 45 and WSL 26 tests remain historical evidence. This qualifies idle lifecycle and dependency isolation, not graphics, simulation, networking, persistence, streaming, capacity or a shipping release."}
+      "verification": {"status": "PASS", "reason": "Historical M01 PASS at d658d69c21c492c844f5678f931b1ddf955d25cd: ordinary push 39082339515 and restored run 39083098689 pass all 15 jobs and 206 CTests without skips. Injected run 39082507455 on the same revision fails only 13 real sentinels while 180 other tests pass; later headless phases correctly stop. Hosted Docker Ubuntu 24 Release closure/package/pristine read-only-runtime smoke and GCC Debug 13/13 plus Clang 18 ASan/UBSan 13/13 pass. All 15 then-required checks, including headless-server, were verified on main under app 15368; that policy preserved strict freshness and administrator bypass. ADR0009 subsequently removes Mac jobs and compatibility obligations; current checks are documented in docs/ci.md. Durable historical evidence: docs/coverage/evidence/M01-ci-gate.json; handoff: docs/handoffs/M01-ci-verification.md. Earlier local Windows 45 and WSL 26 tests remain historical evidence. This qualifies idle lifecycle and dependency isolation, not graphics, simulation, networking, persistence, streaming, capacity or a shipping release."}
     },
     {
       "id": "REQ-M02",

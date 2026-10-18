@@ -17,7 +17,6 @@ from process_runner import run_process
 PRESETS = (
     "windows-debug", "windows-release", "windows-asan",
     "linux-debug", "linux-release", "linux-asan-ubsan",
-    "macos-debug", "macos-release", "macos-asan-ubsan",
     "server-debug", "server-asan-ubsan",
 )
 
