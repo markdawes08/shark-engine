@@ -9,8 +9,14 @@ which assignment owns the gate.
 Assignment 03 is split into [03a/03b/03c](../roadmap/core-plan.md). The implemented
 Core diagnostics/configuration and identity/path features map to real unit and
 process fixtures. The [03a handoff](../handoffs/03a-core-contracts.md) records their
-local results. Full `REQ-03` remains NOT_RUN until lifecycle ownership, clocks,
-bounded queues and final qualification pass in the following checkpoints.
+local results. Full `REQ-03` remains NOT_RUN until clocks, bounded work and final
+qualification pass in 03c.
+
+The 03b [application lifecycle](../application-lifecycle.md) feature adds
+`shark.core.lifecycle` and extends the real Server process path. Its
+[handoff](../handoffs/03b-application-lifecycle.md) records native/injected signal
+ownership, partial-start rollback, repeated cycles and cleanup-failure evidence.
+The final 03c timing/work gate remains separate.
 
 The user selected a seamless open-world MMORPG. The
 [versioned execution plan](../roadmap/mmorpg-plan.md) and

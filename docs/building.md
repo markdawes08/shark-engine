@@ -6,7 +6,9 @@ Editor/Runtime/Server entry points and Catch2 tests. Editor/Runtime report
 bootstrap information; Server has validated startup and an idle lifecycle.
 03a adds shared [Core contracts](core-contracts.md), including owned errors,
 structured stderr diagnostics, UUIDs and project paths. `shark.core.contracts`
-runs their CPU fixtures with seed 1337; lifecycle expansion remains in 03b/03c.
+runs their CPU fixtures with seed 1337. The [03b lifecycle](application-lifecycle.md)
+uses `shark.core.lifecycle`, also with seed 1337, for ownership and failure/cleanup
+fixtures. Scheduling and bounded work remain in 03c.
 02a/02b add a separate opt-in [graphics probe](graphics-probe.md) with locked
 dependencies, terminal diagnostics, analytic GPU cases and offline validation tools.
 02d adds matching `graphics-windows-release` and `graphics-linux-release`

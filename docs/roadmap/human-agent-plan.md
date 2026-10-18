@@ -113,7 +113,9 @@ checks for this planning change. The full authoring gate remains NOT_RUN.
 
 M01's hosted qualification is complete. Assignment 02's recorded local evidence
 now closes its gate under ADR 0010; assignment 03 is current, split into
-[03a contracts, 03b lifecycle and 03c scheduling](core-plan.md). The
+[03a contracts, 03b lifecycle and 03c scheduling](core-plan.md). 03a and 03b are
+complete; [03b verification](../handoffs/03b-application-lifecycle.md) covers
+application ownership and rollback. 03c scheduling and the full gate are next. The
 [final local handoff](../handoffs/02d-final-verification.md) preserves full local
 Windows lifecycle runs, bounded portable terminal launchers and isolated Ubuntu
 CPU/package checks. Former external GPU and independent clean-machine gates are

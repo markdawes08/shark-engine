@@ -4,7 +4,9 @@ add_library(EngineCore STATIC
     src/error.cpp
     src/log.cpp
     src/project_path.cpp
+    src/server_application.cpp
     src/server_config.cpp
+    src/shutdown_signals.cpp
     src/stable_id.cpp)
 target_include_directories(EngineCore PUBLIC ../include include PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
 if(WIN32)

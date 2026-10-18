@@ -37,7 +37,8 @@ Assertions diagnose programmer invariants, while validation returns errors in
 both Debug and Release. Synchronous logging/entropy/filesystem calls are not
 permitted in real-time callbacks or signal handlers.
 
-**03a is complete within its checkpoint scope.** Its
-[handoff](../handoffs/03a-core-contracts.md) records the delivered interfaces,
-exact local evidence and limitations. **03b is next**; do not advance directly
-to assignment 04. Full `REQ-03` remains NOT_RUN pending 03b/03c.
+**03a and 03b are complete within their checkpoint scopes.** The
+[03a handoff](../handoffs/03a-core-contracts.md) and
+[03b handoff](../handoffs/03b-application-lifecycle.md) record the delivered
+interfaces, exact local evidence and limitations. **03c is next**; do not advance
+directly to assignment 04. Full `REQ-03` remains NOT_RUN pending 03c.

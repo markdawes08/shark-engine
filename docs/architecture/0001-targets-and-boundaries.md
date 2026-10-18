@@ -99,6 +99,13 @@ system as a foundation requirement.
 
 ## Lifetime, threading and failure
 
+03b implements this policy for the current Server's actual signal resources
+and readiness transition; see the [lifecycle contract](../application-lifecycle.md)
+and [handoff](../handoffs/03b-application-lifecycle.md). Application roots explicitly
+own their resources; there is no registry, service lookup or dependency graph.
+Later subsystems extend that ownership at their integration gates. Thread/queue
+scheduling and final assignment-03 qualification remain in 03c.
+
 Each application root exclusively owns its services. A scene owns its entity
 registry and per-scene script/physics state; resource managers own shared immutable
 assets through typed handles. Use RAII and unique ownership by default. Reference

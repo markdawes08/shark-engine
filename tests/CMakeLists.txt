@@ -3,6 +3,8 @@ add_executable(Tests
     core_error_tests.cpp
     core_identity_tests.cpp
     core_path_tests.cpp
+    server_application_tests.cpp
+    shutdown_signal_tests.cpp
     server_tests.cpp)
 target_link_libraries(Tests PRIVATE EngineCore Catch2::Catch2WithMain)
 target_compile_definitions(Tests PRIVATE
@@ -20,6 +22,8 @@ add_test(NAME shark.server.unit COMMAND Tests "[server]" --rng-seed 1337)
 set_tests_properties(shark.server.unit PROPERTIES LABELS "cpu;server;unit" TIMEOUT 10)
 add_test(NAME shark.core.contracts COMMAND Tests "[core]" --rng-seed 1337)
 set_tests_properties(shark.core.contracts PROPERTIES LABELS "cpu;unit" TIMEOUT 15)
+add_test(NAME shark.core.lifecycle COMMAND Tests "[lifecycle]" --rng-seed 1337)
+set_tests_properties(shark.core.lifecycle PROPERTIES LABELS "cpu;unit;server" TIMEOUT 15)
 
 foreach(shark_application IN ITEMS Runtime Editor)
     if(TARGET "${shark_application}")

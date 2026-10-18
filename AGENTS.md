@@ -23,9 +23,10 @@ split are implemented; the [M01 handoff](docs/handoffs/M01-headless-server.md) r
 local qualification and the [hosted follow-up](docs/handoffs/M01-ci-verification.md)
 records the completed native CPU, headless Docker and red/green gate. The next
 assignment is 03, split into the [Core checkpoints](docs/roadmap/core-plan.md).
-03a errors/logging, configuration, identity and paths are complete; 03b application
-lifecycle is next and 03c owns scheduling/queues plus the final gate. Consult the
-[03a handoff](docs/handoffs/03a-core-contracts.md) for its verification status.
+03a errors/logging, configuration, identity and paths and 03b application
+lifecycle are complete; 03c owns scheduling/queues plus the final gate. Consult the
+[03b handoff](docs/handoffs/03b-application-lifecycle.md) for current verification
+and the [lifecycle guide](docs/application-lifecycle.md) before extending ownership.
 02 is complete under the user-directed
 [current-machine scope](docs/architecture/0010-current-machine-scope.md). The
 [02a handoff](docs/handoffs/02a-graphics-setup.md) records evidence and limits;

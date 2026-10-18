@@ -72,7 +72,9 @@ implementation/local qualification; the
 headless Docker and deliberate-failure/restored-success gate. **Assignment 02 is
 closed under the explicit current-machine scope amendment; assignment 03 is current.**
 The [Core checkpoint plan](core-plan.md) separates 03a contracts, 03b lifecycle
-and 03c scheduling/bounded work. The full gate remains open until all three pass.
+and 03c scheduling/bounded work. 03a and 03b are complete; 03c is next and retains
+the full gate. The [03b handoff](../handoffs/03b-application-lifecycle.md) records
+owned Server lifecycle and local verification, without adding game services.
 The [final local handoff](../handoffs/02d-final-verification.md)
 preserves the Windows lifecycle and isolated Ubuntu CPU/package evidence. The
 [graphics checkpoint plan](graphics-plan.md) applies the new local gate to those

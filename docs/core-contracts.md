@@ -1,8 +1,9 @@
 # Core contracts introduced in 03a
 
 These CPU-only C++20 contracts live in EngineCore and are shared by the
-bootstrap executables. The [checkpoint plan](roadmap/core-plan.md) leaves owned
-application lifecycle to 03b and scheduling/queues to 03c. Source project
+bootstrap executables. [03b application lifecycle](application-lifecycle.md)
+extends these contracts with explicit ownership and failure cleanup; the
+[checkpoint plan](roadmap/core-plan.md) leaves scheduling/queues to 03c. Source project
 schemas, runtime entity handles, networking and authoring protocol remain with
 their existing owners.
 

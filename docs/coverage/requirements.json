@@ -91,7 +91,7 @@
         "Structured errors retain stable codes, operation/request context and readable messages through later terminal, protocol and editor adapters; unavailable capabilities and validation/conflict/execution failures remain distinguishable."
       ],
       "planned_fixture": "CoreLifecycle, StartupFailureInjection, ProjectPathResolution and ConfigurationErrors unit/integration fixtures; startup and ownership failures occur before a scene can run.",
-      "verification": {"status": "NOT_RUN", "reason": "03a implements owned errors/results, structured diagnostics, validated bootstrap/server configuration, stable UUIDs and project-relative paths; local verification is recorded in docs/handoffs/03a-core-contracts.md. The overall gate remains NOT_RUN pending 03b application ownership/partial-start rollback and 03c controllable clocks, bounded queues and final qualification. See docs/roadmap/core-plan.md."}
+      "verification": {"status": "NOT_RUN", "reason": "03a Core contracts and 03b explicit application ownership, partial-start rollback and reverse cleanup are implemented; local verification is recorded in docs/handoffs/03a-core-contracts.md and docs/handoffs/03b-application-lifecycle.md. The overall gate remains NOT_RUN pending 03c controllable clocks, bounded work and final qualification. See docs/roadmap/core-plan.md."}
     },
     {
       "id": "REQ-04",
@@ -809,13 +809,22 @@
   "implemented_surface": {
     "features": [
       {
+        "id": "core.application-lifecycle",
+        "name": "Owned Server startup, signal resources, reverse rollback and observable cleanup failures",
+        "requirement_ids": ["REQ-03", "REQ-M01"],
+        "test_ids": ["shark.core.lifecycle", "shark.server.lifecycle"],
+        "test_sources": ["tests/shutdown_signal_tests.cpp", "tests/server_application_tests.cpp", "tests/check_server.py"],
+        "fixtures": ["engine/core/src/shutdown_signals.cpp", "engine/core/src/server_application.cpp", "server/main.cpp"],
+        "fixture_reason": "Actual native signal registrations and injected backend/output failures exercise application ownership and ordered cleanup before any scene exists. Repeated in-process lifetimes supplement the real Server process fixture; no unimplemented worker or game service is represented as an acquired resource. FeatureWorld begins in 10."
+      },
+      {
         "id": "core.diagnostics-configuration",
         "name": "Owned errors/results, bounded structured logs and validated startup configuration",
         "requirement_ids": ["REQ-03"],
         "test_ids": ["shark.core.contracts", "shark.unit", "shark.server.unit", "shark.server.lifecycle", "shark.runtime.cli", "shark.editor.cli"],
         "test_sources": ["tests/core_error_tests.cpp", "tests/bootstrap_tests.cpp", "tests/server_tests.cpp", "tests/check_server.py", "tests/CheckCli.cmake"],
         "fixtures": ["engine/core/src/log.cpp", "engine/core/src/server_config.cpp", "server/main.cpp", "runtime/main.cpp", "editor/main.cpp"],
-        "fixture_reason": "Core values and real bootstrap processes exercise lifetime, invalid configuration, machine-readable Release diagnostics and sink failures before scenes exist. These are not authoring commands; FeatureWorld begins in 10. Lifecycle ownership and queue qualification remain in 03b/03c."
+        "fixture_reason": "Core values and real bootstrap processes exercise lifetime, invalid configuration, machine-readable Release diagnostics and sink failures before scenes exist. These are not authoring commands; FeatureWorld begins in 10. Lifecycle ownership is covered separately by core.application-lifecycle; scheduling and queue qualification remain in 03c."
       },
       {
         "id": "core.stable-identity-project-paths",
