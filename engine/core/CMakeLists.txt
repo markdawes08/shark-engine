@@ -14,6 +14,7 @@ add_library(EngineCore STATIC
     src/net_session_wire.cpp
     src/net_replication.cpp
     src/net_replication_wire.cpp
+    src/net_interest.cpp
     src/server_application.cpp
     src/server_config.cpp
     src/shutdown_signals.cpp

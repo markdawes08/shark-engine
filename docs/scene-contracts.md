@@ -141,5 +141,6 @@ is complete, and [M02b owned sessions](handoffs/M02b-owned-sessions.md) is **PAS
 under the current-machine scope. M02c [replication](network-replication.md) is also
 complete: explicit server-selected affine world poses are read through this owner.
 Names, durable IDs, hierarchy and private scene revisions stay off the public state
-wire. M02d spatial interest/budgets is next under the
+wire. M02d spatial interest/budgets is complete. M02e integrated qualification is
+next under the
 [network plan](roadmap/network-plan.md); full REQ-M02 remains NOT_RUN.

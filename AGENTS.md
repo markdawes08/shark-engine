@@ -68,7 +68,8 @@ scope**: 446 passing CPU CTests and protected package checks. Follow
 [ADR 0013](docs/architecture/0013-authoritative-replication.md), the
 [replication contract](docs/network-replication.md) and
 [handoff](docs/handoffs/M02c-authoritative-replication.md). **M02d spatial interest,
-privacy and connection budgets is next**; integrated adversity retains M02e. Follow the
+privacy and connection budgets is complete.** M02e integrated qualification is
+next. Follow the
 [05 checkpoint plan](docs/roadmap/graphics-device-plan.md),
 [graphics device contract](docs/graphics-device.md),
 [presentation lifecycle contract](docs/presentation-lifecycle.md) and
@@ -118,8 +119,9 @@ not retroactive passes. Follow the
 on other machines or a production MMO release.
 The bounded local TLS/wire foundation is implemented in M02a. M02b adds mutual
 TLS and owned sessions; M02c adds explicitly selected public pose replication and
-bounded resynchronization. Local qualification is complete. Spatial interest,
-persistence, simulation and streaming retain their later owners.
+bounded resynchronization. M02d adds qualified spatial interest, recipient privacy
+and connection budgets. Integrated adversity remains M02e; persistence, simulation
+and streaming retain their later owners.
 
 Keep all remaining gates achievable on this PC: local processes, loopback or
 Windows/WSL connections, deterministic network faults, local storage and backups,
@@ -376,3 +378,9 @@ the current assignment's required gate is met, except for the user-authorized
 nonblocking backlog amendment above. End the user response with the
 important changes, verification limits and suggested commit message, leaving
 all staging, committing and pushing to the user.
+
+M02d [spatial interest](docs/network-interest.md) is qualified under the current-machine
+scope: 460 CPU CTests and protected package checks pass. Its
+[handoff](docs/handoffs/M02d-spatial-interest.md) records the active two-recipient
+workload, privacy, byte/work and reliable-stream delay measurements.
+M02e integrated qualification is next; full REQ-M02 remains NOT_RUN.

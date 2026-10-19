@@ -51,8 +51,8 @@ and noninteractive real-process authentication fixtures; its completed
 and protected package checks.
 M02c adds shared [replication APIs](../network-replication.md), a compiled public
 C++ example and real-process JSON evidence with 446 passing CTests.
-Spatial interest and integrated adversity remain M02d/M02e;
-authoring adapters retain their existing assignment owners.
+M02d adds spatial interest and measured connection budgets. Integrated adversity
+remains M02e; authoring adapters retain their existing assignment owners.
 
 A terminal agent discovers capabilities and schemas, opens or creates a project,
 queries a bounded state snapshot, validates and commits revision-checked edits,
@@ -173,7 +173,8 @@ retain their owners in 09, 15 and 16. The current assignment is M02. Its
 protected dependency/package qualification. M02b authentication and owned sessions
 is also complete. M02c [authoritative replication](../network-replication.md) is
 locally qualified through the same CPU C++ services and noninteractive fixtures;
-M02d spatial interest, privacy and connection budgets is next.
+M02d spatial interest, privacy and connection budgets is complete.
+M02e integrated qualification is next.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and
@@ -198,3 +199,9 @@ provide noninteractive contributor diagnostics; public authoring commands and
 protocol/editor adapters remain future work.
 No additional numbered chunk or change to product/player authority is necessary
 for this amendment.
+
+M02d [spatial interest](../network-interest.md) is qualified under the current-machine
+scope: 460 CPU CTests and protected package checks pass. Its
+[handoff](../handoffs/M02d-spatial-interest.md) records the active two-recipient
+workload, privacy, byte/work and reliable-stream delay measurements.
+M02e integrated qualification is next; full REQ-M02 remains NOT_RUN.

@@ -18,6 +18,7 @@
 # Explicitly public test-only certificates in tests/fixtures/network remain versioned.
 # Session enrollment experiments, local credentials and process receipts stay under out/.
 # Replication traces, raw payload diagnostics and local multi-process receipts use out/ or build/.
+# Interest budgets, shaped relay barriers and per-connection traces use out/ or build/.
 /build/
 /out/
 /dist/

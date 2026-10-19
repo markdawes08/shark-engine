@@ -34,11 +34,24 @@ revisions never enter this schema. Account and character IDs are not state field
 The session/epoch/stream envelope identifies this recipient's replication domain.
 Private-only Scene changes produce no delta when the selected public poses are
 unchanged. The source schema catalog never determines visibility automatically.
-The trusted selection must itself be authorized; M02d adds spatial interest and
-recipient-policy enforcement. Scene-local poses do not supply global MMO origin
+The trusted selection must itself be authorized; M02d's
+[interest service](network-interest.md) adds spatial selection and recipient-policy
+enforcement. Scene-local poses do not supply global MMO origin
 or region-transfer semantics, which remain M05.
 
 ## Streams, revisions and recovery
+
+M02d also adds `ReplicationServer::publish`, the managed capture/encode/send
+boundary used by `InterestServer`. It commits IDs, revisions and ACK state only
+after successful TLS FIFO admission, charges the complete outer frame against
+the supplied allowance, and returns explicit pending/byte/queue outcomes.
+For `byte_limited`, its `framed_bytes` reports the candidate's required allowance;
+no bytes were admitted. `sent` reports the actual admitted frame size.
+New state requires an empty application output queue, including after resync.
+Unsent candidates can therefore use current Scene values without replacing or
+overtaking already admitted bytes. Manual `prepare` and managed `publish` cannot
+be mixed within one session stream. The [interest contract](network-interest.md)
+defines recipient policy, pacing and privacy maintenance before output polling.
 
 Each publication revalidates the actual transport through
 `SessionAuthority::current(transport, now)`. That call checks current identity

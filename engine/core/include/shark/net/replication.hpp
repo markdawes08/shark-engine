@@ -101,6 +101,14 @@ struct ReplicationStats {
     std::size_t pending_updates;
 };
 
+enum class ReplicationPublishStatus { sent, unchanged, pending_ack, byte_limited, queue_limited };
+struct ReplicationPublication {
+    ReplicationPublishStatus status;
+    std::size_t framed_bytes{0};
+    std::size_t entities{0};
+    std::size_t records{0};
+};
+
 // Trusted single-owner publisher. Selection is an explicit server allowlist,
 // never supplied by a player or discovered from authoring metadata. Source must
 // be one live Region Scene on its owner thread. Committed state only. One
@@ -122,6 +130,15 @@ class ReplicationServer final {
     [[nodiscard]] Result<std::optional<ReplicationUpdate>>
     prepare(Scene& scene, std::span<const EntityHandle> published, SessionAuthority& sessions,
             TlsTransport& transport, MonotonicTime now);
+    // Managed admission: capture/encode a complete candidate, then commit its
+    // revision, IDs and ACK deadline only after successful TLS FIFO admission.
+    // Never resends pending state. Requires an empty outgoing queue, including
+    // after resync; an earlier admitted frame cannot be replaced or overtaken.
+    // Byte allowance includes the outer wire header, not TLS/TCP overhead.
+    // Do not mix prepare and publish within one session stream.
+    [[nodiscard]] Result<ReplicationPublication>
+    publish(Scene& scene, std::span<const EntityHandle> published, SessionAuthority& sessions,
+            TlsTransport& transport, MonotonicTime now, std::size_t available_framed_bytes);
     // Fully validate control before consuming shared session sequence/rate and
     // lease via Heartbeat. Invalid controls spend their separate bounded window
     // but do not acknowledge state, consume session sequence or refresh leases.

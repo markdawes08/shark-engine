@@ -5,7 +5,8 @@ Owner: `REQ-07`. Full assignment verification is **PASS** under the current-mach
 The current-machine scope and existing assignment order remain unchanged.
 **07a, 07b and 07c are complete. The current assignment is M02; M02b owned
 sessions and M02c replication are PASS under the current-machine scope.
-M02d spatial interest, privacy and connection budgets is next.**
+M02d spatial interest, privacy and connection budgets is complete;
+M02e integrated qualification is next.**
 The [M02c handoff](../handoffs/M02c-authoritative-replication.md) records its
 explicit public pose allowlist and bounded resynchronization evidence.
 See the [M02b handoff](../handoffs/M02b-owned-sessions.md), [network plan](network-plan.md) and

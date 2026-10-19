@@ -124,7 +124,8 @@ M02b [authentication and owned sessions](../network-sessions.md) is complete; it
 [handoff](../handoffs/M02b-owned-sessions.md) records 425 passing CTests and protected
 package checks. M02c [replication](../network-replication.md) is complete with
 446 passing CTests and protected package checks in its
-[handoff](../handoffs/M02c-authoritative-replication.md). M02d interest/budgets is next.
+[handoff](../handoffs/M02c-authoritative-replication.md). M02d interest/budgets is
+complete; M02e integrated qualification is next.
 The completed scene C++ APIs are not player
 messages or source persistence, and they do not grant gameplay authority.
 Presentation stays in Client and cannot acquire authority over server time or world state.
@@ -163,8 +164,8 @@ Mbed TLS foundation in [ADR 0011](../architecture/0011-network-foundation.md) an
 implements bounded loopback TLS/wire diagnostics plus deterministic fault modeling.
 M02b implements [mutual TLS and owned sessions](../network-sessions.md), with
 completed local qualification. M02c implements bounded authoritative pose
-replication and resynchronization; interest and integrated adversity retain M02d/M02e;
-full REQ-M02 remains NOT_RUN until the integrated M02e gate passes.
+replication and resynchronization; M02d adds spatial interest and connection budgets.
+Full REQ-M02 remains NOT_RUN until the integrated M02e adversity gate passes.
 
 After 03/07 and M01. Select and pin maintained transport/authentication components
 using a recorded threat/requirements assessment. Add independent gameplay-wire
@@ -364,3 +365,9 @@ capacity are separate future scope decisions rather than blockers in this plan.
 Transport/auth/database/terrain/navigation dependencies require measurements and
 pinning at first integration. Neither the current bootstrap nor the new documents
 prove any MMO feature, scale or release support.
+
+M02d [spatial interest](../network-interest.md) is qualified under the current-machine
+scope: 460 CPU CTests and protected package checks pass. Its
+[handoff](../handoffs/M02d-spatial-interest.md) records the active two-recipient
+workload, privacy, byte/work and reliable-stream delay measurements.
+M02e integrated qualification is next; full REQ-M02 remains NOT_RUN.

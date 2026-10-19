@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <limits>
 #include <thread>
+#include <type_traits>
 #include <utility>
 
 namespace shark::net {
@@ -49,29 +50,33 @@ struct Capture {
     std::vector<SourceEntity> entities;
 };
 
+Result<SceneRevision> source_revision(Scene& scene) {
+    // Scope and revision are present even for an empty page or a first-slot hole.
+    // Do not use Scene::stats here: its retired-slot count scans the whole Scene.
+    SceneQueryOptions options;
+    options.fields = {false, false, false};
+    options.page_size = 1;
+    options.scan_budget = 1;
+    auto page = scene.query_entities(options);
+    if (!page || !std::holds_alternative<RegionSceneScope>(page.value().scope())) {
+        return rejected("net.replication.scene");
+    }
+    return page.value().revision();
+}
+
 Result<Capture> capture(Scene& scene, std::span<const EntityHandle> selection,
                         std::size_t maximum) {
     if (selection.size() > maximum) {
         return rejected("net.replication.selection", ErrorCode::invalid_argument);
     }
-    auto stats = scene.stats();
-    if (!stats || stats.value().closed) {
-        return rejected("net.replication.scene");
+    auto revision = source_revision(scene);
+    if (!revision) {
+        return revision.error();
     }
-    const SceneRevision revision{stats.value().instance, stats.value().revision};
-    SceneQueryOptions options;
-    options.fields = {false, false, false};
-    options.page_size = 1;
-    options.scan_budget = 1;
-    options.expected_revision = revision;
-    auto scope = scene.query_entities(options);
-    if (!scope || !std::holds_alternative<RegionSceneScope>(scope.value().scope())) {
-        return rejected("net.replication.scene");
-    }
-    Capture candidate{revision.scene_instance, {}};
+    Capture candidate{revision.value().scene_instance, {}};
     candidate.entities.reserve(selection.size());
     for (const auto handle : selection) {
-        auto inspected = scene.inspect_entity(handle, {false, true, false}, revision);
+        auto inspected = scene.inspect_entity(handle, {false, true, false}, revision.value());
         if (!inspected) {
             return rejected("net.replication.selection", ErrorCode::invalid_id);
         }
@@ -122,6 +127,7 @@ struct ReplicationServer::Impl {
         std::optional<Pending> pending;
         Window controls;
         Window resyncs;
+        bool managed{false};
     };
 
     explicit Impl(ReplicationLimits value) : limits(value) {
@@ -260,6 +266,9 @@ ReplicationServer::prepare(Scene& scene, std::span<const EntityHandle> published
         const bool same_session = existing != impl_->streams.end() &&
                                   existing->session.session == current.value().session;
         if (same_session) {
+            if (existing->managed) {
+                return rejected("net.replication.mode");
+            }
             if (existing->scene_instance != captured.value().scene_instance) {
                 return rejected("net.replication.scene");
             }
@@ -319,6 +328,124 @@ ReplicationServer::prepare(Scene& scene, std::span<const EntityHandle> published
         return result;
     } catch (...) {
         return rejected("net.replication.prepare", ErrorCode::execution_failed);
+    }
+}
+
+Result<ReplicationPublication>
+ReplicationServer::publish(Scene& scene, std::span<const EntityHandle> published,
+                           SessionAuthority& sessions, TlsTransport& transport, MonotonicTime now,
+                           std::size_t available_framed_bytes) {
+    if (auto owner = impl_->check_owner(); !owner) {
+        return owner.error();
+    }
+    if (auto time = impl_->advance(now); !time) {
+        return time.error();
+    }
+    auto current = sessions.current(transport, now);
+    if (!current || !current.value().ready) {
+        return rejected("net.replication.session");
+    }
+    try {
+        auto existing =
+            std::ranges::find(impl_->streams, current.value().account,
+                              [](const Impl::Stream& stream) { return stream.session.account; });
+        const bool same_session = existing != impl_->streams.end() &&
+                                  existing->session.session == current.value().session;
+        if (same_session) {
+            if (!existing->managed) {
+                return rejected("net.replication.mode");
+            }
+            auto source = source_revision(scene);
+            if (!source || source.value().scene_instance != existing->scene_instance) {
+                return rejected("net.replication.scene");
+            }
+            if (existing->pending) {
+                if (now >= existing->pending->deadline) {
+                    return rejected("net.replication.ack-timeout");
+                }
+                return ReplicationPublication{ReplicationPublishStatus::pending_ack};
+            }
+        } else if (existing == impl_->streams.end() &&
+                   impl_->streams.size() >= impl_->limits.streams) {
+            return rejected("net.replication.capacity");
+        }
+        auto queued = transport.stats();
+        if (!queued) {
+            return queued.error();
+        }
+        if (queued.value().send_queue_frames != 0) {
+            return ReplicationPublication{ReplicationPublishStatus::queue_limited};
+        }
+        auto captured = capture(scene, published, impl_->limits.entities_per_stream);
+        if (!captured) {
+            return captured.error();
+        }
+        auto candidate = [&]() -> Result<Impl::Stream> {
+            if (same_session) {
+                return *existing;
+            }
+            auto id = generate_stable_id();
+            if (!id) {
+                return rejected("net.replication.entropy", id.error().code);
+            }
+            const ReplicaSessionId stream_id{id.value()};
+            if (std::ranges::find(impl_->streams, stream_id, &Impl::Stream::id) !=
+                impl_->streams.end()) {
+                return rejected("net.replication.entropy");
+            }
+            return Impl::Stream{current.value(),
+                                stream_id,
+                                captured.value().scene_instance,
+                                0,
+                                0,
+                                0,
+                                true,
+                                {},
+                                {},
+                                {},
+                                {now, 0},
+                                {now, 0},
+                                true};
+        }();
+        if (!candidate) {
+            return candidate.error();
+        }
+        auto prepared = impl_->prepare_candidate(candidate.value(), captured.value(), now);
+        if (!prepared) {
+            return prepared.error();
+        }
+        if (!prepared.value()) {
+            return ReplicationPublication{ReplicationPublishStatus::unchanged, 0,
+                                          captured.value().entities.size(), 0};
+        }
+        const auto& pending = *candidate.value().pending;
+        auto encoded = encode_replication_update(pending.update);
+        if (!encoded) {
+            return encoded.error();
+        }
+        const ReplicationPublication result{ReplicationPublishStatus::sent,
+                                            wire_header_bytes + encoded.value().size(),
+                                            pending.target.size(), pending.update.changes.size()};
+        if (result.framed_bytes > available_framed_bytes) {
+            return ReplicationPublication{ReplicationPublishStatus::byte_limited,
+                                          result.framed_bytes, result.entities, result.records};
+        }
+        auto sent = transport.send(MessageKind::replication_state, encoded.value());
+        if (!sent) {
+            return sent.error();
+        }
+        // Capacity was reserved at creation; all potentially throwing work is
+        // complete before admission. Commit cannot leave an untracked FIFO frame.
+        static_assert(std::is_nothrow_move_constructible_v<Impl::Stream>);
+        static_assert(std::is_nothrow_move_assignable_v<Impl::Stream>);
+        if (existing == impl_->streams.end()) {
+            impl_->streams.push_back(std::move(candidate).value());
+        } else {
+            *existing = std::move(candidate).value();
+        }
+        return result;
+    } catch (...) {
+        return rejected("net.replication.publish", ErrorCode::execution_failed);
     }
 }
 

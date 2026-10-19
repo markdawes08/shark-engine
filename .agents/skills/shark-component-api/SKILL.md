@@ -109,3 +109,12 @@ Use the native preset and actual existing CTest cases from
 increment; the contract validator alone does not prove API behavior. Update
 migration/rejection rules, coverage and handoff together when the public contract
 changes, and follow AGENTS.md's user-owned commit policy.
+
+M02d [spatial interest](../../../docs/network-interest.md) is locally qualified.
+Preserve the complete trusted catalog, authenticated character observer binding,
+unthrottled privacy maintenance and bounded managed admission. Its two new CTest
+families are `shark.core.net-interest` (30 seconds, seed 1337) and
+`shark.core.net-interest-process` (120 seconds); retain all twelve network families
+in qualification. Two active recipients and controlled reliable-stream delay do
+not establish the full LOCAL-MMO-1 workload or WAN behavior. Integrated adversity
+remains M02e; see the [handoff](../../../docs/handoffs/M02d-spatial-interest.md).

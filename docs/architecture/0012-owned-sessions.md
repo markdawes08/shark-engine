@@ -74,8 +74,9 @@ No mutation retry or durable exactly-once promise follows from these session
 controls. Lost outcomes can require a new login; later durable operations belong
 to M03. M02c [replication and resynchronization](../network-replication.md) now
 extend these session checks and are locally qualified under
-[ADR 0013](0013-authoritative-replication.md). Spatial interest and budgets remain
-M02d, and integrated adversity M02e. Full REQ-M02 remains NOT_RUN.
+[ADR 0013](0013-authoritative-replication.md). M02d adds qualified spatial interest
+and budgets under [ADR 0014](0014-spatial-interest.md). Integrated adversity remains
+M02e; full REQ-M02 remains NOT_RUN.
 
 The [M02b handoff](../handoffs/M02b-owned-sessions.md) records completed
 qualification. The [session contract](../network-sessions.md) and

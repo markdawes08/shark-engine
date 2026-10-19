@@ -71,7 +71,7 @@ and package checks. M02a is PASS: the [handoff](../handoffs/M02a-transport-wire.
 and [receipt](evidence/M02a-transport-wire.json) record 404 passing CPU CTests
 without failures/skips, protected builds and isolated packages. The narrow
 postqualification CI compiler-forwarding amendment is recorded separately from
-the unchanged compiled inputs. Full REQ-M02 remains NOT_RUN pending M02d/M02e. The prior
+the unchanged compiled inputs. Full REQ-M02 remains NOT_RUN pending M02e. The prior
 [07 checkpoint plan](../roadmap/scene-plan.md) is complete.
 M02b's `core.owned-sessions` feature maps mutual TLS, explicit enrollment, typed
 owned session controls, expiry/revocation and reconnect fencing to two new unit
@@ -106,8 +106,7 @@ Debug/ASan+UBSan 55 each, and WSL Server Debug/ASan+UBSan 40 each. Schema covera
 has 9 cases/654 assertions and query coverage 19 cases/3,916 assertions. Protected
 Runtime/Server builds, source/link/license closure and fresh isolated package
 checks pass; all 221 qualification source inputs were unchanged in that record.
-The current assignment is M02; M02a/M02b/M02c are complete and M02d spatial
-interest, privacy and connection budgets is next.
+The current assignment is M02; M02a-M02d are complete; M02e integrated qualification is next.
 FeatureWorld integration remains assignment 10.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
@@ -233,5 +232,11 @@ M02c adds `core.authoritative-replication`, mapped to strict wire, service and
 real-process fixtures. Its [handoff](../handoffs/M02c-authoritative-replication.md)
 and [receipt](evidence/M02c-authoritative-replication.json) record 446 passing CPU
 CTests and protected package checks. The public field allowlist is independent
-of authoring schemas. M02d interest/budgets and M02e integrated adversity remain;
+of authoring schemas. M02d interest/budgets is complete; M02e integrated adversity remains;
 full REQ-M02 stays NOT_RUN.
+
+M02d [spatial interest](../network-interest.md) is qualified under the current-machine
+scope: 460 CPU CTests and protected package checks pass. Its
+[handoff](../handoffs/M02d-spatial-interest.md) records the active two-recipient
+workload, privacy, byte/work and reliable-stream delay measurements.
+M02e integrated qualification is next; full REQ-M02 remains NOT_RUN.

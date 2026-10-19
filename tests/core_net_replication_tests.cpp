@@ -747,3 +747,165 @@ TEST_CASE("Replication deadline overflow rejects before installing a stream", "[
     rejected(server->prepare(*source, {}, *sessions, *pair.server, now), "net.replication.time");
     CHECK(server->stats().value().streams == 0);
 }
+
+namespace {
+Frame receive_managed(Harness& h, MonotonicTime now) {
+    const auto deadline = std::chrono::steady_clock::now() + 5s;
+    for (;;) {
+        REQUIRE(std::chrono::steady_clock::now() < deadline);
+        REQUIRE(h.pair.server->poll(now));
+        REQUIRE(h.pair.client->poll(now));
+        auto received = h.pair.client->receive();
+        REQUIRE(received);
+        if (received.value()) {
+            return std::move(*received.value());
+        }
+        std::this_thread::yield();
+    }
+}
+ReplicationUpdate receive_update(Harness& h, MonotonicTime now) {
+    auto frame = receive_managed(h, now);
+    REQUIRE(frame.kind == MessageKind::replication_state);
+    auto decoded = decode_replication_update(frame.payload);
+    REQUIRE(decoded);
+    return std::move(decoded).value();
+}
+} // namespace
+
+TEST_CASE("Managed replication commits only admitted current state", "[net-replication]") {
+    Harness h;
+    const auto first = h.entity(1);
+    const auto second = h.entity(2);
+    std::array selected{first};
+    auto publish = [&](std::size_t allowance, MonotonicTime now = 0ns) {
+        auto result =
+            h.server->publish(*h.source, selected, *h.sessions, *h.pair.server, now, allowance);
+        REQUIRE(result);
+        return result.value();
+    };
+    const auto blocked = publish(0);
+    CHECK(blocked.status == ReplicationPublishStatus::byte_limited);
+    CHECK(blocked.framed_bytes == wire_header_bytes + replication_update_header_bytes + 106);
+    CHECK(h.server->stats().value().streams == 0);
+    CHECK(h.pair.server->stats().value().send_queue_frames == 0);
+    selected[0] = second;
+    Transform moved;
+    moved.translation.x = 27;
+    REQUIRE(h.source->set_transform(second, moved));
+    const auto admitted = publish(blocked.framed_bytes);
+    REQUIRE(admitted.status == ReplicationPublishStatus::sent);
+    CHECK(admitted.framed_bytes == blocked.framed_bytes);
+    CHECK(admitted.entities == 1);
+    CHECK(admitted.records == 1);
+    CHECK(publish(8192).status == ReplicationPublishStatus::pending_ack);
+    CHECK(h.pair.server->stats().value().send_queue_frames == 1);
+    const auto initial = receive_update(h, 0ns);
+    CHECK(initial.revision == 1);
+    CHECK(initial.changes.front().id.value == 1);
+    CHECK(initial.changes.front().pose->coefficients[3] == 27);
+    REQUIRE(h.ack(initial, 2));
+    CHECK(publish(8192).status == ReplicationPublishStatus::unchanged);
+    moved.translation.x = 50;
+    REQUIRE(h.source->set_transform(second, moved));
+    CHECK(publish(0).status == ReplicationPublishStatus::byte_limited);
+    moved.translation.x = 70;
+    REQUIRE(h.source->set_transform(second, moved));
+    CHECK(publish(8192).status == ReplicationPublishStatus::sent);
+    const auto latest = receive_update(h, 0ns);
+    CHECK(latest.revision == 2);
+    CHECK(latest.base_revision == 1);
+    CHECK(latest.changes.front().id == initial.changes.front().id);
+    CHECK(latest.changes.front().pose->coefficients[3] == 70);
+    auto expired = h.server->publish(*h.source, selected, *h.sessions, *h.pair.server, 5s, 8192);
+    rejected(expired, "net.replication.ack-timeout");
+}
+
+TEST_CASE("Managed resync preserves prior FIFO admission and coalesces unsent state",
+          "[net-replication]") {
+    Harness h;
+    const std::array selected{h.entity(1)};
+    auto publish = [&] {
+        auto result =
+            h.server->publish(*h.source, selected, *h.sessions, *h.pair.server, 0ns, 8192);
+        REQUIRE(result);
+        return result.value();
+    };
+    const std::array<std::byte, 1> control{std::byte{1}};
+    REQUIRE(h.pair.server->send(MessageKind::session_reply, control));
+    CHECK(publish().status == ReplicationPublishStatus::queue_limited);
+    CHECK(h.server->stats().value().streams == 0);
+    CHECK(receive_managed(h, 0ns).kind == MessageKind::session_reply);
+    REQUIRE(publish().status == ReplicationPublishStatus::sent);
+    const auto initial = receive_update(h, 0ns);
+    REQUIRE(h.ack(initial, 2));
+    Transform moved;
+    moved.translation.x = 4;
+    REQUIRE(h.source->set_transform(selected[0], moved));
+    REQUIRE(publish().status == ReplicationPublishStatus::sent);
+    REQUIRE(h.server->control(*h.sessions, *h.pair.server,
+                              ReplicationResync{envelope(h.session, 3), initial.stream, 1}, 0ns));
+    moved.translation.x = 9;
+    REQUIRE(h.source->set_transform(selected[0], moved));
+    CHECK(publish().status == ReplicationPublishStatus::queue_limited);
+    CHECK(h.pair.server->stats().value().send_queue_frames == 1);
+    const auto admitted = receive_update(h, 0ns);
+    CHECK(admitted.revision == 2);
+    CHECK(admitted.changes.front().pose->coefficients[3] == 4);
+    REQUIRE(publish().status == ReplicationPublishStatus::sent);
+    const auto replacement = receive_update(h, 0ns);
+    CHECK(replacement.baseline);
+    CHECK(replacement.revision == 3);
+    CHECK(replacement.changes.front().pose->coefficients[3] == 9);
+}
+
+TEST_CASE("Replication publication modes cannot confuse unsent and admitted streams",
+          "[net-replication]") {
+    Harness h;
+    const std::array selected{h.entity(1)};
+    SECTION("legacy pending cannot become managed") {
+        static_cast<void>(h.prepare(selected));
+        rejected(h.server->publish(*h.source, selected, *h.sessions, *h.pair.server, 0ns, 8192),
+                 "net.replication.mode");
+        CHECK(h.pair.server->stats().value().send_queue_frames == 0);
+    }
+    SECTION("managed pending cannot become legacy") {
+        REQUIRE(h.server->publish(*h.source, selected, *h.sessions, *h.pair.server, 0ns, 8192));
+        rejected(h.server->prepare(*h.source, selected, *h.sessions, *h.pair.server, 0ns),
+                 "net.replication.mode");
+        CHECK(h.pair.server->stats().value().send_queue_frames == 1);
+    }
+}
+
+TEST_CASE("Managed replication accepts empty and sparse Region scenes while fencing their lifetime",
+          "[net-replication]") {
+    Harness h;
+    auto initial = h.server->publish(*h.source, {}, *h.sessions, *h.pair.server, 0ns, 8192);
+    REQUIRE(initial);
+    REQUIRE(initial.value().status == ReplicationPublishStatus::sent);
+    CHECK(initial.value().entities == 0);
+    CHECK(initial.value().framed_bytes == wire_header_bytes + replication_update_header_bytes);
+    auto foreign = scene();
+    rejected(h.server->publish(*foreign, {}, *h.sessions, *h.pair.server, 0ns, 8192),
+             "net.replication.scene");
+    const auto empty = receive_update(h, 0ns);
+    CHECK(empty.baseline);
+    CHECK(empty.changes.empty());
+    REQUIRE(h.ack(empty, 2));
+    auto unchanged = h.server->publish(*h.source, {}, *h.sessions, *h.pair.server, 0ns, 8192);
+    REQUIRE(unchanged);
+    CHECK(unchanged.value().status == ReplicationPublishStatus::unchanged);
+
+    const auto removed = h.entity(1);
+    const auto live = h.entity(2);
+    REQUIRE(h.source->destroy_entity(removed));
+    const std::array selection{live};
+    auto sparse = h.server->publish(*h.source, selection, *h.sessions, *h.pair.server, 0ns, 8192);
+    REQUIRE(sparse);
+    REQUIRE(sparse.value().status == ReplicationPublishStatus::sent);
+    const auto populated = receive_update(h, 0ns);
+    REQUIRE(populated.changes.size() == 1);
+    CHECK(populated.changes.front().kind == ReplicationChange::spawn);
+    REQUIRE(h.source->close());
+    rejected(h.server->publish(*h.source, selection, *h.sessions, *h.pair.server, 0ns, 8192),
+             "net.replication.scene");
+}

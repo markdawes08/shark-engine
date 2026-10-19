@@ -114,7 +114,12 @@ it does not add a login flag or test bypass to Runtime/Server. Follow the
 `shark.core.net-replication-process`. The last launches the test-only
 `ReplicationProbe` and writes `replication-process.json`; it uses the same public
 fixture certificates and no production listener. See the
-[replication contract](network-replication.md). Check all ten network families
+[replication contract](network-replication.md). M02d adds `shark.core.net-interest`
+(30 seconds, seed 1337) and `shark.core.net-interest-process` (120 seconds).
+The latter runs `NetInterestProbe` with two actual clients and a bounded opaque
+TCP relay, recording `interest-process.json`. It measures active per-connection
+traffic and ordered-stream delay without changing installed bootstraps. Follow
+the [interest contract](network-interest.md). Check all twelve network families
 noninteractively after a native build:
 
 ```text
@@ -639,3 +644,9 @@ Assignment 01 also exercised the installed Codex CLI 0.163.0 app-server
 All five skills were enabled with repository scope and no discovery errors.
 The local evidence is `out/ci/skills-discovery.json`; see the
 [assignment handoff](handoffs/01-build-foundation.md) for the verified result.
+
+M02d [spatial interest](network-interest.md) is qualified under the current-machine
+scope: 460 CPU CTests and protected package checks pass. Its
+[handoff](handoffs/M02d-spatial-interest.md) records the active two-recipient
+workload, privacy, byte/work and reliable-stream delay measurements.
+M02e integrated qualification is next; full REQ-M02 remains NOT_RUN.

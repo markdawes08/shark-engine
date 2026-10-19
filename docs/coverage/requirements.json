@@ -605,7 +605,7 @@
       "planned_fixture": "TwoProcessReplication, AuthenticationOwnershipReject, NetworkAdversity, ReconnectBaseline and InterestPrivacyBudget fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "M02a, M02b and M02c PASS under current-machine scope. M02c adds explicit public affine-pose replication from the existing Region Scene owner, stable session-local IDs, bounded baselines/deltas and application ACK/resync with atomic client state and reconnect fencing. All 446 CPU CTests pass without failures/skips: Windows Debug/Release/ASan 72 each, WSL client Debug/ASan+UBSan 65 each and WSL Server Debug/ASan+UBSan 50 each. Every profile passes six real replication scenarios in 17 child processes alongside earlier transport/session fixtures. Protected builds, source/link/license/package closure, public-header/example and sanitizer audits pass with unchanged final source/fixture hashes. Evidence: docs/coverage/evidence/M02c-authoritative-replication.json and docs/handoffs/M02c-authoritative-replication.md. Full REQ-M02 remains NOT_RUN: M02d spatial interest/privacy/budgets is next, followed by M02e integrated qualification. No gameplay/authoring mutation, durable store, global origin transfer or MMO capacity is implied. See docs/roadmap/network-plan.md."
+        "reason": "M02a-M02d PASS under current-machine scope. M02d adds server-owned spatial interest and CharacterId observer binding, default-deny recipient policy, hysteresis and deterministic priorities, bounded work and framed-byte budgets, atomic FIFO publication and privacy revocation fencing. All 460 CPU CTests pass without failures/skips: Windows Debug/Release/ASan 74 each, WSL client Debug/ASan+UBSan 67 each and WSL Server Debug/ASan+UBSan 52 each. Each profile passes three new real-process interest scenarios in 10 children alongside earlier transport/session/replication fixtures. Two recipients each receive 32 moving affine poses from 128 candidates at 20Hz source/10Hz publication; 20 measured seconds meet 64KiB/s downstream and 16KiB/s upstream socket p95 limits. A bounded opaque TCP relay measures FIFO head-of-line delay. Full LOCAL-MMO-1 capacity remains unqualified. Protected builds, package closure, sanitizer/public-header/example audits and final frozen source hashes pass. Evidence: docs/coverage/evidence/M02d-spatial-interest.json and docs/handoffs/M02d-spatial-interest.md. Full REQ-M02 remains NOT_RUN until M02e integrated qualification. No gameplay/authoring mutation, durable store, global origin transfer or production capacity is implied."
       }
     },
     {
@@ -809,6 +809,36 @@
   "implemented_surface": {
     "features": [
       {
+        "id": "core.spatial-interest",
+        "name": "Server-owned spatial interest, recipient privacy and bounded publication budgets",
+        "requirement_ids": [
+          "REQ-M02"
+        ],
+        "test_ids": [
+          "shark.core.net-interest",
+          "shark.core.net-interest-process",
+          "shark.core.net-replication",
+          "shark.core.net-mtls",
+          "shark.tooling.server-closure",
+          "shark.tooling.runtime-package"
+        ],
+        "test_sources": [
+          "tests/net_interest_tests.cpp",
+          "tools/test_net_interest.py",
+          "tests/core_net_replication_tests.cpp",
+          "tests/core_net_mtls_tests.cpp",
+          "tools/tests/test_server_closure.py",
+          "tools/tests/test_runtime_package.py"
+        ],
+        "fixtures": [
+          "tests/net_interest_probe.cpp",
+          "tests/fixtures/network/session/README.md",
+          "tests/fixtures/network/session/client-a.pem",
+          "tests/fixtures/network/session/client-b.pem"
+        ],
+        "fixture_reason": "External CPU and real mTLS process fixtures exercise server-owned CharacterId observer binding, default-deny entity policy, spatial entry/exit hysteresis, priority and required selection, bounded work and framed-byte admission, coalescing before reliable FIFO, privacy revocation and reconnect fencing. Two active recipients each receive 32 moving affine poses from 128 candidates; the harness measures socket bytes, queues, publication work and controlled reliable-stream head-of-line delay. This is not the full 16-player LOCAL-MMO-1 workload, WAN packet loss, global-origin transfer or production capacity. The unchanged public pose schema excludes Names, hierarchy, durable IDs and authoring metadata. Human and terminal developers use the same CPU services and noninteractive JSON evidence. Integrated adversity remains M02e, persistence M03, global origin M05, authoring adapters 15/16 and FeatureWorld/MMOWorld 10/M09."
+      },
+      {
         "id": "core.authoritative-replication",
         "name": "Explicit public transform replication with owned baselines, deltas and resynchronization",
         "requirement_ids": [
@@ -838,7 +868,7 @@
           "tests/fixtures/network/session/client-a.pem",
           "tests/fixtures/network/session/client-b.pem"
         ],
-        "fixture_reason": "External CPU and real-process fixtures publish explicit validated affine world poses from one Region Scene to two distinct mutually authenticated clients. They cover spawn/change/despawn, application ACKs, duplicates, missing baselines, reconnect fencing, forged client state and omission of private Names, durable IDs, hierarchy and unpublished entities. Controlled clocks test bounded streams, pending history, rates and deadlines. This presentation cache does not create another authoritative Scene or reuse authoring schemas. These C++ contracts and noninteractive JSON fixtures support human and terminal developers; authoring adapters, FeatureWorld/MMOWorld and global origin transfer retain15/16,10/M09 and M05. Spatial interest/budgets and integrated adversity remain M02d/M02e; no MMO capacity is claimed."
+        "fixture_reason": "External CPU and real-process fixtures publish explicit validated affine world poses from one Region Scene to two distinct mutually authenticated clients. They cover spawn/change/despawn, application ACKs, duplicates, missing baselines, reconnect fencing, forged client state and omission of private Names, durable IDs, hierarchy and unpublished entities. Controlled clocks test bounded streams, pending history, rates and deadlines. This presentation cache does not create another authoritative Scene or reuse authoring schemas. These C++ contracts and noninteractive JSON fixtures support human and terminal developers; authoring adapters, FeatureWorld/MMOWorld and global origin transfer retain15/16,10/M09 and M05. The separate core.spatial-interest feature owns M02d interest/budgets; integrated adversity remains M02e; no MMO capacity is claimed."
       },
       {
         "id": "core.owned-sessions",
@@ -847,7 +877,7 @@
         "test_ids": ["shark.core.net-mtls", "shark.core.net-session", "shark.core.net-sessions-process", "shark.core.net-wire", "shark.tooling.server-closure", "shark.tooling.runtime-package"],
         "test_sources": ["tests/core_net_mtls_tests.cpp", "tests/core_net_session_tests.cpp", "tools/test_network_sessions.py", "tests/core_net_wire_tests.cpp", "tools/tests/test_server_closure.py", "tools/tests/test_runtime_package.py"],
         "fixtures": ["tests/session_probe.cpp", "tests/fixtures/network/session/README.md", "tests/fixtures/network/session/client-a.pem", "tests/fixtures/network/session/client-b.pem", "tests/fixtures/network/session/expired-client.pem", "tests/fixtures/network/session/wrong-ca-client.pem", "tests/fixtures/network/session/wrong-eku-client.pem", "tests/fixtures/network/session/no-eku-client.pem", "tests/fixtures/network/session/wrong-ku-client.pem", "tests/fixtures/network/session/ca-client.pem"],
-        "fixture_reason": "Real local processes prove client private-key possession through the pinned TLS library, then exercise explicit enrollment, account/character ownership, exact application sequence, generic rejection, expiry, live revocation and reconnect fencing through the same CPU SessionAuthority. Deterministic unit clocks cover bounded registry/rate/deadline behavior; public fixture keys are never packaged. These session controls are neither authoring/admin RPC nor movement/combat authority. The separate core.authoritative-replication feature owns M02c; interest and full adversity retain M02d/M02e; durable identity storage retains M03, FeatureWorld/MMOWorld 10/M09."
+        "fixture_reason": "Real local processes prove client private-key possession through the pinned TLS library, then exercise explicit enrollment, account/character ownership, exact application sequence, generic rejection, expiry, live revocation and reconnect fencing through the same CPU SessionAuthority. Deterministic unit clocks cover bounded registry/rate/deadline behavior; public fixture keys are never packaged. These session controls are neither authoring/admin RPC nor movement/combat authority. The separate core.authoritative-replication feature owns M02c; core.spatial-interest owns M02d; integrated adversity retains M02e; durable identity storage retains M03, FeatureWorld/MMOWorld 10/M09."
       },
       {
         "id": "core.network-foundation",
@@ -856,7 +886,7 @@
         "test_ids": ["shark.core.net-wire", "shark.core.net-fault", "shark.core.net-transport", "shark.core.net-process", "shark.tooling.scene-dependencies", "shark.tooling.server-closure", "shark.tooling.runtime-package"],
         "test_sources": ["tests/core_net_wire_tests.cpp", "tests/core_net_fault_tests.cpp", "tests/core_net_transport_tests.cpp", "tools/test_network_transport.py", "tools/tests/test_scene_dependencies.py", "tools/tests/test_server_closure.py", "tools/tests/test_runtime_package.py"],
         "fixtures": ["tests/network_probe.cpp", "tests/fixtures/network/README.md", "tests/fixtures/network/ca.pem", "tests/fixtures/network/server.pem", "tests/fixtures/network/server-key.pem", "tests/fixtures/network/wrong-ca.pem", "tests/fixtures/network/expired-server.pem", "tools/core_dependencies.py", "tools/check_server_closure.py"],
-        "fixture_reason": "External CPU/process fixtures are required to exercise real TLS/socket ownership, certificate validation, fragmented/malformed wire input, bounded queues/deadlines, explicit sequence exhaustion, clean/abrupt EOF and deterministic virtual-time faults. Public test credentials remain test-only and are rejected in packages. This foundation fixture confers no player authority. The separate core.owned-sessions feature owns M02b authentication; core.authoritative-replication owns M02c; M02d/M02e retain interest and integrated qualification. No MMO capacity is implied. Human/terminal use shares these C++ contracts and machine-readable diagnostics; authoring commands remain assignment15 and FeatureWorld/MMOWorld retain10/M09."
+        "fixture_reason": "External CPU/process fixtures are required to exercise real TLS/socket ownership, certificate validation, fragmented/malformed wire input, bounded queues/deadlines, explicit sequence exhaustion, clean/abrupt EOF and deterministic virtual-time faults. Public test credentials remain test-only and are rejected in packages. This foundation fixture confers no player authority. The separate core.owned-sessions feature owns M02b authentication; core.authoritative-replication owns M02c; core.spatial-interest owns M02d; M02e retains integrated qualification. No MMO capacity is implied. Human/terminal use shares these C++ contracts and machine-readable diagnostics; authoring commands remain assignment15 and FeatureWorld/MMOWorld retain10/M09."
       },
       {
         "id": "core.schema-inspection",

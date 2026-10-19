@@ -512,3 +512,9 @@ manual failure input. It does not execute GitHub expression evaluation or jobs.
 `python tools/check_format.py` checks engine-owned C/C++ files against the pinned
 formatter; `--fix` deliberately applies formatting. No future GPU, import or
 release tests are invented for this foundation.
+
+M02d [spatial interest](network-interest.md) is qualified under the current-machine
+scope: 460 CPU CTests and protected package checks pass. Its
+[handoff](handoffs/M02d-spatial-interest.md) records the active two-recipient
+workload, privacy, byte/work and reliable-stream delay measurements.
+M02e integrated qualification is next; full REQ-M02 remains NOT_RUN.

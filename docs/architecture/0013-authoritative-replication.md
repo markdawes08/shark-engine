@@ -82,7 +82,8 @@ The [replication contract](../network-replication.md) defines exact bytes,
 limits, errors and call sequencing. Qualification is PASS across the current
 Windows Debug/Release/ASan and WSL CPU/Server sanitizer profiles, real local
 processes and protected packages: 446 CTests pass without failures or skips.
-M02d spatial interest, privacy and connection budgets is next. Full REQ-M02
+M02d spatial interest, privacy and connection budgets is complete;
+M02e integrated qualification is next. Full REQ-M02
 remains NOT_RUN.
 
 M02d owns spatial interest, recipient authorization policy, entry/exit hysteresis,

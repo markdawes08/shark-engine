@@ -87,5 +87,14 @@ protected package gates when extending these services. M02c replication is PASS
 under current-machine scope: see the [replication contract](../../../docs/network-replication.md)
 and [handoff](../../../docs/handoffs/M02c-authoritative-replication.md). Its three
 additional CTest families use 20/30/90-second timeouts for wire, service and real
-process cases; include all ten network families and freeze source/fixture hashes
-for the full qualification. Session readiness alone does not qualify gameplay or capacity.
+process cases; preserve these earlier network families and freeze source/fixture
+hashes for full qualification. Session readiness alone does not qualify gameplay or capacity.
+
+M02d [spatial interest](../../../docs/network-interest.md) is locally qualified.
+Preserve the complete trusted catalog, authenticated character observer binding,
+unthrottled privacy maintenance and bounded managed admission. Its two new CTest
+families are `shark.core.net-interest` (30 seconds, seed 1337) and
+`shark.core.net-interest-process` (120 seconds); retain all twelve network families
+in qualification. Two active recipients and controlled reliable-stream delay do
+not establish the full LOCAL-MMO-1 workload or WAN behavior. Integrated adversity
+remains M02e; see the [handoff](../../../docs/handoffs/M02d-spatial-interest.md).

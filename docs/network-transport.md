@@ -142,5 +142,5 @@ dependency/package checks. See the [handoff](handoffs/M02a-transport-wire.md) an
 M02b's [handoff](handoffs/M02b-owned-sessions.md) records completed player
 authentication and owned-session qualification. M02c [replication](network-replication.md)
 is also locally qualified, with explicit public fields, baselines, deltas and bounded
-resynchronization. M02d spatial interest/budgets is next; M02e closes the full
-gate. See the [checkpoint plan](roadmap/network-plan.md).
+resynchronization. M02d spatial interest/budgets is complete. M02e integrated
+qualification closes the full gate next; see the [checkpoint plan](roadmap/network-plan.md).

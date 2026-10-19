@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import copy
+from functools import lru_cache
 import hashlib
 import json
 from pathlib import Path
@@ -204,6 +205,14 @@ def validate_manifest(data: object) -> list[str]:
 
 def validate_documents(root: Path) -> list[str]:
     errors = []
+
+    @lru_cache(maxsize=4096)
+    def local_link_exists(lexical_path: str) -> bool:
+        # Preserve '..' until symlinks have been resolved. Cache only within this
+        # invocation, including failures, without suppressing per-link errors.
+        destination = Path(lexical_path).resolve()
+        return destination.is_relative_to(root) and destination.exists()
+
     # The user keeps the original roadmap local and ignored. CI uses the versioned
     # requirements/ADRs; absence of that private input cannot break a clean clone.
     for relative in DOCUMENTS:
@@ -222,19 +231,23 @@ def validate_documents(root: Path) -> list[str]:
             target = match.group(1).strip().strip("<>")
             if re.match(r"^[a-zA-Z][a-zA-Z0-9+.-]*:", target) or target.startswith("#"):
                 continue
-            destination = (path.parent / target.split("#", 1)[0]).resolve()
-            if not destination.is_relative_to(root) or not destination.exists():
+            if not local_link_exists(str(path.parent / target.split("#", 1)[0])):
                 errors.append(f"broken local link in {path.relative_to(root)}: {target}")
     return errors
 
 
 def validate_surface_files(data: dict, root: Path) -> list[str]:
     errors = []
+
+    @lru_cache(maxsize=4096)
+    def local_file_exists(lexical_path: str) -> bool:
+        path = Path(lexical_path).resolve()
+        return path.is_relative_to(root) and path.is_file()
+
     for category, entries in data["implemented_surface"].items():
         for entry in entries:
             for relative in entry["test_sources"] + entry["fixtures"]:
-                path = (root / relative).resolve()
-                if not path.is_relative_to(root) or not path.is_file():
+                if not local_file_exists(str(root / relative)):
                     errors.append(f"{category}/{entry['id']}: missing test or fixture: {relative}")
     return errors
 
@@ -321,7 +334,83 @@ def self_test(data: dict) -> list[str]:
         duplicate_errors = [str(error)]
     cases.append(("duplicate JSON key", duplicate_errors, "duplicate JSON key"))
 
+    path_failures = []
+    with tempfile.TemporaryDirectory(prefix="shark-contract-paths-") as directory:
+        fixture_parent = Path(directory).resolve()
+        fixture_root = fixture_parent / "repository"
+        for relative in DOCUMENTS:
+            path = fixture_root / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text("", encoding="utf-8")
+        document = fixture_root / "README.md"
+        target = fixture_root / "target.txt"
+        target.write_text("local", encoding="utf-8")
+        (fixture_root / "fixture.txt").write_text("fixture", encoding="utf-8")
+
+        def links(target_name):
+            document.write_text(f"[one]({target_name})\n[two]({target_name})\n", encoding="utf-8")
+
+        def surface(target_name):
+            return {"implemented_surface": {"features": [{
+                "id": "path-fixture", "test_sources": [target_name, target_name],
+                "fixtures": ["fixture.txt"],
+            }]}}
+
+        def rejected_paths(label, errors, expected):
+            cases.append((label, errors, expected))
+            if len(errors) != 2:
+                path_failures.append(label + " lost per-reference diagnostics")
+
+        links("target.txt")
+        if validate_documents(fixture_root) or validate_surface_files(surface("target.txt"), fixture_root):
+            path_failures.append("repeated valid references rejected")
+        target.unlink()
+        rejected_paths("deleted link rechecked across invocations", validate_documents(fixture_root), "broken local link")
+        rejected_paths("deleted surface rechecked across invocations", validate_surface_files(surface("target.txt"), fixture_root), "missing test or fixture")
+        target.write_text("recreated", encoding="utf-8")
+        if validate_documents(fixture_root) or validate_surface_files(surface("target.txt"), fixture_root):
+            path_failures.append("recreated references retained a cached failure")
+
+        links("missing.txt")
+        rejected_paths("repeated broken links", validate_documents(fixture_root), "broken local link")
+        rejected_paths("repeated broken surfaces", validate_surface_files(surface("missing.txt"), fixture_root), "missing test or fixture")
+        links("docs")
+        if validate_documents(fixture_root):
+            path_failures.append("existing directory documentation link rejected")
+        rejected_paths("surface directories remain invalid", validate_surface_files(surface("docs"), fixture_root), "missing test or fixture")
+
+        outside = fixture_parent / "outside"
+        (outside / "child").mkdir(parents=True)
+        (outside / "child" / "secret.txt").write_text("outside child", encoding="utf-8")
+        (outside / "outside.txt").write_text("outside", encoding="utf-8")
+        # Lexical normalization would incorrectly select this in-root decoy.
+        (fixture_root / "outside.txt").write_text("decoy", encoding="utf-8")
+        link = fixture_root / "linked"
+        try:
+            link.symlink_to(outside / "child", target_is_directory=True)
+            links("linked/secret.txt")
+            rejected_paths("repeated outside symlink links", validate_documents(fixture_root), "broken local link")
+            rejected_paths("repeated outside symlink surfaces", validate_surface_files(surface("linked/secret.txt"), fixture_root), "missing test or fixture")
+            # Windows and POSIX resolve symlink/.. differently. Preserve the
+            # actual platform's resolve semantics rather than normalizing first.
+            links("linked/../outside.txt")
+            expected_errors = 0 if (link / ".." / "outside.txt").resolve().is_relative_to(fixture_root) else 2
+            if (len(validate_documents(fixture_root)) != expected_errors
+                    or len(validate_surface_files(surface("linked/../outside.txt"), fixture_root)) != expected_errors):
+                path_failures.append("symlink parent traversal differs from platform resolution")
+            link.unlink()
+            link.symlink_to(fixture_root / "docs", target_is_directory=True)
+            links("linked")
+            if validate_documents(fixture_root):
+                path_failures.append("in-root symlink directory rejected")
+            link.unlink()
+            link.symlink_to(outside, target_is_directory=True)
+            rejected_paths("retargeted symlink rechecked across invocations", validate_documents(fixture_root), "broken local link")
+        except OSError as error:
+            path_failures.append(f"cannot exercise local symlink containment: {error}")
+
     failures = [label for label, errors, expected in cases if not any(expected in error for error in errors)]
+    failures.extend(path_failures)
     # M01 precedes 02 even though lexical string order would place it later.
     reordered = copy.deepcopy(data)
     reordered["current_assignment"] = "02"

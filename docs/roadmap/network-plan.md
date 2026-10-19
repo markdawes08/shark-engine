@@ -11,7 +11,8 @@ CTests and protected package checks. **M02c replication is complete**: 446 CPU
 CTests and protected package checks pass in its
 [handoff](../handoffs/M02c-authoritative-replication.md) and
 [receipt](../coverage/evidence/M02c-authoritative-replication.json).
-**M02d spatial interest, privacy and connection budgets is next.**
+**M02d spatial interest, privacy and connection budgets is complete.**
+M02e integrated qualification is next.
 Full M02 remains NOT_RUN until all five checkpoints pass. Assignment 07 is complete.
 The [MMORPG plan](mmorpg-plan.md) retains the assignment order and the
 [current-machine scope](../architecture/0010-current-machine-scope.md).
@@ -60,7 +61,7 @@ Implemented under [ADR 0013](../architecture/0013-authoritative-replication.md)
 and the [replication contract](../network-replication.md). Qualification is PASS
 under current-machine scope. The public schema contains only validated affine
 world poses from an explicit trusted selection of at most 32 entities; spatial
-selection remains M02d and global origin/region transfer remains M05.
+selection is implemented in M02d; global origin/region transfer remains M05.
 
 Add explicit replicated-field allowlists, stable session replica identities,
 baseline/delta state, spawn/despawn, acknowledgements and bounded reconnect
@@ -73,6 +74,11 @@ outcomes; private fields never appear in a baseline or delta. Critical effects
 must not rely on TCP receipt as an application commit acknowledgement.
 
 ## M02d — Spatial interest, privacy and connection budgets
+
+Implemented and qualified under [ADR 0014](../architecture/0014-spatial-interest.md)
+and the [interest contract](../network-interest.md). The
+[handoff](../handoffs/M02d-spatial-interest.md) records all 460 passing CPU CTests,
+protected packages and measurements against the unchanged gates below.
 
 Add server-owned spatial selection, entry/exit hysteresis, priorities and measured
 per-connection byte/work budgets. Replaceable snapshots may be coalesced before
@@ -99,3 +105,9 @@ Record the achieved workload and remaining limits. Tests accompany every earlier
 checkpoint; this final checkpoint integrates their evidence. Assignment 08 follows
 completed M02; persistence, combat/prediction and seamless region transfer retain
 M03, M04 and M05 respectively.
+
+M02d [spatial interest](../network-interest.md) is qualified under the current-machine
+scope: 460 CPU CTests and protected package checks pass. Its
+[handoff](../handoffs/M02d-spatial-interest.md) records the active two-recipient
+workload, privacy, byte/work and reliable-stream delay measurements.
+M02e integrated qualification is next; full REQ-M02 remains NOT_RUN.
