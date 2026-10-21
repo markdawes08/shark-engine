@@ -5,8 +5,9 @@ Its [handoff](handoffs/08a-source-documents.md) records qualification status; fu
 08 follows the [persistence checkpoints](roadmap/persistence-plan.md).
 `<shark/tools/source_document.hpp>` exposes engine-owned values and `Result<T>`;
 the JSON implementation is private. No function opens a file or changes a Scene.
-08b owns active-scene loading; 08c owns filesystem resolution, save/replace and
-external-edit conflicts.
+08b's [authored Scene owner](authored-scenes.md) connects these values to complete
+capture and transactional active-scene replacement. 08c owns filesystem
+resolution, save/replace and external-edit conflicts.
 
 ## Versions and identity
 

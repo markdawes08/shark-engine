@@ -131,7 +131,8 @@ under the current-machine scope: the
 [handoff](../handoffs/M02e-integrated-qualification.md) and
 [receipt](../coverage/evidence/M02e-integrated-qualification.json) record
 474 passing CPU CTests, protected packages and 277 unchanged frozen inputs.
-Assignment 08, Project and scene persistence, is next.
+Assignment 08, Project and scene persistence, is active. Its 08a/08b checkpoints
+are complete; 08c safe files and conflicts is next.
 The completed scene C++ APIs are not player
 messages or source persistence, and they do not grant gameplay authority.
 Presentation stays in Client and cannot acquire authority over server time or world state.
@@ -368,7 +369,9 @@ or relabel idle connections to obtain a PASS.
 Assignment 08 follows the [persistence checkpoints](persistence-plan.md).
 08a's [source formats](../source-documents.md) preserve authored IDs, hierarchy
 and an optional stable global-cell origin. They exclude live ownership epochs,
-session replicas and account/economy state. M03 remains responsible for durable
+session replicas and account/economy state. 08b's
+[capture/activation service](../authored-scenes.md) constructs only authored Scene
+scope and validates world/catalog references before replacement. M03 remains responsible for durable
 server transactions and recovery; a readable scene codec is not that store.
 
 Combat model, world dimensions/travel speed, content/NPC workload and precise

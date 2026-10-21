@@ -61,8 +61,16 @@ current-machine scope:** 484 CPU CTests, standalone Tools tests and protected
 package checks pass. Follow the [source-document contract](docs/source-documents.md),
 [handoff](docs/handoffs/08a-source-documents.md) and
 [receipt](docs/coverage/evidence/08a-source-documents.json).
-**08b, Scene loading and transactional activation, is next.** Safe files/conflicts
-(08c) and integration (08d) follow; full REQ-08 remains NOT_RUN.
+**08b, Scene loading and transactional activation, is complete under the
+current-machine scope:** 489 full-suite CPU CTests pass, with two additional
+standalone Tools CTests on each OS, protected packages and public API audits.
+Follow its [capture/activation contract](docs/authored-scenes.md),
+[handoff](docs/handoffs/08b-scene-activation.md) and
+[receipt](docs/coverage/evidence/08b-scene-activation.json). The Tools owner reuses
+the existing Scene, preserves incarnation-bound source metadata and validates
+a complete candidate before replacing it. Expected revisions, dirty protection
+and pending/visit/thread guards remain required. **08c, safe project files and
+conflicts, is next.** Integration (08d) follows; full REQ-08 remains NOT_RUN.
 The completed [five network checkpoints](docs/roadmap/network-plan.md) retain
 their scoped historical evidence below.
 **M02a is complete under the current-machine scope.** The [TLS/wire foundation](docs/network-transport.md)

@@ -135,3 +135,10 @@ Name/Transform validators and explicit component version 1. Extend format fields
 strict rejection policy and migration fixtures together when components gain
 persistence. The codec is CPU EngineTools only; Scene activation, file commits,
 shared command history and terminal/editor adapters retain their owners.
+
+08b's [authored Scene owner](../../../docs/authored-scenes.md) captures complete
+committed state and replaces only a fully validated candidate. Preserve immutable
+source metadata, incarnation-bound extras, expected revisions, dirty protection
+and pending/visit/thread rejection. No ordinary Scene setter becomes an atomic
+batch; shared history remains 09. Extend capture and construction together when
+new persisted components land, through the existing Scene validators.

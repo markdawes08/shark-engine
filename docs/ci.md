@@ -282,7 +282,20 @@ without Editor or Client. See the [08a handoff](handoffs/08a-source-documents.md
 for final current-machine evidence: 484 full-suite CPU CTests pass (Windows
 Debug/Release/ASan 78 each, WSL clients 71 each, WSL Servers 54 each), plus one
 focused Tools-only CTest on each OS. Protected builds/packages and public API
-audits pass. Full REQ-08 requires later scene/file gates; 08b is next.
+audits pass. This 08a evidence remains separate from 08b qualification below.
+
+08b adds `shark.tools.authored-scene` (CPU/unit/tooling/integration, seed 1337,
+60 seconds) when Tools is enabled. It exercises complete capture, immutable
+source metadata, cross-document references, composed-transform rejection,
+revision/dirty/queue/visit/thread guards and replacement lifetime through the
+public EngineTools owner. The [08b handoff](handoffs/08b-scene-activation.md)
+and [receipt](coverage/evidence/08b-scene-activation.json) record PASS under
+the current-machine scope: 489 full-suite CPU CTests, without failures or
+skips (Windows Debug/Release/ASan 79 each, WSL clients 72 each, WSL Servers
+54 each). Each independent Tools build passes two additional focused CTests.
+The new family passes 23 cases and 26,624 assertions; all 291 frozen inputs
+are unchanged. Protected package checks and public API audits pass. 08c safe
+files and conflicts is next; full REQ-08 remains NOT_RUN until 08c/08d pass.
 
 ## Locked tools and hosted-image limits
 

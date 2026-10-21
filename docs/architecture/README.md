@@ -67,7 +67,11 @@ is complete under [ADR 0014](0014-spatial-interest.md). The
 [M02e handoff](../handoffs/M02e-integrated-qualification.md) and
 [receipt](../coverage/evidence/M02e-integrated-qualification.json) close integrated
 qualification and full REQ-M02 under the current-machine scope. Assignment 08,
-Project and scene persistence, is next. Authoring transactions, terminal
+Project and scene persistence, follows the [four checkpoints](../roadmap/persistence-plan.md).
+08a's source codec is qualified; 08b adds [Scene capture and activation](../authored-scenes.md)
+through the same Core owner. Its [handoff](../handoffs/08b-scene-activation.md) records
+the completed local gate. Safe project files and conflicts (08c) are next.
+General authoring transactions, terminal
 adapters and editor UI retain their later owners;
 schema IDs do not establish file or gameplay-wire formats. The current-machine
 scope remains unchanged.

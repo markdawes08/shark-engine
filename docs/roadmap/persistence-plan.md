@@ -2,10 +2,15 @@
 
 Date: 2026-10-21. Base: `8463a84` on initially clean `main`.
 Owner: REQ-08. M02 is complete; assignment 08 is split into the four checkpoints
-below. **08a is PASS; 08b is next. Full REQ-08 remains NOT_RUN.** The
+below. **08a and 08b are PASS; 08c is next. Full REQ-08 remains NOT_RUN.** The
 [08a handoff](../handoffs/08a-source-documents.md) records 484 passing CPU CTests,
 standalone Tools tests and protected package checks. The
-[format contract](../source-documents.md) defines the implemented surface.
+[08b handoff](../handoffs/08b-scene-activation.md) and
+[receipt](../coverage/evidence/08b-scene-activation.json) record 489 passing
+full-suite CPU CTests, two additional Tools CTests on each OS and protected
+package/public API checks against 291 frozen inputs. The
+[format contract](../source-documents.md) and
+[capture/activation contract](../authored-scenes.md) define the implemented surface.
 Follow [ADR 0004](../architecture/0004-formats-and-identity.md),
 [human/agent authoring](../architecture/0008-human-agent-authoring.md) and the
 [MMORPG execution order](mmorpg-plan.md).
@@ -29,6 +34,9 @@ tools construction and protected dependency/package boundaries. No active Scene
 or file is replaced in this checkpoint.
 
 ## 08b - Scene integration and transactional activation
+
+The [capture/activation contract](../authored-scenes.md) defines the EngineTools
+surface; the [08b handoff](../handoffs/08b-scene-activation.md) records its gate.
 
 Bridge documents to the existing Scene owner. Capture complete revision-consistent
 authored state, resolve project/scene references and build an inactive candidate

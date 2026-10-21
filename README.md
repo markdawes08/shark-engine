@@ -21,7 +21,8 @@ publication with measured per-connection traffic. M02e adds retained-storage
 observations and [integrated network qualification](docs/network-qualification.md)
 through active local processes and deterministic faults. CPU authoring now includes
 [versioned project/scene value codecs](docs/source-documents.md), with validation
-and legacy migration; active-scene loading and file saves follow in 08b/08c.
+and legacy migration, plus [authored Scene capture and activation](docs/authored-scenes.md).
+File saves and external-edit conflicts follow in 08c.
 A separate opt-in graphics
 feasibility probe contains analytic draw/compute/readback cases.
 The versioned
@@ -88,8 +89,12 @@ and [receipt](docs/coverage/evidence/M02e-integrated-qualification.json) record
 formats, validation and migration through [owned C++ values](docs/source-documents.md).
 **08a is complete:** its [handoff](docs/handoffs/08a-source-documents.md) records
 484 passing CPU CTests, standalone Tools tests and protected package checks.
-**08b, Scene loading and transactional activation, is next.** Full REQ-08 remains
-NOT_RUN; file saves and the authoring editor retain their later checkpoints.
+**08b is complete:** [Scene capture and transactional activation](docs/authored-scenes.md)
+passes 489 full-suite CPU CTests, standalone Tools tests, protected package
+checks and public API audits. Its [handoff](docs/handoffs/08b-scene-activation.md)
+and [receipt](docs/coverage/evidence/08b-scene-activation.json) retain the evidence.
+**08c, safe project files and conflicts, is next.** Full REQ-08 remains
+NOT_RUN until the remaining file and integration checkpoints pass.
 See the [transport contract](docs/network-transport.md) and the
 [cube launch workflow](docs/building.md#cube-sample-and-runtime-package).
 The [05a handoff](docs/handoffs/05a-graphics-device.md) records 211 passing CTests
@@ -119,8 +124,8 @@ locked dependencies, device inventory, validated GPU readbacks and bounded lifec
 version, bootstrap help, explicit `--cube` textured rendering, `--graphics` clear presentation and `--window`
 diagnostics through a shared offline frame/input pump;
 Server adds validated startup, timed execution and
-shutdown. Scene rendering, gameplay, scene persistence and editor UI remain future increments. CPU
-build results do not establish graphics or release-platform support.
+shutdown. Scene rendering, gameplay, filesystem saves and editor UI remain future
+increments. CPU build results do not establish graphics or release-platform support.
 
 The [02b handoff](docs/handoffs/02b-graphics-cases.md) records local cases, validation
 and limits. Checkpoint 02c is retired by the

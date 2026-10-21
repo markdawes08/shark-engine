@@ -47,6 +47,13 @@ if(TARGET EngineTools)
     shark_classify_target(SourceDocumentTests test)
     add_test(NAME shark.tools.source-documents COMMAND SourceDocumentTests "[source-documents]" --rng-seed 1337)
     set_tests_properties(shark.tools.source-documents PROPERTIES LABELS "cpu;unit;tooling" TIMEOUT 60)
+
+    add_executable(AuthoredSceneTests authored_scene_tests.cpp)
+    target_link_libraries(AuthoredSceneTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    shark_configure_target(AuthoredSceneTests)
+    shark_classify_target(AuthoredSceneTests test)
+    add_test(NAME shark.tools.authored-scene COMMAND AuthoredSceneTests "[authored-scene]" --rng-seed 1337)
+    set_tests_properties(shark.tools.authored-scene PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
 endif()
 
 # Explicit registration avoids executing a sanitizer binary during the build.

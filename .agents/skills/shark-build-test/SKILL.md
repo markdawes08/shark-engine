@@ -120,3 +120,10 @@ Runtime/Server configurations keep Tools OFF and must not populate JSON. Compile
 the documented public example without JSON include paths. See the
 [source contract](../../../docs/source-documents.md) and
 [08a handoff](../../../docs/handoffs/08a-source-documents.md).
+
+08b adds `shark.tools.authored-scene` (60 seconds, seed 1337) and the separate
+`AuthoredSceneTests` target. Run both Tools families in the independent CPU-only
+configuration, alongside native/WSL regressions and protected boundaries.
+Compile the complete [capture/activation example](../../../docs/authored-scenes.md)
+without private dependency headers. Its [handoff](../../../docs/handoffs/08b-scene-activation.md)
+records exact qualification status; full REQ-08 still requires file services.

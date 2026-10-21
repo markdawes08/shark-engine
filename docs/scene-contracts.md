@@ -13,6 +13,11 @@ through [schema.hpp](../engine/core/include/shark/schema.hpp) and
 returns owned metadata; scene queries return owned immutable pages from the
 existing owner. Neither exposes EnTT or creates a second scene model.
 
+08b's EngineTools [authored Scene owner](authored-scenes.md) reuses these APIs for
+revision-consistent capture and validated replacement. Core has no source reader
+or authoring dependency. Source metadata and the replacement baseline stay in
+Tools; ordinary Scene mutation and deferred-queue semantics remain unchanged.
+
 ## Identity and scope
 
 Persistent UUIDv4 values use distinct domain types: SceneId/AuthoredEntityId for

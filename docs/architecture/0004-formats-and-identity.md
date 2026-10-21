@@ -26,6 +26,12 @@ Scene or access files; those gates follow the [08 checkpoint plan](../roadmap/pe
 Authored IDs and global-cell origins remain distinct from live player records,
 region authority, session replicas and database versions.
 
+08b connects those values through the EngineTools [authored Scene owner](../authored-scenes.md).
+It captures one committed revision and prepares a complete inactive candidate
+using Core's hierarchy/transform validation. Expected revisions, unsaved-state
+policy and a single ownership swap govern replacement. Source metadata stays
+separate from runtime handles, live authority and later filesystem durability.
+
 | Layer | Contract | Owner |
 | --- | --- | --- |
 | Authoring source | IDs, relative source references, component schema versions; readable and durable | 08 |

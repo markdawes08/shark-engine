@@ -185,8 +185,12 @@ CTests and protected package qualification. Assignment 08 follows the
 [source-document codec](../source-documents.md) provides shared CPU values and
 structured errors, independently buildable without Editor/Client. Its
 [handoff](../handoffs/08a-source-documents.md) records the completed CPU/sanitizer,
-independent Tools and protected package gate. Scene loading,
-safe files and full integration remain 08b/08c/08d. Terminal/editor adapters
+independent Tools and protected package gate. 08b's
+[authored Scene owner](../authored-scenes.md) adds complete capture and revision-
+checked replacement with unsaved-state protection; its
+[handoff](../handoffs/08b-scene-activation.md) records the completed local CPU,
+sanitizer and protected package gate.
+Safe files and full integration remain 08c/08d. Terminal/editor adapters
 retain owners 15/16; readable source does not bypass the later project owner.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),

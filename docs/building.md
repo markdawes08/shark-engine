@@ -342,6 +342,7 @@ scene-runner/export commands will be added with their owning increments.
 | `shark.boundary.headers` | `cpu`, `tooling`, `boundary`, `server` |
 | `shark.tooling.headless-environment` | `cpu`, `tooling`, `server` |
 | `shark.tools.source-documents` (Tools enabled) | `cpu`, `unit`, `tooling` |
+| `shark.tools.authored-scene` (Tools enabled) | `cpu`, `unit`, `tooling`, `integration` |
 | `shark.tooling.source-document-dependencies` (Tools enabled) | `cpu`, `tooling`, `boundary` |
 | `shark.tooling.graphics-package`, `shark.tooling.graphics-package-linux` | `cpu`, `tooling`, `boundary` |
 
@@ -413,6 +414,14 @@ No upstream CMake, examples or tests execute. Core/Server/Runtime do not require
 the JSON archive or headers. This codec does not yet load or save files, activate
 scenes or provide terminal commands; see the [format contract](source-documents.md)
 and [08 checkpoint plan](roadmap/persistence-plan.md).
+
+08b adds `AuthoredSceneTests` and `shark.tools.authored-scene` (seed 1337,
+60-second timeout) for revision-consistent capture, project/world references,
+candidate construction and failure-safe Scene activation. After listing the test
+inventory, run both authoring families with
+`ctest --preset tools-debug -R "^shark.tools.(source-documents|authored-scene)$" --output-on-failure`.
+The [capture/activation contract](authored-scenes.md) includes a complete public
+C++ example. These APIs still do not open files or expose terminal commands.
 
 ## Opt-in graphics package builds
 

@@ -65,8 +65,8 @@ explicit scope and SHA-256-pinned references to the unchanged 02d receipts.
 The validator verifies those references and retained bytes; it does not rerun
 graphics or interpret an old aggregate NOT_RUN as a universal PASS.
 `current_assignment: 08` follows the completed
-[five network checkpoints](../roadmap/network-plan.md); Project and scene
-persistence is next.
+[five network checkpoints](../roadmap/network-plan.md). Project/scene
+checkpoints 08a and 08b are complete; 08c safe files and conflicts is next.
 The `core.network-foundation` feature maps M02a's bounded TLS/wire/fault APIs to
 three unit families and a real-process encrypted fixture, plus exact dependency
 and package checks. M02a is PASS: the [handoff](../handoffs/M02a-transport-wire.md)
@@ -109,8 +109,8 @@ has 9 cases/654 assertions and query coverage 19 cases/3,916 assertions. Protect
 Runtime/Server builds, source/link/license closure and fresh isolated package
 checks pass; all 221 qualification source inputs were unchanged in that record.
 M02a-M02e and full REQ-M02 are PASS under the current-machine scope.
-Assignment 08, Project and scene persistence, is next.
-FeatureWorld integration remains assignment 10.
+Assignment 08, Project and scene persistence, is active: 08a/08b are complete
+and 08c is next. FeatureWorld integration remains assignment 10.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
 NOT_RUN. Existing presentation/device fixtures and their earlier handoffs retain
@@ -132,9 +132,9 @@ means precisely that; documentation validation cannot pass a future engine gate.
 The `implemented_surface.features` entries map the bootstrap behavior and runtime
 build boundary, server lifecycle, Server/Core closure and graphics setup/executable cases to their actual tests
 and external fixtures. Name and Transform have implemented component entries with
-C++ validation/mutation fixtures. Their schemas, serialization and adapters remain
-planned at their owning increments. Authoring command and Lua arrays remain empty
-because those interfaces do not exist yet.
+C++ validation/mutation fixtures, fixed schemas and implemented source codecs.
+Authoring command and Lua arrays remain empty because those adapters do not
+exist yet. Filesystem services retain the remaining persistence checkpoints.
 Assignment 10 connects supported scene surfaces to executable FeatureWorld
 coverage; 32 audits completeness. Do not register placeholder APIs.
 
@@ -269,10 +269,28 @@ without Editor, Client or a graphics device; public values expose no JSON librar
 additional standalone Tools tests pass, with protected builds/packages and public
 API audits. The [handoff](../handoffs/08a-source-documents.md) and
 [receipt](evidence/08a-source-documents.json) retain exact evidence and limits.
-Full `REQ-08` remains `NOT_RUN` until the
-[persistence checkpoints](../roadmap/persistence-plan.md) close active-scene
-loading and cross-document resolution (08b), atomic/conflict-aware filesystem
-operations (08c), and integrated qualification (08d). No game-authoring command,
+Full `REQ-08` remains `NOT_RUN` until the remaining
+[persistence checkpoints](../roadmap/persistence-plan.md) close atomic/conflict-aware
+filesystem operations (08c) and integrated qualification (08d). No game-authoring command,
 Lua binding or FeatureWorld case is fabricated: FeatureWorld/Persistence connects
 in 10, the shared authoring services and adapters retain 09/15/16, and live
 durable gameplay state retains M03.
+
+08b adds `tools.authored-scene`, mapped to `shark.tools.authored-scene`
+(60 seconds, seed 1337) and independent public API fixtures in
+`tests/authored_scene_tests.cpp`. The [contract](../authored-scenes.md) covers
+complete revision-consistent capture, catalog/world references, composed-transform
+validation and replacement preserving unsaved state on rejection. The fixtures
+cover maximum-size and sparse scenes, hierarchy bounds, source metadata lifetime,
+dirty/revision/queue/visit/thread guards and old-handle invalidation.
+08b is PASS under the current-machine scope: 489 full-suite CPU CTests pass
+without failures or skips (Windows Debug/Release/ASan 79 each, WSL clients
+72 each and WSL Servers 54 each). Independent Tools builds each pass two
+additional focused CTests. The new family has 23 cases and 26,624 assertions;
+291 frozen source/build/test/fixture inputs remain unchanged. Protected
+packages and public API audits pass. The
+[08b handoff](../handoffs/08b-scene-activation.md) and
+[receipt](evidence/08b-scene-activation.json) retain exact evidence and limits.
+08c safe files and conflicts is next. General authoring commands and Lua
+registries remain unchanged; FeatureWorld integration stays with 10, and
+full REQ-08 remains NOT_RUN until 08c/08d also pass.

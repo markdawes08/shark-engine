@@ -89,7 +89,12 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                 else:
                     self.assertNotIn("json-src", command_text)
                     self.assertNotIn("JSON_USE_IMPLICIT_CONVERSIONS", command_text)
-            self.assertEqual(len(tool_commands), 2 if tools else 0)
+            expected_sources = {
+                ROOT / "engine_tools/src/build_info.cpp",
+                ROOT / "engine_tools/src/source_document.cpp",
+                ROOT / "engine_tools/src/authored_scene.cpp",
+            } if tools else set()
+            self.assertEqual({Path(entry["file"]) for entry in tool_commands}, expected_sources)
             if tools:
                 self.assertIn("SHARK_DOMAIN_nlohmann_json [==[authoring]==]", graph)
                 self.assertIn("SHARK_DOMAIN_nlohmann_json::nlohmann_json [==[authoring]==]", graph)
