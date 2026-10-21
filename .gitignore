@@ -19,6 +19,7 @@
 # Session enrollment experiments, local credentials and process receipts stay under out/.
 # Replication traces, raw payload diagnostics and local multi-process receipts use out/ or build/.
 # Interest budgets, shaped relay barriers and per-connection traces use out/ or build/.
+# Adversity relays, PID/barrier files and process resource samples use out/ or build/.
 /build/
 /out/
 /dist/

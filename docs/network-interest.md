@@ -4,8 +4,10 @@ M02d adds a server-owned CPU interest and publication path above the existing
 [replication contract](network-replication.md), following
 [ADR 0014](architecture/0014-spatial-interest.md). It reuses the Region Scene,
 [owned sessions](network-sessions.md) and [TLS transport](network-transport.md).
-M02d is qualified under the current-machine scope. Full REQ-M02 remains NOT_RUN;
-the [checkpoint plan](roadmap/network-plan.md) retains M02e integrated adversity.
+M02d and M02e are qualified under the current-machine scope. Full REQ-M02 is
+PASS; the [M02e handoff](handoffs/M02e-integrated-qualification.md) and
+[receipt](coverage/evidence/M02e-integrated-qualification.json) close the
+[checkpoint plan](roadmap/network-plan.md).
 
 ## Trusted catalog and recipient selection
 
@@ -156,6 +158,28 @@ they are not a platform-independent CPU-time guarantee.
 `InterestStats` provides owned aggregate stream, entity, publication, byte, record,
 selection, policy, omitted-entity, coalescing and privacy-closure counters.
 
+M02e adds current retained-storage observations.
+`selected_entities` and `last_sent_entities` are logical counts,
+while `selected_capacity_bytes` and `last_sent_capacity_bytes` report the actual
+vector capacities multiplied by `sizeof(EntityHandle)`. Each retained recipient
+has at most 32 selected and 32 last-sent handles. `stream_capacity_bytes` includes
+reserved stream records, even after all live streams have been forgotten.
+The nested `replication` value contains the managed publisher's
+[`ReplicationStats`](network-replication.md#owned-storage-observations), so its
+mapping, acknowledged state and pending history remain independently observable.
+These current storage values are separate from cumulative publication/work
+counters, which do not reset when a stream ends.
+
+An exact-session `forget` or privacy closure releases the selected/last-sent and
+nested replication allocations for that stream. Outer stream-vector reservations
+remain until service destruction. Sum the capacity categories only to describe
+observed retained vector storage: allocator bookkeeping, temporary selection or
+capture candidates, caller-owned catalogs/snapshots, the service object itself,
+transport/TLS/OS buffers and process RSS are excluded. Byte values depend on the
+active C++ ABI/library and are not a native-layout serialization contract.
+`stats()` requires the owner thread, allocates nothing, and neither queries the
+Scene nor polls transport. The new C++ observations do not change any wire format.
+
 ## Public owner-thread API
 
 [interest.hpp](../engine/core/include/shark/net/interest.hpp) exposes
@@ -183,6 +207,7 @@ the region owner, and pass authenticated server-side transport/session services.
 #include "shark/net/interest.hpp"
 
 #include <array>
+#include <cstddef>
 
 shark::Result<shark::net::InterestPublishResult> publish_interest_example(
     shark::net::InterestServer& interest, shark::Scene& scene,
@@ -198,6 +223,20 @@ shark::Result<shark::net::InterestPublishResult> publish_interest_example(
         {private_actor, InterestVisibility::owner_pose, character, 20, false, false},
     }};
     return interest.publish(scene, catalog, sessions, transport, now);
+}
+
+// Retained vector storage only; this is not process RSS or a transport budget.
+shark::Result<std::size_t> observed_retained_vector_bytes(
+    const shark::net::InterestServer& interest) {
+    auto observed = interest.stats();
+    if (!observed) return observed.error();
+    const auto& value = observed.value();
+    const auto& replication = value.replication;
+    return value.stream_capacity_bytes + value.selected_capacity_bytes +
+           value.last_sent_capacity_bytes + replication.stream_capacity_bytes +
+           replication.mapped_capacity_bytes + replication.acknowledged_capacity_bytes +
+           replication.pending_target_capacity_bytes +
+           replication.pending_change_capacity_bytes;
 }
 ```
 
@@ -237,8 +276,9 @@ A separate bounded TCP relay introduces a 100 ms hold and 8 KiB/s shaping to
 measure ordered-stream head-of-line delay and recovery. TLS remains end-to-end;
 the relay forwards opaque bytes in order and does not fabricate protocol results.
 Its queue, deadline and child-process limits must be recorded. Holding or pacing
-these bytes is not a packet-loss/reorder simulation. M02e owns the complete
-seeded adversity matrix and integrated failure qualification.
+these bytes is not a packet-loss/reorder simulation. The completed
+[M02e matrix](network-qualification.md) separately combines seeded semantic
+faults with intact encrypted transport shaping and integrated recovery.
 The relay buffers at most 16 KiB in each direction and retains received/forwarded
 byte totals. Its observed shaped-byte count must fit the 8 KiB/s token schedule
 after the 100 ms hold, allowing eight bytes for timing/rounding. The affected
@@ -247,24 +287,26 @@ making progress independently. The fixture retains unshaped control round-trip
 and state-ACK references. A 40-second child watchdog, 45-second process limit and
 120-second CTest limit bound failures.
 These measurements expose ordered-stream delay on this machine; they do not
-establish suitability for combat latency. Integrated network and gameplay timing
-retain their M02e and M04 gates.
+establish suitability for combat latency. M02e closes integrated network
+qualification; gameplay timing retains its M04 gate.
 
 ## Integration and qualification status
 
 The public C++ interface and managed
 [replication admission](../engine/core/include/shark/net/replication.hpp) share
-the existing EngineCore boundary. The example's independent public-header compile
-check passes with warnings treated as errors. Human applications and terminal-agent fixtures use this same
+the existing EngineCore boundary. The example, including M02e storage
+observations, passes the independent public-header compile check with warnings
+treated as errors. Human applications and terminal-agent fixtures use this same
 CPU path and owned structured results; no GUI, LLM SDK, premature CLI adapter or
 new player authoring permission is introduced.
 
-Qualification passes all 460 CPU CTests across Windows Debug/Release/ASan, WSL CPU
+M02d qualification passed all 460 CPU CTests across Windows Debug/Release/ASan, WSL CPU
 and Server Debug/ASan+UBSan, including active authenticated processes. Protected
 builds and isolated packages also pass. The [handoff](handoffs/M02d-spatial-interest.md)
 and [receipt](coverage/evidence/M02d-spatial-interest.json) record measured ranges,
 source hashes and the superseded attempts. Existing TLS, session and replication
-regression evidence is refreshed against the final frozen sources.
+regression evidence is refreshed in M02e against 277 unchanged frozen inputs,
+with 474 passing CPU CTests and protected package checks.
 Runtime/Server packages retain the existing private static
 TLS and EnTT boundary, central public GLM and exact license notices; test keys,
 probe executables and relay tools are not installed. No new dependencies,

@@ -99,9 +99,10 @@ Measure head-of-line behavior using a bounded real TCP relay that holds bytes fo
 100 ms and shapes transfer to 8 KiB/s. Preserve byte order and TLS end-to-end;
 the relay does not decrypt messages, invent application ACKs or corrupt/drop TLS
 bytes and label that packet loss. Record queue limits, delay and recovery on this
-machine. Full seeded loss/jitter/reorder/partition and integrated adversity remain
-M02e. If measured gates fail, investigate the transport or implementation instead
-of changing the acceptance limits silently.
+machine. Full seeded loss/jitter/reorder/partition and integrated adversity are
+qualified in [M02e](../network-qualification.md). If measured gates fail,
+investigate the transport or implementation instead of changing the acceptance
+limits silently.
 
 ## Consequences
 
@@ -118,5 +119,7 @@ WSL CPU and Server Debug/ASan+UBSan, active local processes and protected packag
 The [handoff](../handoffs/M02d-spatial-interest.md) and
 [receipt](../coverage/evidence/M02d-spatial-interest.json) retain exact results
 and superseded attempts.
-Full REQ-M02 remains NOT_RUN. No production capacity, WAN result or support for an
-additional machine follows from this decision.
+The [M02e handoff](../handoffs/M02e-integrated-qualification.md) records the
+subsequent full REQ-M02 PASS under the current-machine scope. No production
+capacity, WAN result or support for an additional machine follows from this
+decision.

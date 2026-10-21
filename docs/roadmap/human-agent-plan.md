@@ -51,8 +51,10 @@ and noninteractive real-process authentication fixtures; its completed
 and protected package checks.
 M02c adds shared [replication APIs](../network-replication.md), a compiled public
 C++ example and real-process JSON evidence with 446 passing CTests.
-M02d adds spatial interest and measured connection budgets. Integrated adversity
-remains M02e; authoring adapters retain their existing assignment owners.
+M02d adds spatial interest and measured connection budgets. M02e adds qualified
+retained-storage observations and integrated process adversity through the same
+CPU APIs and structured evidence; authoring adapters retain their existing
+assignment owners.
 
 A terminal agent discovers capabilities and schemas, opens or creates a project,
 queries a bounded state snapshot, validates and commits revision-checked edits,
@@ -168,13 +170,18 @@ inspection](../scene-inspection.md), with its gate recorded in the
 CPU CTests and protected dependency/package checks in the
 [07c receipt](../coverage/evidence/07c-schema-inspection.json).
 These are typed CPU C++ APIs; transactions, terminal commands and editor adapters
-retain their owners in 09, 15 and 16. The current assignment is M02. Its
+retain their owners in 09, 15 and 16. M02 is complete. Its
 [transport foundation](../handoffs/M02a-transport-wire.md) passes 404 CPU CTests and
 protected dependency/package qualification. M02b authentication and owned sessions
 is also complete. M02c [authoritative replication](../network-replication.md) is
 locally qualified through the same CPU C++ services and noninteractive fixtures;
-M02d spatial interest, privacy and connection budgets is complete.
-M02e integrated qualification is next.
+M02d spatial interest, privacy and connection budgets is complete with
+460 passing CPU CTests and protected package checks in its
+[handoff](../handoffs/M02d-spatial-interest.md). M02e and full REQ-M02 are PASS
+under the current-machine scope: the
+[handoff](../handoffs/M02e-integrated-qualification.md) records 474 passing CPU
+CTests and protected package qualification. Assignment 08, Project and scene
+persistence, is next; it does not introduce the later terminal/editor adapters.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and
@@ -199,9 +206,3 @@ provide noninteractive contributor diagnostics; public authoring commands and
 protocol/editor adapters remain future work.
 No additional numbered chunk or change to product/player authority is necessary
 for this amendment.
-
-M02d [spatial interest](../network-interest.md) is qualified under the current-machine
-scope: 460 CPU CTests and protected package checks pass. Its
-[handoff](../handoffs/M02d-spatial-interest.md) records the active two-recipient
-workload, privacy, byte/work and reliable-stream delay measurements.
-M02e integrated qualification is next; full REQ-M02 remains NOT_RUN.

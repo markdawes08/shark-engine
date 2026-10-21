@@ -15,6 +15,7 @@ add_executable(Tests
     core_net_replication_tests.cpp
     core_net_replication_wire_tests.cpp
     net_interest_tests.cpp
+    net_adversity_tests.cpp
     core_time_tests.cpp
     core_transform_tests.cpp
     core_work_tests.cpp
@@ -80,6 +81,8 @@ add_test(NAME shark.core.net-replication COMMAND Tests "[net-replication]" --rng
 set_tests_properties(shark.core.net-replication PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)
 add_test(NAME shark.core.net-interest COMMAND Tests "[net-interest]" --rng-seed 1337)
 set_tests_properties(shark.core.net-interest PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)
+add_test(NAME shark.core.net-adversity COMMAND Tests "[net-adversity]" --rng-seed 1337)
+set_tests_properties(shark.core.net-adversity PROPERTIES LABELS "cpu;unit;server" TIMEOUT 60)
 if(TARGET EngineClient)
     add_executable(PresentationFaults presentation_faults.cpp)
     target_include_directories(PresentationFaults PRIVATE "${PROJECT_SOURCE_DIR}"
@@ -311,6 +314,16 @@ add_test(NAME shark.core.net-interest-process
         --fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures/network"
         --output "${CMAKE_CURRENT_BINARY_DIR}/interest-process.json")
 set_tests_properties(shark.core.net-interest-process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 120)
+add_executable(NetAdversityProbe net_adversity_probe.cpp)
+target_link_libraries(NetAdversityProbe PRIVATE EngineCore)
+shark_configure_target(NetAdversityProbe)
+shark_classify_target(NetAdversityProbe test)
+add_test(NAME shark.core.net-adversity-process
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/test_net_adversity.py"
+        --probe "$<TARGET_FILE:NetAdversityProbe>"
+        --fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures/network"
+        --output "${CMAKE_CURRENT_BINARY_DIR}/adversity-process.json")
+set_tests_properties(shark.core.net-adversity-process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 360)
 foreach(shark_tooling_fixture IN ITEMS presentation-stress presentation-faults runtime-package shader-pipeline offscreen-smoke offscreen-faults cube-smoke cube-faults)
     string(REPLACE "-" "_" shark_tooling_source "${shark_tooling_fixture}")
     add_test(NAME "shark.tooling.${shark_tooling_fixture}"

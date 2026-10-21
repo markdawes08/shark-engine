@@ -126,8 +126,9 @@ Drain orders by due time then admission order with a bounded output count.
 
 All calls, including stats, reject another thread. Tests use virtual time without
 sleeps and compare independent golden values and a seeded 1000-step schedule.
-Real socket fixtures use bounded wall-clock deadlines separately. Full shaped
-transport adversity and replicated-state convergence remain M02e.
+Real socket fixtures use bounded wall-clock deadlines separately. The completed
+[M02e qualification](network-qualification.md) combines semantic faults, shaped
+encrypted transport and active replicated-state convergence.
 
 ## Verification and continuation
 
@@ -142,5 +143,7 @@ dependency/package checks. See the [handoff](handoffs/M02a-transport-wire.md) an
 M02b's [handoff](handoffs/M02b-owned-sessions.md) records completed player
 authentication and owned-session qualification. M02c [replication](network-replication.md)
 is also locally qualified, with explicit public fields, baselines, deltas and bounded
-resynchronization. M02d spatial interest/budgets is complete. M02e integrated
-qualification closes the full gate next; see the [checkpoint plan](roadmap/network-plan.md).
+resynchronization. M02d spatial interest/budgets and M02e integrated
+qualification are complete. Full REQ-M02 is PASS under the current-machine
+scope; see the [M02e handoff](handoffs/M02e-integrated-qualification.md) and
+[checkpoint plan](roadmap/network-plan.md). Assignment 08 is next.

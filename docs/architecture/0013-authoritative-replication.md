@@ -82,14 +82,14 @@ The [replication contract](../network-replication.md) defines exact bytes,
 limits, errors and call sequencing. Qualification is PASS across the current
 Windows Debug/Release/ASan and WSL CPU/Server sanitizer profiles, real local
 processes and protected packages: 446 CTests pass without failures or skips.
-M02d spatial interest, privacy and connection budgets is complete;
-M02e integrated qualification is next. Full REQ-M02
-remains NOT_RUN.
+M02d spatial interest, privacy and connection budgets is complete. The
+[M02e handoff](../handoffs/M02e-integrated-qualification.md) closes integrated
+qualification and full REQ-M02 under the current-machine scope.
 
 M02d owns spatial interest, recipient authorization policy, entry/exit hysteresis,
 priorities, byte/work budgets and measured TCP head-of-line costs. An explicit
 selection here must already be authorized by its trusted caller; a pose allowlist
 does not authorize disclosure of an arbitrary entity. M05 owns global-origin
-coordination and fenced region transfer. M02e retains integrated adversity
+coordination and fenced region transfer. M02e records integrated adversity
 qualification. Neither this decision nor a local fixture establishes production
 MMORPG scale or support on additional machines.

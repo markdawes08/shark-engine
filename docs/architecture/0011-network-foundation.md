@@ -98,6 +98,7 @@ Enrollment and ownership remain in memory until M03 supplies durable storage.
 M02c [replication](../network-replication.md) is now locally qualified under
 [ADR 0013](0013-authoritative-replication.md); the
 [handoff](../handoffs/M02c-authoritative-replication.md) retains its separate evidence.
-M02d spatial interest/budgets is complete; M02e integrated qualification is next.
-Full REQ-M02 remains NOT_RUN through the
-remaining checkpoint gates.
+M02d spatial interest/budgets and M02e integrated qualification are complete.
+The [M02e handoff](../handoffs/M02e-integrated-qualification.md) records full
+REQ-M02 PASS under the current-machine scope; the original M02a evidence
+retains its narrower diagnostic scope.

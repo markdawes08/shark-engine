@@ -31,7 +31,7 @@ Follow the implemented [schema and inspection contract](../../../docs/scene-insp
 and [07c handoff](../../../docs/handoffs/07c-schema-inspection.md).
 07c and full REQ-07 are PASS under the current-machine scope; the
 [07c receipt](../../../docs/coverage/evidence/07c-schema-inspection.json) records
-376 passing CPU CTests and protected dependency/package checks. M02 is current;
+376 passing CPU CTests and protected dependency/package checks. M02 is complete;
 [M02b owned sessions](../../../docs/handoffs/M02b-owned-sessions.md) is **PASS**
 under the current-machine scope. M02c [replication](../../../docs/network-replication.md)
 is also locally qualified; follow [ADR 0013](../../../docs/architecture/0013-authoritative-replication.md).
@@ -114,7 +114,19 @@ M02d [spatial interest](../../../docs/network-interest.md) is locally qualified.
 Preserve the complete trusted catalog, authenticated character observer binding,
 unthrottled privacy maintenance and bounded managed admission. Its two new CTest
 families are `shark.core.net-interest` (30 seconds, seed 1337) and
-`shark.core.net-interest-process` (120 seconds); retain all twelve network families
-in qualification. Two active recipients and controlled reliable-stream delay do
-not establish the full LOCAL-MMO-1 workload or WAN behavior. Integrated adversity
-remains M02e; see the [handoff](../../../docs/handoffs/M02d-spatial-interest.md).
+`shark.core.net-interest-process` (120 seconds); retain these families alongside
+the earlier network tests. Two active recipients and controlled reliable-stream
+delay do not establish the full LOCAL-MMO-1 workload or WAN behavior. The
+[M02d handoff](../../../docs/handoffs/M02d-spatial-interest.md) retains that gate's
+historical evidence; M02e subsequently closes integrated qualification.
+
+M02e's additive `ReplicationStats`, `InterestStats` and `ReplicaClientStats`
+report owner-thread logical counts and actual retained vector capacity bytes.
+They are not wire fields or total process memory. Preserve cleanup semantics,
+reserved capacity and nonmutating rejection checks when extending these APIs.
+Retain all fourteen network CTest families, including `shark.core.net-adversity`
+(60 seconds) and `shark.core.net-adversity-process` (360 seconds). The
+[qualification contract](../../../docs/network-qualification.md) and
+[M02e handoff](../../../docs/handoffs/M02e-integrated-qualification.md) record
+full REQ-M02 PASS under the current-machine scope. Assignment 08, Project and
+scene persistence, is next; terminal/editor adapters retain their later owners.

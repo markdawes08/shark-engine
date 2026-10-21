@@ -136,11 +136,13 @@ limits; the [07c handoff](handoffs/07c-schema-inspection.md) and
 [receipt](coverage/evidence/07c-schema-inspection.json) close the final gate.
 07c and full REQ-07 are PASS under the current-machine scope, with 376 passing
 CPU CTests, protected builds and isolated package checks. FeatureWorld connects
-implemented components in assignment 10. M02 is active: the transport foundation
+implemented components in assignment 10. M02 is complete: the transport foundation
 is complete, and [M02b owned sessions](handoffs/M02b-owned-sessions.md) is **PASS**
 under the current-machine scope. M02c [replication](network-replication.md) is also
 complete: explicit server-selected affine world poses are read through this owner.
 Names, durable IDs, hierarchy and private scene revisions stay off the public state
-wire. M02d spatial interest/budgets is complete. M02e integrated qualification is
-next under the
-[network plan](roadmap/network-plan.md); full REQ-M02 remains NOT_RUN.
+wire. M02d spatial interest/budgets and M02e integrated qualification are
+complete under the [network plan](roadmap/network-plan.md). Full REQ-M02 is
+PASS under the current-machine scope in the
+[M02e handoff](handoffs/M02e-integrated-qualification.md). Assignment 08,
+Project and scene persistence, is next.

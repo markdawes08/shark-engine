@@ -8,11 +8,13 @@ The [06c handoff](../handoffs/06c-window-distribution.md) closes window and dist
 **06b is complete for owned resources and offscreen rendering.** See the
 [resource contract](../gpu-resources.md) and [06b handoff](../handoffs/06b-gpu-resources.md)
 for both-GPU and CPU verification. **06c and the subsequent assignment 07 are complete.**
-The [network plan](network-plan.md) tracks the current assignment M02.
+The [network plan](network-plan.md) records completed assignment M02.
 [M02b owned sessions](../handoffs/M02b-owned-sessions.md) is **PASS** under the
 current-machine scope. [M02c replication](../handoffs/M02c-authoritative-replication.md)
 and M02d spatial interest/privacy/budgets are also complete.
-M02e integrated qualification is next.
+The [M02e handoff](../handoffs/M02e-integrated-qualification.md) closes full
+REQ-M02 under the current-machine scope. Assignment 08, Project and scene
+persistence, is next.
 
 ## Sequencing decision
 

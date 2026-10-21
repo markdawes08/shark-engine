@@ -17,7 +17,9 @@ deterministic fault model. M02b adds [mutual TLS and owned sessions](docs/networ
 local qualification is complete. M02c adds [authoritative pose replication](docs/network-replication.md)
 with bounded baselines, deltas and resynchronization. M02d adds
 [spatial interest](docs/network-interest.md), recipient privacy and bounded
-publication with measured per-connection traffic.
+publication with measured per-connection traffic. M02e adds retained-storage
+observations and [integrated network qualification](docs/network-qualification.md)
+through active local processes and deterministic faults.
 A separate opt-in graphics
 feasibility probe contains analytic draw/compute/readback cases.
 The versioned
@@ -72,9 +74,14 @@ and protected package checks pass. Its [handoff](docs/handoffs/M02b-owned-sessio
 records the evidence. **M02c, authoritative replication and resynchronization, is complete**:
 446 CPU CTests and protected package checks pass. The
 [handoff](docs/handoffs/M02c-authoritative-replication.md) records the evidence.
-**M02d spatial interest, privacy and connection budgets is complete.**
-M02e integrated qualification is next, following the
-[five network checkpoints](docs/roadmap/network-plan.md). Full REQ-M02 remains NOT_RUN.
+**M02d spatial interest, privacy and connection budgets is complete**: its
+[handoff](docs/handoffs/M02d-spatial-interest.md) records 460 passing CPU CTests
+and protected package checks. **M02e and full REQ-M02 are PASS under the
+current-machine scope.** The [handoff](docs/handoffs/M02e-integrated-qualification.md)
+and [receipt](docs/coverage/evidence/M02e-integrated-qualification.json) record
+474 passing CPU CTests and protected package qualification across the
+[five network checkpoints](docs/roadmap/network-plan.md).
+**Next assignment: 08, Project and scene persistence.**
 See the [transport contract](docs/network-transport.md) and the
 [cube launch workflow](docs/building.md#cube-sample-and-runtime-package).
 The [05a handoff](docs/handoffs/05a-graphics-device.md) records 211 passing CTests
@@ -181,9 +188,3 @@ then `cmake --build --preset server-only`. Run
 for a one-second headless smoke run.
 With no arguments it waits for shutdown. This is an idle process foundation;
 it has no player connections or world simulation yet.
-
-M02d [spatial interest](docs/network-interest.md) is qualified under the current-machine
-scope: 460 CPU CTests and protected package checks pass. Its
-[handoff](docs/handoffs/M02d-spatial-interest.md) records the active two-recipient
-workload, privacy, byte/work and reliable-stream delay measurements.
-M02e integrated qualification is next; full REQ-M02 remains NOT_RUN.

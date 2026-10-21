@@ -55,21 +55,30 @@ bounded revisioned CPU inspection through the same scene owner. Follow the
 **07c and full REQ-07 are complete under the current-machine scope.** The
 [07c receipt](docs/coverage/evidence/07c-schema-inspection.json) records 376 passing
 CPU CTests with no failures/skips and protected dependency/package qualification.
-The current assignment is **M02**, following the [five network checkpoints](docs/roadmap/network-plan.md).
+The next assignment is **08, Project and scene persistence**.
+The completed [five network checkpoints](docs/roadmap/network-plan.md) retain
+their scoped historical evidence below.
 **M02a is complete under the current-machine scope.** The [TLS/wire foundation](docs/network-transport.md)
 and [M02a handoff](docs/handoffs/M02a-transport-wire.md) record 404 passing CPU CTests,
 protected builds and isolated package qualification. **M02b, authentication and owned
 sessions, is complete under the current-machine scope**: 425 CPU CTests and
 protected package checks pass. The [handoff](docs/handoffs/M02b-owned-sessions.md)
 records exact evidence. Follow the [session contract](docs/network-sessions.md) and
-[ADR 0012](docs/architecture/0012-owned-sessions.md). Full REQ-M02 remains NOT_RUN. Read [ADR 0011](docs/architecture/0011-network-foundation.md)
+[ADR 0012](docs/architecture/0012-owned-sessions.md). Read [ADR 0011](docs/architecture/0011-network-foundation.md)
 before extending transport/authentication. **M02c is complete under the current-machine
 scope**: 446 passing CPU CTests and protected package checks. Follow
 [ADR 0013](docs/architecture/0013-authoritative-replication.md), the
 [replication contract](docs/network-replication.md) and
 [handoff](docs/handoffs/M02c-authoritative-replication.md). **M02d spatial interest,
-privacy and connection budgets is complete.** M02e integrated qualification is
-next. Follow the
+privacy and connection budgets is complete**: its
+[handoff](docs/handoffs/M02d-spatial-interest.md) records 460 passing CPU CTests
+and protected package checks. **M02e and full REQ-M02 are PASS under the
+current-machine scope**: the [handoff](docs/handoffs/M02e-integrated-qualification.md)
+and [receipt](docs/coverage/evidence/M02e-integrated-qualification.json) record
+474 passing CPU CTests across seven profiles, protected packages and 277
+unchanged frozen inputs. Preserve all fourteen network CTest families,
+including `shark.core.net-adversity` (60 seconds) and
+`shark.core.net-adversity-process` (360 seconds). Follow the
 [05 checkpoint plan](docs/roadmap/graphics-device-plan.md),
 [graphics device contract](docs/graphics-device.md),
 [presentation lifecycle contract](docs/presentation-lifecycle.md) and
@@ -120,8 +129,10 @@ on other machines or a production MMO release.
 The bounded local TLS/wire foundation is implemented in M02a. M02b adds mutual
 TLS and owned sessions; M02c adds explicitly selected public pose replication and
 bounded resynchronization. M02d adds qualified spatial interest, recipient privacy
-and connection budgets. Integrated adversity remains M02e; persistence, simulation
-and streaming retain their later owners.
+and connection budgets. M02e qualifies integrated adversity and retained-resource
+bounds under the [network qualification contract](docs/network-qualification.md).
+Project/scene persistence is next in 08; live durable state, simulation and
+streaming retain their later owners.
 
 Keep all remaining gates achievable on this PC: local processes, loopback or
 Windows/WSL connections, deterministic network faults, local storage and backups,
@@ -378,9 +389,3 @@ the current assignment's required gate is met, except for the user-authorized
 nonblocking backlog amendment above. End the user response with the
 important changes, verification limits and suggested commit message, leaving
 all staging, committing and pushing to the user.
-
-M02d [spatial interest](docs/network-interest.md) is qualified under the current-machine
-scope: 460 CPU CTests and protected package checks pass. Its
-[handoff](docs/handoffs/M02d-spatial-interest.md) records the active two-recipient
-workload, privacy, byte/work and reliable-stream delay measurements.
-M02e integrated qualification is next; full REQ-M02 remains NOT_RUN.

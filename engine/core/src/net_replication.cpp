@@ -546,9 +546,22 @@ Result<ReplicationStats> ReplicationServer::stats() const {
         return owner.error();
     }
     ReplicationStats result{impl_->streams.size(), 0, 0};
+    result.stream_capacity_bytes = impl_->streams.capacity() * sizeof(Impl::Stream);
     for (const auto& stream : impl_->streams) {
         result.mapped_entities += stream.mapping.size();
         result.pending_updates += stream.pending.has_value() ? 1U : 0U;
+        result.acknowledged_entities += stream.acknowledged.size();
+        result.mapped_capacity_bytes += stream.mapping.capacity() * sizeof(Impl::Mapping);
+        result.acknowledged_capacity_bytes +=
+            stream.acknowledged.capacity() * sizeof(ReplicaEntity);
+        if (stream.pending) {
+            result.pending_target_entities += stream.pending->target.size();
+            result.pending_change_records += stream.pending->update.changes.size();
+            result.pending_target_capacity_bytes +=
+                stream.pending->target.capacity() * sizeof(ReplicaEntity);
+            result.pending_change_capacity_bytes +=
+                stream.pending->update.changes.capacity() * sizeof(ReplicationRecord);
+        }
     }
     return result;
 }
@@ -685,6 +698,23 @@ Result<void> ReplicaClient::discard_baseline() {
     impl_->entities.clear();
     impl_->has_baseline = false;
     return {};
+}
+
+Result<ReplicaClientStats> ReplicaClient::stats() const {
+    if (auto owner = impl_->check_owner(); !owner) {
+        return owner.error();
+    }
+    ReplicaClientStats result;
+    result.entities = impl_->entities.size();
+    result.known_live_ids = impl_->known_live.size();
+    result.entity_capacity_bytes = impl_->entities.capacity() * sizeof(ReplicaEntity);
+    result.known_live_capacity_bytes = impl_->known_live.capacity() * sizeof(ReplicaId);
+    if (impl_->latest) {
+        result.latest_change_records = impl_->latest->changes.size();
+        result.latest_change_capacity_bytes =
+            impl_->latest->changes.capacity() * sizeof(ReplicationRecord);
+    }
+    return result;
 }
 
 } // namespace shark::net

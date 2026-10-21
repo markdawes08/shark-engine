@@ -694,10 +694,18 @@ Result<InterestStats> InterestServer::stats() const {
     }
     auto result = self.counters;
     result.streams = self.streams.size();
+    result.stream_capacity_bytes = self.streams.capacity() * sizeof(Impl::Stream);
     for (const auto& stream : self.streams) {
         result.selected_entities += stream.selected.size();
         result.last_sent_entities += stream.last_sent.size();
+        result.selected_capacity_bytes += stream.selected.capacity() * sizeof(EntityHandle);
+        result.last_sent_capacity_bytes += stream.last_sent.capacity() * sizeof(EntityHandle);
     }
+    auto replication = self.replication->stats();
+    if (!replication) {
+        return replication.error();
+    }
+    result.replication = replication.value();
     return result;
 }
 

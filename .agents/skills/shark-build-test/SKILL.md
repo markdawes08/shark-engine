@@ -94,7 +94,19 @@ M02d [spatial interest](../../../docs/network-interest.md) is locally qualified.
 Preserve the complete trusted catalog, authenticated character observer binding,
 unthrottled privacy maintenance and bounded managed admission. Its two new CTest
 families are `shark.core.net-interest` (30 seconds, seed 1337) and
-`shark.core.net-interest-process` (120 seconds); retain all twelve network families
-in qualification. Two active recipients and controlled reliable-stream delay do
-not establish the full LOCAL-MMO-1 workload or WAN behavior. Integrated adversity
-remains M02e; see the [handoff](../../../docs/handoffs/M02d-spatial-interest.md).
+`shark.core.net-interest-process` (120 seconds); retain these families alongside
+the earlier network tests. Two active recipients and controlled reliable-stream
+delay do not establish the full LOCAL-MMO-1 workload or WAN behavior. The
+[M02d handoff](../../../docs/handoffs/M02d-spatial-interest.md) retains that gate's
+historical evidence; M02e subsequently closes integrated qualification.
+
+M02e adds `shark.core.net-adversity` (60 seconds, seed 1337) and
+`shark.core.net-adversity-process` (360 seconds), bringing the network prefix to
+fourteen CTest families. M02e and full REQ-M02 are PASS under the current-machine
+scope in the [handoff](../../../docs/handoffs/M02e-integrated-qualification.md);
+assignment 08, Project and scene persistence, is next. Follow the
+[qualification contract](../../../docs/network-qualification.md): semantic faults
+operate on decoded authenticated state, while the bounded relay preserves TLS
+byte order. Record actual injected events, convergence, cleanup, retained vector
+capacity and separate process RSS/handle samples. Refresh all earlier network
+families and protected packages against the same frozen source inputs.

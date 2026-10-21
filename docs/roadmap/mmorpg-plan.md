@@ -117,7 +117,7 @@ see the [inspection contract](../scene-inspection.md) and
 [07c handoff](../handoffs/07c-schema-inspection.md).
 07c and full REQ-07 are PASS under the current-machine scope. The
 [07c receipt](../coverage/evidence/07c-schema-inspection.json) records 376 passing
-CPU CTests and protected dependency/package checks. M02 is now active under its
+CPU CTests and protected dependency/package checks. M02 is complete under its
 [five checkpoints](network-plan.md); M02a is complete with 404 passing CPU CTests
 and protected dependency/package checks in the [handoff](../handoffs/M02a-transport-wire.md).
 M02b [authentication and owned sessions](../network-sessions.md) is complete; its
@@ -125,7 +125,13 @@ M02b [authentication and owned sessions](../network-sessions.md) is complete; it
 package checks. M02c [replication](../network-replication.md) is complete with
 446 passing CTests and protected package checks in its
 [handoff](../handoffs/M02c-authoritative-replication.md). M02d interest/budgets is
-complete; M02e integrated qualification is next.
+complete with 460 passing CPU CTests and protected package checks in its
+[handoff](../handoffs/M02d-spatial-interest.md). M02e and full REQ-M02 are PASS
+under the current-machine scope: the
+[handoff](../handoffs/M02e-integrated-qualification.md) and
+[receipt](../coverage/evidence/M02e-integrated-qualification.json) record
+474 passing CPU CTests, protected packages and 277 unchanged frozen inputs.
+Assignment 08, Project and scene persistence, is next.
 The completed scene C++ APIs are not player
 messages or source persistence, and they do not grant gameplay authority.
 Presentation stays in Client and cannot acquire authority over server time or world state.
@@ -165,7 +171,9 @@ implements bounded loopback TLS/wire diagnostics plus deterministic fault modeli
 M02b implements [mutual TLS and owned sessions](../network-sessions.md), with
 completed local qualification. M02c implements bounded authoritative pose
 replication and resynchronization; M02d adds spatial interest and connection budgets.
-Full REQ-M02 remains NOT_RUN until the integrated M02e adversity gate passes.
+M02e closes integrated adversity qualification and full REQ-M02 under the
+current-machine scope; these foundation results do not establish the complete
+LOCAL-MMO-1 gameplay or release workload.
 
 After 03/07 and M01. Select and pin maintained transport/authentication components
 using a recorded threat/requirements assessment. Add independent gameplay-wire
@@ -365,9 +373,3 @@ capacity are separate future scope decisions rather than blockers in this plan.
 Transport/auth/database/terrain/navigation dependencies require measurements and
 pinning at first integration. Neither the current bootstrap nor the new documents
 prove any MMO feature, scale or release support.
-
-M02d [spatial interest](../network-interest.md) is qualified under the current-machine
-scope: 460 CPU CTests and protected package checks pass. Its
-[handoff](../handoffs/M02d-spatial-interest.md) records the active two-recipient
-workload, privacy, byte/work and reliable-stream delay measurements.
-M02e integrated qualification is next; full REQ-M02 remains NOT_RUN.

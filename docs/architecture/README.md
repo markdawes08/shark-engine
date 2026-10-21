@@ -55,7 +55,7 @@ defines the implemented discovery and query APIs; the
 [07 checkpoint plan](../roadmap/scene-plan.md) and
 [07c handoff](../handoffs/07c-schema-inspection.md) track qualification.
 07c and full REQ-07 are PASS under the current-machine scope, recorded in the
-[07c receipt](../coverage/evidence/07c-schema-inspection.json). M02 is active; the
+[07c receipt](../coverage/evidence/07c-schema-inspection.json). M02 is complete; the
 [M02a handoff](../handoffs/M02a-transport-wire.md) closes the transport foundation,
 and [M02b authentication and owned sessions](../handoffs/M02b-owned-sessions.md)
 is **PASS** under the current-machine scope. [ADR 0012](0012-owned-sessions.md) and the
@@ -63,9 +63,12 @@ is **PASS** under the current-machine scope. [ADR 0012](0012-owned-sessions.md) 
 transport-bound ownership, revocation and reconnect fencing. M02c replication is
 PASS under current-machine scope, following [ADR 0013](0013-authoritative-replication.md)
 and its [handoff](../handoffs/M02c-authoritative-replication.md). M02d interest/budgets
-is complete under [ADR 0014](0014-spatial-interest.md); M02e integrated qualification
-is next. Full REQ-M02 remains NOT_RUN. Source persistence,
-authoring transactions, terminal adapters and editor UI retain their later owners;
+is complete under [ADR 0014](0014-spatial-interest.md). The
+[M02e handoff](../handoffs/M02e-integrated-qualification.md) and
+[receipt](../coverage/evidence/M02e-integrated-qualification.json) close integrated
+qualification and full REQ-M02 under the current-machine scope. Assignment 08,
+Project and scene persistence, is next. Authoring transactions, terminal
+adapters and editor UI retain their later owners;
 schema IDs do not establish file or gameplay-wire formats. The current-machine
 scope remains unchanged.
 

@@ -119,7 +119,18 @@ fixture certificates and no production listener. See the
 The latter runs `NetInterestProbe` with two actual clients and a bounded opaque
 TCP relay, recording `interest-process.json`. It measures active per-connection
 traffic and ordered-stream delay without changing installed bootstraps. Follow
-the [interest contract](network-interest.md). Check all twelve network families
+the [interest contract](network-interest.md). Its
+[M02d handoff](handoffs/M02d-spatial-interest.md) records the earlier 460 passing
+CPU CTests and protected package gate. M02e adds `shark.core.net-adversity`
+(60 seconds, seed 1337) and `shark.core.net-adversity-process` (360 seconds).
+The latter launches test-only `NetAdversityProbe` processes and bounded opaque
+relays, recording `adversity-process.json`, with live owned-process memory and
+handle/descriptor samples. Follow the [qualification contract](network-qualification.md).
+M02e and full REQ-M02 are PASS under the current-machine scope: the
+[handoff](handoffs/M02e-integrated-qualification.md) and
+[receipt](coverage/evidence/M02e-integrated-qualification.json) record 474 passing
+CPU CTests and protected package checks. Assignment 08 is next.
+Check all fourteen network families
 noninteractively after a native build:
 
 ```text
@@ -644,9 +655,3 @@ Assignment 01 also exercised the installed Codex CLI 0.163.0 app-server
 All five skills were enabled with repository scope and no discovery errors.
 The local evidence is `out/ci/skills-discovery.json`; see the
 [assignment handoff](handoffs/01-build-foundation.md) for the verified result.
-
-M02d [spatial interest](network-interest.md) is qualified under the current-machine
-scope: 460 CPU CTests and protected package checks pass. Its
-[handoff](handoffs/M02d-spatial-interest.md) records the active two-recipient
-workload, privacy, byte/work and reliable-stream delay measurements.
-M02e integrated qualification is next; full REQ-M02 remains NOT_RUN.

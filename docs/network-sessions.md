@@ -113,7 +113,9 @@ processes. All keys under `tests/fixtures/network/session` are explicitly public
 test fixtures, not deployment credentials. Build/package closure excludes them.
 M02c [replication](network-replication.md) is implemented and locally qualified.
 M02d [interest/privacy/budgets](network-interest.md) is also locally qualified.
-The [checkpoint plan](roadmap/network-plan.md) retains M02e full qualification.
+M02e closes full REQ-M02 under the current-machine scope; the
+[handoff](handoffs/M02e-integrated-qualification.md) records the integrated
+qualification and refreshed earlier network families.
 
 M02c adds `SessionAuthority::current(transport, now)` for trusted services to
 validate the actual live mTLS connection and inspect its current session. It

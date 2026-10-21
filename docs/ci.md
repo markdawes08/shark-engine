@@ -59,8 +59,10 @@ passes current-machine CPU/sanitizer and protected package qualification.
 M02b [owned sessions](handoffs/M02b-owned-sessions.md) is **PASS** under the
 current-machine scope. M02c [replication](handoffs/M02c-authoritative-replication.md)
 is also PASS locally: 446 CPU CTests and protected package checks. M02d
-interest/budgets is next; database,
-world-handoff and active-load tiers retain their later gates.
+interest/budgets and M02e integrated qualification are complete. Full REQ-M02
+is PASS under the current-machine scope in the
+[M02e handoff](handoffs/M02e-integrated-qualification.md); database, world-handoff
+and active-load tiers retain their later gates.
 
 ## Jobs and required checks
 
@@ -255,8 +257,20 @@ pass 72 CTests each, WSL CPU client Debug/ASan+UBSan pass 65 each and WSL
 Server Debug/ASan+UBSan pass 50 each, totaling 446 with no failures or skips.
 The [M02c handoff](handoffs/M02c-authoritative-replication.md) records protected
 build, package and real-process convergence checks. M02d spatial interest, privacy
-and connection budgets is next. Full REQ-M02 remains NOT_RUN;
-existing hosted CI stays supplemental.
+and connection budgets is complete: its [handoff](handoffs/M02d-spatial-interest.md)
+records 460 passing CPU CTests and protected package checks.
+
+M02e and full REQ-M02 are PASS under the current-machine scope. Windows
+Debug/Release/ASan pass 76 CTests each, WSL CPU client Debug/ASan+UBSan pass
+69 each and WSL Server Debug/ASan+UBSan pass 54 each: 474 total without failures
+or skips. All fourteen network families, protected builds and isolated package
+checks pass against 277 unchanged frozen inputs. The new
+`shark.core.net-adversity` and `shark.core.net-adversity-process` families have
+60-second and 360-second timeouts respectively. The
+[handoff](handoffs/M02e-integrated-qualification.md) and
+[receipt](coverage/evidence/M02e-integrated-qualification.json) retain exact
+commands, resource observations and acceptance limits. Assignment 08, Project
+and scene persistence, is next; hosted CI stays supplemental.
 
 ## Locked tools and hosted-image limits
 
@@ -512,9 +526,3 @@ manual failure input. It does not execute GitHub expression evaluation or jobs.
 `python tools/check_format.py` checks engine-owned C/C++ files against the pinned
 formatter; `--fix` deliberately applies formatting. No future GPU, import or
 release tests are invented for this foundation.
-
-M02d [spatial interest](network-interest.md) is qualified under the current-machine
-scope: 460 CPU CTests and protected package checks pass. Its
-[handoff](handoffs/M02d-spatial-interest.md) records the active two-recipient
-workload, privacy, byte/work and reliable-stream delay measurements.
-M02e integrated qualification is next; full REQ-M02 remains NOT_RUN.

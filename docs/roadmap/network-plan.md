@@ -12,8 +12,13 @@ CTests and protected package checks pass in its
 [handoff](../handoffs/M02c-authoritative-replication.md) and
 [receipt](../coverage/evidence/M02c-authoritative-replication.json).
 **M02d spatial interest, privacy and connection budgets is complete.**
-M02e integrated qualification is next.
-Full M02 remains NOT_RUN until all five checkpoints pass. Assignment 07 is complete.
+**M02e and full REQ-M02 are PASS under the current-machine scope.** The
+[handoff](../handoffs/M02e-integrated-qualification.md) and
+[receipt](../coverage/evidence/M02e-integrated-qualification.json) record
+474 passing CPU CTests across seven profiles, protected package qualification
+and 277 unchanged frozen inputs. All fourteen network families pass, including
+the new 60-second adversity and 360-second process families. Assignment 07 is
+complete; **08, Project and scene persistence, is next**.
 The [MMORPG plan](mmorpg-plan.md) retains the assignment order and the
 [current-machine scope](../architecture/0010-current-machine-scope.md).
 
@@ -106,8 +111,8 @@ checkpoint; this final checkpoint integrates their evidence. Assignment 08 follo
 completed M02; persistence, combat/prediction and seamless region transfer retain
 M03, M04 and M05 respectively.
 
-M02d [spatial interest](../network-interest.md) is qualified under the current-machine
-scope: 460 CPU CTests and protected package checks pass. Its
-[handoff](../handoffs/M02d-spatial-interest.md) records the active two-recipient
-workload, privacy, byte/work and reliable-stream delay measurements.
-M02e integrated qualification is next; full REQ-M02 remains NOT_RUN.
+The [integrated qualification contract](../network-qualification.md) separates
+decoded-message faults from intact encrypted transport shaping, defines explicit
+resync/reconnect outcomes and distinguishes retained vector storage from process
+memory. The [M02e handoff](../handoffs/M02e-integrated-qualification.md) records
+the completed frozen-input gate, measured workload and remaining limits.

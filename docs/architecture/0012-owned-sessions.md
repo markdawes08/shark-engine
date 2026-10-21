@@ -75,8 +75,9 @@ controls. Lost outcomes can require a new login; later durable operations belong
 to M03. M02c [replication and resynchronization](../network-replication.md) now
 extend these session checks and are locally qualified under
 [ADR 0013](0013-authoritative-replication.md). M02d adds qualified spatial interest
-and budgets under [ADR 0014](0014-spatial-interest.md). Integrated adversity remains
-M02e; full REQ-M02 remains NOT_RUN.
+and budgets under [ADR 0014](0014-spatial-interest.md). The
+[M02e handoff](../handoffs/M02e-integrated-qualification.md) closes integrated
+adversity and full REQ-M02 under the current-machine scope.
 
 The [M02b handoff](../handoffs/M02b-owned-sessions.md) records completed
 qualification. The [session contract](../network-sessions.md) and

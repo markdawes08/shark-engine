@@ -119,14 +119,15 @@ negative/nonuniform scale. Pure schema validation reuses `validate_name` and
 `canonicalize_transform`; Scene still checks world-matrix and hierarchy feasibility.
 The [07c handoff](handoffs/07c-schema-inspection.md) and
 [receipt](coverage/evidence/07c-schema-inspection.json) record passing
-current-machine qualification. 07c and full REQ-07 are PASS. M02 is active;
+current-machine qualification. 07c and full REQ-07 are PASS. M02 is complete;
 its [transport foundation](handoffs/M02a-transport-wire.md) is complete and
 [M02b owned sessions](handoffs/M02b-owned-sessions.md) is **PASS** under the
 current-machine scope. Session readiness grants no Transform mutation or gameplay
 authority. M02c [replication](network-replication.md) now publishes explicitly
 selected affine world matrices, preserving shear without exposing local TRS or
 hierarchy. Its current-machine gate and M02d spatial interest/budgets are complete.
-M02e integrated qualification is next.
-Assignment 08 supplies persistence, 09 transactions,
+The [M02e handoff](handoffs/M02e-integrated-qualification.md) closes full
+REQ-M02 under the current-machine scope.
+Assignment 08, Project and scene persistence, is next; 09 supplies transactions,
 10 FeatureWorld, 15 terminal adapters, 16/17 editor fields and 19 selected Lua APIs.
 Those later integrations are planned fixtures, not claimed passes.

@@ -83,6 +83,13 @@ struct InterestStats {
     std::uint64_t privacy_closures{0};
     std::uint64_t policy_units{0};
     std::uint64_t omitted_entities{0};
+    // Owned vector capacity * sizeof(element), excluding allocator overhead,
+    // temporary selection/capture storage and RSS. Fixed stream slots remain
+    // reserved after forget; selected/last-sent allocations follow live streams.
+    std::size_t stream_capacity_bytes{0};
+    std::size_t selected_capacity_bytes{0};
+    std::size_t last_sent_capacity_bytes{0};
+    ReplicationStats replication{};
 };
 
 // Single-owner CPU service. Catalog, Scene and character-to-observer binding

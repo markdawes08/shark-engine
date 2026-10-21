@@ -7,9 +7,11 @@ M02c adds CPU C++ replication in
 M02c qualification is PASS under current-machine scope; its
 [handoff](handoffs/M02c-authoritative-replication.md) and
 [receipt](coverage/evidence/M02c-authoritative-replication.json) record 446 passing
-CPU CTests and protected packages. Full REQ-M02 remains NOT_RUN. The
-[checkpoint plan](roadmap/network-plan.md) retains later spatial-interest and
-integrated adversity gates.
+CPU CTests and protected packages. M02d spatial interest and M02e integrated
+adversity are also complete. Full REQ-M02 is PASS under the current-machine
+scope; the [M02e handoff](handoffs/M02e-integrated-qualification.md) and
+[receipt](coverage/evidence/M02e-integrated-qualification.json) close the
+[checkpoint plan](roadmap/network-plan.md).
 
 ## Publication and privacy
 
@@ -126,6 +128,48 @@ spend their separate control/resync budget, but cannot acknowledge state, advanc
 the accepted session sequence or refresh the lease. An application ACK proves
 replica consumption only; durable gameplay outcomes require M03's transaction
 contract.
+
+## Owned storage observations
+
+M02e adds storage observations to the existing owner-thread CPU API. These are
+additive C++ values; they introduce no gameplay-wire field, format version or
+serialization of native layout. The [M02e qualification](network-qualification.md)
+exercises repeated churn, resynchronization, reconnect and cleanup against
+these observations.
+
+`ReplicationServer::stats()` reports current `streams`, `mapped_entities`,
+`acknowledged_entities`, `pending_updates`, `pending_target_entities` and
+`pending_change_records`. Counts span all retained streams. Each stream still
+holds at most 32 mappings, 32 acknowledged poses, one pending update with at most
+32 target poses, and 64 change records. A pending baseline or delta replaces one
+bounded pending value; retries do not append history.
+
+The corresponding `stream_capacity_bytes`, `mapped_capacity_bytes`,
+`acknowledged_capacity_bytes`, `pending_target_capacity_bytes` and
+`pending_change_capacity_bytes` measure each owned vector's actual capacity
+multiplied by its element size. Reserved but unused elements are included.
+Exact-session `forget` destroys that stream's nested allocations. The outer
+stream vector retains its initial reserved capacity until service
+destruction; zero live streams therefore does not mean zero reserved bytes.
+An admitted ACK for the pending revision, or an admitted resync, releases the
+pending target and change-record allocations.
+
+`ReplicaClient::stats()` returns `ReplicaClientStats`: current `entities`,
+`known_live_ids`, `latest_change_records` and their `entity_capacity_bytes`,
+`known_live_capacity_bytes`, `latest_change_capacity_bytes`. The cache holds at
+most 32 visible entities, 32 live-ID fences and one latest accepted update of at
+most 64 records. `discard_baseline` clears visible entities while retaining their
+reserved capacity, live-ID fences and latest-update history. This preserves
+replay/lifecycle rejection; destruction releases the cache's storage.
+
+These observations allocate nothing and enforce the same owner thread as the
+service. Capacity bytes depend on the active C++ ABI and standard library; they
+are not a portable serialized layout. Their sum describes retained vector storage,
+including the reserved stream records and their separately allocated child
+buffers. It excludes allocator bookkeeping, temporary validation candidates,
+snapshots or payload copies returned to callers, the service object itself,
+transport/TLS/OS buffers and process RSS. Report those other resources separately;
+neither these counters nor a zero logical count establishes a total-memory bound.
 
 ## Limits and wire version 1
 

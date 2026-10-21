@@ -99,6 +99,17 @@ struct ReplicationStats {
     std::size_t streams;
     std::size_t mapped_entities;
     std::size_t pending_updates;
+    std::size_t acknowledged_entities{0};
+    std::size_t pending_target_entities{0};
+    std::size_t pending_change_records{0};
+    // Owned vector capacity * sizeof(element), not allocator overhead, temporary
+    // candidates, transport storage or process RSS. Reserved stream slots remain
+    // after forget; the four nested allocations are released with their stream.
+    std::size_t stream_capacity_bytes{0};
+    std::size_t mapped_capacity_bytes{0};
+    std::size_t acknowledged_capacity_bytes{0};
+    std::size_t pending_target_capacity_bytes{0};
+    std::size_t pending_change_capacity_bytes{0};
 };
 
 enum class ReplicationPublishStatus { sent, unchanged, pending_ack, byte_limited, queue_limited };
@@ -170,6 +181,17 @@ struct ReplicaSnapshot {
 };
 enum class ReplicaApplyResult { applied, duplicate, resync_required };
 
+struct ReplicaClientStats {
+    std::size_t entities{0};
+    std::size_t known_live_ids{0};
+    std::size_t latest_change_records{0};
+    // Owned vector capacity * sizeof(element); excludes snapshots returned to
+    // callers, temporary validation candidates, allocator overhead and RSS.
+    std::size_t entity_capacity_bytes{0};
+    std::size_t known_live_capacity_bytes{0};
+    std::size_t latest_change_capacity_bytes{0};
+};
+
 // Single-owner presentation cache, not a second authoritative Scene. Caller
 // supplies only messages received from its verified TLS server. A fresh login
 // constructs a fresh cache; copied values confer no server-side authority.
@@ -188,6 +210,7 @@ class ReplicaClient final {
     // revisions but cannot change the stream within an authenticated session.
     [[nodiscard]] Result<ReplicaApplyResult> apply(const ReplicationUpdate& update);
     [[nodiscard]] Result<ReplicaSnapshot> snapshot() const;
+    [[nodiscard]] Result<ReplicaClientStats> stats() const;
     // Cache loss retains stream/revision fences; only a newer full baseline can
     // restore it. Never reset fences to accept previously rejected old traffic.
     [[nodiscard]] Result<void> discard_baseline();

@@ -64,14 +64,16 @@ as additive schema-3 fields. REQ-02 is PASS for the amended local gate, with
 explicit scope and SHA-256-pinned references to the unchanged 02d receipts.
 The validator verifies those references and retained bytes; it does not rerun
 graphics or interpret an old aggregate NOT_RUN as a universal PASS.
-`current_assignment: M02` follows the [five network checkpoints](../roadmap/network-plan.md).
+`current_assignment: 08` follows the completed
+[five network checkpoints](../roadmap/network-plan.md); Project and scene
+persistence is next.
 The `core.network-foundation` feature maps M02a's bounded TLS/wire/fault APIs to
 three unit families and a real-process encrypted fixture, plus exact dependency
 and package checks. M02a is PASS: the [handoff](../handoffs/M02a-transport-wire.md)
 and [receipt](evidence/M02a-transport-wire.json) record 404 passing CPU CTests
 without failures/skips, protected builds and isolated packages. The narrow
 postqualification CI compiler-forwarding amendment is recorded separately from
-the unchanged compiled inputs. Full REQ-M02 remains NOT_RUN pending M02e. The prior
+the unchanged compiled inputs. The prior
 [07 checkpoint plan](../roadmap/scene-plan.md) is complete.
 M02b's `core.owned-sessions` feature maps mutual TLS, explicit enrollment, typed
 owned session controls, expiry/revocation and reconnect fencing to two new unit
@@ -80,8 +82,8 @@ and [ADR](../architecture/0012-owned-sessions.md) separate session authority fro
 authoring, administration and future gameplay. M02b is PASS: the
 [handoff](../handoffs/M02b-owned-sessions.md) and
 [receipt](evidence/M02b-owned-sessions.json) record 425 passing CPU CTests, no
-failures/skips, protected builds and isolated package checks;
-full REQ-M02 still requires replication, interest and integrated adversity.
+failures/skips, protected builds and isolated package checks. Later M02
+checkpoints qualify replication, interest and integrated adversity below.
 `core.scene-ownership` maps checked scene/entity lifetime, deferred mutation,
 world coordinates and the private EnTT boundary to executable CPU fixtures.
 The [07a handoff](../handoffs/07a-entity-ownership.md) records checkpoint results.
@@ -106,7 +108,8 @@ Debug/ASan+UBSan 55 each, and WSL Server Debug/ASan+UBSan 40 each. Schema covera
 has 9 cases/654 assertions and query coverage 19 cases/3,916 assertions. Protected
 Runtime/Server builds, source/link/license closure and fresh isolated package
 checks pass; all 221 qualification source inputs were unchanged in that record.
-The current assignment is M02; M02a-M02d are complete; M02e integrated qualification is next.
+M02a-M02e and full REQ-M02 are PASS under the current-machine scope.
+Assignment 08, Project and scene persistence, is next.
 FeatureWorld integration remains assignment 10.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
@@ -232,11 +235,22 @@ M02c adds `core.authoritative-replication`, mapped to strict wire, service and
 real-process fixtures. Its [handoff](../handoffs/M02c-authoritative-replication.md)
 and [receipt](evidence/M02c-authoritative-replication.json) record 446 passing CPU
 CTests and protected package checks. The public field allowlist is independent
-of authoring schemas. M02d interest/budgets is complete; M02e integrated adversity remains;
-full REQ-M02 stays NOT_RUN.
+of authoring schemas. M02d [spatial interest](../network-interest.md) is qualified
+under the current-machine scope: its
+[handoff](../handoffs/M02d-spatial-interest.md) records 460 passing CPU CTests,
+protected package checks and active two-recipient privacy, byte/work and
+reliable-stream delay measurements.
 
-M02d [spatial interest](../network-interest.md) is qualified under the current-machine
-scope: 460 CPU CTests and protected package checks pass. Its
-[handoff](../handoffs/M02d-spatial-interest.md) records the active two-recipient
-workload, privacy, byte/work and reliable-stream delay measurements.
-M02e integrated qualification is next; full REQ-M02 remains NOT_RUN.
+M02e adds integrated adversity and retained-storage observations to the existing
+network contracts. `shark.core.net-adversity` (60 seconds) and
+`shark.core.net-adversity-process` (360 seconds) bring the network prefix to
+fourteen CTest families. Full REQ-M02 is PASS under the current-machine scope:
+Windows Debug/Release/ASan pass 76 CTests each, WSL CPU client Debug/ASan+UBSan
+pass 69 each and WSL Server Debug/ASan+UBSan pass 54 each, totaling 474 with no
+failures or skips. The [handoff](../handoffs/M02e-integrated-qualification.md) and
+[receipt](evidence/M02e-integrated-qualification.json) record 277 unchanged frozen
+inputs, all six integrated scenarios and 21 children per process run, independent
+receipt checks and protected package qualification. These are local network
+foundation results; the full LOCAL-MMO-1 workload, durable gameplay and MMO
+release qualification retain their later owners. FeatureWorld and MMOWorld
+remain planned for assignments 10 and M09.
