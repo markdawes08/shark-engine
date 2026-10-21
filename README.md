@@ -19,7 +19,9 @@ with bounded baselines, deltas and resynchronization. M02d adds
 [spatial interest](docs/network-interest.md), recipient privacy and bounded
 publication with measured per-connection traffic. M02e adds retained-storage
 observations and [integrated network qualification](docs/network-qualification.md)
-through active local processes and deterministic faults.
+through active local processes and deterministic faults. CPU authoring now includes
+[versioned project/scene value codecs](docs/source-documents.md), with validation
+and legacy migration; active-scene loading and file saves follow in 08b/08c.
 A separate opt-in graphics
 feasibility probe contains analytic draw/compute/readback cases.
 The versioned
@@ -81,7 +83,13 @@ current-machine scope.** The [handoff](docs/handoffs/M02e-integrated-qualificati
 and [receipt](docs/coverage/evidence/M02e-integrated-qualification.json) record
 474 passing CPU CTests and protected package qualification across the
 [five network checkpoints](docs/roadmap/network-plan.md).
-**Next assignment: 08, Project and scene persistence.**
+**Current assignment: 08, Project and scene persistence**, split into
+[four checkpoints](docs/roadmap/persistence-plan.md). 08a adds CPU project/scene
+formats, validation and migration through [owned C++ values](docs/source-documents.md).
+**08a is complete:** its [handoff](docs/handoffs/08a-source-documents.md) records
+484 passing CPU CTests, standalone Tools tests and protected package checks.
+**08b, Scene loading and transactional activation, is next.** Full REQ-08 remains
+NOT_RUN; file saves and the authoring editor retain their later checkpoints.
 See the [transport contract](docs/network-transport.md) and the
 [cube launch workflow](docs/building.md#cube-sample-and-runtime-package).
 The [05a handoff](docs/handoffs/05a-graphics-device.md) records 211 passing CTests

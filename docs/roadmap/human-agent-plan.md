@@ -180,8 +180,14 @@ M02d spatial interest, privacy and connection budgets is complete with
 [handoff](../handoffs/M02d-spatial-interest.md). M02e and full REQ-M02 are PASS
 under the current-machine scope: the
 [handoff](../handoffs/M02e-integrated-qualification.md) records 474 passing CPU
-CTests and protected package qualification. Assignment 08, Project and scene
-persistence, is next; it does not introduce the later terminal/editor adapters.
+CTests and protected package qualification. Assignment 08 follows the
+[persistence checkpoints](persistence-plan.md). 08a's
+[source-document codec](../source-documents.md) provides shared CPU values and
+structured errors, independently buildable without Editor/Client. Its
+[handoff](../handoffs/08a-source-documents.md) records the completed CPU/sanitizer,
+independent Tools and protected package gate. Scene loading,
+safe files and full integration remain 08b/08c/08d. Terminal/editor adapters
+retain owners 15/16; readable source does not bypass the later project owner.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and

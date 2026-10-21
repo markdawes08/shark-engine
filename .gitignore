@@ -20,6 +20,8 @@
 # Replication traces, raw payload diagnostics and local multi-process receipts use out/ or build/.
 # Interest budgets, shaped relay barriers and per-connection traces use out/ or build/.
 # Adversity relays, PID/barrier files and process resource samples use out/ or build/.
+# Source JSON dependency caches and codec qualification output use out/ or build/.
+# Authored .sharkproject/.sharkscene fixtures and format documentation stay versioned.
 /build/
 /out/
 /dist/

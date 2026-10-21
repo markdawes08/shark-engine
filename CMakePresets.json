@@ -111,6 +111,19 @@
       }
     },
     {
+      "name": "tools-debug",
+      "inherits": "base",
+      "displayName": "CPU authoring without client or editor",
+      "cacheVariables": {
+        "SHARK_BUILD_CLIENT": "OFF",
+        "SHARK_BUILD_SERVER": "OFF",
+        "SHARK_BUILD_EDITOR": "OFF",
+        "SHARK_BUILD_TOOLS": "ON",
+        "SHARK_NATIVE_WINDOW": "OFF",
+        "SHARK_NATIVE_GRAPHICS": "OFF"
+      }
+    },
+    {
       "name": "runtime-only",
       "inherits": "base",
       "displayName": "Host-native runtime boundary build",
@@ -118,7 +131,8 @@
         "CMAKE_BUILD_TYPE": "Release",
         "SHARK_BUILD_EDITOR": "OFF",
         "SHARK_BUILD_TESTS": "OFF",
-        "SHARK_BUILD_SERVER": "OFF"
+        "SHARK_BUILD_SERVER": "OFF",
+        "SHARK_BUILD_TOOLS": "OFF"
       }
     },
     {
@@ -132,7 +146,8 @@
         "SHARK_BUILD_EDITOR": "OFF",
         "SHARK_BUILD_TESTS": "OFF",
         "SHARK_SANITIZER": "none",
-        "FETCHCONTENT_FULLY_DISCONNECTED": "ON"
+        "FETCHCONTENT_FULLY_DISCONNECTED": "ON",
+        "SHARK_BUILD_TOOLS": "OFF"
       }
     },
     {
@@ -145,7 +160,8 @@
         "SHARK_BUILD_SERVER": "ON",
         "SHARK_BUILD_EDITOR": "OFF",
         "SHARK_BUILD_TESTS": "ON",
-        "SHARK_SANITIZER": "none"
+        "SHARK_SANITIZER": "none",
+        "SHARK_BUILD_TOOLS": "OFF"
       }
     },
     {
@@ -160,7 +176,8 @@
         "SHARK_BUILD_TESTS": "ON",
         "SHARK_SANITIZER": "address-undefined",
         "CMAKE_CXX_COMPILER": "clang++",
-        "CMAKE_C_COMPILER": "clang"
+        "CMAKE_C_COMPILER": "clang",
+        "SHARK_BUILD_TOOLS": "OFF"
       },
       "condition": {
         "type": "equals",
@@ -181,7 +198,8 @@
         "CMAKE_C_COMPILER": "cl",
         "SHARK_BUILD_GRAPHICS_PROBE": "ON",
         "SHARK_BUILD_EDITOR": "OFF",
-        "SHARK_BUILD_SERVER": "OFF"
+        "SHARK_BUILD_SERVER": "OFF",
+        "SHARK_BUILD_TOOLS": "OFF"
       }
     },
     {
@@ -205,7 +223,8 @@
         "CMAKE_C_COMPILER": "gcc",
         "SHARK_BUILD_GRAPHICS_PROBE": "ON",
         "SHARK_BUILD_EDITOR": "OFF",
-        "SHARK_BUILD_SERVER": "OFF"
+        "SHARK_BUILD_SERVER": "OFF",
+        "SHARK_BUILD_TOOLS": "OFF"
       }
     },
     {
@@ -274,6 +293,10 @@
     {
       "name": "graphics-linux-release",
       "configurePreset": "graphics-linux-release"
+    },
+    {
+      "name": "tools-debug",
+      "configurePreset": "tools-debug"
     }
   ],
   "testPresets": [
@@ -409,6 +432,16 @@
       },
       "environment": {
         "LD_LIBRARY_PATH": "${sourceDir}/build/graphics-linux-release/bin"
+      }
+    },
+    {
+      "name": "tools-debug",
+      "configurePreset": "tools-debug",
+      "output": {
+        "outputOnFailure": true
+      },
+      "execution": {
+        "noTestsAction": "error"
       }
     }
   ]

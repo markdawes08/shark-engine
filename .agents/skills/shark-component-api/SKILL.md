@@ -128,5 +128,10 @@ Retain all fourteen network CTest families, including `shark.core.net-adversity`
 (60 seconds) and `shark.core.net-adversity-process` (360 seconds). The
 [qualification contract](../../../docs/network-qualification.md) and
 [M02e handoff](../../../docs/handoffs/M02e-integrated-qualification.md) record
-full REQ-M02 PASS under the current-machine scope. Assignment 08, Project and
-scene persistence, is next; terminal/editor adapters retain their later owners.
+full REQ-M02 PASS under the current-machine scope. Assignment 08 follows the
+[persistence checkpoints](../../../docs/roadmap/persistence-plan.md).
+08a [source documents](../../../docs/source-documents.md) reuse the shared
+Name/Transform validators and explicit component version 1. Extend format fields,
+strict rejection policy and migration fixtures together when components gain
+persistence. The codec is CPU EngineTools only; Scene activation, file commits,
+shared command history and terminal/editor adapters retain their owners.

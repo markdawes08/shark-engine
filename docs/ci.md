@@ -269,8 +269,20 @@ checks pass against 277 unchanged frozen inputs. The new
 60-second and 360-second timeouts respectively. The
 [handoff](handoffs/M02e-integrated-qualification.md) and
 [receipt](coverage/evidence/M02e-integrated-qualification.json) retain exact
-commands, resource observations and acceptance limits. Assignment 08, Project
-and scene persistence, is next; hosted CI stays supplemental.
+commands, resource observations and acceptance limits. Assignment 08 follows the
+[persistence checkpoints](roadmap/persistence-plan.md); hosted CI stays supplemental.
+
+08a adds `shark.tools.source-documents` (CPU/unit/tooling, seed 1337, 60 seconds)
+and `shark.tooling.source-document-dependencies` (CPU/tooling/boundary, 240 seconds)
+when Tools is enabled. The first checks strict project/scene codecs, migration,
+resource bounds and shared component validation against independent fixtures.
+The second verifies the exact private JSON source and rejects graph/include
+leaks into protected targets. `tools-debug` additionally demonstrates CPU authoring
+without Editor or Client. See the [08a handoff](handoffs/08a-source-documents.md)
+for final current-machine evidence: 484 full-suite CPU CTests pass (Windows
+Debug/Release/ASan 78 each, WSL clients 71 each, WSL Servers 54 each), plus one
+focused Tools-only CTest on each OS. Protected builds/packages and public API
+audits pass. Full REQ-08 requires later scene/file gates; 08b is next.
 
 ## Locked tools and hosted-image limits
 

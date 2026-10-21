@@ -365,6 +365,12 @@ or relabel idle connections to obtain a PASS.
 
 ## Still open, without blocking this planning update
 
+Assignment 08 follows the [persistence checkpoints](persistence-plan.md).
+08a's [source formats](../source-documents.md) preserve authored IDs, hierarchy
+and an optional stable global-cell origin. They exclude live ownership epochs,
+session replicas and account/economy state. M03 remains responsible for durable
+server transactions and recovery; a readable scene codec is not that store.
+
 Combat model, world dimensions/travel speed, content/NPC workload and precise
 frame/memory/IO budgets need refinement before their owning implementation gates.
 LOCAL-MMO-1 fixes the current small test population; it does not promise final

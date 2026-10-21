@@ -53,6 +53,13 @@ The GLM exception does not authorize other public third-party
 types or presentation/authoring dependencies in Core. These additions do not
 qualify a shipping MMO package.
 
+08a's [source-document codec](../../../docs/source-documents.md) privately uses
+locked nlohmann/json in EngineTools. Protected Runtime/Server presets set
+`SHARK_BUILD_TOOLS=OFF`; verify that they neither populate JSON nor package its
+headers, authoring library or source fixtures. The JSON notice belongs with a
+future authoring distribution, not these protected packages. 08a does not add an
+authoring installer, source-file export mode or cooked game payload.
+
 Assignment 02d adds Windows/Linux graphics probe packages, documented in
 the [probe guide](../../../docs/graphics-probe.md). Use the explicit
 `graphics-windows-release` preset and `tools/package_graphics_probe.py` inputs;

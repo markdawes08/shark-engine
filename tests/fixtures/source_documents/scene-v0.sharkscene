@@ -1,0 +1,26 @@
+{
+  "format": "shark.scene",
+  "schema_version": 0,
+  "project_id": "00000000-0000-4000-8000-000000000001",
+  "id": "00000000-0000-4000-8000-000000000003",
+  "origin": {
+    "world_id": "00000000-0000-4000-8000-000000000002",
+    "cell": [-2147483648, 2147483647, 1234567890],
+    "offset": [0.125, 1023.875, 0]
+  },
+  "entities": [
+    {
+      "id": "00000000-0000-4000-8000-000000000011",
+      "parent": "00000000-0000-4000-8000-000000000010",
+      "name": "灯台 🦈",
+      "transform": {"position": [1.25, -2.5, 0], "rotation_wxyz": [0, 0, 0, 2], "scale": [-2, 3, 4]},
+      "extras": {"editor": {"locked": false}, "note": "preserve me"}
+    },
+    {
+      "id": "00000000-0000-4000-8000-000000000010",
+      "parent": null,
+      "extras": {"unknown_extension": [7, {"text": "海"}]}
+    }
+  ],
+  "extras": {"layer": "coast", "revision_note": 3}
+}

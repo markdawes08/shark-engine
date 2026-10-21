@@ -104,9 +104,19 @@ M02e adds `shark.core.net-adversity` (60 seconds, seed 1337) and
 `shark.core.net-adversity-process` (360 seconds), bringing the network prefix to
 fourteen CTest families. M02e and full REQ-M02 are PASS under the current-machine
 scope in the [handoff](../../../docs/handoffs/M02e-integrated-qualification.md);
-assignment 08, Project and scene persistence, is next. Follow the
+assignment 08 follows the [persistence checkpoints](../../../docs/roadmap/persistence-plan.md). Follow the
 [qualification contract](../../../docs/network-qualification.md): semantic faults
 operate on decoded authenticated state, while the bounded relay preserves TLS
 byte order. Record actual injected events, convergence, cleanup, retained vector
 capacity and separate process RSS/handle samples. Refresh all earlier network
 families and protected packages against the same frozen source inputs.
+
+08a adds CPU EngineTools source-document tests and a private JSON dependency.
+The `tools-debug` preset must configure/build with Client/Editor OFF; inspect its
+inventory before selecting `shark.tools.source-documents` (60 seconds, seed 1337).
+`shark.tooling.source-document-dependencies` has a 240-second timeout. Offline
+Tools builds additionally supply the exact `SHARK_JSON_ARCHIVE`; protected
+Runtime/Server configurations keep Tools OFF and must not populate JSON. Compile
+the documented public example without JSON include paths. See the
+[source contract](../../../docs/source-documents.md) and
+[08a handoff](../../../docs/handoffs/08a-source-documents.md).

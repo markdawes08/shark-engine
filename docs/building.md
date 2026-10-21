@@ -129,7 +129,9 @@ handle/descriptor samples. Follow the [qualification contract](network-qualifica
 M02e and full REQ-M02 are PASS under the current-machine scope: the
 [handoff](handoffs/M02e-integrated-qualification.md) and
 [receipt](coverage/evidence/M02e-integrated-qualification.json) record 474 passing
-CPU CTests and protected package checks. Assignment 08 is next.
+CPU CTests and protected package checks. Assignment 08 follows the
+[persistence checkpoints](roadmap/persistence-plan.md); see the
+[08a handoff](handoffs/08a-source-documents.md) for source-codec qualification.
 Check all fourteen network families
 noninteractively after a native build:
 
@@ -339,6 +341,8 @@ scene-runner/export commands will be added with their owning increments.
 | `shark.tooling.server-closure`, `shark.tooling.scene-dependencies` | `cpu`, `tooling`, `boundary`, `server` |
 | `shark.boundary.headers` | `cpu`, `tooling`, `boundary`, `server` |
 | `shark.tooling.headless-environment` | `cpu`, `tooling`, `server` |
+| `shark.tools.source-documents` (Tools enabled) | `cpu`, `unit`, `tooling` |
+| `shark.tooling.source-document-dependencies` (Tools enabled) | `cpu`, `tooling`, `boundary` |
 | `shark.tooling.graphics-package`, `shark.tooling.graphics-package-linux` | `cpu`, `tooling`, `boundary` |
 
 For a focused boundary check, use `ctest --preset windows-debug -L boundary`.
@@ -380,6 +384,35 @@ regular files remain exact archive bytes. Eight redistribution notices under
 [ADR 0011](architecture/0011-network-foundation.md) and the
 [network contract](network-transport.md). The test-only `NetworkProbe` target
 does not add network command-line flags to Runtime or Server.
+
+## CPU source-document tooling
+
+08a adds a pure EngineTools project/scene codec. `SHARK_BUILD_TOOLS` can be enabled
+without Editor or Client; Editor requires Tools. The `tools-debug` preset has no
+client, editor or server executable, display or GPU dependency:
+
+```text
+cmake --preset tools-debug
+cmake --build --preset tools-debug --parallel 2
+ctest --preset tools-debug --show-only
+ctest --preset tools-debug -R "^shark.tools.source-documents$" --output-on-failure
+```
+
+On Windows use the x64 developer environment or `tools/windows_dev.ps1` wrapper.
+Normal editor-enabled presets enable Tools. Runtime-only, Server and graphics
+probe presets explicitly disable it. The separate `SourceDocumentTests` target
+uses Catch2, seed 1337 and a 60-second CTest timeout. Fixtures are authored source
+under `tests/fixtures/source_documents/`; they never enter packages.
+
+Tools privately uses nlohmann/json 3.12.0 from the exact release archive in the
+dependency lock. Ordinary Tools builds can fetch that archive. Offline Tools
+builds additionally pass `-DSHARK_JSON_ARCHIVE=/absolute/path/json-3.12.0.tar.xz`
+or reuse its verified cache. `tools/source_document_dependency.py` verifies every
+populated file against that archive; arbitrary source overrides are rejected.
+No upstream CMake, examples or tests execute. Core/Server/Runtime do not require
+the JSON archive or headers. This codec does not yet load or save files, activate
+scenes or provide terminal commands; see the [format contract](source-documents.md)
+and [08 checkpoint plan](roadmap/persistence-plan.md).
 
 ## Opt-in graphics package builds
 

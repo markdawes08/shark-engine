@@ -254,3 +254,25 @@ receipt checks and protected package qualification. These are local network
 foundation results; the full LOCAL-MMO-1 workload, durable gameplay and MMO
 release qualification retain their later owners. FeatureWorld and MMOWorld
 remain planned for assignments 10 and M09.
+
+08a adds `tools.source-documents`, mapped to `shark.tools.source-documents`
+(60 seconds, seed 1337) and independently authored version-0/version-1 project
+and scene fixtures. Its [source contract](../source-documents.md) specifies the
+strict bounded parser, in-memory legacy migration, stable references, shared
+component validation, canonical extras and deterministic version-1 encoder.
+Tests cover explicit expected migrated values, Unicode and world-cell endpoints,
+malformed input, duplicate keys/IDs, unknown schemas, hierarchy rejection and
+resource limits. The separate EngineTools/Catch2 target supports CPU authoring
+without Editor, Client or a graphics device; public values expose no JSON library.
+
+08a is PASS under the current-machine scope: 484 full-suite CPU CTests and two
+additional standalone Tools tests pass, with protected builds/packages and public
+API audits. The [handoff](../handoffs/08a-source-documents.md) and
+[receipt](evidence/08a-source-documents.json) retain exact evidence and limits.
+Full `REQ-08` remains `NOT_RUN` until the
+[persistence checkpoints](../roadmap/persistence-plan.md) close active-scene
+loading and cross-document resolution (08b), atomic/conflict-aware filesystem
+operations (08c), and integrated qualification (08d). No game-authoring command,
+Lua binding or FeatureWorld case is fabricated: FeatureWorld/Persistence connects
+in 10, the shared authoring services and adapters retain 09/15/16, and live
+durable gameplay state retains M03.

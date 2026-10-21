@@ -61,6 +61,12 @@ they do not impose player-visible zone transitions.
 | SharkCLI | Executable, introduced in 14/15 | EngineTools; export first, then CLI and JSON-RPC stdio authoring host |
 | Tests | Test target(s) under one CTest suite | Split engine-only tests from authoring integration tests; one primary C++ framework |
 
+08a makes `SHARK_BUILD_TOOLS` independently selectable. The `tools-debug` preset
+builds CPU authoring and tests without Editor, Client, a display or GPU. EngineTools
+publicly consumes Core's owned values and privately consumes the locked JSON
+parser; its public source-document header exposes neither JSON nor native types.
+See the [source contract](../source-documents.md).
+
 There is no EngineCore-, EngineClient- or Engine-to-EngineTools dependency, even through a shared utility,
 generated header, static initializer, transitive target, or runtime plugin.
 Runtime must neither link nor load Editor, EngineTools, ImGui, ImGuizmo, cgltf,

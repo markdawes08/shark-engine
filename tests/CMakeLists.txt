@@ -38,6 +38,17 @@ target_compile_definitions(Tests PRIVATE
 shark_configure_target(Tests)
 shark_classify_target(Tests test)
 
+if(TARGET EngineTools)
+    add_executable(SourceDocumentTests source_document_tests.cpp)
+    target_link_libraries(SourceDocumentTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_compile_definitions(SourceDocumentTests PRIVATE
+        SHARK_SOURCE_FIXTURE_DIRECTORY="${PROJECT_SOURCE_DIR}/tests/fixtures/source_documents")
+    shark_configure_target(SourceDocumentTests)
+    shark_classify_target(SourceDocumentTests test)
+    add_test(NAME shark.tools.source-documents COMMAND SourceDocumentTests "[source-documents]" --rng-seed 1337)
+    set_tests_properties(shark.tools.source-documents PROPERTIES LABELS "cpu;unit;tooling" TIMEOUT 60)
+endif()
+
 # Explicit registration avoids executing a sanitizer binary during the build.
 add_test(NAME shark.unit COMMAND Tests "[bootstrap]" --rng-seed 1337)
 set_tests_properties(shark.unit PROPERTIES LABELS "cpu;unit" TIMEOUT 10)
@@ -460,6 +471,17 @@ add_test(NAME shark.tooling.scene-dependencies
         --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}" -v)
 set_tests_properties(shark.tooling.scene-dependencies PROPERTIES LABELS "cpu;tooling;boundary;server" TIMEOUT 240
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+
+if(TARGET EngineTools)
+    add_test(NAME shark.tooling.source-document-dependencies
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_source_document_dependencies.py"
+            --cmake "${CMAKE_COMMAND}" --ninja "${CMAKE_MAKE_PROGRAM}"
+            --compiler "${CMAKE_CXX_COMPILER}" --c-compiler "${CMAKE_C_COMPILER}"
+            --entt-archive "${SHARK_EnTT_ARCHIVE}" --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}"
+            --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}" --json-archive "${SHARK_JSON_ARCHIVE_INPUT}" -v)
+    set_tests_properties(shark.tooling.source-document-dependencies PROPERTIES
+        LABELS "cpu;tooling;boundary" TIMEOUT 240 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+endif()
 
 add_test(NAME shark.tooling.graphics-tools
     COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_graphics_tools.py" -v)

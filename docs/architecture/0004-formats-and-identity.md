@@ -19,6 +19,13 @@ and compatibility rules; field schemas and fixtures land in 08, 21 and 26.
 Lua source is UTF-8 `.lua`; project settings declare the Lua API version separately.
 Human formatting is not identity and is not a cache key by itself.
 
+08a implements the project/scene version-1 fields and tested version-0 migration
+in the [source-document contract](../source-documents.md). The CPU EngineTools
+codec returns owned validated values and readable text. It does not activate a
+Scene or access files; those gates follow the [08 checkpoint plan](../roadmap/persistence-plan.md).
+Authored IDs and global-cell origins remain distinct from live player records,
+region authority, session replicas and database versions.
+
 | Layer | Contract | Owner |
 | --- | --- | --- |
 | Authoring source | IDs, relative source references, component schema versions; readable and durable | 08 |

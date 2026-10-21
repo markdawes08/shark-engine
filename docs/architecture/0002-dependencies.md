@@ -6,6 +6,22 @@ Scope: Assignment 00. Assignment 01 implements the build and lock mechanism; lat
 
 ## Decision
 
+08a integrates **nlohmann/json 3.12.0** privately in EngineTools. The official
+release is pinned to commit `55f93686c01528224f448c19128836e7df245f72` and
+`json.tar.xz` SHA-256
+`42f6e95cad6ec532fd372391373363b62a14af6d771056dbfc86160e6dfff7aa`.
+The MIT `LICENSE.MIT`, release archive and CMake integration were reviewed on
+2026-10-21. [Official release](https://github.com/nlohmann/json/releases/tag/v3.12.0),
+[official CMake guidance](https://json.nlohmann.me/integration/cmake/).
+`SourceDocumentDependencies.cmake` verifies all 54 regular archive files and
+creates the SYSTEM header interface without executing upstream CMake or fetching
+transitive dependencies. Implicit conversions and legacy discarded-value
+comparison are disabled. No patch is applied. JSON is authoring-only and is
+absent from Core, Runtime and Server configure, compile and package closures.
+`SHARK_JSON_ARCHIVE` supplies the exact offline archive when Tools is enabled;
+protected builds continue to require only their existing Core archives. Source
+parsing and serialization use [explicit bounded rules](../source-documents.md).
+
 07a integrates **EnTT 4.0.0** in EngineCore's scene implementation, pinned to
 commit `85c6bba014049b5de8fad49d25424df2f1f6a8c1` and archive SHA-256
 `1160aaa50e9f28dc0e250079d6bc507e1566a9ee6db5f4f968a29d357ef17a00` in the

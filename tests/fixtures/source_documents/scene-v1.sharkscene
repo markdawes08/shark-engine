@@ -1,0 +1,29 @@
+{
+  "format": "shark.scene",
+  "schema_version": 1,
+  "project_id": "00000000-0000-4000-8000-000000000001",
+  "scene_id": "00000000-0000-4000-8000-000000000003",
+  "world_origin": {
+    "world_id": "00000000-0000-4000-8000-000000000002",
+    "cell": [-2147483648, 2147483647, 1234567890],
+    "offset": [0.125, 1023.875, 0]
+  },
+  "entities": [
+    {
+      "entity_id": "00000000-0000-4000-8000-000000000011",
+      "parent": "00000000-0000-4000-8000-000000000010",
+      "components": {
+        "shark.name": {"schema_version": 1, "value": "灯台 🦈"},
+        "shark.transform": {"schema_version": 1, "translation": [1.25, -2.5, 0], "rotation": [0, 0, 2, 0], "scale": [-2, 3, 4]}
+      },
+      "extras": {"note": "preserve me", "editor": {"locked": false}}
+    },
+    {
+      "entity_id": "00000000-0000-4000-8000-000000000010",
+      "parent": null,
+      "components": {"shark.name": {"schema_version": 1}, "shark.transform": {"schema_version": 1}},
+      "extras": {"unknown_extension": [7, {"text": "海"}]}
+    }
+  ],
+  "extras": {"revision_note": 3, "layer": "coast"}
+}

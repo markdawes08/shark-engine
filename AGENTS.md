@@ -55,7 +55,14 @@ bounded revisioned CPU inspection through the same scene owner. Follow the
 **07c and full REQ-07 are complete under the current-machine scope.** The
 [07c receipt](docs/coverage/evidence/07c-schema-inspection.json) records 376 passing
 CPU CTests with no failures/skips and protected dependency/package qualification.
-The next assignment is **08, Project and scene persistence**.
+The current assignment is **08, Project and scene persistence**, following the
+[four checkpoints](docs/roadmap/persistence-plan.md). **08a is complete under the
+current-machine scope:** 484 CPU CTests, standalone Tools tests and protected
+package checks pass. Follow the [source-document contract](docs/source-documents.md),
+[handoff](docs/handoffs/08a-source-documents.md) and
+[receipt](docs/coverage/evidence/08a-source-documents.json).
+**08b, Scene loading and transactional activation, is next.** Safe files/conflicts
+(08c) and integration (08d) follow; full REQ-08 remains NOT_RUN.
 The completed [five network checkpoints](docs/roadmap/network-plan.md) retain
 their scoped historical evidence below.
 **M02a is complete under the current-machine scope.** The [TLS/wire foundation](docs/network-transport.md)
@@ -131,7 +138,7 @@ TLS and owned sessions; M02c adds explicitly selected public pose replication an
 bounded resynchronization. M02d adds qualified spatial interest, recipient privacy
 and connection budgets. M02e qualifies integrated adversity and retained-resource
 bounds under the [network qualification contract](docs/network-qualification.md).
-Project/scene persistence is next in 08; live durable state, simulation and
+Project/scene persistence follows the 08 checkpoints; live durable state, simulation and
 streaming retain their later owners.
 
 Keep all remaining gates achievable on this PC: local processes, loopback or
@@ -249,12 +256,16 @@ Server links only EngineCore. EnTT is a private header-only Core dependency;
 centrally configured GLM supplies public CPU math through SharkMath and
 `shark/math.hpp`. M02a privately links the exact Mbed TLS/TF-PSA static graph;
 Core/Server now require a C compiler as well as C++. Public headers contain no TLS
-or native socket types. Offline builds require all three locked archives described in
+or native socket types. Offline Core builds require all three locked archives described in
 [building](docs/building.md). Server/Core exclude window/GPU/audio/authoring
 libraries at configure/download, link and package time. `server-only` builds a
 Release server with tests and dependency fetching disabled; `server-debug` and
 `server-asan-ubsan` exercise actual server tests. `runtime-only` is a client preset.
 EngineTools depends on EngineCore; Editor depends on EngineTools and EngineClient;
+08a independently gates Tools with `SHARK_BUILD_TOOLS`; `tools-debug` builds CPU
+authoring without Client/Editor. Its nlohmann/json parser is private, exactly
+locked and excluded from Core/Server/Runtime; offline Tools additionally requires
+`SHARK_JSON_ARCHIVE`. The value codec does not activate a Scene or access files.
 Runtime depends on Engine. Runtime must not link/load Editor, EngineTools, ImGui,
 ImGuizmo, cgltf, source image/audio decoders or offline source shader compilers.
 EngineTools may never be reached through an Engine transitive

@@ -1,0 +1,13 @@
+{
+  "format": "shark.project",
+  "schema_version": 0,
+  "id": "00000000-0000-4000-8000-000000000001",
+  "world_id": "00000000-0000-4000-8000-000000000002",
+  "name": "Shark 海岸",
+  "start_scene": "00000000-0000-4000-8000-000000000003",
+  "scenes": [
+    {"id": "00000000-0000-4000-8000-000000000003", "path": "scenes/海岸.sharkscene"},
+    {"id": "00000000-0000-4000-8000-000000000004", "path": "scenes/interior.sharkscene"}
+  ],
+  "extras": {"tags": ["coast", "海"], "editor": {"grid": true}, "nullable": null}
+}
