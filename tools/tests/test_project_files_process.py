@@ -59,7 +59,11 @@ def main() -> int:
             after_root.mkdir()
             run("expected-after", "seed-new", after_root)
             after = (after_root / "scene.sharkscene").read_bytes()
-            check("distinct-valid-complete-candidates", before != after)
+            recovered_root = work / "expected-recovered"
+            recovered_root.mkdir()
+            run("expected-recovered", "seed-recovered", recovered_root)
+            recovered = (recovered_root / "scene.sharkscene").read_bytes()
+            check("distinct-valid-complete-candidates", len({before, after, recovered}) == 3)
 
             for phase in ("staged", "written", "flushed", "before_publish", "published"):
                 root = work / phase
@@ -73,8 +77,13 @@ def main() -> int:
                 stages = {path.name: path.read_bytes() for path in root.glob(".shark-stage-*")}
                 check(f"{phase}.stage-count", len(stages) == (0 if phase == "published" else 1),
                       count=len(stages))
-                run(f"{phase}.reopen", "inspect", root)
+                run(f"{phase}.reopen", "inspect", root,
+                    "After" if phase == "published" else "Before")
                 run(f"{phase}.recovery", "recover", root)
+                recovered_actual = (root / "scene.sharkscene").read_bytes()
+                check(f"{phase}.recovery-whole-file", recovered_actual == recovered,
+                      sha256=hashlib.sha256(recovered_actual).hexdigest())
+                run(f"{phase}.recovery-reopen", "inspect", root, "Recovered")
                 retained = {path.name: path.read_bytes() for path in root.glob(".shark-stage-*")}
                 check(f"{phase}.foreign-stage-preserved", retained == stages,
                       artifacts={name: hashlib.sha256(data).hexdigest() for name, data in retained.items()})
@@ -103,9 +112,9 @@ def main() -> int:
                 for stream in (holder.stdin, holder.stdout, holder.stderr):
                     if stream is not None:
                         stream.close()
-            run("lock.open-after-release", "inspect", baseline)
+            run("lock.open-after-release", "inspect", baseline, "Before")
             run("lock.abrupt-owner-exit", "abort-lock", baseline, expected=73)
-            run("lock.open-after-abrupt-exit", "inspect", baseline)
+            run("lock.open-after-abrupt-exit", "inspect", baseline, "Before")
     except Exception as failure:
         error = str(failure)
     receipt = {"status": "FAIL" if error else "PASS", "rows": rows, "error": error,

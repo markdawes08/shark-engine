@@ -73,7 +73,11 @@ through the same Core owner. Its [handoff](../handoffs/08b-scene-activation.md) 
 the completed local gate. 08c [safe project files and conflicts](../project-files.md)
 are qualified under the current-machine scope; the
 [handoff](../handoffs/08c-project-files.md) records the completed gate.
-08d integrated qualification is next; full REQ-08 remains NOT_RUN.
+08d and full REQ-08 are PASS under the current-machine scope: the
+[handoff](../handoffs/08d-integrated-qualification.md) and
+[receipt](../coverage/evidence/08d-integrated-qualification.json) record
+504 CPU CTests, ten additional standalone Tools checks, public API examples
+and protected packages. M03 durable characters and transactional state is next.
 General authoring transactions, terminal
 adapters and editor UI retain their later owners;
 schema IDs do not establish file or gameplay-wire formats. The current-machine

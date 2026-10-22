@@ -64,9 +64,10 @@ as additive schema-3 fields. REQ-02 is PASS for the amended local gate, with
 explicit scope and SHA-256-pinned references to the unchanged 02d receipts.
 The validator verifies those references and retained bytes; it does not rerun
 graphics or interpret an old aggregate NOT_RUN as a universal PASS.
-`current_assignment: 08` follows the completed
-[five network checkpoints](../roadmap/network-plan.md). Project/scene
-checkpoints 08a, 08b and 08c are complete; 08d integrated qualification is next.
+`current_assignment: M03` follows the completed
+[five network checkpoints](../roadmap/network-plan.md) and
+[four persistence checkpoints](../roadmap/persistence-plan.md). Project/scene
+checkpoints 08a-08d and full REQ-08 are PASS under the current-machine scope.
 The `core.network-foundation` feature maps M02a's bounded TLS/wire/fault APIs to
 three unit families and a real-process encrypted fixture, plus exact dependency
 and package checks. M02a is PASS: the [handoff](../handoffs/M02a-transport-wire.md)
@@ -109,8 +110,9 @@ has 9 cases/654 assertions and query coverage 19 cases/3,916 assertions. Protect
 Runtime/Server builds, source/link/license closure and fresh isolated package
 checks pass; all 221 qualification source inputs were unchanged in that record.
 M02a-M02e and full REQ-M02 are PASS under the current-machine scope.
-Assignment 08, Project and scene persistence, is active: 08a/08b/08c are complete
-and 08d is next. FeatureWorld integration remains assignment 10.
+Assignment 08, Project and scene persistence, is complete: 08a-08d and full
+REQ-08 are PASS. M03 durable characters and transactional state is next.
+FeatureWorld integration remains assignment 10.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
 NOT_RUN. Existing presentation/device fixtures and their earlier handoffs retain
@@ -269,9 +271,9 @@ without Editor, Client or a graphics device; public values expose no JSON librar
 additional standalone Tools tests pass, with protected builds/packages and public
 API audits. The [handoff](../handoffs/08a-source-documents.md) and
 [receipt](evidence/08a-source-documents.json) retain exact evidence and limits.
-Full `REQ-08` remains `NOT_RUN` until the remaining
-[integrated persistence checkpoint](../roadmap/persistence-plan.md), 08d, passes;
-08c's file gate is now complete below. No game-authoring command,
+Full `REQ-08` subsequently passes the
+[integrated persistence checkpoint](../roadmap/persistence-plan.md), 08d,
+recorded below. No game-authoring command,
 Lua binding or FeatureWorld case is fabricated: FeatureWorld/Persistence connects
 in 10, the shared authoring services and adapters retain 09/15/16, and live
 durable gameplay state retains M03.
@@ -291,9 +293,9 @@ additional focused CTests. The new family has 23 cases and 26,624 assertions;
 packages and public API audits pass. The
 [08b handoff](../handoffs/08b-scene-activation.md) and
 [receipt](evidence/08b-scene-activation.json) retain exact evidence and limits.
-08c safe files and conflicts is complete below. General authoring commands and Lua
-registries remain unchanged; FeatureWorld integration stays with 10, and
-full REQ-08 remains NOT_RUN until 08d also passes.
+08c safe files and conflicts and 08d integrated qualification are complete
+below. General authoring commands and Lua registries remain unchanged;
+FeatureWorld integration stays with 10.
 
 08c adds `tools.project-files`, mapped to `shark.tools.project-files` and
 `shark.tools.project-files-process` (90 seconds each; Catch2 seed 1337). The
@@ -312,5 +314,23 @@ checks differ. Protected packages, public/private API audits and all seven
 process receipts pass against 298 unchanged source/build/test inputs and 19
 qualification helpers. The [handoff](../handoffs/08c-project-files.md) and
 [receipt](evidence/08c-project-files.json) retain exact commands and evidence.
-08d integrated qualification is next; full REQ-08 remains NOT_RUN. No command,
-Lua or FeatureWorld coverage is fabricated before those owners land.
+08d subsequently closes full REQ-08 below. No command, Lua or FeatureWorld
+coverage is fabricated before those owners land.
+
+08d's `shark.tools.persistence-integration` (CPU/tooling/integration,
+90 seconds, seed 1337) adds three cases with 1,543 assertions spanning
+legacy files, migration, live Scene edits, save/reopen, nine invalid-source
+variants and explicit external-edit reconciliation. The file family now
+has 31 cases; seven process receipts each pass 55 checks, including exact
+reactivation and recovery after interruption of an authored save.
+
+**08d and full REQ-08 are PASS under the current-machine scope:** all 504
+full-suite CPU CTests pass without failures or skips (Windows
+Debug/Release/ASan 82 each, WSL clients 75 each and WSL Servers 54 each).
+Standalone Tools builds add five passes per OS. All three public C++
+examples pass 27 checks; protected builds, isolated packages and API audits
+pass against 299 unchanged inputs and 18 helpers. The
+[handoff](../handoffs/08d-integrated-qualification.md) and
+[receipt](evidence/08d-integrated-qualification.json) retain exact evidence,
+including the corrected final file-case inventory. M03 is next; source
+publication does not establish live player/economy durability.

@@ -194,9 +194,14 @@ sanitizer and protected package gate.
 native sibling publication and revision-safe save/reload through the same owner.
 Its [handoff](../handoffs/08c-project-files.md) records completed current-machine
 CPU/sanitizer, interruption, package and public API qualification.
-Its storage lock is distinct from the later shared human/agent project owner;
-full integration remains 08d. Terminal/editor adapters
-retain owners 15/16; readable source does not bypass the later project owner.
+08d and full REQ-08 are PASS under the current-machine scope: the
+[handoff](../handoffs/08d-integrated-qualification.md) records 504 CPU CTests,
+ten additional standalone Tools checks, protected packages and all three
+public API examples. Integrated external-edit/reload fixtures preserve
+owned snapshots from both authors before explicit reconciliation. M03 is
+next. The storage lock remains distinct from the later shared human/agent
+project owner. Terminal/editor adapters retain owners 15/16; readable
+source does not bypass that owner or create shared command history.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
 [frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and

@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "08",
+  "current_assignment": "M03",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -160,7 +160,7 @@
         "File saves and scoped text writes detect changed on-disk revisions/digests and reject stale overwrites; external-edit, failed-save and subsequent reload fixtures preserve human and agent work."
       ],
       "planned_fixture": "ProjectSceneRoundTrip, SceneMigrationV1, FutureVersionRejection, InterruptedSave and ProjectRootEscape fixtures; FeatureWorld/Persistence provides the representative authored hierarchy.",
-      "verification": {"status": "NOT_RUN", "reason": "08a is PASS under the current-machine scope. EngineTools provides bounded strict UTF-8 JSON decoding, explicit version-0 migration, stable authored identity and hierarchy/reference validation, Core Name/Transform validation, canonical extras and deterministic revalidated version-1 encoding. All 484 full-suite CPU CTests pass without failures/skips: Windows Debug/Release/ASan 78 each, WSL clients 71 each and WSL Servers 54 each. Independent CPU Tools builds each add one focused CTest; the codec has 28 cases and 10,604 assertions. Protected builds/packages, private dependency and public API audits pass against 288 unchanged source/build/test/fixture inputs. Evidence: docs/coverage/evidence/08a-source-documents.json and docs/handoffs/08a-source-documents.md. Implementation maps to shark.tools.source-documents and independently authored legacy/current fixtures; see docs/source-documents.md and docs/roadmap/persistence-plan.md. 08b is also PASS under the current-machine scope. EngineTools AuthoredScene resolves project/catalog/world references, validates complete inactive candidates including composed transforms, captures revision-consistent owned source values and preserves unsaved active state on failed activation. Explicit replacement has dirty/revision/pending/visit/thread guards, incarnation-bound metadata and fresh-instance handle invalidation. All 489 full-suite CPU CTests pass without failures/skips: Windows Debug/Release/ASan 79 each, WSL clients 72 each and WSL Servers 54 each. Independent CPU Tools builds each add two focused CTests; the new family has 23 cases and 26,624 assertions. Protected builds/packages and public API audits pass against 291 unchanged source/build/test/fixture inputs. Evidence: docs/coverage/evidence/08b-scene-activation.json and docs/handoffs/08b-scene-activation.md; contract: docs/authored-scenes.md; implemented fixture: shark.tools.authored-scene. 08c implements typed project file I/O with root/path-bound exact-content revisions, native containment and alias checks, exclusive cooperating ownership, sibling staging and explicit committed durability outcomes. Save/reload reuse AuthoredScene with dirty/revision protection. 08c is PASS under the current-machine scope: 499 full-suite CPU CTests pass without failures/skips (Windows Debug/Release/ASan 81 each, WSL clients 74 each and WSL Servers 54 each), plus four focused standalone Tools tests per OS. The file family has 30 cases with 1,832 Windows/1,830 Linux assertions; seven process receipts each pass 44 checks including native locking, five interruption phases, complete-file recovery and orphan preservation. Protected packages, public/private API audits and all 298 frozen source/build/test inputs with 19 helpers pass unchanged. Evidence: docs/coverage/evidence/08c-project-files.json and docs/handoffs/08c-project-files.md; contract: docs/project-files.md. Full REQ-08 remains NOT_RUN until 08d integrated qualification passes. No source reader is added to Core/Runtime/Server, and authored documents do not implement M03 live durable state."}
+      "verification": {"status": "PASS", "reason": "08a is PASS under the current-machine scope. EngineTools provides bounded strict UTF-8 JSON decoding, explicit version-0 migration, stable authored identity and hierarchy/reference validation, Core Name/Transform validation, canonical extras and deterministic revalidated version-1 encoding. All 484 full-suite CPU CTests pass without failures/skips: Windows Debug/Release/ASan 78 each, WSL clients 71 each and WSL Servers 54 each. Independent CPU Tools builds each add one focused CTest; the codec has 28 cases and 10,604 assertions. Protected builds/packages, private dependency and public API audits pass against 288 unchanged source/build/test/fixture inputs. Evidence: docs/coverage/evidence/08a-source-documents.json and docs/handoffs/08a-source-documents.md. Implementation maps to shark.tools.source-documents and independently authored legacy/current fixtures; see docs/source-documents.md and docs/roadmap/persistence-plan.md. 08b is also PASS under the current-machine scope. EngineTools AuthoredScene resolves project/catalog/world references, validates complete inactive candidates including composed transforms, captures revision-consistent owned source values and preserves unsaved active state on failed activation. Explicit replacement has dirty/revision/pending/visit/thread guards, incarnation-bound metadata and fresh-instance handle invalidation. All 489 full-suite CPU CTests pass without failures/skips: Windows Debug/Release/ASan 79 each, WSL clients 72 each and WSL Servers 54 each. Independent CPU Tools builds each add two focused CTests; the new family has 23 cases and 26,624 assertions. Protected builds/packages and public API audits pass against 291 unchanged source/build/test/fixture inputs. Evidence: docs/coverage/evidence/08b-scene-activation.json and docs/handoffs/08b-scene-activation.md; contract: docs/authored-scenes.md; implemented fixture: shark.tools.authored-scene. 08c implements typed project file I/O with root/path-bound exact-content revisions, native containment and alias checks, exclusive cooperating ownership, sibling staging and explicit committed durability outcomes. Save/reload reuse AuthoredScene with dirty/revision protection. 08c is PASS under the current-machine scope: 499 full-suite CPU CTests pass without failures/skips (Windows Debug/Release/ASan 81 each, WSL clients 74 each and WSL Servers 54 each), plus four focused standalone Tools tests per OS. The file family has 30 cases with 1,832 Windows/1,830 Linux assertions; seven process receipts each pass 44 checks including native locking, five interruption phases, complete-file recovery and orphan preservation. Protected packages, public/private API audits and all 298 frozen source/build/test inputs with 19 helpers pass unchanged. Evidence: docs/coverage/evidence/08c-project-files.json and docs/handoffs/08c-project-files.md; contract: docs/project-files.md. 08d and full REQ-08 are PASS under the current-machine scope. Integrated native file reads, legacy migration, Scene activation, edits, explicit saves, reopen and external-edit reconciliation preserve stable IDs, hierarchy, world/cell identity, metadata and unsaved work. All 504 full-suite CPU CTests pass without failures/skips (Windows Debug/Release/ASan 82 each, WSL clients 75 each and WSL Servers 54 each); standalone Tools builds add five focused tests per OS, ten separately counted passes. The integration family has 3 cases and 1,543 assertions, the file family has 31 cases, and all seven process receipts pass 55 checks including interrupted authored save, complete reactivation and explicit recovery saves. All three public C++ examples pass 27 checks, with protected Runtime/Server builds, isolated packages and dependency/API audits passing against 299 unchanged frozen source/build/test inputs and 18 helpers. Evidence: docs/coverage/evidence/08d-integrated-qualification.json and docs/handoffs/08d-integrated-qualification.md. M03 is next. No source reader is added to Core/Runtime/Server, and authored documents do not implement M03 live durable state."}
     },
     {
       "id": "REQ-09",
@@ -812,28 +812,28 @@
         "id": "tools.project-files",
         "name": "Bounded native project files with exact-content conflicts and explicit publication outcomes",
         "requirement_ids": ["REQ-08"],
-        "test_ids": ["shark.tools.project-files", "shark.tools.project-files-process"],
-        "test_sources": ["tests/project_files_tests.cpp", "tools/tests/test_project_files_process.py"],
+        "test_ids": ["shark.tools.project-files", "shark.tools.project-files-process", "shark.tools.persistence-integration"],
+        "test_sources": ["tests/project_files_tests.cpp", "tools/tests/test_project_files_process.py", "tests/persistence_integration_tests.cpp"],
         "fixtures": ["tests/project_files_process.cpp", "docs/project-files.md"],
-        "fixture_reason": "Public CPU fixtures exercise typed project/scene I/O, root/path-bound exact raw revisions, same-size and same-timestamp external edits, content ABA, create-only writes, catalog collisions, Unicode and aliases, bounded malformed input, dirty-safe reload and revision-safe saved baselines. Native hooks inject prepublication failures and postpublication durability limits; real child processes prove exclusive ownership and abrupt interruption outcomes at each stage without arbitrary sleeps. Orphan stages remain unpublished. The service reuses source and Scene validators through EngineTools' existing Core dependency, without adding source readers to Core/Runtime/Server or requiring a display. Qualification is recorded separately; full integration remains08d, history09, FeatureWorld/Persistence10 and adapters15/16. Per-file authoring publication is not M03 live durable state."
+        "fixture_reason": "Public CPU fixtures exercise typed project/scene I/O, root/path-bound exact raw revisions, same-size and same-timestamp external edits, content ABA, create-only writes, catalog collisions, Unicode and aliases, bounded malformed input, dirty-safe reload and revision-safe saved baselines. Native hooks inject prepublication failures through authored saves and postpublication durability limits; real child processes interrupt save_scene at five phases, activate the exact expected scene, recover through another authored save and reopen it. Complete-file hashes, exclusive ownership and unchanged orphan stages remain checked without arbitrary sleeps. The integrated fixture connects independently authored legacy files, migration, capture, explicit saves and external-edit resolution through the public services. EngineTools reuses Core validation without adding source readers to Core/Runtime/Server or requiring a display. FeatureWorld/Persistence attaches in 10, history remains 09 and adapters 15/16. Per-file authoring publication is not M03 live durable state."
       },
       {
         "id": "tools.authored-scene",
         "name": "Revision-consistent authored Scene capture and transactional activation",
         "requirement_ids": ["REQ-08"],
-        "test_ids": ["shark.tools.authored-scene"],
-        "test_sources": ["tests/authored_scene_tests.cpp"],
+        "test_ids": ["shark.tools.authored-scene", "shark.tools.persistence-integration"],
+        "test_sources": ["tests/authored_scene_tests.cpp", "tests/persistence_integration_tests.cpp"],
         "fixtures": ["tests/authored_scene_tests.cpp", "docs/authored-scenes.md"],
-        "fixture_reason": "Independent CPU fixtures exercise source order and incarnation-bound extras, forward hierarchy and composed world transforms, complete and sparse 4096-entity capture, depth-256 construction, cross-document project/catalog/world references, owned snapshots, dirty/no-op/revision/pending/visit/thread/closed guards and explicit discard. Invalid candidates preserve the active registry, source metadata and unsaved state; successful identical-source reload invalidates old handles/references/cursors. The same EngineTools service reuses Core validation without live gameplay authority, filesystem I/O, editor or device requirements. File containment/atomic saves/conflicts retain 08c, full integration 08d, history 09, FeatureWorld/Persistence 10 and adapters 15/16. Qualification is recorded separately from implemented coverage."
+        "fixture_reason": "Independent CPU fixtures exercise source order and incarnation-bound extras, forward hierarchy and composed world transforms, complete and sparse 4096-entity capture, depth-256 construction, cross-document project/catalog/world references, owned snapshots, dirty/no-op/revision/pending/visit/thread/closed guards and explicit discard. Invalid candidates preserve the active registry, source metadata and unsaved state; successful identical-source reload invalidates old handles/references/cursors. Integrated fixtures connect this owner to native files, explicit legacy migration saves and conflict recovery using the same public services. Core validation grants no live gameplay authority and needs no editor or device. FeatureWorld/Persistence attaches in 10; shared history and adapters retain 09/15/16. Qualification is recorded separately from implemented coverage."
       },
       {
         "id": "tools.source-documents",
         "name": "Bounded project and scene source values with explicit legacy migration",
         "requirement_ids": ["REQ-08"],
-        "test_ids": ["shark.tools.source-documents"],
-        "test_sources": ["tests/source_document_tests.cpp"],
+        "test_ids": ["shark.tools.source-documents", "shark.tools.persistence-integration"],
+        "test_sources": ["tests/source_document_tests.cpp", "tests/persistence_integration_tests.cpp"],
         "fixtures": ["tests/fixtures/source_documents/project-v0.sharkproject", "tests/fixtures/source_documents/project-v1.sharkproject", "tests/fixtures/source_documents/scene-v0.sharkscene", "tests/fixtures/source_documents/scene-v1.sharkscene", "tests/fixtures/source_documents/README.md", "docs/source-documents.md"],
-        "fixture_reason": "External CPU fixtures independently author the actual flat version-0 project/scene representations and corresponding version-1 values. They verify migration, explicit quaternion order, Unicode, large world cells, stable IDs and forward parent references, canonical opaque extras, deterministic encoding and schema defaults. Malformed UTF-8/JSON, escaped duplicate keys, unknown fields/versions/components, invalid references, cycles, component constraints and fixed byte/count/depth/extras/output limits reject through owned structured errors without mutating caller input. EngineTools provides the same device-free C++ values for later human and terminal services; these fixtures do not activate a Scene or perform filesystem saves. 08b/08c own active load, cross-document/root resolution, atomic save and external-edit conflicts; FeatureWorld/Persistence connects in10, authoring services/adapters retain09/15/16 and live durable state remains M03. Qualification is recorded separately from this implemented-surface mapping."
+        "fixture_reason": "External CPU fixtures independently author the actual flat version-0 project/scene representations and corresponding version-1 values. They verify migration, explicit quaternion order, Unicode, large world cells, stable IDs and forward parent references, canonical opaque extras, deterministic encoding and schema defaults. Malformed UTF-8/JSON, escaped duplicate keys, unknown fields/versions/components, invalid references, cycles, component constraints and fixed byte/count/depth/extras/output limits reject through owned structured errors without mutating caller input. The integrated fixture uses those independent documents for real file reads, activation, edits, explicit migration saves and reopen, preserving original legacy bytes until a successful save. EngineTools provides the same device-free values and services for future human/terminal adapters. FeatureWorld/Persistence attaches in 10, shared authoring history/adapters retain 09/15/16 and live durable state remains M03."
       },
       {
         "id": "core.network-adversity",
@@ -1323,42 +1323,48 @@
         "id": "component.name",
         "name": "Name",
         "requirement_ids": [
-          "REQ-07"
+          "REQ-07",
+          "REQ-08"
         ],
         "test_ids": [
           "shark.core.schema",
           "shark.core.scene-query",
-          "shark.core.hierarchy"
+          "shark.core.hierarchy",
+          "shark.tools.persistence-integration"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
           "tests/core_scene_query_tests.cpp",
-          "tests/core_hierarchy_tests.cpp"
+          "tests/core_hierarchy_tests.cpp",
+          "tests/persistence_integration_tests.cpp"
         ],
         "fixtures": [
           "tests/core_schema_tests.cpp",
           "tests/core_scene_query_tests.cpp",
           "tests/core_hierarchy_tests.cpp"
         ],
-        "fixture_reason": "Implemented C++ component, version-1 owned schema metadata, pure validation and bounded revisioned inspection are covered by actual CPU fixtures. Name uses nonunique bounded UTF-8 display text and owned immediate/deferred edits. Assignments 08, 09, 10, 15, 16/17 and 19 connect persistence, transactions, FeatureWorld, terminal/editor adapters and selected Lua as those layers land."
+        "fixture_reason": "Implemented C++ component, version-1 owned schema metadata, pure validation and bounded revisioned inspection are covered by actual CPU fixtures. Name uses nonunique bounded UTF-8 display text and owned immediate/deferred edits. The 08 integrated persistence fixture connects legacy migration, native files, Scene edits, capture and reopen for this component. Assignments 09, 10, 15, 16/17 and 19 connect shared transactions, FeatureWorld, terminal/editor adapters and selected Lua as those layers land."
       },
       {
         "id": "component.transform",
         "name": "Transform",
         "requirement_ids": [
-          "REQ-07"
+          "REQ-07",
+          "REQ-08"
         ],
         "test_ids": [
           "shark.core.schema",
           "shark.core.scene-query",
           "shark.core.transform",
-          "shark.core.hierarchy"
+          "shark.core.hierarchy",
+          "shark.tools.persistence-integration"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
           "tests/core_scene_query_tests.cpp",
           "tests/core_transform_tests.cpp",
-          "tests/core_hierarchy_tests.cpp"
+          "tests/core_hierarchy_tests.cpp",
+          "tests/persistence_integration_tests.cpp"
         ],
         "fixtures": [
           "tests/core_schema_tests.cpp",
@@ -1366,7 +1372,7 @@
           "tests/core_transform_tests.cpp",
           "tests/core_hierarchy_tests.cpp"
         ],
-        "fixture_reason": "Implemented C++ component, version-1 owned schema metadata, pure validation and bounded revisioned inspection are covered by actual CPU fixtures. Transform uses canonical double local TRS, hierarchy propagation and atomic rejection; scene-local matrices remain separate from global WorldPosition. Assignments 08, 09, 10, 15, 16/17 and 19 connect persistence, transactions, FeatureWorld, terminal/editor adapters and selected Lua as those layers land."
+        "fixture_reason": "Implemented C++ component, version-1 owned schema metadata, pure validation and bounded revisioned inspection are covered by actual CPU fixtures. Transform uses canonical double local TRS, hierarchy propagation and atomic rejection; scene-local matrices remain separate from global WorldPosition. The 08 integrated persistence fixture connects legacy migration, native files, Scene edits, capture and reopen for this component. Assignments 09, 10, 15, 16/17 and 19 connect shared transactions, FeatureWorld, terminal/editor adapters and selected Lua as those layers land."
       }
     ],
     "commands": [],

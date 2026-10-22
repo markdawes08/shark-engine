@@ -172,3 +172,9 @@ shark::Result<std::string> migrate_scene_text(std::string_view input) {
 This CPU API is shared groundwork for human and terminal development. It is not
 a CLI/editor adapter, undo service, active-scene loader, save command, cooked
 runtime format or live player database. Those layers retain their assigned owners.
+
+The [08d integrated fixture](handoffs/08d-integrated-qualification.md) follows the
+independent legacy/current documents through native file reads, Scene activation,
+edits, explicit migration saves and reopen. It checks that reading old files
+leaves their original bytes unchanged and that saving one document does not
+silently migrate another.

@@ -147,6 +147,7 @@ replace_authored_scene(shark::tools::AuthoredScene& owner,
 ```
 
 [File services and external-edit conflicts](project-files.md) are implemented in
-08c. Integrated persistence qualification remains 08d, shared history 09, FeatureWorld 10, terminal adapters
-in 15 and editor controls in 16. This API is not a cross-process project lock or
-a player-facing protocol.
+08c. The [08d integrated fixture](handoffs/08d-integrated-qualification.md)
+connects legacy files, activation, edits, saves and external-edit recovery. Shared
+history remains 09, FeatureWorld 10, terminal adapters 15 and editor controls 16.
+This API is not a cross-process project lock or a player-facing protocol.

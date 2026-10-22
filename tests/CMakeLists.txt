@@ -63,6 +63,15 @@ if(TARGET EngineTools)
     add_test(NAME shark.tools.project-files COMMAND ProjectFilesTests "[project-files]" --rng-seed 1337)
     set_tests_properties(shark.tools.project-files PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 90)
 
+    add_executable(PersistenceIntegrationTests persistence_integration_tests.cpp)
+    target_link_libraries(PersistenceIntegrationTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_compile_definitions(PersistenceIntegrationTests PRIVATE
+        SHARK_SOURCE_FIXTURE_DIRECTORY="${PROJECT_SOURCE_DIR}/tests/fixtures/source_documents")
+    shark_configure_target(PersistenceIntegrationTests)
+    shark_classify_target(PersistenceIntegrationTests test)
+    add_test(NAME shark.tools.persistence-integration COMMAND PersistenceIntegrationTests "[persistence-integration]" --rng-seed 1337)
+    set_tests_properties(shark.tools.persistence-integration PROPERTIES LABELS "cpu;tooling;integration" TIMEOUT 90)
+
     add_executable(ProjectFilesProcess project_files_process.cpp)
     target_link_libraries(ProjectFilesProcess PRIVATE EngineTools)
     target_include_directories(ProjectFilesProcess PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")

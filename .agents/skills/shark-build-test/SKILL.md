@@ -5,6 +5,14 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+08d integrates legacy migration, activation, edits and native saves through
+`shark.tools.persistence-integration` (90 seconds, seed 1337). Preserve this family
+alongside all four earlier authoring families in native and standalone Tools
+builds. The process fixture now interrupts `save_scene`, then reopens the exact
+expected state and recovers through another authored save. Compile all three
+published source-document, authored-scene and project-file C++ examples with
+public headers only; keep private-dependency and protected-package audits.
+
 08c file-service fixtures use native filesystem operations without graphics.
 Keep test roots writable under build/out in retained WSL userspaces, and run
 both `shark.tools.project-files` and `shark.tools.project-files-process` alongside
@@ -132,4 +140,5 @@ the documented public example without JSON include paths. See the
 configuration, alongside native/WSL regressions and protected boundaries.
 Compile the complete [capture/activation example](../../../docs/authored-scenes.md)
 without private dependency headers. Its [handoff](../../../docs/handoffs/08b-scene-activation.md)
-records exact qualification status; full REQ-08 still requires file services.
+records its historical qualification status; the completed 08c file services
+participate in the integrated 08d gate.

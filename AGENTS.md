@@ -55,7 +55,8 @@ bounded revisioned CPU inspection through the same scene owner. Follow the
 **07c and full REQ-07 are complete under the current-machine scope.** The
 [07c receipt](docs/coverage/evidence/07c-schema-inspection.json) records 376 passing
 CPU CTests with no failures/skips and protected dependency/package qualification.
-The current assignment is **08, Project and scene persistence**, following the
+The next assignment is **M03, Durable characters and transactional state**.
+Assignment 08, Project and scene persistence, completed the
 [four checkpoints](docs/roadmap/persistence-plan.md). **08a is complete under the
 current-machine scope:** 484 CPU CTests, standalone Tools tests and protected
 package checks pass. Follow the [source-document contract](docs/source-documents.md),
@@ -76,8 +77,15 @@ public API audits. Follow the [file service contract](docs/project-files.md),
 [handoff](docs/handoffs/08c-project-files.md) and
 [receipt](docs/coverage/evidence/08c-project-files.json). Preserve exact-content
 root/path revisions, native path checks, cooperating ownership and explicit
-publication/durability outcomes. **08d integrated qualification is next**;
-full REQ-08 remains NOT_RUN.
+publication/durability outcomes. **08d and full REQ-08 are PASS under the
+current-machine scope:** 504 full-suite CPU CTests and five standalone Tools
+tests per OS pass, with all three public examples and protected packages.
+The [handoff](docs/handoffs/08d-integrated-qualification.md) and
+[receipt](docs/coverage/evidence/08d-integrated-qualification.json) retain
+299 unchanged frozen inputs and 18 helpers. Preserve the new
+`shark.tools.persistence-integration` family (90 seconds, seed 1337), all
+31 file cases and the 55-check interrupted-save process fixture. Authored
+source persistence does not implement M03 live character/economy durability.
 The completed [five network checkpoints](docs/roadmap/network-plan.md) retain
 their scoped historical evidence below.
 **M02a is complete under the current-machine scope.** The [TLS/wire foundation](docs/network-transport.md)
@@ -356,8 +364,9 @@ scene identity/lifetime and mandatory Name/Transform C++ validation and mutation
 the [transform contract](docs/transforms.md) defines local-frame hierarchy behavior.
 07c provides fixed version-1 schema discovery and bounded revisioned queries;
 see the [inspection contract](docs/scene-inspection.md). Pure component validation
-does not reserve a revision or replace Scene's hierarchy validation. File persistence,
-authoring transactions, terminal/editor adapters and Lua retain their later owners;
+does not reserve a revision or replace Scene's hierarchy validation. EngineTools
+provides source persistence through the shared capture/activation and file services.
+Authoring transactions, terminal/editor adapters and Lua retain their later owners;
 the bootstrap executables do not expose those interfaces or a scene renderer.
 MMO requirements remain planned until executable multi-process, network-fault,
 database, streaming and load evidence exists. M09 adds MMOWorld acceptance; Tetris

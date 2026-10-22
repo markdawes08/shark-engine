@@ -51,6 +51,11 @@ identify document kinds.
 
 ## Content revisions and conflicts
 
+The [08d integrated fixture](handoffs/08d-integrated-qualification.md) connects
+these file guarantees to migrated documents and the existing authored owner.
+Native fault cases preserve complete dirty snapshots; process interruptions are
+followed by exact scene activation, an authored recovery save and another reopen.
+
 Reads are bounded to 4 MiB before decoding and return owned documents, the
 original source schema version and an opaque `FileRevision`. This token binds
 the canonical root, relative path and exact original bytes. Copies share

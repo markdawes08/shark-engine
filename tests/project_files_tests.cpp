@@ -496,6 +496,63 @@ TEST_CASE("postpublication directory flush failure returns committed bytes and r
     CHECK(files->write_scene(project(), scene("Retry"), committed->revision));
 }
 
+TEST_CASE(
+    "authored saves preserve dirty snapshots through faults and acknowledge committed durability",
+    "[project-files]") {
+    Fixture fixture;
+    fixture.seed();
+    auto files = fixture.open();
+    auto loaded = take(files->load_scene(project(), id<SceneId>(3)));
+    auto& owner = *loaded.owner;
+    const auto handle = first(owner);
+    REQUIRE(live(owner).set_name(handle, {"Unsaved authoring work"}));
+    const auto before = take(owner.capture());
+    REQUIRE(before.dirty);
+    const auto old_bytes = read_bytes(fixture.scene_path());
+    for (const auto fault :
+         {detail::FileFault::read, detail::FileFault::stage_create, detail::FileFault::stage_write,
+          detail::FileFault::stage_flush, detail::FileFault::publish}) {
+        INFO(static_cast<int>(fault));
+        {
+            Control control{{fault, nullptr, nullptr}};
+            rejected(files->save_scene(owner, before.revision, loaded.file_revision),
+                     ErrorCode::io_failure);
+        }
+        const auto retained = take(owner.capture());
+        CHECK(retained.project == before.project);
+        CHECK(retained.scene == before.scene);
+        CHECK(retained.revision == before.revision);
+        CHECK(retained.dirty);
+        CHECK(first(owner) == handle);
+        CHECK(status(owner).pending_mutations == 0);
+        CHECK(read_bytes(fixture.scene_path()) == old_bytes);
+        CHECK(take(files->read_scene(project(), id<SceneId>(3))).revision == loaded.file_revision);
+        CHECK(regular_files(fixture.root / "scenes") == 1);
+    }
+    std::optional<SavedAuthoredScene> saved;
+    {
+        Control control{{detail::FileFault::directory_flush, nullptr, nullptr}};
+        saved = take(files->save_scene(owner, before.revision, loaded.file_revision));
+    }
+    CHECK(saved->file.durability == FileDurability::directory_flush_failed);
+    CHECK(saved->saved_revision == before.revision);
+    CHECK(saved->current_scene_clean);
+    CHECK_FALSE(status(owner).dirty);
+    CHECK(status(owner).revision == before.revision);
+    CHECK(read_bytes(fixture.scene_path()) == take(encode_scene_document(before.scene)));
+    CHECK(take(files->read_scene(project(), id<SceneId>(3))).revision == saved->file.revision);
+    rejected(files->save_scene(owner, before.revision, loaded.file_revision), ErrorCode::conflict);
+    CHECK_FALSE(status(owner).dirty);
+    files.reset();
+    files = fixture.open();
+    const auto reopened = take(files->load_scene(project(), id<SceneId>(3)));
+    const auto recovered = take(reopened.owner->capture());
+    CHECK(recovered.project == before.project);
+    CHECK(recovered.scene == before.scene);
+    CHECK_FALSE(recovered.dirty);
+    CHECK(recovered.revision.scene_instance != before.revision.scene_instance);
+}
+
 TEST_CASE("final comparison detects an external edit after staging before publication",
           "[project-files]") {
     Fixture fixture;

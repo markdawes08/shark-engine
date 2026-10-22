@@ -85,7 +85,8 @@ current-machine scope.** The [handoff](docs/handoffs/M02e-integrated-qualificati
 and [receipt](docs/coverage/evidence/M02e-integrated-qualification.json) record
 474 passing CPU CTests and protected package qualification across the
 [five network checkpoints](docs/roadmap/network-plan.md).
-**Current assignment: 08, Project and scene persistence**, split into
+**Next assignment: M03, Durable characters and transactional state.**
+Assignment 08, Project and scene persistence, completed its
 [four checkpoints](docs/roadmap/persistence-plan.md). 08a adds CPU project/scene
 formats, validation and migration through [owned C++ values](docs/source-documents.md).
 **08a is complete:** its [handoff](docs/handoffs/08a-source-documents.md) records
@@ -98,8 +99,12 @@ and [receipt](docs/coverage/evidence/08b-scene-activation.json) retain the evide
 pass 499 full-suite CPU CTests, eight additional standalone Tools checks and
 protected package/API audits. The [handoff](docs/handoffs/08c-project-files.md)
 and [receipt](docs/coverage/evidence/08c-project-files.json) retain the evidence.
-**08d integrated qualification is next.** Full REQ-08 remains
-NOT_RUN until the remaining file and integration checkpoints pass.
+**08d and full REQ-08 are PASS under the current-machine scope:** 504 CPU
+CTests, ten additional standalone Tools checks, all three public examples
+and protected packages pass against 299 unchanged inputs. The
+[handoff](docs/handoffs/08d-integrated-qualification.md) and
+[receipt](docs/coverage/evidence/08d-integrated-qualification.json) record
+integrated migration, save/reopen, conflict and interrupted-save evidence.
 See the [transport contract](docs/network-transport.md) and the
 [cube launch workflow](docs/building.md#cube-sample-and-runtime-package).
 The [05a handoff](docs/handoffs/05a-graphics-device.md) records 211 passing CTests

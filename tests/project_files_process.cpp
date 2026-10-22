@@ -23,6 +23,13 @@ template <typename T> T require(Result<T> value) {
     return std::move(value).value();
 }
 
+void require(Result<void> value) {
+    if (!value) {
+        throw std::runtime_error{std::string{error_code_name(value.error().code)} + ":" +
+                                 value.error().context.operation};
+    }
+}
+
 template <typename Id> Id id(unsigned value) {
     std::string text = "00000000-0000-4000-8000-000000000000";
     text.back() = "0123456789abcdef"[value];
@@ -78,11 +85,13 @@ int main(int argc, char** argv) {
             return 0;
         }
         auto files = require(std::move(opening));
-        if (mode == "seed" || mode == "seed-new") {
+        if (mode == "seed" || mode == "seed-new" || mode == "seed-recovered") {
             require(files->write_project(require(ProjectPath::parse("project.sharkproject")),
                                          project(), std::nullopt));
-            require(files->write_scene(project(), scene(mode == "seed" ? "Before" : "After"),
-                                       std::nullopt));
+            const auto name = mode == "seed"       ? "Before"
+                              : mode == "seed-new" ? "After"
+                                                   : "Recovered";
+            require(files->write_scene(project(), scene(name), std::nullopt));
         } else if (mode == "hold") {
             std::cout << "{\"status\":\"PASS\",\"state\":\"ready\"}\n" << std::flush;
             std::string release;
@@ -96,7 +105,16 @@ int main(int argc, char** argv) {
                 throw std::runtime_error{"missing interruption phase"};
             }
             auto selected = phase(argv[3]);
-            auto loaded = require(files->read_scene(project(), id<SceneId>(3)));
+            const auto loaded_project =
+                require(files->read_project(require(ProjectPath::parse("project.sharkproject"))));
+            auto loaded =
+                require(files->load_scene(loaded_project.source.document, id<SceneId>(3)));
+            auto& live = require(loaded.owner->scene()).get();
+            require(live.set_name(require(live.find(id<AuthoredEntityId>(4))), {"After"}));
+            const auto status = require(loaded.owner->status());
+            if (!status.dirty) {
+                throw std::runtime_error{"interrupted save did not start with an edited owner"};
+            }
             const auto hook = [](detail::FilePhase reached, void* context) noexcept {
                 if (reached == *static_cast<detail::FilePhase*>(context)) {
                     std::_Exit(73);
@@ -104,21 +122,34 @@ int main(int argc, char** argv) {
             };
             static_cast<void>(
                 detail::set_file_test_control({detail::FileFault::none, hook, &selected}));
-            require(files->write_scene(project(), scene("After"), loaded.revision));
+            require(files->save_scene(*loaded.owner, status.revision, loaded.file_revision));
             throw std::runtime_error{"interruption phase was never reached"};
         } else if (mode == "inspect") {
+            if (argc != 4) {
+                throw std::runtime_error{"missing expected persisted name"};
+            }
             const auto loaded_project =
                 require(files->read_project(require(ProjectPath::parse("project.sharkproject"))));
             const auto loaded =
                 require(files->load_scene(loaded_project.source.document, id<SceneId>(3)));
             const auto captured = require(loaded.owner->capture());
-            const auto& name = captured.scene.entities.front().name.value;
-            if (name != "Before" && name != "After" && name != "Recovered") {
-                throw std::runtime_error{"unexpected persisted scene"};
+            if (captured.project != project() || captured.scene != scene(argv[3]) ||
+                captured.dirty || loaded.source_schema_version != source_document_version ||
+                loaded_project.source.source_schema_version != source_document_version) {
+                throw std::runtime_error{"persisted scene activation differed from expected state"};
             }
         } else if (mode == "recover") {
-            const auto loaded = require(files->read_scene(project(), id<SceneId>(3)));
-            require(files->write_scene(project(), scene("Recovered"), loaded.revision));
+            const auto loaded_project =
+                require(files->read_project(require(ProjectPath::parse("project.sharkproject"))));
+            auto loaded =
+                require(files->load_scene(loaded_project.source.document, id<SceneId>(3)));
+            auto& live = require(loaded.owner->scene()).get();
+            require(live.set_name(require(live.find(id<AuthoredEntityId>(4))), {"Recovered"}));
+            const auto saved = require(files->save_scene(
+                *loaded.owner, require(loaded.owner->status()).revision, loaded.file_revision));
+            if (!saved.current_scene_clean || require(loaded.owner->status()).dirty) {
+                throw std::runtime_error{"recovered save did not acknowledge the current revision"};
+            }
         } else {
             throw std::runtime_error{"unknown mode"};
         }

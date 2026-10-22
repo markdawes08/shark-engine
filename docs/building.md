@@ -345,6 +345,7 @@ scene-runner/export commands will be added with their owning increments.
 | `shark.tools.authored-scene` (Tools enabled) | `cpu`, `unit`, `tooling`, `integration` |
 | `shark.tools.project-files` (Tools enabled) | `cpu`, `unit`, `tooling`, `integration` |
 | `shark.tools.project-files-process` (Tools enabled) | `cpu`, `tooling`, `integration` |
+| `shark.tools.persistence-integration` (Tools enabled) | `cpu`, `tooling`, `integration` |
 | `shark.tooling.source-document-dependencies` (Tools enabled) | `cpu`, `tooling`, `boundary` |
 | `shark.tooling.graphics-package`, `shark.tooling.graphics-package-linux` | `cpu`, `tooling`, `boundary` |
 
@@ -434,6 +435,23 @@ locks, aliases, sibling publication, external edits and child-process interrupti
 They need neither a display nor a GPU. The [file contract](project-files.md)
 includes the complete public C++ example and operating-system limits; the C++
 services do not expose terminal commands yet.
+
+08d adds `PersistenceIntegrationTests` and `shark.tools.persistence-integration`
+(seed 1337, 90-second timeout). It follows independent legacy fixtures through
+native reads, Scene activation, edits, explicit migration saves and reopen, and
+preserves dirty state through invalid external sources and conflicting edits.
+The existing file/process families additionally exercise failed and interrupted
+`save_scene` operations through recovery and exact reactivation. Run all five
+authoring families after listing the inventory:
+
+```text
+ctest --preset tools-debug --show-only
+ctest --preset tools-debug -R "^shark.tools.(source-documents|authored-scene|project-files|project-files-process|persistence-integration)$" --output-on-failure
+```
+
+CTest owns writable fixture directories under the build tree. Process termination
+checks establish local file visibility and recovery, not hardware power-loss
+durability. See the [persistence checkpoints](roadmap/persistence-plan.md).
 
 ## Opt-in graphics package builds
 

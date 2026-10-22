@@ -10,6 +10,11 @@ EngineTools. Its native I/O, source readers, lock/stage files and crash fixtures
 must not enter Runtime/Server packages. Recheck protected source/dependency and
 installed file closures after changing authoring file services.
 
+08d closes the combined persistence gate using the same local boundaries. Keep
+the integrated migration/reopen and interrupted authored-save fixtures outside
+Runtime/Server packages; no source-file runtime mode or live player durability
+is implied. Verify all three public C++ examples alongside the protected packages.
+
 Read [AGENTS.md](../../../AGENTS.md), the exact assigned export/release increment,
 [target boundaries](../../../docs/architecture/0001-targets-and-boundaries.md),
 [platform matrix](../../../docs/architecture/0003-platforms.md) and

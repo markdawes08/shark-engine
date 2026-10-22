@@ -148,3 +148,9 @@ and validators. Preserve root/path-bound exact-content revisions, explicit
 create-only writes, dirty/revision-safe save/reload and committed durability
 results. A failed post-publication flush must not become an uncommitted error.
 The storage lock does not provide shared command history or distributed authority.
+
+The 08d integrated persistence fixture carries the independent legacy/current
+documents through file reads, Scene edits, migration saves, reload conflicts and
+reopen. Extend that chain when persisted components change. Failed authored saves
+must retain dirty snapshots and old bytes; a committed durability limitation
+must not masquerade as a rollback. FeatureWorld/Persistence still attaches in 10.

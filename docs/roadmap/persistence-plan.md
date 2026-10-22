@@ -2,7 +2,8 @@
 
 Date: 2026-10-21. Base: `8463a84` on initially clean `main`.
 Owner: REQ-08. M02 is complete; assignment 08 is split into the four checkpoints
-below. **08a, 08b and 08c are PASS; 08d is next. Full REQ-08 remains NOT_RUN.** The
+below. **08a-08d and full REQ-08 are PASS under the current-machine scope.**
+M03 durable characters and transactional state is next. The
 [08a handoff](../handoffs/08a-source-documents.md) records 484 passing CPU CTests,
 standalone Tools tests and protected package checks. The
 [08b handoff](../handoffs/08b-scene-activation.md) and
@@ -77,6 +78,21 @@ fixtures. Freeze implemented inputs and qualify Windows/WSL CPU/sanitizer,
 protected Runtime/Server, public API examples and local packages. Retain exact
 commands, failures, limits and coverage in the final handoff and receipt; close
 REQ-08 only when all required gates pass. Tests accompany each earlier checkpoint.
+
+`shark.tools.persistence-integration` carries independent legacy/current fixtures
+through real native reads, activation, edits, explicit migration saves and reopen.
+It retains both authors' snapshots during external conflicts and exercises nine
+invalid-source variants with both dirty-state policies. Existing file/process
+families add complete dirty-state fault checks and interrupted `save_scene`
+recovery with exact reactivation. The public source, activation and file examples
+all compile independently of private dependency headers. The
+[08d handoff](../handoffs/08d-integrated-qualification.md) and
+[receipt](../coverage/evidence/08d-integrated-qualification.json) record PASS:
+504 full-suite CPU CTests, five standalone Tools checks per OS, three
+integration cases with 1,543 assertions, 31 file cases and seven 55-check
+process receipts. All three public examples pass 27 checks; protected
+Runtime/Server builds and isolated packages pass. The 299 source/build/test
+inputs and 18 helpers remain unchanged throughout qualification.
 
 Authored documents define world content. Live character/economy durability stays
 in **M03**, which follows full 08. Shared commands/history retain 09, FeatureWorld

@@ -295,7 +295,7 @@ skips (Windows Debug/Release/ASan 79 each, WSL clients 72 each, WSL Servers
 54 each). Each independent Tools build passes two additional focused CTests.
 The new family passes 23 cases and 26,624 assertions; all 291 frozen inputs
 are unchanged. Protected package checks and public API audits pass. 08c safe
-files and conflicts is qualified below; full REQ-08 remains NOT_RUN until 08d passes.
+files and conflicts and 08d integrated qualification are complete below.
 
 08c registers `shark.tools.project-files` (CPU/unit/tooling/integration, seed 1337)
 and `shark.tools.project-files-process` (CPU/tooling/integration), each with a
@@ -310,8 +310,23 @@ child outcomes. See the [file contract](project-files.md) and
 full-suite CPU CTests and eight additional standalone Tools tests pass without
 failures or skips. Windows profiles register/run 81 tests each, WSL clients 74
 each and WSL Servers 54 each. Protected packages and compiler/API audits pass
-with all 298 source/build/test inputs and 19 helper hashes unchanged. This does
-not close the remaining 08d integrated persistence gate.
+with all 298 source/build/test inputs and 19 helper hashes unchanged. This
+historical gate is followed by the full 08d qualification below.
+
+08d registers `shark.tools.persistence-integration` (CPU/tooling/integration,
+seed 1337, 90 seconds). Its three cases pass 1,543 assertions; the retained
+file family contains 31 cases, and seven process receipts each pass 55
+checks with complete authored-save reactivation and recovery. **08d and
+full REQ-08 are PASS under the current-machine scope:** all 504 CPU CTests
+pass without failures/skips (Windows Debug/Release/ASan 82 each, WSL
+clients 75 each and WSL Servers 54 each), with five additional standalone
+Tools passes per OS. All three public examples pass 27 checks. Protected
+Runtime/Server builds, isolated packages and dependency/API audits pass
+against 299 unchanged source/build/test inputs and 18 helpers. The
+[handoff](handoffs/08d-integrated-qualification.md) and
+[receipt](coverage/evidence/08d-integrated-qualification.json) record exact
+commands, the corrected file-case inventory and verification limits. M03
+durable characters and transactional state is next.
 
 ## Locked tools and hosted-image limits
 
