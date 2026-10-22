@@ -142,3 +142,9 @@ source metadata, incarnation-bound extras, expected revisions, dirty protection
 and pending/visit/thread rejection. No ordinary Scene setter becomes an atomic
 batch; shared history remains 09. Extend capture and construction together when
 new persisted components land, through the existing Scene validators.
+
+08c's [project file service](../../../docs/project-files.md) reuses those values
+and validators. Preserve root/path-bound exact-content revisions, explicit
+create-only writes, dirty/revision-safe save/reload and committed durability
+results. A failed post-publication flush must not become an uncommitted error.
+The storage lock does not provide shared command history or distributed authority.

@@ -5,6 +5,11 @@ description: Validate Shark standalone exports and packages for cooked dependenc
 
 # Shark export and release packaging
 
+08c [project file storage](../../../docs/project-files.md) belongs only to
+EngineTools. Its native I/O, source readers, lock/stage files and crash fixtures
+must not enter Runtime/Server packages. Recheck protected source/dependency and
+installed file closures after changing authoring file services.
+
 Read [AGENTS.md](../../../AGENTS.md), the exact assigned export/release increment,
 [target boundaries](../../../docs/architecture/0001-targets-and-boundaries.md),
 [platform matrix](../../../docs/architecture/0003-platforms.md) and

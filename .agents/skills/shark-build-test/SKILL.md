@@ -5,6 +5,12 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+08c file-service fixtures use native filesystem operations without graphics.
+Keep test roots writable under build/out in retained WSL userspaces, and run
+both `shark.tools.project-files` and `shark.tools.project-files-process` alongside
+the source/activation families. Process interruption is distinct from hardware
+power-loss evidence; retain fault outcomes and publication/durability flags.
+
 Read [AGENTS.md](../../../AGENTS.md), [building](../../../docs/building.md) and
 [CI](../../../docs/ci.md). Run from the repository root with the native compiler
 environment; Windows Ninja presets need an x64 MSVC developer shell.

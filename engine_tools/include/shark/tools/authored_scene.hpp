@@ -13,7 +13,7 @@ enum class UnsavedScenePolicy { reject, discard };
 
 struct AuthoredSceneStatus {
     SceneRevision revision;
-    // Relative to the last successful in-memory activation, not a disk save.
+    // Relative to successful activation or an acknowledged ProjectFiles save.
     bool dirty;
     std::size_t pending_mutations;
 };
@@ -56,6 +56,8 @@ class AuthoredScene final {
              UnsavedScenePolicy unsaved = UnsavedScenePolicy::reject);
 
   private:
+    friend class ProjectFiles;
+    [[nodiscard]] bool acknowledge_saved(SceneRevision revision) noexcept;
     struct Impl;
     explicit AuthoredScene(std::unique_ptr<Impl> impl) noexcept;
     std::unique_ptr<Impl> impl_;

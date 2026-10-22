@@ -54,6 +54,20 @@ if(TARGET EngineTools)
     shark_classify_target(AuthoredSceneTests test)
     add_test(NAME shark.tools.authored-scene COMMAND AuthoredSceneTests "[authored-scene]" --rng-seed 1337)
     set_tests_properties(shark.tools.authored-scene PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
+
+    add_executable(ProjectFilesTests project_files_tests.cpp)
+    target_link_libraries(ProjectFilesTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_include_directories(ProjectFilesTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
+    shark_configure_target(ProjectFilesTests)
+    shark_classify_target(ProjectFilesTests test)
+    add_test(NAME shark.tools.project-files COMMAND ProjectFilesTests "[project-files]" --rng-seed 1337)
+    set_tests_properties(shark.tools.project-files PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 90)
+
+    add_executable(ProjectFilesProcess project_files_process.cpp)
+    target_link_libraries(ProjectFilesProcess PRIVATE EngineTools)
+    target_include_directories(ProjectFilesProcess PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
+    shark_configure_target(ProjectFilesProcess)
+    shark_classify_target(ProjectFilesProcess test)
 endif()
 
 # Explicit registration avoids executing a sanitizer binary during the build.
@@ -292,6 +306,13 @@ set(Python3_FIND_STRATEGY LOCATION)
 set(Python3_FIND_REGISTRY NEVER)
 set(Python3_FIND_FRAMEWORK NEVER)
 find_package(Python3 3.11 COMPONENTS Interpreter REQUIRED)
+if(TARGET ProjectFilesProcess)
+    add_test(NAME shark.tools.project-files-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_project_files_process.py"
+            --probe "$<TARGET_FILE:ProjectFilesProcess>"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/project-files-process.json")
+    set_tests_properties(shark.tools.project-files-process PROPERTIES LABELS "cpu;tooling;integration" TIMEOUT 90)
+endif()
 add_executable(NetworkProbe network_probe.cpp)
 target_link_libraries(NetworkProbe PRIVATE EngineCore)
 shark_configure_target(NetworkProbe)

@@ -131,8 +131,10 @@ under the current-machine scope: the
 [handoff](../handoffs/M02e-integrated-qualification.md) and
 [receipt](../coverage/evidence/M02e-integrated-qualification.json) record
 474 passing CPU CTests, protected packages and 277 unchanged frozen inputs.
-Assignment 08, Project and scene persistence, is active. Its 08a/08b checkpoints
-are complete; 08c safe files and conflicts is next.
+Assignment 08, Project and scene persistence, is active. Its 08a/08b/08c checkpoints
+are complete; 08d integrated qualification is next. The
+[08c handoff](../handoffs/08c-project-files.md) records qualified
+[safe files and conflicts](../project-files.md) under the current-machine scope.
 The completed scene C++ APIs are not player
 messages or source persistence, and they do not grant gameplay authority.
 Presentation stays in Client and cannot acquire authority over server time or world state.

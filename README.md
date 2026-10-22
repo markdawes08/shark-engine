@@ -22,7 +22,8 @@ observations and [integrated network qualification](docs/network-qualification.m
 through active local processes and deterministic faults. CPU authoring now includes
 [versioned project/scene value codecs](docs/source-documents.md), with validation
 and legacy migration, plus [authored Scene capture and activation](docs/authored-scenes.md).
-File saves and external-edit conflicts follow in 08c.
+08c adds [project file saves and external-edit conflicts](docs/project-files.md);
+its current-machine qualification is complete.
 A separate opt-in graphics
 feasibility probe contains analytic draw/compute/readback cases.
 The versioned
@@ -93,7 +94,11 @@ formats, validation and migration through [owned C++ values](docs/source-documen
 passes 489 full-suite CPU CTests, standalone Tools tests, protected package
 checks and public API audits. Its [handoff](docs/handoffs/08b-scene-activation.md)
 and [receipt](docs/coverage/evidence/08b-scene-activation.json) retain the evidence.
-**08c, safe project files and conflicts, is next.** Full REQ-08 remains
+**08c is complete:** [safe project files and conflicts](docs/project-files.md)
+pass 499 full-suite CPU CTests, eight additional standalone Tools checks and
+protected package/API audits. The [handoff](docs/handoffs/08c-project-files.md)
+and [receipt](docs/coverage/evidence/08c-project-files.json) retain the evidence.
+**08d integrated qualification is next.** Full REQ-08 remains
 NOT_RUN until the remaining file and integration checkpoints pass.
 See the [transport contract](docs/network-transport.md) and the
 [cube launch workflow](docs/building.md#cube-sample-and-runtime-package).

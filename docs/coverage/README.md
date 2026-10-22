@@ -66,7 +66,7 @@ The validator verifies those references and retained bytes; it does not rerun
 graphics or interpret an old aggregate NOT_RUN as a universal PASS.
 `current_assignment: 08` follows the completed
 [five network checkpoints](../roadmap/network-plan.md). Project/scene
-checkpoints 08a and 08b are complete; 08c safe files and conflicts is next.
+checkpoints 08a, 08b and 08c are complete; 08d integrated qualification is next.
 The `core.network-foundation` feature maps M02a's bounded TLS/wire/fault APIs to
 three unit families and a real-process encrypted fixture, plus exact dependency
 and package checks. M02a is PASS: the [handoff](../handoffs/M02a-transport-wire.md)
@@ -109,8 +109,8 @@ has 9 cases/654 assertions and query coverage 19 cases/3,916 assertions. Protect
 Runtime/Server builds, source/link/license closure and fresh isolated package
 checks pass; all 221 qualification source inputs were unchanged in that record.
 M02a-M02e and full REQ-M02 are PASS under the current-machine scope.
-Assignment 08, Project and scene persistence, is active: 08a/08b are complete
-and 08c is next. FeatureWorld integration remains assignment 10.
+Assignment 08, Project and scene persistence, is active: 08a/08b/08c are complete
+and 08d is next. FeatureWorld integration remains assignment 10.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
 NOT_RUN. Existing presentation/device fixtures and their earlier handoffs retain
@@ -270,8 +270,8 @@ additional standalone Tools tests pass, with protected builds/packages and publi
 API audits. The [handoff](../handoffs/08a-source-documents.md) and
 [receipt](evidence/08a-source-documents.json) retain exact evidence and limits.
 Full `REQ-08` remains `NOT_RUN` until the remaining
-[persistence checkpoints](../roadmap/persistence-plan.md) close atomic/conflict-aware
-filesystem operations (08c) and integrated qualification (08d). No game-authoring command,
+[integrated persistence checkpoint](../roadmap/persistence-plan.md), 08d, passes;
+08c's file gate is now complete below. No game-authoring command,
 Lua binding or FeatureWorld case is fabricated: FeatureWorld/Persistence connects
 in 10, the shared authoring services and adapters retain 09/15/16, and live
 durable gameplay state retains M03.
@@ -291,6 +291,26 @@ additional focused CTests. The new family has 23 cases and 26,624 assertions;
 packages and public API audits pass. The
 [08b handoff](../handoffs/08b-scene-activation.md) and
 [receipt](evidence/08b-scene-activation.json) retain exact evidence and limits.
-08c safe files and conflicts is next. General authoring commands and Lua
+08c safe files and conflicts is complete below. General authoring commands and Lua
 registries remain unchanged; FeatureWorld integration stays with 10, and
-full REQ-08 remains NOT_RUN until 08c/08d also pass.
+full REQ-08 remains NOT_RUN until 08d also passes.
+
+08c adds `tools.project-files`, mapped to `shark.tools.project-files` and
+`shark.tools.project-files-process` (90 seconds each; Catch2 seed 1337). The
+[contract](../project-files.md) specifies typed I/O, exact-content revisions,
+native path/ownership checks and publication with explicit durability outcomes.
+Thirty cases verify revisions, Unicode, aliases, limits, faults, owner-thread and
+dirty save/reload behavior, plus the different native ancestor-relocation rules.
+The process fixture verifies 44 checks across exclusive ownership, five abrupt
+publication phases, whole-file results and preservation of orphan stages.
+
+08c is PASS under the current-machine scope: **499 full-suite CPU CTests**, zero
+failures or skips (Windows Debug/Release/ASan 81 each, WSL clients 74 each and
+WSL Servers 54 each). Standalone Tools builds add four focused passes per OS.
+Windows has 1,832 file-case assertions; Linux has 1,830 because native topology
+checks differ. Protected packages, public/private API audits and all seven
+process receipts pass against 298 unchanged source/build/test inputs and 19
+qualification helpers. The [handoff](../handoffs/08c-project-files.md) and
+[receipt](evidence/08c-project-files.json) retain exact commands and evidence.
+08d integrated qualification is next; full REQ-08 remains NOT_RUN. No command,
+Lua or FeatureWorld coverage is fabricated before those owners land.

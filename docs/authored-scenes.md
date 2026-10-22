@@ -14,7 +14,7 @@ of both documents. The scene's project ID must match the project, its scene ID
 must occur in the project's catalog, and an optional world origin must use the
 project's world ID. The selected scene may be any declared scene, not just the
 startup scene. Unrelated catalog entries are not loaded. Source paths remain
-lexical values; actual file lookup and containment belong to 08c.
+lexical values here; [ProjectFiles](project-files.md) performs actual lookup and containment.
 
 The owner retains immutable project settings and one active `Scene`. Loading
 always creates `AuthoredSceneScope`, with authored entity IDs and no region,
@@ -68,10 +68,12 @@ handles, cached matrices, revisions or network authority are serialized.
 
 `status()` returns the current revision, pending-mutation count and dirty flag.
 Dirty means the committed Scene revision differs from the last successful
-in-memory activation. It is conservative: changing a value and changing it back
+in-memory activation or a successful ProjectFiles save acknowledgement. It is conservative: changing a value and changing it back
 remains dirty, while a true Core no-op does not. Deferred work is separately
 visible and does not advance the committed revision until applied. The baseline
-is not evidence that any file exists or has been saved.
+alone is not evidence that any file exists or has been saved. ProjectFiles marks
+the saved revision clean only while it still matches the owner and has no pending
+work; a successful file publication reports newer unsaved edits separately.
 
 `activate(candidate, expected_revision, policy)` resolves a new scene within the
 same immutable project catalog. The expected instance and revision are mandatory.
@@ -144,7 +146,7 @@ replace_authored_scene(shark::tools::AuthoredScene& owner,
 }
 ```
 
-File services and external-edit conflicts arrive in 08c, integrated persistence
-qualification in 08d, shared history in 09, FeatureWorld in 10, terminal adapters
+[File services and external-edit conflicts](project-files.md) are implemented in
+08c. Integrated persistence qualification remains 08d, shared history 09, FeatureWorld 10, terminal adapters
 in 15 and editor controls in 16. This API is not a cross-process project lock or
 a player-facing protocol.

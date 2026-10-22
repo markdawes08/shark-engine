@@ -93,6 +93,8 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                 ROOT / "engine_tools/src/build_info.cpp",
                 ROOT / "engine_tools/src/source_document.cpp",
                 ROOT / "engine_tools/src/authored_scene.cpp",
+                ROOT / "engine_tools/src/project_files.cpp",
+                ROOT / "engine_tools/src/project_files_native.cpp",
             } if tools else set()
             self.assertEqual({Path(entry["file"]) for entry in tool_commands}, expected_sources)
             if tools:

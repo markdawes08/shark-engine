@@ -343,6 +343,8 @@ scene-runner/export commands will be added with their owning increments.
 | `shark.tooling.headless-environment` | `cpu`, `tooling`, `server` |
 | `shark.tools.source-documents` (Tools enabled) | `cpu`, `unit`, `tooling` |
 | `shark.tools.authored-scene` (Tools enabled) | `cpu`, `unit`, `tooling`, `integration` |
+| `shark.tools.project-files` (Tools enabled) | `cpu`, `unit`, `tooling`, `integration` |
+| `shark.tools.project-files-process` (Tools enabled) | `cpu`, `tooling`, `integration` |
 | `shark.tooling.source-document-dependencies` (Tools enabled) | `cpu`, `tooling`, `boundary` |
 | `shark.tooling.graphics-package`, `shark.tooling.graphics-package-linux` | `cpu`, `tooling`, `boundary` |
 
@@ -411,7 +413,7 @@ builds additionally pass `-DSHARK_JSON_ARCHIVE=/absolute/path/json-3.12.0.tar.xz
 or reuse its verified cache. `tools/source_document_dependency.py` verifies every
 populated file against that archive; arbitrary source overrides are rejected.
 No upstream CMake, examples or tests execute. Core/Server/Runtime do not require
-the JSON archive or headers. This codec does not yet load or save files, activate
+the JSON archive or headers. This pure codec does not perform file I/O, activate
 scenes or provide terminal commands; see the [format contract](source-documents.md)
 and [08 checkpoint plan](roadmap/persistence-plan.md).
 
@@ -422,6 +424,16 @@ inventory, run both authoring families with
 `ctest --preset tools-debug -R "^shark.tools.(source-documents|authored-scene)$" --output-on-failure`.
 The [capture/activation contract](authored-scenes.md) includes a complete public
 C++ example. These APIs still do not open files or expose terminal commands.
+
+08c adds `ProjectFilesTests`, `ProjectFilesProcess` and the two file-service
+families above, each with a 90-second timeout; the Catch2 family uses seed 1337.
+List the actual inventory, then run the four authoring families with
+`ctest --preset tools-debug -R "^shark.tools.(source-documents|authored-scene|project-files|project-files-process)$" --output-on-failure`.
+These tests require a writable native temporary filesystem and exercise real
+locks, aliases, sibling publication, external edits and child-process interruption.
+They need neither a display nor a GPU. The [file contract](project-files.md)
+includes the complete public C++ example and operating-system limits; the C++
+services do not expose terminal commands yet.
 
 ## Opt-in graphics package builds
 

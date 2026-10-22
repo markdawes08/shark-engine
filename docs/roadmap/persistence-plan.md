@@ -2,7 +2,7 @@
 
 Date: 2026-10-21. Base: `8463a84` on initially clean `main`.
 Owner: REQ-08. M02 is complete; assignment 08 is split into the four checkpoints
-below. **08a and 08b are PASS; 08c is next. Full REQ-08 remains NOT_RUN.** The
+below. **08a, 08b and 08c are PASS; 08d is next. Full REQ-08 remains NOT_RUN.** The
 [08a handoff](../handoffs/08a-source-documents.md) records 484 passing CPU CTests,
 standalone Tools tests and protected package checks. The
 [08b handoff](../handoffs/08b-scene-activation.md) and
@@ -50,6 +50,13 @@ replacement has explicit handle invalidation and ownership behavior. Loading a
 source document never grants server authority or creates a second live registry.
 
 ## 08c - Safe project files and conflicts
+
+The [project file contract](../project-files.md) defines the typed C++ service,
+exact-content revisions, native path restrictions, writer coordination and
+separate publication/durability results. The [08c handoff](../handoffs/08c-project-files.md)
+and [receipt](../coverage/evidence/08c-project-files.json) record 499 passing full-suite
+CPU CTests, four additional standalone Tools tests on each OS, protected packages
+and public API audits against 298 unchanged frozen inputs.
 
 Implement project-root file services over validated documents. Resolve real
 filesystem containment and path collisions, stage sibling writes, flush and

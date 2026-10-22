@@ -295,7 +295,23 @@ skips (Windows Debug/Release/ASan 79 each, WSL clients 72 each, WSL Servers
 54 each). Each independent Tools build passes two additional focused CTests.
 The new family passes 23 cases and 26,624 assertions; all 291 frozen inputs
 are unchanged. Protected package checks and public API audits pass. 08c safe
-files and conflicts is next; full REQ-08 remains NOT_RUN until 08c/08d pass.
+files and conflicts is qualified below; full REQ-08 remains NOT_RUN until 08d passes.
+
+08c registers `shark.tools.project-files` (CPU/unit/tooling/integration, seed 1337)
+and `shark.tools.project-files-process` (CPU/tooling/integration), each with a
+90-second timeout. Their fixtures exercise native file revisions, path restrictions,
+faults, dirty-safe save/reload, cross-process ownership and five deterministic
+abrupt-exit stages. Each process run emits `tests/project-files-process.json` in
+the build tree with complete-file hashes, unpublished-stage retention and bounded
+child outcomes. See the [file contract](project-files.md) and
+[08c handoff](handoffs/08c-project-files.md) for exact scope and qualification.
+
+08c's [receipt](coverage/evidence/08c-project-files.json) records PASS: all 499
+full-suite CPU CTests and eight additional standalone Tools tests pass without
+failures or skips. Windows profiles register/run 81 tests each, WSL clients 74
+each and WSL Servers 54 each. Protected packages and compiler/API audits pass
+with all 298 source/build/test inputs and 19 helper hashes unchanged. This does
+not close the remaining 08d integrated persistence gate.
 
 ## Locked tools and hosted-image limits
 

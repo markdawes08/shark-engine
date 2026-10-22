@@ -70,7 +70,14 @@ Follow its [capture/activation contract](docs/authored-scenes.md),
 the existing Scene, preserves incarnation-bound source metadata and validates
 a complete candidate before replacing it. Expected revisions, dirty protection
 and pending/visit/thread guards remain required. **08c, safe project files and
-conflicts, is next.** Integration (08d) follows; full REQ-08 remains NOT_RUN.
+conflicts, is complete under the current-machine scope:** 499 full-suite CPU
+CTests and four standalone Tools tests per OS pass, with protected packages and
+public API audits. Follow the [file service contract](docs/project-files.md),
+[handoff](docs/handoffs/08c-project-files.md) and
+[receipt](docs/coverage/evidence/08c-project-files.json). Preserve exact-content
+root/path revisions, native path checks, cooperating ownership and explicit
+publication/durability outcomes. **08d integrated qualification is next**;
+full REQ-08 remains NOT_RUN.
 The completed [five network checkpoints](docs/roadmap/network-plan.md) retain
 their scoped historical evidence below.
 **M02a is complete under the current-machine scope.** The [TLS/wire foundation](docs/network-transport.md)

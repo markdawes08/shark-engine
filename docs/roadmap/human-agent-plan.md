@@ -190,7 +190,12 @@ independent Tools and protected package gate. 08b's
 checked replacement with unsaved-state protection; its
 [handoff](../handoffs/08b-scene-activation.md) records the completed local CPU,
 sanitizer and protected package gate.
-Safe files and full integration remain 08c/08d. Terminal/editor adapters
+08c's [project file service](../project-files.md) adds exact-content conflict checks,
+native sibling publication and revision-safe save/reload through the same owner.
+Its [handoff](../handoffs/08c-project-files.md) records completed current-machine
+CPU/sanitizer, interruption, package and public API qualification.
+Its storage lock is distinct from the later shared human/agent project owner;
+full integration remains 08d. Terminal/editor adapters
 retain owners 15/16; readable source does not bypass the later project owner.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),

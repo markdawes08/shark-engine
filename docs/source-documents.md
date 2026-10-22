@@ -1,5 +1,9 @@
 # Project and scene source documents
 
+08c's [ProjectFiles service](project-files.md) wraps this pure codec with bounded
+native reads, exact-content conflicts and atomic sibling publication. The codec
+itself remains free of filesystem and active Scene ownership.
+
 Assignment 08a supplies in-memory, device-free value documents in EngineTools.
 Its [handoff](handoffs/08a-source-documents.md) records qualification status; full
 08 follows the [persistence checkpoints](roadmap/persistence-plan.md).

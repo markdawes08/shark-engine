@@ -343,4 +343,17 @@ Result<SceneRevision> AuthoredScene::activate(const SceneDocument& candidate,
     });
 }
 
+bool AuthoredScene::acknowledge_saved(SceneRevision revision) noexcept {
+    try {
+        const auto state = impl_->read_status(revision);
+        if (state.pending_mutations != 0) {
+            return false;
+        }
+        impl_->active->baseline = revision;
+        return true;
+    } catch (...) {
+        return false;
+    }
+}
+
 } // namespace shark::tools

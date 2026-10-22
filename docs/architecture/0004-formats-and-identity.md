@@ -32,6 +32,12 @@ using Core's hierarchy/transform validation. Expected revisions, unsaved-state
 policy and a single ownership swap govern replacement. Source metadata stays
 separate from runtime handles, live authority and later filesystem durability.
 
+08c's [project file service](../project-files.md) provides bounded native reads
+and complete validation before publication. Exact-content revisions are bound to root/path, sibling stages
+publish with native rename, and committed outcomes report durability separately.
+External writers must coordinate around the final compare/rename interval; these
+per-file source operations do not implement M03 durable player transactions.
+
 | Layer | Contract | Owner |
 | --- | --- | --- |
 | Authoring source | IDs, relative source references, component schema versions; readable and durable | 08 |

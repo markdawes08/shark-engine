@@ -1,5 +1,6 @@
 shark_setup_source_document_dependencies()
-add_library(EngineTools STATIC src/build_info.cpp src/source_document.cpp src/authored_scene.cpp)
+add_library(EngineTools STATIC src/build_info.cpp src/source_document.cpp src/authored_scene.cpp
+    src/project_files.cpp src/project_files_native.cpp)
 target_include_directories(EngineTools PUBLIC include)
 target_link_libraries(EngineTools PUBLIC EngineCore PRIVATE nlohmann_json::nlohmann_json)
 shark_configure_target(EngineTools)
