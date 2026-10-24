@@ -49,7 +49,7 @@ def cache_values(build: Path) -> dict[str, str]:
     values = dict(re.findall(r"^([^/#:=\n]+):[^=\n]+=(.*)$", text, re.M))
     values = {key: value.rstrip("\r") for key, value in values.items()}
     expected = {"CMAKE_BUILD_TYPE": "Release", "SHARK_SANITIZER": "none",
-                "SHARK_BUILD_CLIENT": "ON", "SHARK_BUILD_EDITOR": "OFF",
+                "SHARK_BUILD_CLIENT": "ON", "SHARK_BUILD_EDITOR": "OFF", "SHARK_BUILD_TOOLS": "OFF",
                 "SHARK_BUILD_TESTS": "OFF", "SHARK_BUILD_SERVER": "OFF",
                 "SHARK_BUILD_GRAPHICS_PROBE": "OFF", "SHARK_NATIVE_WINDOW": "ON",
                 "SHARK_NATIVE_GRAPHICS": "ON", "SHARK_INJECT_TEST_FAILURE": "OFF"}
@@ -58,6 +58,8 @@ def cache_values(build: Path) -> dict[str, str]:
             raise ValueError(f"Runtime package requires {key}={value}")
     if Path(values.get("CMAKE_HOME_DIRECTORY", "")).resolve() != ROOT.resolve():
         raise ValueError("Runtime build belongs to a different source checkout")
+    if (build / "_deps/sqlite-src").exists() or values.get("SHARK_SQLITE_SOURCE_DIR"):
+        raise ValueError("Runtime build must not contain Server SQLite population")
     return values
 
 
@@ -211,6 +213,8 @@ def inspect_package(directory: Path, expected_manifest: str) -> dict:
             or not isinstance(manifest.get("files"), dict)):
         raise ValueError("Invalid Runtime package manifest")
     files = manifest["files"]
+    if any(name.casefold().startswith("licenses/sqlite/") for name in files):
+        raise ValueError("Server SQLite notice must not enter the Runtime package")
     if not 1 <= len(files) <= MAX_FILES:
         raise ValueError("Invalid package file count")
     actual = set()

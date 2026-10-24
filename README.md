@@ -85,7 +85,11 @@ current-machine scope.** The [handoff](docs/handoffs/M02e-integrated-qualificati
 and [receipt](docs/coverage/evidence/M02e-integrated-qualification.json) record
 474 passing CPU CTests and protected package qualification across the
 [five network checkpoints](docs/roadmap/network-plan.md).
-**Next assignment: M03, Durable characters and transactional state.**
+**M03a, Store foundation, is complete:** the [server-only store](docs/durable-store.md)
+passes 525 CPU CTests, ten additional standalone Tools checks and protected
+package/API gates. Its [handoff](docs/handoffs/M03a-durable-store.md) records the
+current-machine evidence. **M03b, Owned durable characters, is next** in the
+[six-checkpoint plan](docs/roadmap/durable-state-plan.md). Full REQ-M03 remains NOT_RUN.
 Assignment 08, Project and scene persistence, completed its
 [four checkpoints](docs/roadmap/persistence-plan.md). 08a adds CPU project/scene
 formats, validation and migration through [owned C++ values](docs/source-documents.md).

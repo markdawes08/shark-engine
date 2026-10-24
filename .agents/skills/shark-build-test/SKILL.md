@@ -5,6 +5,13 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+M03a adds EngineStorage only with Server. Supply `SHARK_SQLITE_ARCHIVE` for
+offline Server configurations using `tools/storage_dependency.py --output`.
+Preserve `shark.storage.store`, `shark.storage.process` and
+`shark.tooling.storage-dependencies`, including native/WSL sanitizer builds.
+SQLite must remain absent from Core/Runtime/Tools source and target closures;
+compile the [public example](../../../docs/durable-store.md) without sqlite3.h.
+
 08d integrates legacy migration, activation, edits and native saves through
 `shark.tools.persistence-integration` (90 seconds, seed 1337). Preserve this family
 alongside all four earlier authoring families in native and standalone Tools

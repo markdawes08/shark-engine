@@ -77,7 +77,7 @@ class RuntimePackageTests(unittest.TestCase):
 
     def cache(self, directory, **changes):
         values = {"CMAKE_BUILD_TYPE": "Release", "SHARK_SANITIZER": "none",
-                  "SHARK_BUILD_CLIENT": "ON", "SHARK_BUILD_EDITOR": "OFF",
+                  "SHARK_BUILD_CLIENT": "ON", "SHARK_BUILD_EDITOR": "OFF", "SHARK_BUILD_TOOLS": "OFF",
                   "SHARK_BUILD_TESTS": "OFF", "SHARK_BUILD_SERVER": "OFF",
                   "SHARK_BUILD_GRAPHICS_PROBE": "OFF", "SHARK_NATIVE_WINDOW": "ON",
                   "SHARK_NATIVE_GRAPHICS": "ON", "SHARK_INJECT_TEST_FAILURE": "OFF",
@@ -92,7 +92,7 @@ class RuntimePackageTests(unittest.TestCase):
             self.cache(directory)
             self.assertEqual(package.cache_values(directory)["SHARK_BUILD_EDITOR"], "OFF")
             for key, value in (("CMAKE_BUILD_TYPE", "Debug"), ("SHARK_SANITIZER", "address"),
-                               ("SHARK_BUILD_EDITOR", "ON"), ("SHARK_BUILD_TESTS", "ON"),
+                               ("SHARK_BUILD_EDITOR", "ON"), ("SHARK_BUILD_TOOLS", "ON"), ("SHARK_BUILD_TESTS", "ON"),
                                ("SHARK_BUILD_SERVER", "ON"), ("SHARK_BUILD_GRAPHICS_PROBE", "ON"),
                                ("SHARK_NATIVE_GRAPHICS", "OFF"), ("SHARK_INJECT_TEST_FAILURE", "ON")):
                 with self.subTest(key=key):
@@ -106,6 +106,21 @@ class RuntimePackageTests(unittest.TestCase):
             self.cache(directory, CMAKE_HOME_DIRECTORY=str(directory))
             with self.assertRaisesRegex(ValueError, "different source"):
                 package.cache_values(directory)
+
+    def test_storage_population_and_manifested_storage_payloads_are_rejected(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            self.cache(directory)
+            (directory / "_deps/sqlite-src").mkdir(parents=True)
+            with self.assertRaisesRegex(ValueError, "SQLite population"):
+                package.cache_values(directory)
+        for name in ("licenses/SQLite/LICENSE.txt", "licenses/sQLite/LICENSE.txt", "bin/sqlite3.dll", "data/world.db"):
+            with self.subTest(name=name), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary) / "package"
+                package.publish(directory, {**self.payload(), name: b"storage"},
+                                {"schema_version": 1, "kind": "runtime-deployment-fixture", "status": "PASS", "qualification": "NOT_RUN"})
+                with self.assertRaisesRegex(ValueError, "SQLite|unexpected|Unexpected"):
+                    package.inspect_package(directory, package.sha256(directory / "package-manifest.json"))
 
     def payload(self):
         files = {name: b"synthetic CPU fixture" for name in package.BINARIES}

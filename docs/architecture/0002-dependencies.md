@@ -6,6 +6,15 @@ Scope: Assignment 00. Assignment 01 implements the build and lock mechanism; lat
 
 ## Decision
 
+M03a adds **SQLite 3.54.1** only to EngineStorage. The official amalgamation,
+source ID, exact archive/source/notice hashes, compile options and no-patch policy
+are recorded in the lock and [ADR 0015](0015-durable-store.md). The storage helper
+verifies all four archive files; only sqlite3.c is compiled. Core, client and
+authoring targets do not consume it. Offline Server builds additionally supply
+`SHARK_SQLITE_ARCHIVE`, prepared by `tools/storage_dependency.py`. SQLite public-
+domain provenance is retained in the Server notice; no database, shell executable,
+shared SQLite library or fixture is installed. Existing Core pins remain unchanged.
+
 08a integrates **nlohmann/json 3.12.0** privately in EngineTools. The official
 release is pinned to commit `55f93686c01528224f448c19128836e7df245f72` and
 `json.tar.xz` SHA-256
@@ -111,7 +120,8 @@ EngineCore/EngineClient/Server before client subsystem integration: GLFW, NVRHI,
 Vulkan, miniaudio and platform input are EngineClient-only; math, ECS, authoritative
 physics, simulation Lua and bounded runtime data belong to EngineCore. EngineTools
 uses Core for authoring; optional previews depend explicitly on Client. Runtime
-uses the client composition, while Server links Core only. Rows below naming
+uses the client composition, while Server links Core and the server-only
+EngineStorage module introduced in M03a. Rows below naming
 generic Engine describe these owning implementations under that split, not
 permission to put presentation dependencies into Core. Headless configurations
 must not discover/download graphics/audio/window packages merely to disable them.
@@ -120,8 +130,8 @@ MMO additions require deliberate selections at their owners: maintained transpor
 session authentication and cryptography in M02; transactional persistence and
 migration tooling in M03; terrain/collision/navigation and bounded streaming in
 M05; skeletal-animation processing in M06; deployment/content authenticity in
-M08. M02a selects Mbed TLS below; database, navmesh and hosting providers remain
-unselected.
+M08. M02a selects Mbed TLS below and M03a selects SQLite above; navmesh and
+hosting providers remain unselected.
 Use the existing single dependency lock before first integration. License, patch,
 CPU/platform and offline/server package tests apply to these dependencies too.
 Single-precision Jolt is confined to bounded local origins; it does not select

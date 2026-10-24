@@ -55,7 +55,16 @@ bounded revisioned CPU inspection through the same scene owner. Follow the
 **07c and full REQ-07 are complete under the current-machine scope.** The
 [07c receipt](docs/coverage/evidence/07c-schema-inspection.json) records 376 passing
 CPU CTests with no failures/skips and protected dependency/package qualification.
-The next assignment is **M03, Durable characters and transactional state**.
+**M03a, Store foundation, is complete under the current-machine scope.** Its
+[handoff](docs/handoffs/M03a-durable-store.md) and
+[receipt](docs/coverage/evidence/M03a-durable-store.json) record 525 passing CPU
+CTests, ten additional standalone Tools checks and protected package/API gates.
+The exact next checkpoint is **M03b, Owned durable characters**, following the
+[six durable-state checkpoints](docs/roadmap/durable-state-plan.md). Read
+[ADR 0015](docs/architecture/0015-durable-store.md) and the
+[store contract](docs/durable-store.md). Full REQ-M03 remains NOT_RUN.
+EngineStorage owns SQLite privately and is available only with Server.
+Core, Client, Runtime and Tools must not acquire it.
 Assignment 08, Project and scene persistence, completed the
 [four checkpoints](docs/roadmap/persistence-plan.md). **08a is complete under the
 current-machine scope:** 484 CPU CTests, standalone Tools tests and protected
@@ -275,11 +284,14 @@ has server authority or a game-world implementation.
 Its injectable window fixtures remain CPU-only; existing WSL builds report native
 window capability unavailable. Raw input is never a Server gameplay protocol. Engine is an
 interface composition target that links EngineClient and transitively EngineCore.
-Server links only EngineCore. EnTT is a private header-only Core dependency;
+Server links EngineCore and the server-only EngineStorage module; its bootstrap
+CLI does not yet open a store. EngineStorage privately links the locked SQLite
+amalgamation and publicly reuses Core values. EnTT is a private header-only Core dependency;
 centrally configured GLM supplies public CPU math through SharkMath and
 `shark/math.hpp`. M02a privately links the exact Mbed TLS/TF-PSA static graph;
 Core/Server now require a C compiler as well as C++. Public headers contain no TLS
-or native socket types. Offline Core builds require all three locked archives described in
+or native socket types. Offline Core builds require the three Core archives; Server builds additionally
+require the exact SQLite archive through `SHARK_SQLITE_ARCHIVE`, as described in
 [building](docs/building.md). Server/Core exclude window/GPU/audio/authoring
 libraries at configure/download, link and package time. `server-only` builds a
 Release server with tests and dependency fetching disabled; `server-debug` and

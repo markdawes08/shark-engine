@@ -1,0 +1,1956 @@
+{
+  "schema_version": 1,
+  "checkpoint": "M03a",
+  "generated_at_utc": "2026-10-24T04:53:03.723506+00:00",
+  "status": "PASS",
+  "base_revision": "01968d56cfae7e5faa999fa414dbf73e2b3c75c2",
+  "result_revision": "Uncommitted working tree; staging, commits and pushes remain with the user.",
+  "qualification_profile": "current-machine",
+  "scope": "Server-only SQLite store foundation: explicit atomic creation, supported-version reopen, immutable store/world identity, exclusive local ownership and bounded validation. No character/economy mutation API or player protocol.",
+  "full_requirement": {
+    "id": "REQ-M03",
+    "status": "NOT_RUN",
+    "remaining": [
+      "M03b owned characters",
+      "M03c atomic transactions",
+      "M03d runtime recovery",
+      "M03e migration and restoration",
+      "M03f integrated qualification"
+    ]
+  },
+  "next_assignment": "M03b: Owned durable characters",
+  "source_freeze": {
+    "path": "out/M03a-work/source-freeze.json",
+    "sha256": "5e9db5a42feed28373fdc26fbcf76351b4508ad04fedd2c16b05e4d409c8ab01",
+    "source_input_count": 310,
+    "helper_count": 15,
+    "unchanged": true,
+    "inputs": {
+      "cmake/CheckRuntimeBoundary.cmake": "f8e9bfbe1f28b82872c5acb6c4f4adf36eccc2dc835da748b5298b1f2aae3e09",
+      "cmake/CoreHeaderDependencies.cmake": "3f469c851654835c9f611801c33aeb07e195d0da2b3f534116ed1ca6d07a5b08",
+      "cmake/Dependencies.cmake": "a2d0149a74818b6eb60cd38d5755989402ba0ee9bb242d41a9b207f181ac0f0d",
+      "cmake/GraphicsDependencies.cmake": "060d417436d33da66a3ffbcfc526eed0ae1e60a454f7350999d931f48e403505",
+      "cmake/GraphicsValidation.cmake": "de824be7509230525f980090ef54bea7accd5530e3fa20954e849b6fff8bd2d8",
+      "cmake/LockedClientDependencies.cmake": "55b4c7df5a536d343bbeaa2c0cfd9806e9baf50764e0ce11666461155eb26477",
+      "cmake/MathDependencies.cmake": "b74ddfa314d910482dce6bf7070cec43978ebbed1437947ed1d3eb3af41763b8",
+      "cmake/mbedtls_user_config.h": "8bfe042913109bb93a68cd1f69cddcfd5f7d2a1cf2da49556fcde4f85f658330",
+      "cmake/NetworkDependencies.cmake": "1fac5a555afc10edd7da135beb9f6b2eef59e5a9b6342c94d73455bcae43deb8",
+      "cmake/SceneDependencies.cmake": "84dc5d7208c20be18d33bf27d17b18cea7b9fed73ce8d8c5acb35634eae4e876",
+      "cmake/SharkBoundaries.cmake": "5ca0e28139e807bce587e00967fcc1b90c31b8ecec0e2d8e842027795b69f715",
+      "cmake/SharkOptions.cmake": "0ea2bb9f222393f36449481dffb463e13be7f335abae61be7999253c29ddbe08",
+      "cmake/SourceDocumentDependencies.cmake": "252ddb95de4c9df51a1ad1eca7be1ae38135f10c219bcc789179ecca3a2738ae",
+      "cmake/StorageDependencies.cmake": "b7934d7d01230bcf6d2625431653eafa6eec48824c648a3b8979697c5484f74a",
+      "cmake/WindowDependencies.cmake": "8e9fd2ff8821675640931daa53c23a54b714ac2b6450af9629c21804afc4ab92",
+      "CMakeLists.txt": "b3ab2b121921d983ec3b6da5b68f1a05930a29f5a09a065dacaa254b070def6c",
+      "CMakePresets.json": "304a15a4d32cc355020ae216876058114ac2ae45491aa3a29f347d7fe14ec010",
+      "dependencies.lock.json": "d0cda36900bb4f74b0edb96b208314c1b01095da5d9aa9cba5ca435fb43241e4",
+      "docs/architecture/0015-durable-store.md": "935bd36b91187b5d0de750bfc65a2b1da4b64baac764d3f8aa0df55fe759834f",
+      "docs/durable-store.md": "3232fbcbdd8b18ce124be2f9e81a18ee5e4f57851dd6c657abb2a77d1345710a",
+      "editor/CMakeLists.txt": "7982ebc0c75bae845b3ba6a88c49e1628f4bc61773469f3972fd01bdd2b535b4",
+      "editor/main.cpp": "d419197d1c9081467781c21e80399b4ba7c741fd24e8692d95601aa240f048a3",
+      "engine/client/CMakeLists.txt": "83580c87f5ecf3433d37c4835a7bca24efae294f8256a48b2bad11e66f2c7960",
+      "engine/client/include/shark/client/bootstrap.hpp": "1e46fd4bc86844aba0b00c0e3d8ad04cf2e4668155a71d813208f5da11cbabb4",
+      "engine/client/include/shark/client/cube_sample.hpp": "6fc119418ba6c6029890745e67f8c0ce6cf86dcf00d56bcbf387f4fdc67b2700",
+      "engine/client/include/shark/client/frame_loop.hpp": "9f57175088ce7901c37b438c81a39ba4ea4a047047fa53faa16c81c3bb48ea26",
+      "engine/client/include/shark/client/gpu_resources.hpp": "59b4844575056e35cef6ec99f11c2704f983834c36c2d00695c493647848427f",
+      "engine/client/include/shark/client/graphics.hpp": "fb56b240d430cb3eccb6b34165ae376becc28d80f42073a713df8999702e4f8b",
+      "engine/client/include/shark/client/input.hpp": "54edddf942f0b1fc5c5b038da86284aada0356318b13ad5dddf27b31208e9234",
+      "engine/client/include/shark/client/presentation_launch.hpp": "a8b94a8e4347cbfad6bbc113b5ed2b767ad7476600d0d50b9d5882401668ffac",
+      "engine/client/include/shark/client/shader_bundle.hpp": "6704149fffe3efc144a68856d756aa09087188df0134fffe2f55f23d310f9cc4",
+      "engine/client/include/shark/client/window.hpp": "ab7c2b4e6db473e231d5f5e577eb394937cd0dd4bc0783a79f1f2ac0b1ab7c76",
+      "engine/client/include/shark/client/window_launch.hpp": "2220db968ca4f0b9cf6396d66ba2db24821af52f41cb643112fb719f74eb543a",
+      "engine/client/src/bootstrap.cpp": "c2e468aa471f667feae1963358b8d6572a1e4bfc6e9c5137884010616155946f",
+      "engine/client/src/cube_sample.cpp": "4f6d42868cd662bc4e5858363257aa078fd2749b6c2c7abb41d89055e49ab7a0",
+      "engine/client/src/frame_loop.cpp": "6fe8c090c41a02647e8f71657214108ae3e0da25d826f5120316b77ce17f45cd",
+      "engine/client/src/gpu_resources.cpp": "7f9ae5b58151087c09e614ad10337e823ff4c29288d9514bb7bbb19389643696",
+      "engine/client/src/graphics.cpp": "044ceaf780286dfa9d80d70d680e24c10c0de3002ea4c8ba411882dcdce3d94e",
+      "engine/client/src/graphics_backend.hpp": "5d7ad6ea89c0efb4fbeba8a8e77c4459bfb8996daf8da9472dce9e86b472f137",
+      "engine/client/src/graphics_native_test.hpp": "9ca562e68ded1bbd2245c7fa5be1f77a6d82b9f9b45ae4a74b99ed605f2e6caf",
+      "engine/client/src/graphics_offscreen.cpp": "56ba9305f85c0ad712f038c7fe1b0112d10912fafb425aca917a8fd3a3a14a22",
+      "engine/client/src/graphics_offscreen.hpp": "7b8f2fb20df25139bb940a742e51d76eb7de2ac04eaffaaf1218739379aaa7b0",
+      "engine/client/src/graphics_queue_waiter.hpp": "7287b5cd6c38af885883918e3462631eeca0387eccaff8cf6302549932d1d4e3",
+      "engine/client/src/graphics_queue_waiter_win32.cpp": "6cb918a453bd0bb2629a802e227b4bd5099ab39a0dc6d60dfdf91b21fad1aa3f",
+      "engine/client/src/graphics_unavailable.cpp": "88980d983085c06b176acc8bf1a4af300088a44808e76f06a79af3b0fdd46def",
+      "engine/client/src/graphics_vulkan.cpp": "dd484d27b95423459a0feff8dcb8b5ff6d39a5af7a5d7631d88e492a7da0b1aa",
+      "engine/client/src/input.cpp": "c6c5759fb4267a621cf5af099eb65d44c13f9f67efe08aaa47d868c200ff0fab",
+      "engine/client/src/presentation.cpp": "f1d0a39e649b9cb0913b97491a513224c2aa7e0b0cb942b3745e9fc5970d7bd1",
+      "engine/client/src/presentation.hpp": "6211bcdc3fe2d70f454d380cb8d5b936c1eea437dd98dfff7ca73b1f7a5df30c",
+      "engine/client/src/presentation_launch.cpp": "b61614e466e053e015e0c22a3fe8ffdba7872489d5a1e3bca5234a841a8b4fa5",
+      "engine/client/src/shader_bundle.cpp": "b7c24b2523511ce245a84f0bbc5b56b9720cb3f0d5e0549ccc03d822b1154522",
+      "engine/client/src/shader_digest.hpp": "409cf68be96cafed475a99b555ef63751186a3a9a1279477706f1c7a755a684d",
+      "engine/client/src/shader_path.hpp": "670333b9d7f3907840c443da55484042a51f5a3fc731586bb127caa9cf668b25",
+      "engine/client/src/window.cpp": "94e0d4f102d473f5c1f22abec7cb64817bb52808979ad9657a5f0fbe761043a2",
+      "engine/client/src/window_backend.hpp": "561f8357ca36e3db04e0261946784ae0101ab9f47f51404220338ceb8115ffe6",
+      "engine/client/src/window_events.cpp": "125d040e72861416aa776c68e8e1a004e6ff8fbcc07ec9150f12d42733c165a3",
+      "engine/client/src/window_glfw.cpp": "a930c1b2acbe5cfa0a5e1fd222865365c2ca6f1ba54e60801419a4472f02a8c8",
+      "engine/client/src/window_launch.cpp": "a746a0dc9c6c30f7c15fec6e972a2873077de38ecc63204051b74cb7c47351a3",
+      "engine/client/src/window_loop.hpp": "0b20f86390492f05629bb75b4c6f04c3836890d6395727a65672285217d25459",
+      "engine/client/src/window_unavailable.cpp": "e4dd0ebd78faca013fd177dfba5344527d0b02683a6be2b6594954b398ffb6b4",
+      "engine/client/windows.manifest": "fd1bfdac3b91ed376e96a1e1cfdb86597ab0a6e99fa5d46f04b0426180c3ad6e",
+      "engine/CMakeLists.txt": "ee7b45632e5ac9949e7a248ef5acf9451d0f79677e1e4e90db85238aa9a40a2e",
+      "engine/core/CMakeLists.txt": "9aa03ec80253a6f93e8baaab994fb8ab97e48c7c07df0b96e92d1e0206500add",
+      "engine/core/include/shark/completion_queue.hpp": "bb81aad77634549e3564603dde6b94d91f5b2935d402cb25bf161d151578ffca",
+      "engine/core/include/shark/error.hpp": "62dbfb45bfe48bc9523d969fc70642e8b648d44d0d1c2487f242e1e7d14b806e",
+      "engine/core/include/shark/log.hpp": "8a97e3118ac5145662da7e931cf4e2af69d140a0d3a541cc49b8bc6d0baa6a60",
+      "engine/core/include/shark/math.hpp": "c202d96a4cc7632c22c091d5b5badc6169366f8fffa30a5796137382930a786c",
+      "engine/core/include/shark/name.hpp": "5f88159419577299d7385ad09682d04366f6a7e97a73fea84bb5cf0faa968070",
+      "engine/core/include/shark/net/fault_link.hpp": "b5527ff4a6b23c8b6628b979573e9dbeac22d22dbca7c38e15e1688de956ca25",
+      "engine/core/include/shark/net/interest.hpp": "47ec4a970d3d5cf446647ddfb42b0b7ceadaa9e5a9c93394f053f020796024b8",
+      "engine/core/include/shark/net/replication.hpp": "7b0c5552b8be1555914898a123d8611435659ed458ef6a9ab45694aa389f1c06",
+      "engine/core/include/shark/net/session.hpp": "0a2d5349e3e4df08db79d187c47debe7e217927c900beda8e89bea4d2f07758a",
+      "engine/core/include/shark/net/transport.hpp": "e3057f8cd9f7262881506856bd01f6671c339cd04d3596df1a42d8183315ab47",
+      "engine/core/include/shark/net/wire.hpp": "02fb1512c7f2bf27e8712906c2b59a23335b76c5cc184e00b416d2c515c6543e",
+      "engine/core/include/shark/project_path.hpp": "2534a61372accaff09bef30e94e5d9c929b9e494780ff2b2c775e5204b070fbf",
+      "engine/core/include/shark/scene.hpp": "61a6bb892044ef3580d46ed6bb4201d5da7ced540d31bd1b9c565cc9b6473ed5",
+      "engine/core/include/shark/scene_identity.hpp": "f7739d522ec275717cbb4ded684208a3e23664eb422272777354c2100298c77d",
+      "engine/core/include/shark/scene_query.hpp": "d7882517985bc0f48d6514200768afb79b4ef1fabd4ae9b5498c330acde05deb",
+      "engine/core/include/shark/schema.hpp": "708e3e94481b41eadce58aaf411ab26c86e0890e053dcfe410c335da8c0c3766",
+      "engine/core/include/shark/server_application.hpp": "ba3c9bcd9e85f698689a1dccce2a8bdcaac1ad3ba9ee5c25148edce73cec4cb5",
+      "engine/core/include/shark/server_config.hpp": "f6e3e9745cf107d0144f9a1302446104f160a1a72a58c088882102390eeeac6a",
+      "engine/core/include/shark/shutdown_signals.hpp": "7b5cc9c6ac8da1f2d9f4d6f48a93c90b7ddd3f28e8d12cea9f2d5471ad10ca63",
+      "engine/core/include/shark/stable_id.hpp": "8e49d37d6d17730cc775301287ad8871fbc451851c80ba057c003109c0f5e5b7",
+      "engine/core/include/shark/time.hpp": "c1c296c9015f41bbbd2a7b029774dfbe2ed39c2a5c74926c3abd30d01839af1c",
+      "engine/core/include/shark/transform.hpp": "daf5aae6ae4332684dc46dc879e44142a29cabc1c7f08494f0f16c93c6c3a6cb",
+      "engine/core/include/shark/world_position.hpp": "dc2e5fe0f64741d8fa15321440c662ddea75bb7aa3db565f1a06013921b10167",
+      "engine/core/src/bootstrap.cpp": "f110d63d07103d53da3199bbdd8b74e6ab33131a0cd3364a3e93e50cffacf4f4",
+      "engine/core/src/error.cpp": "ad81265d1fd338e06f7922efd92f1a0cbc0fa0e108e724d1779e92b03a7691fb",
+      "engine/core/src/log.cpp": "7d292884341c0ed5a53bbbb13be4e683a2d149d677dcaa77a9e30ee81656558f",
+      "engine/core/src/name.cpp": "3936b11b34ad507f9ddc469842921e08199505234703570b68fb20ccfa6796ee",
+      "engine/core/src/net_fault_link.cpp": "16d6013101ac2377a523619b5699b18d9d1c2840e993595e4d90a53b6c70e371",
+      "engine/core/src/net_interest.cpp": "87e5d2a33e0ad177a2fe8cd9d76d37fee695a7eff5093e3a300c31605c6b9711",
+      "engine/core/src/net_replication.cpp": "5461589b26f97f7b5100e47883b34c8d860682bda8191300b17bb92249f2a712",
+      "engine/core/src/net_replication_wire.cpp": "e0d55c10df9b869275eaec539ab7a4ca4f1d00a799da087c0cb4d003e318a54e",
+      "engine/core/src/net_session.cpp": "473fd7b40c65d3e62334d124f4192a8711c3276dcb6909250fb242bfb171e689",
+      "engine/core/src/net_session_wire.cpp": "9df37ccfb8d082c6c175553cb88170bacdf9b8760629db70a9f09f65cc891a4c",
+      "engine/core/src/net_transport.cpp": "1b875c3578163378e927d65a0f81dc5c2a1e5b2073f458d757630bc3d506de83",
+      "engine/core/src/net_wire.cpp": "55de1f04d1471264ff81c8c778cbb6afad8229d6b9251e2d1ec607d6c3541949",
+      "engine/core/src/project_path.cpp": "a4a83cd3d479d7803f3523c3ce9513a26a292bcbaacf772c00058bbf4678678d",
+      "engine/core/src/scene.cpp": "7056d99b8dce934e486f749c7eb43c153001237048c3a0d2f63ea1733ccc4deb",
+      "engine/core/src/scene_generation.hpp": "0ecb42e8974b2fc38fcd14bf9d14de301802da55c0ca0566b22d1ddae109f0b9",
+      "engine/core/src/schema.cpp": "98b2e2a402aed3b8d368d592ff576071ff755a18d38762a3e30e429b67f3b6be",
+      "engine/core/src/server_application.cpp": "6c813c1bf3f067277e2e8a5afb4d2ef25938c32d3203ea0bdba9474a0b040338",
+      "engine/core/src/server_config.cpp": "badc3a728c7d460c2f42c6d3380c1fcd3503c1fc670f76b88959b0a61f071fde",
+      "engine/core/src/shutdown_signals.cpp": "56ccc01516be2c9f3cad9d2f87d2b72f3f2557be8f1bacaf7b27c60f823e0c89",
+      "engine/core/src/stable_id.cpp": "fcb8f22c989ce823031ca0ab1ad9b8d0b0deb9972f1d1299d708c51b107c9533",
+      "engine/core/src/time.cpp": "952c1f354c06f08331cb09ce7e9a34b5c854b4a0d36d2246b77e0e079952acc2",
+      "engine/core/src/transform.cpp": "51b0e9bad0875399e6f5ac54ca357bf00de30523755ea318ddaf80a926a7e7d6",
+      "engine/core/src/utf8.hpp": "857eb9279571f52f81b69b6a0e483c30a1737b9b0b670513b59b5af58eec1dec",
+      "engine/core/src/world_position.cpp": "8760d259966076a80aee96513abe55e3a83ada1ec95d6693a6d8e3fce85df045",
+      "engine/include/shark/bootstrap.hpp": "a6c66524330d392176fd4eb1b2ab61bf4252a7cbb418758ce9780abc15da1dfb",
+      "engine_tools/CMakeLists.txt": "87de8f9be0e62f43b8696006bd3ca5d4b871436edaf50c70b7564b330a9433e9",
+      "engine_tools/include/shark/tools/authored_scene.hpp": "d3d2122f80d67dec47c0acef1b8e695c116b37b6b80b88c04d4b1a865093f609",
+      "engine_tools/include/shark/tools/build_info.hpp": "f04974840adacd126c433e36949cc53e2d7250ae5365dbe739dce69757761234",
+      "engine_tools/include/shark/tools/project_files.hpp": "113a09b1f6cc70e8f2e1b263e47b6aa1f7c7f2ee35457d0ea56eb92697684fc7",
+      "engine_tools/include/shark/tools/source_document.hpp": "e966244f7d8c37e6aa104e7265a46ac83e8a87bb277dfad7a8576937a37be8d2",
+      "engine_tools/src/authored_scene.cpp": "c5110f2b9a911d728389c80403f6dce477b82d500bbfb710e46ee2e07b1253a1",
+      "engine_tools/src/build_info.cpp": "5594eeed535e828aab527cd8c403248ee0ce6c2dd0d39883831d13aec0cb1881",
+      "engine_tools/src/project_files.cpp": "1a07870180a0bdc6207807902dc784c5faf006c4ae4157397e835325777d0062",
+      "engine_tools/src/project_files_native.cpp": "cb2fef0955220e58ca10b835a7e2829a905417ee7bd394a16a8ddc888b2abd50",
+      "engine_tools/src/project_files_native.hpp": "df2bcaa501de1387dd4e38d82fba0daed0a545d6afbc84c65b25a2457d03b29e",
+      "engine_tools/src/source_document.cpp": "6961a679eaee56e73ed450f7f8396421d77c937bcff7f3b515cdc5fc8a361f0f",
+      "requirements-dev.txt": "461fc236b481fa5cc273b29dde8f6ab4116ae7a2b34e9ce58ae66e8122d3f191",
+      "runtime/CMakeLists.txt": "93373dba32c57ef2f131a21445fc6d78c7f6c596e6c3b1750370d0d22ad72bce",
+      "runtime/main.cpp": "0ce373df244c57d12b5d6f4c58839c2634cd72364e60dadfee69ae87b22a5137",
+      "server/CMakeLists.txt": "e363e0431eac60d96d80ca2745b68d46c8094dae21883df16bfffaca027f089b",
+      "server/main.cpp": "e5d5f64ab92ae63b382b4b73518284a9d8a32ed47edeb3226b8cd136f1433638",
+      "server/storage/include/shark/storage/store.hpp": "7d54dba97af9aa448e47128bcda48e2204471d376ab5504510819fdc6cf19c68",
+      "server/storage/src/store.cpp": "7d61bf510774e7199dbbcd90540b7a1ebc816da8df1aa0cbf7e97274ef1955a2",
+      "server/storage/src/store_test_hooks.hpp": "b93660666eda6dd121931c83fea78831bdc1a68683896f93fb7f87c3c8b05c2e",
+      "tests/authored_scene_tests.cpp": "3ae7044abae4c6738272c563295c4b9ddeb6780eb9094245d67289878fa90ccc",
+      "tests/bootstrap_tests.cpp": "e9b32086caacc0bd9cd132e6275e087906a3e38b172d07a1a7b2a0701c4a31ae",
+      "tests/boundary_fixture/CMakeLists.txt": "e7ba2c5d793b4d5bc33ee1ca06f12b11a7aa34b9f07bbb3d58f17bc86555f73c",
+      "tests/boundary_fixture/header_leak/CMakeLists.txt": "56f36f0dd94b42847a64cdc30a278289145d1fa9a023bc8000c88a5b915303d5",
+      "tests/boundary_fixture/header_leak/engine/client/leak.hpp": "93db329086db5ed6f54c99bcf41a1dbb989869959360296e2330e10c7fc71ece",
+      "tests/boundary_fixture/header_leak/engine/core/include/api.hpp": "9297930d651d58f79a83e1d68b51fcaeca884413a7f334867decac38d5779837",
+      "tests/boundary_fixture/header_leak/engine/core/src/core.cpp": "50eb75e45b2c07acdbe3c9753c866a6180daf9a78292c8577f1488408a790ddd",
+      "tests/boundary_fixture/header_leak/server/main.cpp": "6ed1e068fc65a49eb8c4caf2001c20762dcd2e7bd3386915278146cc9c1ca138",
+      "tests/boundary_fixture/server_only/CMakeLists.txt": "6e589bf1f2d7757d81f52bd324fbbf861857ee004ad0b2cef39dacaa83aa56b9",
+      "tests/check_cube_cli.py": "274a022e8ec795fa1202dd045de8a86c2839435d2b68837143f4699efdeef6df",
+      "tests/check_graphics_device_cli.py": "48f3211dcea87f75566b1ff4e74f982703413ac6eedcaa5e8c79abff1f7975c9",
+      "tests/check_offscreen_cli.py": "a744e76427cf31acf2678ca8a11703b1633ab21fb9935a96f011feaf476f8f8c",
+      "tests/check_presentation_cli.py": "c746f72f13a382f6d87353a00a1ffcdaa0c42b9c56688302dca924a08efff963",
+      "tests/check_presentation_stress_cli.py": "06d3efbe100c6add142d333fb9406cce59dcad7b7410978df52843b6957f9a4e",
+      "tests/check_server.py": "971fe4e77d1dcda31e2542ec856076c30052621fb660c45a9c76b3f48c7bffcd",
+      "tests/CheckBoundaryFixture.cmake": "bda341a05bf3fcdc8807405c08066537bd69813cc8d891e72d7eb9c376d2a1ad",
+      "tests/CheckCli.cmake": "00cc62d9dce799ff2aab68e6e57b4e77ddfffb06659b903e8110343e299274d8",
+      "tests/CheckPresentationLaunchCli.cmake": "7c5edfb867a3daee8bd1d85ab7edfb798235d9311462125e74a8eb82b74e4266",
+      "tests/CheckWindowCli.cmake": "f135a22dcd24011ed31189f68f7502fe33529dc7e5f2a93edc2bdb0edeb33156",
+      "tests/client_frame_tests.cpp": "1d307ec4a4dc76ad7480d931adee44b80af2375ee43127ffcbc78e879a25cffb",
+      "tests/client_gpu_resources_tests.cpp": "90fb6dc54ae5657b40c67d71632985f870208572a03a4d32cd4b6db43b9b9f04",
+      "tests/client_graphics_tests.cpp": "f77f470abc0a46aa26fe9669872fc2e98e505f7e4d5c30d230ed6371429e1672",
+      "tests/client_input_tests.cpp": "4010cafc82c8811f59060059413dbee8bdbb77f8b53ae74725926eb334755e9c",
+      "tests/client_offscreen_tests.cpp": "6b033d7b29347bef18139ff91cfaebdb4007266e2d221d4c9906f154eea31298",
+      "tests/client_presentation_launch_tests.cpp": "8460d7bf4b2fa155ff5452cf48246f99ca18ee292bb93b77d8fec7e7a7b139a0",
+      "tests/client_presentation_tests.cpp": "0446d1237a4a8dafae142da308381b6a8ec5a7e94b0dc373978a0579d28a317d",
+      "tests/client_queue_waiter_tests.cpp": "fa3145c2c749308c062d99e6351b7470c8e07ee87fc8851cab420c67ebd8e006",
+      "tests/client_shader_bundle_tests.cpp": "3238fe720f1e0ebb1c7ef5f3b6129eace23665b61534f8b7f1b2ae8b4047ba44",
+      "tests/client_window_launch_tests.cpp": "8bfef0a5ff53469ce92bfca9f2d96024dcf3e67045875c6d0681f43e203c2384",
+      "tests/client_window_tests.cpp": "ef199d655499682ff980b34125fc7dfaece0ca5c214fd8e334a2bd0652cc7eaf",
+      "tests/CMakeLists.txt": "ad845bbedb0a115a027504ce453a4391f9271a61987c89da8280d2c9fc3c6b16",
+      "tests/core_error_tests.cpp": "b44bbdf3be8ab0695851551a13df82f8d1d40ecf4f5c7f1aa8c351d5a7f9970c",
+      "tests/core_hierarchy_tests.cpp": "dd68e52a753aa2c68272211167be238b284e4e13ef5566e628ed020d0e2ae516",
+      "tests/core_identity_tests.cpp": "d593e7173600d3506eae899222b2a22a3841e6c125ebed87b8e980a81dab56d2",
+      "tests/core_net_fault_tests.cpp": "3c3d067c094a7a1f30ef34e6df462fd67e56a289d6b93e539818f9d8cdc715ff",
+      "tests/core_net_mtls_tests.cpp": "b057e4af477af59596ddd8fc9fbd8031ecde5f942fd54f802ea673ea1470456e",
+      "tests/core_net_replication_tests.cpp": "0a476fee57fe3fdc1132e75d72274af11b122a10e52d632fae2038de4dcc5aa2",
+      "tests/core_net_replication_wire_tests.cpp": "1c04b17b250289e02bc946d67ea319a8805acb64d62c37c784cb95606129d07c",
+      "tests/core_net_session_tests.cpp": "090bbc9f58b6129f402d283796ebba035070019d2c2ce979a7da5d5e507d82be",
+      "tests/core_net_transport_tests.cpp": "0046aa80534e02b691162dee142032c064bcba19a1fdce60e1d0e63bdfa9ddaa",
+      "tests/core_net_wire_tests.cpp": "d28759eb4b78b56f2470624e8476385fa4f0a1fb2640847ee72f3d865ced0521",
+      "tests/core_path_tests.cpp": "5b95a599b14f3dd9560c4d2f5b5d7deac8a639089c3a23b12705c62863d571f3",
+      "tests/core_scene_query_tests.cpp": "f070da16b3d20bc4cf1b74d3699e5114445cb495e0f38d6d42feb4d5c1c6cd6d",
+      "tests/core_scene_tests.cpp": "82703b11246a2fb3cf6b1be8839b9eb45acfc756d119e8ea76699135a816da89",
+      "tests/core_schema_tests.cpp": "fe04d7d915b5d6cbea3b2e0ed7c65e1afd9c67d38e127446485e51569fd9d7d4",
+      "tests/core_time_tests.cpp": "67f44034bb0859cf4bcd1684dd223a9717898d61296e2caec1694e8b002d5414",
+      "tests/core_transform_tests.cpp": "3e752f5816d62a1ce9d36f1e3823dc1b5748cca8c9a09984e8bb66973be090de",
+      "tests/core_work_tests.cpp": "2291564397c81f4f6d6fb19aad66777d923db2e458a2b443441121623cda3d85",
+      "tests/core_world_position_tests.cpp": "cc362ea36fd72fb117e2d91d888ff43c219aa971c775dce0c19b5683e377a14f",
+      "tests/cube_faults.cpp": "be3990110441b664748f26e541a8916709f086c6e9b375522ef9cfe5b4d42a6f",
+      "tests/cube_smoke.cpp": "0e50d82357412f789156e530d9309c8462cb301767a8fe8903bad229981f0354",
+      "tests/fixtures/network/ca-key.pem": "5d113f0fe27a852b603f35b5c696c6055b583ea7ea7fa55217d6780624670c71",
+      "tests/fixtures/network/ca.pem": "9c359cf8532e995a996b72761f1b51fa8704d40450e270f585d3b3c31823606b",
+      "tests/fixtures/network/expired-server.pem": "f3862da9ba754057a1aaba92bc34d7e7d5ca7f11e304e993c7d072e0b0964224",
+      "tests/fixtures/network/generate.py": "0c19e814658609897256e3af8b0e6e14cb985b81a1b8e7dd6eb3ad28bc4eaa49",
+      "tests/fixtures/network/README.md": "edb9d2ebe5fea4529968f76ebf385f9dbc0e5b374730af1ee4d2541fa259b040",
+      "tests/fixtures/network/server-key.pem": "3b6b6095ddf85d782f2332b646769981514b51eda8e456262ccdd96c565458d8",
+      "tests/fixtures/network/server.pem": "799551fef7ef4c3cabb037c074d55642c81503426e1a29d8a4ef6174e7cb1e20",
+      "tests/fixtures/network/session/ca-client.pem": "7e045fc22df5bfcd698642d54b831bae8a2756f1fa31793177eaedba82ac433f",
+      "tests/fixtures/network/session/client-a-key.pem": "61e41c2244d3b209914deb23f2a08af20beb49af2bafe688c60c90cc72bee64c",
+      "tests/fixtures/network/session/client-a.pem": "7a5de7bfd8c29444b6fca09d7770dc9e2d9cd6e0871e43eb3f8e6a5e12b3f06a",
+      "tests/fixtures/network/session/client-b-key.pem": "782487ee8c6201260c4dd10f53aea10b593a45c7e2b8149bb043a64d395e2857",
+      "tests/fixtures/network/session/client-b.pem": "b58b688f581fc6d883a039600edc1df6483b716eef31f0246ebfd03250bcaa21",
+      "tests/fixtures/network/session/expired-client.pem": "c357b4f176740e4e9fa0beeada252790fa6fbed4551e7f6ffcf16179483dc0b3",
+      "tests/fixtures/network/session/generate.py": "99db53d06c3627362b6ccf5921c754205d01e4857cd7b7691deda9f34a431f5b",
+      "tests/fixtures/network/session/no-eku-client.pem": "b7ac7f18de76cd48151ce3946fe77ab56f791d18a0ab0eb488fae80a45d12e31",
+      "tests/fixtures/network/session/README.md": "1d366794d85940a9db3b3b4c8ff6224ecf6bf298f0827baace576659ca0d79bf",
+      "tests/fixtures/network/session/wrong-ca-client.pem": "ac2fc0ca96faf67f27f1c83f02fb3f1d451cebf49f2c8a240984da165686ffc3",
+      "tests/fixtures/network/session/wrong-eku-client.pem": "e07b9d156d0ae16af29048ea62240a7b947a3453cfec8712be9763bfc190031c",
+      "tests/fixtures/network/session/wrong-ku-client.pem": "0dc68894a3328cebb8c8345e0d946840daac7217a278d5141b2ccbf36c355525",
+      "tests/fixtures/network/wrong-ca-key.pem": "ee939099f53648de719e77bb49ef39ab139a0cd5afdcee73151acd0aaecc931e",
+      "tests/fixtures/network/wrong-ca.pem": "1cc6ccd9a5e7c6e34b54d78a7806d341672f881aef690f43e4a27c2cc6fdd33a",
+      "tests/fixtures/source_documents/project-v0.sharkproject": "21347bada96fd48efd9783a616f56947b273ff44ffbfa31c7b43c6a1a831f9a4",
+      "tests/fixtures/source_documents/project-v1.sharkproject": "3acc3540905486e7bcc056632b4783aab5e743434282a74a26b8d6ee89201e69",
+      "tests/fixtures/source_documents/README.md": "ac9f74bdcdb4fc0d5f54e8714d5178e07ff720a21ec3cae889abbc6cf8d41cf3",
+      "tests/fixtures/source_documents/scene-v0.sharkscene": "99aacf38bfd89abe25f4f359f725fe61fb70bfe65b3e453b998ac3360890b5b9",
+      "tests/fixtures/source_documents/scene-v1.sharkscene": "b5d48fe71f5af53b424ae08922dd9fa9d9076d1d51cc767ba608491e0e27d680",
+      "tests/gpu_shader_fixture.hpp": "e36ed3609f6f8d3bca43ae58004e6d610c238c40c1998a8cbcf04d29f0fbea77",
+      "tests/graphics_device_smoke.cpp": "d194c2e7013efd21a9acb09d70d10db22407688fe6f3e4c2c3272668613a1f89",
+      "tests/net_adversity_probe.cpp": "d3d39e6a045c1ec6e36bb88461bbcdef57a76be949d9dbc787da6bf48525e639",
+      "tests/net_adversity_tests.cpp": "9e47f962db15e64bf6ee972c9a56552da0c4e3d1533b7eee0d46c7abf45eb02d",
+      "tests/net_interest_probe.cpp": "b0c24e5768a410bd9c059d421cf2295a8ccc965467f883f9882b9188b392d4f0",
+      "tests/net_interest_tests.cpp": "71bbf337bfd35a255eac75ff12c3a51f872a37b4178f72b9d6103bcde35ccfdc",
+      "tests/network_probe.cpp": "7826bd2be631f911cb97f2ca55aac414f1d3648badab7d8240496fedbd3a340b",
+      "tests/offscreen_faults.cpp": "e89d9dd4a7d60f41ebe1843379fdadc2f827d6114f103ac0a739c596ba28b719",
+      "tests/offscreen_smoke.cpp": "fde1790b501ba85a5725249c7a6f977844f502d3be035fd52955118d8cc2827f",
+      "tests/persistence_integration_tests.cpp": "c404debce955381aabead6f77a0dfff27e169b2fc0919e46a95bdb64e7fd854d",
+      "tests/presentation_faults.cpp": "462fcabb501a70d62bda562ff798dceec02bdba0ace0bffe4b0705667e2563fe",
+      "tests/presentation_smoke.cpp": "30cc8d0c29b230c58cc1b80187d5fe6985756eba8c23db89e44ea90bb22829fb",
+      "tests/presentation_stress.cpp": "de179910ee7811585210955ea3ee0a9dcd748af0cf1d08a068e8b6dbac7fe2ec",
+      "tests/project_files_process.cpp": "0c4add986e8e7c848119b5d66b511e6fc2173459d277384cfc2e028c1cc7dd7a",
+      "tests/project_files_tests.cpp": "02889e5a7fe9e6146dc093cacd3f28888522ca078a5106ded53f540e1a2585ca",
+      "tests/replication_probe.cpp": "44006cdd9e0cc5607a39d36a3ac94c491e6f437d62498d734bb1fb1b0b78f89b",
+      "tests/server_application_tests.cpp": "b4371dc2cfd79205816e11c222bd029905537b76d81b48363b28b5afba765dde",
+      "tests/server_tests.cpp": "95d6205e1f29c2072e550fab91d39a9426578ebfc658254b67c0db36f1aa55a0",
+      "tests/server_timing_tests.cpp": "1ee71e8b88b13ab3a60f360e2d16bbfaf2a09c1e4619337aac48cc0c404618ca",
+      "tests/session_probe.cpp": "b205d9abd5842a65bba126174b18116463c32a82ec090e3a47feca93be5613bd",
+      "tests/shutdown_signal_tests.cpp": "aad5227b20772ded423f4850a2c086ee946d08cd43d00943dfaac19f5ec09ffd",
+      "tests/source_document_tests.cpp": "33c413803860d2fa8c900dc5551ba1b580e37977c358f923c0511a329de7ac6d",
+      "tests/storage_process.cpp": "87c5d8f017a0559637acb2ebec939a0197202a8363bd8034c18be007c23269ce",
+      "tests/storage_tests.cpp": "7e4967ed43a8dc6f2c08479301fe7358625c5be4d1427a0ed48f7b84dea2c8d1",
+      "tests/window_smoke.cpp": "06508d4c6b409ae399f1a7c2be92129a52d94af075a68002b4255da2897acfd0",
+      "tools/check_ci_config.py": "2872839da2f11dfe8c7f7f8b4c7f84682462011fd309447d37118855b482e46b",
+      "tools/check_clean_source.py": "7d92e5d7b500efbc223ca2948a031e19e40a58431145aa9b3bd254ef99a82e6a",
+      "tools/check_format.py": "4dfce4b68c84ca65032a6d3a06cfe3edbe406c1e262a6834e0d08d32fa34ffb3",
+      "tools/check_repository.py": "d3ea3271a72b8d04803c66883344051eba940f81b52fbda2b890579b85a3700f",
+      "tools/check_server_closure.py": "6b50866f5a07af7e464100a85a0ff247b6b2a4b8461b726638aa24e60afe66db",
+      "tools/ci/headless/chroot.sh": "64dbe422fd9dff9cce715259d4553913fdff9ce848eb7ca6025e19fb8ba21447",
+      "tools/ci/headless/Dockerfile": "706feab64cc2128ee23cfa7c49d396f1a90655b6ff788b7a65291fe6982fa742",
+      "tools/ci/headless/fetch_inputs.py": "c657a53ecc2c519043d5caa54b0ee78200b8eda6eef869e02edbeae8143ad900",
+      "tools/ci/headless/inputs.json": "5b0ab6341f2eebf0e1714a3621af4466c95a8d8b3c03b24b0e1097aed61d5934",
+      "tools/ci/headless/packages.tsv": "5b06a3a7b579f7d4bbd5878471b07e03df84a98f838cd86d0bf69b952f84f29f",
+      "tools/ci/headless/run.sh": "61747c13851fac1903763d4eca01465fa61a912504020b5e050ed919b112774f",
+      "tools/ci/headless/setup.sh": "a7379292924551b9f83ee89952ffd1bcea5202664f3d6669ecd0e2bd0b0a8e4c",
+      "tools/ci.py": "b95dd83fa1ffc61f8bb66c41df1470c17e0149597584e99afdb6f25b659c1bcb",
+      "tools/core_dependencies.py": "ee05200102352d1da5b479f1708fd29428d5d3e302b32bb7cecb60b3d7b95ac3",
+      "tools/cube_faults.py": "19df89f6d521fea04e8ad0d5993356cf2b9d4761068800adfcfa5a070b77bacc",
+      "tools/cube_smoke.py": "9662fb4c5b5945725d6c945511135c14e62e849ada6086f0ffd8f20015c3695d",
+      "tools/entt_dependency.py": "7d5d8ab81a8448e1a03fb9814005cb65767c9d5624c5971d71948c7fe1c1536c",
+      "tools/graphics_device_smoke.py": "1b673e437e72da96fab2d633e9baeb0cc16d28e023f98ab32e731a695e2c674e",
+      "tools/graphics_package/licenses/Microsoft-VC-Runtime-2026.txt": "d9363efd59ac8a01f4b89b6b41519237c2b6cf3a240554204c3708bffa8991dc",
+      "tools/graphics_package/Run-GraphicsProbe.ps1": "ef2072082adf209efe8d46e9f894bcd4fe56d57ce7e3fa570328336a5d1825a5",
+      "tools/graphics_package/run_graphics_probe.py": "81056b22e1a911cdf617bc0fd3b651a6d6e84dde5552ff266d8382dbbd920961",
+      "tools/graphics_probe.py": "61ba9856f77c5e1a46bd6425bcad0120b90ef602dd1bd25da6a76e30df599feb",
+      "tools/graphics_validation/CMakeLists.txt": "193fe4a92c1c372131a14ed80b0a4beacf5b3b9d74f87e73906c5e111e8825d6",
+      "tools/headless_ci.py": "d0a0f8736c1a25dc0a50e4a65aa6bb2b6f2571b5616d9f827116661490fb9e60",
+      "tools/offscreen_faults.py": "fef11ba65a628d8ee8c592a2fdcdd6c7113f8ddbb15441619f0bb06e83861a71",
+      "tools/offscreen_smoke.py": "8e0c834515e02f629f48d3d0441aa69e1b14aac6e39ee31ff61e5eb346431d0c",
+      "tools/package_graphics_probe.py": "f4b182c2b3af4058cd3c1b00249e2c8b615beff67a4601c2f8f4378495ea2c14",
+      "tools/package_graphics_probe_linux.py": "f56d24f4aee4bd3e4ac81ba3cf5158624748ae4a443cced6c17101b5528908cc",
+      "tools/package_runtime.py": "45986d97602bdab8535bdc317cb26da748e3b07cfb3d5ed64275b4d8f2434f71",
+      "tools/prepare_graphics_tools.py": "0222c8f46daa079a0e82a9b8fc165238057811637ec5d0b1f911b7bab23b263b",
+      "tools/prepare_graphics_validation.py": "6d06f86f77bbcedf26519cb03760a1740a45439e24a1fcd3e4dfc413f6a0197f",
+      "tools/presentation_faults.py": "cc55a74e7232206750ed2f61aac40b943df47a69fa9e5f765f073b9455f1fa2a",
+      "tools/presentation_smoke.py": "1768d0d8c2485b6d8d9f524c502de75a4d1b236ef039c160e6451e031a688960",
+      "tools/presentation_stress.py": "1cfcf02610a96f20ce7c534900f40ccef2c572726f1b6b1a33ca3b93c40bbf3a",
+      "tools/process_runner.py": "73ccfe5050040e3f495e518d3ddfbe903ee581edda17f2aed276456ffcf9e4bb",
+      "tools/runtime_package/Run-IsolatedRuntime.ps1": "68972c10f46d0bc3487d25e91d7bb3dd5a7da11420857f3c1b8ec137cb34fcd9",
+      "tools/shader_pipeline.py": "161cf31cb6ec6086a23aca144743745ce8c2c33a3a470109a4424226ee86c779",
+      "tools/source_document_dependency.py": "f313978be41f2bf0f3512338fadc3303f3c5ece09a070a493841a6bdfbb2c521",
+      "tools/storage_dependency.py": "2939c8f32d58c0a113c2dd04ca7fce7e4067b976e196cd5f43b1f28605b1ae92",
+      "tools/test_net_adversity.py": "0507a5a9a7a9f39fab00c728e2732319ab4f15b837810e80f9918cf09add09e3",
+      "tools/test_net_interest.py": "92bda1c52845294e084b3758b0924a9df273b4fdc092030e14fa9df49cecf109",
+      "tools/test_network_replication.py": "546a9887c70ed9aedcdf68ff162fb5cf24efdfb303064377a28262ff3d897caa",
+      "tools/test_network_sessions.py": "ffe2e309fb01d97be0340d63768ed227dd98daf8aedb42a619a09dc9d08fc853",
+      "tools/test_network_transport.py": "1f334b2c7857e83e0426dca9ff00be38f179edeab6653af76f678213ab8a58e2",
+      "tools/tests/check_graphics_package_launcher.py": "1dfa7b4e8eb2e15dbc16bc3551e3dac52d85441ec5ed261d732b46b2c7e71ad3",
+      "tools/tests/check_server_header_fixture.py": "0e57a56555d997699909a2ecbffc1cb75cec61e0579e27328c67fdc9845d770b",
+      "tools/tests/check_shader_pipeline.py": "08320f07442121aec9e072bbc9b533194e8175472d922c137542b49ddcb4bd72",
+      "tools/tests/check_windows_unelevated.py": "5618312f59d278957ba0e2ad426066d1a75e6a34ab1ef5cca8e978b36e1c3ef5",
+      "tools/tests/test_clean_source.py": "96f22281221db755c4298ec51c370ad67ab7f17bf6bd732808eb25435fb5272d",
+      "tools/tests/test_cube_faults.py": "ea34fa3d62691b5144027bfd7a28c6e906a1b7ebbd0d16c94b4b8c24276ec28c",
+      "tools/tests/test_cube_smoke.py": "f0bff11f4a8f5fe79a8474230faf0d7f2fcb22a7b03f3ee5c36bf4adcaab624b",
+      "tools/tests/test_graphics_dependencies.py": "940d206fc22c59561721b380857bc4d396a6850ad905188869a2db0721668c24",
+      "tools/tests/test_graphics_device_smoke.py": "aede1c8604b481c3eaee15bd43b8a877803d88cc1a88ce99c4ea68c76db450b2",
+      "tools/tests/test_graphics_package.py": "dcaf1e7a029d0bae2e68836b11b2f0e03476b9392328a7070f9aed099aea49f8",
+      "tools/tests/test_graphics_package_linux.py": "366f6e0a440a46d1e51fe1060ca0c54ffb83e31d051f2d5ccdc5ca0cdeb5d997",
+      "tools/tests/test_graphics_probe.py": "e9eda21f35c311a0e8ffb924bc7422c1c30d311306f28fdf52062781b2c3719a",
+      "tools/tests/test_graphics_tools.py": "83f034b9210ded31eb3a3152566aa25f461e37979beb20a988634c3497dc6459",
+      "tools/tests/test_graphics_validation.py": "9abcb6f15dce7255b622f88e34750e6940c437a3752a3c19da161578e7a42ebf",
+      "tools/tests/test_headless_environment.py": "98821011318ef78a1733533e18576e502d1107cffa834cb27b7f06c83ba55334",
+      "tools/tests/test_offscreen_faults.py": "79137eb634b7781c517f10928adfbc734145daaf58fbc7d1ab0d4c6811f3d7ae",
+      "tools/tests/test_offscreen_smoke.py": "1679e8d7885fecdc39483a11851011078d3c4fad77906530f63b0e26753ee765",
+      "tools/tests/test_presentation_faults.py": "bd7a90f9fe373547e1bea56eb8e36da62c185be54126fc179c6bbac30a051113",
+      "tools/tests/test_presentation_smoke.py": "23e4e2e5dd1729b4be3555f90dc1abf93f60b6410d386537a8f595609532e0e0",
+      "tools/tests/test_presentation_stress.py": "e50c499fbcd067e2833af725a6cafeeb7acac916a825a8ca803b27e1ba3c98f7",
+      "tools/tests/test_process_runner.py": "672891f6bb063aa25ec6d84e508905597a245c73430329d660c4629dd77a571f",
+      "tools/tests/test_project_files_process.py": "c1d63c877e89ae6403ff8b15c0e9943706a2f2fdd8d8f2fcf1a3d951474e5043",
+      "tools/tests/test_runtime_package.py": "4ef178dc0de2bdb9d54a996d8a0ec851185c411a70322a5e06ce9b17c579d962",
+      "tools/tests/test_scene_dependencies.py": "c76522dff9f7dc996abf8adae55378433af184cd428983c80ed8f749a5853147",
+      "tools/tests/test_server_closure.py": "1417960d222085869eb44ba1fdd75b93c266d1ee03336f2c26cad122252d4b5f",
+      "tools/tests/test_shader_pipeline.py": "9fb970c5c54f2fbf8ce2910c8601af67f16fb31f67902a063652f64368f49843",
+      "tools/tests/test_source_document_dependencies.py": "b59c85a2f884438fb1657f19223b840ff141f18405c2d35499a47688f875bf53",
+      "tools/tests/test_storage_dependencies.py": "ffcc3f47fb1cd2e29dd373ff610ad2330b213881a63a12cf2e845734158369c4",
+      "tools/tests/test_storage_process.py": "12996b0936dd9752504592dfaa892076117f1dcd828abbc4bfde375691656747",
+      "tools/toolchain_report.py": "59349b3f52acac3465da940c96f1cda5c7a264db89d9f3c1ca21038de50a6fe4",
+      "tools/validate_contract.py": "2f4be045b54e66510393a47b3798ba83a738f8a322f2fc6a3da739b32a88ecc5",
+      "tools/window_smoke.py": "6dc5357eec538f53220906a9156fd7625aec456783d61ad6466e0a318d810a0b",
+      "tools/windows_dev.ps1": "ed9cc7102b469e8004fc2266e31a0e3d083a5574e9b41329f67c81a75481d19b",
+      "tools/windows_unelevated.py": "f6a717b35e577f733415e965394c6ae57e7805e6790dd6180fd1ca5d6d6feb33"
+    },
+    "helpers": {
+      "qualification_common.py": "e41a5130cda4c4340c7aa4387fc345fddb29675914ae5af142da7f15fe847238",
+      "freeze.py": "7dc4359229073d4619031c9dd35ec44dcbdfcd5a2a1f32fb025608d2f48e9c68",
+      "verify-windows.py": "6e9eb2ef70f5f11192a257cff42ffd996a412f9e5b2772088b0cf07444eb8f75",
+      "verify-runtime-package.py": "4583b8b6ce4847038a21a3f9eb8338103bbc5a6c90a68866b3043fb00c838e54",
+      "api-audit.py": "dfae62e9194480eb89aed07e0910f2365d867e69e77c984f9e9dce6254fd6d68",
+      "wsl-run.sh": "846d764fbaef00a543fb99ea58dc4db87e6af4a088a16a1af028bd9c2a01cc9d",
+      "wsl-verify.py": "06abfe074c567bf63778f06f084a518fadd8d8416f4ec88aab1281a39e5afc55",
+      "wsl-runtime-audit.py": "ee06ffe42d737700178aa4a12e851c2ddabdac2462fa157a2af8778de230b1ee",
+      "wsl-receipt.py": "8aef174b9fcd9f213deacf05d8f0600239868849f1ab94e7413504c202edc2ec",
+      "project_files_receipt.py": "1876d55da320f4c0e30630a71db8496d93ba58244df59900062a0af8168cb4db",
+      "interest_receipt.py": "efaab6b5d13dc02c7ba654f7c76180f962a47ab0c3ddf981d77139af1b9b729d",
+      "integrated_receipt.py": "7e64b0b0f60177f415a1160d19f576a56c77f6146257878a70a4c93a63ca2a02",
+      "network-regression-contract.json": "70dc8fdd48bc5bc39e789e095c2dab8964040c34577abc8b5f0616d3f2f7edbe",
+      "preflight/config.json": "02a851d22ad807a2f5d79947d161c2e61eb00a0fdbca01f7239dce098620b900",
+      "storage-receipt-negative.py": "85b7e1c1870d65552eab77b11839390bd5d0a351e940aa51e9d6b2459ee64884"
+    }
+  },
+  "hardware": {
+    "verified_utc": "2026-10-22T11:50:41.5043861Z",
+    "processor": [
+      {
+        "Name": "Intel(R) Core(TM) i9-14900HX",
+        "NumberOfCores": 24,
+        "NumberOfLogicalProcessors": 32
+      }
+    ],
+    "operating_system": {
+      "Caption": "Microsoft Windows 11 Home",
+      "Version": "10.0.26200",
+      "BuildNumber": "26200",
+      "OSArchitecture": "64-bit"
+    },
+    "memory_bytes": 34053414912,
+    "available_memory_kib": 6014928,
+    "workspace_free_bytes": 102411128832,
+    "scope": "CPU server storage on the current PC and retained WSL; no new graphics or capacity qualification"
+  },
+  "cpu_tests": {
+    "status": "PASS",
+    "total": 525,
+    "profiles": [
+      {
+        "preset": "windows-debug",
+        "status": "PASS",
+        "tests": 85,
+        "failures": 0,
+        "skipped": 0,
+        "evidence_directory": "windows-r2/windows-debug",
+        "qualification_origin": "carried from completed original Debug"
+      },
+      {
+        "preset": "windows-release",
+        "status": "PASS",
+        "tests": 85,
+        "failures": 0,
+        "skipped": 0,
+        "evidence_directory": "windows-r2/windows-release",
+        "qualification_origin": "resumed run"
+      },
+      {
+        "preset": "windows-asan",
+        "status": "PASS",
+        "tests": 85,
+        "failures": 0,
+        "skipped": 0,
+        "evidence_directory": "windows-r2/windows-asan",
+        "qualification_origin": "resumed run"
+      },
+      {
+        "preset": "server-debug",
+        "status": "PASS",
+        "tests": 57,
+        "failures": 0,
+        "skipped": 0,
+        "evidence_directory": "wsl-qualification/server-debug"
+      },
+      {
+        "preset": "server-asan-ubsan",
+        "status": "PASS",
+        "tests": 57,
+        "failures": 0,
+        "skipped": 0,
+        "evidence_directory": "wsl-qualification/server-asan-ubsan"
+      },
+      {
+        "preset": "linux-debug",
+        "status": "PASS",
+        "tests": 78,
+        "failures": 0,
+        "skipped": 0,
+        "evidence_directory": "wsl-qualification/client-linux-debug"
+      },
+      {
+        "preset": "linux-asan-ubsan",
+        "status": "PASS",
+        "tests": 78,
+        "failures": 0,
+        "skipped": 0,
+        "evidence_directory": "wsl-qualification/client-linux-asan-ubsan"
+      }
+    ],
+    "count_scope": "Selected passing profiles; the interrupted failed Release attempt remains recorded separately."
+  },
+  "environment_interruption": {
+    "status": "REQUALIFIED",
+    "native_passing_summary": {
+      "path": "out/M03a-work/windows-r2/summary.json",
+      "sha256": "80bc4b655e7dbc53edda52e82f8c2ba36e45dd8266ed49ee633bd24ceea9439e"
+    },
+    "debug_reuse": {
+      "summary_path": "out/M03a-work/windows-final/summary.json",
+      "summary_sha256": "ddcd04b6ea8b08ebedcd4145a9cad30b368ba5d910e0b591a4b19acdf0e3c7ed",
+      "evidence_directory": "out/M03a-work/windows-final/windows-debug",
+      "original_attempt_started_utc": "2026-10-22T11:48:18.038109+00:00",
+      "original_junit_timestamp": "2026-10-22T07:48:38",
+      "original_junit_elapsed_seconds": "868",
+      "files": {
+        "adversity-process.json": "5966c7ddd33966ec5042a5cbaccd0c7566f9808b9ce21b3f7d648bcb384d4fc8",
+        "build.log": "ffd84ddfbcac158c440db2135d9fecf9625b4c4be90f804c348e40c1d115c770",
+        "configure.log": "81def8b8cd3d040197820c95cd05a6ec349edc6d97ca5e424b95673cdb0a0f6e",
+        "ctest.xml": "6fe4d1218f3fad3232378c4fc277b294cce2fbc9c17a2a6414372224e07d57ba",
+        "interest-process.json": "0bd0fc419bad4ebfeda71484db3a58ac634ee43526e0571e458e4c49b0bf730a",
+        "inventory.log": "de5abbbc53b1c0518edfc1da58e3dae1c072a3bcf71f4f3c4bffa2a56efc7965",
+        "network-process.json": "78a030cf9d544929819035f43de56395f669b7274607e51449daadcd36a1401c",
+        "network-sessions.json": "191cca2d9de26a3062ef8b858c046e6fd00e2e41842276e299df07a3f3ea540a",
+        "project-files-process.json": "bf32eb218a4c5e7a5ec1cfd1cfa93acbbb9b55010e52c03de31e4bef8de491a8",
+        "replication-process.json": "38bcd9b162fd3d174f5fdb46c2574e31506a176d09974c5db29cf7442ab74135",
+        "storage-cases.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "storage-cases.xml": "9ac8d64d1176d4503f450f26d309d1b729c0d838db99bbdc4f383a5f6c17c878",
+        "storage-process.json": "605ab438d14aa8e2a5823106f57f4447c619bc7d952665ee840365b30730f8c3",
+        "test.log": "ed98eab048b4f59a9ee8fd42527025852a664048f32c7403f847822ffb286a6a",
+        "toolchain.json": "9db02c4ff4bbb730ea644d0fcc1fd131fe06cc85c67eb72f536832157be8e52a"
+      },
+      "rerun": false
+    },
+    "focused_confirmation": {
+      "status": "PASS",
+      "tests": 1,
+      "path": "out/M03a-work/clock-gap-processes.xml",
+      "sha256": "7af2b0d5b05c28282081424d90824f8b0a365d5f11450a0d6938cb4911df1e89",
+      "counted_in_selected_profile_total": false
+    },
+    "reason": "Windows sleep interrupted the first Release run; its sole failed CTest was shark.tooling.processes (timeout).",
+    "original_attempt_status": "FAIL",
+    "original_attempt_directory": "out/M03a-work/windows-final",
+    "original_summary_sha256": "ddcd04b6ea8b08ebedcd4145a9cad30b368ba5d910e0b591a4b19acdf0e3c7ed",
+    "original_finished_utc": "2026-10-22T13:13:28.645392+00:00",
+    "original_failed_tests": [
+      "shark.tooling.processes"
+    ],
+    "original_files": {
+      "summary.json": "ddcd04b6ea8b08ebedcd4145a9cad30b368ba5d910e0b591a4b19acdf0e3c7ed",
+      "windows-debug/adversity-process.json": "5966c7ddd33966ec5042a5cbaccd0c7566f9808b9ce21b3f7d648bcb384d4fc8",
+      "windows-debug/build.log": "ffd84ddfbcac158c440db2135d9fecf9625b4c4be90f804c348e40c1d115c770",
+      "windows-debug/configure.log": "81def8b8cd3d040197820c95cd05a6ec349edc6d97ca5e424b95673cdb0a0f6e",
+      "windows-debug/ctest.xml": "6fe4d1218f3fad3232378c4fc277b294cce2fbc9c17a2a6414372224e07d57ba",
+      "windows-debug/interest-process.json": "0bd0fc419bad4ebfeda71484db3a58ac634ee43526e0571e458e4c49b0bf730a",
+      "windows-debug/inventory.log": "de5abbbc53b1c0518edfc1da58e3dae1c072a3bcf71f4f3c4bffa2a56efc7965",
+      "windows-debug/network-process.json": "78a030cf9d544929819035f43de56395f669b7274607e51449daadcd36a1401c",
+      "windows-debug/network-sessions.json": "191cca2d9de26a3062ef8b858c046e6fd00e2e41842276e299df07a3f3ea540a",
+      "windows-debug/project-files-process.json": "bf32eb218a4c5e7a5ec1cfd1cfa93acbbb9b55010e52c03de31e4bef8de491a8",
+      "windows-debug/replication-process.json": "38bcd9b162fd3d174f5fdb46c2574e31506a176d09974c5db29cf7442ab74135",
+      "windows-debug/storage-cases.log": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "windows-debug/storage-cases.xml": "9ac8d64d1176d4503f450f26d309d1b729c0d838db99bbdc4f383a5f6c17c878",
+      "windows-debug/storage-process.json": "605ab438d14aa8e2a5823106f57f4447c619bc7d952665ee840365b30730f8c3",
+      "windows-debug/test.log": "ed98eab048b4f59a9ee8fd42527025852a664048f32c7403f847822ffb286a6a",
+      "windows-debug/toolchain.json": "9db02c4ff4bbb730ea644d0fcc1fd131fe06cc85c67eb72f536832157be8e52a",
+      "windows-release/build.log": "9cf723c71f1ae88807a46ad41c554bf27866235077362d3eae194291b23edf81",
+      "windows-release/configure.log": "805d6931d7709d65372ba4d176f98a16170f4e82182e41637549be1886d22009",
+      "windows-release/ctest.xml": "12ed596e79cc68de1078a82b708b06e69b4ef477226fb99a9f5c08cbe368e551",
+      "windows-release/inventory.log": "c39709db18d58231bc0981326d045fb025928b9f1bde3936f36c8c3d91781df9",
+      "windows-release/test.log": "3f091135f01f552ead029e2a04e1d8dc6069439786ac6f15f1a7e90b327feb80",
+      "windows-release/toolchain.json": "d31d1f0e5f73e0714a8f265dc9b318fd2267f481f6828013f21f6e1ab1e0b71e"
+    },
+    "clock_event": {
+      "path": "out/M03a-work/clock-gap-events.json",
+      "sha256": "5fa86f633b76675ddb7cde95678d5bb941548573693d74bdf8f5d8a65ad58593"
+    },
+    "original_driver": {
+      "path": "out/M03a-work/verify-windows.py",
+      "sha256": "6e9eb2ef70f5f11192a257cff42ffd996a412f9e5b2772088b0cf07444eb8f75"
+    },
+    "resume_helper": {
+      "path": "out/M03a-work/resume-windows.py",
+      "sha256": "267f857f49a3e0308fd9a0d9fb1780e5c915b271a4254bfae0a85c898c4dd426"
+    },
+    "source_freeze_sha256": "5e9db5a42feed28373fdc26fbcf76351b4508ad04fedd2c16b05e4d409c8ab01",
+    "carried_profiles": [
+      "windows-debug"
+    ],
+    "rerun_profiles": [
+      "windows-release",
+      "windows-asan",
+      "runtime-only",
+      "server-only",
+      "tools-debug"
+    ],
+    "commands_and_acceptance_limits": "Identical to the frozen original driver; only output directory and completed Debug reuse differ.",
+    "frozen_helper_count": 15,
+    "resume_helper_is_additional_unfrozen_orchestration": true
+  },
+  "case_results": [
+    {
+      "preset": "windows-debug",
+      "test_cases": 18,
+      "assertions": 695,
+      "status": "PASS"
+    },
+    {
+      "preset": "windows-release",
+      "test_cases": 18,
+      "assertions": 695,
+      "status": "PASS"
+    },
+    {
+      "preset": "windows-asan",
+      "test_cases": 18,
+      "assertions": 695,
+      "status": "PASS"
+    },
+    {
+      "preset": "server-debug",
+      "test_cases": 18,
+      "assertions": 695,
+      "status": "PASS"
+    },
+    {
+      "preset": "server-asan-ubsan",
+      "test_cases": 18,
+      "assertions": 695,
+      "status": "PASS"
+    },
+    {
+      "preset": "linux-debug",
+      "test_cases": 18,
+      "assertions": 695,
+      "status": "PASS"
+    },
+    {
+      "preset": "linux-asan-ubsan",
+      "test_cases": 18,
+      "assertions": 695,
+      "status": "PASS"
+    }
+  ],
+  "storage_process": [
+    {
+      "preset": "windows-debug",
+      "status": "PASS",
+      "checks": 48,
+      "supervisor_negative_controls": 8,
+      "path": "out/M03a-work/windows-r2/windows-debug/storage-process.json",
+      "sha256": "605ab438d14aa8e2a5823106f57f4447c619bc7d952665ee840365b30730f8c3"
+    },
+    {
+      "preset": "windows-release",
+      "status": "PASS",
+      "checks": 48,
+      "supervisor_negative_controls": 8,
+      "path": "out/M03a-work/windows-r2/windows-release/storage-process.json",
+      "sha256": "4e32c31e2f5c58d1ccd6cefa746e4fd58f40cb6ac461b92d6a1bec0a36753855"
+    },
+    {
+      "preset": "windows-asan",
+      "status": "PASS",
+      "checks": 48,
+      "supervisor_negative_controls": 8,
+      "path": "out/M03a-work/windows-r2/windows-asan/storage-process.json",
+      "sha256": "48e7d78271a76fee994b502b8bdda1b98905d9a2dc2accb17f37596f643a4b55"
+    },
+    {
+      "preset": "server-debug",
+      "status": "PASS",
+      "checks": 48,
+      "supervisor_negative_controls": 8,
+      "path": "out/M03a-work/wsl-qualification/server-debug/storage-process.json",
+      "sha256": "398ccc47f6f899d4ad2ab8fa56f32419981ae5730ef595bee4f00ab42f440293"
+    },
+    {
+      "preset": "server-asan-ubsan",
+      "status": "PASS",
+      "checks": 48,
+      "supervisor_negative_controls": 8,
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/storage-process.json",
+      "sha256": "b42e2efe4ae1715ca76b50ece623f9c7571de734bf86136354b727c9c63ab2bc"
+    },
+    {
+      "preset": "linux-debug",
+      "status": "PASS",
+      "checks": 48,
+      "supervisor_negative_controls": 8,
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/storage-process.json",
+      "sha256": "eab2c9acecd3316023a650a50ae089f791b21c908facaf21b397998e0dfced3e"
+    },
+    {
+      "preset": "linux-asan-ubsan",
+      "status": "PASS",
+      "checks": 48,
+      "supervisor_negative_controls": 8,
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/storage-process.json",
+      "sha256": "539332556588231ce499d8c606322deb1c661254a693dc0a9ece57397a908040"
+    }
+  ],
+  "standalone_tools": {
+    "status": "PASS",
+    "windows": {
+      "status": "PASS",
+      "tests": 5,
+      "registered": 59,
+      "full_suite": false
+    },
+    "wsl": {
+      "status": "PASS",
+      "build": "/work/build-M03a-tools",
+      "tests": 5,
+      "registered_tests": 59,
+      "test_names": [
+        "shark.tools.source-documents",
+        "shark.tools.authored-scene",
+        "shark.tools.project-files",
+        "shark.tools.project-files-process",
+        "shark.tools.persistence-integration"
+      ],
+      "client": false,
+      "editor": false,
+      "server": false,
+      "phases": [
+        {
+          "name": "configure",
+          "command": [
+            "cmake",
+            "--preset",
+            "tools-debug",
+            "-B",
+            "/work/build-M03a-tools",
+            "-DCMAKE_CXX_COMPILER=g++-13",
+            "-DCMAKE_C_COMPILER=gcc-13",
+            "-DPython3_EXECUTABLE=/opt/shark-headless/venv/bin/python",
+            "-DSHARK_ENTT_ARCHIVE=/source/out/07b-work/dependencies/85c6bba014049b5de8fad49d25424df2f1f6a8c1.tar.gz",
+            "-DSHARK_GLM_ARCHIVE=/source/out/07b-work/dependencies/8d1fd52e5ab5590e2c81768ace50c72bae28f2ed.tar.gz",
+            "-DSHARK_MBEDTLS_ARCHIVE=/source/out/M02a-work/dependency-review/mbedtls-4.1.1.tar.bz2",
+            "-DSHARK_JSON_ARCHIVE=/source/out/08a-work/dependencies/json-3.12.0.tar.xz",
+            "-DFETCHCONTENT_FULLY_DISCONNECTED=ON"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 8.519,
+          "status": "PASS"
+        },
+        {
+          "name": "build",
+          "command": [
+            "cmake",
+            "--build",
+            "/work/build-M03a-tools",
+            "--target",
+            "SourceDocumentTests",
+            "AuthoredSceneTests",
+            "ProjectFilesTests",
+            "ProjectFilesProcess",
+            "PersistenceIntegrationTests",
+            "shark_check_server_boundary",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 88.761,
+          "status": "PASS"
+        },
+        {
+          "name": "inventory",
+          "command": [
+            "ctest",
+            "--test-dir",
+            "/work/build-M03a-tools",
+            "--show-only=json-v1"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 0.128,
+          "status": "PASS"
+        },
+        {
+          "name": "test",
+          "command": [
+            "ctest",
+            "--test-dir",
+            "/work/build-M03a-tools",
+            "-R",
+            "^(shark[.]tools[.]source-documents|shark[.]tools[.]authored-scene|shark[.]tools[.]project-files|shark[.]tools[.]project-files-process|shark[.]tools[.]persistence-integration)$",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "/evidence/tools-only/ctest.xml"
+          ],
+          "exit_code": 0,
+          "elapsed_seconds": 5.15,
+          "status": "PASS"
+        }
+      ],
+      "catch2_archive_sha256": "d16bd1b8b2364918bd472cb216394acb93bde6784890df0d91bccfb3f28d777d",
+      "cache_sha256": "47914505ab1376460a27a9a897470a85576d885db8481783a1c437b7929b051e",
+      "project_files_process": {
+        "status": "PASS",
+        "receipt_sha256": "4ed0617653f7faf3f742110d0e92efcff79ca398a8627fdc8974bc7256f95cb6"
+      }
+    },
+    "additional_passes": 10
+  },
+  "protected_builds_and_packages": {
+    "status": "PASS",
+    "windows_server_files": 12,
+    "windows_server_inventory": {
+      "bin/Server.exe": "15980f5e4f541661d05c14693c01cf60cae50300515fbb546e7ba754005354fa",
+      "licenses/EnTT/LICENSE": "73547f6370ee16ea560665329bb62d4e2d8250f41eaa204b47a6c694ca3286ea",
+      "licenses/GLM/copying.txt": "62d2d642c7d054d4fb4c9b42faad617d6c88fcd91e317f8035aa9f277cc159c3",
+      "licenses/MbedTLS/LICENSE": "9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b",
+      "licenses/SQLite/LICENSE.txt": "85806d613cfda5901f848b3b5b4b04396c8c64e89c97c0af3706c42b0c44bb47",
+      "licenses/MbedTLS/framework/LICENSE": "11402351e38392230bb8934ba1095c0c0049a296c0f8821f76e4672dff54b490",
+      "licenses/MbedTLS/tf-psa-crypto/LICENSE": "da8c58f05f135a9d15e9ffad4ecf854cfcc1f014c8abfd75ba05f62630ccc118",
+      "licenses/MbedTLS/tf-psa-crypto/framework/LICENSE": "11402351e38392230bb8934ba1095c0c0049a296c0f8821f76e4672dff54b490",
+      "licenses/MbedTLS/tf-psa-crypto/drivers/pqcp/mldsa-native/LICENSE": "26ee68617256be39e12fbbb0fb0c8c7087980a2020ded46e3ef3c3810c35d847",
+      "licenses/MbedTLS/tf-psa-crypto/drivers/everest/library/Hacl_Curve25519.c": "ff662cfae5e65d968d487a687db5fdc05c357ec9b2035ac9e380c9f8ec7eb6eb",
+      "licenses/MbedTLS/tf-psa-crypto/drivers/everest/library/legacy/Hacl_Curve25519.c": "fd769ba72bed1ca61a4e286d7ef1751931fda5707881df514335f97ccafb5984",
+      "licenses/MbedTLS/tf-psa-crypto/drivers/everest/include/tf-psa-crypto/private/everest/kremlib.h": "8aca2e1da765d1a1fd6277a0d69caadffd5dc07c61bb313b4689843d3fcaefe3"
+    },
+    "windows_runtime_files": 34,
+    "windows_runtime_payload_files": 33,
+    "windows_runtime_manifest_files": 1,
+    "windows_runtime_package": "C:\\Users\\mrkda\\Projects\\shark\\out\\M03a-work\\runtime-package",
+    "runtime_relocation": "C:\\Users\\mrkda\\AppData\\Local\\Temp\\Shark M03a caf\u00e9 runtime 812bfba989",
+    "runtime_missing_license_rejections": 10,
+    "wsl_server_release": "PASS",
+    "wsl_sdk_free_runtime": {
+      "status": "PASS",
+      "scope": "fresh installed Server and EnTT/GLM, all eight locked MbedTLS notices and verified SQLite public-domain notice in retained SDK-free pinned Ubuntu runtime userspace; isolated network; shared WSL kernel; writable rootfs"
+    },
+    "wsl_runtime_inventory": {
+      "status": "PASS",
+      "package_count": 92,
+      "sha256": "be8e1143aa04d777051479065b797bf22085bbee5a20367abf22d881a0de28e5",
+      "previous_record": "out/M02e-work/wsl-qualification/clean-runtime-packages.tsv",
+      "previous_sha256": "be8e1143aa04d777051479065b797bf22085bbee5a20367abf22d881a0de28e5",
+      "package_files": [
+        "bin/Server",
+        "licenses/EnTT/LICENSE",
+        "licenses/GLM/copying.txt",
+        "licenses/MbedTLS/LICENSE",
+        "licenses/MbedTLS/framework/LICENSE",
+        "licenses/MbedTLS/tf-psa-crypto/LICENSE",
+        "licenses/MbedTLS/tf-psa-crypto/drivers/everest/include/tf-psa-crypto/private/everest/kremlib.h",
+        "licenses/MbedTLS/tf-psa-crypto/drivers/everest/library/Hacl_Curve25519.c",
+        "licenses/MbedTLS/tf-psa-crypto/drivers/everest/library/legacy/Hacl_Curve25519.c",
+        "licenses/MbedTLS/tf-psa-crypto/drivers/pqcp/mldsa-native/LICENSE",
+        "licenses/MbedTLS/tf-psa-crypto/framework/LICENSE",
+        "licenses/SQLite/LICENSE.txt"
+      ],
+      "file_hashes": {
+        "licenses/MbedTLS/framework/LICENSE": "11402351e38392230bb8934ba1095c0c0049a296c0f8821f76e4672dff54b490",
+        "licenses/MbedTLS/tf-psa-crypto/framework/LICENSE": "11402351e38392230bb8934ba1095c0c0049a296c0f8821f76e4672dff54b490",
+        "licenses/MbedTLS/tf-psa-crypto/drivers/everest/library/Hacl_Curve25519.c": "ff662cfae5e65d968d487a687db5fdc05c357ec9b2035ac9e380c9f8ec7eb6eb",
+        "licenses/MbedTLS/tf-psa-crypto/drivers/everest/library/legacy/Hacl_Curve25519.c": "fd769ba72bed1ca61a4e286d7ef1751931fda5707881df514335f97ccafb5984",
+        "licenses/MbedTLS/tf-psa-crypto/drivers/everest/include/tf-psa-crypto/private/everest/kremlib.h": "8aca2e1da765d1a1fd6277a0d69caadffd5dc07c61bb313b4689843d3fcaefe3",
+        "licenses/MbedTLS/tf-psa-crypto/drivers/pqcp/mldsa-native/LICENSE": "26ee68617256be39e12fbbb0fb0c8c7087980a2020ded46e3ef3c3810c35d847",
+        "licenses/MbedTLS/tf-psa-crypto/LICENSE": "da8c58f05f135a9d15e9ffad4ecf854cfcc1f014c8abfd75ba05f62630ccc118",
+        "licenses/MbedTLS/LICENSE": "9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b",
+        "licenses/EnTT/LICENSE": "73547f6370ee16ea560665329bb62d4e2d8250f41eaa204b47a6c694ca3286ea",
+        "licenses/SQLite/LICENSE.txt": "85806d613cfda5901f848b3b5b4b04396c8c64e89c97c0af3706c42b0c44bb47",
+        "licenses/GLM/copying.txt": "62d2d642c7d054d4fb4c9b42faad617d6c88fcd91e317f8035aa9f277cc159c3",
+        "bin/Server": "24585acb48d5fecfa166954064d6f03ce937c8ffe9e38958caddab9ed89c7990"
+      }
+    }
+  },
+  "public_api_audit": {
+    "status": "PASS",
+    "native_profiles": 6,
+    "native_report": "out/M03a-work/api-audit/summary.json",
+    "native_report_sha256": "222f66469d638ec841e04553618373e286abd9cb458523730a0b4d0d29e25fbc",
+    "wsl_examples": [
+      {
+        "preset": "server-debug",
+        "status": "PASS",
+        "compiler": "GCC 13",
+        "compiler_input": {
+          "path": "/usr/bin/x86_64-linux-gnu-g++-13",
+          "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+          "bytes": 1027128
+        },
+        "path": "out/M03a-work/wsl-qualification/server-debug/storage-api/summary.json",
+        "sha256": "d68329cd072db483ed8a49d43be2efbb39cf900b55b21f6de9879ff28badc8df"
+      },
+      {
+        "preset": "server-asan-ubsan",
+        "status": "PASS",
+        "compiler": "Clang 18",
+        "compiler_input": {
+          "path": "/usr/lib/llvm-18/bin/clang",
+          "sha256": "8ef402d453d1ba4902e4ee0f0f847f6cfa01400c95aa43c24e97818b9c0e3f45",
+          "bytes": 140592
+        },
+        "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/storage-api/summary.json",
+        "sha256": "3871d531da1c95250d05639f1fce8420ff3cab1ac948c7f64e32591df393a0b6"
+      }
+    ],
+    "example_document": "docs/durable-store.md",
+    "compilers": [
+      "MSVC",
+      "GCC 13",
+      "Clang 18"
+    ]
+  },
+  "negative_controls": {
+    "supervisor_per_process_fixture": 8,
+    "copied_process_receipts": 10,
+    "api_audit_parser_and_dependency_controls": 6
+  },
+  "aggregation_helper": {
+    "path": "out/M03a-work/record-evidence.py",
+    "sha256": "38754d0bfa201305639f889e570ac8bc957645e5acbc3849801a132b9b37a6f2"
+  },
+  "preflight_findings": [
+    "Windows page-size fixture initially used VACUUM, which requires disabled ATTACH; replaced with an explicit unsupported-header case.",
+    "Windows process fixture initially used narrow argv and lost Unicode path characters; probe now uses native wide arguments.",
+    "GCC warnings-as-errors found three copied structured bindings; corrected to const references.",
+    "Independent review corrected compound SELECT limit 0 (unlimited) to 1 and preserved I/O/SQLite error categories.",
+    "Independent review found empty AssertionError could falsely pass the supervisor; explicit failure state, nonempty diagnostics and eight actual-main controls now reject it."
+  ],
+  "final_checks": {
+    "status": "PASS",
+    "recorded_utc": "2026-10-22T20:26:47.415295+00:00",
+    "commands": [
+      {
+        "name": "format",
+        "command": [
+          "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+          "tools/check_format.py"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "cleanup_errors": [],
+        "log": "out/M03a-work/final-checks/format.log",
+        "log_sha256": "903ed5539a4024d69fc2461a2b088ba56cf0cd25e9994fd249c63ef431414c8f"
+      },
+      {
+        "name": "contract",
+        "command": [
+          "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+          "tools/validate_contract.py",
+          "--self-test"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "cleanup_errors": [],
+        "log": "out/M03a-work/final-checks/contract.log",
+        "log_sha256": "a5d465c500ce5594f61817e185f3ca0b70ec56a36d011b94a9bf5518d5b97edc"
+      },
+      {
+        "name": "repository",
+        "command": [
+          "C:\\Users\\mrkda\\Projects\\shark\\.tools\\venv\\Scripts\\python.exe",
+          "tools/check_repository.py",
+          "--self-test"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "cleanup_errors": [],
+        "log": "out/M03a-work/final-checks/repository.log",
+        "log_sha256": "e39fe4cb3f05005fba55121444234bfb030f3c21b6783a9eabef6369957a58a4"
+      },
+      {
+        "name": "whitespace",
+        "command": [
+          "git",
+          "diff",
+          "--check"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "cleanup_errors": [],
+        "log": "out/M03a-work/final-checks/whitespace.log",
+        "log_sha256": "66ea2241f4b8466794d028bf72c477c0f137208d64acd927c0da22579b331228"
+      },
+      {
+        "name": "index",
+        "command": [
+          "git",
+          "diff",
+          "--cached",
+          "--name-only"
+        ],
+        "exit_code": 0,
+        "timed_out": false,
+        "cleanup_errors": [],
+        "log": "out/M03a-work/final-checks/index.log",
+        "log_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+      }
+    ],
+    "script_sha256": "4bb1f344a6be3e9ed3876cf586c5e4f362ea4037ca93b3f3f7daaea3dfd9ffd8",
+    "frozen_source_unchanged": true,
+    "index_empty": true,
+    "ignore_boundary": "PASS"
+  },
+  "limits": [
+    "Only the recorded Windows PC and existing retained WSL userspaces are qualified; no hosted or other-machine evidence is claimed.",
+    "Process termination and hot-journal recovery are software recovery tests, not physical power-loss or disk-loss qualification.",
+    "One creating-thread owner holds an exclusive local database connection; this is not distributed region fencing or concurrent external SQL support.",
+    "Main-file cap is 16 MiB, admitted rollback journal 32 MiB, suggested page cache 1 MiB; these are not total process-memory or disk quotas.",
+    "Server bootstrap remains idle and does not automatically open a database; public storage services are exercised through test executables.",
+    "Character/session durability, economy deduplication, complete crash/outage matrix, migrations and backup/restore retain M03b-f.",
+    "No new GPU, audio, real network population or MMO capacity claim is made."
+  ],
+  "artifacts": [
+    {
+      "path": "out/M03a-work/api-audit/example/compiler-inputs.json",
+      "sha256": "a50b20c1b3dfe31f73864736b189888fc508a068204fa19a804c777d3681be18"
+    },
+    {
+      "path": "out/M03a-work/api-audit/example/compiler.log",
+      "sha256": "5f06c91c6f426569bfa45eb5c1532cf64d389e29100425a0b572eb340c0856dc"
+    },
+    {
+      "path": "out/M03a-work/api-audit/example/summary.json",
+      "sha256": "a8d6887a04130faf841e07aa73d63f7c32d31a82d2f05f5f30f18c63c17778e3"
+    },
+    {
+      "path": "out/M03a-work/api-audit/runtime-only/ninja-dependencies.log",
+      "sha256": "779376b37260bf2f25ef95676036247e4384ad5679dcc453f1395811c368096f"
+    },
+    {
+      "path": "out/M03a-work/api-audit/runtime-only/summary.json",
+      "sha256": "55790765a0bba92a010a2b67ae222d79267a522445a0995503aa0a0c62c2a583"
+    },
+    {
+      "path": "out/M03a-work/api-audit/server-only/ninja-dependencies.log",
+      "sha256": "075bf87c5937872637af17acd598909d7d4e3f71de67b6eb3de9fb41cc05dfcd"
+    },
+    {
+      "path": "out/M03a-work/api-audit/server-only/summary.json",
+      "sha256": "6475b20c4bd07efdfd5cfc875df05c97621c263bea0357c94ea23881823322fc"
+    },
+    {
+      "path": "out/M03a-work/api-audit/summary.json",
+      "sha256": "222f66469d638ec841e04553618373e286abd9cb458523730a0b4d0d29e25fbc"
+    },
+    {
+      "path": "out/M03a-work/api-audit/tools-debug/ninja-dependencies.log",
+      "sha256": "5d7a4f64bbd6c4080c9feec3d2c9078eae20c17ceea0e1ba48cfec4fc4b3918b"
+    },
+    {
+      "path": "out/M03a-work/api-audit/tools-debug/summary.json",
+      "sha256": "2cace2ebd9922faf050ec96be292da1b95aab0922ad47b730a16afe768724f10"
+    },
+    {
+      "path": "out/M03a-work/api-audit/windows-asan/ninja-dependencies.log",
+      "sha256": "13d1482dee6c0252018ac218164d642148d62e8cbd2093ac32f40ac2e39bf27d"
+    },
+    {
+      "path": "out/M03a-work/api-audit/windows-asan/sqlite3.c.symbols.log",
+      "sha256": "126857b7053aa02c198120da052b6f7a02a8b120801c9dea159f526cf9448129"
+    },
+    {
+      "path": "out/M03a-work/api-audit/windows-asan/storage_process.cpp.symbols.log",
+      "sha256": "5dee73ce95ee8e371982c9c83cd096278a42a26cfce62da398ac6a2c66798cec"
+    },
+    {
+      "path": "out/M03a-work/api-audit/windows-asan/storage_tests.cpp.symbols.log",
+      "sha256": "32080a831d9b42725b9d1b9d855577eb9a07df9a97cd74d3dc673165777233cd"
+    },
+    {
+      "path": "out/M03a-work/api-audit/windows-asan/store.cpp.symbols.log",
+      "sha256": "5b81155968c1c7cdf14e093eb0835ba5da191ed7d283a3cde24656d75a00a102"
+    },
+    {
+      "path": "out/M03a-work/api-audit/windows-asan/summary.json",
+      "sha256": "87d292d45b68bdef46e601aeb7511d14fcd78af449df7c5625a9094427fb98b7"
+    },
+    {
+      "path": "out/M03a-work/api-audit/windows-debug/ninja-dependencies.log",
+      "sha256": "2ffb3ac0ebf3a36de8b64a9214158c56b8c0e318c92b5935178f872c5dd06ca0"
+    },
+    {
+      "path": "out/M03a-work/api-audit/windows-debug/summary.json",
+      "sha256": "0046a58a7b6cded7071129b1b0521548e3f814fe08f88bcae1e09aec54d441ea"
+    },
+    {
+      "path": "out/M03a-work/api-audit/windows-release/ninja-dependencies.log",
+      "sha256": "b64f1f7fc4d94a931bd926735a3d50b222cbf0b6b92720c89b6217fa15434598"
+    },
+    {
+      "path": "out/M03a-work/api-audit/windows-release/summary.json",
+      "sha256": "3937205b9551516d9a21aeea51e3b63d7ce03d3e90fe3192c1c178cb1c510dea"
+    },
+    {
+      "path": "out/M03a-work/api-audit-preparation.json",
+      "sha256": "313726e16a65a72516b522a0960e90791cd199e0c7beb544c15f2d330d26fb23"
+    },
+    {
+      "path": "out/M03a-work/clock-gap-events.json",
+      "sha256": "5fa86f633b76675ddb7cde95678d5bb941548573693d74bdf8f5d8a65ad58593"
+    },
+    {
+      "path": "out/M03a-work/clock-gap-processes.xml",
+      "sha256": "7af2b0d5b05c28282081424d90824f8b0a365d5f11450a0d6938cb4911df1e89"
+    },
+    {
+      "path": "out/M03a-work/final-checks.json",
+      "sha256": "94dd2461db3a71081b04dcc2f5111677fe0f8134d1cce1aa734af3217a16bf1a"
+    },
+    {
+      "path": "out/M03a-work/hardware.json",
+      "sha256": "924643e1cb91fe7285e18aacb0b824feeffb11b37accb60f2b02a77009ec6816"
+    },
+    {
+      "path": "out/M03a-work/package-check/build.log",
+      "sha256": "ca8e92429c8005376230f2dbad4e18492e7269d7f52789c154452b21881778ea"
+    },
+    {
+      "path": "out/M03a-work/package-check/relocated-help.log",
+      "sha256": "fa0b344fab351630b0cc94a1edee8d3107c1528cc964c3bda69ce8acef57e745"
+    },
+    {
+      "path": "out/M03a-work/package-check/relocated-version.log",
+      "sha256": "76992cdc5f1271b6763c5d2482f2127f3b3dacafe5ac873b74e471faa935205f"
+    },
+    {
+      "path": "out/M03a-work/package-check/summary.json",
+      "sha256": "a7f1399b9d93e076cb9256c9b46e9e3f28ebbd62d766857bd428cc28f2ad5ab2"
+    },
+    {
+      "path": "out/M03a-work/preflight/config.json",
+      "sha256": "02a851d22ad807a2f5d79947d161c2e61eb00a0fdbca01f7239dce098620b900"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r1/server-debug/build.log",
+      "sha256": "ff560c17ed30a2c8e6af1bc72485987abf87336ab3ea984a469faaca61564bab"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r1/server-debug/configure.log",
+      "sha256": "3860849f8f420b87c3a95189784bfe607beee9cf869ba702ea04eb2c92d3a474"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r1/summary.json",
+      "sha256": "65bdbc92eef4bd324c312b867c79dcebd116352a8bab04a61ec33720d2601890"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r2/server-asan-ubsan/build.log",
+      "sha256": "4f70a3da983fd1abcfb858f8f2c584346fc8dcbb34d63a0c0826944456ae20d5"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r2/server-asan-ubsan/configure.log",
+      "sha256": "8ca151b3dc3ba639c523c25a24531254cc139c8fb6802f2c8a7e1c0d76c9410a"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r2/server-asan-ubsan/ctest.xml",
+      "sha256": "4d394377f01525a65e57e55004e09aa65b5a75f63217a5427a806cd855cd0a8f"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r2/server-asan-ubsan/inventory.log",
+      "sha256": "bd11e88fa914f094b37f89b9382f21e64bad01c1db6d7ad44c047ad64051d5d8"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r2/server-asan-ubsan/tests.log",
+      "sha256": "c4a7e25e8db1011dac5346c2d263d4c9fadc246fd8d71d6903ff237c4f01ebf1"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r2/server-debug/build.log",
+      "sha256": "b089741b5a9763c40104d403c16d5b5f9adca83590e7f275aae46c4150cc2240"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r2/server-debug/configure.log",
+      "sha256": "1b0f3ce3d95aec2ca96571f2fe1258231eecface60a06f0f37903c809fd51ba2"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r2/server-debug/ctest.xml",
+      "sha256": "ea1aee3491387ec459828fbd61b910e6075e29fbc2eb5122f5cafcc84c2d5039"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r2/server-debug/inventory.log",
+      "sha256": "d68bb952f96c06a05bcf070c6fd6065dd9c292640008ca0d3a4898071bbc0f85"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r2/server-debug/tests.log",
+      "sha256": "3780138509061a3aebc8ef485475bf67ded02967c3132f3444001dce6a8a9f69"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r2/summary.json",
+      "sha256": "25347e1f9274d1c97c8f31ac1129ca3fabf64f421174925df09598504c8f1943"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r3/server-asan-ubsan/build.log",
+      "sha256": "21088b1b983ada40eb1d1de2aa52b9139cfb200ed1ff5c1c810fcab7cea5d008"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r3/server-asan-ubsan/configure.log",
+      "sha256": "65e61af4d7c5ed0dceb00e27af552fe525ba654e55e3ea44ac9e06bcde58cdfe"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r3/server-asan-ubsan/ctest.xml",
+      "sha256": "0d095f227174f98ac32b12b3c67a724bf8b129f38d35a35895ff76b877c6eece"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r3/server-asan-ubsan/inventory.log",
+      "sha256": "bd11e88fa914f094b37f89b9382f21e64bad01c1db6d7ad44c047ad64051d5d8"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r3/server-asan-ubsan/tests.log",
+      "sha256": "1fb68f04a7bc1b54383af767fb6454923eed74c948589989b4184c83f9bad388"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r3/server-debug/build.log",
+      "sha256": "21088b1b983ada40eb1d1de2aa52b9139cfb200ed1ff5c1c810fcab7cea5d008"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r3/server-debug/configure.log",
+      "sha256": "59bcac943d8288a79f2962296e27fbd5eba0c18469cb39dc3987841106c1c1d5"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r3/server-debug/ctest.xml",
+      "sha256": "c5c0950501b666e8f198ad762fe586022ef00347deb04dc7bc828a573dd9b1fd"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r3/server-debug/inventory.log",
+      "sha256": "d68bb952f96c06a05bcf070c6fd6065dd9c292640008ca0d3a4898071bbc0f85"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r3/server-debug/tests.log",
+      "sha256": "57c729f097de94ebc39789960632534f630fe86411a70eca51392119d8a76ac5"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r3/storage-process.json",
+      "sha256": "9f260a469770ec7dcfb8454400199b650e26c92bc334e1c97c827bdc1db2c202"
+    },
+    {
+      "path": "out/M03a-work/preflight/focused-r3/summary.json",
+      "sha256": "237026f6f938519e40ecb6430514c771f13435f9ccc6b6f50ed7de12204cf553"
+    },
+    {
+      "path": "out/M03a-work/preflight-boundaries.xml",
+      "sha256": "681addfe62d58f1448a2d2f908a2ed3c993a30de6a1c4c667b68520c09d5c7a3"
+    },
+    {
+      "path": "out/M03a-work/preflight-windows-r2.xml",
+      "sha256": "5b1cf10cf5b6a6bdcdc41b9005f4248549781854d6e019eea2ec97cfd2916397"
+    },
+    {
+      "path": "out/M03a-work/preflight-windows-r3.xml",
+      "sha256": "200783af96313dc53f33bdb927ada879c51c6b2f1fdb8c9d802493013f0c90e5"
+    },
+    {
+      "path": "out/M03a-work/preflight-windows.xml",
+      "sha256": "d5254a9dde8c2033d59b6e80cdf50cfcb2902593940719a8a2d4528b307c8c83"
+    },
+    {
+      "path": "out/M03a-work/resume-preflight.json",
+      "sha256": "d3d1ca7b2c886e546858a9cb89fba4e3b211c1fa73b57565f19364c6d8ce28f6"
+    },
+    {
+      "path": "out/M03a-work/resume-windows.py",
+      "sha256": "267f857f49a3e0308fd9a0d9fb1780e5c915b271a4254bfae0a85c898c4dd426"
+    },
+    {
+      "path": "out/M03a-work/source-freeze.json",
+      "sha256": "5e9db5a42feed28373fdc26fbcf76351b4508ad04fedd2c16b05e4d409c8ab01"
+    },
+    {
+      "path": "out/M03a-work/storage-receipt-negative.json",
+      "sha256": "89715318c82353ee12ecf1a8478f43e7ce0ca422af56ea051a70e8a5d5850146"
+    },
+    {
+      "path": "out/M03a-work/verify-windows.py",
+      "sha256": "6e9eb2ef70f5f11192a257cff42ffd996a412f9e5b2772088b0cf07444eb8f75"
+    },
+    {
+      "path": "out/M03a-work/windows-final/summary.json",
+      "sha256": "ddcd04b6ea8b08ebedcd4145a9cad30b368ba5d910e0b591a4b19acdf0e3c7ed"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-debug/adversity-process.json",
+      "sha256": "5966c7ddd33966ec5042a5cbaccd0c7566f9808b9ce21b3f7d648bcb384d4fc8"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-debug/build.log",
+      "sha256": "ffd84ddfbcac158c440db2135d9fecf9625b4c4be90f804c348e40c1d115c770"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-debug/configure.log",
+      "sha256": "81def8b8cd3d040197820c95cd05a6ec349edc6d97ca5e424b95673cdb0a0f6e"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-debug/ctest.xml",
+      "sha256": "6fe4d1218f3fad3232378c4fc277b294cce2fbc9c17a2a6414372224e07d57ba"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-debug/interest-process.json",
+      "sha256": "0bd0fc419bad4ebfeda71484db3a58ac634ee43526e0571e458e4c49b0bf730a"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-debug/inventory.log",
+      "sha256": "de5abbbc53b1c0518edfc1da58e3dae1c072a3bcf71f4f3c4bffa2a56efc7965"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-debug/network-process.json",
+      "sha256": "78a030cf9d544929819035f43de56395f669b7274607e51449daadcd36a1401c"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-debug/network-sessions.json",
+      "sha256": "191cca2d9de26a3062ef8b858c046e6fd00e2e41842276e299df07a3f3ea540a"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-debug/project-files-process.json",
+      "sha256": "bf32eb218a4c5e7a5ec1cfd1cfa93acbbb9b55010e52c03de31e4bef8de491a8"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-debug/replication-process.json",
+      "sha256": "38bcd9b162fd3d174f5fdb46c2574e31506a176d09974c5db29cf7442ab74135"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-debug/storage-cases.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-debug/storage-cases.xml",
+      "sha256": "9ac8d64d1176d4503f450f26d309d1b729c0d838db99bbdc4f383a5f6c17c878"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-debug/storage-process.json",
+      "sha256": "605ab438d14aa8e2a5823106f57f4447c619bc7d952665ee840365b30730f8c3"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-debug/test.log",
+      "sha256": "ed98eab048b4f59a9ee8fd42527025852a664048f32c7403f847822ffb286a6a"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-debug/toolchain.json",
+      "sha256": "9db02c4ff4bbb730ea644d0fcc1fd131fe06cc85c67eb72f536832157be8e52a"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-release/build.log",
+      "sha256": "9cf723c71f1ae88807a46ad41c554bf27866235077362d3eae194291b23edf81"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-release/configure.log",
+      "sha256": "805d6931d7709d65372ba4d176f98a16170f4e82182e41637549be1886d22009"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-release/ctest.xml",
+      "sha256": "12ed596e79cc68de1078a82b708b06e69b4ef477226fb99a9f5c08cbe368e551"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-release/inventory.log",
+      "sha256": "c39709db18d58231bc0981326d045fb025928b9f1bde3936f36c8c3d91781df9"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-release/test.log",
+      "sha256": "3f091135f01f552ead029e2a04e1d8dc6069439786ac6f15f1a7e90b327feb80"
+    },
+    {
+      "path": "out/M03a-work/windows-final/windows-release/toolchain.json",
+      "sha256": "d31d1f0e5f73e0714a8f265dc9b318fd2267f481f6828013f21f6e1ab1e0b71e"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/runtime-only/build.log",
+      "sha256": "1b750e127cab621afae37fcb3f54968e870a8fe45f39efdf1814371803c2a709"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/runtime-only/configure.log",
+      "sha256": "21760f8f71b7cc9c0bf3a9e39985382418ff4c5027260f759b5cf9203f63b75e"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/runtime-only/toolchain.json",
+      "sha256": "05afe8193203a244f022571ccc48bd0e3eb9da2920c1bd7248b639a431caf0c8"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/runtime-only/version.log",
+      "sha256": "76992cdc5f1271b6763c5d2482f2127f3b3dacafe5ac873b74e471faa935205f"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/server-only/build.log",
+      "sha256": "d11520d61ce46b52bce4d3c49c51a474baa63fc746877e87b0687a7472db0419"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/server-only/configure.log",
+      "sha256": "ae8380077254089b318830cf5015f4980350dfd984aa6ef1ca6826a0f8ad28be"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/server-only/install.log",
+      "sha256": "b20a259625f8d2f3de9e56eeae012a6bbdc3c75220472f6756dd9ecec9f29f77"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/server-only/lifecycle.log",
+      "sha256": "933ab4ea5ed4305542f3ce1073b4fdcce3bba59568611ee155e4f61445acbd95"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/server-only/toolchain.json",
+      "sha256": "7c8e2917a6619ddc19bde848893ffe47addb7f2a9031ef6f7b5c575d0a524bc4"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/server-only/version.log",
+      "sha256": "b2fcd1fdfcc100cf33ea1253eba54a90aa63d1f422a999e577e8e27639e36e17"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/summary.json",
+      "sha256": "80bc4b655e7dbc53edda52e82f8c2ba36e45dd8266ed49ee633bd24ceea9439e"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/tools-debug/build.log",
+      "sha256": "e2f9ac1e2b17ab4e3288d95c5f464f4244301407d433d717b92c59ae1d377748"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/tools-debug/configure.log",
+      "sha256": "7b75f52edaf5778e82efc4adc1f0882d258f525066c9c2585d7e4a80709df782"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/tools-debug/ctest.xml",
+      "sha256": "96693a9bf46d84045447db1fe380c4be93fce850bfbcec53f6b3baa5839d5776"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/tools-debug/inventory.log",
+      "sha256": "230c0ad0e75ec6191bf91cb59fae7c81e8cb1ea963192efa4472ecd82dc5fd06"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/tools-debug/test.log",
+      "sha256": "a846eaa2ee80edf3660ee5f5d6caf33092068b35ee0d914a8bcd0914594cfbc9"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/tools-debug/toolchain.json",
+      "sha256": "6265664487bd82602ae2cae9475c904c295dbabf77c41684647b780fd1168f1a"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-asan/adversity-process.json",
+      "sha256": "d5974ea5851e8ad84abb76a214c6b8f418182a2f5b9b0e440e2ed5187d084b1b"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-asan/build.log",
+      "sha256": "0a068848d79a29eb1283c58d453eb3470e30833fe3682bf15f551caa36a3397b"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-asan/configure.log",
+      "sha256": "ed8e28cc09aaacf9fe74dc544f424840c99a548b6fc9c6a09165890b5c9dfb9e"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-asan/ctest.xml",
+      "sha256": "a1bde1e4da0ed7c9b1b83c2a5ef0c4cb6dc7cbcfa1cbce042aa60b42b4219342"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-asan/interest-process.json",
+      "sha256": "67523d879284443c42e6ba5b89bb7a9c34824b3bcf0c434830ff0bf1f1c63c90"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-asan/inventory.log",
+      "sha256": "70cc5a3f81882c88cab9381eb93686faf2afd65f0d69aa048d86bd2202eb2575"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-asan/network-process.json",
+      "sha256": "525a816af91917fd6348c35a38af092ba9bdba6a09fce0212a3ec0d970ff49ee"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-asan/network-sessions.json",
+      "sha256": "4c7cff128bf2655990c517d75f06ee418854d5f4dabaf2a537b1822bd9b13310"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-asan/project-files-process.json",
+      "sha256": "d7936d3179b8f6462f49a196e2dc2d8d51804dd6ce17b2516189411253aeedac"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-asan/replication-process.json",
+      "sha256": "b226ad7a07d78ed82bd8d407cf41fa9b28524487f0a8688ae019a2e8f3ad1271"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-asan/storage-cases.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-asan/storage-cases.xml",
+      "sha256": "5ea637a82b1aa3188fbe801a9a15f10833a9a26dd250d395973435319833902a"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-asan/storage-process.json",
+      "sha256": "48e7d78271a76fee994b502b8bdda1b98905d9a2dc2accb17f37596f643a4b55"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-asan/test.log",
+      "sha256": "19e83c9749a1804e4d6b756717b5e7b1741a92628b9ae8c12a1900c741e38dff"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-asan/toolchain.json",
+      "sha256": "ad16609cb4d86c4cb3be8fab3ed4c967ea36b456d54142c219bb3cfee1d3f844"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-debug/adversity-process.json",
+      "sha256": "5966c7ddd33966ec5042a5cbaccd0c7566f9808b9ce21b3f7d648bcb384d4fc8"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-debug/build.log",
+      "sha256": "ffd84ddfbcac158c440db2135d9fecf9625b4c4be90f804c348e40c1d115c770"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-debug/configure.log",
+      "sha256": "81def8b8cd3d040197820c95cd05a6ec349edc6d97ca5e424b95673cdb0a0f6e"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-debug/ctest.xml",
+      "sha256": "6fe4d1218f3fad3232378c4fc277b294cce2fbc9c17a2a6414372224e07d57ba"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-debug/interest-process.json",
+      "sha256": "0bd0fc419bad4ebfeda71484db3a58ac634ee43526e0571e458e4c49b0bf730a"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-debug/inventory.log",
+      "sha256": "de5abbbc53b1c0518edfc1da58e3dae1c072a3bcf71f4f3c4bffa2a56efc7965"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-debug/network-process.json",
+      "sha256": "78a030cf9d544929819035f43de56395f669b7274607e51449daadcd36a1401c"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-debug/network-sessions.json",
+      "sha256": "191cca2d9de26a3062ef8b858c046e6fd00e2e41842276e299df07a3f3ea540a"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-debug/project-files-process.json",
+      "sha256": "bf32eb218a4c5e7a5ec1cfd1cfa93acbbb9b55010e52c03de31e4bef8de491a8"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-debug/replication-process.json",
+      "sha256": "38bcd9b162fd3d174f5fdb46c2574e31506a176d09974c5db29cf7442ab74135"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-debug/storage-cases.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-debug/storage-cases.xml",
+      "sha256": "9ac8d64d1176d4503f450f26d309d1b729c0d838db99bbdc4f383a5f6c17c878"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-debug/storage-process.json",
+      "sha256": "605ab438d14aa8e2a5823106f57f4447c619bc7d952665ee840365b30730f8c3"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-debug/test.log",
+      "sha256": "ed98eab048b4f59a9ee8fd42527025852a664048f32c7403f847822ffb286a6a"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-debug/toolchain.json",
+      "sha256": "9db02c4ff4bbb730ea644d0fcc1fd131fe06cc85c67eb72f536832157be8e52a"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-release/adversity-process.json",
+      "sha256": "290eadca537a2c98e88b24f48ad77d11234605c627b9439ec2e751715fe39661"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-release/build.log",
+      "sha256": "2aa107008ea5e2d90da30d4f2b516cb0b52cba2beeeff14eb8fb43a1c25773c6"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-release/configure.log",
+      "sha256": "b4d661f52a66807eeb56c9d04e2986fc26a1d4c43adb46a1303eed98d1ecbe9f"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-release/ctest.xml",
+      "sha256": "c2a18f561bef0279404a9ba05d98bab22e8fd921cfc4cb4f54246d5a25123714"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-release/interest-process.json",
+      "sha256": "6182a978cd09305f3312757b210b7d42ba4282f2e215d1f8c719cafae414db8b"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-release/inventory.log",
+      "sha256": "c39709db18d58231bc0981326d045fb025928b9f1bde3936f36c8c3d91781df9"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-release/network-process.json",
+      "sha256": "52ee49b787baae40fe8df9fbbe5b8a864c40825f17e054da3ddac19359bf325d"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-release/network-sessions.json",
+      "sha256": "f40d38705f68aa0db7eb8a0035e0012a2728970e3c32f093fbed2cf37ff63d86"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-release/project-files-process.json",
+      "sha256": "0c4d0476300b10a936c00680e4746a9202e30d65dcba80a21791916de5ffe719"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-release/replication-process.json",
+      "sha256": "b5e56ff97ec15a3ec3b1f85fd484e9adaffcb6e38f8b90cbc4a6ed9a9576e0e8"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-release/storage-cases.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-release/storage-cases.xml",
+      "sha256": "565fa495ff00909454aac0ef495d2a6df92af5205bf3296fd047d580b012beb0"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-release/storage-process.json",
+      "sha256": "4e32c31e2f5c58d1ccd6cefa746e4fd58f40cb6ac461b92d6a1bec0a36753855"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-release/test.log",
+      "sha256": "f30a8ea107600035997a05c01b8257bb7c76587f2b70687622a3b5420658574c"
+    },
+    {
+      "path": "out/M03a-work/windows-r2/windows-release/toolchain.json",
+      "sha256": "d31d1f0e5f73e0714a8f265dc9b318fd2267f481f6828013f21f6e1ab1e0b71e"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/chroot-host-kernel.txt",
+      "sha256": "fa3a882bbbf4c7e1ab5046bbb44a6adbc09105d3524a56123d9a7b9f409f07a9"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/clean-runtime-files.txt",
+      "sha256": "9bb28bb142989ca1c99087d1f546a17ff85b0f5e34a8db2a9cf9e96b5e522a9c"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/clean-runtime-packages.tsv",
+      "sha256": "be8e1143aa04d777051479065b797bf22085bbee5a20367abf22d881a0de28e5"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/clean-runtime-sha256.txt",
+      "sha256": "bb5df5a0035745bb1e49d2e6939abb003a0b5a7f96593fdf04d93c64a349113b"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/clean-runtime.json",
+      "sha256": "813f48547343f09b9a1d3d5a6200651ef2d10b6b99c42e341317d043d6260489"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/clean-runtime.log",
+      "sha256": "e6c6dd549f216d16d0a53ca9b7dae3e8dd5cb89ec7badf4e89da2a267e6c712d"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/adversity-process.json",
+      "sha256": "af2aa9438df63e2fbcb8e5f9f6385855cecb0b99000ebed208517476ca163479"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/boundary.log",
+      "sha256": "cc06d71606af7fb8a3545d3ec2b763dca76c1ae392553c38d35ed3eb0b719423"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/build.log",
+      "sha256": "f422e1426f06d1fc783ad6e78d059e9a850615c053b68757581203051ec5e733"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/configure.log",
+      "sha256": "99e7ffaf4770862136f3ede9cb1c86fdedc1f8af6938e77d4f5cffe9279cb266"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/ctest.xml",
+      "sha256": "cd7caad0f4f08f95a48b898c126bd1715cd2dde79ca99ec29f37d1bc7458b89e"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/interest-process.json",
+      "sha256": "8268bb5a5cb082aed5fbf0f98751ffb1239c4a459bc52f334c1ee5b91bfa3e89"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/inventory.log",
+      "sha256": "e67953eba8caa3c25bb27535c62d8021cd66951e17699233ca122dc3fa282993"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/network-process.json",
+      "sha256": "de6a914f2b2995789faed514e35493e85b12d1f95a10ec36872cd23851841dc9"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/network-sessions.json",
+      "sha256": "44f529a71e884ce389d37d1bba9be93636a05c46b35ff4246ee68665eb95ce0b"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/project-files-process.json",
+      "sha256": "3131dae1f33fa5839b401f830baaaa8b0017a605b1cbacc538e02922badc6cad"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/replication-process.json",
+      "sha256": "093c08eeff36b3b46c3b1c732a5941bc71d94cd714f12ad210d4b5a7ff917748"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/storage-process.json",
+      "sha256": "539332556588231ce499d8c606322deb1c661254a693dc0a9ece57397a908040"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/summary.json",
+      "sha256": "274a732183bb7a2613e5750a1c5d475c5701d2173c4d22349fd992b7bf22d473"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/test.log",
+      "sha256": "f003a7534e02bf9d7dc3e9584fec2d0b7b4f0e568cc89bbbd8eacd7ffd4d2490"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-asan-ubsan/toolchain.json",
+      "sha256": "c3883717175c161dab626de4c0e86dd1ecc94d033a99377512ebb0d86d9f171f"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/adversity-process.json",
+      "sha256": "ea42f2c39c94f21e03deb12a814de24484c268f3b2f2ba2f1cb4b2766abc469a"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/boundary.log",
+      "sha256": "cc06d71606af7fb8a3545d3ec2b763dca76c1ae392553c38d35ed3eb0b719423"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/build.log",
+      "sha256": "96b07cda3696e0d6babd764822ba66c7fcf32173cfbfdf412149e3abb641958d"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/configure.log",
+      "sha256": "87fc343cfa5fc9185ecc5137bf035982895986b68bbb0ec341f704df54b493ce"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/ctest.xml",
+      "sha256": "d1c39733ad0e61838bcdcfc6ed30fa8c3bd7a8a907d10a73cc5a256d5040a781"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/interest-process.json",
+      "sha256": "484457b83813f01472debfb50b11596736bbdda1e7ced6a6441ef0f1cd99821f"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/inventory.log",
+      "sha256": "2fdb8b180c301fc022a5f8979e77c002b6c291bdc528235be629844d8d4d5c79"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/network-process.json",
+      "sha256": "58201d528ffeea0cc0d0f45d302fc35a6a1c45a1c4642328271df71a2d990a1f"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/network-sessions.json",
+      "sha256": "8eaf401d0adcf9ce9143f5f9f142fa7a5ae7cb21d60f69d957940fd8341fc8a0"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/project-files-process.json",
+      "sha256": "8b4d530a4603b60f77e82d046bab9a6183dea3f7f4e5510b34136d7fc16d5cc1"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/replication-process.json",
+      "sha256": "74ab30eb7b0b1a68509263e2bcd1be479745885e79083d5e3a810ef53db59208"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/storage-process.json",
+      "sha256": "eab2c9acecd3316023a650a50ae089f791b21c908facaf21b397998e0dfced3e"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/summary.json",
+      "sha256": "a298ec7b13a478428627c537393f1339a0541ccfb1f14fc88749d02f5e0341dc"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/test.log",
+      "sha256": "810d8ce55c7cb39a850291f016b18dfd5fad19bb4437f3ac70d24ab4b42bd246"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/client-linux-debug/toolchain.json",
+      "sha256": "9ec776f3e78192ded21bf1450d239bc20e2b1429f13f84f089fa92fb8d8fb357"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/installed-packages.tsv",
+      "sha256": "28343c3c868e41beb5161811e9670cc51b57413c2848e6de2fa6b5698e1b92fa"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/provenance/deb-sha256.txt",
+      "sha256": "d320eff6cedadebe385dff4a4b426db96e4dca480b08ce0eac26f2fe493f5cc1"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/provenance/inputs.json",
+      "sha256": "5b0ab6341f2eebf0e1714a3621af4466c95a8d8b3c03b24b0e1097aed61d5934"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/provenance/packages.tsv",
+      "sha256": "5b06a3a7b579f7d4bbd5878471b07e03df84a98f838cd86d0bf69b952f84f29f"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/provenance/pip-install.json",
+      "sha256": "eb9214369a500c73818af201ccd00816a93f179b8000be2923220070f199c844"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/provenance/python-version.txt",
+      "sha256": "5b3e43dc38ca01e3f5a7854ba50d4330864b0c1e0f646650b2c78cf072acc366"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/qualification.log",
+      "sha256": "c6a666ac5d45850b0daf75e02996152ba051ae08b94ff6075985a770f84fbf65"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/adversity-process.json",
+      "sha256": "5bdc80cf5036bb3df0f74b772f67d9b14bde78eb98cddfd992dd9e1dd37b2612"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/boundary.log",
+      "sha256": "21088b1b983ada40eb1d1de2aa52b9139cfb200ed1ff5c1c810fcab7cea5d008"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/build.log",
+      "sha256": "21088b1b983ada40eb1d1de2aa52b9139cfb200ed1ff5c1c810fcab7cea5d008"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/configure.log",
+      "sha256": "309b1e06f6f5177614ba194c88116598c0e0a95787caba41ea86474c7520c4b6"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/ctest.xml",
+      "sha256": "80f7cacd8d6c73d77fbf43417dfc233201d41c80c9986a5af44d12fed92cb43d"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/interest-process.json",
+      "sha256": "402e1ef2daf13f25dcd1bc97bdda427c8e940fad9cc8606d0d2c45dc1f520c36"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/inventory.log",
+      "sha256": "bd11e88fa914f094b37f89b9382f21e64bad01c1db6d7ad44c047ad64051d5d8"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/network-process.json",
+      "sha256": "e0b31bf737c3b3af8018caea54fad7c257a3a04fdb2a82112681095cef460bb1"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/network-sessions.json",
+      "sha256": "bf9a69359e65ae83f3a18de6f19434c610f001b7956df9895a97cf2e12f5b380"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/public-storage-example.log",
+      "sha256": "83c668b6d35345990ed317e5e6225b8b6204d5c6d30c201326e2493a17e648f8"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/replication-process.json",
+      "sha256": "ab725ff7c4c6580adf4eb944c9b477340a969cbc94f9a9318d0321edfc49b1da"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/storage-api/example/compiler.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/storage-api/example/summary.json",
+      "sha256": "dc34d42daa75ef9f7aa1a75f0045c995953491354bda8f9279271eb63a365323"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/storage-api/summary.json",
+      "sha256": "3871d531da1c95250d05639f1fce8420ff3cab1ac948c7f64e32591df393a0b6"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/storage-process.json",
+      "sha256": "b42e2efe4ae1715ca76b50ece623f9c7571de734bf86136354b727c9c63ab2bc"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/summary.json",
+      "sha256": "09b33229069b862c412237f753a2e06d90c0335bd0fd7819d21a2a7a26adb1c0"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/test.log",
+      "sha256": "d3d8ad5787f9149a6e63a7adba24eee50f62871a9651ebea5f29804f933433bb"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-asan-ubsan/toolchain.json",
+      "sha256": "7f66c784ab9711456c6f28694addb64073625e26d56954bf0f755108b3cbf33b"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/adversity-process.json",
+      "sha256": "3e30f687360231bddf35d8b70902f95a5d76872f2b1202e83f9ff4f979b25984"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/boundary.log",
+      "sha256": "21088b1b983ada40eb1d1de2aa52b9139cfb200ed1ff5c1c810fcab7cea5d008"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/build.log",
+      "sha256": "21088b1b983ada40eb1d1de2aa52b9139cfb200ed1ff5c1c810fcab7cea5d008"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/configure.log",
+      "sha256": "93003dc9841517de8754be099f0932ec188a3eb4999c041148dc7132934bd321"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/ctest.xml",
+      "sha256": "8e56b5cd08e8e98f6136e584866903ef306242028d78b9361ef51132738affad"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/interest-process.json",
+      "sha256": "6faa7c696aae5c32c4a9630181d0f13c5b0d3ccaf912a67b6003ccf7cb810567"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/inventory.log",
+      "sha256": "d68bb952f96c06a05bcf070c6fd6065dd9c292640008ca0d3a4898071bbc0f85"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/network-process.json",
+      "sha256": "f90e87c8cfe50f7d4309c02e98c748e7b541cd93f7dc9a73ed0b9bbeed8ffcc7"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/network-sessions.json",
+      "sha256": "22e967fbe0a6d9defde08c44766582518049388f352174c2aac6072304df2073"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/public-storage-example.log",
+      "sha256": "290a11ccd1b1c78ced7c864a74da2c1d4f8de7e1f81c69279b9f8d3ea6bad6d5"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/replication-process.json",
+      "sha256": "7dae69486d5837a9f60218c3b81feb2d35edd5dd39e779be9c434db7cd385f80"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/storage-api/example/compiler.log",
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/storage-api/example/summary.json",
+      "sha256": "9f5b8f3d21586c0f15343f696d52926864750637541c151c617f33e92c3ae501"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/storage-api/summary.json",
+      "sha256": "d68329cd072db483ed8a49d43be2efbb39cf900b55b21f6de9879ff28badc8df"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/storage-process.json",
+      "sha256": "398ccc47f6f899d4ad2ab8fa56f32419981ae5730ef595bee4f00ab42f440293"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/summary.json",
+      "sha256": "c047cd3bfadc6885ba4a061c1c0c4a58288ff3a412b527ef462e5fca0622753c"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/test.log",
+      "sha256": "d72648e3a870c372f6e790c217079c8307db67d669f00ade351a474c72759829"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-debug/toolchain.json",
+      "sha256": "ba56cb0efb7d7b6bd12efecfbdfde5b56c8c8174df1c49984d88e7e39416cf33"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-only/boundary.log",
+      "sha256": "21088b1b983ada40eb1d1de2aa52b9139cfb200ed1ff5c1c810fcab7cea5d008"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-only/build.log",
+      "sha256": "78e587ee4a23ef6066945d3d961f181f11d40ca28a559a1d2add89089626660d"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-only/closure.json",
+      "sha256": "48d271d687fa879342ff484f17e9a3802db989ee003f33623d4996fb256b67f0"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-only/closure.log",
+      "sha256": "26ae0edeb0a2caea95d1d1c5c08f217f641d0949c68724323f1a8483d514d26a"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-only/configure.log",
+      "sha256": "3eaae370b87bd044e1039347ebdb3f289a7a4e67da19dee5d8119cc64784f29c"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-only/install.log",
+      "sha256": "d7eb7d97abd413b7fb75fbb509fded0e8547b0ab67d60d58afc7e9d46a32c0c3"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-only/package-smoke.log",
+      "sha256": "e6c6dd549f216d16d0a53ca9b7dae3e8dd5cb89ec7badf4e89da2a267e6c712d"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-only/summary.json",
+      "sha256": "14f263f54bc0ebfcce7b03e977c85c42b75bb756d85e1f8fb96e58a7606d45bd"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/server-only/toolchain.json",
+      "sha256": "e8937a7c4fb1ead904a70dec48971759eaf8120445eaab06f6466c7d7d3f9b7a"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/source-inputs-after.json",
+      "sha256": "2a825d0068b86a3653f12f72d9fa699b3df100c26194cc5f4d5d36e3f9d83dff"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/source-inputs.json",
+      "sha256": "2a825d0068b86a3653f12f72d9fa699b3df100c26194cc5f4d5d36e3f9d83dff"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/summary.json",
+      "sha256": "36410e64e86d710b9e422f866511119a336f50d3444af34b5175ff8e18de8ca2"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/toolchain.json",
+      "sha256": "b7318c9b973c56aeb073a956af8587ef2204da1ebda8ca69a47bd4de967d4f22"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/tools-only/build.log",
+      "sha256": "e0f3764b393c8126458596367cbbd785580c4e306e920f7f21442d9e89a003cd"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/tools-only/configure.log",
+      "sha256": "b87c9a4ff37cd98a2e7d52653e23aac3b81b5c245321ffdc1a584a09082be9f1"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/tools-only/ctest.xml",
+      "sha256": "b06a0cd6907abe9ebf7cbe7ab9bf8fb9d7b3fca97850c1be3adad2c5ce8c5e87"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/tools-only/inventory.log",
+      "sha256": "4316bc90310ff80b8ced75f261479b96f9565eeb2539a68d0d18f38a2084f5c6"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/tools-only/project-files-process.json",
+      "sha256": "4ed0617653f7faf3f742110d0e92efcff79ca398a8627fdc8974bc7256f95cb6"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/tools-only/summary.json",
+      "sha256": "fe2995e92570839905a7a0fc6bc2eed9ac70d9b975062a85180335272e396f5c"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/tools-only/test.log",
+      "sha256": "d0a1dc32db7cd82fb3b71b570af5addd8ffad8c2e763c90417c98789bbaefaf4"
+    },
+    {
+      "path": "out/M03a-work/wsl-qualification/tools-only/toolchain.json",
+      "sha256": "e6fb068f353b7037469d88e7844f906898f54264809ded150b2659137a2cc52b"
+    },
+    {
+      "path": "out/M03a-work/wsl-runtime-audit.json",
+      "sha256": "9a8d71d536542518ab5aa69440a30a6624ad634272b84112210d3a0eb4d4e169"
+    },
+    {
+      "path": "out/M03a-work/wsl-verification.json",
+      "sha256": "59ee0efe8838b1c6772abe48f16fcf8ba163896978d68f8c66ea053cce4ea59d"
+    }
+  ]
+}

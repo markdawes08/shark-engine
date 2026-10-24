@@ -5,6 +5,7 @@ import json
 import hashlib
 import io
 import tarfile
+import zipfile
 import os
 import sys
 import tempfile
@@ -15,6 +16,7 @@ from check_server_closure import (ClosureError, codemodel_source, compile_invent
                                   file_api, link_inventory, ninja_dependencies, package_inventory,
                                   resolved_libraries, system_header_owners, TLS_STATIC, TLS_OBJECT, TLS_UTILITIES)
 from core_dependencies import MBEDTLS_LICENSE_FILES, DEPENDENCIES
+from storage_dependency import DEFINITIONS as SQLITE_DEFINITIONS
 
 
 class ServerClosureTests(unittest.TestCase):
@@ -28,7 +30,7 @@ class ServerClosureTests(unittest.TestCase):
         self.reply = self.build / ".cmake/api/v1/reply"
         self.reply.mkdir(parents=True)
         (self.source / "engine/include").mkdir(parents=True)
-        for relative in ("engine/core/src/core.cpp", "server/main.cpp"):
+        for relative in ("engine/core/src/core.cpp", "server/main.cpp", "server/storage/src/store.cpp"):
             path = self.source / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_text("int fixture;\n", encoding="utf-8")
@@ -55,6 +57,18 @@ class ServerClosureTests(unittest.TestCase):
             self.targets.append(target)
         self.targets[1]["link"]["commandFragments"][1]["fragment"] += " " + " ".join(
             "_deps/mbedtls-build/" + name + ".a" for name in ("SharkTLS_mbedtls", "SharkTLS_mbedx509", "SharkTLS_tfpsacrypto"))
+        self.targets[1]["link"]["commandFragments"][1]["fragment"] = (
+            "server/libEngineStorage.a " + self.targets[1]["link"]["commandFragments"][1]["fragment"] + " libSharkSQLite.a")
+        self.targets += [
+            {"name": "EngineStorage", "id": "storage", "type": "STATIC_LIBRARY",
+             "artifacts": [{"path": "server/libEngineStorage.a"}],
+             "sources": [{"path": "server/storage/src/store.cpp", "compileGroupIndex": 0}],
+             "compileGroups": [{"language": "CXX"}], "dependencies": [{"id": "core"}, {"id": "sqlite"}]},
+            {"name": "SharkSQLite", "id": "sqlite", "type": "STATIC_LIBRARY",
+             "artifacts": [{"path": "libSharkSQLite.a"}],
+             "sources": [{"path": str(self.build / "_deps/sqlite-src/sqlite3.c"), "compileGroupIndex": 0}],
+             "compileGroups": [{"language": "C"}]}]
+        self.targets[1]["dependencies"].append({"id": "storage"})
         self.configuration = {"name": "Release", "directories": [{"source": value} for value in (".", "engine", "engine/core", "server")],
                               "targets": [{"name": item["name"], "id": item["id"], "jsonFile": item["id"] + ".json"}
                                           for item in self.targets]}
@@ -66,12 +80,17 @@ class ServerClosureTests(unittest.TestCase):
             "CMAKE_EXPORT_COMPILE_COMMANDS": "ON"}.items()]}
         self.commands = [{"directory": str(self.build), "file": str(self.source / relative),
                           "arguments": ["c++", "-I" + str(self.source / "engine/include"), "-c", str(self.source / relative), "-o", relative + ".o"]}
-                         for relative in ("engine/core/src/core.cpp", "server/main.cpp")]
-        for relative in ("engine/core/libEngineCore.a", "engine/core/src/core.cpp.o", "server/main.cpp.o"):
+                         for relative in ("engine/core/src/core.cpp", "server/main.cpp", "server/storage/src/store.cpp")]
+        for relative in ("engine/core/libEngineCore.a", "engine/core/src/core.cpp.o", "server/main.cpp.o",
+                         "server/storage/src/store.cpp.o", "server/libEngineStorage.a", "libSharkSQLite.a", "sqlite3.c.o"):
             path = self.build / relative
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(b"built fixture")
         self.add_core_dependency_fixtures()
+        self.add_storage_dependency_fixture()
+        self.commands.append({"directory": str(self.build), "file": str(self.build / "_deps/sqlite-src/sqlite3.c"),
+                              "arguments": ["cc", *["-D" + item for item in SQLITE_DEFINITIONS], "-c",
+                                            str(self.build / "_deps/sqlite-src/sqlite3.c"), "-o", "sqlite3.c.o"]})
         for target in self.targets:
             if target["name"] in TLS_STATIC | TLS_OBJECT:
                 path = target["sources"][0]["path"]
@@ -86,6 +105,8 @@ class ServerClosureTests(unittest.TestCase):
         (self.package / "licenses/EnTT/LICENSE").write_bytes(b"fixture license")
         (self.package / "licenses/GLM").mkdir()
         (self.package / "licenses/GLM/copying.txt").write_bytes(b"fixture license")
+        (self.package / "licenses/SQLite").mkdir()
+        (self.package / "licenses/SQLite/LICENSE.txt").write_bytes(b"/* fixture notice */\n")
         for relative in MBEDTLS_LICENSE_FILES:
             path = self.package / "licenses/MbedTLS" / relative
             path.parent.mkdir(parents=True, exist_ok=True)
@@ -135,6 +156,30 @@ class ServerClosureTests(unittest.TestCase):
             self.cache["entries"].append({"name": key, "value": str(archive)})
         (self.source / "dependencies.lock.json").write_text(json.dumps({"dependencies": dependencies}))
 
+    def add_storage_dependency_fixture(self):
+        notice = b"/* fixture notice */\n"
+        header = notice + b'#define SQLITE_VERSION        "fixture"\n#define SQLITE_SOURCE_ID      "fixture-id"\n'
+        contents = {"sqlite3.h": header, "sqlite3.c": b"int sqlite_fixture;", "sqlite3ext.h": b"/* extension */", "shell.c": b"int shell_fixture;"}
+        archive = self.root / "sqlite.zip"
+        with zipfile.ZipFile(archive, "w") as stream:
+            for name, data in contents.items():
+                stream.writestr("sqlite-fixture/" + name, data)
+        locked = {"version": "fixture", "source_id": "fixture-id", "archive_prefix": "sqlite-fixture",
+                  "archive_bytes": archive.stat().st_size, "sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+                  "license": "LicenseRef-SQLite-Public-Domain", "license_files": ["LICENSE.txt"],
+                  "patches": [], "transitive_dependencies": [], "compile_definitions": list(SQLITE_DEFINITIONS),
+                  "source_sha256": {name: hashlib.sha256(contents[name]).hexdigest() for name in ("sqlite3.c", "sqlite3.h")},
+                  "notice_sha256": hashlib.sha256(notice).hexdigest(), "notice_bytes": len(notice)}
+        lock = self.source / "dependencies.lock.json"
+        data = json.loads(lock.read_text())
+        data["dependencies"]["SQLite"] = locked
+        lock.write_text(json.dumps(data))
+        directory = self.build / "_deps/sqlite-src"
+        directory.mkdir()
+        for name, content in {**contents, "LICENSE.txt": notice}.items():
+            (directory / name).write_bytes(content)
+        self.cache["entries"].append({"name": "SHARK_SQLITE_ARCHIVE_INPUT", "value": str(archive)})
+
     def write_evidence(self):
         data = {"index-1.json": {"objects": [
             {"kind": "codemodel", "version": {"major": 2}, "jsonFile": "model.json"},
@@ -147,7 +192,7 @@ class ServerClosureTests(unittest.TestCase):
 
     def test_accepts_exact_core_server_graph_and_compile_inventory(self):
         source, _, targets, _ = file_api(self.build)
-        self.assertEqual(len(compile_inventory(self.build, source, targets)), 12)
+        self.assertEqual(len(compile_inventory(self.build, source, targets)), 14)
 
     def test_rejects_client_target_even_if_unlinked(self):
         self.configuration["targets"].append({"name": "EngineClient", "id": "client", "jsonFile": "client.json"})
@@ -270,6 +315,88 @@ class ServerClosureTests(unittest.TestCase):
         path.write_bytes(b"unreviewed TLS code")
         with self.assertRaisesRegex(ClosureError, "Populated MbedTLS source differs"):
             file_api(self.build)
+
+    def test_sqlite_source_header_notice_and_missing_archive_reject_drift(self):
+        for name in ("sqlite3.c", "sqlite3.h", "LICENSE.txt"):
+            path = self.build / "_deps/sqlite-src" / name
+            original = path.read_bytes()
+            with self.subTest(name=name):
+                path.write_bytes(original + b"changed")
+                with self.assertRaisesRegex(ClosureError, "Populated SQLite source differs"):
+                    file_api(self.build)
+                path.write_bytes(original)
+        self.cache["entries"] = [item for item in self.cache["entries"] if item["name"] != "SHARK_SQLITE_ARCHIVE_INPUT"]
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "Missing locked SQLite archive"):
+            file_api(self.build)
+
+    def test_sqlite_notice_required_and_database_or_tools_payload_rejected(self):
+        notice = self.package / "licenses/SQLite/LICENSE.txt"
+        notice.unlink()
+        with self.assertRaisesRegex(ClosureError, "Incomplete Server package"):
+            package_inventory(self.package)
+        notice.write_bytes(b"fixture notice")
+        for name in ("bin/sqlite3", "bin/libsqlite3.so", "world.db", "world.db-journal"):
+            with self.subTest(name=name):
+                path = self.package / name
+                path.write_bytes(b"unexpected payload")
+                with self.assertRaisesRegex(ClosureError, "Unexpected package entry"):
+                    package_inventory(self.package)
+                path.unlink()
+
+    def test_sqlite_compile_options_are_private_and_exact(self):
+        sqlite = next(item for item in self.commands if Path(item["file"]).name == "sqlite3.c")
+        original = list(sqlite["arguments"])
+        for arguments in ([item for item in original if item != "-DSQLITE_DQS=0"],
+                          original + ["-DSQLITE_OMIT_WAL=1"], original + ["-DSQLITE_DQS=0"]):
+            with self.subTest(arguments=arguments):
+                sqlite["arguments"] = arguments
+                self.write_evidence()
+                with self.assertRaisesRegex(ClosureError, "Private SQLite compile definitions"):
+                    compile_inventory(self.build, self.source, self.targets)
+        sqlite["arguments"] = original
+        self.commands[0]["arguments"].append("-DSQLITE_THREADSAFE=1")
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "Private SQLite compile definitions"):
+            compile_inventory(self.build, self.source, self.targets)
+
+    def test_core_cannot_reach_storage_target_source_or_include(self):
+        self.targets[0]["dependencies"] = [{"id": "storage"}]
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "escaped its Server owner"):
+            file_api(self.build)
+        self.targets[0].pop("dependencies")
+        self.targets[0]["sources"].append({"path": "server/storage/src/store.cpp", "compileGroupIndex": 0})
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "storage source escaped"):
+            file_api(self.build)
+        self.targets[0]["sources"].pop()
+        self.targets[0]["compileGroups"][0]["includes"].append({"path": str(self.source / "server/storage")})
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "storage include escaped"):
+            file_api(self.build)
+
+    def test_private_sqlite_header_does_not_reach_core_or_server_consumers(self):
+        header = self.build / "_deps/sqlite-src/sqlite3.h"
+        for index in (0, 1):
+            with self.subTest(owner=index):
+                self.commands[index]["arguments"] += ["-I" + str(header.parent)]
+                self.write_evidence()
+                with self.assertRaisesRegex(ClosureError, "Private SQLite header escaped"):
+                    compile_inventory(self.build, self.source, self.targets)
+                self.commands[index]["arguments"].pop()
+                evidence = f"unit.o: #deps 1, deps mtime 1 (VALID)\n    {header}\n"
+                with self.assertRaisesRegex(ClosureError, "Private SQLite compiler-discovered input"):
+                    compiler_headers(evidence, [{"path": self.commands[index]["file"], "object": "unit.o"}], self.source, self.build)
+
+    def test_sqlite_shell_source_and_system_dynamic_library_are_forbidden(self):
+        target = next(item for item in self.targets if item["name"] == "SharkSQLite")
+        target["sources"].append({"path": str(self.build / "_deps/sqlite-src/shell.c"), "compileGroupIndex": 0})
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "Non-Core source"):
+            file_api(self.build)
+        with self.assertRaises(ClosureError):
+            dynamic_needed("Dynamic section at offset 0x123 contains 1 entries:\n 0x1 (NEEDED) Shared library: [libsqlite3.so.0]\n")
 
     def test_tls_objects_must_be_actual_compiler_outputs_and_reject_injection(self):
         target = next(item for item in self.targets if item["name"] == "SharkTLS_builtin")

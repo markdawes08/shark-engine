@@ -64,6 +64,15 @@ as additive schema-3 fields. REQ-02 is PASS for the amended local gate, with
 explicit scope and SHA-256-pinned references to the unchanged 02d receipts.
 The validator verifies those references and retained bytes; it does not rerun
 graphics or interpret an old aggregate NOT_RUN as a universal PASS.
+M03a maps `server.durable-store` to real-file unit/process tests and locked
+dependency checks. Its [contract](../durable-store.md) and
+[six-checkpoint plan](../roadmap/durable-state-plan.md) distinguish the foundation
+from character, economy, recovery and migration gates. M03a is PASS under the
+current-machine scope: [the receipt](evidence/M03a-durable-store.json) and
+[handoff](../handoffs/M03a-durable-store.md) record 525 full CPU CTests, ten
+additional standalone Tools checks and protected package/API gates. M03b is next;
+full REQ-M03 remains NOT_RUN.
+
 `current_assignment: M03` follows the completed
 [five network checkpoints](../roadmap/network-plan.md) and
 [four persistence checkpoints](../roadmap/persistence-plan.md). Project/scene

@@ -38,6 +38,22 @@ target_compile_definitions(Tests PRIVATE
 shark_configure_target(Tests)
 shark_classify_target(Tests test)
 
+if(TARGET EngineStorage)
+    add_executable(StorageTests storage_tests.cpp)
+    target_link_libraries(StorageTests PRIVATE EngineStorage SharkSQLite Catch2::Catch2WithMain)
+    target_include_directories(StorageTests PRIVATE "${PROJECT_SOURCE_DIR}/server/storage/src")
+    shark_configure_target(StorageTests)
+    shark_classify_target(StorageTests test)
+    add_test(NAME shark.storage.store COMMAND StorageTests "[storage]" --rng-seed 1337)
+    set_tests_properties(shark.storage.store PROPERTIES LABELS "cpu;unit;server;integration" TIMEOUT 60)
+
+    add_executable(StorageProcess storage_process.cpp)
+    target_link_libraries(StorageProcess PRIVATE EngineStorage SharkSQLite)
+    target_include_directories(StorageProcess PRIVATE "${PROJECT_SOURCE_DIR}/server/storage/src")
+    shark_configure_target(StorageProcess)
+    shark_classify_target(StorageProcess test)
+endif()
+
 if(TARGET EngineTools)
     add_executable(SourceDocumentTests source_document_tests.cpp)
     target_link_libraries(SourceDocumentTests PRIVATE EngineTools Catch2::Catch2WithMain)
@@ -315,6 +331,13 @@ set(Python3_FIND_STRATEGY LOCATION)
 set(Python3_FIND_REGISTRY NEVER)
 set(Python3_FIND_FRAMEWORK NEVER)
 find_package(Python3 3.11 COMPONENTS Interpreter REQUIRED)
+if(TARGET EngineStorage)
+    add_test(NAME shark.storage.process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_storage_process.py"
+            --probe "$<TARGET_FILE:StorageProcess>"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/storage-process.json")
+    set_tests_properties(shark.storage.process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 90)
+endif()
 if(TARGET ProjectFilesProcess)
     add_test(NAME shark.tools.project-files-process
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_project_files_process.py"
@@ -491,12 +514,31 @@ add_test(NAME shark.tooling.graphics-evidence
 set_tests_properties(shark.tooling.graphics-evidence PROPERTIES LABELS "cpu;tooling" TIMEOUT 15
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
+set(shark_storage_fixture_args)
+if(TARGET EngineStorage)
+    list(APPEND shark_storage_fixture_args --sqlite-archive "${SHARK_SQLITE_ARCHIVE_INPUT}")
+    set(shark_storage_json_fixture_args)
+    if(TARGET EngineTools)
+        list(APPEND shark_storage_json_fixture_args --json-archive "${SHARK_JSON_ARCHIVE_INPUT}")
+    endif()
+    add_test(NAME shark.tooling.storage-dependencies
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_storage_dependencies.py"
+            --cmake "${CMAKE_COMMAND}" --ninja "${CMAKE_MAKE_PROGRAM}"
+            --compiler "${CMAKE_CXX_COMPILER}" --c-compiler "${CMAKE_C_COMPILER}"
+            --entt-archive "${SHARK_EnTT_ARCHIVE}" --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}"
+            --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}"
+            --sqlite-archive "${SHARK_SQLITE_ARCHIVE_INPUT}"
+            ${shark_storage_json_fixture_args} -v)
+    set_tests_properties(shark.tooling.storage-dependencies PROPERTIES
+        LABELS "cpu;tooling;boundary;server" TIMEOUT 240 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+endif()
+
 add_test(NAME shark.tooling.graphics-dependencies
     COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_graphics_dependencies.py"
         --cmake "${CMAKE_COMMAND}" --ninja "${CMAKE_MAKE_PROGRAM}"
         --compiler "${CMAKE_CXX_COMPILER}" --entt-archive "${SHARK_EnTT_ARCHIVE}"
         --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}" --c-compiler "${CMAKE_C_COMPILER}"
-        --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}" -v)
+        --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}" ${shark_storage_fixture_args} -v)
 set_tests_properties(shark.tooling.graphics-dependencies PROPERTIES LABELS "cpu;tooling;boundary" TIMEOUT 240
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
@@ -505,7 +547,7 @@ add_test(NAME shark.tooling.scene-dependencies
         --cmake "${CMAKE_COMMAND}" --ninja "${CMAKE_MAKE_PROGRAM}"
         --compiler "${CMAKE_CXX_COMPILER}" --entt-archive "${SHARK_EnTT_ARCHIVE}"
         --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}" --c-compiler "${CMAKE_C_COMPILER}"
-        --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}" -v)
+        --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}" ${shark_storage_fixture_args} -v)
 set_tests_properties(shark.tooling.scene-dependencies PROPERTIES LABELS "cpu;tooling;boundary;server" TIMEOUT 240
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
@@ -515,7 +557,8 @@ if(TARGET EngineTools)
             --cmake "${CMAKE_COMMAND}" --ninja "${CMAKE_MAKE_PROGRAM}"
             --compiler "${CMAKE_CXX_COMPILER}" --c-compiler "${CMAKE_C_COMPILER}"
             --entt-archive "${SHARK_EnTT_ARCHIVE}" --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}"
-            --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}" --json-archive "${SHARK_JSON_ARCHIVE_INPUT}" -v)
+            --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}" --json-archive "${SHARK_JSON_ARCHIVE_INPUT}"
+            ${shark_storage_fixture_args} -v)
     set_tests_properties(shark.tooling.source-document-dependencies PROPERTIES
         LABELS "cpu;tooling;boundary" TIMEOUT 240 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 endif()

@@ -172,9 +172,10 @@ distributed handoff requires the same failure tests across processes.
 
 Authored scene/project files define content. They do not serve as the live
 character database, an inventory ledger or a save file for a running server.
-M03 selects and pins a transactional database integration after defining its
-durability and recovery contract; no database or networking library is selected
-by this amendment. Durable commands use operation IDs and atomic transactions
+M03a selects and pins SQLite privately in EngineStorage under
+[ADR 0015](0015-durable-store.md), with a separately versioned database schema,
+explicit create/open and immutable store/world identity. Character and economic
+mutations retain M03b/M03c; runtime recovery and migration/restore retain M03d/M03e. Durable commands use operation IDs and atomic transactions
 covering both the state change and the retained deduplication result. Retrying a
 committed operation after a lost acknowledgement must not duplicate a reward,
 item or currency transfer. Deduplication retention and request expiry must agree:

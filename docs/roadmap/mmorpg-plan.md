@@ -199,6 +199,15 @@ Seeded local loss/jitter/partition fixtures are required; real WAN links are not
 
 ### M03 - Durable characters and transactional state
 
+The [six-checkpoint plan](durable-state-plan.md) divides this assignment into
+M03a store foundation, M03b owned characters, M03c atomic transactions, M03d runtime
+recovery, M03e database migration/restore and M03f integrated qualification.
+M03a is PASS under the current-machine scope; its
+[handoff](../handoffs/M03a-durable-store.md) records 525 passing CPU CTests and
+protected package/API gates. M03b is next; full REQ-M03 remains NOT_RUN.
+[ADR 0015](../architecture/0015-durable-store.md)
+selects the private local store without adding database authority to clients.
+
 After 08 and M02. Select/pin the transactional persistence integration, distinguish
 authored content from live state, define account/character ownership, database
 schema migration, operation identity, revision checks and crash recovery. Preserve

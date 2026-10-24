@@ -21,6 +21,7 @@ import tarfile
 import time
 
 from core_dependencies import prepare as prepare_core_dependency
+from storage_dependency import prepare as prepare_storage_dependency
 from process_runner import run_process
 from toolchain_report import PINNED_TOOLS, write_report
 
@@ -164,6 +165,7 @@ def main() -> int:
         entt_archive = prepare_core_dependency(ROOT, build_root / "dependency-cache", "EnTT")
         glm_archive = prepare_core_dependency(ROOT, build_root / "dependency-cache", "GLM")
         mbedtls_archive = prepare_core_dependency(ROOT, build_root / "dependency-cache", "MbedTLS")
+        sqlite_archive = prepare_storage_dependency(ROOT, build_root / "dependency-cache")
         for preset in PRESETS:
             build = build_root / preset
             evidence = output / preset
@@ -186,6 +188,7 @@ def main() -> int:
                                f"-DSHARK_ENTT_ARCHIVE={entt_archive}",
                                f"-DSHARK_GLM_ARCHIVE={glm_archive}",
                                f"-DSHARK_MBEDTLS_ARCHIVE={mbedtls_archive}",
+                               f"-DSHARK_SQLITE_ARCHIVE={sqlite_archive}",
                                "-DSHARK_INJECT_TEST_FAILURE=" + (
                                    "ON" if args.inject_test_failure and preset != "server-only" else "OFF")]),
                 ("build", ["cmake", "--build", str(build), "--parallel", str(args.jobs)]),

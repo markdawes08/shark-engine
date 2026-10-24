@@ -57,7 +57,8 @@ they do not impose player-visible zone transitions.
 | EngineTools | Static library | EngineCore; device-free project/source persistence, commands/undo, imports, cook/export, discovery and authoring services; client preview is a separately gated adapter/target and cannot enter the CPU host's dependency closure |
 | Editor | Executable | EngineTools and client presentation services; Dear ImGui/ImGuizmo views of shared services |
 | Runtime | Executable | Engine only among engine libraries; client startup and game loop |
-| Server | Executable, introduced in M01 | EngineCore only among engine libraries; headless configuration and lifecycle; gameplay listener, authoritative simulation and persistence remain later work |
+| EngineStorage | Static library, introduced in M03a | EngineCore values and a private pinned SQLite amalgamation; server-only durable store foundation, excluded from Core/Client/Tools |
+| Server | Executable, introduced in M01 | EngineCore and EngineStorage; headless configuration/lifecycle. M03a supplies callable storage services; bootstrap flags do not open a database or expose player/administrative storage commands |
 | SharkCLI | Executable, introduced in 14/15 | EngineTools; export first, then CLI and JSON-RPC stdio authoring host |
 | Tests | Test target(s) under one CTest suite | Split engine-only tests from authoring integration tests; one primary C++ framework |
 

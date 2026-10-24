@@ -1,6 +1,35 @@
 {
   "schema_version": 1,
   "dependencies": {
+    "SQLite": {
+      "version": "3.54.1",
+      "upstream": "https://www.sqlite.org/",
+      "url": "https://www.sqlite.org/2026/sqlite-amalgamation-3540100.zip",
+      "sha256": "0a9c8e34352dad46006aa82836d5383bff9dc6bc9ce5a60553c05aa30e6ad1f9",
+      "archive_bytes": 2990966,
+      "archive_prefix": "sqlite-amalgamation-3540100",
+      "source_id": "2026-10-16 14:45:20 555e07ef33f69a0957d24d8e555b702464a131d6f1607f4c3c1e4551e8e6ca76",
+      "source_sha256": {
+        "sqlite3.c": "0c657666d819f261cc4007526ad57e1669de9949df7a8ea847aa284a2bf0ee52",
+        "sqlite3.h": "d6c84557261893439b341d2e6c35187ae3ea24fbfd843ad94616f72d89242b8c"
+      },
+      "license": "LicenseRef-SQLite-Public-Domain",
+      "license_files": ["LICENSE.txt"],
+      "notice_source": "Exact opening C comment of sqlite3.h through its first closing */ plus one LF; generated from the verified archive, with no source patch",
+      "notice_bytes": 1485,
+      "notice_sha256": "85806d613cfda5901f848b3b5b4b04396c8c64e89c97c0af3706c42b0c44bb47",
+      "owner_target": "EngineStorage (private SharkSQLite), Server only",
+      "assignment": "M03",
+      "patches": [],
+      "transitive_dependencies": [],
+      "compile_definitions": [
+        "SQLITE_THREADSAFE=1", "SQLITE_OMIT_LOAD_EXTENSION=1", "SQLITE_DQS=0",
+        "SQLITE_DEFAULT_MEMSTATUS=0", "SQLITE_USE_URI=0", "SQLITE_MAX_ATTACHED=0",
+        "SQLITE_DEFAULT_FOREIGN_KEYS=1", "SQLITE_ENABLE_API_ARMOR=1"
+      ],
+      "verification": "Official 2026 amalgamation downloaded and SHA-256/source ID checked on 2026-10-22; official SHA3-256 92281c86e2957f9b9305890f9ac04204caa7b677cc868dc326d942689df28e30 also matched. Public-domain dedication: https://www.sqlite.org/copyright.html. Qualification is recorded separately.",
+      "notes": "Compile only sqlite3.c into a private static target, with matching sanitizer flags. shell.c and sqlite3ext.h remain verified unbuilt archive inputs. No SQLite CLI, extension loading, system SQLite, system database or client/Tools dependency. EngineStorage owns runtime connection policy."
+    },
     "Catch2": {
       "version": "3.16.1",
       "upstream": "https://github.com/catchorg/Catch2",

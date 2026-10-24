@@ -20,6 +20,8 @@ class GraphicsDependencyTests(unittest.TestCase):
                 f"-DCMAKE_MAKE_PROGRAM={OPTIONS.ninja}",
                 f"-DCMAKE_CXX_COMPILER={OPTIONS.compiler}",
                 "-DSHARK_BUILD_EDITOR=OFF", "-DSHARK_BUILD_GRAPHICS_PROBE=ON",
+                f"-DSHARK_BUILD_SERVER={'ON' if OPTIONS.sqlite_archive else 'OFF'}",
+                *([f"-DSHARK_SQLITE_ARCHIVE={OPTIONS.sqlite_archive}"] if OPTIONS.sqlite_archive else []),
                 # A missed early rejection must fail offline, never fetch on a test host.
                 "-DFETCHCONTENT_FULLY_DISCONNECTED=ON",
                 f"-DSHARK_ENTT_ARCHIVE={OPTIONS.entt_archive}",
@@ -102,6 +104,8 @@ class GraphicsDependencyTests(unittest.TestCase):
                     f"-DCMAKE_C_COMPILER={OPTIONS.c_compiler}",
                     f"-DSHARK_BUILD_CLIENT={'ON' if client else 'OFF'}",
                     "-DSHARK_BUILD_EDITOR=OFF", "-DSHARK_BUILD_TESTS=OFF",
+                    f"-DSHARK_BUILD_SERVER={'ON' if OPTIONS.sqlite_archive else 'OFF'}",
+                    *([f"-DSHARK_SQLITE_ARCHIVE={OPTIONS.sqlite_archive}"] if OPTIONS.sqlite_archive else []),
                     "-DSHARK_BUILD_GRAPHICS_PROBE=OFF",
                     "-DFETCHCONTENT_FULLY_DISCONNECTED=ON",
                     f"-DSHARK_ENTT_ARCHIVE={OPTIONS.entt_archive}",
@@ -114,7 +118,8 @@ class GraphicsDependencyTests(unittest.TestCase):
                 output = result.stdout + result.stderr
                 self.assertEqual(result.returncode, 0, output)
                 self.assertEqual({path.name for path in (build / "_deps").iterdir()},
-                                 {"entt-src", "entt-build", "entt-subbuild", "glm-src", "glm-build", "glm-subbuild", "mbedtls-src", "mbedtls-build"})
+                                 {"entt-src", "entt-build", "entt-subbuild", "glm-src", "glm-build", "glm-subbuild", "mbedtls-src", "mbedtls-build"} |
+                                 ({"sqlite-src"} if OPTIONS.sqlite_archive else set()))
                 cache = (build / "CMakeCache.txt").read_text(encoding="utf-8")
                 self.assertIn("SHARK_NATIVE_WINDOW:BOOL=OFF", cache)
                 self.assertIn("SHARK_NATIVE_GRAPHICS:BOOL=OFF", cache)
@@ -129,5 +134,6 @@ if __name__ == "__main__":
     parser.add_argument("--mbedtls-archive", type=Path, required=True)
     parser.add_argument("--entt-archive", type=Path, required=True)
     parser.add_argument("--glm-archive", type=Path, required=True)
+    parser.add_argument("--sqlite-archive", type=Path)
     OPTIONS, remaining = parser.parse_known_args()
     unittest.main(argv=[__file__, *remaining])

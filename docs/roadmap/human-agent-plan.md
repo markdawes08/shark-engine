@@ -41,6 +41,12 @@ exist. Existing bootstrap consumers and historical CI receipts remain unchanged.
 
 ## Workflow to deliver
 
+M03a adds the same documented [CPU storage service](../durable-store.md) for human
+and terminal contributors, with owned errors and noninteractive process receipts.
+Storage lives in a server-only module; source authoring and player/admin protocols
+remain separate. No SQL shell, LLM SDK, GUI or new remote adapter is required.
+The [M03 checkpoints](durable-state-plan.md) preserve later authoring owners.
+
 M02a provides the [bounded network foundation](../network-transport.md) through
 engine-owned CPU C++ interfaces and noninteractive JSON test fixtures. It does not
 reuse source-authoring RPC as a player protocol. Both human contributors and

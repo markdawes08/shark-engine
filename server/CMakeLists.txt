@@ -1,4 +1,10 @@
+add_library(EngineStorage STATIC storage/src/store.cpp)
+target_include_directories(EngineStorage PUBLIC storage/include)
+target_link_libraries(EngineStorage PUBLIC EngineCore PRIVATE SharkSQLite)
+shark_configure_target(EngineStorage)
+shark_classify_target(EngineStorage storage)
+
 add_executable(Server main.cpp)
-target_link_libraries(Server PRIVATE EngineCore)
+target_link_libraries(Server PRIVATE EngineStorage)
 shark_configure_target(Server)
-shark_classify_target(Server core)
+shark_classify_target(Server storage)

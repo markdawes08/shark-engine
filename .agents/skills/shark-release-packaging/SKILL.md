@@ -5,6 +5,13 @@ description: Validate Shark standalone exports and packages for cooked dependenc
 
 # Shark export and release packaging
 
+M03a adds private static SQLite through EngineStorage to the Server build only.
+Offline Server builds also require `SHARK_SQLITE_ARCHIVE`; prepare it separately
+with `tools/storage_dependency.py --output`. The installed Server closure includes
+`licenses/SQLite/LICENSE.txt` derived from the exact upstream notice. Reject
+database files, journals, SQLite shared libraries, the upstream shell and fixtures
+in packages. Runtime/Tools/Core must not acquire the SQLite dependency.
+
 08c [project file storage](../../../docs/project-files.md) belongs only to
 EngineTools. Its native I/O, source readers, lock/stage files and crash fixtures
 must not enter Runtime/Server packages. Recheck protected source/dependency and

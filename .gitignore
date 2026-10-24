@@ -24,6 +24,8 @@
 # Scene activation/capture qualification and temporary snapshots use out/ or build/.
 # Project file conflict/interruption fixtures and receipts use out/ or build/.
 # Integrated persistence qualification, migrations and recovery receipts use out/ or build/.
+# Live database files, rollback journals, SQLite caches and recovery receipts use out/ or build/.
+# Keep independently authored database fixtures and storage documentation eligible for versioning.
 # Authored .sharkproject/.sharkscene fixtures and format documentation stay versioned.
 /build/
 /out/

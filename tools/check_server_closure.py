@@ -1,8 +1,8 @@
-"""Fail-closed M01 Linux server-only source, build and installed ELF inventory.
+"""Fail-closed Linux Server/Core/storage source, build and installed ELF inventory.
 
 Run after a fresh configure with file-api codemodel-v2/cache-v2 queries and
 CMAKE_EXPORT_COMPILE_COMMANDS=ON, then build/install --component Server.
-This intentionally narrow allowlist must be reviewed when Core gains dependencies.
+This intentionally narrow allowlist must be reviewed when a protected module changes.
 """
 
 from __future__ import annotations
@@ -18,7 +18,8 @@ import shlex
 import shutil
 import sys
 
-from core_dependencies import DEPENDENCIES, MBEDTLS_LICENSE_FILES, verify_build as verify_core_build
+from core_dependencies import DEPENDENCIES, MBEDTLS_LICENSE_FILES
+from storage_dependency import DEFINITIONS as SQLITE_DEFINITIONS, verify_server_build
 from process_runner import run_process
 
 
@@ -35,8 +36,9 @@ TLS_DIRECTORIES = {"", "framework", "include", "library", "pkgconfig", "tf-psa-c
                    "tf-psa-crypto/drivers/builtin", "tf-psa-crypto/drivers/pqcp",
                    "tf-psa-crypto/extras", "tf-psa-crypto/platform", "tf-psa-crypto/utilities",
                    "tf-psa-crypto/core", "tf-psa-crypto/pkgconfig"}
-TARGETS = {"EngineCore", "Server", "shark_check_server_boundary"} | TLS_STATIC | TLS_OBJECT | TLS_UTILITIES
-PACKAGE_FILES = {"bin/Server", "licenses/EnTT/LICENSE", "licenses/GLM/copying.txt"} | {
+STORAGE_TARGETS = {"EngineStorage", "SharkSQLite"}
+TARGETS = {"EngineCore", "Server", "shark_check_server_boundary"} | STORAGE_TARGETS | TLS_STATIC | TLS_OBJECT | TLS_UTILITIES
+PACKAGE_FILES = {"bin/Server", "licenses/EnTT/LICENSE", "licenses/GLM/copying.txt", "licenses/SQLite/LICENSE.txt"} | {
     "licenses/MbedTLS/" + item for item in MBEDTLS_LICENSE_FILES}
 FORBIDDEN = re.compile(
     r"(?:^|[/\\\s;:=_-])(?:engineclient|engine_tools|editor|runtime|catch2|"
@@ -97,7 +99,8 @@ def source_path(path: Path, source: Path, build: Path, *, generated=False) -> Pa
                      and path.suffix in (".h", ".c")
                      and not set(Path(relative).parts) & {"framework", "tests", "test", "examples", "programs"})
     network_config = not generated and relative == "cmake/mbedtls_user_config.h"
-    require(relative.startswith(allowed) or dependency_header or network_input or network_config,
+    storage_input = generated and relative in ("_deps/sqlite-src/sqlite3.c", "_deps/sqlite-src/sqlite3.h")
+    require(relative.startswith(allowed) or dependency_header or network_input or network_config or storage_input,
             f"Non-Core source/include path: {path}")
     require(not FORBIDDEN.search(relative), f"Forbidden source/include path: {path}")
     return path
@@ -113,7 +116,7 @@ def include_path(path: Path, source: Path, build: Path) -> Path:
                                   "_deps/mbedtls-src/tf-psa-crypto/utilities",
                                   "_deps/mbedtls-src/tf-psa-crypto/dispatch", "_deps/mbedtls-src/tf-psa-crypto/drivers",
                                   "_deps/mbedtls-build/include", "_deps/mbedtls-build/library", "_deps/mbedtls-build/tf-psa-crypto/include",
-                                  "_deps/mbedtls-build/tf-psa-crypto/core")),
+                                  "_deps/mbedtls-build/tf-psa-crypto/core", "_deps/sqlite-src")),
                           (source, ("engine/include", "engine/core/include", "server"))):
         if path.is_relative_to(base):
             path = plain_path(path, base)
@@ -164,17 +167,24 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
     require(len(target_ids) == len(targets), "Duplicate target IDs")
     for item in targets:
         require(item["name"] in TARGETS, "File-api target identity mismatch")
-        if item["name"] in TLS_STATIC | TLS_OBJECT | TLS_UTILITIES:
-            expected_type = "STATIC_LIBRARY" if item["name"] in TLS_STATIC else (
+        if item["name"] in TLS_STATIC | TLS_OBJECT | TLS_UTILITIES | STORAGE_TARGETS:
+            expected_type = "STATIC_LIBRARY" if item["name"] in TLS_STATIC | STORAGE_TARGETS else (
                 "OBJECT_LIBRARY" if item["name"] in TLS_OBJECT else "UTILITY")
             require(item.get("type") == expected_type, "Unexpected reviewed TLS target type")
         for dependency in item.get("dependencies", []):
             require(dependency["id"] in target_ids, f"External build dependency: {dependency}")
+            reached = next(target["name"] for target in targets if target["id"] == dependency["id"])
+            require(item["name"] in {"Server", "EngineStorage"} or reached not in STORAGE_TARGETS,
+                    "Storage dependency escaped its Server owner")
         for group in item.get("compileGroups", []):
-            language = "C" if item["name"] in TLS_STATIC | TLS_OBJECT else "CXX"
+            language = "C" if item["name"] in TLS_STATIC | TLS_OBJECT | {"SharkSQLite"} else "CXX"
             require(group.get("language") == language, "Unexpected Core source language")
             for include in group.get("includes", []):
-                include_path(Path(include["path"]), source, build)
+                directory = include_path(Path(include["path"]), source, build)
+                require(item["name"] in STORAGE_TARGETS or not directory.is_relative_to(build / "_deps/sqlite-src"),
+                        "Private SQLite include escaped storage target")
+                require(item["name"] != "EngineCore" or not directory.is_relative_to(source / "server"),
+                        "Server storage include escaped into shared Core")
         for entry in item.get("sources", []):
             path = Path(entry["path"])
             if item["name"] in TLS_UTILITIES | {"shark_check_server_boundary"}:
@@ -189,9 +199,15 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
                 full = Path(os.path.abspath(path if path.is_absolute() else source / path))
                 require(full in network_objects, f"Unreviewed network object source: {full}")
             else:
-                suffixes = ((".c",) if item["name"] in TLS_STATIC | TLS_OBJECT else (".cpp", ".cc", ".cxx")) if "compileGroupIndex" in entry else (".h", ".hh", ".hpp", ".hxx", ".inl")
+                suffixes = ((".c",) if item["name"] in TLS_STATIC | TLS_OBJECT | {"SharkSQLite"} else (".cpp", ".cc", ".cxx")) if "compileGroupIndex" in entry else (".h", ".hh", ".hpp", ".hxx", ".inl")
                 require(path.suffix in suffixes, f"Unreviewed prebuilt/noncompiled source input: {path}")
-                codemodel_source(entry, source, build)
+                resolved = codemodel_source(entry, source, build)
+                require(item["name"] in STORAGE_TARGETS or not resolved.is_relative_to(build / "_deps/sqlite-src"),
+                        "Private SQLite source escaped storage target")
+                require(item["name"] != "EngineCore" or not resolved.is_relative_to(source / "server"),
+                        "Server storage source escaped into shared Core")
+                if item["name"] == "SharkSQLite" and "compileGroupIndex" in entry:
+                    require(resolved == build / "_deps/sqlite-src/sqlite3.c", "SQLite compiles only the reviewed amalgamation")
     for directory in configuration.get("directories", []):
         relative = directory["source"].replace("\\", "/")
         full = Path(os.path.abspath(source / relative))
@@ -220,7 +236,8 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
     archives = {name: Path(cache[spec["cache"]]) for name, spec in DEPENDENCIES.items() if cache.get(spec["cache"])}
     require(set(archives) == set(DEPENDENCIES), "Missing locked Core archive evidence")
     try:
-        verify_core_build(source, build, archives)
+        require(bool(cache.get("SHARK_SQLITE_ARCHIVE_INPUT")), "Missing locked SQLite archive evidence")
+        verify_server_build(source, build, archives, Path(cache["SHARK_SQLITE_ARCHIVE_INPUT"]))
     except ValueError as error:
         raise ClosureError(str(error)) from error
     for relative in ("engine/client", "engine_tools", "editor", "runtime", "tests", "probes"):
@@ -241,6 +258,15 @@ def compile_inventory(build: Path, source: Path, targets: list[dict]) -> list[di
         require(not FORBIDDEN.search(" ".join(args)), "Forbidden compiler dependency")
         require(not any(arg.startswith(("-fplugin", "-specs", "--sysroot", "-isysroot", "-Xclang")) for arg in args),
                 "Unreviewed compiler injection/sysroot option")
+        sqlite_unit = path == build / "_deps/sqlite-src/sqlite3.c"
+        storage_unit = path.is_relative_to(source / "server/storage/src")
+        sqlite_definitions = [arg.removeprefix("-D") for arg in args if arg.startswith("-DSQLITE_")]
+        require(set(sqlite_definitions) == set(SQLITE_DEFINITIONS) and len(sqlite_definitions) == len(SQLITE_DEFINITIONS)
+                if sqlite_unit else not sqlite_definitions, "Private SQLite compile definitions escaped or changed")
+        require(sqlite_unit or storage_unit or not any("sqlite-src" in arg for arg in args),
+                "Private SQLite header escaped storage implementation")
+        require(not path.is_relative_to(source / "engine/core") or not any("server/storage" in arg.replace("\\", "/") for arg in args),
+                "Storage header escaped into shared Core")
         index = 1
         while index < len(args):
             arg = args[index]
@@ -286,7 +312,7 @@ def link_inventory(targets: list[dict], build: Path) -> list[dict]:
     fragments = server.get("link", {}).get("commandFragments", [])
     require(bool(fragments), "Missing actual Server linker inputs")
     archives = []
-    for name in ("EngineCore", "SharkTLS_mbedtls", "SharkTLS_mbedx509", "SharkTLS_tfpsacrypto"):
+    for name in ("EngineStorage", "EngineCore", "SharkTLS_mbedtls", "SharkTLS_mbedx509", "SharkTLS_tfpsacrypto", "SharkSQLite"):
         core = next(item for item in targets if item["name"] == name)
         artifacts = core.get("artifacts", [])
         require(core.get("type") == "STATIC_LIBRARY" and len(artifacts) == 1, "Expected one static Core/TLS artifact")
@@ -305,7 +331,7 @@ def link_inventory(targets: list[dict], build: Path) -> list[dict]:
             for token in tokens:
                 require(bool(re.fullmatch(r"(?:-O[0-3sg]|-g|-DNDEBUG|-pthread|-fsanitize=address(?:,undefined)?|-fno-omit-frame-pointer)", token)),
                         f"Unreviewed actual link option: {token}")
-    require(libraries == archives, "Server must link exactly the reviewed Core/TLS archives")
+    require(libraries == archives, "Server must link exactly the reviewed storage/Core/TLS archives")
     return fragments
 
 
@@ -338,6 +364,15 @@ def compiler_headers(output: str, compiled: list[dict], source: Path, build: Pat
     # them in the probe/report while still rejecting unknown extra records.
     require(objects.issubset(groups) and set(groups) - objects <= (linker_outputs or set()),
             "Ninja dependency objects differ from compiler invocations")
+    for entry in compiled:
+        owner = Path(entry.get("path", source / "engine/core/unknown.cpp"))
+        storage = owner.is_relative_to(source / "server/storage/src") or owner == build / "_deps/sqlite-src/sqlite3.c"
+        for value in groups[entry["object"]]:
+            path = Path(os.path.abspath(value if Path(value).is_absolute() else build / value))
+            require(storage or not path.is_relative_to(build / "_deps/sqlite-src"),
+                    "Private SQLite compiler-discovered input escaped storage")
+            require(not owner.is_relative_to(source / "engine/core") or not path.is_relative_to(source / "server/storage"),
+                    "Storage compiler-discovered input escaped into shared Core")
     headers, system = [], []
     for name in sorted({path for name, group in groups.items() if name in objects for path in group}):
         path = Path(name)
@@ -455,8 +490,8 @@ def inspect(build: Path, package: Path) -> dict:
     headers, system = compiler_headers(dependencies["stdout"], compiled, source, build, linker_outputs=linker_outputs)
     owners = probe([dpkg, "-S", *system]) if system else None
     packages = system_header_owners(owners["stdout"], system) if owners else {}
-    core_dependencies = verify_core_build(source, build, {name: Path(cache[spec["cache"]])
-                                                    for name, spec in DEPENDENCIES.items()})
+    core_dependencies = verify_server_build(source, build, {name: Path(cache[spec["cache"]])
+                                                    for name, spec in DEPENDENCIES.items()}, Path(cache["SHARK_SQLITE_ARCHIVE_INPUT"]))
     binary = package_inventory(package)
     for name, record in core_dependencies.items():
         for license_file, expected_sha in record["license_files"].items():
@@ -469,7 +504,7 @@ def inspect(build: Path, package: Path) -> dict:
     needed = dynamic_needed(dynamic["stdout"])
     loader = probe([ldd, str(binary)])
     libraries = resolved_libraries(loader["stdout"], needed, sanitizer=cache["SHARK_SANITIZER"])
-    return {"schema_version": 1, "status": "PASS", "scope": "M01 Linux x86-64 server-only source/build/package closure",
+    return {"schema_version": 1, "status": "PASS", "scope": "Linux x86-64 Server/Core/private-storage source/build/package closure",
             "source_dir": str(source), "build_dir": str(build), "package_dir": str(package),
             "configuration": configuration["name"], "targets": sorted(TARGETS),
             "cache": {name: cache[name] for name in ("SHARK_BUILD_CLIENT", "SHARK_BUILD_SERVER", "SHARK_BUILD_EDITOR",

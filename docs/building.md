@@ -377,7 +377,8 @@ documentation utility targets are excluded from the default dependency build.
 [ADR 0002](architecture/0002-dependencies.md) records the header pins and selected
 MIT licenses, plus the TLS pin and selected Apache-2.0 option.
 Ordinary builds can fetch a missing archive; the disconnected
-Server workflow below requires all three verified archives prepared beforehand.
+Server workflow below requires the three Core archives plus the separately
+verified SQLite archive prepared beforehand.
 
 M02a uses the exact official Mbed TLS 4.1.1 release archive and bundled crypto
 sources recorded in the lock. `tools/core_dependencies.py` verifies and prepares
@@ -519,26 +520,54 @@ developer environment. On POSIX systems select `CC`/`CXX` before its first
 configuration if the system defaults are unsuitable; use a fresh build directory
 for a compiler change. Do not edit global machine/compiler configuration.
 
+## Server-only durable storage
+
+M03a adds `EngineStorage` and its private static SQLite 3.54.1 amalgamation only
+when `SHARK_BUILD_SERVER=ON`. The public C++ service is documented in
+[the store contract](durable-store.md); `Store::create` and `Store::open` require
+absolute paths in an existing local directory. Keep generated databases and
+journals under `out/` or `build/`. Current Server bootstrap flags do not create a
+database, authorize a player or expose SQL. Human and terminal developers use the
+same API and noninteractive tests.
+
+The new test families are `shark.storage.store` (60 seconds, seed 1337),
+`shark.storage.process` (90 seconds) and `shark.tooling.storage-dependencies`
+(240 seconds). They run without a display or GPU. List the configured inventory
+before selecting them:
+
+```text
+ctest --preset windows-debug --show-only
+ctest --preset windows-debug -R "^shark\.(storage\.|tooling\.storage-dependencies)" --output-on-failure
+```
+
+Use the matching Linux preset in WSL. `StorageTests` and `StorageProcess` are
+test-only executables, absent from installed packages. The latter emits JSON
+receipts through the Python supervisor and uses deterministic pipe barriers and
+explicit process exits for the create-transaction boundaries. Runtime-only and
+Tools-only configurations do not discover, download or compile SQLite.
+
 ## Headless Server
 
 These presets never create EngineClient, Engine, Runtime, EngineTools or Editor:
 
 | Preset | Configuration | Tests / compiler |
 | --- | --- | --- |
-| `server-only` | Release | No tests or network downloads; verified local EnTT/GLM/TLS archives, host C/C++ compilers |
+| `server-only` | Release | No tests or network downloads; verified local EnTT/GLM/TLS/SQLite archives, host C/C++ compilers |
 | `server-debug` | Debug | Catch2/CTest enabled, host compiler |
 | `server-asan-ubsan` | Debug, ASan + UBSan | Catch2/CTest enabled, Linux Clang |
 
-Prepare the exact EnTT, GLM and Mbed TLS archives before the first disconnected configure.
+Prepare the exact EnTT, GLM, Mbed TLS and SQLite archives before the first disconnected configure.
 This explicit command downloads only the locked bytes, or verifies an existing
 cache; configure itself makes no network request. On Windows from ordinary PowerShell:
 
 ```powershell
 & ./tools/windows_dev.ps1 -CommandArguments @('python','tools/core_dependencies.py','--output','out/dependency-cache')
+& ./tools/windows_dev.ps1 -CommandArguments @('python','tools/storage_dependency.py','--output','out/dependency-cache')
 $taskEnTT = (Resolve-Path 'out/dependency-cache/85c6bba014049b5de8fad49d25424df2f1f6a8c1.tar.gz').Path
 $taskGLM = (Resolve-Path 'out/dependency-cache/8d1fd52e5ab5590e2c81768ace50c72bae28f2ed.tar.gz').Path
 $taskTLS = (Resolve-Path 'out/dependency-cache/mbedtls-4.1.1.tar.bz2').Path
-& ./tools/windows_dev.ps1 -CommandArguments @('cmake','--preset','server-only',"-DSHARK_ENTT_ARCHIVE=$taskEnTT","-DSHARK_GLM_ARCHIVE=$taskGLM","-DSHARK_MBEDTLS_ARCHIVE=$taskTLS")
+$taskSQLite = (Resolve-Path 'out/dependency-cache/sqlite-amalgamation-3540100.zip').Path
+& ./tools/windows_dev.ps1 -CommandArguments @('cmake','--preset','server-only',"-DSHARK_ENTT_ARCHIVE=$taskEnTT","-DSHARK_GLM_ARCHIVE=$taskGLM","-DSHARK_MBEDTLS_ARCHIVE=$taskTLS","-DSHARK_SQLITE_ARCHIVE=$taskSQLite")
 & ./tools/windows_dev.ps1 -CommandArguments @('cmake','--build','--preset','server-only')
 ./build/server-only/bin/Server.exe --version
 ./build/server-only/bin/Server.exe --run-for-ms 1000
@@ -549,18 +578,21 @@ In the existing WSL/Linux compiler environment:
 
 ```sh
 python tools/core_dependencies.py --output out/dependency-cache
+python tools/storage_dependency.py --output out/dependency-cache
 cmake --preset server-only \
   -DSHARK_ENTT_ARCHIVE="$PWD/out/dependency-cache/85c6bba014049b5de8fad49d25424df2f1f6a8c1.tar.gz" \
   -DSHARK_GLM_ARCHIVE="$PWD/out/dependency-cache/8d1fd52e5ab5590e2c81768ace50c72bae28f2ed.tar.gz" \
-  -DSHARK_MBEDTLS_ARCHIVE="$PWD/out/dependency-cache/mbedtls-4.1.1.tar.bz2"
+  -DSHARK_MBEDTLS_ARCHIVE="$PWD/out/dependency-cache/mbedtls-4.1.1.tar.bz2" \
+  -DSHARK_SQLITE_ARCHIVE="$PWD/out/dependency-cache/sqlite-amalgamation-3540100.zip"
 cmake --build --preset server-only
 build/server-only/bin/Server --version
 build/server-only/bin/Server --run-for-ms 1000
 cmake --install build/server-only --prefix out/server-package --component Server
 ```
 
-For a read-only source mount, prepare all three archives under a writable work directory
-and pass their absolute paths instead. `SHARK_ENTT_ARCHIVE`, `SHARK_GLM_ARCHIVE` and `SHARK_MBEDTLS_ARCHIVE`
+For a read-only source mount, prepare all four archives under a writable work directory
+and pass their absolute paths instead. `SHARK_ENTT_ARCHIVE`, `SHARK_GLM_ARCHIVE`,
+`SHARK_MBEDTLS_ARCHIVE` and `SHARK_SQLITE_ARCHIVE`
 must each match the lock's SHA-256; arbitrary extracted source overrides are
 rejected. Previously populated standard FetchContent archive caches satisfy
 EnTT/GLM reconfiguration; Mbed TLS uses the verified archive under
@@ -572,7 +604,7 @@ dependencies.
 
 The install component contains `bin/Server` (or `bin/Server.exe`),
 `licenses/EnTT/LICENSE`, `licenses/GLM/copying.txt` and the eight locked notices
-under `licenses/MbedTLS/`. It is a dependency-closure
+under `licenses/MbedTLS/`, plus `licenses/SQLite/LICENSE.txt`. It is a dependency-closure
 probe, not a shipping distribution; full deployment packaging remains future work.
 A clean package directory is required for closure verification. Runtime packages also retain the
 EnTT, GLM and Mbed TLS notices alongside their existing graphics/CRT notices. GLM is used
@@ -606,7 +638,7 @@ Negative boundary fixtures exercise direct, transitive and generator-expression
 links/options, generated source/includes and manually added build dependencies.
 Compiler dependency records also reject hidden relative and generated-header
 inclusions, exercised by actual fixture compilations. The server-only source
-closure permits exactly the EnTT, GLM and Mbed TLS populations, compares every
+closure permits exactly the EnTT, GLM, Mbed TLS and SQLite populations, compares every
 populated regular file with its SHA-256-verified archive, and verifies all
 installed notices. Only the 147 reviewed unused TLS source symlinks are omitted.
 It checks the three private TLS archives and seven object targets against actual

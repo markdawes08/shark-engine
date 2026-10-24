@@ -1,7 +1,9 @@
 cmake_minimum_required(VERSION 3.28)
 foreach(shark_case IN ITEMS allowed server-only security-flags security-flag-injection client-link client-genex authoring-genex
         runtime-authoring raw-link link-option link-directory prebuilt-object utility-client utility-authoring utility-unclassified
-        include-client include-authoring source-client source-authoring include-json source-json)
+        include-client include-authoring source-client source-authoring include-json source-json
+        core-storage runtime-storage tools-storage storage-authoring storage-client utility-storage
+        include-sqlite source-sqlite include-storage source-storage editor-storage include-editor-storage)
     set(shark_build "${SHARK_FIXTURE_BINARY}/${shark_case}")
     set(shark_fixture "${SHARK_SOURCE}/tests/boundary_fixture")
     if(shark_case STREQUAL "server-only")
@@ -24,4 +26,4 @@ foreach(shark_case IN ITEMS allowed server-only security-flags security-flag-inj
         message(FATAL_ERROR "Violation ${shark_case} was not rejected by the boundary checker: ${shark_output} ${shark_error}")
     endif()
 endforeach()
-message(STATUS "Boundary fixtures: 3 allowed configurations and 18 forbidden dependency paths verified")
+message(STATUS "Boundary fixtures: 3 allowed configurations and 30 forbidden dependency paths verified")

@@ -60,6 +60,7 @@ cp "$task_output/server-only/package/bin/Server" "$task_runtime/package/bin/Serv
 cp "$task_output/server-only/package/licenses/EnTT/LICENSE" "$task_runtime/package/licenses/EnTT/LICENSE"
 cp "$task_output/server-only/package/licenses/GLM/copying.txt" "$task_runtime/package/licenses/GLM/copying.txt"
 cp -R "$task_output/server-only/package/licenses/MbedTLS" "$task_runtime/package/licenses/MbedTLS"
+cp -R "$task_output/server-only/package/licenses/SQLite" "$task_runtime/package/licenses/SQLite"
 chmod 755 "$task_runtime/package/bin/Server"
 chroot "$task_runtime" dpkg-query -W -f='${binary:Package}\t${Version}\t${Architecture}\n' > "$task_output/clean-runtime-packages.tsv"
 find "$task_runtime/package" -type f -printf '%P\n' > "$task_output/clean-runtime-files.txt"

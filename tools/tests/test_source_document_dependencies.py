@@ -47,13 +47,14 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                        f"-DSHARK_BUILD_CLIENT={'ON' if client else 'OFF'}",
                        f"-DSHARK_BUILD_EDITOR={'ON' if editor else 'OFF'}",
                        f"-DSHARK_BUILD_TOOLS={'ON' if tools else 'OFF'}",
-                       "-DSHARK_BUILD_SERVER=ON", "-DSHARK_BUILD_TESTS=OFF",
+                       f"-DSHARK_BUILD_SERVER={'ON' if OPTIONS.sqlite_archive else 'OFF'}", "-DSHARK_BUILD_TESTS=OFF",
                        "-DSHARK_NATIVE_WINDOW=OFF", "-DSHARK_NATIVE_GRAPHICS=OFF",
                        "-DFETCHCONTENT_FULLY_DISCONNECTED=ON", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
                        f"-DSHARK_ENTT_ARCHIVE={OPTIONS.entt_archive}",
                        f"-DSHARK_GLM_ARCHIVE={OPTIONS.glm_archive}",
                        f"-DSHARK_MBEDTLS_ARCHIVE={OPTIONS.mbedtls_archive}",
-                       f"-DSHARK_JSON_ARCHIVE={OPTIONS.json_archive}", *extra]
+                       f"-DSHARK_JSON_ARCHIVE={OPTIONS.json_archive}",
+                       *([f"-DSHARK_SQLITE_ARCHIVE={OPTIONS.sqlite_archive}"] if OPTIONS.sqlite_archive else []), *extra]
             result = subprocess.run(command, text=True, capture_output=True, timeout=120)
             output = result.stdout + result.stderr
             if expected:
@@ -67,6 +68,8 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                                      "glm-subbuild", "mbedtls-src", "mbedtls-build"}
             if tools:
                 expected_dependencies.add("json-src")
+            if OPTIONS.sqlite_archive:
+                expected_dependencies.add("sqlite-src")
             self.assertEqual(dependencies, expected_dependencies)
             cache = (build / "CMakeCache.txt").read_text(encoding="utf-8")
             self.assertNotIn("JSON_BuildTests:", cache)
@@ -149,5 +152,6 @@ if __name__ == "__main__":
         parser.add_argument("--" + option, required=True)
     for option in ("mbedtls-archive", "entt-archive", "glm-archive", "json-archive"):
         parser.add_argument("--" + option, type=Path, required=True)
+    parser.add_argument("--sqlite-archive", type=Path)
     OPTIONS, remaining = parser.parse_known_args()
     unittest.main(argv=[__file__, *remaining])

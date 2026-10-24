@@ -198,14 +198,16 @@ public `SharkMath` interface propagates GLM includes and its five central compil
 definitions. Real C++ fixture compilations accept the wrapper with central
 definitions and defaults, reject a prior GLM include, and reject each of the 20
 incompatible configuration definitions. Existing graphics-dependency fixtures
-receive all three verified archives and continue to reject all client source overrides
-before population. Both dependency tooling families have 240-second suite
+receive the three verified Core archives, plus SQLite when Server is enabled,
+and continue to reject all client source overrides before population. Both
+dependency tooling families have 240-second suite
 timeouts and 120-second configure deadlines, accounting for fresh exact TLS
 source population; these are tooling limits, not transport budgets.
 No fixture downloads dependencies during CTest.
 
-The headless closure checks compare all three extracted source inventories
-with their pinned archives and verify their installed notices. Runtime package
+The headless closure checks compare the three Core dependency source inventories
+and the Server-only SQLite inventory with their pinned archives and verify their
+installed notices. Runtime package
 tests also require EnTT, GLM and all eight TLS notices. Windows CPU/sanitizer, existing WSL
 CPU/headless and protected target builds qualify these checkpoints; the CPU scene
 layer does not require repeating 06c's GPU acceptance.
@@ -371,6 +373,26 @@ the actual toolchain/environment and build inputs needed for release reproductio
 or use an immutable controlled runner image. A missing toolchain or changed compiler
 requires a reviewed configuration/evidence update; do not mask that failure.
 
+## M03a durable-store checks
+
+M03a adds the three storage families documented in [building](building.md#server-only-durable-storage).
+The Server build has a separate `storage` dependency domain; Core, Runtime and
+Tools reject storage targets and headers. `tools/storage_dependency.py` prepares
+and verifies the exact SQLite ZIP, four upstream files and preserved public-domain
+notice. It is additional to the three unchanged Core archives. Dependency fixtures
+reject missing/changed archives, sources, notices and unsupported overrides.
+
+The process fixture exercises a real database across restart, concurrent ownership,
+abrupt release, three initial-commit interruption phases and supported-version
+hot-journal rollback. Fixed seeds, pipe barriers, deadlines and JSON outcomes
+keep this noninteractive. Initial creation and rollback recovery are tested;
+full character/economy crash, outage,
+migration and restore qualification retains the [later M03 checkpoints](roadmap/durable-state-plan.md).
+Sanitizers must instrument both the storage C++ implementation and sqlite3.c.
+The Server package gains only `licenses/SQLite/LICENSE.txt`; SQLite shells, shared
+libraries, databases, journals and test probes are excluded. Runtime packages
+retain their existing dependency closure.
+
 ## Minimal Ubuntu headless gate
 
 [inputs.json](../tools/ci/headless/inputs.json) pins the Ubuntu 24.04 amd64 base
@@ -426,14 +448,15 @@ claim a read-only runtime root.
 installed package inventory, image provenance and Python/tool pins. It rejects
 mapped GPU/audio devices and display sockets and clears display/audio-session
 environment variables. Before configuring, it explicitly prepares the exact EnTT,
-GLM and Mbed TLS archives under the writable build root and passes `SHARK_ENTT_ARCHIVE`,
-`SHARK_GLM_ARCHIVE` and `SHARK_MBEDTLS_ARCHIVE` to each preset. This uses
+GLM and Mbed TLS archives under the writable build root and prepares SQLite with
+`storage_dependency.py`. It passes `SHARK_ENTT_ARCHIVE`, `SHARK_GLM_ARCHIVE`,
+`SHARK_MBEDTLS_ARCHIVE` and `SHARK_SQLITE_ARCHIVE` to each preset. This uses
 [the shared locked archive helper](../tools/core_dependencies.py),
 not an installed-package or source-tree fallback. It then runs these stages in
 fresh build directories:
 
 1. `server-only`: GCC Release with Client, Editor and Tests disabled, dependency
-   network fetching disabled (verified local EnTT/GLM/TLS extraction only), explicit
+   network fetching disabled (verified local EnTT/GLM/TLS/SQLite extraction only), explicit
    Server/Core boundary check, component install including all dependency notices,
    source/build/package closure inspection and a finite installed-Server run.
 2. `server-debug`: GCC Debug with the Core/Server Catch2 and process tests;
@@ -450,14 +473,15 @@ unsetting display variables on a desktop runner alone is insufficient.
 Closure checks inspect CMake's generated graph and file-api data, the compiler's
 actual source/header dependencies and linker inputs, installed package contents,
 and ELF direct/transitive library dependencies. The only permitted dependency
-source trees in `server-only` are the exactly pinned EnTT, GLM and Mbed TLS populations;
+source trees in `server-only` are the exactly pinned EnTT, GLM, Mbed TLS and SQLite populations;
 every regular file is compared with its verified archive, with only the 147 locked,
 unused upstream symlinks omitted for portable extraction. The TLS archive supplies
 3,927 verified regular files. EnTT/GLM are header-only;
 the private TLS graph has three static libraries and seven reviewed object targets.
 No shared TLS library enters the ELF closure. The installed package contains the
 executable, `licenses/EnTT/LICENSE`, `licenses/GLM/copying.txt` and eight exact notices
-under `licenses/MbedTLS/`.
+under `licenses/MbedTLS/`, plus the preserved SQLite notice under
+`licenses/SQLite/LICENSE.txt` (12 files total).
 Negative fixtures exercise changed/missing locked inputs, extra dependency trees
 and presentation/authoring leaks. Catch2 may be fetched for test-enabled
 configurations; it must not enter `server-only` or the installed package. These

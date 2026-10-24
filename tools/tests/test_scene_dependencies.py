@@ -20,12 +20,13 @@ class SceneDependencyTests(unittest.TestCase):
                        f"-DCMAKE_MAKE_PROGRAM={OPTIONS.ninja}",
                        f"-DCMAKE_CXX_COMPILER={OPTIONS.compiler}",
                        f"-DCMAKE_C_COMPILER={OPTIONS.c_compiler}",
-                       "-DSHARK_BUILD_CLIENT=OFF", "-DSHARK_BUILD_SERVER=ON",
+                       "-DSHARK_BUILD_CLIENT=OFF", f"-DSHARK_BUILD_SERVER={'ON' if OPTIONS.sqlite_archive else 'OFF'}",
                        "-DSHARK_BUILD_EDITOR=OFF", "-DSHARK_BUILD_TESTS=OFF",
                        "-DFETCHCONTENT_FULLY_DISCONNECTED=ON", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON",
                        f"-DSHARK_ENTT_ARCHIVE={OPTIONS.entt_archive}",
                        f"-DSHARK_GLM_ARCHIVE={OPTIONS.glm_archive}",
-                       f"-DSHARK_MBEDTLS_ARCHIVE={OPTIONS.mbedtls_archive}", *extra]
+                       f"-DSHARK_MBEDTLS_ARCHIVE={OPTIONS.mbedtls_archive}",
+                       *([f"-DSHARK_SQLITE_ARCHIVE={OPTIONS.sqlite_archive}"] if OPTIONS.sqlite_archive else []), *extra]
             result = subprocess.run(command, text=True, capture_output=True, timeout=120)
             text = result.stdout + result.stderr
             if expected:
@@ -35,7 +36,8 @@ class SceneDependencyTests(unittest.TestCase):
             else:
                 self.assertEqual(result.returncode, 0, text)
                 self.assertEqual({p.name for p in (build / "_deps").iterdir()},
-                                 {"entt-src", "entt-build", "entt-subbuild", "glm-src", "glm-build", "glm-subbuild", "mbedtls-src", "mbedtls-build"})
+                                 {"entt-src", "entt-build", "entt-subbuild", "glm-src", "glm-build", "glm-subbuild", "mbedtls-src", "mbedtls-build"} |
+                                 ({"sqlite-src"} if OPTIONS.sqlite_archive else set()))
                 cache = (build / "CMakeCache.txt").read_text(encoding="utf-8")
                 self.assertIn("FETCHCONTENT_FULLY_DISCONNECTED:BOOL=ON", cache)
                 self.assertNotIn("ENTT_BUILD_TESTING:BOOL", cache)
@@ -163,5 +165,6 @@ if __name__ == "__main__":
     parser.add_argument("--mbedtls-archive", type=Path, required=True)
     parser.add_argument("--entt-archive", type=Path, required=True)
     parser.add_argument("--glm-archive", type=Path, required=True)
+    parser.add_argument("--sqlite-archive", type=Path)
     OPTIONS, remaining = parser.parse_known_args()
     unittest.main(argv=[__file__, *remaining])
