@@ -106,6 +106,12 @@ durable success. Creating a fresh coordinator does not erase persisted
 revocation. Process restart tests establish software recovery on this PC, not
 physical power-loss survival or distributed region fencing.
 
+M03d adds [runtime recovery](durable-recovery.md) to the same CharacterAuthority.
+`open_runtime` owns Store on a dedicated worker while SessionAuthority and Scene
+stay on the caller thread. Async save/transfer have fixed retained-work bounds,
+actual session/entity fences and explicit timeout/reopen semantics. Existing
+synchronous calls remain blocking maintenance and reject while work is retained.
+
 ## Public C++ example
 
 Link a trusted server caller to EngineStorage. `accepted_state` below must be

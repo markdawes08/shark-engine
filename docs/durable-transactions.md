@@ -141,10 +141,12 @@ not consume an identity. Commit uncertainty faults the Store and coordinator;
 destroy/reopen before resolving a retained operation. Never refresh revisions
 and resubmit as a new action merely because the original acknowledgement failed.
 
-All calls and destruction remain on the creating thread. Synchronous bounded
-fixture I/O has no live-tick latency guarantee. M03d owns the full crash/outage
-matrix, pending-work bounds and fenced completion integration. Same-PC process
-tests do not simulate physical power loss or an independent database host.
+Store calls and destruction remain on its creating thread. M03d's
+[runtime recovery](durable-recovery.md) opens that Store on a dedicated worker
+through the same CharacterAuthority, with bounded pending work, fenced owned
+completions and explicit reopen/reconciliation. Synchronous maintenance has no
+live-tick latency guarantee. Same-PC process tests do not simulate physical
+power loss or an independent database host.
 
 ## Public C++ example
 

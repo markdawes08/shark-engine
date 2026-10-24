@@ -21,7 +21,8 @@ The ready authenticated session must own the source character and operation
 account. The existing session authority admits every economic query and retry
 with the next live command sequence and its shared budget. Durable operation
 identity is independent of that ephemeral sequence. CharacterAuthority retains
-sole ownership; there is no second database connection, worker or scheduler.
+sole ownership; M03d's [ADR 0018](0018-runtime-durable-recovery.md) adds a private
+worker for this same owner's Store without a second connection or scheduler.
 Public receipts are trusted server values. They are not a player response codec
 and may contain private economic state. Future adapters must select an authorized
 response rather than send these records verbatim.

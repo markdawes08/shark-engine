@@ -328,7 +328,7 @@ against 299 unchanged source/build/test inputs and 18 helpers. The
 [handoff](handoffs/08d-integrated-qualification.md) and
 [receipt](coverage/evidence/08d-integrated-qualification.json) record exact
 commands, the corrected file-case inventory and verification limits. M03
-separately owns live durability; M03a-c are complete and M03d is next.
+separately owns live durability; M03a-d are complete and M03e is next.
 
 ## Locked tools and hosted-image limits
 
@@ -391,7 +391,10 @@ M03c atomic transactions are PASS under the same scope: its
 [handoff](handoffs/M03c-atomic-transactions.md) and
 [receipt](coverage/evidence/M03c-atomic-transactions.json) record 553 full CPU
 CTests (89 native each, 82 WSL clients each, 61 WSL Servers each), ten additional
-standalone Tools checks and protected package/API gates. M03d is next.
+standalone Tools checks and protected package/API gates. M03d is also PASS:
+its [handoff](handoffs/M03d-runtime-recovery.md) records 567 full CPU CTests
+and 10 standalone Tools checks with protected package/API qualification.
+M03e database migration/restore is next; full REQ-M03 remains NOT_RUN.
 
 M03a adds the three storage families documented in [building](building.md#server-only-durable-storage).
 The Server build has a separate `storage` dependency domain; Core, Runtime and
@@ -633,4 +636,11 @@ reopens in a fresh process for retained retry and expiry checks. Business
 rejections consume durable identities, while session commands remain separately
 sequenced. The [public transaction example](durable-transactions.md) compiles
 without SQLite/TLS headers. Schema 3 explicitly rejects historical versions 1/2
-until M03e. Complete runtime crash/outage qualification remains M03d.
+until M03e. M03d adds `shark.storage.recovery` (120 seconds, seed 1337) and
+`shark.storage.recovery-process` (240 seconds). Preserve all earlier families.
+Its 69-row process matrix requires 207 real children and observed native-VFS
+write/sync/full errors, with exact reopened/retried state and strict negative
+receipt controls. Runtime service tests use actual mTLS, Scene references,
+controlled clocks and deterministic worker barriers. Compile the
+[public recovery example](durable-recovery.md) with public headers only, and
+verify the private worker/SQLite source closure and protected packages.

@@ -76,6 +76,22 @@ if(TARGET EngineStorage)
     add_test(NAME shark.storage.transactions COMMAND StorageTransactionTests "[storage-transactions]" --rng-seed 1337)
     set_tests_properties(shark.storage.transactions PROPERTIES LABELS "cpu;unit;server;integration" TIMEOUT 90)
 
+    add_executable(StorageRecoveryTests storage_recovery_tests.cpp)
+    target_link_libraries(StorageRecoveryTests PRIVATE EngineStorage Catch2::Catch2WithMain)
+    target_include_directories(StorageRecoveryTests PRIVATE "${PROJECT_SOURCE_DIR}/server/storage/src")
+    target_compile_definitions(StorageRecoveryTests PRIVATE
+        SHARK_NETWORK_FIXTURE_DIRECTORY="${PROJECT_SOURCE_DIR}/tests/fixtures/network")
+    shark_configure_target(StorageRecoveryTests)
+    shark_classify_target(StorageRecoveryTests test)
+    add_test(NAME shark.storage.recovery COMMAND StorageRecoveryTests "[storage-recovery]" --rng-seed 1337)
+    set_tests_properties(shark.storage.recovery PROPERTIES LABELS "cpu;unit;server;integration" TIMEOUT 120)
+
+    add_executable(StorageRecoveryProbe storage_recovery_probe.cpp storage_recovery_vfs.cpp)
+    target_link_libraries(StorageRecoveryProbe PRIVATE EngineStorage SharkSQLite)
+    target_include_directories(StorageRecoveryProbe PRIVATE "${PROJECT_SOURCE_DIR}/server/storage/src")
+    shark_configure_target(StorageRecoveryProbe)
+    shark_classify_target(StorageRecoveryProbe test)
+
     add_executable(StorageTransactionProbe storage_transaction_probe.cpp)
     target_link_libraries(StorageTransactionProbe PRIVATE EngineStorage)
     shark_configure_target(StorageTransactionProbe)
@@ -377,6 +393,11 @@ if(TARGET EngineStorage)
             --fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures/network"
             --output "${CMAKE_CURRENT_BINARY_DIR}/storage-transactions-process.json")
     set_tests_properties(shark.storage.transactions-process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 180)
+    add_test(NAME shark.storage.recovery-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_storage_recovery_process.py"
+            --probe "$<TARGET_FILE:StorageRecoveryProbe>"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/storage-recovery-process.json")
+    set_tests_properties(shark.storage.recovery-process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 240)
 endif()
 if(TARGET ProjectFilesProcess)
     add_test(NAME shark.tools.project-files-process

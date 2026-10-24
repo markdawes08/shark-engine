@@ -83,3 +83,9 @@ M03c amendment: [ADR 0017](0017-atomic-durable-transactions.md) advances the act
 schema to 3, adds bounded atomic economic transfers and retained operation
 outcomes, and explicitly rejects versions 1/2 until M03e migration. The
 earlier version and scope above describe this ADR's original checkpoint.
+
+M03d amendment: [ADR 0018](0018-runtime-durable-recovery.md) extends the same
+CharacterAuthority with a dedicated Store worker, bounded retained commands,
+session/Scene completion fences and explicit timeout/reopen reconciliation.
+The creating-thread rule applies separately to Store on its worker and sessions
+on the authority thread; existing synchronous construction remains supported.

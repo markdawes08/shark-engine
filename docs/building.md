@@ -545,6 +545,14 @@ M03c adds `shark.storage.transactions` (90 seconds, seed 1337) and
 real SQLite conservation, operation retention/expiry and authenticated competing
 intents across restart. Full game rules and live simulation remain later owners.
 
+M03d adds `shark.storage.recovery` (120 seconds, seed 1337) and
+`shark.storage.recovery-process` (240 seconds). `StorageRecoveryTests` exercises
+the dedicated worker with actual mTLS/Scene ownership and deterministic barriers;
+`StorageRecoveryProbe` uses a private test-only delegating VFS for real SQLite
+write/sync/full failures. The process supervisor runs 69 rows / 207 children and
+strict receipt controls. These executables and all database/journal artifacts
+stay outside packages. See the [runtime recovery contract](durable-recovery.md).
+
 The new test families are `shark.storage.store` (60 seconds, seed 1337),
 `shark.storage.process` (90 seconds) and `shark.tooling.storage-dependencies`
 (240 seconds). They run without a display or GPU. List the configured inventory

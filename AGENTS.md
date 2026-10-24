@@ -70,7 +70,16 @@ CPU CTests, ten additional standalone Tools checks and protected package/API gat
 Follow [ADR 0017](docs/architecture/0017-atomic-durable-transactions.md) and the
 [transaction contract](docs/durable-transactions.md). Durable account sequences
 and eight retained outcomes prevent expired economic operations from executing
-again. The next checkpoint is **M03d, Runtime failure recovery**, following the
+again. **M03d, Runtime failure recovery, is complete under the current-machine scope.**
+Its [handoff](docs/handoffs/M03d-runtime-recovery.md) and
+[receipt](docs/coverage/evidence/M03d-runtime-recovery.json) record 567 passing CPU
+CTests, 10 standalone Tools checks and protected package/API gates. Follow
+[ADR 0018](docs/architecture/0018-runtime-durable-recovery.md) and the
+[recovery contract](docs/durable-recovery.md). CharacterAuthority keeps session/Scene
+admission on its owner thread while one private worker owns Store. Retained
+work is bounded to sixteen with one operation per account. A timeout is not
+rollback; drain/take outcomes, reopen explicitly and reconcile original IDs.
+The next checkpoint is **M03e, Database migration and restoration**, following the
 [six durable-state checkpoints](docs/roadmap/durable-state-plan.md). Read
 [ADR 0015](docs/architecture/0015-durable-store.md) and the
 [store contract](docs/durable-store.md), [ADR 0016](docs/architecture/0016-owned-durable-characters.md)

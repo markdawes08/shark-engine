@@ -191,9 +191,10 @@ reopens, or fails validation without granting a usable owner.
 
 M03c adds atomic economic mutations and retained retry results through the
 [transaction contract](durable-transactions.md). Its persistent high-water marks
-prevent expired operation identities from executing again. The full
-commit/outage/completion-fencing matrix remains M03d; migration and restore remain
-M03e. No backup or migration command is introduced by the transaction fixture. Ordinary process termination demonstrates
+prevent expired operation identities from executing again. M03d's
+[runtime recovery contract](durable-recovery.md) adds the crash/outage matrix,
+bounded worker and session/entity completion fences. Migration and restore remain
+M03e. No backup or migration command is introduced here. Ordinary process termination demonstrates
 software recovery on this PC; it does not simulate physical host or disk loss.
 
 ## Public C++ example

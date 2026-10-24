@@ -1,8 +1,40 @@
 #pragma once
 
+#include "shark/scene.hpp"
 #include "shark/storage/store.hpp"
 
 namespace shark::storage {
+
+using RuntimeId = TypedId<struct RuntimeIdDomain>;
+inline constexpr std::size_t maximum_runtime_pending = 16;
+struct RuntimeLimits {
+    std::size_t pending{maximum_runtime_pending};
+};
+struct RuntimeTicket {
+    RuntimeId owner;
+    std::uint64_t sequence;
+    bool operator==(const RuntimeTicket&) const = default;
+};
+enum class RuntimeDelivery { pending, ready, timed_out, fenced, reconciliation_required };
+using RuntimeValue = std::variant<CharacterRecord, TransferResult>;
+struct RuntimeCompletion {
+    RuntimeTicket ticket;
+    RuntimeDelivery delivery;
+    // The original economic identity/payload, including on an uncertain result.
+    // These are trusted owner values, never a player response or authorization.
+    std::optional<TransferRequest> transfer;
+    // Every settled result is returned, including fenced or timed-out delivery.
+    // Delivery status still forbids applying those values to the old session/Scene.
+    std::optional<Result<RuntimeValue>> outcome;
+};
+struct RuntimeStats {
+    std::size_t capacity;
+    std::size_t retained;
+    std::size_t unsettled;
+    std::size_t completed;
+    std::size_t timed_out;
+    bool reconciliation_required;
+};
 
 // Server-only creating-thread owner. Hydrates one SessionAuthority from complete
 // durable records before admission; never exposes a mutable store/session bypass.
@@ -12,6 +44,12 @@ class CharacterAuthority final {
   public:
     [[nodiscard]] static Result<std::unique_ptr<CharacterAuthority>>
     create(std::unique_ptr<Store> store, const net::SessionLimits& limits = {});
+    // Opens and destroys Store on one dedicated worker; SessionAuthority and
+    // scene admission stay on this creating thread. Never moves an existing
+    // Store across threads. Startup is explicit blocking maintenance work.
+    [[nodiscard]] static Result<std::unique_ptr<CharacterAuthority>>
+    open_runtime(const std::filesystem::path& path, StoreId expected_store, WorldId expected_world,
+                 const net::SessionLimits& limits = {}, RuntimeLimits runtime_limits = {});
     ~CharacterAuthority();
     CharacterAuthority(const CharacterAuthority&) = delete;
     CharacterAuthority& operator=(const CharacterAuthority&) = delete;
@@ -63,6 +101,35 @@ class CharacterAuthority final {
                                                   const net::SessionEnvelope& authority,
                                                   const TransferRequest& request,
                                                   MonotonicTime now);
+
+    // Runtime submission copies bounded server-owned values, admits exactly one
+    // live command, and returns without database I/O. One retained operation per
+    // account; all queued, executing and untaken completions count toward capacity.
+    // Deadlines are strictly after now and at most 60 seconds later. A timeout
+    // never cancels or rolls back a dispatched write and never frees its slot.
+    [[nodiscard]] Result<RuntimeTicket>
+    submit_save(net::TlsTransport& transport, const net::SessionEnvelope& authority, Scene& scene,
+                EntityHandle entity, std::uint64_t expected_revision,
+                const CharacterState& accepted_state, MonotonicTime deadline, MonotonicTime now);
+    [[nodiscard]] Result<RuntimeTicket> submit_transfer(net::TlsTransport& transport,
+                                                        const net::SessionEnvelope& authority,
+                                                        Scene& scene, EntityHandle entity,
+                                                        const TransferRequest& request,
+                                                        MonotonicTime deadline, MonotonicTime now);
+    [[nodiscard]] Result<RuntimeStats> poll(MonotonicTime now);
+    [[nodiscard]] Result<RuntimeStats> runtime_stats() const;
+    // Rechecks live transport/session and the exact Scene EntityReference. Never
+    // mutates Scene. A settled take consumes the slot, including fenced/expired
+    // delivery; an unsettled timeout remains retained. Keep original save inputs
+    // and use the returned transfer request for explicit durable reconciliation.
+    [[nodiscard]] Result<RuntimeCompletion> take(RuntimeTicket ticket, net::TlsTransport& transport,
+                                                 Scene& scene, MonotonicTime now);
+    // Explicit blocking maintenance, only after every retained result is settled
+    // and taken. Joins the worker, reopens the exact StoreId/world/schema, hydrates
+    // authorization, and rotates runtime identity. All prior sessions/tickets
+    // become invalid. No operation is automatically replayed; caller reconciles
+    // transfers by their original ID and saves by durable revision/state.
+    [[nodiscard]] Result<void> recover();
 
   private:
     struct Impl;

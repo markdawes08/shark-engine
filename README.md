@@ -97,7 +97,12 @@ ten additional standalone Tools checks and protected package/API gates.
 conserve the modeled currency/items and retain bounded durable retry outcomes.
 Its [handoff](docs/handoffs/M03c-atomic-transactions.md) records 553 passing CPU
 CTests, ten additional standalone Tools checks and protected package/API gates.
-**M03d, Runtime failure recovery, is next** in the
+**M03d, Runtime failure recovery, is complete:** the
+[bounded storage worker](docs/durable-recovery.md) preserves outcomes across
+timeouts and fences late results against current sessions and scene entities.
+Its [handoff](docs/handoffs/M03d-runtime-recovery.md) records 567 passing CPU
+CTests, 10 standalone Tools checks and protected package/API gates.
+**M03e, Database migration and restoration, is next** in the
 [six-checkpoint plan](docs/roadmap/durable-state-plan.md). Full REQ-M03 remains NOT_RUN.
 Assignment 08, Project and scene persistence, completed its
 [four checkpoints](docs/roadmap/persistence-plan.md). 08a adds CPU project/scene

@@ -58,7 +58,11 @@ packages and public API qualification. M03c adds the same documented
 [CPU transaction service](../durable-transactions.md), bounded audit values and
 noninteractive process receipts for both audiences. Its
 [handoff](../handoffs/M03c-atomic-transactions.md) records 553 passing CPU CTests
-and protected package/API qualification. M03d runtime failure recovery is next.
+and protected package/API qualification. M03d adds the same documented
+[CPU recovery service](../durable-recovery.md), typed tickets/outcomes and
+noninteractive crash/outage receipts for both audiences. Its
+[handoff](../handoffs/M03d-runtime-recovery.md) records 567 passing CPU CTests
+and protected gates. M03e database migration/restore is next.
 
 M02a provides the [bounded network foundation](../network-transport.md) through
 engine-owned CPU C++ interfaces and noninteractive JSON test fixtures. It does not
@@ -218,7 +222,7 @@ CPU/sanitizer, interruption, package and public API qualification.
 ten additional standalone Tools checks, protected packages and all three
 public API examples. Integrated external-edit/reload fixtures preserve
 owned snapshots from both authors before explicit reconciliation. M03 separately
-owns live durability; M03a-c are complete and M03d runtime failure recovery is next. The storage lock
+owns live durability; M03a-d are complete and M03e database migration/restore is next. The storage lock
 remains distinct from the later shared human/agent
 project owner. Terminal/editor adapters retain owners 15/16; readable
 source does not bypass that owner or create shared command history.

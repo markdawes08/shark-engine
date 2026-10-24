@@ -2,8 +2,8 @@
 
 Date: 2026-10-22. Base: `01968d5` on initially clean `main`.
 Owner: REQ-M03. M02 and assignment 08 are complete. The user approved dividing
-M03 into the six checkpoints below. **M03a, M03b and M03c are PASS under the
-current-machine scope; M03d is next and full REQ-M03 remains NOT_RUN.** The
+M03 into the six checkpoints below. **M03a through M03d are PASS under the
+current-machine scope; M03e is next and full REQ-M03 remains NOT_RUN.** The
 [M03a handoff](../handoffs/M03a-durable-store.md) records the store foundation;
 the [M03b handoff](../handoffs/M03b-owned-characters.md) and
 [receipt](../coverage/evidence/M03b-owned-characters.json) record 539 CPU CTests,
@@ -83,6 +83,14 @@ modeled inventory/currency conservation. Expiring a cached result never makes an
 old economic operation valid again. Full game rules remain M07.
 
 ## M03d - Runtime failure recovery
+
+Implemented by [ADR 0018](../architecture/0018-runtime-durable-recovery.md)
+and the [recovery contract](../durable-recovery.md). The
+[handoff](../handoffs/M03d-runtime-recovery.md) and
+[receipt](../coverage/evidence/M03d-runtime-recovery.json) record 567 passing
+CPU CTests, 10 standalone Tools checks and protected package/API gates.
+The same authority uses a bounded private worker, actual session/Scene fences,
+explicit timeout/reopen reconciliation and a 69-row real crash/outage matrix.
 
 Exercise real-store crash and timeout behavior around every durable mutation
 commit boundary, including a lost acknowledgement and database outage. Bound

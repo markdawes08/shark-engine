@@ -5,6 +5,13 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+M03d adds `shark.storage.recovery` (120 seconds, seed 1337) and
+`shark.storage.recovery-process` (240 seconds). Preserve the 69-row crash/VFS
+matrix, actual mTLS/Scene fences, retained-work limits and explicit timeout
+reconciliation. Never infer rollback from a timeout or issue a new transfer ID
+to retry an uncertain effect. Compile the [recovery example](../../../docs/durable-recovery.md)
+with public headers only; keep worker/SQLite ownership private to EngineStorage.
+
 M03c adds `shark.storage.transactions` and `shark.storage.transactions-process`.
 Preserve economic conservation, exact retries, terminal rejection, bounded
 retention and permanently expired operation identities across restart. Compile
