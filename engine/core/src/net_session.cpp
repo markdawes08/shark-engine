@@ -72,6 +72,10 @@ struct SessionAuthority::Impl {
         MonotonicTime idle_deadline;
         Window rate{};
     };
+    struct AccountAdmission {
+        PeerIdentity peer;
+        Account* account;
+    };
 
     explicit Impl(SessionLimits value) : limits(value) {
         accounts.reserve(limits.accounts);
@@ -97,8 +101,16 @@ struct SessionAuthority::Impl {
         });
     }
 
-    Result<SessionSnapshot> login(const PeerIdentity& peer, const LoginRequest& request,
-                                  MonotonicTime now) {
+    Result<AccountAdmission> authorize_account(TlsTransport& transport, AccountId requested,
+                                               MonotonicTime now) {
+        if (!spend(login_rate, now, limits.auth_window, limits.login_attempts_per_window)) {
+            return rejection("net.session.rate.authority");
+        }
+        auto authenticated = transport.authenticated_peer();
+        if (!authenticated || authenticated.value().connection_id == 0) {
+            return rejection("net.session.peer");
+        }
+        const auto& peer = authenticated.value();
         auto certificate =
             std::ranges::find(certificates, peer.certificate, &Enrollment::certificate);
         if (certificate == certificates.end()) {
@@ -120,9 +132,18 @@ struct SessionAuthority::Impl {
         if (certificate->revoked || account->revoked) {
             return rejection("net.session.revoked");
         }
+        if (requested != account->id) {
+            return rejection("net.session.ownership");
+        }
+        return AccountAdmission{peer, &*account};
+    }
+
+    Result<SessionSnapshot> login(const AccountAdmission& admission, const LoginRequest& request,
+                                  MonotonicTime now) {
+        const auto& peer = admission.peer;
+        auto* account = admission.account;
         auto character = std::ranges::find(characters, request.character, &Character::id);
-        if (request.account != account->id || character == characters.end() ||
-            character->account != account->id) {
+        if (character == characters.end() || character->account != account->id) {
             return rejection("net.session.ownership");
         }
         if (peer.connection_id == 0 || peer.connection_id <= account->last_connection) {
@@ -325,6 +346,24 @@ Result<bool> SessionAuthority::revoke_session(SessionId session) {
            }) != 0;
 }
 
+Result<AccountId> SessionAuthority::authorize_account(TlsTransport& transport, AccountId account,
+                                                      MonotonicTime now) {
+    if (auto owner = impl_->check_owner(); !owner) {
+        return owner.error();
+    }
+    if (auto time = impl_->advance(now); !time) {
+        return time.error();
+    }
+    auto admitted = impl_->authorize_account(transport, account, now);
+    if (!admitted) {
+        return admitted.error();
+    }
+    if (admitted.value().peer.connection_id < admitted.value().account->last_connection) {
+        return rejection("net.session.reconnect");
+    }
+    return admitted.value().account->id;
+}
+
 Result<SessionSnapshot> SessionAuthority::apply(TlsTransport& transport,
                                                 const SessionRequest& request, MonotonicTime now) {
     if (auto owner = impl_->check_owner(); !owner) {
@@ -333,17 +372,16 @@ Result<SessionSnapshot> SessionAuthority::apply(TlsTransport& transport,
     if (auto time = impl_->advance(now); !time) {
         return time.error();
     }
-    const auto* login = std::get_if<LoginRequest>(&request);
-    if (login && !spend(impl_->login_rate, now, impl_->limits.auth_window,
-                        impl_->limits.login_attempts_per_window)) {
-        return rejection("net.session.rate.authority");
+    if (const auto* login = std::get_if<LoginRequest>(&request)) {
+        auto admitted = impl_->authorize_account(transport, login->account, now);
+        if (!admitted) {
+            return admitted.error();
+        }
+        return impl_->login(admitted.value(), *login, now);
     }
     auto peer = transport.authenticated_peer();
     if (!peer || peer.value().connection_id == 0) {
         return rejection("net.session.peer");
-    }
-    if (login) {
-        return impl_->login(peer.value(), *login, now);
     }
     if (const auto* ready = std::get_if<SetReadyRequest>(&request)) {
         return impl_->command(peer.value(), request, ready->authority, now);

@@ -112,6 +112,16 @@ class SessionAuthority final {
     // An old ID never revokes a replacement session. False means no live match.
     [[nodiscard]] Result<bool> revoke_session(SessionId session);
 
+    // Trusted account-only admission for services before character selection.
+    // Requires the actual live server-side mTLS transport and shares Login's
+    // authority/certificate/account budgets, owner/time and revocation checks.
+    // Connections older than the account's latest successful Login reject;
+    // that Login's own connection may still perform account operations.
+    // Creates no session and never advances ownership/command sequences or
+    // refreshes a live lease. The returned ID is not a reusable credential.
+    [[nodiscard]] Result<AccountId> authorize_account(TlsTransport& transport, AccountId account,
+                                                      MonotonicTime now);
+
     // Calls authenticated_peer() on this actual server-side mTLS transport on
     // every request. A copied PeerIdentity is never an authorization input.
     // One active session per account. A successful login requires a connection

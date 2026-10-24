@@ -35,7 +35,7 @@ def metadata(value: dict) -> dict:
         r"[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}", identity)),
         "metadata store ID is not a canonical UUIDv4")
     require(value.get("world_id") == WORLD_ID, "metadata world differs")
-    require(type(value.get("schema_version")) is int and value["schema_version"] == 1,
+    require(type(value.get("schema_version")) is int and value["schema_version"] == 2,
             "metadata schema version differs")
     return {key: value[key] for key in ("store_id", "world_id", "schema_version")}
 
@@ -175,13 +175,13 @@ def negative_controls(probe: Path, output: Path) -> list[dict]:
             if name == "empty-exception":
                 raise AssertionError()
             value = {"status": "PASS", "state": "complete", "store_id": "12345678-1234-4123-8123-123456789abc",
-                     "world_id": WORLD_ID, "schema_version": 1}
+                     "world_id": WORLD_ID, "schema_version": 2}
             if name == "invalid-store-id":
                 value["store_id"] = "invalid"
             elif name == "wrong-world":
                 value["world_id"] = "00000000-0000-4000-8000-000000000002"
             elif name == "future-schema":
-                value["schema_version"] = 2
+                value["schema_version"] = 3
             elif name == "reported-failure":
                 value["status"] = "FAIL"
             return SimpleNamespace(returncode=9 if name == "nonzero-exit" else 0,
@@ -292,7 +292,7 @@ def main(argv=None, *, runner=run_process, run_controls: bool = True) -> int:
             check("hot-journal.supported-header", len(header) == 100
                   and header[:16] == b"SQLite format 3\0"
                   and int.from_bytes(header[68:72], "big") == 0x53484B44
-                  and int.from_bytes(header[60:64], "big") == 1
+                  and int.from_bytes(header[60:64], "big") == 2
                   and header[16:20] == b"\x10\x00\x01\x01")
             hot_journal = Path(str(path) + "-journal")
             journal_bytes = hot_journal.read_bytes()

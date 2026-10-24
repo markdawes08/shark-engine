@@ -59,10 +59,21 @@ CPU CTests with no failures/skips and protected dependency/package qualification
 [handoff](docs/handoffs/M03a-durable-store.md) and
 [receipt](docs/coverage/evidence/M03a-durable-store.json) record 525 passing CPU
 CTests, ten additional standalone Tools checks and protected package/API gates.
-The exact next checkpoint is **M03b, Owned durable characters**, following the
+**M03b, Owned durable characters, is complete under the current-machine scope.**
+Its [handoff](docs/handoffs/M03b-owned-characters.md) and
+[receipt](docs/coverage/evidence/M03b-owned-characters.json) record 539 passing CPU
+CTests, ten additional standalone Tools checks and protected package/API gates.
+The next checkpoint is **M03c, Atomic transactions**, following the
 [six durable-state checkpoints](docs/roadmap/durable-state-plan.md). Read
 [ADR 0015](docs/architecture/0015-durable-store.md) and the
-[store contract](docs/durable-store.md). Full REQ-M03 remains NOT_RUN.
+[store contract](docs/durable-store.md), [ADR 0016](docs/architecture/0016-owned-durable-characters.md)
+and [character contract](docs/durable-characters.md). Full REQ-M03 remains NOT_RUN.
+M03b persists bounded enrollment, revocation and owned character checkpoints in
+schema 2, with explicit nonmutating schema-1 rejection until M03e. One server
+CharacterAuthority owns Store and SessionAuthority. Account-only admission uses
+actual live mTLS; load/save require ready sequenced sessions. State passed to
+save is trusted server output, never player-authoritative snapshots. Do not
+restore sessions/connection IDs or expose mutable storage/session bypasses.
 EngineStorage owns SQLite privately and is available only with Server.
 Core, Client, Runtime and Tools must not acquire it.
 Assignment 08, Project and scene persistence, completed the

@@ -70,8 +70,20 @@ dependency checks. Its [contract](../durable-store.md) and
 from character, economy, recovery and migration gates. M03a is PASS under the
 current-machine scope: [the receipt](evidence/M03a-durable-store.json) and
 [handoff](../handoffs/M03a-durable-store.md) record 525 full CPU CTests, ten
-additional standalone Tools checks and protected package/API gates. M03b is next;
-full REQ-M03 remains NOT_RUN.
+additional standalone Tools checks and protected package/API gates.
+Full REQ-M03 remains NOT_RUN until all six checkpoints pass.
+
+M03b maps `server.durable-characters` to real database records, shared session
+admission and authenticated process restart. The
+[character contract](../durable-characters.md) defines bounded enrollment and
+revocation, immutable ownership/identity and roster/character revision conflicts.
+Fixture-only local discovery does not add a player roster protocol. Economic
+transactions, full runtime recovery and migration/restore remain separate gates;
+FeatureWorld and MMOWorld attach in 10/M09. M03b is PASS under the current-machine
+scope: [the receipt](evidence/M03b-owned-characters.json) and
+[handoff](../handoffs/M03b-owned-characters.md) record 539 full CPU CTests,
+ten separately counted standalone Tools checks and protected package/API gates.
+M03c atomic transactions are next.
 
 `current_assignment: M03` follows the completed
 [five network checkpoints](../roadmap/network-plan.md) and
@@ -120,7 +132,7 @@ Runtime/Server builds, source/link/license closure and fresh isolated package
 checks pass; all 221 qualification source inputs were unchanged in that record.
 M02a-M02e and full REQ-M02 are PASS under the current-machine scope.
 Assignment 08, Project and scene persistence, is complete: 08a-08d and full
-REQ-08 are PASS. M03 durable characters and transactional state is next.
+REQ-08 are PASS. M03a-b are complete; M03c atomic transactions are next.
 FeatureWorld integration remains assignment 10.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
@@ -341,5 +353,6 @@ examples pass 27 checks; protected builds, isolated packages and API audits
 pass against 299 unchanged inputs and 18 helpers. The
 [handoff](../handoffs/08d-integrated-qualification.md) and
 [receipt](evidence/08d-integrated-qualification.json) retain exact evidence,
-including the corrected final file-case inventory. M03 is next; source
-publication does not establish live player/economy durability.
+including the corrected final file-case inventory. M03 separately owns live
+player/economy durability; its store and character checkpoints are complete,
+with M03c atomic transactions next.

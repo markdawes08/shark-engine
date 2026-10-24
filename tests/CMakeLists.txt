@@ -39,7 +39,7 @@ shark_configure_target(Tests)
 shark_classify_target(Tests test)
 
 if(TARGET EngineStorage)
-    add_executable(StorageTests storage_tests.cpp)
+    add_executable(StorageTests storage_tests.cpp storage_records_tests.cpp)
     target_link_libraries(StorageTests PRIVATE EngineStorage SharkSQLite Catch2::Catch2WithMain)
     target_include_directories(StorageTests PRIVATE "${PROJECT_SOURCE_DIR}/server/storage/src")
     shark_configure_target(StorageTests)
@@ -52,6 +52,21 @@ if(TARGET EngineStorage)
     target_include_directories(StorageProcess PRIVATE "${PROJECT_SOURCE_DIR}/server/storage/src")
     shark_configure_target(StorageProcess)
     shark_classify_target(StorageProcess test)
+
+    add_executable(StorageCharacterTests storage_character_tests.cpp)
+    target_link_libraries(StorageCharacterTests PRIVATE EngineStorage Catch2::Catch2WithMain)
+    target_include_directories(StorageCharacterTests PRIVATE "${PROJECT_SOURCE_DIR}/server/storage/src")
+    target_compile_definitions(StorageCharacterTests PRIVATE
+        SHARK_NETWORK_FIXTURE_DIRECTORY="${PROJECT_SOURCE_DIR}/tests/fixtures/network")
+    shark_configure_target(StorageCharacterTests)
+    shark_classify_target(StorageCharacterTests test)
+    add_test(NAME shark.storage.characters COMMAND StorageCharacterTests "[storage-characters]" --rng-seed 1337)
+    set_tests_properties(shark.storage.characters PROPERTIES LABELS "cpu;unit;server;integration" TIMEOUT 60)
+
+    add_executable(StorageCharacterProbe storage_character_probe.cpp)
+    target_link_libraries(StorageCharacterProbe PRIVATE EngineStorage)
+    shark_configure_target(StorageCharacterProbe)
+    shark_classify_target(StorageCharacterProbe test)
 endif()
 
 if(TARGET EngineTools)
@@ -337,6 +352,12 @@ if(TARGET EngineStorage)
             --probe "$<TARGET_FILE:StorageProcess>"
             --output "${CMAKE_CURRENT_BINARY_DIR}/storage-process.json")
     set_tests_properties(shark.storage.process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 90)
+    add_test(NAME shark.storage.characters-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_storage_characters_process.py"
+            --probe "$<TARGET_FILE:StorageCharacterProbe>"
+            --fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures/network"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/storage-characters-process.json")
+    set_tests_properties(shark.storage.characters-process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 180)
 endif()
 if(TARGET ProjectFilesProcess)
     add_test(NAME shark.tools.project-files-process

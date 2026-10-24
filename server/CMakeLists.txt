@@ -1,4 +1,4 @@
-add_library(EngineStorage STATIC storage/src/store.cpp)
+add_library(EngineStorage STATIC storage/src/store.cpp storage/src/characters.cpp)
 target_include_directories(EngineStorage PUBLIC storage/include)
 target_link_libraries(EngineStorage PUBLIC EngineCore PRIVATE SharkSQLite)
 shark_configure_target(EngineStorage)

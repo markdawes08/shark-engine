@@ -2,10 +2,13 @@
 
 Date: 2026-10-22. Base: `01968d5` on initially clean `main`.
 Owner: REQ-M03. M02 and assignment 08 are complete. The user approved dividing
-M03 into the six checkpoints below. **M03a is PASS under the current-machine
-scope; M03b is next and full REQ-M03 remains NOT_RUN.** The
-[handoff](../handoffs/M03a-durable-store.md) and
-[receipt](../coverage/evidence/M03a-durable-store.json) record the store gate. Follow [ADR 0007](../architecture/0007-mmorpg-architecture.md),
+M03 into the six checkpoints below. **M03a and M03b are PASS under the
+current-machine scope; M03c is next and full REQ-M03 remains NOT_RUN.** The
+[M03a handoff](../handoffs/M03a-durable-store.md) records the store foundation;
+the [M03b handoff](../handoffs/M03b-owned-characters.md) and
+[receipt](../coverage/evidence/M03b-owned-characters.json) record 539 CPU CTests,
+ten additional standalone Tools checks and protected package/API gates.
+Follow [ADR 0007](../architecture/0007-mmorpg-architecture.md),
 [durable identity rules](../architecture/0004-formats-and-identity.md),
 [existing session authority](../architecture/0012-owned-sessions.md) and
 [human/agent development](../architecture/0008-human-agent-authoring.md).
@@ -36,6 +39,14 @@ protected target builds and local packages. No public SQL, character records,
 player mutation protocol, migration or backup API is introduced here.
 
 ## M03b - Owned durable characters
+
+[ADR 0016](../architecture/0016-owned-durable-characters.md) and the
+[character contract](../durable-characters.md) define the server-only coordinator,
+schema-2 records and explicit version-1 rejection. Account-only mTLS admission
+supports first-character creation; existing Login selects an owned character.
+Load/save use ready sequenced sessions and trusted server state. Durable roster
+and character revisions reject conflicting writes; tombstones survive restart.
+No gameplay storage protocol or synchronous live-tick integration is implied.
 
 Reuse existing account/character ID domains and authenticated SessionAuthority.
 Persist enrollment/ownership and bounded character state, with durable world/entity

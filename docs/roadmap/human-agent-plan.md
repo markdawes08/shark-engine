@@ -47,6 +47,15 @@ Storage lives in a server-only module; source authoring and player/admin protoco
 remain separate. No SQL shell, LLM SDK, GUI or new remote adapter is required.
 The [M03 checkpoints](durable-state-plan.md) preserve later authoring owners.
 
+M03b's [durable character service](../durable-characters.md) follows the same
+device-free C++ and noninteractive fixture path for humans and terminal agents.
+Trusted server rules supply state; development authoring does not grant player
+ownership. Actual authenticated process tests use fixture-only ID discovery,
+not an advertised CLI or player roster protocol. Adapters remain 15/16.
+M03b is PASS under the current-machine scope; its
+[handoff](../handoffs/M03b-owned-characters.md) records 539 CPU CTests, protected
+packages and public API qualification. M03c atomic transactions are next.
+
 M02a provides the [bounded network foundation](../network-transport.md) through
 engine-owned CPU C++ interfaces and noninteractive JSON test fixtures. It does not
 reuse source-authoring RPC as a player protocol. Both human contributors and
@@ -204,8 +213,9 @@ CPU/sanitizer, interruption, package and public API qualification.
 [handoff](../handoffs/08d-integrated-qualification.md) records 504 CPU CTests,
 ten additional standalone Tools checks, protected packages and all three
 public API examples. Integrated external-edit/reload fixtures preserve
-owned snapshots from both authors before explicit reconciliation. M03 is
-next. The storage lock remains distinct from the later shared human/agent
+owned snapshots from both authors before explicit reconciliation. M03 separately
+owns live durability; M03a-b are complete and M03c is next. The storage lock
+remains distinct from the later shared human/agent
 project owner. Terminal/editor adapters retain owners 15/16; readable
 source does not bypass that owner or create shared command history.
 The [input guide](../input-contracts.md),

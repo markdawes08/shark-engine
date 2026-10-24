@@ -489,6 +489,175 @@ TEST_CASE("Ownership epochs never wrap and unrepresentable deadlines cannot admi
     CHECK(service->stats().value().live_sessions == 0);
 }
 
+TEST_CASE("Account admission authenticates enrollment before a first character exists",
+          "[net-session]") {
+    auto created = SessionAuthority::create();
+    REQUIRE(created);
+    auto service = std::move(created).value();
+    REQUIRE(service->provision_account(account_a()));
+    REQUIRE(service->enroll_certificate(account_a(), fingerprint("client-a")));
+    Pair pair;
+    auto admitted = service->authorize_account(*pair.server, account_a(), 0ns);
+    REQUIRE(admitted);
+    CHECK(admitted.value() == account_a());
+    CHECK(service->stats().value().accounts == 1);
+    CHECK(service->stats().value().characters == 0);
+    CHECK(service->stats().value().live_sessions == 0);
+    rejected(service->current(*pair.server, 0ns), "net.session.connection");
+
+    REQUIRE(service->assign_character(account_a(), character_a()));
+    const auto first = login(*service, pair);
+    CHECK(first.ownership_epoch == 1);
+    CHECK(first.last_sequence == 0);
+    CHECK_FALSE(first.ready);
+}
+
+TEST_CASE("Account admission requires live server mTLS and preserves owner and clock guards",
+          "[net-session]") {
+    auto service = authority();
+    Pair diagnostic{"client-a", false};
+    rejected(service->authorize_account(*diagnostic.server, account_a(), 0ns), "net.session.peer");
+    Pair known;
+    rejected(service->authorize_account(*known.client, account_a(), 0ns), "net.session.peer");
+    Pair unknown{"client-b"};
+    rejected(service->authorize_account(*unknown.server, account_a(), 0ns),
+             "net.session.enrollment");
+    const auto account = account_a();
+    std::optional<shark::Error> wrong_thread;
+    std::thread other{[&] {
+        auto result = service->authorize_account(*known.server, account, 100ns);
+        if (!result) {
+            wrong_thread = result.error();
+        }
+    }};
+    other.join();
+    REQUIRE(wrong_thread);
+    CHECK(wrong_thread->context.operation == "net.session.owner");
+    REQUIRE(service->authorize_account(*known.server, account, 10ns));
+    rejected(service->authorize_account(*known.server, account, 9ns), "net.session.time");
+    rejected(service->authorize_account(*known.server, account, -1ns), "net.session.time");
+    REQUIRE(known.server->close());
+    rejected(service->authorize_account(*known.server, account, 10ns), "net.session.peer");
+    CHECK(service->stats().value().live_sessions == 0);
+}
+
+TEST_CASE("Account admission and login share one authority attempt each including unknown peers",
+          "[net-session]") {
+    SessionLimits limits;
+    limits.login_attempts_per_window = 2;
+    limits.auth_window = 10ns;
+    auto service = authority(limits);
+    Pair unknown{"client-b"};
+    Pair known;
+    rejected(service->authorize_account(*unknown.server, account_a(), 0ns),
+             "net.session.enrollment");
+    const auto first = login(*service, known);
+    rejected(service->authorize_account(*known.server, account_a(), 9ns),
+             "net.session.rate.authority");
+    REQUIRE(service->authorize_account(*known.server, account_a(), 10ns));
+    Pair next;
+    const auto replacement = login(*service, next, 10ns);
+    CHECK(replacement.ownership_epoch == first.ownership_epoch + 1);
+    rejected(service->apply(*unknown.server, LoginRequest{account_a(), character_a()}, 10ns),
+             "net.session.rate.authority");
+    CHECK(service->stats().value().live_sessions == 1);
+}
+
+TEST_CASE("Mismatched account admission shares retained certificate and account login budgets",
+          "[net-session]") {
+    SessionLimits limits;
+    limits.auth_attempts_per_window = 2;
+    limits.auth_window = 10ns;
+    auto service = authority(limits);
+    REQUIRE(service->enroll_certificate(account_a(), fingerprint("client-b")));
+    Pair first;
+    Pair other_certificate{"client-b"};
+    rejected(service->authorize_account(*first.server, account_b(), 0ns), "net.session.ownership");
+    const auto selected = login(*service, first);
+    rejected(service->authorize_account(*first.server, account_a(), 9ns),
+             "net.session.rate.certificate");
+    rejected(service->authorize_account(*other_certificate.server, account_a(), 9ns),
+             "net.session.rate.account");
+    CHECK(service->current(*first.server, 9ns).value() == selected);
+    REQUIRE(service->authorize_account(*other_certificate.server, account_a(), 10ns));
+    const auto replacement = login(*service, other_certificate, 10ns);
+    CHECK(replacement.ownership_epoch == selected.ownership_epoch + 1);
+}
+
+TEST_CASE("Revocation rejects account admission on existing and fresh TLS connections",
+          "[net-session]") {
+    auto service = authority();
+    Pair pair;
+    REQUIRE(service->authorize_account(*pair.server, account_a(), 0ns));
+    const auto selected = login(*service, pair);
+    SECTION("certificate") {
+        REQUIRE(service->revoke_certificate(fingerprint("client-a")));
+    }
+    SECTION("account") {
+        REQUIRE(service->revoke_account(account_a()));
+    }
+    rejected(service->authorize_account(*pair.server, account_a(), 0ns), "net.session.revoked");
+    Pair next;
+    rejected(service->authorize_account(*next.server, account_a(), 0ns), "net.session.revoked");
+    rejected(service->apply(*next.server, LoginRequest{account_a(), character_a()}, 0ns),
+             "net.session.revoked");
+    rejected(service->apply(*pair.server, HeartbeatRequest{envelope(selected, 1)}, 0ns));
+    CHECK(service->stats().value().live_sessions == 0);
+}
+
+TEST_CASE("Account admission and rejection never refresh a selected session lease",
+          "[net-session]") {
+    SessionLimits limits;
+    limits.session_lifetime = 30ns;
+    limits.session_idle_timeout = 10ns;
+    auto service = authority(limits);
+    Pair pair;
+    const auto selected = login(*service, pair);
+    auto ready = service->apply(*pair.server, SetReadyRequest{envelope(selected, 1), true}, 0ns);
+    REQUIRE(ready);
+    REQUIRE(service->authorize_account(*pair.server, account_a(), 9ns));
+    rejected(service->authorize_account(*pair.server, account_b(), 9ns), "net.session.ownership");
+    CHECK(service->current(*pair.server, 9ns).value() == ready.value());
+    CHECK(service->expire(10ns).value() == 1);
+    REQUIRE(service->authorize_account(*pair.server, account_a(), 10ns));
+    CHECK(service->stats().value().live_sessions == 0);
+    rejected(service->current(*pair.server, 10ns), "net.session.connection");
+    Pair next;
+    CHECK(login(*service, next, 10ns).ownership_epoch == selected.ownership_epoch + 1);
+}
+
+TEST_CASE("Account admission preserves command budgets and reconnect ownership fences",
+          "[net-session]") {
+    SessionLimits limits;
+    limits.commands_per_window = 1;
+    limits.command_window = 10ns;
+    auto service = authority(limits);
+    Pair older;
+    Pair selected;
+    const auto initial = login(*service, selected);
+    auto ready = service->apply(*selected.server, SetReadyRequest{envelope(initial, 1), true}, 0ns);
+    REQUIRE(ready);
+    REQUIRE(service->authorize_account(*selected.server, account_a(), 0ns));
+    CHECK(service->current(*selected.server, 0ns).value() == ready.value());
+    rejected(service->apply(*selected.server, HeartbeatRequest{envelope(initial, 2)}, 0ns),
+             "net.session.rate.command");
+    rejected(service->authorize_account(*older.server, account_a(), 0ns), "net.session.reconnect");
+    rejected(service->apply(*older.server, LoginRequest{account_a(), character_b()}, 0ns),
+             "net.session.ownership");
+    rejected(service->apply(*older.server, LoginRequest{account_a(), character_a()}, 0ns),
+             "net.session.reconnect");
+    REQUIRE(service->apply(*selected.server, HeartbeatRequest{envelope(initial, 2)}, 10ns));
+    Pair next;
+    const auto replacement = login(*service, next, 10ns);
+    rejected(service->authorize_account(*selected.server, account_a(), 10ns),
+             "net.session.reconnect");
+    REQUIRE(service->authorize_account(*next.server, account_a(), 10ns));
+    rejected(service->current(*selected.server, 10ns), "net.session.connection");
+    CHECK(service->current(*next.server, 10ns).value() == replacement);
+    CHECK(replacement.ownership_epoch == initial.ownership_epoch + 1);
+    CHECK_FALSE(service->revoke_session(initial.session).value());
+}
+
 TEST_CASE("Session request bytes independently specify UUID order integers and boolean layout",
           "[net-session]") {
     const SessionRequest login_request{LoginRequest{account_a(), character_a()}};

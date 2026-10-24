@@ -80,9 +80,12 @@ are qualified under the current-machine scope; the
 and protected packages. M03 follows the [six durable-state checkpoints](../roadmap/durable-state-plan.md).
 M03a's [server-only store foundation](../durable-store.md) is PASS under the
 current-machine scope: [its handoff](../handoffs/M03a-durable-store.md) records
-525 passing CPU CTests and protected package/API gates. M03b is next.
-Character ownership, economic transactions and full REQ-M03 remain unqualified
-until their named checkpoints pass.
+525 passing CPU CTests and protected package/API gates.
+M03b's [owned durable characters](../durable-characters.md) are also PASS under
+the current-machine scope: [the handoff](../handoffs/M03b-owned-characters.md)
+records 539 CPU CTests and protected package/API gates.
+M03c atomic transactions are next. Full REQ-M03 remains NOT_RUN until the
+economic, runtime recovery, migration/restore and integrated gates pass.
 General authoring transactions, terminal
 adapters and editor UI retain their later owners;
 schema IDs do not establish file or gameplay-wire formats. The current-machine
@@ -105,6 +108,7 @@ scope remains unchanged.
 | [0013](0013-authoritative-replication.md) | Bounded pose replication, session/stream fences, application acknowledgements and resynchronization |
 | [0014](0014-spatial-interest.md) | Trusted observer selection, recipient policy, bounded admission and measured reliable-stream delay |
 | [0015](0015-durable-store.md) | Server-only SQLite store, explicit create/open, durable identity and local durability boundary |
+| [0016](0016-owned-durable-characters.md) | Durable character ownership, persisted enrollment/revocation, authenticated server owner and schema-2 compatibility |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

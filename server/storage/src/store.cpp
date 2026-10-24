@@ -5,6 +5,7 @@
 
 #include <sqlite3.h>
 
+#include <algorithm>
 #include <array>
 #include <cstring>
 #include <fstream>
@@ -30,8 +31,31 @@ constexpr std::string_view table_sql =
     "CREATE TABLE shark_store(singleton INTEGER PRIMARY KEY CHECK(singleton=1),"
     "store_id TEXT NOT NULL CHECK(length(store_id)=36),"
     "world_id TEXT NOT NULL CHECK(length(world_id)=36),"
-    "schema_version INTEGER NOT NULL CHECK(schema_version=1)) STRICT";
+    "schema_version INTEGER NOT NULL CHECK(schema_version=2)) STRICT";
+constexpr std::string_view accounts_sql =
+    "CREATE TABLE shark_accounts(account_id TEXT PRIMARY KEY NOT NULL CHECK(length(account_id)=36),"
+    "revoked INTEGER NOT NULL CHECK(revoked IN(0,1)),"
+    "roster_revision INTEGER NOT NULL CHECK(roster_revision>=1)) STRICT";
+constexpr std::string_view certificates_sql =
+    "CREATE TABLE shark_certificates(certificate BLOB PRIMARY KEY NOT NULL "
+    "CHECK(length(certificate)=32),"
+    "account_id TEXT NOT NULL REFERENCES shark_accounts(account_id),"
+    "revoked INTEGER NOT NULL CHECK(revoked IN(0,1))) STRICT";
+constexpr std::string_view characters_sql =
+    "CREATE TABLE shark_characters(character_id TEXT PRIMARY KEY NOT NULL "
+    "CHECK(length(character_id)=36),"
+    "account_id TEXT NOT NULL REFERENCES shark_accounts(account_id),"
+    "entity_id TEXT NOT NULL UNIQUE CHECK(length(entity_id)=36),"
+    "revision INTEGER NOT NULL CHECK(revision>=1),"
+    "name TEXT NOT NULL CHECK(length(CAST(name AS BLOB)) BETWEEN 1 AND 256),"
+    "cell_x INTEGER NOT NULL CHECK(cell_x BETWEEN -2147483648 AND 2147483647),"
+    "cell_y INTEGER NOT NULL CHECK(cell_y BETWEEN -2147483648 AND 2147483647),"
+    "cell_z INTEGER NOT NULL CHECK(cell_z BETWEEN -2147483648 AND 2147483647),"
+    "offset_x REAL NOT NULL CHECK(offset_x>=0 AND offset_x<1024),"
+    "offset_y REAL NOT NULL CHECK(offset_y>=0 AND offset_y<1024),"
+    "offset_z REAL NOT NULL CHECK(offset_z>=0 AND offset_z<1024)) STRICT";
 thread_local detail::CreateHook create_hook = nullptr;
+thread_local detail::WriteFaultHook write_fault_hook = nullptr;
 
 Error failure(ErrorCode code, std::string_view operation, std::string_view message,
               const std::string& path) {
@@ -362,14 +386,16 @@ Result<void> configure(Connection& connection) {
 }
 
 Result<void> create_schema(Connection& connection, const StoreMetadata& metadata) {
-    if (auto result = connection.execute(table_sql.data()); !result) {
-        return result.error();
+    for (const auto sql : {table_sql, accounts_sql, certificates_sql, characters_sql}) {
+        if (auto result = connection.execute(sql.data()); !result) {
+            return result.error();
+        }
     }
     if (create_hook != nullptr) {
         create_hook(detail::CreatePhase::schema_written);
     }
     Statement insert;
-    if (auto result = prepare(connection, insert, "INSERT INTO shark_store VALUES(1,?1,?2,1)");
+    if (auto result = prepare(connection, insert, "INSERT INTO shark_store VALUES(1,?1,?2,2)");
         !result) {
         return result.error();
     }
@@ -387,7 +413,7 @@ Result<void> create_schema(Connection& connection, const StoreMetadata& metadata
     if (step != SQLITE_DONE) {
         return connection.error(step);
     }
-    return connection.execute("PRAGMA application_id=1397246788; PRAGMA user_version=1");
+    return connection.execute("PRAGMA application_id=1397246788; PRAGMA user_version=2");
 }
 
 Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world) {
@@ -405,18 +431,35 @@ Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world) {
         !result) {
         return result.error();
     }
-    auto step = sqlite3_step(schema.value);
-    if (step != SQLITE_ROW) {
-        if (step != SQLITE_DONE) {
-            return connection.error(step);
+    struct SchemaObject {
+        std::string_view type;
+        std::string_view name;
+        std::string_view table;
+        std::string_view sql;
+    };
+    constexpr std::array objects{
+        SchemaObject{"table", "shark_accounts", "shark_accounts", accounts_sql},
+        SchemaObject{"table", "shark_certificates", "shark_certificates", certificates_sql},
+        SchemaObject{"table", "shark_characters", "shark_characters", characters_sql},
+        SchemaObject{"table", "shark_store", "shark_store", table_sql},
+        SchemaObject{"index", "sqlite_autoindex_shark_accounts_1", "shark_accounts", {}},
+        SchemaObject{"index", "sqlite_autoindex_shark_certificates_1", "shark_certificates", {}},
+        SchemaObject{"index", "sqlite_autoindex_shark_characters_1", "shark_characters", {}},
+        SchemaObject{"index", "sqlite_autoindex_shark_characters_2", "shark_characters", {}},
+    };
+    for (const auto& object : objects) {
+        const auto status = sqlite3_step(schema.value);
+        if (status != SQLITE_ROW && status != SQLITE_DONE) {
+            return connection.error(status);
         }
-        return connection.invalid("database schema is missing");
+        if (status != SQLITE_ROW || !text_is(schema.value, 0, object.type) ||
+            !text_is(schema.value, 1, object.name) || !text_is(schema.value, 2, object.table) ||
+            (object.sql.empty() ? sqlite3_column_type(schema.value, 3) != SQLITE_NULL
+                                : !text_is(schema.value, 3, object.sql))) {
+            return connection.invalid("database schema differs from supported version 2");
+        }
     }
-    if (!text_is(schema.value, 0, "table") || !text_is(schema.value, 1, "shark_store") ||
-        !text_is(schema.value, 2, "shark_store") || !text_is(schema.value, 3, table_sql)) {
-        return connection.invalid("database schema differs from supported version 1");
-    }
-    step = sqlite3_step(schema.value);
+    auto step = sqlite3_step(schema.value);
     if (step != SQLITE_DONE) {
         if (step != SQLITE_ROW) {
             return connection.error(step);
@@ -425,6 +468,15 @@ Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world) {
     }
     if (auto result = require_text(connection, "PRAGMA quick_check(1)", "ok"); !result) {
         return result.error();
+    }
+    Statement foreign_keys;
+    if (auto result = prepare(connection, foreign_keys, "PRAGMA foreign_key_check"); !result) {
+        return result.error();
+    }
+    step = sqlite3_step(foreign_keys.value);
+    if (step != SQLITE_DONE) {
+        return step == SQLITE_ROW ? connection.invalid("database has dangling ownership")
+                                  : connection.error(step);
     }
     Statement rows;
     if (auto result = prepare(connection, rows,
@@ -472,17 +524,318 @@ Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world) {
     }
     return StoreMetadata{StoreId{ids[0].value()}, world, store_schema_version};
 }
+
+Result<StableId> read_id(const Connection& connection, sqlite3_stmt* row, int column) {
+    if (sqlite3_column_type(row, column) != SQLITE_TEXT ||
+        sqlite3_column_bytes(row, column) != 36) {
+        return connection.invalid("record identity is not a canonical UUID");
+    }
+    const auto* text = sqlite3_column_text(row, column);
+    if (text == nullptr) {
+        return connection.invalid("record identity could not be read");
+    }
+    auto value = StableId::parse({reinterpret_cast<const char*>(text), 36});
+    if (!value) {
+        return connection.invalid("record identity is not a canonical UUID");
+    }
+    return value.value();
+}
+
+bool valid_integer(sqlite3_stmt* row, int column, sqlite3_int64 low, sqlite3_int64 high) {
+    return sqlite3_column_type(row, column) == SQLITE_INTEGER &&
+           sqlite3_column_int64(row, column) >= low && sqlite3_column_int64(row, column) <= high;
+}
+
+bool valid_certificate(const net::CertificateFingerprint& certificate) {
+    return std::any_of(certificate.begin(), certificate.end(),
+                       [](std::byte value) { return value != std::byte{}; });
+}
+
+template <typename Function>
+Result<void> read_rows(const Connection& connection, const char* sql, std::size_t limit,
+                       Function&& read) {
+    Statement statement;
+    if (auto result = prepare(connection, statement, sql); !result) {
+        return result.error();
+    }
+    std::size_t count = 0;
+    for (;;) {
+        const auto step = sqlite3_step(statement.value);
+        if (step == SQLITE_DONE) {
+            return {};
+        }
+        if (step != SQLITE_ROW) {
+            return connection.error(step);
+        }
+        if (count++ == limit) {
+            return connection.invalid("durable record capacity exceeded");
+        }
+        if (auto result = read(statement.value); !result) {
+            return result.error();
+        }
+    }
+}
+
+Result<DurableRegistry> read_registry(const Connection& connection, WorldId world) {
+    DurableRegistry registry;
+    constexpr auto maximum_revision = static_cast<sqlite3_int64>(maximum_durable_revision);
+    auto accounts = read_rows(
+        connection,
+        "SELECT account_id,revoked,roster_revision FROM shark_accounts ORDER BY account_id",
+        maximum_durable_accounts, [&](sqlite3_stmt* row) -> Result<void> {
+            auto id = read_id(connection, row, 0);
+            if (!id) {
+                return id.error();
+            }
+            if (!valid_integer(row, 1, 0, 1) || !valid_integer(row, 2, 1, maximum_revision)) {
+                return connection.invalid("invalid account revocation or roster revision");
+            }
+            registry.accounts.push_back({net::AccountId{id.value()},
+                                         sqlite3_column_int(row, 1) != 0,
+                                         static_cast<std::uint64_t>(sqlite3_column_int64(row, 2))});
+            return {};
+        });
+    if (!accounts) {
+        return accounts.error();
+    }
+    auto certificates = read_rows(
+        connection,
+        "SELECT certificate,account_id,revoked FROM shark_certificates ORDER BY certificate",
+        maximum_durable_certificates, [&](sqlite3_stmt* row) -> Result<void> {
+            auto account = read_id(connection, row, 1);
+            if (!account) {
+                return account.error();
+            }
+            if (sqlite3_column_type(row, 0) != SQLITE_BLOB || sqlite3_column_bytes(row, 0) != 32 ||
+                sqlite3_column_blob(row, 0) == nullptr || !valid_integer(row, 2, 0, 1)) {
+                return connection.invalid("invalid certificate enrollment");
+            }
+            net::CertificateFingerprint certificate{};
+            std::memcpy(certificate.data(), sqlite3_column_blob(row, 0), certificate.size());
+            if (!valid_certificate(certificate)) {
+                return connection.invalid("certificate fingerprint is empty");
+            }
+            registry.certificates.push_back(
+                {net::AccountId{account.value()}, certificate, sqlite3_column_int(row, 2) != 0});
+            return {};
+        });
+    if (!certificates) {
+        return certificates.error();
+    }
+    auto characters = read_rows(
+        connection,
+        "SELECT character_id,account_id,entity_id,revision,name,cell_x,cell_y,cell_z,"
+        "offset_x,offset_y,offset_z FROM shark_characters ORDER BY character_id",
+        maximum_durable_characters, [&](sqlite3_stmt* row) -> Result<void> {
+            auto character = read_id(connection, row, 0);
+            auto account = read_id(connection, row, 1);
+            auto entity = read_id(connection, row, 2);
+            if (!character) {
+                return character.error();
+            }
+            if (!account) {
+                return account.error();
+            }
+            if (!entity) {
+                return entity.error();
+            }
+            if (!valid_integer(row, 3, 1, maximum_revision) ||
+                sqlite3_column_type(row, 4) != SQLITE_TEXT || sqlite3_column_bytes(row, 4) < 1 ||
+                sqlite3_column_bytes(row, 4) > 256 || sqlite3_column_text(row, 4) == nullptr) {
+                return connection.invalid("invalid character revision or name");
+            }
+            for (int column = 5; column < 8; ++column) {
+                if (!valid_integer(row, column, world_cell_min, world_cell_max)) {
+                    return connection.invalid("invalid character world cell");
+                }
+            }
+            for (int column = 8; column < 11; ++column) {
+                if (sqlite3_column_type(row, column) != SQLITE_FLOAT) {
+                    return connection.invalid("invalid character world offset");
+                }
+            }
+            CharacterState state{
+                Name{std::string{reinterpret_cast<const char*>(sqlite3_column_text(row, 4)),
+                                 static_cast<std::size_t>(sqlite3_column_bytes(row, 4))}},
+                WorldPosition{world,
+                              {sqlite3_column_int64(row, 5), sqlite3_column_int64(row, 6),
+                               sqlite3_column_int64(row, 7)},
+                              {sqlite3_column_double(row, 8), sqlite3_column_double(row, 9),
+                               sqlite3_column_double(row, 10)}}};
+            if (!validate_character_state(state, world)) {
+                return connection.invalid("invalid character checkpoint");
+            }
+            if (character.value() == entity.value() ||
+                std::any_of(registry.characters.begin(), registry.characters.end(),
+                            [&](const CharacterRecord& previous) {
+                                return previous.character.value() == entity.value() ||
+                                       previous.entity.value() == character.value();
+                            })) {
+                return connection.invalid("character and world entity identities must be distinct");
+            }
+            registry.characters.push_back(
+                {net::AccountId{account.value()}, net::CharacterId{character.value()},
+                 WorldEntityId{entity.value()},
+                 static_cast<std::uint64_t>(sqlite3_column_int64(row, 3)), std::move(state)});
+            return {};
+        });
+    if (!characters) {
+        return characters.error();
+    }
+    for (const auto& account : registry.accounts) {
+        const auto count = static_cast<std::size_t>(std::count_if(
+            registry.characters.begin(), registry.characters.end(),
+            [&](const CharacterRecord& record) { return record.account == account.account; }));
+        if (count > maximum_characters_per_account || account.roster_revision <= count) {
+            return connection.invalid("invalid account roster bounds or revision");
+        }
+    }
+    return registry;
+}
+
+Result<void> bind_text(const Connection& connection, Statement& statement, int index,
+                       std::string_view value) {
+    const auto code = sqlite3_bind_text(statement.value, index, value.data(),
+                                        static_cast<int>(value.size()), SQLITE_TRANSIENT);
+    return code == SQLITE_OK ? Result<void>{} : Result<void>{connection.error(code)};
+}
+
+Result<void> bind_integer(const Connection& connection, Statement& statement, int index,
+                          std::uint64_t value) {
+    const auto code = sqlite3_bind_int64(statement.value, index, static_cast<sqlite3_int64>(value));
+    return code == SQLITE_OK ? Result<void>{} : Result<void>{connection.error(code)};
+}
+
+Result<void> bind_certificate(const Connection& connection, Statement& statement, int index,
+                              const net::CertificateFingerprint& value) {
+    const auto code = sqlite3_bind_blob(statement.value, index, value.data(),
+                                        static_cast<int>(value.size()), SQLITE_TRANSIENT);
+    return code == SQLITE_OK ? Result<void>{} : Result<void>{connection.error(code)};
+}
+
+Result<void> finish_write(const Connection& connection, Statement& statement) {
+    const auto code = sqlite3_step(statement.value);
+    if (code != SQLITE_DONE) {
+        return connection.error(code);
+    }
+    if (sqlite3_changes(connection.db) != 1) {
+        return connection.invalid("durable write did not affect exactly one expected record");
+    }
+    return {};
+}
+
+template <typename Function>
+Result<void> change(const Connection& connection, const char* sql, Function&& bind) {
+    Statement statement;
+    if (auto result = prepare(connection, statement, sql); !result) {
+        return result.error();
+    }
+    if (auto result = bind(statement); !result) {
+        return result.error();
+    }
+    return finish_write(connection, statement);
+}
+
+Result<void> bind_state(const Connection& connection, Statement& statement, int index,
+                        const CharacterState& state) {
+    if (auto result = bind_text(connection, statement, index++, state.name.value); !result) {
+        return result.error();
+    }
+    for (const auto cell : {state.position.cell.x, state.position.cell.y, state.position.cell.z}) {
+        const auto code = sqlite3_bind_int64(statement.value, index++, cell);
+        if (code != SQLITE_OK) {
+            return connection.error(code);
+        }
+    }
+    for (const auto offset : state.position.offset) {
+        const auto code = sqlite3_bind_double(statement.value, index++, offset);
+        if (code != SQLITE_OK) {
+            return connection.error(code);
+        }
+    }
+    return {};
+}
+
+bool injected(detail::WritePhase phase) {
+    return write_fault_hook != nullptr && write_fault_hook(phase);
+}
 } // namespace
 
 struct Store::Impl {
     std::unique_ptr<Connection> connection;
     StoreMetadata metadata;
     std::thread::id thread;
+    DurableRegistry records;
+    bool faulted{false};
+
+    Result<void> guard(std::string_view operation) const {
+        if (std::this_thread::get_id() != thread) {
+            return failure(ErrorCode::conflict, operation,
+                           "database access requires its creating thread", connection->path);
+        }
+        if (faulted) {
+            return failure(ErrorCode::execution_failed, operation,
+                           "database owner requires destruction and reopen after a failed write",
+                           connection->path);
+        }
+        connection->operation = operation;
+        return {};
+    }
+
+    Error reject(std::string_view message) const {
+        return failure(ErrorCode::conflict, connection->operation, message, connection->path);
+    }
+
+    auto account(net::AccountId id) const {
+        return std::find_if(records.accounts.begin(), records.accounts.end(),
+                            [&](const AccountRecord& record) { return record.account == id; });
+    }
+
+    template <typename Function>
+    Result<void> write(DurableRegistry& candidate, Function&& execute) {
+        if (auto begun = connection->execute("BEGIN EXCLUSIVE"); !begun) {
+            return begun.error();
+        }
+        auto result = execute();
+        if (result && injected(detail::WritePhase::after_write)) {
+            result = failure(ErrorCode::io_failure, connection->operation,
+                             "injected precommit write failure", connection->path);
+        }
+        if (!result) {
+            if (injected(detail::WritePhase::before_rollback) || !connection->execute("ROLLBACK")) {
+                faulted = true;
+            }
+            return result.error();
+        }
+        if (injected(detail::WritePhase::before_commit)) {
+            faulted = true;
+            return failure(ErrorCode::io_failure, connection->operation,
+                           "injected unsuccessful commit", connection->path);
+        }
+        if (auto committed = connection->execute("COMMIT"); !committed) {
+            faulted = true;
+            return committed.error();
+        }
+        if (injected(detail::WritePhase::after_commit)) {
+            faulted = true;
+            return failure(ErrorCode::io_failure, connection->operation,
+                           "injected uncertain commit acknowledgement", connection->path);
+        }
+        // Candidate values and return snapshots were allocated before BEGIN.
+        // These vector swaps cannot fail after the durable commit.
+        records.accounts.swap(candidate.accounts);
+        records.certificates.swap(candidate.certificates);
+        records.characters.swap(candidate.characters);
+        return {};
+    }
 };
 
 namespace detail {
 void set_create_hook(CreateHook hook) noexcept {
     create_hook = hook;
+}
+void set_write_fault_hook(WriteFaultHook hook) noexcept {
+    write_fault_hook = hook;
 }
 } // namespace detail
 
@@ -564,6 +917,10 @@ Result<std::unique_ptr<Store>> Store::acquire(const std::filesystem::path& path,
     if (!inspected) {
         return inspected.error();
     }
+    auto records = read_registry(*connection, world);
+    if (!records) {
+        return records.error();
+    }
     if (create_new && create_hook != nullptr) {
         create_hook(detail::CreatePhase::before_commit);
     }
@@ -575,17 +932,332 @@ Result<std::unique_ptr<Store>> Store::acquire(const std::filesystem::path& path,
     if (create_new && create_hook != nullptr) {
         create_hook(detail::CreatePhase::after_commit);
     }
-    auto impl = std::make_unique<Impl>(
-        Impl{std::move(connection), inspected.value(), std::this_thread::get_id()});
+    auto impl =
+        std::make_unique<Impl>(Impl{std::move(connection), inspected.value(),
+                                    std::this_thread::get_id(), std::move(records).value()});
     return std::unique_ptr<Store>(new Store(std::move(impl)));
 }
 
 Result<StoreMetadata> Store::metadata() const {
-    if (std::this_thread::get_id() != impl_->thread) {
-        return failure(ErrorCode::conflict, "storage.metadata",
-                       "database access requires its creating thread", impl_->connection->path);
+    if (auto result = impl_->guard("storage.metadata"); !result) {
+        return result.error();
     }
     return impl_->metadata;
+}
+
+Result<void> validate_character_state(const CharacterState& state, WorldId world) {
+    constexpr auto operation = "storage.validate_character_state";
+    if (auto result = validate_name(state.name); !result) {
+        return failure(ErrorCode::invalid_argument, operation, result.error().message, {});
+    }
+    if (auto result = validate_world_position(state.position); !result) {
+        return failure(ErrorCode::invalid_argument, operation, result.error().message, {});
+    }
+    if (state.position.world != world) {
+        return failure(ErrorCode::invalid_argument, operation,
+                       "character checkpoint belongs to a different world", {});
+    }
+    return {};
+}
+
+Result<DurableRegistry> Store::registry() const {
+    if (auto result = impl_->guard("storage.registry"); !result) {
+        return result.error();
+    }
+    return impl_->records;
+}
+
+Result<AccountRecord> Store::provision_account(net::AccountId account) {
+    if (auto result = impl_->guard("storage.provision_account"); !result) {
+        return result.error();
+    }
+    if (impl_->account(account) != impl_->records.accounts.end()) {
+        return impl_->reject("account identity is already provisioned");
+    }
+    if (impl_->records.accounts.size() == maximum_durable_accounts) {
+        return impl_->reject("durable account capacity reached");
+    }
+    const AccountRecord record{account, false, 1};
+    auto candidate = impl_->records;
+    candidate.accounts.push_back(record);
+    std::sort(candidate.accounts.begin(), candidate.accounts.end(),
+              [](const auto& a, const auto& b) { return a.account < b.account; });
+    const auto id = account.value().to_string();
+    auto& connection = *impl_->connection;
+    auto written = impl_->write(candidate, [&] {
+        return change(
+            connection, "INSERT INTO shark_accounts VALUES(?1,0,1)",
+            [&](Statement& statement) { return bind_text(connection, statement, 1, id); });
+    });
+    if (!written) {
+        return written.error();
+    }
+    return record;
+}
+
+Result<void> Store::enroll_certificate(net::AccountId account,
+                                       const net::CertificateFingerprint& certificate) {
+    if (auto result = impl_->guard("storage.enroll_certificate"); !result) {
+        return result.error();
+    }
+    const auto owner = impl_->account(account);
+    if (owner == impl_->records.accounts.end() || owner->revoked) {
+        return impl_->reject("enrollment requires an active durable account");
+    }
+    if (!valid_certificate(certificate)) {
+        return failure(ErrorCode::invalid_argument, "storage.enroll_certificate",
+                       "certificate fingerprint is empty", impl_->connection->path);
+    }
+    if (std::any_of(impl_->records.certificates.begin(), impl_->records.certificates.end(),
+                    [&](const auto& record) { return record.certificate == certificate; })) {
+        return impl_->reject("certificate identity is already enrolled");
+    }
+    if (impl_->records.certificates.size() == maximum_durable_certificates) {
+        return impl_->reject("durable certificate capacity reached");
+    }
+    auto candidate = impl_->records;
+    candidate.certificates.push_back({account, certificate, false});
+    std::sort(candidate.certificates.begin(), candidate.certificates.end(),
+              [](const auto& a, const auto& b) { return a.certificate < b.certificate; });
+    const auto id = account.value().to_string();
+    auto& connection = *impl_->connection;
+    return impl_->write(candidate, [&] {
+        return change(connection, "INSERT INTO shark_certificates VALUES(?1,?2,0)",
+                      [&](Statement& statement) -> Result<void> {
+                          if (auto result = bind_certificate(connection, statement, 1, certificate);
+                              !result) {
+                              return result.error();
+                          }
+                          return bind_text(connection, statement, 2, id);
+                      });
+    });
+}
+
+Result<void> Store::revoke_account(net::AccountId account) {
+    if (auto result = impl_->guard("storage.revoke_account"); !result) {
+        return result.error();
+    }
+    const auto owner = impl_->account(account);
+    if (owner == impl_->records.accounts.end()) {
+        return impl_->reject("unknown durable account");
+    }
+    if (owner->revoked) {
+        return {};
+    }
+    auto candidate = impl_->records;
+    const auto index = static_cast<std::size_t>(owner - impl_->records.accounts.begin());
+    candidate.accounts[index].revoked = true;
+    const auto id = account.value().to_string();
+    auto& connection = *impl_->connection;
+    return impl_->write(candidate, [&] {
+        return change(
+            connection, "UPDATE shark_accounts SET revoked=1 WHERE account_id=?1",
+            [&](Statement& statement) { return bind_text(connection, statement, 1, id); });
+    });
+}
+
+Result<void> Store::revoke_certificate(const net::CertificateFingerprint& certificate) {
+    if (auto result = impl_->guard("storage.revoke_certificate"); !result) {
+        return result.error();
+    }
+    const auto found =
+        std::find_if(impl_->records.certificates.begin(), impl_->records.certificates.end(),
+                     [&](const auto& record) { return record.certificate == certificate; });
+    if (found == impl_->records.certificates.end()) {
+        return impl_->reject("unknown certificate");
+    }
+    if (found->revoked) {
+        return {};
+    }
+    auto candidate = impl_->records;
+    const auto index = static_cast<std::size_t>(found - impl_->records.certificates.begin());
+    candidate.certificates[index].revoked = true;
+    auto& connection = *impl_->connection;
+    return impl_->write(candidate, [&] {
+        return change(connection, "UPDATE shark_certificates SET revoked=1 WHERE certificate=?1",
+                      [&](Statement& statement) {
+                          return bind_certificate(connection, statement, 1, certificate);
+                      });
+    });
+}
+
+Result<CharacterRoster> Store::roster(net::AccountId account) const {
+    if (auto result = impl_->guard("storage.roster"); !result) {
+        return result.error();
+    }
+    const auto owner = impl_->account(account);
+    if (owner == impl_->records.accounts.end()) {
+        return impl_->reject("unknown durable account");
+    }
+    CharacterRoster result{account, owner->roster_revision, {}};
+    for (const auto& record : impl_->records.characters) {
+        if (record.account == account) {
+            result.characters.push_back(record);
+        }
+    }
+    return result;
+}
+
+Result<CharacterRecord> Store::character(net::AccountId account, net::CharacterId character) const {
+    if (auto result = impl_->guard("storage.character"); !result) {
+        return result.error();
+    }
+    const auto found =
+        std::find_if(impl_->records.characters.begin(), impl_->records.characters.end(),
+                     [&](const auto& record) {
+                         return record.account == account && record.character == character;
+                     });
+    if (found == impl_->records.characters.end()) {
+        return impl_->reject("unknown owned character");
+    }
+    return *found;
+}
+
+Result<CharacterRecord> Store::create_character(net::AccountId account,
+                                                std::uint64_t expected_roster_revision,
+                                                const CharacterState& initial) {
+    if (auto result = impl_->guard("storage.create_character"); !result) {
+        return result.error();
+    }
+    const auto owner = impl_->account(account);
+    if (owner == impl_->records.accounts.end() || owner->revoked) {
+        return impl_->reject("character creation requires an active durable account");
+    }
+    if (owner->roster_revision != expected_roster_revision ||
+        owner->roster_revision == maximum_durable_revision) {
+        return impl_->reject("stale or exhausted roster revision");
+    }
+    const auto count = static_cast<std::size_t>(
+        std::count_if(impl_->records.characters.begin(), impl_->records.characters.end(),
+                      [&](const auto& record) { return record.account == account; }));
+    if (count == maximum_characters_per_account ||
+        impl_->records.characters.size() == maximum_durable_characters) {
+        return impl_->reject("durable character capacity reached");
+    }
+    if (auto result = validate_character_state(initial, impl_->metadata.world); !result) {
+        return failure(result.error().code, "storage.create_character", result.error().message,
+                       impl_->connection->path);
+    }
+    auto character_id = generate_stable_id();
+    if (!character_id) {
+        return character_id.error();
+    }
+    auto entity_id = generate_stable_id();
+    if (!entity_id) {
+        return entity_id.error();
+    }
+    if (character_id.value() == entity_id.value() ||
+        std::any_of(impl_->records.characters.begin(), impl_->records.characters.end(),
+                    [&](const auto& record) {
+                        return record.character.value() == character_id.value() ||
+                               record.entity.value() == character_id.value() ||
+                               record.character.value() == entity_id.value() ||
+                               record.entity.value() == entity_id.value();
+                    })) {
+        return impl_->reject("generated character or world entity identity collided");
+    }
+    CharacterRecord record{account, net::CharacterId{character_id.value()},
+                           WorldEntityId{entity_id.value()}, 1, initial};
+    auto candidate = impl_->records;
+    const auto owner_index = static_cast<std::size_t>(owner - impl_->records.accounts.begin());
+    ++candidate.accounts[owner_index].roster_revision;
+    candidate.characters.push_back(record);
+    std::sort(candidate.characters.begin(), candidate.characters.end(),
+              [](const auto& a, const auto& b) { return a.character < b.character; });
+    const auto account_text = account.value().to_string();
+    const auto character_text = record.character.value().to_string();
+    const auto entity_text = record.entity.value().to_string();
+    auto& connection = *impl_->connection;
+    auto written = impl_->write(candidate, [&]() -> Result<void> {
+        auto inserted = change(
+            connection, "INSERT INTO shark_characters VALUES(?1,?2,?3,1,?4,?5,?6,?7,?8,?9,?10)",
+            [&](Statement& statement) -> Result<void> {
+                if (auto result = bind_text(connection, statement, 1, character_text); !result) {
+                    return result.error();
+                }
+                if (auto result = bind_text(connection, statement, 2, account_text); !result) {
+                    return result.error();
+                }
+                if (auto result = bind_text(connection, statement, 3, entity_text); !result) {
+                    return result.error();
+                }
+                return bind_state(connection, statement, 4, record.state);
+            });
+        if (!inserted) {
+            return inserted.error();
+        }
+        return change(connection,
+                      "UPDATE shark_accounts SET roster_revision=roster_revision+1 WHERE "
+                      "account_id=?1 AND roster_revision=?2",
+                      [&](Statement& statement) -> Result<void> {
+                          if (auto result = bind_text(connection, statement, 1, account_text);
+                              !result) {
+                              return result.error();
+                          }
+                          return bind_integer(connection, statement, 2, expected_roster_revision);
+                      });
+    });
+    if (!written) {
+        return written.error();
+    }
+    return record;
+}
+
+Result<CharacterRecord> Store::save_character(net::AccountId account, net::CharacterId character,
+                                              std::uint64_t expected_revision,
+                                              const CharacterState& accepted_state) {
+    if (auto result = impl_->guard("storage.save_character"); !result) {
+        return result.error();
+    }
+    const auto owner = impl_->account(account);
+    if (owner == impl_->records.accounts.end() || owner->revoked) {
+        return impl_->reject("checkpoint requires an active durable account");
+    }
+    const auto found =
+        std::find_if(impl_->records.characters.begin(), impl_->records.characters.end(),
+                     [&](const auto& record) {
+                         return record.account == account && record.character == character;
+                     });
+    if (found == impl_->records.characters.end()) {
+        return impl_->reject("unknown owned character");
+    }
+    if (found->revision != expected_revision || found->revision == maximum_durable_revision) {
+        return impl_->reject("stale or exhausted character revision");
+    }
+    if (auto result = validate_character_state(accepted_state, impl_->metadata.world); !result) {
+        return failure(result.error().code, "storage.save_character", result.error().message,
+                       impl_->connection->path);
+    }
+    CharacterRecord record{account, character, found->entity, found->revision + 1, accepted_state};
+    auto candidate = impl_->records;
+    const auto index = static_cast<std::size_t>(found - impl_->records.characters.begin());
+    candidate.characters[index] = record;
+    const auto account_text = account.value().to_string();
+    const auto character_text = character.value().to_string();
+    auto& connection = *impl_->connection;
+    auto written = impl_->write(candidate, [&] {
+        return change(
+            connection,
+            "UPDATE shark_characters SET revision=revision+1,name=?1,cell_x=?2,cell_y=?3,cell_z=?4,"
+            "offset_x=?5,offset_y=?6,offset_z=?7 WHERE character_id=?8 AND account_id=?9 AND "
+            "revision=?10",
+            [&](Statement& statement) -> Result<void> {
+                if (auto result = bind_state(connection, statement, 1, record.state); !result) {
+                    return result.error();
+                }
+                if (auto result = bind_text(connection, statement, 8, character_text); !result) {
+                    return result.error();
+                }
+                if (auto result = bind_text(connection, statement, 9, account_text); !result) {
+                    return result.error();
+                }
+                return bind_integer(connection, statement, 10, expected_revision);
+            });
+    });
+    if (!written) {
+        return written.error();
+    }
+    return record;
 }
 
 } // namespace shark::storage

@@ -530,6 +530,14 @@ journals under `out/` or `build/`. Current Server bootstrap flags do not create 
 database, authorize a player or expose SQL. Human and terminal developers use the
 same API and noninteractive tests.
 
+M03b adds [owned durable characters](durable-characters.md) in EngineStorage,
+with schema-2 enrollment, ownership and character records. Legacy schema-1 files
+reject explicitly; migration is a later checkpoint. `shark.storage.characters`
+(60 seconds, seed 1337) and `shark.storage.characters-process` (180 seconds)
+exercise service/session admission and actual mTLS server/store restart.
+The original storage family also covers durable record validation and revision
+conflicts. No new dependency, bootstrap listener or database flag is needed.
+
 The new test families are `shark.storage.store` (60 seconds, seed 1337),
 `shark.storage.process` (90 seconds) and `shark.tooling.storage-dependencies`
 (240 seconds). They run without a display or GPU. List the configured inventory

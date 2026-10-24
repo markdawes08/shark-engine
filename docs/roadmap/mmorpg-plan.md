@@ -136,9 +136,9 @@ REQ-08 are PASS under the current-machine scope. The
 [08d handoff](../handoffs/08d-integrated-qualification.md) and
 [receipt](../coverage/evidence/08d-integrated-qualification.json) record
 504 CPU CTests, ten additional standalone Tools checks, all three public
-examples and protected packages against 299 unchanged inputs. M03 durable
-characters and transactional state is next; authored source saves do not
-provide live character or economy durability.
+examples and protected packages against 299 unchanged inputs. M03 separately
+owns live character and transactional durability; M03a-b are complete and M03c
+is next. Authored source saves do not provide live character or economy durability.
 The authoring APIs are not player messages and do not grant gameplay authority.
 Presentation stays in Client and cannot acquire authority over server time or world state.
 The [final local handoff](../handoffs/02d-final-verification.md)
@@ -204,8 +204,12 @@ M03a store foundation, M03b owned characters, M03c atomic transactions, M03d run
 recovery, M03e database migration/restore and M03f integrated qualification.
 M03a is PASS under the current-machine scope; its
 [handoff](../handoffs/M03a-durable-store.md) records 525 passing CPU CTests and
-protected package/API gates. M03b is next; full REQ-M03 remains NOT_RUN.
-[ADR 0015](../architecture/0015-durable-store.md)
+protected package/API gates. M03b is also PASS under the current-machine scope;
+its [handoff](../handoffs/M03b-owned-characters.md) records durable ownership,
+revocation and authenticated restart with 539 CPU CTests and protected gates.
+M03c atomic transactions are next; full REQ-M03 remains NOT_RUN.
+[ADR 0016](../architecture/0016-owned-durable-characters.md) defines the character
+owner and schema-2 compatibility boundary. [ADR 0015](../architecture/0015-durable-store.md)
 selects the private local store without adding database authority to clients.
 
 After 08 and M02. Select/pin the transactional persistence integration, distinguish

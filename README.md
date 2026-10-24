@@ -88,7 +88,12 @@ and [receipt](docs/coverage/evidence/M02e-integrated-qualification.json) record
 **M03a, Store foundation, is complete:** the [server-only store](docs/durable-store.md)
 passes 525 CPU CTests, ten additional standalone Tools checks and protected
 package/API gates. Its [handoff](docs/handoffs/M03a-durable-store.md) records the
-current-machine evidence. **M03b, Owned durable characters, is next** in the
+current-machine evidence. **M03b, Owned durable characters, is complete:**
+[durable character services](docs/durable-characters.md) preserve ownership,
+revocation and revision-checked checkpoints across authenticated restart.
+Its [handoff](docs/handoffs/M03b-owned-characters.md) records 539 passing CPU CTests,
+ten additional standalone Tools checks and protected package/API gates.
+**M03c, Atomic transactions, is next** in the
 [six-checkpoint plan](docs/roadmap/durable-state-plan.md). Full REQ-M03 remains NOT_RUN.
 Assignment 08, Project and scene persistence, completed its
 [four checkpoints](docs/roadmap/persistence-plan.md). 08a adds CPU project/scene

@@ -4,6 +4,11 @@ Date: 2026-10-22. Status: accepted design for M03a; qualification is recorded
 separately from this decision. Scope: the current Windows PC and existing WSL
 environment under [ADR 0010](0010-current-machine-scope.md).
 
+M03b's [ADR 0016](0016-owned-durable-characters.md) advances the database to
+schema 2 with explicit nonmutating version-1 rejection and adds durable
+character ownership. The version-1 decision and M03a evidence below remain
+historical; the [current store contract](../durable-store.md) defines the active schema.
+
 ## Decision and dependency boundary
 
 Use the exact SQLite 3.54.1 amalgamation as a private static dependency of the

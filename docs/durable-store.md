@@ -1,12 +1,15 @@
 # Local durable store contract
 
-M03a introduces a server-only local database owner in
+M03a introduced a server-only local database owner in
 [`store.hpp`](../server/storage/include/shark/storage/store.hpp).
 [ADR 0015](architecture/0015-durable-store.md) records the dependency selection,
 trust boundary and compatibility decision. This document defines behavior;
 it does not itself assert that qualification has passed. The
 [M03 requirements](coverage/requirements.json) include later character,
-transaction, migration and recovery gates.
+transaction, migration and recovery gates. M03b extends the active schema to 2
+and supplies [owned durable characters](durable-characters.md), following
+[ADR 0016](architecture/0016-owned-durable-characters.md). The earlier M03a
+handoff retains historical schema-1 evidence.
 
 ## Public owner and identity
 
@@ -15,15 +18,15 @@ initialization commits. `Store::open(path, expected_world)` returns the same
 owner type after validating an existing supported database. Neither operation
 accepts SQL, credentials, source-scene files or a generic mutable record bag.
 `metadata()` returns an owned `StoreMetadata` value containing typed `StoreId`,
-typed `WorldId` and `schema_version`. Schema version is independently fixed at 1;
+typed `WorldId` and `schema_version`. Schema version is independently fixed at 2;
 source JSON, component and gameplay-wire version numbers do not set it.
 
 The store generates a new persistent store ID through the existing OS-entropy
 UUID implementation. Reopen preserves that ID and the configured world. A
 valid stable ID identifies data, but grants no session, character or region
-authority. [Session authorization](network-sessions.md) remains unchanged in
-M03a. The database holds no character, inventory, currency or operation-result
-records yet.
+authority. [CharacterAuthority](durable-characters.md) connects durable account,
+enrollment and character records to live session authorization. The database
+does not yet hold inventory, currency or operation-result records.
 
 The owner is neither copyable nor movable. Keep every operation and destruction
 on its creating thread; SQLite's connection uses `NOMUTEX` under this ownership
@@ -66,12 +69,12 @@ the raw header must contain all of the following:
 | --- | --- |
 | SQLite file signature | `SQLite format 3` followed by NUL |
 | Application ID | `0x53484B44` |
-| User schema version | `1` |
+| User schema version | `2` |
 | Page size | `4096` bytes |
 | File read/write versions | Both `1`, the rollback-journal format |
 | Main-file size | Within `maximum_store_bytes`, 16 MiB |
 
-Foreign/future headers and incomplete initialization reject without SQLite
+Foreign, legacy version-1, future headers and incomplete initialization reject without SQLite
 recovery or database mutation. No new database is silently substituted. A
 recognized supported header permits SQLite to recover a hot journal, after
 which the exact schema, metadata identity, expected world and integrity check
@@ -85,27 +88,33 @@ SQLite permits a read/write request to fall back to read-only, so an open return
 code alone is insufficient. [Open flags](https://www.sqlite.org/c3ref/open.html),
 [actual connection mode](https://www.sqlite.org/c3ref/db_readonly.html)
 
-M03a supports only its exact version-1 schema. Unsupported versions, additional
+M03b supports only its exact version-2 schema. Unsupported versions, additional
 schema objects or incompatible metadata reject; opening does not run a migration
 or rewrite them. Schema changes require an explicit compatibility decision and
 real-store fixtures in their owning checkpoint.
 
-The sole schema object is the STRICT table `shark_store`. Its canonical DDL is
-the private `table_sql` constant in [store.cpp](../server/storage/src/store.cpp);
-inspection compares the complete stored DDL, not only its table/column names.
-There must be exactly one row:
+The schema contains four fixed STRICT tables: metadata, accounts, certificate
+enrollment and characters, plus only their expected uniqueness autoindexes.
+Canonical DDL lives in [store.cpp](../server/storage/src/store.cpp); inspection
+compares complete stored DDL and expected indexes, not only column names.
+The `shark_store` metadata table must contain exactly one row:
 
 | Column | Required representation |
 | --- | --- |
 | `singleton` | INTEGER primary key, value `1`, constrained to `1` |
 | `store_id` | Non-null TEXT of length 36, parsed as lowercase canonical UUIDv4 |
 | `world_id` | Non-null TEXT of length 36, parsed as lowercase canonical UUIDv4 and matched to the caller's expected world |
-| `schema_version` | Non-null INTEGER, constrained to and equal to `1` |
+| `schema_version` | Non-null INTEGER, constrained to and equal to `2` |
 
 Both IDs use the existing validated non-nil identity type. The database
 application/user versions, exact schema, `quick_check(1)` result and sole row are
 checked while holding the exclusive transaction. Equivalent-looking rewritten
-DDL is not automatically accepted as a compatible schema.
+DDL is not automatically accepted as a compatible schema. Every account,
+enrollment and character row is bounded and validated before returning the owner,
+including immutable identity uniqueness, ownership references, boolean tombstones,
+nonwrapping revisions, shared Name/WorldPosition rules and roster capacity.
+The complete validated registry is held as bounded owned values; no borrowed
+database value or native handle crosses a public call.
 
 ## Connection policy and limits
 
@@ -126,7 +135,7 @@ without Server do not populate the SQLite archive.
 | Mapped database I/O | Disabled |
 | Temporary storage | Memory, without a claim of a separate hard heap cap |
 | Foreign-key enforcement | Enabled |
-| Public query surface | Fixed create/open/metadata operations only |
+| Public query surface | Fixed typed metadata, registry, ownership and character operations; no SQL |
 
 Verify effective settings rather than trusting that a PRAGMA was accepted.
 Setting a maximum page count cannot shrink an already larger database. Exclusive
@@ -223,6 +232,6 @@ create_and_reopen_store(const std::filesystem::path& new_path,
 ```
 
 The same API is available to human developers and terminal-driven executable
-fixtures. M03a adds no player-facing storage command or game-authoring CLI/UI.
+fixtures. Storage adds no player-facing SQL command or game-authoring CLI/UI.
 Authoring adapters retain their existing owners, and later operational access
 must remain separately authorized.

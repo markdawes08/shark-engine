@@ -41,6 +41,17 @@ records reject. Account/character/session UUID domains differ from scene slots,
 authored IDs, replica IDs and the TLS connection token. No public API accepts a
 copied `PeerIdentity` as proof of authority.
 
+M03b adds `authorize_account(transport, account, now)` for authenticated roster
+and first-character admission before Login can select an existing character.
+It reuses the same global, certificate and account attempt budgets and actual
+live mTLS provenance, including revocation checks. Success returns only the
+matched AccountId; it issues no session, changes no epoch, consumes no session
+command and refreshes no lease. The [durable character owner](durable-characters.md)
+persists enrollment/ownership and revocation without moving storage into Core.
+Account-only admission also rejects connections older than the account's latest
+successful Login; equality remains allowed and account admission never advances
+the Login connection watermark.
+
 `apply(transport, request, now)` checks the actual transport on every request.
 Login validates the claimed account and character against certificate enrollment
 and server ownership before issuing a fresh `SessionId` and increasing the
@@ -70,7 +81,12 @@ account, including failed attempts, and persist across reconnects. Session comma
 budgets count rejected commands as applicable. Rejection never refreshes a lease,
 advances the accepted sequence or replaces ownership. Registry/tombstone storage
 is bounded and retained until service destruction; no eviction resets security
-state. Durable provisioning, recovery and revocation storage remain M03.
+state. M03b's server-only CharacterAuthority hydrates these bounded records and
+revocation tombstones from the store before admission; live sessions and local
+epochs are never restored. Its load/save operations use accepted Heartbeat
+admission before storage access, so a later durable revision conflict still
+consumes that accepted sequence and budget. This is separate from rejection
+of a SessionAuthority command itself.
 
 Defaults are 64 accounts, 128 characters, 128 certificates and 64 live sessions;
 128 login attempts per 10-second authority window, eight per credential/account,

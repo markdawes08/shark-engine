@@ -328,7 +328,7 @@ against 299 unchanged source/build/test inputs and 18 helpers. The
 [handoff](handoffs/08d-integrated-qualification.md) and
 [receipt](coverage/evidence/08d-integrated-qualification.json) record exact
 commands, the corrected file-case inventory and verification limits. M03
-durable characters and transactional state is next.
+separately owns live durability; M03a-b are complete and M03c is next.
 
 ## Locked tools and hosted-image limits
 
@@ -373,7 +373,21 @@ the actual toolchain/environment and build inputs needed for release reproductio
 or use an immutable controlled runner image. A missing toolchain or changed compiler
 requires a reviewed configuration/evidence update; do not mask that failure.
 
-## M03a durable-store checks
+## M03 durable-store and character checks
+
+M03b extends the same gate with `shark.storage.characters` and
+`shark.storage.characters-process`, documented in [building](building.md#server-only-durable-storage).
+Retain all session, storage and authoring regression families. Actual mutually
+authenticated local clients exercise the same durable character coordinator,
+then a fresh server process reopens the store without reseeding ownership.
+Fixture-only ID discovery is local test metadata, not a product roster protocol.
+The public character example compiles using only public Core/Storage headers.
+M03b is PASS under the current-machine scope: its
+[handoff](handoffs/M03b-owned-characters.md) and
+[receipt](coverage/evidence/M03b-owned-characters.json) record 539 full CPU CTests,
+ten additional standalone Tools checks and protected package/API audits against
+318 unchanged source inputs and 15 final helpers. Full REQ-M03 remains NOT_RUN;
+M03c atomic transactions are next.
 
 M03a adds the three storage families documented in [building](building.md#server-only-durable-storage).
 The Server build has a separate `storage` dependency domain; Core, Runtime and
