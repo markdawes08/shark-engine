@@ -3,9 +3,10 @@
 M03b adds [`CharacterAuthority`](../server/storage/include/shark/storage/characters.hpp)
 as the server-only owner of a durable Store and the existing authenticated
 SessionAuthority. [ADR 0016](architecture/0016-owned-durable-characters.md) records
-the design and schema compatibility decision. Full M03 includes later economic,
-runtime recovery, migration and integrated gates; this contract claims none of
-those from character checkpoints alone.
+the design and schema compatibility decision. M03c extends this owner with [atomic economic transactions](durable-transactions.md)
+under [ADR 0017](architecture/0017-atomic-durable-transactions.md). Runtime recovery,
+migration and integrated gates remain later M03 work; character checkpoints alone
+do not establish those gates.
 
 ## Ownership and startup
 
@@ -95,8 +96,8 @@ record; no current foreign record is returned in an error. An admitted command
 consumes its sequence even if a subsequent storage operation fails or its
 expected revision conflicts. Pure invalid state rejects before admission. A lost
 reply requires reading and reconciling the durable roster or character, never
-blindly retrying with an advanced revision. Operation-result deduplication
-belongs to M03c.
+blindly retrying with an advanced revision. These non-economic create/save operations do not gain retry deduplication.
+M03c adds it specifically for the separate economic TransferRequest contract.
 
 Commit acknowledgement means SQLite accepted COMMIT under the existing
 DELETE/EXTRA policy. Commit or rollback uncertainty quiesces the store and

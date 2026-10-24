@@ -5,11 +5,17 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+M03c adds `shark.storage.transactions` and `shark.storage.transactions-process`.
+Preserve economic conservation, exact retries, terminal rejection, bounded
+retention and permanently expired operation identities across restart. Compile
+the [transaction example](../../../docs/durable-transactions.md) with public
+headers only. Active schema 3 rejects versions 1/2 until M03e migration.
+
 M03b adds durable character records and actual authenticated restart coverage in
 `shark.storage.characters` and `shark.storage.characters-process`. Preserve those,
 the original storage families and all session regression tests. Compile the
 [public character example](../../../docs/durable-characters.md) without private
-SQLite/TLS headers. Schema-1 rejection is explicit until M03e migration.
+SQLite/TLS headers. Schema-1/2 rejection is explicit until M03e migration.
 
 M03a adds EngineStorage only with Server. Supply `SHARK_SQLITE_ARCHIVE` for
 offline Server configurations using `tools/storage_dependency.py --output`.

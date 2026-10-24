@@ -560,3 +560,236 @@ TEST_CASE("uncertain committed revocation freezes the service and stays revoked 
         CHECK(found->revoked);
     }
 }
+
+TEST_CASE("authenticated transfers preserve durable retry identity across fresh sessions",
+          "[storage-characters]") {
+    Fixture fixture;
+    Pair a;
+    Pair b{true};
+    const auto first = fixture.create(a);
+    const auto second = fixture.create(b, true);
+    take(fixture.service->initialize_economy(account(), first.character, {100, 10}));
+    take(fixture.service->initialize_economy(account(true), second.character, {50, 5}));
+    const auto sa = login(fixture, a, first);
+    const auto sb = login(fixture, b, second);
+    const TransferRequest request{{take(fixture.service->metadata()).id, account(), 1},
+                                  first.character,
+                                  second.character,
+                                  1,
+                                  1,
+                                  {25, 3}};
+    // Neither an operation ID nor a source character can bypass the live owner.
+    reject(fixture.service->transfer(*b.server, envelope(sb, 2), request, 0ns));
+    auto copied = request;
+    copied.operation.actor = account(true);
+    reject(fixture.service->transfer(*b.server, envelope(sb, 2), copied, 0ns));
+    CHECK(
+        take(fixture.service->operation_stream(*b.server, envelope(sb, 2), 0ns)).receipts.empty());
+    const auto committed =
+        take(fixture.service->transfer(*a.server, envelope(sa, 2), request, 0ns));
+    CHECK(committed.receipt.status == TransferStatus::committed);
+    CHECK_FALSE(committed.replayed);
+    REQUIRE(committed.receipt.source);
+    REQUIRE(committed.receipt.target);
+    CHECK(committed.receipt.source->state == EconomyState{75, 7});
+    CHECK(committed.receipt.target->state == EconomyState{75, 8});
+    reject(fixture.service->transfer(*a.server, envelope(sa, 2), request, 0ns));
+    const auto retry = take(fixture.service->transfer(*a.server, envelope(sa, 3), request, 0ns));
+    CHECK(retry.replayed);
+    CHECK(retry.receipt == committed.receipt);
+    CHECK(take(fixture.service->economy(*b.server, envelope(sb, 3), 0ns)) ==
+          *committed.receipt.target);
+    const auto stream = take(fixture.service->operation_stream(*a.server, envelope(sa, 4), 0ns));
+    CHECK(stream.actor == account());
+    CHECK(stream.high_watermark == 1);
+    CHECK(stream.receipts == std::vector{committed.receipt});
+
+    fixture.reopen();
+    Pair fresh;
+    const auto session = login(fixture, fresh, first);
+    CHECK(session.session != sa.session);
+    reject(fixture.service->transfer(*fresh.server, envelope(sa, 5), request, 0ns));
+    const auto restored =
+        take(fixture.service->transfer(*fresh.server, envelope(session, 2), request, 0ns));
+    CHECK(restored.replayed);
+    CHECK(restored.receipt == committed.receipt);
+    CHECK(take(fixture.service->economy(*fresh.server, envelope(session, 3), 0ns)) ==
+          *committed.receipt.source);
+}
+
+TEST_CASE("transfer shape rejection and terminal outcomes have distinct admission semantics",
+          "[storage-characters]") {
+    Fixture fixture;
+    Pair a;
+    Pair b{true};
+    const auto first = fixture.create(a);
+    const auto second = fixture.create(b, true);
+    take(fixture.service->initialize_economy(account(), first.character, {100, 10}));
+    take(fixture.service->initialize_economy(account(true), second.character, {50, 5}));
+    const auto session = login(fixture, a, first);
+    TransferRequest request{{take(fixture.service->metadata()).id, account(), 1},
+                            first.character,
+                            second.character,
+                            2,
+                            1,
+                            {10, 1}};
+    auto malformed = request;
+    malformed.quantity = {0, 0};
+    reject(fixture.service->transfer(*a.server, envelope(session, 2), malformed, 0ns));
+    const auto stale =
+        take(fixture.service->transfer(*a.server, envelope(session, 2), request, 0ns));
+    CHECK(stale.receipt.status == TransferStatus::stale_revision);
+    CHECK_FALSE(stale.replayed);
+    const auto retry =
+        take(fixture.service->transfer(*a.server, envelope(session, 3), request, 0ns));
+    CHECK(retry.replayed);
+    CHECK(retry.receipt == stale.receipt);
+    request.expected_source_revision = 1;
+    reject(fixture.service->transfer(*a.server, envelope(session, 4), request, 0ns));
+    // Admitted durable mismatch consumes a live command sequence but never the
+    // next durable operation; fixing payload requires a deliberately new ID.
+    request.operation.sequence = 2;
+    reject(fixture.service->transfer(*a.server, envelope(session, 4), request, 0ns));
+    CHECK(take(fixture.service->transfer(*a.server, envelope(session, 5), request, 0ns))
+              .receipt.status == TransferStatus::committed);
+    const auto stream =
+        take(fixture.service->operation_stream(*a.server, envelope(session, 6), 0ns));
+    CHECK(stream.high_watermark == 2);
+    REQUIRE(stream.receipts.size() == 2);
+    CHECK(stream.receipts.front() == stale.receipt);
+}
+
+TEST_CASE("economic retries cannot restore revoked disconnected or stale session authority",
+          "[storage-characters]") {
+    auto configuration = limits();
+    configuration.session_lifetime = 10ns;
+    configuration.session_idle_timeout = 10ns;
+    Fixture fixture{configuration};
+    Pair a;
+    Pair b{true};
+    const auto first = fixture.create(a);
+    const auto second = fixture.create(b, true);
+    take(fixture.service->initialize_economy(account(), first.character, {100, 10}));
+    take(fixture.service->initialize_economy(account(true), second.character, {50, 5}));
+    const auto session = login(fixture, a, first);
+    const TransferRequest request{{take(fixture.service->metadata()).id, account(), 1},
+                                  first.character,
+                                  second.character,
+                                  1,
+                                  1,
+                                  {10, 1}};
+    const auto result =
+        take(fixture.service->transfer(*a.server, envelope(session, 2), request, 0ns));
+    MonotonicTime now = 0ns;
+    std::uint64_t sequence = 3;
+    std::unique_ptr<Pair> replacement;
+    SECTION("account revoked") {
+        take(fixture.service->revoke_account(account()));
+    }
+    SECTION("certificate revoked") {
+        take(fixture.service->revoke_certificate(certificate()));
+    }
+    SECTION("session revoked") {
+        CHECK(take(fixture.service->revoke_session(session.session)));
+    }
+    SECTION("logout") {
+        take(fixture.service->apply(*a.server, LogoutRequest{envelope(session, 3)}, 0ns));
+        sequence = 4;
+    }
+    SECTION("not ready") {
+        take(fixture.service->apply(*a.server, SetReadyRequest{envelope(session, 3), false}, 0ns));
+        sequence = 4;
+    }
+    SECTION("expired") {
+        now = 10ns;
+    }
+    SECTION("closed transport") {
+        take(a.server->close());
+    }
+    SECTION("replacement") {
+        replacement = std::make_unique<Pair>();
+        login(fixture, *replacement, first);
+    }
+    reject(fixture.service->transfer(*a.server, envelope(session, sequence), request, now));
+    reject(fixture.service->economy(*a.server, envelope(session, sequence), now));
+    reject(fixture.service->operation_stream(*a.server, envelope(session, sequence), now));
+    fixture.service.reset();
+    auto store = take(Store::open(fixture.path, world()));
+    // Trusted recovery inspection remains available; player admission does not.
+    CHECK(take(store->economy(account(), first.character)) == *result.receipt.source);
+    CHECK(take(store->operation_stream(account())).receipts == std::vector{result.receipt});
+    CHECK(take(store->economy(account(true), second.character)) == *result.receipt.target);
+}
+
+TEST_CASE("economic operations share command budgets and creating thread ownership",
+          "[storage-characters]") {
+    auto configuration = limits();
+    configuration.commands_per_window = 2;
+    Fixture fixture{configuration};
+    Pair a;
+    Pair b{true};
+    const auto first = fixture.create(a);
+    const auto second = fixture.create(b, true);
+    take(fixture.service->initialize_economy(account(), first.character, {100, 10}));
+    take(fixture.service->initialize_economy(account(true), second.character, {50, 5}));
+    const auto session = login(fixture, a, first);
+    const TransferRequest request{{take(fixture.service->metadata()).id, account(), 1},
+                                  first.character,
+                                  second.character,
+                                  1,
+                                  1,
+                                  {10, 1}};
+    std::optional<Result<TransferResult>> wrong_thread;
+    std::thread worker{[&] {
+        wrong_thread.emplace(
+            fixture.service->transfer(*a.server, envelope(session, 2), request, 0ns));
+    }};
+    worker.join();
+    REQUIRE(wrong_thread);
+    reject(*wrong_thread);
+    take(fixture.service->economy(*a.server, envelope(session, 2), 0ns));
+    reject(fixture.service->transfer(*a.server, envelope(session, 3), request, 0ns));
+    reject(fixture.service->operation_stream(*a.server, envelope(session, 3), 0ns));
+    fixture.service.reset();
+    auto store = take(Store::open(fixture.path, world()));
+    CHECK(take(store->operation_stream(account())).high_watermark == 0);
+    CHECK(take(store->economy(account(), first.character)).state == EconomyState{100, 10});
+}
+
+TEST_CASE("uncertain economic acknowledgement freezes the owner and reopens one durable outcome",
+          "[storage-characters]") {
+    Fixture fixture;
+    Pair a;
+    Pair b{true};
+    const auto first = fixture.create(a);
+    const auto second = fixture.create(b, true);
+    take(fixture.service->initialize_economy(account(), first.character, {100, 10}));
+    take(fixture.service->initialize_economy(account(true), second.character, {50, 5}));
+    const auto session = login(fixture, a, first);
+    const TransferRequest request{{take(fixture.service->metadata()).id, account(), 1},
+                                  first.character,
+                                  second.character,
+                                  1,
+                                  1,
+                                  {10, 1}};
+    {
+        AfterCommitFault fault;
+        reject(fixture.service->transfer(*a.server, envelope(session, 2), request, 0ns));
+    }
+    reject(fixture.service->economy(*a.server, envelope(session, 3), 0ns));
+    reject(fixture.service->operation_stream(*a.server, envelope(session, 3), 0ns));
+    reject(fixture.service->initialize_economy(account(), first.character, {500, 500}));
+    fixture.reopen();
+    Pair fresh;
+    const auto restored_session = login(fixture, fresh, first);
+    const auto retry =
+        take(fixture.service->transfer(*fresh.server, envelope(restored_session, 2), request, 0ns));
+    CHECK(retry.replayed);
+    CHECK(retry.receipt.status == TransferStatus::committed);
+    REQUIRE(retry.receipt.source);
+    REQUIRE(retry.receipt.target);
+    CHECK(retry.receipt.source->state == EconomyState{90, 9});
+    CHECK(retry.receipt.target->state == EconomyState{60, 6});
+    CHECK(take(fixture.service->operation_stream(*fresh.server, envelope(restored_session, 3), 0ns))
+              .high_watermark == 1);
+}

@@ -129,3 +129,8 @@ player storage command or premature authoring adapter. M03a contains only
 creation, validated reopen and owned metadata. Character/session restart,
 economy transactions, outages, migrations, backups and integrated qualification
 remain explicit later work; full REQ-M03 cannot pass from this foundation alone.
+
+M03c amendment: [ADR 0017](0017-atomic-durable-transactions.md) advances the active
+schema to 3, adds bounded atomic economic transfers and retained operation
+outcomes, and explicitly rejects versions 1/2 until M03e migration. The
+earlier version and scope above describe this ADR's original checkpoint.

@@ -328,7 +328,7 @@ against 299 unchanged source/build/test inputs and 18 helpers. The
 [handoff](handoffs/08d-integrated-qualification.md) and
 [receipt](coverage/evidence/08d-integrated-qualification.json) record exact
 commands, the corrected file-case inventory and verification limits. M03
-separately owns live durability; M03a-b are complete and M03c is next.
+separately owns live durability; M03a-c are complete and M03d is next.
 
 ## Locked tools and hosted-image limits
 
@@ -387,7 +387,11 @@ M03b is PASS under the current-machine scope: its
 [receipt](coverage/evidence/M03b-owned-characters.json) record 539 full CPU CTests,
 ten additional standalone Tools checks and protected package/API audits against
 318 unchanged source inputs and 15 final helpers. Full REQ-M03 remains NOT_RUN;
-M03c atomic transactions are next.
+M03c atomic transactions are PASS under the same scope: its
+[handoff](handoffs/M03c-atomic-transactions.md) and
+[receipt](coverage/evidence/M03c-atomic-transactions.json) record 553 full CPU
+CTests (89 native each, 82 WSL clients each, 61 WSL Servers each), ten additional
+standalone Tools checks and protected package/API gates. M03d is next.
 
 M03a adds the three storage families documented in [building](building.md#server-only-durable-storage).
 The Server build has a separate `storage` dependency domain; Core, Runtime and
@@ -620,3 +624,13 @@ manual failure input. It does not execute GitHub expression evaluation or jobs.
 `python tools/check_format.py` checks engine-owned C/C++ files against the pinned
 formatter; `--fix` deliberately applies formatting. No future GPU, import or
 release tests are invented for this foundation.
+
+M03c adds `shark.storage.transactions` (90 seconds, seed 1337) and
+`shark.storage.transactions-process` (180 seconds). Keep the original storage,
+character and all network families. Its two-client process barrier supplies
+simultaneous stale intents to one server owner; the same real database then
+reopens in a fresh process for retained retry and expiry checks. Business
+rejections consume durable identities, while session commands remain separately
+sequenced. The [public transaction example](durable-transactions.md) compiles
+without SQLite/TLS headers. Schema 3 explicitly rejects historical versions 1/2
+until M03e. Complete runtime crash/outage qualification remains M03d.

@@ -26,6 +26,10 @@ class CharacterAuthority final {
     [[nodiscard]] Result<void> revoke_account(net::AccountId account);
     [[nodiscard]] Result<void> revoke_certificate(const net::CertificateFingerprint& certificate);
     [[nodiscard]] Result<bool> revoke_session(net::SessionId session);
+    // Trusted one-time fixture provisioning, never a player grant or state write.
+    [[nodiscard]] Result<EconomyRecord> initialize_economy(net::AccountId account,
+                                                           net::CharacterId character,
+                                                           const EconomyState& initial);
 
     // Account admission uses the actual live mTLS transport and shares existing
     // bounded authentication budgets. It does not issue or restore a session.
@@ -47,6 +51,18 @@ class CharacterAuthority final {
     [[nodiscard]] Result<CharacterRecord>
     save(net::TlsTransport& transport, const net::SessionEnvelope& authority,
          std::uint64_t expected_revision, const CharacterState& accepted_state, MonotonicTime now);
+
+    // Ready, sequenced session admission applies to queries and retries too.
+    // Results are trusted server values, not public player response payloads.
+    [[nodiscard]] Result<EconomyRecord>
+    economy(net::TlsTransport& transport, const net::SessionEnvelope& authority, MonotonicTime now);
+    [[nodiscard]] Result<OperationStream> operation_stream(net::TlsTransport& transport,
+                                                           const net::SessionEnvelope& authority,
+                                                           MonotonicTime now);
+    [[nodiscard]] Result<TransferResult> transfer(net::TlsTransport& transport,
+                                                  const net::SessionEnvelope& authority,
+                                                  const TransferRequest& request,
+                                                  MonotonicTime now);
 
   private:
     struct Impl;

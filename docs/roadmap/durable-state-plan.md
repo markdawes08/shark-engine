@@ -2,12 +2,16 @@
 
 Date: 2026-10-22. Base: `01968d5` on initially clean `main`.
 Owner: REQ-M03. M02 and assignment 08 are complete. The user approved dividing
-M03 into the six checkpoints below. **M03a and M03b are PASS under the
-current-machine scope; M03c is next and full REQ-M03 remains NOT_RUN.** The
+M03 into the six checkpoints below. **M03a, M03b and M03c are PASS under the
+current-machine scope; M03d is next and full REQ-M03 remains NOT_RUN.** The
 [M03a handoff](../handoffs/M03a-durable-store.md) records the store foundation;
 the [M03b handoff](../handoffs/M03b-owned-characters.md) and
 [receipt](../coverage/evidence/M03b-owned-characters.json) record 539 CPU CTests,
-ten additional standalone Tools checks and protected package/API gates.
+ten additional standalone Tools checks and protected package/API gates. The
+[M03c handoff](../handoffs/M03c-atomic-transactions.md) and
+[receipt](../coverage/evidence/M03c-atomic-transactions.json) record 553 CPU CTests,
+ten standalone Tools checks and protected package/API qualification for atomic
+economic transfers and durable operation retention/expiry.
 Follow [ADR 0007](../architecture/0007-mmorpg-architecture.md),
 [durable identity rules](../architecture/0004-formats-and-identity.md),
 [existing session authority](../architecture/0012-owned-sessions.md) and
@@ -60,6 +64,13 @@ access, stale sessions and conflicting revisions reject. Neither an ECS handle
 nor a source-scene identifier grants durable ownership.
 
 ## M03c - Atomic transactions
+
+Implemented by [ADR 0017](../architecture/0017-atomic-durable-transactions.md) and
+the [transaction contract](../durable-transactions.md): one-way transfers of
+currency and one item, separate economic revisions, account-scoped monotonic
+operation identities and eight retained terminal outcomes. Schema 3 explicitly
+rejects versions 1/2 until M03e migration. The local qualification above closes
+this checkpoint; it does not close later recovery/restore work.
 
 Implement a small inventory/currency transaction fixture with server validation,
 multi-record atomicity, revisions, operation identity and an auditable retained

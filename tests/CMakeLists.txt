@@ -67,6 +67,19 @@ if(TARGET EngineStorage)
     target_link_libraries(StorageCharacterProbe PRIVATE EngineStorage)
     shark_configure_target(StorageCharacterProbe)
     shark_classify_target(StorageCharacterProbe test)
+
+    add_executable(StorageTransactionTests storage_transaction_tests.cpp)
+    target_link_libraries(StorageTransactionTests PRIVATE EngineStorage SharkSQLite Catch2::Catch2WithMain)
+    target_include_directories(StorageTransactionTests PRIVATE "${PROJECT_SOURCE_DIR}/server/storage/src")
+    shark_configure_target(StorageTransactionTests)
+    shark_classify_target(StorageTransactionTests test)
+    add_test(NAME shark.storage.transactions COMMAND StorageTransactionTests "[storage-transactions]" --rng-seed 1337)
+    set_tests_properties(shark.storage.transactions PROPERTIES LABELS "cpu;unit;server;integration" TIMEOUT 90)
+
+    add_executable(StorageTransactionProbe storage_transaction_probe.cpp)
+    target_link_libraries(StorageTransactionProbe PRIVATE EngineStorage)
+    shark_configure_target(StorageTransactionProbe)
+    shark_classify_target(StorageTransactionProbe test)
 endif()
 
 if(TARGET EngineTools)
@@ -358,6 +371,12 @@ if(TARGET EngineStorage)
             --fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures/network"
             --output "${CMAKE_CURRENT_BINARY_DIR}/storage-characters-process.json")
     set_tests_properties(shark.storage.characters-process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 180)
+    add_test(NAME shark.storage.transactions-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_storage_transactions_process.py"
+            --probe "$<TARGET_FILE:StorageTransactionProbe>"
+            --fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures/network"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/storage-transactions-process.json")
+    set_tests_properties(shark.storage.transactions-process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 180)
 endif()
 if(TARGET ProjectFilesProcess)
     add_test(NAME shark.tools.project-files-process

@@ -196,7 +196,7 @@ TEST_CASE("durable store identity survives close and reopen with owned snapshots
     CHECK(take(reopened->metadata()) == saved);
     reopened.reset();
     CHECK(saved.world == world());
-    CHECK(saved.schema_version == 2);
+    CHECK(saved.schema_version == 3);
 }
 
 TEST_CASE("separate stores receive distinct stable identities for the same world", "[storage]") {
@@ -270,7 +270,7 @@ TEST_CASE("opening a foreign SQLite database does not adopt or mutate it", "[sto
 TEST_CASE("durable storage headers reject future foreign and unsupported physical versions",
           "[storage]") {
     const std::array mutations{
-        Mutation{"future database schema", "PRAGMA user_version=3"},
+        Mutation{"future database schema", "PRAGMA user_version=4"},
         Mutation{"older database schema", "PRAGMA user_version=0"},
         Mutation{"foreign application", "PRAGMA application_id=1"},
         Mutation{"different page size", ""},
@@ -314,7 +314,7 @@ TEST_CASE("durable store rejects malformed metadata and altered schemas", "[stor
         Mutation{"oversized identity", "PRAGMA ignore_check_constraints=ON; UPDATE shark_store SET "
                                        "store_id=printf('%010000d',1)"},
         Mutation{"future row version",
-                 "PRAGMA ignore_check_constraints=ON; UPDATE shark_store SET schema_version=3"},
+                 "PRAGMA ignore_check_constraints=ON; UPDATE shark_store SET schema_version=4"},
         Mutation{"missing metadata table", "DROP TABLE shark_store"},
         Mutation{"added column", "ALTER TABLE shark_store ADD COLUMN unsupported TEXT"},
         Mutation{"additional table", "CREATE TABLE unsupported(value INTEGER)"},
@@ -387,18 +387,18 @@ TEST_CASE("storage creation commits one bounded fixed schema and metadata row", 
     CHECK(sqlite3_libversion_number() == SQLITE_VERSION_NUMBER);
     Database database{fixture.path};
     CHECK(database.scalar("PRAGMA application_id") == "1397246788");
-    CHECK(database.scalar("PRAGMA user_version") == "2");
+    CHECK(database.scalar("PRAGMA user_version") == "3");
     CHECK(database.scalar("PRAGMA page_size") == "4096");
     CHECK(database.scalar("PRAGMA journal_mode") == "delete");
     CHECK(database.scalar("PRAGMA integrity_check") == "ok");
     CHECK(database.scalar("SELECT count(*) FROM sqlite_schema WHERE name NOT LIKE 'sqlite_%'") ==
-          "4");
+          "6");
     CHECK(database.scalar("SELECT count(*) FROM shark_store") == "1");
     CHECK(database.scalar("SELECT singleton FROM shark_store") == "1");
     CHECK(database.scalar("SELECT store_id FROM shark_store") == metadata.id.value().to_string());
     CHECK(database.scalar("SELECT world_id FROM shark_store") ==
           metadata.world.value().to_string());
-    CHECK(database.scalar("SELECT schema_version FROM shark_store") == "2");
+    CHECK(database.scalar("SELECT schema_version FROM shark_store") == "3");
     CHECK(database.scalar("SELECT strict FROM pragma_table_list WHERE name='shark_store'") == "1");
 }
 

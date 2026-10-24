@@ -531,12 +531,19 @@ database, authorize a player or expose SQL. Human and terminal developers use th
 same API and noninteractive tests.
 
 M03b adds [owned durable characters](durable-characters.md) in EngineStorage,
-with schema-2 enrollment, ownership and character records. Legacy schema-1 files
-reject explicitly; migration is a later checkpoint. `shark.storage.characters`
+with enrollment, ownership and character records. M03c advances the active
+schema to 3 for [atomic economic transactions](durable-transactions.md). Legacy
+schema-1/2 files reject explicitly; migration is a later checkpoint. `shark.storage.characters`
 (60 seconds, seed 1337) and `shark.storage.characters-process` (180 seconds)
 exercise service/session admission and actual mTLS server/store restart.
 The original storage family also covers durable record validation and revision
 conflicts. No new dependency, bootstrap listener or database flag is needed.
+
+M03c adds `shark.storage.transactions` (90 seconds, seed 1337) and
+`shark.storage.transactions-process` (180 seconds), with test-only
+`StorageTransactionTests` and `StorageTransactionProbe` executables. They exercise
+real SQLite conservation, operation retention/expiry and authenticated competing
+intents across restart. Full game rules and live simulation remain later owners.
 
 The new test families are `shark.storage.store` (60 seconds, seed 1337),
 `shark.storage.process` (90 seconds) and `shark.tooling.storage-dependencies`

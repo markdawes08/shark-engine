@@ -93,7 +93,11 @@ current-machine evidence. **M03b, Owned durable characters, is complete:**
 revocation and revision-checked checkpoints across authenticated restart.
 Its [handoff](docs/handoffs/M03b-owned-characters.md) records 539 passing CPU CTests,
 ten additional standalone Tools checks and protected package/API gates.
-**M03c, Atomic transactions, is next** in the
+**M03c, Atomic transactions, is complete:** [atomic transfers](docs/durable-transactions.md)
+conserve the modeled currency/items and retain bounded durable retry outcomes.
+Its [handoff](docs/handoffs/M03c-atomic-transactions.md) records 553 passing CPU
+CTests, ten additional standalone Tools checks and protected package/API gates.
+**M03d, Runtime failure recovery, is next** in the
 [six-checkpoint plan](docs/roadmap/durable-state-plan.md). Full REQ-M03 remains NOT_RUN.
 Assignment 08, Project and scene persistence, completed its
 [four checkpoints](docs/roadmap/persistence-plan.md). 08a adds CPU project/scene

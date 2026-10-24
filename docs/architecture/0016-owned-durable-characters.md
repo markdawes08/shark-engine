@@ -78,3 +78,8 @@ state. They add no player storage protocol, administrative endpoint or arbitrary
 SQL path. Both human and terminal developers use the same CPU services and
 noninteractive fixtures. Public examples require no private SQLite/TLS headers,
 editor, GPU or LLM SDK. FeatureWorld and MMOWorld remain 10/M09.
+
+M03c amendment: [ADR 0017](0017-atomic-durable-transactions.md) advances the active
+schema to 3, adds bounded atomic economic transfers and retained operation
+outcomes, and explicitly rejects versions 1/2 until M03e migration. The
+earlier version and scope above describe this ADR's original checkpoint.

@@ -63,13 +63,21 @@ CTests, ten additional standalone Tools checks and protected package/API gates.
 Its [handoff](docs/handoffs/M03b-owned-characters.md) and
 [receipt](docs/coverage/evidence/M03b-owned-characters.json) record 539 passing CPU
 CTests, ten additional standalone Tools checks and protected package/API gates.
-The next checkpoint is **M03c, Atomic transactions**, following the
+**M03c, Atomic transactions, is complete under the current-machine scope.**
+Its [handoff](docs/handoffs/M03c-atomic-transactions.md) and
+[receipt](docs/coverage/evidence/M03c-atomic-transactions.json) record 553 passing
+CPU CTests, ten additional standalone Tools checks and protected package/API gates.
+Follow [ADR 0017](docs/architecture/0017-atomic-durable-transactions.md) and the
+[transaction contract](docs/durable-transactions.md). Durable account sequences
+and eight retained outcomes prevent expired economic operations from executing
+again. The next checkpoint is **M03d, Runtime failure recovery**, following the
 [six durable-state checkpoints](docs/roadmap/durable-state-plan.md). Read
 [ADR 0015](docs/architecture/0015-durable-store.md) and the
 [store contract](docs/durable-store.md), [ADR 0016](docs/architecture/0016-owned-durable-characters.md)
 and [character contract](docs/durable-characters.md). Full REQ-M03 remains NOT_RUN.
-M03b persists bounded enrollment, revocation and owned character checkpoints in
-schema 2, with explicit nonmutating schema-1 rejection until M03e. One server
+M03b persists bounded enrollment, revocation and owned character checkpoints;
+M03c adds economic records and atomic outcomes in schema 3, with explicit
+nonmutating schema-1/2 rejection until M03e. One server
 CharacterAuthority owns Store and SessionAuthority. Account-only admission uses
 actual live mTLS; load/save require ready sequenced sessions. State passed to
 save is trusted server output, never player-authoritative snapshots. Do not

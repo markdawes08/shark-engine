@@ -83,7 +83,10 @@ FeatureWorld and MMOWorld attach in 10/M09. M03b is PASS under the current-machi
 scope: [the receipt](evidence/M03b-owned-characters.json) and
 [handoff](../handoffs/M03b-owned-characters.md) record 539 full CPU CTests,
 ten separately counted standalone Tools checks and protected package/API gates.
-M03c atomic transactions are next.
+M03c atomic transactions are also PASS under the current-machine scope;
+[the handoff](../handoffs/M03c-atomic-transactions.md) and
+[receipt](evidence/M03c-atomic-transactions.json) record 553 full CPU CTests, ten
+standalone Tools checks and protected package/API gates. M03d is next.
 
 `current_assignment: M03` follows the completed
 [five network checkpoints](../roadmap/network-plan.md) and
@@ -132,7 +135,7 @@ Runtime/Server builds, source/link/license closure and fresh isolated package
 checks pass; all 221 qualification source inputs were unchanged in that record.
 M02a-M02e and full REQ-M02 are PASS under the current-machine scope.
 Assignment 08, Project and scene persistence, is complete: 08a-08d and full
-REQ-08 are PASS. M03a-b are complete; M03c atomic transactions are next.
+REQ-08 are PASS. M03a-c are complete; M03d runtime failure recovery is next.
 FeatureWorld integration remains assignment 10.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
@@ -354,5 +357,14 @@ pass against 299 unchanged inputs and 18 helpers. The
 [handoff](../handoffs/08d-integrated-qualification.md) and
 [receipt](evidence/08d-integrated-qualification.json) retain exact evidence,
 including the corrected final file-case inventory. M03 separately owns live
-player/economy durability; its store and character checkpoints are complete,
-with M03c atomic transactions next.
+player/economy durability; its store, character and atomic transaction checkpoints
+are complete, with M03d runtime failure recovery next.
+
+M03c maps `server.durable-transactions` to `shark.storage.transactions`,
+`shark.storage.transactions-process` and authenticated owner regressions in
+`shark.storage.characters`. The [transaction contract](../durable-transactions.md)
+defines conservation, expected economic revisions, complete-payload retries,
+terminal business outcomes and a permanently advanced operation high-water mark.
+The completed [M03c handoff](../handoffs/M03c-atomic-transactions.md) records
+exact source/receipt counts and current-machine qualification. Economic fixtures are external CPU
+fixtures; FeatureWorld/MMOWorld remain 10/M09. Full REQ-M03 remains NOT_RUN.

@@ -6,10 +6,12 @@ M03a introduced a server-only local database owner in
 trust boundary and compatibility decision. This document defines behavior;
 it does not itself assert that qualification has passed. The
 [M03 requirements](coverage/requirements.json) include later character,
-transaction, migration and recovery gates. M03b extends the active schema to 2
-and supplies [owned durable characters](durable-characters.md), following
-[ADR 0016](architecture/0016-owned-durable-characters.md). The earlier M03a
-handoff retains historical schema-1 evidence.
+transaction, migration and recovery gates. M03b supplies
+[owned durable characters](durable-characters.md), following
+[ADR 0016](architecture/0016-owned-durable-characters.md). M03c advances the active
+schema to 3 with [atomic economic transactions](durable-transactions.md), following
+[ADR 0017](architecture/0017-atomic-durable-transactions.md). Earlier handoffs
+retain their historical schema-1/2 evidence.
 
 ## Public owner and identity
 
@@ -18,15 +20,15 @@ initialization commits. `Store::open(path, expected_world)` returns the same
 owner type after validating an existing supported database. Neither operation
 accepts SQL, credentials, source-scene files or a generic mutable record bag.
 `metadata()` returns an owned `StoreMetadata` value containing typed `StoreId`,
-typed `WorldId` and `schema_version`. Schema version is independently fixed at 2;
+typed `WorldId` and `schema_version`. Schema version is independently fixed at 3;
 source JSON, component and gameplay-wire version numbers do not set it.
 
 The store generates a new persistent store ID through the existing OS-entropy
 UUID implementation. Reopen preserves that ID and the configured world. A
 valid stable ID identifies data, but grants no session, character or region
 authority. [CharacterAuthority](durable-characters.md) connects durable account,
-enrollment and character records to live session authorization. The database
-does not yet hold inventory, currency or operation-result records.
+enrollment and character records to live session authorization. M03c adds bounded currency/item records, operation high-water marks and retained
+transaction outcomes; these do not constitute a full game inventory.
 
 The owner is neither copyable nor movable. Keep every operation and destruction
 on its creating thread; SQLite's connection uses `NOMUTEX` under this ownership
@@ -69,12 +71,12 @@ the raw header must contain all of the following:
 | --- | --- |
 | SQLite file signature | `SQLite format 3` followed by NUL |
 | Application ID | `0x53484B44` |
-| User schema version | `2` |
+| User schema version | `3` |
 | Page size | `4096` bytes |
 | File read/write versions | Both `1`, the rollback-journal format |
 | Main-file size | Within `maximum_store_bytes`, 16 MiB |
 
-Foreign, legacy version-1, future headers and incomplete initialization reject without SQLite
+Foreign, legacy version-1/2, future headers and incomplete initialization reject without SQLite
 recovery or database mutation. No new database is silently substituted. A
 recognized supported header permits SQLite to recover a hot journal, after
 which the exact schema, metadata identity, expected world and integrity check
@@ -88,13 +90,15 @@ SQLite permits a read/write request to fall back to read-only, so an open return
 code alone is insufficient. [Open flags](https://www.sqlite.org/c3ref/open.html),
 [actual connection mode](https://www.sqlite.org/c3ref/db_readonly.html)
 
-M03b supports only its exact version-2 schema. Unsupported versions, additional
+M03c supports only its exact version-3 schema. Unsupported versions, additional
 schema objects or incompatible metadata reject; opening does not run a migration
 or rewrite them. Schema changes require an explicit compatibility decision and
 real-store fixtures in their owning checkpoint.
 
-The schema contains four fixed STRICT tables: metadata, accounts, certificate
-enrollment and characters, plus only their expected uniqueness autoindexes.
+The schema contains six fixed STRICT tables: metadata, accounts, certificate
+enrollment, characters, economic records and retained transaction receipts, plus
+only their expected uniqueness autoindexes. Accounts include a durable operation
+high-water mark; the bounded economic contract defines receipt retention.
 Canonical DDL lives in [store.cpp](../server/storage/src/store.cpp); inspection
 compares complete stored DDL and expected indexes, not only column names.
 The `shark_store` metadata table must contain exactly one row:
@@ -104,7 +108,7 @@ The `shark_store` metadata table must contain exactly one row:
 | `singleton` | INTEGER primary key, value `1`, constrained to `1` |
 | `store_id` | Non-null TEXT of length 36, parsed as lowercase canonical UUIDv4 |
 | `world_id` | Non-null TEXT of length 36, parsed as lowercase canonical UUIDv4 and matched to the caller's expected world |
-| `schema_version` | Non-null INTEGER, constrained to and equal to `2` |
+| `schema_version` | Non-null INTEGER, constrained to and equal to `3` |
 
 Both IDs use the existing validated non-nil identity type. The database
 application/user versions, exact schema, `quick_check(1)` result and sole row are
@@ -112,7 +116,9 @@ checked while holding the exclusive transaction. Equivalent-looking rewritten
 DDL is not automatically accepted as a compatible schema. Every account,
 enrollment and character row is bounded and validated before returning the owner,
 including immutable identity uniqueness, ownership references, boolean tombstones,
-nonwrapping revisions, shared Name/WorldPosition rules and roster capacity.
+nonwrapping revisions, shared Name/WorldPosition rules and roster capacity. Economic records, high-water marks and complete contiguous
+receipt windows additionally validate bounded values, ownership, outcome semantics
+and consistent historical revisions before admission.
 The complete validated registry is held as bounded owned values; no borrowed
 database value or native handle crosses a public call.
 
@@ -135,7 +141,7 @@ without Server do not populate the SQLite archive.
 | Mapped database I/O | Disabled |
 | Temporary storage | Memory, without a claim of a separate hard heap cap |
 | Foreign-key enforcement | Enabled |
-| Public query surface | Fixed typed metadata, registry, ownership and character operations; no SQL |
+| Public query surface | Fixed typed metadata, registry, character and economic operations; no SQL |
 
 Verify effective settings rather than trusting that a PRAGMA was accepted.
 Setting a maximum page count cannot shrink an already larger database. Exclusive
@@ -183,12 +189,11 @@ recover. Never report a rollback merely because the caller received an error.
 An interrupted initializer either leaves supported committed metadata that
 reopens, or fails validation without granting a usable owner.
 
-This checkpoint has no economic mutation API, durable retry result, backup or
-migration command. Subsequent M03 work must atomically persist a mutation and its
-operation result, reject stale revisions and expired operation identities,
-preserve acknowledged effects, and fence late completions before integrating
-them into live state. The full commit/outage/migration/restore matrix remains
-separate from initialization tests. Ordinary process termination demonstrates
+M03c adds atomic economic mutations and retained retry results through the
+[transaction contract](durable-transactions.md). Its persistent high-water marks
+prevent expired operation identities from executing again. The full
+commit/outage/completion-fencing matrix remains M03d; migration and restore remain
+M03e. No backup or migration command is introduced by the transaction fixture. Ordinary process termination demonstrates
 software recovery on this PC; it does not simulate physical host or disk loss.
 
 ## Public C++ example

@@ -447,7 +447,50 @@ TEST_CASE("schema one stores reject before any write and preserve their legacy b
     CHECK_FALSE(fs::exists(fs::path{fixture.path.string() + "-journal"}));
 }
 
-TEST_CASE("schema two rejects malformed durable records foreign keys and altered indexes",
+TEST_CASE("schema two stores with owned records reject unchanged without implicit migration",
+          "[storage]") {
+    Fixture fixture;
+    // Independently authored historical schema, never derived by downgrading a v3 file.
+    raw(fixture.path,
+        "PRAGMA page_size=4096; PRAGMA application_id=1397246788; PRAGMA user_version=2;"
+        "CREATE TABLE shark_store(singleton INTEGER PRIMARY KEY CHECK(singleton=1),"
+        "store_id TEXT NOT NULL CHECK(length(store_id)=36),"
+        "world_id TEXT NOT NULL CHECK(length(world_id)=36),"
+        "schema_version INTEGER NOT NULL CHECK(schema_version=2)) STRICT;"
+        "CREATE TABLE shark_accounts(account_id TEXT PRIMARY KEY NOT NULL "
+        "CHECK(length(account_id)=36),"
+        "revoked INTEGER NOT NULL CHECK(revoked IN(0,1)),"
+        "roster_revision INTEGER NOT NULL CHECK(roster_revision>=1)) STRICT;"
+        "CREATE TABLE shark_certificates(certificate BLOB PRIMARY KEY NOT NULL "
+        "CHECK(length(certificate)=32),account_id TEXT NOT NULL REFERENCES "
+        "shark_accounts(account_id),"
+        "revoked INTEGER NOT NULL CHECK(revoked IN(0,1))) STRICT;"
+        "CREATE TABLE shark_characters(character_id TEXT PRIMARY KEY NOT NULL "
+        "CHECK(length(character_id)=36),account_id TEXT NOT NULL REFERENCES "
+        "shark_accounts(account_id),"
+        "entity_id TEXT NOT NULL UNIQUE CHECK(length(entity_id)=36),"
+        "revision INTEGER NOT NULL CHECK(revision>=1),"
+        "name TEXT NOT NULL CHECK(length(CAST(name AS BLOB)) BETWEEN 1 AND 256),"
+        "cell_x INTEGER NOT NULL CHECK(cell_x BETWEEN -2147483648 AND 2147483647),"
+        "cell_y INTEGER NOT NULL CHECK(cell_y BETWEEN -2147483648 AND 2147483647),"
+        "cell_z INTEGER NOT NULL CHECK(cell_z BETWEEN -2147483648 AND 2147483647),"
+        "offset_x REAL NOT NULL CHECK(offset_x>=0 AND offset_x<1024),"
+        "offset_y REAL NOT NULL CHECK(offset_y>=0 AND offset_y<1024),"
+        "offset_z REAL NOT NULL CHECK(offset_z>=0 AND offset_z<1024)) STRICT;"
+        "INSERT INTO shark_store VALUES(1,'00000000-0000-4000-8000-000000000001',"
+        "'00000000-0000-4000-8000-000000000384',2);"
+        "INSERT INTO shark_accounts VALUES('00000000-0000-4000-8000-000000000002',0,2);"
+        "INSERT INTO shark_characters VALUES('00000000-0000-4000-8000-000000000003',"
+        "'00000000-0000-4000-8000-000000000002','00000000-0000-4000-8000-000000000004',"
+        "1,'Legacy owned character',0,0,0,0.0,0.0,0.0);",
+        true);
+    const auto before = bytes(fixture.path);
+    rejected(Store::open(fixture.path, world()), ErrorCode::invalid_configuration);
+    CHECK(bytes(fixture.path) == before);
+    CHECK_FALSE(fs::exists(fs::path{fixture.path.string() + "-journal"}));
+}
+
+TEST_CASE("schema three rejects malformed durable records foreign keys and altered indexes",
           "[storage]") {
     const std::array mutations{
         "UPDATE shark_accounts SET account_id='00000000-0000-4000-8000-00000000000A'",
@@ -492,7 +535,7 @@ TEST_CASE("schema two rejects malformed durable records foreign keys and altered
     }
 }
 
-TEST_CASE("schema two rejects oversized persisted registries before exposing their records",
+TEST_CASE("schema three rejects oversized persisted registries before exposing their records",
           "[storage]") {
     for (const std::string_view kind : {"accounts", "certificates", "characters", "roster"}) {
         DYNAMIC_SECTION(kind) {
@@ -505,7 +548,8 @@ TEST_CASE("schema two rejects oversized persisted registries before exposing the
             std::string sql = "BEGIN;";
             const unsigned accounts = kind == "accounts" ? 65U : (kind == "characters" ? 17U : 1U);
             for (unsigned i = 2; i <= accounts; ++i) {
-                sql += "INSERT INTO shark_accounts VALUES('" + identity(i).to_string() + "',0,9);";
+                sql +=
+                    "INSERT INTO shark_accounts VALUES('" + identity(i).to_string() + "',0,9,0);";
             }
             if (kind == "certificates") {
                 for (unsigned i = 2; i <= 129; ++i) {

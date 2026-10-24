@@ -9,6 +9,7 @@
 #include <cstdint>
 #include <filesystem>
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace shark::storage {
@@ -16,13 +17,15 @@ namespace shark::storage {
 struct StoreIdDomain;
 using StoreId = TypedId<StoreIdDomain>;
 
-inline constexpr std::uint32_t store_schema_version = 2;
+inline constexpr std::uint32_t store_schema_version = 3;
 inline constexpr std::uint64_t maximum_store_bytes = 16 * 1024 * 1024;
 inline constexpr std::size_t maximum_durable_accounts = 64;
 inline constexpr std::size_t maximum_durable_characters = 128;
 inline constexpr std::size_t maximum_durable_certificates = 128;
 inline constexpr std::size_t maximum_characters_per_account = 8;
 inline constexpr std::uint64_t maximum_durable_revision = 0x7fffffffffffffffULL;
+inline constexpr std::uint64_t maximum_economy_amount = 1'000'000'000;
+inline constexpr std::size_t retained_operation_receipts = 8;
 
 struct StoreMetadata {
     StoreId id;
@@ -72,6 +75,64 @@ struct CharacterRoster {
 };
 
 [[nodiscard]] Result<void> validate_character_state(const CharacterState& state, WorldId world);
+
+// A deliberately small conservation fixture, not a general inventory or item catalog.
+struct EconomyState {
+    std::uint64_t currency;
+    std::uint64_t item_units;
+    bool operator==(const EconomyState&) const = default;
+};
+struct EconomyRecord {
+    net::AccountId account;
+    net::CharacterId character;
+    std::uint64_t revision;
+    EconomyState state;
+    bool operator==(const EconomyRecord&) const = default;
+};
+struct OperationId {
+    StoreId store;
+    net::AccountId actor;
+    std::uint64_t sequence;
+    bool operator==(const OperationId&) const = default;
+};
+struct TransferRequest {
+    OperationId operation;
+    net::CharacterId source;
+    net::CharacterId target;
+    std::uint64_t expected_source_revision;
+    std::uint64_t expected_target_revision;
+    EconomyState quantity;
+    bool operator==(const TransferRequest&) const = default;
+};
+enum class TransferStatus : std::uint8_t {
+    committed,
+    stale_revision,
+    insufficient_assets,
+    capacity_exceeded,
+    target_unavailable,
+    revision_exhausted
+};
+struct TransferReceipt {
+    TransferRequest request;
+    TransferStatus status;
+    std::optional<EconomyRecord> source;
+    std::optional<EconomyRecord> target;
+    bool operator==(const TransferReceipt&) const = default;
+};
+struct TransferResult {
+    TransferReceipt receipt;
+    bool replayed;
+    bool operator==(const TransferResult&) const = default;
+};
+struct OperationStream {
+    StoreId store;
+    net::AccountId actor;
+    std::uint64_t high_watermark;
+    std::vector<TransferReceipt> receipts;
+    bool operator==(const OperationStream&) const = default;
+};
+[[nodiscard]] Result<void> validate_economy_state(const EconomyState& state);
+[[nodiscard]] Result<void> validate_transfer_request(const TransferRequest& request);
 
 // Server-only, creating-thread owner of a real local database. No public SQL or
 // native database handle. Parent directory must exist on local storage. Callers
@@ -123,6 +184,19 @@ class Store final {
                                                          net::CharacterId character,
                                                          std::uint64_t expected_revision,
                                                          const CharacterState& accepted_state);
+
+    // Trusted provisioning only, once per character. No arbitrary later grants.
+    [[nodiscard]] Result<EconomyRecord> initialize_economy(net::AccountId account,
+                                                           net::CharacterId character,
+                                                           const EconomyState& initial);
+    [[nodiscard]] Result<EconomyRecord> economy(net::AccountId account,
+                                                net::CharacterId character) const;
+    // Exact next sequence admits one durable terminal outcome. Retained equal
+    // retries return that same outcome before current revisions are considered.
+    // Mismatched, expired or gapped operation IDs reject without admission.
+    [[nodiscard]] Result<TransferResult> transfer(const TransferRequest& request);
+    // Owned, bounded trusted audit; receipts include committed business rejects.
+    [[nodiscard]] Result<OperationStream> operation_stream(net::AccountId actor) const;
 
   private:
     struct Impl;

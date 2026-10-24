@@ -220,6 +220,19 @@ Result<bool> CharacterAuthority::revoke_session(net::SessionId session) {
     return impl_->sessions->revoke_session(session);
 }
 
+Result<EconomyRecord> CharacterAuthority::initialize_economy(net::AccountId account,
+                                                             net::CharacterId character,
+                                                             const EconomyState& initial) {
+    if (auto result = impl_->check("storage.characters.initialize_economy"); !result) {
+        return result.error();
+    }
+    auto stored = impl_->store->initialize_economy(account, character, initial);
+    if (!stored) {
+        return impl_->storage_error(stored.error());
+    }
+    return stored;
+}
+
 Result<CharacterRoster> CharacterAuthority::roster(net::TlsTransport& transport,
                                                    net::AccountId account, MonotonicTime now) {
     if (auto result = impl_->check("storage.characters.roster"); !result) {
@@ -319,6 +332,72 @@ Result<CharacterRecord> CharacterAuthority::save(net::TlsTransport& transport,
         return impl_->storage_error(saved.error());
     }
     return saved;
+}
+
+Result<EconomyRecord> CharacterAuthority::economy(net::TlsTransport& transport,
+                                                  const net::SessionEnvelope& authority,
+                                                  MonotonicTime now) {
+    auto session = impl_->current(transport, authority, now, "storage.characters.economy");
+    if (!session) {
+        return session.error();
+    }
+    auto admitted = impl_->sessions->apply(transport, net::HeartbeatRequest{authority}, now);
+    if (!admitted) {
+        return admitted.error();
+    }
+    auto stored = impl_->store->economy(session.value().account, session.value().character);
+    if (!stored) {
+        return impl_->storage_error(stored.error());
+    }
+    return stored;
+}
+
+Result<OperationStream> CharacterAuthority::operation_stream(net::TlsTransport& transport,
+                                                             const net::SessionEnvelope& authority,
+                                                             MonotonicTime now) {
+    auto session = impl_->current(transport, authority, now, "storage.characters.operation_stream");
+    if (!session) {
+        return session.error();
+    }
+    auto admitted = impl_->sessions->apply(transport, net::HeartbeatRequest{authority}, now);
+    if (!admitted) {
+        return admitted.error();
+    }
+    auto stored = impl_->store->operation_stream(session.value().account);
+    if (!stored) {
+        return impl_->storage_error(stored.error());
+    }
+    return stored;
+}
+
+Result<TransferResult> CharacterAuthority::transfer(net::TlsTransport& transport,
+                                                    const net::SessionEnvelope& authority,
+                                                    const TransferRequest& request,
+                                                    MonotonicTime now) {
+    constexpr auto operation = "storage.characters.transfer";
+    auto session = impl_->current(transport, authority, now, operation);
+    if (!session) {
+        return session.error();
+    }
+    // Durable retry identity is separate from the live command envelope. A new
+    // session may resolve an owned old operation; copied account/character IDs
+    // never authorize it, even if its retained receipt exists.
+    if (request.operation.actor != session.value().account ||
+        request.source != session.value().character) {
+        return rejected(operation);
+    }
+    if (auto result = validate_transfer_request(request); !result) {
+        return result.error();
+    }
+    auto admitted = impl_->sessions->apply(transport, net::HeartbeatRequest{authority}, now);
+    if (!admitted) {
+        return admitted.error();
+    }
+    auto stored = impl_->store->transfer(request);
+    if (!stored) {
+        return impl_->storage_error(stored.error());
+    }
+    return stored;
 }
 
 } // namespace shark::storage

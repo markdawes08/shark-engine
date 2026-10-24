@@ -117,7 +117,7 @@ def validate_scenarios(phases: list[dict]) -> None:
                     require(integer(value.get(key), expected), name + ": incorrect server " + key)
         result = processes[-1]["result"]
         require(uuid(result.get("store_id")) and result.get("world_id") == WORLD
-                and integer(result.get("schema_version"), 2), "character store metadata differs")
+                and integer(result.get("schema_version"), 3), "character store metadata differs")
         if original_store is None:
             original_store = result["store_id"]
         require(result["store_id"] == original_store, "server restart changed StoreId")

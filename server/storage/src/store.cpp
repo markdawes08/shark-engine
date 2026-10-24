@@ -31,11 +31,12 @@ constexpr std::string_view table_sql =
     "CREATE TABLE shark_store(singleton INTEGER PRIMARY KEY CHECK(singleton=1),"
     "store_id TEXT NOT NULL CHECK(length(store_id)=36),"
     "world_id TEXT NOT NULL CHECK(length(world_id)=36),"
-    "schema_version INTEGER NOT NULL CHECK(schema_version=2)) STRICT";
+    "schema_version INTEGER NOT NULL CHECK(schema_version=3)) STRICT";
 constexpr std::string_view accounts_sql =
     "CREATE TABLE shark_accounts(account_id TEXT PRIMARY KEY NOT NULL CHECK(length(account_id)=36),"
     "revoked INTEGER NOT NULL CHECK(revoked IN(0,1)),"
-    "roster_revision INTEGER NOT NULL CHECK(roster_revision>=1)) STRICT";
+    "roster_revision INTEGER NOT NULL CHECK(roster_revision>=1),"
+    "operation_sequence INTEGER NOT NULL CHECK(operation_sequence>=0)) STRICT";
 constexpr std::string_view certificates_sql =
     "CREATE TABLE shark_certificates(certificate BLOB PRIMARY KEY NOT NULL "
     "CHECK(length(certificate)=32),"
@@ -54,6 +55,34 @@ constexpr std::string_view characters_sql =
     "offset_x REAL NOT NULL CHECK(offset_x>=0 AND offset_x<1024),"
     "offset_y REAL NOT NULL CHECK(offset_y>=0 AND offset_y<1024),"
     "offset_z REAL NOT NULL CHECK(offset_z>=0 AND offset_z<1024)) STRICT";
+constexpr std::string_view economy_sql =
+    "CREATE TABLE shark_economy(character_id TEXT PRIMARY KEY NOT NULL "
+    "REFERENCES shark_characters(character_id),"
+    "revision INTEGER NOT NULL CHECK(revision>=1),"
+    "currency INTEGER NOT NULL CHECK(currency BETWEEN 0 AND 1000000000),"
+    "item_units INTEGER NOT NULL CHECK(item_units BETWEEN 0 AND 1000000000)) STRICT";
+constexpr std::string_view receipts_sql =
+    "CREATE TABLE shark_transfer_receipts(actor_id TEXT NOT NULL "
+    "REFERENCES shark_accounts(account_id),"
+    "sequence INTEGER NOT NULL CHECK(sequence>=1),"
+    "source_id TEXT NOT NULL REFERENCES shark_economy(character_id),"
+    "target_id TEXT NOT NULL CHECK(length(target_id)=36),"
+    "expected_source_revision INTEGER NOT NULL CHECK(expected_source_revision>=1),"
+    "expected_target_revision INTEGER NOT NULL CHECK(expected_target_revision>=1),"
+    "currency INTEGER NOT NULL CHECK(currency BETWEEN 0 AND 1000000000),"
+    "item_units INTEGER NOT NULL CHECK(item_units BETWEEN 0 AND 1000000000),"
+    "status INTEGER NOT NULL CHECK(status BETWEEN 0 AND 5),"
+    "source_revision INTEGER NOT NULL CHECK(source_revision>=1),"
+    "source_currency INTEGER NOT NULL CHECK(source_currency BETWEEN 0 AND 1000000000),"
+    "source_items INTEGER NOT NULL CHECK(source_items BETWEEN 0 AND 1000000000),"
+    "target_revision INTEGER CHECK(target_revision>=1),"
+    "target_currency INTEGER CHECK(target_currency BETWEEN 0 AND 1000000000),"
+    "target_items INTEGER CHECK(target_items BETWEEN 0 AND 1000000000),"
+    "PRIMARY KEY(actor_id,sequence),CHECK(source_id<>target_id),"
+    "CHECK(currency>0 OR item_units>0),"
+    "CHECK((status=4 AND target_revision IS NULL AND target_currency IS NULL AND "
+    "target_items IS NULL) OR (status<>4 AND target_revision IS NOT NULL AND "
+    "target_currency IS NOT NULL AND target_items IS NOT NULL))) STRICT";
 thread_local detail::CreateHook create_hook = nullptr;
 thread_local detail::WriteFaultHook write_fault_hook = nullptr;
 
@@ -386,7 +415,8 @@ Result<void> configure(Connection& connection) {
 }
 
 Result<void> create_schema(Connection& connection, const StoreMetadata& metadata) {
-    for (const auto sql : {table_sql, accounts_sql, certificates_sql, characters_sql}) {
+    for (const auto sql :
+         {table_sql, accounts_sql, certificates_sql, characters_sql, economy_sql, receipts_sql}) {
         if (auto result = connection.execute(sql.data()); !result) {
             return result.error();
         }
@@ -395,7 +425,7 @@ Result<void> create_schema(Connection& connection, const StoreMetadata& metadata
         create_hook(detail::CreatePhase::schema_written);
     }
     Statement insert;
-    if (auto result = prepare(connection, insert, "INSERT INTO shark_store VALUES(1,?1,?2,2)");
+    if (auto result = prepare(connection, insert, "INSERT INTO shark_store VALUES(1,?1,?2,3)");
         !result) {
         return result.error();
     }
@@ -413,7 +443,7 @@ Result<void> create_schema(Connection& connection, const StoreMetadata& metadata
     if (step != SQLITE_DONE) {
         return connection.error(step);
     }
-    return connection.execute("PRAGMA application_id=1397246788; PRAGMA user_version=2");
+    return connection.execute("PRAGMA application_id=1397246788; PRAGMA user_version=3");
 }
 
 Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world) {
@@ -441,11 +471,16 @@ Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world) {
         SchemaObject{"table", "shark_accounts", "shark_accounts", accounts_sql},
         SchemaObject{"table", "shark_certificates", "shark_certificates", certificates_sql},
         SchemaObject{"table", "shark_characters", "shark_characters", characters_sql},
+        SchemaObject{"table", "shark_economy", "shark_economy", economy_sql},
         SchemaObject{"table", "shark_store", "shark_store", table_sql},
+        SchemaObject{"table", "shark_transfer_receipts", "shark_transfer_receipts", receipts_sql},
         SchemaObject{"index", "sqlite_autoindex_shark_accounts_1", "shark_accounts", {}},
         SchemaObject{"index", "sqlite_autoindex_shark_certificates_1", "shark_certificates", {}},
         SchemaObject{"index", "sqlite_autoindex_shark_characters_1", "shark_characters", {}},
         SchemaObject{"index", "sqlite_autoindex_shark_characters_2", "shark_characters", {}},
+        SchemaObject{"index", "sqlite_autoindex_shark_economy_1", "shark_economy", {}},
+        SchemaObject{
+            "index", "sqlite_autoindex_shark_transfer_receipts_1", "shark_transfer_receipts", {}},
     };
     for (const auto& object : objects) {
         const auto status = sqlite3_step(schema.value);
@@ -456,7 +491,7 @@ Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world) {
             !text_is(schema.value, 1, object.name) || !text_is(schema.value, 2, object.table) ||
             (object.sql.empty() ? sqlite3_column_type(schema.value, 3) != SQLITE_NULL
                                 : !text_is(schema.value, 3, object.sql))) {
-            return connection.invalid("database schema differs from supported version 2");
+            return connection.invalid("database schema differs from supported version 3");
         }
     }
     auto step = sqlite3_step(schema.value);
@@ -693,6 +728,311 @@ Result<DurableRegistry> read_registry(const Connection& connection, WorldId worl
     return registry;
 }
 
+struct EconomyLedger {
+    std::vector<EconomyRecord> records;
+    std::vector<OperationStream> streams;
+};
+
+TransferStatus decide_transfer(const TransferRequest& request, const EconomyRecord& source,
+                               const std::optional<EconomyRecord>& target) {
+    if (!target) {
+        return TransferStatus::target_unavailable;
+    }
+    if (source.revision != request.expected_source_revision ||
+        target->revision != request.expected_target_revision) {
+        return TransferStatus::stale_revision;
+    }
+    if (source.revision == maximum_durable_revision ||
+        target->revision == maximum_durable_revision) {
+        return TransferStatus::revision_exhausted;
+    }
+    if (source.state.currency < request.quantity.currency ||
+        source.state.item_units < request.quantity.item_units) {
+        return TransferStatus::insufficient_assets;
+    }
+    if (target->state.currency > maximum_economy_amount - request.quantity.currency ||
+        target->state.item_units > maximum_economy_amount - request.quantity.item_units) {
+        return TransferStatus::capacity_exceeded;
+    }
+    return TransferStatus::committed;
+}
+
+// Every retained snapshot at a given character/revision must agree, including
+// the pre-state implied by a committed transfer. Later/pruned history is not
+// reconstructed, but retained receipts cannot contradict one another or the
+// current record and every committed pair conserves both modeled resources.
+Result<void> validate_receipts(const Connection& connection, const EconomyLedger& ledger) {
+    std::vector<EconomyRecord> snapshots;
+    std::vector<std::pair<net::CharacterId, std::uint64_t>> committed_revisions;
+    std::uint64_t pruned_operations = 0;
+    auto remember = [&](const EconomyRecord& snapshot) -> Result<void> {
+        const auto current =
+            std::find_if(ledger.records.begin(), ledger.records.end(),
+                         [&](const auto& value) { return value.character == snapshot.character; });
+        if (current == ledger.records.end() || current->account != snapshot.account ||
+            snapshot.revision == 0 || snapshot.revision > current->revision ||
+            !validate_economy_state(snapshot.state) ||
+            (snapshot.revision == current->revision && snapshot != *current)) {
+            return connection.invalid("receipt snapshot contradicts durable economy");
+        }
+        const auto previous =
+            std::find_if(snapshots.begin(), snapshots.end(), [&](const auto& value) {
+                return value.character == snapshot.character && value.revision == snapshot.revision;
+            });
+        if (previous != snapshots.end()) {
+            if (*previous != snapshot) {
+                return connection.invalid("retained receipt snapshots disagree");
+            }
+        } else {
+            snapshots.push_back(snapshot);
+        }
+        return {};
+    };
+    for (const auto& stream : ledger.streams) {
+        std::vector<std::pair<net::CharacterId, std::uint64_t>> observed_revisions;
+        const auto count = static_cast<std::size_t>(
+            std::min<std::uint64_t>(stream.high_watermark, retained_operation_receipts));
+        if (stream.receipts.size() != count) {
+            return connection.invalid("operation stream does not retain its complete window");
+        }
+        const auto pruned = stream.high_watermark - count;
+        // Many independent account streams may approach INT64_MAX. Only a
+        // conservative revision bound is needed; never overflow their sum.
+        pruned_operations += std::min(pruned, maximum_durable_revision - pruned_operations);
+        auto sequence = stream.high_watermark - count;
+        for (const auto& receipt : stream.receipts) {
+            const auto& request = receipt.request;
+            if (request.operation.sequence != ++sequence ||
+                request.operation.actor != stream.actor ||
+                request.operation.store != stream.store || !receipt.source ||
+                receipt.source->account != stream.actor ||
+                receipt.source->character != request.source ||
+                (receipt.target && receipt.target->character != request.target) ||
+                !validate_transfer_request(request)) {
+                return connection.invalid("invalid retained operation identity or payload");
+            }
+            for (const auto* snapshot : {&receipt.source, &receipt.target}) {
+                if (!*snapshot) {
+                    continue;
+                }
+                const auto& value = snapshot->value();
+                const auto previous = std::find_if(
+                    observed_revisions.begin(), observed_revisions.end(),
+                    [&](const auto& observed) { return observed.first == value.character; });
+                if (previous == observed_revisions.end()) {
+                    observed_revisions.emplace_back(value.character, value.revision);
+                } else {
+                    if (value.revision < previous->second ||
+                        (receipt.status == TransferStatus::committed &&
+                         value.revision == previous->second)) {
+                        return connection.invalid(
+                            "operation history regresses or reuses a character revision");
+                    }
+                    previous->second = value.revision;
+                }
+                if (receipt.status == TransferStatus::committed) {
+                    const auto identity = std::pair{value.character, value.revision};
+                    if (std::find(committed_revisions.begin(), committed_revisions.end(),
+                                  identity) != committed_revisions.end()) {
+                        return connection.invalid(
+                            "distinct transfers reuse a committed character revision");
+                    }
+                    committed_revisions.push_back(identity);
+                }
+            }
+            if (auto checked = remember(*receipt.source); !checked) {
+                return checked.error();
+            }
+            if (receipt.target) {
+                if (auto checked = remember(*receipt.target); !checked) {
+                    return checked.error();
+                }
+            }
+            if (receipt.status == TransferStatus::committed) {
+                if (!receipt.target ||
+                    request.expected_source_revision == maximum_durable_revision ||
+                    request.expected_target_revision == maximum_durable_revision ||
+                    receipt.source->revision != request.expected_source_revision + 1 ||
+                    receipt.target->revision != request.expected_target_revision + 1 ||
+                    receipt.source->state.currency >
+                        maximum_economy_amount - request.quantity.currency ||
+                    receipt.source->state.item_units >
+                        maximum_economy_amount - request.quantity.item_units ||
+                    receipt.target->state.currency < request.quantity.currency ||
+                    receipt.target->state.item_units < request.quantity.item_units) {
+                    return connection.invalid(
+                        "committed receipt has impossible revisions or values");
+                }
+                auto before_source = *receipt.source;
+                auto before_target = *receipt.target;
+                --before_source.revision;
+                --before_target.revision;
+                before_source.state.currency += request.quantity.currency;
+                before_source.state.item_units += request.quantity.item_units;
+                before_target.state.currency -= request.quantity.currency;
+                before_target.state.item_units -= request.quantity.item_units;
+                if (auto checked = remember(before_source); !checked) {
+                    return checked.error();
+                }
+                if (auto checked = remember(before_target); !checked) {
+                    return checked.error();
+                }
+            } else if (decide_transfer(request, *receipt.source, receipt.target) !=
+                       receipt.status) {
+                return connection.invalid("receipt business result disagrees with its snapshots");
+            }
+        }
+    }
+    for (const auto& record : ledger.records) {
+        const auto retained = static_cast<std::uint64_t>(std::count_if(
+            committed_revisions.begin(), committed_revisions.end(),
+            [&](const auto& identity) { return identity.first == record.character; }));
+        const auto possible =
+            pruned_operations + std::min(retained, maximum_durable_revision - pruned_operations);
+        const auto advances = record.revision - 1;
+        // Initialization starts at one; only a committed transfer increments a
+        // participant. Pruning can remove evidence of at most one such advance
+        // per operation. With complete history every advance is accounted for.
+        if (advances < retained || advances > possible) {
+            return connection.invalid(
+                "economy revision is not explained by durable operation history");
+        }
+    }
+    return {};
+}
+
+Result<EconomyLedger> read_economy(const Connection& connection, const StoreMetadata& metadata,
+                                   const DurableRegistry& registry) {
+    EconomyLedger ledger;
+    constexpr auto maximum_revision = static_cast<sqlite3_int64>(maximum_durable_revision);
+    constexpr auto maximum_amount = static_cast<sqlite3_int64>(maximum_economy_amount);
+    auto economies = read_rows(
+        connection,
+        "SELECT character_id,revision,currency,item_units FROM shark_economy ORDER BY character_id",
+        maximum_durable_characters, [&](sqlite3_stmt* row) -> Result<void> {
+            auto character = read_id(connection, row, 0);
+            if (!character) {
+                return character.error();
+            }
+            const auto owner = std::find_if(
+                registry.characters.begin(), registry.characters.end(),
+                [&](const auto& value) { return value.character.value() == character.value(); });
+            if (owner == registry.characters.end() || !valid_integer(row, 1, 1, maximum_revision) ||
+                !valid_integer(row, 2, 0, maximum_amount) ||
+                !valid_integer(row, 3, 0, maximum_amount)) {
+                return connection.invalid("invalid economy ownership, revision or value");
+            }
+            ledger.records.push_back({owner->account,
+                                      owner->character,
+                                      static_cast<std::uint64_t>(sqlite3_column_int64(row, 1)),
+                                      {static_cast<std::uint64_t>(sqlite3_column_int64(row, 2)),
+                                       static_cast<std::uint64_t>(sqlite3_column_int64(row, 3))}});
+            return {};
+        });
+    if (!economies) {
+        return economies.error();
+    }
+    auto streams = read_rows(
+        connection, "SELECT account_id,operation_sequence FROM shark_accounts ORDER BY account_id",
+        maximum_durable_accounts, [&](sqlite3_stmt* row) -> Result<void> {
+            auto account = read_id(connection, row, 0);
+            if (!account) {
+                return account.error();
+            }
+            if (!valid_integer(row, 1, 0, maximum_revision)) {
+                return connection.invalid("invalid durable operation high watermark");
+            }
+            ledger.streams.push_back({metadata.id,
+                                      net::AccountId{account.value()},
+                                      static_cast<std::uint64_t>(sqlite3_column_int64(row, 1)),
+                                      {}});
+            return {};
+        });
+    if (!streams) {
+        return streams.error();
+    }
+    auto receipts = read_rows(
+        connection,
+        "SELECT actor_id,sequence,source_id,target_id,expected_source_revision,"
+        "expected_target_revision,currency,item_units,status,source_revision,source_currency,"
+        "source_items,target_revision,target_currency,target_items FROM shark_transfer_receipts "
+        "ORDER BY actor_id,sequence",
+        maximum_durable_accounts * retained_operation_receipts,
+        [&](sqlite3_stmt* row) -> Result<void> {
+            auto account = read_id(connection, row, 0);
+            auto source_id = read_id(connection, row, 2);
+            auto target_id = read_id(connection, row, 3);
+            if (!account)
+                return account.error();
+            if (!source_id)
+                return source_id.error();
+            if (!target_id)
+                return target_id.error();
+            for (const auto column : {1, 4, 5, 9}) {
+                if (!valid_integer(row, column, 1, maximum_revision)) {
+                    return connection.invalid("invalid receipt sequence or revision");
+                }
+            }
+            for (const auto column : {6, 7, 10, 11}) {
+                if (!valid_integer(row, column, 0, maximum_amount)) {
+                    return connection.invalid("invalid receipt resource value");
+                }
+            }
+            if (!valid_integer(row, 8, 0, 5)) {
+                return connection.invalid("invalid receipt result status");
+            }
+            const auto stream =
+                std::find_if(ledger.streams.begin(), ledger.streams.end(), [&](const auto& value) {
+                    return value.actor.value() == account.value();
+                });
+            if (stream == ledger.streams.end() ||
+                stream->receipts.size() == retained_operation_receipts) {
+                return connection.invalid("unknown or overfull receipt stream");
+            }
+            const auto number = [&](int column) {
+                return static_cast<std::uint64_t>(sqlite3_column_int64(row, column));
+            };
+            const auto actor = net::AccountId{account.value()};
+            TransferRequest request{{metadata.id, actor, number(1)},
+                                    net::CharacterId{source_id.value()},
+                                    net::CharacterId{target_id.value()},
+                                    number(4),
+                                    number(5),
+                                    {number(6), number(7)}};
+            const auto status = static_cast<TransferStatus>(sqlite3_column_int(row, 8));
+            EconomyRecord source{actor, request.source, number(9), {number(10), number(11)}};
+            std::optional<EconomyRecord> target;
+            if (status == TransferStatus::target_unavailable) {
+                for (const auto column : {12, 13, 14}) {
+                    if (sqlite3_column_type(row, column) != SQLITE_NULL) {
+                        return connection.invalid(
+                            "unavailable target receipt contains private state");
+                    }
+                }
+            } else {
+                const auto owner = std::find_if(
+                    ledger.records.begin(), ledger.records.end(),
+                    [&](const auto& value) { return value.character == request.target; });
+                if (owner == ledger.records.end() || !valid_integer(row, 12, 1, maximum_revision) ||
+                    !valid_integer(row, 13, 0, maximum_amount) ||
+                    !valid_integer(row, 14, 0, maximum_amount)) {
+                    return connection.invalid("invalid receipt target snapshot");
+                }
+                target = EconomyRecord{
+                    owner->account, request.target, number(12), {number(13), number(14)}};
+            }
+            stream->receipts.push_back({request, status, source, target});
+            return {};
+        });
+    if (!receipts) {
+        return receipts.error();
+    }
+    if (auto validated = validate_receipts(connection, ledger); !validated) {
+        return validated.error();
+    }
+    return ledger;
+}
+
 Result<void> bind_text(const Connection& connection, Statement& statement, int index,
                        std::string_view value) {
     const auto code = sqlite3_bind_text(statement.value, index, value.data(),
@@ -766,6 +1106,7 @@ struct Store::Impl {
     StoreMetadata metadata;
     std::thread::id thread;
     DurableRegistry records;
+    EconomyLedger economy;
     bool faulted{false};
 
     Result<void> guard(std::string_view operation) const {
@@ -791,8 +1132,19 @@ struct Store::Impl {
                             [&](const AccountRecord& record) { return record.account == id; });
     }
 
-    template <typename Function>
-    Result<void> write(DurableRegistry& candidate, Function&& execute) {
+    void publish(DurableRegistry& candidate) noexcept {
+        records.accounts.swap(candidate.accounts);
+        records.certificates.swap(candidate.certificates);
+        records.characters.swap(candidate.characters);
+    }
+
+    void publish(EconomyLedger& candidate) noexcept {
+        economy.records.swap(candidate.records);
+        economy.streams.swap(candidate.streams);
+    }
+
+    template <typename Candidate, typename Function>
+    Result<void> write(Candidate& candidate, Function&& execute) {
         if (auto begun = connection->execute("BEGIN EXCLUSIVE"); !begun) {
             return begun.error();
         }
@@ -823,9 +1175,7 @@ struct Store::Impl {
         }
         // Candidate values and return snapshots were allocated before BEGIN.
         // These vector swaps cannot fail after the durable commit.
-        records.accounts.swap(candidate.accounts);
-        records.certificates.swap(candidate.certificates);
-        records.characters.swap(candidate.characters);
+        publish(candidate);
         return {};
     }
 };
@@ -921,6 +1271,10 @@ Result<std::unique_ptr<Store>> Store::acquire(const std::filesystem::path& path,
     if (!records) {
         return records.error();
     }
+    auto economy = read_economy(*connection, inspected.value(), records.value());
+    if (!economy) {
+        return economy.error();
+    }
     if (create_new && create_hook != nullptr) {
         create_hook(detail::CreatePhase::before_commit);
     }
@@ -932,9 +1286,9 @@ Result<std::unique_ptr<Store>> Store::acquire(const std::filesystem::path& path,
     if (create_new && create_hook != nullptr) {
         create_hook(detail::CreatePhase::after_commit);
     }
-    auto impl =
-        std::make_unique<Impl>(Impl{std::move(connection), inspected.value(),
-                                    std::this_thread::get_id(), std::move(records).value()});
+    auto impl = std::make_unique<Impl>(Impl{std::move(connection), inspected.value(),
+                                            std::this_thread::get_id(), std::move(records).value(),
+                                            std::move(economy).value()});
     return std::unique_ptr<Store>(new Store(std::move(impl)));
 }
 
@@ -986,7 +1340,7 @@ Result<AccountRecord> Store::provision_account(net::AccountId account) {
     auto& connection = *impl_->connection;
     auto written = impl_->write(candidate, [&] {
         return change(
-            connection, "INSERT INTO shark_accounts VALUES(?1,0,1)",
+            connection, "INSERT INTO shark_accounts VALUES(?1,0,1,0)",
             [&](Statement& statement) { return bind_text(connection, statement, 1, id); });
     });
     if (!written) {
@@ -1258,6 +1612,305 @@ Result<CharacterRecord> Store::save_character(net::AccountId account, net::Chara
         return written.error();
     }
     return record;
+}
+
+Result<void> validate_economy_state(const EconomyState& state) {
+    if (state.currency > maximum_economy_amount || state.item_units > maximum_economy_amount) {
+        return failure(ErrorCode::invalid_argument, "storage.validate_economy_state",
+                       "economy values exceed the bounded capacity", {});
+    }
+    return {};
+}
+
+Result<void> validate_transfer_request(const TransferRequest& request) {
+    if (request.source == request.target || request.operation.sequence == 0 ||
+        request.operation.sequence > maximum_durable_revision ||
+        request.expected_source_revision == 0 ||
+        request.expected_source_revision > maximum_durable_revision ||
+        request.expected_target_revision == 0 ||
+        request.expected_target_revision > maximum_durable_revision ||
+        !validate_economy_state(request.quantity) ||
+        (request.quantity.currency == 0 && request.quantity.item_units == 0)) {
+        return failure(ErrorCode::invalid_argument, "storage.validate_transfer_request",
+                       "transfer requires distinct characters, bounded positive sequence/revisions "
+                       "and quantity",
+                       {});
+    }
+    return {};
+}
+
+Result<EconomyRecord> Store::initialize_economy(net::AccountId account, net::CharacterId character,
+                                                const EconomyState& initial) {
+    if (auto checked = impl_->guard("storage.initialize_economy"); !checked) {
+        return checked.error();
+    }
+    if (auto checked = validate_economy_state(initial); !checked) {
+        return failure(checked.error().code, "storage.initialize_economy", checked.error().message,
+                       impl_->connection->path);
+    }
+    const auto owner = impl_->account(account);
+    const auto found = std::find_if(
+        impl_->records.characters.begin(), impl_->records.characters.end(), [&](const auto& value) {
+            return value.character == character && value.account == account;
+        });
+    if (owner == impl_->records.accounts.end() || owner->revoked ||
+        found == impl_->records.characters.end()) {
+        return impl_->reject("economy initialization requires an active owning account");
+    }
+    if (std::any_of(impl_->economy.records.begin(), impl_->economy.records.end(),
+                    [&](const auto& value) { return value.character == character; })) {
+        return impl_->reject("character economy is already initialized");
+    }
+    const EconomyRecord record{account, character, 1, initial};
+    auto candidate = impl_->economy;
+    candidate.records.push_back(record);
+    std::sort(candidate.records.begin(), candidate.records.end(),
+              [](const auto& a, const auto& b) { return a.character < b.character; });
+    const auto id = character.value().to_string();
+    auto& connection = *impl_->connection;
+    auto written = impl_->write(candidate, [&] {
+        return change(connection, "INSERT INTO shark_economy VALUES(?1,1,?2,?3)",
+                      [&](Statement& statement) -> Result<void> {
+                          if (auto bound = bind_text(connection, statement, 1, id); !bound)
+                              return bound.error();
+                          if (auto bound = bind_integer(connection, statement, 2, initial.currency);
+                              !bound)
+                              return bound.error();
+                          return bind_integer(connection, statement, 3, initial.item_units);
+                      });
+    });
+    if (!written)
+        return written.error();
+    return record;
+}
+
+Result<EconomyRecord> Store::economy(net::AccountId account, net::CharacterId character) const {
+    if (auto checked = impl_->guard("storage.economy"); !checked) {
+        return checked.error();
+    }
+    const auto found = std::find_if(
+        impl_->economy.records.begin(), impl_->economy.records.end(), [&](const auto& value) {
+            return value.character == character && value.account == account;
+        });
+    if (found == impl_->economy.records.end()) {
+        return impl_->reject("unknown owned character economy");
+    }
+    return *found;
+}
+
+Result<OperationStream> Store::operation_stream(net::AccountId actor) const {
+    if (auto checked = impl_->guard("storage.operation_stream"); !checked) {
+        return checked.error();
+    }
+    if (impl_->account(actor) == impl_->records.accounts.end()) {
+        return impl_->reject("unknown operation account");
+    }
+    const auto found = std::find_if(impl_->economy.streams.begin(), impl_->economy.streams.end(),
+                                    [&](const auto& value) { return value.actor == actor; });
+    return found == impl_->economy.streams.end() ? OperationStream{impl_->metadata.id, actor, 0, {}}
+                                                 : *found;
+}
+
+Result<TransferResult> Store::transfer(const TransferRequest& request) {
+    if (auto checked = impl_->guard("storage.transfer"); !checked) {
+        return checked.error();
+    }
+    if (auto checked = validate_transfer_request(request); !checked) {
+        return failure(checked.error().code, "storage.transfer", checked.error().message,
+                       impl_->connection->path);
+    }
+    if (request.operation.store != impl_->metadata.id) {
+        return impl_->reject("operation belongs to a different store");
+    }
+    const auto actor = impl_->account(request.operation.actor);
+    const auto source = std::find_if(
+        impl_->economy.records.begin(), impl_->economy.records.end(), [&](const auto& value) {
+            return value.character == request.source && value.account == request.operation.actor;
+        });
+    if (actor == impl_->records.accounts.end() || actor->revoked ||
+        source == impl_->economy.records.end()) {
+        return impl_->reject(
+            "transfer requires an active account and its initialized source economy");
+    }
+    const auto stream =
+        std::find_if(impl_->economy.streams.begin(), impl_->economy.streams.end(),
+                     [&](const auto& value) { return value.actor == request.operation.actor; });
+    const auto high_watermark = stream == impl_->economy.streams.end() ? 0 : stream->high_watermark;
+    if (request.operation.sequence <= high_watermark) {
+        const auto receipt =
+            std::find_if(stream->receipts.begin(), stream->receipts.end(), [&](const auto& value) {
+                return value.request.operation.sequence == request.operation.sequence;
+            });
+        if (receipt == stream->receipts.end()) {
+            return failure(
+                ErrorCode::conflict, "storage.transfer.expired",
+                "operation is older than the retained outcome window and can never execute again",
+                impl_->connection->path);
+        }
+        if (receipt->request != request) {
+            return failure(
+                ErrorCode::conflict, "storage.transfer.mismatch",
+                "operation identity was already admitted with a different canonical payload",
+                impl_->connection->path);
+        }
+        return TransferResult{*receipt, true};
+    }
+    if (high_watermark == maximum_durable_revision ||
+        request.operation.sequence != high_watermark + 1) {
+        return failure(ErrorCode::conflict, "storage.transfer.sequence",
+                       "operation must use the exact next sequence without wrap",
+                       impl_->connection->path);
+    }
+    const auto target =
+        std::find_if(impl_->economy.records.begin(), impl_->economy.records.end(),
+                     [&](const auto& value) { return value.character == request.target; });
+    std::optional<EconomyRecord> accepted_target;
+    if (target != impl_->economy.records.end()) {
+        const auto owner = impl_->account(target->account);
+        if (owner != impl_->records.accounts.end() && !owner->revoked) {
+            accepted_target = *target;
+        }
+    }
+    const auto status = decide_transfer(request, *source, accepted_target);
+    TransferReceipt receipt{request, status, *source, accepted_target};
+    auto candidate = impl_->economy;
+    if (status == TransferStatus::committed) {
+        auto& debit = *receipt.source;
+        auto& credit = *receipt.target;
+        ++debit.revision;
+        ++credit.revision;
+        debit.state.currency -= request.quantity.currency;
+        debit.state.item_units -= request.quantity.item_units;
+        credit.state.currency += request.quantity.currency;
+        credit.state.item_units += request.quantity.item_units;
+        candidate.records[static_cast<std::size_t>(source - impl_->economy.records.begin())] =
+            debit;
+        candidate.records[static_cast<std::size_t>(target - impl_->economy.records.begin())] =
+            credit;
+    }
+    auto destination =
+        std::find_if(candidate.streams.begin(), candidate.streams.end(),
+                     [&](const auto& value) { return value.actor == request.operation.actor; });
+    if (destination == candidate.streams.end()) {
+        candidate.streams.push_back({impl_->metadata.id, request.operation.actor, 0, {}});
+        destination = candidate.streams.end() - 1;
+    }
+    destination->high_watermark = request.operation.sequence;
+    destination->receipts.push_back(receipt);
+    if (destination->receipts.size() > retained_operation_receipts) {
+        destination->receipts.erase(destination->receipts.begin());
+    }
+    const TransferResult result{receipt, false};
+    const auto actor_text = request.operation.actor.value().to_string();
+    const auto source_text = request.source.value().to_string();
+    const auto target_text = request.target.value().to_string();
+    auto& connection = *impl_->connection;
+    const auto update = [&](const EconomyRecord& record, const std::string& id,
+                            std::uint64_t expected) -> Result<void> {
+        return change(
+            connection,
+            "UPDATE shark_economy SET revision=?1,currency=?2,item_units=?3 "
+            "WHERE character_id=?4 AND revision=?5",
+            [&](Statement& statement) -> Result<void> {
+                if (auto bound = bind_integer(connection, statement, 1, record.revision); !bound)
+                    return bound.error();
+                if (auto bound = bind_integer(connection, statement, 2, record.state.currency);
+                    !bound)
+                    return bound.error();
+                if (auto bound = bind_integer(connection, statement, 3, record.state.item_units);
+                    !bound)
+                    return bound.error();
+                if (auto bound = bind_text(connection, statement, 4, id); !bound)
+                    return bound.error();
+                return bind_integer(connection, statement, 5, expected);
+            });
+    };
+    auto written = impl_->write(candidate, [&]() -> Result<void> {
+        if (status == TransferStatus::committed) {
+            if (auto changed =
+                    update(*receipt.source, source_text, request.expected_source_revision);
+                !changed) {
+                return changed.error();
+            }
+            if (injected(detail::WritePhase::after_source_debit)) {
+                return failure(ErrorCode::io_failure, "storage.transfer",
+                               "injected failure after source debit", connection.path);
+            }
+            if (auto changed =
+                    update(*receipt.target, target_text, request.expected_target_revision);
+                !changed) {
+                return changed.error();
+            }
+        }
+        auto inserted = change(
+            connection,
+            "INSERT INTO shark_transfer_receipts "
+            "VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11,?12,?13,?14,?15)",
+            [&](Statement& statement) -> Result<void> {
+                if (auto bound = bind_text(connection, statement, 1, actor_text); !bound)
+                    return bound.error();
+                if (auto bound = bind_integer(connection, statement, 2, request.operation.sequence);
+                    !bound)
+                    return bound.error();
+                if (auto bound = bind_text(connection, statement, 3, source_text); !bound)
+                    return bound.error();
+                if (auto bound = bind_text(connection, statement, 4, target_text); !bound)
+                    return bound.error();
+                int column = 5;
+                for (const auto value :
+                     {request.expected_source_revision, request.expected_target_revision,
+                      request.quantity.currency, request.quantity.item_units,
+                      static_cast<std::uint64_t>(status), receipt.source->revision,
+                      receipt.source->state.currency, receipt.source->state.item_units}) {
+                    if (auto bound = bind_integer(connection, statement, column++, value); !bound)
+                        return bound.error();
+                }
+                for (const auto value : {receipt.target ? receipt.target->revision : 0,
+                                         receipt.target ? receipt.target->state.currency : 0,
+                                         receipt.target ? receipt.target->state.item_units : 0}) {
+                    if (receipt.target) {
+                        if (auto bound = bind_integer(connection, statement, column++, value);
+                            !bound)
+                            return bound.error();
+                    } else {
+                        const auto code = sqlite3_bind_null(statement.value, column++);
+                        if (code != SQLITE_OK)
+                            return connection.error(code);
+                    }
+                }
+                return {};
+            });
+        if (!inserted)
+            return inserted.error();
+        auto advanced = change(
+            connection,
+            "UPDATE shark_accounts SET operation_sequence=?1 WHERE account_id=?2 AND "
+            "operation_sequence=?3",
+            [&](Statement& statement) -> Result<void> {
+                if (auto bound = bind_integer(connection, statement, 1, request.operation.sequence);
+                    !bound)
+                    return bound.error();
+                if (auto bound = bind_text(connection, statement, 2, actor_text); !bound)
+                    return bound.error();
+                return bind_integer(connection, statement, 3, high_watermark);
+            });
+        if (!advanced)
+            return advanced.error();
+        if (request.operation.sequence > retained_operation_receipts) {
+            return change(
+                connection, "DELETE FROM shark_transfer_receipts WHERE actor_id=?1 AND sequence=?2",
+                [&](Statement& statement) -> Result<void> {
+                    if (auto bound = bind_text(connection, statement, 1, actor_text); !bound)
+                        return bound.error();
+                    return bind_integer(connection, statement, 2,
+                                        request.operation.sequence - retained_operation_receipts);
+                });
+        }
+        return {};
+    });
+    if (!written)
+        return written.error();
+    return result;
 }
 
 } // namespace shark::storage

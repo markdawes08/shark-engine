@@ -84,8 +84,10 @@ current-machine scope: [its handoff](../handoffs/M03a-durable-store.md) records
 M03b's [owned durable characters](../durable-characters.md) are also PASS under
 the current-machine scope: [the handoff](../handoffs/M03b-owned-characters.md)
 records 539 CPU CTests and protected package/API gates.
-M03c atomic transactions are next. Full REQ-M03 remains NOT_RUN until the
-economic, runtime recovery, migration/restore and integrated gates pass.
+M03c [atomic transactions](../durable-transactions.md) are PASS under the same
+scope: [the handoff](../handoffs/M03c-atomic-transactions.md) records 553 CPU
+CTests and protected package/API gates. M03d runtime failure recovery is next.
+Full REQ-M03 remains NOT_RUN until recovery, migration/restore and integration pass.
 General authoring transactions, terminal
 adapters and editor UI retain their later owners;
 schema IDs do not establish file or gameplay-wire formats. The current-machine
@@ -109,6 +111,7 @@ scope remains unchanged.
 | [0014](0014-spatial-interest.md) | Trusted observer selection, recipient policy, bounded admission and measured reliable-stream delay |
 | [0015](0015-durable-store.md) | Server-only SQLite store, explicit create/open, durable identity and local durability boundary |
 | [0016](0016-owned-durable-characters.md) | Durable character ownership, persisted enrollment/revocation, authenticated server owner and schema-2 compatibility |
+| [0017](0017-atomic-durable-transactions.md) | Atomic economic transfers, durable operation identity, bounded retained outcomes and schema-3 compatibility |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an
