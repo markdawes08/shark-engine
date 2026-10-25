@@ -187,8 +187,21 @@ Build a Windows preset normally, then explicitly prepare the fixed sample's
 shaders with cached, locked tools. No ordinary CMake configuration/build, Runtime
 startup or package inspection discovers or invokes a source compiler.
 
+The current local validator receipt is
+`out/graphics-tools/current-validation/summary.json`. Storage maintenance
+revalidated the retained binaries, complete locked source inventories, version
+and native DLL dependencies against the current dependency lock; that receipt
+records reuse, not a rebuild or a new GPU pass. The older 05a receipt is preserved.
+For a checkout without this local receipt, prepare the locked tools through
+`tools/windows_dev.ps1 python tools/prepare_graphics_validation.py --offline --output out/graphics-tools/current-validation`.
+This requires the verified archive cache; omit `--offline` only when preparing
+missing pinned inputs. Preparation requires a fresh output directory: use another
+directory and pass its `summary.json` when preserving an existing receipt.
+Receipts must match the complete current lock; never repair one by replacing its
+lock digest without validating the tool inputs and recording fresh evidence.
+
 ```powershell
-.tools/venv/Scripts/python.exe tools/shader_pipeline.py prepare --recipe shaders/recipe.json --output out/shaders/development --validation-manifest out/05a-work/validation-tools/summary.json --bin-dir build/windows-debug/bin
+.tools/venv/Scripts/python.exe tools/shader_pipeline.py prepare --recipe shaders/recipe.json --output out/shaders/development --validation-manifest out/graphics-tools/current-validation/summary.json --bin-dir build/windows-debug/bin
 .\build\windows-debug\bin\Editor.exe --cube
 .\build\windows-debug\bin\Runtime.exe --cube --graphics-ms 1000 --device auto --validation off
 ```
@@ -813,6 +826,45 @@ paths and runs configure/build/CTest. It creates an empty Git repository there
 for ignore checks without staging or committing anything. Its result is a
 source-only snapshot check; a committed clean checkout and hosted matrix remain
 separate evidence. Logs and `snapshot-result.json` stay inside the snapshot.
+
+## Storage retention
+
+Reuse build directories by platform/compiler/profile instead of creating another
+complete tree for each checkpoint. Keep the active Windows and WSL profiles for
+incremental work, the pinned tools, and one canonical archive cache for future
+dependency preparation (for example `out/dependency-cache/`). Existing CMake caches
+and frozen helpers may reference older checkpoint paths: inspect those references
+before removing or relocating an input. Historical receipts remain unchanged.
+
+Successful temporary deployment tests should use a managed temporary directory or
+cleanup in `finally`; retain their manifests and results rather than repeated
+executable copies. Keep failed cases only when they preserve useful diagnostics.
+This does not authorize deleting unique failure evidence or reducing test coverage.
+
+For older evidence, select exact files into a JSON array of root-relative paths
+and archive them with the standard-library helper:
+
+```text
+python tools/archive_evidence.py create --root . --selection out/storage-cleanup/selection.json --output out/storage-cleanup/evidence.zip
+python tools/archive_evidence.py verify --archive out/storage-cleanup/evidence.zip
+python tools/tests/test_archive_evidence.py -v
+```
+
+The output directory must already exist. Creation refuses existing output and
+links, preserves original relative paths, records every file's SHA-256 and size,
+and reads the archive back to verify all bytes. Verification rejects duplicate,
+escaping, linked, missing, unexpected or corrupt members. It never extracts files
+or deletes inputs. Save the reported archive hash and a path-to-archive index in
+the cleanup receipt; compare retained evidence with its original receipt before
+removing expanded copies. Restore selected files to their original paths when a
+historical helper requires them. The archive proves preservation, not a new test
+pass, and a copy on the same disk is not an independent backup.
+
+Delete only reviewed, resolved paths after confirming that builds, processes and
+mounts no longer use them. Preserve source, fixtures, Git history, dependency
+locks, manifests, current helpers/baselines and unique diagnostics. Never blanket
+delete `out/`, temporary folders or WSL roots. Record before/after usage separately
+for host files and WSL guest data; virtual-disk reclamation is a separate operation.
 
 ## Repository skill discovery
 

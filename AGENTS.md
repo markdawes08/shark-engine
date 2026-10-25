@@ -306,6 +306,14 @@ ignore generated output, dependency caches, local environment files and the loca
 or project documentation. The roadmap is a local planning input; builds and CI
 must not depend on its presence in a checkout.
 
+Reuse one build directory per active platform/compiler/profile across increments.
+Follow [storage retention](docs/building.md#storage-retention) when closing work:
+keep one canonical dependency archive cache, clean successful temporary deployment
+copies, and compress historical evidence with verified hashes and original paths.
+Current helpers can depend on older checkpoint paths; never delete `out/` or a
+retained WSL environment wholesale based on age. Archive restoration may be needed
+to inspect historical raw evidence; preserve its receipt and archive index.
+
 ## Build, tests and formatting
 
 Run commands from the repository root. [Building](docs/building.md) documents
