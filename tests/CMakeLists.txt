@@ -454,6 +454,12 @@ set(Python3_FIND_REGISTRY NEVER)
 set(Python3_FIND_FRAMEWORK NEVER)
 find_package(Python3 3.11 COMPONENTS Interpreter REQUIRED)
 if(TARGET SceneRunner)
+    add_test(NAME shark.tools.scene-qualification
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_scene_qualification_process.py"
+            --runner "$<TARGET_FILE:SceneRunner>" --build-dir "${PROJECT_BINARY_DIR}"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/scene-qualification.json")
+    set_tests_properties(shark.tools.scene-qualification PROPERTIES LABELS "cpu;tooling;integration" TIMEOUT 90)
+
     add_test(NAME shark.tools.scene-execution
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_scene_execution_process.py"
             --runner "$<TARGET_FILE:SceneRunner>"

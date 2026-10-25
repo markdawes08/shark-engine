@@ -176,15 +176,27 @@ component/command mappings, 23 process checks and both new 60-second families
 expected state, cases and mappings together when surfaces grow. Input projects
 are read through ProjectFiles; persistence writes only to an explicit scratch
 parent on the runner's AuthoredScene owner. Keep isolated network/storage/platform
-fixtures and the empty Lua list. **Next: 10c, explicit GPU execution.** CPU Tools
+fixtures and the empty Lua list. CPU Tools
 and SceneRunner must retain their protected dependency independence.
-10c implementation and all twelve native GPU runs are delivered; its
+**10c is complete under the current-machine scope.** Its
 [handoff](docs/handoffs/10c-gpu-execution.md) and
-[partial receipt](docs/coverage/evidence/10c-gpu-execution-partial.json) retain
-completed evidence and the remaining WSL sanitizer recovery. An existing test
-is unkillable in this WSL kernel's VMA mapping path. Ubuntu restart approval is
-pending; no host/resource/kernel settings were changed. Do not mark 10c complete
-or advance to 10d until the remaining sanitizer gate is resolved honestly.
+[receipt](docs/coverage/evidence/10c-gpu-execution.json) record 315 qualified CTest
+profile results, 30 public-example compiles, four actual sanitizer objects and
+twelve real GPU runs with 48 readback comparisons. The user-approved Ubuntu
+restart cleared the stalled environment; the original 40 sanitizer checks pass
+at unchanged limits. Historical partial/kernel evidence remains preserved.
+No host/resource/kernel settings were changed.
+**10d and full REQ-10 are complete under the current-machine scope.** Follow the
+[qualification contract](docs/featureworld-qualification.md),
+[handoff](docs/handoffs/10d-integrated-qualification.md) and
+[receipt](docs/coverage/evidence/10d-integrated-qualification.json): 660 full CTests
+across seven profiles, 36 standalone Tools checks, 30 public-example compiles,
+actual sanitizer objects, protected packages and twelve both-GPU runs pass.
+Preserve `shark.tools.scene-qualification` (90 seconds), its 19 connected checks
+and 15 rejection controls, nineteen scene surfaces, one external GPU command,
+and all earlier workloads/limits. New surfaces extend actual cases, independent
+coverage expectations and manifest mappings together. **Next: 11, asset database,
+import jobs and cache.**
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read

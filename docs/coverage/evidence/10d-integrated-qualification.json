@@ -1,0 +1,1105 @@
+{
+  "schema_version": 1,
+  "checkpoint": "10d",
+  "status": "PASS",
+  "recorded_utc": "2026-10-25T22:17:32.177078+00:00",
+  "base_revision": "2532512",
+  "result_revision": "Uncommitted; user owns staging, commits and pushing",
+  "initial_worktree": "clean",
+  "branch": "main",
+  "scope": "Current Windows PC/WSL development qualification; all seven full CPU/sanitizer/Server profiles plus independent Tools and explicit GPU fixtures",
+  "source_freeze": {
+    "path": "out/10d-work/source-freeze-final.json",
+    "sha256": "69d037561184bf92e224236eba79515be0f840dc45b9130cb3dda9037107baf7",
+    "inputs": 376,
+    "unchanged_during_qualification": true
+  },
+  "profiles": [
+    {
+      "name": "windows-debug",
+      "registered": 108,
+      "executed": 108,
+      "status": "PASS",
+      "runner_cases": 13,
+      "featureworld_cases": 5,
+      "runner_process_checks": 29,
+      "featureworld_process_checks": 23,
+      "scene_execution_process_checks": 21,
+      "synthetic_evidence_tests": 14,
+      "qualification_checks": 19,
+      "qualification_negative_controls": 15,
+      "negative_controls": 4,
+      "evidence_directory": "out/10d-work/windows-final"
+    },
+    {
+      "name": "windows-release",
+      "registered": 108,
+      "executed": 108,
+      "status": "PASS",
+      "runner_cases": 13,
+      "featureworld_cases": 5,
+      "runner_process_checks": 29,
+      "featureworld_process_checks": 23,
+      "scene_execution_process_checks": 21,
+      "synthetic_evidence_tests": 14,
+      "qualification_checks": 19,
+      "qualification_negative_controls": 15,
+      "negative_controls": 4,
+      "evidence_directory": "out/10d-work/windows-release-final"
+    },
+    {
+      "name": "windows-asan",
+      "registered": 108,
+      "executed": 108,
+      "status": "PASS",
+      "runner_cases": 13,
+      "featureworld_cases": 5,
+      "runner_process_checks": 29,
+      "featureworld_process_checks": 23,
+      "scene_execution_process_checks": 21,
+      "synthetic_evidence_tests": 14,
+      "qualification_checks": 19,
+      "qualification_negative_controls": 15,
+      "negative_controls": 4,
+      "evidence_directory": "out/10d-work/windows-asan-final"
+    },
+    {
+      "name": "tools-debug",
+      "registered": 73,
+      "executed": 18,
+      "status": "PASS",
+      "runner_cases": 13,
+      "featureworld_cases": 5,
+      "runner_process_checks": 29,
+      "featureworld_process_checks": 23,
+      "scene_execution_process_checks": 21,
+      "synthetic_evidence_tests": 14,
+      "qualification_checks": 19,
+      "qualification_negative_controls": 15,
+      "negative_controls": 4,
+      "evidence_directory": "out/10d-work/tools-debug-final"
+    },
+    {
+      "name": "linux-debug",
+      "registered": 101,
+      "executed": 101,
+      "status": "PASS",
+      "runner_cases": 13,
+      "featureworld_cases": 5,
+      "runner_process_checks": 29,
+      "featureworld_process_checks": 23,
+      "scene_execution_process_checks": 21,
+      "synthetic_evidence_tests": 14,
+      "qualification_checks": 19,
+      "qualification_negative_controls": 15,
+      "negative_controls": 4,
+      "evidence_directory": "out/10d-work/wsl-final"
+    },
+    {
+      "name": "linux-asan-ubsan",
+      "registered": 101,
+      "executed": 101,
+      "status": "PASS",
+      "runner_cases": 13,
+      "featureworld_cases": 5,
+      "runner_process_checks": 29,
+      "featureworld_process_checks": 23,
+      "scene_execution_process_checks": 21,
+      "synthetic_evidence_tests": 14,
+      "qualification_checks": 19,
+      "qualification_negative_controls": 15,
+      "negative_controls": 4
+    },
+    {
+      "name": "tools-debug",
+      "registered": 73,
+      "executed": 18,
+      "status": "PASS",
+      "runner_cases": 13,
+      "featureworld_cases": 5,
+      "runner_process_checks": 29,
+      "featureworld_process_checks": 23,
+      "scene_execution_process_checks": 21,
+      "synthetic_evidence_tests": 14,
+      "qualification_checks": 19,
+      "qualification_negative_controls": 15,
+      "negative_controls": 4
+    },
+    {
+      "name": "server-debug",
+      "registered": 67,
+      "executed": 67,
+      "status": "PASS",
+      "negative_controls": 4
+    },
+    {
+      "name": "server-asan-ubsan",
+      "registered": 67,
+      "executed": 67,
+      "status": "PASS",
+      "negative_controls": 4
+    }
+  ],
+  "full_profile_ctests": 660,
+  "standalone_tools_ctests": 36,
+  "total_ctest_executions": 696,
+  "connected_receipts": [
+    {
+      "path": "out/10d-work/windows-final/windows-debug-scene-qualification.json",
+      "sha256": "e12d20fd5e50a62b0d327d98fad0806718be05ffc48ad328cb5379f7c1bc0c13"
+    },
+    {
+      "path": "out/10d-work/windows-release-final/windows-release-scene-qualification.json",
+      "sha256": "baffb0c414136c0878d9ed779c79ca5c2c6dc030a31d31938303ffec3bb586ae"
+    },
+    {
+      "path": "out/10d-work/windows-asan-final/windows-asan-scene-qualification.json",
+      "sha256": "0b0f06ff8d5675fac82982d20bde4692e817f6c2703b42f7e817c93094123d8c"
+    },
+    {
+      "path": "out/10d-work/tools-debug-final/tools-debug-scene-qualification.json",
+      "sha256": "f155374b2623b9ac9e1e6234593cade77789e22d4e605b5e79b3f8e792c36367"
+    },
+    {
+      "path": "out/10d-work/wsl-final/linux-debug-scene-qualification.json",
+      "sha256": "8b50628fab119d12939dfc3a6badc5b96ba63770caad249ef9a082b458220bc5"
+    },
+    {
+      "path": "out/10d-work/wsl-continued-final/linux-asan-ubsan-scene-qualification.json",
+      "sha256": "d6d847fc3a1702bd982d29855b585e12b4bf538ce05a20b9ba8a98be686d3530"
+    },
+    {
+      "path": "out/10d-work/wsl-continued-final/tools-debug-scene-qualification.json",
+      "sha256": "a23afe43090d51b7544041800d9eb8dfdcdd56fd2751092974e6535e83cf67c4"
+    }
+  ],
+  "connected_process_checks": 19,
+  "connected_negative_controls": 15,
+  "public_surface_coverage": {
+    "components": 2,
+    "commands": 18,
+    "scene_mappings": 19,
+    "external_gpu_commands": 1,
+    "lua_entries": 0,
+    "all_component_command_test_ids_in_passing_union": true,
+    "passing_test_ids": [
+      "shark.boundary",
+      "shark.boundary.fixture",
+      "shark.boundary.headers",
+      "shark.client.cube-cli",
+      "shark.client.cube-faults-cli",
+      "shark.client.frame",
+      "shark.client.gpu-resources",
+      "shark.client.graphics",
+      "shark.client.graphics-cli",
+      "shark.client.input",
+      "shark.client.offscreen",
+      "shark.client.offscreen-cli",
+      "shark.client.offscreen-faults-cli",
+      "shark.client.presentation",
+      "shark.client.presentation-cli",
+      "shark.client.presentation-faults",
+      "shark.client.presentation-stress-cli",
+      "shark.client.shader-bundle",
+      "shark.client.window",
+      "shark.contract",
+      "shark.core.contracts",
+      "shark.core.hierarchy",
+      "shark.core.lifecycle",
+      "shark.core.net-adversity",
+      "shark.core.net-adversity-process",
+      "shark.core.net-fault",
+      "shark.core.net-interest",
+      "shark.core.net-interest-process",
+      "shark.core.net-mtls",
+      "shark.core.net-process",
+      "shark.core.net-replication",
+      "shark.core.net-replication-process",
+      "shark.core.net-replication-wire",
+      "shark.core.net-session",
+      "shark.core.net-sessions-process",
+      "shark.core.net-transport",
+      "shark.core.net-wire",
+      "shark.core.scene",
+      "shark.core.scene-edit",
+      "shark.core.scene-query",
+      "shark.core.schema",
+      "shark.core.timing",
+      "shark.core.transform",
+      "shark.core.work",
+      "shark.core.world-position",
+      "shark.editor.cli",
+      "shark.editor.presentation-cli",
+      "shark.editor.window-cli",
+      "shark.failure-sentinel",
+      "shark.repository",
+      "shark.runtime.cli",
+      "shark.runtime.presentation-cli",
+      "shark.runtime.window-cli",
+      "shark.server.lifecycle",
+      "shark.server.unit",
+      "shark.storage.characters",
+      "shark.storage.characters-process",
+      "shark.storage.integration-process",
+      "shark.storage.migration",
+      "shark.storage.migration-process",
+      "shark.storage.process",
+      "shark.storage.recovery",
+      "shark.storage.recovery-process",
+      "shark.storage.store",
+      "shark.storage.transactions",
+      "shark.storage.transactions-process",
+      "shark.tooling.cube-faults",
+      "shark.tooling.cube-smoke",
+      "shark.tooling.graphics-dependencies",
+      "shark.tooling.graphics-device-evidence",
+      "shark.tooling.graphics-evidence",
+      "shark.tooling.graphics-package",
+      "shark.tooling.graphics-package-linux",
+      "shark.tooling.graphics-tools",
+      "shark.tooling.graphics-validation",
+      "shark.tooling.headless-environment",
+      "shark.tooling.offscreen-faults",
+      "shark.tooling.offscreen-smoke",
+      "shark.tooling.presentation-evidence",
+      "shark.tooling.presentation-faults",
+      "shark.tooling.presentation-stress",
+      "shark.tooling.processes",
+      "shark.tooling.runtime-package",
+      "shark.tooling.scene-dependencies",
+      "shark.tooling.scene-execution-evidence",
+      "shark.tooling.server-closure",
+      "shark.tooling.shader-pipeline",
+      "shark.tooling.source-document-dependencies",
+      "shark.tooling.sources",
+      "shark.tooling.storage-dependencies",
+      "shark.tools.authored-scene",
+      "shark.tools.authoring-batches",
+      "shark.tools.authoring-commands",
+      "shark.tools.authoring-history",
+      "shark.tools.authoring-integration",
+      "shark.tools.authoring-retries",
+      "shark.tools.authoring-retries-process",
+      "shark.tools.featureworld",
+      "shark.tools.featureworld-process",
+      "shark.tools.persistence-integration",
+      "shark.tools.project-files",
+      "shark.tools.project-files-process",
+      "shark.tools.scene-execution",
+      "shark.tools.scene-qualification",
+      "shark.tools.scene-runner",
+      "shark.tools.scene-runner-process",
+      "shark.tools.source-documents",
+      "shark.unit"
+    ],
+    "declared_historical_probe_tests_not_rerun": [
+      "shark.graphics-probe.cli",
+      "shark.graphics-probe.report"
+    ],
+    "optional_probe_scope": "These opt-in assignment-02 CLI/report declarations resolve to existing source. Their separate historical evidence is retained; no new execution is claimed."
+  },
+  "intentional_failure": {
+    "outer_exit": 1,
+    "status": "FAIL",
+    "renderer_initialized": false,
+    "case": "intentional-failure",
+    "phase": "tick",
+    "tick": 0,
+    "entity_id": "10000000-0000-4000-8000-000000000004",
+    "evidence": "Seven connected receipts embed actual supervisor/native results after publication and artifact byte/hash checks; temporary roots were removed"
+  },
+  "visual_review": {
+    "status": "PASS",
+    "images": [
+      {
+        "path": "out/10d-work/windows-final/gpu-windows-debug-nvidia-window/native/window-1.png",
+        "sha256": "706115ca19bf0b885177dcfc27e8b0daef23fe411fb20703d307443c6391bca8"
+      },
+      {
+        "path": "out/10d-work/windows-final/gpu-windows-debug-intel-window/native/window-1.png",
+        "sha256": "706115ca19bf0b885177dcfc27e8b0daef23fe411fb20703d307443c6391bca8"
+      }
+    ],
+    "observation": "Both actual captures show the expected rotated multicolor cube and agree with the fixed readback oracle; no authored scene rendering is inferred"
+  },
+  "gpu_runs": [
+    {
+      "name": "gpu-windows-debug-nvidia-offscreen",
+      "case": "gpu.offscreen-cube",
+      "profile": "windows-debug",
+      "device": {
+        "api_version": 4211029,
+        "device_id": 10336,
+        "driver_info": "610.62",
+        "driver_name": "NVIDIA",
+        "driver_version": 2559541248,
+        "features": {
+          "dynamic_rendering": true,
+          "fifo_present": true,
+          "graphics_compute_present_queue": true,
+          "srgb_surface": true,
+          "swapchain_extension": true,
+          "synchronization2": true,
+          "timeline_semaphore": true,
+          "vulkan_1_3": true
+        },
+        "formats": {
+          "d32_float_depth_array": true,
+          "rgba16_float": true,
+          "rgba8_srgb": true,
+          "rgba8_unorm": true
+        },
+        "kind": "discrete",
+        "limits": {
+          "maxBoundDescriptorSets": 32,
+          "maxColorAttachments": 8,
+          "maxComputeWorkGroupInvocations": 1024,
+          "maxImageArrayLayers": 2048,
+          "maxImageDimension2D": 32768,
+          "maxImageDimensionCube": 32768,
+          "maxPerStageDescriptorSampledImages": 1048576,
+          "maxPerStageDescriptorSamplers": 1048576,
+          "maxStorageBufferRange": 4294967295,
+          "maxUniformBufferRange": 65536
+        },
+        "missing_requirements": [],
+        "name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+        "queue_family": 0,
+        "uuid": "863d6f59a51894ab8b4829aa9460c78d",
+        "vendor_id": 4318
+      },
+      "status": "PASS",
+      "comparisons": 2,
+      "result": "out\\10d-work\\windows-final\\gpu-windows-debug-nvidia-offscreen\\result.json",
+      "result_sha256": "54aa040ba83bc5e376f7f8424f54a44868bc71b608a9b0c788710e15413fbaff",
+      "max_color_error": 0,
+      "max_depth_error": 9.46983110816646e-08
+    },
+    {
+      "name": "gpu-windows-debug-nvidia-window",
+      "case": "gpu.window-cube",
+      "profile": "windows-debug",
+      "device": {
+        "api_version": 4211029,
+        "device_id": 10336,
+        "driver_info": "610.62",
+        "driver_name": "NVIDIA",
+        "driver_version": 2559541248,
+        "features": {
+          "dynamic_rendering": true,
+          "fifo_present": true,
+          "graphics_compute_present_queue": true,
+          "srgb_surface": true,
+          "swapchain_extension": true,
+          "synchronization2": true,
+          "timeline_semaphore": true,
+          "vulkan_1_3": true
+        },
+        "formats": {
+          "d32_float_depth_array": true,
+          "rgba16_float": true,
+          "rgba8_srgb": true,
+          "rgba8_unorm": true
+        },
+        "kind": "discrete",
+        "limits": {
+          "maxBoundDescriptorSets": 32,
+          "maxColorAttachments": 8,
+          "maxComputeWorkGroupInvocations": 1024,
+          "maxImageArrayLayers": 2048,
+          "maxImageDimension2D": 32768,
+          "maxImageDimensionCube": 32768,
+          "maxPerStageDescriptorSampledImages": 1048576,
+          "maxPerStageDescriptorSamplers": 1048576,
+          "maxStorageBufferRange": 4294967295,
+          "maxUniformBufferRange": 65536
+        },
+        "missing_requirements": [],
+        "name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+        "queue_family": 0,
+        "uuid": "863d6f59a51894ab8b4829aa9460c78d",
+        "vendor_id": 4318
+      },
+      "status": "PASS",
+      "comparisons": 6,
+      "result": "out\\10d-work\\windows-final\\gpu-windows-debug-nvidia-window\\result.json",
+      "result_sha256": "134273118bf862e3b577fd72744b448de3bd8b014c646d6c466761f8ee05b39e",
+      "max_color_error": 0,
+      "max_depth_error": 9.092371766605822e-08
+    },
+    {
+      "name": "gpu-windows-debug-intel-offscreen",
+      "case": "gpu.offscreen-cube",
+      "profile": "windows-debug",
+      "device": {
+        "api_version": 4210999,
+        "device_id": 42888,
+        "driver_info": "101.6790",
+        "driver_name": "Intel Corporation",
+        "driver_version": 1661574,
+        "features": {
+          "dynamic_rendering": true,
+          "fifo_present": true,
+          "graphics_compute_present_queue": true,
+          "srgb_surface": true,
+          "swapchain_extension": true,
+          "synchronization2": true,
+          "timeline_semaphore": true,
+          "vulkan_1_3": true
+        },
+        "formats": {
+          "d32_float_depth_array": true,
+          "rgba16_float": true,
+          "rgba8_srgb": true,
+          "rgba8_unorm": true
+        },
+        "kind": "integrated",
+        "limits": {
+          "maxBoundDescriptorSets": 32,
+          "maxColorAttachments": 8,
+          "maxComputeWorkGroupInvocations": 1024,
+          "maxImageArrayLayers": 2048,
+          "maxImageDimension2D": 16384,
+          "maxImageDimensionCube": 16384,
+          "maxPerStageDescriptorSampledImages": 200,
+          "maxPerStageDescriptorSamplers": 64,
+          "maxStorageBufferRange": 1073741820,
+          "maxUniformBufferRange": 134217724
+        },
+        "missing_requirements": [],
+        "name": "Intel(R) RaptorLake-S Mobile Graphics Controller",
+        "queue_family": 0,
+        "uuid": "868088a7040000000002000000000000",
+        "vendor_id": 32902
+      },
+      "status": "PASS",
+      "comparisons": 2,
+      "result": "out\\10d-work\\windows-final\\gpu-windows-debug-intel-offscreen\\result.json",
+      "result_sha256": "5699d89c044bc310851b676b3c4f4d9894b0ef88fe8346ec2a22f8e96d5fdce7",
+      "max_color_error": 0,
+      "max_depth_error": 7.16195970307254e-08
+    },
+    {
+      "name": "gpu-windows-debug-intel-window",
+      "case": "gpu.window-cube",
+      "profile": "windows-debug",
+      "device": {
+        "api_version": 4210999,
+        "device_id": 42888,
+        "driver_info": "101.6790",
+        "driver_name": "Intel Corporation",
+        "driver_version": 1661574,
+        "features": {
+          "dynamic_rendering": true,
+          "fifo_present": true,
+          "graphics_compute_present_queue": true,
+          "srgb_surface": true,
+          "swapchain_extension": true,
+          "synchronization2": true,
+          "timeline_semaphore": true,
+          "vulkan_1_3": true
+        },
+        "formats": {
+          "d32_float_depth_array": true,
+          "rgba16_float": true,
+          "rgba8_srgb": true,
+          "rgba8_unorm": true
+        },
+        "kind": "integrated",
+        "limits": {
+          "maxBoundDescriptorSets": 32,
+          "maxColorAttachments": 8,
+          "maxComputeWorkGroupInvocations": 1024,
+          "maxImageArrayLayers": 2048,
+          "maxImageDimension2D": 16384,
+          "maxImageDimensionCube": 16384,
+          "maxPerStageDescriptorSampledImages": 200,
+          "maxPerStageDescriptorSamplers": 64,
+          "maxStorageBufferRange": 1073741820,
+          "maxUniformBufferRange": 134217724
+        },
+        "missing_requirements": [],
+        "name": "Intel(R) RaptorLake-S Mobile Graphics Controller",
+        "queue_family": 0,
+        "uuid": "868088a7040000000002000000000000",
+        "vendor_id": 32902
+      },
+      "status": "PASS",
+      "comparisons": 6,
+      "result": "out\\10d-work\\windows-final\\gpu-windows-debug-intel-window\\result.json",
+      "result_sha256": "e82735e5a95615b969038e6e6be201be958d910721145f01f5205ae4519b3362",
+      "max_color_error": 0,
+      "max_depth_error": 6.4941682587083e-08
+    },
+    {
+      "name": "gpu-windows-release-nvidia-offscreen",
+      "case": "gpu.offscreen-cube",
+      "profile": "windows-release",
+      "device": {
+        "api_version": 4211029,
+        "device_id": 10336,
+        "driver_info": "610.62",
+        "driver_name": "NVIDIA",
+        "driver_version": 2559541248,
+        "features": {
+          "dynamic_rendering": true,
+          "fifo_present": true,
+          "graphics_compute_present_queue": true,
+          "srgb_surface": true,
+          "swapchain_extension": true,
+          "synchronization2": true,
+          "timeline_semaphore": true,
+          "vulkan_1_3": true
+        },
+        "formats": {
+          "d32_float_depth_array": true,
+          "rgba16_float": true,
+          "rgba8_srgb": true,
+          "rgba8_unorm": true
+        },
+        "kind": "discrete",
+        "limits": {
+          "maxBoundDescriptorSets": 32,
+          "maxColorAttachments": 8,
+          "maxComputeWorkGroupInvocations": 1024,
+          "maxImageArrayLayers": 2048,
+          "maxImageDimension2D": 32768,
+          "maxImageDimensionCube": 32768,
+          "maxPerStageDescriptorSampledImages": 1048576,
+          "maxPerStageDescriptorSamplers": 1048576,
+          "maxStorageBufferRange": 4294967295,
+          "maxUniformBufferRange": 65536
+        },
+        "missing_requirements": [],
+        "name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+        "queue_family": 0,
+        "uuid": "863d6f59a51894ab8b4829aa9460c78d",
+        "vendor_id": 4318
+      },
+      "status": "PASS",
+      "comparisons": 2,
+      "result": "out\\10d-work\\windows-gpu-final\\gpu-windows-release-nvidia-offscreen\\result.json",
+      "result_sha256": "8420138955caf31b371f6148a9f394d3e4dfff03873484280e176d0625572fe9",
+      "max_color_error": 0,
+      "max_depth_error": 9.46983110816646e-08
+    },
+    {
+      "name": "gpu-windows-release-nvidia-window",
+      "case": "gpu.window-cube",
+      "profile": "windows-release",
+      "device": {
+        "api_version": 4211029,
+        "device_id": 10336,
+        "driver_info": "610.62",
+        "driver_name": "NVIDIA",
+        "driver_version": 2559541248,
+        "features": {
+          "dynamic_rendering": true,
+          "fifo_present": true,
+          "graphics_compute_present_queue": true,
+          "srgb_surface": true,
+          "swapchain_extension": true,
+          "synchronization2": true,
+          "timeline_semaphore": true,
+          "vulkan_1_3": true
+        },
+        "formats": {
+          "d32_float_depth_array": true,
+          "rgba16_float": true,
+          "rgba8_srgb": true,
+          "rgba8_unorm": true
+        },
+        "kind": "discrete",
+        "limits": {
+          "maxBoundDescriptorSets": 32,
+          "maxColorAttachments": 8,
+          "maxComputeWorkGroupInvocations": 1024,
+          "maxImageArrayLayers": 2048,
+          "maxImageDimension2D": 32768,
+          "maxImageDimensionCube": 32768,
+          "maxPerStageDescriptorSampledImages": 1048576,
+          "maxPerStageDescriptorSamplers": 1048576,
+          "maxStorageBufferRange": 4294967295,
+          "maxUniformBufferRange": 65536
+        },
+        "missing_requirements": [],
+        "name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+        "queue_family": 0,
+        "uuid": "863d6f59a51894ab8b4829aa9460c78d",
+        "vendor_id": 4318
+      },
+      "status": "PASS",
+      "comparisons": 6,
+      "result": "out\\10d-work\\windows-gpu-final\\gpu-windows-release-nvidia-window\\result.json",
+      "result_sha256": "e10deb8c56ec1db88dba295a90012c86021eb809194781a5c9545f61def7bbda",
+      "max_color_error": 0,
+      "max_depth_error": 9.092371766605822e-08
+    },
+    {
+      "name": "gpu-windows-release-intel-offscreen",
+      "case": "gpu.offscreen-cube",
+      "profile": "windows-release",
+      "device": {
+        "api_version": 4210999,
+        "device_id": 42888,
+        "driver_info": "101.6790",
+        "driver_name": "Intel Corporation",
+        "driver_version": 1661574,
+        "features": {
+          "dynamic_rendering": true,
+          "fifo_present": true,
+          "graphics_compute_present_queue": true,
+          "srgb_surface": true,
+          "swapchain_extension": true,
+          "synchronization2": true,
+          "timeline_semaphore": true,
+          "vulkan_1_3": true
+        },
+        "formats": {
+          "d32_float_depth_array": true,
+          "rgba16_float": true,
+          "rgba8_srgb": true,
+          "rgba8_unorm": true
+        },
+        "kind": "integrated",
+        "limits": {
+          "maxBoundDescriptorSets": 32,
+          "maxColorAttachments": 8,
+          "maxComputeWorkGroupInvocations": 1024,
+          "maxImageArrayLayers": 2048,
+          "maxImageDimension2D": 16384,
+          "maxImageDimensionCube": 16384,
+          "maxPerStageDescriptorSampledImages": 200,
+          "maxPerStageDescriptorSamplers": 64,
+          "maxStorageBufferRange": 1073741820,
+          "maxUniformBufferRange": 134217724
+        },
+        "missing_requirements": [],
+        "name": "Intel(R) RaptorLake-S Mobile Graphics Controller",
+        "queue_family": 0,
+        "uuid": "868088a7040000000002000000000000",
+        "vendor_id": 32902
+      },
+      "status": "PASS",
+      "comparisons": 2,
+      "result": "out\\10d-work\\windows-gpu-final\\gpu-windows-release-intel-offscreen\\result.json",
+      "result_sha256": "e6ce2ab05f5082318be0145003bd03ec8c55b7856b8c16c9eb272c77b4d82fa9",
+      "max_color_error": 0,
+      "max_depth_error": 7.16195970307254e-08
+    },
+    {
+      "name": "gpu-windows-release-intel-window-caf\u00e9",
+      "case": "gpu.window-cube",
+      "profile": "windows-release",
+      "device": {
+        "api_version": 4210999,
+        "device_id": 42888,
+        "driver_info": "101.6790",
+        "driver_name": "Intel Corporation",
+        "driver_version": 1661574,
+        "features": {
+          "dynamic_rendering": true,
+          "fifo_present": true,
+          "graphics_compute_present_queue": true,
+          "srgb_surface": true,
+          "swapchain_extension": true,
+          "synchronization2": true,
+          "timeline_semaphore": true,
+          "vulkan_1_3": true
+        },
+        "formats": {
+          "d32_float_depth_array": true,
+          "rgba16_float": true,
+          "rgba8_srgb": true,
+          "rgba8_unorm": true
+        },
+        "kind": "integrated",
+        "limits": {
+          "maxBoundDescriptorSets": 32,
+          "maxColorAttachments": 8,
+          "maxComputeWorkGroupInvocations": 1024,
+          "maxImageArrayLayers": 2048,
+          "maxImageDimension2D": 16384,
+          "maxImageDimensionCube": 16384,
+          "maxPerStageDescriptorSampledImages": 200,
+          "maxPerStageDescriptorSamplers": 64,
+          "maxStorageBufferRange": 1073741820,
+          "maxUniformBufferRange": 134217724
+        },
+        "missing_requirements": [],
+        "name": "Intel(R) RaptorLake-S Mobile Graphics Controller",
+        "queue_family": 0,
+        "uuid": "868088a7040000000002000000000000",
+        "vendor_id": 32902
+      },
+      "status": "PASS",
+      "comparisons": 6,
+      "result": "out\\10d-work\\windows-gpu-final\\gpu-windows-release-intel-window-caf\u00e9\\result.json",
+      "result_sha256": "f1106d57ba23468bf1ee8728159d125b42858c3d20291370748d5bea6ec4ac56",
+      "max_color_error": 0,
+      "max_depth_error": 6.4941682587083e-08
+    },
+    {
+      "name": "gpu-windows-asan-nvidia-offscreen",
+      "case": "gpu.offscreen-cube",
+      "profile": "windows-asan",
+      "device": {
+        "api_version": 4211029,
+        "device_id": 10336,
+        "driver_info": "610.62",
+        "driver_name": "NVIDIA",
+        "driver_version": 2559541248,
+        "features": {
+          "dynamic_rendering": true,
+          "fifo_present": true,
+          "graphics_compute_present_queue": true,
+          "srgb_surface": true,
+          "swapchain_extension": true,
+          "synchronization2": true,
+          "timeline_semaphore": true,
+          "vulkan_1_3": true
+        },
+        "formats": {
+          "d32_float_depth_array": true,
+          "rgba16_float": true,
+          "rgba8_srgb": true,
+          "rgba8_unorm": true
+        },
+        "kind": "discrete",
+        "limits": {
+          "maxBoundDescriptorSets": 32,
+          "maxColorAttachments": 8,
+          "maxComputeWorkGroupInvocations": 1024,
+          "maxImageArrayLayers": 2048,
+          "maxImageDimension2D": 32768,
+          "maxImageDimensionCube": 32768,
+          "maxPerStageDescriptorSampledImages": 1048576,
+          "maxPerStageDescriptorSamplers": 1048576,
+          "maxStorageBufferRange": 4294967295,
+          "maxUniformBufferRange": 65536
+        },
+        "missing_requirements": [],
+        "name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+        "queue_family": 0,
+        "uuid": "863d6f59a51894ab8b4829aa9460c78d",
+        "vendor_id": 4318
+      },
+      "status": "PASS",
+      "comparisons": 2,
+      "result": "out\\10d-work\\windows-gpu-final\\gpu-windows-asan-nvidia-offscreen\\result.json",
+      "result_sha256": "f46253797e67423eff2ec958757462ffe31251deca56a91621c3aaa5cc71cf4b",
+      "max_color_error": 0,
+      "max_depth_error": 9.46983110816646e-08
+    },
+    {
+      "name": "gpu-windows-asan-nvidia-window",
+      "case": "gpu.window-cube",
+      "profile": "windows-asan",
+      "device": {
+        "api_version": 4211029,
+        "device_id": 10336,
+        "driver_info": "610.62",
+        "driver_name": "NVIDIA",
+        "driver_version": 2559541248,
+        "features": {
+          "dynamic_rendering": true,
+          "fifo_present": true,
+          "graphics_compute_present_queue": true,
+          "srgb_surface": true,
+          "swapchain_extension": true,
+          "synchronization2": true,
+          "timeline_semaphore": true,
+          "vulkan_1_3": true
+        },
+        "formats": {
+          "d32_float_depth_array": true,
+          "rgba16_float": true,
+          "rgba8_srgb": true,
+          "rgba8_unorm": true
+        },
+        "kind": "discrete",
+        "limits": {
+          "maxBoundDescriptorSets": 32,
+          "maxColorAttachments": 8,
+          "maxComputeWorkGroupInvocations": 1024,
+          "maxImageArrayLayers": 2048,
+          "maxImageDimension2D": 32768,
+          "maxImageDimensionCube": 32768,
+          "maxPerStageDescriptorSampledImages": 1048576,
+          "maxPerStageDescriptorSamplers": 1048576,
+          "maxStorageBufferRange": 4294967295,
+          "maxUniformBufferRange": 65536
+        },
+        "missing_requirements": [],
+        "name": "NVIDIA GeForce RTX 4070 Laptop GPU",
+        "queue_family": 0,
+        "uuid": "863d6f59a51894ab8b4829aa9460c78d",
+        "vendor_id": 4318
+      },
+      "status": "PASS",
+      "comparisons": 6,
+      "result": "out\\10d-work\\windows-gpu-final\\gpu-windows-asan-nvidia-window\\result.json",
+      "result_sha256": "db164f03d9ed5c5ef079fdacd0047c441e3394b57d20b6ee4b5b03b974eac637",
+      "max_color_error": 0,
+      "max_depth_error": 9.092371766605822e-08
+    },
+    {
+      "name": "gpu-windows-asan-intel-offscreen",
+      "case": "gpu.offscreen-cube",
+      "profile": "windows-asan",
+      "device": {
+        "api_version": 4210999,
+        "device_id": 42888,
+        "driver_info": "101.6790",
+        "driver_name": "Intel Corporation",
+        "driver_version": 1661574,
+        "features": {
+          "dynamic_rendering": true,
+          "fifo_present": true,
+          "graphics_compute_present_queue": true,
+          "srgb_surface": true,
+          "swapchain_extension": true,
+          "synchronization2": true,
+          "timeline_semaphore": true,
+          "vulkan_1_3": true
+        },
+        "formats": {
+          "d32_float_depth_array": true,
+          "rgba16_float": true,
+          "rgba8_srgb": true,
+          "rgba8_unorm": true
+        },
+        "kind": "integrated",
+        "limits": {
+          "maxBoundDescriptorSets": 32,
+          "maxColorAttachments": 8,
+          "maxComputeWorkGroupInvocations": 1024,
+          "maxImageArrayLayers": 2048,
+          "maxImageDimension2D": 16384,
+          "maxImageDimensionCube": 16384,
+          "maxPerStageDescriptorSampledImages": 200,
+          "maxPerStageDescriptorSamplers": 64,
+          "maxStorageBufferRange": 1073741820,
+          "maxUniformBufferRange": 134217724
+        },
+        "missing_requirements": [],
+        "name": "Intel(R) RaptorLake-S Mobile Graphics Controller",
+        "queue_family": 0,
+        "uuid": "868088a7040000000002000000000000",
+        "vendor_id": 32902
+      },
+      "status": "PASS",
+      "comparisons": 2,
+      "result": "out\\10d-work\\windows-gpu-final\\gpu-windows-asan-intel-offscreen\\result.json",
+      "result_sha256": "8cba0d8e5d887ea17afab760e612d3c7a00b2e94ecdd2119a027c0f66981c5dc",
+      "max_color_error": 0,
+      "max_depth_error": 7.16195970307254e-08
+    },
+    {
+      "name": "gpu-windows-asan-intel-window",
+      "case": "gpu.window-cube",
+      "profile": "windows-asan",
+      "device": {
+        "api_version": 4210999,
+        "device_id": 42888,
+        "driver_info": "101.6790",
+        "driver_name": "Intel Corporation",
+        "driver_version": 1661574,
+        "features": {
+          "dynamic_rendering": true,
+          "fifo_present": true,
+          "graphics_compute_present_queue": true,
+          "srgb_surface": true,
+          "swapchain_extension": true,
+          "synchronization2": true,
+          "timeline_semaphore": true,
+          "vulkan_1_3": true
+        },
+        "formats": {
+          "d32_float_depth_array": true,
+          "rgba16_float": true,
+          "rgba8_srgb": true,
+          "rgba8_unorm": true
+        },
+        "kind": "integrated",
+        "limits": {
+          "maxBoundDescriptorSets": 32,
+          "maxColorAttachments": 8,
+          "maxComputeWorkGroupInvocations": 1024,
+          "maxImageArrayLayers": 2048,
+          "maxImageDimension2D": 16384,
+          "maxImageDimensionCube": 16384,
+          "maxPerStageDescriptorSampledImages": 200,
+          "maxPerStageDescriptorSamplers": 64,
+          "maxStorageBufferRange": 1073741820,
+          "maxUniformBufferRange": 134217724
+        },
+        "missing_requirements": [],
+        "name": "Intel(R) RaptorLake-S Mobile Graphics Controller",
+        "queue_family": 0,
+        "uuid": "868088a7040000000002000000000000",
+        "vendor_id": 32902
+      },
+      "status": "PASS",
+      "comparisons": 6,
+      "result": "out\\10d-work\\windows-gpu-final\\gpu-windows-asan-intel-window\\result.json",
+      "result_sha256": "24ae10b3183e9bcf76aed7e260f99b3f240701f6294e7539a2f4fbc5fb1025e4",
+      "max_color_error": 0,
+      "max_depth_error": 6.4941682587083e-08
+    }
+  ],
+  "gpu_readback_comparisons": 48,
+  "unexpected_validation_messages": 0,
+  "max_color_error": 0,
+  "max_depth_error": 9.46983110816646e-08,
+  "public_api": {
+    "compiles": 30,
+    "receipts": [
+      {
+        "path": "out/10d-work/windows-audits/public-api/summary.json",
+        "sha256": "9d20536fb7a545e01b453b18e1e6dca9a2012d3d6c016f121edfeead221e3812"
+      },
+      {
+        "path": "out/10d-work/wsl-continued-final/linux-debug-public-api/summary.json",
+        "sha256": "469f54d1fe49368a20708d748c122e1d1a3779ff34fdb1daa7ab71cff63a76d5"
+      },
+      {
+        "path": "out/10d-work/wsl-continued-final/linux-asan-ubsan-public-api/summary.json",
+        "sha256": "6ea49fbd5c8338d689972da090b948f3d0551845d1d9ca9373970951aaba554c"
+      }
+    ]
+  },
+  "actual_sanitizer_objects": {
+    "windows": [
+      {
+        "source": "engine_tools/src/scene_runner_main.cpp",
+        "object": "engine_tools/CMakeFiles/SceneRunner.dir/src/scene_runner_main.cpp.obj",
+        "sha256": "b3349a33d64c71436b6def646ccc933498f9a1b780c195dd8b6951c18a3713fe",
+        "actual_asan_symbols": 538
+      },
+      {
+        "source": "tests/offscreen_smoke.cpp",
+        "object": "tests/CMakeFiles/OffscreenSmoke.dir/offscreen_smoke.cpp.obj",
+        "sha256": "9054d1cba86c6092f645fb950f2cf5ea36f7b055018fb4bdf4176c9d1c27736f",
+        "actual_asan_symbols": 793
+      },
+      {
+        "source": "tests/cube_smoke.cpp",
+        "object": "tests/CMakeFiles/CubeSmoke.dir/cube_smoke.cpp.obj",
+        "sha256": "acf2e3f0b40471957c0770a00b2517d08fc979ef468636be1ce72bbf322d7b99",
+        "actual_asan_symbols": 869
+      }
+    ],
+    "linux": [
+      {
+        "source": "engine_tools/src/scene_runner_main.cpp",
+        "object": "/work/build-05a-final-client/linux-asan-ubsan/engine_tools/CMakeFiles/SceneRunner.dir/src/scene_runner_main.cpp.o",
+        "sha256": "03914c414a29c9887d6e14571324448f48a57bbf29f6cfabd0cc7ec9c56975a7",
+        "actual_asan_ubsan": "PASS"
+      }
+    ]
+  },
+  "protected_packages": {
+    "windows": {
+      "files": 35,
+      "manifest_sha256": "f0fc5213765a0154f4ad4f3ba3b998cf2bf2b5f62c4ef134ed013873fd0b6221",
+      "current_build_binary_matches": true,
+      "standard_user_relocation": "PASS",
+      "isolated_system_path": true,
+      "managed_deployments_removed": true,
+      "package_copy_retained": false
+    },
+    "linux": {
+      "status": "PASS",
+      "scope": "Current installed Server and CPU Runtime read-only mounted in retained SDK-free userspace; no package copy retained"
+    }
+  },
+  "orchestration": {
+    "windows": "Debug completed before stopping the original coordinator; remaining CPU profiles use separate build directories concurrently. All native GPU runs are serial.",
+    "linux": "101 Debug tests pass in wsl-final. A public-example helper initially referred to the superseded freeze; continuation uses the unchanged final implementation inputs and the correct helper, preserving original results.",
+    "original_fixture_failure": "First WSL full run has 100 passes and one new fixture failure at the read-only project lock. Corrected to an owned temporary copy and private CTest metadata discovery before the final 376-input freeze; original source/evidence preserved."
+  },
+  "prior_gate_recovery": {
+    "path": "docs/coverage/evidence/10c-gpu-execution.json",
+    "sha256": "f659c0149ca59e4f7f348fb834c103688aa81f20d3516e99220cb544a2c55fc0"
+  },
+  "preservation": {
+    "all_earlier_limits_cases_and_seeds_unchanged": true,
+    "runner_cases": 13,
+    "runner_process_checks": 29,
+    "featureworld_cases": 5,
+    "featureworld_process_checks": 23,
+    "supervisor_process_checks": 21,
+    "synthetic_evidence_tests": 14
+  },
+  "storage_retention": {
+    "current_builds_caches_userspaces_reused": true,
+    "native_deployment_copies_retained": false,
+    "server_package_archive": {
+      "status": "PASS",
+      "files": 12,
+      "source_bytes": 356122,
+      "archive": "C:\\Users\\mrkda\\Projects\\shark\\out\\10d-work\\server-package.zip",
+      "archive_bytes": 122210,
+      "archive_sha256": "0ddbb9d7fd222ead27d366ab4eff606fa89586024ba4d1ebdc3a631410b5b470",
+      "original_paths": [
+        "out/10d-work/wsl-protected/server-package/bin/Server",
+        "out/10d-work/wsl-protected/server-package/licenses/EnTT/LICENSE",
+        "out/10d-work/wsl-protected/server-package/licenses/GLM/copying.txt",
+        "out/10d-work/wsl-protected/server-package/licenses/MbedTLS/LICENSE",
+        "out/10d-work/wsl-protected/server-package/licenses/MbedTLS/framework/LICENSE",
+        "out/10d-work/wsl-protected/server-package/licenses/MbedTLS/tf-psa-crypto/LICENSE",
+        "out/10d-work/wsl-protected/server-package/licenses/MbedTLS/tf-psa-crypto/drivers/everest/include/tf-psa-crypto/private/everest/kremlib.h",
+        "out/10d-work/wsl-protected/server-package/licenses/MbedTLS/tf-psa-crypto/drivers/everest/library/Hacl_Curve25519.c",
+        "out/10d-work/wsl-protected/server-package/licenses/MbedTLS/tf-psa-crypto/drivers/everest/library/legacy/Hacl_Curve25519.c",
+        "out/10d-work/wsl-protected/server-package/licenses/MbedTLS/tf-psa-crypto/drivers/pqcp/mldsa-native/LICENSE",
+        "out/10d-work/wsl-protected/server-package/licenses/MbedTLS/tf-psa-crypto/framework/LICENSE",
+        "out/10d-work/wsl-protected/server-package/licenses/SQLite/LICENSE.txt"
+      ],
+      "verified_before_removal": true
+    }
+  },
+  "evidence": [
+    {
+      "path": "out/10d-work/windows-gpu-final/summary.json",
+      "sha256": "bf91a1fef030dbde15d76ac675488823712d40b690fd100aac5734030d3a36c5"
+    },
+    {
+      "path": "out/10d-work/wsl-final/summary.json",
+      "sha256": "bf7b051ea02dd7d5831f2bc2261416b04dd9c84a2cbd79d7222ef4b94b778cc7"
+    },
+    {
+      "path": "out/10d-work/wsl-continued-final/summary.json",
+      "sha256": "60fdb175519f5d8a0ae8dd95d6305c73e84ea1aae6da8acb488d8bd9572084ee"
+    },
+    {
+      "path": "out/10d-work/windows-audits/summary.json",
+      "sha256": "799efb308e6b369da36d2f14a8a6d6c7486f47ea8c21943ff0371a1ca5e9e96b"
+    },
+    {
+      "path": "out/10d-work/windows-audits-continued/summary.json",
+      "sha256": "ebd53e069d6ee24603dbbbb7ad3fccdb74dbfab8a1db69a2d06f7d2aa56a90f2"
+    },
+    {
+      "path": "out/10d-work/wsl-protected/summary.json",
+      "sha256": "149632ce84aa37d61065c20f029295e027f81ca5d19df6c9fae1ebc0aaf39e72"
+    },
+    {
+      "path": "out/10d-work/wsl-protected/sdk-free.json",
+      "sha256": "a1993c8c627fe5a9ce6ea2e7fe1de2adb869db03e4ffc69d6c14771d194f245a"
+    },
+    {
+      "path": "out/10d-work/gate-helpers.json",
+      "sha256": "a6e5c3f26681187235f04d6bba54672eba9247ac02d7039a6ddb3808846e5b98"
+    },
+    {
+      "path": "out/10d-work/manifest-qualified.json",
+      "sha256": "5b38ab51f5e4959e6397b27a5b4cda796c26c120f865798bb5d248f80ed83f45"
+    }
+  ],
+  "full_requirement": {
+    "id": "REQ-10",
+    "status": "PASS",
+    "next": "11 asset database, import jobs and cache"
+  }
+}

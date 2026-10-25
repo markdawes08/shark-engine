@@ -112,4 +112,6 @@ CPU CTest families `shark.tools.scene-execution` and
 test real CPU processes, UTF-8 paths, publication, nonzero failure, capability
 rejection and synthetic evidence mutations. Synthetic fixtures qualify no GPU.
 Hardware qualification is an explicit separate run on both current Windows GPUs.
-Full REQ-10 remains NOT_RUN until the integrated 10d gate.
+Full REQ-10 is PASS in the [integrated handoff](handoffs/10d-integrated-qualification.md).
+The [qualification contract](featureworld-qualification.md) connects manifest
+audits, actual saved cases and intentional failure through these existing results.

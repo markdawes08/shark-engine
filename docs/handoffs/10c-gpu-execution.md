@@ -1,7 +1,10 @@
 # 10c: Explicit CPU/GPU test supervision
 
-Date: 2026-10-25. **Implementation and Windows GPU qualification are complete;
-10c's final qualification remains NOT_RUN pending WSL sanitizer recovery.**
+Date: 2026-10-25. **10c is PASS under the current-machine scope.**
+The user approved an Ubuntu restart; all 40 original WSL sanitizer checks now
+pass. Qualification totals 315 logical CTest profile results, 30 public-example
+compiles, four actual sanitizer objects and twelve real GPU runs with 48 readback
+comparisons. Original incomplete attempts remain preserved.
 Base: `a3e3597c334832243dae3662633ec499cdca50d5` on initially clean `main`.
 Staging, commits and pushing belong to the user. Full REQ-10 remains NOT_RUN;
 the next checkpoint after this gate is 10d, integrated coverage qualification.
@@ -9,8 +12,11 @@ the next checkpoint after this gate is 10d, integrated coverage qualification.
 Follow the [checkpoint plan](../roadmap/featureworld-plan.md),
 [execution contract](../scene-execution.md) and
 [ADR 0024](../architecture/0024-headless-scene-runner.md).
-The [partial receipt](../coverage/evidence/10c-gpu-execution-partial.json) records
-completed evidence and the remaining kernel-stall recovery honestly as NOT_RUN.
+The [complete receipt](../coverage/evidence/10c-gpu-execution.json) closes this
+gate. The [partial receipt](../coverage/evidence/10c-gpu-execution-partial.json)
+retains the earlier NOT_RUN state and the evidence available at that time.
+Recovery resumed from the user's `2532512` commit on clean `main`; these closing
+documentation changes are uncommitted.
 
 ## Delivered behavior
 
@@ -91,15 +97,20 @@ not a confirmed kernel fix. Raw status/stack/syscall and the interpretation are
 preserved in `out/10c-work/wsl-kernel-stall`. Owned stalled diagnostic readers and
 test coordinators were stopped; the victim's pending SIGKILL cannot complete
 inside this kernel wait. No host/WSL resource settings, drivers or kernel versions
-were changed. No Ubuntu restart has been performed.
+were changed during investigation.
 
-Restarting Ubuntu would also close existing Ubuntu shells/processes, so approval
-was requested and remains pending. Finish that recovery before claiming the
-remaining WSL sanitizer checks or closing 10c. Do not advance to 10d from this
-handoff's current status. After an approved restart, use the same retained build
-directory, fatal ASan/UBSan options and original test inventory/limits; retain
-the stalled attempt separately. WSL independent standalone Tools and Clang public
-examples were completed through a separate owned command while awaiting recovery.
+After the user explicitly approved closing Ubuntu shells/processes,
+`wsl.exe --terminate Ubuntu` completed successfully. Ubuntu started again with
+the old victim absent. The kernel version and boot ID remained unchanged; this
+was a distribution restart, with no `wsl --shutdown`, kernel/driver change or
+resource setting change. `out/10c-work/restart-recovery.json` records the action.
+The same retained build, frozen inputs, fatal ASan/UBSan options and exact
+40-test inventory/limits then passed, including all earlier runner and
+FeatureWorld cases, process controls and synthetic evidence checks. Original
+stalled evidence remains separate in `wsl-kernel-stall` and `wsl-continued`.
+The completed recovery is in `out/10c-work/wsl-recovered/summary.json`.
+WSL independent standalone Tools and Clang public examples had already completed
+through a separate owned command. Next: 10d integrated coverage qualification.
 
 ## Storage and reproduction
 
@@ -117,6 +128,8 @@ checks are:
 ctest --preset windows-debug -R ^shark.tools.scene-execution$
 ctest --preset windows-debug -R ^shark.tooling.scene-execution-evidence$
 python tools/validate_contract.py --self-test
+wsl.exe -d Ubuntu -u root --cd / -- /bin/bash /mnt/c/Users/mrkda/Projects/shark/out/10c-work/recover-wsl.sh
+python out/10c-work/receipt-recovered.py
 ```
 
 The [execution guide](../scene-execution.md) provides direct CPU/GPU commands.

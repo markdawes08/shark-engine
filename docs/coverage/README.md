@@ -1,19 +1,21 @@
 # Requirement and API coverage
 
-Assignment 10 follows the [FeatureWorld checkpoints](../roadmap/featureworld-plan.md).
-10c's [test supervisor](../scene-execution.md) extends current coverage with
-explicit CPU/GPU execution and two real graphics cases. The GPU command has an
-external fixture reason; it does not turn CPU FeatureWorld assertions into
-renderer evidence. Discovery is compared with manifest GPU IDs, and actual GPU
-qualification remains separate from synthetic CPU evidence controls.
-10a adds the [CPU scene-runner foundation](../scene-runner.md), with native owner,
-scheduler/assertion tests and independent process-result tests. 10b adds the
-[saved FeatureWorld](../featureworld.md), five executable native cases and
-catalog references for all 19 current component/command entries. Its
-[handoff](../handoffs/10b-featureworld.md) records qualification. Real GPU mode
-and the final integrated audit remain10c/10d; full REQ-10 remains NOT_RUN.
-10b's [receipt](evidence/10b-featureworld.json) records 311 passing profile results,
-30 public-example compiles, actual sanitizer objects and protected packages.
+All four [FeatureWorld checkpoints](../roadmap/featureworld-plan.md) and full
+REQ-10 are PASS under the current-machine scope. The
+[integrated handoff](../handoffs/10d-integrated-qualification.md) and
+[receipt](evidence/10d-integrated-qualification.json) record 660 full CTests across
+seven profiles, 36 standalone Tools checks, 30 public-example compiles, actual
+sanitizer objects, protected packages and twelve real GPU runs with 48 readback
+comparisons. All current component/command test IDs resolve to passing executions.
+
+The [qualification contract](../featureworld-qualification.md) distinguishes
+actual executions from other-profile declarations. The optional assignment-02
+probe CLI/report declarations retain historical evidence and are not counted as
+new runs. Nineteen scene surfaces and one external GPU command are independently
+audited; CPU assertions do not qualify graphics. Preserve the five saved cases,
+stable source IDs and all earlier fixtures, seeds, timeouts and limits. New
+features extend native cases, independent expectations and mappings together.
+Next: 11 asset database, import jobs and cache.
 
 [requirements.json](requirements.json) is the version-3 requirement/coverage manifest for
 Shark. Each requirement has a unique ID, one owning roadmap assignment, observable

@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "10",
+  "current_assignment": "11",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -192,7 +192,16 @@
         "Noninteractive CPU runs produce bounded versioned results and artifact references with revision/seed/execution context. Device-dependent runs identify capabilities and cannot silently substitute an unqualified backend."
       ],
       "planned_fixture": "FeatureWorld/current-surface cases, IntentionalSceneAssertionFailure and CoverageManifestAudit; the audit inspects mappings while the scene runner exercises behavior.",
-      "verification": {"status": "NOT_RUN", "reason": "10a CPU runner foundation, 10b saved FeatureWorld and 10c explicit supervised CPU/GPU fixture execution are implemented; their handoffs and receipts record current-machine qualification. Native CPU contracts stay independent of Client. GPU cases use exact devices, required validation and independently checked readbacks. Full REQ-10 remains NOT_RUN pending integrated audit10d."}
+      "verification": {
+        "status": "PASS",
+        "reason": "All four FeatureWorld/runner checkpoints pass under the current-machine scope. 10d refreshes seven full CPU/sanitizer/Server profiles (660 CTests), 36 standalone Tools checks, 30 public-example compiles, four actual sanitizer objects, protected packages and twelve explicit both-GPU runs with 48 readback comparisons. The connected audit resolves all current component/command test IDs to passing executions and preserves intentional assertion failure through published native/supervisor results and artifact hashes. Optional assignment-02 probe declarations retain separate historical evidence. See docs/handoffs/10d-integrated-qualification.md and docs/coverage/evidence/10d-integrated-qualification.json. Next: 11 asset database, import jobs and cache.",
+        "evidence": [
+          {
+            "path": "docs/coverage/evidence/10d-integrated-qualification.json",
+            "sha256": "3a5b09e528c313a94d17cbcc8301eb996a6a62f469cdc25da38c1e04f556b0c2"
+          }
+        ]
+      }
     },
     {
       "id": "REQ-11",
@@ -844,11 +853,11 @@
         ],
         "test_ids": [
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
@@ -875,7 +884,7 @@
           "shark.tools.scene-runner-process",
           "shark.boundary.fixture",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process",
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification",
           "shark.tools.scene-execution",
           "shark.tooling.scene-execution-evidence"
         ],
@@ -884,7 +893,7 @@
           "tools/tests/test_scene_runner_process.py",
           "tests/CheckBoundaryFixture.cmake",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py",
           "tools/tests/test_scene_execution_process.py",
           "tools/tests/test_scene_execution.py"
         ],
@@ -980,14 +989,14 @@
           "shark.tools.project-files-process",
           "shark.tools.persistence-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/project_files_tests.cpp",
           "tools/tests/test_project_files_process.py",
           "tests/persistence_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/project_files_process.cpp",
@@ -1014,7 +1023,7 @@
           "shark.tools.project-files",
           "shark.tools.persistence-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
@@ -1022,7 +1031,7 @@
           "tests/project_files_tests.cpp",
           "tests/persistence_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -1050,13 +1059,13 @@
           "shark.tools.authored-scene",
           "shark.tools.persistence-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authored_scene_tests.cpp",
           "tests/persistence_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authored_scene_tests.cpp",
@@ -1082,13 +1091,13 @@
           "shark.tools.source-documents",
           "shark.tools.persistence-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/source_document_tests.cpp",
           "tests/persistence_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/fixtures/source_documents/project-v0.sharkproject",
@@ -1213,7 +1222,7 @@
           "shark.core.scene",
           "shark.core.hierarchy",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
@@ -1221,7 +1230,7 @@
           "tests/core_scene_tests.cpp",
           "tests/core_hierarchy_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/core_schema_tests.cpp",
@@ -1249,7 +1258,7 @@
           "shark.tooling.server-closure",
           "shark.tooling.runtime-package",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/core_hierarchy_tests.cpp",
@@ -1258,7 +1267,7 @@
           "tools/tests/test_server_closure.py",
           "tools/tests/test_runtime_package.py",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/core_hierarchy_tests.cpp",
@@ -1288,7 +1297,7 @@
           "shark.tooling.server-closure",
           "shark.tooling.runtime-package",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/core_scene_tests.cpp",
@@ -1297,7 +1306,7 @@
           "tools/tests/test_server_closure.py",
           "tools/tests/test_runtime_package.py",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/core_scene_tests.cpp",
@@ -1654,14 +1663,14 @@
           "shark.tools.authoring-batches",
           "shark.core.scene-edit",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
           "tests/core_scene_edit_tests.cpp",
           "tests/authoring_allocation_fault.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -1687,7 +1696,7 @@
           "shark.tools.authoring-retries-process",
           "shark.tools.project-files-process",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_integration_tests.cpp",
@@ -1695,7 +1704,7 @@
           "tools/tests/test_authoring_retries_process.py",
           "tools/tests/test_project_files_process.py",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/fixtures/source_documents/project-v0.sharkproject",
@@ -1726,14 +1735,14 @@
           "shark.tools.authoring-retries",
           "shark.tools.authoring-retries-process",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
           "tests/authoring_retry_probe.cpp",
           "tools/tests/test_authoring_retries_process.py",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -1758,14 +1767,14 @@
           "shark.tools.authoring-history",
           "shark.core.scene-edit",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
           "tests/core_scene_edit_tests.cpp",
           "tests/authoring_allocation_fault.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -1800,7 +1809,7 @@
           "shark.tools.authoring-history",
           "shark.tools.authoring-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
@@ -1810,7 +1819,7 @@
           "tests/authoring_command_tests.cpp",
           "tests/authoring_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/core_schema_tests.cpp",
@@ -1849,7 +1858,7 @@
           "shark.tools.authoring-history",
           "shark.tools.authoring-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
@@ -1860,7 +1869,7 @@
           "tests/authoring_command_tests.cpp",
           "tests/authoring_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/core_schema_tests.cpp",
@@ -1921,13 +1930,13 @@
         ],
         "test_ids": [
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process",
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification",
           "shark.tools.scene-execution",
           "shark.tooling.scene-execution-evidence"
         ],
         "test_sources": [
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py",
           "tools/tests/test_scene_execution_process.py",
           "tools/tests/test_scene_execution.py"
         ],
@@ -1957,7 +1966,7 @@
           "shark.tools.scene-runner",
           "shark.tools.scene-runner-process",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process",
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification",
           "shark.tools.scene-execution",
           "shark.tooling.scene-execution-evidence"
         ],
@@ -1966,7 +1975,7 @@
           "tools/tests/test_scene_runner_process.py",
           "tests/CheckBoundaryFixture.cmake",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py",
           "tools/tests/test_scene_execution_process.py",
           "tools/tests/test_scene_execution.py"
         ],
@@ -1999,7 +2008,7 @@
           "shark.tools.scene-runner",
           "shark.tools.scene-runner-process",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process",
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification",
           "shark.tools.scene-execution",
           "shark.tooling.scene-execution-evidence"
         ],
@@ -2008,7 +2017,7 @@
           "tools/tests/test_scene_runner_process.py",
           "tests/CheckBoundaryFixture.cmake",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py",
           "tools/tests/test_scene_execution_process.py",
           "tools/tests/test_scene_execution.py"
         ],
@@ -2043,7 +2052,7 @@
           "shark.tools.authoring-retries-process",
           "shark.tools.authoring-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
@@ -2051,7 +2060,7 @@
           "tools/tests/test_authoring_retries_process.py",
           "tests/authoring_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -2077,7 +2086,7 @@
           "shark.tools.authoring-retries-process",
           "shark.tools.authoring-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
@@ -2085,7 +2094,7 @@
           "tools/tests/test_authoring_retries_process.py",
           "tests/authoring_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -2111,7 +2120,7 @@
           "shark.tools.authoring-retries-process",
           "shark.tools.authoring-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
@@ -2119,7 +2128,7 @@
           "tools/tests/test_authoring_retries_process.py",
           "tests/authoring_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -2145,13 +2154,13 @@
                       "shark.tools.authoring-history",
                       "shark.tools.authoring-integration",
                       "shark.tools.featureworld",
-                      "shark.tools.featureworld-process"
+                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
                       "tests/authoring_integration_tests.cpp",
                       "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py"
+                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -2177,13 +2186,13 @@
                       "shark.tools.authoring-history",
                       "shark.tools.authoring-integration",
                       "shark.tools.featureworld",
-                      "shark.tools.featureworld-process"
+                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
                       "tests/authoring_integration_tests.cpp",
                       "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py"
+                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -2209,13 +2218,13 @@
                       "shark.tools.authoring-history",
                       "shark.tools.authoring-integration",
                       "shark.tools.featureworld",
-                      "shark.tools.featureworld-process"
+                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
                       "tests/authoring_integration_tests.cpp",
                       "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py"
+                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -2242,14 +2251,14 @@
                       "shark.tools.authoring-history",
                       "shark.tools.authoring-integration",
                       "shark.tools.featureworld",
-                      "shark.tools.featureworld-process"
+                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
                       "tests/persistence_integration_tests.cpp",
                       "tests/authoring_integration_tests.cpp",
                       "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py"
+                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -2276,14 +2285,14 @@
                       "shark.tools.authoring-history",
                       "shark.tools.authoring-integration",
                       "shark.tools.featureworld",
-                      "shark.tools.featureworld-process"
+                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
                       "tests/persistence_integration_tests.cpp",
                       "tests/authoring_integration_tests.cpp",
                       "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py"
+                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -2310,14 +2319,14 @@
                       "shark.tools.authoring-history",
                       "shark.tools.authoring-integration",
                       "shark.tools.featureworld",
-                      "shark.tools.featureworld-process"
+                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
                       "tests/core_scene_edit_tests.cpp",
                       "tests/authoring_integration_tests.cpp",
                       "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py"
+                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -2344,14 +2353,14 @@
                       "shark.tools.authoring-history",
                       "shark.tools.authoring-integration",
                       "shark.tools.featureworld",
-                      "shark.tools.featureworld-process"
+                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
                       "tests/core_scene_edit_tests.cpp",
                       "tests/authoring_integration_tests.cpp",
                       "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py"
+                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -2376,13 +2385,13 @@
                       "shark.tools.authoring-history",
                       "shark.tools.authoring-integration",
                       "shark.tools.featureworld",
-                      "shark.tools.featureworld-process"
+                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
                       "tests/authoring_integration_tests.cpp",
                       "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py"
+                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -2407,13 +2416,13 @@
                       "shark.tools.authoring-history",
                       "shark.tools.authoring-integration",
                       "shark.tools.featureworld",
-                      "shark.tools.featureworld-process"
+                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
                       "tests/authoring_integration_tests.cpp",
                       "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py"
+                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -2438,13 +2447,13 @@
                       "shark.tools.authoring-history",
                       "shark.tools.authoring-integration",
                       "shark.tools.featureworld",
-                      "shark.tools.featureworld-process"
+                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
                       "tests/authoring_integration_tests.cpp",
                       "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py"
+                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -2469,13 +2478,13 @@
                       "shark.tools.authoring-history",
                       "shark.tools.authoring-integration",
                       "shark.tools.featureworld",
-                      "shark.tools.featureworld-process"
+                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
                       "tests/authoring_integration_tests.cpp",
                       "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py"
+                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",

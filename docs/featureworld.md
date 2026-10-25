@@ -61,6 +61,9 @@ and checks that neither the versioned input nor its temporary copy changed.
 Existing behavior suites still cover large scenes, allocation limits, native
 faults and lifetime/resource boundaries. Network/storage/platform fixtures remain
 separate. Lua stays empty until19; terminal/editor authoring remain15/16.
+The [integrated qualification](featureworld-qualification.md) additionally audits
+test registrations, independent surface completeness and assertion publication
+through the shared CPU/GPU supervisor.
 
 The shared public API uses no private headers or external test library:
 
@@ -83,5 +86,6 @@ check_featureworld(const shark::tools::ProjectDocument& project,
 Always inspect both the outer Result and the report status. CTest families
 `shark.tools.featureworld` and `shark.tools.featureworld-process` have 60-second
 timeouts; the Catch family uses seed1337. They extend the earlier runner and
-authoring tests. Full REQ-10 remains NOT_RUN until actual GPU mode10c and the
-integrated audit10d pass.
+authoring tests. Full REQ-10 is PASS in the
+[integrated handoff](handoffs/10d-integrated-qualification.md), including explicit
+GPU qualification and the independent coverage/failure audit.

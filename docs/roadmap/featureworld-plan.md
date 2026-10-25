@@ -2,7 +2,7 @@
 
 Date: 2026-10-25. Base: `7f5353a` on initially clean `main`.
 Owner: REQ-10. Full REQ-09 is complete. The user authorized 10a after reviewing
-this four-checkpoint split. Full REQ-10 remains NOT_RUN until 10d.
+this four-checkpoint split. Full REQ-10 is PASS after the completed 10d gate below.
 
 **10a is PASS under the current-machine scope.** The
 [handoff](../handoffs/10a-headless-runner.md) and
@@ -12,7 +12,11 @@ explicit Linux repository-environment retry. **10b is also PASS under the
 current-machine scope:** its [handoff](../handoffs/10b-featureworld.md) and
 [receipt](../coverage/evidence/10b-featureworld.json) record saved source, five
 native cases, all current component/command mappings and 311 passing profile
-results. **Next: 10c.**
+results. **10c is PASS** after the user-approved Ubuntu restart and unchanged
+40-check sanitizer recovery; its [complete receipt](../coverage/evidence/10c-gpu-execution.json)
+records 315 qualified profile results and all twelve GPU runs. **10d and full
+REQ-10 are PASS** in the [integrated handoff](../handoffs/10d-integrated-qualification.md)
+and [receipt](../coverage/evidence/10d-integrated-qualification.json). Next: 11.
 
 Follow [ADR 0007](../architecture/0007-mmorpg-architecture.md),
 [ADR 0008](../architecture/0008-human-agent-authoring.md), the
@@ -55,11 +59,12 @@ survive repeat runs. No future feature is represented as implemented coverage.
 
 ## 10c - Explicit GPU execution
 
-Implementation and all twelve Windows GPU runs are delivered. Final 10c
-qualification remains NOT_RUN while an existing WSL sanitizer test is stuck in
-kernel memory mapping. See the [handoff](../handoffs/10c-gpu-execution.md) and
-[partial receipt](../coverage/evidence/10c-gpu-execution-partial.json); Ubuntu
-restart approval is pending. Do not advance to 10d until this gate is closed.
+Completed under the current-machine scope. See the
+[handoff](../handoffs/10c-gpu-execution.md) and
+[complete receipt](../coverage/evidence/10c-gpu-execution.json). The earlier
+[partial receipt](../coverage/evidence/10c-gpu-execution-partial.json) preserves
+the initial prerequisite and WSL failures; an approved distribution restart and
+unchanged 40-check sanitizer run close that recovery without changing settings.
 
 Connect existing graphical fixtures through an explicit GPU mode with device,
 capability and artifact context. Qualify the current Windows NVIDIA and Intel
@@ -69,6 +74,12 @@ different backend. Scene rendering remains assignment 13; existing cube/device
 fixtures are identified by their actual scope.
 
 ## 10d - Coverage audit and integrated qualification
+
+Complete under the current-machine scope: 660 full CTests across seven profiles,
+36 standalone Tools checks, 30 public-example compiles, protected packages and
+twelve GPU runs with 48 readback comparisons pass. Preserve the connected
+90-second family, its 19 checks/15 rejection controls and all earlier workloads.
+The [qualification contract](../featureworld-qualification.md) records scope.
 
 Audit missing/stale coverage mappings and prove intentional assertion failure
 through the complete executable/result/artifact path. Refresh the relevant

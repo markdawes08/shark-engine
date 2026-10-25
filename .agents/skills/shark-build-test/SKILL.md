@@ -5,6 +5,14 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+10d adds `shark.tools.scene-qualification` (90 seconds), connecting actual
+catalog/CTest coverage discovery, saved-world execution and intentional failure
+through the existing supervisor and published artifact hashes. Follow the
+[qualification contract](../../../docs/featureworld-qualification.md). Preserve
+its independent 19 scene/one GPU surface inventory and all earlier cases. A
+declared test in another profile is not a passing execution; closing receipts
+must resolve current component/command mappings to actual passing test results.
+
 10c adds `shark.tools.scene-execution` (21 real process checks) and
 `shark.tooling.scene-execution-evidence` (14 synthetic CPU tests), both 90 seconds.
 Preserve earlier runner/FeatureWorld cases and 19 CPU scene mappings; the GPU

@@ -44,10 +44,13 @@ with explicit seed/ticks, case discovery and versioned JSON results. This is a
 test workflow; graphical scene authoring retains its later checkpoints.
 **10b is complete:** its [handoff](docs/handoffs/10b-featureworld.md) records
 311 passing CTest profile results, public API/sanitizer audits and protected
-packages. **Next: 10c, explicit GPU execution.** Full REQ-10 remains NOT_RUN.
-10c's [test supervisor](docs/scene-execution.md) is implemented and its twelve
-native GPU runs pass. Final closure awaits recovery of a WSL kernel-stalled
-sanitizer test; see the [current handoff](docs/handoffs/10c-gpu-execution.md).
+packages. **10c is complete:** its [test supervisor](docs/scene-execution.md)
+passes twelve native GPU runs and the recovered sanitizer gate; see the
+[handoff](docs/handoffs/10c-gpu-execution.md).
+**10d and full assignment 10 are complete:** the
+[integrated qualification](docs/handoffs/10d-integrated-qualification.md) records
+660 full CTests across seven profiles, 36 standalone Tools checks, protected
+packages and twelve both-GPU runs. **Next: 11, asset database, import jobs and cache.**
 
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
 **04c and full assignment 04 are complete under the current-machine scope.**

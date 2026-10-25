@@ -109,12 +109,13 @@ retain their later owners;
 schema IDs do not establish file or gameplay-wire formats. The current-machine
 scope remains unchanged.
 
-Assignment 10's 10a/10b checkpoints are now complete under the current-machine
-scope. The [saved FeatureWorld](../featureworld.md) extends the CPU runner with
-five native cases and real component/command coverage references; its
-[handoff](../handoffs/10b-featureworld.md) records 311 passing CTest profile results,
-public API/sanitizer audits and protected packages. Next is explicit GPU mode 10c,
-then integrated qualification 10d. Full REQ-10 remains NOT_RUN.
+All four assignment-10 checkpoints and full REQ-10 are complete under the
+current-machine scope. The [saved FeatureWorld](../featureworld.md), explicit
+CPU/GPU supervisor and [integrated qualification](../handoffs/10d-integrated-qualification.md)
+retain actual coverage, assertion-failure results, 660 full CTests across seven
+profiles, 36 standalone Tools checks and twelve both-GPU runs. Authored scene
+rendering remains 13, terminal/editor adapters remain 15/16, and MMOWorld remains
+M09. Next: 11 asset database, import jobs and cache.
 
 | Record | Decision |
 | --- | --- |

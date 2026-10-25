@@ -106,3 +106,9 @@ migration is provided. Existing source, native CPU result and gameplay protocols
 do not change. GPU cases qualify the fixed graphics fixtures, while authored
 scene rendering, general terminal authoring and the full REQ-10 audit retain
 their later owners.
+
+10d connects the existing contracts in a CPU integration fixture under the
+[qualification contract](../featureworld-qualification.md). Actual discovery,
+independently reviewed surface coverage, CTest registrations and published
+success/failure artifacts are checked together. Declarations for another profile
+do not establish execution or GPU qualification. No public API or format changes.
