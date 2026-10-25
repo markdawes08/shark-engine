@@ -192,7 +192,7 @@
         "Noninteractive CPU runs produce bounded versioned results and artifact references with revision/seed/execution context. Device-dependent runs identify capabilities and cannot silently substitute an unqualified backend."
       ],
       "planned_fixture": "FeatureWorld/current-surface cases, IntentionalSceneAssertionFailure and CoverageManifestAudit; the audit inspects mappings while the scene runner exercises behavior.",
-      "verification": {"status": "NOT_RUN", "reason": "FeatureWorld, runner and executable surface manifests are not implemented; owner assignment 10."}
+      "verification": {"status": "NOT_RUN", "reason": "10a CPU runner foundation is PASS under current-machine scope: sticky assertions, deterministic seed/rate/input control, bounded versioned results, nonzero intentional failure and protected boundaries. See docs/handoffs/10a-headless-runner.md and docs/coverage/evidence/10a-headless-runner.json. Saved FeatureWorld/current-surface catalog, real GPU mode and integrated audit remain10b-10d; full REQ-10 is NOT_RUN."}
     },
     {
       "id": "REQ-11",
@@ -808,6 +808,29 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "tools.scene-runner",
+        "name": "Bounded deterministic CPU scene-runner foundation",
+        "requirement_ids": [
+          "REQ-10"
+        ],
+        "test_ids": [
+          "shark.tools.scene-runner",
+          "shark.tools.scene-runner-process",
+          "shark.boundary.fixture"
+        ],
+        "test_sources": [
+          "tests/scene_runner_tests.cpp",
+          "tools/tests/test_scene_runner_process.py",
+          "tests/CheckBoundaryFixture.cmake"
+        ],
+        "fixtures": [
+          "tests/scene_runner_tests.cpp",
+          "engine_tools/src/scene_runner_main.cpp",
+          "docs/scene-runner.md"
+        ],
+        "fixture_reason": "10a uses real AuthoredScene owners and Core scheduling in independent in-memory foundation and intentional-assertion cases. It covers seed/rational tick/input control, sticky assertions, callback faults, cancellation, result bounds, noninteractive process failure and Unicode create-only results. Saved FeatureWorld/current-surface coverage attaches in10b; real GPU mode in10c and the full audit in10d. CPU results do not claim renderer or distributed MMO qualification."
+      },
       {
         "id": "server.durable-maintenance",
         "name": "Explicit sequential database upgrades, validated backups and isolated restoration",
@@ -1564,6 +1587,50 @@
       }
     ],
     "commands": [
+      {
+        "id": "tools.scene-runner.run",
+        "name": "Run deterministic native CPU cases through shared authored-scene ownership",
+        "requirement_ids": [
+          "REQ-10"
+        ],
+        "test_ids": [
+          "shark.tools.scene-runner",
+          "shark.tools.scene-runner-process"
+        ],
+        "test_sources": [
+          "tests/scene_runner_tests.cpp",
+          "tools/tests/test_scene_runner_process.py",
+          "tests/CheckBoundaryFixture.cmake"
+        ],
+        "fixtures": [
+          "tests/scene_runner_tests.cpp",
+          "engine_tools/src/scene_runner_main.cpp",
+          "docs/scene-runner.md"
+        ],
+        "fixture_reason": "10a uses real AuthoredScene owners and Core scheduling in independent in-memory foundation and intentional-assertion cases. It covers seed/rational tick/input control, sticky assertions, callback faults, cancellation, result bounds, noninteractive process failure and Unicode create-only results. Saved FeatureWorld/current-surface coverage attaches in10b; real GPU mode in10c and the full audit in10d. CPU results do not claim renderer or distributed MMO qualification."
+      },
+      {
+        "id": "tools.scene-runner.results",
+        "name": "Encode bounded versioned scene-run results and errors",
+        "requirement_ids": [
+          "REQ-10"
+        ],
+        "test_ids": [
+          "shark.tools.scene-runner",
+          "shark.tools.scene-runner-process"
+        ],
+        "test_sources": [
+          "tests/scene_runner_tests.cpp",
+          "tools/tests/test_scene_runner_process.py",
+          "tests/CheckBoundaryFixture.cmake"
+        ],
+        "fixtures": [
+          "tests/scene_runner_tests.cpp",
+          "engine_tools/src/scene_runner_main.cpp",
+          "docs/scene-runner.md"
+        ],
+        "fixture_reason": "10a uses real AuthoredScene owners and Core scheduling in independent in-memory foundation and intentional-assertion cases. It covers seed/rational tick/input control, sticky assertions, callback faults, cancellation, result bounds, noninteractive process failure and Unicode create-only results. Saved FeatureWorld/current-surface coverage attaches in10b; real GPU mode in10c and the full audit in10d. CPU results do not claim renderer or distributed MMO qualification."
+      },
       {
         "id": "authoring.mutation.status",
         "name": "AuthoredScene::mutation_status",

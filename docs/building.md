@@ -829,6 +829,13 @@ separate evidence. Logs and `snapshot-result.json` stay inside the snapshot.
 
 ## Storage retention
 
+The CPU `SceneRunner` executable is built with EngineTools, including the
+standalone `tools-debug` preset. Follow the [scene-runner contract](scene-runner.md)
+for fixed seed/rate/input control, result JSON and intentional failure. Keep run
+results under `out/` or `build/`; the runner's create-only result paths and
+managed temporary fixtures do not overwrite existing evidence. Saved FeatureWorld
+coverage and actual GPU mode follow the [10 checkpoints](roadmap/featureworld-plan.md).
+
 Reuse build directories by platform/compiler/profile instead of creating another
 complete tree for each checkpoint. Keep the active Windows and WSL profiles for
 incremental work, the pinned tools, and one canonical archive cache for future

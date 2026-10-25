@@ -125,6 +125,14 @@ if(TARGET EngineStorage)
 endif()
 
 if(TARGET EngineTools)
+    add_executable(SceneRunnerTests scene_runner_tests.cpp)
+    target_link_libraries(SceneRunnerTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    shark_configure_target(SceneRunnerTests)
+    shark_classify_target(SceneRunnerTests test)
+    add_test(NAME shark.tools.scene-runner COMMAND SceneRunnerTests "[scene-runner]" --rng-seed 1337
+        --reporter xml --out "${CMAKE_CURRENT_BINARY_DIR}/scene-runner-cases.xml")
+    set_tests_properties(shark.tools.scene-runner PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
+
     add_executable(SourceDocumentTests source_document_tests.cpp)
     target_link_libraries(SourceDocumentTests PRIVATE EngineTools Catch2::Catch2WithMain)
     target_compile_definitions(SourceDocumentTests PRIVATE
@@ -434,6 +442,13 @@ set(Python3_FIND_STRATEGY LOCATION)
 set(Python3_FIND_REGISTRY NEVER)
 set(Python3_FIND_FRAMEWORK NEVER)
 find_package(Python3 3.11 COMPONENTS Interpreter REQUIRED)
+if(TARGET SceneRunner)
+    add_test(NAME shark.tools.scene-runner-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_scene_runner_process.py"
+            --runner "$<TARGET_FILE:SceneRunner>"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/scene-runner-process.json")
+    set_tests_properties(shark.tools.scene-runner-process PROPERTIES LABELS "cpu;tooling;integration" TIMEOUT 60)
+endif()
 if(TARGET EngineStorage)
     add_test(NAME shark.storage.process
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_storage_process.py"

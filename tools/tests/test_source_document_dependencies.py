@@ -81,7 +81,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
             for entry in commands:
                 source = Path(entry["file"])
                 command_text = entry["command"].replace("\\", "/")
-                if source.is_relative_to(ROOT / "engine_tools"):
+                if source.is_relative_to(ROOT / "engine_tools") and source.name != "scene_runner_main.cpp":
                     tool_commands.append(entry)
                     self.assertIn("/json-src/include", command_text)
                     self.assertIn("JSON_USE_IMPLICIT_CONVERSIONS=0", command_text)
@@ -98,6 +98,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                 ROOT / "engine_tools/src/authored_scene.cpp",
                 ROOT / "engine_tools/src/project_files.cpp",
                 ROOT / "engine_tools/src/project_files_native.cpp",
+                ROOT / "engine_tools/src/scene_runner.cpp",
             } if tools else set()
             self.assertEqual({Path(entry["file"]) for entry in tool_commands}, expected_sources)
             if tools:

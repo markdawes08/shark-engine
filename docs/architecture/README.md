@@ -134,6 +134,7 @@ scope remains unchanged.
 | [0021](0021-atomic-authoring-batches.md) | Bounded atomic batches, pure preview and internal handle-preserving publication |
 | [0022](0022-shared-authoring-history.md) | Bounded shared undo/redo, revision/ticket conflicts and incarnation-safe restoration |
 | [0023](0023-retained-authoring-retries.md) | Owner-scoped sequenced mutations, bounded immutable outcomes and explicit expiry/restart reconciliation |
+| [0024](0024-headless-scene-runner.md) | Deterministic CPU cases through existing owners/scheduling, bounded assertions and versioned results |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

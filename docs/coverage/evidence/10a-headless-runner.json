@@ -1,0 +1,1946 @@
+{
+  "schema_version": 1,
+  "checkpoint": "10a",
+  "status": "PASS",
+  "scope": "Deterministic CPU runner foundation on this Windows PC and retained WSL2; saved FeatureWorld/GPU/audit follow in10b-10d",
+  "recorded_utc": "2026-10-25T13:42:56.731994+00:00",
+  "base_revision": "7f5353a82384b8091580409d3d1d1f7779256a74",
+  "branch": "main",
+  "initial_worktree": "clean",
+  "result_worktree": "Uncommitted; user owns staging, commits and pushing",
+  "source_freeze": {
+    "path": "out/10a-work/source-freeze.json",
+    "sha256": "c75072028361c2260ce53c13b5139022f4751bc87dfc646f11aafaf0075d8ab9",
+    "source_inputs": 358,
+    "gate_helpers": 5
+  },
+  "qualification_amendment": {
+    "reason": "Review found valid AuthoredScene activation creates a fresh scene incarnation within the same owner. Result encoding now permits it, with an explicit regression test.",
+    "preserved_initial_snapshot": "out/10a-work/initial-snapshot/source-freeze.json",
+    "initial_windows_debug_full_ctests": 103,
+    "release_attempt": "Interrupted through its own tool session for source correction; not a qualification result.",
+    "current_scope": "Full Linux Debug regression; affected Tools families plus boundary/timing/contract on Windows Debug/Release/ASan and Linux ASan/UBSan; both standalone Tools configurations; public APIs and protected packages. Source dependency controls were exercised in the initial full Windows Debug and current full Linux Debug. No test case, timeout or workload removed."
+  },
+  "profiles": [
+    {
+      "name": "windows-debug",
+      "inventory": 103,
+      "executed": 17,
+      "base_cases": 13,
+      "process_checks": 29,
+      "status": "PASS",
+      "negative_controls": 4
+    },
+    {
+      "name": "windows-release",
+      "inventory": 103,
+      "executed": 17,
+      "base_cases": 13,
+      "process_checks": 29,
+      "status": "PASS",
+      "negative_controls": 4
+    },
+    {
+      "name": "windows-asan",
+      "inventory": 103,
+      "executed": 17,
+      "base_cases": 13,
+      "process_checks": 29,
+      "status": "PASS",
+      "negative_controls": 4
+    },
+    {
+      "name": "tools-debug",
+      "inventory": 68,
+      "executed": 13,
+      "base_cases": 13,
+      "process_checks": 29,
+      "status": "PASS",
+      "negative_controls": 4
+    },
+    {
+      "name": "linux-debug",
+      "inventory": 96,
+      "executed": 96,
+      "status": "PASS",
+      "base_cases": 13,
+      "negative_controls": 4,
+      "process_checks": 29,
+      "reconciliation": "95 unchanged passing CTests from the full run plus repository retry after process-local Git ownership correction; both original results retained"
+    },
+    {
+      "name": "linux-asan-ubsan",
+      "inventory": 96,
+      "executed": 17,
+      "status": "PASS",
+      "base_cases": 13,
+      "negative_controls": 4,
+      "process_checks": 29
+    },
+    {
+      "name": "tools-debug",
+      "inventory": 68,
+      "executed": 13,
+      "status": "PASS",
+      "base_cases": 13,
+      "negative_controls": 4,
+      "process_checks": 29
+    }
+  ],
+  "current_candidate_ctest_executions": 190,
+  "standalone_tools_checks": 26,
+  "additional_environment_retry_executions": 1,
+  "linux_repository_environment_correction": "Per-process safe.directory=/source for the known read-only checkout; no global Git configuration changed",
+  "preparatory_broad_windows_debug": {
+    "status": "PASS",
+    "executed": 103,
+    "scope": "Preparatory candidate before activation-incarnation encoding correction; current related checks are qualified separately",
+    "junit": "out/10a-work/windows-final/windows-debug.xml"
+  },
+  "test_families": [
+    {
+      "name": "shark.tools.scene-runner",
+      "timeout_seconds": 60,
+      "seed": 1337,
+      "base_cases": 13
+    },
+    {
+      "name": "shark.tools.scene-runner-process",
+      "timeout_seconds": 60,
+      "checks": 29
+    }
+  ],
+  "public_example_compiles": 27,
+  "actual_sanitizer_objects": {
+    "windows_asan": [
+      {
+        "source": "engine_tools/src/scene_runner.cpp",
+        "object": "build\\windows-asan\\engine_tools\\CMakeFiles\\EngineTools.dir\\src\\scene_runner.cpp.obj",
+        "sha256": "c884249155ee756d7505ff57aee10ab335913d02bbfecdc93e94dc64a5c3a41c",
+        "actual_asan_symbols": 791
+      },
+      {
+        "source": "engine_tools/src/scene_runner_main.cpp",
+        "object": "build\\windows-asan\\engine_tools\\CMakeFiles\\SceneRunner.dir\\src\\scene_runner_main.cpp.obj",
+        "sha256": "14477891e1ad7fe31c9bd72b189efe9b95026e24c4debe5cecc200d9219d2a6c",
+        "actual_asan_symbols": 483
+      },
+      {
+        "source": "tests/scene_runner_tests.cpp",
+        "object": "build\\windows-asan\\tests\\CMakeFiles\\SceneRunnerTests.dir\\scene_runner_tests.cpp.obj",
+        "sha256": "5d148373df8b83cfaebc6f12a1935417e88f3a364e8e99bc3465b8cbf8ef4842",
+        "actual_asan_symbols": 696
+      }
+    ],
+    "linux_asan_ubsan": [
+      {
+        "source": "engine_tools/src/scene_runner.cpp",
+        "object": "/work/build-05a-final-client/linux-asan-ubsan/engine_tools/CMakeFiles/EngineTools.dir/src/scene_runner.cpp.o",
+        "sha256": "292af05ec817782badf4ae3660608ebc1eeb6a1fd23c6a694eb91e3ac9ac8a0d",
+        "actual_asan_ubsan": "PASS"
+      },
+      {
+        "source": "engine_tools/src/scene_runner_main.cpp",
+        "object": "/work/build-05a-final-client/linux-asan-ubsan/engine_tools/CMakeFiles/SceneRunner.dir/src/scene_runner_main.cpp.o",
+        "sha256": "0aad26fa9fef85fcaa2739f23d40c995964dd84e910d7721131d4cd4d8b4090d",
+        "actual_asan_ubsan": "PASS"
+      },
+      {
+        "source": "tests/scene_runner_tests.cpp",
+        "object": "/work/build-05a-final-client/linux-asan-ubsan/tests/CMakeFiles/SceneRunnerTests.dir/scene_runner_tests.cpp.o",
+        "sha256": "7d4d0ec8aa373c902a38e4f28ae2e2eff2bd2d18f419704ff4e1f5d03de0f81b",
+        "actual_asan_ubsan": "PASS"
+      }
+    ]
+  },
+  "malformed_junit_controls": 28,
+  "additional_sanitizer_runtime_checks": {
+    "ASAN_OPTIONS": "detect_leaks=1:halt_on_error=1",
+    "UBSAN_OPTIONS": "halt_on_error=1:print_stacktrace=1",
+    "executed": 2
+  },
+  "boundary_fixture_controls": {
+    "allowed": 3,
+    "forbidden": 32,
+    "preserved_earlier_forbidden": 30
+  },
+  "protected_packages": {
+    "native_runtime": "PASS;33 files; isolated Unicode deployment removed after version/help checks",
+    "linux_server": "PASS; source/link/ELF/install closure and SDK-free startup",
+    "runtime_server_builds": "PASS on Windows and WSL; Tools/JSON excluded",
+    "server_full_suites": "Core/Storage/Server implementation unchanged; full dedicated Server-suite evidence remains historical09e"
+  },
+  "limits": {
+    "cases": 32,
+    "ticks_per_case": 10000,
+    "rate_hz": [
+      1,
+      1000
+    ],
+    "input_events": 4096,
+    "assertions_per_case": 16384,
+    "random_draws_per_case": 65536,
+    "result_bytes": 1048576
+  },
+  "remaining_full_requirement": {
+    "id": "REQ-10",
+    "status": "NOT_RUN",
+    "remaining": [
+      "10b saved FeatureWorld and supported-surface coverage",
+      "10c actual GPU execution",
+      "10d integrated coverage audit and qualification"
+    ]
+  },
+  "artifacts": [
+    {
+      "path": "out/10a-work/audit-freeze.json",
+      "bytes": 276,
+      "sha256": "34548908fe3373b92328384d677439c4f22151a4fa5caea134cffe5ba400a483"
+    },
+    {
+      "path": "out/10a-work/audit-windows.py",
+      "bytes": 3892,
+      "sha256": "95240aa5f94aec14efe5a1afbc8872cd2fb38b3a3eb84370808d5a76b59d49c5"
+    },
+    {
+      "path": "out/10a-work/continue-wsl.py",
+      "bytes": 4188,
+      "sha256": "5a4a74b53aeed1de75d21991e6850f66d1ce8c6a73a854a7b5a72c74a9adca0b"
+    },
+    {
+      "path": "out/10a-work/environment-recovery-helpers.json",
+      "bytes": 185,
+      "sha256": "021d59140fca2662ed57c0a12b68256ebb66879d81fc0fb09d296a3c962fe426"
+    },
+    {
+      "path": "out/10a-work/initial-snapshot/broad-windows-debug.json",
+      "bytes": 242,
+      "sha256": "b32850aad88475c948c5b20ba5f9b74ecaff08dd5b5adf1ec8c0a8170f383b21"
+    },
+    {
+      "path": "out/10a-work/initial-snapshot/qualification.py",
+      "bytes": 2791,
+      "sha256": "d7ef6a69ab0e3535525491566e91f3c8ef289931623907e8e79d2ce66ade77c2"
+    },
+    {
+      "path": "out/10a-work/initial-snapshot/qualify-windows.py",
+      "bytes": 3026,
+      "sha256": "7f2c069947194b8f5bbe1fbb783b7f5dfe6103790ab8545df6a67d98ad228bd3"
+    },
+    {
+      "path": "out/10a-work/initial-snapshot/qualify-wsl.py",
+      "bytes": 3354,
+      "sha256": "96b0d8b693e317d588cfdf726f335a3c2346c6364f61a208ef1feebeb105503d"
+    },
+    {
+      "path": "out/10a-work/initial-snapshot/scene-runner.md",
+      "bytes": 7706,
+      "sha256": "cfd25abfa0dec439bb2ae5cf171009837ee41f124d440bae9531ce048f3d68f1"
+    },
+    {
+      "path": "out/10a-work/initial-snapshot/scene_runner.cpp",
+      "bytes": 20138,
+      "sha256": "ec3770bb2e4466cdf22b5d1d92a0372e965cddd18ba9a92ca0c58ebd47e8f955"
+    },
+    {
+      "path": "out/10a-work/initial-snapshot/scene_runner_tests.cpp",
+      "bytes": 16993,
+      "sha256": "3780a3c8cec86a4fbe8676602525d9adddb641de53cd284cd3bfbcbc40cafa89"
+    },
+    {
+      "path": "out/10a-work/initial-snapshot/source-freeze.json",
+      "bytes": 40518,
+      "sha256": "e136a825a6e2d1c75b9c1bac88064c85e337958b399fa5145589a099f8ad672a"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/a-primed",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/b-primed",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/client-a.pid",
+      "bytes": 7,
+      "sha256": "9a11cbbf9d422e40b4c50a2f498a563de33588ae7156e73feeda77c1ec96eee0"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/client-a.pid.finish",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/client-a.pid.finished",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/client-a.pid.observed",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/client-b.pid",
+      "bytes": 7,
+      "sha256": "8bb5fc01a049832ebb48a57e1248fae87cf51123385b85370bb0167e23512996"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/client-b.pid.finish",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/client-b.pid.finished",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/client-b.pid.observed",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/faults-ended",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/relay-finish",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/server-ready.json",
+      "bytes": 16,
+      "sha256": "ee252515790c3313f1a4b5015a3cbdb5658f44f49a028982be4951ab4a66fbd0"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/server.pid",
+      "bytes": 7,
+      "sha256": "4357e50f1862058e92b07044c836b84bd28c148e851beddae709b274437a04a2"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/server.pid.finish",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/server.pid.finished",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/server.pid.observed",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/baseline/source-start",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/a-primed",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/b-primed",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/client-a.pid",
+      "bytes": 7,
+      "sha256": "032cc9513af382e5c087d80ac1a990cfea1f09837e9f6af20a25a30841eabc24"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/client-a.pid.finish",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/client-a.pid.finished",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/client-a.pid.observed",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/client-b.pid",
+      "bytes": 7,
+      "sha256": "b47dd07a629203bd2f9741b76446bdaabbf3cd19f9b9ee660edd3d8861962d1e"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/client-b.pid.finish",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/client-b.pid.finished",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/client-b.pid.observed",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/faults-ended",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/relay-arm",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/relay-armed",
+      "bytes": 7,
+      "sha256": "4d870461d25c3d84c5a59ba0bb8941d9ae2464c77fa8e82da56f0ba0c739cc4b"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/relay-finish",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/relay-ready.json",
+      "bytes": 17,
+      "sha256": "0f57c3e5422e6afbf9d3f2ea6d85e6da2e006b42d09e7cfb5f5ae4a8157f929e"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/relay.pid",
+      "bytes": 7,
+      "sha256": "4c4dc9135adfd9739aa2dbb40cd06683d098952f5d3bd07df75c7d4ac10a3585"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/relay.pid.finish",
+      "bytes": 10,
+      "sha256": "5350918150f1698627c27bc435353e89047e7e03b8103099d93921961d379bba"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/relay.pid.finished",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/relay.pid.observed",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/server-ready.json",
+      "bytes": 16,
+      "sha256": "8fae07790693186ee681eda2d00ee967c7496fe495f6b3b697b8a4a3a540af61"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/server.pid",
+      "bytes": 7,
+      "sha256": "c7bc869b254793a2e67470c1d9c148e2dd1b5506cd81bcf35457655cf9b52a4c"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/server.pid.finish",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/server.pid.finished",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/server.pid.observed",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt100-loss1/source-start",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt200-loss5/a-primed",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt200-loss5/b-primed",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt200-loss5/client-a.pid",
+      "bytes": 7,
+      "sha256": "f9b7a3257c63a010d76a7c079d2013a48883620c730195472d23817bef05da05"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt200-loss5/client-a.pid.observed",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt200-loss5/client-b.pid",
+      "bytes": 7,
+      "sha256": "412187503f130ff7fc29a608185d9feffa7ba7b7bfb0fbfa49671e5a99ebe56b"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt200-loss5/client-b.pid.observed",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt200-loss5/relay-arm",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt200-loss5/relay-armed",
+      "bytes": 7,
+      "sha256": "4d870461d25c3d84c5a59ba0bb8941d9ae2464c77fa8e82da56f0ba0c739cc4b"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt200-loss5/relay-ready.json",
+      "bytes": 17,
+      "sha256": "09aa55d5f6236a67b1d4b8150be1b4aa7c919c4821187cb7e425df72deb3bb8f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt200-loss5/relay.pid",
+      "bytes": 7,
+      "sha256": "69c08a72c1dd14d443d0a66712925c9a3736d09ed1bde705db0d823c674018a6"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt200-loss5/relay.pid.observed",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt200-loss5/server-ready.json",
+      "bytes": 16,
+      "sha256": "1dd992f2dbaa11ce2eaa1e52a8843167522909b40a6c200d3f2b18d0d76defe5"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt200-loss5/server.pid",
+      "bytes": 7,
+      "sha256": "8fcdf89529ca1d93ab0d883f2ffa40205d1de3f1dd65bef7dddda1860619de20"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt200-loss5/server.pid.observed",
+      "bytes": 10,
+      "sha256": "9b18cfe191ae34a57f99051c3a2b73f5eae86151ec9224aa341195bb7b51b39f"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-adversity/rtt200-loss5/source-start",
+      "bytes": 7,
+      "sha256": "83e24203f3532a5d379e2dfcab2a0bffa0b0d059eddc22ab04155ed229343ef3"
+    },
+    {
+      "path": "out/10a-work/interrupted-release-evidence.json",
+      "bytes": 334,
+      "sha256": "300a164e2af081428a5207f9dc82260137cafd5f6153afaa2564e92b50d39a44"
+    },
+    {
+      "path": "out/10a-work/protect-wsl.py",
+      "bytes": 2718,
+      "sha256": "18dea8794d89ed3f5b7f3d5e2973b9522010eda20f7663d3f6e57a4215a0e0d7"
+    },
+    {
+      "path": "out/10a-work/public-api.py",
+      "bytes": 6203,
+      "sha256": "b23aeadfe84b9d8c854b23a497749381b790dc703a62e532da1c9102a58a0764"
+    },
+    {
+      "path": "out/10a-work/qualification-amendment.json",
+      "bytes": 816,
+      "sha256": "01ea5ed196491d55beb5d9eeb0a73bebc00533ccac4f63a8920e011ea9cb4668"
+    },
+    {
+      "path": "out/10a-work/qualification.py",
+      "bytes": 2839,
+      "sha256": "8848a0ddae51302e05bfec552cd9f27cdc707621f7d62e20277de5bc63319fb5"
+    },
+    {
+      "path": "out/10a-work/qualify-windows-current.py",
+      "bytes": 3130,
+      "sha256": "ee09281a8516e4787c84cd9778a2652bb5d1856c0ca9548461a3ae6193086059"
+    },
+    {
+      "path": "out/10a-work/qualify-windows.py",
+      "bytes": 3026,
+      "sha256": "7f2c069947194b8f5bbe1fbb783b7f5dfe6103790ab8545df6a67d98ad228bd3"
+    },
+    {
+      "path": "out/10a-work/qualify-wsl.py",
+      "bytes": 3553,
+      "sha256": "85538e488cfd94619585df8ee70c6505d5aaeb9c54baa5190443de277df00892"
+    },
+    {
+      "path": "out/10a-work/receipt.py",
+      "bytes": 4789,
+      "sha256": "7130ff8f0fef9c978544b1c7965ffaa0ada809e8066337bfa48a9ae5f0161112"
+    },
+    {
+      "path": "out/10a-work/source-freeze.json",
+      "bytes": 40769,
+      "sha256": "c75072028361c2260ce53c13b5139022f4751bc87dfc646f11aafaf0075d8ab9"
+    },
+    {
+      "path": "out/10a-work/windows-audits/contract.log",
+      "bytes": 441,
+      "sha256": "a5d465c500ce5594f61817e185f3ca0b70ec56a36d011b94a9bf5518d5b97edc"
+    },
+    {
+      "path": "out/10a-work/windows-audits/format.log",
+      "bytes": 34,
+      "sha256": "f8114ad27c232340d3be0367d8e9f37736f0fbe4ca79d3686e907288aa1279b6"
+    },
+    {
+      "path": "out/10a-work/windows-audits/package-build.log",
+      "bytes": 272,
+      "sha256": "3f32f2860cadab03f9fe4ad0c2a75a213ea5652b045a905755ce5e91b5b4ea5b"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authored-scenes/compile.log",
+      "bytes": 1113,
+      "sha256": "203949072e5c79a359a79e78af035d325afb7dce8c2863d95aafea3fe4a9e7f3"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authored-scenes/compiler-inputs.json",
+      "bytes": 44190,
+      "sha256": "a8079434c1cdd7e55802f98b025e3debc029057f603bb051f76cd4f1bcfaf3d3"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authored-scenes/example.cpp",
+      "bytes": 1278,
+      "sha256": "ddbe41da2bbb5c8825bba2c301eb70c898691c3b01ed69c50307117223166453"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authored-scenes/example.obj",
+      "bytes": 237233,
+      "sha256": "2fd4d2eca775503e023ca14ed8f1f8aad525af2dfad067514bbf67d279faeb91"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-commands/compile.log",
+      "bytes": 1113,
+      "sha256": "203949072e5c79a359a79e78af035d325afb7dce8c2863d95aafea3fe4a9e7f3"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-commands/compiler-inputs.json",
+      "bytes": 44193,
+      "sha256": "e30e5ceb630eefea56f075abcdae98bdfb03b682e8cfe1d444cd34f2ab432f71"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-commands/example.cpp",
+      "bytes": 571,
+      "sha256": "d37596c6896558f1693ca95e5b6ffedf666be158cea290fabafb7bdaf83dcd4c"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-commands/example.obj",
+      "bytes": 177050,
+      "sha256": "41869968fa21d72616a6a7632b545aa5bd9cfdd8c28e765d51d90c0a7fde0768"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-history/compile.log",
+      "bytes": 1113,
+      "sha256": "203949072e5c79a359a79e78af035d325afb7dce8c2863d95aafea3fe4a9e7f3"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-history/compiler-inputs.json",
+      "bytes": 44192,
+      "sha256": "35a5a06c1ea41694f276493c923a3cd83af8b9221c4d51b011fab52178012760"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-history/example.cpp",
+      "bytes": 1001,
+      "sha256": "37178d802c517beb4d258acf7153f87c5cc51efe021e62ab09706f47ae4626bf"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-history/example.obj",
+      "bytes": 257340,
+      "sha256": "eca22b78a7a508aa488055af12830cdb897fd03e09c8b258e58051e108ee4418"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-qualification/compile.log",
+      "bytes": 1113,
+      "sha256": "203949072e5c79a359a79e78af035d325afb7dce8c2863d95aafea3fe4a9e7f3"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-qualification/compiler-inputs.json",
+      "bytes": 44304,
+      "sha256": "cd6ce6379198f81092d981afaa75dc749347369d16ec0812c5572af370fc0aab"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-qualification/example.cpp",
+      "bytes": 1739,
+      "sha256": "58075ca304aa9506f251b47581338ce8c41aba81986e231b3a9b3c4bd7cba1cc"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-qualification/example.obj",
+      "bytes": 417163,
+      "sha256": "7f928ac789b0fdae5f7162d007eb1c998e979616c35dc4671b4f8159ad3c5ac2"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-retries/compile.log",
+      "bytes": 1113,
+      "sha256": "203949072e5c79a359a79e78af035d325afb7dce8c2863d95aafea3fe4a9e7f3"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-retries/compiler-inputs.json",
+      "bytes": 44192,
+      "sha256": "198c5c549b6cb0d4b3dfcc26a78d992b1abf411b10d65236428c3711af37f656"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-retries/example.cpp",
+      "bytes": 1258,
+      "sha256": "7e8a0d57ef00d7e2f321bff0246a4d22d91c05598570b60099b575e484b9952c"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-retries/example.obj",
+      "bytes": 484216,
+      "sha256": "2ff5e04971fb9ebe01f03536b770eda916be2e2c164ecd4debe45719fc8b99e2"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-transactions/compile.log",
+      "bytes": 1113,
+      "sha256": "203949072e5c79a359a79e78af035d325afb7dce8c2863d95aafea3fe4a9e7f3"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-transactions/compiler-inputs.json",
+      "bytes": 44197,
+      "sha256": "d74fd5ed82bad67065379755ac7e06922de829e0459d724244f1d79090962b85"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-transactions/example.cpp",
+      "bytes": 508,
+      "sha256": "023a7a1f70e9f3f44c547681729592cf4db714c2cdc6892a7f1da50f7b128667"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/authoring-transactions/example.obj",
+      "bytes": 124197,
+      "sha256": "ae2564d36e6dfc29710808963213321cf77c44ec272529e896243a3585584a13"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/project-files/compile.log",
+      "bytes": 1113,
+      "sha256": "203949072e5c79a359a79e78af035d325afb7dce8c2863d95aafea3fe4a9e7f3"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/project-files/compiler-inputs.json",
+      "bytes": 44294,
+      "sha256": "f771f3fd171508f3fa906710f115a03cc007345dbd131c3277c7fbd686d2f975"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/project-files/example.cpp",
+      "bytes": 905,
+      "sha256": "247fdcdb618a55346df27708d5bced5a27c0a372babffbe78c20caf403e262cd"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/project-files/example.obj",
+      "bytes": 211383,
+      "sha256": "3b10ce6996a23bd88bcfd306e7535b43bf3581fa196228cd6404953c44171f26"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/scene-runner/compile.log",
+      "bytes": 1113,
+      "sha256": "203949072e5c79a359a79e78af035d325afb7dce8c2863d95aafea3fe4a9e7f3"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/scene-runner/compiler-inputs.json",
+      "bytes": 44971,
+      "sha256": "662c46f7976abf88b669410b62a4b8429e1257bed0fa5e5a873810ea5cbe251f"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/scene-runner/example.cpp",
+      "bytes": 1157,
+      "sha256": "e3512f82d38d3755a40ee8c36cf945a897c487e60d3690a1857b4221fb4b8e0a"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/scene-runner/example.obj",
+      "bytes": 248933,
+      "sha256": "ba2af06aa30e83b2b31cddb9d5b662b72ca446015734dd59076d65e16a933a08"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/source-documents/compile.log",
+      "bytes": 1113,
+      "sha256": "203949072e5c79a359a79e78af035d325afb7dce8c2863d95aafea3fe4a9e7f3"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/source-documents/compiler-inputs.json",
+      "bytes": 43566,
+      "sha256": "c4fbfee42dece639996f74e16582048433662e1d3519b4fef58856898018b49d"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/source-documents/example.cpp",
+      "bytes": 313,
+      "sha256": "110e8f7521604b9f4614532dc7db0319b090cb7dfb072d9f01de4974f7f97cbb"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/source-documents/example.obj",
+      "bytes": 113143,
+      "sha256": "416f73b421db89b0c22ee806fd0f7c0ea5c003738e4c546a99de34600ce959a9"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api/summary.json",
+      "bytes": 775009,
+      "sha256": "eda14d7d09112076383a48d9f96af07a3faf28585bc4a747dfd6e7c487bd920c"
+    },
+    {
+      "path": "out/10a-work/windows-audits/public-api.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/windows-audits/relocated-help.log",
+      "bytes": 595,
+      "sha256": "fa0b344fab351630b0cc94a1edee8d3107c1528cc964c3bda69ce8acef57e745"
+    },
+    {
+      "path": "out/10a-work/windows-audits/relocated-version.log",
+      "bytes": 21,
+      "sha256": "76992cdc5f1271b6763c5d2482f2127f3b3dacafe5ac873b74e471faa935205f"
+    },
+    {
+      "path": "out/10a-work/windows-audits/repository.log",
+      "bytes": 235,
+      "sha256": "e39fe4cb3f05005fba55121444234bfb030f3c21b6783a9eabef6369957a58a4"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-only-build.log",
+      "bytes": 2140,
+      "sha256": "1b750e127cab621afae37fcb3f54968e870a8fe45f39efdf1814371803c2a709"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/bin/msvcp140.dll",
+      "bytes": 643512,
+      "sha256": "7c26614e1d733892c2deac7e245ce115504b1d80592dd0a01b08e3e5a55f89ca"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/bin/Runtime.exe",
+      "bytes": 1023488,
+      "sha256": "5f25a72c6e2266804631196987094e84c3021693149c40eb0c3a59799c694100"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/bin/vcruntime140.dll",
+      "bytes": 178616,
+      "sha256": "d1f4225df2cd877dbf130d5668a021dce3f94118455ff5ec952061c30afc9ce7"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/bin/vcruntime140_1.dll",
+      "bytes": 50112,
+      "sha256": "a7146c08f89fe5b04541ab507cdb59ff7b44534d4ba3c668a426c6450a03434e"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/bin/vulkan-1.dll",
+      "bytes": 795648,
+      "sha256": "ba61929f72e8bef26d5ecef57dff8272594bacbba8e23cf4cbcc1319e0395fa9"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/EnTT/LICENSE",
+      "bytes": 1097,
+      "sha256": "73547f6370ee16ea560665329bb62d4e2d8250f41eaa204b47a6c694ca3286ea"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/GLFW/LICENSE.md",
+      "bytes": 904,
+      "sha256": "149704059b5d0bf551637e50042dd4de9c2cae921021f6636298911e3a5f9462"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/GLM/copying.txt",
+      "bytes": 2865,
+      "sha256": "62d2d642c7d054d4fb4c9b42faad617d6c88fcd91e317f8035aa9f277cc159c3"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/MbedTLS/framework/LICENSE",
+      "bytes": 29861,
+      "sha256": "11402351e38392230bb8934ba1095c0c0049a296c0f8821f76e4672dff54b490"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/MbedTLS/LICENSE",
+      "bytes": 29852,
+      "sha256": "9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/MbedTLS/tf-psa-crypto/drivers/everest/include/tf-psa-crypto/private/everest/kremlib.h",
+      "bytes": 1017,
+      "sha256": "8aca2e1da765d1a1fd6277a0d69caadffd5dc07c61bb313b4689843d3fcaefe3"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/MbedTLS/tf-psa-crypto/drivers/everest/library/Hacl_Curve25519.c",
+      "bytes": 22405,
+      "sha256": "ff662cfae5e65d968d487a687db5fdc05c357ec9b2035ac9e380c9f8ec7eb6eb"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/MbedTLS/tf-psa-crypto/drivers/everest/library/legacy/Hacl_Curve25519.c",
+      "bytes": 24161,
+      "sha256": "fd769ba72bed1ca61a4e286d7ef1751931fda5707881df514335f97ccafb5984"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/MbedTLS/tf-psa-crypto/drivers/pqcp/mldsa-native/LICENSE",
+      "bytes": 15310,
+      "sha256": "26ee68617256be39e12fbbb0fb0c8c7087980a2020ded46e3ef3c3810c35d847"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/MbedTLS/tf-psa-crypto/framework/LICENSE",
+      "bytes": 29861,
+      "sha256": "11402351e38392230bb8934ba1095c0c0049a296c0f8821f76e4672dff54b490"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/MbedTLS/tf-psa-crypto/LICENSE",
+      "bytes": 29856,
+      "sha256": "da8c58f05f135a9d15e9ffad4ecf854cfcc1f014c8abfd75ba05f62630ccc118"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/MicrosoftVC/Microsoft-VC-Runtime-2026.txt",
+      "bytes": 12273,
+      "sha256": "d9363efd59ac8a01f4b89b6b41519237c2b6cf3a240554204c3708bffa8991dc"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/NVRHI/LICENSE.txt",
+      "bytes": 1090,
+      "sha256": "25179dae1293243f83e3c1293bd8c13dbbac4dd544f51a40a2dbb7c7cfd6e18a"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/VulkanHeaders/LICENSE.md",
+      "bytes": 458,
+      "sha256": "ac24e5ea920e4318e4d02c4086ae51f53cfb03feed06c18df1019e7ada1ec7bc"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/VulkanHeaders/LICENSES/Apache-2.0.txt",
+      "bytes": 11358,
+      "sha256": "cfc7749b96f63bd31c3c42b5c471bf756814053e847c10f3eb003417bc523d30"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/VulkanHeaders/LICENSES/MIT.txt",
+      "bytes": 1084,
+      "sha256": "1ca3502222d967f3be5751c55f6b7ee735b5383909c3b501495f54b216dbf227"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/VulkanLoader/LICENSE.txt",
+      "bytes": 11661,
+      "sha256": "43c0a37e6a0fa7ff3c843b3ec5a4fac84b712558ddac103fbd4c1649662a9ece"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/VulkanLoader/LICENSES/Apache-2.0.txt",
+      "bytes": 10280,
+      "sha256": "074e6e32c86a4c0ef8b3ed25b721ca23aca83df277cd88106ef7177c354615ff"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/VulkanLoader/LICENSES/MIT-Khronos-old.txt",
+      "bytes": 1305,
+      "sha256": "fbeaca472f4f70e276dd1106ca5097435967a22ad6c1d8200aef7ad9f70aaf3f"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/VulkanLoader/loader/cJSON.c",
+      "bytes": 55167,
+      "sha256": "141a4f05c65c1b65798844e36423839a0e84f7aaf232a442fd97b4ff949cddb7"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/VulkanLoader/loader/dirent_on_windows.c",
+      "bytes": 3797,
+      "sha256": "4d4181b0018d7ddc29a866aebcc0f5a1b6574de56a3ef574b20698792b325338"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/VulkanLoader/loader/dirent_on_windows.h",
+      "bytes": 1262,
+      "sha256": "3ac29aed7e519e45b131ef5d3b7ebdd4f616424790c462811bf50755776085bc"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/licenses/VulkanLoader/loader/loader_json.c",
+      "bytes": 9275,
+      "sha256": "f7ad6debbe082688684ece7ec2463c83d0993c12e191723dfdee5b740133b6fe"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/package-manifest.json",
+      "bytes": 12012,
+      "sha256": "54192477ac8a0f8c23eee7eb9b268b96644b9fb7919ebbd742cbd39244fedea0"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/provenance/crt-manifest.json",
+      "bytes": 2297,
+      "sha256": "375f04bfc9f30ac632cefc588f7d1ef4e0d510972093c2b92d27c5d36e2ee2fd"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/provenance/dependencies.lock.json",
+      "bytes": 34538,
+      "sha256": "d0cda36900bb4f74b0edb96b208314c1b01095da5d9aa9cba5ca435fb43241e4"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/provenance/dependency-closure.json",
+      "bytes": 9354,
+      "sha256": "58c2604edd7e579cb0a7eacd7d42c8bcbaaa2be885f857293f581ea33e7c7ef0"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/provenance/toolchain.json",
+      "bytes": 5306,
+      "sha256": "9dfdb794b3e39df89071bdb30207d8b8f95357e7864e135157d963eb95429ea4"
+    },
+    {
+      "path": "out/10a-work/windows-audits/runtime-package/README.txt",
+      "bytes": 741,
+      "sha256": "54124c987f4752041b9c8df2ce4738c0d3eb15263a98aaf4a6ef254cd11db6ea"
+    },
+    {
+      "path": "out/10a-work/windows-audits/scene_runner-asan-symbols.log",
+      "bytes": 169013,
+      "sha256": "8825143129de12c514dce32c266b22a4f18d9ccb3090ebb2bc9c94e673411cad"
+    },
+    {
+      "path": "out/10a-work/windows-audits/scene_runner_main-asan-symbols.log",
+      "bytes": 66061,
+      "sha256": "d703db4ba1d19b6b35f0147ab140a31898c5250786988935c4a5bb1f9cfdf85f"
+    },
+    {
+      "path": "out/10a-work/windows-audits/scene_runner_tests-asan-symbols.log",
+      "bytes": 85690,
+      "sha256": "1a5e760f826faa715eda877ae9a786d22039b03ebd58cd85c18aeaa24d91a4c7"
+    },
+    {
+      "path": "out/10a-work/windows-audits/server-only-build.log",
+      "bytes": 1096,
+      "sha256": "63692277c5c9733817f8ccf39d899061f11b3f883ad54b582371ff3324bf48ef"
+    },
+    {
+      "path": "out/10a-work/windows-audits/summary.json",
+      "bytes": 4394,
+      "sha256": "c39cdbb96bfc7986efd7fe07a24d3bfb3a6108b2cfd5d9543b5f89e041ffef62"
+    },
+    {
+      "path": "out/10a-work/windows-final/windows-debug-build.log",
+      "bytes": 5942,
+      "sha256": "96931c4b5db62c6a8bc1a44ad63306580a6b108bcadb8ce10420726e391d59ec"
+    },
+    {
+      "path": "out/10a-work/windows-final/windows-debug-cases.xml",
+      "bytes": 3409,
+      "sha256": "827006a285a7d85540a2d1296d7b43d021fbd9f956f74a9f78a4b6211ce74011"
+    },
+    {
+      "path": "out/10a-work/windows-final/windows-debug-inventory.json",
+      "bytes": 95111,
+      "sha256": "17ce58b803a044e52f81774d79bbb28ce54cccb856927d110899f33394a04b1f"
+    },
+    {
+      "path": "out/10a-work/windows-final/windows-debug-inventory.log",
+      "bytes": 99581,
+      "sha256": "24546ce4f1cf8f660745c67f0198c08363c2bceaa66dd449c553ce429597c070"
+    },
+    {
+      "path": "out/10a-work/windows-final/windows-debug-process.json",
+      "bytes": 2135,
+      "sha256": "346081439b14335266311bc14c009b95218e574ee0fe122e680e4e93b088fe0f"
+    },
+    {
+      "path": "out/10a-work/windows-final/windows-debug-tests.log",
+      "bytes": 14432,
+      "sha256": "c2a12bd26bcaaf6ffcd5938ca9d6aca440910961c38b98c95f9fc6ee96a9a356"
+    },
+    {
+      "path": "out/10a-work/windows-final/windows-debug.xml",
+      "bytes": 65110,
+      "sha256": "4843604ca0feee18387e9c99636bcc38b91d0a99c2ec1453d20f5b1273a51398"
+    },
+    {
+      "path": "out/10a-work/windows-final/windows-release-build.log",
+      "bytes": 7878,
+      "sha256": "8f121fa78e0fea3a8639077ed97f9ff99f4993183e9130057da91339acdff59c"
+    },
+    {
+      "path": "out/10a-work/windows-final/windows-release-inventory.json",
+      "bytes": 95437,
+      "sha256": "989dcae1b3861dbdcfc7705bc7336588f667ad9fe00c3219d418252c933166ab"
+    },
+    {
+      "path": "out/10a-work/windows-final/windows-release-inventory.log",
+      "bytes": 99907,
+      "sha256": "bd0f000d99cebe1d8e561f16d94109facd4d98aa017d2afc2bf075c44413c8d7"
+    },
+    {
+      "path": "out/10a-work/windows-inventory-before-tests.log",
+      "bytes": 8602,
+      "sha256": "e46566b97d39a27f945a12019a19ec0e5c43407eafa856b6792999bd22333f10"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/summary.json",
+      "bytes": 7091,
+      "sha256": "f72083f705c619f58d44750a3064e2248affa3e3ae92d3c04a527b745cffb70f"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/tools-debug-build.log",
+      "bytes": 3374,
+      "sha256": "4aa89757750cd618e3f2eafeeae14399c435687fd62e8f9eeeee30d331765b19"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/tools-debug-cases.xml",
+      "bytes": 3670,
+      "sha256": "7b311d9010e4294f4971a5afe4403b8d7cc8cd450c86d52b30a0117aa6358a3f"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/tools-debug-inventory.json",
+      "bytes": 61016,
+      "sha256": "440a093bcf102f9c794c0e08295e58fc0ba35c773ed4e1c7b3ddd3c63936ec17"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/tools-debug-inventory.log",
+      "bytes": 63981,
+      "sha256": "fef1b67a942de0022f6a3fa935b25301ad6f42c827aab7a65478e27cede79d17"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/tools-debug-process.json",
+      "bytes": 2135,
+      "sha256": "346081439b14335266311bc14c009b95218e574ee0fe122e680e4e93b088fe0f"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/tools-debug-tests.log",
+      "bytes": 2014,
+      "sha256": "882a6c3eee081d463ec84438ef7a93c46c12f834f7862a477430dd0ec0134dd2"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/tools-debug.xml",
+      "bytes": 7730,
+      "sha256": "2146161f576a3685fdbd7173522dd0abcf393dec500b4063b522fb06be4c2d1b"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-asan-build.log",
+      "bytes": 7869,
+      "sha256": "ae854f9baaffe84fd61dcf2dadf202184c7538578b55336b622218c1d24a6c83"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-asan-cases.xml",
+      "bytes": 3670,
+      "sha256": "7b311d9010e4294f4971a5afe4403b8d7cc8cd450c86d52b30a0117aa6358a3f"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-asan-inventory.json",
+      "bytes": 94958,
+      "sha256": "6a04d35ccb51bf8d56563650407a3eaa31e9d3bc9152090d1b426c1d069fbea4"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-asan-inventory.log",
+      "bytes": 99428,
+      "sha256": "adf9051f84d79e25db29119fd6f90c7f029b8b9c1abbc8542c01335dca102b68"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-asan-process.json",
+      "bytes": 2135,
+      "sha256": "346081439b14335266311bc14c009b95218e574ee0fe122e680e4e93b088fe0f"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-asan-tests.log",
+      "bytes": 2604,
+      "sha256": "3a78c39281562ebb682707369cd8374464afd3498e794496bf0cec7f0afae0aa"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-asan.xml",
+      "bytes": 10488,
+      "sha256": "281149aea831799e167934630a51f9b683a7f613e3a2dfd6890f4c0012f39128"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-debug-build.log",
+      "bytes": 4765,
+      "sha256": "fd1163324d5122943e771b7874e26bb0553f8ee8202f56a1d36f25dbb5ca50e9"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-debug-cases.xml",
+      "bytes": 3670,
+      "sha256": "7b311d9010e4294f4971a5afe4403b8d7cc8cd450c86d52b30a0117aa6358a3f"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-debug-inventory.json",
+      "bytes": 95111,
+      "sha256": "17ce58b803a044e52f81774d79bbb28ce54cccb856927d110899f33394a04b1f"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-debug-inventory.log",
+      "bytes": 99581,
+      "sha256": "24546ce4f1cf8f660745c67f0198c08363c2bceaa66dd449c553ce429597c070"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-debug-process.json",
+      "bytes": 2135,
+      "sha256": "afed7b34d90de0cb5311965a04c9c7ae05980ea8d9f21acf4f2ab58c1e71aabe"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-debug-tests.log",
+      "bytes": 2605,
+      "sha256": "a99f066770bf9311b18f214175fd8c7a81033d49195af602bf6af6a25f77c157"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-debug.xml",
+      "bytes": 10488,
+      "sha256": "4ff259d0f3c58f99d5a7abe2305698d728be2ea29c14eb427c37c95da0798736"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-release-build.log",
+      "bytes": 5127,
+      "sha256": "ef79f8d38f0e94dbf3f440f8361be1a7e02c56823e772ca8424b243941823dfd"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-release-cases.xml",
+      "bytes": 3670,
+      "sha256": "7b311d9010e4294f4971a5afe4403b8d7cc8cd450c86d52b30a0117aa6358a3f"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-release-inventory.json",
+      "bytes": 95437,
+      "sha256": "989dcae1b3861dbdcfc7705bc7336588f667ad9fe00c3219d418252c933166ab"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-release-inventory.log",
+      "bytes": 99907,
+      "sha256": "bd0f000d99cebe1d8e561f16d94109facd4d98aa017d2afc2bf075c44413c8d7"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-release-process.json",
+      "bytes": 2135,
+      "sha256": "afed7b34d90de0cb5311965a04c9c7ae05980ea8d9f21acf4f2ab58c1e71aabe"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-release-tests.log",
+      "bytes": 2607,
+      "sha256": "35e2b069fcaeb81b9ec9b6ce8c6fdfaa37c6c11a30fa9495bf5fae686740f515"
+    },
+    {
+      "path": "out/10a-work/windows-qualified/windows-release.xml",
+      "bytes": 10495,
+      "sha256": "a6055816c62e0191b1f9a109146861f2f689e711162bc6301c63c8258cb54b03"
+    },
+    {
+      "path": "out/10a-work/wsl-continue.sh",
+      "bytes": 1591,
+      "sha256": "a6f819ba6137958d0c53a5517d682acf7613d617cc1e7119e3b5124895a24c64"
+    },
+    {
+      "path": "out/10a-work/wsl-final/driver.log",
+      "bytes": 5884,
+      "sha256": "bc20712ee8d2b03d160d1c744374b65bb2657988cccad9e8819fb892497ce913"
+    },
+    {
+      "path": "out/10a-work/wsl-final/linux-debug-build.log",
+      "bytes": 5031,
+      "sha256": "0525fba7819294f0c68dbbd3d80f6e39b20c3593d50319aa5882027fae4430f1"
+    },
+    {
+      "path": "out/10a-work/wsl-final/linux-debug-inventory.log",
+      "bytes": 82799,
+      "sha256": "563b52658dbb3ad90db966190f70d18dc642898653da5d0dd141ad472c156e86"
+    },
+    {
+      "path": "out/10a-work/wsl-final/linux-debug-test.log",
+      "bytes": 13110,
+      "sha256": "7b5145960336d9446db9ad7a3a8a2b82fed2b89a8ba2912f1520c794146e916e"
+    },
+    {
+      "path": "out/10a-work/wsl-final/linux-debug.xml",
+      "bytes": 61923,
+      "sha256": "09c613f2a5538d82629374f0e6ea4189fa64815ff46ecb2ce5512c2d21e9b620"
+    },
+    {
+      "path": "out/10a-work/wsl-final/summary.json",
+      "bytes": 6077,
+      "sha256": "27774cb39c7965e38956c4dd1d760f0d6b4316fe33ff3df6678a5f7faf4f7c09"
+    },
+    {
+      "path": "out/10a-work/wsl-focus/driver.log",
+      "bytes": 2538,
+      "sha256": "f8f1a7928e213aec617bfc70e5c9e1643cbc41974c2c69fa3549067df674191a"
+    },
+    {
+      "path": "out/10a-work/wsl-focus/linux-asan-ubsan-build.log",
+      "bytes": 1731,
+      "sha256": "fba5310c4254b4cef2c107893f8858cca83a9b81579d760e9c4eb365b22b1811"
+    },
+    {
+      "path": "out/10a-work/wsl-focus/linux-asan-ubsan-inventory.log",
+      "bytes": 83462,
+      "sha256": "4ad4e5b01817e2acc164a793f6d21b56b2e34273b38ce74abd66522c6eaf60a9"
+    },
+    {
+      "path": "out/10a-work/wsl-focus/linux-asan-ubsan-test.log",
+      "bytes": 791,
+      "sha256": "79ec5817e646924ec697906d07e341a866b9424bdbe831179a97b0d29f2baa38"
+    },
+    {
+      "path": "out/10a-work/wsl-focus/linux-asan-ubsan.xml",
+      "bytes": 3343,
+      "sha256": "60bfbbcab7c332b30f1aecea92312edd767bb70fd236505184a5d18dcba1443e"
+    },
+    {
+      "path": "out/10a-work/wsl-focus/linux-debug-build.log",
+      "bytes": 1716,
+      "sha256": "cf620b9858ffa44df54b5e11d553bf0c4ab4071ff3dd23cc15c0573979691a12"
+    },
+    {
+      "path": "out/10a-work/wsl-focus/linux-debug-inventory.log",
+      "bytes": 82664,
+      "sha256": "07cc023791ad0f2ab6e877f942d66ea40bfbb8d3980572d12dad3fe7a1c2bb2c"
+    },
+    {
+      "path": "out/10a-work/wsl-focus/linux-debug-test.log",
+      "bytes": 781,
+      "sha256": "da8d11b20f2346b720bf7bdc3d082f6b3beeff683e0473d20cbb67845da6e3c6"
+    },
+    {
+      "path": "out/10a-work/wsl-focus/linux-debug.xml",
+      "bytes": 3343,
+      "sha256": "01e83c5e025a1460750b5ac400abe3ac9ba96b745e1ffec8369d225bf755d57a"
+    },
+    {
+      "path": "out/10a-work/wsl-focus/summary.json",
+      "bytes": 3286,
+      "sha256": "a924e24dc4025bb03fcdd69354ec77ed7826aebf2c16e12f2b637c0573cf8363"
+    },
+    {
+      "path": "out/10a-work/wsl-focus/tools-debug-build.log",
+      "bytes": 1659,
+      "sha256": "bb331388b59bffae91127d7eec9dda4b6cc9766e8645681021c2574433f7cfaf"
+    },
+    {
+      "path": "out/10a-work/wsl-focus/tools-debug-inventory.log",
+      "bytes": 55049,
+      "sha256": "26d6780bccbc8b107577a834fc2b83aa59eaa03cf759c50be33bb3adb23a8a3e"
+    },
+    {
+      "path": "out/10a-work/wsl-focus/tools-debug-test.log",
+      "bytes": 743,
+      "sha256": "8a0b4df9e35fe7aba21b1eb2a126e40f786370d41d72fcbf91bb9d0cbcbf7939"
+    },
+    {
+      "path": "out/10a-work/wsl-focus/tools-debug.xml",
+      "bytes": 3115,
+      "sha256": "a3b50039ce9bf6524c3cba057c1eea4b1f6dfdd3339355af661b38b538909e0d"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/driver.log",
+      "bytes": 2772,
+      "sha256": "abf068c410b52f6d7d85d69cf4a5e2d00ab5024c2d649dfdf06ab1211815b67a"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/runtime-build.log",
+      "bytes": 1254,
+      "sha256": "d39692e780cc15ebf8366a062c8b3da6ce5c63eca339dbe087af291c81a8bba7"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/sanitizer-runtime-policy.log",
+      "bytes": 648,
+      "sha256": "6b32044faabaedcf19b28478105c043601fc4f422d5574e542b6f789462879c0"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/sanitizer-runtime-policy.xml",
+      "bytes": 1826,
+      "sha256": "194940e7e33f621774b2abbab087b7efa2907f6808982a05b183f0753575964d"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/scene_runner-sanitizer.log",
+      "bytes": 4653,
+      "sha256": "fd70c63e14823c872e6cfbf24f8645dbc76adb8bb1dc3777c7de706ceaad6873"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/scene_runner_main-sanitizer.log",
+      "bytes": 6354,
+      "sha256": "a0d0384242b63da968618b0104afba9537118b51dde256c9962cd998fe8c66b4"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/scene_runner_tests-sanitizer.log",
+      "bytes": 6448,
+      "sha256": "3eb9413483863ebed5e8ecbfa9d2790d5e2419795c635bc169637e9596957e17"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/sdk-free.json",
+      "bytes": 144,
+      "sha256": "a1993c8c627fe5a9ce6ea2e7fe1de2adb869db03e4ffc69d6c14771d194f245a"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/sdk-runtime.log",
+      "bytes": 608,
+      "sha256": "16d374daaf3213cd3b5e1a20bd7085835717fd3b064b521f18978d6fb0020210"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/sdk-server.log",
+      "bytes": 97,
+      "sha256": "a98c3e2b751e8218e5945028ab3bee75b3fdb8181c39096d590ec58c9b17e38f"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-build.log",
+      "bytes": 936,
+      "sha256": "21088b1b983ada40eb1d1de2aa52b9139cfb200ed1ff5c1c810fcab7cea5d008"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-closure.json",
+      "bytes": 2941381,
+      "sha256": "f962ee24554bf1e1f99ae01bc226a45f8abcbb472e5082fc08ecbfe8b695a154"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-closure.log",
+      "bytes": 77,
+      "sha256": "9917f64861414070036b9e25e4b6a746b3483c0002140d90b0eca1cb1fc65558"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-install.log",
+      "bytes": 1063,
+      "sha256": "30fd0838955a519350c95a54b7db96e1676aaae599d2a75bbe788befd7e14723"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-package/bin/Server",
+      "bytes": 168352,
+      "sha256": "24585acb48d5fecfa166954064d6f03ce937c8ffe9e38958caddab9ed89c7990"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-package/licenses/EnTT/LICENSE",
+      "bytes": 1097,
+      "sha256": "73547f6370ee16ea560665329bb62d4e2d8250f41eaa204b47a6c694ca3286ea"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-package/licenses/GLM/copying.txt",
+      "bytes": 2865,
+      "sha256": "62d2d642c7d054d4fb4c9b42faad617d6c88fcd91e317f8035aa9f277cc159c3"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-package/licenses/MbedTLS/framework/LICENSE",
+      "bytes": 29861,
+      "sha256": "11402351e38392230bb8934ba1095c0c0049a296c0f8821f76e4672dff54b490"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-package/licenses/MbedTLS/LICENSE",
+      "bytes": 29852,
+      "sha256": "9b405ef4c89342f5eae1dd828882f931747f71001cfba7d114801039b52ad09b"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-package/licenses/MbedTLS/tf-psa-crypto/drivers/everest/include/tf-psa-crypto/private/everest/kremlib.h",
+      "bytes": 1017,
+      "sha256": "8aca2e1da765d1a1fd6277a0d69caadffd5dc07c61bb313b4689843d3fcaefe3"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-package/licenses/MbedTLS/tf-psa-crypto/drivers/everest/library/Hacl_Curve25519.c",
+      "bytes": 22405,
+      "sha256": "ff662cfae5e65d968d487a687db5fdc05c357ec9b2035ac9e380c9f8ec7eb6eb"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-package/licenses/MbedTLS/tf-psa-crypto/drivers/everest/library/legacy/Hacl_Curve25519.c",
+      "bytes": 24161,
+      "sha256": "fd769ba72bed1ca61a4e286d7ef1751931fda5707881df514335f97ccafb5984"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-package/licenses/MbedTLS/tf-psa-crypto/drivers/pqcp/mldsa-native/LICENSE",
+      "bytes": 15310,
+      "sha256": "26ee68617256be39e12fbbb0fb0c8c7087980a2020ded46e3ef3c3810c35d847"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-package/licenses/MbedTLS/tf-psa-crypto/framework/LICENSE",
+      "bytes": 29861,
+      "sha256": "11402351e38392230bb8934ba1095c0c0049a296c0f8821f76e4672dff54b490"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-package/licenses/MbedTLS/tf-psa-crypto/LICENSE",
+      "bytes": 29856,
+      "sha256": "da8c58f05f135a9d15e9ffad4ecf854cfcc1f014c8abfd75ba05f62630ccc118"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/server-package/licenses/SQLite/LICENSE.txt",
+      "bytes": 1485,
+      "sha256": "85806d613cfda5901f848b3b5b4b04396c8c64e89c97c0af3706c42b0c44bb47"
+    },
+    {
+      "path": "out/10a-work/wsl-protected/summary.json",
+      "bytes": 3362,
+      "sha256": "130b8fc5083f145bde0812ca0d37d1530f5be3a57a50db5e17c267d77eb28fe7"
+    },
+    {
+      "path": "out/10a-work/wsl-protected.sh",
+      "bytes": 2739,
+      "sha256": "a50244b8e62ae4655b031db28553adff8e48b5cab99f2091d34807709f92afe7"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/driver.log",
+      "bytes": 4054,
+      "sha256": "0cd1d8abc442e11c6c18ded5a80207d17900a99d5b4b9b1a041241ee115ce64e"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-build.log",
+      "bytes": 5046,
+      "sha256": "82e87edd9f34fbad22b747cf1452bb1c99948ccfd0e10987f35016f5d63463d0"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-cases.xml",
+      "bytes": 3336,
+      "sha256": "204b451c28d48959ec7df18fa44cbb596122c78423101b386c3f64e6a06a639f"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-inventory.log",
+      "bytes": 83602,
+      "sha256": "7b6363811b12347c29ffe7d3079a82f3907c681b52071d8382e8e8b19982dec4"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-process.json",
+      "bytes": 2012,
+      "sha256": "cc5089758249f7d184015338793ea0859a3ababd554da5d9f02e8a7dfd9de848"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authored-scenes/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authored-scenes/compiler-inputs.d",
+      "bytes": 51416,
+      "sha256": "b91ff8333b0d6fb7829a05e6df20f1f93db6a8ea6722909a8d6960ee91a7af00"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authored-scenes/example.cpp",
+      "bytes": 1278,
+      "sha256": "ddbe41da2bbb5c8825bba2c301eb70c898691c3b01ed69c50307117223166453"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authored-scenes/example.o",
+      "bytes": 220984,
+      "sha256": "767f548a86c39aceab954087c87df34e868b413c19fa149c633a1e80d70c1b5a"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-commands/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-commands/compiler-inputs.d",
+      "bytes": 51422,
+      "sha256": "750b769aa50fac3a3082eb0b6a1df38ef681574b0016edd5e69a79d118574a6e"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-commands/example.cpp",
+      "bytes": 571,
+      "sha256": "d37596c6896558f1693ca95e5b6ffedf666be158cea290fabafb7bdaf83dcd4c"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-commands/example.o",
+      "bytes": 163984,
+      "sha256": "7604730e4acf88ac7a9ecf9286931bff6e632a10d1fe0b36312b92b57eda1a4d"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-history/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-history/compiler-inputs.d",
+      "bytes": 51420,
+      "sha256": "ef29dd0e6ffd4414afe3de354cba8cbec1717957090cd6a2968d5af40134a2ee"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-history/example.cpp",
+      "bytes": 1001,
+      "sha256": "37178d802c517beb4d258acf7153f87c5cc51efe021e62ab09706f47ae4626bf"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-history/example.o",
+      "bytes": 225632,
+      "sha256": "036b30560352adb068c1616feb843307956f9677bdc0a2d5cfd96b5b4782b5da"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-qualification/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-qualification/compiler-inputs.d",
+      "bytes": 51495,
+      "sha256": "db08b32321e23ab5e74f9d6d8934dac29d8af5b45dc977f6d711b25c07433cfb"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-qualification/example.cpp",
+      "bytes": 1739,
+      "sha256": "58075ca304aa9506f251b47581338ce8c41aba81986e231b3a9b3c4bd7cba1cc"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-qualification/example.o",
+      "bytes": 354840,
+      "sha256": "a1f6af3306d794914ff1ca53c7ab60f13000af862d428a2b574ba894119b9dd6"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-retries/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-retries/compiler-inputs.d",
+      "bytes": 51420,
+      "sha256": "e3dd1df6d1b8ee2c8f67de3c62567d25ea278be84d366fad459b56317fa6f245"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-retries/example.cpp",
+      "bytes": 1258,
+      "sha256": "7e8a0d57ef00d7e2f321bff0246a4d22d91c05598570b60099b575e484b9952c"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-retries/example.o",
+      "bytes": 374808,
+      "sha256": "9600bb3eeda7f52b7e6f8acab05af784aba90cd556741b3e9ffc3fccf590a8a7"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-transactions/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-transactions/compiler-inputs.d",
+      "bytes": 51430,
+      "sha256": "955d4caeb715737986fdf7ae4b5416d73483489585cdd2e655247afc4aedcee1"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-transactions/example.cpp",
+      "bytes": 508,
+      "sha256": "023a7a1f70e9f3f44c547681729592cf4db714c2cdc6892a7f1da50f7b128667"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/authoring-transactions/example.o",
+      "bytes": 83488,
+      "sha256": "420c3498a20e7b7f7aa983588efa678618e29632cf9f0f18d5111ad59945e2c8"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/project-files/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/project-files/compiler-inputs.d",
+      "bytes": 51475,
+      "sha256": "b6ca786fdb4c72170b9640f7b8e3bfc351463a7f53df5b32bb4edbee964d423d"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/project-files/example.cpp",
+      "bytes": 905,
+      "sha256": "247fdcdb618a55346df27708d5bced5a27c0a372babffbe78c20caf403e262cd"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/project-files/example.o",
+      "bytes": 180240,
+      "sha256": "7bef38f716d10866684516fb2f5324da0884107bb97c1333b823deffd74ba24a"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/scene-runner/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/scene-runner/compiler-inputs.d",
+      "bytes": 52230,
+      "sha256": "43ebb3470fa9e6ee7bc565a962fd9f8266ff7456b77d53b5d6bcafb3b9e3080e"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/scene-runner/example.cpp",
+      "bytes": 1157,
+      "sha256": "e3512f82d38d3755a40ee8c36cf945a897c487e60d3690a1857b4221fb4b8e0a"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/scene-runner/example.o",
+      "bytes": 181544,
+      "sha256": "919a7bc9e9e702ce61242db2ff19ec761d5935e44a0b1050fea0f09ffa17c5e2"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/source-documents/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/source-documents/compiler-inputs.d",
+      "bytes": 49361,
+      "sha256": "9714491c3ffc2e660f7d01acfa2293a7967eba7d19d576d7fbdc68c43054d241"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/source-documents/example.cpp",
+      "bytes": 313,
+      "sha256": "110e8f7521604b9f4614532dc7db0319b090cb7dfb072d9f01de4974f7f97cbb"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/source-documents/example.o",
+      "bytes": 82840,
+      "sha256": "e83cb50fe53e3e16b1ad8d4b9570f3e6f35249c404e57aff52b7e005903dc5ee"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api/summary.json",
+      "bytes": 969276,
+      "sha256": "aced309180185ba4c665b3c164c876ff749ef28b8f45b17ac1db925126d8ce1d"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-public-api.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan-tests.log",
+      "bytes": 2639,
+      "sha256": "4aca19451b326f74842950a5e9b877ed457c3e97dfcf01be17ee56090eeb4629"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-asan-ubsan.xml",
+      "bytes": 10310,
+      "sha256": "0b4e2b9252976a6794535e69b83fbda0bb3f224363590b42496517ae2abd13c9"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-cases.xml",
+      "bytes": 3336,
+      "sha256": "64ed847d33406a8982dab1a1cabf0843bf064c58e44437f7f1a568cd880efab8"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-inventory.log",
+      "bytes": 82799,
+      "sha256": "563b52658dbb3ad90db966190f70d18dc642898653da5d0dd141ad472c156e86"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-process.json",
+      "bytes": 2012,
+      "sha256": "8ae9a2fdecf3f4ff2af3f51f3e3ce3cc8e3bfb5821ee4f26746fbc8203e6055a"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authored-scenes/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authored-scenes/compiler-inputs.d",
+      "bytes": 29275,
+      "sha256": "27926122274e9353e1bf9ccdeda90bebc995cfd8b0aa025e03e4ffcc5b1317d0"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authored-scenes/example.cpp",
+      "bytes": 1278,
+      "sha256": "ddbe41da2bbb5c8825bba2c301eb70c898691c3b01ed69c50307117223166453"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authored-scenes/example.o",
+      "bytes": 286560,
+      "sha256": "3f2533000e46ee2307b05eb91d3e9a50a63f27c1285863d0d49c75c4fade0bd9"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-commands/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-commands/compiler-inputs.d",
+      "bytes": 29281,
+      "sha256": "b58ccc004023fda672ba770b750f9eb3caa321f1652184dc6d9adeb40474b7d0"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-commands/example.cpp",
+      "bytes": 571,
+      "sha256": "d37596c6896558f1693ca95e5b6ffedf666be158cea290fabafb7bdaf83dcd4c"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-commands/example.o",
+      "bytes": 205368,
+      "sha256": "b332fc89cd210171aad86d2b2433bca62289863d458ac7ea84db166395986ff1"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-history/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-history/compiler-inputs.d",
+      "bytes": 29279,
+      "sha256": "c49d7eb85653cf2c18d3a3ea47af425fab880e982844e76e8cca67250a770409"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-history/example.cpp",
+      "bytes": 1001,
+      "sha256": "37178d802c517beb4d258acf7153f87c5cc51efe021e62ab09706f47ae4626bf"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-history/example.o",
+      "bytes": 316120,
+      "sha256": "cbd71d878a54f5e3f0373591b0c6d4404e8c029ca6e2f6baa04a7db91684e1d2"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-qualification/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-qualification/compiler-inputs.d",
+      "bytes": 29353,
+      "sha256": "f9fd40a50472297f9d4e0450e7bce4c28c104590b137e881bf8df21f502b8ccb"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-qualification/example.cpp",
+      "bytes": 1739,
+      "sha256": "58075ca304aa9506f251b47581338ce8c41aba81986e231b3a9b3c4bd7cba1cc"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-qualification/example.o",
+      "bytes": 510736,
+      "sha256": "b9c0647d7711df75e614f2c2f832b7f1ac2e3306847bc1794a1e49f40d925c65"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-retries/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-retries/compiler-inputs.d",
+      "bytes": 29279,
+      "sha256": "f513d61099e74bdc0be96617761ec6cfbcf459087e9a56fbe97aab3995a13191"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-retries/example.cpp",
+      "bytes": 1258,
+      "sha256": "7e8a0d57ef00d7e2f321bff0246a4d22d91c05598570b60099b575e484b9952c"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-retries/example.o",
+      "bytes": 629616,
+      "sha256": "c58344d959ec0958fee53c8592580e7c2b081de5aadfde1d93de363a0c6bc90c"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-transactions/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-transactions/compiler-inputs.d",
+      "bytes": 29289,
+      "sha256": "13092310b5a28eb63f537ce868cb2c8d0f18918e48e21f4f20b33614d0bf588f"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-transactions/example.cpp",
+      "bytes": 508,
+      "sha256": "023a7a1f70e9f3f44c547681729592cf4db714c2cdc6892a7f1da50f7b128667"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/authoring-transactions/example.o",
+      "bytes": 119360,
+      "sha256": "fb312b5457678d23c575dce2764f1176375fcf8656346251b8161afa9e92fd6c"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/project-files/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/project-files/compiler-inputs.d",
+      "bytes": 29333,
+      "sha256": "44a9f91ee6b57efa8baae51ddde2a1cf85118d5e626abb4ffa09d923fd0a8bde"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/project-files/example.cpp",
+      "bytes": 905,
+      "sha256": "247fdcdb618a55346df27708d5bced5a27c0a372babffbe78c20caf403e262cd"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/project-files/example.o",
+      "bytes": 229632,
+      "sha256": "d1a53e58348bfaece882bbfb62048a3c86c376465e9b96fbd3e8a0955c249a71"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/scene-runner/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/scene-runner/compiler-inputs.d",
+      "bytes": 29752,
+      "sha256": "c76a067c070dfa1b784196af6a1a9347977e50ee2edb69635f7589360bc8c8ce"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/scene-runner/example.cpp",
+      "bytes": 1157,
+      "sha256": "e3512f82d38d3755a40ee8c36cf945a897c487e60d3690a1857b4221fb4b8e0a"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/scene-runner/example.o",
+      "bytes": 228608,
+      "sha256": "0b16cd5f919143e21d2d4a0589564e94c1c997f5d31b3b22ebaf33b5c7c75367"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/source-documents/compile.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/source-documents/compiler-inputs.d",
+      "bytes": 27804,
+      "sha256": "80e79c81398500cc75900aa4c44f907e3df9ee863a2211da0693ead84074e9f1"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/source-documents/example.cpp",
+      "bytes": 313,
+      "sha256": "110e8f7521604b9f4614532dc7db0319b090cb7dfb072d9f01de4974f7f97cbb"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/source-documents/example.o",
+      "bytes": 93376,
+      "sha256": "68db63c83afb64fd8273f3ce7da2031b3af1eacc3e880bcc07d9c1aedb80eec7"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api/summary.json",
+      "bytes": 946500,
+      "sha256": "103d9ead832dc64d565ce5614555bf94eb98605b645b90372f298118d27734e2"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-public-api.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/linux-debug-reconciled.xml",
+      "bytes": 61838,
+      "sha256": "527e971cf9eed6fd4f2a84f63eb9fa45f2728a19628dd3e47357c3e4c99ed603"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/repository-retry.log",
+      "bytes": 416,
+      "sha256": "112522f4ff3abdea2a22055604e6d6fb490dbc0292bf0723e7f0d3f9bddf5133"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/repository-retry.xml",
+      "bytes": 575,
+      "sha256": "1a69cd5baa4565edf90ab79b1bd9bff2765adbdb09932bd4d8cc3fd65afc6a2a"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/summary.json",
+      "bytes": 4889,
+      "sha256": "c627388a036faac26011593c4fe2b0a1b34cc7c4d0b53aeb374b0998aed05f6d"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/tools-debug-build.log",
+      "bytes": 3063,
+      "sha256": "7c45a6a7c52a2e7eb9def1de2805d0d559782f58d26613ffae301bd295135b16"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/tools-debug-cases.xml",
+      "bytes": 3336,
+      "sha256": "64ed847d33406a8982dab1a1cabf0843bf064c58e44437f7f1a568cd880efab8"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/tools-debug-inventory.log",
+      "bytes": 55165,
+      "sha256": "7d11dcab8d23b6e0d1cd007d47db1e9eefb81a3b3736156205d4aeabcbb62bd9"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/tools-debug-process.json",
+      "bytes": 2012,
+      "sha256": "cc5089758249f7d184015338793ea0859a3ababd554da5d9f02e8a7dfd9de848"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/tools-debug-tests.log",
+      "bytes": 2013,
+      "sha256": "f47967ff0f8dd40dcc987658d303e3b8dbb4ceff76aca089ecef11da293d7fe8"
+    },
+    {
+      "path": "out/10a-work/wsl-qualified/tools-debug.xml",
+      "bytes": 7598,
+      "sha256": "f22671a803780d39e2e1f8897eefcfda17bb37bbbaef9eb8d55bdda55dd59fa6"
+    },
+    {
+      "path": "out/10a-work/wsl.sh",
+      "bytes": 1526,
+      "sha256": "10e627f03b5a5783895e1abee2b0ea71bbfdc064bb77e66b6d2cc8e3782270a8"
+    }
+  ]
+}

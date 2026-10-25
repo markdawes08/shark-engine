@@ -1,5 +1,11 @@
 # Requirement and API coverage
 
+Assignment 10 follows the [FeatureWorld checkpoints](../roadmap/featureworld-plan.md).
+10a adds the [CPU scene-runner foundation](../scene-runner.md), with native owner,
+scheduler/assertion tests and independent process-result tests. Its in-memory
+foundation cases are implemented fixtures; the saved FeatureWorld and full
+current-surface mapping audit remain 10b/10d. Full REQ-10 remains NOT_RUN.
+
 [requirements.json](requirements.json) is the version-3 requirement/coverage manifest for
 Shark. Each requirement has a unique ID, one owning roadmap assignment, observable
 acceptance criteria, a planned FeatureWorld case or external fixture, and an

@@ -152,7 +152,20 @@ full Server suites are refreshed. Preserve `shark.tools.authoring-integration`
 (90 seconds, seed 1337), its eight connected cases and all earlier workloads.
 The same owner carries edits/preview/history/retries through native saves,
 external conflicts, publication faults, reload and explicit reconciliation.
-**Next: 10, FeatureWorld and automated scene runner.**
+**10a is complete under the current-machine scope.** Follow the
+[FeatureWorld checkpoints](docs/roadmap/featureworld-plan.md),
+[ADR 0024](docs/architecture/0024-headless-scene-runner.md),
+[runner contract](docs/scene-runner.md), [handoff](docs/handoffs/10a-headless-runner.md)
+and [receipt](docs/coverage/evidence/10a-headless-runner.json).
+SceneRunner is a CPU Tools executable; each native case uses one AuthoredScene
+owner and Core scheduling with explicit seed/rate/input control. Assertions are
+sticky, cancellation is cooperative, and results preserve local incarnation
+changes across valid activation. Preserve both runner families (60 seconds,
+Catch seed 1337), all thirteen base cases, 29 process checks and earlier workloads.
+Current qualification includes 190 profile test results, the explicit Linux
+repository retry, 27 public example compiles, actual sanitizer objects and
+protected packages. Full REQ-10 remains NOT_RUN. **Next: 10b, saved FeatureWorld
+and current-surface cases.**
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read
