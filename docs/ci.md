@@ -328,7 +328,7 @@ against 299 unchanged source/build/test inputs and 18 helpers. The
 [handoff](handoffs/08d-integrated-qualification.md) and
 [receipt](coverage/evidence/08d-integrated-qualification.json) record exact
 commands, the corrected file-case inventory and verification limits. M03
-separately owns live durability; M03a-e are complete and M03f is next.
+separately owns live durability; M03 and all six checkpoints are complete; assignment 09 is next.
 
 ## Locked tools and hosted-image limits
 
@@ -375,6 +375,13 @@ requires a reviewed configuration/evidence update; do not mask that failure.
 
 ## M03 durable-store and character checks
 
+M03f's `shark.storage.integration-process` connects the existing services on one
+real store lineage. Follow the [qualification contract](durable-qualification.md).
+The fresh source freeze includes the connected probe/supervisor and independent
+SQL inputs. Keep all prior families, five public storage examples, standalone
+Tools checks and protected packages. Actual sanitizer dependency audits include
+the integration probe's separate instance of the test-only VFS source.
+
 M03b extends the same gate with `shark.storage.characters` and
 `shark.storage.characters-process`, documented in [building](building.md#server-only-durable-storage).
 Retain all session, storage and authoring regression families. Actual mutually
@@ -386,7 +393,7 @@ M03b is PASS under the current-machine scope: its
 [handoff](handoffs/M03b-owned-characters.md) and
 [receipt](coverage/evidence/M03b-owned-characters.json) record 539 full CPU CTests,
 ten additional standalone Tools checks and protected package/API audits against
-318 unchanged source inputs and 15 final helpers. Full REQ-M03 remains NOT_RUN;
+318 unchanged source inputs and 15 final helpers. That checkpoint did not close full REQ-M03;
 M03c atomic transactions are PASS under the same scope: its
 [handoff](handoffs/M03c-atomic-transactions.md) and
 [receipt](coverage/evidence/M03c-atomic-transactions.json) record 553 full CPU
@@ -397,7 +404,9 @@ and 10 standalone Tools checks with protected package/API qualification.
 M03e database migration/restore is PASS: its
 [handoff](handoffs/M03e-migration-restoration.md) records 581 CPU CTests,
 10 standalone Tools checks and protected package/API gates.
-M03f integrated qualification is next; full REQ-M03 remains NOT_RUN.
+M03f and full REQ-M03 are PASS: the [handoff](handoffs/M03f-integrated-qualification.md)
+records 588 CPU CTests, 10 standalone Tools checks and protected gates.
+Assignment 09 is next.
 
 M03a adds the three storage families documented in [building](building.md#server-only-durable-storage).
 The Server build has a separate `storage` dependency domain; Core, Runtime and
@@ -411,8 +420,8 @@ abrupt release, three initial-commit interruption phases and supported-version
 hot-journal rollback. Fixed seeds, pipe barriers, deadlines and JSON outcomes
 keep this noninteractive. The character, economy, runtime recovery and maintenance
 families add their separate gates under the
-[M03 checkpoint plan](roadmap/durable-state-plan.md); full integrated acceptance
-remains M03f.
+[M03 checkpoint plan](roadmap/durable-state-plan.md). M03f closes full integrated
+acceptance under the [qualification contract](durable-qualification.md).
 Sanitizers must instrument both the storage C++ implementation and sqlite3.c.
 The Server package gains only `licenses/SQLite/LICENSE.txt`; SQLite shells, shared
 libraries, databases, journals and test probes are excluded. Runtime packages
@@ -662,4 +671,5 @@ recovery contract. Compile the [public maintenance example](durable-maintenance.
 with public headers only; audit both probe copies of the VFS in sanitizer builds.
 Preserve exact backup contents, economic operation retention, revocations and
 fresh authentication across restored restart. An isolated old snapshot is not
-authority to roll back acknowledged state. Integrated acceptance remains M03f.
+authority to roll back acknowledged state. M03f closes integrated acceptance
+through the [connected qualification](durable-qualification.md).

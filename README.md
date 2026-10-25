@@ -107,8 +107,12 @@ CTests, 10 standalone Tools checks and protected package/API gates.
 historical stores and create isolated restore candidates. Its
 [handoff](docs/handoffs/M03e-migration-restoration.md) records 581 passing CPU
 CTests, 10 standalone Tools checks and protected package/API gates.
-**M03f, Integrated qualification, is next** in the
-[six-checkpoint plan](docs/roadmap/durable-state-plan.md). Full REQ-M03 remains NOT_RUN.
+**M03f and full REQ-M03 are complete under the current-machine scope.** The
+[handoff](docs/handoffs/M03f-integrated-qualification.md) records 588 passing CPU
+CTests, 10 standalone Tools checks and protected package/API gates. The
+[connected fixture](docs/durable-qualification.md) qualifies migration,
+authenticated runtime work, crash/outage recovery and isolated restored restart.
+**09: Shared authoring commands and undo/redo is next.**
 Assignment 08, Project and scene persistence, completed its
 [four checkpoints](docs/roadmap/persistence-plan.md). 08a adds CPU project/scene
 formats, validation and migration through [owned C++ values](docs/source-documents.md).

@@ -65,7 +65,10 @@ noninteractive crash/outage receipts for both audiences. Its
 and protected gates. M03e adds shared [CPU maintenance services](../durable-maintenance.md),
 independent legacy/current fixtures and machine-readable interruption results.
 Its [handoff](../handoffs/M03e-migration-restoration.md) records 581 CPU CTests
-and protected gates. M03f integrated qualification is next.
+and protected gates. M03f connects these CPU services and structured receipts
+through actual authenticated processes. Its [handoff](../handoffs/M03f-integrated-qualification.md)
+records 588 CPU CTests, 10 standalone Tools checks and protected gates.
+Full REQ-M03 is PASS; shared authoring services in 09 are next.
 
 M02a provides the [bounded network foundation](../network-transport.md) through
 engine-owned CPU C++ interfaces and noninteractive JSON test fixtures. It does not
@@ -225,7 +228,7 @@ CPU/sanitizer, interruption, package and public API qualification.
 ten additional standalone Tools checks, protected packages and all three
 public API examples. Integrated external-edit/reload fixtures preserve
 owned snapshots from both authors before explicit reconciliation. M03 separately
-owns live durability; M03a-e are complete and M03f integrated qualification is next. The storage lock
+owns live durability; M03 and all six checkpoints are complete; shared authoring services in 09 are next. The storage lock
 remains distinct from the later shared human/agent
 project owner. Terminal/editor adapters retain owners 15/16; readable
 source does not bypass that owner or create shared command history.

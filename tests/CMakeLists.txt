@@ -111,6 +111,12 @@ if(TARGET EngineStorage)
     shark_configure_target(StorageMigrationProbe)
     shark_classify_target(StorageMigrationProbe test)
 
+    add_executable(StorageIntegrationProbe storage_integration_probe.cpp storage_recovery_vfs.cpp)
+    target_link_libraries(StorageIntegrationProbe PRIVATE EngineStorage SharkSQLite)
+    target_include_directories(StorageIntegrationProbe PRIVATE "${PROJECT_SOURCE_DIR}/server/storage/src")
+    shark_configure_target(StorageIntegrationProbe)
+    shark_classify_target(StorageIntegrationProbe test)
+
     add_executable(StorageTransactionProbe storage_transaction_probe.cpp)
     target_link_libraries(StorageTransactionProbe PRIVATE EngineStorage)
     shark_configure_target(StorageTransactionProbe)
@@ -424,6 +430,14 @@ if(TARGET EngineStorage)
             --fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures/storage"
             --output "${CMAKE_CURRENT_BINARY_DIR}/storage-migration-process.json")
     set_tests_properties(shark.storage.migration-process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 240)
+
+    add_test(NAME shark.storage.integration-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_storage_integration_process.py"
+            --probe "$<TARGET_FILE:StorageIntegrationProbe>"
+            --fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures/network"
+            --storage-fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures/storage"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/storage-integration-process.json")
+    set_tests_properties(shark.storage.integration-process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 300)
 endif()
 if(TARGET ProjectFilesProcess)
     add_test(NAME shark.tools.project-files-process

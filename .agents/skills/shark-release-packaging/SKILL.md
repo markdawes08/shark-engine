@@ -5,6 +5,12 @@ description: Validate Shark standalone exports and packages for cooked dependenc
 
 # Shark export and release packaging
 
+M03f's [integrated durable qualification](../../../docs/durable-qualification.md)
+retains the existing package boundary. Connected integration probes, credentials,
+database lineages, backups and supervisor evidence never enter Runtime/Server
+packages. Refresh protected package and public API audits against the same frozen
+inputs as the Windows/WSL CPU and sanitizer matrix.
+
 M03e adds explicit offline database maintenance within EngineStorage. Keep
 independent legacy/current SQL fixtures, temporary backups, restored candidates
 and migration probes outside Runtime/Server packages. Maintenance public examples

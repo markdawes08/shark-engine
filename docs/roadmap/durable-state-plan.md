@@ -2,8 +2,8 @@
 
 Date: 2026-10-22. Base: `01968d5` on initially clean `main`.
 Owner: REQ-M03. M02 and assignment 08 are complete. The user approved dividing
-M03 into the six checkpoints below. **M03a through M03e are PASS under the
-current-machine scope; M03f is next and full REQ-M03 remains NOT_RUN.** The
+M03 into the six checkpoints below. **M03a through M03f and full REQ-M03 are PASS under the
+current-machine scope. Assignment 09, shared authoring commands and undo/redo, is next.** The
 [M03a handoff](../handoffs/M03a-durable-store.md) records the store foundation;
 the [M03b handoff](../handoffs/M03b-owned-characters.md) and
 [receipt](../coverage/evidence/M03b-owned-characters.json) record 539 CPU CTests,
@@ -125,6 +125,17 @@ rollback constraints explicitly; local restore does not prove host/disk-loss
 survival or independent disaster recovery.
 
 ## M03f - Integrated qualification
+
+The [handoff](../handoffs/M03f-integrated-qualification.md) records 588 passing
+CPU CTests, 10 standalone Tools checks and protected package/API gates.
+Seven connected phases and sixteen children per profile preserve one actual
+store lineage through nine mTLS connections, concurrent economic intents,
+committed lost reply, observed I/O failure and same-point restored restart.
+The earlier detailed failure matrices remain qualified.
+
+The [integrated qualification contract](../durable-qualification.md) connects
+the existing services through one database lineage and actual authenticated
+client/server processes. Detailed earlier failure matrices remain required.
 
 Connect character restart, authentication, concurrent transaction, commit-crash,
 outage, migration and restore fixtures. Freeze the tested inputs and run the

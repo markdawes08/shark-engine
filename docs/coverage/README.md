@@ -71,7 +71,7 @@ from character, economy, recovery and migration gates. M03a is PASS under the
 current-machine scope: [the receipt](evidence/M03a-durable-store.json) and
 [handoff](../handoffs/M03a-durable-store.md) record 525 full CPU CTests, ten
 additional standalone Tools checks and protected package/API gates.
-Full REQ-M03 remains NOT_RUN until all six checkpoints pass.
+Full REQ-M03 is now PASS after all six checkpoints and integrated qualification.
 
 M03b maps `server.durable-characters` to real database records, shared session
 admission and authenticated process restart. The
@@ -90,9 +90,12 @@ standalone Tools checks and protected package/API gates. M03d is also PASS:
 its [handoff](../handoffs/M03d-runtime-recovery.md) records 567 full CPU CTests
 and 10 standalone Tools checks with protected gates. M03e is also PASS:
 its [handoff](../handoffs/M03e-migration-restoration.md) records 581 CPU CTests
-and 10 standalone Tools checks with protected gates. M03f is next.
+and 10 standalone Tools checks with protected gates. M03f and full REQ-M03
+are PASS: the [handoff](../handoffs/M03f-integrated-qualification.md) records
+588 CPU CTests and 10 standalone Tools checks with protected gates.
+Assignment 09, shared authoring commands and undo/redo, is next.
 
-`current_assignment: M03` follows the completed
+`current_assignment: 09` follows the completed durable-state gate and
 [five network checkpoints](../roadmap/network-plan.md) and
 [four persistence checkpoints](../roadmap/persistence-plan.md). Project/scene
 checkpoints 08a-08d and full REQ-08 are PASS under the current-machine scope.
@@ -139,7 +142,7 @@ Runtime/Server builds, source/link/license closure and fresh isolated package
 checks pass; all 221 qualification source inputs were unchanged in that record.
 M02a-M02e and full REQ-M02 are PASS under the current-machine scope.
 Assignment 08, Project and scene persistence, is complete: 08a-08d and full
-REQ-08 are PASS. M03a-e are complete; M03f integrated qualification is next.
+REQ-08 are PASS. M03 and all six checkpoints are complete; assignment 09 is next.
 FeatureWorld integration remains assignment 10.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
@@ -362,8 +365,8 @@ pass against 299 unchanged inputs and 18 helpers. The
 [receipt](evidence/08d-integrated-qualification.json) retain exact evidence,
 including the corrected final file-case inventory. M03 separately owns live
 player/economy durability; its store, character, atomic transaction and runtime
-recovery and database maintenance checkpoints are complete; M03f integrated
-qualification is next.
+recovery, database maintenance and integrated qualification are complete;
+assignment 09 is next.
 
 M03c maps `server.durable-transactions` to `shark.storage.transactions`,
 `shark.storage.transactions-process` and authenticated owner regressions in
@@ -372,7 +375,7 @@ defines conservation, expected economic revisions, complete-payload retries,
 terminal business outcomes and a permanently advanced operation high-water mark.
 The completed [M03c handoff](../handoffs/M03c-atomic-transactions.md) records
 exact source/receipt counts and current-machine qualification. Economic fixtures are external CPU
-fixtures; FeatureWorld/MMOWorld remain 10/M09. Full REQ-M03 remains NOT_RUN.
+fixtures; FeatureWorld/MMOWorld remain 10/M09. M03f subsequently closes full REQ-M03.
 
 M03d maps `server.durable-recovery` to the two recovery CTest families and
 earlier authenticated owner/transaction regressions. Twenty-one runtime cases
@@ -392,4 +395,14 @@ restart; 66 process rows cover interrupted/failed upgrades and copies, including
 actual hot-journal recovery. The [maintenance contract](../durable-maintenance.md)
 keeps ordinary open nonmigrating and old restore candidates isolated. These are
 CPU external fixtures; FeatureWorld/MMOWorld remain 10/M09. The [receipt](evidence/M03e-migration-restoration.json) records PASS under the
-current-machine scope; full REQ-M03 still requires M03f integrated acceptance.
+current-machine scope. M03f subsequently closes full REQ-M03 in its
+[integrated receipt](evidence/M03f-integrated-qualification.json).
+
+M03f adds `shark.storage.integration-process` to all five existing durable
+feature mappings. It connects one independent legacy store to real mTLS runtime
+operations, economic contention, committed lost reply, observed native database
+outage, recovery and isolated restored restart. The
+[qualification contract](../durable-qualification.md) fixes the connected workload
+and evidence requirements. This extends executable CPU external coverage;
+FeatureWorld/MMOWorld integration remains assigned to 10/M09. A passing individual
+process run alone cannot close the complete cross-platform and package gate.

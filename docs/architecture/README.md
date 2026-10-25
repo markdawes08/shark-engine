@@ -90,8 +90,11 @@ CTests and protected package/API gates. M03d [runtime recovery](../durable-recov
 is also PASS under this scope; its [handoff](../handoffs/M03d-runtime-recovery.md)
 records 567 CPU CTests and protected gates. M03e maintenance is PASS: its [handoff](../handoffs/M03e-migration-restoration.md)
 records 581 CPU CTests, 10 standalone Tools checks and protected gates.
-M03f integrated qualification is next; full REQ-M03 remains NOT_RUN until
-M03f passes.
+M03f and full REQ-M03 are PASS: the [handoff](../handoffs/M03f-integrated-qualification.md)
+records 588 CPU CTests, 10 standalone Tools checks and protected gates.
+The [connected qualification](../durable-qualification.md) covers one real
+database lineage through authenticated operations, crash/outage recovery and
+isolated restore. Assignment 09, shared authoring commands and undo/redo, is next.
 General authoring transactions, terminal
 adapters and editor UI retain their later owners;
 schema IDs do not establish file or gameplay-wire formats. The current-machine

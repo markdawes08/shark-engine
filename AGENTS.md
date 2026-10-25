@@ -87,11 +87,17 @@ CTests, 10 standalone Tools checks and protected package/API gates. Follow
 [maintenance contract](docs/durable-maintenance.md). Drain/destroy live owners
 before explicit maintenance. Migration needs an exact pre-upgrade backup;
 restore creates an isolated candidate and never authorizes stale rollback.
-The next checkpoint is **M03f, Integrated qualification**, following the
-[six durable-state checkpoints](docs/roadmap/durable-state-plan.md). Read
+**M03f and full REQ-M03 are complete under the current-machine scope.** Its
+[handoff](docs/handoffs/M03f-integrated-qualification.md) records 588 passing CPU
+CTests, 10 standalone Tools checks and protected package/API gates. Preserve
+`shark.storage.integration-process` (300 seconds), seven connected phases,
+sixteen children, nine actual mTLS connections and 38 supervisor controls.
+Follow the [qualification contract](docs/durable-qualification.md) and
+[six completed durable-state checkpoints](docs/roadmap/durable-state-plan.md).
+The next assignment is **09: Shared authoring commands and undo/redo**. Read
 [ADR 0015](docs/architecture/0015-durable-store.md) and the
 [store contract](docs/durable-store.md), [ADR 0016](docs/architecture/0016-owned-durable-characters.md)
-and [character contract](docs/durable-characters.md). Full REQ-M03 remains NOT_RUN.
+and [character contract](docs/durable-characters.md).
 M03b persists bounded enrollment, revocation and owned character checkpoints;
 M03c adds economic records and atomic outcomes in schema 3, with explicit
 nonmutating schema-1/2 rejection on ordinary open. M03e upgrades are explicit. One server

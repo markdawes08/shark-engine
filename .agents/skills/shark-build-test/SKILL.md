@@ -5,6 +5,15 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+M03f connects the existing durable services in `shark.storage.integration-process`.
+Follow the [qualification contract](../../../docs/durable-qualification.md):
+validate one actual store lineage through migration, authenticated runtime work,
+lost acknowledgement, native I/O failure, reconciliation and isolated restore.
+Preserve every earlier storage/network family and the five public storage examples.
+Freeze the connected fixture and supervisor along with implementation inputs;
+audit every separate VFS object and require observed faults and exact state,
+not only successful child exits or counts.
+
 M03e adds `shark.storage.migration` (120 seconds, seed 1337) and
 `shark.storage.migration-process` (240 seconds). Use independently authored
 schema-1/2/3 SQL fixtures; preserve all earlier storage families. Validate complete

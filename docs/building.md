@@ -522,6 +522,15 @@ for a compiler change. Do not edit global machine/compiler configuration.
 
 ## Server-only durable storage
 
+M03f adds the connected `shark.storage.integration-process` family through the
+test-only `StorageIntegrationProbe` and Python supervisor. The
+[qualification contract](durable-qualification.md) defines continuity from a
+legacy store through authenticated runtime operations, interruption, recovery and
+isolated restore. Its seven phases launch sixteen children under a 300-second
+CTest limit and `cpu;integration;server` labels. Use the normal native/WSL CPU presets and list the actual test
+inventory before selecting this family. The fixture requires writable local
+storage and loopback networking; it requires no editor, display or external service.
+
 M03a adds `EngineStorage` and its private static SQLite 3.54.1 amalgamation only
 when `SHARK_BUILD_SERVER=ON`. The public C++ service is documented in
 [the store contract](durable-store.md); `Store::create` and `Store::open` require
