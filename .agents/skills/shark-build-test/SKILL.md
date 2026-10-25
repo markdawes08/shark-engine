@@ -5,6 +5,19 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+09a adds `shark.tools.authoring-commands` (60 seconds, seed 1337) to the five
+existing Tools families. Its [command contract](../../../docs/authoring-commands.md)
+uses AuthoredScene's single owner, required revisions, typed effects and read-only
+Scene access. Preserve existing persistence cases as their ordinary edits move
+through commands; private access is only for lifecycle invariant fixtures.
+Run all six families in standalone CPU Tools on Windows and existing WSL, alongside
+native/WSL regressions, sanitizers and protected boundaries. Compile all four
+public Tools examples without private headers. 09a is PASS under the
+current-machine scope; its [handoff](../../../docs/handoffs/09a-shared-commands.md)
+and [receipt](../../../docs/coverage/evidence/09a-shared-commands.json) record
+461 CPU CTests, 12 standalone Tools checks and protected package/API gates.
+Full REQ-09 remains NOT_RUN. Next: 09b, Atomic transactions and preview.
+
 M03f connects the existing durable services in `shark.storage.integration-process`.
 Follow the [qualification contract](../../../docs/durable-qualification.md):
 validate one actual store lineage through migration, authenticated runtime work,

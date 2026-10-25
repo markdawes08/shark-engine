@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shark/scene.hpp"
+#include "shark/tools/authored_commands.hpp"
 #include "shark/tools/source_document.hpp"
 
 #include <functional>
@@ -8,6 +9,10 @@
 #include <optional>
 
 namespace shark::tools {
+
+namespace detail {
+struct AuthoredSceneTestAccess;
+}
 
 enum class UnsavedScenePolicy { reject, discard };
 
@@ -26,8 +31,9 @@ struct CapturedScene {
 };
 
 // Owns one authored Scene on its creating thread. Project settings and source-only
-// metadata are immutable between activations. This is not a filesystem/project
-// lock, undo history, live server region or terminal protocol.
+// metadata are immutable between activations. All authoring edits use execute;
+// the owned Core Scene is exposed for const inspection only. This is not a
+// filesystem/project lock, undo history, live server region or terminal protocol.
 class AuthoredScene final {
   public:
     [[nodiscard]] static Result<std::unique_ptr<AuthoredScene>>
@@ -41,8 +47,20 @@ class AuthoredScene final {
     [[nodiscard]] Result<AuthoredSceneStatus> status() const;
     // A local borrow, valid only until successful activation or owner destruction.
     // Do not retain across either boundary; retain checked handles/revisions instead.
-    [[nodiscard]] Result<std::reference_wrapper<Scene>> scene();
     [[nodiscard]] Result<std::reference_wrapper<const Scene>> scene() const;
+    // One validated edit at the expected committed incarnation/revision. The
+    // outer error means the owner could not be observed/accessed; admitted
+    // validation and revision failures are owned errors inside the reply.
+    // Every reply reports the current revision. No retry retention is implied.
+    [[nodiscard]] Result<AuthoringCommandReply> execute(const AuthoringCommand& command,
+                                                        SceneRevision expected_revision);
+    // Bounded owned Core query pages, sharing the same owner/revision/cursors.
+    [[nodiscard]] Result<SceneQueryPage>
+    query_entities(const SceneQueryOptions& options = {}) const;
+    [[nodiscard]] Result<SceneQueryPage> continue_query(const SceneQueryCursor& cursor) const;
+    [[nodiscard]] Result<SceneQueryPage>
+    inspect_entity(AuthoredEntityId id, SceneQueryFields fields = {},
+                   std::optional<SceneRevision> expected_revision = std::nullopt) const;
     // Complete owned authored data at one committed revision. Pending deferred
     // work rejects; capture does not clear dirty state or acknowledge a file save.
     [[nodiscard]] Result<CapturedScene>
@@ -57,6 +75,7 @@ class AuthoredScene final {
 
   private:
     friend class ProjectFiles;
+    friend struct detail::AuthoredSceneTestAccess;
     [[nodiscard]] bool acknowledge_saved(SceneRevision revision) noexcept;
     struct Impl;
     explicit AuthoredScene(std::unique_ptr<Impl> impl) noexcept;

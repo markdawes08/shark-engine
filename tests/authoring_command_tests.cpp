@@ -1,0 +1,778 @@
+#include <shark/tools/authored_scene.hpp>
+#include <shark/tools/project_files.hpp>
+
+#include "authored_scene_test_access.hpp"
+
+#include <catch2/catch_test_macros.hpp>
+
+#include <array>
+#include <cmath>
+#include <cstddef>
+#include <cstdint>
+#include <filesystem>
+#include <limits>
+#include <memory>
+#include <optional>
+#include <string>
+#include <system_error>
+#include <thread>
+#include <type_traits>
+#include <utility>
+#include <vector>
+
+namespace {
+
+using namespace shark;
+using namespace shark::tools;
+namespace fs = std::filesystem;
+
+template <typename T> T take(Result<T> result) {
+    REQUIRE(result);
+    return std::move(result).value();
+}
+
+template <typename Id> Id id(std::uint32_t value) {
+    std::string text = "00000000-0000-4000-8000-000000000000";
+    constexpr char digits[] = "0123456789abcdef";
+    for (std::size_t index = 0; index < 8; ++index) {
+        text[35 - index] = digits[value & 0xfU];
+        value >>= 4U;
+    }
+    return Id{take(StableId::parse(text))};
+}
+
+ProjectDocument project() {
+    return {id<ProjectId>(1),
+            id<WorldId>(2),
+            {"Shared command project"},
+            id<SceneId>(3),
+            {{id<SceneId>(3), take(ProjectPath::parse("scenes/start.sharkscene"))}},
+            R"({"project-note":"keep"})"};
+}
+
+SourceEntity entity(std::uint32_t value, std::optional<std::uint32_t> parent = std::nullopt) {
+    return {id<AuthoredEntityId>(value),
+            parent ? std::optional{id<AuthoredEntityId>(*parent)} : std::nullopt,
+            {"Entity " + std::to_string(value)},
+            {},
+            "{}"};
+}
+
+SceneDocument source() {
+    auto child = entity(30, 10);
+    child.transform.translation = {1.0, 2.0, 3.0};
+    child.extras_json = R"({"source-note":"child"})";
+    auto parent = entity(10);
+    parent.transform.translation = {10.0, 20.0, 30.0};
+    parent.transform.scale = {2.0, 2.0, 2.0};
+    parent.extras_json = R"({"source-note":"parent"})";
+    // Source order is intentionally unrelated to stable ID and hierarchy order.
+    return {id<ProjectId>(1),
+            id<SceneId>(3),
+            WorldPosition{id<WorldId>(2), {-19, 200, 3000}, {0.25, 512.0, 1023.5}},
+            {child, entity(20, 30), parent, entity(40)},
+            R"({"scene-note":[7,true]})"};
+}
+
+std::unique_ptr<AuthoredScene> owner(const SceneDocument& document = source(),
+                                     SceneLimits limits = {}) {
+    return take(AuthoredScene::create(project(), document, limits));
+}
+
+const Scene& live(const AuthoredScene& value) {
+    return take(value.scene()).get();
+}
+
+Scene& fixture_scene(AuthoredScene& value) {
+    return take(detail::AuthoredSceneTestAccess::scene(value)).get();
+}
+
+EntityHandle find(const AuthoredScene& value, std::uint32_t identity) {
+    return take(live(value).find(id<AuthoredEntityId>(identity)));
+}
+
+SceneEntityState state(const AuthoredScene& value, std::uint32_t identity) {
+    return take(live(value).entity_state(find(value, identity)));
+}
+
+AuthoredSceneStatus status(const AuthoredScene& value) {
+    return take(value.status());
+}
+
+CapturedScene capture(const AuthoredScene& value) {
+    return take(value.capture());
+}
+
+template <typename T> void rejected(const Result<T>& result, ErrorCode code) {
+    REQUIRE_FALSE(result);
+    CHECK(result.error().code == code);
+    CHECK_FALSE(result.error().message.empty());
+    CHECK_FALSE(result.error().context.operation.empty());
+}
+
+void same_capture(const CapturedScene& actual, const CapturedScene& expected) {
+    CHECK(actual.revision == expected.revision);
+    CHECK(actual.project == expected.project);
+    CHECK(actual.scene == expected.scene);
+    CHECK(actual.dirty == expected.dirty);
+}
+
+AuthoringCommandReply changed(AuthoredScene& value, const AuthoringCommand& command,
+                              std::vector<AuthoredEntityId> affected) {
+    const auto before = status(value).revision;
+    auto reply = take(value.execute(command, before));
+    REQUIRE(reply.outcome);
+    CHECK(reply.outcome.value().changed);
+    CHECK(reply.outcome.value().affected_entities == affected);
+    CHECK(reply.observed_revision.scene_instance == before.scene_instance);
+    CHECK(reply.observed_revision.revision == before.revision + 1);
+    CHECK(reply.observed_revision == status(value).revision);
+    CHECK(status(value).dirty);
+    return reply;
+}
+
+void command_rejected(AuthoredScene& value, const AuthoringCommand& command, SceneRevision expected,
+                      ErrorCode code) {
+    const auto before = capture(value);
+    const auto reply = take(value.execute(command, expected));
+    rejected(reply.outcome, code);
+    CHECK(reply.outcome.error().context.operation == "authoring.execute");
+    CHECK(reply.observed_revision == before.revision);
+    same_capture(capture(value), before);
+}
+
+void command_rejected(AuthoredScene& value, const AuthoringCommand& command, ErrorCode code) {
+    command_rejected(value, command, status(value).revision, code);
+}
+
+const SourceEntity& captured_entity(const CapturedScene& value, std::uint32_t identity) {
+    const auto wanted = id<AuthoredEntityId>(identity);
+    for (const auto& current : value.scene.entities) {
+        if (current.id == wanted) {
+            return current;
+        }
+    }
+    FAIL("expected authored entity is absent from capture");
+}
+
+class FileFixture final {
+  public:
+    FileFixture() {
+        root = fs::current_path() /
+               ("shark-authoring-commands-" + take(generate_stable_id()).to_string());
+        REQUIRE(fs::create_directory(root));
+        REQUIRE(fs::create_directory(root / "scenes"));
+    }
+    ~FileFixture() {
+        std::error_code error;
+        fs::remove_all(root, error);
+    }
+    FileFixture(const FileFixture&) = delete;
+    FileFixture& operator=(const FileFixture&) = delete;
+    fs::path root;
+};
+
+static_assert(std::is_same_v<decltype(std::declval<AuthoredScene&>().scene()),
+                             Result<std::reference_wrapper<const Scene>>>);
+static_assert(std::is_same_v<decltype(std::declval<const AuthoredScene&>().scene()),
+                             Result<std::reference_wrapper<const Scene>>>);
+static_assert(std::variant_size_v<AuthoringCommand> == 5);
+
+} // namespace
+
+TEST_CASE("authoring five typed edits preserve the active instance and advance once",
+          "[authoring-commands]") {
+    auto value = owner();
+    const auto original = find(*value, 30);
+    const auto reference = take(live(*value).reference(original));
+    changed(
+        *value,
+        CreateEntityCommand{id<AuthoredEntityId>(50), {"Created"}, {}, id<AuthoredEntityId>(40)},
+        {id<AuthoredEntityId>(40), id<AuthoredEntityId>(50)});
+    const auto created = find(*value, 50);
+    CHECK(state(*value, 50).parent == find(*value, 40));
+    changed(*value, SetNameCommand{id<AuthoredEntityId>(50), {"Renamed"}},
+            {id<AuthoredEntityId>(50)});
+    Transform moved;
+    moved.translation = {4.0, 5.0, 6.0};
+    changed(*value, SetTransformCommand{id<AuthoredEntityId>(50), moved},
+            {id<AuthoredEntityId>(50)});
+    changed(*value, ReparentEntityCommand{id<AuthoredEntityId>(50), id<AuthoredEntityId>(10)},
+            {id<AuthoredEntityId>(10), id<AuthoredEntityId>(40), id<AuthoredEntityId>(50)});
+    CHECK(state(*value, 50).local_transform == moved);
+    CHECK(state(*value, 50).world_matrix[3][0] == 18.0);
+    CHECK(find(*value, 50) == created);
+    changed(*value, DeleteEntityCommand{id<AuthoredEntityId>(50)},
+            {id<AuthoredEntityId>(10), id<AuthoredEntityId>(50)});
+    rejected(live(*value).entity_state(created), ErrorCode::invalid_id);
+    CHECK(find(*value, 30) == original);
+    CHECK(take(live(*value).resolve(reference)) == original);
+    CHECK(take(live(*value).stats()).live_entities == 4);
+}
+
+TEST_CASE("authoring canonical noops retain revision clean state and query cursors",
+          "[authoring-commands]") {
+    auto value = owner();
+    const auto before = capture(*value);
+    auto canonical = state(*value, 30).local_transform;
+    canonical.rotation = {-8.0, -0.0, -0.0, -0.0};
+    SceneQueryOptions options;
+    options.page_size = 1;
+    const auto page = take(value->query_entities(options));
+    REQUIRE(page.next_cursor());
+    const std::array<AuthoringCommand, 4> commands{
+        SetNameCommand{id<AuthoredEntityId>(30), state(*value, 30).name},
+        SetTransformCommand{id<AuthoredEntityId>(30), canonical},
+        ReparentEntityCommand{id<AuthoredEntityId>(30), id<AuthoredEntityId>(10),
+                              ReparentMode::keep_local},
+        ReparentEntityCommand{id<AuthoredEntityId>(30), id<AuthoredEntityId>(10),
+                              ReparentMode::keep_world}};
+    for (const auto& command : commands) {
+        const auto reply = take(value->execute(command, before.revision));
+        REQUIRE(reply.outcome);
+        CHECK_FALSE(reply.outcome.value().changed);
+        CHECK(reply.outcome.value().affected_entities.empty());
+        CHECK(reply.observed_revision == before.revision);
+        same_capture(capture(*value), before);
+        REQUIRE(value->continue_query(*page.next_cursor()));
+    }
+}
+
+TEST_CASE("authoring stale foreign and future revisions reject every edit including noops",
+          "[authoring-commands]") {
+    auto value = owner();
+    const auto stale = status(*value).revision;
+    changed(*value, SetNameCommand{id<AuthoredEntityId>(40), {"New observation"}},
+            {id<AuthoredEntityId>(40)});
+    auto foreign = owner();
+    const auto current = status(*value).revision;
+    const std::array expected{SceneRevision{}, stale, status(*foreign).revision,
+                              SceneRevision{current.scene_instance, current.revision + 1}};
+    const std::array<AuthoringCommand, 5> commands{
+        CreateEntityCommand{id<AuthoredEntityId>(50)},
+        DeleteEntityCommand{id<AuthoredEntityId>(40)},
+        SetNameCommand{id<AuthoredEntityId>(40), {"New observation"}},
+        SetTransformCommand{id<AuthoredEntityId>(30), state(*value, 30).local_transform},
+        ReparentEntityCommand{id<AuthoredEntityId>(30), id<AuthoredEntityId>(10)}};
+    for (const auto revision : expected) {
+        for (const auto& command : commands) {
+            command_rejected(*value, command, revision, ErrorCode::conflict);
+        }
+    }
+}
+
+TEST_CASE("authoring missing identities and parents fail without creating partial entities",
+          "[authoring-commands]") {
+    auto value = owner();
+    const auto missing = id<AuthoredEntityId>(999);
+    const std::array<AuthoringCommand, 6> commands{
+        DeleteEntityCommand{missing},
+        SetNameCommand{missing, {"Unknown"}},
+        SetTransformCommand{missing, {}},
+        ReparentEntityCommand{missing, id<AuthoredEntityId>(10)},
+        ReparentEntityCommand{id<AuthoredEntityId>(30), missing},
+        CreateEntityCommand{id<AuthoredEntityId>(50), {}, {}, missing}};
+    for (const auto& command : commands) {
+        command_rejected(*value, command, ErrorCode::invalid_id);
+    }
+    rejected(live(*value).find(id<AuthoredEntityId>(50)), ErrorCode::invalid_id);
+    rejected(value->inspect_entity(missing), ErrorCode::invalid_id);
+}
+
+TEST_CASE("authoring duplicate creation preserves the original incarnation and metadata",
+          "[authoring-commands]") {
+    auto value = owner();
+    const auto original = find(*value, 30);
+    command_rejected(*value,
+                     CreateEntityCommand{
+                         id<AuthoredEntityId>(30), {"Replacement"}, {}, id<AuthoredEntityId>(40)},
+                     ErrorCode::conflict);
+    CHECK(find(*value, 30) == original);
+    CHECK(captured_entity(capture(*value), 30).extras_json == R"({"source-note":"child"})");
+}
+
+TEST_CASE("authoring components use the shared validators before publishing mutations",
+          "[authoring-commands]") {
+    auto value = owner();
+    for (const auto& text : std::array<std::string, 5>{"", std::string(257, 'x'), "line\nfeed",
+                                                       std::string{"\xc0\xaf"}, "delete\x7f"}) {
+        command_rejected(*value, SetNameCommand{id<AuthoredEntityId>(30), {text}},
+                         ErrorCode::invalid_argument);
+        command_rejected(*value, CreateEntityCommand{id<AuthoredEntityId>(50), {text}},
+                         ErrorCode::invalid_argument);
+    }
+    for (int scenario = 0; scenario != 4; ++scenario) {
+        CAPTURE(scenario);
+        Transform invalid;
+        if (scenario == 0) {
+            invalid.scale.x = 0.0;
+        } else if (scenario == 1) {
+            invalid.translation.y = std::numeric_limits<double>::infinity();
+        } else if (scenario == 2) {
+            invalid.rotation = {0.0, 0.0, 0.0, 0.0};
+        } else {
+            invalid.scale.z = std::numeric_limits<double>::quiet_NaN();
+        }
+        command_rejected(*value, SetTransformCommand{id<AuthoredEntityId>(30), invalid},
+                         ErrorCode::invalid_argument);
+        command_rejected(*value, CreateEntityCommand{id<AuthoredEntityId>(50), {}, invalid},
+                         ErrorCode::invalid_argument);
+    }
+}
+
+TEST_CASE("authoring composed transform overflow rolls back create set and reparent",
+          "[authoring-commands]") {
+    auto document = source();
+    document.entities = {entity(10), entity(20, 10), entity(30)};
+    document.entities[0].transform.scale = {1e200, 1e200, 1e200};
+    document.entities[2].transform.scale = {1e200, 1e200, 1e200};
+    auto value = owner(document);
+    Transform oversized;
+    oversized.scale = {1e200, 1e200, 1e200};
+    command_rejected(
+        *value,
+        CreateEntityCommand{id<AuthoredEntityId>(40), {}, oversized, id<AuthoredEntityId>(10)},
+        ErrorCode::invalid_argument);
+    command_rejected(*value, SetTransformCommand{id<AuthoredEntityId>(20), oversized},
+                     ErrorCode::invalid_argument);
+    command_rejected(*value,
+                     ReparentEntityCommand{id<AuthoredEntityId>(30), id<AuthoredEntityId>(10)},
+                     ErrorCode::invalid_argument);
+    CHECK(state(*value, 20).local_transform == Transform{});
+    CHECK_FALSE(state(*value, 30).parent);
+    CHECK(state(*value, 10).children == std::vector{find(*value, 20)});
+}
+
+TEST_CASE("authoring keep-world reparent preserves subtree poses and checked handles",
+          "[authoring-commands]") {
+    auto value = owner();
+    const auto child = state(*value, 30);
+    const auto descendant = state(*value, 20);
+    changed(*value,
+            ReparentEntityCommand{id<AuthoredEntityId>(30), std::nullopt, ReparentMode::keep_world},
+            {id<AuthoredEntityId>(10), id<AuthoredEntityId>(20), id<AuthoredEntityId>(30)});
+    CHECK(state(*value, 30).reference.handle == child.reference.handle);
+    CHECK(state(*value, 20).reference.handle == descendant.reference.handle);
+    CHECK(state(*value, 30).world_matrix == child.world_matrix);
+    CHECK(state(*value, 20).world_matrix == descendant.world_matrix);
+    CHECK(state(*value, 30).local_transform.translation == math::Vec3(12.0, 24.0, 36.0));
+    CHECK(state(*value, 30).local_transform.scale == math::Vec3(2.0, 2.0, 2.0));
+    CHECK(state(*value, 20).depth == 2);
+}
+
+TEST_CASE("authoring nonrepresentable keep-world reparent retains the whole hierarchy",
+          "[authoring-commands]") {
+    auto document = source();
+    document.entities[2].transform.scale = {2.0, 3.0, 4.0};
+    constexpr double half_angle = 0.39269908169872415481;
+    document.entities[0].transform.rotation = {std::cos(half_angle), 0.0, 0.0,
+                                               std::sin(half_angle)};
+    auto value = owner(document);
+    const auto before_child = state(*value, 30);
+    const auto before_descendant = state(*value, 20);
+    command_rejected(
+        *value,
+        ReparentEntityCommand{id<AuthoredEntityId>(30), std::nullopt, ReparentMode::keep_world},
+        ErrorCode::invalid_argument);
+    CHECK(state(*value, 30).world_matrix == before_child.world_matrix);
+    CHECK(state(*value, 20).world_matrix == before_descendant.world_matrix);
+    CHECK(state(*value, 30).parent == before_child.parent);
+}
+
+TEST_CASE("authoring cycles invalid modes and lower hierarchy limits reject unchanged",
+          "[authoring-commands]") {
+    auto value = owner(source(), SceneLimits{5, 4, 3});
+    command_rejected(*value,
+                     ReparentEntityCommand{id<AuthoredEntityId>(10), id<AuthoredEntityId>(10)},
+                     ErrorCode::conflict);
+    command_rejected(*value,
+                     ReparentEntityCommand{id<AuthoredEntityId>(10), id<AuthoredEntityId>(20)},
+                     ErrorCode::conflict);
+    command_rejected(*value,
+                     ReparentEntityCommand{id<AuthoredEntityId>(40), id<AuthoredEntityId>(20)},
+                     ErrorCode::conflict);
+    command_rejected(
+        *value, CreateEntityCommand{id<AuthoredEntityId>(50), {}, {}, id<AuthoredEntityId>(20)},
+        ErrorCode::conflict);
+    command_rejected(*value,
+                     ReparentEntityCommand{id<AuthoredEntityId>(30), id<AuthoredEntityId>(40),
+                                           static_cast<ReparentMode>(99)},
+                     ErrorCode::invalid_argument);
+    changed(*value, CreateEntityCommand{id<AuthoredEntityId>(50)}, {id<AuthoredEntityId>(50)});
+    command_rejected(*value, CreateEntityCommand{id<AuthoredEntityId>(60)}, ErrorCode::conflict);
+}
+
+TEST_CASE("authoring refresh identities include descendants and changed links in stable order",
+          "[authoring-commands]") {
+    auto value = owner();
+    changed(*value, SetNameCommand{id<AuthoredEntityId>(10), {"Only the named entity"}},
+            {id<AuthoredEntityId>(10)});
+    auto transform = state(*value, 10).local_transform;
+    transform.translation.x = 99.0;
+    changed(*value, SetTransformCommand{id<AuthoredEntityId>(10), transform},
+            {id<AuthoredEntityId>(10), id<AuthoredEntityId>(20), id<AuthoredEntityId>(30)});
+    changed(*value, ReparentEntityCommand{id<AuthoredEntityId>(30), id<AuthoredEntityId>(40)},
+            {id<AuthoredEntityId>(10), id<AuthoredEntityId>(20), id<AuthoredEntityId>(30),
+             id<AuthoredEntityId>(40)});
+    CHECK(state(*value, 10).children.empty());
+    CHECK(state(*value, 40).children == std::vector{find(*value, 30)});
+}
+
+TEST_CASE("authoring maximum subtree refresh is complete bounded and sorted",
+          "[authoring-commands]") {
+    auto document = source();
+    document.entities.clear();
+    document.entities.reserve(source_maximum_entities);
+    std::vector<AuthoredEntityId> expected;
+    expected.reserve(source_maximum_entities);
+    // Descending source order and one broad parent expose truncation, omission,
+    // duplicate-parent IDs and accidental source/slot ordering in the receipt.
+    for (std::size_t index = 0; index < source_maximum_entities; ++index) {
+        const auto value = static_cast<std::uint32_t>(source_maximum_entities - index);
+        document.entities.push_back(entity(value, value == 1 ? std::nullopt : std::optional{1U}));
+        expected.push_back(id<AuthoredEntityId>(static_cast<std::uint32_t>(index + 1)));
+    }
+    auto value = owner(document);
+    Transform moved;
+    moved.translation = {4.0, 5.0, 6.0};
+    const auto reply =
+        changed(*value, SetTransformCommand{id<AuthoredEntityId>(1), moved}, expected);
+    CHECK(reply.outcome.value().affected_entities.size() == source_maximum_entities);
+    CHECK(state(*value, 4096).world_matrix[3][0] == 4.0);
+    CHECK(state(*value, 4096).world_matrix[3][1] == 5.0);
+    CHECK(state(*value, 4096).world_matrix[3][2] == 6.0);
+    command_rejected(
+        *value, CreateEntityCommand{id<AuthoredEntityId>(4097), {}, {}, id<AuthoredEntityId>(1)},
+        ErrorCode::conflict);
+    CHECK(take(live(*value).stats()).live_entities == source_maximum_entities);
+}
+
+TEST_CASE("authoring subtree delete reports removed IDs plus its surviving parent",
+          "[authoring-commands]") {
+    auto value = owner();
+    const auto old_child = find(*value, 30);
+    const auto old_descendant = find(*value, 20);
+    const auto root = find(*value, 10);
+    changed(*value, DeleteEntityCommand{id<AuthoredEntityId>(30)},
+            {id<AuthoredEntityId>(10), id<AuthoredEntityId>(20), id<AuthoredEntityId>(30)});
+    rejected(live(*value).entity_state(old_child), ErrorCode::invalid_id);
+    rejected(live(*value).entity_state(old_descendant), ErrorCode::invalid_id);
+    CHECK(find(*value, 10) == root);
+    CHECK(state(*value, 10).children.empty());
+    const auto saved = capture(*value);
+    REQUIRE(saved.scene.entities.size() == 2);
+    CHECK(saved.scene.entities[0].id == id<AuthoredEntityId>(10));
+    CHECK(saved.scene.entities[1].id == id<AuthoredEntityId>(40));
+    changed(*value, DeleteEntityCommand{id<AuthoredEntityId>(10)}, {id<AuthoredEntityId>(10)});
+    changed(*value, DeleteEntityCommand{id<AuthoredEntityId>(40)}, {id<AuthoredEntityId>(40)});
+    CHECK(capture(*value).scene.entities.empty());
+}
+
+TEST_CASE("authoring recreate never inherits deleted incarnation metadata or references",
+          "[authoring-commands]") {
+    auto value = owner();
+    const auto old = find(*value, 30);
+    const auto reference = take(live(*value).reference(old));
+    changed(*value, DeleteEntityCommand{id<AuthoredEntityId>(30)},
+            {id<AuthoredEntityId>(10), id<AuthoredEntityId>(20), id<AuthoredEntityId>(30)});
+    changed(*value, CreateEntityCommand{id<AuthoredEntityId>(30), {"Recreated"}},
+            {id<AuthoredEntityId>(30)});
+    CHECK(find(*value, 30) != old);
+    rejected(live(*value).resolve(reference), ErrorCode::invalid_id);
+    const auto saved = capture(*value);
+    CHECK(captured_entity(saved, 30).extras_json == "{}");
+    CHECK(captured_entity(saved, 10).extras_json == R"({"source-note":"parent"})");
+    CHECK(saved.project == project());
+    CHECK(saved.scene.extras_json == source().extras_json);
+    CHECK(saved.scene.world_origin == source().world_origin);
+}
+
+TEST_CASE("authoring edits retain independent command payload and reply values",
+          "[authoring-commands]") {
+    auto value = owner();
+    SetNameCommand command{id<AuthoredEntityId>(30), {"Owned result"}};
+    auto reply = changed(*value, command, {id<AuthoredEntityId>(30)});
+    command.name.value = "Caller edited input";
+    reply.outcome.value().affected_entities.clear();
+    CHECK(state(*value, 30).name.value == "Owned result");
+    CHECK(captured_entity(capture(*value), 30).extras_json == R"({"source-note":"child"})");
+    changed(*value, SetNameCommand{id<AuthoredEntityId>(30), {"Entity 30"}},
+            {id<AuthoredEntityId>(30)});
+    CHECK(capture(*value).scene == source());
+    CHECK(status(*value).dirty);
+}
+
+TEST_CASE("authoring save acknowledges the command revision without replacing the scene",
+          "[authoring-commands]") {
+    FileFixture fixture;
+    auto files = take(ProjectFiles::open(fixture.root));
+    const auto initial_file = take(files->write_scene(project(), source(), std::nullopt));
+    auto loaded = take(files->load_scene(project(), id<SceneId>(3)));
+    auto& value = *loaded.owner;
+    const auto handle = find(value, 30);
+    changed(value, SetNameCommand{id<AuthoredEntityId>(30), {"Saved command"}},
+            {id<AuthoredEntityId>(30)});
+    const auto revision = status(value).revision;
+    const auto saved = take(files->save_scene(value, revision, initial_file.revision));
+    CHECK(saved.current_scene_clean);
+    CHECK(saved.saved_revision == revision);
+    CHECK(status(value).revision == revision);
+    CHECK_FALSE(status(value).dirty);
+    CHECK(find(value, 30) == handle);
+    const auto persisted = take(files->read_scene(project(), id<SceneId>(3)));
+    CHECK(persisted.source.document == capture(value).scene);
+    const auto no_op =
+        take(value.execute(SetNameCommand{id<AuthoredEntityId>(30), {"Saved command"}}, revision));
+    REQUIRE(no_op.outcome);
+    CHECK_FALSE(no_op.outcome.value().changed);
+    CHECK_FALSE(status(value).dirty);
+    changed(value, SetNameCommand{id<AuthoredEntityId>(30), {"Later unsaved command"}},
+            {id<AuthoredEntityId>(30)});
+    rejected(files->save_scene(value, revision, saved.file.revision), ErrorCode::conflict);
+    CHECK(status(value).dirty);
+    CHECK(take(files->read_scene(project(), id<SceneId>(3))).source.document ==
+          persisted.source.document);
+}
+
+TEST_CASE("authoring bounded query continuation preserves filters and independent values",
+          "[authoring-commands]") {
+    auto value = owner();
+    SceneQueryOptions options;
+    options.name_prefix = "Entity 2";
+    options.page_size = 1;
+    options.scan_budget = 1;
+    options.fields = {true, false, false};
+    const auto before = capture(*value);
+    auto page = take(value->query_entities(options));
+    CHECK(page.entities().empty());
+    CHECK(page.scanned_slots() == 1);
+    REQUIRE(page.next_cursor());
+    const auto cursor = *page.next_cursor();
+    options.name_prefix = "Never use changed options";
+    std::size_t pages = 1;
+    while (page.next_cursor()) {
+        page = take(value->continue_query(*page.next_cursor()));
+        CHECK(page.revision() == before.revision);
+        CHECK(page.scanned_slots() <= 1);
+        CHECK(page.entities().size() <= 1);
+        ++pages;
+    }
+    CHECK(pages == 4);
+    REQUIRE(page.entities().size() == 1);
+    CHECK(page.entities().front().reference.identity == EntityIdentity{id<AuthoredEntityId>(20)});
+    REQUIRE(page.entities().front().name);
+    CHECK(page.entities().front().name->value == "Entity 20");
+    CHECK_FALSE(page.entities().front().transform);
+    CHECK_FALSE(page.entities().front().hierarchy);
+    const auto replay = take(value->continue_query(cursor));
+    CHECK(replay.entities().empty());
+    same_capture(capture(*value), before);
+    changed(*value, SetNameCommand{id<AuthoredEntityId>(20), {"Later name"}},
+            {id<AuthoredEntityId>(20)});
+    CHECK(page.entities().front().name->value == "Entity 20");
+    value.reset();
+    CHECK(page.revision() == before.revision);
+    CHECK(page.entities().front().name->value == "Entity 20");
+}
+
+TEST_CASE("authoring queries share revision fences after command mutation and activation",
+          "[authoring-commands]") {
+    auto value = owner();
+    SceneQueryOptions options;
+    options.page_size = 1;
+    const auto page = take(value->query_entities(options));
+    REQUIRE(page.next_cursor());
+    const auto old = page.revision();
+    auto other = owner();
+    rejected(other->continue_query(*page.next_cursor()), ErrorCode::conflict);
+    command_rejected(*value, DeleteEntityCommand{id<AuthoredEntityId>(999)}, ErrorCode::invalid_id);
+    REQUIRE(value->continue_query(*page.next_cursor()));
+    changed(*value, SetNameCommand{id<AuthoredEntityId>(30), {"Changed"}},
+            {id<AuthoredEntityId>(30)});
+    rejected(value->continue_query(*page.next_cursor()), ErrorCode::conflict);
+    options.expected_revision = old;
+    rejected(value->query_entities(options), ErrorCode::conflict);
+    rejected(value->inspect_entity(id<AuthoredEntityId>(30), {}, old), ErrorCode::conflict);
+    const auto fresh = take(value->query_entities());
+    const auto before_reload = capture(*value);
+    REQUIRE(
+        value->activate(before_reload.scene, before_reload.revision, UnsavedScenePolicy::discard));
+    CHECK(status(*value).revision.scene_instance != fresh.revision().scene_instance);
+    command_rejected(*value, SetNameCommand{id<AuthoredEntityId>(30), {"Changed"}},
+                     before_reload.revision, ErrorCode::conflict);
+    CHECK_FALSE(status(*value).dirty);
+}
+
+TEST_CASE("authoring semantic queries select hierarchy and enforce existing field and work bounds",
+          "[authoring-commands]") {
+    auto value = owner();
+    const auto before = capture(*value);
+    SceneQueryOptions options;
+    options.selection = SceneQuerySelection::children;
+    options.parent = find(*value, 10);
+    options.fields = {false, false, true};
+    options.expected_revision = before.revision;
+    const auto children = take(value->query_entities(options));
+    REQUIRE(children.entities().size() == 1);
+    CHECK(children.entities().front().reference.identity ==
+          EntityIdentity{id<AuthoredEntityId>(30)});
+    CHECK_FALSE(children.entities().front().name);
+    CHECK_FALSE(children.entities().front().transform);
+    REQUIRE(children.entities().front().hierarchy);
+    CHECK(children.entities().front().hierarchy->child_count == 1);
+    const auto inspected = take(
+        value->inspect_entity(id<AuthoredEntityId>(30), {true, false, false}, before.revision));
+    REQUIRE(inspected.entities().size() == 1);
+    CHECK(inspected.entities().front().name->value == "Entity 30");
+    CHECK_FALSE(inspected.entities().front().hierarchy);
+    CHECK_FALSE(inspected.next_cursor());
+    for (int scenario = 0; scenario != 6; ++scenario) {
+        CAPTURE(scenario);
+        SceneQueryOptions invalid;
+        if (scenario == 0) {
+            invalid.page_size = 0;
+        } else if (scenario == 1) {
+            invalid.page_size = scene_query_maximum_page_size + 1;
+        } else if (scenario == 2) {
+            invalid.scan_budget = 0;
+        } else if (scenario == 3) {
+            invalid.scan_budget = scene_query_maximum_scan_budget + 1;
+        } else if (scenario == 4) {
+            invalid.selection = SceneQuerySelection::children;
+        } else {
+            invalid.name_prefix = "bad\nfilter";
+        }
+        rejected(value->query_entities(invalid), ErrorCode::invalid_argument);
+    }
+    same_capture(capture(*value), before);
+}
+
+TEST_CASE("authoring human and agent equivalent requests share one unsaved revision stream",
+          "[authoring-commands]") {
+    auto value = owner();
+    const auto human_observation = take(value->inspect_entity(id<AuthoredEntityId>(30)));
+    const auto agent_observation = take(value->inspect_entity(id<AuthoredEntityId>(30)));
+    CHECK(human_observation.revision() == agent_observation.revision());
+    const auto human = take(value->execute(SetNameCommand{id<AuthoredEntityId>(30), {"Human edit"}},
+                                           human_observation.revision()));
+    REQUIRE(human.outcome);
+    command_rejected(*value, SetNameCommand{id<AuthoredEntityId>(30), {"Stale agent edit"}},
+                     agent_observation.revision(), ErrorCode::conflict);
+    const auto refreshed = take(value->inspect_entity(id<AuthoredEntityId>(30)));
+    CHECK(refreshed.entities().front().name->value == "Human edit");
+    const auto agent = take(value->execute(
+        CreateEntityCommand{
+            id<AuthoredEntityId>(50), {"Agent child"}, {}, id<AuthoredEntityId>(30)},
+        refreshed.revision()));
+    REQUIRE(agent.outcome);
+    CHECK(agent.observed_revision.revision == human.observed_revision.revision + 1);
+    CHECK(agent.observed_revision.scene_instance == human.observed_revision.scene_instance);
+    command_rejected(*value, DeleteEntityCommand{id<AuthoredEntityId>(50)}, human.observed_revision,
+                     ErrorCode::conflict);
+    const auto authored = capture(*value);
+    CHECK(authored.dirty);
+    CHECK(captured_entity(authored, 30).name.value == "Human edit");
+    CHECK(captured_entity(authored, 50).parent == id<AuthoredEntityId>(30));
+    CHECK(captured_entity(authored, 30).extras_json == R"({"source-note":"child"})");
+    const auto decoded = take(decode_scene_document(take(encode_scene_document(authored.scene))));
+    const auto reopened = owner(decoded.document);
+    CHECK(capture(*reopened).scene == authored.scene);
+    CHECK_FALSE(status(*reopened).dirty);
+}
+
+TEST_CASE("authoring wrong thread rejects before exposing a revision or accessing live state",
+          "[authoring-commands]") {
+    auto value = owner();
+    const auto before = capture(*value);
+    SceneQueryOptions options;
+    options.page_size = 1;
+    const auto page = take(value->query_entities(options));
+    REQUIRE(page.next_cursor());
+    const auto cursor = *page.next_cursor();
+    const auto target = id<AuthoredEntityId>(30);
+    std::array<bool, 5> denied{};
+    std::thread worker([&] {
+        const auto edit = value->execute(SetNameCommand{target, {"Wrong thread"}}, before.revision);
+        denied[0] = !edit && edit.error().code == ErrorCode::conflict;
+        const auto query = value->query_entities();
+        denied[1] = !query && query.error().code == ErrorCode::conflict;
+        const auto continuation = value->continue_query(cursor);
+        denied[2] = !continuation && continuation.error().code == ErrorCode::conflict;
+        const auto inspected = value->inspect_entity(target);
+        denied[3] = !inspected && inspected.error().code == ErrorCode::conflict;
+        const auto accessed = value->scene();
+        denied[4] = !accessed && accessed.error().code == ErrorCode::conflict;
+    });
+    worker.join();
+    for (const bool result : denied) {
+        CHECK(result);
+    }
+    same_capture(capture(*value), before);
+}
+
+TEST_CASE("authoring pending writes reject decisions without applying the queue",
+          "[authoring-commands]") {
+    auto value = owner();
+    const auto before = capture(*value);
+    const auto ticket = take(fixture_scene(*value).defer_set_name(find(*value, 30), {"Pending"}));
+    const std::array<AuthoringCommand, 2> commands{
+        SetNameCommand{id<AuthoredEntityId>(30), {"Immediate"}},
+        SetNameCommand{id<AuthoredEntityId>(30), {"Entity 30"}}};
+    for (const auto& command : commands) {
+        const auto reply = take(value->execute(command, before.revision));
+        rejected(reply.outcome, ErrorCode::conflict);
+        CHECK(reply.observed_revision == before.revision);
+        CHECK(status(*value).pending_mutations == 1);
+        CHECK_FALSE(status(*value).dirty);
+        CHECK(state(*value, 30).name.value == "Entity 30");
+        const auto inspected = take(value->inspect_entity(id<AuthoredEntityId>(30)));
+        CHECK(inspected.revision() == before.revision);
+        CHECK(inspected.entities().front().name->value == "Entity 30");
+    }
+    const auto applied = take(fixture_scene(*value).apply_deferred());
+    REQUIRE(applied.outcomes.size() == 1);
+    CHECK(applied.outcomes.front().ticket == ticket);
+    REQUIRE(applied.outcomes.front().result);
+    CHECK(state(*value, 30).name.value == "Pending");
+    command_rejected(*value, SetNameCommand{id<AuthoredEntityId>(30), {"Immediate"}},
+                     before.revision, ErrorCode::conflict);
+}
+
+TEST_CASE("authoring active visits permit inspection and reject even noop edits",
+          "[authoring-commands]") {
+    auto value = owner();
+    const auto before = capture(*value);
+    std::size_t visited = 0;
+    REQUIRE(fixture_scene(*value).visit_entities([&](const EntityReference&) -> Result<void> {
+        ++visited;
+        const auto reply = take(value->execute(
+            SetNameCommand{id<AuthoredEntityId>(30), {"Entity 30"}}, before.revision));
+        rejected(reply.outcome, ErrorCode::conflict);
+        CHECK(reply.observed_revision == before.revision);
+        const auto page = take(value->query_entities());
+        CHECK(page.revision() == before.revision);
+        CHECK(page.entities().size() == 4);
+        same_capture(capture(*value), before);
+        return {};
+    }));
+    CHECK(visited == 4);
+    same_capture(capture(*value), before);
+}
+
+TEST_CASE("authoring closed owners reject commands and queries while owned pages survive",
+          "[authoring-commands]") {
+    auto value = owner();
+    SceneQueryOptions options;
+    options.page_size = 1;
+    const auto page = take(value->query_entities(options));
+    REQUIRE(page.next_cursor());
+    const auto before = page.revision();
+    REQUIRE(fixture_scene(*value).close());
+    rejected(value->execute(DeleteEntityCommand{id<AuthoredEntityId>(30)}, before),
+             ErrorCode::conflict);
+    rejected(value->query_entities(), ErrorCode::conflict);
+    rejected(value->continue_query(*page.next_cursor()), ErrorCode::conflict);
+    rejected(value->inspect_entity(id<AuthoredEntityId>(30)), ErrorCode::conflict);
+    CHECK(page.entities().front().name->value == "Entity 10");
+    CHECK(page.revision() == before);
+}

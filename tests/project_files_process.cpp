@@ -23,13 +23,6 @@ template <typename T> T require(Result<T> value) {
     return std::move(value).value();
 }
 
-void require(Result<void> value) {
-    if (!value) {
-        throw std::runtime_error{std::string{error_code_name(value.error().code)} + ":" +
-                                 value.error().context.operation};
-    }
-}
-
 template <typename Id> Id id(unsigned value) {
     std::string text = "00000000-0000-4000-8000-000000000000";
     text.back() = "0123456789abcdef"[value];
@@ -109,8 +102,10 @@ int main(int argc, char** argv) {
                 require(files->read_project(require(ProjectPath::parse("project.sharkproject"))));
             auto loaded =
                 require(files->load_scene(loaded_project.source.document, id<SceneId>(3)));
-            auto& live = require(loaded.owner->scene()).get();
-            require(live.set_name(require(live.find(id<AuthoredEntityId>(4))), {"After"}));
+            require(
+                require(loaded.owner->execute(SetNameCommand{id<AuthoredEntityId>(4), {"After"}},
+                                              require(loaded.owner->status()).revision))
+                    .outcome);
             const auto status = require(loaded.owner->status());
             if (!status.dirty) {
                 throw std::runtime_error{"interrupted save did not start with an edited owner"};
@@ -143,8 +138,10 @@ int main(int argc, char** argv) {
                 require(files->read_project(require(ProjectPath::parse("project.sharkproject"))));
             auto loaded =
                 require(files->load_scene(loaded_project.source.document, id<SceneId>(3)));
-            auto& live = require(loaded.owner->scene()).get();
-            require(live.set_name(require(live.find(id<AuthoredEntityId>(4))), {"Recovered"}));
+            require(require(loaded.owner->execute(
+                                SetNameCommand{id<AuthoredEntityId>(4), {"Recovered"}},
+                                require(loaded.owner->status()).revision))
+                        .outcome);
             const auto saved = require(files->save_scene(
                 *loaded.owner, require(loaded.owner->status()).revision, loaded.file_revision));
             if (!saved.current_scene_clean || require(loaded.owner->status()).dirty) {

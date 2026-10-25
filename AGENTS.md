@@ -94,7 +94,20 @@ CTests, 10 standalone Tools checks and protected package/API gates. Preserve
 sixteen children, nine actual mTLS connections and 38 supervisor controls.
 Follow the [qualification contract](docs/durable-qualification.md) and
 [six completed durable-state checkpoints](docs/roadmap/durable-state-plan.md).
-The next assignment is **09: Shared authoring commands and undo/redo**. Read
+**09a: Shared command foundation is complete under the current-machine scope**,
+following the [five authoring checkpoints](docs/roadmap/authoring-plan.md). It
+extends the existing AuthoredScene owner with typed create/delete/Name/Transform/
+reparent commands, required revisions, bounded effects and Core query pages.
+Public `scene()` is read-only; edits use `execute` and check both Result levels.
+Follow [ADR 0020](docs/architecture/0020-shared-authoring-commands.md) and the
+[command contract](docs/authoring-commands.md). Its
+[handoff](docs/handoffs/09a-shared-commands.md) and
+[receipt](docs/coverage/evidence/09a-shared-commands.json) record 461 passing CPU
+CTests, 12 standalone Tools checks and protected package/API gates.
+Full REQ-09 remains NOT_RUN. **Next: 09b, Atomic transactions and preview.**
+Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
+and all existing persistence cases. Private mutable access is limited to invariant
+fixtures; gameplay keeps Core's safe mutation without authoring history. Read
 [ADR 0015](docs/architecture/0015-durable-store.md) and the
 [store contract](docs/durable-store.md), [ADR 0016](docs/architecture/0016-owned-durable-characters.md)
 and [character contract](docs/durable-characters.md).
@@ -420,7 +433,11 @@ the [transform contract](docs/transforms.md) defines local-frame hierarchy behav
 see the [inspection contract](docs/scene-inspection.md). Pure component validation
 does not reserve a revision or replace Scene's hierarchy validation. EngineTools
 provides source persistence through the shared capture/activation and file services.
-Authoring transactions, terminal/editor adapters and Lua retain their later owners;
+09a adds typed single edits and bounded queries on that same AuthoredScene owner.
+Ordinary edits preserve Scene incarnation and the saved baseline; activation is
+explicit replacement, never a shortcut for commands. Atomic transactions/preview,
+history and retry retention retain 09b/09c/09d; terminal/editor adapters and Lua
+retain their later owners;
 the bootstrap executables do not expose those interfaces or a scene renderer.
 MMO requirements remain planned until executable multi-process, network-fault,
 database, streaming and load evidence exists. M09 adds MMOWorld acceptance; Tetris

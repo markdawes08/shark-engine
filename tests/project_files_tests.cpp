@@ -1,5 +1,6 @@
 #include <shark/tools/project_files.hpp>
 
+#include "authored_scene_test_access.hpp"
 #include "project_files_native.hpp"
 
 #include <catch2/catch_test_macros.hpp>
@@ -140,15 +141,24 @@ std::size_t regular_files(const fs::path& directory) {
     return count;
 }
 
-Scene& live(AuthoredScene& owner) {
+const Scene& live(const AuthoredScene& owner) {
     const auto access = take(owner.scene());
     return access.get();
+}
+Scene& fixture_scene(AuthoredScene& owner) {
+    return take(detail::AuthoredSceneTestAccess::scene(owner)).get();
 }
 EntityHandle first(AuthoredScene& owner) {
     return take(live(owner).find(id<AuthoredEntityId>(10)));
 }
 AuthoredSceneStatus status(AuthoredScene& owner) {
     return take(owner.status());
+}
+
+Result<AuthoringCommandEffect> execute(AuthoredScene& owner, const AuthoringCommand& command) {
+    auto reply = take(owner.execute(command, status(owner).revision));
+    CHECK(reply.observed_revision == status(owner).revision);
+    return std::move(reply.outcome);
 }
 
 static_assert(!std::is_copy_constructible_v<ProjectFiles>);
@@ -505,7 +515,7 @@ TEST_CASE(
     auto loaded = take(files->load_scene(project(), id<SceneId>(3)));
     auto& owner = *loaded.owner;
     const auto handle = first(owner);
-    REQUIRE(live(owner).set_name(handle, {"Unsaved authoring work"}));
+    REQUIRE(execute(owner, SetNameCommand{id<AuthoredEntityId>(10), {"Unsaved authoring work"}}));
     const auto before = take(owner.capture());
     REQUIRE(before.dirty);
     const auto old_bytes = read_bytes(fixture.scene_path());
@@ -655,7 +665,7 @@ TEST_CASE("external edits and dirty reload preserve both authors until explicit 
     auto loaded = take(files->load_scene(project(), id<SceneId>(3)));
     auto& owner = *loaded.owner;
     const auto old_handle = first(owner);
-    REQUIRE(live(owner).set_name(old_handle, {"Unsaved human"}));
+    REQUIRE(execute(owner, SetNameCommand{id<AuthoredEntityId>(10), {"Unsaved human"}}));
     const auto dirty = take(owner.capture());
     const auto external = take(encode_scene_document(scene("External agent")));
     write_bytes(fixture.scene_path(), external);
@@ -713,7 +723,7 @@ TEST_CASE("failed reload preserves active revision metadata pending work and dir
     auto files = fixture.open();
     auto loaded = take(files->load_scene(project(), id<SceneId>(3)));
     auto& owner = *loaded.owner;
-    REQUIRE(live(owner).set_name(first(owner), {"Unsaved"}));
+    REQUIRE(execute(owner, SetNameCommand{id<AuthoredEntityId>(10), {"Unsaved"}}));
     const auto before = take(owner.capture());
     write_bytes(fixture.scene_path(), "{broken");
     REQUIRE_FALSE(files->reload_scene(owner, before.revision, UnsavedScenePolicy::discard));
@@ -721,12 +731,12 @@ TEST_CASE("failed reload preserves active revision metadata pending work and dir
     CHECK(status(owner).revision == before.revision);
     CHECK(status(owner).dirty);
     fixture.seed();
-    REQUIRE(live(owner).defer_set_name(first(owner), {"Queued"}));
+    REQUIRE(fixture_scene(owner).defer_set_name(first(owner), {"Queued"}));
     rejected(files->reload_scene(owner, before.revision, UnsavedScenePolicy::discard),
              ErrorCode::conflict);
     rejected(files->save_scene(owner, before.revision, loaded.file_revision), ErrorCode::conflict);
     CHECK(status(owner).pending_mutations == 1);
-    CHECK(take(live(owner).apply_deferred()).outcomes.size() == 1);
+    CHECK(take(fixture_scene(owner).apply_deferred()).outcomes.size() == 1);
     CHECK(take(owner.capture()).scene.entities.front().name.value == "Queued");
 }
 
@@ -737,7 +747,7 @@ TEST_CASE("successful save acknowledges only captured committed scene revision",
     auto files = fixture.open();
     auto loaded = take(files->load_scene(project(), id<SceneId>(3)));
     auto& owner = *loaded.owner;
-    REQUIRE(live(owner).set_name(first(owner), {"Saved human"}));
+    REQUIRE(execute(owner, SetNameCommand{id<AuthoredEntityId>(10), {"Saved human"}}));
     const auto before = status(owner);
     REQUIRE(before.dirty);
     const auto saved = take(files->save_scene(owner, before.revision, loaded.file_revision));
@@ -748,7 +758,7 @@ TEST_CASE("successful save acknowledges only captured committed scene revision",
     CHECK(take(files->read_scene(project(), id<SceneId>(3)))
               .source.document.entities.front()
               .name.value == "Saved human");
-    REQUIRE(live(owner).set_name(first(owner), {"New unsaved"}));
+    REQUIRE(execute(owner, SetNameCommand{id<AuthoredEntityId>(10), {"New unsaved"}}));
     rejected(files->save_scene(owner, before.revision, saved.file.revision), ErrorCode::conflict);
     CHECK(status(owner).dirty);
 }
@@ -760,22 +770,24 @@ TEST_CASE("save commit reports later owner mutation without falsely clearing dir
     auto files = fixture.open();
     auto loaded = take(files->load_scene(project(), id<SceneId>(3)));
     auto& owner = *loaded.owner;
-    REQUIRE(live(owner).set_name(first(owner), {"Captured"}));
+    REQUIRE(execute(owner, SetNameCommand{id<AuthoredEntityId>(10), {"Captured"}}));
     const auto expected = status(owner).revision;
     struct Mutation {
         AuthoredScene* owner;
-        EntityHandle entity;
+        AuthoredEntityId entity;
         bool success{};
     };
-    Mutation mutation{&owner, first(owner)};
+    Mutation mutation{&owner, id<AuthoredEntityId>(10)};
     const auto hook = [](detail::FilePhase phase, void* context) noexcept {
         auto& value = *static_cast<Mutation*>(context);
         if (phase == detail::FilePhase::published) {
             try {
-                auto access = value.owner->scene();
-                value.success =
-                    access &&
-                    static_cast<bool>(access.value().get().set_name(value.entity, {"Later edit"}));
+                const auto current = value.owner->status();
+                if (current) {
+                    const auto reply = value.owner->execute(
+                        SetNameCommand{value.entity, {"Later edit"}}, current.value().revision);
+                    value.success = reply && static_cast<bool>(reply.value().outcome);
+                }
             } catch (...) {
                 value.success = false;
             }
@@ -837,10 +849,10 @@ TEST_CASE("capture and save during a read visit are permitted while reload canno
     auto files = fixture.open();
     auto loaded = take(files->load_scene(project(), id<SceneId>(3)));
     auto& owner = *loaded.owner;
-    REQUIRE(live(owner).set_name(first(owner), {"Visited"}));
+    REQUIRE(execute(owner, SetNameCommand{id<AuthoredEntityId>(10), {"Visited"}}));
     const auto expected = status(owner).revision;
     bool saved = false;
-    REQUIRE(live(owner).visit_entities([&](const EntityReference&) -> Result<void> {
+    REQUIRE(fixture_scene(owner).visit_entities([&](const EntityReference&) -> Result<void> {
         auto result = files->save_scene(owner, expected, loaded.file_revision);
         if (!result) {
             return result.error();
@@ -864,14 +876,14 @@ TEST_CASE("postcapture pending mutation preserves committed outcome without clea
     auto files = fixture.open();
     auto loaded = take(files->load_scene(project(), id<SceneId>(3)));
     auto& owner = *loaded.owner;
-    REQUIRE(live(owner).set_name(first(owner), {"Captured"}));
+    REQUIRE(execute(owner, SetNameCommand{id<AuthoredEntityId>(10), {"Captured"}}));
     const auto expected = status(owner).revision;
     struct Pending {
         Scene* owner;
         EntityHandle entity;
         bool queued{};
     };
-    Pending pending{&live(owner), first(owner)};
+    Pending pending{&fixture_scene(owner), first(owner)};
     const auto hook = [](detail::FilePhase reached, void* context) noexcept {
         if (reached != detail::FilePhase::published) {
             return;
@@ -895,7 +907,7 @@ TEST_CASE("postcapture pending mutation preserves committed outcome without clea
     CHECK(take(files->read_scene(project(), id<SceneId>(3)))
               .source.document.entities.front()
               .name.value == "Captured");
-    REQUIRE(live(owner).apply_deferred());
+    REQUIRE(fixture_scene(owner).apply_deferred());
     CHECK(take(owner.capture()).scene.entities.front().name.value == "Queued");
 }
 
@@ -906,7 +918,7 @@ TEST_CASE("closed authored owner cannot reload or save its former file", "[proje
     auto loaded = take(files->load_scene(project(), id<SceneId>(3)));
     const auto expected = status(*loaded.owner).revision;
     const auto old = read_bytes(fixture.scene_path());
-    REQUIRE(live(*loaded.owner).close());
+    REQUIRE(fixture_scene(*loaded.owner).close());
     rejected(files->save_scene(*loaded.owner, expected, loaded.file_revision), ErrorCode::conflict);
     rejected(files->reload_scene(*loaded.owner, expected), ErrorCode::conflict);
     CHECK(read_bytes(fixture.scene_path()) == old);

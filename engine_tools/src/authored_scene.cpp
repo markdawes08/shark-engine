@@ -1,9 +1,13 @@
 #include "shark/tools/authored_scene.hpp"
 
+#include "authored_scene_test_access.hpp"
+
+#include <algorithm>
 #include <exception>
 #include <map>
 #include <new>
 #include <thread>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
@@ -163,6 +167,22 @@ std::unique_ptr<ActiveScene> prepare(const ProjectDocument& project, const Scene
                                                      {stats.instance, stats.revision}});
 }
 
+void append_identity(const Scene& scene, EntityHandle handle,
+                     std::vector<AuthoredEntityId>& affected) {
+    const auto reference = checked(scene.reference(handle));
+    affected.push_back(std::get<AuthoredEntityId>(reference.identity));
+}
+
+void append_subtree(const Scene& scene, EntityHandle root,
+                    std::vector<AuthoredEntityId>& affected) {
+    std::vector<EntityHandle> pending{root};
+    for (std::size_t index = 0; index < pending.size(); ++index) {
+        const auto state = checked(scene.entity_state(pending[index]));
+        affected.push_back(std::get<AuthoredEntityId>(state.reference.identity));
+        pending.insert(pending.end(), state.children.begin(), state.children.end());
+    }
+}
+
 } // namespace
 
 struct AuthoredScene::Impl {
@@ -225,17 +245,116 @@ Result<AuthoredSceneStatus> AuthoredScene::status() const {
                                          [&] { return impl_->read_status(); });
 }
 
-Result<std::reference_wrapper<Scene>> AuthoredScene::scene() {
-    return boundary<std::reference_wrapper<Scene>>("source.scene.access", [&] {
-        static_cast<void>(impl_->read_status());
-        return std::ref(*impl_->active->scene);
-    });
-}
-
 Result<std::reference_wrapper<const Scene>> AuthoredScene::scene() const {
     return boundary<std::reference_wrapper<const Scene>>("source.scene.access", [&] {
         static_cast<void>(impl_->read_status());
         return std::cref(*impl_->active->scene);
+    });
+}
+
+Result<AuthoringCommandReply> AuthoredScene::execute(const AuthoringCommand& command,
+                                                     SceneRevision expected_revision) {
+    return boundary<AuthoringCommandReply>("authoring.execute", [&] {
+        const auto observed = impl_->read_status();
+        auto& scene = *impl_->active->scene;
+        auto outcome = boundary<AuthoringCommandEffect>("authoring.execute", [&] {
+            static_cast<void>(impl_->read_status(expected_revision));
+            // Prepare the entire receipt before calling the mutation boundary.
+            // No allocation or caller callback follows a successful mutation.
+            AuthoringCommandEffect effect{false, {}};
+            effect.affected_entities.reserve(impl_->limits.max_entities + 2);
+            std::visit(
+                [&](const auto& request) {
+                    using Command = std::decay_t<decltype(request)>;
+                    if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
+                                  std::is_same_v<Command, SetNameCommand>) {
+                        // Reject oversized caller-owned text before copying it
+                        // into the Core mutation's owned input.
+                        checked(validate_name(request.name));
+                    }
+                    std::optional<EntityHandle> target;
+                    std::optional<EntityHandle> parent;
+                    if constexpr (!std::is_same_v<Command, CreateEntityCommand>) {
+                        target = checked(scene.find(request.id));
+                    }
+                    if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
+                                  std::is_same_v<Command, ReparentEntityCommand>) {
+                        if (request.parent) {
+                            parent = checked(scene.find(*request.parent));
+                        }
+                    }
+                    if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
+                                  std::is_same_v<Command, SetNameCommand>) {
+                        effect.affected_entities.push_back(request.id);
+                    } else {
+                        append_subtree(scene, *target, effect.affected_entities);
+                    }
+                    if constexpr (std::is_same_v<Command, DeleteEntityCommand> ||
+                                  std::is_same_v<Command, ReparentEntityCommand>) {
+                        if (const auto old_parent = checked(scene.entity_state(*target)).parent) {
+                            append_identity(scene, *old_parent, effect.affected_entities);
+                        }
+                    }
+                    if (parent) {
+                        append_identity(scene, *parent, effect.affected_entities);
+                    }
+                    std::sort(effect.affected_entities.begin(), effect.affected_entities.end());
+                    effect.affected_entities.erase(std::unique(effect.affected_entities.begin(),
+                                                               effect.affected_entities.end()),
+                                                   effect.affected_entities.end());
+                    if constexpr (std::is_same_v<Command, CreateEntityCommand>) {
+                        static_cast<void>(checked(scene.create_entity(
+                            {request.id, std::nullopt, request.name, request.transform, parent})));
+                    } else if constexpr (std::is_same_v<Command, DeleteEntityCommand>) {
+                        checked(scene.destroy_entity(*target));
+                    } else if constexpr (std::is_same_v<Command, SetNameCommand>) {
+                        checked(scene.set_name(*target, request.name));
+                    } else if constexpr (std::is_same_v<Command, SetTransformCommand>) {
+                        checked(scene.set_transform(*target, request.transform));
+                    } else {
+                        checked(scene.reparent(*target, parent, request.mode));
+                    }
+                },
+                command);
+            // The owner thread and live Scene cannot change during an immediate
+            // Core mutation: no callback or borrowed mutable Scene is exposed.
+            // stats() is allocation-free on this already-checked owner thread.
+            effect.changed = scene.stats().value().revision != observed.revision.revision;
+            if (!effect.changed) {
+                effect.affected_entities.clear();
+            }
+            return effect;
+        });
+        if (!outcome && outcome.error().context.entity_id.empty()) {
+            outcome.error().context.entity_id = std::visit(
+                [](const auto& request) { return request.id.value().to_string(); }, command);
+        }
+        const auto stats = scene.stats().value();
+        return AuthoringCommandReply{{stats.instance, stats.revision}, std::move(outcome)};
+    });
+}
+
+Result<SceneQueryPage> AuthoredScene::query_entities(const SceneQueryOptions& options) const {
+    return boundary<SceneQueryPage>("authoring.query", [&] {
+        static_cast<void>(impl_->read_status());
+        return checked(impl_->active->scene->query_entities(options));
+    });
+}
+
+Result<SceneQueryPage> AuthoredScene::continue_query(const SceneQueryCursor& cursor) const {
+    return boundary<SceneQueryPage>("authoring.continue-query", [&] {
+        static_cast<void>(impl_->read_status());
+        return checked(impl_->active->scene->continue_query(cursor));
+    });
+}
+
+Result<SceneQueryPage>
+AuthoredScene::inspect_entity(AuthoredEntityId id, SceneQueryFields fields,
+                              std::optional<SceneRevision> expected_revision) const {
+    return boundary<SceneQueryPage>("authoring.inspect", [&] {
+        const auto observed = impl_->read_status(expected_revision);
+        const auto handle = checked(impl_->active->scene->find(id));
+        return checked(impl_->active->scene->inspect_entity(handle, fields, observed.revision));
     });
 }
 
@@ -354,6 +473,13 @@ bool AuthoredScene::acknowledge_saved(SceneRevision revision) noexcept {
     } catch (...) {
         return false;
     }
+}
+
+Result<std::reference_wrapper<Scene>> detail::AuthoredSceneTestAccess::scene(AuthoredScene& owner) {
+    return boundary<std::reference_wrapper<Scene>>("source.scene.access", [&] {
+        static_cast<void>(owner.impl_->read_status());
+        return std::ref(*owner.impl_->active->scene);
+    });
 }
 
 } // namespace shark::tools

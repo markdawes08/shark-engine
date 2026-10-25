@@ -177,7 +177,7 @@
         "Test alternating human/agent-equivalent edits, stale revisions, invalid batches and retry outcomes through the common service; process ownership is enforced in 15 and editor integration in 16."
       ],
       "planned_fixture": "CommandReplayUndoRedo, TransactionRollback, RevisionConflict and RequestRetry fixtures; FeatureWorld/AuthoringCommands is added with assignment 10. Add HumanAgentRevisionHistory, PureValidationPreview and LostReplyRetryScope fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Shared authoring commands are not implemented; owner assignment 09."}
+      "verification": {"status": "NOT_RUN", "reason": "09a is PASS under current-machine scope: typed revision-checked single commands and bounded queries share the existing AuthoredScene owner. Qualification records 461 full CPU CTests plus 12 standalone Tools checks, public examples, sanitizer instrumentation and protected package gates. See docs/handoffs/09a-shared-commands.md, docs/coverage/evidence/09a-shared-commands.json, docs/authoring-commands.md and docs/roadmap/authoring-plan.md. Full REQ-09 remains NOT_RUN: atomic batches/preview, shared undo/redo, mutation retry retention and integrated qualification retain checkpoints 09b-09e. Next is 09b: Atomic transactions and preview. CLI/editor adapters remain 15/16 and FeatureWorld connects in 10."}
     },
     {
       "id": "REQ-10",
@@ -879,6 +879,30 @@
         "fixture_reason": "Public CPU fixtures exercise typed project/scene I/O, root/path-bound exact raw revisions, same-size and same-timestamp external edits, content ABA, create-only writes, catalog collisions, Unicode and aliases, bounded malformed input, dirty-safe reload and revision-safe saved baselines. Native hooks inject prepublication failures through authored saves and postpublication durability limits; real child processes interrupt save_scene at five phases, activate the exact expected scene, recover through another authored save and reopen it. Complete-file hashes, exclusive ownership and unchanged orphan stages remain checked without arbitrary sleeps. The integrated fixture connects independently authored legacy files, migration, capture, explicit saves and external-edit resolution through the public services. EngineTools reuses Core validation without adding source readers to Core/Runtime/Server or requiring a display. FeatureWorld/Persistence attaches in 10, history remains 09 and adapters 15/16. Per-file authoring publication is not M03 live durable state."
       },
       {
+        "id": "tools.authoring-owner",
+        "name": "Shared revision-checked authoring commands and bounded read-only queries",
+        "requirement_ids": [
+          "REQ-09"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-commands",
+          "shark.tools.authored-scene",
+          "shark.tools.project-files",
+          "shark.tools.persistence-integration"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/authored_scene_tests.cpp",
+          "tests/project_files_tests.cpp",
+          "tests/persistence_integration_tests.cpp"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-commands.md"
+        ],
+        "fixture_reason": "CPU fixtures cover the existing AuthoredScene owner, all five typed single commands, read-only scene access, bounded query/continuation/inspection, exact decision revisions and deterministic refresh sets. Rejected edits preserve captured state and dirty baseline; current saves/reloads exercise the command path. This is implemented C++ service coverage, not batch/history/retry retention or terminal/editor integration. FeatureWorld connects in 10; adapters retain 15/16."
+      },
+      {
         "id": "tools.authored-scene",
         "name": "Revision-consistent authored Scene capture and transactional activation",
         "requirement_ids": ["REQ-08"],
@@ -1385,47 +1409,53 @@
         "name": "Name",
         "requirement_ids": [
           "REQ-07",
-          "REQ-08"
+          "REQ-08",
+          "REQ-09"
         ],
         "test_ids": [
           "shark.core.schema",
           "shark.core.scene-query",
           "shark.core.hierarchy",
-          "shark.tools.persistence-integration"
+          "shark.tools.persistence-integration",
+          "shark.tools.authoring-commands"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
           "tests/core_scene_query_tests.cpp",
           "tests/core_hierarchy_tests.cpp",
-          "tests/persistence_integration_tests.cpp"
+          "tests/persistence_integration_tests.cpp",
+          "tests/authoring_command_tests.cpp"
         ],
         "fixtures": [
           "tests/core_schema_tests.cpp",
           "tests/core_scene_query_tests.cpp",
           "tests/core_hierarchy_tests.cpp"
         ],
-        "fixture_reason": "Implemented C++ component, version-1 owned schema metadata, pure validation and bounded revisioned inspection are covered by actual CPU fixtures. Name uses nonunique bounded UTF-8 display text and owned immediate/deferred edits. The 08 integrated persistence fixture connects legacy migration, native files, Scene edits, capture and reopen for this component. Assignments 09, 10, 15, 16/17 and 19 connect shared transactions, FeatureWorld, terminal/editor adapters and selected Lua as those layers land."
+        "fixture_reason": "Implemented C++ component, version-1 owned schema metadata, pure validation and bounded revisioned inspection are covered by actual CPU fixtures. Name uses nonunique bounded UTF-8 display text and owned immediate/deferred edits. The 08 integrated persistence fixture connects legacy migration, native files, Scene edits, capture and reopen for this component. 09a connects revision-checked single edits through the shared authored owner. Later 09 checkpoints add batches/history/retries; 10, 15, 16/17 and 19 connect FeatureWorld, terminal/editor adapters and selected Lua."
       },
       {
         "id": "component.transform",
         "name": "Transform",
         "requirement_ids": [
           "REQ-07",
-          "REQ-08"
+          "REQ-08",
+          "REQ-09"
         ],
         "test_ids": [
           "shark.core.schema",
           "shark.core.scene-query",
           "shark.core.transform",
           "shark.core.hierarchy",
-          "shark.tools.persistence-integration"
+          "shark.tools.persistence-integration",
+          "shark.tools.authoring-commands"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
           "tests/core_scene_query_tests.cpp",
           "tests/core_transform_tests.cpp",
           "tests/core_hierarchy_tests.cpp",
-          "tests/persistence_integration_tests.cpp"
+          "tests/persistence_integration_tests.cpp",
+          "tests/authoring_command_tests.cpp"
         ],
         "fixtures": [
           "tests/core_schema_tests.cpp",
@@ -1433,10 +1463,105 @@
           "tests/core_transform_tests.cpp",
           "tests/core_hierarchy_tests.cpp"
         ],
-        "fixture_reason": "Implemented C++ component, version-1 owned schema metadata, pure validation and bounded revisioned inspection are covered by actual CPU fixtures. Transform uses canonical double local TRS, hierarchy propagation and atomic rejection; scene-local matrices remain separate from global WorldPosition. The 08 integrated persistence fixture connects legacy migration, native files, Scene edits, capture and reopen for this component. Assignments 09, 10, 15, 16/17 and 19 connect shared transactions, FeatureWorld, terminal/editor adapters and selected Lua as those layers land."
+        "fixture_reason": "Implemented C++ component, version-1 owned schema metadata, pure validation and bounded revisioned inspection are covered by actual CPU fixtures. Transform uses canonical double local TRS, hierarchy propagation and atomic rejection; scene-local matrices remain separate from global WorldPosition. The 08 integrated persistence fixture connects legacy migration, native files, Scene edits, capture and reopen for this component. 09a connects revision-checked single edits through the shared authored owner. Later 09 checkpoints add batches/history/retries; 10, 15, 16/17 and 19 connect FeatureWorld, terminal/editor adapters and selected Lua."
       }
     ],
-    "commands": [],
+    "commands": [
+                  {
+                    "id": "authoring.entity.create",
+                    "name": "CreateEntityCommand",
+                    "requirement_ids": [
+                      "REQ-09"
+                    ],
+                    "test_ids": [
+                      "shark.tools.authoring-commands"
+                    ],
+                    "test_sources": [
+                      "tests/authoring_command_tests.cpp"
+                    ],
+                    "fixtures": [
+                      "tests/authoring_command_tests.cpp",
+                      "docs/authoring-commands.md"
+                    ],
+                    "fixture_reason": "Typed C++ command through AuthoredScene::execute; CPU fixtures cover authored identity, parent, component validation, capacity, revision fencing, metadata and failed-state preservation. FeatureWorld attaches in 10; terminal/editor adapters remain 15/16."
+                  },
+                  {
+                    "id": "authoring.entity.delete",
+                    "name": "DeleteEntityCommand",
+                    "requirement_ids": [
+                      "REQ-09"
+                    ],
+                    "test_ids": [
+                      "shark.tools.authoring-commands"
+                    ],
+                    "test_sources": [
+                      "tests/authoring_command_tests.cpp"
+                    ],
+                    "fixtures": [
+                      "tests/authoring_command_tests.cpp",
+                      "docs/authoring-commands.md"
+                    ],
+                    "fixture_reason": "Typed C++ subtree deletion through the shared owner; CPU fixtures verify exact sorted refresh IDs, invalidated incarnations, retained survivor metadata and stale/missing rejection. FeatureWorld attaches in 10; terminal/editor adapters remain 15/16."
+                  },
+                  {
+                    "id": "authoring.entity.reparent",
+                    "name": "ReparentEntityCommand",
+                    "requirement_ids": [
+                      "REQ-09"
+                    ],
+                    "test_ids": [
+                      "shark.tools.authoring-commands"
+                    ],
+                    "test_sources": [
+                      "tests/authoring_command_tests.cpp"
+                    ],
+                    "fixtures": [
+                      "tests/authoring_command_tests.cpp",
+                      "docs/authoring-commands.md"
+                    ],
+                    "fixture_reason": "Typed C++ hierarchy edit through the shared owner; CPU fixtures cover keep-local/keep-world, no-ops, refresh sets, invalid parents, cycles, depth and composed-world rejection. FeatureWorld attaches in 10; terminal/editor adapters remain 15/16."
+                  },
+                  {
+                    "id": "authoring.name.set",
+                    "name": "SetNameCommand",
+                    "requirement_ids": [
+                      "REQ-09"
+                    ],
+                    "test_ids": [
+                      "shark.tools.authoring-commands",
+                      "shark.tools.persistence-integration"
+                    ],
+                    "test_sources": [
+                      "tests/authoring_command_tests.cpp",
+                      "tests/persistence_integration_tests.cpp"
+                    ],
+                    "fixtures": [
+                      "tests/authoring_command_tests.cpp",
+                      "docs/authoring-commands.md"
+                    ],
+                    "fixture_reason": "Typed C++ Name edit through the shared owner; CPU fixtures cover bounded UTF-8 validation, exact revision/no-op outcomes, metadata, dirty/save baseline and alternating human/agent-equivalent callers. FeatureWorld attaches in 10; terminal/editor adapters remain 15/16."
+                  },
+                  {
+                    "id": "authoring.transform.set",
+                    "name": "SetTransformCommand",
+                    "requirement_ids": [
+                      "REQ-09"
+                    ],
+                    "test_ids": [
+                      "shark.tools.authoring-commands",
+                      "shark.tools.persistence-integration"
+                    ],
+                    "test_sources": [
+                      "tests/authoring_command_tests.cpp",
+                      "tests/persistence_integration_tests.cpp"
+                    ],
+                    "fixtures": [
+                      "tests/authoring_command_tests.cpp",
+                      "docs/authoring-commands.md"
+                    ],
+                    "fixture_reason": "Typed C++ Transform edit through the shared owner; CPU fixtures cover pure value and composed-hierarchy validation, subtree refresh IDs, no-ops, stale fences and atomic rejection. FeatureWorld attaches in 10; terminal/editor adapters remain 15/16."
+                  }
+                ],
     "lua_api": []
   }
 }

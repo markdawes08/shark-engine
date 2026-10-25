@@ -93,7 +93,12 @@ its [handoff](../handoffs/M03e-migration-restoration.md) records 581 CPU CTests
 and 10 standalone Tools checks with protected gates. M03f and full REQ-M03
 are PASS: the [handoff](../handoffs/M03f-integrated-qualification.md) records
 588 CPU CTests and 10 standalone Tools checks with protected gates.
-Assignment 09, shared authoring commands and undo/redo, is next.
+09a's shared command foundation is PASS under the current-machine scope. Its
+[handoff](../handoffs/09a-shared-commands.md) and
+[receipt](evidence/09a-shared-commands.json) record 461 passing CPU CTests,
+12 standalone Tools checks and protected package/API gates. Full REQ-09 remains
+NOT_RUN. The next [checkpoint](../roadmap/authoring-plan.md) is
+09b, Atomic transactions and preview.
 
 `current_assignment: 09` follows the completed durable-state gate and
 [five network checkpoints](../roadmap/network-plan.md) and
@@ -142,7 +147,8 @@ Runtime/Server builds, source/link/license closure and fresh isolated package
 checks pass; all 221 qualification source inputs were unchanged in that record.
 M02a-M02e and full REQ-M02 are PASS under the current-machine scope.
 Assignment 08, Project and scene persistence, is complete: 08a-08d and full
-REQ-08 are PASS. M03 and all six checkpoints are complete; assignment 09 is next.
+REQ-08 are PASS. M03 and all six checkpoints are complete; 09a is qualified and
+09b is the next authoring checkpoint.
 FeatureWorld integration remains assignment 10.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
@@ -366,7 +372,7 @@ pass against 299 unchanged inputs and 18 helpers. The
 including the corrected final file-case inventory. M03 separately owns live
 player/economy durability; its store, character, atomic transaction and runtime
 recovery, database maintenance and integrated qualification are complete;
-assignment 09 is next.
+09a is qualified; 09b is the next authoring checkpoint.
 
 M03c maps `server.durable-transactions` to `shark.storage.transactions`,
 `shark.storage.transactions-process` and authenticated owner regressions in
@@ -406,3 +412,17 @@ outage, recovery and isolated restored restart. The
 and evidence requirements. This extends executable CPU external coverage;
 FeatureWorld/MMOWorld integration remains assigned to 10/M09. A passing individual
 process run alone cannot close the complete cross-platform and package gate.
+
+09a maps the five typed EngineTools commands and shared inspection entry points
+to `shark.tools.authoring-commands` (60 seconds, seed 1337), with ordinary edits
+in all existing authored-scene/file/integration fixtures migrated to that same
+AuthoredScene owner. Create/delete/Name/Transform/reparent commands require the
+observed SceneRevision; the public Scene borrow is read-only. Tests exercise
+unchanged rejection, one-step revision advances, canonical no-ops, complete
+bounded refresh IDs, owned queries, source metadata and save baselines.
+The [command contract](../authoring-commands.md) distinguishes outer access/reply
+failure from the nested command outcome and its observed current revision.
+These are implemented CPU C++ commands, not terminal methods or Lua bindings.
+FeatureWorld/AuthoringCommands remains planned for 10; its current justification
+is the executable external CPU fixture. 09a qualification is PASS; full REQ-09
+stays NOT_RUN until the later atomic/history/retry/integrated gates.

@@ -35,8 +35,9 @@ state. The owner cannot move or copy. Its Scene must be destroyed on its owner
 thread while live, following the existing Core lifetime contract. Concurrent
 destruction is never supported.
 
-`scene()` returns a checked local reference to the existing Scene for its normal
-queries and mutations. That borrow ends at successful activation or destruction;
+`scene()` returns a checked read-only local reference to the existing Scene.
+09a replaces mutable access with [typed commands](authoring-commands.md) on this
+same owner. That borrow ends at successful activation or destruction;
 never retain it across either boundary. Retain checked handles, references or
 revision tokens instead. There is no second authoritative mutable document model.
 The caller must not destroy the owner from one of its Scene callbacks.
@@ -106,7 +107,7 @@ dirty, pending-work and iteration-boundary failures use `conflict`. Allocation
 or unexpected internal failures return `execution_failed` without exposing
 third-party exception text. No user prompts or filesystem operations occur.
 
-This complete C++ example loads values, performs a normal Scene edit and captures
+This complete C++ example loads values, performs a typed authoring edit and captures
 the result. The second helper demonstrates explicit revision-checked replacement.
 Neither helper reads or writes a file.
 
@@ -121,19 +122,19 @@ rename_authored_entity(const shark::tools::ProjectDocument& project,
     if (!loaded) {
         return loaded.error();
     }
-    auto access = loaded.value()->scene();
-    if (!access) {
-        return access.error();
+    auto status = loaded.value()->status();
+    if (!status) {
+        return status.error();
     }
-    auto handle = access.value().get().find(entity);
-    if (!handle) {
-        return handle.error();
-    }
-    auto renamed = access.value().get().set_name(handle.value(), shark::Name{"Spawn"});
+    auto renamed = loaded.value()->execute(
+        shark::tools::SetNameCommand{entity, shark::Name{"Spawn"}}, status.value().revision);
     if (!renamed) {
         return renamed.error();
     }
-    return loaded.value()->capture();
+    if (!renamed.value().outcome) {
+        return renamed.value().outcome.error();
+    }
+    return loaded.value()->capture(renamed.value().observed_revision);
 }
 
 shark::Result<shark::SceneRevision>

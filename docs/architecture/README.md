@@ -121,6 +121,7 @@ scope remains unchanged.
 | [0017](0017-atomic-durable-transactions.md) | Atomic economic transfers, durable operation identity, bounded retained outcomes and schema-3 compatibility |
 | [0018](0018-runtime-durable-recovery.md) | Bounded storage worker, session/entity completion fences, timeout and explicit durable reconciliation |
 | [0019](0019-durable-maintenance.md) | Explicit sequential database upgrades, required pre-upgrade backup and isolated restoration |
+| [0020](0020-shared-authoring-commands.md) | One authored-scene command owner, revisioned single edits, bounded outcomes and read-only inspection |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

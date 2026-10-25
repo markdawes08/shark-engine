@@ -135,10 +135,19 @@ if(TARGET EngineTools)
 
     add_executable(AuthoredSceneTests authored_scene_tests.cpp)
     target_link_libraries(AuthoredSceneTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_include_directories(AuthoredSceneTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
     shark_configure_target(AuthoredSceneTests)
     shark_classify_target(AuthoredSceneTests test)
     add_test(NAME shark.tools.authored-scene COMMAND AuthoredSceneTests "[authored-scene]" --rng-seed 1337)
     set_tests_properties(shark.tools.authored-scene PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
+
+    add_executable(AuthoringCommandTests authoring_command_tests.cpp)
+    target_link_libraries(AuthoringCommandTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_include_directories(AuthoringCommandTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
+    shark_configure_target(AuthoringCommandTests)
+    shark_classify_target(AuthoringCommandTests test)
+    add_test(NAME shark.tools.authoring-commands COMMAND AuthoringCommandTests "[authoring-commands]" --rng-seed 1337)
+    set_tests_properties(shark.tools.authoring-commands PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
 
     add_executable(ProjectFilesTests project_files_tests.cpp)
     target_link_libraries(ProjectFilesTests PRIVATE EngineTools Catch2::Catch2WithMain)
@@ -150,6 +159,7 @@ if(TARGET EngineTools)
 
     add_executable(PersistenceIntegrationTests persistence_integration_tests.cpp)
     target_link_libraries(PersistenceIntegrationTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_include_directories(PersistenceIntegrationTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
     target_compile_definitions(PersistenceIntegrationTests PRIVATE
         SHARK_SOURCE_FIXTURE_DIRECTORY="${PROJECT_SOURCE_DIR}/tests/fixtures/source_documents")
     shark_configure_target(PersistenceIntegrationTests)

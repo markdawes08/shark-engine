@@ -343,6 +343,7 @@ scene-runner/export commands will be added with their owning increments.
 | `shark.tooling.headless-environment` | `cpu`, `tooling`, `server` |
 | `shark.tools.source-documents` (Tools enabled) | `cpu`, `unit`, `tooling` |
 | `shark.tools.authored-scene` (Tools enabled) | `cpu`, `unit`, `tooling`, `integration` |
+| `shark.tools.authoring-commands` (Tools enabled) | `cpu`, `unit`, `tooling`, `integration` |
 | `shark.tools.project-files` (Tools enabled) | `cpu`, `unit`, `tooling`, `integration` |
 | `shark.tools.project-files-process` (Tools enabled) | `cpu`, `tooling`, `integration` |
 | `shark.tools.persistence-integration` (Tools enabled) | `cpu`, `tooling`, `integration` |
@@ -453,6 +454,31 @@ ctest --preset tools-debug -R "^shark.tools.(source-documents|authored-scene|pro
 CTest owns writable fixture directories under the build tree. Process termination
 checks establish local file visibility and recovery, not hardware power-loss
 durability. See the [persistence checkpoints](roadmap/persistence-plan.md).
+
+09a adds `AuthoringCommandTests` and `shark.tools.authoring-commands` (seed 1337,
+60-second timeout). The [shared command contract](authoring-commands.md) documents
+five typed edits on the existing AuthoredScene owner, required revisions, nested
+command outcomes and bounded queries. Public Scene access is read-only; the
+existing persistence fixtures perform ordinary edits through these commands.
+Private fixture access retains pending/visit/closed-state invariant checks.
+09a is PASS under the current-machine scope: its
+[handoff](handoffs/09a-shared-commands.md) and
+[receipt](coverage/evidence/09a-shared-commands.json) record 461 CPU CTests,
+12 standalone Tools checks and protected package/API gates. Full REQ-09 remains
+NOT_RUN. The next [authoring checkpoint](roadmap/authoring-plan.md) is
+09b, Atomic transactions and preview.
+List the inventory, then run all six CPU Tools families:
+
+```text
+ctest --preset tools-debug --show-only
+ctest --preset tools-debug -R "^shark.tools.(source-documents|authored-scene|authoring-commands|project-files|project-files-process|persistence-integration)$" --output-on-failure
+```
+
+Compile all four public examples from the source-document, authored-scene,
+project-file and command contracts without private dependency or fixture headers.
+No Editor, Client, display or GPU is needed for these services. Atomic batches,
+preview, undo/redo and retry retention remain separate 09 checkpoints; terminal
+and editor adapters remain 15/16.
 
 ## Opt-in graphics package builds
 

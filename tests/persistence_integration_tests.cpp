@@ -135,8 +135,14 @@ class Fixture final {
     const SceneDocument scene;
 };
 
-Scene& live(AuthoredScene& owner) {
+const Scene& live(const AuthoredScene& owner) {
     return take(owner.scene()).get();
+}
+
+Result<AuthoringCommandEffect> execute(AuthoredScene& owner, const AuthoringCommand& command) {
+    auto reply = take(owner.execute(command, take(owner.status()).revision));
+    CHECK(reply.observed_revision == take(owner.status()).revision);
+    return std::move(reply.outcome);
 }
 
 EntityHandle find(AuthoredScene& owner, AuthoredEntityId entity) {
@@ -243,16 +249,16 @@ TEST_CASE("legacy disk project migrates only on explicit saves and reopens edite
     expected.entities.front().name.value = "Edited coastal marker";
     expected.entities.back().transform.translation = {10.0, 20.0, 30.0};
     expected.entities.back().transform.scale = {2.0, 2.0, 2.0};
-    REQUIRE(live(*loaded.owner).set_name(child, expected.entities.front().name));
-    REQUIRE(live(*loaded.owner).set_transform(parent, expected.entities.back().transform));
+    REQUIRE(execute(*loaded.owner, SetNameCommand{child_id(), expected.entities.front().name}));
+    REQUIRE(execute(*loaded.owner,
+                    SetTransformCommand{parent_id(), expected.entities.back().transform}));
     const SourceEntity added{id<AuthoredEntityId>("00000000-0000-4000-8000-000000000020"),
                              parent_id(),
                              {"New authored marker"},
                              {},
                              "{}"};
-    static_cast<void>(
-        take(live(*loaded.owner)
-                 .create_entity({added.id, std::nullopt, added.name, added.transform, parent})));
+    REQUIRE(execute(*loaded.owner,
+                    CreateEntityCommand{added.id, added.name, added.transform, parent_id()}));
     expected.entities.push_back(added);
     const auto edited = take(loaded.owner->capture());
     CHECK(edited.scene == expected);
@@ -313,7 +319,7 @@ TEST_CASE("invalid external sources preserve dirty incarnation metadata and exac
             auto loaded =
                 take(files->load_scene(catalog.source.document, fixture.project.startup_scene));
             const auto child = find(*loaded.owner, child_id());
-            REQUIRE(live(*loaded.owner).set_name(child, {"Unsaved local child"}));
+            REQUIRE(execute(*loaded.owner, SetNameCommand{child_id(), {"Unsaved local child"}}));
             const auto unsaved = take(loaded.owner->capture());
             write_bytes(fixture.scene_path(), invalid.bytes);
             for (const auto policy : {UnsavedScenePolicy::reject, UnsavedScenePolicy::discard}) {
@@ -358,7 +364,7 @@ TEST_CASE("external edits can be reconciled explicitly without losing either aut
     const auto catalog = take(files->read_project(project_path()));
     auto loaded = take(files->load_scene(catalog.source.document, fixture.project.startup_scene));
     const auto child = find(*loaded.owner, child_id());
-    REQUIRE(live(*loaded.owner).set_name(child, {"Unsaved local child"}));
+    REQUIRE(execute(*loaded.owner, SetNameCommand{child_id(), {"Unsaved local child"}}));
     const auto local = take(loaded.owner->capture());
     auto external = fixture.scene;
     external.entities.back().name.value = "External parent edit";
@@ -395,8 +401,7 @@ TEST_CASE("external edits can be reconciled explicitly without losing either aut
     CHECK(local.scene.entities.front().name.value == "Unsaved local child");
     auto merged = external;
     merged.entities.front().name = local.scene.entities.front().name;
-    REQUIRE(live(*loaded.owner)
-                .set_name(find(*loaded.owner, child_id()), merged.entities.front().name));
+    REQUIRE(execute(*loaded.owner, SetNameCommand{child_id(), merged.entities.front().name}));
     const auto merged_capture = take(loaded.owner->capture());
     CHECK(merged_capture.scene == merged);
     rejected(files->save_scene(*loaded.owner, local.revision, reloaded.file_revision),

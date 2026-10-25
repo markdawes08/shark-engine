@@ -16,10 +16,11 @@ authoring layer lands; the bootstrap does not yet provide these interfaces.
 
 The implemented-surface manifest includes the mandatory Name and Transform C++
 components and their validation/mutation tests. 07c adds real fixed schema and
-bounded revisioned query coverage. Authoring transactions, Lua and FeatureWorld
-arrive in 09, 19 and 10 respectively. Do not fabricate bindings for those layers or fill the
-empty command/Lua arrays with placeholders. Connect each earlier component when
-its missing layer is introduced.
+bounded revisioned query coverage. 09a adds real typed authoring command entries
+through the existing AuthoredScene owner. Authoring transactions, Lua and
+FeatureWorld arrive in 09b, 19 and 10 respectively. Do not fabricate unimplemented
+bindings or fill the Lua array with placeholders. Connect each earlier component
+when its missing layer is introduced.
 
 07a now supplies [scene identity and lifetime](../../../docs/scene-contracts.md)
 through EngineCore, with private EnTT, checked scoped references and an explicit
@@ -142,6 +143,19 @@ source metadata, incarnation-bound extras, expected revisions, dirty protection
 and pending/visit/thread rejection. No ordinary Scene setter becomes an atomic
 batch; shared history remains 09. Extend capture and construction together when
 new persisted components land, through the existing Scene validators.
+
+09a's [shared command contract](../../../docs/authoring-commands.md) makes the
+public AuthoredScene borrow read-only. Use its typed create/delete/Name/Transform/
+reparent commands with an expected revision; check both outer and nested Results.
+The reply reports the current revision and a sorted bounded refresh-ID set.
+Ordinary edits preserve the Scene instance, retained handles, source metadata
+and saved baseline. Never use activation as a command shortcut or expose private
+invariant-fixture access through an adapter. Batches/preview, history and retry
+retention belong to 09b/09c/09d; terminal/editor integration remains 15/16.
+09a is PASS under the current-machine scope; follow its
+[handoff](../../../docs/handoffs/09a-shared-commands.md) and
+[receipt](../../../docs/coverage/evidence/09a-shared-commands.json).
+Full REQ-09 remains NOT_RUN. Next: 09b, Atomic transactions and preview.
 
 08c's [project file service](../../../docs/project-files.md) reuses those values
 and validators. Preserve root/path-bound exact-content revisions, explicit

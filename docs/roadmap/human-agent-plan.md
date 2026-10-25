@@ -68,7 +68,16 @@ Its [handoff](../handoffs/M03e-migration-restoration.md) records 581 CPU CTests
 and protected gates. M03f connects these CPU services and structured receipts
 through actual authenticated processes. Its [handoff](../handoffs/M03f-integrated-qualification.md)
 records 588 CPU CTests, 10 standalone Tools checks and protected gates.
-Full REQ-M03 is PASS; shared authoring services in 09 are next.
+Full REQ-M03 is PASS. 09a implements the first
+[shared authoring commands](../authoring-commands.md) on the existing AuthoredScene
+owner: typed single edits, mandatory revisions, bounded results and read-only
+Scene access. Human and agent-equivalent callers share this CPU C++ service.
+09a is PASS under the current-machine scope. Its
+[handoff](../handoffs/09a-shared-commands.md) and
+[receipt](../coverage/evidence/09a-shared-commands.json) record 461 CPU CTests,
+12 standalone Tools checks and protected package/API gates. Full REQ-09 remains
+NOT_RUN. The next [checkpoint](authoring-plan.md) is 09b, Atomic transactions and
+preview; shared history and retry retention follow in 09c/09d.
 
 M02a provides the [bounded network foundation](../network-transport.md) through
 engine-owned CPU C++ interfaces and noninteractive JSON test fixtures. It does not
@@ -110,7 +119,7 @@ no second computer or specific provider integration is part of the requirement.
 | 03 | Owned structured errors and correlation/context usable by humans and tools; distinguish validation, capability, conflict and execution outcomes as services land. Preserve readable diagnostics. |
 | 07 | Implemented fixed Name/Transform metadata exposes stable versioned IDs/types/defaults/ranges/units and scene-owner mutability. Bounded revisioned CPU inspection needs no ECS access or viewport. 07c and full REQ-07 pass current-machine qualification. |
 | 08 | Documented readable source, project-root rules, atomic saves and conflict-aware text/file updates; external changes cannot be silently overwritten. |
-| 09 | One authoritative service, expected revisions, pure validation/preview, atomic batches, shared undo/redo and precise retry identity/scope. Test stale snapshots, failed batches and lost-reply outcomes. |
+| 09 | 09a qualifies one AuthoredScene command owner, typed single edits, expected revisions and bounded queries/results. Full REQ-09 remains NOT_RUN. Next, 09b adds pure preview/atomic batches, 09c shared undo/redo, 09d explicit retry identity/retention and 09e integrated qualification. |
 | 10 | Deterministic CPU runs with nonzero assertion failure and bounded machine results/artifacts. Separate real GPU runs and report unavailable capabilities honestly. |
 | 11-14 | Imports/jobs expose progress, cancellation and atomic publication; export has structured completion/artifact metadata. Build CPU tools without editor/device initialization; qualify optional capture separately. |
 | 15 | Deliver the terminal contract and public discovery, queries, edits, text files, jobs, diagnostics, run/capture/export adapters. Include no-TTY, second-writer, protocol-stream, conflict/retry and resource-limit fixtures. |
@@ -228,9 +237,10 @@ CPU/sanitizer, interruption, package and public API qualification.
 ten additional standalone Tools checks, protected packages and all three
 public API examples. Integrated external-edit/reload fixtures preserve
 owned snapshots from both authors before explicit reconciliation. M03 separately
-owns live durability; M03 and all six checkpoints are complete; shared authoring services in 09 are next. The storage lock
-remains distinct from the later shared human/agent
-project owner. Terminal/editor adapters retain owners 15/16; readable
+owns live durability; M03 and all six checkpoints are complete. 09a extends that
+same in-process authored owner with shared typed edits and bounded inspection.
+The storage lock remains distinct from process attachment/ownership in 15.
+Terminal/editor adapters retain owners 15/16; readable
 source does not bypass that owner or create shared command history.
 The [input guide](../input-contracts.md),
 [window lifecycle guide](../window-lifecycle.md),
@@ -252,7 +262,7 @@ outside current scope, not passed. Existing hosted CI is supplemental and does
 not block local increments. These remain developer fixtures, not public
 game-authoring commands. The
 [graphics plan](graphics-plan.md) and [probe commands](../graphics-probe.md)
-provide noninteractive contributor diagnostics; public authoring commands and
-protocol/editor adapters remain future work.
+provide noninteractive contributor diagnostics. The 09a command service is a CPU
+C++ API; user-facing protocol/editor adapters remain future work.
 No additional numbered chunk or change to product/player authority is necessary
 for this amendment.

@@ -328,7 +328,31 @@ against 299 unchanged source/build/test inputs and 18 helpers. The
 [handoff](handoffs/08d-integrated-qualification.md) and
 [receipt](coverage/evidence/08d-integrated-qualification.json) record exact
 commands, the corrected file-case inventory and verification limits. M03
-separately owns live durability; M03 and all six checkpoints are complete; assignment 09 is next.
+separately owns live durability; M03 and all six checkpoints are complete.
+The qualified 09a command foundation uses these persistence regressions.
+
+09a registers `shark.tools.authoring-commands` (CPU/unit/tooling/integration,
+seed 1337, 60 seconds). It tests five typed edits, revision and hierarchy rejection,
+complete bounded refresh IDs, query consistency, incarnation/metadata lifetime,
+save baselines and alternating human/agent-equivalent requests through one owner.
+Existing persistence families retain their cases and use commands for ordinary
+edits; private fixture access injects lifecycle invariant failures only.
+09a is PASS under the current-machine scope. Its
+[handoff](handoffs/09a-shared-commands.md) and
+[receipt](coverage/evidence/09a-shared-commands.json) record 461 passing CPU CTests
+across five profiles, 12 standalone Tools checks and protected package/API gates.
+Full REQ-09 remains NOT_RUN. The next [checkpoint](roadmap/authoring-plan.md) is
+09b, Atomic transactions and preview.
+
+Run native Debug/Release/ASan and existing WSL CPU Debug/ASan+UBSan regressions,
+plus all six standalone Tools families on both systems. Compile the four public
+Tools examples, including the [command example](authoring-commands.md), without
+private headers. Freeze current sources and evidence helpers; preserve exact
+test names, labels, timeouts and seed 1337. Require exact named Catch cases and
+nonzero assertions; duplicate/missing cases and skipped/failing receipts reject.
+Protected Runtime/Server builds and packages must still exclude EngineTools,
+JSON, authoring fixture access and source-document payloads. This CPU gate adds
+no GPU, terminal-adapter, editor or gameplay qualification.
 
 ## Locked tools and hosted-image limits
 
@@ -406,7 +430,8 @@ M03e database migration/restore is PASS: its
 10 standalone Tools checks and protected package/API gates.
 M03f and full REQ-M03 are PASS: the [handoff](handoffs/M03f-integrated-qualification.md)
 records 588 CPU CTests, 10 standalone Tools checks and protected gates.
-Assignment 09 is next.
+09a's shared command foundation is also qualified; its evidence remains separate
+from this completed durable-state gate. 09b is the next checkpoint.
 
 M03a adds the three storage families documented in [building](building.md#server-only-durable-storage).
 The Server build has a separate `storage` dependency domain; Core, Runtime and

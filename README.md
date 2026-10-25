@@ -24,6 +24,8 @@ through active local processes and deterministic faults. CPU authoring now inclu
 and legacy migration, plus [authored Scene capture and activation](docs/authored-scenes.md).
 08c adds [project file saves and external-edit conflicts](docs/project-files.md);
 its current-machine qualification is complete.
+09a adds [typed authoring commands](docs/authoring-commands.md) on that same
+owner, with expected revisions, bounded results and read-only Scene access.
 A separate opt-in graphics
 feasibility probe contains analytic draw/compute/readback cases.
 The versioned
@@ -33,8 +35,9 @@ scope and acceptance criteria for clean checkouts.
 The engine is designed for **both human editor users and terminal-based LLM
 agents**, with shared authoring services and no required model/provider integration.
 The [human/agent plan and foundation assessment](docs/roadmap/human-agent-plan.md)
-define noninteractive tools, discoverable schemas and safe project handoff. Those
-game-authoring interfaces remain planned; terminal build/test tools work today.
+define noninteractive tools, discoverable schemas and safe project handoff.
+Shared CPU editing services are implemented; terminal/editor adapters remain
+assigned to 15/16. Terminal build/test tools work today.
 
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
 **04c and full assignment 04 are complete under the current-machine scope.**
@@ -112,7 +115,12 @@ CTests, 10 standalone Tools checks and protected package/API gates.
 CTests, 10 standalone Tools checks and protected package/API gates. The
 [connected fixture](docs/durable-qualification.md) qualifies migration,
 authenticated runtime work, crash/outage recovery and isolated restored restart.
-**09: Shared authoring commands and undo/redo is next.**
+**09a, shared command foundation, is complete under the current-machine scope.**
+Its [handoff](docs/handoffs/09a-shared-commands.md) and
+[receipt](docs/coverage/evidence/09a-shared-commands.json) record 461 passing CPU
+CTests, 12 standalone Tools checks and protected package/API gates.
+The [five-checkpoint plan](docs/roadmap/authoring-plan.md) keeps full REQ-09
+NOT_RUN. **Next: 09b, Atomic transactions and preview.**
 Assignment 08, Project and scene persistence, completed its
 [four checkpoints](docs/roadmap/persistence-plan.md). 08a adds CPU project/scene
 formats, validation and migration through [owned C++ values](docs/source-documents.md).
@@ -161,8 +169,9 @@ locked dependencies, device inventory, validated GPU readbacks and bounded lifec
 version, bootstrap help, explicit `--cube` textured rendering, `--graphics` clear presentation and `--window`
 diagnostics through a shared offline frame/input pump;
 Server adds validated startup, timed execution and
-shutdown. Scene rendering, gameplay, filesystem saves and editor UI remain future
-increments. CPU build results do not establish graphics or release-platform support.
+shutdown. Scene rendering, gameplay and editor UI remain future increments;
+typed file services and editing are CPU C++ APIs. CPU build results do not
+establish graphics or release-platform support.
 
 The [02b handoff](docs/handoffs/02b-graphics-cases.md) records local cases, validation
 and limits. Checkpoint 02c is retired by the
