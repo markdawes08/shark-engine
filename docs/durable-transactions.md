@@ -8,6 +8,10 @@ records the design. Public types live in
 lives in [`characters.hpp`](../server/storage/include/shark/storage/characters.hpp).
 Qualification results belong in the M03c handoff, not in this behavior contract.
 
+[M03e maintenance](durable-maintenance.md) preserves this history in validated
+backups and isolated restores. An older backup can lower economic high-water
+marks; it cannot be activated as an authoritative rollback of acknowledged work.
+
 ## Small conservation model
 
 `EconomyState` contains unsigned integer `currency` and `item_units`, each at most
@@ -130,8 +134,9 @@ storage codec, editor command, CLI adapter or operational administration endpoin
 Schema 3 adds economic records, operation high-water marks and retained receipts.
 There are at most 128 economic records and 512 retained receipts (8 per 64 accounts).
 The exact DDL and all bounded candidate rows are validated when opening a store.
-Unsupported versions 1/2 reject without migration or writes; actual migration and
-restore remain M03e. Public types expose neither SQLite nor native TLS handles.
+Ordinary open rejects versions 1/2 without migration or writes; M03e's explicit
+[maintenance services](durable-maintenance.md) own migration and isolated restore.
+Public types expose neither SQLite nor native TLS handles.
 
 Both record updates, operation mark, result insertion and pruning share one real
 SQLite transaction under the existing exclusive DELETE/EXTRA policy. Complete

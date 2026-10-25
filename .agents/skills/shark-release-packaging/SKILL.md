@@ -5,6 +5,12 @@ description: Validate Shark standalone exports and packages for cooked dependenc
 
 # Shark export and release packaging
 
+M03e adds explicit offline database maintenance within EngineStorage. Keep
+independent legacy/current SQL fixtures, temporary backups, restored candidates
+and migration probes outside Runtime/Server packages. Maintenance public examples
+compile without SQLite headers. Isolated same-machine restore is distinct from
+host/disk-loss protection and must not silently roll back acknowledged outcomes.
+
 M03a adds private static SQLite through EngineStorage to the Server build only.
 Offline Server builds also require `SHARK_SQLITE_ARCHIVE`; prepare it separately
 with `tools/storage_dependency.py --output`. The installed Server closure includes

@@ -5,6 +5,11 @@ extends the existing [characters](durable-characters.md) and
 [transaction](durable-transactions.md) services without changing schema 3.
 EngineStorage remains Server-only; public headers expose engine-owned values.
 
+[M03e maintenance](durable-maintenance.md) adds explicit migration, backup and
+isolated restore after the active owner is drained and destroyed. `recover()`
+below still reopens the same current-schema database; it never selects an old
+backup or performs a schema upgrade.
+
 ## Opening and admission
 
 `CharacterAuthority::open_runtime(path, expected_store, expected_world, limits,

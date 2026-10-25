@@ -2,8 +2,8 @@
 
 Date: 2026-10-22. Base: `01968d5` on initially clean `main`.
 Owner: REQ-M03. M02 and assignment 08 are complete. The user approved dividing
-M03 into the six checkpoints below. **M03a through M03d are PASS under the
-current-machine scope; M03e is next and full REQ-M03 remains NOT_RUN.** The
+M03 into the six checkpoints below. **M03a through M03e are PASS under the
+current-machine scope; M03f is next and full REQ-M03 remains NOT_RUN.** The
 [M03a handoff](../handoffs/M03a-durable-store.md) records the store foundation;
 the [M03b handoff](../handoffs/M03b-owned-characters.md) and
 [receipt](../coverage/evidence/M03b-owned-characters.json) record 539 CPU CTests,
@@ -69,7 +69,7 @@ Implemented by [ADR 0017](../architecture/0017-atomic-durable-transactions.md) a
 the [transaction contract](../durable-transactions.md): one-way transfers of
 currency and one item, separate economic revisions, account-scoped monotonic
 operation identities and eight retained terminal outcomes. Schema 3 explicitly
-rejects versions 1/2 until M03e migration. The local qualification above closes
+rejects versions 1/2 on ordinary open; M03e migration is explicit. The local qualification above closes
 this checkpoint; it does not close later recovery/restore work.
 
 Implement a small inventory/currency transaction fixture with server validation,
@@ -103,6 +103,15 @@ a replacement session/entity/region. Record any checkpoint rollback window
 separately from economy/progression changes that may not be acknowledged then lost.
 
 ## M03e - Database migration and restoration
+
+Implemented by [ADR 0019](../architecture/0019-durable-maintenance.md) and
+the [maintenance contract](../durable-maintenance.md). The
+[handoff](../handoffs/M03e-migration-restoration.md) records 581 passing CPU
+CTests, 10 standalone Tools checks and protected package/API gates.
+Twenty-five unit cases and 66 process rows per profile qualify independent
+legacy/current stores, sequential upgrades, interrupted copies/commits,
+mandatory exact backups and fresh authenticated restored restart. Ordinary
+open stays nonmigrating; stale copies never authorize authoritative rollback.
 
 Implement real-store version migration, interrupted migration recovery, backup and
 isolated restore. Define compatibility with deployed server builds, pre-upgrade

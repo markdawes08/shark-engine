@@ -88,7 +88,9 @@ M03c atomic transactions are also PASS under the current-machine scope;
 [receipt](evidence/M03c-atomic-transactions.json) record 553 full CPU CTests, ten
 standalone Tools checks and protected package/API gates. M03d is also PASS:
 its [handoff](../handoffs/M03d-runtime-recovery.md) records 567 full CPU CTests
-and 10 standalone Tools checks with protected gates. M03e is next.
+and 10 standalone Tools checks with protected gates. M03e is also PASS:
+its [handoff](../handoffs/M03e-migration-restoration.md) records 581 CPU CTests
+and 10 standalone Tools checks with protected gates. M03f is next.
 
 `current_assignment: M03` follows the completed
 [five network checkpoints](../roadmap/network-plan.md) and
@@ -137,7 +139,7 @@ Runtime/Server builds, source/link/license closure and fresh isolated package
 checks pass; all 221 qualification source inputs were unchanged in that record.
 M02a-M02e and full REQ-M02 are PASS under the current-machine scope.
 Assignment 08, Project and scene persistence, is complete: 08a-08d and full
-REQ-08 are PASS. M03a-d are complete; M03e database migration/restore is next.
+REQ-08 are PASS. M03a-e are complete; M03f integrated qualification is next.
 FeatureWorld integration remains assignment 10.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
@@ -360,7 +362,8 @@ pass against 299 unchanged inputs and 18 helpers. The
 [receipt](evidence/08d-integrated-qualification.json) retain exact evidence,
 including the corrected final file-case inventory. M03 separately owns live
 player/economy durability; its store, character, atomic transaction and runtime
-recovery checkpoints are complete, with M03e database migration/restore next.
+recovery and database maintenance checkpoints are complete; M03f integrated
+qualification is next.
 
 M03c maps `server.durable-transactions` to `shark.storage.transactions`,
 `shark.storage.transactions-process` and authenticated owner regressions in
@@ -379,3 +382,14 @@ every mutation commit boundary, lost acknowledgements, pruning and observed
 native-VFS write/sync/full errors. The [receipt](evidence/M03d-runtime-recovery.json)
 binds full local qualification; migration/restore and integrated M03 remain
 separate gates. No new component, authoring command or Lua entry is introduced.
+
+M03e maps `server.durable-maintenance` to `shark.storage.migration` and
+`shark.storage.migration-process`, retaining the earlier recovery VFS regression.
+Independent schema-1/2/3 SQL fixtures cover complete identity, character,
+revocation and economic-history preservation. Twenty-five unit cases exercise
+explicit maintenance, strict compatibility and fresh authenticated restored
+restart; 66 process rows cover interrupted/failed upgrades and copies, including
+actual hot-journal recovery. The [maintenance contract](../durable-maintenance.md)
+keeps ordinary open nonmigrating and old restore candidates isolated. These are
+CPU external fixtures; FeatureWorld/MMOWorld remain 10/M09. The [receipt](evidence/M03e-migration-restoration.json) records PASS under the
+current-machine scope; full REQ-M03 still requires M03f integrated acceptance.

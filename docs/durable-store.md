@@ -13,6 +13,11 @@ schema to 3 with [atomic economic transactions](durable-transactions.md), follow
 [ADR 0017](architecture/0017-atomic-durable-transactions.md). Earlier handoffs
 retain their historical schema-1/2 evidence.
 
+M03e adds explicit [offline maintenance](durable-maintenance.md) under
+[ADR 0019](architecture/0019-durable-maintenance.md): sequential upgrades,
+verified pre-upgrade backups and isolated restores. Ordinary open below remains
+current-schema-only and never upgrades automatically.
+
 ## Public owner and identity
 
 `Store::create(path, world)` returns `Result<std::unique_ptr<Store>>` after
@@ -193,8 +198,9 @@ M03c adds atomic economic mutations and retained retry results through the
 [transaction contract](durable-transactions.md). Its persistent high-water marks
 prevent expired operation identities from executing again. M03d's
 [runtime recovery contract](durable-recovery.md) adds the crash/outage matrix,
-bounded worker and session/entity completion fences. Migration and restore remain
-M03e. No backup or migration command is introduced here. Ordinary process termination demonstrates
+bounded worker and session/entity completion fences. M03e adds explicit
+[migration, backup and isolated restore](durable-maintenance.md); ordinary open
+never invokes those maintenance operations. Ordinary process termination demonstrates
 software recovery on this PC; it does not simulate physical host or disk loss.
 
 ## Public C++ example

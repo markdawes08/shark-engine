@@ -34,6 +34,26 @@ struct StoreMetadata {
     bool operator==(const StoreMetadata&) const = default;
 };
 
+// A validated offline snapshot summary, not an authorization or freshness token.
+// Maintenance revalidates complete contents rather than trusting these counts.
+struct SnapshotInfo {
+    StoreMetadata metadata;
+    std::uint64_t bytes;
+    std::size_t accounts;
+    std::size_t certificates;
+    std::size_t characters;
+    std::size_t economies;
+    std::size_t operation_streams;
+    std::size_t receipts;
+    bool operator==(const SnapshotInfo&) const = default;
+};
+struct MigrationResult {
+    StoreMetadata before;
+    StoreMetadata after;
+    bool already_current;
+    bool operator==(const MigrationResult&) const = default;
+};
+
 // A bounded checkpoint of server-accepted, non-economic state. Names are display
 // text; position acceptance belongs to server simulation, never a player snapshot.
 struct CharacterState {
@@ -149,6 +169,34 @@ class Store final {
     // and expected world. Foreign/future headers reject before SQLite can write.
     [[nodiscard]] static Result<std::unique_ptr<Store>> open(const std::filesystem::path& path,
                                                              WorldId expected_world);
+    // Explicit offline maintenance. Exact historical schemas 1/2 and current 3
+    // are supported here; ordinary open remains current-schema-only. Inspection
+    // is read-only and cannot recover a hot journal. Caller releases live owners.
+    [[nodiscard]] static Result<SnapshotInfo> inspect_snapshot(const std::filesystem::path& path,
+                                                               StoreId expected_store,
+                                                               WorldId expected_world);
+    // Both copy operations reserve a new destination in a different canonical
+    // directory, never overwrite, and independently reopen/validate the copy.
+    // Failed/interrupted copies may leave allocated files for explicit cleanup.
+    [[nodiscard]] static Result<SnapshotInfo> backup(const std::filesystem::path& source,
+                                                     const std::filesystem::path& destination,
+                                                     StoreId expected_store,
+                                                     WorldId expected_world);
+    // Requires an independently validated backup of the exact pre-upgrade state.
+    // Sequential 1->2->3 transforms commit together and never grant economy state.
+    // A retry at schema 3 succeeds only when it exactly matches that transform.
+    // Supported interrupted source transactions may recover before inspection;
+    // newer headers reject before SQLite can write. No downgrade is supported.
+    [[nodiscard]] static Result<MigrationResult>
+    migrate(const std::filesystem::path& source, const std::filesystem::path& verified_backup,
+            StoreId expected_store, WorldId expected_world);
+    // Isolated same-schema candidate only, never active-state replacement.
+    // An older snapshot must not resume authoritative use after acknowledged
+    // later effects: restored economic high-water marks would also be older.
+    [[nodiscard]] static Result<SnapshotInfo> restore(const std::filesystem::path& snapshot,
+                                                      const std::filesystem::path& destination,
+                                                      StoreId expected_store,
+                                                      WorldId expected_world);
     ~Store();
     Store(const Store&) = delete;
     Store& operator=(const Store&) = delete;

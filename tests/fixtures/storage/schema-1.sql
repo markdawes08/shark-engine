@@ -1,0 +1,10 @@
+PRAGMA page_size=4096;
+PRAGMA journal_mode=DELETE;
+PRAGMA synchronous=EXTRA;
+PRAGMA foreign_keys=ON;
+BEGIN EXCLUSIVE;
+CREATE TABLE shark_store(singleton INTEGER PRIMARY KEY CHECK(singleton=1),store_id TEXT NOT NULL CHECK(length(store_id)=36),world_id TEXT NOT NULL CHECK(length(world_id)=36),schema_version INTEGER NOT NULL CHECK(schema_version=1)) STRICT;
+INSERT INTO shark_store VALUES(1,'00000000-0000-4000-8000-0000000002bc','00000000-0000-4000-8000-000000000384',1);
+PRAGMA application_id=1397246788;
+PRAGMA user_version=1;
+COMMIT;

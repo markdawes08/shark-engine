@@ -79,14 +79,22 @@ CTests, 10 standalone Tools checks and protected package/API gates. Follow
 admission on its owner thread while one private worker owns Store. Retained
 work is bounded to sixteen with one operation per account. A timeout is not
 rollback; drain/take outcomes, reopen explicitly and reconcile original IDs.
-The next checkpoint is **M03e, Database migration and restoration**, following the
+**M03e, Database migration and restoration, is complete under the current-machine scope.**
+Its [handoff](docs/handoffs/M03e-migration-restoration.md) and
+[receipt](docs/coverage/evidence/M03e-migration-restoration.json) record 581 passing CPU
+CTests, 10 standalone Tools checks and protected package/API gates. Follow
+[ADR 0019](docs/architecture/0019-durable-maintenance.md) and the
+[maintenance contract](docs/durable-maintenance.md). Drain/destroy live owners
+before explicit maintenance. Migration needs an exact pre-upgrade backup;
+restore creates an isolated candidate and never authorizes stale rollback.
+The next checkpoint is **M03f, Integrated qualification**, following the
 [six durable-state checkpoints](docs/roadmap/durable-state-plan.md). Read
 [ADR 0015](docs/architecture/0015-durable-store.md) and the
 [store contract](docs/durable-store.md), [ADR 0016](docs/architecture/0016-owned-durable-characters.md)
 and [character contract](docs/durable-characters.md). Full REQ-M03 remains NOT_RUN.
 M03b persists bounded enrollment, revocation and owned character checkpoints;
 M03c adds economic records and atomic outcomes in schema 3, with explicit
-nonmutating schema-1/2 rejection until M03e. One server
+nonmutating schema-1/2 rejection on ordinary open. M03e upgrades are explicit. One server
 CharacterAuthority owns Store and SessionAuthority. Account-only admission uses
 actual live mTLS; load/save require ready sequenced sessions. State passed to
 save is trusted server output, never player-authoritative snapshots. Do not

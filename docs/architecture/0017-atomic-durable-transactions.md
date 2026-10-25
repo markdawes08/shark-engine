@@ -79,3 +79,11 @@ concurrent stale intents, authenticated retries, restart and expiry. M03d retain
 the complete crash/outage/timeout matrix and asynchronous completion fencing;
 M03e retains backup, migration and restore. The synchronous fixture is not a
 20 Hz simulation performance claim, production economy or disaster-recovery test.
+
+M03e amendment: [ADR 0019](0019-durable-maintenance.md) and the
+[maintenance contract](../durable-maintenance.md) implement explicit schema 1/2
+upgrades with a verified pre-upgrade backup; ordinary open remains strict schema 3.
+Current-schema backup/isolated restore preserve economic records, retained receipts
+and high-water marks. Earlier snapshots omit later acknowledged effects and can
+make consumed identities fresh again, so they never authorize automatic live
+rollback. Migration introduces no economic grants. M03c evidence remains historical.

@@ -28,6 +28,7 @@
 # Durable character/session restart fixtures and roster/save receipts also use out/ or build/.
 # Economic transaction databases, operation receipts and process barriers use out/ or build/.
 # Runtime recovery journals, worker barriers and I/O-fault receipts use out/ or build/.
+# Database upgrade backups, isolated restore candidates and migration receipts use out/ or build/.
 # Keep independently authored database fixtures and storage documentation eligible for versioning.
 # Authored .sharkproject/.sharkscene fixtures and format documentation stay versioned.
 /build/

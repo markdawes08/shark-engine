@@ -89,3 +89,11 @@ CharacterAuthority with a dedicated Store worker, bounded retained commands,
 session/Scene completion fences and explicit timeout/reopen reconciliation.
 The creating-thread rule applies separately to Store on its worker and sessions
 on the authority thread; existing synchronous construction remains supported.
+
+M03e amendment: [ADR 0019](0019-durable-maintenance.md) and the
+[maintenance contract](../durable-maintenance.md) add explicit schema 1/2 upgrades,
+verified backups and isolated restore while ordinary open remains strict schema 3.
+Maintenance preserves character ownership, revisions and revocation tombstones;
+it restores no sessions and requires fresh authenticated admission after restart.
+A stale restored candidate is for inspection/reconciliation, never automatic
+authoritative rollback. Historical M03b behavior and evidence above are unchanged.

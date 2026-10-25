@@ -13,6 +13,7 @@ sqlite3_vfs* native = nullptr;
 sqlite3_vfs wrapper{};
 IoFault selected = IoFault::none;
 std::uint64_t fault_count = 0;
+MainWriteHook main_write_hook = nullptr;
 
 struct File {
     sqlite3_file base;
@@ -49,7 +50,11 @@ int write(sqlite3_file* value, const void* buffer, int amount, sqlite3_int64 pos
     auto& owner = file(value);
     if (const auto result = fail(owner, IoFault::write); result != SQLITE_OK)
         return result;
-    return owner.actual->pMethods->xWrite(owner.actual, buffer, amount, position);
+    const auto result = owner.actual->pMethods->xWrite(owner.actual, buffer, amount, position);
+    if (result == SQLITE_OK && (owner.flags & SQLITE_OPEN_MAIN_DB) != 0 &&
+        main_write_hook != nullptr)
+        main_write_hook(amount, position);
+    return result;
 }
 int truncate(sqlite3_file* value, sqlite3_int64 size) {
     auto* actual = file(value).actual;
@@ -241,6 +246,7 @@ RecoveryVfs::RecoveryVfs() {
 }
 RecoveryVfs::~RecoveryVfs() {
     selected = IoFault::none;
+    main_write_hook = nullptr;
     sqlite3_vfs_register(native, 1);
     sqlite3_vfs_unregister(&wrapper);
     native = nullptr;
@@ -251,6 +257,10 @@ void RecoveryVfs::arm(IoFault fault) noexcept {
 }
 void RecoveryVfs::clear() noexcept {
     selected = IoFault::none;
+    main_write_hook = nullptr;
+}
+void RecoveryVfs::observe_main_write(MainWriteHook hook) noexcept {
+    main_write_hook = hook;
 }
 std::uint64_t RecoveryVfs::failures() const noexcept {
     return fault_count;

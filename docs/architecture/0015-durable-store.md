@@ -134,3 +134,11 @@ M03c amendment: [ADR 0017](0017-atomic-durable-transactions.md) advances the act
 schema to 3, adds bounded atomic economic transfers and retained operation
 outcomes, and explicitly rejects versions 1/2 until M03e migration. The
 earlier version and scope above describe this ADR's original checkpoint.
+
+M03e amendment: [ADR 0019](0019-durable-maintenance.md) and the
+[maintenance contract](../durable-maintenance.md) add explicit schema 1/2 upgrades,
+independently validated backups and isolated restoration. Ordinary `Store::open`
+remains strict schema 3 and never migrates. Upgrade requires an exact pre-upgrade
+backup; restore creates a separate candidate without replacing an active store.
+A stale backup never authorizes automatic authoritative rollback. The earlier
+checkpoint decisions and evidence remain historical; qualification is separate.

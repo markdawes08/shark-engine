@@ -1,5 +1,6 @@
 #include "shark/storage/store.hpp"
 
+#include "maintenance_test_hooks.hpp"
 #include "shark/project_path.hpp"
 #include "store_test_hooks.hpp"
 
@@ -27,6 +28,16 @@
 namespace shark::storage {
 namespace {
 constexpr int application_id = 0x53484b44;
+constexpr std::string_view table_v1_sql =
+    "CREATE TABLE shark_store(singleton INTEGER PRIMARY KEY CHECK(singleton=1),"
+    "store_id TEXT NOT NULL CHECK(length(store_id)=36),"
+    "world_id TEXT NOT NULL CHECK(length(world_id)=36),"
+    "schema_version INTEGER NOT NULL CHECK(schema_version=1)) STRICT";
+constexpr std::string_view table_v2_sql =
+    "CREATE TABLE shark_store(singleton INTEGER PRIMARY KEY CHECK(singleton=1),"
+    "store_id TEXT NOT NULL CHECK(length(store_id)=36),"
+    "world_id TEXT NOT NULL CHECK(length(world_id)=36),"
+    "schema_version INTEGER NOT NULL CHECK(schema_version=2)) STRICT";
 constexpr std::string_view table_sql =
     "CREATE TABLE shark_store(singleton INTEGER PRIMARY KEY CHECK(singleton=1),"
     "store_id TEXT NOT NULL CHECK(length(store_id)=36),"
@@ -37,6 +48,10 @@ constexpr std::string_view accounts_sql =
     "revoked INTEGER NOT NULL CHECK(revoked IN(0,1)),"
     "roster_revision INTEGER NOT NULL CHECK(roster_revision>=1),"
     "operation_sequence INTEGER NOT NULL CHECK(operation_sequence>=0)) STRICT";
+constexpr std::string_view accounts_v2_sql =
+    "CREATE TABLE shark_accounts(account_id TEXT PRIMARY KEY NOT NULL CHECK(length(account_id)=36),"
+    "revoked INTEGER NOT NULL CHECK(revoked IN(0,1)),"
+    "roster_revision INTEGER NOT NULL CHECK(roster_revision>=1)) STRICT";
 constexpr std::string_view certificates_sql =
     "CREATE TABLE shark_certificates(certificate BLOB PRIMARY KEY NOT NULL "
     "CHECK(length(certificate)=32),"
@@ -85,6 +100,7 @@ constexpr std::string_view receipts_sql =
     "target_currency IS NOT NULL AND target_items IS NOT NULL))) STRICT";
 thread_local detail::CreateHook create_hook = nullptr;
 thread_local detail::WriteFaultHook write_fault_hook = nullptr;
+thread_local detail::MaintenanceFaultHook maintenance_fault_hook = nullptr;
 
 Error failure(ErrorCode code, std::string_view operation, std::string_view message,
               const std::string& path) {
@@ -321,7 +337,8 @@ Result<void> reserve_file(const std::filesystem::path& path, const Connection& c
     return {};
 }
 
-Result<void> check_header(const std::filesystem::path& path, const Connection& connection) {
+Result<void> check_header(const std::filesystem::path& path, const Connection& connection,
+                          bool allow_historical = false) {
     std::array<unsigned char, 100> header{};
     std::ifstream input(path, std::ios::binary);
     if (!input.is_open()) {
@@ -342,9 +359,11 @@ Result<void> check_header(const std::filesystem::path& path, const Connection& c
                (static_cast<std::uint32_t>(header[offset + 2]) << 8U) |
                static_cast<std::uint32_t>(header[offset + 3]);
     };
+    const auto version = u32(60);
+    const bool supported = allow_historical ? version >= 1 && version <= store_schema_version
+                                            : version == store_schema_version;
     if (std::memcmp(header.data(), "SQLite format 3\0", 16) != 0 || u32(68) != application_id ||
-        u32(60) != store_schema_version || header[16] != 16 || header[17] != 0 || header[18] != 1 ||
-        header[19] != 1) {
+        !supported || header[16] != 16 || header[17] != 0 || header[18] != 1 || header[19] != 1) {
         return connection.invalid("unsupported database identity, schema or journal format");
     }
     return {};
@@ -414,14 +433,15 @@ Result<void> configure(Connection& connection) {
     return {};
 }
 
-Result<void> create_schema(Connection& connection, const StoreMetadata& metadata) {
+Result<void> create_schema(Connection& connection, const StoreMetadata& metadata,
+                           bool notify_creation = true) {
     for (const auto sql :
          {table_sql, accounts_sql, certificates_sql, characters_sql, economy_sql, receipts_sql}) {
         if (auto result = connection.execute(sql.data()); !result) {
             return result.error();
         }
     }
-    if (create_hook != nullptr) {
+    if (notify_creation && create_hook != nullptr) {
         create_hook(detail::CreatePhase::schema_written);
     }
     Statement insert;
@@ -446,12 +466,13 @@ Result<void> create_schema(Connection& connection, const StoreMetadata& metadata
     return connection.execute("PRAGMA application_id=1397246788; PRAGMA user_version=3");
 }
 
-Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world) {
+Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world,
+                              std::uint32_t version = store_schema_version) {
     if (auto result = require_integer(connection, "PRAGMA application_id", application_id);
         !result) {
         return result.error();
     }
-    if (auto result = require_integer(connection, "PRAGMA user_version", store_schema_version);
+    if (auto result = require_integer(connection, "PRAGMA user_version", static_cast<int>(version));
         !result) {
         return result.error();
     }
@@ -467,12 +488,14 @@ Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world) {
         std::string_view table;
         std::string_view sql;
     };
-    constexpr std::array objects{
-        SchemaObject{"table", "shark_accounts", "shark_accounts", accounts_sql},
+    const auto metadata_sql = version == 1 ? table_v1_sql : version == 2 ? table_v2_sql : table_sql;
+    const std::array objects{
+        SchemaObject{"table", "shark_accounts", "shark_accounts",
+                     version == 2 ? accounts_v2_sql : accounts_sql},
         SchemaObject{"table", "shark_certificates", "shark_certificates", certificates_sql},
         SchemaObject{"table", "shark_characters", "shark_characters", characters_sql},
         SchemaObject{"table", "shark_economy", "shark_economy", economy_sql},
-        SchemaObject{"table", "shark_store", "shark_store", table_sql},
+        SchemaObject{"table", "shark_store", "shark_store", metadata_sql},
         SchemaObject{"table", "shark_transfer_receipts", "shark_transfer_receipts", receipts_sql},
         SchemaObject{"index", "sqlite_autoindex_shark_accounts_1", "shark_accounts", {}},
         SchemaObject{"index", "sqlite_autoindex_shark_certificates_1", "shark_certificates", {}},
@@ -483,6 +506,11 @@ Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world) {
             "index", "sqlite_autoindex_shark_transfer_receipts_1", "shark_transfer_receipts", {}},
     };
     for (const auto& object : objects) {
+        if ((version == 1 && object.table != "shark_store") ||
+            (version < 3 &&
+             (object.table == "shark_economy" || object.table == "shark_transfer_receipts"))) {
+            continue;
+        }
         const auto status = sqlite3_step(schema.value);
         if (status != SQLITE_ROW && status != SQLITE_DONE) {
             return connection.error(status);
@@ -491,7 +519,7 @@ Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world) {
             !text_is(schema.value, 1, object.name) || !text_is(schema.value, 2, object.table) ||
             (object.sql.empty() ? sqlite3_column_type(schema.value, 3) != SQLITE_NULL
                                 : !text_is(schema.value, 3, object.sql))) {
-            return connection.invalid("database schema differs from supported version 3");
+            return connection.invalid("database schema differs from its supported version");
         }
     }
     auto step = sqlite3_step(schema.value);
@@ -526,7 +554,7 @@ Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world) {
     if (step != SQLITE_ROW || sqlite3_column_type(rows.value, 0) != SQLITE_INTEGER ||
         sqlite3_column_int64(rows.value, 0) != 1 ||
         sqlite3_column_type(rows.value, 3) != SQLITE_INTEGER ||
-        sqlite3_column_int64(rows.value, 3) != store_schema_version) {
+        sqlite3_column_int64(rows.value, 3) != static_cast<sqlite3_int64>(version)) {
         return connection.invalid("database identity row is missing or invalid");
     }
     std::array<std::optional<StableId>, 2> ids;
@@ -557,7 +585,7 @@ Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world) {
         return failure(ErrorCode::conflict, connection.operation,
                        "database belongs to a different world", connection.path);
     }
-    return StoreMetadata{StoreId{ids[0].value()}, world, store_schema_version};
+    return StoreMetadata{StoreId{ids[0].value()}, world, version};
 }
 
 Result<StableId> read_id(const Connection& connection, sqlite3_stmt* row, int column) {
@@ -731,6 +759,7 @@ Result<DurableRegistry> read_registry(const Connection& connection, WorldId worl
 struct EconomyLedger {
     std::vector<EconomyRecord> records;
     std::vector<OperationStream> streams;
+    bool operator==(const EconomyLedger&) const = default;
 };
 
 TransferStatus decide_transfer(const TransferRequest& request, const EconomyRecord& source,
@@ -1099,6 +1128,380 @@ Result<void> bind_state(const Connection& connection, Statement& statement, int 
 bool injected(detail::WritePhase phase) {
     return write_fault_hook != nullptr && write_fault_hook(phase);
 }
+
+struct SnapshotData {
+    StoreMetadata metadata;
+    DurableRegistry records;
+    EconomyLedger economy;
+    bool operator==(const SnapshotData&) const = default;
+};
+
+struct MaintenanceOwner {
+    std::filesystem::path path;
+    std::unique_ptr<Connection> connection;
+    SnapshotData snapshot;
+};
+
+Result<SnapshotData> read_snapshot(Connection& connection, StoreId expected_store,
+                                   WorldId expected_world) {
+    Statement version_query;
+    if (auto result = prepare(connection, version_query, "PRAGMA user_version"); !result) {
+        return result.error();
+    }
+    auto step = sqlite3_step(version_query.value);
+    if (step != SQLITE_ROW) {
+        return connection.error(step);
+    }
+    if (!valid_integer(version_query.value, 0, 1, store_schema_version)) {
+        return connection.invalid("database schema version is unsupported");
+    }
+    const auto version = static_cast<std::uint32_t>(sqlite3_column_int(version_query.value, 0));
+    step = sqlite3_step(version_query.value);
+    if (step != SQLITE_DONE) {
+        return connection.error(step);
+    }
+    auto metadata = inspect(connection, expected_world, version);
+    if (!metadata) {
+        return metadata.error();
+    }
+    if (metadata.value().id != expected_store) {
+        return failure(ErrorCode::conflict, connection.operation,
+                       "database belongs to a different store", connection.path);
+    }
+    SnapshotData snapshot{metadata.value(), {}, {}};
+    if (version >= 2) {
+        auto records = read_registry(connection, expected_world);
+        if (!records) {
+            return records.error();
+        }
+        snapshot.records = std::move(records).value();
+    }
+    if (version == store_schema_version) {
+        auto economy = read_economy(connection, snapshot.metadata, snapshot.records);
+        if (!economy) {
+            return economy.error();
+        }
+        snapshot.economy = std::move(economy).value();
+    }
+    return snapshot;
+}
+
+Result<MaintenanceOwner> open_maintenance(const std::filesystem::path& path, StoreId expected_store,
+                                          WorldId expected_world, std::string_view operation,
+                                          bool read_only) {
+    auto resolved = resolve_path(path, operation);
+    if (!resolved) {
+        return resolved.error();
+    }
+    auto connection = std::make_unique<Connection>();
+    connection->path = utf8_path(resolved.value());
+    connection->operation = operation;
+    if (auto checked = check_sidecars(resolved.value(), *connection); !checked) {
+        return checked.error();
+    }
+    if (auto checked = check_regular(resolved.value(), *connection, maximum_store_bytes, true);
+        !checked) {
+        return checked.error();
+    }
+    if (auto checked = check_header(resolved.value(), *connection, true); !checked) {
+        return checked.error();
+    }
+    const auto flags = (read_only ? SQLITE_OPEN_READONLY : SQLITE_OPEN_READWRITE) |
+                       SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_EXRESCODE | SQLITE_OPEN_NOFOLLOW;
+    const auto opened = sqlite3_open_v2(connection->path.c_str(), &connection->db, flags, nullptr);
+    if (opened != SQLITE_OK) {
+        return connection->error(opened);
+    }
+    if (sqlite3_db_readonly(connection->db, "main") != (read_only ? 1 : 0)) {
+        return failure(ErrorCode::io_failure, operation,
+                       "database did not open with the required access mode", connection->path);
+    }
+    if (auto configured = configure(*connection); !configured) {
+        return configured.error();
+    }
+    // The raw header preflight excludes empty databases. SQLite READONLY can
+    // inspect a nonempty database with a cold journal without changing either
+    // file, and refuses hot-journal recovery. READWRITE explicitly recovers
+    // recognized interruptions before validating the actual recovered schema.
+    if (auto begun = connection->execute(read_only ? "BEGIN" : "BEGIN EXCLUSIVE"); !begun) {
+        return begun.error();
+    }
+    auto snapshot = read_snapshot(*connection, expected_store, expected_world);
+    if (!snapshot) {
+        return snapshot.error();
+    }
+    if (!read_only) {
+        // EXCLUSIVE locking mode retains ownership outside the transaction.
+        // SQLite backup cannot read a source with an active write transaction.
+        if (auto committed = connection->execute("COMMIT"); !committed) {
+            return committed.error();
+        }
+    }
+    return MaintenanceOwner{resolved.value(), std::move(connection), std::move(snapshot).value()};
+}
+
+Result<std::filesystem::path> separate_destination(const MaintenanceOwner& source,
+                                                   const std::filesystem::path& path) {
+    auto resolved = resolve_path(path, source.connection->operation);
+    if (!resolved) {
+        return resolved.error();
+    }
+    std::error_code ec;
+    const auto same =
+        std::filesystem::equivalent(source.path.parent_path(), resolved.value().parent_path(), ec);
+    if (ec || same) {
+        return failure(ErrorCode::invalid_path, source.connection->operation,
+                       "maintenance requires distinct existing canonical directories",
+                       utf8_path(resolved.value()));
+    }
+    return resolved;
+}
+
+Result<SnapshotInfo> snapshot_info(const MaintenanceOwner& owner) {
+    std::error_code ec;
+    const auto bytes = std::filesystem::file_size(owner.path, ec);
+    if (ec || bytes > maximum_store_bytes) {
+        return failure(ErrorCode::io_failure, owner.connection->operation,
+                       "validated database size could not be read", owner.connection->path);
+    }
+    std::size_t receipts = 0;
+    for (const auto& stream : owner.snapshot.economy.streams) {
+        receipts += stream.receipts.size();
+    }
+    return SnapshotInfo{owner.snapshot.metadata,
+                        static_cast<std::uint64_t>(bytes),
+                        owner.snapshot.records.accounts.size(),
+                        owner.snapshot.records.certificates.size(),
+                        owner.snapshot.records.characters.size(),
+                        owner.snapshot.economy.records.size(),
+                        owner.snapshot.economy.streams.size(),
+                        receipts};
+}
+
+Result<void> maintenance_phase(const Connection& connection, detail::MaintenancePhase phase) {
+    if (maintenance_fault_hook != nullptr && maintenance_fault_hook(phase)) {
+        return failure(ErrorCode::io_failure, connection.operation,
+                       "injected maintenance failure; inspect durable state before retry",
+                       connection.path);
+    }
+    return {};
+}
+
+struct BackupHandle {
+    sqlite3_backup* value{};
+    ~BackupHandle() {
+        if (value != nullptr) {
+            sqlite3_backup_finish(value);
+        }
+    }
+};
+
+Result<SnapshotInfo> copy_snapshot(const MaintenanceOwner& source,
+                                   const std::filesystem::path& destination, bool restoring) {
+    auto resolved = separate_destination(source, destination);
+    if (!resolved) {
+        return resolved.error();
+    }
+    auto connection = std::make_unique<Connection>();
+    connection->path = utf8_path(resolved.value());
+    connection->operation = source.connection->operation;
+    if (auto checked = check_sidecars(resolved.value(), *connection); !checked) {
+        return checked.error();
+    }
+    auto journal = resolved.value();
+    journal += "-journal";
+    std::error_code ec;
+    if (std::filesystem::exists(journal, ec) || ec) {
+        return failure(ErrorCode::conflict, connection->operation,
+                       "new snapshot path has an existing journal", connection->path);
+    }
+    if (auto reserved = reserve_file(resolved.value(), *connection); !reserved) {
+        return reserved.error();
+    }
+    const auto opened = sqlite3_open_v2(connection->path.c_str(), &connection->db,
+                                        SQLITE_OPEN_READWRITE | SQLITE_OPEN_NOMUTEX |
+                                            SQLITE_OPEN_EXRESCODE | SQLITE_OPEN_NOFOLLOW,
+                                        nullptr);
+    if (opened != SQLITE_OK) {
+        return connection->error(opened);
+    }
+    if (auto configured = configure(*connection); !configured) {
+        return configured.error();
+    }
+    BackupHandle backup{sqlite3_backup_init(connection->db, "main", source.connection->db, "main")};
+    if (backup.value == nullptr) {
+        return connection->error(sqlite3_extended_errcode(connection->db));
+    }
+    bool completed = false;
+    constexpr auto maximum_pages = maximum_store_bytes / 4096;
+    for (std::uint64_t page = 0; page < maximum_pages; ++page) {
+        const auto result = sqlite3_backup_step(backup.value, 1);
+        if (result != SQLITE_OK && result != SQLITE_DONE) {
+            return connection->error(result);
+        }
+        const auto count = sqlite3_backup_pagecount(backup.value);
+        if (count < 1 || static_cast<std::uint64_t>(count) > maximum_pages) {
+            return connection->invalid("database backup exceeds its page bound");
+        }
+        if (auto phase =
+                maintenance_phase(*connection, restoring ? detail::MaintenancePhase::restore_step
+                                                         : detail::MaintenancePhase::backup_step);
+            !phase) {
+            return phase.error();
+        }
+        if (result == SQLITE_DONE) {
+            completed = true;
+            break;
+        }
+    }
+    if (!completed) {
+        return connection->invalid("database backup did not finish within its page bound");
+    }
+    const auto finished = sqlite3_backup_finish(std::exchange(backup.value, nullptr));
+    if (finished != SQLITE_OK) {
+        return connection->error(finished);
+    }
+    if (auto phase =
+            maintenance_phase(*connection, restoring ? detail::MaintenancePhase::restore_complete
+                                                     : detail::MaintenancePhase::backup_complete);
+        !phase) {
+        return phase.error();
+    }
+    // Drop the destination owner before an independent read-only reopen. The
+    // source owner still holds its coherent snapshot throughout validation.
+    connection.reset();
+    auto copied =
+        open_maintenance(resolved.value(), source.snapshot.metadata.id,
+                         source.snapshot.metadata.world, source.connection->operation, true);
+    if (!copied) {
+        return copied.error();
+    }
+    if (copied.value().snapshot != source.snapshot) {
+        return copied.value().connection->invalid(
+            "copied database differs from its source snapshot");
+    }
+    auto info = snapshot_info(copied.value());
+    if (!info) {
+        return info.error();
+    }
+    if (auto phase = maintenance_phase(*copied.value().connection,
+                                       restoring ? detail::MaintenancePhase::restore_validated
+                                                 : detail::MaintenancePhase::backup_validated);
+        !phase) {
+        return phase.error();
+    }
+    return info;
+}
+
+SnapshotData upgraded_snapshot(const SnapshotData& before) {
+    auto after = before;
+    if (after.metadata.schema_version < store_schema_version) {
+        after.metadata.schema_version = store_schema_version;
+        for (const auto& account : after.records.accounts) {
+            after.economy.streams.push_back({after.metadata.id, account.account, 0, {}});
+        }
+    }
+    return after;
+}
+
+Result<void> migrate_v1_to_v2(Connection& connection, const StoreMetadata& metadata) {
+    if (auto dropped = connection.execute("DROP TABLE shark_store"); !dropped) {
+        return dropped.error();
+    }
+    for (const auto sql : {table_v2_sql, accounts_v2_sql, certificates_sql, characters_sql}) {
+        if (auto created = connection.execute(sql.data()); !created) {
+            return created.error();
+        }
+    }
+    auto inserted = change(
+        connection, "INSERT INTO shark_store VALUES(1,?1,?2,2)",
+        [&](Statement& statement) -> Result<void> {
+            if (auto bound = bind_text(connection, statement, 1, metadata.id.value().to_string());
+                !bound) {
+                return bound.error();
+            }
+            return bind_text(connection, statement, 2, metadata.world.value().to_string());
+        });
+    if (!inserted) {
+        return inserted.error();
+    }
+    return connection.execute("PRAGMA user_version=2");
+}
+
+Result<void> migrate_v2_to_v3(Connection& connection, const SnapshotData& after) {
+    if (auto dropped = connection.execute("DROP TABLE shark_certificates;"
+                                          "DROP TABLE shark_characters;"
+                                          "DROP TABLE shark_accounts; DROP TABLE shark_store;");
+        !dropped) {
+        return dropped.error();
+    }
+    if (auto created = create_schema(connection, after.metadata, false); !created) {
+        return created.error();
+    }
+    for (const auto& account : after.records.accounts) {
+        auto inserted = change(
+            connection, "INSERT INTO shark_accounts VALUES(?1,?2,?3,0)",
+            [&](Statement& statement) -> Result<void> {
+                if (auto bound =
+                        bind_text(connection, statement, 1, account.account.value().to_string());
+                    !bound) {
+                    return bound.error();
+                }
+                if (auto bound = bind_integer(connection, statement, 2, account.revoked ? 1 : 0);
+                    !bound) {
+                    return bound.error();
+                }
+                return bind_integer(connection, statement, 3, account.roster_revision);
+            });
+        if (!inserted) {
+            return inserted.error();
+        }
+    }
+    for (const auto& certificate : after.records.certificates) {
+        auto inserted =
+            change(connection, "INSERT INTO shark_certificates VALUES(?1,?2,?3)",
+                   [&](Statement& statement) -> Result<void> {
+                       if (auto bound =
+                               bind_certificate(connection, statement, 1, certificate.certificate);
+                           !bound) {
+                           return bound.error();
+                       }
+                       if (auto bound = bind_text(connection, statement, 2,
+                                                  certificate.account.value().to_string());
+                           !bound) {
+                           return bound.error();
+                       }
+                       return bind_integer(connection, statement, 3, certificate.revoked ? 1 : 0);
+                   });
+        if (!inserted) {
+            return inserted.error();
+        }
+    }
+    for (const auto& character : after.records.characters) {
+        auto inserted = change(
+            connection, "INSERT INTO shark_characters VALUES(?1,?2,?3,?4,?5,?6,?7,?8,?9,?10,?11)",
+            [&](Statement& statement) -> Result<void> {
+                for (const auto& [index, id] :
+                     std::array<std::pair<int, StableId>, 3>{{{1, character.character.value()},
+                                                              {2, character.account.value()},
+                                                              {3, character.entity.value()}}}) {
+                    if (auto bound = bind_text(connection, statement, index, id.to_string());
+                        !bound) {
+                        return bound.error();
+                    }
+                }
+                if (auto bound = bind_integer(connection, statement, 4, character.revision);
+                    !bound) {
+                    return bound.error();
+                }
+                return bind_state(connection, statement, 5, character.state);
+            });
+        if (!inserted) {
+            return inserted.error();
+        }
+    }
+    return {};
+}
 } // namespace
 
 struct Store::Impl {
@@ -1187,6 +1590,9 @@ void set_create_hook(CreateHook hook) noexcept {
 void set_write_fault_hook(WriteFaultHook hook) noexcept {
     write_fault_hook = hook;
 }
+void set_maintenance_fault_hook(MaintenanceFaultHook hook) noexcept {
+    maintenance_fault_hook = hook;
+}
 } // namespace detail
 
 Store::Store(std::unique_ptr<Impl> impl) noexcept : impl_(std::move(impl)) {}
@@ -1199,6 +1605,116 @@ Result<std::unique_ptr<Store>> Store::create(const std::filesystem::path& path, 
 Result<std::unique_ptr<Store>> Store::open(const std::filesystem::path& path,
                                            WorldId expected_world) {
     return acquire(path, expected_world, false);
+}
+
+Result<SnapshotInfo> Store::inspect_snapshot(const std::filesystem::path& path,
+                                             StoreId expected_store, WorldId expected_world) {
+    auto owner =
+        open_maintenance(path, expected_store, expected_world, "storage.inspect_snapshot", true);
+    if (!owner) {
+        return owner.error();
+    }
+    return snapshot_info(owner.value());
+}
+
+Result<SnapshotInfo> Store::backup(const std::filesystem::path& source,
+                                   const std::filesystem::path& destination, StoreId expected_store,
+                                   WorldId expected_world) {
+    auto owner = open_maintenance(source, expected_store, expected_world, "storage.backup", false);
+    if (!owner) {
+        return owner.error();
+    }
+    return copy_snapshot(owner.value(), destination, false);
+}
+
+Result<SnapshotInfo> Store::restore(const std::filesystem::path& snapshot,
+                                    const std::filesystem::path& destination,
+                                    StoreId expected_store, WorldId expected_world) {
+    auto owner =
+        open_maintenance(snapshot, expected_store, expected_world, "storage.restore", true);
+    if (!owner) {
+        return owner.error();
+    }
+    return copy_snapshot(owner.value(), destination, true);
+}
+
+Result<MigrationResult> Store::migrate(const std::filesystem::path& source,
+                                       const std::filesystem::path& verified_backup,
+                                       StoreId expected_store, WorldId expected_world) {
+    // Validate the independently closed backup before acquiring a writable
+    // source. A bad or missing backup can never initiate source recovery/write.
+    auto backup =
+        open_maintenance(verified_backup, expected_store, expected_world, "storage.migrate", true);
+    if (!backup) {
+        return backup.error();
+    }
+    auto resolved = separate_destination(backup.value(), source);
+    if (!resolved) {
+        return resolved.error();
+    }
+    auto owner = open_maintenance(resolved.value(), expected_store, expected_world,
+                                  "storage.migrate", false);
+    if (!owner) {
+        return owner.error();
+    }
+    auto& connection = *owner.value().connection;
+    const auto& before = owner.value().snapshot;
+    // All bounded candidate values and the successful reply are allocated
+    // before any schema mutation. Retry equality compares every semantic row.
+    const auto after = upgraded_snapshot(backup.value().snapshot);
+    if (before.metadata.schema_version == store_schema_version) {
+        if (before != after) {
+            return failure(ErrorCode::conflict, connection.operation,
+                           "current database differs from the verified backup transformation",
+                           connection.path);
+        }
+        return MigrationResult{before.metadata, before.metadata, true};
+    }
+    if (before != backup.value().snapshot) {
+        return failure(ErrorCode::conflict, connection.operation,
+                       "migration backup differs from the complete source state", connection.path);
+    }
+    const MigrationResult result{before.metadata, after.metadata, false};
+    if (auto begun = connection.execute("BEGIN EXCLUSIVE"); !begun) {
+        return begun.error();
+    }
+    if (before.metadata.schema_version == 1) {
+        if (auto migrated = migrate_v1_to_v2(connection, before.metadata); !migrated) {
+            return migrated.error();
+        }
+        if (auto phase = maintenance_phase(connection, detail::MaintenancePhase::after_v1_to_v2);
+            !phase) {
+            return phase.error();
+        }
+    }
+    if (auto migrated = migrate_v2_to_v3(connection, after); !migrated) {
+        return migrated.error();
+    }
+    if (auto phase = maintenance_phase(connection, detail::MaintenancePhase::after_v2_to_v3);
+        !phase) {
+        return phase.error();
+    }
+    auto candidate = read_snapshot(connection, expected_store, expected_world);
+    if (!candidate) {
+        return candidate.error();
+    }
+    if (candidate.value() != after) {
+        return connection.invalid("migration result differs from its deterministic transformation");
+    }
+    if (auto phase =
+            maintenance_phase(connection, detail::MaintenancePhase::before_migration_commit);
+        !phase) {
+        return phase.error();
+    }
+    if (auto committed = connection.execute("COMMIT"); !committed) {
+        return committed.error();
+    }
+    if (auto phase =
+            maintenance_phase(connection, detail::MaintenancePhase::after_migration_commit);
+        !phase) {
+        return phase.error();
+    }
+    return result;
 }
 
 Result<std::unique_ptr<Store>> Store::acquire(const std::filesystem::path& path, WorldId world,

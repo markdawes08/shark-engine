@@ -137,8 +137,8 @@ REQ-08 are PASS under the current-machine scope. The
 [receipt](../coverage/evidence/08d-integrated-qualification.json) record
 504 CPU CTests, ten additional standalone Tools checks, all three public
 examples and protected packages against 299 unchanged inputs. M03 separately
-owns live character and transactional durability; M03a-d are complete and M03e
-database migration and restoration is next. Authored source saves do not provide live character or economy durability.
+owns live character and transactional durability; M03a-e are complete and M03f
+integrated qualification is next. Authored source saves do not provide live character or economy durability.
 The authoring APIs are not player messages and do not grant gameplay authority.
 Presentation stays in Client and cannot acquire authority over server time or world state.
 The [final local handoff](../handoffs/02d-final-verification.md)
@@ -212,7 +212,10 @@ M03c atomic transactions are PASS under the same scope; its
 conservation/retry/expiry and protected gates. M03d runtime failure recovery is
 PASS: its [handoff](../handoffs/M03d-runtime-recovery.md) records 567 CPU CTests,
 bounded worker/session/entity fences, real crash/outage recovery and protected
-gates. M03e database migration/restore is next; full REQ-M03 remains NOT_RUN.
+gates. M03e database migration/restore is PASS: its
+[handoff](../handoffs/M03e-migration-restoration.md) records 581 CPU CTests,
+validated sequential upgrades/backups, isolated restored restart and protected
+gates. M03f integrated qualification is next; full REQ-M03 remains NOT_RUN.
 [ADR 0017](../architecture/0017-atomic-durable-transactions.md) advances the active
 schema to 3 and defines the economic operation lifetime.
 [ADR 0016](../architecture/0016-owned-durable-characters.md) defines the character

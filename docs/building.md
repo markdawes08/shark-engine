@@ -533,7 +533,8 @@ same API and noninteractive tests.
 M03b adds [owned durable characters](durable-characters.md) in EngineStorage,
 with enrollment, ownership and character records. M03c advances the active
 schema to 3 for [atomic economic transactions](durable-transactions.md). Legacy
-schema-1/2 files reject explicitly; migration is a later checkpoint. `shark.storage.characters`
+schema-1/2 files reject explicitly on ordinary open; M03e supplies separate
+offline migration. `shark.storage.characters`
 (60 seconds, seed 1337) and `shark.storage.characters-process` (180 seconds)
 exercise service/session admission and actual mTLS server/store restart.
 The original storage family also covers durable record validation and revision
@@ -552,6 +553,17 @@ the dedicated worker with actual mTLS/Scene ownership and deterministic barriers
 write/sync/full failures. The process supervisor runs 69 rows / 207 children and
 strict receipt controls. These executables and all database/journal artifacts
 stay outside packages. See the [runtime recovery contract](durable-recovery.md).
+
+M03e adds `shark.storage.migration` (120 seconds, seed 1337) and
+`shark.storage.migration-process` (240 seconds), built as `StorageMigrationTests`
+and `StorageMigrationProbe`. Independent SQL fixtures cover historical schemas
+1/2 and current 3. The process supervisor checks 66 rows / 200 children,
+including actual hot-journal interruption, and 24 negative receipt controls.
+Explicit backup, sequential upgrade and isolated restore preserve full logical
+state; ordinary open remains nonmigrating. Compile the
+[public maintenance example](durable-maintenance.md) without private SQLite/TLS
+headers. Keep fixture SQL, probes, databases, journals and backup candidates out
+of packages; generated maintenance files belong under `out/` or `build/`.
 
 The new test families are `shark.storage.store` (60 seconds, seed 1337),
 `shark.storage.process` (90 seconds) and `shark.tooling.storage-dependencies`

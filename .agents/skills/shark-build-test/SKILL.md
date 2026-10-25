@@ -5,6 +5,16 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+M03e adds `shark.storage.migration` (120 seconds, seed 1337) and
+`shark.storage.migration-process` (240 seconds). Use independently authored
+schema-1/2/3 SQL fixtures; preserve all earlier storage families. Validate complete
+identities, records, revocations and economic outcomes across interrupted upgrade,
+required pre-upgrade backup and isolated restore. Ordinary open still rejects
+legacy/future versions. Never treat a stale restored high-water mark as authority
+to replay an old operation. Compile the complete
+[maintenance example](../../../docs/durable-maintenance.md) with public headers
+only; fixture SQLite access stays test-private and packages exclude databases.
+
 M03d adds `shark.storage.recovery` (120 seconds, seed 1337) and
 `shark.storage.recovery-process` (240 seconds). Preserve the 69-row crash/VFS
 matrix, actual mTLS/Scene fences, retained-work limits and explicit timeout
@@ -16,13 +26,13 @@ M03c adds `shark.storage.transactions` and `shark.storage.transactions-process`.
 Preserve economic conservation, exact retries, terminal rejection, bounded
 retention and permanently expired operation identities across restart. Compile
 the [transaction example](../../../docs/durable-transactions.md) with public
-headers only. Active schema 3 rejects versions 1/2 until M03e migration.
+headers only. Ordinary open accepts schema 3 only; M03e migration is explicit.
 
 M03b adds durable character records and actual authenticated restart coverage in
 `shark.storage.characters` and `shark.storage.characters-process`. Preserve those,
 the original storage families and all session regression tests. Compile the
 [public character example](../../../docs/durable-characters.md) without private
-SQLite/TLS headers. Schema-1/2 rejection is explicit until M03e migration.
+SQLite/TLS headers. Ordinary open rejects schema 1/2; use explicit M03e maintenance.
 
 M03a adds EngineStorage only with Server. Supply `SHARK_SQLITE_ARCHIVE` for
 offline Server configurations using `tools/storage_dependency.py --output`.

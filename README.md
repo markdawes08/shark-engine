@@ -102,7 +102,12 @@ CTests, ten additional standalone Tools checks and protected package/API gates.
 timeouts and fences late results against current sessions and scene entities.
 Its [handoff](docs/handoffs/M03d-runtime-recovery.md) records 567 passing CPU
 CTests, 10 standalone Tools checks and protected package/API gates.
-**M03e, Database migration and restoration, is next** in the
+**M03e, Database migration and restoration, is complete:** explicit
+[maintenance services](docs/durable-maintenance.md) validate backups, upgrade
+historical stores and create isolated restore candidates. Its
+[handoff](docs/handoffs/M03e-migration-restoration.md) records 581 passing CPU
+CTests, 10 standalone Tools checks and protected package/API gates.
+**M03f, Integrated qualification, is next** in the
 [six-checkpoint plan](docs/roadmap/durable-state-plan.md). Full REQ-M03 remains NOT_RUN.
 Assignment 08, Project and scene persistence, completed its
 [four checkpoints](docs/roadmap/persistence-plan.md). 08a adds CPU project/scene

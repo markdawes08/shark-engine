@@ -77,3 +77,11 @@ remain M03e, integrated qualification M03f, gameplay M07 and administration M08.
 Public C++ services and noninteractive machine-readable fixtures serve human and
 terminal-agent developers equally. No new player protocol, CLI authoring stub,
 editor requirement, LLM SDK or cloud dependency is introduced.
+
+M03e amendment: [ADR 0019](0019-durable-maintenance.md) and the
+[maintenance contract](../durable-maintenance.md) add explicit schema 1/2 upgrades,
+verified backups and isolated restore after retained work is reconciled and the
+active owner is destroyed. Ordinary open and runtime recovery remain strict
+schema 3; neither invokes migration or restores a backup automatically. A stale
+candidate cannot roll back acknowledged authoritative effects. These offline
+services preserve the runtime owner/fencing contract and its historical evidence.

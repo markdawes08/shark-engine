@@ -4,9 +4,10 @@ M03b adds [`CharacterAuthority`](../server/storage/include/shark/storage/charact
 as the server-only owner of a durable Store and the existing authenticated
 SessionAuthority. [ADR 0016](architecture/0016-owned-durable-characters.md) records
 the design and schema compatibility decision. M03c extends this owner with [atomic economic transactions](durable-transactions.md)
-under [ADR 0017](architecture/0017-atomic-durable-transactions.md). Runtime recovery,
-migration and integrated gates remain later M03 work; character checkpoints alone
-do not establish those gates.
+under [ADR 0017](architecture/0017-atomic-durable-transactions.md). M03d defines
+[runtime recovery](durable-recovery.md); M03e defines explicit
+[migration and restoration](durable-maintenance.md). Their qualification is
+separate from character checkpoints; full integrated qualification remains M03f.
 
 ## Ownership and startup
 

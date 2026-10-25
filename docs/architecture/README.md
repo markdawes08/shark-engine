@@ -88,8 +88,10 @@ M03c [atomic transactions](../durable-transactions.md) are PASS under the same
 scope: [the handoff](../handoffs/M03c-atomic-transactions.md) records 553 CPU
 CTests and protected package/API gates. M03d [runtime recovery](../durable-recovery.md)
 is also PASS under this scope; its [handoff](../handoffs/M03d-runtime-recovery.md)
-records 567 CPU CTests and protected gates. M03e migration/restore is next.
-Full REQ-M03 remains NOT_RUN until migration/restore and integration pass.
+records 567 CPU CTests and protected gates. M03e maintenance is PASS: its [handoff](../handoffs/M03e-migration-restoration.md)
+records 581 CPU CTests, 10 standalone Tools checks and protected gates.
+M03f integrated qualification is next; full REQ-M03 remains NOT_RUN until
+M03f passes.
 General authoring transactions, terminal
 adapters and editor UI retain their later owners;
 schema IDs do not establish file or gameplay-wire formats. The current-machine
@@ -115,6 +117,7 @@ scope remains unchanged.
 | [0016](0016-owned-durable-characters.md) | Durable character ownership, persisted enrollment/revocation, authenticated server owner and schema-2 compatibility |
 | [0017](0017-atomic-durable-transactions.md) | Atomic economic transfers, durable operation identity, bounded retained outcomes and schema-3 compatibility |
 | [0018](0018-runtime-durable-recovery.md) | Bounded storage worker, session/entity completion fences, timeout and explicit durable reconciliation |
+| [0019](0019-durable-maintenance.md) | Explicit sequential database upgrades, required pre-upgrade backup and isolated restoration |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

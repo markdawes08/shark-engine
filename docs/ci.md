@@ -328,7 +328,7 @@ against 299 unchanged source/build/test inputs and 18 helpers. The
 [handoff](handoffs/08d-integrated-qualification.md) and
 [receipt](coverage/evidence/08d-integrated-qualification.json) record exact
 commands, the corrected file-case inventory and verification limits. M03
-separately owns live durability; M03a-d are complete and M03e is next.
+separately owns live durability; M03a-e are complete and M03f is next.
 
 ## Locked tools and hosted-image limits
 
@@ -394,7 +394,10 @@ CTests (89 native each, 82 WSL clients each, 61 WSL Servers each), ten additiona
 standalone Tools checks and protected package/API gates. M03d is also PASS:
 its [handoff](handoffs/M03d-runtime-recovery.md) records 567 full CPU CTests
 and 10 standalone Tools checks with protected package/API qualification.
-M03e database migration/restore is next; full REQ-M03 remains NOT_RUN.
+M03e database migration/restore is PASS: its
+[handoff](handoffs/M03e-migration-restoration.md) records 581 CPU CTests,
+10 standalone Tools checks and protected package/API gates.
+M03f integrated qualification is next; full REQ-M03 remains NOT_RUN.
 
 M03a adds the three storage families documented in [building](building.md#server-only-durable-storage).
 The Server build has a separate `storage` dependency domain; Core, Runtime and
@@ -406,9 +409,10 @@ reject missing/changed archives, sources, notices and unsupported overrides.
 The process fixture exercises a real database across restart, concurrent ownership,
 abrupt release, three initial-commit interruption phases and supported-version
 hot-journal rollback. Fixed seeds, pipe barriers, deadlines and JSON outcomes
-keep this noninteractive. Initial creation and rollback recovery are tested;
-full character/economy crash, outage,
-migration and restore qualification retains the [later M03 checkpoints](roadmap/durable-state-plan.md).
+keep this noninteractive. The character, economy, runtime recovery and maintenance
+families add their separate gates under the
+[M03 checkpoint plan](roadmap/durable-state-plan.md); full integrated acceptance
+remains M03f.
 Sanitizers must instrument both the storage C++ implementation and sqlite3.c.
 The Server package gains only `licenses/SQLite/LICENSE.txt`; SQLite shells, shared
 libraries, databases, journals and test probes are excluded. Runtime packages
@@ -635,8 +639,8 @@ simultaneous stale intents to one server owner; the same real database then
 reopens in a fresh process for retained retry and expiry checks. Business
 rejections consume durable identities, while session commands remain separately
 sequenced. The [public transaction example](durable-transactions.md) compiles
-without SQLite/TLS headers. Schema 3 explicitly rejects historical versions 1/2
-until M03e. M03d adds `shark.storage.recovery` (120 seconds, seed 1337) and
+without SQLite/TLS headers. Ordinary open explicitly rejects historical versions
+1/2; M03e supplies separate offline migration. M03d adds `shark.storage.recovery` (120 seconds, seed 1337) and
 `shark.storage.recovery-process` (240 seconds). Preserve all earlier families.
 Its 69-row process matrix requires 207 real children and observed native-VFS
 write/sync/full errors, with exact reopened/retried state and strict negative
@@ -644,3 +648,18 @@ receipt controls. Runtime service tests use actual mTLS, Scene references,
 controlled clocks and deterministic worker barriers. Compile the
 [public recovery example](durable-recovery.md) with public headers only, and
 verify the private worker/SQLite source closure and protected packages.
+
+M03e adds `shark.storage.migration` (120 seconds, seed 1337) and
+`shark.storage.migration-process` (240 seconds), preserving earlier families and
+their limits. Independent schema-1/2/3 fixtures and exact typed state checks
+qualify sequential upgrades, required pre-upgrade backups, idempotent commit
+reconciliation and create-only isolated restore. The process matrix requires
+66 rows / 200 real children and 24 negative receipt controls. Its two hot-journal
+rows observe a successful native main-file write during COMMIT, verify that
+read-only inspection rejects without changing either file, then recover and
+upgrade in a fresh process. The shared test VFS retains the earlier 69-row
+recovery contract. Compile the [public maintenance example](durable-maintenance.md)
+with public headers only; audit both probe copies of the VFS in sanitizer builds.
+Preserve exact backup contents, economic operation retention, revocations and
+fresh authentication across restored restart. An isolated old snapshot is not
+authority to roll back acknowledged state. Integrated acceptance remains M03f.
