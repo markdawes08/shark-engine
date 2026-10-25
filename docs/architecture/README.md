@@ -95,11 +95,13 @@ records 588 CPU CTests, 10 standalone Tools checks and protected gates.
 The [connected qualification](../durable-qualification.md) covers one real
 database lineage through authenticated operations, crash/outage recovery and
 isolated restore. Assignment 09 follows its [five authoring checkpoints](../roadmap/authoring-plan.md).
-09a and 09b are qualified under current-machine scope: shared single commands,
-bounded atomic batches and pure preview use the same authored owner. The
-[09b handoff](../handoffs/09b-atomic-batches.md) records 605 full CPU CTests,
-14 standalone Tools checks and protected package/API gates. Full REQ-09 remains
-NOT_RUN; 09c, Shared undo and redo, is next. Terminal adapters and editor UI
+09a through 09d are qualified under current-machine scope: shared single commands,
+atomic batches/preview, history and scoped retained retries use the same owner.
+The [09d handoff](../handoffs/09d-retained-retries.md) records 486 full CPU CTest
+executions, 20 standalone Tools checks, 21 public-example compiles and protected
+gates. Core/Server implementation is unchanged; full Server suites retain their
+historical 09c evidence until 09e. Full REQ-09 remains NOT_RUN; 09e, Integrated
+qualification, is next. Terminal adapters and editor UI
 retain their later owners;
 schema IDs do not establish file or gameplay-wire formats. The current-machine
 scope remains unchanged.
@@ -128,6 +130,7 @@ scope remains unchanged.
 | [0020](0020-shared-authoring-commands.md) | One authored-scene command owner, revisioned single edits, bounded outcomes and read-only inspection |
 | [0021](0021-atomic-authoring-batches.md) | Bounded atomic batches, pure preview and internal handle-preserving publication |
 | [0022](0022-shared-authoring-history.md) | Bounded shared undo/redo, revision/ticket conflicts and incarnation-safe restoration |
+| [0023](0023-retained-authoring-retries.md) | Owner-scoped sequenced mutations, bounded immutable outcomes and explicit expiry/restart reconciliation |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

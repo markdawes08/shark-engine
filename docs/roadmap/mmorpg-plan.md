@@ -150,7 +150,13 @@ Its [handoff](../handoffs/09b-atomic-batches.md) and
 [handoff](../handoffs/09c-shared-history.md) and
 [receipt](../coverage/evidence/09c-shared-history.json) record 610 full CPU CTests,
 16 standalone Tools checks, 18 public-example compiles and protected gates.
-Next in the [authoring plan](authoring-plan.md) is 09d, Safe retries and lost replies. Authored source saves and
+**09d is PASS under the current-machine scope.** Follow the
+[retry contract](../authoring-retries.md), [handoff](../handoffs/09d-retained-retries.md)
+and [receipt](../coverage/evidence/09d-retained-retries.json): 486 full CPU CTest
+executions, 20 additional standalone Tools checks, 21 public-example compiles,
+actual sanitizer objects and protected packages pass. Core/Server implementation
+is unchanged; their full Server suites remain historical until 09e.
+**Next: 09e, Integrated qualification. Full REQ-09 remains NOT_RUN.** Authored source saves and
 local editing do not provide live character or economy durability.
 The authoring APIs are not player messages and do not grant gameplay authority.
 Presentation stays in Client and cannot acquire authority over server time or world state.
@@ -231,7 +237,7 @@ validated sequential upgrades/backups, isolated restored restart and protected
 gates. M03f and full REQ-M03 are PASS: its [handoff](../handoffs/M03f-integrated-qualification.md)
 records 588 CPU CTests, 10 standalone Tools checks and protected gates.
 The connected lineage qualifies authenticated runtime operations, crash/outage
-reconciliation and isolated restored restart. 09a, 09b and 09c are qualified; 09d is next,
+reconciliation and isolated restored restart. 09a through 09d are qualified; 09e is next,
 separate from this completed durable-state gate.
 [ADR 0017](../architecture/0017-atomic-durable-transactions.md) advances the active
 schema to 3 and defines the economic operation lifetime.

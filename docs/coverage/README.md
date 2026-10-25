@@ -110,7 +110,13 @@ and `shark.core.scene-edit` (30 seconds), seed 1337. Full REQ-09 remains NOT_RUN
 and [receipt](evidence/09c-shared-history.json) record 610 full CPU CTests,
 16 standalone Tools checks, 18 public-example compiles, sanitizer audits and
 protected packages. Preserve `shark.tools.authoring-history` (60 seconds, seed1337).
-Full REQ-09 remains NOT_RUN. **Next: 09d, Safe retries and lost replies.**
+**09d is PASS under the current-machine scope.** Follow the
+[retry contract](../authoring-retries.md), [handoff](../handoffs/09d-retained-retries.md)
+and [receipt](../coverage/evidence/09d-retained-retries.json): 486 full CPU CTest
+executions, 20 additional standalone Tools checks, 21 public-example compiles,
+actual sanitizer objects and protected packages pass. Core/Server implementation
+is unchanged; their full Server suites remain historical until 09e.
+**Next: 09e, Integrated qualification. Full REQ-09 remains NOT_RUN.**
 
 `current_assignment: 09` follows the completed durable-state gate and
 [five network checkpoints](../roadmap/network-plan.md) and
@@ -159,8 +165,8 @@ Runtime/Server builds, source/link/license closure and fresh isolated package
 checks pass; all 221 qualification source inputs were unchanged in that record.
 M02a-M02e and full REQ-M02 are PASS under the current-machine scope.
 Assignment 08, Project and scene persistence, is complete: 08a-08d and full
-REQ-08 are PASS. M03 and all six checkpoints are complete; 09a and
-09b and 09c are qualified; 09d is the next authoring checkpoint.
+REQ-08 are PASS. M03 and all six checkpoints are complete; 09a,
+09b, 09c and 09d are qualified; 09e is the next authoring checkpoint.
 FeatureWorld integration remains assignment 10.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
@@ -384,7 +390,7 @@ pass against 299 unchanged inputs and 18 helpers. The
 including the corrected final file-case inventory. M03 separately owns live
 player/economy durability; its store, character, atomic transaction and runtime
 recovery, database maintenance and integrated qualification are complete;
-09a, 09b and 09c are qualified; 09d is the next authoring checkpoint.
+09a, 09b, 09c and 09d are qualified; 09e is the next authoring checkpoint.
 
 M03c maps `server.durable-transactions` to `shark.storage.transactions`,
 `shark.storage.transactions-process` and authenticated owner regressions in
@@ -445,5 +451,13 @@ CPU cases exercise grouped replay, source metadata/order, generation lifetimes,
 revision/ticket conflicts, redo invalidation, reconciliation, save/reload,
 entry/byte bounds and allocation rollback. Name/Transform and earlier commands
 connect to those fixtures. FeatureWorld/AuthoringCommands remains an external
-CPU-fixture justification until10. Retained retries and integrated qualification
-remain09d/09e; this does not add a terminal, editor or Lua adapter.
+CPU-fixture justification until10. 09d now supplies retained retries; integrated
+qualification remains09e. This does not add a terminal, editor or Lua adapter.
+
+09d maps mutation discovery/submission/outcome lookup to 25 retry cases and a
+three-process lost-reply/restart fixture, including strict independent source and
+receipt validation. Commands, atomic batches and history share the same owner.
+Exact payload matching, immutable terminal decisions, bounded FIFO retention and
+permanent expiry fencing preserve later edits. All three Result levels are
+explicit. FeatureWorld remains an external CPU-fixture justification until10;
+full REQ-09 remains NOT_RUN until09e.

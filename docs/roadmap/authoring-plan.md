@@ -15,7 +15,13 @@ Its [handoff](../handoffs/09c-shared-history.md) and
 [receipt](../coverage/evidence/09c-shared-history.json) record 610 full CPU CTests,
 16 standalone Tools checks, 18 public-example compiles, sanitizer audits and
 protected packages. Follow the [history contract](../authoring-history.md).
-**Next: 09d - Safe retries and lost replies. Full REQ-09 remains NOT_RUN.**
+**09d is PASS under the current-machine scope.** Follow the
+[retry contract](../authoring-retries.md), [handoff](../handoffs/09d-retained-retries.md)
+and [receipt](../coverage/evidence/09d-retained-retries.json): 486 full CPU CTest
+executions, 20 additional standalone Tools checks, 21 public-example compiles,
+actual sanitizer objects and protected packages pass. Core/Server implementation
+is unchanged; their full Server suites remain historical until 09e.
+**Next: 09e, Integrated qualification. Full REQ-09 remains NOT_RUN.**
 
 Follow [ADR 0008](../architecture/0008-human-agent-authoring.md),
 the [human/agent plan](human-agent-plan.md) and
@@ -123,3 +129,12 @@ examples compile on MSVC/GCC/Clang. Core changes refresh both Server profiles.
 Undo/redo preserve surviving handles and restore removed/replaced IDs with fresh
 generations; save retains history, successful activation clears it. Retained
 mutation identity, payload matching and lost-reply handling remain 09d.
+
+09d adds `shark.tools.authoring-retries` (60 seconds) and
+`shark.tools.authoring-retries-process` (90 seconds), both seed 1337. Preserve all
+previous inventories and the 512-allocation sweep ceilings. Its five full CPU
+profiles total 486 CTest executions, with 10 standalone authoring families per OS
+and seven public examples on MSVC/GCC/Clang. Core/Server implementation is unchanged;
+09e refreshes both full Server profiles. Owner UUID scope plus consecutive
+sequences and a nonrewinding watermark prevent expired identities from executing.
+Save/activation retain the ledger; new owners require reconciliation of old IDs.

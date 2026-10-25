@@ -3,6 +3,7 @@
 #include "shark/scene.hpp"
 #include "shark/tools/authored_commands.hpp"
 #include "shark/tools/authoring_history.hpp"
+#include "shark/tools/authoring_retries.hpp"
 #include "shark/tools/source_document.hpp"
 
 #include <functional>
@@ -40,7 +41,8 @@ class AuthoredScene final {
   public:
     [[nodiscard]] static Result<std::unique_ptr<AuthoredScene>>
     create(const ProjectDocument& project, const SceneDocument& scene, SceneLimits limits = {},
-           AuthoringHistoryLimits history_limits = {});
+           AuthoringHistoryLimits history_limits = {},
+           AuthoringMutationLimits mutation_limits = {});
     ~AuthoredScene();
     AuthoredScene(const AuthoredScene&) = delete;
     AuthoredScene& operator=(const AuthoredScene&) = delete;
@@ -70,6 +72,12 @@ class AuthoredScene final {
     // Explicit reconciliation after out-of-band Core changes. Does not change
     // scene values, dirty baseline or revision; tickets are never reused.
     [[nodiscard]] Result<AuthoringHistoryStatus> clear_history(SceneRevision expected_revision);
+    // Scoped, sequenced retry retention on this same owner. The original APIs
+    // remain ordinary nonretained calls. Save/activation do not reset this ledger.
+    [[nodiscard]] Result<AuthoringMutationStatus>
+    mutation_status(std::optional<SceneRevision> expected_revision = std::nullopt) const;
+    [[nodiscard]] Result<AuthoringMutationReply> mutation_outcome(AuthoringMutationId id) const;
+    [[nodiscard]] Result<AuthoringMutationReply> mutate(const AuthoringMutationRequest& request);
     // Bounded owned Core query pages, sharing the same owner/revision/cursors.
     [[nodiscard]] Result<SceneQueryPage>
     query_entities(const SceneQueryOptions& options = {}) const;

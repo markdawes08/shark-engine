@@ -7,6 +7,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include <array>
+#include <bit>
 #include <cmath>
 #include <cstddef>
 #include <cstdint>
@@ -76,8 +77,9 @@ SceneDocument source() {
 }
 
 std::unique_ptr<AuthoredScene> owner(const SceneDocument& document = source(),
-                                     SceneLimits limits = {}, AuthoringHistoryLimits history = {}) {
-    return take(AuthoredScene::create(project(), document, limits, history));
+                                     SceneLimits limits = {}, AuthoringHistoryLimits history = {},
+                                     AuthoringMutationLimits mutations = {}) {
+    return take(AuthoredScene::create(project(), document, limits, history, mutations));
 }
 
 const Scene& live(const AuthoredScene& value) {
@@ -1652,4 +1654,624 @@ TEST_CASE("history capture retains the source aggregate extras limit for new ent
     command_rejected(*value, CreateEntityCommand{id<AuthoredEntityId>(1000)},
                      ErrorCode::invalid_configuration);
     CHECK(history(*value).undo_entries == 0);
+}
+
+namespace {
+AuthoringMutationStatus ledger(const AuthoredScene& value) {
+    return take(value.mutation_status());
+}
+AuthoringMutationRequest request(const AuthoredScene& value, AuthoringMutation mutation) {
+    const auto current = ledger(value);
+    REQUIRE(current.next);
+    return {*current.next, current.revision, std::move(mutation)};
+}
+AuthoringMutationRequest rename_request(const AuthoredScene& value, std::string name = "Retry") {
+    return request(value,
+                   AuthoringCommand{SetNameCommand{id<AuthoredEntityId>(40), {std::move(name)}}});
+}
+std::shared_ptr<const AuthoringMutationOutcome> recorded(AuthoredScene& value,
+                                                         const AuthoringMutationRequest& input) {
+    auto reply = take(value.mutate(input));
+    REQUIRE(reply.state == AuthoringMutationState::recorded);
+    REQUIRE(reply.outcome);
+    CHECK(reply.id == input.id);
+    CHECK(reply.observed_revision == status(value).revision);
+    return std::move(reply.outcome).value();
+}
+void mutation_denied(AuthoredScene& value, const AuthoringMutationRequest& input,
+                     AuthoringMutationState expected) {
+    const auto before = capture(value);
+    const auto old = history(value);
+    const auto high = ledger(value).high_watermark;
+    const auto reply = take(value.mutate(input));
+    CHECK(reply.state == expected);
+    rejected(reply.outcome,
+             expected == AuthoringMutationState::not_admitted && input.id.sequence == 0
+                 ? ErrorCode::invalid_argument
+                 : ErrorCode::conflict);
+    CHECK(reply.observed_revision == before.revision);
+    same_capture(capture(value), before);
+    same_history(history(value), old);
+    CHECK(ledger(value).high_watermark == high);
+}
+} // namespace
+
+TEST_CASE("mutation discovery exposes bounded owner scope and sequenced admission",
+          "[authoring-retries]") {
+    auto value = owner();
+    const auto current = ledger(*value);
+    CHECK(current.high_watermark == 0);
+    CHECK(current.retained_entries == 0);
+    CHECK(current.retained_bytes == 0);
+    CHECK_FALSE(current.oldest_retained);
+    REQUIRE(current.next);
+    CHECK(current.next->sequence == 1);
+    CHECK(current.next->scope == current.scope);
+    CHECK(current.limits.max_entries == 32);
+    CHECK(current.limits.max_retained_bytes == 8 * 1024 * 1024);
+    CHECK(ledger(*owner()).scope != current.scope);
+    auto stale = current.revision;
+    ++stale.revision;
+    rejected(value->mutation_status(stale), ErrorCode::conflict);
+    for (auto invalid : {AuthoringMutationLimits{0, 1024},
+                         {65, 1024},
+                         {1, 0},
+                         {1, authoring_maximum_mutation_bytes + 1}}) {
+        rejected(AuthoredScene::create(project(), source(), {}, {}, invalid),
+                 ErrorCode::invalid_configuration);
+    }
+}
+
+TEST_CASE("lost single reply replays original immutable result after unrelated edits",
+          "[authoring-retries]") {
+    auto value = owner();
+    const auto input = rename_request(*value, "Original");
+    const auto original = recorded(*value, input);
+    REQUIRE(original->result);
+    CHECK(original->result.value().changed);
+    const auto old_revision = original->observed_revision;
+    edit_name(*value, "Later unrelated edit");
+    const auto before = capture(*value);
+    const auto old_history = history(*value);
+    const auto replay = take(value->mutate(input));
+    REQUIRE(replay.outcome);
+    CHECK(replay.state == AuthoringMutationState::replayed);
+    CHECK(replay.outcome.value() == original);
+    CHECK(replay.outcome.value()->observed_revision == old_revision);
+    CHECK(replay.observed_revision == before.revision);
+    same_capture(capture(*value), before);
+    same_history(history(*value), old_history);
+    const auto query = take(value->mutation_outcome(input.id));
+    REQUIRE(query.outcome);
+    CHECK(query.state == AuthoringMutationState::retained);
+    CHECK(query.outcome.value() == original);
+    CHECK(query.observed_revision == before.revision);
+}
+
+TEST_CASE("batch retry ignores correlation but matches ordered operations", "[authoring-retries]") {
+    auto value = owner();
+    auto input = request(*value, batch({CreateEntityCommand{id<AuthoredEntityId>(50), {"New"}},
+                                        SetNameCommand{id<AuthoredEntityId>(40), {"Batch"}}}));
+    auto original = recorded(*value, input);
+    REQUIRE(original->result);
+    CHECK(history(*value).undo_entries == 1);
+    CHECK(status(*value).revision.revision == input.expected_revision.revision + 1);
+    std::get<AuthoringBatch>(input.mutation).id = id<AuthoringBatchId>(200);
+    auto replay = take(value->mutate(input));
+    REQUIRE(replay.outcome);
+    CHECK(replay.outcome.value() == original);
+    auto& commands = std::get<AuthoringBatch>(input.mutation).commands;
+    std::swap(commands[0], commands[1]);
+    mutation_denied(*value, input, AuthoringMutationState::payload_mismatch);
+}
+
+TEST_CASE("retained terminal batch rejection preserves original diagnostic correlation",
+          "[authoring-retries]") {
+    auto value = owner();
+    auto input = request(*value, batch({SetNameCommand{id<AuthoredEntityId>(40), {"Transient"}},
+                                        DeleteEntityCommand{id<AuthoredEntityId>(999)}}));
+    const auto before = capture(*value);
+    const auto original_id = std::get<AuthoringBatch>(input.mutation).id.value().to_string();
+    auto original = recorded(*value, input);
+    rejected(original->result, ErrorCode::invalid_id);
+    CHECK(original->result.error().context.request_id == original_id);
+    CHECK(original->result.error().context.path == "/commands/1");
+    same_capture(capture(*value), before);
+    std::get<AuthoringBatch>(input.mutation).id = id<AuthoringBatchId>(300);
+    auto replay = take(value->mutate(input));
+    REQUIRE(replay.outcome);
+    CHECK(replay.outcome.value() == original);
+    CHECK(ledger(*value).high_watermark == 1);
+    CHECK(history(*value).undo_entries == 0);
+}
+
+TEST_CASE("retries retain noops and failures even when later state would succeed",
+          "[authoring-retries]") {
+    auto value = owner();
+    auto noop = rename_request(*value, "Entity 40");
+    auto no_effect = recorded(*value, noop);
+    REQUIRE(no_effect->result);
+    CHECK_FALSE(no_effect->result.value().changed);
+    CHECK_FALSE(status(*value).dirty);
+    auto missing =
+        request(*value, AuthoringCommand{SetNameCommand{id<AuthoredEntityId>(50), {"Missing"}}});
+    auto failure = recorded(*value, missing);
+    rejected(failure->result, ErrorCode::invalid_id);
+    changed(*value, CreateEntityCommand{id<AuthoredEntityId>(50), {"Later"}},
+            {id<AuthoredEntityId>(50)});
+    const auto before = capture(*value);
+    REQUIRE(take(value->mutate(missing)).outcome.value() == failure);
+    REQUIRE(take(value->mutate(noop)).outcome.value() == no_effect);
+    same_capture(capture(*value), before);
+    CHECK(state(*value, 50).name.value == "Later");
+}
+
+TEST_CASE("mutation mismatch includes expected revision type and every command field",
+          "[authoring-retries]") {
+    const std::vector<std::pair<AuthoringCommand, AuthoringCommand>> pairs{
+        {CreateEntityCommand{id<AuthoredEntityId>(50), {"A"}},
+         CreateEntityCommand{id<AuthoredEntityId>(51), {"A"}}},
+        {CreateEntityCommand{id<AuthoredEntityId>(50), {"A"}},
+         CreateEntityCommand{id<AuthoredEntityId>(50), {"B"}}},
+        {CreateEntityCommand{id<AuthoredEntityId>(50)},
+         CreateEntityCommand{id<AuthoredEntityId>(50), {}, {}, id<AuthoredEntityId>(40)}},
+        {SetNameCommand{id<AuthoredEntityId>(40), {"A"}},
+         SetNameCommand{id<AuthoredEntityId>(40), {"B"}}},
+        {DeleteEntityCommand{id<AuthoredEntityId>(40)},
+         DeleteEntityCommand{id<AuthoredEntityId>(30)}},
+        {ReparentEntityCommand{id<AuthoredEntityId>(40), id<AuthoredEntityId>(10)},
+         ReparentEntityCommand{id<AuthoredEntityId>(40), id<AuthoredEntityId>(30)}},
+        {ReparentEntityCommand{id<AuthoredEntityId>(40), id<AuthoredEntityId>(10)},
+         ReparentEntityCommand{id<AuthoredEntityId>(40), id<AuthoredEntityId>(10),
+                               ReparentMode::keep_world}},
+        {SetNameCommand{id<AuthoredEntityId>(40), {"A"}},
+         DeleteEntityCommand{id<AuthoredEntityId>(40)}}};
+    for (const auto& [left, right] : pairs) {
+        auto value = owner();
+        auto input = request(*value, left);
+        REQUIRE(recorded(*value, input)->result);
+        auto altered = input;
+        altered.mutation = right;
+        mutation_denied(*value, altered, AuthoringMutationState::payload_mismatch);
+        ++input.expected_revision.revision;
+        mutation_denied(*value, input, AuthoringMutationState::payload_mismatch);
+    }
+    for (std::size_t field = 0; field < 10; ++field) {
+        auto value = owner();
+        Transform original;
+        auto input = request(
+            *value, AuthoringCommand{SetTransformCommand{id<AuthoredEntityId>(40), original}});
+        REQUIRE(recorded(*value, input)->result);
+        std::array<double*, 10> fields{&original.translation.x, &original.translation.y,
+                                       &original.translation.z, &original.rotation.x,
+                                       &original.rotation.y,    &original.rotation.z,
+                                       &original.rotation.w,    &original.scale.x,
+                                       &original.scale.y,       &original.scale.z};
+        *fields[field] += 0.125;
+        input.mutation = AuthoringCommand{SetTransformCommand{id<AuthoredEntityId>(40), original}};
+        mutation_denied(*value, input, AuthoringMutationState::payload_mismatch);
+    }
+}
+
+TEST_CASE("mutation payload equality preserves floating point bits including invalid inputs",
+          "[authoring-retries]") {
+    auto value = owner();
+    Transform transform;
+    auto input =
+        request(*value, AuthoringCommand{SetTransformCommand{id<AuthoredEntityId>(40), transform}});
+    REQUIRE(recorded(*value, input)->result);
+    transform.translation.x = -0.0;
+    input.mutation = AuthoringCommand{SetTransformCommand{id<AuthoredEntityId>(40), transform}};
+    mutation_denied(*value, input, AuthoringMutationState::payload_mismatch);
+    transform.translation.x = std::bit_cast<double>(std::uint64_t{0x7ff8000000000001});
+    auto invalid =
+        request(*value, AuthoringCommand{SetTransformCommand{id<AuthoredEntityId>(40), transform}});
+    auto failure = recorded(*value, invalid);
+    REQUIRE_FALSE(failure->result);
+    CHECK(take(value->mutate(invalid)).outcome.value() == failure);
+    transform.translation.x = std::bit_cast<double>(std::uint64_t{0x7ff8000000000002});
+    invalid.mutation = AuthoringCommand{SetTransformCommand{id<AuthoredEntityId>(40), transform}};
+    mutation_denied(*value, invalid, AuthoringMutationState::payload_mismatch);
+}
+
+TEST_CASE("undo redo and clear lost replies preserve shared history exactly once",
+          "[authoring-retries]") {
+    auto value = owner();
+    edit_name(*value, "First");
+    auto undo = request(*value, UndoAuthoringMutation{history(*value).next_undo->ticket});
+    auto undone = recorded(*value, undo);
+    REQUIRE(undone->result);
+    const auto redo_ticket = history(*value).next_redo->ticket;
+    auto redo = request(*value, RedoAuthoringMutation{redo_ticket});
+    auto redone = recorded(*value, redo);
+    REQUIRE(redone->result);
+    auto clear = request(*value, ClearAuthoringHistoryMutation{});
+    auto cleared = recorded(*value, clear);
+    REQUIRE(cleared->result);
+    CHECK(cleared->result.value().changed);
+    REQUIRE(cleared->history_after);
+    CHECK(cleared->history_after->undo_entries == 0);
+    CHECK(cleared->observed_revision == clear.expected_revision);
+    edit_name(*value, "Later");
+    const auto before = capture(*value);
+    const auto current = history(*value);
+    CHECK(take(value->mutate(undo)).outcome.value() == undone);
+    CHECK(take(value->mutate(redo)).outcome.value() == redone);
+    CHECK(take(value->mutate(clear)).outcome.value() == cleared);
+    same_capture(capture(*value), before);
+    same_history(history(*value), current);
+    ++std::get<UndoAuthoringMutation>(undo.mutation).ticket.value;
+    mutation_denied(*value, undo, AuthoringMutationState::payload_mismatch);
+    redo.mutation = ClearAuthoringHistoryMutation{};
+    mutation_denied(*value, redo, AuthoringMutationState::payload_mismatch);
+}
+
+TEST_CASE("empty clear is retained and later history cannot make its retry destructive",
+          "[authoring-retries]") {
+    auto value = owner();
+    auto input = request(*value, ClearAuthoringHistoryMutation{});
+    auto result = recorded(*value, input);
+    REQUIRE(result->result);
+    CHECK_FALSE(result->result.value().changed);
+    edit_name(*value, "Survives");
+    CHECK(take(value->mutate(input)).outcome.value() == result);
+    CHECK(history(*value).undo_entries == 1);
+}
+
+TEST_CASE("failed history operation is retained across later available history",
+          "[authoring-retries]") {
+    auto value = owner();
+    auto input = request(*value, UndoAuthoringMutation{{1}});
+    auto failure = recorded(*value, input);
+    rejected(failure->result, ErrorCode::conflict);
+    edit_name(*value, "Now undoable");
+    const auto current = history(*value);
+    CHECK(take(value->mutate(input)).outcome.value() == failure);
+    same_history(history(*value), current);
+}
+
+TEST_CASE("entry eviction permanently expires identities without dropping external results",
+          "[authoring-retries]") {
+    auto value = owner(source(), {}, {}, {2, authoring_maximum_mutation_bytes});
+    auto first = rename_request(*value, "First");
+    auto retained = recorded(*value, first);
+    auto second = rename_request(*value, "Second");
+    REQUIRE(recorded(*value, second)->result);
+    REQUIRE(recorded(*value, rename_request(*value, "Third"))->result);
+    auto current = ledger(*value);
+    CHECK(current.retained_entries == 2);
+    CHECK(current.high_watermark == 3);
+    CHECK(current.oldest_retained == second.id);
+    CHECK(take(value->mutation_outcome(first.id)).state == AuthoringMutationState::unknown_outcome);
+    mutation_denied(*value, first, AuthoringMutationState::unknown_outcome);
+    first.expected_revision = current.revision;
+    mutation_denied(*value, first, AuthoringMutationState::unknown_outcome);
+    first.mutation =
+        AuthoringCommand{SetNameCommand{id<AuthoredEntityId>(40), {std::string(5000, 'a')}}};
+    mutation_denied(*value, first, AuthoringMutationState::unknown_outcome);
+    CHECK(retained->result.value().changed);
+    value.reset();
+    CHECK(retained->id.sequence == 1);
+    CHECK(retained->result.value().affected_entities == std::vector{id<AuthoredEntityId>(40)});
+}
+
+TEST_CASE("byte retention evicts whole outcomes and rejects an individually oversized entry",
+          "[authoring-retries]") {
+    auto measure = owner();
+    REQUIRE(recorded(*measure, rename_request(*measure, "Small"))->result);
+    const auto one = ledger(*measure).retained_bytes;
+    auto value = owner(source(), {}, {}, {64, one + 64});
+    auto first = rename_request(*value, "Small");
+    REQUIRE(recorded(*value, first)->result);
+    REQUIRE(recorded(*value, rename_request(*value, "Small"))->result);
+    CHECK(ledger(*value).retained_entries == 1);
+    CHECK(ledger(*value).high_watermark == 2);
+    mutation_denied(*value, first, AuthoringMutationState::unknown_outcome);
+    const auto high = ledger(*value).high_watermark;
+    auto large = rename_request(*value, std::string(3000, 'a'));
+    mutation_denied(*value, large, AuthoringMutationState::not_admitted);
+    CHECK(ledger(*value).high_watermark == high);
+    CHECK(ledger(*value).retained_entries == 1);
+    CHECK(ledger(*value).retained_bytes <= one + 64);
+}
+
+TEST_CASE("unknown foreign scope cannot execute even at the current revision",
+          "[authoring-retries]") {
+    auto first = owner();
+    auto input = rename_request(*first);
+    REQUIRE(recorded(*first, input)->result);
+    auto restarted = owner(capture(*first).scene);
+    input.expected_revision = status(*restarted).revision;
+    mutation_denied(*restarted, input, AuthoringMutationState::unknown_outcome);
+    CHECK(take(restarted->mutation_outcome(input.id)).state ==
+          AuthoringMutationState::unknown_outcome);
+    CHECK(ledger(*restarted).high_watermark == 0);
+}
+
+TEST_CASE("sequence gaps zero and never admitted queries cannot consume identity",
+          "[authoring-retries]") {
+    auto value = owner();
+    auto input = rename_request(*value);
+    CHECK(take(value->mutation_outcome(input.id)).state == AuthoringMutationState::not_recorded);
+    input.id.sequence = 3;
+    mutation_denied(*value, input, AuthoringMutationState::out_of_order);
+    CHECK(take(value->mutation_outcome(input.id)).state == AuthoringMutationState::not_recorded);
+    input.id.sequence = 0;
+    mutation_denied(*value, input, AuthoringMutationState::not_admitted);
+    CHECK(take(value->mutation_outcome(input.id)).state == AuthoringMutationState::not_admitted);
+    input.id.sequence = 1;
+    REQUIRE(recorded(*value, input)->result);
+}
+
+TEST_CASE("sequence exhaustion never wraps or permits reexecution", "[authoring-retries]") {
+    auto value = owner();
+    REQUIRE(detail::AuthoredSceneTestAccess::mutation_watermark(
+        *value, std::numeric_limits<std::uint64_t>::max() - 1));
+    auto input = rename_request(*value);
+    CHECK(input.id.sequence == std::numeric_limits<std::uint64_t>::max());
+    auto original = recorded(*value, input);
+    CHECK_FALSE(ledger(*value).next);
+    CHECK(take(value->mutate(input)).outcome.value() == original);
+    input.id.sequence = 1;
+    mutation_denied(*value, input, AuthoringMutationState::unknown_outcome);
+}
+
+TEST_CASE("bounded invalid names are retained while oversized envelopes are never admitted",
+          "[authoring-retries]") {
+    auto value = owner();
+    auto invalid = rename_request(*value, std::string(300, 'a'));
+    auto failure = recorded(*value, invalid);
+    REQUIRE_FALSE(failure->result);
+    CHECK(take(value->mutate(invalid)).outcome.value() == failure);
+    for (const auto size : {authoring_maximum_mutation_name_bytes + 1, std::size_t{100000}}) {
+        auto large = rename_request(*value, std::string(size, 'a'));
+        auto result = take(value->mutate(large));
+        CHECK(result.state == AuthoringMutationState::not_admitted);
+        rejected(result.outcome, ErrorCode::invalid_argument);
+        CHECK(ledger(*value).high_watermark == 1);
+    }
+    auto commands =
+        std::vector<AuthoringCommand>(257, DeleteEntityCommand{id<AuthoredEntityId>(40)});
+    auto too_many = request(*value, AuthoringBatch{id<AuthoringBatchId>(10), std::move(commands)});
+    CHECK(take(value->mutate(too_many)).state == AuthoringMutationState::not_admitted);
+    commands.assign(256, SetNameCommand{id<AuthoredEntityId>(40), {std::string(4096, 'a')}});
+    auto too_large = request(*value, AuthoringBatch{id<AuthoringBatchId>(10), std::move(commands)});
+    CHECK(take(value->mutate(too_large)).state == AuthoringMutationState::not_admitted);
+    CHECK(ledger(*value).high_watermark == 1);
+}
+
+TEST_CASE("stale revision failures retain the initial decision without retrying against new state",
+          "[authoring-retries]") {
+    auto value = owner();
+    auto input = rename_request(*value);
+    edit_name(*value, "Intervening");
+    const auto before = capture(*value);
+    auto failure = recorded(*value, input);
+    rejected(failure->result, ErrorCode::conflict);
+    CHECK(failure->observed_revision == before.revision);
+    input.expected_revision = before.revision;
+    mutation_denied(*value, input, AuthoringMutationState::payload_mismatch);
+    same_capture(capture(*value), before);
+}
+
+TEST_CASE("activation and save retain owner scope watermark and original outcomes",
+          "[authoring-retries]") {
+    FileFixture fixture;
+    auto files = take(ProjectFiles::open(fixture.root));
+    auto value = owner();
+    const auto input = rename_request(*value);
+    auto original = recorded(*value, input);
+    REQUIRE(files->save_scene(*value, status(*value).revision, std::nullopt));
+    CHECK_FALSE(status(*value).dirty);
+    auto replacement = source();
+    replacement.entities.back().name.value = "Activated";
+    REQUIRE(value->activate(replacement, status(*value).revision));
+    CHECK(ledger(*value).scope == input.id.scope);
+    CHECK(ledger(*value).high_watermark == 1);
+    CHECK(history(*value).undo_entries == 0);
+    auto replay = take(value->mutate(input));
+    CHECK(replay.outcome.value() == original);
+    CHECK(replay.observed_revision != original->observed_revision);
+    CHECK(state(*value, 40).name.value == "Activated");
+    CHECK_FALSE(status(*value).dirty);
+}
+
+TEST_CASE("ordinary calls share history but neither consume nor reset retry identities",
+          "[authoring-retries]") {
+    auto value = owner();
+    auto input = rename_request(*value);
+    auto original = recorded(*value, input);
+    edit_name(*value, "Ordinary");
+    move_history(*value);
+    REQUIRE(value->clear_history(status(*value).revision));
+    CHECK(ledger(*value).high_watermark == 1);
+    CHECK(take(value->mutate(input)).outcome.value() == original);
+    CHECK(history(*value).undo_entries == 0);
+}
+
+TEST_CASE("retained replies bypass pending visit and out of sync fences without mutations",
+          "[authoring-retries]") {
+    auto value = owner();
+    auto input = rename_request(*value);
+    auto original = recorded(*value, input);
+    auto& raw = fixture_scene(*value);
+    REQUIRE(raw.set_name(find(*value, 40), {"Outside"}));
+    CHECK_FALSE(history(*value).synchronized);
+    CHECK(take(value->mutate(input)).outcome.value() == original);
+    REQUIRE(raw.visit_entities([&](const EntityReference&) -> Result<void> {
+        CHECK(take(value->mutate(input)).outcome.value() == original);
+        CHECK(take(value->mutation_outcome(input.id)).outcome.value() == original);
+        return {};
+    }));
+    auto pending = raw.defer_set_name(find(*value, 40), {"Pending"});
+    REQUIRE(pending);
+    CHECK(take(value->mutate(input)).outcome.value() == original);
+    CHECK(status(*value).pending_mutations == 1);
+}
+
+TEST_CASE("new requests during pending work retain their terminal rejection",
+          "[authoring-retries]") {
+    auto value = owner();
+    auto input = rename_request(*value);
+    auto& raw = fixture_scene(*value);
+    REQUIRE(raw.defer_set_name(find(*value, 40), {"Deferred"}));
+    auto failure = recorded(*value, input);
+    rejected(failure->result, ErrorCode::conflict);
+    REQUIRE(raw.apply_deferred());
+    CHECK(take(value->mutate(input)).outcome.value() == failure);
+    CHECK(state(*value, 40).name.value == "Deferred");
+}
+
+TEST_CASE("retry methods reject foreign threads and closed owners before accessing ledger",
+          "[authoring-retries]") {
+    auto value = owner();
+    const auto input = rename_request(*value);
+    REQUIRE(recorded(*value, input)->result);
+    std::array<bool, 3> denied{};
+    std::thread worker([&] {
+        denied[0] = !value->mutation_status();
+        denied[1] = !value->mutation_outcome(input.id);
+        denied[2] = !value->mutate(input);
+    });
+    worker.join();
+    for (auto result : denied)
+        CHECK(result);
+    REQUIRE(fixture_scene(*value).close());
+    rejected(value->mutation_status(), ErrorCode::conflict);
+    rejected(value->mutation_outcome(input.id), ErrorCode::conflict);
+    rejected(value->mutate(input), ErrorCode::conflict);
+}
+
+TEST_CASE("mutation admission allocation faults do not evict or consume the next sequence",
+          "[authoring-retries]") {
+    for (unsigned mode = 0; mode < 6; ++mode) {
+        CAPTURE(mode);
+        bool exhausted = false;
+        std::size_t faults = 0;
+        for (std::size_t index = 0; index < 512; ++index) {
+            auto value = owner(source(), {}, {}, {1, authoring_maximum_mutation_bytes});
+            auto first = rename_request(*value, "Before");
+            auto original = recorded(*value, first);
+            auto input = rename_request(*value, "After");
+            if (mode == 1)
+                input.mutation = batch({SetNameCommand{id<AuthoredEntityId>(40), {"After"}},
+                                        DeleteEntityCommand{id<AuthoredEntityId>(30)}});
+            if (mode == 2)
+                input.mutation = AuthoringCommand{DeleteEntityCommand{id<AuthoredEntityId>(40)}};
+            if (mode == 3)
+                input.mutation = UndoAuthoringMutation{history(*value).next_undo->ticket};
+            if (mode == 4) {
+                move_history(*value);
+                input = request(*value, RedoAuthoringMutation{history(*value).next_redo->ticket});
+            }
+            if (mode == 5)
+                input.mutation = ClearAuthoringHistoryMutation{};
+            const auto before = capture(*value);
+            const auto old = history(*value);
+#ifdef _WIN32
+            REQUIRE(detail::AuthoredSceneTestAccess::fail_mutation_after(*value, index));
+#else
+            shark::test::allocation_fault::arm(index);
+#endif
+            auto reply = value->mutate(input);
+#ifdef _WIN32
+            const bool fired =
+                !reply || (reply.value().outcome && !reply.value().outcome.value()->result);
+#else
+            const bool fired = shark::test::allocation_fault::disarm();
+#endif
+            if (fired) {
+                ++faults;
+                if (!reply) {
+                    CHECK(ledger(*value).high_watermark == 1);
+                    CHECK(take(value->mutation_outcome(first.id)).outcome.value() == original);
+                    same_capture(capture(*value), before);
+                    same_history(history(*value), old);
+                } else {
+                    // Once dispatched, a terminal operation failure is retained.
+                    REQUIRE(reply.value().outcome);
+                    REQUIRE_FALSE(reply.value().outcome.value()->result);
+                    CHECK(ledger(*value).high_watermark == 2);
+                    CHECK(take(value->mutate(input)).outcome.value() ==
+                          reply.value().outcome.value());
+                    same_capture(capture(*value), before);
+                    same_history(history(*value), old);
+                }
+            } else {
+                REQUIRE(reply);
+                REQUIRE(reply.value().outcome);
+                REQUIRE(reply.value().outcome.value()->result);
+                if (mode <= 1)
+                    CHECK(state(*value, 40).name.value == "After");
+                if (mode == 2)
+                    CHECK_FALSE(live(*value).find(id<AuthoredEntityId>(40)));
+                if (mode == 3)
+                    CHECK(state(*value, 40).name.value == "Entity 40");
+                if (mode == 4)
+                    CHECK(state(*value, 40).name.value == "Before");
+                if (mode == 5) {
+                    CHECK(history(*value).undo_entries == 0);
+                    CHECK(status(*value).revision == before.revision);
+                }
+                CHECK(ledger(*value).high_watermark == 2);
+                exhausted = true;
+                break;
+            }
+        }
+        CHECK(exhausted);
+#ifdef _WIN32
+        CHECK(faults >= 6);
+#else
+        // Clear only allocates the retained entry and outcome. All other
+        // operations also allocate their private candidate/history preparation.
+        CHECK(faults >= (mode == 5 ? 2 : 5));
+#endif
+    }
+}
+
+TEST_CASE("all retained edit kinds preserve a later incarnation on replay", "[authoring-retries]") {
+    auto value = owner();
+    std::vector<AuthoringMutationRequest> inputs;
+    std::vector<std::shared_ptr<const AuthoringMutationOutcome>> outcomes;
+    const auto apply = [&](AuthoringCommand command) {
+        inputs.push_back(request(*value, std::move(command)));
+        outcomes.push_back(recorded(*value, inputs.back()));
+        REQUIRE(outcomes.back()->result);
+    };
+    apply(CreateEntityCommand{id<AuthoredEntityId>(50), {"Created"}});
+    apply(SetNameCommand{id<AuthoredEntityId>(50), {"Renamed"}});
+    Transform moved;
+    moved.translation.x = 3.0;
+    apply(SetTransformCommand{id<AuthoredEntityId>(50), moved});
+    apply(ReparentEntityCommand{id<AuthoredEntityId>(50), id<AuthoredEntityId>(40)});
+    apply(DeleteEntityCommand{id<AuthoredEntityId>(50)});
+    changed(*value, CreateEntityCommand{id<AuthoredEntityId>(50), {"Later incarnation"}},
+            {id<AuthoredEntityId>(50)});
+    const auto handle = find(*value, 50);
+    const auto before = capture(*value);
+    const auto old = history(*value);
+    for (std::size_t index = 0; index < inputs.size(); ++index) {
+        CHECK(take(value->mutate(inputs[index])).outcome.value() == outcomes[index]);
+    }
+    same_capture(capture(*value), before);
+    same_history(history(*value), old);
+    CHECK(find(*value, 50) == handle);
+    auto& created =
+        std::get<CreateEntityCommand>(std::get<AuthoringCommand>(inputs.front().mutation));
+    created.transform.translation.z = 1.0;
+    mutation_denied(*value, inputs.front(), AuthoringMutationState::payload_mismatch);
+}
+
+TEST_CASE("retained request owns exact name bytes after caller storage is reused",
+          "[authoring-retries]") {
+    auto value = owner();
+    auto input = rename_request(*value, "Original owned name long enough to allocate");
+    const auto exact = input;
+    const auto original = recorded(*value, input);
+    std::get<SetNameCommand>(std::get<AuthoringCommand>(input.mutation))
+        .name.value.assign(200, 'x');
+    mutation_denied(*value, input, AuthoringMutationState::payload_mismatch);
+    input = rename_request(*value, "Another intent");
+    CHECK(take(value->mutate(exact)).outcome.value() == original);
+    CHECK(state(*value, 40).name.value == "Original owned name long enough to allocate");
 }

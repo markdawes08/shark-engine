@@ -147,6 +147,8 @@ if(TARGET EngineTools)
     target_include_directories(AuthoringCommandTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
     shark_configure_target(AuthoringCommandTests)
     shark_classify_target(AuthoringCommandTests test)
+    add_test(NAME shark.tools.authoring-retries COMMAND AuthoringCommandTests "[authoring-retries]" --rng-seed 1337)
+    set_tests_properties(shark.tools.authoring-retries PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
     add_test(NAME shark.tools.authoring-history COMMAND AuthoringCommandTests "[authoring-history]" --rng-seed 1337)
     set_tests_properties(shark.tools.authoring-history PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
     add_test(NAME shark.tools.authoring-batches COMMAND AuthoringCommandTests "[authoring-batches]" --rng-seed 1337)
@@ -177,6 +179,11 @@ if(TARGET EngineTools)
     target_include_directories(ProjectFilesProcess PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
     shark_configure_target(ProjectFilesProcess)
     shark_classify_target(ProjectFilesProcess test)
+
+    add_executable(AuthoringRetryProbe authoring_retry_probe.cpp)
+    target_link_libraries(AuthoringRetryProbe PRIVATE EngineTools)
+    shark_configure_target(AuthoringRetryProbe)
+    shark_classify_target(AuthoringRetryProbe test)
 endif()
 
 # Explicit registration avoids executing a sanitizer binary during the build.
@@ -462,6 +469,14 @@ if(TARGET ProjectFilesProcess)
             --probe "$<TARGET_FILE:ProjectFilesProcess>"
             --output "${CMAKE_CURRENT_BINARY_DIR}/project-files-process.json")
     set_tests_properties(shark.tools.project-files-process PROPERTIES LABELS "cpu;tooling;integration" TIMEOUT 90)
+endif()
+
+if(TARGET AuthoringRetryProbe)
+    add_test(NAME shark.tools.authoring-retries-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_authoring_retries_process.py"
+            --probe "$<TARGET_FILE:AuthoringRetryProbe>"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/authoring-retries-process.json" --rng-seed 1337)
+    set_tests_properties(shark.tools.authoring-retries-process PROPERTIES LABELS "cpu;tooling;integration" TIMEOUT 90)
 endif()
 add_executable(NetworkProbe network_probe.cpp)
 target_link_libraries(NetworkProbe PRIVATE EngineCore)

@@ -129,7 +129,20 @@ survivors retain handles, and out-of-band writes require explicit reconciliation
 Preserve `shark.tools.authoring-history` (60 seconds, seed 1337), the original
 4096-entity/4095-delete sparse fixture and all earlier cases/limits. Metadata
 capture/restoration and Core record copying must grow together with components.
-**Next: 09d, Safe retries and lost replies. Full REQ-09 remains NOT_RUN.**
+**09d is complete under the current-machine scope.** Follow
+[ADR 0023](docs/architecture/0023-retained-authoring-retries.md), the
+[retry contract](docs/authoring-retries.md),
+[handoff](docs/handoffs/09d-retained-retries.md) and
+[receipt](docs/coverage/evidence/09d-retained-retries.json): 486 full CPU CTest
+executions, 20 standalone Tools checks, 21 public-example compiles, actual
+sanitizer objects and protected package gates pass. Retained mutations use a fresh
+owner UUID scope and consecutive sequences; watermark survives eviction, save,
+activation and history clearing. Foreign/expired identities require reconciliation,
+never blind repetition. Check all three Result levels on mutate: outer access,
+reply outcome and original operation result. Preserve both retry families (60/90
+seconds, seed 1337), all six allocation sweeps and every earlier case/limit.
+Extend exact input comparison and retained charges whenever command fields grow.
+**Next: 09e, Integrated qualification. Full REQ-09 remains NOT_RUN.**
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read
@@ -462,7 +475,7 @@ provides source persistence through the shared capture/activation and file servi
 Ordinary edits preserve Scene incarnation and the saved baseline; activation is
 explicit replacement, never a shortcut for commands. 09b adds bounded atomic
 batches and pure preview through an internal Core candidate/publication port.
-Shared history and retry retention remain 09c/09d; terminal/editor adapters and Lua
+09c supplies shared history and 09d owner-local retained retries; terminal/editor adapters and Lua
 retain their later owners;
 the bootstrap executables do not expose those interfaces or a scene renderer.
 MMO requirements remain planned until executable multi-process, network-fault,

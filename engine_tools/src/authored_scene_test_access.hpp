@@ -11,6 +11,8 @@ struct AuthoredSceneTestAccess {
     // One-shot allocation exception at the Nth batch preparation boundary.
     [[nodiscard]] static Result<void> fail_batch_after(AuthoredScene& owner, std::size_t step);
     [[nodiscard]] static Result<void> fail_history_after(AuthoredScene& owner, std::size_t step);
+    [[nodiscard]] static Result<void> fail_mutation_after(AuthoredScene& owner, std::size_t step);
+    [[nodiscard]] static Result<void> mutation_watermark(AuthoredScene& owner, std::uint64_t value);
 };
 
 } // namespace shark::tools::detail

@@ -8,7 +8,7 @@ description: Validate Shark standalone exports and packages for cooked dependenc
 09a's [shared commands](../../../docs/authoring-commands.md) stay in EngineTools.
 Protected Runtime/Server packages must not acquire authoring command services,
 JSON/source readers, mutable invariant-fixture access or the command test target.
-Compile the six public Tools examples separately from those packages; all public
+Compile the seven public Tools examples separately from those packages; all public
 AuthoredScene reads are const and ordinary edits use the typed service. 09a is
 PASS under the current-machine scope; follow its
 [handoff](../../../docs/handoffs/09a-shared-commands.md) and
@@ -28,7 +28,22 @@ objects and protected packages pass. Preserve `shark.tools.authoring-history`
 (60 seconds, seed1337), all earlier families and the4096/4095 sparse workload.
 Undo/redo require the next ticket and current revision; save retains history,
 activation clears it, and restored incarnations receive fresh generations.
-Full REQ-09 remains NOT_RUN. Next: 09d, Safe retries and lost replies.
+Full REQ-09 remains NOT_RUN. Next: 09e, Integrated qualification.
+
+09d is PASS under the current-machine scope. Follow the
+[retry contract](../../../docs/authoring-retries.md),
+[handoff](../../../docs/handoffs/09d-retained-retries.md) and
+[receipt](../../../docs/coverage/evidence/09d-retained-retries.json): 486 full CPU
+CTest executions, 20 standalone Tools checks, 21 public-example compiles, actual
+sanitizer objects and protected packages pass. Preserve both retry families
+(60/90 seconds, seed 1337), 25 cases, the real restart fixture and every earlier
+case/limit. Scope plus consecutive sequences and a nonrewinding watermark fence
+expired IDs; save/activation/history clear retain this owner's ledger. Check the
+outer Result, reply outcome and original operation result. Extend exact input
+comparison and payload charges when command/component fields grow. New owners
+require reconciliation; never blindly repeat expired requests. These remain
+Tools-only services, with no durable journal or terminal/editor/player adapter.
+
 No authoring installer or terminal/editor adapter is added by 09a.
 
 M03f's [integrated durable qualification](../../../docs/durable-qualification.md)

@@ -177,7 +177,7 @@
         "Test alternating human/agent-equivalent edits, stale revisions, invalid batches and retry outcomes through the common service; process ownership is enforced in 15 and editor integration in 16."
       ],
       "planned_fixture": "CommandReplayUndoRedo, TransactionRollback, RevisionConflict and RequestRetry fixtures; FeatureWorld/AuthoringCommands is added with assignment 10. Add HumanAgentRevisionHistory, PureValidationPreview and LostReplyRetryScope fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "09a, 09b and 09c are PASS under current-machine scope. Bounded shared undo/redo groups changed commands and batches on AuthoredScene, with revision/ticket conflicts, fresh removed/replaced generations, explicit reconciliation and save/reload policy. The09c receipt records610 full CPU CTests across seven profiles,16 standalone Tools checks,18 public-example compiles, sanitizer object audits and protected package gates. See docs/handoffs/09c-shared-history.md, docs/coverage/evidence/09c-shared-history.json, docs/authoring-history.md and docs/roadmap/authoring-plan.md. Full REQ-09 remains NOT_RUN: retained retry outcomes and integrated qualification remain09d/09e. Next:09d Safe retries and lost replies. CLI/editor adapters remain15/16 and FeatureWorld connects in10."}
+      "verification": {"status": "NOT_RUN", "reason": "09a through09d are PASS under current-machine scope. Owner-scoped consecutive mutation identities retain original immutable successes, noops and terminal failures, compare exact bounded payloads separately from batch correlation, and permanently fence expired IDs with a nonrewinding watermark. New owners/restarts report unknown outcome and require reconciliation. The09d receipt records486 full CPU CTest executions across five profiles,20 standalone Tools checks,21 public-example compiles, actual sanitizer objects and protected package gates. Core/Server implementation is unchanged; full Server suites retain historical09c evidence until09e. See docs/handoffs/09d-retained-retries.md, docs/coverage/evidence/09d-retained-retries.json, docs/authoring-retries.md and docs/roadmap/authoring-plan.md. Full REQ-09 remains NOT_RUN pending09e integrated qualification. CLI/editor adapters remain15/16 and FeatureWorld connects in10."}
     },
     {
       "id": "REQ-10",
@@ -1424,6 +1424,27 @@
         "fixture_reason": "Executable CPU fixtures qualify shared batch admission, nonauthoritative candidate validation, allocation failure rollback, one revision publication, preview purity, exact checked lifetimes and save-baseline behavior. The internal Core port is not an adapter API. FeatureWorld/AuthoringCommands connects in10; no history/retry/terminal/editor claims."
       },
       {
+        "id": "tools.authoring-retries",
+        "name": "Scoped retained authoring mutations",
+        "requirement_ids": [
+          "REQ-09"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-retries",
+          "shark.tools.authoring-retries-process"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/authoring_retry_probe.cpp",
+          "tools/tests/test_authoring_retries_process.py"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-retries.md"
+        ],
+        "fixture_reason": "CPU fixtures verify exact payload/revision matching, original immutable successes and terminal errors, bounded entry/byte expiry, sequenced identities, shared command/history behavior, allocation failures and actual separate-process restart with independent parent validation. FeatureWorld/AuthoringCommands attaches in10; terminal/editor adapters remain15/16. Full REQ-09 remains NOT_RUN until09e."
+      },
+      {
         "id": "tools.authoring-history",
         "name": "Bounded shared authoring undo and redo",
         "requirement_ids": [
@@ -1513,6 +1534,69 @@
       }
     ],
     "commands": [
+      {
+        "id": "authoring.mutation.status",
+        "name": "AuthoredScene::mutation_status",
+        "requirement_ids": [
+          "REQ-09"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-retries",
+          "shark.tools.authoring-retries-process"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/authoring_retry_probe.cpp",
+          "tools/tests/test_authoring_retries_process.py"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-retries.md"
+        ],
+        "fixture_reason": "CPU fixtures verify exact payload/revision matching, original immutable successes and terminal errors, bounded entry/byte expiry, sequenced identities, shared command/history behavior, allocation failures and actual separate-process restart with independent parent validation. FeatureWorld/AuthoringCommands attaches in10; terminal/editor adapters remain15/16. Full REQ-09 remains NOT_RUN until09e."
+      },
+      {
+        "id": "authoring.mutation.execute",
+        "name": "AuthoredScene::mutate",
+        "requirement_ids": [
+          "REQ-09"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-retries",
+          "shark.tools.authoring-retries-process"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/authoring_retry_probe.cpp",
+          "tools/tests/test_authoring_retries_process.py"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-retries.md"
+        ],
+        "fixture_reason": "CPU fixtures verify exact payload/revision matching, original immutable successes and terminal errors, bounded entry/byte expiry, sequenced identities, shared command/history behavior, allocation failures and actual separate-process restart with independent parent validation. FeatureWorld/AuthoringCommands attaches in10; terminal/editor adapters remain15/16. Full REQ-09 remains NOT_RUN until09e."
+      },
+      {
+        "id": "authoring.mutation.query",
+        "name": "AuthoredScene::mutation_outcome",
+        "requirement_ids": [
+          "REQ-09"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-retries",
+          "shark.tools.authoring-retries-process"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/authoring_retry_probe.cpp",
+          "tools/tests/test_authoring_retries_process.py"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-retries.md"
+        ],
+        "fixture_reason": "CPU fixtures verify exact payload/revision matching, original immutable successes and terminal errors, bounded entry/byte expiry, sequenced identities, shared command/history behavior, allocation failures and actual separate-process restart with independent parent validation. FeatureWorld/AuthoringCommands attaches in10; terminal/editor adapters remain15/16. Full REQ-09 remains NOT_RUN until09e."
+      },
                   {
                     "id": "authoring.entity.create",
                     "name": "CreateEntityCommand",

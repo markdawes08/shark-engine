@@ -86,7 +86,13 @@ with revision/ticket conflicts, common groups and safe source/handle restoration
 Its [handoff](../handoffs/09c-shared-history.md) and
 [receipt](../coverage/evidence/09c-shared-history.json) record 610 full CPU CTests,
 16 standalone Tools checks, 18 public-example compiles and protected gates.
-Next in the [checkpoint plan](authoring-plan.md) is 09d, Safe retries and lost replies.
+**09d is PASS under the current-machine scope.** Follow the
+[retry contract](../authoring-retries.md), [handoff](../handoffs/09d-retained-retries.md)
+and [receipt](../coverage/evidence/09d-retained-retries.json): 486 full CPU CTest
+executions, 20 additional standalone Tools checks, 21 public-example compiles,
+actual sanitizer objects and protected packages pass. Core/Server implementation
+is unchanged; their full Server suites remain historical until 09e.
+**Next: 09e, Integrated qualification. Full REQ-09 remains NOT_RUN.**
 
 M02a provides the [bounded network foundation](../network-transport.md) through
 engine-owned CPU C++ interfaces and noninteractive JSON test fixtures. It does not
@@ -128,7 +134,7 @@ no second computer or specific provider integration is part of the requirement.
 | 03 | Owned structured errors and correlation/context usable by humans and tools; distinguish validation, capability, conflict and execution outcomes as services land. Preserve readable diagnostics. |
 | 07 | Implemented fixed Name/Transform metadata exposes stable versioned IDs/types/defaults/ranges/units and scene-owner mutability. Bounded revisioned CPU inspection needs no ECS access or viewport. 07c and full REQ-07 pass current-machine qualification. |
 | 08 | Documented readable source, project-root rules, atomic saves and conflict-aware text/file updates; external changes cannot be silently overwritten. |
-| 09 | 09a qualifies one AuthoredScene command owner, typed single edits, expected revisions and bounded queries/results. Full REQ-09 remains NOT_RUN. 09b qualifies pure preview/atomic batches and 09c shared undo/redo. Next: 09d explicit retry identity/retention, followed by 09e integrated qualification. |
+| 09 | 09a qualifies one AuthoredScene command owner, typed single edits, expected revisions and bounded queries/results. Full REQ-09 remains NOT_RUN. 09b qualifies pure preview/atomic batches and 09c shared undo/redo. 09d qualifies scoped retained retries and explicit expiry/restart reconciliation. Next: 09e integrated qualification. |
 | 10 | Deterministic CPU runs with nonzero assertion failure and bounded machine results/artifacts. Separate real GPU runs and report unavailable capabilities honestly. |
 | 11-14 | Imports/jobs expose progress, cancellation and atomic publication; export has structured completion/artifact metadata. Build CPU tools without editor/device initialization; qualify optional capture separately. |
 | 15 | Deliver the terminal contract and public discovery, queries, edits, text files, jobs, diagnostics, run/capture/export adapters. Include no-TTY, second-writer, protocol-stream, conflict/retry and resource-limit fixtures. |

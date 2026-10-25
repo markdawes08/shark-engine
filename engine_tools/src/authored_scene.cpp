@@ -4,6 +4,7 @@
 #include "scene_edit_access.hpp"
 
 #include <algorithm>
+#include <bit>
 #include <exception>
 #include <limits>
 #include <map>
@@ -385,6 +386,136 @@ struct HistoryRestoration {
     AuthoringCommandEffect effect;
 };
 
+struct RetainedMutation {
+    AuthoringMutationRequest request;
+    std::shared_ptr<const AuthoringMutationOutcome> outcome;
+    std::size_t charge;
+};
+
+// Existing effects hold at most the union of two source scenes; diagnostics are
+// fixed engine messages/paths/IDs, never an echo of caller-owned text. Reserve
+// conservatively before dispatch, so retaining the decision cannot allocate.
+constexpr std::size_t mutation_outcome_reservation =
+    2 * source_maximum_entities * sizeof(AuthoredEntityId) + 64 * 1024;
+
+bool same_number(double left, double right) noexcept {
+    return std::bit_cast<std::uint64_t>(left) == std::bit_cast<std::uint64_t>(right);
+}
+
+bool same_transform_input(const Transform& left, const Transform& right) noexcept {
+    return same_number(left.translation.x, right.translation.x) &&
+           same_number(left.translation.y, right.translation.y) &&
+           same_number(left.translation.z, right.translation.z) &&
+           same_number(left.rotation.x, right.rotation.x) &&
+           same_number(left.rotation.y, right.rotation.y) &&
+           same_number(left.rotation.z, right.rotation.z) &&
+           same_number(left.rotation.w, right.rotation.w) &&
+           same_number(left.scale.x, right.scale.x) && same_number(left.scale.y, right.scale.y) &&
+           same_number(left.scale.z, right.scale.z);
+}
+
+bool same_command_input(const AuthoringCommand& left, const AuthoringCommand& right) {
+    return std::visit(
+        [&](const auto& value) {
+            using T = std::decay_t<decltype(value)>;
+            const auto* other = std::get_if<T>(&right);
+            if (!other || value.id != other->id)
+                return false;
+            if constexpr (std::is_same_v<T, CreateEntityCommand>) {
+                return value.name.value == other->name.value && value.parent == other->parent &&
+                       same_transform_input(value.transform, other->transform);
+            } else if constexpr (std::is_same_v<T, SetNameCommand>) {
+                return value.name.value == other->name.value;
+            } else if constexpr (std::is_same_v<T, SetTransformCommand>) {
+                return same_transform_input(value.transform, other->transform);
+            } else if constexpr (std::is_same_v<T, ReparentEntityCommand>) {
+                return value.parent == other->parent && value.mode == other->mode;
+            } else {
+                return true;
+            }
+        },
+        left);
+}
+
+bool same_mutation_input(const AuthoringMutationRequest& left,
+                         const AuthoringMutationRequest& right) {
+    if (left.expected_revision != right.expected_revision)
+        return false;
+    return std::visit(
+        [&](const auto& value) {
+            using T = std::decay_t<decltype(value)>;
+            const auto* other = std::get_if<T>(&right.mutation);
+            if (!other)
+                return false;
+            if constexpr (std::is_same_v<T, AuthoringCommand>) {
+                return same_command_input(value, *other);
+            } else if constexpr (std::is_same_v<T, AuthoringBatch>) {
+                // Batch ID is request correlation, deliberately outside mutation identity.
+                if (value.commands.size() != other->commands.size())
+                    return false;
+                for (std::size_t index = 0; index < value.commands.size(); ++index) {
+                    if (!same_command_input(value.commands[index], other->commands[index]))
+                        return false;
+                }
+                return true;
+            } else if constexpr (std::is_same_v<T, UndoAuthoringMutation> ||
+                                 std::is_same_v<T, RedoAuthoringMutation>) {
+                return value.ticket == other->ticket;
+            } else {
+                return true;
+            }
+        },
+        left.mutation);
+}
+
+std::size_t mutation_payload_charge(const AuthoringMutation& mutation, bool capacity) {
+    std::size_t charge = sizeof(AuthoringMutationRequest);
+    const auto add_name = [&](const Name& name) {
+        if (name.value.size() > authoring_maximum_mutation_name_bytes) {
+            fail(ErrorCode::invalid_argument, "mutation Name input exceeds its byte bound");
+        }
+        charge += (capacity ? name.value.capacity() : name.value.size()) + 1;
+    };
+    const auto command = [&](const AuthoringCommand& value) {
+        std::visit(
+            [&](const auto& item) {
+                using T = std::decay_t<decltype(item)>;
+                if constexpr (std::is_same_v<T, CreateEntityCommand> ||
+                              std::is_same_v<T, SetNameCommand>) {
+                    add_name(item.name);
+                }
+            },
+            value);
+    };
+    std::visit(
+        [&](const auto& value) {
+            using T = std::decay_t<decltype(value)>;
+            if constexpr (std::is_same_v<T, AuthoringCommand>) {
+                command(value);
+            } else if constexpr (std::is_same_v<T, AuthoringBatch>) {
+                if (value.commands.size() > authoring_maximum_batch_commands) {
+                    fail(ErrorCode::invalid_argument, "mutation batch command bound exceeded");
+                }
+                charge += (capacity ? value.commands.capacity() : value.commands.size()) *
+                          sizeof(AuthoringCommand);
+                for (const auto& item : value.commands)
+                    command(item);
+            }
+        },
+        mutation);
+    if (charge > authoring_maximum_mutation_payload_bytes) {
+        fail(ErrorCode::invalid_argument, "mutation payload exceeds its byte bound");
+    }
+    return charge;
+}
+
+AuthoringMutationReply mutation_rejection(AuthoringMutationId id, SceneRevision revision,
+                                          AuthoringMutationState state, const char* message,
+                                          const char* operation,
+                                          ErrorCode code = ErrorCode::conflict) {
+    return {id, state, revision, Error{code, message, {.operation = operation}}};
+}
+
 template <typename Checkpoint>
 HistoryRestoration restore_document(Scene& candidate, const SceneDocument& target,
                                     const std::vector<AuthoredEntityId>& replaced,
@@ -491,12 +622,41 @@ struct AuthoredScene::Impl {
     SceneRevision history_revision;
     std::shared_ptr<const SceneDocument> cached_snapshot;
     SceneRevision cached_revision{};
+    const AuthoringMutationScope mutation_scope;
+    const AuthoringMutationLimits mutation_limits;
+    std::uint64_t mutation_watermark{0};
+    std::vector<std::unique_ptr<RetainedMutation>> mutations;
+    std::size_t mutation_bytes{0};
+    std::optional<std::size_t> mutation_failure_after;
 
     Impl(ProjectDocument catalog, SceneLimits bounds, std::unique_ptr<ActiveScene> value,
-         AuthoringHistoryLimits history_bounds)
+         AuthoringHistoryLimits history_bounds, AuthoringMutationScope retry_scope,
+         AuthoringMutationLimits retry_bounds)
         : project(std::move(catalog)), limits(bounds), active(std::move(value)),
-          history_limits(history_bounds), history_revision(active->baseline) {
+          history_limits(history_bounds), history_revision(active->baseline),
+          mutation_scope(retry_scope), mutation_limits(retry_bounds) {
         entries.reserve(history_limits.max_entries);
+        mutations.reserve(mutation_limits.max_entries);
+    }
+
+    const RetainedMutation* retained_mutation(AuthoringMutationId id) const noexcept {
+        for (const auto& value : mutations) {
+            if (value->request.id == id)
+                return value.get();
+        }
+        return nullptr;
+    }
+
+    void retain_mutation(std::unique_ptr<RetainedMutation> entry) noexcept {
+        while (!mutations.empty() &&
+               (mutations.size() >= mutation_limits.max_entries ||
+                mutation_bytes > mutation_limits.max_retained_bytes - entry->charge)) {
+            mutation_bytes -= mutations.front()->charge;
+            mutations.erase(mutations.begin());
+        }
+        mutation_bytes += entry->charge;
+        mutation_watermark = entry->request.id.sequence;
+        mutations.push_back(std::move(entry));
     }
 
     void check_history(SceneRevision revision) const {
@@ -638,7 +798,8 @@ AuthoredScene::~AuthoredScene() = default;
 
 Result<std::unique_ptr<AuthoredScene>>
 AuthoredScene::create(const ProjectDocument& project, const SceneDocument& scene,
-                      SceneLimits limits, AuthoringHistoryLimits history_limits) {
+                      SceneLimits limits, AuthoringHistoryLimits history_limits,
+                      AuthoringMutationLimits mutation_limits) {
     return boundary<std::unique_ptr<AuthoredScene>>("source.scene.create", [&] {
         validate_limits(limits);
         if (history_limits.max_entries == 0 ||
@@ -648,10 +809,19 @@ AuthoredScene::create(const ProjectDocument& project, const SceneDocument& scene
             fail(ErrorCode::invalid_configuration,
                  "authoring history limits exceed supported bounds");
         }
+        if (mutation_limits.max_entries == 0 ||
+            mutation_limits.max_entries > authoring_maximum_mutation_entries ||
+            mutation_limits.max_retained_bytes == 0 ||
+            mutation_limits.max_retained_bytes > authoring_maximum_mutation_bytes) {
+            fail(ErrorCode::invalid_configuration,
+                 "mutation retention limits exceed supported bounds");
+        }
+        const AuthoringMutationScope scope{checked(generate_stable_id())};
         auto catalog = checked(validate_project_document(project));
         auto active = prepare(catalog, scene, limits);
-        return std::unique_ptr<AuthoredScene>(new AuthoredScene(
-            std::make_unique<Impl>(std::move(catalog), limits, std::move(active), history_limits)));
+        return std::unique_ptr<AuthoredScene>(
+            new AuthoredScene(std::make_unique<Impl>(std::move(catalog), limits, std::move(active),
+                                                     history_limits, scope, mutation_limits)));
     });
 }
 
@@ -825,6 +995,162 @@ Result<AuthoringHistoryStatus> AuthoredScene::clear_history(SceneRevision expect
     });
 }
 
+Result<AuthoringMutationStatus>
+AuthoredScene::mutation_status(std::optional<SceneRevision> expected_revision) const {
+    return boundary<AuthoringMutationStatus>("authoring.mutation.status", [&] {
+        const auto state = impl_->read_status(expected_revision);
+        std::optional<AuthoringMutationId> next;
+        if (impl_->mutation_watermark != std::numeric_limits<std::uint64_t>::max()) {
+            next = AuthoringMutationId{impl_->mutation_scope, impl_->mutation_watermark + 1};
+        }
+        std::optional<AuthoringMutationId> oldest;
+        if (!impl_->mutations.empty())
+            oldest = impl_->mutations.front()->request.id;
+        return AuthoringMutationStatus{
+            impl_->mutation_scope,   state.revision,        impl_->mutation_watermark, next, oldest,
+            impl_->mutations.size(), impl_->mutation_bytes, impl_->mutation_limits};
+    });
+}
+
+Result<AuthoringMutationReply> AuthoredScene::mutation_outcome(AuthoringMutationId id) const {
+    constexpr auto operation = "authoring.mutation.query";
+    return boundary<AuthoringMutationReply>(operation, [&] {
+        const auto revision = impl_->read_status().revision;
+        if (id.sequence == 0) {
+            return mutation_rejection(id, revision, AuthoringMutationState::not_admitted,
+                                      "mutation sequence must be nonzero", operation,
+                                      ErrorCode::invalid_argument);
+        }
+        if (const auto* entry = impl_->retained_mutation(id)) {
+            return AuthoringMutationReply{id, AuthoringMutationState::retained, revision,
+                                          entry->outcome};
+        }
+        if (id.scope != impl_->mutation_scope || id.sequence <= impl_->mutation_watermark) {
+            return mutation_rejection(id, revision, AuthoringMutationState::unknown_outcome,
+                                      "mutation outcome is unavailable; reconcile live state",
+                                      operation);
+        }
+        return mutation_rejection(id, revision, AuthoringMutationState::not_recorded,
+                                  "mutation was not admitted by this owner", operation);
+    });
+}
+
+Result<AuthoringMutationReply> AuthoredScene::mutate(const AuthoringMutationRequest& request) {
+    constexpr auto operation = "authoring.mutation.execute";
+    return boundary<AuthoringMutationReply>(operation, [&] {
+        const auto revision = impl_->read_status().revision;
+        if (request.id.sequence == 0) {
+            return mutation_rejection(request.id, revision, AuthoringMutationState::not_admitted,
+                                      "mutation sequence must be nonzero", operation,
+                                      ErrorCode::invalid_argument);
+        }
+        if (request.id.scope != impl_->mutation_scope) {
+            return mutation_rejection(request.id, revision, AuthoringMutationState::unknown_outcome,
+                                      "mutation belongs to another owner; reconcile live state",
+                                      operation);
+        }
+        const auto* retained = impl_->retained_mutation(request.id);
+        if (!retained && request.id.sequence <= impl_->mutation_watermark) {
+            return mutation_rejection(request.id, revision, AuthoringMutationState::unknown_outcome,
+                                      "mutation outcome expired; reconcile live state", operation);
+        }
+        if (!retained && (impl_->mutation_watermark == std::numeric_limits<std::uint64_t>::max() ||
+                          request.id.sequence != impl_->mutation_watermark + 1)) {
+            return mutation_rejection(request.id, revision, AuthoringMutationState::out_of_order,
+                                      "mutation sequence must be the next unused value", operation);
+        }
+        // Check the bounded envelope before comparing or copying caller input.
+        auto charge = boundary<std::size_t>(
+            operation, [&] { return mutation_payload_charge(request.mutation, false); });
+        if (!charge) {
+            return AuthoringMutationReply{request.id, AuthoringMutationState::not_admitted,
+                                          revision, std::move(charge).error()};
+        }
+        if (const auto* entry = retained) {
+            if (!same_mutation_input(entry->request, request)) {
+                return mutation_rejection(request.id, revision,
+                                          AuthoringMutationState::payload_mismatch,
+                                          "mutation identity has a different payload", operation);
+            }
+            return AuthoringMutationReply{request.id, AuthoringMutationState::replayed, revision,
+                                          entry->outcome};
+        }
+        if (charge.value() + sizeof(RetainedMutation) + mutation_outcome_reservation >
+            impl_->mutation_limits.max_retained_bytes) {
+            return mutation_rejection(request.id, revision, AuthoringMutationState::not_admitted,
+                                      "mutation cannot fit the retention byte limit", operation);
+        }
+        const auto failure_after = std::exchange(impl_->mutation_failure_after, std::nullopt);
+        std::size_t step = 0;
+        const auto allocation_boundary = [&] {
+            if (failure_after && step++ == *failure_after)
+                throw std::bad_alloc{};
+        };
+        allocation_boundary();
+        auto entry = std::make_unique<RetainedMutation>(RetainedMutation{request, {}, 0});
+        allocation_boundary();
+        entry->charge = mutation_payload_charge(entry->request.mutation, true) +
+                        sizeof(RetainedMutation) + mutation_outcome_reservation;
+        if (entry->charge > impl_->mutation_limits.max_retained_bytes) {
+            return mutation_rejection(request.id, revision, AuthoringMutationState::not_admitted,
+                                      "owned mutation cannot fit the retention byte limit",
+                                      operation);
+        }
+        allocation_boundary();
+        auto outcome = std::make_shared<AuthoringMutationOutcome>(AuthoringMutationOutcome{
+            request.id, revision, AuthoringCommandEffect{false, {}}, std::nullopt});
+        entry->outcome = outcome;
+        allocation_boundary();
+        // All ledger storage exists before dispatch. Successful publication is
+        // followed only by nonthrowing moves, bounded eviction and pointer copies.
+        static_assert(std::is_nothrow_move_assignable_v<Result<AuthoringCommandEffect>>);
+        allocation_boundary();
+        auto dispatched = boundary<void>(operation, [&] {
+            allocation_boundary();
+            std::visit(
+                [&](const auto& value) {
+                    using T = std::decay_t<decltype(value)>;
+                    if constexpr (std::is_same_v<T, ClearAuthoringHistoryMutation>) {
+                        const bool changed = impl_->cursor != 0 || !impl_->entries.empty();
+                        auto result = clear_history(request.expected_revision);
+                        if (result) {
+                            outcome->history_after = result.value();
+                            outcome->result = AuthoringCommandEffect{changed, {}};
+                        } else {
+                            outcome->result = std::move(result).error();
+                        }
+                    } else {
+                        auto result = [&] {
+                            if constexpr (std::is_same_v<T, UndoAuthoringMutation>) {
+                                return undo(value.ticket, request.expected_revision);
+                            } else if constexpr (std::is_same_v<T, RedoAuthoringMutation>) {
+                                return redo(value.ticket, request.expected_revision);
+                            } else {
+                                return execute(value, request.expected_revision);
+                            }
+                        }();
+                        if (result) {
+                            outcome->observed_revision = result.value().observed_revision;
+                            outcome->result = std::move(result).value().outcome;
+                        } else {
+                            outcome->result = std::move(result).error();
+                        }
+                    }
+                },
+                entry->request.mutation);
+            return Result<void>{};
+        });
+        // Failure while constructing an operation's owned diagnostic is itself
+        // a terminal dispatch failure. Keep it under the admitted identity too.
+        if (!dispatched)
+            outcome->result = std::move(dispatched).error();
+        impl_->retain_mutation(std::move(entry));
+        return AuthoringMutationReply{
+            request.id, AuthoringMutationState::recorded, outcome->observed_revision,
+            std::shared_ptr<const AuthoringMutationOutcome>{std::move(outcome)}};
+    });
+}
+
 Result<AuthoringHistoryReply> AuthoredScene::undo(AuthoringHistoryTicket ticket,
                                                   SceneRevision expected_revision) {
     return move_history(ticket, expected_revision, false);
@@ -986,6 +1312,27 @@ Result<void> detail::AuthoredSceneTestAccess::fail_history_after(AuthoredScene& 
     return boundary<void>("source.scene.test-history-fault", [&] {
         static_cast<void>(owner.impl_->read_status());
         owner.impl_->history_failure_after = step;
+        return Result<void>{};
+    });
+}
+
+Result<void> detail::AuthoredSceneTestAccess::fail_mutation_after(AuthoredScene& owner,
+                                                                  std::size_t step) {
+    return boundary<void>("source.scene.test-mutation-fault", [&] {
+        static_cast<void>(owner.impl_->read_status());
+        owner.impl_->mutation_failure_after = step;
+        return Result<void>{};
+    });
+}
+
+Result<void> detail::AuthoredSceneTestAccess::mutation_watermark(AuthoredScene& owner,
+                                                                 std::uint64_t value) {
+    return boundary<void>("source.scene.test-mutation-watermark", [&] {
+        static_cast<void>(owner.impl_->read_status());
+        if (!owner.impl_->mutations.empty() || value < owner.impl_->mutation_watermark) {
+            fail(ErrorCode::conflict, "watermark fixture requires an empty ledger and no rewind");
+        }
+        owner.impl_->mutation_watermark = value;
         return Result<void>{};
     });
 }
