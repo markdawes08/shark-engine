@@ -142,8 +142,11 @@ owns live character and transactional durability; M03 and all six checkpoints ar
 AuthoredScene owner. Its [handoff](../handoffs/09a-shared-commands.md) and
 [receipt](../coverage/evidence/09a-shared-commands.json) record 461 passing CPU
 CTests, 12 standalone Tools checks and protected package/API gates. Full REQ-09
-remains NOT_RUN. Next in the [authoring plan](authoring-plan.md) is
-09b, Atomic transactions and preview. Authored source saves and
+remains NOT_RUN. 09b also qualifies [atomic authoring batches and preview](../authoring-transactions.md).
+Its [handoff](../handoffs/09b-atomic-batches.md) and
+[receipt](../coverage/evidence/09b-atomic-batches.json) record 605 full CPU CTests,
+14 standalone Tools checks and protected package/API gates. Next in the
+[authoring plan](authoring-plan.md) is 09c, Shared undo and redo. Authored source saves and
 local editing do not provide live character or economy durability.
 The authoring APIs are not player messages and do not grant gameplay authority.
 Presentation stays in Client and cannot acquire authority over server time or world state.
@@ -224,7 +227,7 @@ validated sequential upgrades/backups, isolated restored restart and protected
 gates. M03f and full REQ-M03 are PASS: its [handoff](../handoffs/M03f-integrated-qualification.md)
 records 588 CPU CTests, 10 standalone Tools checks and protected gates.
 The connected lineage qualifies authenticated runtime operations, crash/outage
-reconciliation and isolated restored restart. 09a is qualified and 09b is next,
+reconciliation and isolated restored restart. 09a and 09b are qualified; 09c is next,
 separate from this completed durable-state gate.
 [ADR 0017](../architecture/0017-atomic-durable-transactions.md) advances the active
 schema to 3 and defines the economic operation lifetime.

@@ -44,12 +44,32 @@ struct AuthoringCommandEffect {
     bool changed;
     // Sorted unique stable IDs to refresh, including deleted descendants and
     // parents whose child links changed. Empty for a Core no-op. At most the
-    // authored scene entity bound; this is not a list of new/current entities.
+    // authored scene entity bound for one command. Batch unions add at most the
+    // command bound in new identities. This is not a list of new/current entities.
     std::vector<AuthoredEntityId> affected_entities;
 };
 
 struct AuthoringCommandReply {
     // Current committed revision after the decision, including a rejection.
+    SceneRevision observed_revision;
+    Result<AuthoringCommandEffect> outcome;
+};
+
+struct AuthoringBatchDomain;
+using AuthoringBatchId = TypedId<AuthoringBatchDomain>;
+inline constexpr std::size_t authoring_maximum_batch_commands = 256;
+
+// Caller-supplied correlation identity, not retained retry/deduplication identity.
+// Commands execute in order against the private candidate, then publish together.
+struct AuthoringBatch {
+    AuthoringBatchId id;
+    std::vector<AuthoringCommand> commands;
+};
+
+struct AuthoringBatchReply {
+    AuthoringBatchId id;
+    // Preview always reports the unchanged live revision. Commit reports the
+    // committed revision; no-op and rejected batches leave it unchanged.
     SceneRevision observed_revision;
     Result<AuthoringCommandEffect> outcome;
 };

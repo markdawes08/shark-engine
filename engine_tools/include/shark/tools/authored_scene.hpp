@@ -54,6 +54,10 @@ class AuthoredScene final {
     // Every reply reports the current revision. No retry retention is implied.
     [[nodiscard]] Result<AuthoringCommandReply> execute(const AuthoringCommand& command,
                                                         SceneRevision expected_revision);
+    [[nodiscard]] Result<AuthoringBatchReply> preview(const AuthoringBatch& batch,
+                                                      SceneRevision expected_revision) const;
+    [[nodiscard]] Result<AuthoringBatchReply> execute(const AuthoringBatch& batch,
+                                                      SceneRevision expected_revision);
     // Bounded owned Core query pages, sharing the same owner/revision/cursors.
     [[nodiscard]] Result<SceneQueryPage>
     query_entities(const SceneQueryOptions& options = {}) const;
@@ -77,6 +81,9 @@ class AuthoredScene final {
     friend class ProjectFiles;
     friend struct detail::AuthoredSceneTestAccess;
     [[nodiscard]] bool acknowledge_saved(SceneRevision revision) noexcept;
+    [[nodiscard]] Result<AuthoringBatchReply> evaluate_batch(const AuthoringBatch& batch,
+                                                             SceneRevision expected_revision,
+                                                             bool publish) const;
     struct Impl;
     explicit AuthoredScene(std::unique_ptr<Impl> impl) noexcept;
     std::unique_ptr<Impl> impl_;

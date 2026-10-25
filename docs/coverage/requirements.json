@@ -177,7 +177,7 @@
         "Test alternating human/agent-equivalent edits, stale revisions, invalid batches and retry outcomes through the common service; process ownership is enforced in 15 and editor integration in 16."
       ],
       "planned_fixture": "CommandReplayUndoRedo, TransactionRollback, RevisionConflict and RequestRetry fixtures; FeatureWorld/AuthoringCommands is added with assignment 10. Add HumanAgentRevisionHistory, PureValidationPreview and LostReplyRetryScope fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "09a is PASS under current-machine scope: typed revision-checked single commands and bounded queries share the existing AuthoredScene owner. Qualification records 461 full CPU CTests plus 12 standalone Tools checks, public examples, sanitizer instrumentation and protected package gates. See docs/handoffs/09a-shared-commands.md, docs/coverage/evidence/09a-shared-commands.json, docs/authoring-commands.md and docs/roadmap/authoring-plan.md. Full REQ-09 remains NOT_RUN: atomic batches/preview, shared undo/redo, mutation retry retention and integrated qualification retain checkpoints 09b-09e. Next is 09b: Atomic transactions and preview. CLI/editor adapters remain 15/16 and FeatureWorld connects in 10."}
+      "verification": {"status": "NOT_RUN", "reason": "09a and 09b are PASS under current-machine scope. Bounded ordered atomic batches and pure preview share the AuthoredScene owner, existing typed commands and checked Core publication. Qualification records 605 full CPU CTests across seven profiles, 14 standalone Tools checks, 15 public-example compiles, sanitizer object audits and protected package gates. See docs/handoffs/09b-atomic-batches.md, docs/coverage/evidence/09b-atomic-batches.json, docs/authoring-transactions.md and docs/roadmap/authoring-plan.md. Full REQ-09 remains NOT_RUN: shared history, retained retry outcomes and integrated qualification remain 09c-09e. Next:09c Shared undo and redo. CLI/editor adapters remain15/16 and FeatureWorld connects in10."}
     },
     {
       "id": "REQ-10",
@@ -1401,6 +1401,27 @@
         "test_sources": ["tools/tests/test_graphics_package.py", "tools/tests/test_graphics_package_linux.py", "probes/graphics/lifecycle_tests.cpp"],
         "fixtures": ["tools/package_graphics_probe.py", "tools/package_graphics_probe_linux.py", "tools/graphics_package/Run-GraphicsProbe.ps1", "tools/graphics_package/run_graphics_probe.py", "tools/tests/check_graphics_package_launcher.py", "probes/graphics/main.cpp"],
         "fixture_reason": "CPU tests reject invalid package inputs, PE/ELF dependency leaks, stale hashes and unsafe paths, and verify bounded native-child cleanup and failure-progress retention. Explicit package/GPU commands verify relocated execution, readbacks and lifecycle outside scenes. The preserved receipts support ADR0010's current-PC scope; relocation and SDK-free WSL userspace do not establish independent clean-machine or retired hardware-row qualification. FeatureWorld starts in 10."
+      },
+      {
+        "id": "tools.authoring-batches",
+        "name": "Atomic authoring transactions and pure preview",
+        "requirement_ids": [
+          "REQ-09"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-batches",
+          "shark.core.scene-edit"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/core_scene_edit_tests.cpp",
+          "tests/authoring_allocation_fault.cpp"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-transactions.md"
+        ],
+        "fixture_reason": "Executable CPU fixtures qualify shared batch admission, nonauthoritative candidate validation, allocation failure rollback, one revision publication, preview purity, exact checked lifetimes and save-baseline behavior. The internal Core port is not an adapter API. FeatureWorld/AuthoringCommands connects in10; no history/retry/terminal/editor claims."
       }
     ],
     "components": [
@@ -1417,7 +1438,8 @@
           "shark.core.scene-query",
           "shark.core.hierarchy",
           "shark.tools.persistence-integration",
-          "shark.tools.authoring-commands"
+          "shark.tools.authoring-commands",
+          "shark.tools.authoring-batches"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
@@ -1447,7 +1469,8 @@
           "shark.core.transform",
           "shark.core.hierarchy",
           "shark.tools.persistence-integration",
-          "shark.tools.authoring-commands"
+          "shark.tools.authoring-commands",
+          "shark.tools.authoring-batches"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
@@ -1560,6 +1583,46 @@
                       "docs/authoring-commands.md"
                     ],
                     "fixture_reason": "Typed C++ Transform edit through the shared owner; CPU fixtures cover pure value and composed-hierarchy validation, subtree refresh IDs, no-ops, stale fences and atomic rejection. FeatureWorld attaches in 10; terminal/editor adapters remain 15/16."
+                  },
+                  {
+                    "id": "authoring.batch.preview",
+                    "name": "AuthoredScene::preview(AuthoringBatch)",
+                    "requirement_ids": [
+                      "REQ-09"
+                    ],
+                    "test_ids": [
+                      "shark.tools.authoring-batches",
+                      "shark.core.scene-edit"
+                    ],
+                    "test_sources": [
+                      "tests/authoring_command_tests.cpp",
+                      "tests/core_scene_edit_tests.cpp"
+                    ],
+                    "fixtures": [
+                      "tests/authoring_command_tests.cpp",
+                      "docs/authoring-transactions.md"
+                    ],
+                    "fixture_reason": "Bounded CPU batch preview through the existing owner; ordered candidate validation, late rollback, fixed command/entity bounds, exact revisions/no-ops, sorted refresh unions, slot/metadata lifetime, owner/pending/visit conflicts, stale worker values and real file-save baselines. Allocation-fault tests cover candidate/command/result boundaries and a Linux allocation sweep. FeatureWorld attaches in10; history/retries and adapters retain later checkpoints."
+                  },
+                  {
+                    "id": "authoring.batch.execute",
+                    "name": "AuthoredScene::execute(AuthoringBatch)",
+                    "requirement_ids": [
+                      "REQ-09"
+                    ],
+                    "test_ids": [
+                      "shark.tools.authoring-batches",
+                      "shark.core.scene-edit"
+                    ],
+                    "test_sources": [
+                      "tests/authoring_command_tests.cpp",
+                      "tests/core_scene_edit_tests.cpp"
+                    ],
+                    "fixtures": [
+                      "tests/authoring_command_tests.cpp",
+                      "docs/authoring-transactions.md"
+                    ],
+                    "fixture_reason": "Bounded CPU batch execute through the existing owner; ordered candidate validation, late rollback, fixed command/entity bounds, exact revisions/no-ops, sorted refresh unions, slot/metadata lifetime, owner/pending/visit conflicts, stale worker values and real file-save baselines. Allocation-fault tests cover candidate/command/result boundaries and a Linux allocation sweep. FeatureWorld attaches in10; history/retries and adapters retain later checkpoints."
                   }
                 ],
     "lua_api": []

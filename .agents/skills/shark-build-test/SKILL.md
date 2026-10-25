@@ -10,13 +10,26 @@ existing Tools families. Its [command contract](../../../docs/authoring-commands
 uses AuthoredScene's single owner, required revisions, typed effects and read-only
 Scene access. Preserve existing persistence cases as their ordinary edits move
 through commands; private access is only for lifecycle invariant fixtures.
-Run all six families in standalone CPU Tools on Windows and existing WSL, alongside
-native/WSL regressions, sanitizers and protected boundaries. Compile all four
+Run all seven authoring families in standalone CPU Tools on Windows and existing WSL, alongside
+native/WSL regressions, sanitizers and protected boundaries. Compile all five
 public Tools examples without private headers. 09a is PASS under the
 current-machine scope; its [handoff](../../../docs/handoffs/09a-shared-commands.md)
 and [receipt](../../../docs/coverage/evidence/09a-shared-commands.json) record
 461 CPU CTests, 12 standalone Tools checks and protected package/API gates.
-Full REQ-09 remains NOT_RUN. Next: 09b, Atomic transactions and preview.
+09b is also PASS under the current-machine scope. Follow its
+[transaction contract](../../../docs/authoring-transactions.md),
+[handoff](../../../docs/handoffs/09b-atomic-batches.md) and
+[receipt](../../../docs/coverage/evidence/09b-atomic-batches.json): 605 full CPU
+CTests, 14 standalone Tools checks, public examples, sanitizer objects and
+protected packages pass. Full REQ-09 remains NOT_RUN.
+Next: 09c, Shared undo and redo.
+
+09b adds `shark.tools.authoring-batches` (60 seconds) and `shark.core.scene-edit`
+(30 seconds), both seed 1337. Preserve all earlier cases and exact inventories;
+Core changes refresh both WSL Server profiles. Compile the fifth public Tools
+example and audit candidate code plus fixture sanitizer objects. Windows uses
+private allocation-boundary faults; Linux also sweeps ordinary/nothrow allocations.
+Keep candidates and their handles private; preview never reserves a revision.
 
 M03f connects the existing durable services in `shark.storage.integration-process`.
 Follow the [qualification contract](../../../docs/durable-qualification.md):

@@ -88,6 +88,7 @@ struct Scene::Impl {
     std::vector<Slot> slots;
     std::map<EntityIdentity, EntityHandle> identities;
     std::vector<Pending> pending;
+    std::optional<SceneRevision> edit_origin;
 
     Impl(SceneScope value, SceneLimits bounds, std::uint64_t token)
         : scope(std::move(value)), limits(bounds), instance(token) {}
@@ -556,6 +557,66 @@ Scene::~Scene() {
     if (!impl_->closed && impl_->owner != std::this_thread::get_id()) {
         std::terminate();
     }
+}
+
+Result<std::unique_ptr<Scene>> Scene::prepare_edit(SceneRevision expected) const {
+    if (auto checked = impl_->check_immediate(); !checked) {
+        return checked.error();
+    }
+    if (auto checked = impl_->check_expected_revision(expected); !checked) {
+        return checked.error();
+    }
+    if (!std::holds_alternative<AuthoredSceneScope>(impl_->scope) || impl_->edit_origin) {
+        return scene_error(ErrorCode::conflict, "edit preparation requires a live authored scene");
+    }
+    try {
+        auto copy = std::make_unique<Impl>(impl_->scope, impl_->limits, impl_->instance);
+        copy->revision = impl_->revision;
+        copy->next_ticket = impl_->next_ticket;
+        copy->edit_origin = expected;
+        copy->identities = impl_->identities;
+        copy->slots.reserve(impl_->slots.size());
+        for (const auto& slot : impl_->slots) {
+            auto cloned = slot;
+            if (slot.entity != entt::null) {
+                cloned.entity = copy->registry.create();
+                copy->registry.emplace<Impl::Record>(
+                    cloned.entity, impl_->registry.get<Impl::Record>(slot.entity));
+            }
+            copy->slots.push_back(cloned);
+        }
+        return std::unique_ptr<Scene>(new Scene(std::move(copy)));
+    } catch (...) {
+        return scene_error(ErrorCode::execution_failed, "edit candidate allocation failed");
+    }
+}
+
+Result<SceneRevision> Scene::commit_edit(Scene& candidate, SceneRevision expected) {
+    if (auto checked = impl_->check_immediate(); !checked) {
+        return checked.error();
+    }
+    if (auto checked = impl_->check_expected_revision(expected); !checked) {
+        return checked.error();
+    }
+    if (auto checked = candidate.impl_->check_immediate(); !checked) {
+        return checked.error();
+    }
+    if (this == &candidate || impl_->edit_origin || candidate.impl_->edit_origin != expected ||
+        candidate.impl_->instance != impl_->instance) {
+        return scene_error(ErrorCode::conflict,
+                           "edit candidate does not match this scene revision");
+    }
+    const bool changed = candidate.impl_->revision != expected.revision;
+    if (changed) {
+        // All allocation/validation precedes this publication boundary. Preserve
+        // the Scene object, instance, generations and deferred ticket sequence.
+        candidate.impl_->revision = expected.revision + 1;
+        candidate.impl_->next_ticket = impl_->next_ticket;
+        candidate.impl_->edit_origin.reset();
+        impl_.swap(candidate.impl_);
+    }
+    candidate.impl_->closed = true;
+    return SceneRevision{impl_->instance, impl_->revision};
 }
 
 Result<EntityHandle> Scene::create_entity(EntitySeed seed) {

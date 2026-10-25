@@ -465,20 +465,27 @@ Private fixture access retains pending/visit/closed-state invariant checks.
 [handoff](handoffs/09a-shared-commands.md) and
 [receipt](coverage/evidence/09a-shared-commands.json) record 461 CPU CTests,
 12 standalone Tools checks and protected package/API gates. Full REQ-09 remains
-NOT_RUN. The next [authoring checkpoint](roadmap/authoring-plan.md) is
-09b, Atomic transactions and preview.
-List the inventory, then run all six CPU Tools families:
+NOT_RUN. The completed 09b qualification follows below.
+
+09b is PASS under the current-machine scope. Its
+[transaction contract](authoring-transactions.md), [handoff](handoffs/09b-atomic-batches.md)
+and [receipt](coverage/evidence/09b-atomic-batches.json) record 605 full CPU CTests across seven profiles,
+14 standalone Tools checks, 15 public-example compiles, actual sanitizer objects
+and protected packages. Preserve `shark.tools.authoring-batches` (60 seconds)
+and `shark.core.scene-edit` (30 seconds), seed 1337. Full REQ-09 remains NOT_RUN.
+**Next: 09c, Shared undo and redo.**
+List the inventory, then run all seven CPU Tools families:
 
 ```text
 ctest --preset tools-debug --show-only
-ctest --preset tools-debug -R "^shark.tools.(source-documents|authored-scene|authoring-commands|project-files|project-files-process|persistence-integration)$" --output-on-failure
+ctest --preset tools-debug -R "^shark.tools.(source-documents|authored-scene|authoring-commands|authoring-batches|project-files|project-files-process|persistence-integration)$" --output-on-failure
 ```
 
-Compile all four public examples from the source-document, authored-scene,
-project-file and command contracts without private dependency or fixture headers.
-No Editor, Client, display or GPU is needed for these services. Atomic batches,
-preview, undo/redo and retry retention remain separate 09 checkpoints; terminal
-and editor adapters remain 15/16.
+Compile all five public examples from the source-document, authored-scene,
+project-file, command and [transaction](authoring-transactions.md) contracts
+without private dependency or fixture headers. No Editor, Client, display or GPU
+is needed for these services. Atomic batches and preview are qualified in 09b;
+undo/redo and retry retention remain 09c/09d. Terminal/editor adapters remain 15/16.
 
 ## Opt-in graphics package builds
 

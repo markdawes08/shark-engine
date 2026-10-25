@@ -94,9 +94,13 @@ M03f and full REQ-M03 are PASS: the [handoff](../handoffs/M03f-integrated-qualif
 records 588 CPU CTests, 10 standalone Tools checks and protected gates.
 The [connected qualification](../durable-qualification.md) covers one real
 database lineage through authenticated operations, crash/outage recovery and
-isolated restore. Assignment 09, shared authoring commands and undo/redo, is next.
-General authoring transactions, terminal
-adapters and editor UI retain their later owners;
+isolated restore. Assignment 09 follows its [five authoring checkpoints](../roadmap/authoring-plan.md).
+09a and 09b are qualified under current-machine scope: shared single commands,
+bounded atomic batches and pure preview use the same authored owner. The
+[09b handoff](../handoffs/09b-atomic-batches.md) records 605 full CPU CTests,
+14 standalone Tools checks and protected package/API gates. Full REQ-09 remains
+NOT_RUN; 09c, Shared undo and redo, is next. Terminal adapters and editor UI
+retain their later owners;
 schema IDs do not establish file or gameplay-wire formats. The current-machine
 scope remains unchanged.
 
@@ -122,6 +126,7 @@ scope remains unchanged.
 | [0018](0018-runtime-durable-recovery.md) | Bounded storage worker, session/entity completion fences, timeout and explicit durable reconciliation |
 | [0019](0019-durable-maintenance.md) | Explicit sequential database upgrades, required pre-upgrade backup and isolated restoration |
 | [0020](0020-shared-authoring-commands.md) | One authored-scene command owner, revisioned single edits, bounded outcomes and read-only inspection |
+| [0021](0021-atomic-authoring-batches.md) | Bounded atomic batches, pure preview and internal handle-preserving publication |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

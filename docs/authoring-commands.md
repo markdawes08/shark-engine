@@ -69,8 +69,9 @@ observed revision and error code without parsing diagnostic text.
 There is no mutation retry identity or retained outcome in 09a. Calling again is
 a new invocation subject to the supplied revision; it does not recover an earlier
 reply. After uncertainty, inspect state and reconcile deliberately. 09d supplies
-explicit deduplication, retention and lost-reply behavior. History, pure preview
-and multi-command atomic batches are not advertised by this single-edit API.
+explicit deduplication, retention and lost-reply behavior. [09b batches and pure preview](authoring-transactions.md) extend the same owner
+through separate overloads; history retains 09c. This single-edit API remains
+synchronous and has no retained retry outcome.
 
 ## Bounded inspection
 

@@ -2,6 +2,7 @@
 #include <shark/tools/project_files.hpp>
 
 #include "authored_scene_test_access.hpp"
+#include "authoring_allocation_fault.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -775,4 +776,384 @@ TEST_CASE("authoring closed owners reject commands and queries while owned pages
     rejected(value->inspect_entity(id<AuthoredEntityId>(30)), ErrorCode::conflict);
     CHECK(page.entities().front().name->value == "Entity 10");
     CHECK(page.revision() == before);
+}
+
+namespace {
+AuthoringBatch batch(std::initializer_list<AuthoringCommand> commands) {
+    return {id<AuthoringBatchId>(900), commands};
+}
+void batch_rejected(AuthoredScene& value, const AuthoringBatch& commands, SceneRevision expected,
+                    ErrorCode code) {
+    const auto before = capture(value);
+    for (bool preview : {true, false}) {
+        auto reply =
+            take(preview ? value.preview(commands, expected) : value.execute(commands, expected));
+        CHECK(reply.id == commands.id);
+        CHECK(reply.observed_revision == before.revision);
+        rejected(reply.outcome, code);
+        CHECK(reply.outcome.error().context.request_id == commands.id.value().to_string());
+        same_capture(capture(value), before);
+    }
+}
+} // namespace
+
+TEST_CASE("batch preview and commit share sequential validation with one publication",
+          "[authoring-batches]") {
+    auto value = owner();
+    const auto before = capture(*value);
+    const Scene* borrowed = &live(*value);
+    const auto survivor = find(*value, 30);
+    const auto commands =
+        batch({CreateEntityCommand{id<AuthoredEntityId>(50), {"new"}},
+               SetNameCommand{id<AuthoredEntityId>(50), {"renamed"}},
+               ReparentEntityCommand{id<AuthoredEntityId>(50), id<AuthoredEntityId>(40)},
+               DeleteEntityCommand{id<AuthoredEntityId>(20)}});
+    auto preview = take(value->preview(commands, before.revision));
+    REQUIRE(preview.outcome);
+    CHECK(preview.outcome.value().changed);
+    CHECK(preview.observed_revision == before.revision);
+    same_capture(capture(*value), before);
+    auto committed = take(value->execute(commands, before.revision));
+    REQUIRE(committed.outcome);
+    CHECK(committed.outcome.value().affected_entities == preview.outcome.value().affected_entities);
+    CHECK(committed.outcome.value().affected_entities ==
+          std::vector<AuthoredEntityId>{id<AuthoredEntityId>(20), id<AuthoredEntityId>(30),
+                                        id<AuthoredEntityId>(40), id<AuthoredEntityId>(50)});
+    CHECK(committed.observed_revision ==
+          SceneRevision{before.revision.scene_instance, before.revision.revision + 1});
+    CHECK(&live(*value) == borrowed);
+    CHECK(find(*value, 30) == survivor);
+    CHECK(state(*value, 50).name.value == "renamed");
+    CHECK(state(*value, 50).parent == find(*value, 40));
+    CHECK(status(*value).dirty);
+}
+
+TEST_CASE("batch late invalid requests discard every earlier edit", "[authoring-batches]") {
+    auto value = owner();
+    const std::array<AuthoringCommand, 5> invalid{
+        CreateEntityCommand{id<AuthoredEntityId>(10)},
+        DeleteEntityCommand{id<AuthoredEntityId>(99)},
+        SetNameCommand{id<AuthoredEntityId>(30), {std::string(1000, 'x')}},
+        SetTransformCommand{id<AuthoredEntityId>(30), Transform{{}, {}, {0.0, 1.0, 1.0}}},
+        ReparentEntityCommand{id<AuthoredEntityId>(10), id<AuthoredEntityId>(20)}};
+    for (const auto& last : invalid) {
+        auto commands = batch({SetNameCommand{id<AuthoredEntityId>(40), {"candidate only"}}, last});
+        auto before = capture(*value);
+        for (bool preview : {true, false}) {
+            auto reply = take(preview ? value->preview(commands, before.revision)
+                                      : value->execute(commands, before.revision));
+            REQUIRE_FALSE(reply.outcome);
+            CHECK(reply.outcome.error().context.path == "/commands/1");
+            CHECK_FALSE(reply.outcome.error().context.entity_id.empty());
+            same_capture(capture(*value), before);
+        }
+    }
+}
+
+TEST_CASE("batch commit revalidates after preview and rejects stale empty batches",
+          "[authoring-batches]") {
+    auto value = owner();
+    const auto expected = status(*value).revision;
+    auto commands = batch({SetNameCommand{id<AuthoredEntityId>(40), {"previewed"}}});
+    REQUIRE(take(value->preview(commands, expected)).outcome);
+    changed(*value, SetNameCommand{id<AuthoredEntityId>(30), {"intervening"}},
+            {id<AuthoredEntityId>(30)});
+    batch_rejected(*value, commands, expected, ErrorCode::conflict);
+    batch_rejected(*value, batch({}), expected, ErrorCode::conflict);
+    auto foreign = owner();
+    batch_rejected(*value, commands, status(*foreign).revision, ErrorCode::conflict);
+}
+
+TEST_CASE("batch noops and empty batches preserve clean baseline and cursors",
+          "[authoring-batches]") {
+    auto value = owner();
+    const auto before = capture(*value);
+    SceneQueryOptions options;
+    options.page_size = 1;
+    const auto page = take(value->query_entities(options));
+    REQUIRE(page.next_cursor());
+    for (const auto& commands :
+         {batch({}),
+          batch({SetNameCommand{id<AuthoredEntityId>(40), state(*value, 40).name},
+                 SetTransformCommand{id<AuthoredEntityId>(30), state(*value, 30).local_transform},
+                 ReparentEntityCommand{id<AuthoredEntityId>(30), id<AuthoredEntityId>(10)}})}) {
+        for (bool preview : {true, false}) {
+            const auto reply = take(preview ? value->preview(commands, before.revision)
+                                            : value->execute(commands, before.revision));
+            REQUIRE(reply.outcome);
+            CHECK_FALSE(reply.outcome.value().changed);
+            CHECK(reply.outcome.value().affected_entities.empty());
+            same_capture(capture(*value), before);
+            REQUIRE(value->continue_query(*page.next_cursor()));
+        }
+    }
+}
+
+TEST_CASE("batch changing then restoring values is one real edit", "[authoring-batches]") {
+    auto value = owner();
+    const auto before = capture(*value);
+    auto reply = take(
+        value->execute(batch({SetNameCommand{id<AuthoredEntityId>(40), {"temporary"}},
+                              SetNameCommand{id<AuthoredEntityId>(40), state(*value, 40).name}}),
+                       before.revision));
+    REQUIRE(reply.outcome);
+    CHECK(reply.outcome.value().changed);
+    CHECK(capture(*value).scene == before.scene);
+    CHECK(status(*value).dirty);
+    CHECK(reply.observed_revision.revision == before.revision.revision + 1);
+}
+
+TEST_CASE("batch delete recreate invalidates only removed incarnations and their extras",
+          "[authoring-batches]") {
+    auto value = owner();
+    const auto before = capture(*value);
+    const auto removed = find(*value, 30);
+    const auto survivor = find(*value, 10);
+    auto reply = take(value->execute(
+        batch({DeleteEntityCommand{id<AuthoredEntityId>(30)},
+               CreateEntityCommand{
+                   id<AuthoredEntityId>(30), {"replacement"}, {}, id<AuthoredEntityId>(10)}}),
+        before.revision));
+    REQUIRE(reply.outcome);
+    rejected(live(*value).reference(removed), ErrorCode::invalid_id);
+    CHECK(find(*value, 30) != removed);
+    CHECK(find(*value, 10) == survivor);
+    const auto after = capture(*value);
+    CHECK(captured_entity(after, 30).extras_json == "{}");
+    CHECK(captured_entity(after, 10).extras_json == captured_entity(before, 10).extras_json);
+    CHECK(after.scene.extras_json == before.scene.extras_json);
+    CHECK(after.scene.world_origin == before.scene.world_origin);
+}
+
+TEST_CASE("batch failed recreate preserves handles generations and metadata",
+          "[authoring-batches]") {
+    auto value = owner();
+    const auto original = find(*value, 30);
+    auto commands =
+        batch({DeleteEntityCommand{id<AuthoredEntityId>(30)},
+               CreateEntityCommand{id<AuthoredEntityId>(30)},
+               ReparentEntityCommand{id<AuthoredEntityId>(10), id<AuthoredEntityId>(99)}});
+    batch_rejected(*value, commands, status(*value).revision, ErrorCode::invalid_id);
+    CHECK(find(*value, 30) == original);
+}
+
+TEST_CASE("batch bounds admit 256 commands and reject 257 before evaluation",
+          "[authoring-batches]") {
+    auto value = owner();
+    auto commands = batch({});
+    for (std::size_t i = 0; i < authoring_maximum_batch_commands; ++i)
+        commands.commands.emplace_back(SetNameCommand{id<AuthoredEntityId>(40), {"bounded"}});
+    auto expected = status(*value).revision;
+    REQUIRE(take(value->preview(commands, expected)).outcome);
+    auto reply = take(value->execute(commands, expected));
+    REQUIRE(reply.outcome);
+    CHECK(reply.observed_revision.revision == expected.revision + 1);
+    commands.commands.emplace_back(DeleteEntityCommand{id<AuthoredEntityId>(99)});
+    batch_rejected(*value, commands, status(*value).revision, ErrorCode::invalid_argument);
+}
+
+TEST_CASE("batch intermediate entity capacity and hierarchy must be valid", "[authoring-batches]") {
+    auto value = owner(source(), {4, 16, 3});
+    batch_rejected(*value,
+                   batch({CreateEntityCommand{id<AuthoredEntityId>(50)},
+                          DeleteEntityCommand{id<AuthoredEntityId>(40)}}),
+                   status(*value).revision, ErrorCode::conflict);
+    auto accepted = batch({DeleteEntityCommand{id<AuthoredEntityId>(40)},
+                           CreateEntityCommand{id<AuthoredEntityId>(50)}});
+    REQUIRE(take(value->execute(accepted, status(*value).revision)).outcome);
+    batch_rejected(
+        *value,
+        batch({CreateEntityCommand{id<AuthoredEntityId>(60), {}, {}, id<AuthoredEntityId>(20)}}),
+        status(*value).revision, ErrorCode::conflict);
+}
+
+TEST_CASE("batch pending visits wrong thread and closed owner reject", "[authoring-batches]") {
+    auto value = owner();
+    const auto expected = status(*value).revision;
+    const auto commands = batch({SetNameCommand{id<AuthoredEntityId>(40), {"blocked"}}});
+    auto& raw = fixture_scene(*value);
+    REQUIRE(raw.defer_set_name(find(*value, 40), {"queued"}));
+    for (bool preview : {true, false}) {
+        auto reply =
+            take(preview ? value->preview(commands, expected) : value->execute(commands, expected));
+        rejected(reply.outcome, ErrorCode::conflict);
+    }
+    REQUIRE(raw.apply_deferred());
+    const auto current = status(*value).revision;
+    REQUIRE(raw.visit_entities([&](const EntityReference&) -> Result<void> {
+        rejected(take(value->preview(commands, current)).outcome, ErrorCode::conflict);
+        rejected(take(value->execute(commands, current)).outcome, ErrorCode::conflict);
+        return {};
+    }));
+    std::optional<Result<AuthoringBatchReply>> wrong;
+    std::thread worker([&] { wrong = value->preview(commands, current); });
+    worker.join();
+    REQUIRE(wrong);
+    rejected(*wrong, ErrorCode::conflict);
+    REQUIRE(raw.close());
+    rejected(value->preview(commands, current), ErrorCode::conflict);
+    rejected(value->execute(commands, current), ErrorCode::conflict);
+}
+
+TEST_CASE("batch correlation identity does not retain outcomes or permit stale retries",
+          "[authoring-batches]") {
+    auto value = owner();
+    auto commands = batch({SetNameCommand{id<AuthoredEntityId>(40), {"one"}}});
+    const auto first = status(*value).revision;
+    REQUIRE(take(value->execute(commands, first)).outcome);
+    batch_rejected(*value, commands, first, ErrorCode::conflict);
+    commands.commands = {SetNameCommand{id<AuthoredEntityId>(40), {"two"}}};
+    auto reply = take(value->execute(commands, status(*value).revision));
+    REQUIRE(reply.outcome);
+    CHECK(reply.id == commands.id);
+    CHECK(state(*value, 40).name.value == "two");
+}
+
+TEST_CASE("batch saved baseline preview and file conflicts preserve shared unsaved work",
+          "[authoring-batches]") {
+    FileFixture fixture;
+    auto files = take(ProjectFiles::open(fixture.root));
+    auto value = owner();
+    auto saved = take(files->save_scene(*value, status(*value).revision, std::nullopt));
+    CHECK(saved.current_scene_clean);
+    const auto before = capture(*value);
+    const auto commands = batch({SetNameCommand{id<AuthoredEntityId>(40), {"human"}},
+                                 SetNameCommand{id<AuthoredEntityId>(30), {"agent"}}});
+    REQUIRE(take(value->preview(commands, before.revision)).outcome);
+    same_capture(capture(*value), before);
+    REQUIRE(take(value->execute(commands, before.revision)).outcome);
+    const auto dirty = capture(*value);
+    REQUIRE(dirty.dirty);
+    auto conflict = files->save_scene(*value, before.revision, saved.file.revision);
+    REQUIRE_FALSE(conflict);
+    same_capture(capture(*value), dirty);
+    auto final = take(files->save_scene(*value, dirty.revision, saved.file.revision));
+    CHECK(final.current_scene_clean);
+    CHECK_FALSE(status(*value).dirty);
+    CHECK(take(files->read_scene(project(), id<SceneId>(3))).source.document == dirty.scene);
+}
+
+TEST_CASE("batch preview preserves cursors and does not consume scene incarnations",
+          "[authoring-batches]") {
+    auto value = owner();
+    const auto expected = status(*value).revision;
+    SceneQueryOptions options;
+    options.page_size = 1;
+    auto page = take(value->query_entities(options));
+    REQUIRE(page.next_cursor());
+    const auto commands = batch({DeleteEntityCommand{id<AuthoredEntityId>(30)},
+                                 CreateEntityCommand{id<AuthoredEntityId>(50)}});
+    for (int attempt = 0; attempt < 3; ++attempt) {
+        REQUIRE(take(value->preview(commands, expected)).outcome);
+        REQUIRE(value->continue_query(*page.next_cursor()));
+    }
+    auto next = owner();
+    CHECK(status(*next).revision.scene_instance == expected.scene_instance + 1);
+    REQUIRE(take(value->execute(commands, expected)).outcome);
+    rejected(value->continue_query(*page.next_cursor()), ErrorCode::conflict);
+}
+
+TEST_CASE("batch composed transforms and keep world use the staged hierarchy",
+          "[authoring-batches]") {
+    auto value = owner();
+    const auto expected = status(*value).revision;
+    auto transform = state(*value, 40).local_transform;
+    transform.translation = {7.0, 8.0, 9.0};
+    const auto world = state(*value, 30).world_matrix;
+    const auto commands =
+        batch({SetTransformCommand{id<AuthoredEntityId>(40), transform},
+               ReparentEntityCommand{id<AuthoredEntityId>(30), id<AuthoredEntityId>(40),
+                                     ReparentMode::keep_world}});
+    auto result = take(value->execute(commands, expected));
+    REQUIRE(result.outcome);
+    CHECK(transform_matrices_equivalent(state(*value, 30).world_matrix, world));
+    CHECK(state(*value, 30).parent == find(*value, 40));
+    CHECK(result.outcome.value().affected_entities ==
+          std::vector<AuthoredEntityId>{id<AuthoredEntityId>(10), id<AuthoredEntityId>(20),
+                                        id<AuthoredEntityId>(30), id<AuthoredEntityId>(40)});
+}
+
+TEST_CASE("batch worker values reenter the owner with the original revision fence",
+          "[authoring-batches]") {
+    auto value = owner();
+    const auto expected = status(*value).revision;
+    std::optional<AuthoringBatch> completed;
+    std::thread worker([&] {
+        completed = batch({SetNameCommand{id<AuthoredEntityId>(40), {"worker candidate"}}});
+    });
+    worker.join();
+    REQUIRE(completed);
+    changed(*value, SetNameCommand{id<AuthoredEntityId>(30), {"human intervened"}},
+            {id<AuthoredEntityId>(30)});
+    batch_rejected(*value, *completed, expected, ErrorCode::conflict);
+    REQUIRE(take(value->execute(*completed, status(*value).revision)).outcome);
+}
+
+TEST_CASE("batch full scene candidates retain all surviving handles within fixed source bounds",
+          "[authoring-batches]") {
+    auto document = source();
+    document.entities.clear();
+    for (std::uint32_t i = 1; i <= source_maximum_entities; ++i)
+        document.entities.push_back(entity(i));
+    auto value = owner(document);
+    const auto expected = status(*value).revision;
+    const auto survivor = find(*value, 4000);
+    auto commands = batch({DeleteEntityCommand{id<AuthoredEntityId>(1)},
+                           CreateEntityCommand{id<AuthoredEntityId>(5000)}});
+    REQUIRE(take(value->preview(commands, expected)).outcome);
+    REQUIRE(take(value->execute(commands, expected)).outcome);
+    CHECK(take(live(*value).stats()).live_entities == source_maximum_entities);
+    CHECK(find(*value, 4000) == survivor);
+    batch_rejected(*value, batch({CreateEntityCommand{id<AuthoredEntityId>(5001)}}),
+                   status(*value).revision, ErrorCode::conflict);
+}
+
+TEST_CASE("batch allocation failures before publication preserve the complete live owner",
+          "[authoring-batches]") {
+    for (bool preview : {true, false}) {
+        bool exhausted = false;
+        std::size_t observed_faults = 0;
+        for (std::size_t index = 0; index < 512; ++index) {
+            auto value = owner();
+            const auto before = capture(*value);
+            const auto original = find(*value, 30);
+            const auto commands =
+                batch({SetNameCommand{id<AuthoredEntityId>(40), {"allocate staged name"}},
+                       DeleteEntityCommand{id<AuthoredEntityId>(30)},
+                       CreateEntityCommand{id<AuthoredEntityId>(50),
+                                           {"allocate staged entity"},
+                                           {},
+                                           id<AuthoredEntityId>(10)}});
+#ifdef _WIN32
+            REQUIRE(shark::tools::detail::AuthoredSceneTestAccess::fail_batch_after(*value, index));
+#else
+            shark::test::allocation_fault::arm(index);
+#endif
+            auto reply = preview ? value->preview(commands, before.revision)
+                                 : value->execute(commands, before.revision);
+#ifdef _WIN32
+            const bool fired = !reply || !reply.value().outcome;
+#else
+            const bool fired = shark::test::allocation_fault::disarm();
+#endif
+            if (fired) {
+                ++observed_faults;
+                CHECK_FALSE((reply && reply.value().outcome));
+                same_capture(capture(*value), before);
+                CHECK(find(*value, 30) == original);
+            } else {
+                REQUIRE(reply);
+                REQUIRE(reply.value().outcome);
+                CHECK(reply.value().outcome.value().changed);
+                if (preview)
+                    same_capture(capture(*value), before);
+                else
+                    CHECK(status(*value).revision.revision == before.revision.revision + 1);
+                exhausted = true;
+                break;
+            }
+        }
+        CHECK(exhausted);
+        CHECK(observed_faults >= 5);
+    }
 }

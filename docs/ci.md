@@ -341,11 +341,19 @@ edits; private fixture access injects lifecycle invariant failures only.
 [handoff](handoffs/09a-shared-commands.md) and
 [receipt](coverage/evidence/09a-shared-commands.json) record 461 passing CPU CTests
 across five profiles, 12 standalone Tools checks and protected package/API gates.
-Full REQ-09 remains NOT_RUN. The next [checkpoint](roadmap/authoring-plan.md) is
-09b, Atomic transactions and preview.
+Full REQ-09 remains NOT_RUN. The completed 09b qualification follows below.
+
+09b is PASS under the current-machine scope. Its
+[transaction contract](authoring-transactions.md), [handoff](handoffs/09b-atomic-batches.md)
+and [receipt](coverage/evidence/09b-atomic-batches.json) record 605 full CPU CTests across seven profiles,
+14 standalone Tools checks, 15 public-example compiles, actual sanitizer objects
+and protected packages. Preserve `shark.tools.authoring-batches` (60 seconds)
+and `shark.core.scene-edit` (30 seconds), seed 1337. Full REQ-09 remains NOT_RUN.
+**Next: 09c, Shared undo and redo.**
 
 Run native Debug/Release/ASan and existing WSL CPU Debug/ASan+UBSan regressions,
-plus all six standalone Tools families on both systems. Compile the four public
+plus all seven standalone Tools families on both systems. Core changes also
+refresh both WSL Server profiles. Compile the five public
 Tools examples, including the [command example](authoring-commands.md), without
 private headers. Freeze current sources and evidence helpers; preserve exact
 test names, labels, timeouts and seed 1337. Require exact named Catch cases and
@@ -431,7 +439,7 @@ M03e database migration/restore is PASS: its
 M03f and full REQ-M03 are PASS: the [handoff](handoffs/M03f-integrated-qualification.md)
 records 588 CPU CTests, 10 standalone Tools checks and protected gates.
 09a's shared command foundation is also qualified; its evidence remains separate
-from this completed durable-state gate. 09b is the next checkpoint.
+from this completed durable-state gate. 09b is qualified; 09c is the next checkpoint.
 
 M03a adds the three storage families documented in [building](building.md#server-only-durable-storage).
 The Server build has a separate `storage` dependency domain; Core, Runtime and

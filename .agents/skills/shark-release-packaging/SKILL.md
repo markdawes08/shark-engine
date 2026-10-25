@@ -8,12 +8,18 @@ description: Validate Shark standalone exports and packages for cooked dependenc
 09a's [shared commands](../../../docs/authoring-commands.md) stay in EngineTools.
 Protected Runtime/Server packages must not acquire authoring command services,
 JSON/source readers, mutable invariant-fixture access or the command test target.
-Compile the four public Tools examples separately from those packages; all public
+Compile the five public Tools examples separately from those packages; all public
 AuthoredScene reads are const and ordinary edits use the typed service. 09a is
 PASS under the current-machine scope; follow its
 [handoff](../../../docs/handoffs/09a-shared-commands.md) and
 [receipt](../../../docs/coverage/evidence/09a-shared-commands.json).
-Full REQ-09 remains NOT_RUN. Next: 09b, Atomic transactions and preview.
+09b is also PASS under the current-machine scope. Follow its
+[transaction contract](../../../docs/authoring-transactions.md),
+[handoff](../../../docs/handoffs/09b-atomic-batches.md) and
+[receipt](../../../docs/coverage/evidence/09b-atomic-batches.json): 605 full CPU
+CTests, 14 standalone Tools checks, public examples, sanitizer objects and
+protected packages pass. Full REQ-09 remains NOT_RUN.
+Next: 09c, Shared undo and redo.
 No authoring installer or terminal/editor adapter is added by 09a.
 
 M03f's [integrated durable qualification](../../../docs/durable-qualification.md)

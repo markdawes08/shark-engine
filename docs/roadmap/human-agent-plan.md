@@ -76,8 +76,13 @@ Scene access. Human and agent-equivalent callers share this CPU C++ service.
 [handoff](../handoffs/09a-shared-commands.md) and
 [receipt](../coverage/evidence/09a-shared-commands.json) record 461 CPU CTests,
 12 standalone Tools checks and protected package/API gates. Full REQ-09 remains
-NOT_RUN. The next [checkpoint](authoring-plan.md) is 09b, Atomic transactions and
-preview; shared history and retry retention follow in 09c/09d.
+NOT_RUN. 09b now qualifies [atomic batches and pure preview](../authoring-transactions.md)
+on the same owner. Its [handoff](../handoffs/09b-atomic-batches.md) and
+[receipt](../coverage/evidence/09b-atomic-batches.json) record 605 full CPU CTests,
+14 standalone Tools checks and protected package/API gates. Preview reserves no
+revision; owner-thread commit revalidates bounded worker values against their
+original observation. Next in the [checkpoint plan](authoring-plan.md) is 09c,
+Shared undo and redo; retained retries follow in 09d.
 
 M02a provides the [bounded network foundation](../network-transport.md) through
 engine-owned CPU C++ interfaces and noninteractive JSON test fixtures. It does not
@@ -119,7 +124,7 @@ no second computer or specific provider integration is part of the requirement.
 | 03 | Owned structured errors and correlation/context usable by humans and tools; distinguish validation, capability, conflict and execution outcomes as services land. Preserve readable diagnostics. |
 | 07 | Implemented fixed Name/Transform metadata exposes stable versioned IDs/types/defaults/ranges/units and scene-owner mutability. Bounded revisioned CPU inspection needs no ECS access or viewport. 07c and full REQ-07 pass current-machine qualification. |
 | 08 | Documented readable source, project-root rules, atomic saves and conflict-aware text/file updates; external changes cannot be silently overwritten. |
-| 09 | 09a qualifies one AuthoredScene command owner, typed single edits, expected revisions and bounded queries/results. Full REQ-09 remains NOT_RUN. Next, 09b adds pure preview/atomic batches, 09c shared undo/redo, 09d explicit retry identity/retention and 09e integrated qualification. |
+| 09 | 09a qualifies one AuthoredScene command owner, typed single edits, expected revisions and bounded queries/results. Full REQ-09 remains NOT_RUN. 09b qualifies pure preview/atomic batches; next, 09c adds shared undo/redo, 09d explicit retry identity/retention and 09e integrated qualification. |
 | 10 | Deterministic CPU runs with nonzero assertion failure and bounded machine results/artifacts. Separate real GPU runs and report unavailable capabilities honestly. |
 | 11-14 | Imports/jobs expose progress, cancellation and atomic publication; export has structured completion/artifact metadata. Build CPU tools without editor/device initialization; qualify optional capture separately. |
 | 15 | Deliver the terminal contract and public discovery, queries, edits, text files, jobs, diagnostics, run/capture/export adapters. Include no-TTY, second-writer, protocol-stream, conflict/retry and resource-limit fixtures. |

@@ -6,7 +6,11 @@ Owner: REQ-09. M03 is complete. The user approved the following five checkpoints
 The [09a handoff](../handoffs/09a-shared-commands.md) and
 [receipt](../coverage/evidence/09a-shared-commands.json) record 461 passing full
 CPU CTests plus 12 standalone Tools checks and protected package qualification.
-**09b - Atomic transactions and preview is next.**
+**09b - Atomic transactions and preview is complete under the current-machine scope.**
+Its [handoff](../handoffs/09b-atomic-batches.md) and
+[receipt](../coverage/evidence/09b-atomic-batches.json) record 605 full CPU CTests,
+14 standalone Tools checks, public API/sanitizer audits and protected packages.
+**Next: 09c - Shared undo and redo. Full REQ-09 remains NOT_RUN.**
 
 Follow [ADR 0008](../architecture/0008-human-agent-authoring.md),
 the [human/agent plan](human-agent-plan.md) and
@@ -97,3 +101,12 @@ CLI/process ownership and editor integration remain 15 and 16. FeatureWorld
 attaches the supported commands in 10; earlier CPU fixtures are explicit external
 coverage until then. Full local authoring parity is not established by these
 C++ services alone.
+
+09b adds the internal Core candidate/publication port and two CTest families:
+`shark.core.scene-edit` (30 seconds) and `shark.tools.authoring-batches`
+(60 seconds), both seed1337. Its qualification refreshes seven full CPU profiles,
+including both WSL Server profiles, all seven authoring families in standalone
+Tools on each OS, five public examples, actual sanitizer objects and protected
+builds/packages. Preserve the 09a inventories plus only these additive families.
+The [transaction contract](../authoring-transactions.md) defines ordered limits,
+identity, no-op and publication semantics; full REQ-09 remains NOT_RUN.

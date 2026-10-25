@@ -120,7 +120,14 @@ Its [handoff](docs/handoffs/09a-shared-commands.md) and
 [receipt](docs/coverage/evidence/09a-shared-commands.json) record 461 passing CPU
 CTests, 12 standalone Tools checks and protected package/API gates.
 The [five-checkpoint plan](docs/roadmap/authoring-plan.md) keeps full REQ-09
-NOT_RUN. **Next: 09b, Atomic transactions and preview.**
+NOT_RUN.
+**09b, atomic transactions and preview, is complete under the current-machine scope.**
+The [transaction contract](docs/authoring-transactions.md) and
+[handoff](docs/handoffs/09b-atomic-batches.md) describe bounded C++ batches,
+pure preview and one revision-checked publication preserving surviving handles
+and unsaved state. Its [receipt](docs/coverage/evidence/09b-atomic-batches.json)
+records 605 full CPU CTests, 14 standalone Tools checks, public examples,
+sanitizer audits and protected packages. **Next: 09c, Shared undo and redo.**
 Assignment 08, Project and scene persistence, completed its
 [four checkpoints](docs/roadmap/persistence-plan.md). 08a adds CPU project/scene
 formats, validation and migration through [owned C++ values](docs/source-documents.md).

@@ -5,6 +5,7 @@ add_executable(Tests
     core_hierarchy_tests.cpp
     core_path_tests.cpp
     core_scene_tests.cpp
+    core_scene_edit_tests.cpp
     core_scene_query_tests.cpp
     core_schema_tests.cpp
     core_net_wire_tests.cpp
@@ -141,11 +142,13 @@ if(TARGET EngineTools)
     add_test(NAME shark.tools.authored-scene COMMAND AuthoredSceneTests "[authored-scene]" --rng-seed 1337)
     set_tests_properties(shark.tools.authored-scene PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
 
-    add_executable(AuthoringCommandTests authoring_command_tests.cpp)
+    add_executable(AuthoringCommandTests authoring_command_tests.cpp authoring_allocation_fault.cpp)
     target_link_libraries(AuthoringCommandTests PRIVATE EngineTools Catch2::Catch2WithMain)
     target_include_directories(AuthoringCommandTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
     shark_configure_target(AuthoringCommandTests)
     shark_classify_target(AuthoringCommandTests test)
+    add_test(NAME shark.tools.authoring-batches COMMAND AuthoringCommandTests "[authoring-batches]" --rng-seed 1337)
+    set_tests_properties(shark.tools.authoring-batches PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
     add_test(NAME shark.tools.authoring-commands COMMAND AuthoringCommandTests "[authoring-commands]" --rng-seed 1337)
     set_tests_properties(shark.tools.authoring-commands PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
 
@@ -189,6 +192,8 @@ add_test(NAME shark.core.timing COMMAND Tests "[timing]" --rng-seed 1337)
 set_tests_properties(shark.core.timing PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
 add_test(NAME shark.core.work COMMAND Tests "[work]" --rng-seed 1337)
 set_tests_properties(shark.core.work PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
+add_test(NAME shark.core.scene-edit COMMAND Tests "[scene-edit]" --rng-seed 1337)
+set_tests_properties(shark.core.scene-edit PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)
 add_test(NAME shark.core.scene COMMAND Tests "[scene]" --rng-seed 1337)
 set_tests_properties(shark.core.scene PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
 add_test(NAME shark.core.world-position COMMAND Tests "[world-position]" --rng-seed 1337)

@@ -104,7 +104,19 @@ Follow [ADR 0020](docs/architecture/0020-shared-authoring-commands.md) and the
 [handoff](docs/handoffs/09a-shared-commands.md) and
 [receipt](docs/coverage/evidence/09a-shared-commands.json) record 461 passing CPU
 CTests, 12 standalone Tools checks and protected package/API gates.
-Full REQ-09 remains NOT_RUN. **Next: 09b, Atomic transactions and preview.**
+**09b: Atomic transactions and preview is complete under the current-machine
+scope.** Follow [ADR 0021](docs/architecture/0021-atomic-authoring-batches.md), the
+[transaction contract](docs/authoring-transactions.md),
+[handoff](docs/handoffs/09b-atomic-batches.md) and
+[receipt](docs/coverage/evidence/09b-atomic-batches.json): 605 full CPU CTests,
+14 standalone Tools checks, public examples, sanitizer audits and protected
+packages pass. Batches contain at most 256 ordered commands; preview publishes
+nothing, while commit rechecks the revision and publishes once through the same
+owner. Internal candidates preserve surviving handles and the saved baseline;
+never expose candidate handles or private ports through adapters. Preserve
+`shark.tools.authoring-batches` (60 seconds) and `shark.core.scene-edit`
+(30 seconds), both seed 1337. Full REQ-09 remains NOT_RUN.
+**Next: 09c, Shared undo and redo.**
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read
@@ -435,8 +447,9 @@ does not reserve a revision or replace Scene's hierarchy validation. EngineTools
 provides source persistence through the shared capture/activation and file services.
 09a adds typed single edits and bounded queries on that same AuthoredScene owner.
 Ordinary edits preserve Scene incarnation and the saved baseline; activation is
-explicit replacement, never a shortcut for commands. Atomic transactions/preview,
-history and retry retention retain 09b/09c/09d; terminal/editor adapters and Lua
+explicit replacement, never a shortcut for commands. 09b adds bounded atomic
+batches and pure preview through an internal Core candidate/publication port.
+Shared history and retry retention remain 09c/09d; terminal/editor adapters and Lua
 retain their later owners;
 the bootstrap executables do not expose those interfaces or a scene renderer.
 MMO requirements remain planned until executable multi-process, network-fault,

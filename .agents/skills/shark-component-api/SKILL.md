@@ -17,8 +17,8 @@ authoring layer lands; the bootstrap does not yet provide these interfaces.
 The implemented-surface manifest includes the mandatory Name and Transform C++
 components and their validation/mutation tests. 07c adds real fixed schema and
 bounded revisioned query coverage. 09a adds real typed authoring command entries
-through the existing AuthoredScene owner. Authoring transactions, Lua and
-FeatureWorld arrive in 09b, 19 and 10 respectively. Do not fabricate unimplemented
+through the existing AuthoredScene owner. 09b supplies atomic authoring batches and pure preview. Lua and
+FeatureWorld arrive in 19 and 10 respectively. Do not fabricate unimplemented
 bindings or fill the Lua array with placeholders. Connect each earlier component
 when its missing layer is introduced.
 
@@ -150,12 +150,26 @@ reparent commands with an expected revision; check both outer and nested Results
 The reply reports the current revision and a sorted bounded refresh-ID set.
 Ordinary edits preserve the Scene instance, retained handles, source metadata
 and saved baseline. Never use activation as a command shortcut or expose private
-invariant-fixture access through an adapter. Batches/preview, history and retry
-retention belong to 09b/09c/09d; terminal/editor integration remains 15/16.
+invariant-fixture access through an adapter. 09b batches and pure preview reuse
+that owner and an internal Core candidate/publication port. History and retry
+retention belong to 09c/09d; terminal/editor integration remains 15/16.
 09a is PASS under the current-machine scope; follow its
 [handoff](../../../docs/handoffs/09a-shared-commands.md) and
 [receipt](../../../docs/coverage/evidence/09a-shared-commands.json).
-Full REQ-09 remains NOT_RUN. Next: 09b, Atomic transactions and preview.
+09b is also PASS under the current-machine scope. Follow its
+[transaction contract](../../../docs/authoring-transactions.md),
+[handoff](../../../docs/handoffs/09b-atomic-batches.md) and
+[receipt](../../../docs/coverage/evidence/09b-atomic-batches.json): 605 full CPU
+CTests, 14 standalone Tools checks, public examples, sanitizer objects and
+protected packages pass. Full REQ-09 remains NOT_RUN.
+Next: 09c, Shared undo and redo.
+
+Extend the staged Core record copy and validated mutation path together when
+persisted components land. Batches contain at most 256 ordered commands; each
+intermediate state must validate. Allocate complete replies before publication.
+Preserve revision/no-op, metadata, handle-generation and dirty-baseline semantics.
+Workers deliver owned bounded values and the observed revision to the owner;
+never expose internal candidate handles or treat preview as a commit token.
 
 08c's [project file service](../../../docs/project-files.md) reuses those values
 and validators. Preserve root/path-bound exact-content revisions, explicit

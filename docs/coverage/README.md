@@ -97,8 +97,15 @@ are PASS: the [handoff](../handoffs/M03f-integrated-qualification.md) records
 [handoff](../handoffs/09a-shared-commands.md) and
 [receipt](evidence/09a-shared-commands.json) record 461 passing CPU CTests,
 12 standalone Tools checks and protected package/API gates. Full REQ-09 remains
-NOT_RUN. The next [checkpoint](../roadmap/authoring-plan.md) is
-09b, Atomic transactions and preview.
+NOT_RUN. The completed 09b qualification follows below.
+
+09b is PASS under the current-machine scope. Its
+[transaction contract](../authoring-transactions.md), [handoff](../handoffs/09b-atomic-batches.md)
+and [receipt](evidence/09b-atomic-batches.json) record 605 full CPU CTests across seven profiles,
+14 standalone Tools checks, 15 public-example compiles, actual sanitizer objects
+and protected packages. Preserve `shark.tools.authoring-batches` (60 seconds)
+and `shark.core.scene-edit` (30 seconds), seed 1337. Full REQ-09 remains NOT_RUN.
+**Next: 09c, Shared undo and redo.**
 
 `current_assignment: 09` follows the completed durable-state gate and
 [five network checkpoints](../roadmap/network-plan.md) and
@@ -147,8 +154,8 @@ Runtime/Server builds, source/link/license closure and fresh isolated package
 checks pass; all 221 qualification source inputs were unchanged in that record.
 M02a-M02e and full REQ-M02 are PASS under the current-machine scope.
 Assignment 08, Project and scene persistence, is complete: 08a-08d and full
-REQ-08 are PASS. M03 and all six checkpoints are complete; 09a is qualified and
-09b is the next authoring checkpoint.
+REQ-08 are PASS. M03 and all six checkpoints are complete; 09a and
+09b are qualified; 09c is the next authoring checkpoint.
 FeatureWorld integration remains assignment 10.
 The user's sequencing amendment moved remaining 05c work to the
 [nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
@@ -372,7 +379,7 @@ pass against 299 unchanged inputs and 18 helpers. The
 including the corrected final file-case inventory. M03 separately owns live
 player/economy durability; its store, character, atomic transaction and runtime
 recovery, database maintenance and integrated qualification are complete;
-09a is qualified; 09b is the next authoring checkpoint.
+09a and 09b are qualified; 09c is the next authoring checkpoint.
 
 M03c maps `server.durable-transactions` to `shark.storage.transactions`,
 `shark.storage.transactions-process` and authenticated owner regressions in

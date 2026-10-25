@@ -1,11 +1,13 @@
 #include "shark/tools/authored_scene.hpp"
 
 #include "authored_scene_test_access.hpp"
+#include "scene_edit_access.hpp"
 
 #include <algorithm>
 #include <exception>
 #include <map>
 #include <new>
+#include <set>
 #include <thread>
 #include <type_traits>
 #include <utility>
@@ -183,6 +185,88 @@ void append_subtree(const Scene& scene, EntityHandle root,
     }
 }
 
+AuthoringCommandReply apply_command(Scene& scene, SceneLimits limits,
+                                    const AuthoringCommand& command,
+                                    SceneRevision expected_revision) {
+    const auto observed = checked(scene.stats());
+    auto outcome = boundary<AuthoringCommandEffect>("authoring.execute", [&] {
+        if (expected_revision != SceneRevision{observed.instance, observed.revision}) {
+            fail(ErrorCode::conflict, "authored scene revision has changed");
+        }
+        // Prepare the entire receipt before calling the mutation boundary.
+        // No allocation or caller callback follows a successful mutation.
+        AuthoringCommandEffect effect{false, {}};
+        effect.affected_entities.reserve(limits.max_entities + 2);
+        std::visit(
+            [&](const auto& request) {
+                using Command = std::decay_t<decltype(request)>;
+                if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
+                              std::is_same_v<Command, SetNameCommand>) {
+                    // Reject oversized caller-owned text before copying it
+                    // into the Core mutation's owned input.
+                    checked(validate_name(request.name));
+                }
+                std::optional<EntityHandle> target;
+                std::optional<EntityHandle> parent;
+                if constexpr (!std::is_same_v<Command, CreateEntityCommand>) {
+                    target = checked(scene.find(request.id));
+                }
+                if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
+                              std::is_same_v<Command, ReparentEntityCommand>) {
+                    if (request.parent) {
+                        parent = checked(scene.find(*request.parent));
+                    }
+                }
+                if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
+                              std::is_same_v<Command, SetNameCommand>) {
+                    effect.affected_entities.push_back(request.id);
+                } else {
+                    append_subtree(scene, *target, effect.affected_entities);
+                }
+                if constexpr (std::is_same_v<Command, DeleteEntityCommand> ||
+                              std::is_same_v<Command, ReparentEntityCommand>) {
+                    if (const auto old_parent = checked(scene.entity_state(*target)).parent) {
+                        append_identity(scene, *old_parent, effect.affected_entities);
+                    }
+                }
+                if (parent) {
+                    append_identity(scene, *parent, effect.affected_entities);
+                }
+                std::sort(effect.affected_entities.begin(), effect.affected_entities.end());
+                effect.affected_entities.erase(
+                    std::unique(effect.affected_entities.begin(), effect.affected_entities.end()),
+                    effect.affected_entities.end());
+                if constexpr (std::is_same_v<Command, CreateEntityCommand>) {
+                    static_cast<void>(checked(scene.create_entity(
+                        {request.id, std::nullopt, request.name, request.transform, parent})));
+                } else if constexpr (std::is_same_v<Command, DeleteEntityCommand>) {
+                    checked(scene.destroy_entity(*target));
+                } else if constexpr (std::is_same_v<Command, SetNameCommand>) {
+                    checked(scene.set_name(*target, request.name));
+                } else if constexpr (std::is_same_v<Command, SetTransformCommand>) {
+                    checked(scene.set_transform(*target, request.transform));
+                } else {
+                    checked(scene.reparent(*target, parent, request.mode));
+                }
+            },
+            command);
+        // The owner thread and live Scene cannot change during an immediate
+        // Core mutation: no callback or borrowed mutable Scene is exposed.
+        // stats() is allocation-free on this already-checked owner thread.
+        effect.changed = scene.stats().value().revision != observed.revision;
+        if (!effect.changed) {
+            effect.affected_entities.clear();
+        }
+        return effect;
+    });
+    if (!outcome && outcome.error().context.entity_id.empty()) {
+        outcome.error().context.entity_id =
+            std::visit([](const auto& request) { return request.id.value().to_string(); }, command);
+    }
+    const auto stats = scene.stats().value();
+    return AuthoringCommandReply{{stats.instance, stats.revision}, std::move(outcome)};
+}
+
 } // namespace
 
 struct AuthoredScene::Impl {
@@ -191,6 +275,7 @@ struct AuthoredScene::Impl {
     const ProjectDocument project;
     const SceneLimits limits;
     std::unique_ptr<ActiveScene> active;
+    std::optional<std::size_t> batch_failure_after;
 
     Impl(ProjectDocument catalog, SceneLimits bounds, std::unique_ptr<ActiveScene> value)
         : project(std::move(catalog)), limits(bounds), active(std::move(value)) {}
@@ -255,83 +340,81 @@ Result<std::reference_wrapper<const Scene>> AuthoredScene::scene() const {
 Result<AuthoringCommandReply> AuthoredScene::execute(const AuthoringCommand& command,
                                                      SceneRevision expected_revision) {
     return boundary<AuthoringCommandReply>("authoring.execute", [&] {
-        const auto observed = impl_->read_status();
-        auto& scene = *impl_->active->scene;
-        auto outcome = boundary<AuthoringCommandEffect>("authoring.execute", [&] {
+        static_cast<void>(impl_->read_status());
+        return apply_command(*impl_->active->scene, impl_->limits, command, expected_revision);
+    });
+}
+
+Result<AuthoringBatchReply> AuthoredScene::preview(const AuthoringBatch& batch,
+                                                   SceneRevision expected_revision) const {
+    return evaluate_batch(batch, expected_revision, false);
+}
+
+Result<AuthoringBatchReply> AuthoredScene::execute(const AuthoringBatch& batch,
+                                                   SceneRevision expected_revision) {
+    return evaluate_batch(batch, expected_revision, true);
+}
+
+Result<AuthoringBatchReply> AuthoredScene::evaluate_batch(const AuthoringBatch& batch,
+                                                          SceneRevision expected_revision,
+                                                          bool publish) const {
+    const auto* operation = publish ? "authoring.batch.execute" : "authoring.batch.preview";
+    auto result = boundary<AuthoringBatchReply>(operation, [&] {
+        static_cast<void>(impl_->read_status());
+        auto& live = *impl_->active->scene;
+        auto outcome = boundary<AuthoringCommandEffect>(operation, [&] {
             static_cast<void>(impl_->read_status(expected_revision));
-            // Prepare the entire receipt before calling the mutation boundary.
-            // No allocation or caller callback follows a successful mutation.
-            AuthoringCommandEffect effect{false, {}};
-            effect.affected_entities.reserve(impl_->limits.max_entities + 2);
-            std::visit(
-                [&](const auto& request) {
-                    using Command = std::decay_t<decltype(request)>;
-                    if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
-                                  std::is_same_v<Command, SetNameCommand>) {
-                        // Reject oversized caller-owned text before copying it
-                        // into the Core mutation's owned input.
-                        checked(validate_name(request.name));
-                    }
-                    std::optional<EntityHandle> target;
-                    std::optional<EntityHandle> parent;
-                    if constexpr (!std::is_same_v<Command, CreateEntityCommand>) {
-                        target = checked(scene.find(request.id));
-                    }
-                    if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
-                                  std::is_same_v<Command, ReparentEntityCommand>) {
-                        if (request.parent) {
-                            parent = checked(scene.find(*request.parent));
-                        }
-                    }
-                    if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
-                                  std::is_same_v<Command, SetNameCommand>) {
-                        effect.affected_entities.push_back(request.id);
-                    } else {
-                        append_subtree(scene, *target, effect.affected_entities);
-                    }
-                    if constexpr (std::is_same_v<Command, DeleteEntityCommand> ||
-                                  std::is_same_v<Command, ReparentEntityCommand>) {
-                        if (const auto old_parent = checked(scene.entity_state(*target)).parent) {
-                            append_identity(scene, *old_parent, effect.affected_entities);
-                        }
-                    }
-                    if (parent) {
-                        append_identity(scene, *parent, effect.affected_entities);
-                    }
-                    std::sort(effect.affected_entities.begin(), effect.affected_entities.end());
-                    effect.affected_entities.erase(std::unique(effect.affected_entities.begin(),
-                                                               effect.affected_entities.end()),
-                                                   effect.affected_entities.end());
-                    if constexpr (std::is_same_v<Command, CreateEntityCommand>) {
-                        static_cast<void>(checked(scene.create_entity(
-                            {request.id, std::nullopt, request.name, request.transform, parent})));
-                    } else if constexpr (std::is_same_v<Command, DeleteEntityCommand>) {
-                        checked(scene.destroy_entity(*target));
-                    } else if constexpr (std::is_same_v<Command, SetNameCommand>) {
-                        checked(scene.set_name(*target, request.name));
-                    } else if constexpr (std::is_same_v<Command, SetTransformCommand>) {
-                        checked(scene.set_transform(*target, request.transform));
-                    } else {
-                        checked(scene.reparent(*target, parent, request.mode));
-                    }
-                },
-                command);
-            // The owner thread and live Scene cannot change during an immediate
-            // Core mutation: no callback or borrowed mutable Scene is exposed.
-            // stats() is allocation-free on this already-checked owner thread.
-            effect.changed = scene.stats().value().revision != observed.revision.revision;
-            if (!effect.changed) {
-                effect.affected_entities.clear();
+            if (batch.commands.size() > authoring_maximum_batch_commands) {
+                fail(ErrorCode::invalid_argument, "authoring batch command bound exceeded");
+            }
+            const auto failure_after = std::exchange(impl_->batch_failure_after, std::nullopt);
+            std::size_t step = 0;
+            const auto allocation_boundary = [&] {
+                if (failure_after && step++ == *failure_after) {
+                    throw std::bad_alloc{};
+                }
+            };
+            allocation_boundary();
+            auto candidate =
+                checked(shark::scene_detail::SceneEditAccess::prepare(live, expected_revision));
+            allocation_boundary();
+            std::set<AuthoredEntityId> affected;
+            bool changed = false;
+            for (std::size_t index = 0; index < batch.commands.size(); ++index) {
+                const auto stats = checked(candidate->stats());
+                auto reply = apply_command(*candidate, impl_->limits, batch.commands[index],
+                                           {stats.instance, stats.revision});
+                if (!reply.outcome) {
+                    auto error = std::move(reply.outcome).error();
+                    error.context.path = "/commands/" + std::to_string(index);
+                    throw ActivationFailure{std::move(error)};
+                }
+                changed = changed || reply.outcome.value().changed;
+                const auto& ids = reply.outcome.value().affected_entities;
+                affected.insert(ids.begin(), ids.end());
+                allocation_boundary();
+            }
+            AuthoringCommandEffect effect{changed, {affected.begin(), affected.end()}};
+            allocation_boundary();
+            if (publish) {
+                allocation_boundary();
+                // The complete reply payload exists before the allocation-free
+                // commit. Commit rechecks live owner, revision and mutation phase.
+                static_cast<void>(checked(shark::scene_detail::SceneEditAccess::commit(
+                    live, *candidate, expected_revision)));
             }
             return effect;
         });
-        if (!outcome && outcome.error().context.entity_id.empty()) {
-            outcome.error().context.entity_id = std::visit(
-                [](const auto& request) { return request.id.value().to_string(); }, command);
+        if (!outcome) {
+            outcome.error().context.request_id = batch.id.value().to_string();
         }
-        const auto stats = scene.stats().value();
-        return AuthoringCommandReply{{stats.instance, stats.revision}, std::move(outcome)};
+        const auto stats = live.stats().value();
+        return AuthoringBatchReply{batch.id, {stats.instance, stats.revision}, std::move(outcome)};
     });
+    if (!result) {
+        result.error().context.request_id = batch.id.value().to_string();
+    }
+    return result;
 }
 
 Result<SceneQueryPage> AuthoredScene::query_entities(const SceneQueryOptions& options) const {
@@ -479,6 +562,15 @@ Result<std::reference_wrapper<Scene>> detail::AuthoredSceneTestAccess::scene(Aut
     return boundary<std::reference_wrapper<Scene>>("source.scene.access", [&] {
         static_cast<void>(owner.impl_->read_status());
         return std::ref(*owner.impl_->active->scene);
+    });
+}
+
+Result<void> detail::AuthoredSceneTestAccess::fail_batch_after(AuthoredScene& owner,
+                                                               std::size_t step) {
+    return boundary<void>("source.scene.test-fault", [&] {
+        static_cast<void>(owner.impl_->read_status());
+        owner.impl_->batch_failure_after = step;
+        return Result<void>{};
     });
 }
 
