@@ -76,8 +76,8 @@ SceneDocument source() {
 }
 
 std::unique_ptr<AuthoredScene> owner(const SceneDocument& document = source(),
-                                     SceneLimits limits = {}) {
-    return take(AuthoredScene::create(project(), document, limits));
+                                     SceneLimits limits = {}, AuthoringHistoryLimits history = {}) {
+    return take(AuthoredScene::create(project(), document, limits, history));
 }
 
 const Scene& live(const AuthoredScene& value) {
@@ -1156,4 +1156,500 @@ TEST_CASE("batch allocation failures before publication preserve the complete li
         CHECK(exhausted);
         CHECK(observed_faults >= 5);
     }
+}
+
+namespace {
+AuthoringHistoryStatus history(const AuthoredScene& value) {
+    return take(value.history(status(value).revision));
+}
+void same_history(const AuthoringHistoryStatus& actual, const AuthoringHistoryStatus& expected) {
+    CHECK(actual.revision == expected.revision);
+    CHECK(actual.synchronized == expected.synchronized);
+    CHECK(actual.undo_entries == expected.undo_entries);
+    CHECK(actual.redo_entries == expected.redo_entries);
+    CHECK(actual.retained_bytes == expected.retained_bytes);
+    CHECK(actual.next_undo.has_value() == expected.next_undo.has_value());
+    CHECK(actual.next_redo.has_value() == expected.next_redo.has_value());
+    if (actual.next_undo && expected.next_undo) {
+        CHECK(actual.next_undo->ticket == expected.next_undo->ticket);
+        CHECK(actual.next_undo->command_count == expected.next_undo->command_count);
+    }
+    if (actual.next_redo && expected.next_redo) {
+        CHECK(actual.next_redo->ticket == expected.next_redo->ticket);
+        CHECK(actual.next_redo->command_count == expected.next_redo->command_count);
+    }
+}
+AuthoringHistoryReply move_history(AuthoredScene& value, bool forward = false) {
+    const auto before = history(value);
+    const auto next = forward ? before.next_redo : before.next_undo;
+    REQUIRE(next);
+    auto reply = take(forward ? value.redo(next->ticket, before.revision)
+                              : value.undo(next->ticket, before.revision));
+    REQUIRE(reply.outcome);
+    CHECK(reply.ticket == next->ticket);
+    CHECK(reply.outcome.value().changed);
+    CHECK(reply.observed_revision == status(value).revision);
+    CHECK(reply.observed_revision.scene_instance == before.revision.scene_instance);
+    CHECK(reply.observed_revision.revision == before.revision.revision + 1);
+    CHECK(status(value).dirty);
+    return reply;
+}
+void history_rejected(AuthoredScene& value, AuthoringHistoryTicket ticket, SceneRevision expected,
+                      bool forward = false) {
+    const auto before = capture(value);
+    const auto old = history(value);
+    auto reply = take(forward ? value.redo(ticket, expected) : value.undo(ticket, expected));
+    rejected(reply.outcome, ErrorCode::conflict);
+    CHECK(reply.observed_revision == before.revision);
+    same_capture(capture(value), before);
+    same_history(history(value), old);
+}
+void edit_name(AuthoredScene& value, const char* name) {
+    REQUIRE(take(value.execute(SetNameCommand{id<AuthoredEntityId>(40), {name}},
+                               status(value).revision))
+                .outcome);
+}
+} // namespace
+
+TEST_CASE("history single edits and atomic batches share ordered groups across callers",
+          "[authoring-history]") {
+    auto value = owner();
+    const auto initial = capture(*value);
+    CHECK(history(*value).synchronized);
+    CHECK(history(*value).retained_bytes == 0);
+    edit_name(*value, "human");
+    const auto human = capture(*value);
+    const auto first = history(*value);
+    REQUIRE(first.next_undo);
+    CHECK(first.next_undo->command_count == 1);
+    Transform transformed;
+    transformed.translation = {3.0, 4.0, 5.0};
+    REQUIRE(take(value->execute(batch({SetTransformCommand{id<AuthoredEntityId>(40), transformed},
+                                       ReparentEntityCommand{id<AuthoredEntityId>(30),
+                                                             id<AuthoredEntityId>(40)}}),
+                                status(*value).revision))
+                .outcome);
+    const auto agent = capture(*value);
+    CHECK(history(*value).undo_entries == 2);
+    REQUIRE(history(*value).next_undo);
+    CHECK(history(*value).next_undo->command_count == 2);
+    const auto handle = find(*value, 40);
+    move_history(*value);
+    CHECK(capture(*value).scene == human.scene);
+    CHECK(find(*value, 40) == handle);
+    move_history(*value);
+    CHECK(capture(*value).scene == initial.scene);
+    CHECK(history(*value).undo_entries == 0);
+    CHECK(history(*value).redo_entries == 2);
+    move_history(*value, true);
+    CHECK(capture(*value).scene == human.scene);
+    move_history(*value, true);
+    CHECK(capture(*value).scene == agent.scene);
+    CHECK(state(*value, 30).world_matrix[3][0] == 4.0);
+    CHECK(history(*value).next_undo->command_count == 2);
+}
+
+TEST_CASE("history subtree deletion restores source ordering hierarchy extras and fresh handles",
+          "[authoring-history]") {
+    auto value = owner();
+    const auto initial = capture(*value);
+    const auto parent = find(*value, 10);
+    const auto child = find(*value, 30);
+    const auto other = find(*value, 40);
+    const auto world = state(*value, 20).world_matrix;
+    REQUIRE(take(value->execute(DeleteEntityCommand{id<AuthoredEntityId>(10)}, initial.revision))
+                .outcome);
+    const auto removed = capture(*value);
+    const auto effect = move_history(*value).outcome.value();
+    CHECK(effect.affected_entities ==
+          std::vector<AuthoredEntityId>{id<AuthoredEntityId>(10), id<AuthoredEntityId>(20),
+                                        id<AuthoredEntityId>(30), id<AuthoredEntityId>(40)});
+    CHECK(capture(*value).scene == initial.scene);
+    CHECK(find(*value, 10) != parent);
+    CHECK(find(*value, 30) != child);
+    CHECK(find(*value, 40) == other);
+    rejected(live(*value).reference(parent), ErrorCode::invalid_id);
+    rejected(live(*value).reference(child), ErrorCode::invalid_id);
+    CHECK(transform_matrices_equivalent(state(*value, 20).world_matrix, world));
+    const auto restored = find(*value, 10);
+    move_history(*value, true);
+    CHECK(capture(*value).scene == removed.scene);
+    rejected(live(*value).reference(restored), ErrorCode::invalid_id);
+    move_history(*value);
+    CHECK(find(*value, 10) != restored);
+    CHECK(capture(*value).scene == initial.scene);
+}
+
+TEST_CASE("history replacement groups never resurrect or reuse the opposite incarnation",
+          "[authoring-history]") {
+    auto value = owner();
+    const auto initial = capture(*value);
+    const auto original = find(*value, 30);
+    const auto survivor = find(*value, 10);
+    REQUIRE(take(value->execute(batch({DeleteEntityCommand{id<AuthoredEntityId>(30)},
+                                       CreateEntityCommand{id<AuthoredEntityId>(30),
+                                                           {"new incarnation"},
+                                                           {},
+                                                           id<AuthoredEntityId>(40)}}),
+                                initial.revision))
+                .outcome);
+    const auto replacement = find(*value, 30);
+    const auto replaced = capture(*value);
+    CHECK(captured_entity(replaced, 30).extras_json == "{}");
+    move_history(*value);
+    const auto restored = find(*value, 30);
+    CHECK(restored != original);
+    CHECK(restored != replacement);
+    CHECK(capture(*value).scene == initial.scene);
+    rejected(live(*value).reference(replacement), ErrorCode::invalid_id);
+    move_history(*value, true);
+    CHECK(find(*value, 30) != restored);
+    CHECK(find(*value, 30) != replacement);
+    rejected(live(*value).reference(restored), ErrorCode::invalid_id);
+    CHECK(capture(*value).scene == replaced.scene);
+    CHECK(find(*value, 10) == survivor);
+}
+
+TEST_CASE("history net source neutral transaction still moves its revision once",
+          "[authoring-history]") {
+    auto value = owner();
+    const auto before = capture(*value);
+    REQUIRE(take(value->execute(batch({SetNameCommand{id<AuthoredEntityId>(40), {"temporary"}},
+                                       SetNameCommand{id<AuthoredEntityId>(40), {"Entity 40"}}}),
+                                before.revision))
+                .outcome);
+    CHECK(capture(*value).scene == before.scene);
+    CHECK(history(*value).undo_entries == 1);
+    move_history(*value);
+    CHECK(capture(*value).scene == before.scene);
+    move_history(*value, true);
+    CHECK(capture(*value).scene == before.scene);
+}
+
+TEST_CASE("history previews noops and failures preserve redo and ticket allocation",
+          "[authoring-history]") {
+    auto value = owner();
+    edit_name(*value, "one");
+    move_history(*value);
+    const auto before = capture(*value);
+    const auto old = history(*value);
+    REQUIRE(take(value->preview(batch({SetNameCommand{id<AuthoredEntityId>(40), {"preview"}}}),
+                                before.revision))
+                .outcome);
+    REQUIRE(take(value->execute(batch({}), before.revision)).outcome);
+    REQUIRE(take(value->execute(SetNameCommand{id<AuthoredEntityId>(40), {"Entity 40"}},
+                                before.revision))
+                .outcome);
+    command_rejected(*value, DeleteEntityCommand{id<AuthoredEntityId>(99)}, ErrorCode::invalid_id);
+    same_capture(capture(*value), before);
+    same_history(history(*value), old);
+    edit_name(*value, "branch");
+    const auto next = history(*value);
+    CHECK(next.redo_entries == 0);
+    CHECK(next.undo_entries == 1);
+    CHECK(next.next_undo->ticket.value == old.next_redo->ticket.value + 1);
+    history_rejected(*value, old.next_redo->ticket, next.revision, true);
+}
+
+TEST_CASE("history stale foreign future and wrong ticket requests preserve all state",
+          "[authoring-history]") {
+    auto value = owner();
+    const auto stale = status(*value).revision;
+    edit_name(*value, "one");
+    const auto observed = history(*value);
+    auto other = owner();
+    for (const auto expected :
+         {SceneRevision{}, stale, status(*other).revision,
+          SceneRevision{observed.revision.scene_instance, observed.revision.revision + 1}}) {
+        history_rejected(*value, observed.next_undo->ticket, expected);
+        rejected(value->history(expected), ErrorCode::conflict);
+        rejected(value->clear_history(expected), ErrorCode::conflict);
+    }
+    history_rejected(*value, {0}, observed.revision);
+    history_rejected(*value, {observed.next_undo->ticket.value + 1}, observed.revision);
+    history_rejected(*value, observed.next_undo->ticket, observed.revision, true);
+    move_history(*value);
+    history_rejected(*value, observed.next_undo->ticket, history(*value).revision);
+    history_rejected(*value, observed.next_undo->ticket, observed.revision, true);
+}
+
+TEST_CASE("history out of band Core mutations require explicit reconciliation",
+          "[authoring-history]") {
+    auto value = owner();
+    edit_name(*value, "authoring");
+    const auto ticket = history(*value).next_undo->ticket;
+    REQUIRE(fixture_scene(*value).set_name(find(*value, 30), {"intervening Core value"}));
+    const auto before = capture(*value);
+    CHECK_FALSE(history(*value).synchronized);
+    history_rejected(*value, ticket, before.revision);
+    command_rejected(*value, SetNameCommand{id<AuthoredEntityId>(40), {"blocked"}},
+                     ErrorCode::conflict);
+    rejected(take(value->preview(batch({}), before.revision)).outcome, ErrorCode::conflict);
+    const auto cleared = take(value->clear_history(before.revision));
+    CHECK(cleared.synchronized);
+    CHECK(cleared.retained_bytes == 0);
+    CHECK(cleared.undo_entries == 0);
+    same_capture(capture(*value), before);
+    edit_name(*value, "reconciled");
+    CHECK(history(*value).next_undo->ticket.value == ticket.value + 1);
+    move_history(*value);
+    CHECK(capture(*value).scene == before.scene);
+}
+
+TEST_CASE("history saves retain groups and undo redo conservatively mark dirty",
+          "[authoring-history]") {
+    FileFixture fixture;
+    auto files = take(ProjectFiles::open(fixture.root));
+    auto value = owner();
+    const auto initial = capture(*value);
+    auto saved = take(files->save_scene(*value, initial.revision, std::nullopt));
+    edit_name(*value, "saved edit");
+    const auto old = history(*value);
+    rejected(files->save_scene(*value, initial.revision, saved.file.revision), ErrorCode::conflict);
+    same_history(history(*value), old);
+    saved = take(files->save_scene(*value, old.revision, saved.file.revision));
+    CHECK(saved.current_scene_clean);
+    same_history(history(*value), old);
+    move_history(*value);
+    CHECK(capture(*value).scene == initial.scene);
+    move_history(*value, true);
+    CHECK(state(*value, 40).name.value == "saved edit");
+    CHECK(status(*value).dirty);
+}
+
+TEST_CASE("history successful reload clears groups while rejected reload preserves them",
+          "[authoring-history]") {
+    FileFixture fixture;
+    auto files = take(ProjectFiles::open(fixture.root));
+    auto value = owner();
+    REQUIRE(files->save_scene(*value, status(*value).revision, std::nullopt));
+    edit_name(*value, "unsaved");
+    const auto before = capture(*value);
+    const auto old = history(*value);
+    rejected(files->reload_scene(*value, before.revision), ErrorCode::conflict);
+    same_capture(capture(*value), before);
+    same_history(history(*value), old);
+    REQUIRE(files->reload_scene(*value, before.revision, UnsavedScenePolicy::discard));
+    CHECK(history(*value).undo_entries == 0);
+    CHECK(history(*value).redo_entries == 0);
+    CHECK(history(*value).retained_bytes == 0);
+    CHECK(status(*value).revision.scene_instance != before.revision.scene_instance);
+    CHECK_FALSE(status(*value).dirty);
+    history_rejected(*value, old.next_undo->ticket, status(*value).revision);
+    edit_name(*value, "after reload");
+    CHECK(history(*value).next_undo->ticket.value > old.next_undo->ticket.value);
+}
+
+TEST_CASE("history failed activation retains history and successful activation resets it",
+          "[authoring-history]") {
+    auto value = owner();
+    edit_name(*value, "old");
+    move_history(*value);
+    const auto old = history(*value);
+    auto invalid = source();
+    invalid.entities.front().parent = id<AuthoredEntityId>(99);
+    REQUIRE_FALSE(value->activate(invalid, old.revision, UnsavedScenePolicy::discard));
+    same_history(history(*value), old);
+    REQUIRE(value->activate(source(), old.revision, UnsavedScenePolicy::discard));
+    CHECK(history(*value).retained_bytes == 0);
+    CHECK_FALSE(history(*value).next_redo);
+}
+
+TEST_CASE("history entry bounds evict the oldest group without reusing tickets",
+          "[authoring-history]") {
+    auto value = owner(source(), {}, {2, 1024 * 1024});
+    edit_name(*value, "one");
+    const auto first = history(*value).next_undo->ticket;
+    edit_name(*value, "two");
+    edit_name(*value, "three");
+    CHECK(history(*value).undo_entries == 2);
+    CHECK(history(*value).next_undo->ticket.value == first.value + 2);
+    move_history(*value);
+    CHECK(state(*value, 40).name.value == "two");
+    move_history(*value);
+    CHECK(state(*value, 40).name.value == "one");
+    history_rejected(*value, first, status(*value).revision);
+    const auto before = capture(*value);
+    const auto cleared = take(value->clear_history(before.revision));
+    CHECK(cleared.retained_bytes == 0);
+    same_capture(capture(*value), before);
+    edit_name(*value, "four");
+    CHECK(history(*value).next_undo->ticket.value == first.value + 3);
+}
+
+TEST_CASE("history byte pressure evicts deterministically and oversized edits reject atomically",
+          "[authoring-history]") {
+    auto probe = owner();
+    edit_name(*probe, "one");
+    const auto charge = history(*probe).retained_bytes;
+    REQUIRE(charge > 1);
+    auto bounded = owner(source(), {}, {32, charge});
+    edit_name(*bounded, "one");
+    edit_name(*bounded, "two");
+    CHECK(history(*bounded).undo_entries == 1);
+    CHECK(history(*bounded).retained_bytes <= charge);
+    move_history(*bounded);
+    CHECK(state(*bounded, 40).name.value == "one");
+    auto tiny = owner(source(), {}, {32, 1});
+    command_rejected(*tiny, SetNameCommand{id<AuthoredEntityId>(40), {"cannot retain"}},
+                     ErrorCode::conflict);
+    command_rejected(*tiny, DeleteEntityCommand{id<AuthoredEntityId>(10)}, ErrorCode::conflict);
+    CHECK(history(*tiny).retained_bytes == 0);
+    CHECK(history(*tiny).undo_entries == 0);
+}
+
+TEST_CASE("history invalid limits reject owner creation without changing source",
+          "[authoring-history]") {
+    const auto document = source();
+    for (const auto limits : {AuthoringHistoryLimits{0, 1},
+                              AuthoringHistoryLimits{authoring_maximum_history_entries + 1, 1},
+                              AuthoringHistoryLimits{1, 0},
+                              AuthoringHistoryLimits{1, authoring_maximum_history_bytes + 1}}) {
+        rejected(AuthoredScene::create(project(), document, {}, limits),
+                 ErrorCode::invalid_configuration);
+    }
+    CHECK(document == source());
+}
+
+TEST_CASE("history pending work visits wrong threads and closed owners reject safely",
+          "[authoring-history]") {
+    auto value = owner();
+    edit_name(*value, "one");
+    const auto old = history(*value);
+    const auto ticket = old.next_undo->ticket;
+    auto& raw = fixture_scene(*value);
+    REQUIRE(raw.defer_set_name(find(*value, 30), {"queued"}));
+    rejected(take(value->undo(ticket, old.revision)).outcome, ErrorCode::conflict);
+    rejected(value->clear_history(old.revision), ErrorCode::conflict);
+    same_history(history(*value), old);
+    REQUIRE(raw.apply_deferred());
+    REQUIRE(value->clear_history(status(*value).revision));
+    edit_name(*value, "two");
+    const auto current = history(*value);
+    REQUIRE(raw.visit_entities([&](const EntityReference&) -> Result<void> {
+        rejected(take(value->undo(current.next_undo->ticket, current.revision)).outcome,
+                 ErrorCode::conflict);
+        rejected(value->clear_history(current.revision), ErrorCode::conflict);
+        return {};
+    }));
+    std::array<bool, 4> denied{};
+    std::thread worker([&] {
+        denied[0] = !value->undo(current.next_undo->ticket, current.revision);
+        denied[1] = !value->redo(current.next_undo->ticket, current.revision);
+        denied[2] = !value->history();
+        denied[3] = !value->clear_history(current.revision);
+    });
+    worker.join();
+    for (const auto result : denied)
+        CHECK(result);
+    same_history(history(*value), current);
+    REQUIRE(raw.close());
+    REQUIRE_FALSE(value->undo(ticket, current.revision));
+    REQUIRE_FALSE(value->redo(ticket, current.revision));
+    REQUIRE_FALSE(value->history());
+    REQUIRE_FALSE(value->clear_history(current.revision));
+}
+
+TEST_CASE("history moves invalidate query cursors while clear preserves them",
+          "[authoring-history]") {
+    auto value = owner();
+    edit_name(*value, "one");
+    SceneQueryOptions options;
+    options.page_size = 1;
+    auto page = take(value->query_entities(options));
+    REQUIRE(page.next_cursor());
+    move_history(*value);
+    rejected(value->continue_query(*page.next_cursor()), ErrorCode::conflict);
+    page = take(value->query_entities(options));
+    REQUIRE(page.next_cursor());
+    REQUIRE(value->clear_history(status(*value).revision));
+    REQUIRE(value->continue_query(*page.next_cursor()));
+}
+
+TEST_CASE("history maximum source scene replays within the fixed entity bound",
+          "[authoring-history]") {
+    auto document = source();
+    document.entities.clear();
+    for (std::uint32_t index = 1; index <= source_maximum_entities; ++index)
+        document.entities.push_back(entity(index));
+    auto value = owner(document);
+    const auto survivor = find(*value, 4000);
+    REQUIRE(take(value->execute(batch({DeleteEntityCommand{id<AuthoredEntityId>(1)},
+                                       CreateEntityCommand{id<AuthoredEntityId>(5000)}}),
+                                status(*value).revision))
+                .outcome);
+    const auto after = capture(*value);
+    move_history(*value);
+    CHECK(capture(*value).scene == document);
+    CHECK(find(*value, 4000) == survivor);
+    move_history(*value, true);
+    CHECK(capture(*value).scene == after.scene);
+    CHECK(take(live(*value).stats()).live_entities == source_maximum_entities);
+}
+
+TEST_CASE("history allocation failures retain live state metadata and both stack directions",
+          "[authoring-history]") {
+    for (bool forward : {false, true}) {
+        bool exhausted = false;
+        std::size_t faults = 0;
+        for (std::size_t index = 0; index < 512; ++index) {
+            auto value = owner();
+            REQUIRE(take(value->execute(batch({DeleteEntityCommand{id<AuthoredEntityId>(30)},
+                                               CreateEntityCommand{id<AuthoredEntityId>(30),
+                                                                   {"replacement"}}}),
+                                        status(*value).revision))
+                        .outcome);
+            if (forward)
+                move_history(*value);
+            const auto before = capture(*value);
+            const auto old = history(*value);
+            const auto handle = find(*value, 30);
+            const auto ticket = forward ? old.next_redo->ticket : old.next_undo->ticket;
+#ifdef _WIN32
+            REQUIRE(detail::AuthoredSceneTestAccess::fail_history_after(*value, index));
+#else
+            shark::test::allocation_fault::arm(index);
+#endif
+            auto reply =
+                forward ? value->redo(ticket, old.revision) : value->undo(ticket, old.revision);
+#ifdef _WIN32
+            const bool fired = !reply || !reply.value().outcome;
+#else
+            const bool fired = shark::test::allocation_fault::disarm();
+#endif
+            if (fired) {
+                ++faults;
+                CHECK_FALSE((reply && reply.value().outcome));
+                same_capture(capture(*value), before);
+                same_history(history(*value), old);
+                CHECK(find(*value, 30) == handle);
+            } else {
+                REQUIRE(reply);
+                REQUIRE(reply.value().outcome);
+                exhausted = true;
+                break;
+            }
+        }
+        CHECK(exhausted);
+        CHECK(faults >= 5);
+    }
+}
+
+TEST_CASE("history capture retains the source aggregate extras limit for new entities",
+          "[authoring-history]") {
+    auto document = source();
+    const std::string full =
+        std::string{"{\"x\":\""} + std::string(source_maximum_extras_bytes - 8, 'a') + "\"}";
+    REQUIRE(full.size() == source_maximum_extras_bytes);
+    document.extras_json = full;
+    document.entities.clear();
+    for (std::uint32_t index = 1; index <= 15; ++index) {
+        auto current = entity(index);
+        current.extras_json = full;
+        document.entities.push_back(std::move(current));
+    }
+    auto value = owner(document);
+    command_rejected(*value, CreateEntityCommand{id<AuthoredEntityId>(1000)},
+                     ErrorCode::invalid_configuration);
+    CHECK(history(*value).undo_entries == 0);
 }

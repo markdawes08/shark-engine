@@ -116,7 +116,20 @@ owner. Internal candidates preserve surviving handles and the saved baseline;
 never expose candidate handles or private ports through adapters. Preserve
 `shark.tools.authoring-batches` (60 seconds) and `shark.core.scene-edit`
 (30 seconds), both seed 1337. Full REQ-09 remains NOT_RUN.
-**Next: 09c, Shared undo and redo.**
+**09c, Shared undo and redo, is complete under the current-machine scope.**
+Follow [ADR 0022](docs/architecture/0022-shared-authoring-history.md), the
+[history contract](docs/authoring-history.md),
+[handoff](docs/handoffs/09c-shared-history.md) and
+[receipt](docs/coverage/evidence/09c-shared-history.json): 610 full CPU CTests,
+16 standalone Tools checks, 18 public-example compiles, actual sanitizer objects
+and protected package gates pass. Changed single edits/batches share bounded
+history; undo/redo require the next ticket and current revision. Save retains
+history; activation clears it. Recreated identities get fresh generations,
+survivors retain handles, and out-of-band writes require explicit reconciliation.
+Preserve `shark.tools.authoring-history` (60 seconds, seed 1337), the original
+4096-entity/4095-delete sparse fixture and all earlier cases/limits. Metadata
+capture/restoration and Core record copying must grow together with components.
+**Next: 09d, Safe retries and lost replies. Full REQ-09 remains NOT_RUN.**
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read

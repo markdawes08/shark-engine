@@ -127,7 +127,15 @@ The [transaction contract](docs/authoring-transactions.md) and
 pure preview and one revision-checked publication preserving surviving handles
 and unsaved state. Its [receipt](docs/coverage/evidence/09b-atomic-batches.json)
 records 605 full CPU CTests, 14 standalone Tools checks, public examples,
-sanitizer audits and protected packages. **Next: 09c, Shared undo and redo.**
+sanitizer audits and protected packages.
+**09c, Shared undo and redo, is complete under the current-machine scope.**
+The [history contract](docs/authoring-history.md),
+[handoff](docs/handoffs/09c-shared-history.md) and
+[receipt](docs/coverage/evidence/09c-shared-history.json) record bounded shared
+history, revision/ticket conflicts, safe incarnation restoration and save/reload
+policy. Qualification passes 610 full CPU CTests, 16 standalone Tools checks,
+18 public-example compiles, sanitizer audits and protected packages.
+**Next: 09d, Safe retries and lost replies. Full REQ-09 remains NOT_RUN.**
 Assignment 08, Project and scene persistence, completed its
 [four checkpoints](docs/roadmap/persistence-plan.md). 08a adds CPU project/scene
 formats, validation and migration through [owned C++ values](docs/source-documents.md).

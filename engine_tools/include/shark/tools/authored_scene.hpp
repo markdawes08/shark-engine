@@ -2,11 +2,13 @@
 
 #include "shark/scene.hpp"
 #include "shark/tools/authored_commands.hpp"
+#include "shark/tools/authoring_history.hpp"
 #include "shark/tools/source_document.hpp"
 
 #include <functional>
 #include <memory>
 #include <optional>
+#include <span>
 
 namespace shark::tools {
 
@@ -33,11 +35,12 @@ struct CapturedScene {
 // Owns one authored Scene on its creating thread. Project settings and source-only
 // metadata are immutable between activations. All authoring edits use execute;
 // the owned Core Scene is exposed for const inspection only. This is not a
-// filesystem/project lock, undo history, live server region or terminal protocol.
+// filesystem/project lock, live server region or terminal protocol.
 class AuthoredScene final {
   public:
     [[nodiscard]] static Result<std::unique_ptr<AuthoredScene>>
-    create(const ProjectDocument& project, const SceneDocument& scene, SceneLimits limits = {});
+    create(const ProjectDocument& project, const SceneDocument& scene, SceneLimits limits = {},
+           AuthoringHistoryLimits history_limits = {});
     ~AuthoredScene();
     AuthoredScene(const AuthoredScene&) = delete;
     AuthoredScene& operator=(const AuthoredScene&) = delete;
@@ -58,6 +61,15 @@ class AuthoredScene final {
                                                       SceneRevision expected_revision) const;
     [[nodiscard]] Result<AuthoringBatchReply> execute(const AuthoringBatch& batch,
                                                       SceneRevision expected_revision);
+    [[nodiscard]] Result<AuthoringHistoryStatus>
+    history(std::optional<SceneRevision> expected_revision = std::nullopt) const;
+    [[nodiscard]] Result<AuthoringHistoryReply> undo(AuthoringHistoryTicket ticket,
+                                                     SceneRevision expected_revision);
+    [[nodiscard]] Result<AuthoringHistoryReply> redo(AuthoringHistoryTicket ticket,
+                                                     SceneRevision expected_revision);
+    // Explicit reconciliation after out-of-band Core changes. Does not change
+    // scene values, dirty baseline or revision; tickets are never reused.
+    [[nodiscard]] Result<AuthoringHistoryStatus> clear_history(SceneRevision expected_revision);
     // Bounded owned Core query pages, sharing the same owner/revision/cursors.
     [[nodiscard]] Result<SceneQueryPage>
     query_entities(const SceneQueryOptions& options = {}) const;
@@ -84,6 +96,13 @@ class AuthoredScene final {
     [[nodiscard]] Result<AuthoringBatchReply> evaluate_batch(const AuthoringBatch& batch,
                                                              SceneRevision expected_revision,
                                                              bool publish) const;
+    [[nodiscard]] Result<AuthoringCommandReply>
+    evaluate_commands(std::span<const AuthoringCommand> commands, SceneRevision expected_revision,
+                      bool publish, const char* operation) const;
+    [[nodiscard]] Result<AuthoringCommandReply> execute_delete(const AuthoringCommand& command,
+                                                               SceneRevision expected_revision);
+    [[nodiscard]] Result<AuthoringHistoryReply>
+    move_history(AuthoringHistoryTicket ticket, SceneRevision expected_revision, bool forward);
     struct Impl;
     explicit AuthoredScene(std::unique_ptr<Impl> impl) noexcept;
     std::unique_ptr<Impl> impl_;

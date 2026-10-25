@@ -559,7 +559,7 @@ Scene::~Scene() {
     }
 }
 
-Result<std::unique_ptr<Scene>> Scene::prepare_edit(SceneRevision expected) const {
+Result<void> Scene::check_edit(SceneRevision expected) const {
     if (auto checked = impl_->check_immediate(); !checked) {
         return checked.error();
     }
@@ -568,6 +568,13 @@ Result<std::unique_ptr<Scene>> Scene::prepare_edit(SceneRevision expected) const
     }
     if (!std::holds_alternative<AuthoredSceneScope>(impl_->scope) || impl_->edit_origin) {
         return scene_error(ErrorCode::conflict, "edit preparation requires a live authored scene");
+    }
+    return {};
+}
+
+Result<std::unique_ptr<Scene>> Scene::prepare_edit(SceneRevision expected) const {
+    if (auto checked = check_edit(expected); !checked) {
+        return checked.error();
     }
     try {
         auto copy = std::make_unique<Impl>(impl_->scope, impl_->limits, impl_->instance);
@@ -591,7 +598,8 @@ Result<std::unique_ptr<Scene>> Scene::prepare_edit(SceneRevision expected) const
     }
 }
 
-Result<SceneRevision> Scene::commit_edit(Scene& candidate, SceneRevision expected) {
+Result<SceneRevision> Scene::commit_edit(Scene& candidate, SceneRevision expected,
+                                         bool force_revision) {
     if (auto checked = impl_->check_immediate(); !checked) {
         return checked.error();
     }
@@ -606,8 +614,11 @@ Result<SceneRevision> Scene::commit_edit(Scene& candidate, SceneRevision expecte
         return scene_error(ErrorCode::conflict,
                            "edit candidate does not match this scene revision");
     }
-    const bool changed = candidate.impl_->revision != expected.revision;
+    const bool changed = force_revision || candidate.impl_->revision != expected.revision;
     if (changed) {
+        if (auto checked = impl_->check_revision(); !checked) {
+            return checked.error();
+        }
         // All allocation/validation precedes this publication boundary. Preserve
         // the Scene object, instance, generations and deferred ticket sequence.
         candidate.impl_->revision = expected.revision + 1;

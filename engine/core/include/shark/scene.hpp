@@ -116,12 +116,14 @@ class Scene final {
 
   private:
     friend struct scene_detail::SceneEditAccess;
+    [[nodiscard]] Result<void> check_edit(SceneRevision expected) const;
     // Authored-scene staging only. The private candidate retains checked handle
     // identity but is not live state. Both operations require an immediate owner
     // boundary. Publication rechecks the base revision and advances it once if
     // any candidate operation changed state; it consumes/closes the candidate.
     [[nodiscard]] Result<std::unique_ptr<Scene>> prepare_edit(SceneRevision expected) const;
-    [[nodiscard]] Result<SceneRevision> commit_edit(Scene& candidate, SceneRevision expected);
+    [[nodiscard]] Result<SceneRevision> commit_edit(Scene& candidate, SceneRevision expected,
+                                                    bool force_revision);
 
     struct Impl;
     explicit Scene(std::unique_ptr<Impl> impl) noexcept;

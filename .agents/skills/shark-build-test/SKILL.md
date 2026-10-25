@@ -10,8 +10,8 @@ existing Tools families. Its [command contract](../../../docs/authoring-commands
 uses AuthoredScene's single owner, required revisions, typed effects and read-only
 Scene access. Preserve existing persistence cases as their ordinary edits move
 through commands; private access is only for lifecycle invariant fixtures.
-Run all seven authoring families in standalone CPU Tools on Windows and existing WSL, alongside
-native/WSL regressions, sanitizers and protected boundaries. Compile all five
+Run all eight authoring families in standalone CPU Tools on Windows and existing WSL, alongside
+native/WSL regressions, sanitizers and protected boundaries. Compile all six
 public Tools examples without private headers. 09a is PASS under the
 current-machine scope; its [handoff](../../../docs/handoffs/09a-shared-commands.md)
 and [receipt](../../../docs/coverage/evidence/09a-shared-commands.json) record
@@ -22,7 +22,16 @@ and [receipt](../../../docs/coverage/evidence/09a-shared-commands.json) record
 [receipt](../../../docs/coverage/evidence/09b-atomic-batches.json): 605 full CPU
 CTests, 14 standalone Tools checks, public examples, sanitizer objects and
 protected packages pass. Full REQ-09 remains NOT_RUN.
-Next: 09c, Shared undo and redo.
+09c is PASS under the current-machine scope. Follow the
+[history contract](../../../docs/authoring-history.md),
+[handoff](../../../docs/handoffs/09c-shared-history.md) and
+[receipt](../../../docs/coverage/evidence/09c-shared-history.json): 610 full CPU
+CTests, 16 additional Tools checks, 18 public-example compiles, actual sanitizer
+objects and protected packages pass. Preserve `shark.tools.authoring-history`
+(60 seconds, seed1337), all earlier families and the4096/4095 sparse workload.
+Undo/redo require the next ticket and current revision; save retains history,
+activation clears it, and restored incarnations receive fresh generations.
+Full REQ-09 remains NOT_RUN. Next: 09d, Safe retries and lost replies.
 
 09b adds `shark.tools.authoring-batches` (60 seconds) and `shark.core.scene-edit`
 (30 seconds), both seed 1337. Preserve all earlier cases and exact inventories;

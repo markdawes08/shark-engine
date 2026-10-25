@@ -45,7 +45,9 @@ struct AuthoringCommandEffect {
     // Sorted unique stable IDs to refresh, including deleted descendants and
     // parents whose child links changed. Empty for a Core no-op. At most the
     // authored scene entity bound for one command. Batch unions add at most the
-    // command bound in new identities. This is not a list of new/current entities.
+    // command bound in new identities. History conservatively includes the union
+    // of both complete snapshots (at most twice the source entity bound).
+    // This is not a list of new/current entities.
     std::vector<AuthoredEntityId> affected_entities;
 };
 

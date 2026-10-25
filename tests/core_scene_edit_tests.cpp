@@ -169,3 +169,20 @@ TEST_CASE("scene edit candidate pending work rejects publication without touchin
     CHECK(revision(*live) == expected);
     CHECK(take(live->entity_state(a)).name.value == "Entity");
 }
+
+TEST_CASE("scene edit forced publication advances an unchanged candidate exactly once",
+          "[scene-edit]") {
+    auto live = scene();
+    const auto handle = create(*live, authored(10));
+    const auto expected = revision(*live);
+    REQUIRE(shark::scene_detail::SceneEditAccess::check(*live, expected));
+    auto candidate = take(shark::scene_detail::SceneEditAccess::prepare(*live, expected));
+    const auto published =
+        take(shark::scene_detail::SceneEditAccess::commit(*live, *candidate, expected, true));
+    CHECK(published == shark::SceneRevision{expected.scene_instance, expected.revision + 1});
+    CHECK(take(live->find(id<shark::AuthoredEntityId>(10))) == handle);
+    CHECK(take(candidate->stats()).closed);
+    CHECK_FALSE(shark::scene_detail::SceneEditAccess::check(*live, expected));
+    REQUIRE(live->defer_set_name(handle, {"pending"}));
+    CHECK_FALSE(shark::scene_detail::SceneEditAccess::check(*live, published));
+}

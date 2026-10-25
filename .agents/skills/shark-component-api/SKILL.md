@@ -151,8 +151,8 @@ The reply reports the current revision and a sorted bounded refresh-ID set.
 Ordinary edits preserve the Scene instance, retained handles, source metadata
 and saved baseline. Never use activation as a command shortcut or expose private
 invariant-fixture access through an adapter. 09b batches and pure preview reuse
-that owner and an internal Core candidate/publication port. History and retry
-retention belong to 09c/09d; terminal/editor integration remains 15/16.
+that owner and an internal Core candidate/publication port. 09c adds shared history; retry
+retention belongs to 09d; terminal/editor integration remains 15/16.
 09a is PASS under the current-machine scope; follow its
 [handoff](../../../docs/handoffs/09a-shared-commands.md) and
 [receipt](../../../docs/coverage/evidence/09a-shared-commands.json).
@@ -162,7 +162,16 @@ retention belong to 09c/09d; terminal/editor integration remains 15/16.
 [receipt](../../../docs/coverage/evidence/09b-atomic-batches.json): 605 full CPU
 CTests, 14 standalone Tools checks, public examples, sanitizer objects and
 protected packages pass. Full REQ-09 remains NOT_RUN.
-Next: 09c, Shared undo and redo.
+09c is PASS under the current-machine scope. Follow the
+[history contract](../../../docs/authoring-history.md),
+[handoff](../../../docs/handoffs/09c-shared-history.md) and
+[receipt](../../../docs/coverage/evidence/09c-shared-history.json): 610 full CPU
+CTests, 16 additional Tools checks, 18 public-example compiles, actual sanitizer
+objects and protected packages pass. Preserve `shark.tools.authoring-history`
+(60 seconds, seed1337), all earlier families and the4096/4095 sparse workload.
+Undo/redo require the next ticket and current revision; save retains history,
+activation clears it, and restored incarnations receive fresh generations.
+Full REQ-09 remains NOT_RUN. Next: 09d, Safe retries and lost replies.
 
 Extend the staged Core record copy and validated mutation path together when
 persisted components land. Batches contain at most 256 ordered commands; each
@@ -182,3 +191,9 @@ documents through file reads, Scene edits, migration saves, reload conflicts and
 reopen. Extend that chain when persisted components change. Failed authored saves
 must retain dirty snapshots and old bytes; a committed durability limitation
 must not masquerade as a rollback. FeatureWorld/Persistence still attaches in 10.
+
+Extend history capture/restoration and Core candidate record copying together
+when components or source metadata gain mutation. Reuse revision-bound immutable
+snapshots; never introduce a second authoritative mutable scene. Changed single
+edits/batches are one group, while preview/noops/rejections preserve both stacks.
+Keep bounded tickets/bytes, explicit reconciliation and both Result levels.

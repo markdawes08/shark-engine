@@ -133,3 +133,7 @@ retained as failed evidence. Vendor/runtime OOM recovery is not guaranteed.
 Both supported fault paths prove exact live-state rollback until a fault-free
 preview/commit. This does not promise recovery from every vendor/runtime OOM path. Existing command/persistence cases remain intact. FeatureWorld attaches in 10;
 full REQ-09 remains NOT_RUN until 09e.
+
+09c adds [shared undo/redo](authoring-history.md) to changed batches on this same
+owner, preserving preview purity and one-group publication. Retry retention
+remains09d; full REQ-09 remains NOT_RUN until09e.

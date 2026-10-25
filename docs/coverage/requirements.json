@@ -177,7 +177,7 @@
         "Test alternating human/agent-equivalent edits, stale revisions, invalid batches and retry outcomes through the common service; process ownership is enforced in 15 and editor integration in 16."
       ],
       "planned_fixture": "CommandReplayUndoRedo, TransactionRollback, RevisionConflict and RequestRetry fixtures; FeatureWorld/AuthoringCommands is added with assignment 10. Add HumanAgentRevisionHistory, PureValidationPreview and LostReplyRetryScope fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "09a and 09b are PASS under current-machine scope. Bounded ordered atomic batches and pure preview share the AuthoredScene owner, existing typed commands and checked Core publication. Qualification records 605 full CPU CTests across seven profiles, 14 standalone Tools checks, 15 public-example compiles, sanitizer object audits and protected package gates. See docs/handoffs/09b-atomic-batches.md, docs/coverage/evidence/09b-atomic-batches.json, docs/authoring-transactions.md and docs/roadmap/authoring-plan.md. Full REQ-09 remains NOT_RUN: shared history, retained retry outcomes and integrated qualification remain 09c-09e. Next:09c Shared undo and redo. CLI/editor adapters remain15/16 and FeatureWorld connects in10."}
+      "verification": {"status": "NOT_RUN", "reason": "09a, 09b and 09c are PASS under current-machine scope. Bounded shared undo/redo groups changed commands and batches on AuthoredScene, with revision/ticket conflicts, fresh removed/replaced generations, explicit reconciliation and save/reload policy. The09c receipt records610 full CPU CTests across seven profiles,16 standalone Tools checks,18 public-example compiles, sanitizer object audits and protected package gates. See docs/handoffs/09c-shared-history.md, docs/coverage/evidence/09c-shared-history.json, docs/authoring-history.md and docs/roadmap/authoring-plan.md. Full REQ-09 remains NOT_RUN: retained retry outcomes and integrated qualification remain09d/09e. Next:09d Safe retries and lost replies. CLI/editor adapters remain15/16 and FeatureWorld connects in10."}
     },
     {
       "id": "REQ-10",
@@ -1422,6 +1422,27 @@
           "docs/authoring-transactions.md"
         ],
         "fixture_reason": "Executable CPU fixtures qualify shared batch admission, nonauthoritative candidate validation, allocation failure rollback, one revision publication, preview purity, exact checked lifetimes and save-baseline behavior. The internal Core port is not an adapter API. FeatureWorld/AuthoringCommands connects in10; no history/retry/terminal/editor claims."
+      },
+      {
+        "id": "tools.authoring-history",
+        "name": "Bounded shared authoring undo and redo",
+        "requirement_ids": [
+          "REQ-09"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-history",
+          "shark.core.scene-edit"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/core_scene_edit_tests.cpp",
+          "tests/authoring_allocation_fault.cpp"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-history.md"
+        ],
+        "fixture_reason": "CPU fixtures exercise grouped replay, source metadata/order, hierarchy and world values, fresh removed/replaced generations, shared caller ordering, revision/ticket conflicts, bounded eviction, save/reload policy and allocation rollback. Core gameplay mutations remain independent. FeatureWorld/AuthoringCommands connects in10; retained retries09d and adapters15/16 remain later owners."
       }
     ],
     "components": [
@@ -1439,7 +1460,8 @@
           "shark.core.hierarchy",
           "shark.tools.persistence-integration",
           "shark.tools.authoring-commands",
-          "shark.tools.authoring-batches"
+          "shark.tools.authoring-batches",
+          "shark.tools.authoring-history"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
@@ -1453,7 +1475,7 @@
           "tests/core_scene_query_tests.cpp",
           "tests/core_hierarchy_tests.cpp"
         ],
-        "fixture_reason": "Implemented C++ component, version-1 owned schema metadata, pure validation and bounded revisioned inspection are covered by actual CPU fixtures. Name uses nonunique bounded UTF-8 display text and owned immediate/deferred edits. The 08 integrated persistence fixture connects legacy migration, native files, Scene edits, capture and reopen for this component. 09a connects revision-checked single edits through the shared authored owner. Later 09 checkpoints add batches/history/retries; 10, 15, 16/17 and 19 connect FeatureWorld, terminal/editor adapters and selected Lua."
+        "fixture_reason": "Implemented C++ component, version-1 owned schema metadata, pure validation and bounded revisioned inspection are covered by actual CPU fixtures. Name uses nonunique bounded UTF-8 display text and owned immediate/deferred edits. The 08 integrated persistence fixture connects legacy migration, native files, Scene edits, capture and reopen for this component. 09a connects revision-checked single edits through the shared authored owner. 09b/09c connect atomic batches and shared history; 09d adds retained retries; 10, 15, 16/17 and 19 connect FeatureWorld, terminal/editor adapters and selected Lua."
       },
       {
         "id": "component.transform",
@@ -1470,7 +1492,8 @@
           "shark.core.hierarchy",
           "shark.tools.persistence-integration",
           "shark.tools.authoring-commands",
-          "shark.tools.authoring-batches"
+          "shark.tools.authoring-batches",
+          "shark.tools.authoring-history"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
@@ -1486,7 +1509,7 @@
           "tests/core_transform_tests.cpp",
           "tests/core_hierarchy_tests.cpp"
         ],
-        "fixture_reason": "Implemented C++ component, version-1 owned schema metadata, pure validation and bounded revisioned inspection are covered by actual CPU fixtures. Transform uses canonical double local TRS, hierarchy propagation and atomic rejection; scene-local matrices remain separate from global WorldPosition. The 08 integrated persistence fixture connects legacy migration, native files, Scene edits, capture and reopen for this component. 09a connects revision-checked single edits through the shared authored owner. Later 09 checkpoints add batches/history/retries; 10, 15, 16/17 and 19 connect FeatureWorld, terminal/editor adapters and selected Lua."
+        "fixture_reason": "Implemented C++ component, version-1 owned schema metadata, pure validation and bounded revisioned inspection are covered by actual CPU fixtures. Transform uses canonical double local TRS, hierarchy propagation and atomic rejection; scene-local matrices remain separate from global WorldPosition. The 08 integrated persistence fixture connects legacy migration, native files, Scene edits, capture and reopen for this component. 09a connects revision-checked single edits through the shared authored owner. 09b/09c connect atomic batches and shared history; 09d adds retained retries; 10, 15, 16/17 and 19 connect FeatureWorld, terminal/editor adapters and selected Lua."
       }
     ],
     "commands": [
@@ -1497,7 +1520,8 @@
                       "REQ-09"
                     ],
                     "test_ids": [
-                      "shark.tools.authoring-commands"
+                      "shark.tools.authoring-commands",
+                      "shark.tools.authoring-history"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp"
@@ -1515,7 +1539,8 @@
                       "REQ-09"
                     ],
                     "test_ids": [
-                      "shark.tools.authoring-commands"
+                      "shark.tools.authoring-commands",
+                      "shark.tools.authoring-history"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp"
@@ -1533,7 +1558,8 @@
                       "REQ-09"
                     ],
                     "test_ids": [
-                      "shark.tools.authoring-commands"
+                      "shark.tools.authoring-commands",
+                      "shark.tools.authoring-history"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp"
@@ -1552,7 +1578,8 @@
                     ],
                     "test_ids": [
                       "shark.tools.authoring-commands",
-                      "shark.tools.persistence-integration"
+                      "shark.tools.persistence-integration",
+                      "shark.tools.authoring-history"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
@@ -1572,7 +1599,8 @@
                     ],
                     "test_ids": [
                       "shark.tools.authoring-commands",
-                      "shark.tools.persistence-integration"
+                      "shark.tools.persistence-integration",
+                      "shark.tools.authoring-history"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
@@ -1592,7 +1620,8 @@
                     ],
                     "test_ids": [
                       "shark.tools.authoring-batches",
-                      "shark.core.scene-edit"
+                      "shark.core.scene-edit",
+                      "shark.tools.authoring-history"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
@@ -1602,7 +1631,7 @@
                       "tests/authoring_command_tests.cpp",
                       "docs/authoring-transactions.md"
                     ],
-                    "fixture_reason": "Bounded CPU batch preview through the existing owner; ordered candidate validation, late rollback, fixed command/entity bounds, exact revisions/no-ops, sorted refresh unions, slot/metadata lifetime, owner/pending/visit conflicts, stale worker values and real file-save baselines. Allocation-fault tests cover candidate/command/result boundaries and a Linux allocation sweep. FeatureWorld attaches in10; history/retries and adapters retain later checkpoints."
+                    "fixture_reason": "Bounded CPU batch preview through the existing owner; ordered candidate validation, late rollback, fixed command/entity bounds, exact revisions/no-ops, sorted refresh unions, slot/metadata lifetime, owner/pending/visit conflicts, stale worker values and real file-save baselines. Allocation-fault tests cover candidate/command/result boundaries and a Linux allocation sweep. 09c connects shared history. FeatureWorld attaches in10; retained retries09d and adapters15/16 remain later owners."
                   },
                   {
                     "id": "authoring.batch.execute",
@@ -1612,7 +1641,8 @@
                     ],
                     "test_ids": [
                       "shark.tools.authoring-batches",
-                      "shark.core.scene-edit"
+                      "shark.core.scene-edit",
+                      "shark.tools.authoring-history"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
@@ -1622,7 +1652,79 @@
                       "tests/authoring_command_tests.cpp",
                       "docs/authoring-transactions.md"
                     ],
-                    "fixture_reason": "Bounded CPU batch execute through the existing owner; ordered candidate validation, late rollback, fixed command/entity bounds, exact revisions/no-ops, sorted refresh unions, slot/metadata lifetime, owner/pending/visit conflicts, stale worker values and real file-save baselines. Allocation-fault tests cover candidate/command/result boundaries and a Linux allocation sweep. FeatureWorld attaches in10; history/retries and adapters retain later checkpoints."
+                    "fixture_reason": "Bounded CPU batch execute through the existing owner; ordered candidate validation, late rollback, fixed command/entity bounds, exact revisions/no-ops, sorted refresh unions, slot/metadata lifetime, owner/pending/visit conflicts, stale worker values and real file-save baselines. Allocation-fault tests cover candidate/command/result boundaries and a Linux allocation sweep. 09c connects shared history. FeatureWorld attaches in10; retained retries09d and adapters15/16 remain later owners."
+                  },
+                  {
+                    "id": "authoring.history.inspect",
+                    "name": "AuthoredScene::history",
+                    "requirement_ids": [
+                      "REQ-09"
+                    ],
+                    "test_ids": [
+                      "shark.tools.authoring-history"
+                    ],
+                    "test_sources": [
+                      "tests/authoring_command_tests.cpp"
+                    ],
+                    "fixtures": [
+                      "tests/authoring_command_tests.cpp",
+                      "docs/authoring-history.md"
+                    ],
+                    "fixture_reason": "Shared CPU owner history with explicit revision/ticket conflicts, bounded entries/bytes, no-op and failure preservation, fresh identity lifetimes, save/reload policy and allocation rollback. FeatureWorld connects in10; retained retries09d and terminal/editor adapters15/16 remain separate."
+                  },
+                  {
+                    "id": "authoring.history.undo",
+                    "name": "AuthoredScene::undo",
+                    "requirement_ids": [
+                      "REQ-09"
+                    ],
+                    "test_ids": [
+                      "shark.tools.authoring-history"
+                    ],
+                    "test_sources": [
+                      "tests/authoring_command_tests.cpp"
+                    ],
+                    "fixtures": [
+                      "tests/authoring_command_tests.cpp",
+                      "docs/authoring-history.md"
+                    ],
+                    "fixture_reason": "Shared CPU owner history with explicit revision/ticket conflicts, bounded entries/bytes, no-op and failure preservation, fresh identity lifetimes, save/reload policy and allocation rollback. FeatureWorld connects in10; retained retries09d and terminal/editor adapters15/16 remain separate."
+                  },
+                  {
+                    "id": "authoring.history.redo",
+                    "name": "AuthoredScene::redo",
+                    "requirement_ids": [
+                      "REQ-09"
+                    ],
+                    "test_ids": [
+                      "shark.tools.authoring-history"
+                    ],
+                    "test_sources": [
+                      "tests/authoring_command_tests.cpp"
+                    ],
+                    "fixtures": [
+                      "tests/authoring_command_tests.cpp",
+                      "docs/authoring-history.md"
+                    ],
+                    "fixture_reason": "Shared CPU owner history with explicit revision/ticket conflicts, bounded entries/bytes, no-op and failure preservation, fresh identity lifetimes, save/reload policy and allocation rollback. FeatureWorld connects in10; retained retries09d and terminal/editor adapters15/16 remain separate."
+                  },
+                  {
+                    "id": "authoring.history.clear",
+                    "name": "AuthoredScene::clear_history",
+                    "requirement_ids": [
+                      "REQ-09"
+                    ],
+                    "test_ids": [
+                      "shark.tools.authoring-history"
+                    ],
+                    "test_sources": [
+                      "tests/authoring_command_tests.cpp"
+                    ],
+                    "fixtures": [
+                      "tests/authoring_command_tests.cpp",
+                      "docs/authoring-history.md"
+                    ],
+                    "fixture_reason": "Shared CPU owner history with explicit revision/ticket conflicts, bounded entries/bytes, no-op and failure preservation, fresh identity lifetimes, save/reload policy and allocation rollback. FeatureWorld connects in10; retained retries09d and terminal/editor adapters15/16 remain separate."
                   }
                 ],
     "lua_api": []

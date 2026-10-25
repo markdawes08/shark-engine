@@ -5,6 +5,7 @@
 
 #include <algorithm>
 #include <exception>
+#include <limits>
 #include <map>
 #include <new>
 #include <set>
@@ -267,6 +268,211 @@ AuthoringCommandReply apply_command(Scene& scene, SceneLimits limits,
     return AuthoringCommandReply{{stats.instance, stats.revision}, std::move(outcome)};
 }
 
+SceneDocument capture_document(const ProjectDocument& project, const ActiveScene& active,
+                               const Scene& scene, bool revalidate_source = true) {
+    const auto stats = checked(scene.stats());
+    if (stats.closed || stats.pending_mutations != 0) {
+        fail(ErrorCode::conflict, "capture requires a live committed scene");
+    }
+    const SceneRevision revision{stats.instance, stats.revision};
+    SceneQueryOptions options;
+    options.page_size = scene_query_maximum_page_size;
+    // Bound each read to one page of slots, including sparse empty pages.
+    options.scan_budget = scene_query_maximum_page_size;
+    options.expected_revision = revision;
+    auto page = checked(scene.query_entities(options));
+    std::vector<SourceEntity> observed;
+    std::vector<std::optional<EntityHandle>> parents;
+    std::map<EntityHandle, std::size_t> indices;
+    for (;;) {
+        const auto* scope = std::get_if<AuthoredSceneScope>(&page.scope());
+        if (!scope || scope->scene != active.id || page.revision() != revision) {
+            fail(ErrorCode::conflict, "capture requires the active authored scene incarnation");
+        }
+        for (const auto& row : page.entities()) {
+            if (observed.size() >= source_maximum_entities) {
+                fail(ErrorCode::conflict, "scene capture exceeds the source entity limit",
+                     "/entities");
+            }
+            const auto* id = std::get_if<AuthoredEntityId>(&row.reference.identity);
+            if (!id || row.reference.authority || !row.name || !row.transform || !row.hierarchy) {
+                fail(ErrorCode::invalid_configuration,
+                     "capture requires complete authored entity state", "/entities");
+            }
+            indices.emplace(row.reference.handle, observed.size());
+            observed.push_back({*id, std::nullopt, *row.name, row.transform->local, "{}"});
+            parents.push_back(row.hierarchy->parent);
+        }
+        if (!page.next_cursor()) {
+            break;
+        }
+        page = checked(scene.continue_query(*page.next_cursor()));
+    }
+    for (std::size_t index = 0; index < observed.size(); ++index) {
+        if (parents[index]) {
+            const auto parent = indices.find(*parents[index]);
+            if (parent == indices.end()) {
+                fail(ErrorCode::invalid_configuration, "captured parent is missing",
+                     "/entities/" + std::to_string(index) + "/parent",
+                     observed[index].id.value().to_string());
+            }
+            observed[index].parent = observed[parent->second].id;
+        }
+    }
+    std::vector<SourceEntity> ordered;
+    ordered.reserve(observed.size());
+    std::vector<bool> retained(observed.size(), false);
+    for (const auto& metadata : active.entities) {
+        const auto found = indices.find(metadata.handle);
+        if (found == indices.end()) {
+            continue;
+        }
+        const auto index = found->second;
+        auto& entity = observed[index];
+        if (entity.id != metadata.id) {
+            fail(ErrorCode::invalid_id, "retained source identity has changed");
+        }
+        entity.extras_json = metadata.extras;
+        ordered.push_back(std::move(entity));
+        retained[index] = true;
+    }
+    for (std::size_t index = 0; index < observed.size(); ++index) {
+        if (!retained[index]) {
+            ordered.push_back(std::move(observed[index]));
+        }
+    }
+    SceneDocument document{project.project, active.id, active.origin, std::move(ordered),
+                           active.extras};
+    if (revalidate_source) {
+        return checked(validate_scene_document(document));
+    }
+    // Internal history only copies canonical extras already validated at activation
+    // (or the fixed empty object for a new entity). Core validates components,
+    // identity, hierarchy and depth under source-compatible limits. Recheck the
+    // aggregate extras budget because new entities add empty objects. Avoid parsing
+    // immutable metadata again on the mutation path: the pinned JSON DOM destructor
+    // allocates inside noexcept and cannot provide recoverable allocation failure.
+    auto extras_bytes = document.extras_json.size();
+    for (const auto& entity : document.entities) {
+        if (entity.extras_json.size() > source_maximum_total_extras_bytes - extras_bytes) {
+            fail(ErrorCode::invalid_configuration, "total source extras exceeds its byte bound");
+        }
+        extras_bytes += entity.extras_json.size();
+    }
+    return document;
+}
+
+struct HistoryEntry {
+    AuthoringHistoryTicket ticket;
+    std::size_t command_count;
+    std::shared_ptr<const SceneDocument> before;
+    std::shared_ptr<const SceneDocument> after;
+    std::vector<AuthoredEntityId> replaced;
+    std::size_t charge;
+};
+
+std::size_t snapshot_charge(const SceneDocument& document) {
+    auto charge = sizeof(SceneDocument) + document.entities.capacity() * sizeof(SourceEntity) +
+                  document.extras_json.capacity() + 1;
+    for (const auto& entity : document.entities) {
+        charge += entity.name.value.capacity() + 1 + entity.extras_json.capacity() + 1;
+    }
+    return charge;
+}
+
+struct HistoryRestoration {
+    std::vector<RetainedEntity> metadata;
+    AuthoringCommandEffect effect;
+};
+
+template <typename Checkpoint>
+HistoryRestoration restore_document(Scene& candidate, const SceneDocument& target,
+                                    const std::vector<AuthoredEntityId>& replaced,
+                                    Checkpoint&& checkpoint) {
+    std::vector<SceneEntityState> current;
+    checked(candidate.visit_entities([&](const EntityReference& reference) -> Result<void> {
+        auto value = candidate.entity_state(reference.handle);
+        if (!value) {
+            return std::move(value).error();
+        }
+        current.push_back(std::move(value).value());
+        return {};
+    }));
+    std::sort(current.begin(), current.end(), [](const auto& left, const auto& right) {
+        return left.depth != right.depth ? left.depth > right.depth
+                                         : left.reference.handle.slot < right.reference.handle.slot;
+    });
+    checkpoint();
+    std::map<AuthoredEntityId, const SourceEntity*> targets;
+    std::set<AuthoredEntityId> affected;
+    for (const auto& entity : target.entities) {
+        targets.emplace(entity.id, &entity);
+        affected.insert(entity.id);
+    }
+    // Detach deepest first: every node is a leaf when moved. This avoids
+    // temporary composed-world/depth failures and preserves surviving handles.
+    for (const auto& entity : current) {
+        affected.insert(std::get<AuthoredEntityId>(entity.reference.identity));
+        if (entity.parent) {
+            checked(candidate.reparent(entity.reference.handle, std::nullopt,
+                                       ReparentMode::keep_local));
+        }
+    }
+    checkpoint();
+    for (const auto& entity : current) {
+        const auto id = std::get<AuthoredEntityId>(entity.reference.identity);
+        if (!targets.contains(id) || std::binary_search(replaced.begin(), replaced.end(), id)) {
+            checked(candidate.destroy_entity(entity.reference.handle));
+        }
+    }
+    checkpoint();
+    std::map<AuthoredEntityId, EntityHandle> handles;
+    for (const auto& entity : target.entities) {
+        auto found = candidate.find(entity.id);
+        if (found) {
+            checked(candidate.set_name(found.value(), entity.name));
+            checked(candidate.set_transform(found.value(), entity.transform));
+            handles.emplace(entity.id, found.value());
+        } else {
+            handles.emplace(entity.id,
+                            checked(candidate.create_entity({entity.id, std::nullopt, entity.name,
+                                                             entity.transform, std::nullopt})));
+        }
+    }
+    checkpoint();
+    std::map<AuthoredEntityId, std::vector<AuthoredEntityId>> children;
+    std::vector<AuthoredEntityId> ordered;
+    ordered.reserve(target.entities.size());
+    for (const auto& entity : target.entities) {
+        if (entity.parent) {
+            children[*entity.parent].push_back(entity.id);
+        } else {
+            ordered.push_back(entity.id);
+        }
+    }
+    for (std::size_t index = 0; index < ordered.size(); ++index) {
+        const auto id = ordered[index];
+        const auto& entity = *targets.at(id);
+        if (entity.parent) {
+            checked(candidate.reparent(handles.at(id), handles.at(*entity.parent),
+                                       ReparentMode::keep_local));
+        }
+        if (const auto found = children.find(id); found != children.end()) {
+            ordered.insert(ordered.end(), found->second.begin(), found->second.end());
+        }
+    }
+    if (ordered.size() != target.entities.size()) {
+        fail(ErrorCode::conflict, "history hierarchy cannot be resolved");
+    }
+    checkpoint();
+    std::vector<RetainedEntity> metadata;
+    metadata.reserve(target.entities.size());
+    for (const auto& entity : target.entities) {
+        metadata.push_back({handles.at(entity.id), entity.id, entity.extras_json});
+    }
+    return {std::move(metadata), {true, {affected.begin(), affected.end()}}};
+}
+
 } // namespace
 
 struct AuthoredScene::Impl {
@@ -276,9 +482,126 @@ struct AuthoredScene::Impl {
     const SceneLimits limits;
     std::unique_ptr<ActiveScene> active;
     std::optional<std::size_t> batch_failure_after;
+    std::optional<std::size_t> history_failure_after;
+    const AuthoringHistoryLimits history_limits;
+    std::vector<std::unique_ptr<HistoryEntry>> entries;
+    std::size_t cursor{0};
+    std::size_t history_bytes{0};
+    std::uint64_t next_history_ticket{1};
+    SceneRevision history_revision;
+    std::shared_ptr<const SceneDocument> cached_snapshot;
+    SceneRevision cached_revision{};
 
-    Impl(ProjectDocument catalog, SceneLimits bounds, std::unique_ptr<ActiveScene> value)
-        : project(std::move(catalog)), limits(bounds), active(std::move(value)) {}
+    Impl(ProjectDocument catalog, SceneLimits bounds, std::unique_ptr<ActiveScene> value,
+         AuthoringHistoryLimits history_bounds)
+        : project(std::move(catalog)), limits(bounds), active(std::move(value)),
+          history_limits(history_bounds), history_revision(active->baseline) {
+        entries.reserve(history_limits.max_entries);
+    }
+
+    void check_history(SceneRevision revision) const {
+        if (!entries.empty() && revision != history_revision) {
+            fail(ErrorCode::conflict, "authoring history is out of sync; clear it explicitly");
+        }
+    }
+
+    AuthoringHistoryStatus read_history() const {
+        const auto state = read_status();
+        std::optional<AuthoringHistoryGroup> undo;
+        std::optional<AuthoringHistoryGroup> redo;
+        if (cursor != 0) {
+            const auto& entry = *entries[cursor - 1];
+            undo = AuthoringHistoryGroup{entry.ticket, entry.command_count};
+        }
+        if (cursor < entries.size()) {
+            const auto& entry = *entries[cursor];
+            redo = AuthoringHistoryGroup{entry.ticket, entry.command_count};
+        }
+        return {state.revision, state.revision == history_revision,
+                cursor,         entries.size() - cursor,
+                history_bytes,  history_limits,
+                undo,           redo};
+    }
+
+    std::shared_ptr<const SceneDocument> before_snapshot() const {
+        const auto state = read_status();
+        if (cached_snapshot && cached_revision == state.revision) {
+            return cached_snapshot;
+        }
+        return std::make_shared<const SceneDocument>(
+            capture_document(project, *active, *active->scene, false));
+    }
+
+    std::unique_ptr<HistoryEntry> prepare_pair(std::shared_ptr<const SceneDocument> before,
+                                               std::shared_ptr<const SceneDocument> after,
+                                               std::size_t command_count,
+                                               std::vector<AuthoredEntityId> replaced = {}) const {
+        if (next_history_ticket == 0) {
+            fail(ErrorCode::conflict, "authoring history ticket capacity exhausted");
+        }
+        const auto charge = sizeof(HistoryEntry) + snapshot_charge(*before) +
+                            snapshot_charge(*after) +
+                            replaced.capacity() * sizeof(AuthoredEntityId);
+        if (charge > history_limits.max_retained_bytes) {
+            fail(ErrorCode::conflict, "authoring history snapshot exceeds its byte limit");
+        }
+        return std::make_unique<HistoryEntry>(HistoryEntry{{next_history_ticket},
+                                                           command_count,
+                                                           std::move(before),
+                                                           std::move(after),
+                                                           std::move(replaced),
+                                                           charge});
+    }
+
+    std::unique_ptr<HistoryEntry> prepare_history(const Scene& candidate,
+                                                  std::size_t command_count) const {
+        auto before = before_snapshot();
+        auto after = std::make_shared<const SceneDocument>(
+            capture_document(project, *active, candidate, false));
+        std::vector<AuthoredEntityId> replaced;
+        for (const auto& entity : after->entities) {
+            const auto old = active->scene->find(entity.id);
+            if (old && old.value() != checked(candidate.find(entity.id))) {
+                replaced.push_back(entity.id);
+            }
+        }
+        std::sort(replaced.begin(), replaced.end());
+        return prepare_pair(std::move(before), std::move(after), command_count,
+                            std::move(replaced));
+    }
+
+    void record_history(std::unique_ptr<HistoryEntry> entry, SceneRevision revision) noexcept {
+        // Capacity was reserved at owner creation; entry allocation and all
+        // rejection decisions precede Core publication. Only moves/cleanup here.
+        for (std::size_t index = cursor; index < entries.size(); ++index) {
+            history_bytes -= entries[index]->charge;
+        }
+        entries.erase(entries.begin() + static_cast<std::ptrdiff_t>(cursor), entries.end());
+        while (!entries.empty() &&
+               (entries.size() >= history_limits.max_entries ||
+                history_bytes > history_limits.max_retained_bytes - entry->charge)) {
+            history_bytes -= entries.front()->charge;
+            entries.erase(entries.begin());
+        }
+        history_bytes += entry->charge;
+        cached_snapshot = entry->after;
+        cached_revision = revision;
+        entries.push_back(std::move(entry));
+        cursor = entries.size();
+        next_history_ticket = next_history_ticket == std::numeric_limits<std::uint64_t>::max()
+                                  ? 0
+                                  : next_history_ticket + 1;
+        history_revision = revision;
+    }
+
+    void reset_history(SceneRevision revision) noexcept {
+        entries.clear();
+        cached_snapshot.reset();
+        cached_revision = {};
+        cursor = 0;
+        history_bytes = 0;
+        history_revision = revision;
+    }
 
     void check_owner() const {
         if (owner != std::this_thread::get_id()) {
@@ -313,15 +636,22 @@ struct AuthoredScene::Impl {
 AuthoredScene::AuthoredScene(std::unique_ptr<Impl> impl) noexcept : impl_(std::move(impl)) {}
 AuthoredScene::~AuthoredScene() = default;
 
-Result<std::unique_ptr<AuthoredScene>> AuthoredScene::create(const ProjectDocument& project,
-                                                             const SceneDocument& scene,
-                                                             SceneLimits limits) {
+Result<std::unique_ptr<AuthoredScene>>
+AuthoredScene::create(const ProjectDocument& project, const SceneDocument& scene,
+                      SceneLimits limits, AuthoringHistoryLimits history_limits) {
     return boundary<std::unique_ptr<AuthoredScene>>("source.scene.create", [&] {
         validate_limits(limits);
+        if (history_limits.max_entries == 0 ||
+            history_limits.max_entries > authoring_maximum_history_entries ||
+            history_limits.max_retained_bytes == 0 ||
+            history_limits.max_retained_bytes > authoring_maximum_history_bytes) {
+            fail(ErrorCode::invalid_configuration,
+                 "authoring history limits exceed supported bounds");
+        }
         auto catalog = checked(validate_project_document(project));
         auto active = prepare(catalog, scene, limits);
         return std::unique_ptr<AuthoredScene>(new AuthoredScene(
-            std::make_unique<Impl>(std::move(catalog), limits, std::move(active))));
+            std::make_unique<Impl>(std::move(catalog), limits, std::move(active), history_limits)));
     });
 }
 
@@ -339,9 +669,48 @@ Result<std::reference_wrapper<const Scene>> AuthoredScene::scene() const {
 
 Result<AuthoringCommandReply> AuthoredScene::execute(const AuthoringCommand& command,
                                                      SceneRevision expected_revision) {
+    if (std::holds_alternative<DeleteEntityCommand>(command)) {
+        return execute_delete(command, expected_revision);
+    }
+    return evaluate_commands(std::span<const AuthoringCommand>{&command, 1}, expected_revision,
+                             true, "authoring.execute");
+}
+
+Result<AuthoringCommandReply> AuthoredScene::execute_delete(const AuthoringCommand& command,
+                                                            SceneRevision expected_revision) {
     return boundary<AuthoringCommandReply>("authoring.execute", [&] {
         static_cast<void>(impl_->read_status());
-        return apply_command(*impl_->active->scene, impl_->limits, command, expected_revision);
+        auto& live = *impl_->active->scene;
+        auto outcome = boundary<AuthoringCommandEffect>("authoring.execute", [&] {
+            static_cast<void>(impl_->read_status(expected_revision));
+            impl_->check_history(expected_revision);
+            checked(shark::scene_detail::SceneEditAccess::check(live, expected_revision));
+            const auto& request = std::get<DeleteEntityCommand>(command);
+            const auto handle = checked(live.find(request.id));
+            std::vector<AuthoredEntityId> removed;
+            append_subtree(live, handle, removed);
+            const std::set<AuthoredEntityId> ids(removed.begin(), removed.end());
+            auto before = impl_->before_snapshot();
+            auto after = std::make_shared<SceneDocument>(*before);
+            std::erase_if(after->entities,
+                          [&](const auto& entity) { return ids.contains(entity.id); });
+            // Subtree removal only reduces a previously validated source value.
+            // The immutable projection is history data; Core still owns validation
+            // and the immediate atomic deletion, as in the original single API.
+            auto entry = impl_->prepare_pair(std::move(before), std::move(after), 1);
+            auto reply = apply_command(live, impl_->limits, command, expected_revision);
+            if (!reply.outcome) {
+                throw ActivationFailure{std::move(reply.outcome).error()};
+            }
+            impl_->record_history(std::move(entry), reply.observed_revision);
+            return std::move(reply.outcome).value();
+        });
+        if (!outcome && outcome.error().context.entity_id.empty()) {
+            outcome.error().context.entity_id =
+                std::get<DeleteEntityCommand>(command).id.value().to_string();
+        }
+        const auto stats = live.stats().value();
+        return AuthoringCommandReply{{stats.instance, stats.revision}, std::move(outcome)};
     });
 }
 
@@ -358,13 +727,31 @@ Result<AuthoringBatchReply> AuthoredScene::execute(const AuthoringBatch& batch,
 Result<AuthoringBatchReply> AuthoredScene::evaluate_batch(const AuthoringBatch& batch,
                                                           SceneRevision expected_revision,
                                                           bool publish) const {
-    const auto* operation = publish ? "authoring.batch.execute" : "authoring.batch.preview";
-    auto result = boundary<AuthoringBatchReply>(operation, [&] {
+    auto result =
+        evaluate_commands(batch.commands, expected_revision, publish,
+                          publish ? "authoring.batch.execute" : "authoring.batch.preview");
+    if (!result) {
+        result.error().context.request_id = batch.id.value().to_string();
+        return std::move(result).error();
+    }
+    auto reply = std::move(result).value();
+    if (!reply.outcome) {
+        reply.outcome.error().context.request_id = batch.id.value().to_string();
+    }
+    return AuthoringBatchReply{batch.id, reply.observed_revision, std::move(reply.outcome)};
+}
+
+Result<AuthoringCommandReply>
+AuthoredScene::evaluate_commands(std::span<const AuthoringCommand> commands,
+                                 SceneRevision expected_revision, bool publish,
+                                 const char* operation) const {
+    return boundary<AuthoringCommandReply>(operation, [&] {
         static_cast<void>(impl_->read_status());
         auto& live = *impl_->active->scene;
         auto outcome = boundary<AuthoringCommandEffect>(operation, [&] {
             static_cast<void>(impl_->read_status(expected_revision));
-            if (batch.commands.size() > authoring_maximum_batch_commands) {
+            impl_->check_history(expected_revision);
+            if (commands.size() > authoring_maximum_batch_commands) {
                 fail(ErrorCode::invalid_argument, "authoring batch command bound exceeded");
             }
             const auto failure_after = std::exchange(impl_->batch_failure_after, std::nullopt);
@@ -380,13 +767,16 @@ Result<AuthoringBatchReply> AuthoredScene::evaluate_batch(const AuthoringBatch& 
             allocation_boundary();
             std::set<AuthoredEntityId> affected;
             bool changed = false;
-            for (std::size_t index = 0; index < batch.commands.size(); ++index) {
+            for (std::size_t index = 0; index < commands.size(); ++index) {
                 const auto stats = checked(candidate->stats());
-                auto reply = apply_command(*candidate, impl_->limits, batch.commands[index],
+                auto reply = apply_command(*candidate, impl_->limits, commands[index],
                                            {stats.instance, stats.revision});
                 if (!reply.outcome) {
                     auto error = std::move(reply.outcome).error();
-                    error.context.path = "/commands/" + std::to_string(index);
+                    if (commands.size() != 1 ||
+                        std::string_view{operation} != "authoring.execute") {
+                        error.context.path = "/commands/" + std::to_string(index);
+                    }
                     throw ActivationFailure{std::move(error)};
                 }
                 changed = changed || reply.outcome.value().changed;
@@ -396,25 +786,109 @@ Result<AuthoringBatchReply> AuthoredScene::evaluate_batch(const AuthoringBatch& 
             }
             AuthoringCommandEffect effect{changed, {affected.begin(), affected.end()}};
             allocation_boundary();
+            std::unique_ptr<HistoryEntry> entry;
+            if (changed) {
+                entry = impl_->prepare_history(*candidate, commands.size());
+                allocation_boundary();
+            }
             if (publish) {
                 allocation_boundary();
-                // The complete reply payload exists before the allocation-free
-                // commit. Commit rechecks live owner, revision and mutation phase.
-                static_cast<void>(checked(shark::scene_detail::SceneEditAccess::commit(
-                    live, *candidate, expected_revision)));
+                const auto revision = checked(shark::scene_detail::SceneEditAccess::commit(
+                    live, *candidate, expected_revision));
+                if (entry) {
+                    impl_->record_history(std::move(entry), revision);
+                }
             }
             return effect;
         });
-        if (!outcome) {
-            outcome.error().context.request_id = batch.id.value().to_string();
-        }
         const auto stats = live.stats().value();
-        return AuthoringBatchReply{batch.id, {stats.instance, stats.revision}, std::move(outcome)};
+        return AuthoringCommandReply{{stats.instance, stats.revision}, std::move(outcome)};
     });
-    if (!result) {
-        result.error().context.request_id = batch.id.value().to_string();
-    }
-    return result;
+}
+
+Result<AuthoringHistoryStatus>
+AuthoredScene::history(std::optional<SceneRevision> expected_revision) const {
+    return boundary<AuthoringHistoryStatus>("authoring.history", [&] {
+        static_cast<void>(impl_->read_status(expected_revision));
+        return impl_->read_history();
+    });
+}
+
+Result<AuthoringHistoryStatus> AuthoredScene::clear_history(SceneRevision expected_revision) {
+    return boundary<AuthoringHistoryStatus>("authoring.history.clear", [&] {
+        static_cast<void>(impl_->read_status(expected_revision));
+        // Reuse the complete owner/visit/pending guard before changing history.
+        checked(
+            shark::scene_detail::SceneEditAccess::check(*impl_->active->scene, expected_revision));
+        impl_->reset_history(expected_revision);
+        return impl_->read_history();
+    });
+}
+
+Result<AuthoringHistoryReply> AuthoredScene::undo(AuthoringHistoryTicket ticket,
+                                                  SceneRevision expected_revision) {
+    return move_history(ticket, expected_revision, false);
+}
+
+Result<AuthoringHistoryReply> AuthoredScene::redo(AuthoringHistoryTicket ticket,
+                                                  SceneRevision expected_revision) {
+    return move_history(ticket, expected_revision, true);
+}
+
+Result<AuthoringHistoryReply> AuthoredScene::move_history(AuthoringHistoryTicket ticket,
+                                                          SceneRevision expected_revision,
+                                                          bool forward) {
+    const auto* operation = forward ? "authoring.redo" : "authoring.undo";
+    return boundary<AuthoringHistoryReply>(operation, [&] {
+        static_cast<void>(impl_->read_status());
+        auto& live = *impl_->active->scene;
+        auto outcome = boundary<AuthoringCommandEffect>(operation, [&] {
+            static_cast<void>(impl_->read_status(expected_revision));
+            impl_->check_history(expected_revision);
+            if ((!forward && impl_->cursor == 0) ||
+                (forward && impl_->cursor == impl_->entries.size())) {
+                fail(ErrorCode::conflict, "no history entry is available in this direction");
+            }
+            const auto index = forward ? impl_->cursor : impl_->cursor - 1;
+            const auto& entry = *impl_->entries[index];
+            if (ticket != entry.ticket) {
+                fail(ErrorCode::conflict, "history ticket does not match the next entry");
+            }
+            const auto& target_snapshot = forward ? entry.after : entry.before;
+            const auto& target = *target_snapshot;
+            validate_references(impl_->project, target);
+            if (target.scene != impl_->active->id || target.world_origin != impl_->active->origin ||
+                target.extras_json != impl_->active->extras) {
+                fail(ErrorCode::conflict, "history metadata does not match the active scene");
+            }
+            const auto failure_after = std::exchange(impl_->history_failure_after, std::nullopt);
+            std::size_t step = 0;
+            const auto allocation_boundary = [&] {
+                if (failure_after && step++ == *failure_after) {
+                    throw std::bad_alloc{};
+                }
+            };
+            allocation_boundary();
+            auto candidate =
+                checked(shark::scene_detail::SceneEditAccess::prepare(live, expected_revision));
+            allocation_boundary();
+            auto restored =
+                restore_document(*candidate, target, entry.replaced, allocation_boundary);
+            allocation_boundary();
+            // Prebuild metadata and the complete result, then force one revision
+            // for the history movement even when the source values are equal.
+            const auto revision = checked(shark::scene_detail::SceneEditAccess::commit(
+                live, *candidate, expected_revision, true));
+            impl_->active->entities.swap(restored.metadata);
+            impl_->cursor = forward ? impl_->cursor + 1 : impl_->cursor - 1;
+            impl_->history_revision = revision;
+            impl_->cached_snapshot = target_snapshot;
+            impl_->cached_revision = revision;
+            return std::move(restored.effect);
+        });
+        const auto stats = live.stats().value();
+        return AuthoringHistoryReply{ticket, {stats.instance, stats.revision}, std::move(outcome)};
+    });
 }
 
 Result<SceneQueryPage> AuthoredScene::query_entities(const SceneQueryOptions& options) const {
@@ -448,75 +922,7 @@ Result<CapturedScene> AuthoredScene::capture(std::optional<SceneRevision> expect
             fail(ErrorCode::conflict, "scene capture requires no pending mutations");
         }
         const auto& active = *impl_->active;
-        SceneQueryOptions options;
-        options.page_size = scene_query_maximum_page_size;
-        // Bound each read to one page of slots, including sparse empty pages.
-        options.scan_budget = scene_query_maximum_page_size;
-        options.expected_revision = status.revision;
-        auto page = checked(active.scene->query_entities(options));
-        std::vector<SourceEntity> observed;
-        std::vector<std::optional<EntityHandle>> parents;
-        std::map<EntityHandle, std::size_t> indices;
-        for (;;) {
-            const auto* scope = std::get_if<AuthoredSceneScope>(&page.scope());
-            if (!scope || scope->scene != active.id || page.revision() != status.revision) {
-                fail(ErrorCode::conflict, "capture requires the active authored scene incarnation");
-            }
-            for (const auto& row : page.entities()) {
-                if (observed.size() >= source_maximum_entities) {
-                    fail(ErrorCode::conflict, "scene capture exceeds the source entity limit",
-                         "/entities");
-                }
-                const auto* id = std::get_if<AuthoredEntityId>(&row.reference.identity);
-                if (!id || row.reference.authority || !row.name || !row.transform ||
-                    !row.hierarchy) {
-                    fail(ErrorCode::invalid_configuration,
-                         "capture requires complete authored entity state", "/entities");
-                }
-                indices.emplace(row.reference.handle, observed.size());
-                observed.push_back({*id, std::nullopt, *row.name, row.transform->local, "{}"});
-                parents.push_back(row.hierarchy->parent);
-            }
-            if (!page.next_cursor()) {
-                break;
-            }
-            page = checked(active.scene->continue_query(*page.next_cursor()));
-        }
-        for (std::size_t index = 0; index < observed.size(); ++index) {
-            if (parents[index]) {
-                const auto parent = indices.find(*parents[index]);
-                if (parent == indices.end()) {
-                    fail(ErrorCode::invalid_configuration, "captured parent is missing",
-                         "/entities/" + std::to_string(index) + "/parent",
-                         observed[index].id.value().to_string());
-                }
-                observed[index].parent = observed[parent->second].id;
-            }
-        }
-        std::vector<SourceEntity> ordered;
-        ordered.reserve(observed.size());
-        std::vector<bool> retained(observed.size(), false);
-        for (const auto& metadata : active.entities) {
-            const auto found = indices.find(metadata.handle);
-            if (found == indices.end()) {
-                continue;
-            }
-            const auto index = found->second;
-            auto& entity = observed[index];
-            if (entity.id != metadata.id) {
-                fail(ErrorCode::invalid_id, "retained source identity has changed");
-            }
-            entity.extras_json = metadata.extras;
-            ordered.push_back(std::move(entity));
-            retained[index] = true;
-        }
-        for (std::size_t index = 0; index < observed.size(); ++index) {
-            if (!retained[index]) {
-                ordered.push_back(std::move(observed[index]));
-            }
-        }
-        auto document = checked(validate_scene_document(
-            {impl_->project.project, active.id, active.origin, std::move(ordered), active.extras}));
+        auto document = capture_document(impl_->project, active, *active.scene);
         CapturedScene result{status.revision, impl_->project, std::move(document), status.dirty};
         const auto final_status = impl_->read_status(status.revision);
         if (final_status.pending_mutations != 0) {
@@ -541,6 +947,7 @@ Result<SceneRevision> AuthoredScene::activate(const SceneDocument& candidate,
         checked(impl_->active->scene->close());
         // Publication cannot allocate or fail after the previous scene closes.
         impl_->active.swap(prepared);
+        impl_->reset_history(result);
         return result;
     });
 }
@@ -570,6 +977,15 @@ Result<void> detail::AuthoredSceneTestAccess::fail_batch_after(AuthoredScene& ow
     return boundary<void>("source.scene.test-fault", [&] {
         static_cast<void>(owner.impl_->read_status());
         owner.impl_->batch_failure_after = step;
+        return Result<void>{};
+    });
+}
+
+Result<void> detail::AuthoredSceneTestAccess::fail_history_after(AuthoredScene& owner,
+                                                                 std::size_t step) {
+    return boundary<void>("source.scene.test-history-fault", [&] {
+        static_cast<void>(owner.impl_->read_status());
+        owner.impl_->history_failure_after = step;
         return Result<void>{};
     });
 }

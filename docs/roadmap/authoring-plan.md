@@ -10,7 +10,12 @@ CPU CTests plus 12 standalone Tools checks and protected package qualification.
 Its [handoff](../handoffs/09b-atomic-batches.md) and
 [receipt](../coverage/evidence/09b-atomic-batches.json) record 605 full CPU CTests,
 14 standalone Tools checks, public API/sanitizer audits and protected packages.
-**Next: 09c - Shared undo and redo. Full REQ-09 remains NOT_RUN.**
+**09c - Shared undo and redo is complete under the current-machine scope.**
+Its [handoff](../handoffs/09c-shared-history.md) and
+[receipt](../coverage/evidence/09c-shared-history.json) record 610 full CPU CTests,
+16 standalone Tools checks, 18 public-example compiles, sanitizer audits and
+protected packages. Follow the [history contract](../authoring-history.md).
+**Next: 09d - Safe retries and lost replies. Full REQ-09 remains NOT_RUN.**
 
 Follow [ADR 0008](../architecture/0008-human-agent-authoring.md),
 the [human/agent plan](human-agent-plan.md) and
@@ -110,3 +115,11 @@ Tools on each OS, five public examples, actual sanitizer objects and protected
 builds/packages. Preserve the 09a inventories plus only these additive families.
 The [transaction contract](../authoring-transactions.md) defines ordered limits,
 identity, no-op and publication semantics; full REQ-09 remains NOT_RUN.
+
+09c adds `shark.tools.authoring-history` (60 seconds, seed 1337), preserving all
+previous inventories and workloads. Its seven full profiles total 610 CPU CTests;
+eight authoring families run in standalone Tools on each OS and six public
+examples compile on MSVC/GCC/Clang. Core changes refresh both Server profiles.
+Undo/redo preserve surviving handles and restore removed/replaced IDs with fresh
+generations; save retains history, successful activation clears it. Retained
+mutation identity, payload matching and lost-reply handling remain 09d.
