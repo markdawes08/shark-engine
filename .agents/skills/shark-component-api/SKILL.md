@@ -170,7 +170,7 @@ objects and protected packages pass. Preserve `shark.tools.authoring-history`
 (60 seconds, seed1337), all earlier families and the4096/4095 sparse workload.
 Undo/redo require the next ticket and current revision; save retains history,
 activation clears it, and restored incarnations receive fresh generations.
-Full REQ-09 remains NOT_RUN. Next: 09e, Integrated qualification.
+Full REQ-09 is now PASS after09e. Next: 10, FeatureWorld and automated scene runner.
 
 09d is PASS under the current-machine scope. Follow the
 [retry contract](../../../docs/authoring-retries.md),
@@ -211,3 +211,14 @@ when components or source metadata gain mutation. Reuse revision-bound immutable
 snapshots; never introduce a second authoritative mutable scene. Changed single
 edits/batches are one group, while preview/noops/rejections preserve both stacks.
 Keep bounded tickets/bytes, explicit reconciliation and both Result levels.
+
+09e and full REQ-09 are PASS under the current-machine scope. Follow the
+[qualification contract](../../../docs/authoring-qualification.md),
+[handoff](../../../docs/handoffs/09e-integrated-qualification.md) and
+[receipt](../../../docs/coverage/evidence/09e-integrated-qualification.json):
+625 full CPU CTest executions across seven profiles, 22 standalone Tools checks,
+24 public-example compiles, actual sanitizer objects and protected packages pass.
+Both full Server suites are refreshed. Preserve the eight connected cases in
+`shark.tools.authoring-integration` (90 seconds, seed 1337), native publication
+faults, real external-file lineage and every earlier case/limit. Connect supported
+components/commands to FeatureWorld in10; adapters remain15/16.

@@ -174,6 +174,16 @@ if(TARGET EngineTools)
     add_test(NAME shark.tools.persistence-integration COMMAND PersistenceIntegrationTests "[persistence-integration]" --rng-seed 1337)
     set_tests_properties(shark.tools.persistence-integration PROPERTIES LABELS "cpu;tooling;integration" TIMEOUT 90)
 
+    add_executable(AuthoringIntegrationTests authoring_integration_tests.cpp)
+    target_link_libraries(AuthoringIntegrationTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_include_directories(AuthoringIntegrationTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
+    target_compile_definitions(AuthoringIntegrationTests PRIVATE
+        SHARK_SOURCE_FIXTURE_DIRECTORY="${PROJECT_SOURCE_DIR}/tests/fixtures/source_documents")
+    shark_configure_target(AuthoringIntegrationTests)
+    shark_classify_target(AuthoringIntegrationTests test)
+    add_test(NAME shark.tools.authoring-integration COMMAND AuthoringIntegrationTests "[authoring-integration]" --rng-seed 1337)
+    set_tests_properties(shark.tools.authoring-integration PROPERTIES LABELS "cpu;tooling;integration" TIMEOUT 90)
+
     add_executable(ProjectFilesProcess project_files_process.cpp)
     target_link_libraries(ProjectFilesProcess PRIVATE EngineTools)
     target_include_directories(ProjectFilesProcess PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")

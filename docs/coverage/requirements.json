@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "09",
+  "current_assignment": "10",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -177,7 +177,7 @@
         "Test alternating human/agent-equivalent edits, stale revisions, invalid batches and retry outcomes through the common service; process ownership is enforced in 15 and editor integration in 16."
       ],
       "planned_fixture": "CommandReplayUndoRedo, TransactionRollback, RevisionConflict and RequestRetry fixtures; FeatureWorld/AuthoringCommands is added with assignment 10. Add HumanAgentRevisionHistory, PureValidationPreview and LostReplyRetryScope fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "09a through09d are PASS under current-machine scope. Owner-scoped consecutive mutation identities retain original immutable successes, noops and terminal failures, compare exact bounded payloads separately from batch correlation, and permanently fence expired IDs with a nonrewinding watermark. New owners/restarts report unknown outcome and require reconciliation. The09d receipt records486 full CPU CTest executions across five profiles,20 standalone Tools checks,21 public-example compiles, actual sanitizer objects and protected package gates. Core/Server implementation is unchanged; full Server suites retain historical09c evidence until09e. See docs/handoffs/09d-retained-retries.md, docs/coverage/evidence/09d-retained-retries.json, docs/authoring-retries.md and docs/roadmap/authoring-plan.md. Full REQ-09 remains NOT_RUN pending09e integrated qualification. CLI/editor adapters remain15/16 and FeatureWorld connects in10."}
+      "verification": {"status": "PASS", "reason": "09a-09e and fullREQ09 PASS under current-machine scope. Eight connected authoring cases carry independently authored legacy/current documents and one real file lineage through alternating shared-owner edits, pure preview, atomic rollback, common undo/redo, retained successes/noops/errors, expiry, native I/O and postpublication faults, external text conflicts, explicit reload and fresh-owner reconciliation. All previous inventories, seeds, timeouts and workloads remain. Final qualification records625 full CPU CTest executions across seven profiles including both refreshed Server suites,22 standalone Tools checks,24 public-example compiles, actual sanitizer objects and protected packages. See docs/handoffs/09e-integrated-qualification.md, docs/coverage/evidence/09e-integrated-qualification.json and docs/authoring-qualification.md. These are local C++ source-authoring services; actual import/export jobs retain11-14, terminal/project ownership15, editor16 and FeatureWorld10. No player RPC or production MMO capacity is claimed. Next:10 FeatureWorld and automated scene runner."}
     },
     {
       "id": "REQ-10",
@@ -1424,6 +1424,32 @@
         "fixture_reason": "Executable CPU fixtures qualify shared batch admission, nonauthoritative candidate validation, allocation failure rollback, one revision publication, preview purity, exact checked lifetimes and save-baseline behavior. The internal Core port is not an adapter API. FeatureWorld/AuthoringCommands connects in10; no history/retry/terminal/editor claims."
       },
       {
+        "id": "tools.authoring-integration",
+        "name": "Connected shared authoring qualification",
+        "requirement_ids": [
+          "REQ-09"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-integration",
+          "shark.tools.authoring-retries-process",
+          "shark.tools.project-files-process"
+        ],
+        "test_sources": [
+          "tests/authoring_integration_tests.cpp",
+          "tests/authoring_retry_probe.cpp",
+          "tools/tests/test_authoring_retries_process.py",
+          "tools/tests/test_project_files_process.py"
+        ],
+        "fixtures": [
+          "tests/fixtures/source_documents/project-v0.sharkproject",
+          "tests/fixtures/source_documents/scene-v0.sharkscene",
+          "tests/fixtures/source_documents/project-v1.sharkproject",
+          "tests/fixtures/source_documents/scene-v1.sharkscene",
+          "docs/authoring-qualification.md"
+        ],
+        "fixture_reason": "Eight connected CPU cases carry actual legacy/current project files through alternating common-owner edits, pure preview, atomic rejection, shared history, retained successes/errors, expiry, native publication faults, save/reload and external changes. Complete expected documents and persisted bytes are independent oracles. Existing separate-process restart/interruption fixtures remain required. FeatureWorld/AuthoringCommands connects in10; terminal/project-owner and editor adapters remain15/16. Qualification status is recorded by REQ-09 after the final gate."
+      },
+      {
         "id": "tools.authoring-retries",
         "name": "Scoped retained authoring mutations",
         "requirement_ids": [
@@ -1482,14 +1508,16 @@
           "shark.tools.persistence-integration",
           "shark.tools.authoring-commands",
           "shark.tools.authoring-batches",
-          "shark.tools.authoring-history"
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-integration"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
           "tests/core_scene_query_tests.cpp",
           "tests/core_hierarchy_tests.cpp",
           "tests/persistence_integration_tests.cpp",
-          "tests/authoring_command_tests.cpp"
+          "tests/authoring_command_tests.cpp",
+          "tests/authoring_integration_tests.cpp"
         ],
         "fixtures": [
           "tests/core_schema_tests.cpp",
@@ -1514,7 +1542,8 @@
           "shark.tools.persistence-integration",
           "shark.tools.authoring-commands",
           "shark.tools.authoring-batches",
-          "shark.tools.authoring-history"
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-integration"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
@@ -1522,7 +1551,8 @@
           "tests/core_transform_tests.cpp",
           "tests/core_hierarchy_tests.cpp",
           "tests/persistence_integration_tests.cpp",
-          "tests/authoring_command_tests.cpp"
+          "tests/authoring_command_tests.cpp",
+          "tests/authoring_integration_tests.cpp"
         ],
         "fixtures": [
           "tests/core_schema_tests.cpp",
@@ -1542,12 +1572,14 @@
         ],
         "test_ids": [
           "shark.tools.authoring-retries",
-          "shark.tools.authoring-retries-process"
+          "shark.tools.authoring-retries-process",
+          "shark.tools.authoring-integration"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
           "tests/authoring_retry_probe.cpp",
-          "tools/tests/test_authoring_retries_process.py"
+          "tools/tests/test_authoring_retries_process.py",
+          "tests/authoring_integration_tests.cpp"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -1563,12 +1595,14 @@
         ],
         "test_ids": [
           "shark.tools.authoring-retries",
-          "shark.tools.authoring-retries-process"
+          "shark.tools.authoring-retries-process",
+          "shark.tools.authoring-integration"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
           "tests/authoring_retry_probe.cpp",
-          "tools/tests/test_authoring_retries_process.py"
+          "tools/tests/test_authoring_retries_process.py",
+          "tests/authoring_integration_tests.cpp"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -1584,12 +1618,14 @@
         ],
         "test_ids": [
           "shark.tools.authoring-retries",
-          "shark.tools.authoring-retries-process"
+          "shark.tools.authoring-retries-process",
+          "shark.tools.authoring-integration"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
           "tests/authoring_retry_probe.cpp",
-          "tools/tests/test_authoring_retries_process.py"
+          "tools/tests/test_authoring_retries_process.py",
+          "tests/authoring_integration_tests.cpp"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -1605,10 +1641,12 @@
                     ],
                     "test_ids": [
                       "shark.tools.authoring-commands",
-                      "shark.tools.authoring-history"
+                      "shark.tools.authoring-history",
+                      "shark.tools.authoring-integration"
                     ],
                     "test_sources": [
-                      "tests/authoring_command_tests.cpp"
+                      "tests/authoring_command_tests.cpp",
+                      "tests/authoring_integration_tests.cpp"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -1624,10 +1662,12 @@
                     ],
                     "test_ids": [
                       "shark.tools.authoring-commands",
-                      "shark.tools.authoring-history"
+                      "shark.tools.authoring-history",
+                      "shark.tools.authoring-integration"
                     ],
                     "test_sources": [
-                      "tests/authoring_command_tests.cpp"
+                      "tests/authoring_command_tests.cpp",
+                      "tests/authoring_integration_tests.cpp"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -1643,10 +1683,12 @@
                     ],
                     "test_ids": [
                       "shark.tools.authoring-commands",
-                      "shark.tools.authoring-history"
+                      "shark.tools.authoring-history",
+                      "shark.tools.authoring-integration"
                     ],
                     "test_sources": [
-                      "tests/authoring_command_tests.cpp"
+                      "tests/authoring_command_tests.cpp",
+                      "tests/authoring_integration_tests.cpp"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -1663,11 +1705,13 @@
                     "test_ids": [
                       "shark.tools.authoring-commands",
                       "shark.tools.persistence-integration",
-                      "shark.tools.authoring-history"
+                      "shark.tools.authoring-history",
+                      "shark.tools.authoring-integration"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
-                      "tests/persistence_integration_tests.cpp"
+                      "tests/persistence_integration_tests.cpp",
+                      "tests/authoring_integration_tests.cpp"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -1684,11 +1728,13 @@
                     "test_ids": [
                       "shark.tools.authoring-commands",
                       "shark.tools.persistence-integration",
-                      "shark.tools.authoring-history"
+                      "shark.tools.authoring-history",
+                      "shark.tools.authoring-integration"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
-                      "tests/persistence_integration_tests.cpp"
+                      "tests/persistence_integration_tests.cpp",
+                      "tests/authoring_integration_tests.cpp"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -1705,11 +1751,13 @@
                     "test_ids": [
                       "shark.tools.authoring-batches",
                       "shark.core.scene-edit",
-                      "shark.tools.authoring-history"
+                      "shark.tools.authoring-history",
+                      "shark.tools.authoring-integration"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
-                      "tests/core_scene_edit_tests.cpp"
+                      "tests/core_scene_edit_tests.cpp",
+                      "tests/authoring_integration_tests.cpp"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -1726,11 +1774,13 @@
                     "test_ids": [
                       "shark.tools.authoring-batches",
                       "shark.core.scene-edit",
-                      "shark.tools.authoring-history"
+                      "shark.tools.authoring-history",
+                      "shark.tools.authoring-integration"
                     ],
                     "test_sources": [
                       "tests/authoring_command_tests.cpp",
-                      "tests/core_scene_edit_tests.cpp"
+                      "tests/core_scene_edit_tests.cpp",
+                      "tests/authoring_integration_tests.cpp"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -1745,10 +1795,12 @@
                       "REQ-09"
                     ],
                     "test_ids": [
-                      "shark.tools.authoring-history"
+                      "shark.tools.authoring-history",
+                      "shark.tools.authoring-integration"
                     ],
                     "test_sources": [
-                      "tests/authoring_command_tests.cpp"
+                      "tests/authoring_command_tests.cpp",
+                      "tests/authoring_integration_tests.cpp"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -1763,10 +1815,12 @@
                       "REQ-09"
                     ],
                     "test_ids": [
-                      "shark.tools.authoring-history"
+                      "shark.tools.authoring-history",
+                      "shark.tools.authoring-integration"
                     ],
                     "test_sources": [
-                      "tests/authoring_command_tests.cpp"
+                      "tests/authoring_command_tests.cpp",
+                      "tests/authoring_integration_tests.cpp"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -1781,10 +1835,12 @@
                       "REQ-09"
                     ],
                     "test_ids": [
-                      "shark.tools.authoring-history"
+                      "shark.tools.authoring-history",
+                      "shark.tools.authoring-integration"
                     ],
                     "test_sources": [
-                      "tests/authoring_command_tests.cpp"
+                      "tests/authoring_command_tests.cpp",
+                      "tests/authoring_integration_tests.cpp"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",
@@ -1799,10 +1855,12 @@
                       "REQ-09"
                     ],
                     "test_ids": [
-                      "shark.tools.authoring-history"
+                      "shark.tools.authoring-history",
+                      "shark.tools.authoring-integration"
                     ],
                     "test_sources": [
-                      "tests/authoring_command_tests.cpp"
+                      "tests/authoring_command_tests.cpp",
+                      "tests/authoring_integration_tests.cpp"
                     ],
                     "fixtures": [
                       "tests/authoring_command_tests.cpp",

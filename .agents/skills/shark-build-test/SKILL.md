@@ -10,8 +10,8 @@ existing Tools families. Its [command contract](../../../docs/authoring-commands
 uses AuthoredScene's single owner, required revisions, typed effects and read-only
 Scene access. Preserve existing persistence cases as their ordinary edits move
 through commands; private access is only for lifecycle invariant fixtures.
-Run all ten authoring families in standalone CPU Tools on Windows and existing WSL, alongside
-native/WSL regressions, sanitizers and protected boundaries. Compile all seven
+Run all eleven authoring families in standalone CPU Tools on Windows and existing WSL, alongside
+native/WSL regressions, sanitizers and protected boundaries. Compile all eight
 public Tools examples without private headers. 09a is PASS under the
 current-machine scope; its [handoff](../../../docs/handoffs/09a-shared-commands.md)
 and [receipt](../../../docs/coverage/evidence/09a-shared-commands.json) record
@@ -31,7 +31,7 @@ objects and protected packages pass. Preserve `shark.tools.authoring-history`
 (60 seconds, seed1337), all earlier families and the4096/4095 sparse workload.
 Undo/redo require the next ticket and current revision; save retains history,
 activation clears it, and restored incarnations receive fresh generations.
-Full REQ-09 remains NOT_RUN. Next: 09e, Integrated qualification.
+Full REQ-09 is now PASS after09e. Next: 10, FeatureWorld and automated scene runner.
 
 09d is PASS under the current-machine scope. Follow the
 [retry contract](../../../docs/authoring-retries.md),
@@ -237,3 +237,14 @@ Compile the complete [capture/activation example](../../../docs/authored-scenes.
 without private dependency headers. Its [handoff](../../../docs/handoffs/08b-scene-activation.md)
 records its historical qualification status; the completed 08c file services
 participate in the integrated 08d gate.
+
+09e and full REQ-09 are PASS under the current-machine scope. Follow the
+[qualification contract](../../../docs/authoring-qualification.md),
+[handoff](../../../docs/handoffs/09e-integrated-qualification.md) and
+[receipt](../../../docs/coverage/evidence/09e-integrated-qualification.json):
+625 full CPU CTest executions across seven profiles, 22 standalone Tools checks,
+24 public-example compiles, actual sanitizer objects and protected packages pass.
+Both full Server suites are refreshed. Preserve the eight connected cases in
+`shark.tools.authoring-integration` (90 seconds, seed 1337), native publication
+faults, real external-file lineage and every earlier case/limit. Connect supported
+components/commands to FeatureWorld in10; adapters remain15/16.

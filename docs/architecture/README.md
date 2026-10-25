@@ -100,8 +100,11 @@ atomic batches/preview, history and scoped retained retries use the same owner.
 The [09d handoff](../handoffs/09d-retained-retries.md) records 486 full CPU CTest
 executions, 20 standalone Tools checks, 21 public-example compiles and protected
 gates. Core/Server implementation is unchanged; full Server suites retain their
-historical 09c evidence until 09e. Full REQ-09 remains NOT_RUN; 09e, Integrated
-qualification, is next. Terminal adapters and editor UI
+historical 09c evidence until 09e. The
+[09e qualification](../handoffs/09e-integrated-qualification.md) now refreshes all
+seven profiles: 625 full CPU CTest executions, 22 standalone Tools checks,
+24 public-example compiles and protected gates pass. Full REQ-09 is PASS;
+assignment 10 is next. Terminal adapters and editor UI
 retain their later owners;
 schema IDs do not establish file or gameplay-wire formats. The current-machine
 scope remains unchanged.

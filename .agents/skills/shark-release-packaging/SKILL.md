@@ -8,7 +8,7 @@ description: Validate Shark standalone exports and packages for cooked dependenc
 09a's [shared commands](../../../docs/authoring-commands.md) stay in EngineTools.
 Protected Runtime/Server packages must not acquire authoring command services,
 JSON/source readers, mutable invariant-fixture access or the command test target.
-Compile the seven public Tools examples separately from those packages; all public
+Compile the eight public Tools examples separately from those packages; all public
 AuthoredScene reads are const and ordinary edits use the typed service. 09a is
 PASS under the current-machine scope; follow its
 [handoff](../../../docs/handoffs/09a-shared-commands.md) and
@@ -28,7 +28,7 @@ objects and protected packages pass. Preserve `shark.tools.authoring-history`
 (60 seconds, seed1337), all earlier families and the4096/4095 sparse workload.
 Undo/redo require the next ticket and current revision; save retains history,
 activation clears it, and restored incarnations receive fresh generations.
-Full REQ-09 remains NOT_RUN. Next: 09e, Integrated qualification.
+Full REQ-09 is now PASS after09e. Next: 10, FeatureWorld and automated scene runner.
 
 09d is PASS under the current-machine scope. Follow the
 [retry contract](../../../docs/authoring-retries.md),
@@ -201,3 +201,14 @@ server roots, authenticated content, drain/restart and tested backup/restore.
 The Server package must run in its qualified local WSL Ubuntu environment without
 presentation dependencies. M09/M10 supply multi-client seamless-world, failure and active-load
 evidence; Tetris/desktop install checks alone cannot qualify an MMORPG release.
+
+09e and full REQ-09 are PASS under the current-machine scope. Follow the
+[qualification contract](../../../docs/authoring-qualification.md),
+[handoff](../../../docs/handoffs/09e-integrated-qualification.md) and
+[receipt](../../../docs/coverage/evidence/09e-integrated-qualification.json):
+625 full CPU CTest executions across seven profiles, 22 standalone Tools checks,
+24 public-example compiles, actual sanitizer objects and protected packages pass.
+Both full Server suites are refreshed. Preserve the eight connected cases in
+`shark.tools.authoring-integration` (90 seconds, seed 1337), native publication
+faults, real external-file lineage and every earlier case/limit. Connect supported
+components/commands to FeatureWorld in10; adapters remain15/16.

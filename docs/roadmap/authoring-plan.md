@@ -2,7 +2,7 @@
 
 Date: 2026-10-25. Base: `0b2726c` on initially clean `main`.
 Owner: REQ-09. M03 is complete. The user approved the following five checkpoints;
-**09a is complete and full REQ-09 remains NOT_RUN**.
+**09a-09e and full REQ-09 are complete under the current-machine scope**.
 The [09a handoff](../handoffs/09a-shared-commands.md) and
 [receipt](../coverage/evidence/09a-shared-commands.json) record 461 passing full
 CPU CTests plus 12 standalone Tools checks and protected package qualification.
@@ -21,7 +21,13 @@ and [receipt](../coverage/evidence/09d-retained-retries.json): 486 full CPU CTes
 executions, 20 additional standalone Tools checks, 21 public-example compiles,
 actual sanitizer objects and protected packages pass. Core/Server implementation
 is unchanged; their full Server suites remain historical until 09e.
-**Next: 09e, Integrated qualification. Full REQ-09 remains NOT_RUN.**
+**09e and full REQ-09 are PASS under the current-machine scope.** The
+[qualification contract](../authoring-qualification.md),
+[handoff](../handoffs/09e-integrated-qualification.md) and
+[receipt](../coverage/evidence/09e-integrated-qualification.json) record 625 full
+CPU CTest executions across seven profiles, 22 standalone Tools checks, 24 public-
+example compiles, actual sanitizer objects and protected packages. Both full
+Server suites are refreshed. **Next: 10, FeatureWorld and automated scene runner.**
 
 Follow [ADR 0008](../architecture/0008-human-agent-authoring.md),
 the [human/agent plan](human-agent-plan.md) and
@@ -138,3 +144,11 @@ and seven public examples on MSVC/GCC/Clang. Core/Server implementation is uncha
 09e refreshes both full Server profiles. Owner UUID scope plus consecutive
 sequences and a nonrewinding watermark prevent expired identities from executing.
 Save/activation retain the ledger; new owners require reconciliation of old IDs.
+
+09e completes the five checkpoints through eight connected source/file/authoring
+cases in `shark.tools.authoring-integration` (90 seconds, seed 1337). Its seven
+profiles total 625 full CTest executions, including both Server profiles. Eleven
+standalone Tools families per OS, eight public examples per compiler and actual
+sanitizer/package audits pass. Preserve this lineage and every earlier case/limit.
+The [qualification contract](../authoring-qualification.md) records the exact
+connected behavior. Full REQ-09 is PASS; assignment 10 follows.

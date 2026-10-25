@@ -142,7 +142,17 @@ never blind repetition. Check all three Result levels on mutate: outer access,
 reply outcome and original operation result. Preserve both retry families (60/90
 seconds, seed 1337), all six allocation sweeps and every earlier case/limit.
 Extend exact input comparison and retained charges whenever command fields grow.
-**Next: 09e, Integrated qualification. Full REQ-09 remains NOT_RUN.**
+**09e and full REQ-09 are complete under the current-machine scope.** Follow the
+[qualification contract](docs/authoring-qualification.md),
+[handoff](docs/handoffs/09e-integrated-qualification.md) and
+[receipt](docs/coverage/evidence/09e-integrated-qualification.json): 625 full CPU
+CTest executions across seven profiles, 22 standalone Tools checks, 24 public-
+example compiles, actual sanitizer objects and protected packages pass. Both
+full Server suites are refreshed. Preserve `shark.tools.authoring-integration`
+(90 seconds, seed 1337), its eight connected cases and all earlier workloads.
+The same owner carries edits/preview/history/retries through native saves,
+external conflicts, publication faults, reload and explicit reconciliation.
+**Next: 10, FeatureWorld and automated scene runner.**
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read
