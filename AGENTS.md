@@ -164,8 +164,20 @@ changes across valid activation. Preserve both runner families (60 seconds,
 Catch seed 1337), all thirteen base cases, 29 process checks and earlier workloads.
 Current qualification includes 190 profile test results, the explicit Linux
 repository retry, 27 public example compiles, actual sanitizer objects and
-protected packages. Full REQ-10 remains NOT_RUN. **Next: 10b, saved FeatureWorld
-and current-surface cases.**
+protected packages. Full REQ-10 remains NOT_RUN.
+**10b is complete under the current-machine scope.** Follow the
+[saved FeatureWorld guide](docs/featureworld.md),
+[handoff](docs/handoffs/10b-featureworld.md) and
+[receipt](docs/coverage/evidence/10b-featureworld.json): 311 CTest profile results,
+30 public-example compiles, six actual sanitizer objects and protected packages
+pass. Preserve the four saved entity IDs, five native cases, all 19 current
+component/command mappings, 23 process checks and both new 60-second families
+(Catch seed 1337), alongside all earlier workloads. Extend source, independent
+expected state, cases and mappings together when surfaces grow. Input projects
+are read through ProjectFiles; persistence writes only to an explicit scratch
+parent on the runner's AuthoredScene owner. Keep isolated network/storage/platform
+fixtures and the empty Lua list. **Next: 10c, explicit GPU execution.** CPU Tools
+and SceneRunner must retain their protected dependency independence.
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read
@@ -529,7 +541,8 @@ in ADR 0007 are provisional targets; tests cannot silently reduce them to pass.
 | `.github/workflows/` | Required CI automation |
 | `.agents/skills/` | Repository-scoped Codex skill sources |
 | `build/`, `out/` | Ignored generated builds and test evidence |
-| `cli/`, `assets/FeatureWorld/` | Future CLI and scene fixtures, created by their owning assignments |
+| `assets/FeatureWorld/` | Saved CPU source project/scene with native runner cases and coverage mappings |
+| `cli/` | Future general authoring CLI, created by assignment 15 |
 | `assets/MMOWorld/` | Future M09 MMO acceptance world |
 
 Use the relevant focused skill:

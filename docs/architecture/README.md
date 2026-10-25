@@ -104,10 +104,17 @@ historical 09c evidence until 09e. The
 [09e qualification](../handoffs/09e-integrated-qualification.md) now refreshes all
 seven profiles: 625 full CPU CTest executions, 22 standalone Tools checks,
 24 public-example compiles and protected gates pass. Full REQ-09 is PASS;
-assignment 10 is next. Terminal adapters and editor UI
+assignment 10 follows its FeatureWorld checkpoints. Terminal adapters and editor UI
 retain their later owners;
 schema IDs do not establish file or gameplay-wire formats. The current-machine
 scope remains unchanged.
+
+Assignment 10's 10a/10b checkpoints are now complete under the current-machine
+scope. The [saved FeatureWorld](../featureworld.md) extends the CPU runner with
+five native cases and real component/command coverage references; its
+[handoff](../handoffs/10b-featureworld.md) records 311 passing CTest profile results,
+public API/sanitizer audits and protected packages. Next is explicit GPU mode 10c,
+then integrated qualification 10d. Full REQ-10 remains NOT_RUN.
 
 | Record | Decision |
 | --- | --- |

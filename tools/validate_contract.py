@@ -200,6 +200,34 @@ def validate_manifest(data: object) -> list[str]:
                         errors.append(f"{category}: surface entry needs nonempty {field}")
                 if not nonempty_text(entry.get("fixture_reason")):
                     errors.append(f"{category}: surface entry needs a fixture_reason")
+    catalog = data.get("featureworld")
+    if catalog is not None:
+        if not isinstance(catalog, dict):
+            errors.append("featureworld must be a catalog object")
+        else:
+            case_ids = catalog.get("case_ids")
+            valid_ids = (isinstance(case_ids, list) and 1 <= len(case_ids) <= 32
+                         and all(isinstance(value, str) and len(value) <= 64 and
+                                 re.fullmatch(r"featureworld\.[a-z0-9.-]+", value) for value in case_ids)
+                         and len(set(case_ids)) == len(case_ids))
+            if not valid_ids:
+                errors.append("featureworld case_ids must be unique bounded native case IDs")
+            for field in ("project", "scene", "case_source"):
+                if not nonempty_text(catalog.get(field)):
+                    errors.append(f"featureworld needs a {field} file")
+            if valid_ids and isinstance(surface, dict):
+                for category, entries in surface.items():
+                    if not isinstance(entries, list):
+                        continue
+                    for entry in entries:
+                        if not isinstance(entry, dict):
+                            continue
+                        mapped = entry.get("featureworld_cases", [])
+                        if (not isinstance(mapped, list) or not all(isinstance(value, str) and value in case_ids for value in mapped)
+                                or len(set(mapped)) != len(mapped)):
+                            errors.append(f"{category}: featureworld_cases must reference unique catalog IDs")
+                        elif category in ("components", "commands") and not mapped and not nonempty_text(entry.get("external_fixture_reason")):
+                            errors.append(f"{category}: current surface needs FeatureWorld cases or an explicit external fixture reason")
     return errors
 
 
@@ -249,6 +277,11 @@ def validate_surface_files(data: dict, root: Path) -> list[str]:
             for relative in entry["test_sources"] + entry["fixtures"]:
                 if not local_file_exists(str(root / relative)):
                     errors.append(f"{category}/{entry['id']}: missing test or fixture: {relative}")
+    if isinstance(data.get("featureworld"), dict):
+        for field in ("project", "scene", "case_source"):
+            relative = data["featureworld"][field]
+            if not local_file_exists(str(root / relative)):
+                errors.append(f"featureworld: missing catalog file: {relative}")
     return errors
 
 
@@ -302,6 +335,13 @@ def self_test(data: dict) -> list[str]:
     changed("missing evidence reason", lambda d: d["requirements"][0]["verification"].update(reason=""), "verification reason must be")
     changed("fake implemented API", lambda d: d["implemented_surface"]["lua_api"].append("fake_api"), "surface entry must be an object")
     changed("missing surface category", lambda d: d["implemented_surface"].pop("commands"), "implemented_surface must contain")
+    if isinstance(data.get("featureworld"), dict):
+        changed("malformed FeatureWorld catalog", lambda d: d.update(featureworld=[]), "featureworld must be a catalog object")
+        changed("duplicate FeatureWorld case", lambda d: d["featureworld"]["case_ids"].append(d["featureworld"]["case_ids"][0]), "case_ids must be unique")
+        changed("unbounded FeatureWorld case", lambda d: d["featureworld"]["case_ids"].append("featureworld." + "x" * 64), "case_ids must be unique")
+        changed("missing FeatureWorld project", lambda d: d["featureworld"].pop("project"), "featureworld needs a project file")
+        changed("unknown FeatureWorld mapping", lambda d: d["implemented_surface"]["commands"][0].update(featureworld_cases=["featureworld.fake"]), "must reference unique catalog IDs")
+        changed("missing component exercise", lambda d: d["implemented_surface"]["components"][0].pop("featureworld_cases"), "current surface needs FeatureWorld cases")
     changed("invalid schema", lambda d: d.update(schema_version=True), "schema_version must be integer")
     changed("malformed requirement", lambda d: d["requirements"].append(None), "must be an object")
     local_pass = copy.deepcopy(data)

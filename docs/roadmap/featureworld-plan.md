@@ -8,7 +8,11 @@ this four-checkpoint split. Full REQ-10 remains NOT_RUN until 10d.
 [handoff](../handoffs/10a-headless-runner.md) and
 [receipt](../coverage/evidence/10a-headless-runner.json) record the current Tools,
 regression, public API, sanitizer and protected package evidence, including the
-explicit Linux repository-environment retry. **Next: 10b.**
+explicit Linux repository-environment retry. **10b is also PASS under the
+current-machine scope:** its [handoff](../handoffs/10b-featureworld.md) and
+[receipt](../coverage/evidence/10b-featureworld.json) record saved source, five
+native cases, all current component/command mappings and 311 passing profile
+results. **Next: 10c.**
 
 Follow [ADR 0007](../architecture/0007-mmorpg-architecture.md),
 [ADR 0008](../architecture/0008-human-agent-authoring.md), the
@@ -34,6 +38,9 @@ Preserve `shark.tools.scene-runner` and `shark.tools.scene-runner-process`, both
 records fixed limits. CPU results explicitly report no renderer initialization.
 
 ## 10b - Saved FeatureWorld and current surface coverage
+
+Completed under the current-machine scope; retain its source IDs, five native
+cases, 23 process checks, both 60-second families and Catch seed 1337.
 
 Create the small versioned saved project/scene and real cases for the currently
 supported Name/Transform/hierarchy, source persistence and authoring commands,

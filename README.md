@@ -38,6 +38,13 @@ The [human/agent plan and foundation assessment](docs/roadmap/human-agent-plan.m
 define noninteractive tools, discoverable schemas and safe project handoff.
 Shared CPU editing services are implemented; terminal/editor adapters remain
 assigned to 15/16. Terminal build/test tools work today.
+The [saved FeatureWorld](docs/featureworld.md) and CPU `SceneRunner` now exercise
+supported components and shared authoring/persistence services from a terminal,
+with explicit seed/ticks, case discovery and versioned JSON results. This is a
+test workflow; graphical scene authoring retains its later checkpoints.
+**10b is complete:** its [handoff](docs/handoffs/10b-featureworld.md) records
+311 passing CTest profile results, public API/sanitizer audits and protected
+packages. **Next: 10c, explicit GPU execution.** Full REQ-10 remains NOT_RUN.
 
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
 **04c and full assignment 04 are complete under the current-machine scope.**
@@ -135,7 +142,9 @@ The [history contract](docs/authoring-history.md),
 history, revision/ticket conflicts, safe incarnation restoration and save/reload
 policy. Qualification passes 610 full CPU CTests, 16 standalone Tools checks,
 18 public-example compiles, sanitizer audits and protected packages.
-**Next: 09d, Safe retries and lost replies. Full REQ-09 remains NOT_RUN.**
+09d/09e subsequently completed safe retries and integrated qualification;
+[full REQ-09 is PASS](docs/handoffs/09e-integrated-qualification.md). Assignment10
+follows its [FeatureWorld checkpoints](docs/roadmap/featureworld-plan.md).
 Assignment 08, Project and scene persistence, completed its
 [four checkpoints](docs/roadmap/persistence-plan.md). 08a adds CPU project/scene
 formats, validation and migration through [owned C++ values](docs/source-documents.md).

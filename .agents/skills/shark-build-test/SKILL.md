@@ -5,6 +5,16 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+10b adds the saved [FeatureWorld](../../../docs/featureworld.md) and two CTest
+families, `shark.tools.featureworld` and `shark.tools.featureworld-process`, both
+60 seconds; Catch uses seed 1337. Run all fifteen Tools families in standalone
+Windows/WSL builds and the relevant native/sanitizer regressions. Preserve the
+thirteen 10a runner cases and 29 process checks alongside the five new native cases
+and 23 FeatureWorld process checks. Compile all ten public Tools examples without
+private headers. Reuse current build directories, explicit scratch parents and
+protected Runtime/Server closure/package checks. See the
+[10b handoff](../../../docs/handoffs/10b-featureworld.md) for qualification status.
+
 09a adds `shark.tools.authoring-commands` (60 seconds, seed 1337) to the five
 existing Tools families. Its [command contract](../../../docs/authoring-commands.md)
 uses AuthoredScene's single owner, required revisions, typed effects and read-only

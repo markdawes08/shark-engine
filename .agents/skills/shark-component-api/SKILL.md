@@ -111,6 +111,16 @@ increment; the contract validator alone does not prove API behavior. Update
 migration/rejection rules, coverage and handoff together when the public contract
 changes, and follow AGENTS.md's user-owned commit policy.
 
+10b connects the saved [FeatureWorld](../../../docs/featureworld.md) to five real
+native CPU cases through the existing scene runner. Every current component and
+command has `featureworld_cases` references in the manifest, resolved against the
+actual executable catalog by `shark.tools.featureworld-process`. Extend saved
+source, independent expected state, native cases and mappings together when a
+scene surface grows. Keep isolated process/storage/platform/fault fixtures; a
+scene assertion cannot qualify those boundaries. Lua remains empty until19.
+Input source is never a save destination: persistence uses an explicit scratch
+parent and the existing ProjectFiles service on the runner's AuthoredScene owner.
+
 M02d [spatial interest](../../../docs/network-interest.md) is locally qualified.
 Preserve the complete trusted catalog, authenticated character observer binding,
 unthrottled privacy maintenance and bounded managed admission. Its two new CTest

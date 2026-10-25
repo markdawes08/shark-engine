@@ -98,7 +98,11 @@ is unchanged; their full Server suites remain historical until 09e.
 [receipt](../coverage/evidence/09e-integrated-qualification.json) record 625 full
 CPU CTest executions across seven profiles, 22 standalone Tools checks, 24 public-
 example compiles, actual sanitizer objects and protected packages. Both full
-Server suites are refreshed. **Next: 10, FeatureWorld and automated scene runner.**
+Server suites are refreshed. **10a/10b now qualify the CPU runner and saved
+FeatureWorld**, including the real native case catalog, current component/command
+mappings and shared authoring/persistence exercises. The
+[10b handoff](../handoffs/10b-featureworld.md) records 311 passing profile results
+and API/sanitizer/package evidence. **Next: 10c, explicit GPU execution.**
 
 M02a provides the [bounded network foundation](../network-transport.md) through
 engine-owned CPU C++ interfaces and noninteractive JSON test fixtures. It does not
@@ -141,7 +145,7 @@ no second computer or specific provider integration is part of the requirement.
 | 07 | Implemented fixed Name/Transform metadata exposes stable versioned IDs/types/defaults/ranges/units and scene-owner mutability. Bounded revisioned CPU inspection needs no ECS access or viewport. 07c and full REQ-07 pass current-machine qualification. |
 | 08 | Documented readable source, project-root rules, atomic saves and conflict-aware text/file updates; external changes cannot be silently overwritten. |
 | 09 | 09a qualifies one AuthoredScene command owner, typed single edits, expected revisions and bounded queries/results. 09b qualifies pure preview/atomic batches and 09c shared undo/redo. 09d qualifies scoped retained retries and explicit expiry/restart reconciliation. 09e connects these services through real files, publication faults, reload and reconciliation; full REQ-09 is PASS. Next: 10 FeatureWorld. |
-| 10 | Deterministic CPU runs with nonzero assertion failure and bounded machine results/artifacts. Separate real GPU runs and report unavailable capabilities honestly. |
+| 10 | 10a/10b qualify deterministic CPU runs, nonzero assertion failure, bounded machine results/artifacts and the saved FeatureWorld/native catalog through shared owners. Current components/commands resolve to real cases; isolated system fixtures remain required. Separate real GPU runs and report unavailable capabilities honestly in 10c; close the integrated audit in 10d. |
 | 11-14 | Imports/jobs expose progress, cancellation and atomic publication; export has structured completion/artifact metadata. Build CPU tools without editor/device initialization; qualify optional capture separately. |
 | 15 | Deliver the terminal contract and public discovery, queries, edits, text files, jobs, diagnostics, run/capture/export adapters. Include no-TTY, second-writer, protocol-stream, conflict/retry and resource-limit fixtures. |
 | 16/17 | Editor calls the same services; UI/API actions yield equivalent semantic saved state and history. Prove human-to-agent and agent-to-human handoff, including unsaved state and a stale revision. |

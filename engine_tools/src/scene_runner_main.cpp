@@ -1,6 +1,8 @@
+#include "shark/tools/feature_world.hpp"
+#include "shark/tools/project_files.hpp"
 #include "shark/tools/scene_runner.hpp"
 
-#include <array>
+#include <algorithm>
 #include <charconv>
 #include <filesystem>
 #include <fstream>
@@ -41,11 +43,13 @@ struct Options {
     SceneRunConfig config;
     std::string case_id{"foundation"};
     std::string output;
+    std::string project;
+    std::string workspace;
 };
 Result<Options> options(std::span<const std::string> args) {
     Options result;
     std::set<std::string> seen;
-    if (args.size() > scene_run_maximum_inputs * 2 + 20)
+    if (args.size() > scene_run_maximum_inputs * 2 + 32)
         return cli_error("Too many runner arguments");
     for (std::size_t index = 0; index < args.size(); ++index) {
         const auto& name = args[index];
@@ -76,6 +80,10 @@ Result<Options> options(std::span<const std::string> args) {
             return cli_error("Output path must not be empty", ErrorCode::invalid_path);
         else if (name == "--output")
             result.output = value;
+        else if (name == "--project")
+            result.project = value;
+        else if (name == "--workspace")
+            result.workspace = value;
         else if (name == "--mode") {
             if (value != "cpu")
                 return cli_error("Only CPU execution is implemented",
@@ -100,8 +108,20 @@ Result<Options> options(std::span<const std::string> args) {
         } else
             return cli_error("Unknown runner option");
     }
-    if (result.case_id != "foundation" && result.case_id != "intentional-failure")
+    const bool suite = result.case_id == "featureworld";
+    const auto catalog = feature_world_case_ids();
+    const bool feature =
+        suite || std::find(catalog.begin(), catalog.end(), result.case_id) != catalog.end();
+    if (!feature && result.case_id != "foundation" && result.case_id != "intentional-failure")
         return cli_error("Unknown runner case");
+    if (feature && result.project.empty())
+        return cli_error("FeatureWorld requires --project FILE");
+    if (feature && !result.config.inputs.empty())
+        return cli_error("FeatureWorld cases have no input actions; offset belongs to foundation");
+    if ((suite || result.case_id == "featureworld.persistence") && result.workspace.empty())
+        return cli_error("FeatureWorld persistence requires --workspace EXISTING_DIRECTORY");
+    if (!feature && (seen.contains("--project") || seen.contains("--workspace")))
+        return cli_error("Project/workspace options require a FeatureWorld case");
     if (auto valid = validate_scene_run_config(result.config); !valid)
         return valid.error();
     return result;
@@ -171,12 +191,33 @@ int run(std::span<const std::string> args) {
                "--case foundation|intentional-failure --mode cpu --seed UINT64\n"
                "--ticks 1..10000 --hz 1..1000 --input TICK:offset:INT32 (repeat, tick ordered)\n"
                "--run-id TOKEN --revision TOKEN --output NEW_FILE\n"
+               "--case featureworld|featureworld.CASE --project FILE --workspace "
+               "EXISTING_DIRECTORY\n"
+               "--list-cases emits the versioned native case catalog as JSON.\n"
                "Exit: 0 PASS, 1 case failure, 2 arguments/execution/publication failure.\n"
-               "CPU execution does not initialize a renderer. Saved FeatureWorld follows in10b.\n";
+               "CPU execution does not initialize a renderer. FeatureWorld inputs are saved source "
+               "files.\n";
         return std::cout ? 0 : 2;
     }
     if (args.size() == 1 && args.front() == "--version") {
         std::cout << "Shark SceneRunner 0.1.0 (result schema 1)\n";
+        return std::cout ? 0 : 2;
+    }
+    if (args.size() == 1 && args.front() == "--list-cases") {
+        std::cout << "{\"format\":\"shark.scene-cases\",\"schema_version\":1,\"mode\":\"cpu\","
+                     "\"cases\":[\"foundation\",\"intentional-failure\"";
+        for (const auto entry : feature_world_case_ids())
+            std::cout << ",\"" << entry << "\"";
+        std::cout << "],\"suites\":{\"featureworld\":[";
+        bool first = true;
+        for (const auto entry : feature_world_case_ids()) {
+            if (!first)
+                std::cout << ',';
+            std::cout << '\"' << entry << '\"';
+            first = false;
+        }
+        std::cout << "]}}\n";
+        std::cout.flush();
         return std::cout ? 0 : 2;
     }
     auto parsed = options(args);
@@ -235,7 +276,39 @@ int run(std::span<const std::string> args) {
                                    capture.value().scene.entities.front().transform == transform,
                                "Tick transform differs from deterministic input", entity_id);
     };
-    const std::array cases{test};
+    std::vector<SceneRunCase> cases{test};
+    std::unique_ptr<ProjectFiles> files;
+    if (!opt.project.empty()) {
+        const auto path = fs::path{std::u8string{
+            reinterpret_cast<const char8_t*>(opt.project.data()), opt.project.size()}};
+        std::error_code error;
+        const auto absolute = fs::absolute(path, error);
+        if (error)
+            return emit_error(cli_error("Invalid project file path", ErrorCode::invalid_path));
+        auto opened = ProjectFiles::open(absolute.parent_path());
+        if (!opened)
+            return emit_error(opened.error());
+        files = std::move(opened).value();
+        const auto filename = absolute.filename().u8string();
+        auto relative = ProjectPath::parse(
+            std::string_view{reinterpret_cast<const char*>(filename.data()), filename.size()});
+        if (!relative)
+            return emit_error(relative.error());
+        auto loaded_project = files->read_project(relative.value());
+        if (!loaded_project)
+            return emit_error(loaded_project.error());
+        project = std::move(loaded_project).value().source.document;
+        auto loaded_scene = files->read_scene(project, project.startup_scene);
+        if (!loaded_scene)
+            return emit_error(loaded_scene.error());
+        scene = std::move(loaded_scene).value().source.document;
+        const auto scratch = fs::path{std::u8string{
+            reinterpret_cast<const char8_t*>(opt.workspace.data()), opt.workspace.size()}};
+        cases = feature_world_cases(scratch);
+        if (opt.case_id != "featureworld")
+            std::erase_if(cases,
+                          [&](const SceneRunCase& entry) { return entry.id != opt.case_id; });
+    }
     auto report = run_scene_cases(project, scene, opt.config, cases);
     if (!report)
         return emit_error(report.error());

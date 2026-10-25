@@ -1,0 +1,50 @@
+{
+  "format": "shark.scene",
+  "schema_version": 1,
+  "project_id": "20000000-0000-4000-8000-000000000001",
+  "scene_id": "20000000-0000-4000-8000-000000000003",
+  "world_origin": {
+    "world_id": "20000000-0000-4000-8000-000000000002",
+    "cell": [1234567890, -7, 42],
+    "offset": [0.125, 1023.875, 0]
+  },
+  "entities": [
+    {
+      "entity_id": "20000000-0000-4000-8000-000000000004",
+      "parent": null,
+      "components": {
+        "shark.name": {"schema_version": 1, "value": "Root"},
+        "shark.transform": {"schema_version": 1, "translation": [10, 0, 0], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1]}
+      },
+      "extras": {"role": "root"}
+    },
+    {
+      "entity_id": "20000000-0000-4000-8000-000000000005",
+      "parent": "20000000-0000-4000-8000-000000000004",
+      "components": {
+        "shark.name": {"schema_version": 1, "value": "Branch"},
+        "shark.transform": {"schema_version": 1, "translation": [2, 0, 0], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1]}
+      },
+      "extras": {}
+    },
+    {
+      "entity_id": "20000000-0000-4000-8000-000000000006",
+      "parent": "20000000-0000-4000-8000-000000000005",
+      "components": {
+        "shark.name": {"schema_version": 1, "value": "Waypoint 雪"},
+        "shark.transform": {"schema_version": 1, "translation": [3, 0, 0], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1]}
+      },
+      "extras": {"keep": true}
+    },
+    {
+      "entity_id": "20000000-0000-4000-8000-000000000007",
+      "parent": null,
+      "components": {
+        "shark.name": {"schema_version": 1, "value": "Root"},
+        "shark.transform": {"schema_version": 1, "translation": [-4, 0, 0], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1]}
+      },
+      "extras": {}
+    }
+  ],
+  "extras": {"fixture": "10b"}
+}

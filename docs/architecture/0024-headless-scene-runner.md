@@ -43,3 +43,29 @@ even if the result artifact was already published.
 10b adds the saved FeatureWorld and executable coverage catalog. 10c adds actual
 GPU execution; 10a rejects GPU requests explicitly. The runner is a local testing
 tool, not the assignment-15 authoring CLI, player protocol or operational console.
+
+## 10b amendment: saved current-surface cases
+
+FeatureWorld is a versioned source project under `assets/FeatureWorld`, using the
+existing source schema 1. Five trusted native CPU cases are shared EngineTools
+code, discovered through `feature_world_case_ids` and the independently versioned
+`shark.scene-cases` catalog (version 1). The CLI accepts an explicit project file,
+reads its startup scene through ProjectFiles and holds that cooperating owner
+for the run. It never infers a workspace from an ignored roadmap or build path.
+
+Each case checks the independently specified saved baseline before exercising
+current components/services. Ordinary edits, batches, history and retries use
+the same AuthoredScene supplied by the runner. Persistence saves/reopens/reloads
+that owner through a unique child of an explicit scratch parent. Input files are
+never save destinations. Cleanup removes only owned, known scratch names; any
+unexpected remnant remains visible. A source drift is a real scene assertion
+failure; malformed/unsupported source rejects before case dispatch.
+
+The coverage manifest adds catalog paths, executable case IDs and per-surface
+case references. Independent process tests compare discovery to that catalog,
+run all cases, check semantic revisions and preserve original source bytes.
+Existing isolated fixtures continue to qualify bounds, faults, actual network,
+durable storage and platform behavior. A saved scene cannot replace those tests.
+No source/result schema change or migration is needed. Catalog consumers reject
+unsupported versions; there is no implicit catalog migration. FeatureWorld has
+no input actions in10b; the foundation case retains its explicit offset inputs.

@@ -125,6 +125,17 @@ if(TARGET EngineStorage)
 endif()
 
 if(TARGET EngineTools)
+    add_executable(FeatureWorldTests feature_world_tests.cpp)
+    target_link_libraries(FeatureWorldTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_compile_definitions(FeatureWorldTests PRIVATE
+        SHARK_FEATUREWORLD_DIRECTORY="${PROJECT_SOURCE_DIR}/assets/FeatureWorld"
+        SHARK_FEATUREWORLD_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}")
+    shark_configure_target(FeatureWorldTests)
+    shark_classify_target(FeatureWorldTests test)
+    add_test(NAME shark.tools.featureworld COMMAND FeatureWorldTests "[featureworld]" --rng-seed 1337
+        --reporter xml --out "${CMAKE_CURRENT_BINARY_DIR}/featureworld-cases.xml")
+    set_tests_properties(shark.tools.featureworld PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
+
     add_executable(SceneRunnerTests scene_runner_tests.cpp)
     target_link_libraries(SceneRunnerTests PRIVATE EngineTools Catch2::Catch2WithMain)
     shark_configure_target(SceneRunnerTests)
@@ -443,6 +454,14 @@ set(Python3_FIND_REGISTRY NEVER)
 set(Python3_FIND_FRAMEWORK NEVER)
 find_package(Python3 3.11 COMPONENTS Interpreter REQUIRED)
 if(TARGET SceneRunner)
+    add_test(NAME shark.tools.featureworld-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_feature_world_process.py"
+            --runner "$<TARGET_FILE:SceneRunner>"
+            --fixture "${PROJECT_SOURCE_DIR}/assets/FeatureWorld"
+            --manifest "${PROJECT_SOURCE_DIR}/docs/coverage/requirements.json"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/featureworld-process.json")
+    set_tests_properties(shark.tools.featureworld-process PROPERTIES LABELS "cpu;tooling;integration" TIMEOUT 60)
+
     add_test(NAME shark.tools.scene-runner-process
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_scene_runner_process.py"
             --runner "$<TARGET_FILE:SceneRunner>"

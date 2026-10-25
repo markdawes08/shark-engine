@@ -2,9 +2,13 @@
 
 Assignment 10 follows the [FeatureWorld checkpoints](../roadmap/featureworld-plan.md).
 10a adds the [CPU scene-runner foundation](../scene-runner.md), with native owner,
-scheduler/assertion tests and independent process-result tests. Its in-memory
-foundation cases are implemented fixtures; the saved FeatureWorld and full
-current-surface mapping audit remain 10b/10d. Full REQ-10 remains NOT_RUN.
+scheduler/assertion tests and independent process-result tests. 10b adds the
+[saved FeatureWorld](../featureworld.md), five executable native cases and
+catalog references for all 19 current component/command entries. Its
+[handoff](../handoffs/10b-featureworld.md) records qualification. Real GPU mode
+and the final integrated audit remain10c/10d; full REQ-10 remains NOT_RUN.
+10b's [receipt](evidence/10b-featureworld.json) records 311 passing profile results,
+30 public-example compiles, actual sanitizer objects and protected packages.
 
 [requirements.json](requirements.json) is the version-3 requirement/coverage manifest for
 Shark. Each requirement has a unique ID, one owning roadmap assignment, observable
@@ -202,15 +206,25 @@ The `implemented_surface.features` entries map the bootstrap behavior and runtim
 build boundary, server lifecycle, Server/Core closure and graphics setup/executable cases to their actual tests
 and external fixtures. Name and Transform have implemented component entries with
 C++ validation/mutation fixtures, fixed schemas and implemented source codecs.
-Authoring command and Lua arrays remain empty because those adapters do not
-exist yet. Filesystem services retain the remaining persistence checkpoints.
-Assignment 10 connects supported scene surfaces to executable FeatureWorld
-coverage; 32 audits completeness. Do not register placeholder APIs.
+Typed authoring commands now have real entries and saved FeatureWorld exercises;
+the Lua array remains empty until bindings exist. Filesystem services retain their
+completed persistence evidence. Assignment10 connects supported scene surfaces
+to executable FeatureWorld coverage;32 audits completeness. Do not register
+placeholder APIs.
 
 An implemented entry identifies its stable name, owning requirement IDs, actual
 automated test IDs, test source paths and FeatureWorld or justified external
 fixture paths. Coverage registration is not proof of correct behavior;
 those tests must run with recorded platform and PASS/FAIL/NOT_RUN evidence.
+
+The additive schema-3 `featureworld` catalog records project/scene paths, native
+case source and executable case IDs. `featureworld_cases` on a surface references
+those IDs; an explicit `external_fixture_reason` can justify a surface requiring
+an isolated system fixture. Structural validation checks unique bounded IDs,
+references and files. `shark.tools.featureworld-process` independently compares
+the real `shark.scene-cases` discovery output, resolves current component/command
+mappings and executes every saved case. Neither registration nor a scene run
+substitutes for network, durable storage, GPU or platform qualification.
 
 Run from the workspace root:
 

@@ -1,0 +1,308 @@
+{
+  "schema_version": 1,
+  "checkpoint": "10b",
+  "status": "PASS",
+  "scope": "Saved current-surface FeatureWorld and CPU case catalog on the current Windows PC and retained WSL2; GPU mode10c and integrated audit10d remain separate",
+  "recorded_utc": "2026-10-25T14:23:49.597416+00:00",
+  "base_revision": "9631d67ac858d76401cd4ee11c85743d2f434b64",
+  "branch": "main",
+  "initial_worktree": "clean",
+  "result_worktree": "Uncommitted; user owns staging, commits and pushing",
+  "source_freeze": {
+    "path": "out/10b-work/source-freeze.json",
+    "sha256": "286b71380d084132868a99b152fa1a015613f449fd9f44f3829ff29d7e9043f1",
+    "inputs": 368,
+    "generated_coordination_markers": 1,
+    "note": "Includes the existing zero-byte ignored FeatureWorld ProjectFiles lock; ordinary builds/tests do not require it"
+  },
+  "profiles": [
+    {
+      "name": "windows-debug",
+      "registered": 105,
+      "executed": 105,
+      "status": "PASS",
+      "runner_cases": 13,
+      "featureworld_cases": 5,
+      "runner_process_checks": 29,
+      "featureworld_process_checks": 23,
+      "negative_controls": 4
+    },
+    {
+      "name": "windows-release",
+      "registered": 105,
+      "executed": 26,
+      "status": "PASS",
+      "runner_cases": 13,
+      "featureworld_cases": 5,
+      "runner_process_checks": 29,
+      "featureworld_process_checks": 23,
+      "negative_controls": 4
+    },
+    {
+      "name": "windows-asan",
+      "registered": 105,
+      "executed": 26,
+      "status": "PASS",
+      "runner_cases": 13,
+      "featureworld_cases": 5,
+      "runner_process_checks": 29,
+      "featureworld_process_checks": 23,
+      "negative_controls": 4
+    },
+    {
+      "name": "tools-debug",
+      "registered": 70,
+      "executed": 15,
+      "status": "PASS",
+      "runner_cases": 13,
+      "featureworld_cases": 5,
+      "runner_process_checks": 29,
+      "featureworld_process_checks": 23,
+      "negative_controls": 4
+    },
+    {
+      "name": "linux-debug",
+      "registered": 98,
+      "executed": 98,
+      "status": "PASS",
+      "runner_cases": 13,
+      "featureworld_cases": 5,
+      "runner_process_checks": 29,
+      "featureworld_process_checks": 23,
+      "negative_controls": 4
+    },
+    {
+      "name": "linux-asan-ubsan",
+      "registered": 98,
+      "executed": 26,
+      "status": "PASS",
+      "runner_cases": 13,
+      "featureworld_cases": 5,
+      "runner_process_checks": 29,
+      "featureworld_process_checks": 23,
+      "negative_controls": 4
+    },
+    {
+      "name": "tools-debug",
+      "registered": 70,
+      "executed": 15,
+      "status": "PASS",
+      "runner_cases": 13,
+      "featureworld_cases": 5,
+      "runner_process_checks": 29,
+      "featureworld_process_checks": 23,
+      "negative_controls": 4
+    }
+  ],
+  "current_candidate_ctest_executions": 311,
+  "standalone_tools_checks": 30,
+  "public_example_compiles": 30,
+  "public_api_receipts": [
+    {
+      "path": "out/10b-work/windows-audits/public-api/summary.json",
+      "sha256": "b77d3c559fd8f10115cd30949f2b785579f933463d20ca92fafd6776a9cee74a"
+    },
+    {
+      "path": "out/10b-work/wsl-qualified/linux-debug-public-api/summary.json",
+      "sha256": "5972fb8e377e805572309d1983972f8c9d6e5f0194fcd041a77d68ff73d92134"
+    },
+    {
+      "path": "out/10b-work/wsl-qualified/linux-asan-ubsan-public-api/summary.json",
+      "sha256": "1857b17cf399f914a9e53a1631b907abc34bdda21649a00f385fb0aa2410a58f"
+    }
+  ],
+  "actual_sanitizer_objects": {
+    "windows_asan": [
+      {
+        "source": "engine_tools/src/feature_world.cpp",
+        "object": "build\\windows-asan\\engine_tools\\CMakeFiles\\EngineTools.dir\\src\\feature_world.cpp.obj",
+        "sha256": "54a4f17f6934d1de4bdcf33a1c3b72508813e3c5c572ec5269b17bcdcb00a293",
+        "actual_asan_symbols": 620
+      },
+      {
+        "source": "engine_tools/src/scene_runner_main.cpp",
+        "object": "build\\windows-asan\\engine_tools\\CMakeFiles\\SceneRunner.dir\\src\\scene_runner_main.cpp.obj",
+        "sha256": "a4dd00929cff263623ee79b2283df02aa152ea6d8d9350aa0af245721f5a54fe",
+        "actual_asan_symbols": 538
+      },
+      {
+        "source": "tests/feature_world_tests.cpp",
+        "object": "build\\windows-asan\\tests\\CMakeFiles\\FeatureWorldTests.dir\\feature_world_tests.cpp.obj",
+        "sha256": "059de232ff81fd6cfc87f22b07820a1349a2b03fd973581db6f333ea5a00816f",
+        "actual_asan_symbols": 523
+      }
+    ],
+    "linux_asan_ubsan": [
+      {
+        "source": "engine_tools/src/feature_world.cpp",
+        "object": "/work/build-05a-final-client/linux-asan-ubsan/engine_tools/CMakeFiles/EngineTools.dir/src/feature_world.cpp.o",
+        "sha256": "a1aa176279971daa5649cc36f8cc4667646728a3b7e68a2fcd664877ce667534",
+        "actual_asan_ubsan": "PASS"
+      },
+      {
+        "source": "engine_tools/src/scene_runner_main.cpp",
+        "object": "/work/build-05a-final-client/linux-asan-ubsan/engine_tools/CMakeFiles/SceneRunner.dir/src/scene_runner_main.cpp.o",
+        "sha256": "43d18400ac6bbe46ecb93884548b21b350ce52eb3ee83b02cbc0e3bb64df7b87",
+        "actual_asan_ubsan": "PASS"
+      },
+      {
+        "source": "tests/feature_world_tests.cpp",
+        "object": "/work/build-05a-final-client/linux-asan-ubsan/tests/CMakeFiles/FeatureWorldTests.dir/feature_world_tests.cpp.o",
+        "sha256": "1737fddbcd8f7ac687a393bbd225f964aecd42a34fd6c7e1552afcc5040ecdab",
+        "actual_asan_ubsan": "PASS"
+      }
+    ]
+  },
+  "sanitizer_runtime_policy": {
+    "windows": "ASAN_OPTIONS=halt_on_error=1",
+    "linux": "ASAN_OPTIONS=detect_leaks=1:halt_on_error=1; UBSAN_OPTIONS=halt_on_error=1:print_stacktrace=1"
+  },
+  "test_families": [
+    {
+      "name": "shark.tools.featureworld",
+      "timeout_seconds": 60,
+      "seed": 1337,
+      "catch_cases": 5
+    },
+    {
+      "name": "shark.tools.featureworld-process",
+      "timeout_seconds": 60,
+      "process_checks": 23
+    }
+  ],
+  "preserved_runner": {
+    "catch_cases": 13,
+    "process_checks": 29,
+    "timeouts_seconds": 60,
+    "catch_seed": 1337
+  },
+  "coverage": {
+    "components": 2,
+    "commands": 17,
+    "mapped_surfaces": [
+      "component.name",
+      "component.transform",
+      "tools.scene-runner.catalog",
+      "tools.scene-runner.run",
+      "tools.scene-runner.results",
+      "authoring.mutation.status",
+      "authoring.mutation.execute",
+      "authoring.mutation.query",
+      "authoring.entity.create",
+      "authoring.entity.delete",
+      "authoring.entity.reparent",
+      "authoring.name.set",
+      "authoring.transform.set",
+      "authoring.batch.preview",
+      "authoring.batch.execute",
+      "authoring.history.inspect",
+      "authoring.history.undo",
+      "authoring.history.redo",
+      "authoring.history.clear"
+    ],
+    "native_cases": [
+      "featureworld.components",
+      "featureworld.commands",
+      "featureworld.batches-history",
+      "featureworld.retries",
+      "featureworld.persistence"
+    ],
+    "source_sha256": {
+      "FeatureWorld.sharkproject": "dee6a71d82a0843c301e8f8c50e6e2d3470b98049cd002ef5c486944ad14b1d4",
+      "scenes/FeatureWorld.sharkscene": "cf8f7eb77e2be89a5346905c77b5cfd135dc43dc0e132666b5335616bb66dbd9"
+    },
+    "source_preserved": true,
+    "lua_api_entries": 0,
+    "qualification": "Actual discovery matches manifest and all five cases pass; source/revision expectations repeat. Existing isolated network/storage/platform/fault/resource fixtures remain required."
+  },
+  "protected_packages": {
+    "windows": {
+      "files": 33,
+      "manifest_sha256": "81dc9a8472567c2a7b20536d6488fa13960cfb9b561b22804f6a92b972f8630c",
+      "managed_temporary_removed": true
+    },
+    "linux": {
+      "status": "PASS",
+      "scope": "Current installed Server and CPU Runtime read-only mounted in retained SDK-free userspace; no package copy retained"
+    },
+    "dedicated_server_suites": "Not rerun: Core/Storage/Server implementation unchanged. Full Windows/WSL Debug includes existing server/storage tests; dedicated full Server evidence remains historical09e."
+  },
+  "preparatory_outcomes": {
+    "native_test_compile": "Corrected TypedId::value() access in a new test",
+    "process_supervisor": "Corrected Windows path keys to use POSIX spelling; initial FAIL retained separately",
+    "gcc_build": "Named the borrowed reference wrapper explicitly after GCC -Wdangling-reference; no suppression",
+    "interrupted_windows": "Stopped its own preparatory session before changing source; not qualification evidence",
+    "preserved": "out/10b-work/preliminary and preparatory-* receipts; current final runs are independent"
+  },
+  "environment": "Process-local Git safe.directory=/source in read-only WSL checkout, with no host/global Git/WSL resource changes",
+  "junit_negative_controls": 28,
+  "contract_negative_controls": 43,
+  "storage_retention": {
+    "builds": "Existing platform/profile directories and pinned caches reused; no new userspace/build environment",
+    "runtime_deployment": "Managed Unicode isolated deployment removed after success",
+    "retained_optional_package": {
+      "action": "Delete verified temporary Runtime package",
+      "bytes": 3061823,
+      "files": 34,
+      "path": "C:\\Users\\mrkda\\Projects\\shark\\out\\10b-work\\windows-audits\\runtime-package",
+      "reason": "Automatic approval review rejected deletion as blocked by policy without a detailed reason; no deletion was retried",
+      "status": "NOT_RUN"
+    },
+    "evidence_bytes": 19823800
+  },
+  "evidence": [
+    {
+      "path": "out/10b-work/windows-qualified/summary.json",
+      "sha256": "cea1d9cd00b2beb8eda97a08199a3633c509770d4c0e7a1b37e95489d40b5f07"
+    },
+    {
+      "path": "out/10b-work/wsl-qualified/summary.json",
+      "sha256": "0b4693f940226db8d9e1568b6402eae57f5e5b052c52a2f8be26f682f113b627"
+    },
+    {
+      "path": "out/10b-work/windows-audits/summary.json",
+      "sha256": "7926495fbe7447c780d074e8d2d7c169e933ecca6f421983c9b9b80ad38adf36"
+    },
+    {
+      "path": "out/10b-work/windows-sanitizer/summary.json",
+      "sha256": "4e963796a0028682c0ecb3542fd09b5c251ddd409f963f59335f64e76d3806c8"
+    },
+    {
+      "path": "out/10b-work/wsl-protected/summary.json",
+      "sha256": "d8129dc629c7bcb8434eb90d71a8ceedf21e8cd8fb82bbefa0d0662283d33784"
+    },
+    {
+      "path": "out/10b-work/wsl-protected/sdk-free.json",
+      "sha256": "a1993c8c627fe5a9ce6ea2e7fe1de2adb869db03e4ffc69d6c14771d194f245a"
+    },
+    {
+      "path": "out/10b-work/audit-freeze.json",
+      "sha256": "0adb1808e75ae5a070ec96e0180713f67082ab26664d93d931c5b178b9da5e0d"
+    },
+    {
+      "path": "out/10b-work/final-integrity.json",
+      "sha256": "0df0903c320d64db14a2806945341201a68f7bd1e315bb2d013bdd41a49c568a"
+    },
+    {
+      "path": "out/10b-work/receipt.py",
+      "sha256": "6d55c60137cdd4a061ae3a0166be9ef0de96dfab723524dc03e43865ccbffbfa"
+    },
+    {
+      "path": "out/10b-work/close.py",
+      "sha256": "e90a4fc24196351da7baed8e6abe8c69b2ecb04f1d4cb50ec8c1bcd75f5b1137"
+    },
+    {
+      "path": "out/10b-work/final-docs-checks.json",
+      "sha256": "446899b778aef9e4e3c0cfbb43dac9040a766193a4d934544f005e94b380ce57"
+    }
+  ],
+  "full_requirement": {
+    "id": "REQ-10",
+    "status": "NOT_RUN",
+    "next": "10c explicit GPU execution, then10d integrated audit"
+  },
+  "final_integrity": {
+    "artifacts": 298,
+    "missing_or_mismatched": []
+  }
+}

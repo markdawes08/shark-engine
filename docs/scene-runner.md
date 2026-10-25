@@ -41,8 +41,9 @@ The public C++ service also reports cooperative `CANCELLED` and unexecuted
 `NOT_RUN` cases. The current executable has no cancellation adapter. A failed case
 dominates aggregate cancellation; a cancelled run cannot pass. The current GPU
 request returns `capability_unavailable`, exit 2 and `mode: none`; there is no CPU
-fallback. GPU execution/capture arrives in 10c. No saved FeatureWorld is claimed
-until 10b, and scene rendering retains assignment 13.
+fallback. GPU execution/capture arrives in 10c. The [saved FeatureWorld](featureworld.md)
+adds explicit project loading and five current-surface native cases in10b;
+scene rendering retains assignment 13.
 
 ## Configuration and execution
 
