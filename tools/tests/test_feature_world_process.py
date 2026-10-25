@@ -64,13 +64,20 @@ def main():
         assert catalog['cases'] == ['foundation', 'intentional-failure', *case_ids]
         assert len(set(case_ids)) == 5
         mapped = []
+        external = []
         for category in ('components', 'commands'):
             for entry in manifest['implemented_surface'][category]:
+                if not entry.get('featureworld_cases'):
+                    assert isinstance(entry.get('external_fixture_reason'), str) and entry['external_fixture_reason'].strip(), entry['id']
+                    assert entry['fixtures'] and entry['test_sources'], entry['id']
+                    external.append(entry['id'])
+                    continue
                 assert entry['featureworld_cases'] and set(entry['featureworld_cases']) <= set(case_ids), entry['id']
                 assert 'shark.tools.featureworld-process' in entry['test_ids'], entry['id']
                 mapped.append(entry['id'])
         assert manifest['implemented_surface']['lua_api'] == []
         summary['mapped_surfaces'] = mapped
+        summary['external_surfaces'] = external
         source_paths = [Path('FeatureWorld.sharkproject'), Path('scenes/FeatureWorld.sharkscene')]
         original = {path.as_posix(): (args.fixture / path).read_bytes() for path in source_paths}
         summary['source_sha256'] = {path: hashlib.sha256(data).hexdigest() for path, data in original.items()}

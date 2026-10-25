@@ -45,6 +45,9 @@ test workflow; graphical scene authoring retains its later checkpoints.
 **10b is complete:** its [handoff](docs/handoffs/10b-featureworld.md) records
 311 passing CTest profile results, public API/sanitizer audits and protected
 packages. **Next: 10c, explicit GPU execution.** Full REQ-10 remains NOT_RUN.
+10c's [test supervisor](docs/scene-execution.md) is implemented and its twelve
+native GPU runs pass. Final closure awaits recovery of a WSL kernel-stalled
+sanitizer test; see the [current handoff](docs/handoffs/10c-gpu-execution.md).
 
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
 **04c and full assignment 04 are complete under the current-machine scope.**

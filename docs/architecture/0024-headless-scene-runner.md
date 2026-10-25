@@ -69,3 +69,40 @@ durable storage and platform behavior. A saved scene cannot replace those tests.
 No source/result schema change or migration is needed. Catalog consumers reject
 unsupported versions; there is no implicit catalog migration. FeatureWorld has
 no input actions in10b; the foundation case retains its explicit offset inputs.
+
+## 10c amendment: supervised GPU fixtures
+
+`tools/scene_runner.py` is the developer test entry point for explicit CPU/GPU
+execution. The native SceneRunner remains a CPU worker; its target dependencies
+and version-1 result/catalog contracts remain unchanged. GPU requests use the
+existing OffscreenSmoke/CubeSmoke executables and their existing supervisors,
+source identities, validation-tool checks and independent readback validators.
+This reuses the owned Client renderer and process supervisor without adding
+Client dependencies to EngineTools or a second renderer/process framework.
+
+The new, independently versioned `shark.scene-execution` envelope (version 1)
+identifies requested mode/case, caller context, actual input hashes, worker
+completion and bounded artifact references. CPU retains the complete native
+result. GPU PASS requires an exact UUID, required Vulkan core/synchronization and
+NVRHI validation, current native source/executable/shader identities and verified
+raw readbacks at unchanged tolerances. A wrapper's PASS label is insufficient:
+the supervisor rechecks the native stream and actual files. No mode, adapter,
+validation or shader fallback is permitted. GPU controls describe fixed native
+workloads; CPU seed/tick/input/project arguments are rejected in that mode.
+
+`renderer_initialized` is false for CPU and pre-dispatch capability rejection,
+true only after verified GPU completion, and null when failed/interrupted GPU
+work may have initialized a device. Incomplete evidence cannot assert that no
+device was touched. Unavailable capabilities remain NOT_RUN with nonzero exit.
+Cancellation is cooperative at supervised process boundaries; work may already
+have executed. Native callbacks remain trusted; this is not a hostile executable
+sandbox or a guarantee against machine loss/hard termination.
+
+Evidence roots are explicit, fresh directories with existing parents. Complete
+UTF-8 result publication is atomic and create-only; artifact traversal rejects
+links/junctions and enforces fixed file/path/byte bounds. Failed evidence remains
+inspectable. Consumers reject unsupported envelope/catalog versions; no implicit
+migration is provided. Existing source, native CPU result and gameplay protocols
+do not change. GPU cases qualify the fixed graphics fixtures, while authored
+scene rendering, general terminal authoring and the full REQ-10 audit retain
+their later owners.

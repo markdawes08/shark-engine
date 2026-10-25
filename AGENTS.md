@@ -178,6 +178,13 @@ are read through ProjectFiles; persistence writes only to an explicit scratch
 parent on the runner's AuthoredScene owner. Keep isolated network/storage/platform
 fixtures and the empty Lua list. **Next: 10c, explicit GPU execution.** CPU Tools
 and SceneRunner must retain their protected dependency independence.
+10c implementation and all twelve native GPU runs are delivered; its
+[handoff](docs/handoffs/10c-gpu-execution.md) and
+[partial receipt](docs/coverage/evidence/10c-gpu-execution-partial.json) retain
+completed evidence and the remaining WSL sanitizer recovery. An existing test
+is unkillable in this WSL kernel's VMA mapping path. Ubuntu restart approval is
+pending; no host/resource/kernel settings were changed. Do not mark 10c complete
+or advance to 10d until the remaining sanitizer gate is resolved honestly.
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read

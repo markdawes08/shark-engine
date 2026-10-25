@@ -86,8 +86,9 @@ Result<Options> options(std::span<const std::string> args) {
             result.workspace = value;
         else if (name == "--mode") {
             if (value != "cpu")
-                return cli_error("Only CPU execution is implemented",
-                                 ErrorCode::capability_unavailable);
+                return cli_error(
+                    "This worker is CPU-only; tools/scene_runner.py provides explicit GPU fixtures",
+                    ErrorCode::capability_unavailable);
         } else if (name == "--input") {
             if (result.config.inputs.size() == scene_run_maximum_inputs)
                 return cli_error("Too many input events");
@@ -194,6 +195,7 @@ int run(std::span<const std::string> args) {
                "--case featureworld|featureworld.CASE --project FILE --workspace "
                "EXISTING_DIRECTORY\n"
                "--list-cases emits the versioned native case catalog as JSON.\n"
+               "CPU/GPU test supervisor: python tools/scene_runner.py --help\n"
                "Exit: 0 PASS, 1 case failure, 2 arguments/execution/publication failure.\n"
                "CPU execution does not initialize a renderer. FeatureWorld inputs are saved source "
                "files.\n";

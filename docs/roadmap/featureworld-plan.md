@@ -55,6 +55,12 @@ survive repeat runs. No future feature is represented as implemented coverage.
 
 ## 10c - Explicit GPU execution
 
+Implementation and all twelve Windows GPU runs are delivered. Final 10c
+qualification remains NOT_RUN while an existing WSL sanitizer test is stuck in
+kernel memory mapping. See the [handoff](../handoffs/10c-gpu-execution.md) and
+[partial receipt](../coverage/evidence/10c-gpu-execution-partial.json); Ubuntu
+restart approval is pending. Do not advance to 10d until this gate is closed.
+
 Connect existing graphical fixtures through an explicit GPU mode with device,
 capability and artifact context. Qualify the current Windows NVIDIA and Intel
 GPUs. CPU/WSL operation stays independent of Client/graphics initialization.

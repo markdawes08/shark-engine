@@ -1,6 +1,11 @@
 # Requirement and API coverage
 
 Assignment 10 follows the [FeatureWorld checkpoints](../roadmap/featureworld-plan.md).
+10c's [test supervisor](../scene-execution.md) extends current coverage with
+explicit CPU/GPU execution and two real graphics cases. The GPU command has an
+external fixture reason; it does not turn CPU FeatureWorld assertions into
+renderer evidence. Discovery is compared with manifest GPU IDs, and actual GPU
+qualification remains separate from synthetic CPU evidence controls.
 10a adds the [CPU scene-runner foundation](../scene-runner.md), with native owner,
 scheduler/assertion tests and independent process-result tests. 10b adds the
 [saved FeatureWorld](../featureworld.md), five executable native cases and

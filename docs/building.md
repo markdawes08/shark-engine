@@ -835,8 +835,13 @@ for fixed seed/rate/input control, result JSON and intentional failure. Keep run
 results under `out/` or `build/`; the runner's create-only result paths and
 managed temporary fixtures do not overwrite existing evidence. The
 [saved FeatureWorld guide](featureworld.md) documents explicit project/scratch
-paths and its native case catalog. Actual GPU mode follows checkpoint10c in the
+paths and its native case catalog. GPU execution follows checkpoint 10c in the
 [10 checkpoints](roadmap/featureworld-plan.md).
+
+The [test supervisor](scene-execution.md) now provides explicit CPU/GPU modes,
+using the native CPU worker or existing validated GPU fixtures. GPU operation
+requires its named Windows device and precompiled payload; it does not change
+Tools dependencies. Use the existing build profiles and a fresh evidence root.
 
 Reuse build directories by platform/compiler/profile instead of creating another
 complete tree for each checkpoint. Keep the active Windows and WSL profiles for

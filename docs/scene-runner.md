@@ -1,5 +1,9 @@
 # Deterministic scene runner
 
+The [CPU/GPU test supervisor](scene-execution.md) adds explicit GPU fixture
+execution in 10c while this native worker remains CPU-only. Its target dependency
+boundary and native version-1 result/catalog contracts remain unchanged.
+
 Checkpoint 10a implements the shared CPU foundation described in
 [ADR 0024](architecture/0024-headless-scene-runner.md) and the
 [four-checkpoint plan](roadmap/featureworld-plan.md). `SceneRunner` is built with

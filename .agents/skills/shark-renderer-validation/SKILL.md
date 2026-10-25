@@ -5,6 +5,15 @@ description: Validate Shark graphics changes against Vulkan/NVRHI requirements, 
 
 # Shark renderer validation
 
+10c's [test supervisor](../../../docs/scene-execution.md) connects the existing
+native offscreen/window cube fixtures through explicit GPU mode. Preserve exact
+UUID selection, required core/synchronization/NVRHI validation, fixed readback
+tolerances and independent raw-evidence checks. Both GPUs run serially in each
+Windows Debug/Release/ASan profile. CPU SceneRunner/Tools retain their protected
+dependencies. Synthetic evidence tests qualify no GPU; incomplete GPU work has
+unknown initialization rather than a false device-free result. Keep fixed shader
+payload preparation explicit and preserve failed/unavailable attempts.
+
 Read [AGENTS.md](../../../AGENTS.md), the assigned increment and
 [platform evidence](../../../docs/architecture/0003-platforms.md),
 [space/color conventions](../../../docs/architecture/0005-simulation-and-rendering.md)

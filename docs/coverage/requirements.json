@@ -192,7 +192,7 @@
         "Noninteractive CPU runs produce bounded versioned results and artifact references with revision/seed/execution context. Device-dependent runs identify capabilities and cannot silently substitute an unqualified backend."
       ],
       "planned_fixture": "FeatureWorld/current-surface cases, IntentionalSceneAssertionFailure and CoverageManifestAudit; the audit inspects mappings while the scene runner exercises behavior.",
-      "verification": {"status": "NOT_RUN", "reason": "10a CPU runner foundation and 10b saved FeatureWorld/current-surface cases are implemented; qualification is recorded in their handoffs and receipts. Five native cases cover supported components and shared authoring/persistence services, with real catalog/manifest resolution. Full REQ-10 remains NOT_RUN pending actual GPU mode10c and integrated audit10d."}
+      "verification": {"status": "NOT_RUN", "reason": "10a CPU runner foundation, 10b saved FeatureWorld and 10c explicit supervised CPU/GPU fixture execution are implemented; their handoffs and receipts record current-machine qualification. Native CPU contracts stay independent of Client. GPU cases use exact devices, required validation and independently checked readbacks. Full REQ-10 remains NOT_RUN pending integrated audit10d."}
     },
     {
       "id": "REQ-11",
@@ -809,6 +809,34 @@
   "implemented_surface": {
     "features": [
       {
+        "id": "tools.scene-execution",
+        "name": "Mode-explicit CPU/GPU native test supervisor with bounded versioned artifacts",
+        "requirement_ids": [
+          "REQ-10"
+        ],
+        "test_ids": [
+          "shark.tools.scene-execution",
+          "shark.tooling.scene-execution-evidence"
+        ],
+        "test_sources": [
+          "tools/tests/test_scene_execution_process.py",
+          "tools/tests/test_scene_execution.py"
+        ],
+        "fixtures": [
+          "tools/scene_runner.py",
+          "docs/scene-execution.md",
+          "tests/offscreen_smoke.cpp",
+          "tests/cube_smoke.cpp",
+          "tools/offscreen_smoke.py",
+          "tools/cube_smoke.py"
+        ],
+        "fixture_reason": "CPU dispatch uses the existing native scene owner/runner; explicit GPU dispatch uses the existing native renderer and independent evidence validators. Required capabilities never fall back, and incomplete GPU evidence cannot claim initialization or PASS.",
+        "gpu_case_ids": [
+          "gpu.offscreen-cube",
+          "gpu.window-cube"
+        ]
+      },
+      {
         "id": "tools.featureworld",
         "name": "Saved FeatureWorld current-surface native regression cases",
         "requirement_ids": [
@@ -847,14 +875,18 @@
           "shark.tools.scene-runner-process",
           "shark.boundary.fixture",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-execution",
+          "shark.tooling.scene-execution-evidence"
         ],
         "test_sources": [
           "tests/scene_runner_tests.cpp",
           "tools/tests/test_scene_runner_process.py",
           "tests/CheckBoundaryFixture.cmake",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_execution_process.py",
+          "tools/tests/test_scene_execution.py"
         ],
         "fixtures": [
           "tests/scene_runner_tests.cpp",
@@ -862,9 +894,11 @@
           "docs/scene-runner.md",
           "assets/FeatureWorld/FeatureWorld.sharkproject",
           "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
-          "engine_tools/src/feature_world.cpp"
+          "engine_tools/src/feature_world.cpp",
+          "tools/scene_runner.py",
+          "docs/scene-execution.md"
         ],
-        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
+        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c. The 10c test supervisor adds explicit CPU/GPU mode and independently verifies native GPU fixture receipts; this does not add authored scene rendering.",
         "featureworld_cases": [
           "featureworld.components",
           "featureworld.commands",
@@ -1297,7 +1331,9 @@
           "shark.tooling.shader-pipeline",
           "shark.tooling.runtime-package",
           "shark.runtime.presentation-cli",
-          "shark.editor.presentation-cli"
+          "shark.editor.presentation-cli",
+          "shark.tools.scene-execution",
+          "shark.tooling.scene-execution-evidence"
         ],
         "test_sources": [
           "tests/client_shader_bundle_tests.cpp",
@@ -1308,7 +1344,9 @@
           "tools/tests/test_cube_smoke.py",
           "tools/tests/test_cube_faults.py",
           "tools/tests/test_shader_pipeline.py",
-          "tools/tests/test_runtime_package.py"
+          "tools/tests/test_runtime_package.py",
+          "tools/tests/test_scene_execution_process.py",
+          "tools/tests/test_scene_execution.py"
         ],
         "fixtures": [
           "tests/cube_smoke.cpp",
@@ -1317,9 +1355,14 @@
           "tools/cube_faults.py",
           "tools/package_runtime.py",
           "tools/runtime_package/Run-IsolatedRuntime.ps1",
-          "shaders/recipe.json"
+          "shaders/recipe.json",
+          "tools/scene_runner.py",
+          "docs/scene-execution.md"
         ],
-        "fixture_reason": "Device-free tests cover versioned bounded bundles, SHA integrity, typed interfaces, Unicode paths, launch validation and immutable draw ownership. Explicit native fixtures capture actual sRGB window attachments and independent linear offscreen draws, compare fixed color/depth expectations, exercise resize/minimize and owner retention/retirement on both current-PC GPUs. Relocated Runtime verifies complete precompiled closure without sources/compiler and useful missing/corrupt failures. These are developer diagnostics, not scene-authoring APIs or an MMO world; FeatureWorld connects in assignment 10."
+        "fixture_reason": "Device-free tests cover versioned bounded bundles, SHA integrity, typed interfaces, Unicode paths, launch validation and immutable draw ownership. Explicit native fixtures capture actual sRGB window attachments and independent linear offscreen draws, compare fixed color/depth expectations, exercise resize/minimize and owner retention/retirement on both current-PC GPUs. Relocated Runtime verifies complete precompiled closure without sources/compiler and useful missing/corrupt failures. These are developer diagnostics, not scene-authoring APIs or an MMO world; FeatureWorld connects in assignment 10. The 10c test supervisor adds explicit CPU/GPU mode and independently verifies native GPU fixture receipts; this does not add authored scene rendering.",
+        "gpu_case_ids": [
+          "gpu.window-cube"
+        ]
       },
       {
         "id": "client.gpu-resources",
@@ -1333,23 +1376,33 @@
           "shark.client.offscreen-cli",
           "shark.tooling.offscreen-smoke",
           "shark.tooling.offscreen-faults",
-          "shark.client.offscreen-faults-cli"
+          "shark.client.offscreen-faults-cli",
+          "shark.tools.scene-execution",
+          "shark.tooling.scene-execution-evidence"
         ],
         "test_sources": [
           "tests/client_gpu_resources_tests.cpp",
           "tests/client_offscreen_tests.cpp",
           "tests/check_offscreen_cli.py",
           "tools/tests/test_offscreen_smoke.py",
-          "tools/tests/test_offscreen_faults.py"
+          "tools/tests/test_offscreen_faults.py",
+          "tools/tests/test_scene_execution_process.py",
+          "tools/tests/test_scene_execution.py"
         ],
         "fixtures": [
           "tests/offscreen_smoke.cpp",
           "tests/offscreen_faults.cpp",
           "tools/offscreen_smoke.py",
           "tools/offscreen_faults.py",
-          "shaders/recipe.json"
+          "shaders/recipe.json",
+          "tools/scene_runner.py",
+          "docs/scene-execution.md"
         ],
-        "fixture_reason": "CPU fixtures reject malformed or mismatched shader interfaces, invalid upload bounds and unsafe owner transitions without a GPU. Native offscreen fixtures use the production GraphicsDevice, exact shader artifacts, independent fixed CPU rasterization and both current-PC devices with required validation. Native fault children exercise partial creation, retained submitted work and fatal recording ownership. These are isolated developer fixtures, not public authoring commands, scene rendering or MMO capacity evidence; FeatureWorld connects in 10; the separate window/package fixtures are registered below."
+        "fixture_reason": "CPU fixtures reject malformed or mismatched shader interfaces, invalid upload bounds and unsafe owner transitions without a GPU. Native offscreen fixtures use the production GraphicsDevice, exact shader artifacts, independent fixed CPU rasterization and both current-PC devices with required validation. Native fault children exercise partial creation, retained submitted work and fatal recording ownership. These are isolated developer fixtures, not public authoring commands, scene rendering or MMO capacity evidence; FeatureWorld connects in 10; the separate window/package fixtures are registered below. The 10c test supervisor adds explicit CPU/GPU mode and independently verifies native GPU fixture receipts; this does not add authored scene rendering.",
+        "gpu_case_ids": [
+          "gpu.offscreen-cube",
+          "gpu.window-cube"
+        ]
       },
       {
         "id": "tooling.offline-shaders",
@@ -1830,6 +1883,37 @@
     ],
     "commands": [
       {
+        "id": "tools.scene-runner.gpu",
+        "name": "Supervise explicit validated native GPU cube fixtures",
+        "requirement_ids": [
+          "REQ-10",
+          "REQ-06"
+        ],
+        "test_ids": [
+          "shark.tools.scene-execution",
+          "shark.tooling.scene-execution-evidence"
+        ],
+        "test_sources": [
+          "tools/tests/test_scene_execution_process.py",
+          "tools/tests/test_scene_execution.py"
+        ],
+        "fixtures": [
+          "tools/scene_runner.py",
+          "docs/scene-execution.md",
+          "tests/offscreen_smoke.cpp",
+          "tests/cube_smoke.cpp",
+          "tools/offscreen_smoke.py",
+          "tools/cube_smoke.py"
+        ],
+        "fixture_reason": "The actual CPU-safe supervisor/evidence tests reject forged, stale, unavailable and corrupt evidence. Explicit hardware runs execute existing native Client fixtures with required Vulkan/NVRHI validation, unchanged independent readback tolerances and checked retirement. Synthetic CPU fixtures do not qualify a GPU.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "GPU upload, offscreen readback and actual window capture require the native Windows renderer/device fixtures. CPU authored scene values cannot establish these capabilities; authored scene rendering retains13.",
+        "gpu_case_ids": [
+          "gpu.offscreen-cube",
+          "gpu.window-cube"
+        ]
+      },
+      {
         "id": "tools.scene-runner.catalog",
         "name": "Discover the versioned native SceneRunner case catalog",
         "requirement_ids": [
@@ -1837,18 +1921,24 @@
         ],
         "test_ids": [
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-execution",
+          "shark.tooling.scene-execution-evidence"
         ],
         "test_sources": [
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_execution_process.py",
+          "tools/tests/test_scene_execution.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
           "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
-          "engine_tools/src/feature_world.cpp"
+          "engine_tools/src/feature_world.cpp",
+          "tools/scene_runner.py",
+          "docs/scene-execution.md"
         ],
-        "fixture_reason": "The real --list-cases process output resolves every registered FeatureWorld ID and current component/command mapping to executed passing native cases. This is testing discovery, not the future general authoring CLI.",
+        "fixture_reason": "The real --list-cases process output resolves every registered FeatureWorld ID and current component/command mapping to executed passing native cases. This is testing discovery, not the future general authoring CLI. The 10c test supervisor adds explicit CPU/GPU mode and independently verifies native GPU fixture receipts; this does not add authored scene rendering.",
         "featureworld_cases": [
           "featureworld.components",
           "featureworld.commands",
@@ -1867,14 +1957,18 @@
           "shark.tools.scene-runner",
           "shark.tools.scene-runner-process",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-execution",
+          "shark.tooling.scene-execution-evidence"
         ],
         "test_sources": [
           "tests/scene_runner_tests.cpp",
           "tools/tests/test_scene_runner_process.py",
           "tests/CheckBoundaryFixture.cmake",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_execution_process.py",
+          "tools/tests/test_scene_execution.py"
         ],
         "fixtures": [
           "tests/scene_runner_tests.cpp",
@@ -1882,9 +1976,11 @@
           "docs/scene-runner.md",
           "assets/FeatureWorld/FeatureWorld.sharkproject",
           "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
-          "engine_tools/src/feature_world.cpp"
+          "engine_tools/src/feature_world.cpp",
+          "tools/scene_runner.py",
+          "docs/scene-execution.md"
         ],
-        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
+        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c. The 10c test supervisor adds explicit CPU/GPU mode and independently verifies native GPU fixture receipts; this does not add authored scene rendering.",
         "featureworld_cases": [
           "featureworld.components",
           "featureworld.commands",
@@ -1903,14 +1999,18 @@
           "shark.tools.scene-runner",
           "shark.tools.scene-runner-process",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-execution",
+          "shark.tooling.scene-execution-evidence"
         ],
         "test_sources": [
           "tests/scene_runner_tests.cpp",
           "tools/tests/test_scene_runner_process.py",
           "tests/CheckBoundaryFixture.cmake",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_execution_process.py",
+          "tools/tests/test_scene_execution.py"
         ],
         "fixtures": [
           "tests/scene_runner_tests.cpp",
@@ -1918,9 +2018,11 @@
           "docs/scene-runner.md",
           "assets/FeatureWorld/FeatureWorld.sharkproject",
           "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
-          "engine_tools/src/feature_world.cpp"
+          "engine_tools/src/feature_world.cpp",
+          "tools/scene_runner.py",
+          "docs/scene-execution.md"
         ],
-        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
+        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c. The 10c test supervisor adds explicit CPU/GPU mode and independently verifies native GPU fixture receipts; this does not add authored scene rendering.",
         "featureworld_cases": [
           "featureworld.components",
           "featureworld.commands",

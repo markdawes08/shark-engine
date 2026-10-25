@@ -5,6 +5,15 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+10c adds `shark.tools.scene-execution` (21 real process checks) and
+`shark.tooling.scene-execution-evidence` (14 synthetic CPU tests), both 90 seconds.
+Preserve earlier runner/FeatureWorld cases and 19 CPU scene mappings; the GPU
+command has an explicit external fixture justification. Follow the
+[execution contract](../../../docs/scene-execution.md). GPU qualification runs
+the native fixtures explicitly on both local Windows devices; ordinary CTests
+remain device-free. Keep the original boundary timeout and preserve failures and
+explicit environment/prerequisite reconciliation in the handoff.
+
 10b adds the saved [FeatureWorld](../../../docs/featureworld.md) and two CTest
 families, `shark.tools.featureworld` and `shark.tools.featureworld-process`, both
 60 seconds; Catch uses seed 1337. Run all fifteen Tools families in standalone

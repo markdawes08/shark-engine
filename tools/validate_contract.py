@@ -200,6 +200,13 @@ def validate_manifest(data: object) -> list[str]:
                         errors.append(f"{category}: surface entry needs nonempty {field}")
                 if not nonempty_text(entry.get("fixture_reason")):
                     errors.append(f"{category}: surface entry needs a fixture_reason")
+                if "gpu_case_ids" in entry:
+                    values = entry["gpu_case_ids"]
+                    if (not isinstance(values, list) or not 1 <= len(values) <= 32
+                            or not all(isinstance(value, str) and len(value) <= 64 and
+                                       re.fullmatch(r"gpu\.[a-z0-9.-]+", value) for value in values)
+                            or len(set(values)) != len(values)):
+                        errors.append(f"{category}: gpu_case_ids must be unique bounded GPU case IDs")
     catalog = data.get("featureworld")
     if catalog is not None:
         if not isinstance(catalog, dict):
@@ -335,6 +342,11 @@ def self_test(data: dict) -> list[str]:
     changed("missing evidence reason", lambda d: d["requirements"][0]["verification"].update(reason=""), "verification reason must be")
     changed("fake implemented API", lambda d: d["implemented_surface"]["lua_api"].append("fake_api"), "surface entry must be an object")
     changed("missing surface category", lambda d: d["implemented_surface"].pop("commands"), "implemented_surface must contain")
+    if any("gpu_case_ids" in entry for entry in data["implemented_surface"]["commands"]):
+        def gpu_entry(candidate):
+            return next(entry for entry in candidate["implemented_surface"]["commands"] if "gpu_case_ids" in entry)
+        changed("malformed GPU case ID", lambda d: gpu_entry(d).update(gpu_case_ids=["gpu/unknown"]), "gpu_case_ids must be unique bounded")
+        changed("duplicate GPU case ID", lambda d: gpu_entry(d).update(gpu_case_ids=["gpu.window-cube", "gpu.window-cube"]), "gpu_case_ids must be unique bounded")
     if isinstance(data.get("featureworld"), dict):
         changed("malformed FeatureWorld catalog", lambda d: d.update(featureworld=[]), "featureworld must be a catalog object")
         changed("duplicate FeatureWorld case", lambda d: d["featureworld"]["case_ids"].append(d["featureworld"]["case_ids"][0]), "case_ids must be unique")
