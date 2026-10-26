@@ -34,8 +34,11 @@ not establish production scale, real WAN behavior or independent failure recover
 11a completes [persistent asset identity and metadata](../handoffs/11a-asset-identity.md)
 under the current-machine scope. Its audience/dependency-ID fields preserve the
 client/server content distinction for later cook/streaming owners; they do not
-implement dependency closure, imports or streaming. Follow the
-[asset checkpoints](asset-plan.md); next is 11b.
+implement dependency closure, imports or streaming. 11b adds a bounded synchronous
+[dependency import/cache service](../asset-import-cache.md), enforcing client/server
+privacy and shared-only dependencies for shared content. Target keys preserve
+separate content roots; source decoders, final cook and streaming keep later owners.
+Follow the [asset checkpoints](asset-plan.md); background jobs follow in 11c.
 
 ## Historical assessment of the pre-M01 foundation
 

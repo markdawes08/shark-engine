@@ -57,7 +57,12 @@ packages and twelve both-GPU runs.
 sidecars, a bounded revisioned catalog, saved-reference move/reopen coverage,
 569 qualified CPU profile outcomes, 33 public-example compiles and protected
 packages. Follow the [asset checkpoints](docs/roadmap/asset-plan.md).
-**Next: 11b, dependencies and reproducible development cache.**
+**11b is complete under the current-machine scope:** the
+[import/cache handoff](docs/handoffs/11b-asset-import-cache.md) records deterministic
+dependency imports, revision-fenced atomic cache publication, last-valid output
+and bounded recovery. 724 selected CPU/Tools outcomes, 36 public-example compiles,
+24 sanitizer objects and protected packages qualify. Full REQ-11 remains NOT_RUN.
+**Next: 11c, bounded background jobs.**
 
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
 **04c and full assignment 04 are complete under the current-machine scope.**

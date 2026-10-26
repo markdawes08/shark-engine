@@ -29,7 +29,14 @@ target_link_libraries(EngineClient INTERFACE EngineCore)
 target_link_libraries(Engine INTERFACE EngineClient)
 target_link_libraries(Runtime INTERFACE Engine)
 
-if(SHARK_BOUNDARY_CASE STREQUAL "runner-client")
+if(SHARK_BOUNDARY_CASE STREQUAL "shared-storage-path")
+    # The identical normalized path is allowed for earlier Storage roots and
+    # forbidden for Tools. Canonical-path reuse must not cache a root's policy.
+    set(shark_shared "${CMAKE_BINARY_DIR}/server/shared.hpp")
+    file(WRITE "${shark_shared}" "// Shared native graph path.\n")
+    target_sources(EngineStorage INTERFACE "${shark_shared}")
+    target_sources(EngineTools INTERFACE "${CMAKE_BINARY_DIR}/server/../server/shared.hpp")
+elseif(SHARK_BOUNDARY_CASE STREQUAL "runner-client")
     target_link_libraries(SceneRunner INTERFACE EngineClient)
 elseif(SHARK_BOUNDARY_CASE STREQUAL "runner-storage")
     target_link_libraries(SceneRunner INTERFACE EngineStorage)

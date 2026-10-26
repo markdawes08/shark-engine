@@ -55,8 +55,10 @@
 /CMakeFiles/
 /Testing/
 
-# Reserved ProjectFiles coordination and unpublished sibling stages.
+# Reserved ProjectFiles coordination, disposable development cache and unpublished stages.
 .shark-write.lock
+.shark-development-cache
+.shark-cache-stage-*
 .shark-stage-*
 .shark-run-stage-*
 

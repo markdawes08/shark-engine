@@ -1,3 +1,4 @@
+#include "crypto_runtime.hpp"
 #include <shark/net/transport.hpp>
 
 #if defined(_WIN32)
@@ -44,31 +45,9 @@ Error tls_error(const char* operation, const char* message, int code) {
                  {.operation = operation}};
 }
 
-struct CryptoRuntime {
-    std::mutex mutex;
-    bool initialized{false};
-    std::uint64_t last_connection_id{0};
-    ~CryptoRuntime() {
-        if (initialized) {
-            mbedtls_psa_crypto_free();
-        }
-    }
-};
-
-CryptoRuntime& crypto() {
-    static CryptoRuntime runtime;
-    return runtime;
-}
-
-Result<void> initialize_crypto() {
-    if (!crypto().initialized) {
-        if (psa_crypto_init() != PSA_SUCCESS) {
-            return net_error(ErrorCode::entropy_unavailable, "net.tls.initialize",
-                             "TLS cryptographic initialization failed");
-        }
-        crypto().initialized = true;
-    }
-    return {};
+using shark::detail::initialize_crypto;
+auto& crypto() {
+    return shark::detail::crypto_runtime();
 }
 
 #if defined(_WIN32)

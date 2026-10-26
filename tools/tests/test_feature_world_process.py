@@ -62,7 +62,7 @@ def main():
         case_ids = manifest['featureworld']['case_ids']
         assert catalog['suites'] == {'featureworld': case_ids}
         assert catalog['cases'] == ['foundation', 'intentional-failure', *case_ids]
-        assert len(set(case_ids)) == 6
+        assert len(set(case_ids)) == 7
         mapped = []
         external = []
         for category in ('components', 'commands'):
@@ -99,7 +99,7 @@ def main():
             assert first['project_id'] == '20000000-0000-4000-8000-000000000001'
             assert first['scene_id'] == '20000000-0000-4000-8000-000000000003'
             assert [case['id'] for case in first['cases']] == case_ids
-            assert [case['final_revision']['value'] for case in first['cases']] == [4, 11, 7, 6, 4, 4]
+            assert [case['final_revision']['value'] for case in first['cases']] == [4, 11, 7, 6, 4, 4, 4]
             for case in first['cases']:
                 assert case['status'] == 'PASS' and case['failure'] is None
                 assert case['ticks_completed'] == 3 and case['assertions'] >= 10

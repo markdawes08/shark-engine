@@ -2,6 +2,7 @@
 
 #include "shark/schema.hpp"
 #include "shark/tools/asset_catalog.hpp"
+#include "shark/tools/asset_import.hpp"
 #include "shark/tools/project_files.hpp"
 
 #include <algorithm>
@@ -12,9 +13,10 @@
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 6> case_ids{
-    "featureworld.components", "featureworld.commands",    "featureworld.batches-history",
-    "featureworld.retries",    "featureworld.persistence", "featureworld.asset-identity"};
+constexpr std::array<std::string_view, 7> case_ids{
+    "featureworld.components",  "featureworld.commands",    "featureworld.batches-history",
+    "featureworld.retries",     "featureworld.persistence", "featureworld.asset-identity",
+    "featureworld.asset-import"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -306,6 +308,7 @@ struct Scratch {
         for (const auto& name :
              {"scenes/FeatureWorld.sharkscene", "FeatureWorld.sharkproject", "one.txt",
               "one.txt.sharkasset", "moved/renamed.txt", "moved/renamed.txt.sharkasset", "moved",
+              "dependency.txt", "dependency.txt.sharkasset", ".shark-development-cache",
               ".shark-write.lock", "scenes"})
             fs::remove(path / name, ignored);
         fs::remove(path, ignored);
@@ -445,6 +448,116 @@ void asset_identity(SceneRunContext& context, const fs::path& parent) {
             "Saved scene reference or persistent metadata changed across reopen");
     unchanged(context, before);
 }
+void asset_import(SceneRunContext& context, const fs::path& parent) {
+    const auto before = take(context.owner().capture());
+    std::error_code error;
+    const auto canonical = fs::canonical(parent, error);
+    require(context, !parent.empty() && !error && fs::is_directory(canonical, error) && !error,
+            "Asset import needs an existing scratch parent");
+    const auto path = canonical / ("shark-featureworld-" + take(generate_stable_id()).to_string());
+    require(context, fs::create_directory(path, error) && !error,
+            "Cannot create asset import scratch");
+    Scratch scratch{path};
+    auto files = take(ProjectFiles::open(path));
+    auto write_source = [&](const char* name, const char* value) {
+        std::ofstream stream{path / name, std::ios::binary};
+        stream << value;
+        stream.close();
+        require(context, stream.good(), "Cannot write offline asset fixture");
+    };
+    write_source("one.txt", "Root bytes");
+    write_source("dependency.txt", "Leaf bytes");
+    AssetMetadata root{before.project.project,
+                       id<AssetId>('a'),
+                       "bytes",
+                       "Shark authored offline byte fixture",
+                       "MIT",
+                       "shark.bytes"};
+    root.dependencies = {id<AssetId>('b')};
+    const AssetMetadata leaf{before.project.project,
+                             id<AssetId>('b'),
+                             "bytes",
+                             "Shark authored offline byte fixture",
+                             "MIT",
+                             "shark.bytes"};
+    const std::array inventory{take(ProjectPath::parse("one.txt.sharkasset")),
+                               take(ProjectPath::parse("dependency.txt.sharkasset"))};
+    take(files->write_asset_metadata(inventory[0], root, {}));
+    take(files->write_asset_metadata(inventory[1], leaf, {}));
+    auto catalog = take(AssetCatalog::create(*files, before.project.project));
+    auto cr = take(catalog->refresh(inventory, take(catalog->revision())));
+    ByteAssetImporter importer;
+    const std::array<AssetImporter*, 1> registry{&importer};
+    auto imports = take(AssetImports::open(*files, *catalog, before.project.project, registry));
+    const AssetTargetProfile target{"featureworld-x64", AssetAudience::client};
+    require(context, take(imports->importers()).front().id == "shark.bytes",
+            "Importer discovery did not reflect a real implementation");
+    auto revision = take(imports->revision());
+    require(context,
+            take(imports->query(root.asset, target, cr, revision)).state ==
+                AssetCacheState::missing,
+            "Fresh scratch unexpectedly has a cached payload");
+    auto prepared = take(imports->prepare(root.asset, target, cr, revision));
+    const auto first = take(prepared.summary());
+    require(context,
+            first.nodes == 2 && first.imported == 2 && first.reused == 0 &&
+                !fs::exists(path / std::string{asset_cache_filename}),
+            "Import preview published output or lost the dependency closure");
+    const auto commit = take(imports->publish(std::move(prepared), cr, revision));
+    revision = commit.revision;
+    require(context, commit.changed && commit.file.has_value(),
+            "Native cache publication did not commit");
+    const auto artifact = take(imports->read(first.root_key, revision));
+    require(context,
+            artifact.asset == root.asset && artifact.kind == "bytes" &&
+                artifact.payload_version == 1 && artifact.dependencies.size() == 1 &&
+                artifact.dependencies[0].asset == leaf.asset && artifact.payload.size() == 46,
+            "Imported reference/payload metadata changed");
+    require(context,
+            take(imports->query(root.asset, target, cr, revision)).state == AssetCacheState::fresh,
+            "Published import is not current");
+    prepared = take(imports->prepare(root.asset, target, cr, revision));
+    require(context, take(prepared.summary()).reused == 2 && take(prepared.summary()).imported == 0,
+            "Matching work did not deduplicate");
+    require(context, !take(imports->publish(std::move(prepared), cr, revision)).changed,
+            "Matching import republished the cache");
+    write_source("dependency.txt", "Changed leaf bytes");
+    require(context,
+            take(imports->query(root.asset, target, cr, revision)).state == AssetCacheState::stale,
+            "Changed dependency did not invalidate its parent");
+    prepared = take(imports->prepare(root.asset, target, cr, revision));
+    const auto changed = take(prepared.summary());
+    require(context, changed.imported == 2 && changed.root_key != first.root_key,
+            "Dependency change failed to create a new root key");
+    revision = take(imports->publish(std::move(prepared), cr, revision)).revision;
+    require(context, take(imports->read(first.root_key, revision)) == artifact,
+            "New import overwrote last-valid payload bytes");
+    revision = take(imports->prune(revision)).revision;
+    require(context, !imports->read(first.root_key, revision),
+            "Prune retained an unreachable old generation");
+    imports.reset();
+    catalog.reset();
+    files.reset();
+    files = take(ProjectFiles::open(path));
+    catalog = take(AssetCatalog::create(*files, before.project.project));
+    cr = take(catalog->refresh(inventory, take(catalog->revision())));
+    imports = take(AssetImports::open(*files, *catalog, before.project.project, registry));
+    revision = take(imports->revision());
+    require(context,
+            take(imports->query(root.asset, target, cr, revision)).last_valid_key ==
+                    changed.root_key &&
+                take(imports->usage(revision)).artifacts == 2,
+            "Cache reopen lost dependency/key identity");
+    revision = take(imports->reload(revision));
+    require(context, take(AssetImports::recover(*files)) == 0,
+            "Clean cache unexpectedly required interrupted-stage recovery");
+    revision = take(imports->clear(revision)).revision;
+    require(context,
+            take(imports->usage(revision)).artifacts == 0 &&
+                take(files->read_asset_metadata(inventory[0])).source.document == root,
+            "Explicit cache clear changed source metadata");
+    unchanged(context, before);
+}
 } // namespace
 
 std::span<const std::string_view> feature_world_case_ids() noexcept {
@@ -485,6 +598,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 5:
                         asset_identity(context, scratch_parent);
+                        break;
+                    case 6:
+                        asset_import(context, scratch_parent);
                         break;
                     default:
                         break;

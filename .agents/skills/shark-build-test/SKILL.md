@@ -5,6 +5,20 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+11b adds `shark.core.content-digest` (15 seconds), `shark.tools.asset-import`
+(90 seconds), and `shark.tools.asset-import-process` (120 seconds). Catch uses
+seed 1337. Preserve the 128-node positive closure, independent source/payload
+byte limits, 59 real interruption/recovery checks and all earlier workloads.
+FeatureWorld now has seven native cases and 34 scene surfaces plus one GPU
+command. Run all 21 standalone Tools checks on Windows/WSL, all twelve public
+Tools examples, relevant native/sanitizer suites, both full WSL Server suites
+for the shared private crypto runtime, and protected packages. Follow the
+[cache contract](../../../docs/asset-import-cache.md); no new dependency is added.
+The [11b handoff](../../../docs/handoffs/11b-asset-import-cache.md) closes this
+checkpoint. Preserve all three allowed/33 rejected graph controls, canonical-path
+reuse with independent root policy checks, and the 43-case Server closure suite.
+Its exact private Core crypto review never permits other Runtime dependencies.
+
 11a adds `shark.tools.asset-catalog` (60 seconds, Catch seed 1337) and a sixth
 FeatureWorld case, `featureworld.asset-identity`. Follow the
 [identity contract](../../../docs/asset-identity.md). Preserve all earlier cases,

@@ -1,6 +1,7 @@
 #include "shark/tools/project_files.hpp"
 
 #include "project_files_native.hpp"
+#include "shark/tools/asset_import.hpp"
 
 #include <map>
 #include <new>
@@ -126,10 +127,18 @@ struct ProjectFiles::Impl {
         auto project = checked(validate_project_document(candidate));
         std::map<std::string, std::string> spellings;
         if (project_path) {
+            if (project_path->text() == asset_development_cache_name) {
+                fail(ErrorCode::invalid_path, "Development cache filename is reserved",
+                     project_path->text());
+            }
             add_spelling(spellings, *project_path);
             checked(native->validate_path(*project_path));
         }
         for (const auto& entry : project.scenes) {
+            if (entry.path.text() == asset_development_cache_name) {
+                fail(ErrorCode::invalid_path, "Development cache filename is reserved",
+                     entry.path.text());
+            }
             if (project_path && entry.path == *project_path) {
                 fail(ErrorCode::conflict, "project and scene paths must be distinct",
                      entry.path.text());
@@ -230,6 +239,51 @@ Result<bool> ProjectFiles::asset_source_exists(const ProjectPath& source) {
         // Validate the same naming domain as sidecars before touching native files.
         static_cast<void>(checked(asset_sidecar_path(source)));
         return checked(impl_->native->exists(source));
+    });
+}
+
+Result<FileRevision> ProjectFiles::read_asset_bytes(const ProjectPath& source) {
+    return boundary<FileRevision>("asset.file.read_source", [&] {
+        impl_->check_owner();
+        static_cast<void>(checked(asset_sidecar_path(source)));
+        return make_revision(
+            source, checked(impl_->native->read(source, asset_import_maximum_source_bytes)));
+    });
+}
+Result<std::optional<FileRevision>> ProjectFiles::read_development_cache() {
+    return boundary<std::optional<FileRevision>>(
+        "asset.file.read_cache", [&]() -> std::optional<FileRevision> {
+            impl_->check_owner();
+            const auto path = checked(ProjectPath::parse(asset_cache_filename));
+            if (!checked(impl_->native->exists(path)))
+                return {};
+            return make_revision(
+                path, checked(impl_->native->read(path, asset_cache_maximum_file_bytes)));
+        });
+}
+Result<FileCommit> ProjectFiles::write_development_cache(std::string bytes,
+                                                         std::optional<FileRevision> expected) {
+    return boundary<FileCommit>("asset.file.write_cache", [&] {
+        impl_->check_owner();
+        const auto path = checked(ProjectPath::parse(asset_cache_filename));
+        const auto prior = expected_bytes(path, expected);
+        auto revision = make_revision(path, std::move(bytes));
+        const auto durability = checked(impl_->native->replace(
+            path, revision.data_->bytes, prior, asset_cache_maximum_file_bytes, true));
+        return FileCommit{std::move(revision), durability};
+    });
+}
+std::string_view ProjectFiles::revision_bytes(const FileRevision& revision) const {
+    impl_->check_owner();
+    if (!revision.data_ || revision.data_->root != impl_->root.native_path()) {
+        fail(ErrorCode::conflict, "Asset file revision belongs to another root");
+    }
+    return revision.data_->bytes;
+}
+Result<std::size_t> ProjectFiles::cache_stages(bool discard) {
+    return boundary<std::size_t>("asset.file.cache_stages", [&] {
+        impl_->check_owner();
+        return checked(impl_->native->cache_stages(discard));
     });
 }
 

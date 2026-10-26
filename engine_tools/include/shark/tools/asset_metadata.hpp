@@ -11,6 +11,7 @@ inline constexpr std::size_t asset_maximum_dependencies = 256;
 inline constexpr std::size_t asset_maximum_catalog_entries = 4096;
 inline constexpr std::size_t asset_maximum_catalog_bytes = 16 * 1024 * 1024;
 inline constexpr std::size_t asset_maximum_page_size = 128;
+inline constexpr std::string_view asset_development_cache_name = ".shark-development-cache";
 
 // Content audience is authoring metadata, not permission to package private
 // server content for a client. Closure/side validation belongs to later cooks.

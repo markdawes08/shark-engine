@@ -1,6 +1,8 @@
 configure_file(../version_config.hpp.in "${CMAKE_CURRENT_BINARY_DIR}/generated/version_config.hpp" @ONLY)
 add_library(EngineCore STATIC
     src/bootstrap.cpp
+    src/content_digest.cpp
+    src/crypto_runtime.cpp
     src/error.cpp
     src/log.cpp
     src/name.cpp

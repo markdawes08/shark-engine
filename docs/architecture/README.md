@@ -119,7 +119,12 @@ M09. Assignment 11 follows the [asset checkpoints](../roadmap/asset-plan.md).
 11a adds persistent sidecar identity and a bounded revisioned CPU catalog through
 the existing ProjectFiles service; import/cache/jobs retain 11b/11c.
 11a is PASS in its [handoff](../handoffs/11a-asset-identity.md), with 569 qualified
-CPU profile outcomes, public examples, sanitizers and protected packages. Next: 11b.
+CPU profile outcomes, public examples, sanitizers and protected packages.
+11b is PASS in its [handoff](../handoffs/11b-asset-import-cache.md), with synchronous
+dependency imports, deterministic bounded cache snapshots, last-valid output and
+explicit recovery under [ADR 0026](0026-development-asset-cache.md). Qualification
+retains 724 selected profile outcomes, public API/sanitizer audits and protected
+packages. Full REQ-11 remains NOT_RUN; next: 11c, bounded background jobs.
 
 | Record | Decision |
 | --- | --- |
@@ -148,6 +153,7 @@ CPU profile outcomes, public examples, sanitizers and protected packages. Next: 
 | [0023](0023-retained-authoring-retries.md) | Owner-scoped sequenced mutations, bounded immutable outcomes and explicit expiry/restart reconciliation |
 | [0024](0024-headless-scene-runner.md) | Deterministic CPU cases through existing owners/scheduling, bounded assertions and versioned results |
 | [0025](0025-asset-identity.md) | Persistent adjacent asset sidecars, shared file publication and bounded revisioned catalog snapshots |
+| [0026](0026-development-asset-cache.md) | Dependency-keyed synchronous imports and atomic bounded development cache snapshots |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

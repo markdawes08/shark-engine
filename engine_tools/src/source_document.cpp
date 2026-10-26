@@ -1,4 +1,5 @@
 #include "shark/tools/source_document.hpp"
+#include "asset_cache_format.hpp"
 #include "shark/tools/asset_metadata.hpp"
 
 #include "shark/schema.hpp"
@@ -955,6 +956,9 @@ Result<ProjectPath> asset_sidecar_path(const ProjectPath& source) {
         std::transform(folded.begin(), folded.end(), folded.begin(), [](char c) {
             return c >= 'A' && c <= 'Z' ? static_cast<char>(c + ('a' - 'A')) : c;
         });
+        if (folded == asset_development_cache_name || folded.starts_with(".shark-cache-stage-")) {
+            fail("/source", "Development cache paths are reserved");
+        }
         if (folded.ends_with(".sharkasset")) {
             fail("/source", "An asset sidecar cannot itself be an asset source");
         }
@@ -976,5 +980,179 @@ Result<ProjectPath> asset_source_path(const ProjectPath& sidecar) {
         return source;
     });
 }
+
+namespace detail {
+namespace {
+ContentDigest cache_digest(const Json& value, const std::string& path) {
+    return checked(ContentDigest::parse(string_value(value, path)), path);
+}
+AssetAudience cache_audience(const Json& value, const std::string& path) {
+    const auto& text = string_value(value, path);
+    if (text == "client")
+        return AssetAudience::client;
+    if (text == "server")
+        return AssetAudience::server;
+    if (text == "shared")
+        return AssetAudience::shared;
+    fail(path, "Unknown cache audience");
+}
+const char* audience_text(AssetAudience audience) {
+    if (audience == AssetAudience::client)
+        return "client";
+    if (audience == AssetAudience::server)
+        return "server";
+    if (audience == AssetAudience::shared)
+        return "shared";
+    fail("/audience", "Unknown cache audience");
+}
+std::uint32_t cache_u32(const Json& value, const std::string& path) {
+    if (!value.is_number_integer() || value <= Json(0) ||
+        value > Json(std::numeric_limits<std::uint32_t>::max())) {
+        fail(path, "Cache versions require a nonzero uint32 integer");
+    }
+    return value.get<std::uint32_t>();
+}
+std::size_t cache_size(const Json& value, const std::string& path) {
+    if (!value.is_number_integer() || value < Json(0) ||
+        value > Json(asset_cache_maximum_file_bytes)) {
+        fail(path, "Cache offset/length is outside its byte limit");
+    }
+    return value.get<std::size_t>();
+}
+AssetTargetProfile cache_target(const Json& object, const std::string& path) {
+    members(object, {"id", "side"}, {}, path);
+    AssetTargetProfile target{string_value(object.at("id"), path + "/id"),
+                              cache_audience(object.at("side"), path + "/side")};
+    checked(validate_target(target), path);
+    return target;
+}
+Json target_json(const AssetTargetProfile& target) {
+    return {{"id", target.id}, {"side", audience_text(target.side)}};
+}
+} // namespace
+
+Result<std::string> canonical_import_object(std::string_view text) {
+    return boundary<std::string>("asset.settings.canonical",
+                                 [&] { return asset_object(text, "/settings"); });
+}
+Result<std::string> normalize_byte_settings(std::string_view text) {
+    return boundary<std::string>("asset.bytes.settings", [&] {
+        const auto canonical = asset_object(text, "/settings");
+        const auto object = parse_json(canonical);
+        members(object, {}, {"transform"}, "/settings");
+        const auto transform = object.contains("transform")
+                                   ? string_value(object.at("transform"), "/settings/transform")
+                                   : "identity";
+        if (transform != "identity" && transform != "uppercase-ascii")
+            fail("/settings/transform", "Unsupported byte transform");
+        return Json{{"transform", transform}}.dump();
+    });
+}
+Result<std::string> encode_cache_index(const CacheIndex& index) {
+    return boundary<std::string>("asset.cache.index.encode", [&] {
+        if (index.entries.size() > asset_cache_maximum_entries ||
+            index.bindings.size() > asset_cache_maximum_entries) {
+            fail({}, "Cache index entry limit exceeded");
+        }
+        Json entries = Json::array();
+        for (const auto& entry : index.entries) {
+            const auto& a = entry.artifact;
+            Json dependencies = Json::array();
+            for (const auto& dependency : a.dependencies) {
+                dependencies.push_back({{"asset_id", dependency.asset.value().to_string()},
+                                        {"key", dependency.key.to_hex()}});
+            }
+            entries.push_back({{"asset_id", a.asset.value().to_string()},
+                               {"key", a.key.to_hex()},
+                               {"kind", a.kind},
+                               {"audience", audience_text(a.audience)},
+                               {"target", target_json(a.target)},
+                               {"importer", a.importer},
+                               {"importer_version", a.importer_version},
+                               {"payload_version", a.payload_version},
+                               {"source_digest", a.source_digest.to_hex()},
+                               {"settings_digest", a.settings_digest.to_hex()},
+                               {"dependencies", std::move(dependencies)},
+                               {"payload_digest", a.payload_digest.to_hex()},
+                               {"offset", entry.offset},
+                               {"length", entry.length}});
+        }
+        Json bindings = Json::array();
+        for (const auto& binding : index.bindings) {
+            bindings.push_back({{"asset_id", binding.asset.value().to_string()},
+                                {"target", target_json(binding.target)},
+                                {"key", binding.key.to_hex()}});
+        }
+        return encode_json({{"format", "shark.development-cache"},
+                            {"schema_version", 1},
+                            {"project_id", index.project.value().to_string()},
+                            {"entries", std::move(entries)},
+                            {"bindings", std::move(bindings)}});
+    });
+}
+Result<CacheIndex> decode_cache_index(std::string_view text) {
+    return boundary<CacheIndex>("asset.cache.index.decode", [&] {
+        const auto root = parse_json(text);
+        members(root, {"format", "schema_version", "project_id", "entries", "bindings"}, {}, {});
+        if (string_value(root.at("format"), "/format") != "shark.development-cache")
+            fail("/format", "Wrong development cache format");
+        static_cast<void>(version(root.at("schema_version"), "/schema_version", false));
+        const auto& entries = root.at("entries");
+        const auto& bindings = root.at("bindings");
+        if (!entries.is_array() || !bindings.is_array() ||
+            entries.size() > asset_cache_maximum_entries ||
+            bindings.size() > asset_cache_maximum_entries) {
+            fail({}, "Cache entries/bindings must be bounded arrays");
+        }
+        CacheIndex index{id_value<ProjectId>(root.at("project_id"), "/project_id"), {}, {}};
+        for (std::size_t i = 0; i < entries.size(); ++i) {
+            const auto path = "/entries/" + std::to_string(i);
+            const auto& e = entries[i];
+            members(e,
+                    {"asset_id", "key", "kind", "audience", "target", "importer",
+                     "importer_version", "payload_version", "source_digest", "settings_digest",
+                     "dependencies", "payload_digest", "offset", "length"},
+                    {}, path);
+            const auto& dependencies = e.at("dependencies");
+            if (!dependencies.is_array() || dependencies.size() > asset_maximum_dependencies)
+                fail(path + "/dependencies", "Cache dependency bound exceeded");
+            std::vector<AssetArtifactDependency> ids;
+            for (std::size_t d = 0; d < dependencies.size(); ++d) {
+                const auto dp = path + "/dependencies/" + std::to_string(d);
+                const auto& value = dependencies[d];
+                members(value, {"asset_id", "key"}, {}, dp);
+                ids.push_back({id_value<AssetId>(value.at("asset_id"), dp + "/asset_id"),
+                               cache_digest(value.at("key"), dp + "/key")});
+            }
+            index.entries.push_back(
+                {{id_value<AssetId>(e.at("asset_id"), path + "/asset_id"),
+                  cache_digest(e.at("key"), path + "/key"),
+                  asset_text(string_value(e.at("kind"), path + "/kind"), 64, path + "/kind", true),
+                  cache_audience(e.at("audience"), path + "/audience"),
+                  cache_target(e.at("target"), path + "/target"),
+                  asset_text(string_value(e.at("importer"), path + "/importer"), 64,
+                             path + "/importer", true),
+                  cache_u32(e.at("importer_version"), path + "/importer_version"),
+                  cache_u32(e.at("payload_version"), path + "/payload_version"),
+                  cache_digest(e.at("source_digest"), path + "/source_digest"),
+                  cache_digest(e.at("settings_digest"), path + "/settings_digest"),
+                  std::move(ids),
+                  cache_digest(e.at("payload_digest"), path + "/payload_digest"),
+                  {}},
+                 cache_size(e.at("offset"), path + "/offset"),
+                 cache_size(e.at("length"), path + "/length")});
+        }
+        for (std::size_t i = 0; i < bindings.size(); ++i) {
+            const auto path = "/bindings/" + std::to_string(i);
+            const auto& b = bindings[i];
+            members(b, {"asset_id", "target", "key"}, {}, path);
+            index.bindings.push_back({id_value<AssetId>(b.at("asset_id"), path + "/asset_id"),
+                                      cache_target(b.at("target"), path + "/target"),
+                                      cache_digest(b.at("key"), path + "/key")});
+        }
+        return index;
+    });
+}
+} // namespace detail
 
 } // namespace shark::tools

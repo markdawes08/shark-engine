@@ -250,3 +250,10 @@ Save to a temporary sibling, flush, and atomically replace with platform-specifi
 durability/error handling; a failed write preserves the prior valid file. Cache,
 cook and export publication follow the same staging/commit principle. These
 failure paths are exercised in 08, 11, 30 and 31.
+
+11b implements [development cache container/index version 1](../asset-import-cache.md)
+under [ADR 0026](0026-development-asset-cache.md). It uses explicit little-endian
+fields, canonical JSON index, engine-owned SHA-256 keys/digests and validated
+dependency closure; it never serializes native structs. The focused byte payload
+has its own exact version. Source/metadata remain schema 1 and the final cooked
+format remains assignment 31.

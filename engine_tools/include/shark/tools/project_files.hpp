@@ -100,6 +100,13 @@ class ProjectFiles final {
                                                         std::optional<FileRevision> expected_file);
 
   private:
+    friend class AssetImports;
+    [[nodiscard]] Result<FileRevision> read_asset_bytes(const ProjectPath& source);
+    [[nodiscard]] Result<std::optional<FileRevision>> read_development_cache();
+    [[nodiscard]] Result<FileCommit> write_development_cache(std::string bytes,
+                                                             std::optional<FileRevision> expected);
+    [[nodiscard]] std::string_view revision_bytes(const FileRevision& revision) const;
+    [[nodiscard]] Result<std::size_t> cache_stages(bool discard);
     struct Impl;
     explicit ProjectFiles(std::unique_ptr<Impl> impl) noexcept;
     [[nodiscard]] FileRevision make_revision(const ProjectPath& path, std::string bytes) const;

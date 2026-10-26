@@ -14,7 +14,7 @@ import unittest
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from check_server_closure import (ClosureError, codemodel_source, compile_inventory, compiler_headers, dynamic_needed,
                                   file_api, link_inventory, ninja_dependencies, package_inventory,
-                                  resolved_libraries, system_header_owners, TLS_STATIC, TLS_OBJECT, TLS_UTILITIES)
+                                  resolved_libraries, source_path, system_header_owners, TLS_STATIC, TLS_OBJECT, TLS_UTILITIES)
 from core_dependencies import MBEDTLS_LICENSE_FILES, DEPENDENCIES
 from storage_dependency import DEFINITIONS as SQLITE_DEFINITIONS
 
@@ -193,6 +193,65 @@ class ServerClosureTests(unittest.TestCase):
     def test_accepts_exact_core_server_graph_and_compile_inventory(self):
         source, _, targets, _ = file_api(self.build)
         self.assertEqual(len(compile_inventory(self.build, source, targets)), 14)
+
+    def add_reviewed_crypto_fixture(self):
+        cpp = self.source / "engine/core/src/crypto_runtime.cpp"
+        header = cpp.with_suffix(".hpp")
+        cpp.write_text("int shared_crypto_fixture;\n", encoding="utf-8")
+        header.write_text("// Private Core crypto state.\n", encoding="utf-8")
+        output = self.build / "engine/core/CMakeFiles/EngineCore.dir/src/crypto_runtime.cpp.o"
+        output.parent.mkdir(parents=True, exist_ok=True)
+        output.write_bytes(b"reviewed Core object")
+        self.targets[0]["sources"].append({"path": cpp.relative_to(self.source).as_posix(), "compileGroupIndex": 0})
+        entry = {"directory": str(self.build), "file": str(cpp),
+                 "arguments": ["c++", "-c", str(cpp), "-o", str(output)]}
+        self.commands.append(entry)
+        self.write_evidence()
+        return cpp, header, output, entry
+
+    def test_accepts_exact_private_core_crypto_source_object_and_header(self):
+        cpp, header, output, _ = self.add_reviewed_crypto_fixture()
+        source, _, targets, _ = file_api(self.build)
+        compiled = compile_inventory(self.build, source, targets)
+        self.assertEqual(len(compiled), 15)
+        relative = output.relative_to(self.build).as_posix()
+        evidence = f"{relative}: #deps 2, deps mtime 1 (VALID)\n    {cpp}\n    {header}\n"
+        rows, system = compiler_headers(evidence, [{"path": str(cpp), "object": relative}], self.source, self.build)
+        self.assertEqual({row["path"] for row in rows}, {str(cpp), str(header)})
+        self.assertEqual(system, [])
+
+    def test_crypto_review_rejects_lookalikes_and_generated_or_misplaced_inputs(self):
+        for relative in ("engine/core/src/not_crypto_runtime.cpp", "engine/core/src/crypto_runtime.cpp.extra",
+                         "engine/core/runtime/crypto_runtime.cpp", "runtime/crypto_runtime.cpp",
+                         "engine/core/src/Crypto_Runtime.cpp"):
+            with self.subTest(relative=relative):
+                path = self.source / relative
+                path.parent.mkdir(parents=True, exist_ok=True)
+                path.write_text("// Unreviewed input.\n", encoding="utf-8")
+                with self.assertRaises(ClosureError):
+                    source_path(path, self.source, self.build)
+        generated = self.build / "engine/core/src/crypto_runtime.cpp"
+        generated.parent.mkdir(parents=True, exist_ok=True)
+        generated.write_text("// Generated lookalike.\n", encoding="utf-8")
+        with self.assertRaises(ClosureError):
+            source_path(generated, self.source, self.build, generated=True)
+
+    def test_crypto_review_preserves_flag_and_compiler_identity_rejection(self):
+        cpp, _, output, entry = self.add_reviewed_crypto_fixture()
+        source, _, targets, _ = file_api(self.build)
+        original = list(entry["arguments"])
+        bad_input = self.source / "server/main.cpp"
+        bad_output = self.build / "engine/core/crypto_runtime.cpp.o"
+        bad_output.write_bytes(b"wrong location")
+        variants = [original + ["-Dleak_runtime_enabled=1"], original + ["-I" + str(self.source / "runtime")],
+                    ["c++", "-c", str(bad_input), "-o", str(output)],
+                    ["c++", "-c", str(cpp), "-o", str(bad_output)]]
+        for arguments in variants:
+            with self.subTest(arguments=arguments):
+                entry["arguments"] = arguments
+                self.write_evidence()
+                with self.assertRaises(ClosureError):
+                    compile_inventory(self.build, source, targets)
 
     def test_rejects_client_target_even_if_unlinked(self):
         self.configuration["targets"].append({"name": "EngineClient", "id": "client", "jsonFile": "client.json"})

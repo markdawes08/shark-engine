@@ -1,5 +1,6 @@
 add_executable(Tests
     bootstrap_tests.cpp
+    core_digest_tests.cpp
     core_error_tests.cpp
     core_identity_tests.cpp
     core_hierarchy_tests.cpp
@@ -125,6 +126,20 @@ if(TARGET EngineStorage)
 endif()
 
 if(TARGET EngineTools)
+    add_executable(AssetImportTests asset_import_tests.cpp)
+    target_link_libraries(AssetImportTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_include_directories(AssetImportTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
+    shark_configure_target(AssetImportTests)
+    shark_classify_target(AssetImportTests test)
+    add_test(NAME shark.tools.asset-import COMMAND AssetImportTests "[asset-import]" --rng-seed 1337
+        --reporter xml --out "${CMAKE_CURRENT_BINARY_DIR}/asset-import-cases.xml")
+    set_tests_properties(shark.tools.asset-import PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 90)
+    add_executable(AssetImportProcess asset_import_process.cpp)
+    target_link_libraries(AssetImportProcess PRIVATE EngineTools)
+    target_include_directories(AssetImportProcess PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
+    shark_configure_target(AssetImportProcess)
+    shark_classify_target(AssetImportProcess test)
+
     add_executable(AssetCatalogTests asset_catalog_tests.cpp)
     target_link_libraries(AssetCatalogTests PRIVATE EngineTools Catch2::Catch2WithMain)
     target_include_directories(AssetCatalogTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
@@ -232,6 +247,8 @@ set_tests_properties(shark.failure-sentinel PROPERTIES LABELS "cpu;unit" TIMEOUT
 add_test(NAME shark.server.unit COMMAND Tests "[server]" --rng-seed 1337)
 set_tests_properties(shark.server.unit PROPERTIES LABELS "cpu;server;unit" TIMEOUT 10)
 add_test(NAME shark.core.contracts COMMAND Tests "[core]" --rng-seed 1337)
+add_test(NAME shark.core.content-digest COMMAND Tests "[content-digest]" --rng-seed 1337)
+set_tests_properties(shark.core.content-digest PROPERTIES LABELS "cpu;unit;server" TIMEOUT 15)
 set_tests_properties(shark.core.contracts PROPERTIES LABELS "cpu;unit" TIMEOUT 15)
 add_test(NAME shark.core.lifecycle COMMAND Tests "[lifecycle]" --rng-seed 1337)
 set_tests_properties(shark.core.lifecycle PROPERTIES LABELS "cpu;unit;server" TIMEOUT 15)
@@ -533,6 +550,11 @@ if(TARGET EngineStorage)
     set_tests_properties(shark.storage.integration-process PROPERTIES LABELS "cpu;integration;server" TIMEOUT 300)
 endif()
 if(TARGET ProjectFilesProcess)
+    add_test(NAME shark.tools.asset-import-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_asset_import_process.py"
+            --probe "$<TARGET_FILE:AssetImportProcess>"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/asset-import-process.json")
+    set_tests_properties(shark.tools.asset-import-process PROPERTIES LABELS "cpu;tooling;integration" TIMEOUT 120)
     add_test(NAME shark.tools.project-files-process
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_project_files_process.py"
             --probe "$<TARGET_FILE:ProjectFilesProcess>"

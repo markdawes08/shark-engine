@@ -40,6 +40,10 @@ STORAGE_TARGETS = {"EngineStorage", "SharkSQLite"}
 TARGETS = {"EngineCore", "Server", "shark_check_server_boundary"} | STORAGE_TARGETS | TLS_STATIC | TLS_OBJECT | TLS_UTILITIES
 PACKAGE_FILES = {"bin/Server", "licenses/EnTT/LICENSE", "licenses/GLM/copying.txt", "licenses/SQLite/LICENSE.txt"} | {
     "licenses/MbedTLS/" + item for item in MBEDTLS_LICENSE_FILES}
+# These private Core inputs own the existing TLS/content crypto lifetime, not
+# client Runtime code. Keep this review exact; the general dependency heuristic
+# still applies to every other source, header, option and discovered dependency.
+CORE_CRYPTO_INPUTS = {"engine/core/src/crypto_runtime.cpp", "engine/core/src/crypto_runtime.hpp"}
 FORBIDDEN = re.compile(
     r"(?:^|[/\\\s;:=_-])(?:engineclient|engine_tools|editor|runtime|catch2|"
     r"glfw|vulkan|nvrhi|imgui|imguizmo|cgltf|stb|dr_wav|miniaudio|openal|"
@@ -102,7 +106,8 @@ def source_path(path: Path, source: Path, build: Path, *, generated=False) -> Pa
     storage_input = generated and relative in ("_deps/sqlite-src/sqlite3.c", "_deps/sqlite-src/sqlite3.h")
     require(relative.startswith(allowed) or dependency_header or network_input or network_config or storage_input,
             f"Non-Core source/include path: {path}")
-    require(not FORBIDDEN.search(relative), f"Forbidden source/include path: {path}")
+    reviewed_crypto = not generated and relative in CORE_CRYPTO_INPUTS
+    require(reviewed_crypto or not FORBIDDEN.search(relative), f"Forbidden source/include path: {path}")
     return path
 
 
@@ -255,7 +260,28 @@ def compile_inventory(build: Path, source: Path, targets: list[dict]) -> list[di
         require(path.suffix in (".cpp", ".cc", ".cxx", ".c"), f"Unexpected compile input: {path}")
         args = entry.get("arguments") or shlex.split(entry["command"])
         require(args and not any(arg.startswith("@") for arg in args), "Opaque compiler response file")
-        require(not FORBIDDEN.search(" ".join(args)), "Forbidden compiler dependency")
+        dependency_args = args
+        if path == source / "engine/core/src/crypto_runtime.cpp":
+            # Only remove the already reviewed compiler input/output identities
+            # from the name heuristic, after proving the exact native Core unit.
+            # All other flags/paths still undergo the ordinary checks below.
+            require(args.count("-c") == 1 and args.index("-c") + 1 < len(args),
+                    "Ambiguous reviewed Core crypto compile input")
+            input_index = args.index("-c") + 1
+            unit = Path(args[input_index])
+            require(plain_path(unit if unit.is_absolute() else directory / unit, source) == path,
+                    "Reviewed Core crypto compile input mismatch")
+            require(args.count("-o") == 1 and args.index("-o") + 1 < len(args),
+                    "Ambiguous reviewed Core crypto compile output")
+            output_index = args.index("-o") + 1
+            output = Path(args[output_index])
+            output = plain_path(output if output.is_absolute() else directory / output, build)
+            require(output == build / "engine/core/CMakeFiles/EngineCore.dir/src/crypto_runtime.cpp.o",
+                    "Reviewed Core crypto compile output mismatch")
+            dependency_args = list(args)
+            dependency_args[input_index] = "reviewed-core-source.cpp"
+            dependency_args[output_index] = "reviewed-core-object.o"
+        require(not FORBIDDEN.search(" ".join(dependency_args)), "Forbidden compiler dependency")
         require(not any(arg.startswith(("-fplugin", "-specs", "--sysroot", "-isysroot", "-Xclang")) for arg in args),
                 "Unreviewed compiler injection/sysroot option")
         sqlite_unit = path == build / "_deps/sqlite-src/sqlite3.c"

@@ -5,7 +5,9 @@ The user approved the following four-checkpoint split. Full REQ-10 is complete.
 11a implements identity/metadata/catalog only; full REQ-11 remains NOT_RUN until
 the later import/cache/job gates pass. **11a is PASS** in its
 [handoff](../handoffs/11a-asset-identity.md) and
-[receipt](../coverage/evidence/11a-asset-identity.json). Next: **11b**. Follow [ADR 0025](../architecture/0025-asset-identity.md),
+[receipt](../coverage/evidence/11a-asset-identity.json). **11b is PASS** in its
+[handoff](../handoffs/11b-asset-import-cache.md) and
+[receipt](../coverage/evidence/11b-asset-import-cache.json). Next: **11c**. Follow [ADR 0025](../architecture/0025-asset-identity.md),
 the [asset identity contract](../asset-identity.md), [MMORPG plan](mmorpg-plan.md)
 and [human/agent plan](human-agent-plan.md).
 
@@ -42,6 +44,14 @@ Gate: source/settings/tool/dependency/profile changes invalidate exactly the
 required output, missing/cyclic dependencies diagnose, matching inputs reproduce
 bytes and failed/interrupted publication preserves valid entries. glTF/image
 decoders remain 12; the final cooked format remains 31.
+
+**Status: PASS under current-machine scope.** The [cache contract](../asset-import-cache.md)
+and [ADR 0026](../architecture/0026-development-asset-cache.md) define the actual
+synchronous byte importer, revision-fenced preparation/publication, target/privacy
+keys, bounded last-valid cache and explicit maintenance. Its handoff/receipt above
+record 724 selected CPU/Tools outcomes, 36 public-example compiles, 24 actual
+sanitizer objects and protected packages. Background work/cancellation remain 11c;
+full REQ-11 remains NOT_RUN until 11d.
 
 ## 11c - Bounded background jobs
 

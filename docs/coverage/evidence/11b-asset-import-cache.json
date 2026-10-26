@@ -1,0 +1,2367 @@
+{
+  "format": "shark.checkpoint-evidence",
+  "schema_version": 1,
+  "checkpoint": "11b",
+  "requirement": "REQ-11",
+  "status": "PASS",
+  "scope": "Current-machine synchronous CPU dependency imports and bounded development cache. Full REQ-11 remains NOT_RUN.",
+  "base_revision": "4da609e",
+  "branch": "main",
+  "initial_worktree": "clean",
+  "result": "unstaged uncommitted changes",
+  "generated_at_utc": "2026-10-26T06:41:46.188893+00:00",
+  "source_freeze": {
+    "path": "out/11b-work/source-freeze-boundary.json",
+    "sha256": "217ca93f314b256876f224462aaaa0359f43959b001f3b976d5927cb551b479b",
+    "bytes": 110274
+  },
+  "frozen_inputs": 625,
+  "initial_source_freeze": {
+    "path": "out/11b-work/source-freeze.json",
+    "sha256": "fab2da7433aa19227fb19b09eca4ab2bca07281bbeb50ef595763b2b74b84aab",
+    "bytes": 106895
+  },
+  "validation_only_changes": [
+    "cmake/CheckRuntimeBoundary.cmake",
+    "tests/CheckBoundaryFixture.cmake",
+    "tests/boundary_fixture/CMakeLists.txt",
+    "tools/check_server_closure.py",
+    "tools/tests/test_server_closure.py"
+  ],
+  "qualification_method": "Selected actual passing outcomes from full current code runs and standalone Tools runs, replacing current validation families and native diagnostic CPU consumers after validation-only corrections. Engine/CPU objects and archives remain unchanged; eight GPU diagnostic fixtures refresh their source stamp. Per-test JUnit provenance is retained. No original failed report is relabeled.",
+  "full_profile_results": 682,
+  "additional_standalone_tools_results": 42,
+  "total_qualified_profile_results": 724,
+  "profiles": [
+    {
+      "name": "windows-debug",
+      "status": "PASS",
+      "qualified_tests": 112,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11b-work/boundary-qualified-final/windows-debug/summary.json",
+        "sha256": "31e91243ae5814532931bb33fce316b84c4719cf71e36af39182a63ff52d04b8",
+        "bytes": 1957
+      },
+      "inventory": {
+        "path": "out/11b-work/boundary-qualified-final/windows-debug/inventory.json",
+        "sha256": "c2fd935da3d1f612e691732a70a99a23708d4ceeee49f7d8dd7b3e98e6e6b820",
+        "bytes": 104190
+      },
+      "junit": {
+        "path": "out/11b-work/boundary-qualified-final/windows-debug/tests.xml",
+        "sha256": "e6ea6389b6cb84e1c4c14e954334960627020d64ce39a45597036d3b5ad303bb",
+        "bytes": 71316
+      },
+      "qualified_results": {
+        "path": "out/11b-work/boundary-qualified-final/windows-debug/qualified-results.json",
+        "sha256": "992c41004219a881c18af86e7a35199b72511f2887a999a32623abd376bd3a94",
+        "bytes": 11400
+      },
+      "qualification_selection": {
+        "path": "out/11b-work/boundary-qualified-final/windows-debug/qualification-selection.json",
+        "sha256": "8a4b66c63463a67dd32d5b01602abfdf59cc5f46310251b58a162f9224da0fca",
+        "bytes": 31676
+      },
+      "unchanged_code_objects": {
+        "path": "out/11b-work/boundary-qualified-final/windows-debug/unchanged-code-objects.json",
+        "sha256": "8876d51679521183152b107a6712c1578bfae5f3d9fd84c11e0601985cc67f40",
+        "bytes": 22234
+      },
+      "current_boundary_results": {
+        "path": "out/11b-work/boundary-qualified-final/windows-debug/boundaries.xml",
+        "sha256": "4f20eab7821a424a51950d4966cc712004772884256df2c7f7326da05e6a6325",
+        "bytes": 11236
+      },
+      "object_identity": {
+        "path": "out/11b-work/boundary-qualified-final/windows-debug/object-identity.json",
+        "sha256": "06109f2934ab0d6291b13de0746e4017d0352365a1834ee1f32580abe06e86f8",
+        "bytes": 45428
+      },
+      "cache_catch": {
+        "cases": 22,
+        "assertions": 4361,
+        "result": {
+          "path": "out/11b-work/boundary-qualified-final/windows-debug/asset-import-cases.xml",
+          "sha256": "4acde2670d2458fbbd2266635d0d4376b616615c9fec5b9c4c4372a8367c6e64",
+          "bytes": 6308
+        }
+      },
+      "cache_process": {
+        "path": "out/11b-work/boundary-qualified-final/windows-debug/asset-import-process.json",
+        "sha256": "f313a4cff3b6564f72f4e6a12e5b59e9990a10f57cf6e0057ad9a56862e19fea",
+        "bytes": 13507
+      },
+      "featureworld": {
+        "path": "out/11b-work/boundary-qualified-final/windows-debug/featureworld-process.json",
+        "sha256": "4800be7c7c46a7256d8c8d4ccc53c40f8cbe61a9ed38214008525b3fac64c3b7",
+        "bytes": 5791
+      },
+      "connected_qualification": {
+        "path": "out/11b-work/boundary-qualified-final/windows-debug/scene-qualification.json",
+        "sha256": "4f7889bf2c47fa0cdcdc5d152fcfe186f796b22dca150533162776f4503e04e8",
+        "bytes": 51626
+      }
+    },
+    {
+      "name": "windows-release",
+      "status": "PASS",
+      "qualified_tests": 112,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11b-work/boundary-qualified-final/windows-release/summary.json",
+        "sha256": "48c055415c8195f565c3d708047b7c341537192dcd54100252e819766c9e7175",
+        "bytes": 1965
+      },
+      "inventory": {
+        "path": "out/11b-work/boundary-qualified-final/windows-release/inventory.json",
+        "sha256": "c4561053a9d5e6e7ae1dce3f065fdc7ff162ffdf0f50d3be59735cb96ae0da3a",
+        "bytes": 104566
+      },
+      "junit": {
+        "path": "out/11b-work/boundary-qualified-final/windows-release/tests.xml",
+        "sha256": "659c3463a24147e7be4b6bf039ed72bfde069c38ad09baee162a57339585aa97",
+        "bytes": 71342
+      },
+      "qualified_results": {
+        "path": "out/11b-work/boundary-qualified-final/windows-release/qualified-results.json",
+        "sha256": "d6c0f48ae2a8bf2eb51979e41aa144bc34469b8c0d17d75d95398c1565bfc7c9",
+        "bytes": 11414
+      },
+      "qualification_selection": {
+        "path": "out/11b-work/boundary-qualified-final/windows-release/qualification-selection.json",
+        "sha256": "085ea483024631431f4096f971926d8fd06ff907045a93f0d1dee080133a55ce",
+        "bytes": 31900
+      },
+      "unchanged_code_objects": {
+        "path": "out/11b-work/boundary-qualified-final/windows-release/unchanged-code-objects.json",
+        "sha256": "cd2bcf222e44458ae90913f012a4f73278bcf75268a3b4540995c98a2e7189e5",
+        "bytes": 22089
+      },
+      "current_boundary_results": {
+        "path": "out/11b-work/boundary-qualified-final/windows-release/boundaries.xml",
+        "sha256": "82ead66231a2518de571d82d49ecb066a252bfa1cb823c3543aaba646e004b81",
+        "bytes": 11240
+      },
+      "object_identity": {
+        "path": "out/11b-work/boundary-qualified-final/windows-release/object-identity.json",
+        "sha256": "ef70fab5e31e66426cb3cdfb70992f95ce64fc603eb00eb0c4a73c589e20f8bf",
+        "bytes": 45698
+      },
+      "cache_catch": {
+        "cases": 22,
+        "assertions": 4361,
+        "result": {
+          "path": "out/11b-work/boundary-qualified-final/windows-release/asset-import-cases.xml",
+          "sha256": "4acde2670d2458fbbd2266635d0d4376b616615c9fec5b9c4c4372a8367c6e64",
+          "bytes": 6308
+        }
+      },
+      "cache_process": {
+        "path": "out/11b-work/boundary-qualified-final/windows-release/asset-import-process.json",
+        "sha256": "f313a4cff3b6564f72f4e6a12e5b59e9990a10f57cf6e0057ad9a56862e19fea",
+        "bytes": 13507
+      },
+      "featureworld": {
+        "path": "out/11b-work/boundary-qualified-final/windows-release/featureworld-process.json",
+        "sha256": "4800be7c7c46a7256d8c8d4ccc53c40f8cbe61a9ed38214008525b3fac64c3b7",
+        "bytes": 5791
+      },
+      "connected_qualification": {
+        "path": "out/11b-work/boundary-qualified-final/windows-release/scene-qualification.json",
+        "sha256": "87c4ab11657cdefd9fff1f2302ceae782017fc392cf8442000a14471be6b0e3c",
+        "bytes": 51646
+      }
+    },
+    {
+      "name": "windows-asan",
+      "status": "PASS",
+      "qualified_tests": 112,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11b-work/boundary-qualified-final/windows-asan/summary.json",
+        "sha256": "6d82edcf1c7d2c31fe43ab83c8e9efdf6342553589b5b998b359ef19bede01d3",
+        "bytes": 1953
+      },
+      "inventory": {
+        "path": "out/11b-work/boundary-qualified-final/windows-asan/inventory.json",
+        "sha256": "cb8e72aa3c07888e0c73f40b9aefa532769fc5bad0abde5f1614a9502bf1f98b",
+        "bytes": 104012
+      },
+      "junit": {
+        "path": "out/11b-work/boundary-qualified-final/windows-asan/tests.xml",
+        "sha256": "39987ff51810e33f40c4349a15bd8c1b6beff8202547986934576d8d43bf7f98",
+        "bytes": 71304
+      },
+      "qualified_results": {
+        "path": "out/11b-work/boundary-qualified-final/windows-asan/qualified-results.json",
+        "sha256": "f0df257fd7b07869ae10e5df62e0b0f4cc393805dca6c1195e4063105d98c804",
+        "bytes": 11395
+      },
+      "qualification_selection": {
+        "path": "out/11b-work/boundary-qualified-final/windows-asan/qualification-selection.json",
+        "sha256": "87464517b4db1a89cbd4aeb6b606d01baf8f3ed723a2aaf7f7a87b69953a0df2",
+        "bytes": 31564
+      },
+      "unchanged_code_objects": {
+        "path": "out/11b-work/boundary-qualified-final/windows-asan/unchanged-code-objects.json",
+        "sha256": "1fe26da8e9620cf84c9512815f9a4bb37b0ccbbaab5464e46832cb1e1084ec8b",
+        "bytes": 22089
+      },
+      "current_boundary_results": {
+        "path": "out/11b-work/boundary-qualified-final/windows-asan/boundaries.xml",
+        "sha256": "b7adb569c11bfd530038d6942b04e3e6cfbe708d0c6291420750fa9f8cf4d66c",
+        "bytes": 11236
+      },
+      "object_identity": {
+        "path": "out/11b-work/boundary-qualified-final/windows-asan/object-identity.json",
+        "sha256": "d0aec5244e567f2db9b3d6673a7f9babecfd1cb777e9c4d0cee0883485e411d3",
+        "bytes": 45698
+      },
+      "cache_catch": {
+        "cases": 22,
+        "assertions": 4361,
+        "result": {
+          "path": "out/11b-work/boundary-qualified-final/windows-asan/asset-import-cases.xml",
+          "sha256": "4acde2670d2458fbbd2266635d0d4376b616615c9fec5b9c4c4372a8367c6e64",
+          "bytes": 6308
+        }
+      },
+      "cache_process": {
+        "path": "out/11b-work/boundary-qualified-final/windows-asan/asset-import-process.json",
+        "sha256": "f313a4cff3b6564f72f4e6a12e5b59e9990a10f57cf6e0057ad9a56862e19fea",
+        "bytes": 13507
+      },
+      "featureworld": {
+        "path": "out/11b-work/boundary-qualified-final/windows-asan/featureworld-process.json",
+        "sha256": "4800be7c7c46a7256d8c8d4ccc53c40f8cbe61a9ed38214008525b3fac64c3b7",
+        "bytes": 5791
+      },
+      "connected_qualification": {
+        "path": "out/11b-work/boundary-qualified-final/windows-asan/scene-qualification.json",
+        "sha256": "283f4d722810750f7c50f1dbea08ba0a46f27172e25cdc3649600e5361699476",
+        "bytes": 51616
+      }
+    },
+    {
+      "name": "linux-debug",
+      "status": "PASS",
+      "qualified_tests": 105,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-debug/summary.json",
+        "sha256": "cdb56c5997eb48c62169d778c5866906b1b60d7b9fe0f61bebfd1e924949c1ef",
+        "bytes": 1130
+      },
+      "inventory": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-debug/inventory.json",
+        "sha256": "4dddd0efb4f5545bba4ae1316306aafb0fc15aabf6aadcb8eb62323552fc36b2",
+        "bytes": 87105
+      },
+      "junit": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-debug/tests.xml",
+        "sha256": "0ffbfac48e5dd3f7f02a76935035a64c2688c07d6b14bd614650eee5fe38047b",
+        "bytes": 67963
+      },
+      "qualified_results": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-debug/qualified-results.json",
+        "sha256": "7a5ab2bae1856fd418b3b89cc3001cdc9f6087bf628381c2a06e6eacef8f883d",
+        "bytes": 10710
+      },
+      "qualification_selection": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-debug/qualification-selection.json",
+        "sha256": "da47a0c669959791dbc099ecf905f8f6c1d721f29eef840528fdae3ad1c68cb4",
+        "bytes": 24013
+      },
+      "unchanged_code_objects": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-debug/unchanged-code-objects.json",
+        "sha256": "c0c43f8f48a3af21d7444c7a02ec891fc37b612b600ad06d2ff13f2df260616d",
+        "bytes": 19023
+      },
+      "current_boundary_results": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-debug/boundaries.xml",
+        "sha256": "47fc64863ba0a69f2cd8a5f5b2c24ef6f9cc5ee7f2db4b44cf38fad7bf26a965",
+        "bytes": 3223
+      },
+      "cache_catch": {
+        "cases": 22,
+        "assertions": 4361,
+        "result": {
+          "path": "out/11b-work/wsl/boundary-qualified/linux-debug/asset-import-cases.xml",
+          "sha256": "104cd5d45ed2d9192651488c1a2a797516c4096361252c7abaa338ec50141ee3",
+          "bytes": 5749
+        }
+      },
+      "cache_process": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-debug/asset-import-process.json",
+        "sha256": "084b5c055adbb3fd20b4a308650e8e7a37d81bc29b4ba067c116a7b7d5596474",
+        "bytes": 13117
+      },
+      "featureworld": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-debug/featureworld-process.json",
+        "sha256": "48a77849612a49b9ad665fa87a15ede09d355b11a1690e1c45efe1e509002e00",
+        "bytes": 5528
+      },
+      "connected_qualification": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-debug/scene-qualification.json",
+        "sha256": "28db0f9a3d005dd74a7474e4267222060ee879ac0737ab226b192fbc694b8b94",
+        "bytes": 49790
+      }
+    },
+    {
+      "name": "linux-asan-ubsan",
+      "status": "PASS",
+      "qualified_tests": 105,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/summary.json",
+        "sha256": "307d7ef1993086a4c6dec92c553d3aaef0d1bdccde14ba9c6bd0b6703ae86331",
+        "bytes": 1150
+      },
+      "inventory": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/inventory.json",
+        "sha256": "fa3feacc5441abf72ad18c7f46df258ff182a0bcb206b7909d5609f1a58e9f9d",
+        "bytes": 88033
+      },
+      "junit": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/tests.xml",
+        "sha256": "64637fe025309d7e5625fd58394e3994f2b1ca76e17091d3d16a068b659c8e54",
+        "bytes": 67945
+      },
+      "qualified_results": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/qualified-results.json",
+        "sha256": "27470f6f39daf78a6fe3c9419eaf6f358ea8b17cad00137129eb5e94d1ce5240",
+        "bytes": 10668
+      },
+      "qualification_selection": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/qualification-selection.json",
+        "sha256": "704f300d84134badbc3bda9680875c90f545067fefe68c21c60c0effbfacc51a",
+        "bytes": 24538
+      },
+      "unchanged_code_objects": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/unchanged-code-objects.json",
+        "sha256": "b013fccb129e94a57ce50029f15dd1836899f44ef1c4b504c9b9f04395ac641d",
+        "bytes": 19023
+      },
+      "current_boundary_results": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/boundaries.xml",
+        "sha256": "0bea63bce29984b1d1865ce840f8662439aaa0d4ab0c86053e764c3453386641",
+        "bytes": 3223
+      },
+      "cache_catch": {
+        "cases": 22,
+        "assertions": 4361,
+        "result": {
+          "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/asset-import-cases.xml",
+          "sha256": "b2489b61401d8798bf0eb3c6192c2070e66dd03e59409262a2736c6558f7c57d",
+          "bytes": 5749
+        }
+      },
+      "cache_process": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/asset-import-process.json",
+        "sha256": "084b5c055adbb3fd20b4a308650e8e7a37d81bc29b4ba067c116a7b7d5596474",
+        "bytes": 13117
+      },
+      "featureworld": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/featureworld-process.json",
+        "sha256": "48a77849612a49b9ad665fa87a15ede09d355b11a1690e1c45efe1e509002e00",
+        "bytes": 5528
+      },
+      "connected_qualification": {
+        "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/scene-qualification.json",
+        "sha256": "46bbe256f19c1588d67fe81778b13fcdd4d15f8bdc8c0e23f498880dc6f22c47",
+        "bytes": 49840
+      }
+    },
+    {
+      "name": "server-debug",
+      "status": "PASS",
+      "qualified_tests": 68,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11b-work/wsl/boundary-qualified/server-debug/summary.json",
+        "sha256": "90bab147060081f0bac3d2513893b86f40439fff5f4e7b913bdeec9205c45e84",
+        "bytes": 1118
+      },
+      "inventory": {
+        "path": "out/11b-work/wsl/boundary-qualified/server-debug/inventory.json",
+        "sha256": "968a958fa1b9372ef1621c25d69cb149b855b245d5fef43325c381e2aa5a52fd",
+        "bytes": 54513
+      },
+      "junit": {
+        "path": "out/11b-work/wsl/boundary-qualified/server-debug/tests.xml",
+        "sha256": "81aa3824d16ea93fdf10f84d0c49a3e6a2b0fd1c202dcd4de378ec3b4fcb8886",
+        "bytes": 48064
+      },
+      "qualified_results": {
+        "path": "out/11b-work/wsl/boundary-qualified/server-debug/qualified-results.json",
+        "sha256": "43be970a35d59a185a7a430db7aad1aca9c46274fc2f745b066c8d588f601ac9",
+        "bytes": 6888
+      },
+      "qualification_selection": {
+        "path": "out/11b-work/wsl/boundary-qualified/server-debug/qualification-selection.json",
+        "sha256": "67e9a75f2c3fe0449907570439e74e3246770e1d8401d672a7542cb3df4717b9",
+        "bytes": 15596
+      },
+      "unchanged_code_objects": {
+        "path": "out/11b-work/wsl/boundary-qualified/server-debug/unchanged-code-objects.json",
+        "sha256": "8c6e4371238ae079014dc6aab1fe2d78691890e908270a7219be4924362c683f",
+        "bytes": 11701
+      },
+      "current_boundary_results": {
+        "path": "out/11b-work/wsl/boundary-qualified/server-debug/boundaries.xml",
+        "sha256": "45123d83a2ac5c64688458c79a22b061bc24013808227fe5ab49eac18b45f4af",
+        "bytes": 2985
+      }
+    },
+    {
+      "name": "server-asan-ubsan",
+      "status": "PASS",
+      "qualified_tests": 68,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11b-work/wsl/boundary-qualified/server-asan-ubsan/summary.json",
+        "sha256": "b4f58b06920491be7418f74f8911a17e620a15f4a9ce5faeac2d7fad10ae5c70",
+        "bytes": 1138
+      },
+      "inventory": {
+        "path": "out/11b-work/wsl/boundary-qualified/server-asan-ubsan/inventory.json",
+        "sha256": "4fbc569b75c38e60faee0e136f65d1b84a63004baf17319a468b962c11a1fa27",
+        "bytes": 55025
+      },
+      "junit": {
+        "path": "out/11b-work/wsl/boundary-qualified/server-asan-ubsan/tests.xml",
+        "sha256": "37afa49f252296fd2f4e205f8076037bf57a3c0b80234595a2474c508b9532a7",
+        "bytes": 48068
+      },
+      "qualified_results": {
+        "path": "out/11b-work/wsl/boundary-qualified/server-asan-ubsan/qualified-results.json",
+        "sha256": "c063c683cc4a679c3cc98fe19f6268712a7cb7bc10db8d87007f857912ea6283",
+        "bytes": 6868
+      },
+      "qualification_selection": {
+        "path": "out/11b-work/wsl/boundary-qualified/server-asan-ubsan/qualification-selection.json",
+        "sha256": "925edf90c2cb06f806576e5473f0300c02c657cc462e114e0179cdef07385311",
+        "bytes": 15936
+      },
+      "unchanged_code_objects": {
+        "path": "out/11b-work/wsl/boundary-qualified/server-asan-ubsan/unchanged-code-objects.json",
+        "sha256": "03f695de0e51bc8854c874dcf3e454a6965922bfdc606b095fe5c0cfbda901af",
+        "bytes": 11701
+      },
+      "current_boundary_results": {
+        "path": "out/11b-work/wsl/boundary-qualified/server-asan-ubsan/boundaries.xml",
+        "sha256": "0fd4455878fa21a74cd975aeca318f0f05eb38325acb713563b33f83869718b2",
+        "bytes": 2985
+      }
+    },
+    {
+      "name": "windows-tools-debug",
+      "status": "PASS",
+      "qualified_tests": 21,
+      "standalone_tools": true,
+      "summary": {
+        "path": "out/11b-work/boundary-qualified-final/tools-debug/summary.json",
+        "sha256": "b06f82f70b98be770830d8ff2b611b51f5771007ce02841aaef7212e7953ac92",
+        "bytes": 1363
+      },
+      "inventory": {
+        "path": "out/11b-work/boundary-qualified-final/tools-debug/inventory.json",
+        "sha256": "07fa5828f39a041220a453ff9422fa822569326a1ea13019d762e277c075702d",
+        "bytes": 70045
+      },
+      "junit": {
+        "path": "out/11b-work/boundary-qualified-final/tools-debug/tests.xml",
+        "sha256": "06cd4efea5f3a051af49302bd25b891d90e6953fe06922d4090ad3fd2f1aa414",
+        "bytes": 13474
+      },
+      "qualified_results": {
+        "path": "out/11b-work/boundary-qualified-final/tools-debug/qualified-results.json",
+        "sha256": "69c6c555398dee87433d3bc4f1af0ece97c5b092c323d15a4880eae330014131",
+        "bytes": 2209
+      },
+      "qualification_selection": {
+        "path": "out/11b-work/boundary-qualified-final/tools-debug/qualification-selection.json",
+        "sha256": "f87635e6288bd6e80fd066329968c62dc6384d694004245d22db356d1f3e65d9",
+        "bytes": 5857
+      },
+      "unchanged_code_objects": {
+        "path": "out/11b-work/boundary-qualified-final/tools-debug/unchanged-code-objects.json",
+        "sha256": "11c127cb8dacc07da20f063f0620691c14bf07878cb77d719767016ecb146058",
+        "bytes": 11606
+      },
+      "current_boundary_results": {
+        "path": "out/11b-work/boundary-qualified-final/tools-debug/boundaries.xml",
+        "sha256": "14469ff25483709c8432b9e16cbc82946793925b18ed18311dca3c72d189290e",
+        "bytes": 3267
+      },
+      "object_identity": {
+        "path": "out/11b-work/boundary-qualified-final/tools-debug/object-identity.json",
+        "sha256": "ee1b4e42386381ff4edc98331e950b75f23c630ebcfe4fcd2b4c9cd8602ade15",
+        "bytes": 23860
+      },
+      "cache_catch": {
+        "cases": 22,
+        "assertions": 4361,
+        "result": {
+          "path": "out/11b-work/boundary-qualified-final/tools-debug/asset-import-cases.xml",
+          "sha256": "4acde2670d2458fbbd2266635d0d4376b616615c9fec5b9c4c4372a8367c6e64",
+          "bytes": 6308
+        }
+      },
+      "cache_process": {
+        "path": "out/11b-work/boundary-qualified-final/tools-debug/asset-import-process.json",
+        "sha256": "f313a4cff3b6564f72f4e6a12e5b59e9990a10f57cf6e0057ad9a56862e19fea",
+        "bytes": 13507
+      },
+      "featureworld": {
+        "path": "out/11b-work/boundary-qualified-final/tools-debug/featureworld-process.json",
+        "sha256": "4800be7c7c46a7256d8c8d4ccc53c40f8cbe61a9ed38214008525b3fac64c3b7",
+        "bytes": 5791
+      },
+      "connected_qualification": {
+        "path": "out/11b-work/boundary-qualified-final/tools-debug/scene-qualification.json",
+        "sha256": "a48ea4e251a907a280697e80ec8688a40dbfcb4a807ce11d0cbccb361cffea42",
+        "bytes": 51690
+      }
+    },
+    {
+      "name": "linux-tools-debug",
+      "status": "PASS",
+      "qualified_tests": 21,
+      "standalone_tools": true,
+      "summary": {
+        "path": "out/11b-work/wsl/boundary-qualified/tools-debug/summary.json",
+        "sha256": "3378e332b8a50631e00e8edd6ed53f52480f27c1cdc7d6c1b2f2d28a82c6d796",
+        "bytes": 1090
+      },
+      "inventory": {
+        "path": "out/11b-work/wsl/boundary-qualified/tools-debug/inventory.json",
+        "sha256": "825a8a73fa675eb9c32aa15ab3c0b7a12ed65dfcfbf84a3f9115880e659808e2",
+        "bytes": 60116
+      },
+      "junit": {
+        "path": "out/11b-work/wsl/boundary-qualified/tools-debug/tests.xml",
+        "sha256": "ad5af66c3072e57a341c94aaff15c490521ad74145ee551368b478446a4822b6",
+        "bytes": 13294
+      },
+      "qualified_results": {
+        "path": "out/11b-work/wsl/boundary-qualified/tools-debug/qualified-results.json",
+        "sha256": "d4bada8a0102691018c2103dc86fd2bf775e178e48fc13ffca2174f8d2fe3de4",
+        "bytes": 2216
+      },
+      "qualification_selection": {
+        "path": "out/11b-work/wsl/boundary-qualified/tools-debug/qualification-selection.json",
+        "sha256": "7969a06744f500bb53ee0adb49e5991e9586a2e5ef2ac027259c23f8e8967247",
+        "bytes": 4868
+      },
+      "unchanged_code_objects": {
+        "path": "out/11b-work/wsl/boundary-qualified/tools-debug/unchanged-code-objects.json",
+        "sha256": "57f86b634124b56610d4f26fb2f4f1639075d780beae0b111ac1dfeab7bb250b",
+        "bytes": 10998
+      },
+      "current_boundary_results": {
+        "path": "out/11b-work/wsl/boundary-qualified/tools-debug/boundaries.xml",
+        "sha256": "519b0c399a04b199f19fd0b905d92e672ab03cec678acaa6f5c180b3af2509b4",
+        "bytes": 2995
+      },
+      "cache_catch": {
+        "cases": 22,
+        "assertions": 4361,
+        "result": {
+          "path": "out/11b-work/wsl/boundary-qualified/tools-debug/asset-import-cases.xml",
+          "sha256": "104cd5d45ed2d9192651488c1a2a797516c4096361252c7abaa338ec50141ee3",
+          "bytes": 5749
+        }
+      },
+      "cache_process": {
+        "path": "out/11b-work/wsl/boundary-qualified/tools-debug/asset-import-process.json",
+        "sha256": "084b5c055adbb3fd20b4a308650e8e7a37d81bc29b4ba067c116a7b7d5596474",
+        "bytes": 13117
+      },
+      "featureworld": {
+        "path": "out/11b-work/wsl/boundary-qualified/tools-debug/featureworld-process.json",
+        "sha256": "48a77849612a49b9ad665fa87a15ede09d355b11a1690e1c45efe1e509002e00",
+        "bytes": 5528
+      },
+      "connected_qualification": {
+        "path": "out/11b-work/wsl/boundary-qualified/tools-debug/scene-qualification.json",
+        "sha256": "aaea0016f885b98b0ba2f050ef08789dc0269064d26e14609858bf19a7c98314",
+        "bytes": 49642
+      }
+    }
+  ],
+  "public_examples": {
+    "compiles": 36,
+    "profiles": [
+      {
+        "examples": 12,
+        "summary": {
+          "path": "out/11b-work/native-audit/public-api/summary.json",
+          "sha256": "df5cfb69192f5f990295f1b92c0e4639d053dc6797bc96daab86210adba038db",
+          "bytes": 1036678
+        },
+        "compiler": {
+          "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+          "sha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+          "bytes": 893328
+        }
+      },
+      {
+        "examples": 12,
+        "summary": {
+          "path": "out/11b-work/wsl/g++-13-public-api/summary.json",
+          "sha256": "97eab7182a139b7508a3365b7e4d4109176d0c9032fc67f4b814fe1e940c12a6",
+          "bytes": 1267319
+        },
+        "compiler": {
+          "path": "/usr/bin/x86_64-linux-gnu-g++-13",
+          "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+          "bytes": 1027128
+        }
+      },
+      {
+        "examples": 12,
+        "summary": {
+          "path": "out/11b-work/wsl/clang++-18-public-api/summary.json",
+          "sha256": "6c0799cbb9353a113049e3c0f76efbae7d54a980e857345604cba225ce26e4c4",
+          "bytes": 1297715
+        },
+        "compiler": {
+          "path": "/usr/lib/llvm-18/bin/clang",
+          "sha256": "8ef402d453d1ba4902e4ee0f0f847f6cfa01400c95aa43c24e97818b9c0e3f45",
+          "bytes": 140592
+        }
+      }
+    ]
+  },
+  "actual_sanitizer_objects": {
+    "count": 24,
+    "profiles": [
+      {
+        "objects": 12,
+        "summary": {
+          "path": "out/11b-work/native-sanitizer/summary.json",
+          "sha256": "189bf3203506aa86a94985473ed601a57fc8c6d5bf520fbf9a4207e313c9d495",
+          "bytes": 19373
+        }
+      },
+      {
+        "objects": 12,
+        "summary": {
+          "path": "out/11b-work/wsl/sanitizer-audit/summary.json",
+          "sha256": "9e896612f01a2734215a61a44c59d536227dcccc9bcb1ec9f343d536483b8c5b",
+          "bytes": 15103
+        }
+      }
+    ]
+  },
+  "new_families": [
+    {
+      "name": "shark.core.content-digest",
+      "timeout_seconds": 15,
+      "seed": 1337,
+      "cases": 3
+    },
+    {
+      "name": "shark.tools.asset-import",
+      "timeout_seconds": 90,
+      "seed": 1337,
+      "cases": 22
+    },
+    {
+      "name": "shark.tools.asset-import-process",
+      "timeout_seconds": 120,
+      "checks": 59
+    }
+  ],
+  "featureworld": {
+    "native_cases": 7,
+    "scene_surfaces": 34,
+    "external_gpu_commands": 1,
+    "process_checks": 25,
+    "qualification_checks": 19,
+    "negative_controls": 15,
+    "new_surface_executions": [
+      {
+        "id": "asset.importers",
+        "case": "featureworld.asset-import",
+        "passing_executions": [
+          {
+            "profile": "windows-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-debug/qualified-results.json",
+              "sha256": "992c41004219a881c18af86e7a35199b72511f2887a999a32623abd376bd3a94",
+              "bytes": 11400
+            }
+          },
+          {
+            "profile": "windows-release",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-release/qualified-results.json",
+              "sha256": "d6c0f48ae2a8bf2eb51979e41aa144bc34469b8c0d17d75d95398c1565bfc7c9",
+              "bytes": 11414
+            }
+          },
+          {
+            "profile": "windows-asan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-asan/qualified-results.json",
+              "sha256": "f0df257fd7b07869ae10e5df62e0b0f4cc393805dca6c1195e4063105d98c804",
+              "bytes": 11395
+            }
+          },
+          {
+            "profile": "linux-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-debug/qualified-results.json",
+              "sha256": "7a5ab2bae1856fd418b3b89cc3001cdc9f6087bf628381c2a06e6eacef8f883d",
+              "bytes": 10710
+            }
+          },
+          {
+            "profile": "linux-asan-ubsan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/qualified-results.json",
+              "sha256": "27470f6f39daf78a6fe3c9419eaf6f358ea8b17cad00137129eb5e94d1ce5240",
+              "bytes": 10668
+            }
+          },
+          {
+            "profile": "windows-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/tools-debug/qualified-results.json",
+              "sha256": "69c6c555398dee87433d3bc4f1af0ece97c5b092c323d15a4880eae330014131",
+              "bytes": 2209
+            }
+          },
+          {
+            "profile": "linux-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/tools-debug/qualified-results.json",
+              "sha256": "d4bada8a0102691018c2103dc86fd2bf775e178e48fc13ffca2174f8d2fe3de4",
+              "bytes": 2216
+            }
+          }
+        ]
+      },
+      {
+        "id": "asset.import.prepare",
+        "case": "featureworld.asset-import",
+        "passing_executions": [
+          {
+            "profile": "windows-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-debug/qualified-results.json",
+              "sha256": "992c41004219a881c18af86e7a35199b72511f2887a999a32623abd376bd3a94",
+              "bytes": 11400
+            }
+          },
+          {
+            "profile": "windows-release",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-release/qualified-results.json",
+              "sha256": "d6c0f48ae2a8bf2eb51979e41aa144bc34469b8c0d17d75d95398c1565bfc7c9",
+              "bytes": 11414
+            }
+          },
+          {
+            "profile": "windows-asan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-asan/qualified-results.json",
+              "sha256": "f0df257fd7b07869ae10e5df62e0b0f4cc393805dca6c1195e4063105d98c804",
+              "bytes": 11395
+            }
+          },
+          {
+            "profile": "linux-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-debug/qualified-results.json",
+              "sha256": "7a5ab2bae1856fd418b3b89cc3001cdc9f6087bf628381c2a06e6eacef8f883d",
+              "bytes": 10710
+            }
+          },
+          {
+            "profile": "linux-asan-ubsan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/qualified-results.json",
+              "sha256": "27470f6f39daf78a6fe3c9419eaf6f358ea8b17cad00137129eb5e94d1ce5240",
+              "bytes": 10668
+            }
+          },
+          {
+            "profile": "windows-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/tools-debug/qualified-results.json",
+              "sha256": "69c6c555398dee87433d3bc4f1af0ece97c5b092c323d15a4880eae330014131",
+              "bytes": 2209
+            }
+          },
+          {
+            "profile": "linux-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/tools-debug/qualified-results.json",
+              "sha256": "d4bada8a0102691018c2103dc86fd2bf775e178e48fc13ffca2174f8d2fe3de4",
+              "bytes": 2216
+            }
+          }
+        ]
+      },
+      {
+        "id": "asset.import.publish",
+        "case": "featureworld.asset-import",
+        "passing_executions": [
+          {
+            "profile": "windows-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-debug/qualified-results.json",
+              "sha256": "992c41004219a881c18af86e7a35199b72511f2887a999a32623abd376bd3a94",
+              "bytes": 11400
+            }
+          },
+          {
+            "profile": "windows-release",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-release/qualified-results.json",
+              "sha256": "d6c0f48ae2a8bf2eb51979e41aa144bc34469b8c0d17d75d95398c1565bfc7c9",
+              "bytes": 11414
+            }
+          },
+          {
+            "profile": "windows-asan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-asan/qualified-results.json",
+              "sha256": "f0df257fd7b07869ae10e5df62e0b0f4cc393805dca6c1195e4063105d98c804",
+              "bytes": 11395
+            }
+          },
+          {
+            "profile": "linux-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-debug/qualified-results.json",
+              "sha256": "7a5ab2bae1856fd418b3b89cc3001cdc9f6087bf628381c2a06e6eacef8f883d",
+              "bytes": 10710
+            }
+          },
+          {
+            "profile": "linux-asan-ubsan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/qualified-results.json",
+              "sha256": "27470f6f39daf78a6fe3c9419eaf6f358ea8b17cad00137129eb5e94d1ce5240",
+              "bytes": 10668
+            }
+          },
+          {
+            "profile": "windows-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/tools-debug/qualified-results.json",
+              "sha256": "69c6c555398dee87433d3bc4f1af0ece97c5b092c323d15a4880eae330014131",
+              "bytes": 2209
+            }
+          },
+          {
+            "profile": "linux-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/tools-debug/qualified-results.json",
+              "sha256": "d4bada8a0102691018c2103dc86fd2bf775e178e48fc13ffca2174f8d2fe3de4",
+              "bytes": 2216
+            }
+          }
+        ]
+      },
+      {
+        "id": "asset.cache.query",
+        "case": "featureworld.asset-import",
+        "passing_executions": [
+          {
+            "profile": "windows-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-debug/qualified-results.json",
+              "sha256": "992c41004219a881c18af86e7a35199b72511f2887a999a32623abd376bd3a94",
+              "bytes": 11400
+            }
+          },
+          {
+            "profile": "windows-release",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-release/qualified-results.json",
+              "sha256": "d6c0f48ae2a8bf2eb51979e41aa144bc34469b8c0d17d75d95398c1565bfc7c9",
+              "bytes": 11414
+            }
+          },
+          {
+            "profile": "windows-asan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-asan/qualified-results.json",
+              "sha256": "f0df257fd7b07869ae10e5df62e0b0f4cc393805dca6c1195e4063105d98c804",
+              "bytes": 11395
+            }
+          },
+          {
+            "profile": "linux-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-debug/qualified-results.json",
+              "sha256": "7a5ab2bae1856fd418b3b89cc3001cdc9f6087bf628381c2a06e6eacef8f883d",
+              "bytes": 10710
+            }
+          },
+          {
+            "profile": "linux-asan-ubsan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/qualified-results.json",
+              "sha256": "27470f6f39daf78a6fe3c9419eaf6f358ea8b17cad00137129eb5e94d1ce5240",
+              "bytes": 10668
+            }
+          },
+          {
+            "profile": "windows-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/tools-debug/qualified-results.json",
+              "sha256": "69c6c555398dee87433d3bc4f1af0ece97c5b092c323d15a4880eae330014131",
+              "bytes": 2209
+            }
+          },
+          {
+            "profile": "linux-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/tools-debug/qualified-results.json",
+              "sha256": "d4bada8a0102691018c2103dc86fd2bf775e178e48fc13ffca2174f8d2fe3de4",
+              "bytes": 2216
+            }
+          }
+        ]
+      },
+      {
+        "id": "asset.cache.read",
+        "case": "featureworld.asset-import",
+        "passing_executions": [
+          {
+            "profile": "windows-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-debug/qualified-results.json",
+              "sha256": "992c41004219a881c18af86e7a35199b72511f2887a999a32623abd376bd3a94",
+              "bytes": 11400
+            }
+          },
+          {
+            "profile": "windows-release",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-release/qualified-results.json",
+              "sha256": "d6c0f48ae2a8bf2eb51979e41aa144bc34469b8c0d17d75d95398c1565bfc7c9",
+              "bytes": 11414
+            }
+          },
+          {
+            "profile": "windows-asan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-asan/qualified-results.json",
+              "sha256": "f0df257fd7b07869ae10e5df62e0b0f4cc393805dca6c1195e4063105d98c804",
+              "bytes": 11395
+            }
+          },
+          {
+            "profile": "linux-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-debug/qualified-results.json",
+              "sha256": "7a5ab2bae1856fd418b3b89cc3001cdc9f6087bf628381c2a06e6eacef8f883d",
+              "bytes": 10710
+            }
+          },
+          {
+            "profile": "linux-asan-ubsan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/qualified-results.json",
+              "sha256": "27470f6f39daf78a6fe3c9419eaf6f358ea8b17cad00137129eb5e94d1ce5240",
+              "bytes": 10668
+            }
+          },
+          {
+            "profile": "windows-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/tools-debug/qualified-results.json",
+              "sha256": "69c6c555398dee87433d3bc4f1af0ece97c5b092c323d15a4880eae330014131",
+              "bytes": 2209
+            }
+          },
+          {
+            "profile": "linux-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/tools-debug/qualified-results.json",
+              "sha256": "d4bada8a0102691018c2103dc86fd2bf775e178e48fc13ffca2174f8d2fe3de4",
+              "bytes": 2216
+            }
+          }
+        ]
+      },
+      {
+        "id": "asset.cache.usage",
+        "case": "featureworld.asset-import",
+        "passing_executions": [
+          {
+            "profile": "windows-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-debug/qualified-results.json",
+              "sha256": "992c41004219a881c18af86e7a35199b72511f2887a999a32623abd376bd3a94",
+              "bytes": 11400
+            }
+          },
+          {
+            "profile": "windows-release",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-release/qualified-results.json",
+              "sha256": "d6c0f48ae2a8bf2eb51979e41aa144bc34469b8c0d17d75d95398c1565bfc7c9",
+              "bytes": 11414
+            }
+          },
+          {
+            "profile": "windows-asan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-asan/qualified-results.json",
+              "sha256": "f0df257fd7b07869ae10e5df62e0b0f4cc393805dca6c1195e4063105d98c804",
+              "bytes": 11395
+            }
+          },
+          {
+            "profile": "linux-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-debug/qualified-results.json",
+              "sha256": "7a5ab2bae1856fd418b3b89cc3001cdc9f6087bf628381c2a06e6eacef8f883d",
+              "bytes": 10710
+            }
+          },
+          {
+            "profile": "linux-asan-ubsan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/qualified-results.json",
+              "sha256": "27470f6f39daf78a6fe3c9419eaf6f358ea8b17cad00137129eb5e94d1ce5240",
+              "bytes": 10668
+            }
+          },
+          {
+            "profile": "windows-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/tools-debug/qualified-results.json",
+              "sha256": "69c6c555398dee87433d3bc4f1af0ece97c5b092c323d15a4880eae330014131",
+              "bytes": 2209
+            }
+          },
+          {
+            "profile": "linux-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/tools-debug/qualified-results.json",
+              "sha256": "d4bada8a0102691018c2103dc86fd2bf775e178e48fc13ffca2174f8d2fe3de4",
+              "bytes": 2216
+            }
+          }
+        ]
+      },
+      {
+        "id": "asset.cache.reload",
+        "case": "featureworld.asset-import",
+        "passing_executions": [
+          {
+            "profile": "windows-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-debug/qualified-results.json",
+              "sha256": "992c41004219a881c18af86e7a35199b72511f2887a999a32623abd376bd3a94",
+              "bytes": 11400
+            }
+          },
+          {
+            "profile": "windows-release",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-release/qualified-results.json",
+              "sha256": "d6c0f48ae2a8bf2eb51979e41aa144bc34469b8c0d17d75d95398c1565bfc7c9",
+              "bytes": 11414
+            }
+          },
+          {
+            "profile": "windows-asan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-asan/qualified-results.json",
+              "sha256": "f0df257fd7b07869ae10e5df62e0b0f4cc393805dca6c1195e4063105d98c804",
+              "bytes": 11395
+            }
+          },
+          {
+            "profile": "linux-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-debug/qualified-results.json",
+              "sha256": "7a5ab2bae1856fd418b3b89cc3001cdc9f6087bf628381c2a06e6eacef8f883d",
+              "bytes": 10710
+            }
+          },
+          {
+            "profile": "linux-asan-ubsan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/qualified-results.json",
+              "sha256": "27470f6f39daf78a6fe3c9419eaf6f358ea8b17cad00137129eb5e94d1ce5240",
+              "bytes": 10668
+            }
+          },
+          {
+            "profile": "windows-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/tools-debug/qualified-results.json",
+              "sha256": "69c6c555398dee87433d3bc4f1af0ece97c5b092c323d15a4880eae330014131",
+              "bytes": 2209
+            }
+          },
+          {
+            "profile": "linux-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/tools-debug/qualified-results.json",
+              "sha256": "d4bada8a0102691018c2103dc86fd2bf775e178e48fc13ffca2174f8d2fe3de4",
+              "bytes": 2216
+            }
+          }
+        ]
+      },
+      {
+        "id": "asset.cache.prune",
+        "case": "featureworld.asset-import",
+        "passing_executions": [
+          {
+            "profile": "windows-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-debug/qualified-results.json",
+              "sha256": "992c41004219a881c18af86e7a35199b72511f2887a999a32623abd376bd3a94",
+              "bytes": 11400
+            }
+          },
+          {
+            "profile": "windows-release",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-release/qualified-results.json",
+              "sha256": "d6c0f48ae2a8bf2eb51979e41aa144bc34469b8c0d17d75d95398c1565bfc7c9",
+              "bytes": 11414
+            }
+          },
+          {
+            "profile": "windows-asan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-asan/qualified-results.json",
+              "sha256": "f0df257fd7b07869ae10e5df62e0b0f4cc393805dca6c1195e4063105d98c804",
+              "bytes": 11395
+            }
+          },
+          {
+            "profile": "linux-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-debug/qualified-results.json",
+              "sha256": "7a5ab2bae1856fd418b3b89cc3001cdc9f6087bf628381c2a06e6eacef8f883d",
+              "bytes": 10710
+            }
+          },
+          {
+            "profile": "linux-asan-ubsan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/qualified-results.json",
+              "sha256": "27470f6f39daf78a6fe3c9419eaf6f358ea8b17cad00137129eb5e94d1ce5240",
+              "bytes": 10668
+            }
+          },
+          {
+            "profile": "windows-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/tools-debug/qualified-results.json",
+              "sha256": "69c6c555398dee87433d3bc4f1af0ece97c5b092c323d15a4880eae330014131",
+              "bytes": 2209
+            }
+          },
+          {
+            "profile": "linux-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/tools-debug/qualified-results.json",
+              "sha256": "d4bada8a0102691018c2103dc86fd2bf775e178e48fc13ffca2174f8d2fe3de4",
+              "bytes": 2216
+            }
+          }
+        ]
+      },
+      {
+        "id": "asset.cache.clear",
+        "case": "featureworld.asset-import",
+        "passing_executions": [
+          {
+            "profile": "windows-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-debug/qualified-results.json",
+              "sha256": "992c41004219a881c18af86e7a35199b72511f2887a999a32623abd376bd3a94",
+              "bytes": 11400
+            }
+          },
+          {
+            "profile": "windows-release",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-release/qualified-results.json",
+              "sha256": "d6c0f48ae2a8bf2eb51979e41aa144bc34469b8c0d17d75d95398c1565bfc7c9",
+              "bytes": 11414
+            }
+          },
+          {
+            "profile": "windows-asan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-asan/qualified-results.json",
+              "sha256": "f0df257fd7b07869ae10e5df62e0b0f4cc393805dca6c1195e4063105d98c804",
+              "bytes": 11395
+            }
+          },
+          {
+            "profile": "linux-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-debug/qualified-results.json",
+              "sha256": "7a5ab2bae1856fd418b3b89cc3001cdc9f6087bf628381c2a06e6eacef8f883d",
+              "bytes": 10710
+            }
+          },
+          {
+            "profile": "linux-asan-ubsan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/qualified-results.json",
+              "sha256": "27470f6f39daf78a6fe3c9419eaf6f358ea8b17cad00137129eb5e94d1ce5240",
+              "bytes": 10668
+            }
+          },
+          {
+            "profile": "windows-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/tools-debug/qualified-results.json",
+              "sha256": "69c6c555398dee87433d3bc4f1af0ece97c5b092c323d15a4880eae330014131",
+              "bytes": 2209
+            }
+          },
+          {
+            "profile": "linux-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/tools-debug/qualified-results.json",
+              "sha256": "d4bada8a0102691018c2103dc86fd2bf775e178e48fc13ffca2174f8d2fe3de4",
+              "bytes": 2216
+            }
+          }
+        ]
+      },
+      {
+        "id": "asset.cache.recover",
+        "case": "featureworld.asset-import",
+        "passing_executions": [
+          {
+            "profile": "windows-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-debug/qualified-results.json",
+              "sha256": "992c41004219a881c18af86e7a35199b72511f2887a999a32623abd376bd3a94",
+              "bytes": 11400
+            }
+          },
+          {
+            "profile": "windows-release",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-release/qualified-results.json",
+              "sha256": "d6c0f48ae2a8bf2eb51979e41aa144bc34469b8c0d17d75d95398c1565bfc7c9",
+              "bytes": 11414
+            }
+          },
+          {
+            "profile": "windows-asan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/windows-asan/qualified-results.json",
+              "sha256": "f0df257fd7b07869ae10e5df62e0b0f4cc393805dca6c1195e4063105d98c804",
+              "bytes": 11395
+            }
+          },
+          {
+            "profile": "linux-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-debug/qualified-results.json",
+              "sha256": "7a5ab2bae1856fd418b3b89cc3001cdc9f6087bf628381c2a06e6eacef8f883d",
+              "bytes": 10710
+            }
+          },
+          {
+            "profile": "linux-asan-ubsan",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/linux-asan-ubsan/qualified-results.json",
+              "sha256": "27470f6f39daf78a6fe3c9419eaf6f358ea8b17cad00137129eb5e94d1ce5240",
+              "bytes": 10668
+            }
+          },
+          {
+            "profile": "windows-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/boundary-qualified-final/tools-debug/qualified-results.json",
+              "sha256": "69c6c555398dee87433d3bc4f1af0ece97c5b092c323d15a4880eae330014131",
+              "bytes": 2209
+            }
+          },
+          {
+            "profile": "linux-tools-debug",
+            "tests": [
+              "shark.tools.asset-import",
+              "shark.tools.asset-import-process",
+              "shark.tools.featureworld",
+              "shark.tools.featureworld-process",
+              "shark.tools.scene-qualification"
+            ],
+            "qualified_results": {
+              "path": "out/11b-work/wsl/boundary-qualified/tools-debug/qualified-results.json",
+              "sha256": "d4bada8a0102691018c2103dc86fd2bf775e178e48fc13ffca2174f8d2fe3de4",
+              "bytes": 2216
+            }
+          }
+        ]
+      }
+    ]
+  },
+  "protected_packages": {
+    "native": {
+      "path": "out/11b-work/native-audit/summary.json",
+      "sha256": "8ae4d9cba6fc5816e8d2c3a2e75186fdf09bea5cf2d0904705d44ae4104e4c7d",
+      "bytes": 3069
+    },
+    "runtime_manifest": {
+      "path": "out/11b-work/native-audit/runtime-package-manifest.json",
+      "sha256": "ab56a497c3298ff4ac2f1e17747b3486d447383fa68a413ce7827a8975b4c133",
+      "bytes": 13026
+    },
+    "wsl": {
+      "path": "out/11b-work/wsl/protected-final/summary.json",
+      "sha256": "f6038ed4f0de087ade537137f91d00839faa7d6285ac59786d631555b37b6825",
+      "bytes": 521
+    },
+    "server_closure": {
+      "path": "out/11b-work/wsl/protected-final/server-closure.json",
+      "sha256": "27ba6f2bddae07a3c0731947babee0d87178917e1d20305f41569c3d84c275f8",
+      "bytes": 2975848
+    },
+    "sdk_free": {
+      "path": "out/11b-work/wsl/sdk-free.json",
+      "sha256": "a83717a6ca07712221e071afa1af876e587a5428603ee2e380367198628d354c",
+      "bytes": 122
+    }
+  },
+  "storage_retention": {
+    "server_package": {
+      "path": "out/11b-work/server-package-retention.json",
+      "sha256": "1d3c247cb187355e43f4f45e2490511f86a2b78466a1e9da6512f894a815f92f",
+      "bytes": 3152
+    },
+    "failed_fixture": {
+      "path": "out/11b-work/failed-fixture-retention.json",
+      "sha256": "8e104f091e408c9ba35f019f9e1fbd86905513137f58764023e614b972dbd17c",
+      "bytes": 65538
+    },
+    "profiling_traces": {
+      "path": "out/11b-work/boundary-profile-retention.json",
+      "sha256": "285f8467f3e3734f45cd930e4d53396ac076fb30bad19e76610a97ae3f9bb024",
+      "bytes": 905
+    },
+    "native_draft_graphs": {
+      "path": "out/11b-work/boundary-draft-windows-retention.json",
+      "sha256": "c62e62dc44d8973a5162807c915d33aa86f887512a470c0b8febab51be4997dd",
+      "bytes": 73273
+    },
+    "wsl_draft_graphs": {
+      "path": "out/11b-work/wsl/boundary-draft-wsl-retention.json",
+      "sha256": "588aa0e20d462a107c006f5a8189ebd2b7a30093cb1d685b1acb88587ce55550",
+      "bytes": 65678
+    }
+  },
+  "boundary_correction": {
+    "native": {
+      "path": "out/11b-work/boundary-qualified-final/summary.json",
+      "sha256": "bffbbc221ddc775f28ea333c9c42dc6c50340c328e5bc1ebae2755f247566392",
+      "bytes": 684
+    },
+    "wsl": {
+      "path": "out/11b-work/wsl/boundary-qualified/summary.json",
+      "sha256": "7deb783bf82c0df6fa28a70a15eaee1ecb4b9dea76c0595be678451fcb461dca",
+      "bytes": 714
+    },
+    "base_boundary_checks": 27,
+    "allowed_controls": 3,
+    "rejection_controls": 33,
+    "closure_unit_cases": 43,
+    "unchanged_timeouts_seconds": {
+      "graph": 10,
+      "fixture_family": 30,
+      "each_rejection": 5
+    },
+    "original_profile": {
+      "path": "out/11b-work/wsl/boundary-profile/summary.json",
+      "sha256": "e8f59ee7ebdc955fca3461e5f201b731a59f17a2cf3190d7356e9bba93f2e57f",
+      "bytes": 783
+    },
+    "memoized_profile": {
+      "path": "out/11b-work/wsl/boundary-profile-memoized/summary.json",
+      "sha256": "021d38a330afcd99cae41fe4cfb7ecb0f2cb1e0517594d56fb9926d279fb9d87",
+      "bytes": 783
+    },
+    "actual_validation_refresh_executions": 81
+  },
+  "preserved_attempts": [
+    {
+      "path": "out/11b-work/focused-initial.xml",
+      "outcome": "FAIL",
+      "reason": "Initial recursive input collection overflowed the Windows stack at the fixed closure workload; replaced with bounded explicit DFS. Windows narrow process argv lost Unicode paths; fixed with the existing UTF-8 wmain pattern."
+    },
+    {
+      "path": "out/11b-work/limits-focused.xml",
+      "outcome": "FAIL",
+      "reason": "The added aggregate payload fixture tried to create already present metadata; changed the fixture to use expected native metadata revisions."
+    },
+    {
+      "path": "out/11b-work/limits-corrected.xml",
+      "outcome": "FAIL",
+      "reason": "A diagnostic ternary needed parentheses in Catch INFO; compile failure corrected before the implementation freeze. A stale test run is not qualification."
+    },
+    {
+      "path": "out/11b-work/wsl/linux-debug/tests.xml",
+      "outcome": "FAIL",
+      "reason": "One 10-second dependency-graph timeout; all 104 other cases pass. The isolated unchanged-limit retry also times out. Profiling found repeated canonical path resolution; per-invocation canonical-path reuse fixes it while retaining every per-root check and adding one independent rejection control. Final graph and all 36 controls rerun in each profile."
+    },
+    {
+      "path": "out/11b-work/wsl/protected/server-closure.json",
+      "outcome": "FAIL",
+      "reason": "The narrow source/dependency name heuristic matched runtime inside Core crypto_runtime.cpp. Only the two exact private Core paths and an exact reviewed compiler source/object identity are permitted; flags, lookalikes, generated/misplaced inputs and all prior controls still reject. Three new tests make 43 closure cases; all profiles and actual protected package requalify."
+    }
+  ],
+  "not_run": [
+    "11c background jobs, cancellation and deduplication",
+    "11d full REQ-11 integrated gate",
+    "source decoders 12/24/27, final cook 31 and terminal/editor adapters 15/16"
+  ],
+  "next": "11c, bounded background jobs",
+  "cross_profile_reproducibility": {
+    "status": "PASS",
+    "snapshots": 35,
+    "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+    "root_key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0",
+    "actual_snapshots": [
+      {
+        "profile": "windows-debug",
+        "phase": "staged",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-debug",
+        "phase": "written",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-debug",
+        "phase": "flushed",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-debug",
+        "phase": "before_publish",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-debug",
+        "phase": "published",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-release",
+        "phase": "staged",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-release",
+        "phase": "written",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-release",
+        "phase": "flushed",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-release",
+        "phase": "before_publish",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-release",
+        "phase": "published",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-asan",
+        "phase": "staged",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-asan",
+        "phase": "written",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-asan",
+        "phase": "flushed",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-asan",
+        "phase": "before_publish",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-asan",
+        "phase": "published",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "linux-debug",
+        "phase": "staged",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "linux-debug",
+        "phase": "written",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "linux-debug",
+        "phase": "flushed",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "linux-debug",
+        "phase": "before_publish",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "linux-debug",
+        "phase": "published",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "linux-asan-ubsan",
+        "phase": "staged",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "linux-asan-ubsan",
+        "phase": "written",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "linux-asan-ubsan",
+        "phase": "flushed",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "linux-asan-ubsan",
+        "phase": "before_publish",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "linux-asan-ubsan",
+        "phase": "published",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-tools-debug",
+        "phase": "staged",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-tools-debug",
+        "phase": "written",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-tools-debug",
+        "phase": "flushed",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-tools-debug",
+        "phase": "before_publish",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "windows-tools-debug",
+        "phase": "published",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "linux-tools-debug",
+        "phase": "staged",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "linux-tools-debug",
+        "phase": "written",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "linux-tools-debug",
+        "phase": "flushed",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "linux-tools-debug",
+        "phase": "before_publish",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      },
+      {
+        "profile": "linux-tools-debug",
+        "phase": "published",
+        "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+        "bytes": 1960,
+        "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+      }
+    ]
+  },
+  "qualification_helpers": [
+    {
+      "path": "out/11b-work/apply_boundary_fix.py",
+      "sha256": "c247cb004c17615eb8836ccba7cc2ddacd30448d5656de5720cfe977755077df",
+      "bytes": 1243
+    },
+    {
+      "path": "out/11b-work/boundary_fixtures.py",
+      "sha256": "af37d39777e0a23d4ae3a15558006a64998edcb0ae55dfbbaee65aef6e09fb17",
+      "bytes": 766
+    },
+    {
+      "path": "out/11b-work/close_receipt.py",
+      "sha256": "ec675a88877eefd5a744d1f62042ab9e03b9cdd58f80e9f3d5a702b4e1927ee4",
+      "bytes": 13489
+    },
+    {
+      "path": "out/11b-work/native_audit.py",
+      "sha256": "c1ee7507582b5517fd0e3256b40c937ea5d8b758ddd86421b0542596fb723fc8",
+      "bytes": 3861
+    },
+    {
+      "path": "out/11b-work/native_final_boundaries.py",
+      "sha256": "41a191a2f7904b55ea03e0a943b7a4563605b6ae9c94c2ee3b0337e432a13189",
+      "bytes": 1832
+    },
+    {
+      "path": "out/11b-work/native_final_boundaries_retry.py",
+      "sha256": "f949ab9050e0c5195fa8fe6f11a144c125768c749185ae26d235def5f467971c",
+      "bytes": 1838
+    },
+    {
+      "path": "out/11b-work/prepare_boundary_draft.py",
+      "sha256": "15f5c56be72ab412aabb89ad6446571da124723b8094a16a71e17a8b5bd4934f",
+      "bytes": 1881
+    },
+    {
+      "path": "out/11b-work/prepare_boundary_fixtures.py",
+      "sha256": "29c613586e91e0b5485dafec9a84edfe9ef4f2bd447e979e80c87e786d3d7244",
+      "bytes": 2786
+    },
+    {
+      "path": "out/11b-work/prepare_drivers.py",
+      "sha256": "21105852e99aff2f5dd449750cf7981b01b048b04d04fe2d862cea0d00ae1a8a",
+      "bytes": 6090
+    },
+    {
+      "path": "out/11b-work/prepare_final_boundaries.py",
+      "sha256": "a0cc20c6572c0fb3a66cab596287903b9a43afb3097ee47f8fd1feed5f30aa73",
+      "bytes": 392
+    },
+    {
+      "path": "out/11b-work/prepare_native_retry.py",
+      "sha256": "88cf941324cb64c73cc3e636d1f50ecb2e74a5a1a3a4bad951382017f547c5a1",
+      "bytes": 284
+    },
+    {
+      "path": "out/11b-work/prepare_profile.py",
+      "sha256": "d4376ac17cafe535d27045c3d7f908150bb0112306198205bcc15ce14238167b",
+      "bytes": 309
+    },
+    {
+      "path": "out/11b-work/prepare_remaining.py",
+      "sha256": "b05c997bc153bf79e5bf68100371b562226c7a534da909e4ec7c310cdfb8077a",
+      "bytes": 1851
+    },
+    {
+      "path": "out/11b-work/prepare_resume.py",
+      "sha256": "2c0fe7f776721f7888dee0556dd2b733952f0d621f78a01b30482852b53464a2",
+      "bytes": 893
+    },
+    {
+      "path": "out/11b-work/profile_boundary.py",
+      "sha256": "5f6a47ef5ffbf25b02241b9567894f0a51c47888c07acfce5398cac57e0345b1",
+      "bytes": 1141
+    },
+    {
+      "path": "out/11b-work/profile_boundary_draft.py",
+      "sha256": "c2d71bb1b07dfce8d12588ca92d1d0a5966a0a3f1b331d78f2c240bf4625becc",
+      "bytes": 1163
+    },
+    {
+      "path": "out/11b-work/public-api.py",
+      "sha256": "fd22de879feae2d79fb7b94ff96d0705fb4503e40c57b73ae3dd347b00a646f5",
+      "bytes": 6207
+    },
+    {
+      "path": "out/11b-work/qualify.py",
+      "sha256": "fc0d71e9f5bc6185482c1f0a0442bf6de0a0693a65358e5eb7f24596f26299df",
+      "bytes": 5535
+    },
+    {
+      "path": "out/11b-work/qualify_boundaries.py",
+      "sha256": "7e887e22870f70564e00e634bfa1bab199c0d0c72ba744e54309440c1fc8a15d",
+      "bytes": 7612
+    },
+    {
+      "path": "out/11b-work/reconcile_boundary.py",
+      "sha256": "37be446530dd49cbc1434f5592d64f57f12f5802291269739d719475b494c4a8",
+      "bytes": 3127
+    },
+    {
+      "path": "out/11b-work/retain_draft_fixtures.py",
+      "sha256": "30740c98b87df82422d3aa7b61c800b7761682dc5746ad7b48a2f918fa749866",
+      "bytes": 1822
+    },
+    {
+      "path": "out/11b-work/retain_failed_fixture.py",
+      "sha256": "ee1c442107050f1f7df570cbbebaa856d049c37590949f24d1029dcd9e679b2e",
+      "bytes": 2469
+    },
+    {
+      "path": "out/11b-work/retain_package.py",
+      "sha256": "5ed9317a9435344de5bbb6db7937b633da34a58cab318aef3dac9a35504e0573",
+      "bytes": 2359
+    },
+    {
+      "path": "out/11b-work/retain_profiles.py",
+      "sha256": "6e978fc3225e3e6061aaa437142ddea761f5b64fb5755efbbc600ee1b91a75e3",
+      "bytes": 1317
+    },
+    {
+      "path": "out/11b-work/sanitizer_audit.py",
+      "sha256": "d334c0fc7de37ce01d2b72be687b94486a4ad4355776c3a73893d81d112cf50a",
+      "bytes": 2682
+    },
+    {
+      "path": "out/11b-work/update_manifest.py",
+      "sha256": "f24028b13fe2df83a5103ad24e1e2818b990cb075db3de46c3829cd283ac4013",
+      "bytes": 3379
+    },
+    {
+      "path": "out/11b-work/windows_boundary_draft.py",
+      "sha256": "c4eba3b5b1baec76c5a9d73d475083faf37de212a6c5ab77aee2f7f3b045086e",
+      "bytes": 791
+    },
+    {
+      "path": "out/11b-work/wsl-boundary-fixtures.sh",
+      "sha256": "abadf6890957c630dd1da8082dff9e8dd6f7813217a517ed850c0ec5f70c43cf",
+      "bytes": 1557
+    },
+    {
+      "path": "out/11b-work/wsl-final-boundaries.sh",
+      "sha256": "5000bf80d002e989c0d982ed575b2da2f518ce19b9dbdfc3e7b25b0361e76e98",
+      "bytes": 3301
+    },
+    {
+      "path": "out/11b-work/wsl-profile-draft.sh",
+      "sha256": "9b8b8ec2462fae28d99963a0e8ce423bfd210ced90139e45e0d586244f9fc575",
+      "bytes": 1556
+    },
+    {
+      "path": "out/11b-work/wsl-profile.sh",
+      "sha256": "1452a750bda46918076da458fd50731ca8f587336518ec3448f87bd2abb88f56",
+      "bytes": 1538
+    },
+    {
+      "path": "out/11b-work/wsl-remaining.sh",
+      "sha256": "4063338e2aa731cff8ec057c714f4ecf1c747eb865fcf8a261380329fb7195fb",
+      "bytes": 3284
+    },
+    {
+      "path": "out/11b-work/wsl-resume.sh",
+      "sha256": "d1caa220057bc4ec7308923e7a0cd11229b91dee68e3802f3e54c360d4fe2f9b",
+      "bytes": 3275
+    },
+    {
+      "path": "out/11b-work/wsl.py",
+      "sha256": "6afbfa66cf0ec0a1fc6b9e4f7160fde5adbcb732ac506ced6715fb9fcbf8f7e8",
+      "bytes": 1971
+    },
+    {
+      "path": "out/11b-work/wsl.sh",
+      "sha256": "4470d0be9c185dbbd2a8c4f2aca569302947e61f8c014d99acfd5bcbda5dfc1e",
+      "bytes": 3254
+    },
+    {
+      "path": "out/11b-work/wsl_final_boundaries.py",
+      "sha256": "b63f19034cff9cf1245d319b9ab13180f5d23e52c8bc757b528974e7e900b737",
+      "bytes": 3157
+    },
+    {
+      "path": "out/11b-work/wsl_protected.py",
+      "sha256": "65c915244628cf0ae13fe89f300fe73b2707d36db5899a16c7aa56f3bc0a77ad",
+      "bytes": 1519
+    },
+    {
+      "path": "out/11b-work/wsl_remaining.py",
+      "sha256": "ba77d7799594b1a0407d2f4a1fc0ec8761c289ddc62dfc80a40f77b2831c6ce7",
+      "bytes": 2587
+    },
+    {
+      "path": "out/11b-work/wsl_resume.py",
+      "sha256": "ce3905baae63035617c81629d349503b2d0a7afcbb49cd64cc834a1050af1d7b",
+      "bytes": 1985
+    }
+  ]
+}

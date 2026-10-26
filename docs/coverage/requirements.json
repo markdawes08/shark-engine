@@ -218,13 +218,20 @@
       "planned_fixture": "AssetRenameMove, ImportDependencyInvalidation, ImportDedupCancelFailure and ImportReproducibility fixtures; FeatureWorld/AssetIdentity uses the imported references.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "11a identity/metadata/catalog is PASS under the current-machine scope; full REQ-11 awaits 11b dependency/import/cache, 11c jobs and 11d integrated qualification.",
+        "reason": "11a identity/metadata/catalog and 11b dependencies/import/cache are PASS under current-machine scope; full REQ-11 awaits 11c bounded jobs and 11d integrated qualification.",
         "checkpoints": {
           "11a": {
             "status": "PASS",
             "evidence": {
               "path": "docs/coverage/evidence/11a-asset-identity.json",
               "sha256": "9a35f750cbefd0b942ee7a493b47863d6c3676f5f6c3d04a3e87288962b89ea9"
+            }
+          },
+          "11b": {
+            "status": "PASS",
+            "evidence": {
+              "path": "docs/coverage/evidence/11b-asset-import-cache.json",
+              "sha256": "2892311895ae8867b92fbdba812e0d6817a42a8347a88e6d8bbb30181c23e78b"
             }
           }
         }
@@ -830,6 +837,62 @@
   "implemented_surface": {
     "features": [
       {
+        "id": "tools.asset-import-cache",
+        "name": "Bounded deterministic dependency import and atomic development cache",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-import",
+          "shark.tools.asset-import-process",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_import_tests.cpp",
+          "tests/asset_import_process.cpp",
+          "tools/tests/test_asset_import_process.py",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-import-cache.md"
+        ],
+        "fixture_reason": "Actual native byte import prepares a dependency closure without publication, then atomically commits, queries, reuses, invalidates, prunes, reopens and clears it through one ProjectFiles/catalog owner. Isolated tests retain graph/resource bounds, stale inputs, callback failures, corruption, private-side rejection and real process interruption/recovery. Jobs/adapters keep11c/15/16.",
+        "featureworld_cases": [
+          "featureworld.asset-import"
+        ]
+      },
+      {
+        "id": "core.content-digest",
+        "name": "SHA-256 content values sharing the existing private TLS runtime",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.core.content-digest",
+          "shark.core.net-mtls",
+          "shark.tools.asset-import"
+        ],
+        "test_sources": [
+          "tests/core_digest_tests.cpp",
+          "tests/core_net_mtls_tests.cpp",
+          "tests/asset_import_tests.cpp"
+        ],
+        "fixtures": [
+          "tests/fixtures/network/server.pem",
+          "docs/asset-import-cache.md"
+        ],
+        "fixture_reason": "Independent algorithm vectors, canonical digest parsing, concurrent hash/certificate callers and actual cache digests use the existing pinned PSA implementation and lifetime.",
+        "featureworld_cases": [
+          "featureworld.asset-import"
+        ]
+      },
+      {
         "id": "tools.asset-identity",
         "name": "Persistent asset sidecars and bounded revisioned CPU catalog",
         "requirement_ids": [
@@ -904,7 +967,7 @@
           "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
           "engine_tools/src/feature_world.cpp"
         ],
-        "fixture_reason": "Small saved source project with six executable native CPU cases and independent expected state. Network, durable storage, platform and graphics qualification keep their isolated fixtures; no renderer, Lua or MMO simulation is inferred.",
+        "fixture_reason": "Small saved source project with seven executable native CPU cases and independent expected state. Network, durable storage, platform and graphics qualification keep their isolated fixtures; no renderer, Lua or MMO simulation is inferred.",
         "featureworld_cases": [
           "featureworld.components",
           "featureworld.commands",
@@ -2689,6 +2752,316 @@
         "featureworld_cases": [
           "featureworld.asset-identity"
         ]
+      },
+      {
+        "id": "asset.importers",
+        "name": "AssetImports::importers",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-import",
+          "shark.tools.asset-import-process",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_import_tests.cpp",
+          "tests/asset_import_process.cpp",
+          "tools/tests/test_asset_import_process.py",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-import-cache.md"
+        ],
+        "fixture_reason": "Actual native byte import prepares a dependency closure without publication, then atomically commits, queries, reuses, invalidates, prunes, reopens and clears it through one ProjectFiles/catalog owner. Isolated tests retain graph/resource bounds, stale inputs, callback failures, corruption, private-side rejection and real process interruption/recovery. Jobs/adapters keep11c/15/16.",
+        "featureworld_cases": [
+          "featureworld.asset-import"
+        ]
+      },
+      {
+        "id": "asset.import.prepare",
+        "name": "AssetImports::prepare",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-import",
+          "shark.tools.asset-import-process",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_import_tests.cpp",
+          "tests/asset_import_process.cpp",
+          "tools/tests/test_asset_import_process.py",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-import-cache.md"
+        ],
+        "fixture_reason": "Actual native byte import prepares a dependency closure without publication, then atomically commits, queries, reuses, invalidates, prunes, reopens and clears it through one ProjectFiles/catalog owner. Isolated tests retain graph/resource bounds, stale inputs, callback failures, corruption, private-side rejection and real process interruption/recovery. Jobs/adapters keep11c/15/16.",
+        "featureworld_cases": [
+          "featureworld.asset-import"
+        ]
+      },
+      {
+        "id": "asset.import.publish",
+        "name": "AssetImports::publish",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-import",
+          "shark.tools.asset-import-process",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_import_tests.cpp",
+          "tests/asset_import_process.cpp",
+          "tools/tests/test_asset_import_process.py",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-import-cache.md"
+        ],
+        "fixture_reason": "Actual native byte import prepares a dependency closure without publication, then atomically commits, queries, reuses, invalidates, prunes, reopens and clears it through one ProjectFiles/catalog owner. Isolated tests retain graph/resource bounds, stale inputs, callback failures, corruption, private-side rejection and real process interruption/recovery. Jobs/adapters keep11c/15/16.",
+        "featureworld_cases": [
+          "featureworld.asset-import"
+        ]
+      },
+      {
+        "id": "asset.cache.query",
+        "name": "AssetImports::query",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-import",
+          "shark.tools.asset-import-process",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_import_tests.cpp",
+          "tests/asset_import_process.cpp",
+          "tools/tests/test_asset_import_process.py",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-import-cache.md"
+        ],
+        "fixture_reason": "Actual native byte import prepares a dependency closure without publication, then atomically commits, queries, reuses, invalidates, prunes, reopens and clears it through one ProjectFiles/catalog owner. Isolated tests retain graph/resource bounds, stale inputs, callback failures, corruption, private-side rejection and real process interruption/recovery. Jobs/adapters keep11c/15/16.",
+        "featureworld_cases": [
+          "featureworld.asset-import"
+        ]
+      },
+      {
+        "id": "asset.cache.read",
+        "name": "AssetImports::read",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-import",
+          "shark.tools.asset-import-process",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_import_tests.cpp",
+          "tests/asset_import_process.cpp",
+          "tools/tests/test_asset_import_process.py",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-import-cache.md"
+        ],
+        "fixture_reason": "Actual native byte import prepares a dependency closure without publication, then atomically commits, queries, reuses, invalidates, prunes, reopens and clears it through one ProjectFiles/catalog owner. Isolated tests retain graph/resource bounds, stale inputs, callback failures, corruption, private-side rejection and real process interruption/recovery. Jobs/adapters keep11c/15/16.",
+        "featureworld_cases": [
+          "featureworld.asset-import"
+        ]
+      },
+      {
+        "id": "asset.cache.usage",
+        "name": "AssetImports::usage",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-import",
+          "shark.tools.asset-import-process",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_import_tests.cpp",
+          "tests/asset_import_process.cpp",
+          "tools/tests/test_asset_import_process.py",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-import-cache.md"
+        ],
+        "fixture_reason": "Actual native byte import prepares a dependency closure without publication, then atomically commits, queries, reuses, invalidates, prunes, reopens and clears it through one ProjectFiles/catalog owner. Isolated tests retain graph/resource bounds, stale inputs, callback failures, corruption, private-side rejection and real process interruption/recovery. Jobs/adapters keep11c/15/16.",
+        "featureworld_cases": [
+          "featureworld.asset-import"
+        ]
+      },
+      {
+        "id": "asset.cache.reload",
+        "name": "AssetImports::reload",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-import",
+          "shark.tools.asset-import-process",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_import_tests.cpp",
+          "tests/asset_import_process.cpp",
+          "tools/tests/test_asset_import_process.py",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-import-cache.md"
+        ],
+        "fixture_reason": "Actual native byte import prepares a dependency closure without publication, then atomically commits, queries, reuses, invalidates, prunes, reopens and clears it through one ProjectFiles/catalog owner. Isolated tests retain graph/resource bounds, stale inputs, callback failures, corruption, private-side rejection and real process interruption/recovery. Jobs/adapters keep11c/15/16.",
+        "featureworld_cases": [
+          "featureworld.asset-import"
+        ]
+      },
+      {
+        "id": "asset.cache.prune",
+        "name": "AssetImports::prune",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-import",
+          "shark.tools.asset-import-process",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_import_tests.cpp",
+          "tests/asset_import_process.cpp",
+          "tools/tests/test_asset_import_process.py",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-import-cache.md"
+        ],
+        "fixture_reason": "Actual native byte import prepares a dependency closure without publication, then atomically commits, queries, reuses, invalidates, prunes, reopens and clears it through one ProjectFiles/catalog owner. Isolated tests retain graph/resource bounds, stale inputs, callback failures, corruption, private-side rejection and real process interruption/recovery. Jobs/adapters keep11c/15/16.",
+        "featureworld_cases": [
+          "featureworld.asset-import"
+        ]
+      },
+      {
+        "id": "asset.cache.clear",
+        "name": "AssetImports::clear",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-import",
+          "shark.tools.asset-import-process",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_import_tests.cpp",
+          "tests/asset_import_process.cpp",
+          "tools/tests/test_asset_import_process.py",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-import-cache.md"
+        ],
+        "fixture_reason": "Actual native byte import prepares a dependency closure without publication, then atomically commits, queries, reuses, invalidates, prunes, reopens and clears it through one ProjectFiles/catalog owner. Isolated tests retain graph/resource bounds, stale inputs, callback failures, corruption, private-side rejection and real process interruption/recovery. Jobs/adapters keep11c/15/16.",
+        "featureworld_cases": [
+          "featureworld.asset-import"
+        ]
+      },
+      {
+        "id": "asset.cache.recover",
+        "name": "AssetImports::recover",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-import",
+          "shark.tools.asset-import-process",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_import_tests.cpp",
+          "tests/asset_import_process.cpp",
+          "tools/tests/test_asset_import_process.py",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-import-cache.md"
+        ],
+        "fixture_reason": "Actual native byte import prepares a dependency closure without publication, then atomically commits, queries, reuses, invalidates, prunes, reopens and clears it through one ProjectFiles/catalog owner. Isolated tests retain graph/resource bounds, stale inputs, callback failures, corruption, private-side rejection and real process interruption/recovery. Jobs/adapters keep11c/15/16.",
+        "featureworld_cases": [
+          "featureworld.asset-import"
+        ]
       }
                 ],
     "lua_api": []
@@ -2702,7 +3075,8 @@
       "featureworld.batches-history",
       "featureworld.retries",
       "featureworld.persistence",
-      "featureworld.asset-identity"
+      "featureworld.asset-identity",
+      "featureworld.asset-import"
     ],
     "case_source": "engine_tools/src/feature_world.cpp"
   }

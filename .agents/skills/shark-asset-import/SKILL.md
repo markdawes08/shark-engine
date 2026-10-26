@@ -5,6 +5,16 @@ description: Implement or change Shark asset import and cache behavior with boun
 
 # Shark asset import
 
+11b implements [dependency imports and the development cache](../../../docs/asset-import-cache.md)
+under [ADR 0026](../../../docs/architecture/0026-development-asset-cache.md).
+Preserve `shark.tools.asset-import` (90 seconds, Catch seed 1337), the real
+`shark.tools.asset-import-process` interruption fixture (120 seconds, 59 checks),
+the seventh native FeatureWorld case, and all earlier cases/limits. Core content
+hashing shares the existing private TLS crypto runtime; Core changes refresh both
+WSL Server profiles. Keep source/payload/closure/cache budgets independent,
+publication atomic, last-valid dependency closures retained, and recovery explicit.
+Background jobs remain 11c; there are no source decoders or live-thread imports.
+
 Read [AGENTS.md](../../../AGENTS.md),
 [decoder/dependency choices](../../../docs/architecture/0002-dependencies.md),
 [formats and identity](../../../docs/architecture/0004-formats-and-identity.md)
@@ -20,8 +30,8 @@ existing ProjectFiles owner. Follow the [asset checkpoints](../../../docs/roadma
 `featureworld.asset-identity` case and all earlier workloads. The saved asset
 reference is bounded scene extras, not a new component or scene schema. Sidecars
 and sources move together; missing sources retain their ID, while duplicate IDs
-reject a complete catalog candidate. Cache/import/jobs remain11b/11c, source
-decoders12, audio24 and HDRI27. There is no import CLI command yet.
+reject a complete catalog candidate. Import/cache follows 11b above; background
+jobs remain 11c, source decoders 12, audio 24 and HDRI 27. There is no import CLI command yet.
 Use the existing native CPU checks from [building](../../../docs/building.md)
 and `python tools/validate_contract.py` for shared-code/contract changes without
 claiming import/cache behavior was exercised by identity tests. Run the actual

@@ -4,7 +4,7 @@ foreach(shark_case IN ITEMS allowed server-only security-flags security-flag-inj
         include-client include-authoring source-client source-authoring include-json source-json
         core-storage runtime-storage tools-storage storage-authoring storage-client utility-storage
         include-sqlite source-sqlite include-storage source-storage editor-storage include-editor-storage
-        runner-client runner-storage)
+        runner-client runner-storage shared-storage-path)
     set(shark_build "${SHARK_FIXTURE_BINARY}/${shark_case}")
     set(shark_fixture "${SHARK_SOURCE}/tests/boundary_fixture")
     if(shark_case STREQUAL "server-only")
@@ -27,4 +27,4 @@ foreach(shark_case IN ITEMS allowed server-only security-flags security-flag-inj
         message(FATAL_ERROR "Violation ${shark_case} was not rejected by the boundary checker: ${shark_output} ${shark_error}")
     endif()
 endforeach()
-message(STATUS "Boundary fixtures: 3 allowed configurations and 32 forbidden dependency paths verified")
+message(STATUS "Boundary fixtures: 3 allowed configurations and 33 forbidden dependency paths verified")

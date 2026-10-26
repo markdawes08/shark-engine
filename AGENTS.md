@@ -213,7 +213,26 @@ complete inventory before path processing and retain sorted full paths, not ever
 directory prefix. IDs survive coordinated source+sidecar moves; missing sources
 retain identity, duplicate IDs reject, and refresh/query require the owner scope
 and revision. ProjectFiles must outlive its borrowed catalog. Full REQ-11 remains
-NOT_RUN; **next: 11b, dependencies and reproducible development cache.**
+NOT_RUN pending 11c/11d.
+**11b is complete under the current-machine scope.** Follow
+[ADR 0026](docs/architecture/0026-development-asset-cache.md), the
+[cache contract](docs/asset-import-cache.md),
+[handoff](docs/handoffs/11b-asset-import-cache.md) and
+[receipt](docs/coverage/evidence/11b-asset-import-cache.json): 724 selected passing
+profile outcomes, 36 public-example compiles, 24 actual sanitizer objects and
+protected packages qualify. Core content hashing shares the existing private TLS
+crypto lifetime. AssetImports borrows ProjectFiles/catalog/importers, captures a
+bounded closure and rechecks revisions/bytes before atomic snapshot publication.
+Preserve last-valid output, exact key/index/payload validation, client/server
+privacy and explicit reload/prune/clear/recovery. Keep the 128-node positive
+closure and independent source/payload budgets. Preserve content-digest (15s),
+asset-import (90s, 22 cases/4361 assertions), asset-import-process (120s, 59 checks),
+Catch seed 1337, seven native FeatureWorld cases/25 process checks, 34 CPU surfaces
+and one external GPU command, plus all earlier workloads/limits. The graph checker
+caches canonical paths, never root policies; retain its three allowed/33 rejected
+controls and 10/30/5-second limits. The 43-case Server closure suite permits only
+the exact reviewed Core crypto inputs/compile identity; do not weaken other
+dependency checks. **Next: 11c, bounded background jobs.**
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read

@@ -23,7 +23,10 @@ account, external model service or hosted runner is needed to complete the plan.
 qualified in the [identity handoff](../handoffs/11a-asset-identity.md). Both
 audiences use the same typed validation, exact file revisions, bounded query
 pages and explicit missing/duplicate outcomes. Declared importer names do not
-advertise execution support; import/cache/jobs keep 11b/11c and adapters keep15/16.
+advertise execution support. 11b adds [shared import/cache services](../asset-import-cache.md):
+registered importer/schema discovery, pure preparation, revision-fenced publication,
+fresh/stale/missing status and explicit reload/prune/clear/recovery. Both audiences
+reuse these CPU services. Background jobs keep 11c and adapters keep 15/16.
 
 ## Assessment of existing work
 

@@ -12,7 +12,9 @@ compares all manifest mappings with real test registrations or explicitly
 identified declarations for another profile. A declaration is not a passing
 execution. Component/command mappings must have registered tests in the current
 Tools profile; their independently reviewed exercise inventory contains twenty-four
-scene surfaces and one external GPU command after 11a. Lua remains empty until real
+scene surfaces and one external GPU command after 11a. 11b extends the independent
+inventory to 34 scene surfaces and one external GPU command, adding ten actual
+import/cache operations in the seventh native FeatureWorld case. Lua remains empty until real
 bindings land. New surfaces extend their actual cases, independent inventory and
 manifest together.
 

@@ -1,6 +1,7 @@
 #include "project_files_native.hpp"
 
 #include "shark/stable_id.hpp"
+#include "shark/tools/asset_import.hpp"
 #include "shark/tools/source_document.hpp"
 
 #include <algorithm>
@@ -37,6 +38,7 @@ constexpr std::size_t maximum_components = 64;
 constexpr std::size_t maximum_directory_entries = 8192;
 constexpr std::string_view lock_name = ".shark-write.lock";
 constexpr std::string_view stage_prefix = ".shark-stage-";
+constexpr std::string_view cache_stage_prefix = ".shark-cache-stage-";
 thread_local FileTestControl test_control;
 
 struct FileFailure {
@@ -90,7 +92,9 @@ std::vector<std::string> components(const ProjectPath& path) {
             begin, end == std::string::npos ? end : end - begin);
         if (ascii_equal(part, lock_name) ||
             (part.size() >= stage_prefix.size() &&
-             ascii_equal(part.substr(0, stage_prefix.size()), stage_prefix))) {
+             ascii_equal(part.substr(0, stage_prefix.size()), stage_prefix)) ||
+            (part.size() >= cache_stage_prefix.size() &&
+             ascii_equal(part.substr(0, cache_stage_prefix.size()), cache_stage_prefix))) {
             fail(ErrorCode::invalid_path, "project path uses a reserved file-service name",
                  path.text());
         }
@@ -719,9 +723,77 @@ Result<std::string> NativeProjectFiles::read(const ProjectPath& path,
     });
 }
 
+Result<std::size_t> NativeProjectFiles::cache_stages(bool discard) {
+    return boundary<std::size_t>("asset.cache.recover", [&] {
+        impl_->validate_root(asset_cache_filename);
+        std::error_code error;
+        std::filesystem::directory_iterator iterator{impl_->root.native_path(), error};
+        if (error)
+            fail(ErrorCode::io_failure, "Cannot inspect reserved cache stages");
+        std::vector<std::filesystem::path> candidates;
+        std::size_t entries = 0;
+        for (const auto end = std::filesystem::directory_iterator{}; iterator != end;
+             iterator.increment(error)) {
+            if (error)
+                fail(ErrorCode::io_failure, "Cannot inspect reserved cache stages");
+            if (++entries > maximum_directory_entries) {
+                fail(ErrorCode::invalid_path, "Project directory entry limit exceeded");
+            }
+            const auto encoded = iterator->path().filename().u8string();
+            const std::string name{encoded.begin(), encoded.end()};
+            if (name.size() < cache_stage_prefix.size() ||
+                !ascii_equal(std::string_view{name}.substr(0, cache_stage_prefix.size()),
+                             cache_stage_prefix))
+                continue;
+            if (!name.starts_with(cache_stage_prefix) ||
+                !StableId::parse(std::string_view{name}.substr(cache_stage_prefix.size()))) {
+                fail(ErrorCode::invalid_path,
+                     "Malformed reserved cache stage; explicit reconciliation required", name);
+            }
+            candidates.push_back(iterator->path());
+            if (candidates.size() > 1) {
+                fail(ErrorCode::conflict,
+                     "Multiple reserved cache stages require explicit reconciliation");
+            }
+        }
+        if (error)
+            fail(ErrorCode::io_failure, "Cannot finish cache stage inspection");
+        for (const auto& candidate : candidates) {
+#if defined(_WIN32)
+            auto held = open_source(candidate, asset_cache_filename);
+#else
+            auto held = open_source(impl_->root_handle.get(), candidate.filename().c_str(), asset_cache_filename);
+#endif
+            if (!held)
+                fail(ErrorCode::conflict, "Unpublished cache stage changed");
+            const auto info = metadata(*held, asset_cache_filename);
+#if defined(_WIN32)
+            const auto excessive =
+                info.nFileSizeHigh != 0 || info.nFileSizeLow > asset_cache_maximum_file_bytes;
+#else
+            const auto excessive = info.st_size < 0 || static_cast<std::uint64_t>(info.st_size) > asset_cache_maximum_file_bytes;
+#endif
+            if (excessive)
+                fail(ErrorCode::invalid_configuration,
+                     "Reserved cache stage exceeds its byte limit");
+            if (discard) {
+                held.reset();
+                impl_->validate_root(asset_cache_filename);
+                if (!std::filesystem::remove(candidate, error) || error) {
+                    fail(ErrorCode::io_failure,
+                         "Cannot remove the reserved unpublished cache stage");
+                }
+            }
+        }
+        impl_->validate_root(asset_cache_filename);
+        return candidates.size();
+    });
+}
+
 Result<FileDurability> NativeProjectFiles::replace(const ProjectPath& path, std::string_view bytes,
                                                    std::optional<std::string_view> expected,
-                                                   std::size_t maximum_bytes) {
+                                                   std::size_t maximum_bytes,
+                                                   bool development_cache) {
     return boundary<FileDurability>("source.files.replace", [&] {
         if (bytes.size() > maximum_bytes || (expected && expected->size() > maximum_bytes)) {
             fail(ErrorCode::invalid_configuration, "project source exceeds its byte limit",
@@ -739,6 +811,11 @@ Result<FileDurability> NativeProjectFiles::replace(const ProjectPath& path, std:
             }
         };
         check_expected();
+        if (development_cache &&
+            (path.text() != asset_cache_filename || checked(cache_stages(false)) != 0)) {
+            fail(ErrorCode::conflict,
+                 "Recover the reserved unpublished cache stage before publication", path.text());
+        }
         fault(FileFault::stage_create, path.text());
         Stage stage;
 #if !defined(_WIN32)
@@ -746,7 +823,8 @@ Result<FileDurability> NativeProjectFiles::replace(const ProjectPath& path, std:
                                                     : location.directories.back().get();
 #endif
         for (std::size_t attempt = 0; attempt < 16; ++attempt) {
-            stage.name = std::string{stage_prefix} + checked(generate_stable_id()).to_string();
+            stage.name = std::string{development_cache ? cache_stage_prefix : stage_prefix} +
+                         checked(generate_stable_id()).to_string();
 #if defined(_WIN32)
             stage.handle = Handle{CreateFileW(
                 os_path(location.parent_path / native_component(stage.name)).c_str(),

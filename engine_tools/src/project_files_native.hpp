@@ -49,7 +49,9 @@ class NativeProjectFiles final {
     // every returned durability value describes a completed publication.
     [[nodiscard]] Result<FileDurability> replace(const ProjectPath& path, std::string_view bytes,
                                                  std::optional<std::string_view> expected,
-                                                 std::size_t maximum_bytes = source_maximum_bytes);
+                                                 std::size_t maximum_bytes = source_maximum_bytes,
+                                                 bool development_cache = false);
+    [[nodiscard]] Result<std::size_t> cache_stages(bool discard);
 
   private:
     struct Impl;
