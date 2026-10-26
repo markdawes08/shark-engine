@@ -24,6 +24,8 @@ SCENE_SURFACES = {
     'authoring.name.set', 'authoring.transform.set', 'authoring.batch.preview',
     'authoring.batch.execute', 'authoring.history.inspect', 'authoring.history.undo',
     'authoring.history.redo', 'authoring.history.clear',
+    'asset.metadata.read', 'asset.metadata.write', 'asset.catalog.refresh',
+    'asset.catalog.query', 'asset.catalog.resolve',
 }
 GPU_SURFACES = {'tools.scene-runner.gpu'}
 

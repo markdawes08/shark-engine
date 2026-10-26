@@ -46,5 +46,5 @@
       "extras": {}
     }
   ],
-  "extras": {"fixture": "10b"}
+  "extras": {"asset_reference": "20000000-0000-4000-8000-00000000000a", "fixture": "10b"}
 }

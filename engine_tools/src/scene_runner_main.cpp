@@ -119,7 +119,9 @@ Result<Options> options(std::span<const std::string> args) {
         return cli_error("FeatureWorld requires --project FILE");
     if (feature && !result.config.inputs.empty())
         return cli_error("FeatureWorld cases have no input actions; offset belongs to foundation");
-    if ((suite || result.case_id == "featureworld.persistence") && result.workspace.empty())
+    if ((suite || result.case_id == "featureworld.persistence" ||
+         result.case_id == "featureworld.asset-identity") &&
+        result.workspace.empty())
         return cli_error("FeatureWorld persistence requires --workspace EXISTING_DIRECTORY");
     if (!feature && (seen.contains("--project") || seen.contains("--workspace")))
         return cli_error("Project/workspace options require a FeatureWorld case");

@@ -12,12 +12,21 @@ and the [exact source profile](../../../docs/architecture/0006-v1-profile.md).
 Apply the [human and terminal-agent contract](../../../docs/architecture/0008-human-agent-authoring.md)
 through its [implementation plan](../../../docs/roadmap/human-agent-plan.md).
 
-Assignment 01 contains no asset database, importer, cache or cooker. Those begin
-in 11/12; audio import is 24 and HDRI is 27. There is no import CLI command yet.
+11a adds persistent asset sidecars and a bounded revisioned catalog through the
+existing ProjectFiles owner. Follow the [asset checkpoints](../../../docs/roadmap/asset-plan.md),
+[ADR 0025](../../../docs/architecture/0025-asset-identity.md) and
+[identity contract](../../../docs/asset-identity.md). Preserve
+`shark.tools.asset-catalog` (60 seconds, seed 1337), the added native
+`featureworld.asset-identity` case and all earlier workloads. The saved asset
+reference is bounded scene extras, not a new component or scene schema. Sidecars
+and sources move together; missing sources retain their ID, while duplicate IDs
+reject a complete catalog candidate. Cache/import/jobs remain11b/11c, source
+decoders12, audio24 and HDRI27. There is no import CLI command yet.
 Use the existing native CPU checks from [building](../../../docs/building.md)
 and `python tools/validate_contract.py` for shared-code/contract changes without
-claiming asset behavior was exercised. Add concrete commands and fixtures when
-the importing layer lands.
+claiming import/cache behavior was exercised by identity tests. Run the actual
+asset and FeatureWorld families on Windows/WSL and sanitizer profiles, including
+the independent coverage inventory when adding public surfaces.
 
 Keep external parsers and image/audio codecs in EngineTools. Runtime loads
 validated engine-owned payloads; parser recognition never means rendering or

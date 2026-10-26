@@ -68,12 +68,13 @@ TEST_CASE("Saved FeatureWorld connects all current scene surfaces through the na
         REQUIRE(result.initial_revision->revision == 4);
     }
     REQUIRE(run.value().status == SceneRunStatus::passed);
-    REQUIRE(run.value().cases.size() == 5);
+    REQUIRE(run.value().cases.size() == 6);
     REQUIRE(run.value().cases[0].final_revision->revision == 4);
     REQUIRE(run.value().cases[1].final_revision->revision == 11);
     REQUIRE(run.value().cases[2].final_revision->revision == 7);
     REQUIRE(run.value().cases[3].final_revision->revision == 6);
     REQUIRE(run.value().cases[4].final_revision->revision == 4);
+    REQUIRE(run.value().cases[5].final_revision == run.value().cases[5].initial_revision);
     REQUIRE(run.value().cases[4].final_revision->scene_instance !=
             run.value().cases[4].initial_revision->scene_instance);
     REQUIRE(encode_scene_run_report(run.value()));
@@ -135,7 +136,7 @@ TEST_CASE(
         stream << "keep";
     }
     auto cases = feature_world_cases(sentinel); // Existing file is not a scratch directory.
-    const std::array selected{cases.back()};
+    const std::array selected{cases[4]};
     const auto run = run_scene_cases(fixture.project, fixture.scene, config(), selected);
     REQUIRE(run);
     REQUIRE(run.value().status == SceneRunStatus::failed);

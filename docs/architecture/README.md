@@ -115,7 +115,11 @@ CPU/GPU supervisor and [integrated qualification](../handoffs/10d-integrated-qua
 retain actual coverage, assertion-failure results, 660 full CTests across seven
 profiles, 36 standalone Tools checks and twelve both-GPU runs. Authored scene
 rendering remains 13, terminal/editor adapters remain 15/16, and MMOWorld remains
-M09. Next: 11 asset database, import jobs and cache.
+M09. Assignment 11 follows the [asset checkpoints](../roadmap/asset-plan.md).
+11a adds persistent sidecar identity and a bounded revisioned CPU catalog through
+the existing ProjectFiles service; import/cache/jobs retain 11b/11c.
+11a is PASS in its [handoff](../handoffs/11a-asset-identity.md), with 569 qualified
+CPU profile outcomes, public examples, sanitizers and protected packages. Next: 11b.
 
 | Record | Decision |
 | --- | --- |
@@ -143,6 +147,7 @@ M09. Next: 11 asset database, import jobs and cache.
 | [0022](0022-shared-authoring-history.md) | Bounded shared undo/redo, revision/ticket conflicts and incarnation-safe restoration |
 | [0023](0023-retained-authoring-retries.md) | Owner-scoped sequenced mutations, bounded immutable outcomes and explicit expiry/restart reconciliation |
 | [0024](0024-headless-scene-runner.md) | Deterministic CPU cases through existing owners/scheduling, bounded assertions and versioned results |
+| [0025](0025-asset-identity.md) | Persistent adjacent asset sidecars, shared file publication and bounded revisioned catalog snapshots |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

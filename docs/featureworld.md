@@ -22,10 +22,10 @@ owner causes explicit failure. Copy the two source files to a writable project
 root when testing from a read-only checkout. Run from any current directory by
 passing explicit paths. There is no compiled-in checkout or fixture location.
 
-`--case featureworld` selects all five cases in catalog order. Each concrete ID
+`--case featureworld` selects all six cases in catalog order. Each concrete ID
 also selects one case. Supply `--workspace EXISTING_DIRECTORY` for the suite or
-persistence case. Only persistence uses it, creating a unique child with its own
-project/scenes and removing its known files on exit. Input source bytes are
+persistence/asset-identity case. Both create a unique child with their own
+project/scenes and remove their known files on exit. Input source bytes are
 preserved. A failed cleanup leaves inspectable remnants; it cannot delete the
 caller-selected parent. Generated results belong under ignored `out/` or `build/`.
 
@@ -36,13 +36,18 @@ caller-selected parent. Generated results belong under ignored `out/` or `build/
 | `featureworld.batches-history` | Pure preview, late-invalid atomic rejection, one-revision commit, grouped undo/redo, surviving handles and explicit history clearing |
 | `featureworld.retries` | Fresh owner scope, sequenced mutate, all three Result levels, retained query/exact replay, payload mismatch and preservation of a later edit |
 | `featureworld.persistence` | Actual native create/save, dirty acknowledgement, retained history, exact-content file revisions, codec round trip, reopen/reload and fresh incarnation |
+| `featureworld.asset-identity` | Saved UUID reference, native typed sidecar publication, bounded revisioned catalog query/resolve, coordinated rename/move, missing source versus unknown ID, reopen and unchanged scene owner |
 
 Every case receives a fresh owner from the same saved baseline. Functional work
 occurs at tick zero; subsequent fixed ticks check stable identity/entity counts.
 The fixture has no input actions and performs no RNG draws. Seed/rate/tick
 context remains explicit in results; foundation cases separately exercise input
 and seeded data. At three ticks, initial revision values are 4 and final values
-are 4, 11, 7, 6 and 4. Persistence's final value belongs to a fresh incarnation.
+are 4, 11, 7, 6, 4 and 4. Persistence's final value belongs to a fresh incarnation.
+The asset reference in scene extras is `20000000-0000-4000-8000-00000000000a`;
+it is preserved through native save/reopen and is not a new asset component.
+Identity fixtures create their own authored source/metadata in scratch; no source
+decoder or import/cache success is inferred. Follow the [identity contract](asset-identity.md).
 Process-local incarnation IDs vary and are excluded from semantic repeat checks.
 
 `--list-cases` emits UTF-8 `shark.scene-cases`, integer `schema_version: 1`,

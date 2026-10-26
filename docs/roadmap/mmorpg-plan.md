@@ -31,6 +31,12 @@ equal human/terminal authoring. A local development release is the current
 deliverable. Same-machine multiprocess tests exercise real boundaries; they do
 not establish production scale, real WAN behavior or independent failure recovery.
 
+11a completes [persistent asset identity and metadata](../handoffs/11a-asset-identity.md)
+under the current-machine scope. Its audience/dependency-ID fields preserve the
+client/server content distinction for later cook/streaming owners; they do not
+implement dependency closure, imports or streaming. Follow the
+[asset checkpoints](asset-plan.md); next is 11b.
+
 ## Historical assessment of the pre-M01 foundation
 
 | Existing work | Assessment and action |

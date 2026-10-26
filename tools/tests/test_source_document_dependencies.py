@@ -98,6 +98,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                 ROOT / "engine_tools/src/authored_scene.cpp",
                 ROOT / "engine_tools/src/project_files.cpp",
                 ROOT / "engine_tools/src/project_files_native.cpp",
+                ROOT / "engine_tools/src/asset_catalog.cpp",
                 ROOT / "engine_tools/src/scene_runner.cpp",
                 ROOT / "engine_tools/src/feature_world.cpp",
             } if tools else set()

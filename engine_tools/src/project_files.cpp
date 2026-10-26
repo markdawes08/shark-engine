@@ -198,6 +198,41 @@ Result<ReadSource<ProjectDocument>> ProjectFiles::read_project(const ProjectPath
     });
 }
 
+Result<ReadSource<AssetMetadata>> ProjectFiles::read_asset_metadata(const ProjectPath& sidecar) {
+    return boundary<ReadSource<AssetMetadata>>("asset.file.read_metadata", [&] {
+        impl_->check_owner();
+        static_cast<void>(checked(asset_source_path(sidecar)));
+        auto bytes = checked(impl_->native->read(sidecar, asset_metadata_maximum_bytes));
+        auto metadata = checked(decode_asset_metadata(bytes));
+        return ReadSource<AssetMetadata>{{std::move(metadata), asset_metadata_version},
+                                         make_revision(sidecar, std::move(bytes))};
+    });
+}
+
+Result<FileCommit> ProjectFiles::write_asset_metadata(const ProjectPath& sidecar,
+                                                      const AssetMetadata& metadata,
+                                                      std::optional<FileRevision> expected) {
+    return boundary<FileCommit>("asset.file.write_metadata", [&] {
+        impl_->check_owner();
+        static_cast<void>(checked(asset_source_path(sidecar)));
+        auto bytes = checked(encode_asset_metadata(metadata));
+        const auto prior = expected_bytes(sidecar, expected);
+        auto revision = make_revision(sidecar, std::move(bytes));
+        const auto durability = checked(impl_->native->replace(
+            sidecar, revision.data_->bytes, prior, asset_metadata_maximum_bytes));
+        return FileCommit{std::move(revision), durability};
+    });
+}
+
+Result<bool> ProjectFiles::asset_source_exists(const ProjectPath& source) {
+    return boundary<bool>("asset.file.source_exists", [&] {
+        impl_->check_owner();
+        // Validate the same naming domain as sidecars before touching native files.
+        static_cast<void>(checked(asset_sidecar_path(source)));
+        return checked(impl_->native->exists(source));
+    });
+}
+
 Result<ReadSource<SceneDocument>> ProjectFiles::read_scene(const ProjectDocument& project,
                                                            SceneId scene) {
     return boundary<ReadSource<SceneDocument>>("source.file.read_scene", [&] {

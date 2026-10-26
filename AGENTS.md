@@ -195,8 +195,25 @@ actual sanitizer objects, protected packages and twelve both-GPU runs pass.
 Preserve `shark.tools.scene-qualification` (90 seconds), its 19 connected checks
 and 15 rejection controls, nineteen scene surfaces, one external GPU command,
 and all earlier workloads/limits. New surfaces extend actual cases, independent
-coverage expectations and manifest mappings together. **Next: 11, asset database,
-import jobs and cache.**
+coverage expectations and manifest mappings together.
+**11a is complete under the current-machine scope.** Follow the
+[asset checkpoints](docs/roadmap/asset-plan.md),
+[ADR 0025](docs/architecture/0025-asset-identity.md),
+[identity contract](docs/asset-identity.md),
+[handoff](docs/handoffs/11a-asset-identity.md) and
+[receipt](docs/coverage/evidence/11a-asset-identity.json): 531 qualified full-profile
+outcomes plus 38 standalone Tools checks, 33 public-example compiles, twelve
+actual sanitizer objects and protected packages pass. Preserve
+`shark.tools.asset-catalog` (60 seconds, seed 1337), its 18 cases/6190 assertions,
+the 4096-path/1500-level workload, six native FeatureWorld cases, 24 process
+checks, 24 scene surfaces/one external GPU command and all earlier cases/limits.
+Sidecars use exact schema 1; native reads/replacement comparisons enforce 64 KiB.
+Catalog inputs are capped at 4096 entries/16 MiB with 128-record pages. Charge the
+complete inventory before path processing and retain sorted full paths, not every
+directory prefix. IDs survive coordinated source+sidecar moves; missing sources
+retain identity, duplicate IDs reject, and refresh/query require the owner scope
+and revision. ProjectFiles must outlive its borrowed catalog. Full REQ-11 remains
+NOT_RUN; **next: 11b, dependencies and reproducible development cache.**
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read

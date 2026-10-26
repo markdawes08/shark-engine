@@ -216,7 +216,19 @@
         "Shared import services expose bounded job status, diagnostics, cancellation and artifact identity to later UI/CLI adapters. Changed source/settings or cancellation before publication cannot replace newer valid output."
       ],
       "planned_fixture": "AssetRenameMove, ImportDependencyInvalidation, ImportDedupCancelFailure and ImportReproducibility fixtures; FeatureWorld/AssetIdentity uses the imported references.",
-      "verification": {"status": "NOT_RUN", "reason": "Asset database/import/cache is not implemented; owner assignment 11."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "11a identity/metadata/catalog is PASS under the current-machine scope; full REQ-11 awaits 11b dependency/import/cache, 11c jobs and 11d integrated qualification.",
+        "checkpoints": {
+          "11a": {
+            "status": "PASS",
+            "evidence": {
+              "path": "docs/coverage/evidence/11a-asset-identity.json",
+              "sha256": "9a35f750cbefd0b942ee7a493b47863d6c3676f5f6c3d04a3e87288962b89ea9"
+            }
+          }
+        }
+      }
     },
     {
       "id": "REQ-12",
@@ -818,6 +830,34 @@
   "implemented_surface": {
     "features": [
       {
+        "id": "tools.asset-identity",
+        "name": "Persistent asset sidecars and bounded revisioned CPU catalog",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-catalog",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_catalog_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "docs/asset-identity.md",
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene"
+        ],
+        "fixture_reason": "11a metadata/catalog scope only: canonical bounded schema-1 sidecars reuse ProjectFiles ownership/publication; derived snapshots preserve stable IDs across source moves and distinguish missing source from unknown identity.",
+        "featureworld_cases": [
+          "featureworld.asset-identity"
+        ]
+      },
+      {
         "id": "tools.scene-execution",
         "name": "Mode-explicit CPU/GPU native test supervisor with bounded versioned artifacts",
         "requirement_ids": [
@@ -864,13 +904,14 @@
           "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
           "engine_tools/src/feature_world.cpp"
         ],
-        "fixture_reason": "Small saved source project with five executable native CPU cases and independent expected state. Network, durable storage, platform and graphics qualification keep their isolated fixtures; no renderer, Lua or MMO simulation is inferred.",
+        "fixture_reason": "Small saved source project with six executable native CPU cases and independent expected state. Network, durable storage, platform and graphics qualification keep their isolated fixtures; no renderer, Lua or MMO simulation is inferred.",
         "featureworld_cases": [
           "featureworld.components",
           "featureworld.commands",
           "featureworld.batches-history",
           "featureworld.retries",
-          "featureworld.persistence"
+          "featureworld.persistence",
+      "featureworld.asset-identity"
         ]
       },
       {
@@ -913,7 +954,8 @@
           "featureworld.commands",
           "featureworld.batches-history",
           "featureworld.retries",
-          "featureworld.persistence"
+          "featureworld.persistence",
+      "featureworld.asset-identity"
         ]
       },
       {
@@ -1007,7 +1049,8 @@
         ],
         "fixture_reason": "Public CPU fixtures exercise typed project/scene I/O, root/path-bound exact raw revisions, same-size and same-timestamp external edits, content ABA, create-only writes, catalog collisions, Unicode and aliases, bounded malformed input, dirty-safe reload and revision-safe saved baselines. Native hooks inject prepublication failures through authored saves and postpublication durability limits; real child processes interrupt save_scene at five phases, activate the exact expected scene, recover through another authored save and reopen it. Complete-file hashes, exclusive ownership and unchanged orphan stages remain checked without arbitrary sleeps. The integrated fixture connects independently authored legacy files, migration, capture, explicit saves and external-edit resolution through the public services. EngineTools reuses Core validation without adding source readers to Core/Runtime/Server or requiring a display. FeatureWorld/Persistence attaches in 10, history remains 09 and adapters 15/16. Per-file authoring publication is not M03 live durable state. The saved FeatureWorld cases now add current-surface source and owner exercises; isolated failure/resource/process tests remain separately required.",
         "featureworld_cases": [
-          "featureworld.persistence"
+          "featureworld.persistence",
+      "featureworld.asset-identity"
         ]
       },
       {
@@ -1045,7 +1088,8 @@
           "featureworld.commands",
           "featureworld.batches-history",
           "featureworld.retries",
-          "featureworld.persistence"
+          "featureworld.persistence",
+      "featureworld.asset-identity"
         ]
       },
       {
@@ -1077,7 +1121,8 @@
         "fixture_reason": "Independent CPU fixtures exercise source order and incarnation-bound extras, forward hierarchy and composed world transforms, complete and sparse 4096-entity capture, depth-256 construction, cross-document project/catalog/world references, owned snapshots, dirty/no-op/revision/pending/visit/thread/closed guards and explicit discard. Invalid candidates preserve the active registry, source metadata and unsaved state; successful identical-source reload invalidates old handles/references/cursors. Integrated fixtures connect this owner to native files, explicit legacy migration saves and conflict recovery using the same public services. Core validation grants no live gameplay authority and needs no editor or device. FeatureWorld/Persistence attaches in 10; shared history and adapters retain 09/15/16. Qualification is recorded separately from implemented coverage. The saved FeatureWorld cases now add current-surface source and owner exercises; isolated failure/resource/process tests remain separately required.",
         "featureworld_cases": [
           "featureworld.components",
-          "featureworld.persistence"
+          "featureworld.persistence",
+      "featureworld.asset-identity"
         ]
       },
       {
@@ -1113,7 +1158,8 @@
         "fixture_reason": "External CPU fixtures independently author the actual flat version-0 project/scene representations and corresponding version-1 values. They verify migration, explicit quaternion order, Unicode, large world cells, stable IDs and forward parent references, canonical opaque extras, deterministic encoding and schema defaults. Malformed UTF-8/JSON, escaped duplicate keys, unknown fields/versions/components, invalid references, cycles, component constraints and fixed byte/count/depth/extras/output limits reject through owned structured errors without mutating caller input. The integrated fixture uses those independent documents for real file reads, activation, edits, explicit migration saves and reopen, preserving original legacy bytes until a successful save. EngineTools provides the same device-free values and services for future human/terminal adapters. FeatureWorld/Persistence attaches in 10, shared authoring history/adapters retain 09/15/16 and live durable state remains M03. The saved FeatureWorld cases now add current-surface source and owner exercises; isolated failure/resource/process tests remain separately required.",
         "featureworld_cases": [
           "featureworld.components",
-          "featureworld.persistence"
+          "featureworld.persistence",
+      "featureworld.asset-identity"
         ]
       },
       {
@@ -1721,7 +1767,8 @@
           "featureworld.commands",
           "featureworld.batches-history",
           "featureworld.retries",
-          "featureworld.persistence"
+          "featureworld.persistence",
+      "featureworld.asset-identity"
         ]
       },
       {
@@ -1835,7 +1882,8 @@
           "featureworld.commands",
           "featureworld.batches-history",
           "featureworld.retries",
-          "featureworld.persistence"
+          "featureworld.persistence",
+      "featureworld.asset-identity"
         ]
       },
       {
@@ -1886,7 +1934,8 @@
           "featureworld.commands",
           "featureworld.batches-history",
           "featureworld.retries",
-          "featureworld.persistence"
+          "featureworld.persistence",
+      "featureworld.asset-identity"
         ]
       }
     ],
@@ -1953,7 +2002,8 @@
           "featureworld.commands",
           "featureworld.batches-history",
           "featureworld.retries",
-          "featureworld.persistence"
+          "featureworld.persistence",
+      "featureworld.asset-identity"
         ]
       },
       {
@@ -1995,7 +2045,8 @@
           "featureworld.commands",
           "featureworld.batches-history",
           "featureworld.retries",
-          "featureworld.persistence"
+          "featureworld.persistence",
+      "featureworld.asset-identity"
         ]
       },
       {
@@ -2037,7 +2088,8 @@
           "featureworld.commands",
           "featureworld.batches-history",
           "featureworld.retries",
-          "featureworld.persistence"
+          "featureworld.persistence",
+      "featureworld.asset-identity"
         ]
       },
       {
@@ -2497,7 +2549,147 @@
                     "featureworld_cases": [
                       "featureworld.batches-history"
                     ]
-                  }
+                  },
+      {
+        "id": "asset.metadata.read",
+        "name": "ProjectFiles::read_asset_metadata",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-catalog",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_catalog_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-identity.md"
+        ],
+        "fixture_reason": "Native FeatureWorld asset identity carries a saved UUID reference through typed metadata publication, revisioned catalog refresh/query/resolve, coordinated source+sidecar move, missing-source detection and reopen. Isolated fixtures retain malformed/bounded metadata, duplicates, stale writes/pages, native path safety and publication faults. Import/cache/jobs and terminal/editor adapters keep their later owners.",
+        "featureworld_cases": [
+          "featureworld.asset-identity"
+        ]
+      },
+      {
+        "id": "asset.metadata.write",
+        "name": "ProjectFiles::write_asset_metadata",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-catalog",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_catalog_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-identity.md"
+        ],
+        "fixture_reason": "Native FeatureWorld asset identity carries a saved UUID reference through typed metadata publication, revisioned catalog refresh/query/resolve, coordinated source+sidecar move, missing-source detection and reopen. Isolated fixtures retain malformed/bounded metadata, duplicates, stale writes/pages, native path safety and publication faults. Import/cache/jobs and terminal/editor adapters keep their later owners.",
+        "featureworld_cases": [
+          "featureworld.asset-identity"
+        ]
+      },
+      {
+        "id": "asset.catalog.refresh",
+        "name": "AssetCatalog::refresh",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-catalog",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_catalog_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-identity.md"
+        ],
+        "fixture_reason": "Native FeatureWorld asset identity carries a saved UUID reference through typed metadata publication, revisioned catalog refresh/query/resolve, coordinated source+sidecar move, missing-source detection and reopen. Isolated fixtures retain malformed/bounded metadata, duplicates, stale writes/pages, native path safety and publication faults. Import/cache/jobs and terminal/editor adapters keep their later owners.",
+        "featureworld_cases": [
+          "featureworld.asset-identity"
+        ]
+      },
+      {
+        "id": "asset.catalog.query",
+        "name": "AssetCatalog::query",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-catalog",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_catalog_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-identity.md"
+        ],
+        "fixture_reason": "Native FeatureWorld asset identity carries a saved UUID reference through typed metadata publication, revisioned catalog refresh/query/resolve, coordinated source+sidecar move, missing-source detection and reopen. Isolated fixtures retain malformed/bounded metadata, duplicates, stale writes/pages, native path safety and publication faults. Import/cache/jobs and terminal/editor adapters keep their later owners.",
+        "featureworld_cases": [
+          "featureworld.asset-identity"
+        ]
+      },
+      {
+        "id": "asset.catalog.resolve",
+        "name": "AssetCatalog::resolve",
+        "requirement_ids": [
+          "REQ-11"
+        ],
+        "test_ids": [
+          "shark.tools.asset-catalog",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/asset_catalog_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/asset-identity.md"
+        ],
+        "fixture_reason": "Native FeatureWorld asset identity carries a saved UUID reference through typed metadata publication, revisioned catalog refresh/query/resolve, coordinated source+sidecar move, missing-source detection and reopen. Isolated fixtures retain malformed/bounded metadata, duplicates, stale writes/pages, native path safety and publication faults. Import/cache/jobs and terminal/editor adapters keep their later owners.",
+        "featureworld_cases": [
+          "featureworld.asset-identity"
+        ]
+      }
                 ],
     "lua_api": []
   },
@@ -2509,7 +2701,8 @@
       "featureworld.commands",
       "featureworld.batches-history",
       "featureworld.retries",
-      "featureworld.persistence"
+      "featureworld.persistence",
+      "featureworld.asset-identity"
     ],
     "case_source": "engine_tools/src/feature_world.cpp"
   }

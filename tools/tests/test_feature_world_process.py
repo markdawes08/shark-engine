@@ -62,7 +62,7 @@ def main():
         case_ids = manifest['featureworld']['case_ids']
         assert catalog['suites'] == {'featureworld': case_ids}
         assert catalog['cases'] == ['foundation', 'intentional-failure', *case_ids]
-        assert len(set(case_ids)) == 5
+        assert len(set(case_ids)) == 6
         mapped = []
         external = []
         for category in ('components', 'commands'):
@@ -99,12 +99,12 @@ def main():
             assert first['project_id'] == '20000000-0000-4000-8000-000000000001'
             assert first['scene_id'] == '20000000-0000-4000-8000-000000000003'
             assert [case['id'] for case in first['cases']] == case_ids
-            assert [case['final_revision']['value'] for case in first['cases']] == [4, 11, 7, 6, 4]
+            assert [case['final_revision']['value'] for case in first['cases']] == [4, 11, 7, 6, 4, 4]
             for case in first['cases']:
                 assert case['status'] == 'PASS' and case['failure'] is None
                 assert case['ticks_completed'] == 3 and case['assertions'] >= 10
                 assert case['initial_revision']['value'] == 4
-            assert first['cases'][-1]['initial_revision']['instance'] != first['cases'][-1]['final_revision']['instance']
+            assert first['cases'][4]['initial_revision']['instance'] != first['cases'][4]['final_revision']['instance']
             summary['cases'] = first['cases']
             artifact = folder / 'result.json'
             published = call('saved-suite-publication', [*options, '--output', str(artifact)], 0)

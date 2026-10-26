@@ -35,6 +35,8 @@
 # Connected authoring qualification projects and publication-fault receipts use out/ or build/.
 # FeatureWorld run results and temporary persistence projects use out/ or build/.
 # Integrated coverage audits and embedded assertion-failure receipts use out/ or build/.
+# Asset catalog snapshots, sidecar fault fixtures and qualification receipts use out/ or build/.
+# Keep authored .sharkasset metadata, asset fixtures and public identity contracts versioned.
 # Supervised CPU/GPU execution receipts, native readbacks and token evidence use out/ or build/.
 # Keep assets/FeatureWorld source project/scene, native cases and coverage documentation versioned.
 # Storage inventories, cleanup receipts and verified evidence archives also stay in out/.

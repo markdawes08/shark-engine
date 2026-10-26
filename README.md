@@ -50,7 +50,14 @@ passes twelve native GPU runs and the recovered sanitizer gate; see the
 **10d and full assignment 10 are complete:** the
 [integrated qualification](docs/handoffs/10d-integrated-qualification.md) records
 660 full CTests across seven profiles, 36 standalone Tools checks, protected
-packages and twelve both-GPU runs. **Next: 11, asset database, import jobs and cache.**
+packages and twelve both-GPU runs.
+
+**11a is complete under the current-machine scope:** the
+[asset identity handoff](docs/handoffs/11a-asset-identity.md) records persistent
+sidecars, a bounded revisioned catalog, saved-reference move/reopen coverage,
+569 qualified CPU profile outcomes, 33 public-example compiles and protected
+packages. Follow the [asset checkpoints](docs/roadmap/asset-plan.md).
+**Next: 11b, dependencies and reproducible development cache.**
 
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
 **04c and full assignment 04 are complete under the current-machine scope.**

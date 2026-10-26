@@ -19,6 +19,12 @@ Windows/Linux platform matrix. Mac and native Linux graphics are outside active
 scope; human/terminal parity is unchanged. No additional hardware, provider
 account, external model service or hosted runner is needed to complete the plan.
 
+11a adds [shared CPU asset metadata/catalog services](../asset-identity.md),
+qualified in the [identity handoff](../handoffs/11a-asset-identity.md). Both
+audiences use the same typed validation, exact file revisions, bounded query
+pages and explicit missing/duplicate outcomes. Declared importer names do not
+advertise execution support; import/cache/jobs keep 11b/11c and adapters keep15/16.
+
 ## Assessment of existing work
 
 | Reviewed area | Finding and action |

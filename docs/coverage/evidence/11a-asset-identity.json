@@ -1,0 +1,321 @@
+{
+  "format": "shark.checkpoint-evidence",
+  "schema_version": 1,
+  "checkpoint": "11a",
+  "requirement": "REQ-11",
+  "status": "PASS",
+  "scope": "Current-machine CPU authoring identity/metadata/catalog only; complete REQ-11 remains NOT_RUN.",
+  "base_revision": "7b68135",
+  "branch": "main",
+  "initial_worktree": "clean",
+  "result": "unstaged uncommitted changes",
+  "generated_at_utc": "2026-10-26T01:57:32.365853+00:00",
+  "source_freeze": {
+    "path": "out/11a-work/source-freeze-budget.json",
+    "sha256": "fc1395aa6382a4e5729e7a30f5d7d5bf3ff96197977741d8d15e62b5b6aa439b",
+    "bytes": 107197
+  },
+  "frozen_inputs": 609,
+  "qualified_full_profile_results": 531,
+  "additional_standalone_tools_results": 38,
+  "total_qualified_profile_results": 569,
+  "profiles": [
+    {
+      "name": "windows-debug",
+      "status": "PASS",
+      "qualified_tests": 109,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11a-work/windows-debug-budget/summary.json",
+        "sha256": "047e8272404dc8d9506ccd85f3715d3ae5d8df21b7fcfddc187b3774614501eb",
+        "bytes": 2753
+      },
+      "qualified_results": {
+        "path": "out/11a-work/windows-debug-budget/qualified-inventory.json",
+        "sha256": "4724dfeebae6cbb18db72dfad3dc46f75a10d0cdadb8d5f6c10b23b39eea5311",
+        "bytes": 27625
+      },
+      "asset_cases": 18,
+      "asset_assertions": 6190,
+      "asset_results": {
+        "path": "out/11a-work/windows-debug-budget/asset-catalog-cases.xml",
+        "sha256": "c5bf6540015ad7d84c35d75da919cddd8e794443c56a489c5bbca8ee67ec078b",
+        "bytes": 5024
+      },
+      "featureworld_native_cases": 6,
+      "featureworld_process_checks": 24,
+      "qualification_checks": 19,
+      "qualification_negative_controls": 15
+    },
+    {
+      "name": "windows-release",
+      "status": "PASS",
+      "qualified_tests": 109,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11a-work/windows-release-budget/summary.json",
+        "sha256": "890eb1b3acbbef8d7917455856906966578e475be2b9beb92a86e299def31239",
+        "bytes": 2769
+      },
+      "qualified_results": {
+        "path": "out/11a-work/windows-release-budget/qualified-inventory.json",
+        "sha256": "145e405f4c36d1ef94fe1ebb3a33beebc55c7b517b74270294b575b67f784e77",
+        "bytes": 27843
+      },
+      "asset_cases": 18,
+      "asset_assertions": 6190,
+      "asset_results": {
+        "path": "out/11a-work/windows-release-budget/asset-catalog-cases.xml",
+        "sha256": "c5bf6540015ad7d84c35d75da919cddd8e794443c56a489c5bbca8ee67ec078b",
+        "bytes": 5024
+      },
+      "featureworld_native_cases": 6,
+      "featureworld_process_checks": 24,
+      "qualification_checks": 19,
+      "qualification_negative_controls": 15
+    },
+    {
+      "name": "windows-asan",
+      "status": "PASS",
+      "qualified_tests": 109,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11a-work/windows-asan-budget/summary.json",
+        "sha256": "65d94569ac1cc01f70d9f31e0ab770ae5606b648c9aa1c3fc209352ba44ad96b",
+        "bytes": 2745
+      },
+      "qualified_results": {
+        "path": "out/11a-work/windows-asan-budget/qualified-inventory.json",
+        "sha256": "d3e3c9f44caf95f968a3fe290f672e11b3fb9f17a07d71216c38c3ce3ad219fd",
+        "bytes": 27516
+      },
+      "asset_cases": 18,
+      "asset_assertions": 6190,
+      "asset_results": {
+        "path": "out/11a-work/windows-asan-budget/asset-catalog-cases.xml",
+        "sha256": "c5bf6540015ad7d84c35d75da919cddd8e794443c56a489c5bbca8ee67ec078b",
+        "bytes": 5024
+      },
+      "featureworld_native_cases": 6,
+      "featureworld_process_checks": 24,
+      "qualification_checks": 19,
+      "qualification_negative_controls": 15
+    },
+    {
+      "name": "linux-debug",
+      "status": "PASS",
+      "qualified_tests": 102,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11a-work/wsl-budget/linux-debug/summary.json",
+        "sha256": "d6e2ea04a889270e8af96572d01a4bc63497f5e787bcff555ee4c9f33f7356ea",
+        "bytes": 3626
+      },
+      "qualified_results": {
+        "path": "out/11a-work/wsl-budget/linux-debug/qualified-inventory.json",
+        "sha256": "b7c90e58afd96eb497d88e11150eb340ab0426f6499f03c587905123a536ed73",
+        "bytes": 21954
+      },
+      "asset_cases": 18,
+      "asset_assertions": 6190,
+      "asset_results": {
+        "path": "out/11a-work/wsl-budget/linux-debug/asset-catalog-cases.xml",
+        "sha256": "009564dfd85e5b4b54f56000197353595bb255cabe58ca4603d82f6b1dc26028",
+        "bytes": 4565
+      },
+      "featureworld_native_cases": 6,
+      "featureworld_process_checks": 24,
+      "qualification_checks": 19,
+      "qualification_negative_controls": 15
+    },
+    {
+      "name": "linux-asan-ubsan",
+      "status": "PASS",
+      "qualified_tests": 102,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11a-work/wsl-budget/linux-asan-ubsan/summary.json",
+        "sha256": "f31768e960e1aa9e278a50c575d830cc19f6f63b30978b615dd4c4b7887b1be5",
+        "bytes": 2735
+      },
+      "qualified_results": {
+        "path": "out/11a-work/wsl-budget/linux-asan-ubsan/qualified-inventory.json",
+        "sha256": "d610e1a64e58c25976d324290f51412f50619d9371a9c1d0814196ef236dc481",
+        "bytes": 23719
+      },
+      "asset_cases": 18,
+      "asset_assertions": 6190,
+      "asset_results": {
+        "path": "out/11a-work/wsl-budget/linux-asan-ubsan/asset-catalog-cases.xml",
+        "sha256": "6712e66f0a909722cc004ebea3b98bb1972305a060fdb9952251bf79f6be4d94",
+        "bytes": 4565
+      },
+      "featureworld_native_cases": 6,
+      "featureworld_process_checks": 24,
+      "qualification_checks": 19,
+      "qualification_negative_controls": 15
+    },
+    {
+      "name": "windows-tools-debug",
+      "status": "PASS",
+      "qualified_tests": 19,
+      "standalone_tools": true,
+      "summary": {
+        "path": "out/11a-work/tools-debug-budget/summary.json",
+        "sha256": "63c66bbca882a82ada72a56c98c378cc2c949b4d302fbb6413479826554c12cb",
+        "bytes": 2531
+      },
+      "qualified_results": {
+        "path": "out/11a-work/tools-debug-budget/qualified-inventory.json",
+        "sha256": "1e10f6568ba7c1e65a331648e856178e1e73889aa37de1f810cad696a8adffb7",
+        "bytes": 5056
+      },
+      "asset_cases": 18,
+      "asset_assertions": 6190,
+      "asset_results": {
+        "path": "out/11a-work/tools-debug-budget/asset-catalog-cases.xml",
+        "sha256": "c5bf6540015ad7d84c35d75da919cddd8e794443c56a489c5bbca8ee67ec078b",
+        "bytes": 5024
+      },
+      "featureworld_native_cases": 6,
+      "featureworld_process_checks": 24,
+      "qualification_checks": 19,
+      "qualification_negative_controls": 15
+    },
+    {
+      "name": "linux-tools-debug",
+      "status": "PASS",
+      "qualified_tests": 19,
+      "standalone_tools": true,
+      "summary": {
+        "path": "out/11a-work/wsl-budget/tools-debug/summary.json",
+        "sha256": "3a8d62f1651e2c7f066da0ea579861d1456228235360742c3718c549e652d5a1",
+        "bytes": 2011
+      },
+      "qualified_results": {
+        "path": "out/11a-work/wsl-budget/tools-debug/tests.xml",
+        "sha256": "1c53daff9cb343fc2ee179ad8f28bd2b60a2eaba9095a5168731c12fb09c9935",
+        "bytes": 12789
+      },
+      "asset_cases": 18,
+      "asset_assertions": 6190,
+      "asset_results": {
+        "path": "out/11a-work/wsl-budget/tools-debug/asset-catalog-cases.xml",
+        "sha256": "009564dfd85e5b4b54f56000197353595bb255cabe58ca4603d82f6b1dc26028",
+        "bytes": 4565
+      },
+      "featureworld_native_cases": 6,
+      "featureworld_process_checks": 24,
+      "qualification_checks": 19,
+      "qualification_negative_controls": 15
+    }
+  ],
+  "public_examples": {
+    "status": "PASS",
+    "compiles": 33,
+    "receipts": [
+      {
+        "path": "out/11a-work/native-audit/public-api/summary.json",
+        "sha256": "d5641a6bc62419b8ad87219719643c2b9ff5ab3310ae287a29543e46b92cbcf2",
+        "bytes": 949643
+      },
+      {
+        "path": "out/11a-work/wsl-budget/g++-13-public-api/summary.json",
+        "sha256": "d3352823e7d4daf2dce7b1b4370fe8dec008f78aacad906075a16c3174eb2157",
+        "bytes": 1160801
+      },
+      {
+        "path": "out/11a-work/wsl-budget/clang++-18-public-api/summary.json",
+        "sha256": "c2d05c11e16b47a1828bcb413f61efaac049118006cf6f936261f8498c825fa6",
+        "bytes": 1188645
+      }
+    ]
+  },
+  "actual_sanitizer_objects": {
+    "status": "PASS",
+    "objects": 12,
+    "receipts": [
+      {
+        "receipt": {
+          "path": "out/11a-work/windows-sanitizer-budget/summary.json",
+          "sha256": "e13bc7c022c972c3b4d656828be1f81cec5a6dde6e3e5a63d29371435154a4a6",
+          "bytes": 8534
+        },
+        "objects": 6
+      },
+      {
+        "receipt": {
+          "path": "out/11a-work/wsl-budget/sanitizer-audit/summary.json",
+          "sha256": "a6bc5626ceef1dce184dbd53005dd1f39da5565cf64cd7cf0bd6040a8b862713",
+          "bytes": 6535
+        },
+        "objects": 6
+      }
+    ]
+  },
+  "native_protected_package": {
+    "path": "out/11a-work/native-audit/summary.json",
+    "sha256": "0696ef25a458557d12aa21307c6624e96c31945f1aa57e63b87727eabb71bd52",
+    "bytes": 3069
+  },
+  "native_package_manifest": {
+    "path": "out/11a-work/native-audit/runtime-package-manifest.json",
+    "sha256": "ec39cdbe66cea79bbde2c90d6217561ec0c4d23f651b95203f9e5d17c9199a82",
+    "bytes": 13026
+  },
+  "wsl_protected_package": {
+    "path": "out/11a-work/wsl-budget/protected/summary.json",
+    "sha256": "8ec5e0a0ac4a1af89eb22cf3a38e7ec92e55f0b257a2e601b6fadbb420852708",
+    "bytes": 1118
+  },
+  "wsl_sdk_free_launch": {
+    "path": "out/11a-work/wsl-budget/sdk-free.json",
+    "sha256": "a83717a6ca07712221e071afa1af876e587a5428603ee2e380367198628d354c",
+    "bytes": 122
+  },
+  "qualification_policy": "Full initial inventories/results are retained. Every Tools family reran against the final frozen catalog. Qualified results explicitly select those current results and unchanged Core/Client/Server regressions; failures/skips cannot be promoted.",
+  "preserved_attempts": [
+    "An initial new injected-flush test expected normal Windows durability despite the explicit fault. Corrected to the existing committed-warning contract; raw failure remains.",
+    "The dependency fixture source inventory needed asset_catalog.cpp; exact integration inventory extended, no boundary relaxed.",
+    "WSL Debug contract timed out during concurrent full profiles; unchanged 30-second CTest retry passes after those competing runs.",
+    "Path-prefix memory amplification found during review; sorted full-path comparisons and the 4096-path/1500-level case added. Windows Debug initially exceeded 60 seconds; complete input-byte preflight fixes work amplification without reducing workload or changing timeout.",
+    "Earlier drivers report FAIL when their source snapshot changes or a helper artifact path is wrong. Original summaries remain; later receipts reference actual current JUnit/case results, not relabeled partial summaries."
+  ],
+  "limits_preserved": {
+    "asset_ctest_timeout_seconds": 60,
+    "catch_seed": 1337,
+    "entries": 4096,
+    "metadata_bytes": 65536,
+    "catalog_input_bytes": 16777216,
+    "page_records": 128,
+    "dependencies": 256,
+    "deep_test_paths": 4096,
+    "deep_test_levels": 1500,
+    "earlier_runner_cases": 13,
+    "earlier_featureworld_cases": 5,
+    "earlier_runner_process_checks": 29,
+    "earlier_featureworld_process_checks": 23,
+    "supervisor_process_checks": 21
+  },
+  "not_implemented": [
+    "importer execution and dependency/cache invalidation (11b)",
+    "background jobs (11c)",
+    "full REQ-11 qualification (11d)",
+    "source glTF/image decoding (12)",
+    "terminal/editor adapters (15/16)",
+    "cell streaming (M05)",
+    "final cooked containers (31)"
+  ],
+  "hardware": "Existing Windows PC and retained WSL Ubuntu CPU userspaces. No hardware/host/kernel/resource setting changes.",
+  "gpu": "No graphics implementation/dependency changes; prior 10d hardware evidence retained, not counted as new runs.",
+  "source_control": "User owns staging, commits and pushing.",
+  "storage_retention": {
+    "path": "out/11a-work/server-package-retention.json",
+    "sha256": "b68ec8e989b2ddef29717094acbc78e1b73f91287263e7839e67cbeb93540ac1",
+    "abandoned_test_roots": "Two exact empty Windows roots from timed-out catalog runs were verified and removed; see out/11a-work/abandoned-fixtures-before.json."
+  },
+  "post_gate_changes": {
+    "record": "out/11a-work/closure-metadata.json",
+    "policy": "Navigation/status and two explanatory comments only; exact comment substitutions preserve C++ behavior/line count, public API, schemas and all tests/limits. Original frozen bytes remain under closure-before."
+  }
+}

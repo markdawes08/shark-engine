@@ -1,18 +1,20 @@
 #include "shark/tools/feature_world.hpp"
 
 #include "shark/schema.hpp"
+#include "shark/tools/asset_catalog.hpp"
 #include "shark/tools/project_files.hpp"
 
 #include <algorithm>
 #include <array>
+#include <fstream>
 #include <utility>
 
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 5> case_ids{
-    "featureworld.components", "featureworld.commands", "featureworld.batches-history",
-    "featureworld.retries", "featureworld.persistence"};
+constexpr std::array<std::string_view, 6> case_ids{
+    "featureworld.components", "featureworld.commands",    "featureworld.batches-history",
+    "featureworld.retries",    "featureworld.persistence", "featureworld.asset-identity"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -73,7 +75,7 @@ SceneDocument expected_scene() {
              {branch(), root(), Name{"Branch"}, translated(2)},
              {leaf(), branch(), Name{"Waypoint 雪"}, translated(3), "{\"keep\":true}"},
              {other(), {}, Name{"Root"}, translated(-4)}},
-            "{\"fixture\":\"10b\"}"};
+            "{\"asset_reference\":\"20000000-0000-4000-8000-00000000000a\",\"fixture\":\"10b\"}"};
 }
 void require(SceneRunContext& context, bool value, const char* message,
              std::optional<AuthoredEntityId> entity = {}) {
@@ -301,8 +303,10 @@ struct Scratch {
     fs::path path;
     ~Scratch() {
         std::error_code ignored;
-        for (const auto& name : {"scenes/FeatureWorld.sharkscene", "FeatureWorld.sharkproject",
-                                 ".shark-write.lock", "scenes"})
+        for (const auto& name :
+             {"scenes/FeatureWorld.sharkscene", "FeatureWorld.sharkproject", "one.txt",
+              "one.txt.sharkasset", "moved/renamed.txt", "moved/renamed.txt.sharkasset", "moved",
+              ".shark-write.lock", "scenes"})
             fs::remove(path / name, ignored);
         fs::remove(path, ignored);
     }
@@ -361,6 +365,86 @@ void persistence(SceneRunContext& context, const fs::path& parent) {
                 take(owner.history()).undo_entries == 0,
             "Reload failed to restore saved values and clear history");
 }
+void asset_identity(SceneRunContext& context, const fs::path& parent) {
+    const auto before = take(context.owner().capture());
+    std::error_code error;
+    const auto canonical = fs::canonical(parent, error);
+    require(context, !parent.empty() && !error && fs::is_directory(canonical, error) && !error,
+            "Asset identity needs an existing scratch parent");
+    const auto path = canonical / ("shark-featureworld-" + take(generate_stable_id()).to_string());
+    require(context, fs::create_directory(path, error) && !error,
+            "Cannot create an isolated asset identity project");
+    Scratch scratch{path};
+    require(context, fs::create_directory(path / "scenes", error) && !error,
+            "Cannot create asset scene directory");
+    require(context, fs::create_directory(path / "moved", error) && !error,
+            "Cannot create asset destination directory");
+    auto files = take(ProjectFiles::open(path));
+    take(files->write_project(take(ProjectPath::parse("FeatureWorld.sharkproject")), before.project,
+                              {}));
+    take(files->write_scene(before.project, before.scene, {}));
+    {
+        std::ofstream source{path / "one.txt", std::ios::binary};
+        source << "Shark authored identity fixture\n";
+        source.close();
+        require(context, source.good(), "Cannot create asset source fixture");
+    }
+    const auto reference = id<AssetId>('a');
+    const AssetMetadata metadata{before.project.project,
+                                 reference,
+                                 "fixture",
+                                 "Shark authored offline identity fixture",
+                                 "MIT",
+                                 "shark.fixture"};
+    const auto sidecar = take(ProjectPath::parse("one.txt.sharkasset"));
+    const auto written = take(files->write_asset_metadata(sidecar, metadata, {}));
+    const auto read = take(files->read_asset_metadata(sidecar));
+    require(context, read.source.document == metadata && read.revision == written.revision,
+            "Persistent metadata changed identity, provenance or exact revision");
+    auto catalog = take(AssetCatalog::create(*files, before.project.project));
+    const std::array initial{sidecar};
+    const auto first = take(catalog->refresh(initial, take(catalog->revision())));
+    const auto page = take(catalog->query(first, 0, 1));
+    require(context,
+            page.total == 1 && page.records.size() == 1 && !page.next_offset &&
+                page.records[0].metadata.asset == reference,
+            "Asset query lost the saved reference");
+    const auto resolved = take(catalog->resolve(reference, first));
+    require(context, resolved.availability == AssetAvailability::source_present && resolved.record,
+            "Asset reference did not resolve to its source");
+    fs::rename(path / "one.txt", path / "moved/renamed.txt", error);
+    require(context, !error, "Cannot move the asset fixture");
+    fs::rename(path / "one.txt.sharkasset", path / "moved/renamed.txt.sharkasset", error);
+    require(context, !error, "Cannot move the asset sidecar fixture");
+    const std::array moved{take(ProjectPath::parse("moved/renamed.txt.sharkasset"))};
+    const auto second = take(catalog->refresh(moved, first));
+    const auto after = take(catalog->resolve(reference, second));
+    require(context,
+            second.value == first.value + 1 && after.record && after.record->metadata == metadata &&
+                after.record->source.text() == "moved/renamed.txt" &&
+                after.availability == AssetAvailability::source_present && !catalog->query(first),
+            "Move changed identity or allowed stale catalog queries");
+    require(context, fs::remove(path / "moved/renamed.txt", error) && !error,
+            "Cannot remove fixture source for missing-asset control");
+    const auto missing = take(catalog->refresh(moved, second));
+    require(context,
+            take(catalog->resolve(reference, missing)).availability ==
+                    AssetAvailability::source_missing &&
+                take(catalog->resolve(id<AssetId>('b'), missing)).availability ==
+                    AssetAvailability::unknown_id,
+            "Missing source and unknown asset identity were conflated");
+    catalog.reset();
+    files.reset();
+    files = take(ProjectFiles::open(path));
+    catalog = take(AssetCatalog::create(*files, before.project.project));
+    const auto reopened = take(catalog->refresh(moved, take(catalog->revision())));
+    const auto saved = take(files->read_scene(before.project, before.scene.scene));
+    require(context,
+            saved.source.document == before.scene &&
+                take(catalog->resolve(reference, reopened)).record->metadata == metadata,
+            "Saved scene reference or persistent metadata changed across reopen");
+    unchanged(context, before);
+}
 } // namespace
 
 std::span<const std::string_view> feature_world_case_ids() noexcept {
@@ -398,6 +482,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 4:
                         persistence(context, scratch_parent);
+                        break;
+                    case 5:
+                        asset_identity(context, scratch_parent);
                         break;
                     default:
                         break;

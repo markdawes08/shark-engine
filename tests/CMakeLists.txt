@@ -125,6 +125,15 @@ if(TARGET EngineStorage)
 endif()
 
 if(TARGET EngineTools)
+    add_executable(AssetCatalogTests asset_catalog_tests.cpp)
+    target_link_libraries(AssetCatalogTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_include_directories(AssetCatalogTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
+    shark_configure_target(AssetCatalogTests)
+    shark_classify_target(AssetCatalogTests test)
+    add_test(NAME shark.tools.asset-catalog COMMAND AssetCatalogTests "[assets]" --rng-seed 1337
+        --reporter xml --out "${CMAKE_CURRENT_BINARY_DIR}/asset-catalog-cases.xml")
+    set_tests_properties(shark.tools.asset-catalog PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
+
     add_executable(FeatureWorldTests feature_world_tests.cpp)
     target_link_libraries(FeatureWorldTests PRIVATE EngineTools Catch2::Catch2WithMain)
     target_compile_definitions(FeatureWorldTests PRIVATE

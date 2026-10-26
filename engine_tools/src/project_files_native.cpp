@@ -289,13 +289,13 @@ std::optional<Handle> open_source(const std::filesystem::path& path, std::string
     return handle;
 }
 
-std::string read_file(const Handle& handle, std::string_view context) {
+std::string read_file(const Handle& handle, std::string_view context,
+                      std::size_t maximum_bytes = source_maximum_bytes) {
     fault(FileFault::read, context);
     const auto before = metadata(handle, context);
     validate_object(before, false, context);
-    if (before.nFileSizeHigh != 0 || before.nFileSizeLow > source_maximum_bytes) {
-        fail(ErrorCode::invalid_configuration, "project source exceeds the 4 MiB byte limit",
-             context);
+    if (before.nFileSizeHigh != 0 || before.nFileSizeLow > maximum_bytes) {
+        fail(ErrorCode::invalid_configuration, "project source exceeds its byte limit", context);
     }
     std::string result;
     result.reserve(static_cast<std::size_t>(before.nFileSizeLow));
@@ -309,8 +309,8 @@ std::string read_file(const Handle& handle, std::string_view context) {
         if (count == 0) {
             break;
         }
-        if (count > source_maximum_bytes - result.size()) {
-            fail(ErrorCode::invalid_configuration, "project source exceeds the 4 MiB byte limit",
+        if (count > maximum_bytes - result.size()) {
+            fail(ErrorCode::invalid_configuration, "project source exceeds its byte limit",
                  context);
         }
         result.append(buffer.data(), count);
@@ -456,13 +456,13 @@ std::optional<Handle> open_source(int parent, const char* name, std::string_view
     return handle;
 }
 
-std::string read_file(const Handle& handle, std::string_view context) {
+std::string read_file(const Handle& handle, std::string_view context,
+                      std::size_t maximum_bytes = source_maximum_bytes) {
     fault(FileFault::read, context);
     const auto before = metadata(handle, context);
     validate_object(before, false, context);
-    if (before.st_size < 0 || static_cast<std::uint64_t>(before.st_size) > source_maximum_bytes) {
-        fail(ErrorCode::invalid_configuration, "project source exceeds the 4 MiB byte limit",
-             context);
+    if (before.st_size < 0 || static_cast<std::uint64_t>(before.st_size) > maximum_bytes) {
+        fail(ErrorCode::invalid_configuration, "project source exceeds its byte limit", context);
     }
     std::string result;
     result.reserve(static_cast<std::size_t>(before.st_size));
@@ -479,8 +479,8 @@ std::string read_file(const Handle& handle, std::string_view context) {
             break;
         }
         const auto size = static_cast<std::size_t>(count);
-        if (size > source_maximum_bytes - result.size()) {
-            fail(ErrorCode::invalid_configuration, "project source exceeds the 4 MiB byte limit",
+        if (size > maximum_bytes - result.size()) {
+            fail(ErrorCode::invalid_configuration, "project source exceeds its byte limit",
                  context);
         }
         result.append(buffer.data(), size);
@@ -696,25 +696,35 @@ Result<void> NativeProjectFiles::validate_path(const ProjectPath& path, bool all
     });
 }
 
-Result<std::string> NativeProjectFiles::read(const ProjectPath& path) const {
+Result<bool> NativeProjectFiles::exists(const ProjectPath& path) const {
+    return boundary<bool>("source.files.exists", [&] {
+        const auto location = impl_->locate(path, true);
+        const auto file = impl_->source(location, path.text());
+        impl_->validate_chain(location, path.text());
+        return file.has_value();
+    });
+}
+
+Result<std::string> NativeProjectFiles::read(const ProjectPath& path,
+                                             std::size_t maximum_bytes) const {
     return boundary<std::string>("source.files.read", [&] {
         const auto location = impl_->locate(path, false);
         const auto file = impl_->source(location, path.text());
         if (!file) {
             fail(ErrorCode::io_failure, "project source does not exist", path.text());
         }
-        auto result = read_file(*file, path.text());
+        auto result = read_file(*file, path.text(), maximum_bytes);
         impl_->validate_chain(location, path.text());
         return result;
     });
 }
 
 Result<FileDurability> NativeProjectFiles::replace(const ProjectPath& path, std::string_view bytes,
-                                                   std::optional<std::string_view> expected) {
+                                                   std::optional<std::string_view> expected,
+                                                   std::size_t maximum_bytes) {
     return boundary<FileDurability>("source.files.replace", [&] {
-        if (bytes.size() > source_maximum_bytes ||
-            (expected && expected->size() > source_maximum_bytes)) {
-            fail(ErrorCode::invalid_configuration, "project source exceeds the 4 MiB byte limit",
+        if (bytes.size() > maximum_bytes || (expected && expected->size() > maximum_bytes)) {
+            fail(ErrorCode::invalid_configuration, "project source exceeds its byte limit",
                  path.text());
         }
         const auto location = impl_->locate(path, false);
@@ -723,7 +733,7 @@ Result<FileDurability> NativeProjectFiles::replace(const ProjectPath& path, std:
         const auto check_expected = [&] {
             const auto file = impl_->source(location, path.text());
             if (file.has_value() != expected.has_value() ||
-                (file && read_file(*file, path.text()) != *expected)) {
+                (file && read_file(*file, path.text(), maximum_bytes) != *expected)) {
                 fail(ErrorCode::conflict, "project source changed; reload before retrying",
                      path.text());
             }

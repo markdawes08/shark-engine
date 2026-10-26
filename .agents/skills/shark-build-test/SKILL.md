@@ -5,6 +5,14 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+11a adds `shark.tools.asset-catalog` (60 seconds, Catch seed 1337) and a sixth
+FeatureWorld case, `featureworld.asset-identity`. Follow the
+[identity contract](../../../docs/asset-identity.md). Preserve all earlier cases,
+extend actual coverage and independent inventory together, and qualify the CPU
+metadata/catalog through Windows/WSL Tools, native regression and sanitizers.
+Native sidecar reads enforce 64 KiB before allocation; ordinary project/scene
+reads retain 4 MiB. Protected targets keep no Tools/JSON/SQLite dependency changes.
+
 10d adds `shark.tools.scene-qualification` (90 seconds), connecting actual
 catalog/CTest coverage discovery, saved-world execution and intentional failure
 through the existing supervisor and published artifact hashes. Follow the

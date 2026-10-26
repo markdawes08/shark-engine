@@ -1,5 +1,6 @@
 #pragma once
 
+#include "shark/tools/asset_metadata.hpp"
 #include "shark/tools/authored_scene.hpp"
 
 #include <filesystem>
@@ -72,6 +73,13 @@ class ProjectFiles final {
     ProjectFiles& operator=(ProjectFiles&&) = delete;
 
     [[nodiscard]] Result<ReadSource<ProjectDocument>> read_project(const ProjectPath& path);
+    [[nodiscard]] Result<ReadSource<AssetMetadata>> read_asset_metadata(const ProjectPath& sidecar);
+    [[nodiscard]] Result<FileCommit> write_asset_metadata(const ProjectPath& sidecar,
+                                                          const AssetMetadata& metadata,
+                                                          std::optional<FileRevision> expected);
+    // Checks a regular source file without decoding or reading its contents.
+    // Missing ancestors/files return false; unsafe paths and I/O faults fail.
+    [[nodiscard]] Result<bool> asset_source_exists(const ProjectPath& source);
     [[nodiscard]] Result<ReadSource<SceneDocument>> read_scene(const ProjectDocument& project,
                                                                SceneId scene);
     // nullopt requires an absent destination; an existing file requires the

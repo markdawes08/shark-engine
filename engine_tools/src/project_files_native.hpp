@@ -40,13 +40,16 @@ class NativeProjectFiles final {
     NativeProjectFiles(NativeProjectFiles&&) = delete;
     NativeProjectFiles& operator=(NativeProjectFiles&&) = delete;
 
-    [[nodiscard]] Result<std::string> read(const ProjectPath& path) const;
+    [[nodiscard]] Result<std::string> read(const ProjectPath& path,
+                                           std::size_t maximum_bytes = source_maximum_bytes) const;
+    [[nodiscard]] Result<bool> exists(const ProjectPath& path) const;
     [[nodiscard]] Result<void> validate_path(const ProjectPath& path,
                                              bool allow_missing = true) const;
     // nullopt requires an absent destination. A failed Result never published;
     // every returned durability value describes a completed publication.
     [[nodiscard]] Result<FileDurability> replace(const ProjectPath& path, std::string_view bytes,
-                                                 std::optional<std::string_view> expected);
+                                                 std::optional<std::string_view> expected,
+                                                 std::size_t maximum_bytes = source_maximum_bytes);
 
   private:
     struct Impl;

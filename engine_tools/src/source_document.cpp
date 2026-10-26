@@ -1,6 +1,8 @@
 #include "shark/tools/source_document.hpp"
+#include "shark/tools/asset_metadata.hpp"
 
 #include "shark/schema.hpp"
+#include "utf8.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -22,7 +24,7 @@ namespace {
 
 using Json = nlohmann::json;
 
-// Validation unwinds only inside the six public Result boundaries below. Neither
+// Validation unwinds only inside public Result boundaries below. Neither
 // dependency exceptions nor caller-controlled exception text crosses that boundary.
 struct SourceFailure {
     Error error;
@@ -715,6 +717,116 @@ Json scene_json(const SceneDocument& document) {
                 {"extras", Json::parse(document.extras_json)}};
 }
 
+std::string asset_text(const std::string& text, std::size_t maximum, const std::string& path,
+                       bool token = false) {
+    if (text.empty() || text.size() > maximum || !shark::detail::valid_utf8(text, true)) {
+        fail(path, "Asset metadata requires bounded nonempty UTF-8 text without controls");
+    }
+    if (token && (text.front() < 'a' || text.front() > 'z' ||
+                  !std::all_of(text.begin(), text.end(), [](char c) {
+                      return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '.' ||
+                             c == '_' || c == '-';
+                  }))) {
+        fail(path, "Asset kind/importer must be a lowercase identifier");
+    }
+    return text;
+}
+
+std::string asset_object(std::string_view text, const std::string& path) {
+    if (text.size() > source_maximum_extras_bytes) {
+        fail(path, "Asset settings/extras input exceeds 4096 bytes");
+    }
+    const auto object = parse_json(text, path, 1);
+    if (!object.is_object()) {
+        fail(path, "Asset settings/extras must be JSON objects");
+    }
+    const auto compact = object.dump();
+    if (compact.size() > source_maximum_extras_bytes) {
+        fail(path, "Canonical asset settings/extras exceeds 4096 bytes");
+    }
+    return compact;
+}
+
+AssetMetadata validate_asset(const AssetMetadata& value) {
+    if (value.dependencies.size() > asset_maximum_dependencies) {
+        fail("/dependencies", "Asset dependency limit is 256");
+    }
+    auto kind = asset_text(value.kind, 64, "/kind", true);
+    auto origin = asset_text(value.origin, 1024, "/origin");
+    auto license = asset_text(value.license, 128, "/license");
+    auto importer = asset_text(value.importer, 64, "/importer", true);
+    if (value.audience != AssetAudience::client && value.audience != AssetAudience::server &&
+        value.audience != AssetAudience::shared) {
+        fail("/audience", "Unknown asset audience");
+    }
+    auto settings = asset_object(value.settings_json, "/settings");
+    auto extras = asset_object(value.extras_json, "/extras");
+    auto dependencies = value.dependencies;
+    std::sort(dependencies.begin(), dependencies.end());
+    if (std::adjacent_find(dependencies.begin(), dependencies.end()) != dependencies.end() ||
+        std::binary_search(dependencies.begin(), dependencies.end(), value.asset)) {
+        fail("/dependencies", "Duplicate or self asset dependency");
+    }
+    return {value.project,           value.asset,         std::move(kind), std::move(origin),
+            std::move(license),      std::move(importer), value.audience,  std::move(settings),
+            std::move(dependencies), std::move(extras)};
+}
+
+AssetMetadata read_asset(const Json& root) {
+    members(root,
+            {"format", "schema_version", "project_id", "asset_id", "kind", "origin", "license",
+             "importer", "audience", "settings", "dependencies"},
+            {"extras"}, {});
+    if (string_value(root.at("format"), "/format") != "shark.asset") {
+        fail("/format", "Expected shark.asset metadata");
+    }
+    static_cast<void>(version(root.at("schema_version"), "/schema_version", false));
+    const auto audience = string_value(root.at("audience"), "/audience");
+    if (audience != "client" && audience != "server" && audience != "shared") {
+        fail("/audience", "Unknown asset audience");
+    }
+    const auto& dependencies = root.at("dependencies");
+    if (!dependencies.is_array() || dependencies.size() > asset_maximum_dependencies) {
+        fail("/dependencies", "Expected at most 256 dependency IDs");
+    }
+    std::vector<AssetId> ids;
+    for (std::size_t i = 0; i < dependencies.size(); ++i) {
+        ids.push_back(id_value<AssetId>(dependencies[i], "/dependencies/" + std::to_string(i)));
+    }
+    return validate_asset(
+        {id_value<ProjectId>(root.at("project_id"), "/project_id"),
+         id_value<AssetId>(root.at("asset_id"), "/asset_id"),
+         string_value(root.at("kind"), "/kind"), string_value(root.at("origin"), "/origin"),
+         string_value(root.at("license"), "/license"),
+         string_value(root.at("importer"), "/importer"),
+         audience == "client"   ? AssetAudience::client
+         : audience == "server" ? AssetAudience::server
+                                : AssetAudience::shared,
+         root.at("settings").dump(), std::move(ids), root.value("extras", Json::object()).dump()});
+}
+
+Json asset_json(const AssetMetadata& value) {
+    Json dependencies = Json::array();
+    for (const auto& dependency : value.dependencies) {
+        dependencies.push_back(dependency.value().to_string());
+    }
+    const auto audience = value.audience == AssetAudience::client   ? "client"
+                          : value.audience == AssetAudience::server ? "server"
+                                                                    : "shared";
+    return Json{{"format", "shark.asset"},
+                {"schema_version", asset_metadata_version},
+                {"project_id", value.project.value().to_string()},
+                {"asset_id", value.asset.value().to_string()},
+                {"kind", value.kind},
+                {"origin", value.origin},
+                {"license", value.license},
+                {"importer", value.importer},
+                {"audience", audience},
+                {"settings", Json::parse(value.settings_json)},
+                {"dependencies", std::move(dependencies)},
+                {"extras", Json::parse(value.extras_json)}};
+}
+
 class BoundedOutput final : public std::streambuf {
   public:
     std::string text;
@@ -810,6 +922,59 @@ Result<std::string> encode_project_document(const ProjectDocument& document) {
 Result<std::string> encode_scene_document(const SceneDocument& document) {
     return boundary<std::string>("source.scene.encode",
                                  [&] { return encode_json(scene_json(validate_scene(document))); });
+}
+
+Result<AssetMetadata> decode_asset_metadata(std::string_view text) {
+    return boundary<AssetMetadata>("asset.metadata.decode", [&] {
+        if (text.size() > asset_metadata_maximum_bytes) {
+            fail({}, "Asset metadata exceeds 64 KiB");
+        }
+        return read_asset(parse_json(text));
+    });
+}
+
+Result<AssetMetadata> validate_asset_metadata(const AssetMetadata& metadata) {
+    return boundary<AssetMetadata>("asset.metadata.validate",
+                                   [&] { return validate_asset(metadata); });
+}
+
+Result<std::string> encode_asset_metadata(const AssetMetadata& metadata) {
+    return boundary<std::string>("asset.metadata.encode", [&] {
+        auto text = encode_json(asset_json(validate_asset(metadata)));
+        if (text.size() > asset_metadata_maximum_bytes) {
+            fail({}, "Encoded asset metadata exceeds 64 KiB");
+        }
+        return text;
+    });
+}
+
+Result<ProjectPath> asset_sidecar_path(const ProjectPath& source) {
+    return boundary<ProjectPath>("asset.path.sidecar", [&] {
+        auto path = checked(ProjectPath::parse(source.text()), "/source");
+        auto folded = path.text();
+        std::transform(folded.begin(), folded.end(), folded.begin(), [](char c) {
+            return c >= 'A' && c <= 'Z' ? static_cast<char>(c + ('a' - 'A')) : c;
+        });
+        if (folded.ends_with(".sharkasset")) {
+            fail("/source", "An asset sidecar cannot itself be an asset source");
+        }
+        return checked(ProjectPath::parse(path.text() + ".sharkasset"), "/source");
+    });
+}
+
+Result<ProjectPath> asset_source_path(const ProjectPath& sidecar) {
+    return boundary<ProjectPath>("asset.path.source", [&] {
+        const auto path = checked(ProjectPath::parse(sidecar.text()), "/sidecar");
+        constexpr std::string_view suffix = ".sharkasset";
+        if (!path.text().ends_with(suffix)) {
+            fail("/sidecar", "Asset sidecar requires the exact .sharkasset suffix");
+        }
+        auto source =
+            checked(ProjectPath::parse(path.text().substr(0, path.text().size() - suffix.size())),
+                    "/sidecar");
+        static_cast<void>(checked(asset_sidecar_path(source), "/sidecar"));
+        return source;
+    });
 }
 
 } // namespace shark::tools

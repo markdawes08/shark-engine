@@ -11,12 +11,12 @@ native case catalog, device-free GPU catalog and current CTest inventory. It
 compares all manifest mappings with real test registrations or explicitly
 identified declarations for another profile. A declaration is not a passing
 execution. Component/command mappings must have registered tests in the current
-Tools profile; their independently reviewed exercise inventory contains nineteen
-scene surfaces and one external GPU command. Lua remains empty until real
+Tools profile; their independently reviewed exercise inventory contains twenty-four
+scene surfaces and one external GPU command after 11a. Lua remains empty until real
 bindings land. New surfaces extend their actual cases, independent inventory and
 manifest together.
 
-The fixture runs the five saved-world cases through the public supervisor, then
+The fixture runs the six saved-world cases through the public supervisor, then
 the intentional failing assertion through the same executable/result path. It
 compares stdout with create-only published results, native results and every
 artifact's bytes/hash. Failure remains exit 1 with the original case, phase,

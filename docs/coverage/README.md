@@ -15,7 +15,15 @@ new runs. Nineteen scene surfaces and one external GPU command are independently
 audited; CPU assertions do not qualify graphics. Preserve the five saved cases,
 stable source IDs and all earlier fixtures, seeds, timeouts and limits. New
 features extend native cases, independent expectations and mappings together.
-Next: 11 asset database, import jobs and cache.
+**11a is PASS** in the [identity handoff](../handoffs/11a-asset-identity.md)
+and [receipt](evidence/11a-asset-identity.json): 531 qualified full-profile
+outcomes plus 38 standalone Tools checks, 33 public-example compiles, twelve
+actual sanitizer objects and protected packages pass. The current inventory
+extends to 24 scene surfaces and one external GPU command, with six native
+FeatureWorld cases and 24 process checks. The original five cases/23 process
+checks remain. Qualification explicitly resolves retained full results with
+final Tools reruns; no failed/partial summary becomes a passing full run.
+Full REQ-11 remains NOT_RUN. Next: 11b under the [asset checkpoints](../roadmap/asset-plan.md).
 
 [requirements.json](requirements.json) is the version-3 requirement/coverage manifest for
 Shark. Each requirement has a unique ID, one owning roadmap assignment, observable
