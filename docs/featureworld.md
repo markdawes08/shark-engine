@@ -1,5 +1,12 @@
 # Saved FeatureWorld
 
+12d adds the thirteenth native case, `featureworld.gltf-assets`, with independent
+core material factors, triangle/node values and deterministic engine-payload
+encoding/decoding. The [material/asset contract](gltf-assets.md) joins the existing
+source, geometry and texture cases; all preserve the four saved entities. Coverage
+now maps 47 CPU surfaces and one external GPU command. Separate real cache/job
+fixtures test typed resources and original publication fences.
+
 Checkpoint 10b connects the [CPU runner](scene-runner.md) to the versioned
 [project](../assets/FeatureWorld/FeatureWorld.sharkproject) and
 [scene](../assets/FeatureWorld/scenes/FeatureWorld.sharkscene), following

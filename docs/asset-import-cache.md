@@ -8,6 +8,13 @@ run on the creating offline authoring thread. Runtime/Server exclude EngineTools
 11c adds [bounded background jobs](asset-import-jobs.md) through the same preparation/
 publication path; terminal/editor adapters keep 15/16. Source/metadata schemas remain 1.
 
+12d adds [typed glTF resources and engine payloads](gltf-assets.md). Dependency
+callback views additionally expose the captured child's importer/kind/versions
+and original source digest. Existing byte importers and keys retain their format;
+glTF requires its separate identity-only resource payload rather than interpreting
+a possibly transformed byte payload as source. Owner capture and publication
+fences are unchanged.
+
 ## Inputs, discovery and keys
 
 Importer discovery returns only registered implementations with bounded settings

@@ -3,6 +3,7 @@
 #include "shark/schema.hpp"
 #include "shark/tools/asset_catalog.hpp"
 #include "shark/tools/asset_import.hpp"
+#include "shark/tools/gltf_asset.hpp"
 #include "shark/tools/gltf_geometry.hpp"
 #include "shark/tools/gltf_source.hpp"
 #include "shark/tools/gltf_textures.hpp"
@@ -22,11 +23,12 @@
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 12> case_ids{
+constexpr std::array<std::string_view, 13> case_ids{
     "featureworld.components",   "featureworld.commands",      "featureworld.batches-history",
     "featureworld.retries",      "featureworld.persistence",   "featureworld.asset-identity",
     "featureworld.asset-import", "featureworld.asset-jobs",    "featureworld.asset-pipeline",
-    "featureworld.gltf-source",  "featureworld.gltf-geometry", "featureworld.gltf-textures"};
+    "featureworld.gltf-source",  "featureworld.gltf-geometry", "featureworld.gltf-textures",
+    "featureworld.gltf-assets"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -1399,6 +1401,66 @@ void gltf_textures(SceneRunContext& context) {
             "Cancelled texture conversion returned success");
     unchanged(context, before);
 }
+void gltf_assets(SceneRunContext& context) {
+    const auto before = take(context.owner().capture());
+    const auto path = take(ProjectPath::parse("models/material.gltf"));
+    // Original Shark unit triangle and material; no external files or decoders.
+    const std::string json =
+        R"({"asset":{"version":"2.0"},"scene":0,"scenes":[{"nodes":[0]}],)"
+        R"("nodes":[{"mesh":0,"translation":[2,3,4]}],"meshes":[{"primitives":[)"
+        R"({"attributes":{"POSITION":0},"material":0}]}],"buffers":[{"byteLength":36,)"
+        R"("uri":"data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAA"}],)"
+        R"("bufferViews":[{"buffer":0,"byteLength":36}],"accessors":[)"
+        R"({"bufferView":0,"componentType":5126,"count":3,"type":"VEC3"}],)"
+        R"("materials":[{"name":"Paint","pbrMetallicRoughness":{)"
+        R"("baseColorFactor":[0.25,0.5,0.75,0.5],"metallicFactor":0.25,"roughnessFactor":0.75},)"
+        R"("emissiveFactor":[0.125,0.25,0.5],"alphaMode":"MASK","alphaCutoff":0.25,"doubleSided":true}]})";
+    const GltfSourceInput input{path, std::as_bytes(std::span{json.data(), json.size()})};
+    const auto material = take(convert_gltf_materials(input));
+    require(context, material.materials.size() == 1, "Selected material inventory differs");
+    const auto& paint = material.materials.front();
+    require(context, paint.source_material == 0 && paint.name == "Paint",
+            "Material identity differs");
+    require(context, paint.base_color == std::array{0.25F, 0.5F, 0.75F, 0.5F},
+            "Base color factors differ from authored values");
+    require(context, paint.metallic == 0.25F && paint.roughness == 0.75F,
+            "Metallic-roughness factors differ");
+    require(context, paint.emissive == std::array{0.125F, 0.25F, 0.5F}, "Emissive factors differ");
+    require(context,
+            paint.alpha_mode == GltfAlphaMode::mask && paint.alpha_cutoff == 0.25F &&
+                paint.double_sided,
+            "Alpha/culling material values differ");
+    require(context, paint.normal_scale == 1.0F && paint.occlusion_strength == 1.0F,
+            "Absent normal/occlusion factors lost defaults");
+    const auto asset = take(convert_gltf_asset(input));
+    const auto payload = take(encode_gltf_asset(asset));
+    const auto restored = take(decode_gltf_asset(payload));
+    require(context, restored.materials.materials == material.materials,
+            "Engine payload lost material values");
+    require(context,
+            restored.geometry.primitives.size() == 1 && restored.geometry.nodes.size() == 1,
+            "Engine payload lost geometry/hierarchy");
+    require(context,
+            restored.geometry.primitives[0].vertices.size() == 3 &&
+                restored.geometry.primitives[0].indices == std::vector<std::uint32_t>{0, 1, 2},
+            "Engine payload lost triangle topology");
+    require(context,
+            restored.geometry.primitives[0].vertices[1].position == std::array{1.0F, 0.0F, 0.0F},
+            "Engine payload changed independent vertex position");
+    require(context, restored.geometry.nodes[0].local.translation == math::Vec3{2, 3, 4},
+            "Engine payload changed node transform");
+    require(context, restored.textures.images.empty() && restored.textures.usages.empty(),
+            "Engine payload invented texture data");
+    require(context, take(encode_gltf_asset(restored)) == payload,
+            "Engine payload is not deterministic after decode");
+    auto damaged = payload;
+    damaged.back() ^= std::byte{1};
+    require(context, !decode_gltf_asset(damaged), "Changed engine payload was accepted");
+    std::stop_source stop;
+    stop.request_stop();
+    require(context, !decode_gltf_asset(payload, stop.get_token()), "Cancelled decode succeeded");
+    unchanged(context, before);
+}
 } // namespace
 
 std::span<const std::string_view> feature_world_case_ids() noexcept {
@@ -1457,6 +1519,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 11:
                         gltf_textures(context);
+                        break;
+                    case 12:
+                        gltf_assets(context);
                         break;
                     default:
                         break;

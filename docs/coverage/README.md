@@ -1,5 +1,13 @@
 # Requirement and API coverage
 
+**12d is complete** in its [handoff](../handoffs/12d-material-assets.md) and
+[selected results](evidence/12d-material-assets.json). Material/asset conversion,
+encoding and decoding extend native FeatureWorld to 13 cases / 47 CPU surfaces,
+with the existing external GPU command separate. Actual owner integration tests
+cover typed resources, cache identity, stale/cancelled jobs and last-valid output.
+The 28 passing profile results follow the testing policy; full REQ-12 remains
+NOT_RUN until 12e. These are selected checks, not new full-profile qualifications.
+
 The user-approved [testing policy](../testing-policy.md), effective 2026-10-27,
 controls future execution cadence and evidence effort. Preserve the historical
 receipts and counts below; do not treat their full matrices or helper/source

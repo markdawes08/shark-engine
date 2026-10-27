@@ -58,9 +58,11 @@ entering live simulation or streaming. 12c qualifies
 [images and semantic texture mips](../handoffs/12c-gltf-textures.md) through the
 same captured-source owner: 507 fresh outcomes, 48 public-example compiles,
 36 actual sanitizer objects and protected packages, including fresh full Server
-suites for the private global dependency-lock addition. Materials, typed external
-resource identity, cache/job integration and optional fallback remain 12d; full
-REQ-12 remains NOT_RUN pending 12d-12e. Next: 12d, materials and asset integration.
+suites for the private global dependency-lock addition. 12d completes
+[materials, typed resource identity and cache/job integration](../handoffs/12d-material-assets.md)
+with optional core fallback, bounded engine payloads and unchanged audience/
+publication fences. Selected checks follow the testing policy. Full REQ-12
+remains NOT_RUN pending 12e integrated qualification, which is next.
 
 ## Historical assessment of the pre-M01 foundation
 

@@ -333,7 +333,18 @@ sRGB/normal semantics and per-use samplers remain required. No file/cache/Scene
 publication or new runtime dependency is introduced. Complete materials, typed
 external-resource identity/cache integration and usable optional fallback remain
 12d. Full REQ-12 remains NOT_RUN pending 12d-12e.
-**Next: 12d, materials and asset integration.**
+**12d, materials and asset integration, is complete under current-machine scope.**
+Follow [ADR 0031](docs/architecture/0031-gltf-material-assets.md), the
+[asset contract](docs/gltf-assets.md) and [handoff](docs/handoffs/12d-material-assets.md).
+The selected [results](docs/coverage/evidence/12d-material-assets.json) cover 15
+Windows, four WSL Debug and nine WSL sanitizer checks under the testing policy.
+Core material conversion and bounded version-1 engine payloads use the existing
+source owner; typed identity-only resources flow through AssetImports' original
+capture/publication fences. Logical URI aliases live in normalized settings;
+never strip ByteAssetImporter envelopes to recover source. Preserve existing
+2 MiB artifact/16 MiB closure limits, new 60/90/90-second families (seed 1337),
+13 native FeatureWorld cases, 31 process checks and 47 CPU surfaces plus one GPU
+surface. Full REQ-12 remains NOT_RUN. **Next: 12e, integrated qualification.**
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read

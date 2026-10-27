@@ -174,6 +174,7 @@ Full REQ-12 remains NOT_RUN; completed 12b/12c checkpoints below continue with 1
 | [0028](0028-bounded-gltf-sources.md) | Bounded pure glTF source snapshots, references, parser ownership and subsequent conversion contracts |
 | [0029](0029-bounded-gltf-geometry.md) | Bounded CPU static geometry, shared mesh hierarchy, transform validation and generated attributes |
 | [0030](0030-bounded-gltf-textures.md) | Bounded PNG/JPEG decoding, usage-specific texture mips and sampler preservation |
+| [0031](0031-gltf-material-assets.md) | Core materials, bounded engine payloads and typed resource integration through the asset owner |
 
 12b qualifies [bounded static geometry and hierarchy](../gltf-geometry.md)
 under [ADR 0029](0029-bounded-gltf-geometry.md). Its
@@ -184,7 +185,10 @@ under [ADR 0030](0030-bounded-gltf-textures.md), retaining the same pure source
 owner and private decoder boundary. Its [handoff](../handoffs/12c-gltf-textures.md)
 records 507 fresh outcomes, 48 public-example compiles, 36 actual sanitizer
 objects and protected packages, including two fresh full Server suites.
-Full REQ-12 remains NOT_RUN pending 12d-12e; next is 12d materials and asset integration.
+12d adds [materials and asset integration](../gltf-assets.md) under ADR 0031,
+retaining existing cache/job ownership and bounds. Its
+[handoff](../handoffs/12d-material-assets.md) records selected verification under
+the testing policy. Full REQ-12 remains NOT_RUN; next is 12e integrated qualification.
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

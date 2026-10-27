@@ -123,6 +123,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                 ROOT / "engine_tools/src/asset_import.cpp",
                 ROOT / "engine_tools/src/gltf_source.cpp",
                 ROOT / "engine_tools/src/gltf_image_decoder.cpp",
+                ROOT / "engine_tools/src/gltf_asset.cpp",
                 ROOT / "engine_tools/src/scene_runner.cpp",
                 ROOT / "engine_tools/src/feature_world.cpp",
             } if tools else set()

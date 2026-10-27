@@ -43,8 +43,10 @@ network/query/fragment forms, normalize relative dot segments and then validate
 ProjectPath. `models/static.gltf` may reference `../textures/a.png`; walking
 beyond the logical project root rejects. No percent-encoded escape bypasses that
 policy. Required extensions reject by name; optional extensions produce bounded
-diagnostics. 12a checks core source fields; full usable material/texture fallback
-and extension-only resource reachability remain 12d/12e. Unsupported skins/animations/morph
+diagnostics. 12d adds usable core fallback for optional compressed texture sources:
+recognized extension-only images are omitted from effective core resources, while
+every core image reference retains its checks. See the [asset contract](gltf-assets.md).
+Unsupported skins/animations/morph
 content rejects. Camera/light content has explicit diagnostics, retaining later
 engine component ownership.
 

@@ -50,9 +50,11 @@ same captured-source owner, with owned RGBA8/16 values, semantic mip chains and
 per-use samplers. The twelfth native FeatureWorld case and public CPU example
 exercise this shared behavior without an editor/device requirement. Its
 [handoff](../handoffs/12c-gltf-textures.md) records 507 fresh outcomes, 48 public-
-example compiles, 36 actual sanitizer objects and protected packages. Materials
-and asset integration follow in 12d; terminal/editor adapters retain 15/16 and
-the original owner/publication fences. Full REQ-12 remains NOT_RUN pending 12d-12e.
+example compiles, 36 actual sanitizer objects and protected packages. 12d adds
+[material/asset APIs](../gltf-assets.md) and typed resource imports through the same
+owner, ready for later human/agent adapters. Its [handoff](../handoffs/12d-material-assets.md)
+records selected verification. Terminal/editor adapters retain 15/16 and the
+original owner/publication fences. Full REQ-12 remains NOT_RUN pending 12e.
 
 ## Assessment of existing work
 

@@ -81,9 +81,13 @@ protected packages. **12c is also complete:** shared CPU
 usage-specific color/data/normal mip chains and per-use samplers through the same
 captured-source owner. Its [handoff](docs/handoffs/12c-gltf-textures.md) records
 507 fresh outcomes, 48 public-example compiles, 36 actual sanitizer objects and
-protected packages, including 136 fresh full Server outcomes. The
-[five checkpoints](docs/roadmap/gltf-plan.md) continue with **12d materials and
-asset integration**; full REQ-12 remains NOT_RUN pending 12d-12e.
+protected packages, including 136 fresh full Server outcomes. **12d is complete:**
+[materials and asset integration](docs/gltf-assets.md) add core material values,
+bounded engine payloads and typed resource imports through the existing cache/job
+owner. Its [handoff](docs/handoffs/12d-material-assets.md) records selected Windows,
+WSL and sanitizer checks under the testing policy. The
+[five checkpoints](docs/roadmap/gltf-plan.md) continue with **12e integrated
+qualification**; full REQ-12 remains NOT_RUN until that gate closes.
 
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
 **04c and full assignment 04 are complete under the current-machine scope.**

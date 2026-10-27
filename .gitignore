@@ -4,6 +4,7 @@
 # Generated builds, fetched dependencies, reports and distribution staging.
 # Static glTF conversion reports and scratch geometry stay under build/ or out/.
 # Decoded pixels, mip reports and image-decoder caches stay under build/ or out/.
+# Serialized development glTF payloads and import scratch stay under build/ or out/.
 # Includes minimal Ubuntu inputs in .tools/headless and server packages/evidence in out/.
 # Graphics/DXC/validation source caches stay in .tools/graphics; generated SPIR-V,
 # binary readbacks, validation layers and reports use build/ and out/graphics*/.

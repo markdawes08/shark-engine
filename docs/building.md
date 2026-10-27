@@ -478,6 +478,15 @@ packages. Future Tools-only lock changes use affected dependency/boundary checks
 under the testing policy; they do not automatically refresh full Server behavior
 or unrelated graphics/package artifacts.
 
+12d adds `GltfMaterialTests`, `GltfAssetTests` and `GltfImportTests`, registered as
+`shark.tools.gltf-materials` (60 seconds), `shark.tools.gltf-assets` (90 seconds)
+and `shark.tools.gltf-import` (90 seconds), all seed 1337. They cover core material
+values, bounded engine payloads and actual typed-resource owner/cache/job behavior.
+The [asset contract](gltf-assets.md) includes the new public example. The
+[12d handoff](handoffs/12d-material-assets.md) records the affected Windows/WSL
+checks; full REQ-12 still requires 12e, and no renderer or cooked runtime output
+is claimed. Use the testing policy to select future checks.
+
 08b adds `AuthoredSceneTests` and `shark.tools.authored-scene` (seed 1337,
 60-second timeout) for revision-consistent capture, project/world references,
 candidate construction and failure-safe Scene activation. After listing the test

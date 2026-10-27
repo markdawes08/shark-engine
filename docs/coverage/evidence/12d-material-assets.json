@@ -1,0 +1,79 @@
+{
+  "format": "shark.checkpoint-evidence",
+  "schema_version": 1,
+  "checkpoint": "12d",
+  "requirement": "REQ-12",
+  "status": "PASS",
+  "requirement_status": "NOT_RUN",
+  "base_revision": "5afe06e",
+  "branch": "main",
+  "worktree": "unstaged implementation changes; user owns staging, commits and pushing",
+  "scope": "Current-machine CPU materials, static engine payloads and typed glTF cache/job integration. Selected verification under docs/testing-policy.md; no full-matrix or release claim.",
+  "profiles": {
+    "windows-debug": {
+      "passing_selected_tests": 15,
+      "junit": [
+        "out/12d-work/dependency-boundary.xml",
+        "out/12d-work/native-tests.xml",
+        "out/12d-work/featureworld-process-fixed.xml"
+      ],
+      "resolved_failed_attempts": [
+        {
+          "test": "shark.tools.featureworld-process",
+          "status": "FAIL",
+          "seconds": 1.37114,
+          "junit": "out/12d-work/native-tests.xml"
+        }
+      ]
+    },
+    "wsl-tools-debug": {
+      "passing_selected_tests": 4,
+      "junit": [
+        "out/12d-work/wsl/debug.xml"
+      ]
+    },
+    "wsl-asan-ubsan": {
+      "passing_selected_tests": 9,
+      "junit": [
+        "out/12d-work/wsl/sanitizer.xml"
+      ]
+    }
+  },
+  "passing_selected_profile_results": 28,
+  "new_catch_cases": {
+    "materials": 14,
+    "assets": 12,
+    "import": 15
+  },
+  "featureworld": {
+    "native_cases": 13,
+    "process_checks": 31,
+    "cpu_surfaces": 47,
+    "external_gpu_surfaces": 1,
+    "qualification_checks": 19,
+    "negative_controls": 15
+  },
+  "prior_import_process_checks": {
+    "synchronous": 59,
+    "asynchronous": 113
+  },
+  "public_example": {
+    "document": "docs/gltf-assets.md",
+    "compiler": "MSVC x64",
+    "result": "PASS",
+    "log": "out/12d-work/public-example.log"
+  },
+  "commands": {
+    "native_build": "out/12d-work/native-build-final.log",
+    "native_selected_tests": "out/12d-work/native-tests.log",
+    "boundary": "out/12d-work/dependency-boundary.log",
+    "fixed_process_fixture": "out/12d-work/featureworld-process-fixed.log",
+    "wsl_commands": "out/12d-work/wsl-commands.sh",
+    "wsl_build_and_tests": "out/12d-work/wsl/driver.log"
+  },
+  "resolved_failure": "FeatureWorld process expected-revision list still had twelve entries after adding the thirteenth native case. Added its expected unchanged revision, preserved the failed batch output and reran only shark.tools.featureworld-process; PASS. No code behavior or acceptance limit changed.",
+  "not_run": [
+    "Unrelated full client/Server matrices, all-example compiles, package redeployments and GPU runs: Core/Server implementation, the dependency lock, install rules and graphics inputs are unchanged. Affected dependency boundaries pass; broader glTF acceptance remains12e."
+  ],
+  "next": "12e integrated qualification"
+}

@@ -328,7 +328,7 @@
       "planned_fixture": "LicensedGLTFProfile corpus with EmbeddedExternal, SparsePolicy, MalformedAccessor, RequiredExtension, ImageColorSpace and PathTraversal cases; FeatureWorld/ImportedStaticMeshes uses accepted assets.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "12a source inspection, 12b bounded static geometry/hierarchy and 12c images/textures are PASS under current-machine scope. 12c qualifies 507 fresh outcomes (231 full client Debug, 140 complete declared Tools selections and 136 fresh full Server; standalone Tools 56 is included in 140), 48 public-example compiles, 36 actual sanitizer objects and protected packages. Pure source-owned PNG/JPEG decoding returns RGBA8/16LE with independent budgets, usage-specific sRGB/data/normal mips, exact linear data/alpha filtering, complete NPOT chains and per-use samplers. Preserve 43 texture cases/9022 assertions, source 41/1794, geometry 45/988 and all earlier workloads/limits. Complete material/resource/cache integration and optional fallback remain 12d; integrated full REQ-12 qualification remains 12e. Final PBR rendering acceptance belongs to 26. See docs/handoffs/12c-gltf-textures.md and docs/roadmap/gltf-plan.md.",
+        "reason": "12a source, 12b geometry, 12c textures and 12d materials/asset integration are PASS under current-machine scope. 12d follows docs/testing-policy.md with 15 Windows Debug, four WSL Debug and nine WSL ASan/UBSan selected results, the new public example and affected dependency boundaries. One stale FeatureWorld process expected-revision inventory was corrected and only that failed check rerun; original evidence is preserved. Core materials, bounded version-1 engine payloads and typed identity-only resources use existing AssetImports capture/publication fences, including stale/cancelled jobs and last-valid output. Preserve all prior workloads and new 60/90/90-second families (seed1337), 13 native FeatureWorld cases, 31 process checks, 47 CPU surfaces and one external GPU command. Full REQ-12 remains NOT_RUN pending12e integrated qualification. See docs/handoffs/12d-material-assets.md and docs/gltf-assets.md.",
         "checkpoints": {
           "12a": {
             "status": "PASS",
@@ -349,6 +349,13 @@
             "evidence": {
               "path": "docs/coverage/evidence/12c-gltf-textures.json",
               "sha256": "7dcb601d00408cad60585ec568397c93c787103eb86880e5e2098a63d3c02b76"
+            }
+          },
+          "12d": {
+            "status": "PASS",
+            "evidence": {
+              "path": "docs/coverage/evidence/12d-material-assets.json",
+              "sha256": "eefe28160129866e1daf0df45e1cb0e851ca05d08df4a65f97e8cf53148cf6cc"
             }
           }
         }
@@ -2615,6 +2622,38 @@
         "featureworld_cases": [
           "featureworld.gltf-textures"
         ]
+      },
+      {
+        "id": "tools.gltf-assets",
+        "name": "Static glTF materials and asset integration",
+        "requirement_ids": [
+          "REQ-12"
+        ],
+        "test_ids": [
+          "shark.tools.gltf-materials",
+          "shark.tools.gltf-assets",
+          "shark.tools.gltf-import",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/gltf_material_tests.cpp",
+          "tests/gltf_asset_tests.cpp",
+          "tests/gltf_import_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/gltf-assets.md"
+        ],
+        "fixture_reason": "Core metallic-roughness materials, deterministic bounded engine-owned geometry/texture/material payloads and typed identity-only resource imports use existing source validation and AssetImports publication fences. Native FeatureWorld independently checks material factors and triangle/node values through conversion and payload round-trip without mutating its owner. Real ProjectFiles/catalog/cache/job fixtures cover source/settings/dependency changes, audience restrictions, stale completion, cancellation and last-valid output. Inline fixtures are original Shark MIT data. No runtime renderer or cooked distribution is claimed.",
+        "featureworld_cases": [
+          "featureworld.gltf-assets"
+        ]
       }
     ],
     "components": [
@@ -4171,6 +4210,134 @@
         "featureworld_cases": [
           "featureworld.gltf-textures"
         ]
+      },
+      {
+        "id": "asset.gltf.materials",
+        "name": "convert_gltf_materials",
+        "requirement_ids": [
+          "REQ-12"
+        ],
+        "test_ids": [
+          "shark.tools.gltf-materials",
+          "shark.tools.gltf-assets",
+          "shark.tools.gltf-import",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/gltf_material_tests.cpp",
+          "tests/gltf_asset_tests.cpp",
+          "tests/gltf_import_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/gltf-assets.md"
+        ],
+        "fixture_reason": "Core metallic-roughness materials, deterministic bounded engine-owned geometry/texture/material payloads and typed identity-only resource imports use existing source validation and AssetImports publication fences. Native FeatureWorld independently checks material factors and triangle/node values through conversion and payload round-trip without mutating its owner. Real ProjectFiles/catalog/cache/job fixtures cover source/settings/dependency changes, audience restrictions, stale completion, cancellation and last-valid output. Inline fixtures are original Shark MIT data. No runtime renderer or cooked distribution is claimed.",
+        "featureworld_cases": [
+          "featureworld.gltf-assets"
+        ]
+      },
+      {
+        "id": "asset.gltf.asset.convert",
+        "name": "convert_gltf_asset",
+        "requirement_ids": [
+          "REQ-12"
+        ],
+        "test_ids": [
+          "shark.tools.gltf-materials",
+          "shark.tools.gltf-assets",
+          "shark.tools.gltf-import",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/gltf_material_tests.cpp",
+          "tests/gltf_asset_tests.cpp",
+          "tests/gltf_import_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/gltf-assets.md"
+        ],
+        "fixture_reason": "Core metallic-roughness materials, deterministic bounded engine-owned geometry/texture/material payloads and typed identity-only resource imports use existing source validation and AssetImports publication fences. Native FeatureWorld independently checks material factors and triangle/node values through conversion and payload round-trip without mutating its owner. Real ProjectFiles/catalog/cache/job fixtures cover source/settings/dependency changes, audience restrictions, stale completion, cancellation and last-valid output. Inline fixtures are original Shark MIT data. No runtime renderer or cooked distribution is claimed.",
+        "featureworld_cases": [
+          "featureworld.gltf-assets"
+        ]
+      },
+      {
+        "id": "asset.gltf.asset.encode",
+        "name": "encode_gltf_asset",
+        "requirement_ids": [
+          "REQ-12"
+        ],
+        "test_ids": [
+          "shark.tools.gltf-materials",
+          "shark.tools.gltf-assets",
+          "shark.tools.gltf-import",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/gltf_material_tests.cpp",
+          "tests/gltf_asset_tests.cpp",
+          "tests/gltf_import_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/gltf-assets.md"
+        ],
+        "fixture_reason": "Core metallic-roughness materials, deterministic bounded engine-owned geometry/texture/material payloads and typed identity-only resource imports use existing source validation and AssetImports publication fences. Native FeatureWorld independently checks material factors and triangle/node values through conversion and payload round-trip without mutating its owner. Real ProjectFiles/catalog/cache/job fixtures cover source/settings/dependency changes, audience restrictions, stale completion, cancellation and last-valid output. Inline fixtures are original Shark MIT data. No runtime renderer or cooked distribution is claimed.",
+        "featureworld_cases": [
+          "featureworld.gltf-assets"
+        ]
+      },
+      {
+        "id": "asset.gltf.asset.decode",
+        "name": "decode_gltf_asset",
+        "requirement_ids": [
+          "REQ-12"
+        ],
+        "test_ids": [
+          "shark.tools.gltf-materials",
+          "shark.tools.gltf-assets",
+          "shark.tools.gltf-import",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/gltf_material_tests.cpp",
+          "tests/gltf_asset_tests.cpp",
+          "tests/gltf_import_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/gltf-assets.md"
+        ],
+        "fixture_reason": "Core metallic-roughness materials, deterministic bounded engine-owned geometry/texture/material payloads and typed identity-only resource imports use existing source validation and AssetImports publication fences. Native FeatureWorld independently checks material factors and triangle/node values through conversion and payload round-trip without mutating its owner. Real ProjectFiles/catalog/cache/job fixtures cover source/settings/dependency changes, audience restrictions, stale completion, cancellation and last-valid output. Inline fixtures are original Shark MIT data. No runtime renderer or cooked distribution is claimed.",
+        "featureworld_cases": [
+          "featureworld.gltf-assets"
+        ]
       }
     ],
     "lua_api": []
@@ -4190,7 +4357,8 @@
       "featureworld.asset-pipeline",
       "featureworld.gltf-source",
       "featureworld.gltf-geometry",
-      "featureworld.gltf-textures"
+      "featureworld.gltf-textures",
+      "featureworld.gltf-assets"
     ],
     "case_source": "engine_tools/src/feature_world.cpp"
   }

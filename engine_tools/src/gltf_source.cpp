@@ -1,5 +1,6 @@
 #include "shark/tools/gltf_source.hpp"
 #include "shark/tools/gltf_geometry.hpp"
+#include "shark/tools/gltf_materials.hpp"
 #include "shark/tools/gltf_textures.hpp"
 
 #include "gltf_image_decoder.hpp"
@@ -323,6 +324,7 @@ struct Inspection {
     std::vector<bool> used;
     std::vector<Resolved> buffers;
     std::vector<Resolved> images;
+    std::vector<bool> ignored_images;
     std::vector<View> views;
     std::vector<Accessor> accessors;
     std::vector<std::optional<std::uint32_t>> index_bounds;
@@ -518,6 +520,57 @@ struct Inspection {
                 fail("glTF numeric value cannot be represented as finite engine data");
         }
     }
+    void optional_image_fallbacks() {
+        const auto count = array(document, "images").size();
+        ignored_images.assign(count, false);
+        // Recognize only the ownership of these optional alternative sources,
+        // never their codecs or other extension behavior. Core references win
+        // across the complete document, including currently unreachable textures.
+        for (const auto& texture : array(document, "textures")) {
+            if (!texture.contains("extensions") || !texture.at("extensions").is_object())
+                continue;
+            const auto& alternatives = texture.at("extensions");
+            for (const auto* name :
+                 {"KHR_texture_basisu", "EXT_texture_webp", "MSFT_texture_dds"}) {
+                if (!extensions.contains(name) || !alternatives.contains(name))
+                    continue;
+                const auto& alternative = alternatives.at(name);
+                if (!alternative.is_object() || !alternative.contains("source"))
+                    continue;
+                const auto& value = alternative.at("source");
+                if (!value.is_number_unsigned() &&
+                    !(value.is_number_integer() && value.get<std::int64_t>() >= 0))
+                    continue;
+                const auto position = value.get<std::uint64_t>();
+                if (position < count)
+                    ignored_images[static_cast<std::size_t>(position)] = true;
+            }
+        }
+        for (const auto& texture : array(document, "textures"))
+            if (texture.contains("source"))
+                ignored_images[index(texture.at("source"), count)] = false;
+        if (std::find(ignored_images.begin(), ignored_images.end(), true) != ignored_images.end())
+            diagnostic(
+                "Ignored extension-only image sources; core texture fallbacks remain active");
+    }
+    void acknowledge_ignored_image(const Json& image) {
+        // The ignored alternative needs no bytes. An explicitly supplied mapping
+        // may still be consumed, after precharge applied all source/path/ID bounds.
+        // Neither a network URI nor malformed ignored content triggers a fetch.
+        if (!image.contains("uri") || !image.at("uri").is_string())
+            return;
+        const auto& value = image.at("uri").get_ref<const std::string&>();
+        if (value.size() >= 5 && folded(std::string_view{value}.substr(0, 5)) == "data:")
+            return;
+        try {
+            const auto path = resolve_path(value);
+            const auto found = external.find(folded(path.text()));
+            if (found != external.end() && input.external_sources[found->second].path == path)
+                used[found->second] = true;
+        } catch (const Failure&) {
+            // An unsupported alternative's URI is not an effective core source.
+        }
+    }
     void tables() {
         object(document);
         if (!document.contains("asset"))
@@ -569,6 +622,7 @@ struct Inspection {
             result.selected_scene = 0;
         // Unsupported optional extensions use the validated core fallback. Do not
         // let parser recognition silently activate extension behavior.
+        optional_image_fallbacks();
         strip_extensions(document);
     }
     void resources() {
@@ -627,6 +681,14 @@ struct Inspection {
         for (std::size_t i = 0; i < source_images.size(); ++i) {
             cancelled(input.stop);
             const auto& image = source_images[i];
+            if (ignored_images[i]) {
+                acknowledge_ignored_image(image);
+                images.push_back({GltfResourceStorage::external, {}, {}, {}, {}, {}});
+                // Preserve source-index correspondence without feeding ignored
+                // image fields back into the core-only third-party parser view.
+                document["images"][i] = Json{{"uri", "ignored-optional-image"}};
+                continue;
+            }
             if (image.contains("uri") == image.contains("bufferView"))
                 fail("glTF image requires exactly one URI or bufferView");
             Resolved resolved{GltfResourceStorage::buffer_view, {}, {}, {}, {}, {}};
@@ -1917,6 +1979,113 @@ struct TextureConversion {
     }
 };
 
+struct MaterialConversion {
+    Inspection& source;
+    const GltfMaterialSettings& settings;
+    std::string& field;
+    GltfMaterials output{};
+    std::size_t output_bytes{};
+
+    void charge(std::size_t bytes) {
+        if (bytes > gltf_material_maximum_output_bytes - output_bytes)
+            fail("glTF material records exceed their output byte bound");
+        output_bytes += bytes;
+    }
+    static float scalar(const Json& value, double minimum, double maximum) {
+        if (!value.is_number())
+            fail("glTF material factor requires a number");
+        const auto number = value.get<double>();
+        if (!std::isfinite(number) || number < minimum || number > maximum)
+            fail("glTF material factor is outside its supported range");
+        const auto converted = static_cast<float>(number);
+        return converted == 0.0F ? 0.0F : converted;
+    }
+    static float factor(const Json& object, const char* key, float fallback, double minimum = 0.0,
+                        double maximum = 1.0) {
+        return object.contains(key) ? scalar(object.at(key), minimum, maximum) : fallback;
+    }
+    template <std::size_t Size>
+    static void factors(const Json& object, const char* key, std::array<float, Size>& output) {
+        if (!object.contains(key))
+            return;
+        const auto& values = object.at(key);
+        if (!values.is_array() || values.size() != Size)
+            fail("glTF material factor vector has the wrong shape");
+        for (std::size_t i = 0; i < Size; ++i)
+            output[i] = scalar(values[i], 0.0, 1.0);
+    }
+    GltfMaterials run() {
+        cancelled(source.input.stop);
+        output.selected_scene = source.result.selected_scene;
+        if (settings.scene)
+            output.selected_scene = index(Json(*settings.scene), source.result.counts.scenes);
+        // Share the existing selected-scene inventory and UV checks. Material
+        // conversion never runs TextureConversion::run or a decoder callback.
+        const GltfTextureSettings texture_settings{settings.scene};
+        TextureConversion references{source, texture_settings, field};
+        references.output.selected_scene = output.selected_scene;
+        const auto inventory = references.material_inventory();
+        charge(multiply(inventory.size(), sizeof(GltfMaterial)));
+        output.materials.reserve(inventory.size());
+        for (const auto position : inventory) {
+            cancelled(source.input.stop);
+            field = "materials[" + std::to_string(position) + "]";
+            const auto& material = array(source.document, "materials")[position];
+            GltfMaterial converted;
+            converted.source_material = position;
+            if (material.contains("name")) {
+                converted.name = string(material.at("name"), gltf_source_maximum_uri_bytes);
+                charge(converted.name.size());
+            }
+            if (material.contains("pbrMetallicRoughness")) {
+                const auto& pbr = material.at("pbrMetallicRoughness");
+                object(pbr);
+                factors(pbr, "baseColorFactor", converted.base_color);
+                converted.metallic = factor(pbr, "metallicFactor", 1.0F);
+                converted.roughness = factor(pbr, "roughnessFactor", 1.0F);
+            }
+            factors(material, "emissiveFactor", converted.emissive);
+            converted.alpha_cutoff =
+                factor(material, "alphaCutoff", 0.5F, 0.0, std::numeric_limits<float>::max());
+            if (material.contains("alphaMode")) {
+                const auto mode = string(material.at("alphaMode"), 16);
+                if (mode == "OPAQUE")
+                    converted.alpha_mode = GltfAlphaMode::opaque;
+                else if (mode == "MASK")
+                    converted.alpha_mode = GltfAlphaMode::mask;
+                else if (mode == "BLEND")
+                    converted.alpha_mode = GltfAlphaMode::blend;
+                else
+                    fail("Unsupported glTF material alpha mode");
+            }
+            if (material.contains("doubleSided")) {
+                if (!material.at("doubleSided").is_boolean())
+                    fail("glTF material doubleSided requires a boolean");
+                converted.double_sided = material.at("doubleSided").get<bool>();
+            }
+            for (const auto& slot : TextureConversion::slots) {
+                const auto* reference = references.info(material, slot);
+                if (!reference)
+                    continue;
+                field = "materials[" + std::to_string(position) + "]." + slot.name;
+                const auto texture = index(reference->at("index"), source.result.counts.textures);
+                converted.textures[static_cast<std::size_t>(slot.role)] =
+                    GltfMaterialTexture{texture, optional_integer(*reference, "texCoord")};
+                if (slot.role == GltfTextureRole::normal)
+                    converted.normal_scale =
+                        factor(*reference, "scale", 1.0F, -std::numeric_limits<float>::max(),
+                               std::numeric_limits<float>::max());
+                else if (slot.role == GltfTextureRole::occlusion)
+                    converted.occlusion_strength = factor(*reference, "strength", 1.0F);
+            }
+            output.materials.push_back(std::move(converted));
+        }
+        cancelled(source.input.stop);
+        output.source = std::move(source.result);
+        return std::move(output);
+    }
+};
+
 void precharge(const GltfSourceInput& input) {
     cancelled(input.stop);
     if (input.bytes.empty() || input.bytes.size() > gltf_source_maximum_file_bytes ||
@@ -2031,6 +2200,36 @@ Result<GltfTextures> convert_gltf_textures(const GltfSourceInput& input,
         return Error{ErrorCode::execution_failed,
                      "glTF texture conversion failed: " + field,
                      {.operation = "asset.gltf.textures", .path = input.path.text()}};
+    }
+}
+
+Result<GltfMaterials> convert_gltf_materials(const GltfSourceInput& input,
+                                             const GltfMaterialSettings& settings) {
+    std::string field;
+    try {
+        precharge(input);
+        Inspection source{input};
+        source.prepare();
+        return MaterialConversion{source, settings, field}.run();
+    } catch (Failure& failure) {
+        failure.error.context.operation = "asset.gltf.materials";
+        if (failure.error.context.path.empty())
+            failure.error.context.path = input.path.text();
+        if (!field.empty())
+            failure.error.message = field + ": " + failure.error.message;
+        return std::move(failure.error);
+    } catch (const std::bad_alloc&) {
+        return Error{ErrorCode::execution_failed,
+                     "glTF material allocation failed",
+                     {.operation = "asset.gltf.materials", .path = input.path.text()}};
+    } catch (const Json::exception&) {
+        return Error{ErrorCode::invalid_configuration,
+                     "Malformed glTF material fields: " + field,
+                     {.operation = "asset.gltf.materials", .path = input.path.text()}};
+    } catch (...) {
+        return Error{ErrorCode::execution_failed,
+                     "glTF material conversion failed: " + field,
+                     {.operation = "asset.gltf.materials", .path = input.path.text()}};
     }
 }
 } // namespace shark::tools

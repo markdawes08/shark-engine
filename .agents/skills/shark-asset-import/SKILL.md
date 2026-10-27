@@ -13,6 +13,12 @@ affected import and FeatureWorld regressions, then use the policy's subchunk or
 assignment-closure scope. A private Tools dependency change needs boundary checks,
 not automatically full Server suites, package deployments or GPU runs.
 
+12d adds [materials and asset payloads](../../../docs/gltf-assets.md). Require the
+typed identity-only resource importer and owner-supplied descriptor/source digest;
+never interpret transformed byte bodies as original sources. Logical URI aliases
+are normalized settings, not native file requests. Preserve the existing cache
+and job bounds/fences; broader glTF qualification remains 12e.
+
 12c adds pure [texture conversion](../../../docs/gltf-textures.md) through the
 same source owner. Preserve pinned memory-only PNG/JPEG, precision, strict PNG
 framing/inflate/palette checks, JPEG structural/scan-work checks, nullable arena

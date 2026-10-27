@@ -115,7 +115,8 @@ to EngineStorage/Server. Package checks must preserve all locked license notices
   [jobs](../../../docs/asset-import-jobs.md),
   [source](../../../docs/gltf-source.md),
   [geometry](../../../docs/gltf-geometry.md) and
-  [textures](../../../docs/gltf-textures.md). Keep independent expected values,
+  [textures](../../../docs/gltf-textures.md), plus
+  [material/asset integration](../../../docs/gltf-assets.md). Keep independent expected values,
   allocation limits/failures and licensed offline fixtures.
 - [FeatureWorld](../../../docs/featureworld.md): extend real cases, independent
   expectations and coverage mappings together when a supported surface grows.

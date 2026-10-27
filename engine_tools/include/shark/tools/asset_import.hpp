@@ -58,6 +58,13 @@ struct AssetImportDependency {
     AssetId asset;
     AssetCacheKey key;
     std::span<const std::byte> payload;
+    // Descriptor and source digest from the validated captured child artifact.
+    // Consumers must not interpret an arbitrary transformed payload as raw source.
+    std::string_view kind{};
+    std::string_view importer{};
+    std::uint32_t importer_version{};
+    std::uint32_t payload_version{};
+    ContentDigest source_digest{};
 };
 struct AssetImportInput {
     AssetId asset;

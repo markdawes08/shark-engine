@@ -88,7 +88,7 @@ outcomes are distinct; standalone Tools 56 is included in 140. Follow
 Preserve 43 texture cases/9,022 assertions, source 41/1,794, geometry 45/988,
 all independent budgets and every earlier workload/limit. FeatureWorld retains
 twelve native cases, 30 process checks, 43 CPU surfaces and one external GPU command.
-Full REQ-12 remains NOT_RUN pending 12d-12e. Next: 12d, materials and asset integration.
+Full REQ-12 remains NOT_RUN; 12d is complete below and 12e is next.
 
 ## 12d - Materials and asset integration
 
@@ -108,6 +108,16 @@ privacy, bounded async work, stale completion, cancellation and last-valid outpu
 Qualify optional-extension core fallback, including a usable core PNG/JPEG texture
 whose unsupported extension references a separate extension-only compressed image.
 Such ignored extension content cannot defeat an otherwise valid core fallback.
+
+**Status: PASS under current-machine scope.** The
+[handoff](../handoffs/12d-material-assets.md) and
+[selected results](../coverage/evidence/12d-material-assets.json) record 28 passing
+profile results under the testing policy, plus the new public example. Follow
+[ADR 0031](../architecture/0031-gltf-material-assets.md) and the
+[asset contract](../gltf-assets.md). The new 14/12/15 Catch cases preserve material
+values, bounded engine payloads and real typed-resource cache/job integration.
+Thirteen native cases map 47 CPU surfaces and one external GPU command.
+Full REQ-12 remains NOT_RUN. Next: 12e.
 
 ## 12e - Integrated qualification
 

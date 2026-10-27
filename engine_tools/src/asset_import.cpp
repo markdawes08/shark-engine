@@ -374,7 +374,9 @@ struct AssetImports::Impl {
                 std::vector<AssetImportDependency> dependencies;
                 for (const auto& dependency : node.artifact.dependencies) {
                     const auto& child = plan.inputs.nodes.at(dependency.asset).artifact;
-                    dependencies.push_back({child.asset, child.key, child.payload});
+                    dependencies.push_back({child.asset, child.key, child.payload, child.kind,
+                                            child.importer, child.importer_version,
+                                            child.payload_version, child.source_digest});
                 }
                 const auto& registered = importer(node.record.metadata);
                 AssetImportInput input{
