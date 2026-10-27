@@ -5,6 +5,13 @@ description: Add or change Shark components and public command or Lua APIs while
 
 # Shark component and API integration
 
+12a exposes the read-only CPU `asset.gltf.inspect` operation under the
+[source contract](../../../docs/gltf-source.md). Its tenth native FeatureWorld
+case uses actual inspection and retains the AuthoredScene and saved entity IDs.
+Extend independent inventory/mappings together; there are 41 CPU surfaces plus
+one external GPU command. Owned source reports do not advertise converted meshes,
+decoded pixels, terminal protocol methods or material rendering.
+
 11d's [asset qualification](../../../docs/asset-qualification.md) connects one
 saved FeatureWorld reference through identity, move, dependency changes, worker
 completion fences and cache reopen. The ninth native case extends real mappings

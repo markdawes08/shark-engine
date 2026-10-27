@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "11",
+  "current_assignment": "12",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -257,14 +257,26 @@
       "requirement": "Implement the declared useful static glTF 2.0 profile for .gltf/.glb, node transforms, indexed primitives, normals/tangents/UVs, core metallic-roughness descriptions, referenced supported images and samplers, color/data decoding and preservation of alpha/double-sided fields. Validate accessor bounds, offsets and sizes and distinguish parser recognition from supported rendering/decompression.",
       "acceptance": [
         "Licensed, locally available fixtures exercise embedded/external buffers/images, missing textures, negative/nonuniform transforms and malformed accessors/files.",
-        "Sparse accessors are tested if supported, otherwise explicitly rejected according to the recorded profile.",
+        "Sparse accessors are validated and expanded according to ADR 0006, including bounded sparse storage, ordered in-range sparse indices and effective primitive-index validation.",
         "Unsupported required extensions fail clearly; supported optional-extension/fallback behavior matches the profile without claiming full glTF support.",
         "Path traversal and unbounded allocations/sizes reject; normal tests perform no network downloads.",
         "Color textures decode as sRGB and data maps remain linear; imported alpha modes and double-sided flags survive serialization for subsequent rendering.",
         "Static glTF is an intermediate profile. Keep explicit rejection until M06 adds bounded skeletal/TRS animation; M05 supplies world collision/navigation payloads."
       ],
       "planned_fixture": "LicensedGLTFProfile corpus with EmbeddedExternal, SparsePolicy, MalformedAccessor, RequiredExtension, ImageColorSpace and PathTraversal cases; FeatureWorld/ImportedStaticMeshes uses accepted assets.",
-      "verification": {"status": "NOT_RUN", "reason": "glTF import is not implemented; owner assignment 12, with final material rendering acceptance owned by 26."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "12a is PASS under current-machine scope: pure bounded .gltf/.glb source inspection, explicit immutable resource snapshots, checked URI/accessor/sparse storage, private pinned parser and complete allocation-failure cleanup. Qualification has 486 selected outcomes, 42 public-example compiles, 30 sanitizer objects and protected packages. Geometry conversion, decoded pixels, complete optional material/texture fallback and cache publication remain assigned to checkpoints 12b-12e; final PBR rendering acceptance belongs to 26. Full REQ-12 remains NOT_RUN. See docs/handoffs/12a-gltf-foundation.md and docs/roadmap/gltf-plan.md.",
+        "checkpoints": {
+          "12a": {
+            "status": "PASS",
+            "evidence": {
+              "path": "docs/coverage/evidence/12a-gltf-foundation.json",
+              "sha256": "5ca69849c0a91fdd30f808bf8093428838ba0458735b378fc3a95941e34765e9"
+            }
+          }
+        }
+      }
     },
     {
       "id": "REQ-13",
@@ -979,11 +991,13 @@
         ],
         "test_ids": [
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
@@ -997,7 +1011,7 @@
           "featureworld.batches-history",
           "featureworld.retries",
           "featureworld.persistence",
-      "featureworld.asset-identity"
+          "featureworld.asset-identity"
         ]
       },
       {
@@ -1011,7 +1025,8 @@
           "shark.tools.scene-runner-process",
           "shark.boundary.fixture",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification",
           "shark.tools.scene-execution",
           "shark.tooling.scene-execution-evidence"
         ],
@@ -1020,7 +1035,8 @@
           "tools/tests/test_scene_runner_process.py",
           "tests/CheckBoundaryFixture.cmake",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py",
           "tools/tests/test_scene_execution_process.py",
           "tools/tests/test_scene_execution.py"
         ],
@@ -1041,43 +1057,129 @@
           "featureworld.batches-history",
           "featureworld.retries",
           "featureworld.persistence",
-      "featureworld.asset-identity"
+          "featureworld.asset-identity"
         ]
       },
       {
         "id": "server.durable-maintenance",
         "name": "Explicit sequential database upgrades, validated backups and isolated restoration",
-        "requirement_ids": ["REQ-M03"],
-        "test_ids": ["shark.storage.migration", "shark.storage.migration-process", "shark.storage.recovery-process", "shark.storage.integration-process"],
-        "test_sources": ["tests/storage_migration_tests.cpp", "tests/storage_migration_probe.cpp", "tests/storage_recovery_vfs.cpp", "tools/tests/test_storage_migration_process.py", "tools/tests/test_storage_recovery_process.py", "tests/storage_integration_probe.cpp", "tools/tests/test_storage_integration_process.py"],
-        "fixtures": ["tests/fixtures/storage/schema-1.sql", "tests/fixtures/storage/schema-2.sql", "tests/fixtures/storage/schema-3.sql", "tests/fixtures/storage/fixture.hpp", "tests/fixtures/storage/README.md", "server/storage/src/maintenance_test_hooks.hpp", "tests/storage_recovery_vfs.hpp", "docs/durable-maintenance.md", "docs/architecture/0019-durable-maintenance.md", "docs/durable-qualification.md"],
+        "requirement_ids": [
+          "REQ-M03"
+        ],
+        "test_ids": [
+          "shark.storage.migration",
+          "shark.storage.migration-process",
+          "shark.storage.recovery-process",
+          "shark.storage.integration-process"
+        ],
+        "test_sources": [
+          "tests/storage_migration_tests.cpp",
+          "tests/storage_migration_probe.cpp",
+          "tests/storage_recovery_vfs.cpp",
+          "tools/tests/test_storage_migration_process.py",
+          "tools/tests/test_storage_recovery_process.py",
+          "tests/storage_integration_probe.cpp",
+          "tools/tests/test_storage_integration_process.py"
+        ],
+        "fixtures": [
+          "tests/fixtures/storage/schema-1.sql",
+          "tests/fixtures/storage/schema-2.sql",
+          "tests/fixtures/storage/schema-3.sql",
+          "tests/fixtures/storage/fixture.hpp",
+          "tests/fixtures/storage/README.md",
+          "server/storage/src/maintenance_test_hooks.hpp",
+          "tests/storage_recovery_vfs.hpp",
+          "docs/durable-maintenance.md",
+          "docs/architecture/0019-durable-maintenance.md",
+          "docs/durable-qualification.md"
+        ],
         "fixture_reason": "Independent historical/current SQL fixtures exercise exact schema and complete durable-state validation through the existing Server-only Store. Explicit offline services inspect closed snapshots, create bounded validated backups, upgrade 1-to-2-to-3 in one transaction with a mandatory pre-upgrade backup, and restore same-schema isolated candidates without overwriting paths. Twenty-five unit cases cover identity, revocation, revisions, retained economic outcomes, strict compatibility and fresh authenticated restored restart. Sixty-six process rows and 200 real children cover failed/interrupted copy, migration and lost acknowledgement, including observed successful native writes that leave hot journals; readonly inspection preserves both files and fresh maintenance recovers the declared state. Exact original-backup retries reject later writes. An old restored snapshot cannot authorize rollback of acknowledged outcomes or resurrection of expired operations. CPU services support humans and terminal developers without an editor or cloud. M03f owns integrated qualification; FeatureWorld/MMOWorld attach in 10/M09. Same-machine restore does not prove host/disk-loss survival."
       },
       {
         "id": "server.durable-recovery",
         "name": "Bounded runtime persistence, fenced completions and real crash/outage reconciliation",
-        "requirement_ids": ["REQ-M03"],
-        "test_ids": ["shark.storage.recovery", "shark.storage.recovery-process", "shark.storage.characters", "shark.storage.transactions", "shark.storage.integration-process"],
-        "test_sources": ["tests/storage_recovery_tests.cpp", "tests/storage_recovery_probe.cpp", "tests/storage_recovery_vfs.cpp", "tools/tests/test_storage_recovery_process.py", "tests/storage_character_tests.cpp", "tests/storage_transaction_tests.cpp", "tests/storage_integration_probe.cpp", "tools/tests/test_storage_integration_process.py"],
-        "fixtures": ["server/storage/src/durable_worker.cpp", "server/storage/src/durable_worker.hpp", "server/storage/src/durable_test_hooks.hpp", "server/storage/src/characters.cpp", "server/storage/src/store.cpp", "tests/storage_recovery_vfs.hpp", "tests/fixtures/network/session/client-a.pem", "tests/fixtures/network/session/client-b.pem"],
+        "requirement_ids": [
+          "REQ-M03"
+        ],
+        "test_ids": [
+          "shark.storage.recovery",
+          "shark.storage.recovery-process",
+          "shark.storage.characters",
+          "shark.storage.transactions",
+          "shark.storage.integration-process"
+        ],
+        "test_sources": [
+          "tests/storage_recovery_tests.cpp",
+          "tests/storage_recovery_probe.cpp",
+          "tests/storage_recovery_vfs.cpp",
+          "tools/tests/test_storage_recovery_process.py",
+          "tests/storage_character_tests.cpp",
+          "tests/storage_transaction_tests.cpp",
+          "tests/storage_integration_probe.cpp",
+          "tools/tests/test_storage_integration_process.py"
+        ],
+        "fixtures": [
+          "server/storage/src/durable_worker.cpp",
+          "server/storage/src/durable_worker.hpp",
+          "server/storage/src/durable_test_hooks.hpp",
+          "server/storage/src/characters.cpp",
+          "server/storage/src/store.cpp",
+          "tests/storage_recovery_vfs.hpp",
+          "tests/fixtures/network/session/client-a.pem",
+          "tests/fixtures/network/session/client-b.pem"
+        ],
         "fixture_reason": "The same CharacterAuthority owns authenticated sessions while one dedicated private worker creates and destroys Store. Fixed retained-work slots, original durable operation identities and actual session/Scene references fence timeout, replacement and late results without worker Scene mutation. Real mTLS and deterministic barriers exercise runtime admission, shutdown, exceptions and explicit reopen. Sixty-nine real-file process rows cover every mutation commit boundary, lost acknowledgement, transfer partial debit/terminal rejection/pruning and observed native-VFS write/sync/full failures; fresh processes inspect and retry exact outcomes. These CPU-only services support human and terminal developers with no editor/cloud dependency. Migration/restore map to server.durable-maintenance in M03e; integrated qualification remains M03f; FeatureWorld/MMOWorld attach in 10/M09. Process/VFS faults do not claim hardware power-loss survival or live simulation latency."
       },
       {
         "id": "server.durable-transactions",
         "name": "Atomic economic transfers with bounded durable operation outcomes",
-        "requirement_ids": ["REQ-M03"],
-        "test_ids": ["shark.storage.transactions", "shark.storage.transactions-process", "shark.storage.characters", "shark.storage.integration-process"],
-        "test_sources": ["tests/storage_transaction_tests.cpp", "tools/tests/test_storage_transactions_process.py", "tests/storage_character_tests.cpp", "tests/storage_integration_probe.cpp", "tools/tests/test_storage_integration_process.py"],
-        "fixtures": ["tests/storage_transaction_probe.cpp", "docs/durable-transactions.md"],
+        "requirement_ids": [
+          "REQ-M03"
+        ],
+        "test_ids": [
+          "shark.storage.transactions",
+          "shark.storage.transactions-process",
+          "shark.storage.characters",
+          "shark.storage.integration-process"
+        ],
+        "test_sources": [
+          "tests/storage_transaction_tests.cpp",
+          "tools/tests/test_storage_transactions_process.py",
+          "tests/storage_character_tests.cpp",
+          "tests/storage_integration_probe.cpp",
+          "tools/tests/test_storage_integration_process.py"
+        ],
+        "fixtures": [
+          "tests/storage_transaction_probe.cpp",
+          "docs/durable-transactions.md"
+        ],
         "fixture_reason": "Real local SQLite transactions atomically update two bounded economic records, their independent revisions, an account-scoped durable operation high-water mark and the complete retained outcome. The eight-result window rejects mismatched and permanently expired identities across restart, including terminal business rejections. Ready authenticated sessions own source intents and share existing command budgets; concurrent separate mTLS client processes exercise stale revisions, exact retries and full server/store restart. Private fault seams test one-sided debit rollback and uncertain acknowledgement without simulating durability. The fixture conserves integer currency and units of one item after explicit one-time trusted initialization. It adds no arbitrary player balance write, shipping storage protocol, full game economy or authoring endpoint. M03d implements runtime crash/outage and completion fencing through server.durable-recovery; M03e maintenance maps to server.durable-maintenance; FeatureWorld and MMOWorld remain 10/M09."
       },
       {
         "id": "server.durable-characters",
         "name": "Authenticated owned durable characters and revisioned server checkpoints",
-        "requirement_ids": ["REQ-M03"],
-        "test_ids": ["shark.storage.store", "shark.storage.characters", "shark.storage.characters-process", "shark.core.net-session", "shark.storage.integration-process"],
-        "test_sources": ["tests/storage_records_tests.cpp", "tests/storage_character_tests.cpp", "tools/tests/test_storage_characters_process.py", "tests/core_net_session_tests.cpp", "tests/storage_integration_probe.cpp", "tools/tests/test_storage_integration_process.py"],
-        "fixtures": ["tests/storage_character_probe.cpp", "docs/durable-characters.md"],
+        "requirement_ids": [
+          "REQ-M03"
+        ],
+        "test_ids": [
+          "shark.storage.store",
+          "shark.storage.characters",
+          "shark.storage.characters-process",
+          "shark.core.net-session",
+          "shark.storage.integration-process"
+        ],
+        "test_sources": [
+          "tests/storage_records_tests.cpp",
+          "tests/storage_character_tests.cpp",
+          "tools/tests/test_storage_characters_process.py",
+          "tests/core_net_session_tests.cpp",
+          "tests/storage_integration_probe.cpp",
+          "tools/tests/test_storage_integration_process.py"
+        ],
+        "fixtures": [
+          "tests/storage_character_probe.cpp",
+          "docs/durable-characters.md"
+        ],
         "fixture_reason": "Real local SQLite records preserve account enrollment, revocation tombstones, immutable ownership and distinct character/world-entity identity. Actual mTLS transports admit first-character creation, selection, sequenced revision-CAS server state saves and reconnect through one server-owned coordinator. A fresh process reopens the same store without reseeding; stale/replaced/revoked/foreign authority rejects and revision conflicts preserve durable state. Fixed server scenarios retain session wire v1; local fixture discovery is not a player roster protocol. Both human and terminal developers use the same device-free CPU service. Economic transactions use the separate server.durable-transactions surface; runtime outage/crash recovery uses server.durable-recovery; migration and restoration map to server.durable-maintenance; FeatureWorld/MMOWorld attach in 10/M09."
       },
       {
@@ -1117,14 +1219,16 @@
           "shark.tools.project-files-process",
           "shark.tools.persistence-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/project_files_tests.cpp",
           "tools/tests/test_project_files_process.py",
           "tests/persistence_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/project_files_process.cpp",
@@ -1136,7 +1240,7 @@
         "fixture_reason": "Public CPU fixtures exercise typed project/scene I/O, root/path-bound exact raw revisions, same-size and same-timestamp external edits, content ABA, create-only writes, catalog collisions, Unicode and aliases, bounded malformed input, dirty-safe reload and revision-safe saved baselines. Native hooks inject prepublication failures through authored saves and postpublication durability limits; real child processes interrupt save_scene at five phases, activate the exact expected scene, recover through another authored save and reopen it. Complete-file hashes, exclusive ownership and unchanged orphan stages remain checked without arbitrary sleeps. The integrated fixture connects independently authored legacy files, migration, capture, explicit saves and external-edit resolution through the public services. EngineTools reuses Core validation without adding source readers to Core/Runtime/Server or requiring a display. FeatureWorld/Persistence attaches in 10, history remains 09 and adapters 15/16. Per-file authoring publication is not M03 live durable state. The saved FeatureWorld cases now add current-surface source and owner exercises; isolated failure/resource/process tests remain separately required.",
         "featureworld_cases": [
           "featureworld.persistence",
-      "featureworld.asset-identity"
+          "featureworld.asset-identity"
         ]
       },
       {
@@ -1152,7 +1256,8 @@
           "shark.tools.project-files",
           "shark.tools.persistence-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
@@ -1160,7 +1265,8 @@
           "tests/project_files_tests.cpp",
           "tests/persistence_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -1175,7 +1281,7 @@
           "featureworld.batches-history",
           "featureworld.retries",
           "featureworld.persistence",
-      "featureworld.asset-identity"
+          "featureworld.asset-identity"
         ]
       },
       {
@@ -1189,13 +1295,15 @@
           "shark.tools.authored-scene",
           "shark.tools.persistence-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authored_scene_tests.cpp",
           "tests/persistence_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authored_scene_tests.cpp",
@@ -1208,7 +1316,7 @@
         "featureworld_cases": [
           "featureworld.components",
           "featureworld.persistence",
-      "featureworld.asset-identity"
+          "featureworld.asset-identity"
         ]
       },
       {
@@ -1222,13 +1330,15 @@
           "shark.tools.source-documents",
           "shark.tools.persistence-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/source_document_tests.cpp",
           "tests/persistence_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/fixtures/source_documents/project-v0.sharkproject",
@@ -1245,16 +1355,36 @@
         "featureworld_cases": [
           "featureworld.components",
           "featureworld.persistence",
-      "featureworld.asset-identity"
+          "featureworld.asset-identity"
         ]
       },
       {
         "id": "core.network-adversity",
         "name": "Integrated network recovery and owned storage observations",
-        "requirement_ids": ["REQ-M02"],
-        "test_ids": ["shark.core.net-adversity", "shark.core.net-adversity-process", "shark.core.net-fault", "shark.core.net-wire", "shark.core.net-sessions-process", "shark.core.net-interest-process"],
-        "test_sources": ["tests/net_adversity_tests.cpp", "tools/test_net_adversity.py", "tests/core_net_fault_tests.cpp", "tests/core_net_wire_tests.cpp", "tools/test_network_sessions.py", "tools/test_net_interest.py"],
-        "fixtures": ["tests/net_adversity_probe.cpp", "tests/fixtures/network/session/README.md", "docs/network-qualification.md"],
+        "requirement_ids": [
+          "REQ-M02"
+        ],
+        "test_ids": [
+          "shark.core.net-adversity",
+          "shark.core.net-adversity-process",
+          "shark.core.net-fault",
+          "shark.core.net-wire",
+          "shark.core.net-sessions-process",
+          "shark.core.net-interest-process"
+        ],
+        "test_sources": [
+          "tests/net_adversity_tests.cpp",
+          "tools/test_net_adversity.py",
+          "tests/core_net_fault_tests.cpp",
+          "tests/core_net_wire_tests.cpp",
+          "tools/test_network_sessions.py",
+          "tools/test_net_interest.py"
+        ],
+        "fixtures": [
+          "tests/net_adversity_probe.cpp",
+          "tests/fixtures/network/session/README.md",
+          "docs/network-qualification.md"
+        ],
         "fixture_reason": "External CPU and actual mTLS process fixtures integrate Scene, sessions, spatial interest and presentation caches under seeded decoded-state faults, intact FIFO transport delay, disconnect, slow readers and hostile controls. Additive owner-thread statistics measure retained vector capacity separately from sampled process RSS and handles/descriptors. Repeated churn/reconnect/timeout cases check cleanup and stale authority. Near-limit helper/cache tests cover exhaustion without a production sequence-reset hook. Refreshed earlier network families retain credential, wire/parser, privacy and bandwidth evidence. These noninteractive fixtures support human and terminal developers through the same CPU services; they are not authoring APIs, full LOCAL-MMO-1 capacity, gameplay, persistence or endurance. FeatureWorld/MMOWorld integration retains assignments10/M09."
       },
       {
@@ -1326,19 +1456,74 @@
       {
         "id": "core.owned-sessions",
         "name": "Mutual TLS player credentials and bounded owned sessions",
-        "requirement_ids": ["REQ-M02"],
-        "test_ids": ["shark.core.net-mtls", "shark.core.net-session", "shark.core.net-sessions-process", "shark.core.net-wire", "shark.tooling.server-closure", "shark.tooling.runtime-package"],
-        "test_sources": ["tests/core_net_mtls_tests.cpp", "tests/core_net_session_tests.cpp", "tools/test_network_sessions.py", "tests/core_net_wire_tests.cpp", "tools/tests/test_server_closure.py", "tools/tests/test_runtime_package.py"],
-        "fixtures": ["tests/session_probe.cpp", "tests/fixtures/network/session/README.md", "tests/fixtures/network/session/client-a.pem", "tests/fixtures/network/session/client-b.pem", "tests/fixtures/network/session/expired-client.pem", "tests/fixtures/network/session/wrong-ca-client.pem", "tests/fixtures/network/session/wrong-eku-client.pem", "tests/fixtures/network/session/no-eku-client.pem", "tests/fixtures/network/session/wrong-ku-client.pem", "tests/fixtures/network/session/ca-client.pem"],
+        "requirement_ids": [
+          "REQ-M02"
+        ],
+        "test_ids": [
+          "shark.core.net-mtls",
+          "shark.core.net-session",
+          "shark.core.net-sessions-process",
+          "shark.core.net-wire",
+          "shark.tooling.server-closure",
+          "shark.tooling.runtime-package"
+        ],
+        "test_sources": [
+          "tests/core_net_mtls_tests.cpp",
+          "tests/core_net_session_tests.cpp",
+          "tools/test_network_sessions.py",
+          "tests/core_net_wire_tests.cpp",
+          "tools/tests/test_server_closure.py",
+          "tools/tests/test_runtime_package.py"
+        ],
+        "fixtures": [
+          "tests/session_probe.cpp",
+          "tests/fixtures/network/session/README.md",
+          "tests/fixtures/network/session/client-a.pem",
+          "tests/fixtures/network/session/client-b.pem",
+          "tests/fixtures/network/session/expired-client.pem",
+          "tests/fixtures/network/session/wrong-ca-client.pem",
+          "tests/fixtures/network/session/wrong-eku-client.pem",
+          "tests/fixtures/network/session/no-eku-client.pem",
+          "tests/fixtures/network/session/wrong-ku-client.pem",
+          "tests/fixtures/network/session/ca-client.pem"
+        ],
         "fixture_reason": "Real local processes prove client private-key possession through the pinned TLS library, then exercise explicit enrollment, account/character ownership, exact application sequence, generic rejection, expiry, live revocation and reconnect fencing through the same CPU SessionAuthority. Deterministic unit clocks cover bounded registry/rate/deadline behavior; public fixture keys are never packaged. These session controls are neither authoring/admin RPC nor movement/combat authority. The separate core.authoritative-replication feature owns M02c; core.spatial-interest owns M02d; core.network-adversity owns integrated M02e coverage; durable identity storage retains M03, FeatureWorld/MMOWorld 10/M09."
       },
       {
         "id": "core.network-foundation",
         "name": "Bounded loopback TLS transport, gameplay-wire framing and deterministic fault model",
-        "requirement_ids": ["REQ-M02"],
-        "test_ids": ["shark.core.net-wire", "shark.core.net-fault", "shark.core.net-transport", "shark.core.net-process", "shark.tooling.scene-dependencies", "shark.tooling.server-closure", "shark.tooling.runtime-package"],
-        "test_sources": ["tests/core_net_wire_tests.cpp", "tests/core_net_fault_tests.cpp", "tests/core_net_transport_tests.cpp", "tools/test_network_transport.py", "tools/tests/test_scene_dependencies.py", "tools/tests/test_server_closure.py", "tools/tests/test_runtime_package.py"],
-        "fixtures": ["tests/network_probe.cpp", "tests/fixtures/network/README.md", "tests/fixtures/network/ca.pem", "tests/fixtures/network/server.pem", "tests/fixtures/network/server-key.pem", "tests/fixtures/network/wrong-ca.pem", "tests/fixtures/network/expired-server.pem", "tools/core_dependencies.py", "tools/check_server_closure.py"],
+        "requirement_ids": [
+          "REQ-M02"
+        ],
+        "test_ids": [
+          "shark.core.net-wire",
+          "shark.core.net-fault",
+          "shark.core.net-transport",
+          "shark.core.net-process",
+          "shark.tooling.scene-dependencies",
+          "shark.tooling.server-closure",
+          "shark.tooling.runtime-package"
+        ],
+        "test_sources": [
+          "tests/core_net_wire_tests.cpp",
+          "tests/core_net_fault_tests.cpp",
+          "tests/core_net_transport_tests.cpp",
+          "tools/test_network_transport.py",
+          "tools/tests/test_scene_dependencies.py",
+          "tools/tests/test_server_closure.py",
+          "tools/tests/test_runtime_package.py"
+        ],
+        "fixtures": [
+          "tests/network_probe.cpp",
+          "tests/fixtures/network/README.md",
+          "tests/fixtures/network/ca.pem",
+          "tests/fixtures/network/server.pem",
+          "tests/fixtures/network/server-key.pem",
+          "tests/fixtures/network/wrong-ca.pem",
+          "tests/fixtures/network/expired-server.pem",
+          "tools/core_dependencies.py",
+          "tools/check_server_closure.py"
+        ],
         "fixture_reason": "External CPU/process fixtures are required to exercise real TLS/socket ownership, certificate validation, fragmented/malformed wire input, bounded queues/deadlines, explicit sequence exhaustion, clean/abrupt EOF and deterministic virtual-time faults. Public test credentials remain test-only and are rejected in packages. This foundation fixture confers no player authority. The separate core.owned-sessions feature owns M02b authentication; core.authoritative-replication owns M02c; core.spatial-interest owns M02d; core.network-adversity owns integrated M02e coverage. No MMO capacity is implied. Human/terminal use shares these C++ contracts and machine-readable diagnostics; authoring commands remain assignment 15 and FeatureWorld/MMOWorld retain 10/M09."
       },
       {
@@ -1354,7 +1539,8 @@
           "shark.core.scene",
           "shark.core.hierarchy",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
@@ -1362,7 +1548,8 @@
           "tests/core_scene_tests.cpp",
           "tests/core_hierarchy_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/core_schema_tests.cpp",
@@ -1390,7 +1577,8 @@
           "shark.tooling.server-closure",
           "shark.tooling.runtime-package",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/core_hierarchy_tests.cpp",
@@ -1399,7 +1587,8 @@
           "tools/tests/test_server_closure.py",
           "tools/tests/test_runtime_package.py",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/core_hierarchy_tests.cpp",
@@ -1429,7 +1618,8 @@
           "shark.tooling.server-closure",
           "shark.tooling.runtime-package",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/core_scene_tests.cpp",
@@ -1438,7 +1628,8 @@
           "tools/tests/test_server_closure.py",
           "tools/tests/test_runtime_package.py",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/core_scene_tests.cpp",
@@ -1567,28 +1758,83 @@
       {
         "id": "client.presentation-qualification",
         "name": "Bounded native presentation stress, resource observations and fatal cleanup qualification",
-        "requirement_ids": ["REQ-05"],
-        "test_ids": ["shark.client.presentation", "shark.client.presentation-faults", "shark.client.presentation-stress-cli", "shark.tooling.presentation-faults", "shark.tooling.presentation-stress"],
-        "test_sources": ["tests/client_presentation_tests.cpp", "tests/check_presentation_stress_cli.py", "tools/tests/test_presentation_faults.py", "tools/tests/test_presentation_stress.py"],
-        "fixtures": ["tests/presentation_stress.cpp", "tests/presentation_faults.cpp", "engine/client/src/graphics_native_test.hpp", "tools/presentation_stress.py", "tools/presentation_faults.py"],
+        "requirement_ids": [
+          "REQ-05"
+        ],
+        "test_ids": [
+          "shark.client.presentation",
+          "shark.client.presentation-faults",
+          "shark.client.presentation-stress-cli",
+          "shark.tooling.presentation-faults",
+          "shark.tooling.presentation-stress"
+        ],
+        "test_sources": [
+          "tests/client_presentation_tests.cpp",
+          "tests/check_presentation_stress_cli.py",
+          "tools/tests/test_presentation_faults.py",
+          "tools/tests/test_presentation_stress.py"
+        ],
+        "fixtures": [
+          "tests/presentation_stress.cpp",
+          "tests/presentation_faults.cpp",
+          "engine/client/src/graphics_native_test.hpp",
+          "tools/presentation_stress.py",
+          "tools/presentation_faults.py"
+        ],
         "fixture_reason": "Explicit native commands exercise the predeclared sustained workload,100resizes,20minimize/restore pairs and20subsequent device lifetimes per GPU/build. Independent parsers verify fixed resource budgets, exact live-owner bounds, zero owned resources after close, validation and raw aggregate consistency. CPU child processes exercise real fatal destruction; private native hooks inject failures after actual NVRHI recording opens or before acquire while requiring healthy-driver cleanup. Physical GPU removal/reset is not induced. Native execution remains separate from device-free CTest. No scene, readback, authoring API or MMO capacity claim; FeatureWorld starts in10."
       },
       {
         "id": "foundation.runtime-package",
         "name": "Protected Release Runtime package with inspected relocation and loaded-module closure",
-        "requirement_ids": ["REQ-05"],
-        "test_ids": ["shark.tooling.runtime-package", "shark.boundary", "shark.boundary.fixture"],
-        "test_sources": ["tools/tests/test_runtime_package.py", "cmake/CheckRuntimeBoundary.cmake", "tests/CheckBoundaryFixture.cmake"],
-        "fixtures": ["tools/package_runtime.py", "tools/runtime_package/Run-IsolatedRuntime.ps1"],
+        "requirement_ids": [
+          "REQ-05"
+        ],
+        "test_ids": [
+          "shark.tooling.runtime-package",
+          "shark.boundary",
+          "shark.boundary.fixture"
+        ],
+        "test_sources": [
+          "tools/tests/test_runtime_package.py",
+          "cmake/CheckRuntimeBoundary.cmake",
+          "tests/CheckBoundaryFixture.cmake"
+        ],
+        "fixtures": [
+          "tools/package_runtime.py",
+          "tools/runtime_package/Run-IsolatedRuntime.ps1"
+        ],
         "fixture_reason": "CPU tests reject invalid build settings, stale builds, unexpected or corrupt payloads, missing notices and unsafe relocation. Explicit standard-user native launches inspect loaded modules outside the checkout with a restricted environment on both current-PC GPUs. This diagnostic clear-window package contains Runtime, the pinned Vulkan loader, locked Release CRT and notices; it does not implement game export, cooking or assignment35release qualification."
       },
       {
         "id": "client.presentation-lifecycle",
         "name": "Owned clear presentation, bounded submission and swapchain retirement",
-        "requirement_ids": ["REQ-05"],
-        "test_ids": ["shark.client.presentation", "shark.client.presentation-cli", "shark.runtime.presentation-cli", "shark.editor.presentation-cli", "shark.tooling.presentation-evidence"],
-        "test_sources": ["tests/client_presentation_tests.cpp", "tests/client_presentation_launch_tests.cpp", "tests/client_queue_waiter_tests.cpp", "tests/check_presentation_cli.py", "tests/CheckPresentationLaunchCli.cmake", "tools/tests/test_presentation_smoke.py"],
-        "fixtures": ["engine/client/src/presentation.cpp", "engine/client/src/graphics_vulkan.cpp", "engine/client/src/graphics_queue_waiter.hpp", "engine/client/src/graphics_queue_waiter_win32.cpp", "engine/client/src/presentation_launch.cpp", "tests/presentation_smoke.cpp", "tools/presentation_smoke.py"],
+        "requirement_ids": [
+          "REQ-05"
+        ],
+        "test_ids": [
+          "shark.client.presentation",
+          "shark.client.presentation-cli",
+          "shark.runtime.presentation-cli",
+          "shark.editor.presentation-cli",
+          "shark.tooling.presentation-evidence"
+        ],
+        "test_sources": [
+          "tests/client_presentation_tests.cpp",
+          "tests/client_presentation_launch_tests.cpp",
+          "tests/client_queue_waiter_tests.cpp",
+          "tests/check_presentation_cli.py",
+          "tests/CheckPresentationLaunchCli.cmake",
+          "tools/tests/test_presentation_smoke.py"
+        ],
+        "fixtures": [
+          "engine/client/src/presentation.cpp",
+          "engine/client/src/graphics_vulkan.cpp",
+          "engine/client/src/graphics_queue_waiter.hpp",
+          "engine/client/src/graphics_queue_waiter_win32.cpp",
+          "engine/client/src/presentation_launch.cpp",
+          "tests/presentation_smoke.cpp",
+          "tools/presentation_smoke.py"
+        ],
         "fixture_reason": "Injected CPU lifecycle fixtures prove bounded slot reuse, resize retirement, pending-image retry, zero-extent/minimize suspension, partial failures, validation faults and safe timeout/device-loss cleanup. Windows queue-waiter tests hold thread-local destruction behind a controlled gate: zero, sub-millisecond and finite waits retain ownership until actual thread exit, reject overlap, then consume the result once and permit reuse. Explicit native workload presents96 clear frames with4 resizes and2 minimize/restore cycles in each of4 device lifetimes per GPU/build; strict JSONL verifies counters, selection, validation and retirement. Runtime/Editor share the existing offline pump and explicit graphical sample with device-free argument validation. No scene, shader pipeline, authoring API, readback, sustained stress or resource-growth claim; FeatureWorld attaches in10 and05c owns further qualification."
       },
       {
@@ -1622,91 +1868,221 @@
       {
         "id": "client.offline-frame-loop",
         "name": "Fixed-tick input consumption and offline pause/step through the shared window pump",
-        "requirement_ids": ["REQ-04"],
-        "test_ids": ["shark.client.frame", "shark.client.window", "shark.core.timing"],
-        "test_sources": ["tests/client_frame_tests.cpp", "tests/client_window_tests.cpp", "tests/core_time_tests.cpp"],
-        "fixtures": ["engine/client/src/frame_loop.cpp", "engine/client/src/window_launch.cpp", "engine/core/src/time.cpp", "tests/window_smoke.cpp", "tools/window_smoke.py"],
+        "requirement_ids": [
+          "REQ-04"
+        ],
+        "test_ids": [
+          "shark.client.frame",
+          "shark.client.window",
+          "shark.core.timing"
+        ],
+        "test_sources": [
+          "tests/client_frame_tests.cpp",
+          "tests/client_window_tests.cpp",
+          "tests/core_time_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/client/src/frame_loop.cpp",
+          "engine/client/src/window_launch.cpp",
+          "engine/core/src/time.cpp",
+          "tests/window_smoke.cpp",
+          "tools/window_smoke.py"
+        ],
         "fixture_reason": "Controllable observations and injected input prove first-tick-only edges across zero/multiple callbacks, bounded merged text/scroll, pause/step, resume without paused debt, long frames, faults/cancellation and independent Server scheduling. The actual Runtime/Editor pump is covered by injected-backend CPU cases and explicit native Windows smoke. FeatureWorld/FrameTiming connects in10; there is no renderer, local play world, authoring API or MMO simulation claim."
       },
       {
         "id": "client.native-window",
         "name": "Owned native Windows GLFW window with injectable lifecycle and bounded callbacks",
-        "requirement_ids": ["REQ-04"],
-        "test_ids": ["shark.client.window", "shark.runtime.window-cli", "shark.editor.window-cli"],
-        "test_sources": ["tests/client_window_tests.cpp", "tests/client_window_launch_tests.cpp", "tests/CheckWindowCli.cmake"],
-        "fixtures": ["engine/client/src/window.cpp", "engine/client/src/window_glfw.cpp", "tests/window_smoke.cpp", "tools/window_smoke.py"],
+        "requirement_ids": [
+          "REQ-04"
+        ],
+        "test_ids": [
+          "shark.client.window",
+          "shark.runtime.window-cli",
+          "shark.editor.window-cli"
+        ],
+        "test_sources": [
+          "tests/client_window_tests.cpp",
+          "tests/client_window_launch_tests.cpp",
+          "tests/CheckWindowCli.cmake"
+        ],
+        "fixtures": [
+          "engine/client/src/window.cpp",
+          "engine/client/src/window_glfw.cpp",
+          "tests/window_smoke.cpp",
+          "tools/window_smoke.py"
+        ],
         "fixture_reason": "Device-free tests inject startup failures, rollback, native mapping, focus/minimize release, dimensions/DPI and bounded diagnostics. Explicit native Windows smoke exercises owned HWND lifecycle, targeted synthetic Win32 callbacks, current-monitor DPI, repeated teardown and the shared offline frame pump; it is not physical input or rendering evidence. Core/Server and WSL CPU-only configurations exclude GLFW. FeatureWorld begins in10."
       },
       {
         "id": "client.raw-input",
         "name": "Injectable bounded raw client input with owned snapshots and focus cancellation",
-        "requirement_ids": ["REQ-04"],
-        "test_ids": ["shark.client.input"],
-        "test_sources": ["tests/client_input_tests.cpp"],
-        "fixtures": ["engine/client/src/input.cpp", "engine/client/include/shark/client/input.hpp"],
+        "requirement_ids": [
+          "REQ-04"
+        ],
+        "test_ids": [
+          "shark.client.input"
+        ],
+        "test_sources": [
+          "tests/client_input_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/client/src/input.cpp",
+          "engine/client/include/shark/client/input.hpp"
+        ],
         "fixture_reason": "Deterministic device-free injection covers held/edge/repeat state, focus-loss releases and cancellation, bounded Unicode text, cursor/scroll validation, overflow and independent snapshots. The Client-only fixture never enters the headless Server build. Native GLFW mappings and separate window smoke are implemented; client.offline-frame-loop covers frame/tick consumption. FeatureWorld begins in10. No authoring command or gameplay protocol is claimed."
       },
       {
         "id": "core.time-policies",
         "name": "Injectable monotonic idle clock and separate offline/server fixed-step policies",
-        "requirement_ids": ["REQ-03", "REQ-04"],
-        "test_ids": ["shark.core.timing", "shark.server.lifecycle"],
-        "test_sources": ["tests/core_time_tests.cpp", "tests/server_timing_tests.cpp", "tests/check_server.py"],
-        "fixtures": ["engine/core/src/time.cpp", "engine/core/src/server_application.cpp", "server/main.cpp"],
+        "requirement_ids": [
+          "REQ-03",
+          "REQ-04"
+        ],
+        "test_ids": [
+          "shark.core.timing",
+          "shark.server.lifecycle"
+        ],
+        "test_sources": [
+          "tests/core_time_tests.cpp",
+          "tests/server_timing_tests.cpp",
+          "tests/check_server.py"
+        ],
+        "fixtures": [
+          "engine/core/src/time.cpp",
+          "engine/core/src/server_application.cpp",
+          "server/main.cpp"
+        ],
         "fixture_reason": "Controllable clocks and real callback consumers prove tick commit, debt limits, overload, cancellation, rational rates and idle deadline failures without a window. 04c adds offline pause/single-step while preserving the separate Server policy. The Server integrates the clock only; its idle polls are not simulated world ticks. Authoritative game simulation belongs to later owners. FeatureWorld begins in10."
       },
       {
         "id": "core.bounded-completions",
         "name": "Bounded value completion channel with backpressure and explicit producer teardown",
-        "requirement_ids": ["REQ-03"],
-        "test_ids": ["shark.core.work"],
-        "test_sources": ["tests/core_work_tests.cpp"],
-        "fixtures": ["engine/core/include/shark/completion_queue.hpp", "tests/core_work_tests.cpp"],
+        "requirement_ids": [
+          "REQ-03"
+        ],
+        "test_ids": [
+          "shark.core.work"
+        ],
+        "test_sources": [
+          "tests/core_work_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/core/include/shark/completion_queue.hpp",
+          "tests/core_work_tests.cpp"
+        ],
         "fixture_reason": "Actual jthread producer/owner fixtures verify bounded inline values, full/closed/cancelled outcomes, blocked wakeups, contained worker exceptions and close/stop/join/drain lifetimes. The primitive is not a job framework and does not invent production workers before a subsystem needs one; scene/authority validation arrives with those owners."
       },
       {
         "id": "core.application-lifecycle",
         "name": "Owned Server startup, signal resources, reverse rollback and observable cleanup failures",
-        "requirement_ids": ["REQ-03", "REQ-M01"],
-        "test_ids": ["shark.core.lifecycle", "shark.server.lifecycle"],
-        "test_sources": ["tests/shutdown_signal_tests.cpp", "tests/server_application_tests.cpp", "tests/check_server.py"],
-        "fixtures": ["engine/core/src/shutdown_signals.cpp", "engine/core/src/server_application.cpp", "server/main.cpp"],
+        "requirement_ids": [
+          "REQ-03",
+          "REQ-M01"
+        ],
+        "test_ids": [
+          "shark.core.lifecycle",
+          "shark.server.lifecycle"
+        ],
+        "test_sources": [
+          "tests/shutdown_signal_tests.cpp",
+          "tests/server_application_tests.cpp",
+          "tests/check_server.py"
+        ],
+        "fixtures": [
+          "engine/core/src/shutdown_signals.cpp",
+          "engine/core/src/server_application.cpp",
+          "server/main.cpp"
+        ],
         "fixture_reason": "Actual native signal registrations and injected backend/output failures exercise application ownership and ordered cleanup before any scene exists. Repeated in-process lifetimes supplement the real Server process fixture; no unimplemented worker or game service is represented as an acquired resource. FeatureWorld begins in 10."
       },
       {
         "id": "core.diagnostics-configuration",
         "name": "Owned errors/results, bounded structured logs and validated startup configuration",
-        "requirement_ids": ["REQ-03"],
-        "test_ids": ["shark.core.contracts", "shark.unit", "shark.server.unit", "shark.server.lifecycle", "shark.runtime.cli", "shark.editor.cli"],
-        "test_sources": ["tests/core_error_tests.cpp", "tests/bootstrap_tests.cpp", "tests/server_tests.cpp", "tests/check_server.py", "tests/CheckCli.cmake"],
-        "fixtures": ["engine/core/src/log.cpp", "engine/core/src/server_config.cpp", "server/main.cpp", "runtime/main.cpp", "editor/main.cpp"],
+        "requirement_ids": [
+          "REQ-03"
+        ],
+        "test_ids": [
+          "shark.core.contracts",
+          "shark.unit",
+          "shark.server.unit",
+          "shark.server.lifecycle",
+          "shark.runtime.cli",
+          "shark.editor.cli"
+        ],
+        "test_sources": [
+          "tests/core_error_tests.cpp",
+          "tests/bootstrap_tests.cpp",
+          "tests/server_tests.cpp",
+          "tests/check_server.py",
+          "tests/CheckCli.cmake"
+        ],
+        "fixtures": [
+          "engine/core/src/log.cpp",
+          "engine/core/src/server_config.cpp",
+          "server/main.cpp",
+          "runtime/main.cpp",
+          "editor/main.cpp"
+        ],
         "fixture_reason": "Core values and real bootstrap processes exercise lifetime, invalid configuration, machine-readable Release diagnostics and sink failures before scenes exist. These are not authoring commands; FeatureWorld begins in 10. Lifecycle, scheduling and completion coverage is recorded by core.application-lifecycle, core.time-policies and core.bounded-completions."
       },
       {
         "id": "core.stable-identity-project-paths",
         "name": "Persistent UUIDv4 primitives and portable project-relative path resolution",
-        "requirement_ids": ["REQ-03"],
-        "test_ids": ["shark.core.contracts"],
-        "test_sources": ["tests/core_identity_tests.cpp", "tests/core_path_tests.cpp"],
-        "fixtures": ["engine/core/src/stable_id.cpp", "engine/core/src/project_path.cpp"],
+        "requirement_ids": [
+          "REQ-03"
+        ],
+        "test_ids": [
+          "shark.core.contracts"
+        ],
+        "test_sources": [
+          "tests/core_identity_tests.cpp",
+          "tests/core_path_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/core/src/stable_id.cpp",
+          "engine/core/src/project_path.cpp"
+        ],
         "fixture_reason": "Injected/OS entropy and temporary real filesystem roots exercise IDs, Unicode/spaces, malformed input and symlink escapes outside a scene. Domain handles, persistent game state and project document schemas belong to later owners."
       },
       {
         "id": "foundation.bootstrap",
         "name": "Engine version metadata and strict informational bootstrap arguments",
-        "requirement_ids": ["REQ-01"],
-        "test_ids": ["shark.unit", "shark.runtime.cli", "shark.editor.cli"],
-        "test_sources": ["tests/bootstrap_tests.cpp", "tests/CheckCli.cmake"],
-        "fixtures": ["runtime/main.cpp", "editor/main.cpp"],
+        "requirement_ids": [
+          "REQ-01"
+        ],
+        "test_ids": [
+          "shark.unit",
+          "shark.runtime.cli",
+          "shark.editor.cli"
+        ],
+        "test_sources": [
+          "tests/bootstrap_tests.cpp",
+          "tests/CheckCli.cmake"
+        ],
+        "fixtures": [
+          "runtime/main.cpp",
+          "editor/main.cpp"
+        ],
         "fixture_reason": "Executable bootstrap behavior is tested outside a scene; FeatureWorld begins in assignment 10. These flags are not authoring commands."
       },
       {
         "id": "foundation.runtime-boundary",
         "name": "Runtime dependency closure excludes authoring and test dependencies",
-        "requirement_ids": ["REQ-01"],
-        "test_ids": ["shark.boundary", "shark.boundary.fixture"],
-        "test_sources": ["cmake/CheckRuntimeBoundary.cmake", "tests/CheckBoundaryFixture.cmake"],
-        "fixtures": ["tests/boundary_fixture/CMakeLists.txt"],
+        "requirement_ids": [
+          "REQ-01"
+        ],
+        "test_ids": [
+          "shark.boundary",
+          "shark.boundary.fixture"
+        ],
+        "test_sources": [
+          "cmake/CheckRuntimeBoundary.cmake",
+          "tests/CheckBoundaryFixture.cmake"
+        ],
+        "fixtures": [
+          "tests/boundary_fixture/CMakeLists.txt"
+        ],
         "fixture_reason": "The generated CMake target graph and isolated forbidden-link fixture test the build boundary before any scene exists. Runtime-only is an additional configured build."
       },
       {
@@ -1760,28 +2136,90 @@
       {
         "id": "graphics.probe-setup",
         "name": "Opt-in graphics dependency, terminal diagnostic and offline shader setup fixtures",
-        "requirement_ids": ["REQ-02"],
-        "test_ids": ["shark.graphics-probe.cli", "shark.graphics-probe.report", "shark.tooling.graphics-evidence", "shark.tooling.graphics-dependencies", "shark.tooling.graphics-tools"],
-        "test_sources": ["probes/graphics/check_cli.py", "probes/graphics/report_tests.cpp", "tools/tests/test_graphics_probe.py", "tools/tests/test_graphics_dependencies.py", "tools/tests/test_graphics_tools.py"],
-        "fixtures": ["probes/graphics/main.cpp", "probes/graphics/shaders/setup.hlsl", "tools/graphics_probe.py", "tools/prepare_graphics_tools.py", "cmake/GraphicsDependencies.cmake"],
+        "requirement_ids": [
+          "REQ-02"
+        ],
+        "test_ids": [
+          "shark.graphics-probe.cli",
+          "shark.graphics-probe.report",
+          "shark.tooling.graphics-evidence",
+          "shark.tooling.graphics-dependencies",
+          "shark.tooling.graphics-tools"
+        ],
+        "test_sources": [
+          "probes/graphics/check_cli.py",
+          "probes/graphics/report_tests.cpp",
+          "tools/tests/test_graphics_probe.py",
+          "tools/tests/test_graphics_dependencies.py",
+          "tools/tests/test_graphics_tools.py"
+        ],
+        "fixtures": [
+          "probes/graphics/main.cpp",
+          "probes/graphics/shaders/setup.hlsl",
+          "tools/graphics_probe.py",
+          "tools/prepare_graphics_tools.py",
+          "cmake/GraphicsDependencies.cmake"
+        ],
         "fixture_reason": "Developer setup is tested outside scenes: CPU-safe CLI/error output, immutable-input rejection, shader-tool archive checks and bounded evidence handling. Actual device/setup and shader compilation use explicit external commands. No rendering/readback or hardware qualification is implied; FeatureWorld starts in assignment 10."
       },
       {
         "id": "graphics.probe-cases",
         "name": "Analytic GPU cases, pinned validation tools and bounded evidence/failure fixtures",
-        "requirement_ids": ["REQ-02"],
-        "test_ids": ["shark.graphics-probe.cli", "shark.graphics-probe.report", "shark.tooling.graphics-evidence", "shark.tooling.graphics-tools", "shark.tooling.graphics-validation"],
-        "test_sources": ["probes/graphics/check_cli.py", "probes/graphics/report_tests.cpp", "probes/graphics/lifecycle_tests.cpp", "tools/tests/test_graphics_probe.py", "tools/tests/test_graphics_tools.py", "tools/tests/test_graphics_validation.py"],
-        "fixtures": ["probes/graphics/cases.cpp", "probes/graphics/shaders/cases.hlsl", "probes/graphics/main.cpp", "tools/graphics_probe.py", "tools/prepare_graphics_tools.py", "tools/prepare_graphics_validation.py", "cmake/GraphicsValidation.cmake", "tools/windows_unelevated.py", "tools/tests/check_windows_unelevated.py"],
+        "requirement_ids": [
+          "REQ-02"
+        ],
+        "test_ids": [
+          "shark.graphics-probe.cli",
+          "shark.graphics-probe.report",
+          "shark.tooling.graphics-evidence",
+          "shark.tooling.graphics-tools",
+          "shark.tooling.graphics-validation"
+        ],
+        "test_sources": [
+          "probes/graphics/check_cli.py",
+          "probes/graphics/report_tests.cpp",
+          "probes/graphics/lifecycle_tests.cpp",
+          "tools/tests/test_graphics_probe.py",
+          "tools/tests/test_graphics_tools.py",
+          "tools/tests/test_graphics_validation.py"
+        ],
+        "fixtures": [
+          "probes/graphics/cases.cpp",
+          "probes/graphics/shaders/cases.hlsl",
+          "probes/graphics/main.cpp",
+          "tools/graphics_probe.py",
+          "tools/prepare_graphics_tools.py",
+          "tools/prepare_graphics_validation.py",
+          "cmake/GraphicsValidation.cmake",
+          "tools/windows_unelevated.py",
+          "tools/tests/check_windows_unelevated.py"
+        ],
         "fixture_reason": "GPU readbacks/lifecycle require explicit native-device commands and retained validation evidence outside ordinary CPU CTest. The optional Windows launcher integration fixture needs a real standard desktop and verifies identity, arguments and actual process-tree cleanup. CPU tests cover report contracts, fixed comparison/artifact acceptance, shader/tool input rejection, zero-extent policy and bounded failure behavior. Local cases do not qualify absent hardware or packaging; FeatureWorld starts in 10."
       },
       {
         "id": "graphics.probe-package",
         "name": "Release Windows/Linux graphics probe packages and bounded portable launchers",
-        "requirement_ids": ["REQ-02"],
-        "test_ids": ["shark.tooling.graphics-package", "shark.tooling.graphics-package-linux", "shark.graphics-probe.report"],
-        "test_sources": ["tools/tests/test_graphics_package.py", "tools/tests/test_graphics_package_linux.py", "probes/graphics/lifecycle_tests.cpp"],
-        "fixtures": ["tools/package_graphics_probe.py", "tools/package_graphics_probe_linux.py", "tools/graphics_package/Run-GraphicsProbe.ps1", "tools/graphics_package/run_graphics_probe.py", "tools/tests/check_graphics_package_launcher.py", "probes/graphics/main.cpp"],
+        "requirement_ids": [
+          "REQ-02"
+        ],
+        "test_ids": [
+          "shark.tooling.graphics-package",
+          "shark.tooling.graphics-package-linux",
+          "shark.graphics-probe.report"
+        ],
+        "test_sources": [
+          "tools/tests/test_graphics_package.py",
+          "tools/tests/test_graphics_package_linux.py",
+          "probes/graphics/lifecycle_tests.cpp"
+        ],
+        "fixtures": [
+          "tools/package_graphics_probe.py",
+          "tools/package_graphics_probe_linux.py",
+          "tools/graphics_package/Run-GraphicsProbe.ps1",
+          "tools/graphics_package/run_graphics_probe.py",
+          "tools/tests/check_graphics_package_launcher.py",
+          "probes/graphics/main.cpp"
+        ],
         "fixture_reason": "CPU tests reject invalid package inputs, PE/ELF dependency leaks, stale hashes and unsafe paths, and verify bounded native-child cleanup and failure-progress retention. Explicit package/GPU commands verify relocated execution, readbacks and lifecycle outside scenes. The preserved receipts support ADR0010's current-PC scope; relocation and SDK-free WSL userspace do not establish independent clean-machine or retired hardware-row qualification. FeatureWorld starts in 10."
       },
       {
@@ -1795,14 +2233,16 @@
           "shark.tools.authoring-batches",
           "shark.core.scene-edit",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
           "tests/core_scene_edit_tests.cpp",
           "tests/authoring_allocation_fault.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -1828,7 +2268,8 @@
           "shark.tools.authoring-retries-process",
           "shark.tools.project-files-process",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_integration_tests.cpp",
@@ -1836,7 +2277,8 @@
           "tools/tests/test_authoring_retries_process.py",
           "tools/tests/test_project_files_process.py",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/fixtures/source_documents/project-v0.sharkproject",
@@ -1854,7 +2296,7 @@
           "featureworld.batches-history",
           "featureworld.retries",
           "featureworld.persistence",
-      "featureworld.asset-identity"
+          "featureworld.asset-identity"
         ]
       },
       {
@@ -1868,14 +2310,16 @@
           "shark.tools.authoring-retries",
           "shark.tools.authoring-retries-process",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
           "tests/authoring_retry_probe.cpp",
           "tools/tests/test_authoring_retries_process.py",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -1900,14 +2344,16 @@
           "shark.tools.authoring-history",
           "shark.core.scene-edit",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
           "tests/core_scene_edit_tests.cpp",
           "tests/authoring_allocation_fault.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -1919,6 +2365,37 @@
         "fixture_reason": "CPU fixtures exercise grouped replay, source metadata/order, hierarchy and world values, fresh removed/replaced generations, shared caller ordering, revision/ticket conflicts, bounded eviction, save/reload policy and allocation rollback. Core gameplay mutations remain independent. FeatureWorld/AuthoringCommands connects in10; retained retries09d and adapters15/16 remain later owners. The saved FeatureWorld cases now add current-surface source and owner exercises; isolated failure/resource/process tests remain separately required.",
         "featureworld_cases": [
           "featureworld.batches-history"
+        ]
+      },
+      {
+        "id": "tools.gltf-source",
+        "name": "Bounded static glTF source inspection",
+        "requirement_ids": [
+          "REQ-12"
+        ],
+        "test_ids": [
+          "shark.tools.gltf-source",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification",
+          "shark.tooling.gltf-dependencies"
+        ],
+        "test_sources": [
+          "tests/gltf_source_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py",
+          "tools/tests/test_gltf_dependencies.py"
+        ],
+        "fixtures": [
+          "tests/fixtures/gltf_source/README.md",
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/gltf-source.md"
+        ],
+        "fixture_reason": "Pure bounded CPU inspection consumes explicit immutable .gltf/.glb and external resource bytes, validates source containers/URIs/accessor storage and returns owned counts, persistent reference mappings, digests and diagnostics. The native source-inspection case exercises real inspection and rejection while preserving its AuthoredScene; external licensed fixtures and allocation sweeps cover malformed/bounded paths. It claims neither converted geometry nor image decoding or cache publication.",
+        "featureworld_cases": [
+          "featureworld.gltf-source"
         ]
       }
     ],
@@ -1942,7 +2419,8 @@
           "shark.tools.authoring-history",
           "shark.tools.authoring-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
@@ -1952,7 +2430,8 @@
           "tests/authoring_command_tests.cpp",
           "tests/authoring_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/core_schema_tests.cpp",
@@ -1969,7 +2448,7 @@
           "featureworld.batches-history",
           "featureworld.retries",
           "featureworld.persistence",
-      "featureworld.asset-identity"
+          "featureworld.asset-identity"
         ]
       },
       {
@@ -1992,7 +2471,8 @@
           "shark.tools.authoring-history",
           "shark.tools.authoring-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/core_schema_tests.cpp",
@@ -2003,7 +2483,8 @@
           "tests/authoring_command_tests.cpp",
           "tests/authoring_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/core_schema_tests.cpp",
@@ -2021,7 +2502,7 @@
           "featureworld.batches-history",
           "featureworld.retries",
           "featureworld.persistence",
-      "featureworld.asset-identity"
+          "featureworld.asset-identity"
         ]
       }
     ],
@@ -2065,13 +2546,15 @@
         ],
         "test_ids": [
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification",
           "shark.tools.scene-execution",
           "shark.tooling.scene-execution-evidence"
         ],
         "test_sources": [
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py",
           "tools/tests/test_scene_execution_process.py",
           "tools/tests/test_scene_execution.py"
         ],
@@ -2089,7 +2572,7 @@
           "featureworld.batches-history",
           "featureworld.retries",
           "featureworld.persistence",
-      "featureworld.asset-identity"
+          "featureworld.asset-identity"
         ]
       },
       {
@@ -2102,7 +2585,8 @@
           "shark.tools.scene-runner",
           "shark.tools.scene-runner-process",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification",
           "shark.tools.scene-execution",
           "shark.tooling.scene-execution-evidence"
         ],
@@ -2111,7 +2595,8 @@
           "tools/tests/test_scene_runner_process.py",
           "tests/CheckBoundaryFixture.cmake",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py",
           "tools/tests/test_scene_execution_process.py",
           "tools/tests/test_scene_execution.py"
         ],
@@ -2132,7 +2617,7 @@
           "featureworld.batches-history",
           "featureworld.retries",
           "featureworld.persistence",
-      "featureworld.asset-identity"
+          "featureworld.asset-identity"
         ]
       },
       {
@@ -2145,7 +2630,8 @@
           "shark.tools.scene-runner",
           "shark.tools.scene-runner-process",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification",
           "shark.tools.scene-execution",
           "shark.tooling.scene-execution-evidence"
         ],
@@ -2154,7 +2640,8 @@
           "tools/tests/test_scene_runner_process.py",
           "tests/CheckBoundaryFixture.cmake",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py",
           "tools/tests/test_scene_execution_process.py",
           "tools/tests/test_scene_execution.py"
         ],
@@ -2175,7 +2662,7 @@
           "featureworld.batches-history",
           "featureworld.retries",
           "featureworld.persistence",
-      "featureworld.asset-identity"
+          "featureworld.asset-identity"
         ]
       },
       {
@@ -2190,7 +2677,8 @@
           "shark.tools.authoring-retries-process",
           "shark.tools.authoring-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
@@ -2198,7 +2686,8 @@
           "tools/tests/test_authoring_retries_process.py",
           "tests/authoring_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -2224,7 +2713,8 @@
           "shark.tools.authoring-retries-process",
           "shark.tools.authoring-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
@@ -2232,7 +2722,8 @@
           "tools/tests/test_authoring_retries_process.py",
           "tests/authoring_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -2258,7 +2749,8 @@
           "shark.tools.authoring-retries-process",
           "shark.tools.authoring-integration",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process", "shark.tools.scene-qualification"
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
         ],
         "test_sources": [
           "tests/authoring_command_tests.cpp",
@@ -2266,7 +2758,8 @@
           "tools/tests/test_authoring_retries_process.py",
           "tests/authoring_integration_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
         ],
         "fixtures": [
           "tests/authoring_command_tests.cpp",
@@ -2280,362 +2773,384 @@
           "featureworld.retries"
         ]
       },
-                  {
-                    "id": "authoring.entity.create",
-                    "name": "CreateEntityCommand",
-                    "requirement_ids": [
-                      "REQ-09",
-                      "REQ-10"
-                    ],
-                    "test_ids": [
-                      "shark.tools.authoring-commands",
-                      "shark.tools.authoring-history",
-                      "shark.tools.authoring-integration",
-                      "shark.tools.featureworld",
-                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
-                    ],
-                    "test_sources": [
-                      "tests/authoring_command_tests.cpp",
-                      "tests/authoring_integration_tests.cpp",
-                      "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
-                    ],
-                    "fixtures": [
-                      "tests/authoring_command_tests.cpp",
-                      "docs/authoring-commands.md",
-                      "assets/FeatureWorld/FeatureWorld.sharkproject",
-                      "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
-                      "engine_tools/src/feature_world.cpp"
-                    ],
-                    "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
-                    "featureworld_cases": [
-                      "featureworld.commands"
-                    ]
-                  },
-                  {
-                    "id": "authoring.entity.delete",
-                    "name": "DeleteEntityCommand",
-                    "requirement_ids": [
-                      "REQ-09",
-                      "REQ-10"
-                    ],
-                    "test_ids": [
-                      "shark.tools.authoring-commands",
-                      "shark.tools.authoring-history",
-                      "shark.tools.authoring-integration",
-                      "shark.tools.featureworld",
-                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
-                    ],
-                    "test_sources": [
-                      "tests/authoring_command_tests.cpp",
-                      "tests/authoring_integration_tests.cpp",
-                      "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
-                    ],
-                    "fixtures": [
-                      "tests/authoring_command_tests.cpp",
-                      "docs/authoring-commands.md",
-                      "assets/FeatureWorld/FeatureWorld.sharkproject",
-                      "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
-                      "engine_tools/src/feature_world.cpp"
-                    ],
-                    "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
-                    "featureworld_cases": [
-                      "featureworld.commands"
-                    ]
-                  },
-                  {
-                    "id": "authoring.entity.reparent",
-                    "name": "ReparentEntityCommand",
-                    "requirement_ids": [
-                      "REQ-09",
-                      "REQ-10"
-                    ],
-                    "test_ids": [
-                      "shark.tools.authoring-commands",
-                      "shark.tools.authoring-history",
-                      "shark.tools.authoring-integration",
-                      "shark.tools.featureworld",
-                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
-                    ],
-                    "test_sources": [
-                      "tests/authoring_command_tests.cpp",
-                      "tests/authoring_integration_tests.cpp",
-                      "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
-                    ],
-                    "fixtures": [
-                      "tests/authoring_command_tests.cpp",
-                      "docs/authoring-commands.md",
-                      "assets/FeatureWorld/FeatureWorld.sharkproject",
-                      "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
-                      "engine_tools/src/feature_world.cpp"
-                    ],
-                    "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
-                    "featureworld_cases": [
-                      "featureworld.commands"
-                    ]
-                  },
-                  {
-                    "id": "authoring.name.set",
-                    "name": "SetNameCommand",
-                    "requirement_ids": [
-                      "REQ-09",
-                      "REQ-10"
-                    ],
-                    "test_ids": [
-                      "shark.tools.authoring-commands",
-                      "shark.tools.persistence-integration",
-                      "shark.tools.authoring-history",
-                      "shark.tools.authoring-integration",
-                      "shark.tools.featureworld",
-                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
-                    ],
-                    "test_sources": [
-                      "tests/authoring_command_tests.cpp",
-                      "tests/persistence_integration_tests.cpp",
-                      "tests/authoring_integration_tests.cpp",
-                      "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
-                    ],
-                    "fixtures": [
-                      "tests/authoring_command_tests.cpp",
-                      "docs/authoring-commands.md",
-                      "assets/FeatureWorld/FeatureWorld.sharkproject",
-                      "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
-                      "engine_tools/src/feature_world.cpp"
-                    ],
-                    "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
-                    "featureworld_cases": [
-                      "featureworld.commands"
-                    ]
-                  },
-                  {
-                    "id": "authoring.transform.set",
-                    "name": "SetTransformCommand",
-                    "requirement_ids": [
-                      "REQ-09",
-                      "REQ-10"
-                    ],
-                    "test_ids": [
-                      "shark.tools.authoring-commands",
-                      "shark.tools.persistence-integration",
-                      "shark.tools.authoring-history",
-                      "shark.tools.authoring-integration",
-                      "shark.tools.featureworld",
-                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
-                    ],
-                    "test_sources": [
-                      "tests/authoring_command_tests.cpp",
-                      "tests/persistence_integration_tests.cpp",
-                      "tests/authoring_integration_tests.cpp",
-                      "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
-                    ],
-                    "fixtures": [
-                      "tests/authoring_command_tests.cpp",
-                      "docs/authoring-commands.md",
-                      "assets/FeatureWorld/FeatureWorld.sharkproject",
-                      "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
-                      "engine_tools/src/feature_world.cpp"
-                    ],
-                    "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
-                    "featureworld_cases": [
-                      "featureworld.commands"
-                    ]
-                  },
-                  {
-                    "id": "authoring.batch.preview",
-                    "name": "AuthoredScene::preview(AuthoringBatch)",
-                    "requirement_ids": [
-                      "REQ-09",
-                      "REQ-10"
-                    ],
-                    "test_ids": [
-                      "shark.tools.authoring-batches",
-                      "shark.core.scene-edit",
-                      "shark.tools.authoring-history",
-                      "shark.tools.authoring-integration",
-                      "shark.tools.featureworld",
-                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
-                    ],
-                    "test_sources": [
-                      "tests/authoring_command_tests.cpp",
-                      "tests/core_scene_edit_tests.cpp",
-                      "tests/authoring_integration_tests.cpp",
-                      "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
-                    ],
-                    "fixtures": [
-                      "tests/authoring_command_tests.cpp",
-                      "docs/authoring-transactions.md",
-                      "assets/FeatureWorld/FeatureWorld.sharkproject",
-                      "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
-                      "engine_tools/src/feature_world.cpp"
-                    ],
-                    "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
-                    "featureworld_cases": [
-                      "featureworld.batches-history"
-                    ]
-                  },
-                  {
-                    "id": "authoring.batch.execute",
-                    "name": "AuthoredScene::execute(AuthoringBatch)",
-                    "requirement_ids": [
-                      "REQ-09",
-                      "REQ-10"
-                    ],
-                    "test_ids": [
-                      "shark.tools.authoring-batches",
-                      "shark.core.scene-edit",
-                      "shark.tools.authoring-history",
-                      "shark.tools.authoring-integration",
-                      "shark.tools.featureworld",
-                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
-                    ],
-                    "test_sources": [
-                      "tests/authoring_command_tests.cpp",
-                      "tests/core_scene_edit_tests.cpp",
-                      "tests/authoring_integration_tests.cpp",
-                      "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
-                    ],
-                    "fixtures": [
-                      "tests/authoring_command_tests.cpp",
-                      "docs/authoring-transactions.md",
-                      "assets/FeatureWorld/FeatureWorld.sharkproject",
-                      "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
-                      "engine_tools/src/feature_world.cpp"
-                    ],
-                    "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
-                    "featureworld_cases": [
-                      "featureworld.batches-history"
-                    ]
-                  },
-                  {
-                    "id": "authoring.history.inspect",
-                    "name": "AuthoredScene::history",
-                    "requirement_ids": [
-                      "REQ-09",
-                      "REQ-10"
-                    ],
-                    "test_ids": [
-                      "shark.tools.authoring-history",
-                      "shark.tools.authoring-integration",
-                      "shark.tools.featureworld",
-                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
-                    ],
-                    "test_sources": [
-                      "tests/authoring_command_tests.cpp",
-                      "tests/authoring_integration_tests.cpp",
-                      "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
-                    ],
-                    "fixtures": [
-                      "tests/authoring_command_tests.cpp",
-                      "docs/authoring-history.md",
-                      "assets/FeatureWorld/FeatureWorld.sharkproject",
-                      "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
-                      "engine_tools/src/feature_world.cpp"
-                    ],
-                    "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
-                    "featureworld_cases": [
-                      "featureworld.batches-history"
-                    ]
-                  },
-                  {
-                    "id": "authoring.history.undo",
-                    "name": "AuthoredScene::undo",
-                    "requirement_ids": [
-                      "REQ-09",
-                      "REQ-10"
-                    ],
-                    "test_ids": [
-                      "shark.tools.authoring-history",
-                      "shark.tools.authoring-integration",
-                      "shark.tools.featureworld",
-                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
-                    ],
-                    "test_sources": [
-                      "tests/authoring_command_tests.cpp",
-                      "tests/authoring_integration_tests.cpp",
-                      "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
-                    ],
-                    "fixtures": [
-                      "tests/authoring_command_tests.cpp",
-                      "docs/authoring-history.md",
-                      "assets/FeatureWorld/FeatureWorld.sharkproject",
-                      "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
-                      "engine_tools/src/feature_world.cpp"
-                    ],
-                    "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
-                    "featureworld_cases": [
-                      "featureworld.batches-history"
-                    ]
-                  },
-                  {
-                    "id": "authoring.history.redo",
-                    "name": "AuthoredScene::redo",
-                    "requirement_ids": [
-                      "REQ-09",
-                      "REQ-10"
-                    ],
-                    "test_ids": [
-                      "shark.tools.authoring-history",
-                      "shark.tools.authoring-integration",
-                      "shark.tools.featureworld",
-                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
-                    ],
-                    "test_sources": [
-                      "tests/authoring_command_tests.cpp",
-                      "tests/authoring_integration_tests.cpp",
-                      "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
-                    ],
-                    "fixtures": [
-                      "tests/authoring_command_tests.cpp",
-                      "docs/authoring-history.md",
-                      "assets/FeatureWorld/FeatureWorld.sharkproject",
-                      "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
-                      "engine_tools/src/feature_world.cpp"
-                    ],
-                    "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
-                    "featureworld_cases": [
-                      "featureworld.batches-history"
-                    ]
-                  },
-                  {
-                    "id": "authoring.history.clear",
-                    "name": "AuthoredScene::clear_history",
-                    "requirement_ids": [
-                      "REQ-09",
-                      "REQ-10"
-                    ],
-                    "test_ids": [
-                      "shark.tools.authoring-history",
-                      "shark.tools.authoring-integration",
-                      "shark.tools.featureworld",
-                      "shark.tools.featureworld-process", "shark.tools.scene-qualification"
-                    ],
-                    "test_sources": [
-                      "tests/authoring_command_tests.cpp",
-                      "tests/authoring_integration_tests.cpp",
-                      "tests/feature_world_tests.cpp",
-                      "tools/tests/test_feature_world_process.py", "tools/tests/test_scene_qualification_process.py"
-                    ],
-                    "fixtures": [
-                      "tests/authoring_command_tests.cpp",
-                      "docs/authoring-history.md",
-                      "assets/FeatureWorld/FeatureWorld.sharkproject",
-                      "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
-                      "engine_tools/src/feature_world.cpp"
-                    ],
-                    "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
-                    "featureworld_cases": [
-                      "featureworld.batches-history"
-                    ]
-                  },
+      {
+        "id": "authoring.entity.create",
+        "name": "CreateEntityCommand",
+        "requirement_ids": [
+          "REQ-09",
+          "REQ-10"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-commands",
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-integration",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/authoring_integration_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-commands.md",
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "engine_tools/src/feature_world.cpp"
+        ],
+        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
+        "featureworld_cases": [
+          "featureworld.commands"
+        ]
+      },
+      {
+        "id": "authoring.entity.delete",
+        "name": "DeleteEntityCommand",
+        "requirement_ids": [
+          "REQ-09",
+          "REQ-10"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-commands",
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-integration",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/authoring_integration_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-commands.md",
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "engine_tools/src/feature_world.cpp"
+        ],
+        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
+        "featureworld_cases": [
+          "featureworld.commands"
+        ]
+      },
+      {
+        "id": "authoring.entity.reparent",
+        "name": "ReparentEntityCommand",
+        "requirement_ids": [
+          "REQ-09",
+          "REQ-10"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-commands",
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-integration",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/authoring_integration_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-commands.md",
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "engine_tools/src/feature_world.cpp"
+        ],
+        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
+        "featureworld_cases": [
+          "featureworld.commands"
+        ]
+      },
+      {
+        "id": "authoring.name.set",
+        "name": "SetNameCommand",
+        "requirement_ids": [
+          "REQ-09",
+          "REQ-10"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-commands",
+          "shark.tools.persistence-integration",
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-integration",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/persistence_integration_tests.cpp",
+          "tests/authoring_integration_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-commands.md",
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "engine_tools/src/feature_world.cpp"
+        ],
+        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
+        "featureworld_cases": [
+          "featureworld.commands"
+        ]
+      },
+      {
+        "id": "authoring.transform.set",
+        "name": "SetTransformCommand",
+        "requirement_ids": [
+          "REQ-09",
+          "REQ-10"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-commands",
+          "shark.tools.persistence-integration",
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-integration",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/persistence_integration_tests.cpp",
+          "tests/authoring_integration_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-commands.md",
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "engine_tools/src/feature_world.cpp"
+        ],
+        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
+        "featureworld_cases": [
+          "featureworld.commands"
+        ]
+      },
+      {
+        "id": "authoring.batch.preview",
+        "name": "AuthoredScene::preview(AuthoringBatch)",
+        "requirement_ids": [
+          "REQ-09",
+          "REQ-10"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-batches",
+          "shark.core.scene-edit",
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-integration",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/core_scene_edit_tests.cpp",
+          "tests/authoring_integration_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-transactions.md",
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "engine_tools/src/feature_world.cpp"
+        ],
+        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
+        "featureworld_cases": [
+          "featureworld.batches-history"
+        ]
+      },
+      {
+        "id": "authoring.batch.execute",
+        "name": "AuthoredScene::execute(AuthoringBatch)",
+        "requirement_ids": [
+          "REQ-09",
+          "REQ-10"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-batches",
+          "shark.core.scene-edit",
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-integration",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/core_scene_edit_tests.cpp",
+          "tests/authoring_integration_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-transactions.md",
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "engine_tools/src/feature_world.cpp"
+        ],
+        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
+        "featureworld_cases": [
+          "featureworld.batches-history"
+        ]
+      },
+      {
+        "id": "authoring.history.inspect",
+        "name": "AuthoredScene::history",
+        "requirement_ids": [
+          "REQ-09",
+          "REQ-10"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-integration",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/authoring_integration_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-history.md",
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "engine_tools/src/feature_world.cpp"
+        ],
+        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
+        "featureworld_cases": [
+          "featureworld.batches-history"
+        ]
+      },
+      {
+        "id": "authoring.history.undo",
+        "name": "AuthoredScene::undo",
+        "requirement_ids": [
+          "REQ-09",
+          "REQ-10"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-integration",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/authoring_integration_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-history.md",
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "engine_tools/src/feature_world.cpp"
+        ],
+        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
+        "featureworld_cases": [
+          "featureworld.batches-history"
+        ]
+      },
+      {
+        "id": "authoring.history.redo",
+        "name": "AuthoredScene::redo",
+        "requirement_ids": [
+          "REQ-09",
+          "REQ-10"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-integration",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/authoring_integration_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-history.md",
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "engine_tools/src/feature_world.cpp"
+        ],
+        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
+        "featureworld_cases": [
+          "featureworld.batches-history"
+        ]
+      },
+      {
+        "id": "authoring.history.clear",
+        "name": "AuthoredScene::clear_history",
+        "requirement_ids": [
+          "REQ-09",
+          "REQ-10"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-integration",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/authoring_command_tests.cpp",
+          "tests/authoring_integration_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "tests/authoring_command_tests.cpp",
+          "docs/authoring-history.md",
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "engine_tools/src/feature_world.cpp"
+        ],
+        "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
+        "featureworld_cases": [
+          "featureworld.batches-history"
+        ]
+      },
       {
         "id": "asset.metadata.read",
         "name": "ProjectFiles::read_asset_metadata",
@@ -3327,8 +3842,37 @@
           "featureworld.asset-jobs",
           "featureworld.asset-pipeline"
         ]
+      },
+      {
+        "id": "asset.gltf.inspect",
+        "name": "inspect_gltf_source",
+        "requirement_ids": [
+          "REQ-12"
+        ],
+        "test_ids": [
+          "shark.tools.gltf-source",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/gltf_source_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "tests/fixtures/gltf_source/README.md",
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/gltf-source.md"
+        ],
+        "fixture_reason": "Pure bounded CPU inspection consumes explicit immutable .gltf/.glb and external resource bytes, validates source containers/URIs/accessor storage and returns owned counts, persistent reference mappings, digests and diagnostics. The native source-inspection case exercises real inspection and rejection while preserving its AuthoredScene; external licensed fixtures and allocation sweeps cover malformed/bounded paths. It claims neither converted geometry nor image decoding or cache publication.",
+        "featureworld_cases": [
+          "featureworld.gltf-source"
+        ]
       }
-                ],
+    ],
     "lua_api": []
   },
   "featureworld": {
@@ -3343,7 +3887,8 @@
       "featureworld.asset-identity",
       "featureworld.asset-import",
       "featureworld.asset-jobs",
-      "featureworld.asset-pipeline"
+      "featureworld.asset-pipeline",
+      "featureworld.gltf-source"
     ],
     "case_source": "engine_tools/src/feature_world.cpp"
   }

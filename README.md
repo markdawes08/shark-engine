@@ -63,6 +63,14 @@ preserves complete cache snapshots and explicit recovery. Follow the
 [completed asset checkpoints](docs/roadmap/asset-plan.md). Source decoders remain
 planned; **next is assignment 12, glTF import**.
 
+**12a is complete under current-machine scope.** The shared CPU
+[glTF source inspector](docs/gltf-source.md) validates explicit byte snapshots,
+references and bounds with a private pinned parser. Its
+[handoff](docs/handoffs/12a-gltf-foundation.md) records 486 selected passing tests,
+42 public-example compiles, 30 actual sanitizer objects and protected packages.
+The [five checkpoints](docs/roadmap/gltf-plan.md) continue with **12b geometry and
+hierarchy**; full REQ-12 remains NOT_RUN pending 12b-12e.
+
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
 **04c and full assignment 04 are complete under the current-machine scope.**
 **05a, graphics device foundation, is complete under the current-machine scope.**

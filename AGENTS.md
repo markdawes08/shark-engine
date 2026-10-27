@@ -264,7 +264,23 @@ require cache reconciliation; fixture markers never authorize durable replay.
 Thirty-five synchronous/49 async snapshots reproduce bytes and root keys within each fixture;
 async snapshots also reproduce dependency keys.
 Core/Server source is unchanged; preserve the qualified 11b full Server evidence.
-**Next: assignment 12, glTF import; plan its checkpoints before implementation.**
+**12a, bounded glTF source inspection, is complete under current-machine scope.**
+Follow the [five checkpoints](docs/roadmap/gltf-plan.md),
+[ADR 0028](docs/architecture/0028-bounded-gltf-sources.md),
+[source contract](docs/gltf-source.md), [handoff](docs/handoffs/12a-gltf-foundation.md)
+and [receipt](docs/coverage/evidence/12a-gltf-foundation.json): 486 passing selected
+outcomes (225 full client Debug, 125 Tools selections, 136 fresh full Server),
+42 public-example compiles, 30 actual sanitizer objects and protected packages.
+Preserve gltf-source/gltf-dependencies (60 seconds each), 41 Catch cases with at least
+1,794 assertions, seed 1337, ten native FeatureWorld cases/28 process checks,
+41 CPU surfaces/one external GPU command and every earlier case/limit. Inspection
+is pure over explicit byte snapshots; no raw-file bypass or cache publication.
+Keep aggregate accessor/resolved-byte budgets, pre-normalization URI validation,
+effective sparse-index checks and all allocator sweeps. Only the parser source
+uses private MSVC `/EHc-` after `/EHsc`; its bounded arena aborts incomplete parses
+inside the owned Result boundary. Full optional fallback/material/image behavior
+remains assigned to 12c/12d. Full REQ-12 remains NOT_RUN pending 12b-12e.
+**Next: 12b, static geometry and hierarchy.**
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read

@@ -28,7 +28,13 @@ coordinated moves, a real worker gate with owner source/settings edits, stale
 completion rejection, retry, cancellation, missing/private dependencies and
 reopen/maintenance. It adds no new authoring API or decoder.
 
-The fixture runs all nine saved-world cases through the public supervisor, then
+12a adds `asset.gltf.inspect` and a tenth pure source-inspection case, extending
+the independent inventory to 41 CPU surfaces plus one external GPU command.
+The case consumes explicit immutable authored bytes and validates source counts,
+references/digests and rejection paths while preserving the saved owner. Geometry
+conversion, image decoding and cache publication retain the later glTF checkpoints.
+
+The fixture runs all ten saved-world cases through the public supervisor, then
 the intentional failing assertion through the same executable/result path. It
 compares stdout with create-only published results, native results and every
 artifact's bytes/hash. Failure remains exit 1 with the original case, phase,

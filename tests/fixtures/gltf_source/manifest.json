@@ -1,0 +1,42 @@
+{
+  "embedded.gltf": {
+    "bytes": 460,
+    "sha256": "4637680f0dd18b41e12bf382d805f173a0bc9ce814a93518f87e0d9122a2c4b8"
+  },
+  "external.gltf": {
+    "bytes": 387,
+    "sha256": "4a1c797299559d6260fc63190eba7156c98d37232b370f4d0d85c108b2632e95"
+  },
+  "minimal.gltf": {
+    "bytes": 28,
+    "sha256": "617cc8e98d1bdf445cdfa3cc49017ab888d54210d5b83a4ebb881433107f9668"
+  },
+  "pixel.png": {
+    "bytes": 68,
+    "sha256": "7e37c3392d585d2d06e4aa3b63b52a4f4babd914538918dd8868e2527070d344"
+  },
+  "repaired-indices.bin": {
+    "bytes": 46,
+    "sha256": "29895411fdd3000d5d06be0a3fd7c2bfe03aaa9f63b51604b6576c306a27766e"
+  },
+  "repaired-indices.gltf": {
+    "bytes": 713,
+    "sha256": "b1832716e1b7ee928d7b811116aef681f260741294db105e0a24ed2bce9d5c1c"
+  },
+  "sparse.bin": {
+    "bytes": 16,
+    "sha256": "547d701ac96ae29bfd2feef20150ce603277d24bdb0ab37efeb424359e5961eb"
+  },
+  "sparse.gltf": {
+    "bytes": 523,
+    "sha256": "3932788e19292d0c54e41de30b02b0e4e10d69d819ade4e164a5bb3204b4ea1e"
+  },
+  "triangle.bin": {
+    "bytes": 36,
+    "sha256": "d8b87038ed2ace74ed183166f6b0a541eab77f7184d50e65edc4bca5ccb5445a"
+  },
+  "triangle.glb": {
+    "bytes": 432,
+    "sha256": "d494a69b844daf95a4b2be9fff5310c02025a8aa93fc709d9cbfa559619d37ec"
+  }
+}

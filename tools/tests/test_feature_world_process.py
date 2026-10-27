@@ -62,7 +62,7 @@ def main():
         case_ids = manifest['featureworld']['case_ids']
         assert catalog['suites'] == {'featureworld': case_ids}
         assert catalog['cases'] == ['foundation', 'intentional-failure', *case_ids]
-        assert len(set(case_ids)) == 9
+        assert len(set(case_ids)) == 10
         mapped = []
         external = []
         for category in ('components', 'commands'):
@@ -99,7 +99,7 @@ def main():
             assert first['project_id'] == '20000000-0000-4000-8000-000000000001'
             assert first['scene_id'] == '20000000-0000-4000-8000-000000000003'
             assert [case['id'] for case in first['cases']] == case_ids
-            assert [case['final_revision']['value'] for case in first['cases']] == [4, 11, 7, 6, 4, 4, 4, 4, 4]
+            assert [case['final_revision']['value'] for case in first['cases']] == [4, 11, 7, 6, 4, 4, 4, 4, 4, 4]
             for case in first['cases']:
                 assert case['status'] == 'PASS' and case['failure'] is None
                 assert case['ticks_completed'] == 3 and case['assertions'] >= 10
@@ -128,7 +128,14 @@ def main():
             bad_workspace = list(options)
             bad_workspace[bad_workspace.index('--workspace') + 1] = str(sentinel)
             failed = call('scratch-parent-is-file', bad_workspace, 1)
-            assert failed['cases'][-1]['failure']['phase'] == 'tick' and sentinel.read_text() == 'keep'
+            failures = {case['id']: case for case in failed['cases']}
+            for case_id in ('featureworld.persistence', 'featureworld.asset-identity',
+                            'featureworld.asset-import', 'featureworld.asset-jobs',
+                            'featureworld.asset-pipeline'):
+                assert failures[case_id]['failure']['phase'] == 'tick'
+            assert failures['featureworld.gltf-source']['status'] == 'PASS'
+            assert failures['featureworld.gltf-source']['failure'] is None
+            assert sentinel.read_text() == 'keep'
             # A valid source edit must fail actual expectations, not merely parse.
             scene = json.loads(scene_file.read_text(encoding='utf-8'))
             scene['entities'][2]['components']['shark.name']['value'] = 'unexpected authored edit'

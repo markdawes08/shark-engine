@@ -5,6 +5,15 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+12a adds `shark.tools.gltf-source` (60 seconds, Catch seed 1337) and the private
+`shark.tooling.gltf-dependencies` family (60 seconds). Tools profiles require the
+exact `SHARK_CGLTF_ARCHIVE`; protected Runtime/Server keep Tools OFF and must not
+populate cgltf or JSON. Verify all glTF allocator sweep points in Debug, Release
+and sanitizers, including actual parser/test object symbols and private MSVC
+exception-flag ordering. Preserve earlier test limits and native fixture inputs.
+Ten native FeatureWorld cases/28 process checks cover 41 CPU surfaces and one
+external GPU command. Follow the [source contract](../../../docs/gltf-source.md).
+
 11d adds `shark.tools.asset-jobs-process` (150 seconds) beside the unchanged
 synchronous interruption fixture. Follow the
 [qualification contract](../../../docs/asset-qualification.md): nine native

@@ -38,6 +38,8 @@
 # Asset catalog snapshots, sidecar fault fixtures and qualification receipts use out/ or build/.
 # Background asset-job traces and bounded worker test receipts use out/ or build/.
 # Integrated asset qualification, abrupt-exit markers and recovery receipts stay there too.
+# glTF dependency archives, validator output and source-inspection receipts stay there too.
+# Keep licensed .gltf/.glb/.bin/image fixtures and their source notices versioned.
 # Keep authored .sharkasset metadata, asset fixtures and public identity contracts versioned.
 # Supervised CPU/GPU execution receipts, native readbacks and token evidence use out/ or build/.
 # Keep assets/FeatureWorld source project/scene, native cases and coverage documentation versioned.

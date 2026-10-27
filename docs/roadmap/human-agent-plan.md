@@ -34,6 +34,9 @@ terminal outcomes through original revision-fenced publication. Adapters keep
 through moves, worker-time owner edits, stale rejection, cancellation, retry and
 reopen, plus actual async process interruption. This qualifies shared backend
 behavior; human/editor and terminal protocol parity remains with its later owners.
+12a adds shared pure [glTF source inspection](../gltf-source.md) over explicit byte
+snapshots, with owned diagnostics/references and no editor/device requirement.
+Later import conversion and adapters reuse that boundary and existing owner fences.
 
 ## Assessment of existing work
 

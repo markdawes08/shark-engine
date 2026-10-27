@@ -5,6 +5,17 @@ description: Implement or change Shark asset import and cache behavior with boun
 
 # Shark asset import
 
+12a starts the [five glTF checkpoints](../../../docs/roadmap/gltf-plan.md) under
+[ADR 0028](../../../docs/architecture/0028-bounded-gltf-sources.md). Follow the
+[source contract](../../../docs/gltf-source.md): pure inspection consumes explicit
+immutable snapshots, never a ProjectFiles bypass or a worker filesystem callback.
+Preserve per-file/aggregate/parser/accessor-work bounds and all allocation sweeps.
+Private cgltf allocation failure unwinds only within its controlled C++ boundary;
+MSVC requires the source-file-only `/EHc-` option after `/EHsc`. Source inspection
+does not qualify geometry/image/material conversion or complete optional fallback.
+Texture roles belong to usage; transformed ByteAssetImporter bodies are not raw
+external source. Decoder integration remains 12c; full REQ-12 closes only in 12e.
+
 11d connects the [asset qualification](../../../docs/asset-qualification.md)
 lineage through the ninth native FeatureWorld case and actual asynchronous
 process interruption/recovery. Preserve the earlier eight cases, all old limits,

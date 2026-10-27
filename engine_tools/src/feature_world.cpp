@@ -3,6 +3,7 @@
 #include "shark/schema.hpp"
 #include "shark/tools/asset_catalog.hpp"
 #include "shark/tools/asset_import.hpp"
+#include "shark/tools/gltf_source.hpp"
 #include "shark/tools/project_files.hpp"
 
 #include <algorithm>
@@ -18,10 +19,11 @@
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 9> case_ids{
+constexpr std::array<std::string_view, 10> case_ids{
     "featureworld.components",   "featureworld.commands",    "featureworld.batches-history",
     "featureworld.retries",      "featureworld.persistence", "featureworld.asset-identity",
-    "featureworld.asset-import", "featureworld.asset-jobs",  "featureworld.asset-pipeline"};
+    "featureworld.asset-import", "featureworld.asset-jobs",  "featureworld.asset-pipeline",
+    "featureworld.gltf-source"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -1054,6 +1056,78 @@ void asset_pipeline(SceneRunContext& context, const fs::path& parent) {
     take(imports->close_jobs());
     unchanged(context, before);
 }
+void gltf_source(SceneRunContext& context) {
+    const auto before = take(context.owner().capture());
+    const auto source_path = take(ProjectPath::parse("models/static.gltf"));
+    const auto resource_path = take(ProjectPath::parse("sources/triangle.bin"));
+    const auto resource_asset = id<AssetId>('a');
+    const std::array<std::byte, 36> triangle{};
+    const std::array resources{GltfExternalSource{resource_path, resource_asset, triangle}};
+    const std::string json =
+        R"({"asset":{"version":"2.0"},"scene":0,"scenes":[{"nodes":[0]}],)"
+        R"("nodes":[{"mesh":0}],"meshes":[{"primitives":[{"attributes":{"POSITION":0}}]}],)"
+        R"("buffers":[{"byteLength":36,"uri":"../sources/triangle.bin"}],)"
+        R"("bufferViews":[{"buffer":0,"byteLength":36}],)"
+        R"("accessors":[{"bufferView":0,"componentType":5126,"count":3,"type":"VEC3",)"
+        R"("min":[0,0,0],"max":[0,0,0]}]})";
+    const auto source_bytes = [](const std::string& text) {
+        return std::as_bytes(std::span{text.data(), text.size()});
+    };
+    const auto inspected = take(inspect_gltf_source({source_path, source_bytes(json), resources}));
+    require(context, inspected.container == GltfContainer::json,
+            "glTF source inspection lost its container kind");
+    require(context, inspected.counts.scenes == 1 && inspected.counts.nodes == 1,
+            "glTF source inspection changed scene/node counts");
+    require(context,
+            inspected.counts.meshes == 1 && inspected.counts.primitives == 1 &&
+                inspected.counts.accessors == 1,
+            "glTF source inspection changed geometry table counts");
+    require(context, inspected.selected_scene == 0 && inspected.diagnostics.empty(),
+            "glTF source selection or ordinary diagnostics changed");
+    require(context, inspected.resources.size() == 1,
+            "glTF source inspection lost its external buffer");
+    const auto& resource = inspected.resources.front();
+    require(context,
+            resource.kind == GltfResourceKind::buffer && resource.index == 0 &&
+                resource.storage == GltfResourceStorage::external,
+            "glTF source buffer reference changed kind/index/storage");
+    require(context, resource.path == resource_path && resource.asset == resource_asset,
+            "Contained parent URI lost persistent external resource identity");
+    require(context,
+            resource.byte_count == 36 &&
+                resource.digest.to_hex() ==
+                    "6db65fd59fd356f6729140571b5bcd6bb3b83492a16e1bf0a3884442fc3c8a0e",
+            "glTF source buffer differs from independently expected literal bytes");
+    const auto repeated = take(inspect_gltf_source({source_path, source_bytes(json), resources}));
+    require(context,
+            repeated.resources.size() == 1 &&
+                repeated.resources.front().digest == resource.digest &&
+                repeated.resources.front().asset == resource_asset,
+            "Repeated pure source inspection changed resource identity");
+    const auto missing = inspect_gltf_source({source_path, source_bytes(json)});
+    require(context, !missing && missing.error().context.operation == "asset.gltf.inspect",
+            "Missing glTF resource did not report its owned operation failure");
+    auto escaping = json;
+    escaping.replace(escaping.find("../sources/triangle.bin"), 23, "../../escape.bin");
+    require(context, !inspect_gltf_source({source_path, source_bytes(escaping), resources}),
+            "glTF URI escaped the logical project root");
+    const std::string required =
+        R"({"asset":{"version":"2.0"},"extensionsRequired":["SHARK_unsupported"]})";
+    const auto unsupported = inspect_gltf_source({source_path, source_bytes(required)});
+    require(context,
+            !unsupported &&
+                unsupported.error().message.find("SHARK_unsupported") != std::string::npos,
+            "Unsupported required extension lost its explicit name");
+    const std::string animated = R"({"asset":{"version":"2.0"},"animations":[{}]})";
+    require(context, !inspect_gltf_source({source_path, source_bytes(animated)}),
+            "Static source inspection silently accepted animation content");
+    std::stop_source stop;
+    stop.request_stop();
+    require(context,
+            !inspect_gltf_source({source_path, source_bytes(json), resources, stop.get_token()}),
+            "Cancelled source inspection returned success");
+    unchanged(context, before);
+}
 } // namespace
 
 std::span<const std::string_view> feature_world_case_ids() noexcept {
@@ -1103,6 +1177,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 8:
                         asset_pipeline(context, scratch_parent);
+                        break;
+                    case 9:
+                        gltf_source(context);
                         break;
                     default:
                         break;

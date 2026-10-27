@@ -44,7 +44,10 @@ No importer enters live simulation/render work. Follow the
 [asset checkpoints](asset-plan.md); 11d now qualifies the connected pipeline,
 actual async interruption/recovery, privacy and reproducibility under the
 [qualification contract](../asset-qualification.md). Full REQ-11 is PASS under
-current-machine scope; glTF decoding follows in 12.
+current-machine scope. The [glTF checkpoints](gltf-plan.md) begin with qualified
+12a pure bounded source inspection, preserving client/server dependency separation.
+Geometry, textures and materials remain assigned to 12b-12d; full REQ-12 remains
+NOT_RUN pending 12b-12e.
 
 ## Historical assessment of the pre-M01 foundation
 

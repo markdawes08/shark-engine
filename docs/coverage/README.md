@@ -38,7 +38,14 @@ Nine native cases/27 process checks retain 40 CPU surfaces plus one GPU command.
 The new async interruption family has 113 checks/39 children/seven phases;
 35 synchronous/49 asynchronous snapshots reproduce. Full inventories use
 disjoint functional/I/O executions with actual per-test JUnit provenance.
-Earlier cases, fixtures, seeds and limits are preserved. Next: assignment 12.
+Earlier cases, fixtures, seeds and limits are preserved. Assignment 12 follows
+the [five checkpoints](../roadmap/gltf-plan.md). **12a is PASS** in its
+[handoff](../handoffs/12a-gltf-foundation.md) and
+[receipt](evidence/12a-gltf-foundation.json): 486 selected outcomes, 42 example
+compiles, 30 actual sanitizer objects and protected packages. `asset.gltf.inspect`
+connects 41 new cases to the tenth native FeatureWorld case; 28 process checks
+retain 41 CPU surfaces and one GPU command. Full REQ-12 remains NOT_RUN pending
+12b-12e. Next: 12b.
 
 [requirements.json](requirements.json) is the version-3 requirement/coverage manifest for
 Shark. Each requirement has a unique ID, one owning roadmap assignment, observable

@@ -54,6 +54,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                        f"-DSHARK_GLM_ARCHIVE={OPTIONS.glm_archive}",
                        f"-DSHARK_MBEDTLS_ARCHIVE={OPTIONS.mbedtls_archive}",
                        f"-DSHARK_JSON_ARCHIVE={OPTIONS.json_archive}",
+                       f"-DSHARK_CGLTF_ARCHIVE={OPTIONS.cgltf_archive}",
                        *([f"-DSHARK_SQLITE_ARCHIVE={OPTIONS.sqlite_archive}"] if OPTIONS.sqlite_archive else []), *extra]
             result = subprocess.run(command, text=True, capture_output=True, timeout=120)
             output = result.stdout + result.stderr
@@ -68,6 +69,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                                      "glm-subbuild", "mbedtls-src", "mbedtls-build"}
             if tools:
                 expected_dependencies.add("json-src")
+                expected_dependencies.add("cgltf-src")
             if OPTIONS.sqlite_archive:
                 expected_dependencies.add("sqlite-src")
             self.assertEqual(dependencies, expected_dependencies)
@@ -81,6 +83,16 @@ class SourceDocumentDependencyTests(unittest.TestCase):
             for entry in commands:
                 source = Path(entry["file"])
                 command_text = entry["command"].replace("\\", "/")
+                if OPTIONS.compiler.lower().endswith(("cl", "cl.exe")):
+                    exception_flags = list(re.finditer(r"(?:^|\s)(?:/|-)EH([ascr-]+)(?=\s|$)", command_text))
+                    c_linkage_unwind = [flag for flag in exception_flags if flag.group(1) == "c-"]
+                    if source == ROOT / "engine_tools/src/gltf_source.cpp":
+                        standard_unwind = [flag for flag in exception_flags if flag.group(1) == "sc"]
+                        self.assertTrue(standard_unwind, command_text)
+                        self.assertEqual(len(c_linkage_unwind), 1, command_text)
+                        self.assertGreater(c_linkage_unwind[0].start(), standard_unwind[-1].start(), command_text)
+                    else:
+                        self.assertFalse(c_linkage_unwind, command_text)
                 if source.is_relative_to(ROOT / "engine_tools") and source.name != "scene_runner_main.cpp":
                     tool_commands.append(entry)
                     self.assertIn("/json-src/include", command_text)
@@ -89,8 +101,11 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                                    else r"-isystem\s+")
                     self.assertRegex(command_text, system_flag + r'"?' +
                                      re.escape((build / "_deps/json-src/include").as_posix()))
+                    self.assertRegex(command_text, system_flag + r'"?' +
+                                     re.escape((build / "_deps/cgltf-src").as_posix()))
                 else:
                     self.assertNotIn("json-src", command_text)
+                    self.assertNotIn("cgltf-src", command_text)
                     self.assertNotIn("JSON_USE_IMPLICIT_CONVERSIONS", command_text)
             expected_sources = {
                 ROOT / "engine_tools/src/build_info.cpp",
@@ -101,6 +116,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                 ROOT / "engine_tools/src/asset_catalog.cpp",
                 ROOT / "engine_tools/src/asset_cache_format.cpp",
                 ROOT / "engine_tools/src/asset_import.cpp",
+                ROOT / "engine_tools/src/gltf_source.cpp",
                 ROOT / "engine_tools/src/scene_runner.cpp",
                 ROOT / "engine_tools/src/feature_world.cpp",
             } if tools else set()
@@ -108,9 +124,14 @@ class SourceDocumentDependencyTests(unittest.TestCase):
             if tools:
                 self.assertIn("SHARK_DOMAIN_nlohmann_json [==[authoring]==]", graph)
                 self.assertIn("SHARK_DOMAIN_nlohmann_json::nlohmann_json [==[authoring]==]", graph)
+                self.assertIn("SHARK_DOMAIN_SharkCgltf [==[authoring]==]", graph)
+                self.assertIn("SHARK_DOMAIN_Shark::Cgltf [==[authoring]==]", graph)
             else:
                 self.assertNotIn("nlohmann", graph)
+                self.assertNotIn("SharkCgltf", graph)
+                self.assertNotIn("Shark::Cgltf", graph)
                 self.assertNotIn("SHARK_JSON_SOURCE_DIR:", cache)
+                self.assertNotIn("SHARK_CGLTF_SOURCE_DIR:", cache)
             check = subprocess.run([OPTIONS.cmake, "-DSHARK_GRAPH=" + str(graph_path), "-P",
                                     str(ROOT / "cmake/CheckRuntimeBoundary.cmake")],
                                    text=True, capture_output=True, timeout=15)
@@ -132,7 +153,9 @@ class SourceDocumentDependencyTests(unittest.TestCase):
         # One CPU graph contains Core, Server and Runtime; the existing separate
         # server-only dependency fixture also verifies its exact population.
         self.configure(["-DSHARK_JSON_ARCHIVE=missing-json-archive",
-                        f"-DFETCHCONTENT_SOURCE_DIR_JSON={ROOT}"], tools=False, client=True)
+                        f"-DFETCHCONTENT_SOURCE_DIR_JSON={ROOT}",
+                        "-DSHARK_CGLTF_ARCHIVE=missing-cgltf-archive",
+                        f"-DFETCHCONTENT_SOURCE_DIR_CGLTF={ROOT}"], tools=False, client=True)
 
     def test_editor_requires_tools_before_dependency_population(self):
         self.configure([], "SHARK_BUILD_EDITOR requires SHARK_BUILD_TOOLS=ON",
@@ -155,7 +178,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     for option in ("cmake", "ninja", "compiler", "c-compiler"):
         parser.add_argument("--" + option, required=True)
-    for option in ("mbedtls-archive", "entt-archive", "glm-archive", "json-archive"):
+    for option in ("mbedtls-archive", "entt-archive", "glm-archive", "json-archive", "cgltf-archive"):
         parser.add_argument("--" + option, type=Path, required=True)
     parser.add_argument("--sqlite-archive", type=Path)
     OPTIONS, remaining = parser.parse_known_args()

@@ -22,7 +22,7 @@ owner causes explicit failure. Copy the two source files to a writable project
 root when testing from a read-only checkout. Run from any current directory by
 passing explicit paths. There is no compiled-in checkout or fixture location.
 
-`--case featureworld` selects all nine cases in catalog order. Each concrete ID
+`--case featureworld` selects all ten cases in catalog order. Each concrete ID
 also selects one case. Supply `--workspace EXISTING_DIRECTORY` for the suite or
 persistence/asset-identity/asset-import/asset-jobs/asset-pipeline case. Each creates a unique child with its own
 project/scenes and remove their known files on exit. Input source bytes are
@@ -40,6 +40,7 @@ caller-selected parent. Generated results belong under ignored `out/` or `build/
 | `featureworld.asset-import` | Synchronous dependency imports, matching-key reuse, source invalidation, last-valid output, atomic cache publication, prune/reopen/reload/recovery and explicit clear through the same scratch ProjectFiles owner |
 | `featureworld.asset-jobs` | Actual private-worker dependency imports, pending-work deduplication, bounded progress, owner-side publication, cancellation before/after publication, retained outcomes, explicit retry and closed admission through one scratch owner |
 | `featureworld.asset-pipeline` | One persisted scene/reference through async publication, coordinated source/sidecar move, matching-key reuse, a gated worker concurrent with owner source/settings edits, stale completion rejection, explicit retry, parent/leaf key and byte checks, cancellation, missing/private dependency rejection, fresh-scope reopen and explicit cache maintenance |
+| `featureworld.gltf-source` | Pure glTF source inspection over an explicit authored triangle snapshot: counts/default scene, contained parent URI, persistent external reference, independent byte digest, repeatability, missing/escaping sources, required-extension/animation errors and cancellation with unchanged AuthoredScene |
 
 Every case receives a fresh owner from the same saved baseline. Functional work
 occurs at tick zero; subsequent fixed ticks check stable identity/entity counts.

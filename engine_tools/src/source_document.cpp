@@ -1,6 +1,7 @@
 #include "shark/tools/source_document.hpp"
 #include "asset_cache_format.hpp"
 #include "shark/tools/asset_metadata.hpp"
+#include "source_json.hpp"
 
 #include "shark/schema.hpp"
 #include "utf8.hpp"
@@ -80,7 +81,11 @@ std::string child_path(const std::string& parent, std::string_view key) {
 // Nodes count containers, scalar values AND object keys. Root container depth=1.
 class SourceSax final : public nlohmann::json_sax<Json> {
   public:
-    explicit SourceSax(std::size_t enclosing_depth = 0) : enclosing_depth_(enclosing_depth) {}
+    explicit SourceSax(std::size_t enclosing_depth = 0,
+                       std::size_t maximum_string_bytes = source_maximum_string_bytes,
+                       std::size_t maximum_nodes = source_maximum_json_nodes)
+        : enclosing_depth_(enclosing_depth), maximum_string_bytes_(maximum_string_bytes),
+          maximum_nodes_(maximum_nodes) {}
 
     bool null() override {
         return scalar();
@@ -122,6 +127,9 @@ class SourceSax final : public nlohmann::json_sax<Json> {
         return finish();
     }
     bool key(string_t& value) override {
+        if (value.size() > source_maximum_string_bytes) {
+            return reject("JSON string exceeds the source byte limit");
+        }
         if (!valid_string(value) || !node()) {
             return false;
         }
@@ -149,6 +157,8 @@ class SourceSax final : public nlohmann::json_sax<Json> {
     };
     std::vector<Frame> frames_;
     std::size_t enclosing_depth_;
+    std::size_t maximum_string_bytes_;
+    std::size_t maximum_nodes_;
     std::size_t nodes_{0};
     Error error_{ErrorCode::invalid_configuration, "Malformed UTF-8 JSON document", {}};
 
@@ -164,13 +174,13 @@ class SourceSax final : public nlohmann::json_sax<Json> {
         return false;
     }
     bool valid_string(const std::string& value) {
-        if (value.size() > source_maximum_string_bytes) {
+        if (value.size() > maximum_string_bytes_) {
             return reject("JSON string exceeds the source byte limit");
         }
         return true;
     }
     bool node() {
-        if (nodes_ == source_maximum_json_nodes) {
+        if (nodes_ == maximum_nodes_) {
             return reject("JSON node budget exceeded");
         }
         ++nodes_;
@@ -206,14 +216,16 @@ class SourceSax final : public nlohmann::json_sax<Json> {
 };
 
 Json parse_json(std::string_view input, const std::string& prefix = {},
-                std::size_t enclosing_depth = 0) {
+                std::size_t enclosing_depth = 0,
+                std::size_t maximum_string_bytes = source_maximum_string_bytes,
+                std::size_t maximum_nodes = source_maximum_json_nodes) {
     if (input.size() > source_maximum_bytes) {
         fail(prefix, "Source input exceeds 4 MiB");
     }
     if (input.find('\0') != std::string_view::npos) {
         fail(prefix, "Source JSON cannot contain raw NUL bytes");
     }
-    SourceSax sax{enclosing_depth};
+    SourceSax sax{enclosing_depth, maximum_string_bytes, maximum_nodes};
     if (!Json::sax_parse(input.begin(), input.end(), &sax)) {
         auto error = sax.error();
         if (!prefix.empty()) {
@@ -982,6 +994,12 @@ Result<ProjectPath> asset_source_path(const ProjectPath& sidecar) {
 }
 
 namespace detail {
+Result<Json> parse_source_json(std::string_view text, std::size_t maximum_string_bytes,
+                               std::size_t maximum_nodes) {
+    return boundary<Json>("source.json.parse", [&] {
+        return parse_json(text, {}, 0, maximum_string_bytes, maximum_nodes);
+    });
+}
 namespace {
 ContentDigest cache_digest(const Json& value, const std::string& path) {
     return checked(ContentDigest::parse(string_value(value, path)), path);

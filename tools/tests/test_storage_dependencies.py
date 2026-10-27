@@ -60,7 +60,8 @@ class StorageDependencyTests(unittest.TestCase):
                        f"-DSHARK_ENTT_ARCHIVE={OPTIONS.entt_archive}", f"-DSHARK_GLM_ARCHIVE={OPTIONS.glm_archive}",
                        f"-DSHARK_MBEDTLS_ARCHIVE={OPTIONS.mbedtls_archive}",
                        f"-DSHARK_SQLITE_ARCHIVE={OPTIONS.sqlite_archive}",
-                       *([f"-DSHARK_JSON_ARCHIVE={OPTIONS.json_archive}"] if authoring else []), *extra]
+                       *([f"-DSHARK_JSON_ARCHIVE={OPTIONS.json_archive}",
+                          f"-DSHARK_CGLTF_ARCHIVE={OPTIONS.cgltf_archive}"] if authoring else []), *extra]
             result = subprocess.run(command, text=True, capture_output=True, timeout=120)
             output = result.stdout + result.stderr
             if expected:
@@ -75,6 +76,7 @@ class StorageDependencyTests(unittest.TestCase):
                 populations.add("sqlite-src")
             if authoring:
                 populations.add("json-src")
+                populations.add("cgltf-src")
             self.assertEqual({path.name for path in (build / "_deps").iterdir()}, populations)
             graph = next(build.glob("shark-target-graph-*.cmake"))
             result = subprocess.run([OPTIONS.cmake, "-DSHARK_GRAPH=" + str(graph), "-P",
@@ -139,5 +141,8 @@ if __name__ == "__main__":
     for name in ("entt-archive", "glm-archive", "mbedtls-archive", "sqlite-archive"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--json-archive", type=Path)
+    parser.add_argument("--cgltf-archive", type=Path)
     OPTIONS, remaining = parser.parse_known_args()
+    if OPTIONS.json_archive and not OPTIONS.cgltf_archive:
+        parser.error("--json-archive requires --cgltf-archive for the authoring fixture")
     unittest.main(argv=[__file__, *remaining])

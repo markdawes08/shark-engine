@@ -131,7 +131,11 @@ objects and protected packages. 11d now closes all four checkpoints in its
 [handoff](../handoffs/11d-asset-qualification.md), with 602 selected passing
 outcomes, nine connected native cases, actual async interruption/recovery,
 reproducibility and protected packages under the
-[qualification contract](../asset-qualification.md). Full REQ-11 is PASS; next: 12.
+[qualification contract](../asset-qualification.md). Full REQ-11 is PASS. Assignment 12 follows its
+[five checkpoints](../roadmap/gltf-plan.md); 12a is PASS in its
+[handoff](../handoffs/12a-gltf-foundation.md), with 486 selected outcomes,
+42 public-example compiles, 30 sanitizer objects and protected packages.
+Full REQ-12 remains NOT_RUN pending 12b-12e. Next: 12b.
 
 | Record | Decision |
 | --- | --- |
@@ -162,6 +166,7 @@ reproducibility and protected packages under the
 | [0025](0025-asset-identity.md) | Persistent adjacent asset sidecars, shared file publication and bounded revisioned catalog snapshots |
 | [0026](0026-development-asset-cache.md) | Dependency-keyed synchronous imports and atomic bounded development cache snapshots |
 | [0027](0027-bounded-asset-jobs.md) | Bounded private import worker, retained jobs, cancellation and owner publication |
+| [0028](0028-bounded-gltf-sources.md) | Bounded pure glTF source snapshots, references, parser ownership and subsequent conversion contracts |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

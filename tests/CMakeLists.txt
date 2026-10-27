@@ -126,6 +126,22 @@ if(TARGET EngineStorage)
 endif()
 
 if(TARGET EngineTools)
+    add_executable(GltfSourceTests gltf_source_tests.cpp)
+    target_link_libraries(GltfSourceTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_include_directories(GltfSourceTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
+    target_compile_definitions(GltfSourceTests PRIVATE
+        SHARK_GLTF_FIXTURE_DIRECTORY="${PROJECT_SOURCE_DIR}/tests/fixtures/gltf_source")
+    shark_configure_target(GltfSourceTests)
+    shark_classify_target(GltfSourceTests test)
+    add_test(NAME shark.tools.gltf-source COMMAND GltfSourceTests "[gltf-source]" --rng-seed 1337
+        --reporter xml --out "${CMAKE_CURRENT_BINARY_DIR}/gltf-source-cases.xml")
+    set_tests_properties(shark.tools.gltf-source PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
+
+    add_test(NAME shark.tooling.gltf-dependencies
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_gltf_dependencies.py"
+            --archive "${SHARK_CGLTF_ARCHIVE_INPUT}" --cmake "${CMAKE_COMMAND}" --ninja "${CMAKE_MAKE_PROGRAM}")
+    set_tests_properties(shark.tooling.gltf-dependencies PROPERTIES LABELS "cpu;tooling;boundary" TIMEOUT 60)
+
     add_executable(AssetImportJobsTests asset_import_jobs_tests.cpp)
     target_link_libraries(AssetImportJobsTests PRIVATE EngineTools Catch2::Catch2WithMain)
     target_include_directories(AssetImportJobsTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
@@ -757,7 +773,8 @@ if(TARGET EngineStorage)
     list(APPEND shark_storage_fixture_args --sqlite-archive "${SHARK_SQLITE_ARCHIVE_INPUT}")
     set(shark_storage_json_fixture_args)
     if(TARGET EngineTools)
-        list(APPEND shark_storage_json_fixture_args --json-archive "${SHARK_JSON_ARCHIVE_INPUT}")
+        list(APPEND shark_storage_json_fixture_args --json-archive "${SHARK_JSON_ARCHIVE_INPUT}"
+            --cgltf-archive "${SHARK_CGLTF_ARCHIVE_INPUT}")
     endif()
     add_test(NAME shark.tooling.storage-dependencies
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_storage_dependencies.py"
@@ -796,6 +813,7 @@ if(TARGET EngineTools)
             --compiler "${CMAKE_CXX_COMPILER}" --c-compiler "${CMAKE_C_COMPILER}"
             --entt-archive "${SHARK_EnTT_ARCHIVE}" --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}"
             --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}" --json-archive "${SHARK_JSON_ARCHIVE_INPUT}"
+            --cgltf-archive "${SHARK_CGLTF_ARCHIVE_INPUT}"
             ${shark_storage_fixture_args} -v)
     set_tests_properties(shark.tooling.source-document-dependencies PROPERTIES
         LABELS "cpu;tooling;boundary" TIMEOUT 240 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")

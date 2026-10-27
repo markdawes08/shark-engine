@@ -433,6 +433,20 @@ the JSON archive or headers. This pure codec does not perform file I/O, activate
 scenes or provide terminal commands; see the [format contract](source-documents.md)
 and [08 checkpoint plan](roadmap/persistence-plan.md).
 
+12a additionally pins cgltf privately in Tools. Offline Tools configurations pass
+`-DSHARK_CGLTF_ARCHIVE=/absolute/path/cgltf-360db1a95480fe102ae9c69b27c5d101167ff5ba.tar.gz`
+or reuse that exact verified cache. Keep one canonical archive under ignored
+`out/dependency-cache/` and pass it to each active profile; ordinary online Tools
+configuration prepares the exact bounded download when its archive is absent.
+`tools/gltf_dependency.py` verifies the full populated inventory before use.
+Protected Runtime/Server configurations keep Tools OFF and acquire neither JSON
+nor cgltf. The parser's allocation-unwind setting is confined to its private
+translation unit; other targets keep their existing exception policy. See the
+[dependency review](dependencies/cgltf.md) and [source contract](gltf-source.md).
+After listing the inventory, run `shark.tools.gltf-source` and
+`shark.tooling.gltf-dependencies` (60 seconds each); Catch uses seed 1337. Source
+inspection exposes no filesystem callback, decoder, converted mesh or renderer.
+
 08b adds `AuthoredSceneTests` and `shark.tools.authored-scene` (seed 1337,
 60-second timeout) for revision-consistent capture, project/world references,
 candidate construction and failure-safe Scene activation. After listing the test
