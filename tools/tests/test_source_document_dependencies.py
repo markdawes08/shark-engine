@@ -55,6 +55,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                        f"-DSHARK_MBEDTLS_ARCHIVE={OPTIONS.mbedtls_archive}",
                        f"-DSHARK_JSON_ARCHIVE={OPTIONS.json_archive}",
                        f"-DSHARK_CGLTF_ARCHIVE={OPTIONS.cgltf_archive}",
+                       f"-DSHARK_IMAGE_ARCHIVE={OPTIONS.image_archive}",
                        *([f"-DSHARK_SQLITE_ARCHIVE={OPTIONS.sqlite_archive}"] if OPTIONS.sqlite_archive else []), *extra]
             result = subprocess.run(command, text=True, capture_output=True, timeout=120)
             output = result.stdout + result.stderr
@@ -70,6 +71,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
             if tools:
                 expected_dependencies.add("json-src")
                 expected_dependencies.add("cgltf-src")
+                expected_dependencies.add("stb_image-src")
             if OPTIONS.sqlite_archive:
                 expected_dependencies.add("sqlite-src")
             self.assertEqual(dependencies, expected_dependencies)
@@ -103,9 +105,12 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                                      re.escape((build / "_deps/json-src/include").as_posix()))
                     self.assertRegex(command_text, system_flag + r'"?' +
                                      re.escape((build / "_deps/cgltf-src").as_posix()))
+                    self.assertRegex(command_text, system_flag + r'"?' +
+                                     re.escape((build / "_deps/stb_image-src").as_posix()))
                 else:
                     self.assertNotIn("json-src", command_text)
                     self.assertNotIn("cgltf-src", command_text)
+                    self.assertNotIn("stb_image-src", command_text)
                     self.assertNotIn("JSON_USE_IMPLICIT_CONVERSIONS", command_text)
             expected_sources = {
                 ROOT / "engine_tools/src/build_info.cpp",
@@ -117,6 +122,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                 ROOT / "engine_tools/src/asset_cache_format.cpp",
                 ROOT / "engine_tools/src/asset_import.cpp",
                 ROOT / "engine_tools/src/gltf_source.cpp",
+                ROOT / "engine_tools/src/gltf_image_decoder.cpp",
                 ROOT / "engine_tools/src/scene_runner.cpp",
                 ROOT / "engine_tools/src/feature_world.cpp",
             } if tools else set()
@@ -126,10 +132,15 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                 self.assertIn("SHARK_DOMAIN_nlohmann_json::nlohmann_json [==[authoring]==]", graph)
                 self.assertIn("SHARK_DOMAIN_SharkCgltf [==[authoring]==]", graph)
                 self.assertIn("SHARK_DOMAIN_Shark::Cgltf [==[authoring]==]", graph)
+                self.assertIn("SHARK_DOMAIN_SharkStbImage [==[authoring]==]", graph)
+                self.assertIn("SHARK_DOMAIN_Shark::StbImage [==[authoring]==]", graph)
             else:
                 self.assertNotIn("nlohmann", graph)
                 self.assertNotIn("SharkCgltf", graph)
                 self.assertNotIn("Shark::Cgltf", graph)
+                self.assertNotIn("SharkStbImage", graph)
+                self.assertNotIn("Shark::StbImage", graph)
+                self.assertNotIn("SHARK_IMAGE_SOURCE_DIR:", cache)
                 self.assertNotIn("SHARK_JSON_SOURCE_DIR:", cache)
                 self.assertNotIn("SHARK_CGLTF_SOURCE_DIR:", cache)
             check = subprocess.run([OPTIONS.cmake, "-DSHARK_GRAPH=" + str(graph_path), "-P",
@@ -155,6 +166,8 @@ class SourceDocumentDependencyTests(unittest.TestCase):
         self.configure(["-DSHARK_JSON_ARCHIVE=missing-json-archive",
                         f"-DFETCHCONTENT_SOURCE_DIR_JSON={ROOT}",
                         "-DSHARK_CGLTF_ARCHIVE=missing-cgltf-archive",
+                        "-DSHARK_IMAGE_ARCHIVE=missing-image-archive",
+                        f"-DFETCHCONTENT_SOURCE_DIR_STB_IMAGE={ROOT}",
                         f"-DFETCHCONTENT_SOURCE_DIR_CGLTF={ROOT}"], tools=False, client=True)
 
     def test_editor_requires_tools_before_dependency_population(self):
@@ -178,7 +191,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     for option in ("cmake", "ninja", "compiler", "c-compiler"):
         parser.add_argument("--" + option, required=True)
-    for option in ("mbedtls-archive", "entt-archive", "glm-archive", "json-archive", "cgltf-archive"):
+    for option in ("mbedtls-archive", "entt-archive", "glm-archive", "json-archive", "cgltf-archive", "image-archive"):
         parser.add_argument("--" + option, type=Path, required=True)
     parser.add_argument("--sqlite-archive", type=Path)
     OPTIONS, remaining = parser.parse_known_args()

@@ -1,6 +1,8 @@
 #include "shark/tools/gltf_source.hpp"
 #include "shark/tools/gltf_geometry.hpp"
+#include "shark/tools/gltf_textures.hpp"
 
+#include "gltf_image_decoder.hpp"
 #include "gltf_source_test_port.hpp"
 #include "source_json.hpp"
 #include "utf8.hpp"
@@ -39,6 +41,7 @@ template <typename Integer> Integer checked_gltf_integer(const char* text) {
 #include <map>
 #include <memory>
 #include <new>
+#include <numeric>
 #include <set>
 #include <utility>
 
@@ -319,6 +322,7 @@ struct Inspection {
     std::map<std::string, std::size_t> external;
     std::vector<bool> used;
     std::vector<Resolved> buffers;
+    std::vector<Resolved> images;
     std::vector<View> views;
     std::vector<Accessor> accessors;
     std::vector<std::optional<std::uint32_t>> index_bounds;
@@ -618,10 +622,11 @@ struct Inspection {
             views.push_back({buffer, offset, length, stride, value.contains("target"),
                              value.contains("byteStride")});
         }
-        const auto& images = array(document, "images");
-        for (std::size_t i = 0; i < images.size(); ++i) {
+        const auto& source_images = array(document, "images");
+        images.reserve(source_images.size());
+        for (std::size_t i = 0; i < source_images.size(); ++i) {
             cancelled(input.stop);
-            const auto& image = images[i];
+            const auto& image = source_images[i];
             if (image.contains("uri") == image.contains("bufferView"))
                 fail("glTF image requires exactly one URI or bufferView");
             Resolved resolved{GltfResourceStorage::buffer_view, {}, {}, {}, {}, {}};
@@ -654,6 +659,7 @@ struct Inspection {
                 resolved.mime != detected)
                 fail("glTF image requires matching PNG/JPEG encoded content");
             reference(GltfResourceKind::image, i, resolved);
+            images.push_back(std::move(resolved));
         }
         if (std::find(used.begin(), used.end(), false) != used.end())
             fail("Supplied glTF external source is not referenced");
@@ -1543,6 +1549,374 @@ struct GeometryConversion {
     }
 };
 
+struct TextureConversion {
+    Inspection& source;
+    const GltfTextureSettings& settings;
+    std::string& field;
+    GltfTextures output{};
+    std::size_t output_bytes{};
+    std::size_t mip_bytes{};
+    std::size_t decoded_bytes{};
+    std::size_t work_items{};
+    std::map<std::size_t, detail::GltfImageInfo> headers{};
+    std::map<std::pair<std::size_t, GltfTextureSemantic>, std::size_t> variants{};
+
+    struct Slot {
+        const char* name;
+        GltfTextureRole role;
+        GltfTextureSemantic semantic;
+        bool pbr;
+    };
+    static constexpr std::array slots{
+        Slot{"baseColorTexture", GltfTextureRole::base_color, GltfTextureSemantic::srgb_color,
+             true},
+        Slot{"metallicRoughnessTexture", GltfTextureRole::metallic_roughness,
+             GltfTextureSemantic::linear_data, true},
+        Slot{"normalTexture", GltfTextureRole::normal, GltfTextureSemantic::normal, false},
+        Slot{"occlusionTexture", GltfTextureRole::occlusion, GltfTextureSemantic::linear_data,
+             false},
+        Slot{"emissiveTexture", GltfTextureRole::emissive, GltfTextureSemantic::srgb_color, false}};
+
+    void poll() const {
+        cancelled(source.input.stop);
+    }
+    void charge(std::size_t bytes) {
+        if (bytes > gltf_texture_maximum_output_bytes - output_bytes)
+            fail("glTF texture output exceeds its metadata/byte bound");
+        output_bytes += bytes;
+    }
+    void work(std::size_t count) {
+        if (count > gltf_texture_maximum_work - work_items)
+            fail("glTF texture conversion exceeds its work bound");
+        work_items += count;
+    }
+    const Json* info(const Json& material, const Slot& slot) const {
+        const Json* parent = &material;
+        if (slot.pbr) {
+            if (!material.contains("pbrMetallicRoughness"))
+                return nullptr;
+            parent = &material.at("pbrMetallicRoughness");
+            object(*parent);
+        }
+        if (!parent->contains(slot.name))
+            return nullptr;
+        const auto& value = parent->at(slot.name);
+        object(value);
+        return &value;
+    }
+    std::set<std::size_t> material_inventory() {
+        std::set<std::size_t> materials;
+        if (!output.selected_scene)
+            return materials;
+        const auto& scene = array(source.document, "scenes")[*output.selected_scene];
+        std::vector<std::size_t> pending;
+        for (const auto& root : array(scene, "nodes"))
+            pending.push_back(integer(root));
+        const auto& nodes = array(source.document, "nodes");
+        std::set<std::size_t> meshes;
+        while (!pending.empty()) {
+            poll();
+            const auto position = pending.back();
+            pending.pop_back();
+            const auto& node = nodes[position];
+            if (node.contains("mesh"))
+                meshes.insert(integer(node.at("mesh")));
+            for (const auto& child : array(node, "children"))
+                pending.push_back(integer(child));
+        }
+        for (const auto mesh : meshes) {
+            const auto& primitives = array(array(source.document, "meshes")[mesh], "primitives");
+            for (const auto& primitive : primitives) {
+                poll();
+                if (!primitive.contains("material"))
+                    continue;
+                const auto position =
+                    index(primitive.at("material"), source.result.counts.materials);
+                const auto& material = array(source.document, "materials")[position];
+                field = "materials[" + std::to_string(position) + "]";
+                for (const auto& slot : slots) {
+                    const auto* reference = info(material, slot);
+                    if (!reference)
+                        continue;
+                    const auto uv = optional_integer(*reference, "texCoord");
+                    if (uv > 1 ||
+                        !primitive.at("attributes").contains(uv == 0 ? "TEXCOORD_0" : "TEXCOORD_1"))
+                        fail("glTF texture use references an unavailable supported UV set");
+                }
+                materials.insert(position);
+            }
+        }
+        return materials;
+    }
+    static GltfTextureWrap wrap(std::size_t value) {
+        switch (value) {
+        case 33071:
+            return GltfTextureWrap::clamp_to_edge;
+        case 33648:
+            return GltfTextureWrap::mirrored_repeat;
+        case 10497:
+            return GltfTextureWrap::repeat;
+        default:
+            fail("Invalid glTF sampler wrap value");
+        }
+    }
+    GltfTextureSampler sampler(const Json& texture) const {
+        GltfTextureSampler converted;
+        if (!texture.contains("sampler"))
+            return converted;
+        const auto& value =
+            array(source.document,
+                  "samplers")[index(texture.at("sampler"), source.result.counts.samplers)];
+        converted.wrap_s = wrap(optional_integer(value, "wrapS", 10497));
+        converted.wrap_t = wrap(optional_integer(value, "wrapT", 10497));
+        const auto mag = optional_integer(value, "magFilter", 9729);
+        if (mag != 9728 && mag != 9729)
+            fail("Invalid glTF magnification filter");
+        converted.magnification =
+            mag == 9728 ? GltfTextureFilter::nearest : GltfTextureFilter::linear;
+        switch (optional_integer(value, "minFilter", 9987)) {
+        case 9728:
+            converted.minification = GltfTextureFilter::nearest;
+            converted.mip = GltfTextureMipFilter::none;
+            break;
+        case 9729:
+            converted.minification = GltfTextureFilter::linear;
+            converted.mip = GltfTextureMipFilter::none;
+            break;
+        case 9984:
+            converted.minification = GltfTextureFilter::nearest;
+            converted.mip = GltfTextureMipFilter::nearest;
+            break;
+        case 9985:
+            converted.minification = GltfTextureFilter::linear;
+            converted.mip = GltfTextureMipFilter::nearest;
+            break;
+        case 9986:
+            converted.minification = GltfTextureFilter::nearest;
+            converted.mip = GltfTextureMipFilter::linear;
+            break;
+        case 9987:
+            converted.minification = GltfTextureFilter::linear;
+            converted.mip = GltfTextureMipFilter::linear;
+            break;
+        default:
+            fail("Invalid glTF minification filter");
+        }
+        return converted;
+    }
+    std::size_t image_variant(std::size_t image, GltfTextureSemantic semantic) {
+        const auto key = std::pair{image, semantic};
+        if (const auto found = variants.find(key); found != variants.end())
+            return found->second;
+        field = "images[" + std::to_string(image) + "]";
+        poll();
+        if (variants.size() >= gltf_texture_maximum_variants)
+            fail("glTF texture semantic variants exceed their bound");
+        auto found = headers.find(image);
+        if (found == headers.end()) {
+            const auto& encoded = source.images[image];
+            const auto header =
+                take(detail::inspect_gltf_image(encoded.bytes, encoded.mime, source.input.stop));
+            if (header.decoded_bytes > gltf_texture_maximum_decoded_bytes - decoded_bytes)
+                fail("glTF decoded image inventory exceeds its aggregate byte bound");
+            decoded_bytes += header.decoded_bytes;
+            work(header.work_items);
+            found = headers.emplace(image, header).first;
+        }
+        const auto& header = found->second;
+        auto width = static_cast<std::size_t>(header.width);
+        auto height = static_cast<std::size_t>(header.height);
+        std::size_t levels = 0;
+        std::size_t bytes = 0;
+        while (true) {
+            ++levels;
+            bytes = add(bytes, multiply(multiply(width, height), 4 * (header.component_bits / 8)));
+            if (width == 1 && height == 1)
+                break;
+            const auto next_width = std::max<std::size_t>(1, width / 2);
+            const auto next_height = std::max<std::size_t>(1, height / 2);
+            work(multiply(add(width, next_width) - std::gcd(width, next_width),
+                          add(height, next_height) - std::gcd(height, next_height)));
+            width = next_width;
+            height = next_height;
+        }
+        if (bytes > gltf_texture_maximum_mip_bytes - mip_bytes)
+            fail("glTF texture mip inventory exceeds its aggregate byte bound");
+        mip_bytes += bytes;
+        charge(add(sizeof(GltfTextureImage), add(bytes, multiply(levels, sizeof(GltfTextureMip)))));
+        const auto dense = output.images.size();
+        variants.emplace(key, dense);
+        GltfTextureImage converted;
+        converted.source_image = image;
+        converted.semantic = semantic;
+        converted.component_bits = header.component_bits;
+        converted.mips.reserve(levels);
+        output.images.push_back(std::move(converted));
+        return dense;
+    }
+    void plan(const std::set<std::size_t>& materials) {
+        for (const auto material_index : materials) {
+            const auto& material = array(source.document, "materials")[material_index];
+            for (const auto& slot : slots) {
+                poll();
+                const auto* reference = info(material, slot);
+                if (!reference)
+                    continue;
+                field = "materials[" + std::to_string(material_index) + "]." + slot.name;
+                if (output.usages.size() >= gltf_texture_maximum_usages)
+                    fail("glTF texture uses exceed their bound");
+                charge(sizeof(GltfTextureUsage));
+                const auto texture_index =
+                    index(reference->at("index"), source.result.counts.textures);
+                const auto& texture = array(source.document, "textures")[texture_index];
+                const auto image = index(texture.at("source"), source.images.size());
+                const auto dense = image_variant(image, slot.semantic);
+                output.usages.push_back({material_index, slot.role, texture_index,
+                                         optional_integer(*reference, "texCoord"), dense,
+                                         sampler(texture)});
+            }
+        }
+    }
+    static double to_linear(double encoded) {
+        return encoded <= 0.04045 ? encoded / 12.92 : std::pow((encoded + 0.055) / 1.055, 2.4);
+    }
+    static double to_srgb(double linear) {
+        return linear <= 0.0031308 ? linear * 12.92 : 1.055 * std::pow(linear, 1.0 / 2.4) - 0.055;
+    }
+    static double sample(const GltfTextureMip& mip, unsigned bits, std::size_t pixel,
+                         std::size_t channel) {
+        const auto offset = (pixel * 4 + channel) * (bits / 8);
+        const auto value = little(mip.rgba, offset, bits / 8);
+        return static_cast<double>(value) / (bits == 16 ? 65535.0 : 255.0);
+    }
+    static void store(GltfTextureMip& mip, unsigned bits, std::size_t pixel, std::size_t channel,
+                      double value) {
+        const auto maximum = bits == 16 ? 65535U : 255U;
+        const auto integer_value =
+            static_cast<std::uint32_t>(std::floor(std::clamp(value, 0.0, 1.0) * maximum + 0.5));
+        const auto offset = (pixel * 4 + channel) * (bits / 8);
+        mip.rgba[offset] = static_cast<std::byte>(integer_value & 255U);
+        if (bits == 16)
+            mip.rgba[offset + 1] = static_cast<std::byte>(integer_value >> 8U);
+    }
+    GltfTextureMip next_mip(const GltfTextureMip& previous, unsigned bits,
+                            GltfTextureSemantic semantic) const {
+        GltfTextureMip next;
+        const auto width = static_cast<std::size_t>(previous.width);
+        const auto height = static_cast<std::size_t>(previous.height);
+        const auto target_width = std::max<std::size_t>(1, width / 2);
+        const auto target_height = std::max<std::size_t>(1, height / 2);
+        next.width = static_cast<std::uint32_t>(target_width);
+        next.height = static_cast<std::uint32_t>(target_height);
+        next.rgba.resize(target_width * target_height * 4 * (bits / 8));
+        for (std::size_t y = 0; y < target_height; ++y) {
+            poll();
+            const auto y0 = y * height;
+            const auto y1 = (y + 1) * height;
+            for (std::size_t x = 0; x < target_width; ++x) {
+                const auto x0 = x * width;
+                const auto x1 = (x + 1) * width;
+                std::array<double, 4> sum{};
+                std::array<std::uint64_t, 4> exact_sum{};
+                for (std::size_t sy = y0 / target_height;
+                     sy < (y1 + target_height - 1) / target_height; ++sy) {
+                    const auto wy =
+                        std::min(y1, (sy + 1) * target_height) - std::max(y0, sy * target_height);
+                    for (std::size_t sx = x0 / target_width;
+                         sx < (x1 + target_width - 1) / target_width; ++sx) {
+                        const auto wx =
+                            std::min(x1, (sx + 1) * target_width) - std::max(x0, sx * target_width);
+                        const auto weight = static_cast<double>(wx * wy);
+                        for (std::size_t channel = 0; channel < 4; ++channel) {
+                            if (channel == 3 || semantic == GltfTextureSemantic::linear_data) {
+                                const auto offset = ((sy * width + sx) * 4 + channel) * (bits / 8);
+                                exact_sum[channel] += static_cast<std::uint64_t>(
+                                                          little(previous.rgba, offset, bits / 8)) *
+                                                      (wx * wy);
+                                continue;
+                            }
+                            auto value = sample(previous, bits, sy * width + sx, channel);
+                            if (channel != 3 && semantic == GltfTextureSemantic::srgb_color)
+                                value = to_linear(value);
+                            else if (channel != 3 && semantic == GltfTextureSemantic::normal)
+                                value = value * 2.0 - 1.0;
+                            sum[channel] += value * weight;
+                        }
+                    }
+                }
+                for (auto& value : sum)
+                    value /= static_cast<double>(width * height);
+                if (semantic == GltfTextureSemantic::normal) {
+                    const auto length = std::hypot(sum[0], sum[1], sum[2]);
+                    if (length <= 1e-12) {
+                        sum[0] = 0.0;
+                        sum[1] = 0.0;
+                        sum[2] = 1.0;
+                    } else {
+                        for (std::size_t channel = 0; channel < 3; ++channel)
+                            sum[channel] /= length;
+                    }
+                    for (std::size_t channel = 0; channel < 3; ++channel)
+                        sum[channel] = sum[channel] * 0.5 + 0.5;
+                } else if (semantic == GltfTextureSemantic::srgb_color) {
+                    for (std::size_t channel = 0; channel < 3; ++channel)
+                        sum[channel] = to_srgb(sum[channel]);
+                }
+                for (std::size_t channel = 0; channel < 4; ++channel) {
+                    if (channel == 3 || semantic == GltfTextureSemantic::linear_data) {
+                        const auto denominator = static_cast<std::uint64_t>(width * height);
+                        const auto rounded = (exact_sum[channel] + denominator / 2) / denominator;
+                        const auto offset = ((y * target_width + x) * 4 + channel) * (bits / 8);
+                        next.rgba[offset] = static_cast<std::byte>(rounded & 255U);
+                        if (bits == 16)
+                            next.rgba[offset + 1] = static_cast<std::byte>(rounded >> 8U);
+                    } else {
+                        store(next, bits, y * target_width + x, channel, sum[channel]);
+                    }
+                }
+            }
+        }
+        return next;
+    }
+    GltfTextures run() {
+        poll();
+        output.selected_scene = source.result.selected_scene;
+        if (settings.scene)
+            output.selected_scene = index(Json(*settings.scene), source.result.counts.scenes);
+        charge(sizeof(GltfTextures));
+        charge(multiply(gltf_source_maximum_diagnostics,
+                        sizeof(std::string) + gltf_source_maximum_diagnostic_bytes));
+        for (const auto& resource : source.result.resources)
+            charge(sizeof(GltfResourceReference) + resource.mime_type.size() +
+                   (resource.path ? resource.path->text().size() : 0));
+        plan(material_inventory());
+        // Every header, semantic variant and mip/work budget is accepted before
+        // the first decoder allocation. Reused source images decode only once.
+        detail::GltfImageDecodeBudget budget;
+        std::map<std::size_t, detail::GltfDecodedImage> decoded;
+        for (const auto& [image, header] : headers) {
+            field = "images[" + std::to_string(image) + "]";
+            poll();
+            const auto& encoded = source.images[image];
+            decoded.emplace(image,
+                            take(detail::decode_gltf_image(encoded.bytes, encoded.mime, header,
+                                                           budget, source.input.stop)));
+        }
+        for (auto& image : output.images) {
+            field = "images[" + std::to_string(image.source_image) + "]";
+            poll();
+            const auto& original = decoded.at(image.source_image);
+            image.mips.push_back({original.info.width, original.info.height, original.rgba});
+            while (image.mips.back().width != 1 || image.mips.back().height != 1)
+                image.mips.push_back(
+                    next_mip(image.mips.back(), image.component_bits, image.semantic));
+        }
+        poll();
+        output.source = std::move(source.result);
+        return std::move(output);
+    }
+};
+
 void precharge(const GltfSourceInput& input) {
     cancelled(input.stop);
     if (input.bytes.empty() || input.bytes.size() > gltf_source_maximum_file_bytes ||
@@ -1627,6 +2001,36 @@ Result<GltfGeometry> convert_gltf_geometry(const GltfSourceInput& input,
         return Error{ErrorCode::execution_failed,
                      "glTF geometry conversion failed: " + field,
                      {.operation = "asset.gltf.convert", .path = input.path.text()}};
+    }
+}
+
+Result<GltfTextures> convert_gltf_textures(const GltfSourceInput& input,
+                                           const GltfTextureSettings& settings) {
+    std::string field;
+    try {
+        precharge(input);
+        Inspection source{input};
+        source.prepare();
+        return TextureConversion{source, settings, field}.run();
+    } catch (Failure& failure) {
+        failure.error.context.operation = "asset.gltf.textures";
+        if (failure.error.context.path.empty())
+            failure.error.context.path = input.path.text();
+        if (!field.empty())
+            failure.error.message = field + ": " + failure.error.message;
+        return std::move(failure.error);
+    } catch (const std::bad_alloc&) {
+        return Error{ErrorCode::execution_failed,
+                     "glTF texture allocation failed",
+                     {.operation = "asset.gltf.textures", .path = input.path.text()}};
+    } catch (const Json::exception&) {
+        return Error{ErrorCode::invalid_configuration,
+                     "Malformed glTF texture fields: " + field,
+                     {.operation = "asset.gltf.textures", .path = input.path.text()}};
+    } catch (...) {
+        return Error{ErrorCode::execution_failed,
+                     "glTF texture conversion failed: " + field,
+                     {.operation = "asset.gltf.textures", .path = input.path.text()}};
     }
 }
 } // namespace shark::tools

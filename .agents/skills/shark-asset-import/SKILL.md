@@ -5,6 +5,14 @@ description: Implement or change Shark asset import and cache behavior with boun
 
 # Shark asset import
 
+12c adds pure [texture conversion](../../../docs/gltf-textures.md) through the
+same source owner. Preserve pinned memory-only PNG/JPEG, precision, strict PNG
+framing/inflate/palette checks, JPEG structural/scan-work checks, nullable arena
+cleanup and independent output/decoder/work budgets. Processing semantic belongs
+to each usage: color, data and normal mip variants share only compatible rules.
+Preserve source identities, sampler state, NPOT coverage and all earlier cases.
+The twelfth FeatureWorld case exercises actual pixels; material/cache remains12d.
+
 12b extends the same source owner with pure CPU geometry conversion under the
 [geometry contract](../../../docs/gltf-geometry.md). Preserve effective sparse
 bytewise reads, precharged output/work bounds, shared mesh instances and Core

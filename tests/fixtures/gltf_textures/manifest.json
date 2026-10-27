@@ -1,0 +1,283 @@
+{
+  "origin": "Original Shark engine-authored offline data, 2026-10-27",
+  "license": "MIT; see LICENSE",
+  "generator": "generate.py; Python standard library only",
+  "inputs": [
+    {
+      "path": "gamma-alpha.png",
+      "bytes": 76,
+      "sha256": "f8d02bb3084947001891e5bf3626457551897d9bad2a2c03f7bdd14386dfc5d8"
+    },
+    {
+      "path": "data-npot.png",
+      "bytes": 104,
+      "sha256": "33522d22f958e9a7c5f81b27707abd288659c9fd24660c9eca5b241972595f64"
+    },
+    {
+      "path": "wide-npot.png",
+      "bytes": 74,
+      "sha256": "ef70a615b6431de2521edc2ecd5a690cf15c8ca605739c923815d5874ea150f3"
+    },
+    {
+      "path": "normal-pair.png",
+      "bytes": 74,
+      "sha256": "0d9a8cf3999c0d7b5a35cfbcf4945e5d1ec20e114edfa10e9839cb624c1e26a9"
+    },
+    {
+      "path": "normal-cancel.png",
+      "bytes": 74,
+      "sha256": "a9b3206ff08bf4a16049b21dbabcd16e59043f5dcefeadb766b3c2070dea3ed5"
+    },
+    {
+      "path": "precision16.png",
+      "bytes": 83,
+      "sha256": "4ac53a01c0aa99c663a06b9bfdb67b5bc0d673c2e654cc7fa41085c381906082"
+    },
+    {
+      "path": "gray1.png",
+      "bytes": 67,
+      "sha256": "9882cf61acb607e382dfb81980c95bfeea3319f02e8aa0bb28d0d01469da5051"
+    },
+    {
+      "path": "gray2.png",
+      "bytes": 67,
+      "sha256": "9cc51b2f1de30ec5483635f3d2fcb9d71cbf30bdcb0df323cc6645124b8f49d5"
+    },
+    {
+      "path": "gray4.png",
+      "bytes": 68,
+      "sha256": "10309b00fe674f1523fc257ae20663e61dd56482a170fafbf9dcdc51e1664b86"
+    },
+    {
+      "path": "gray8.png",
+      "bytes": 68,
+      "sha256": "1978f13563b8ec94f817c897b49f58fba1e551405e6292147184dc304e61f3eb"
+    },
+    {
+      "path": "rgb8.png",
+      "bytes": 72,
+      "sha256": "ede1659422c9dbbe3bcd578d98f741f2de4bf811ad48439aebeff5b7c14945fd"
+    },
+    {
+      "path": "gray-alpha8.png",
+      "bytes": 70,
+      "sha256": "0906cfd727242a28feccd48a6005a25aaf0a85e5fb5ca77f2eec1625dc162a28"
+    },
+    {
+      "path": "palette2.png",
+      "bytes": 103,
+      "sha256": "7c369867cf590f92ed852973a5f377d5dd4207a21317893e8594580c06cb6a8a"
+    },
+    {
+      "path": "rgb-transparent.png",
+      "bytes": 90,
+      "sha256": "f57fbd8b054e8f1d4ab5ee84e95a990dad17ee06dcbd2057c03596b72b5782f6"
+    },
+    {
+      "path": "gray-transparent.png",
+      "bytes": 82,
+      "sha256": "a70c41bc65e1cb6a8a0bd89401d657377478c580c15c74b3f3a58f323f84dc48"
+    },
+    {
+      "path": "adam7.png",
+      "bytes": 128,
+      "sha256": "4f37bae7a7486a8e230af42154dd65296483a1ecd3cd420829fc43fd824dd441"
+    },
+    {
+      "path": "baseline.jpg",
+      "bytes": 137,
+      "sha256": "9c2cd5b056a60ad9c094ae985cff6151124767e505907d81d8e28c211a6b9b95"
+    },
+    {
+      "path": "progressive.jpg",
+      "bytes": 148,
+      "sha256": "d8d7cbef70902857cd70236ea7c9a8eacfc824e6bd1b39b678cab7f6f95f8738"
+    },
+    {
+      "path": "triangle.bin",
+      "bytes": 60,
+      "sha256": "04fc2919a2bbec0ea7f49764d88b81076b2a313718ae59302d944f589cfc83d8"
+    },
+    {
+      "path": "external.gltf",
+      "bytes": 1401,
+      "sha256": "8d4802acc434a569db823ceb071e14c10dc25b179a9965212506e1a84abb7674"
+    },
+    {
+      "path": "embedded.gltf",
+      "bytes": 1617,
+      "sha256": "d803624132c03f9692c64309797ed903ebf68c4f7dae9a217bd2e5aef3c148b4"
+    },
+    {
+      "path": "embedded.glb",
+      "bytes": 984,
+      "sha256": "bdfbd8c7754879fe39df2bbc3cb639a7c6d8e84daeb2c57e8476081e4f0e5aba"
+    }
+  ],
+  "expected": {
+    "gamma_alpha_base_rgba": [
+      0,
+      0,
+      0,
+      0,
+      255,
+      255,
+      255,
+      255,
+      0,
+      0,
+      0,
+      64,
+      255,
+      255,
+      255,
+      128
+    ],
+    "gamma_alpha_color_mip": [
+      188,
+      188,
+      188,
+      112
+    ],
+    "gamma_alpha_data_mip": [
+      128,
+      128,
+      128,
+      112
+    ],
+    "data_npot_mip": [
+      90,
+      40,
+      90,
+      255
+    ],
+    "wide_npot_mips_red": [
+      [
+        0,
+        0,
+        0,
+        0,
+        250
+      ],
+      [
+        0,
+        100
+      ],
+      [
+        50
+      ]
+    ],
+    "precision16_base_components": [
+      258,
+      4660,
+      43981,
+      17185,
+      65244,
+      34661,
+      4077,
+      65535
+    ],
+    "jpeg_dimensions": [
+      8,
+      8
+    ],
+    "jpeg_rgba_every_pixel": [
+      128,
+      128,
+      128,
+      255
+    ],
+    "adam7_rgba": [
+      [
+        0,
+        0,
+        0,
+        10
+      ],
+      [
+        30,
+        0,
+        10,
+        11
+      ],
+      [
+        60,
+        0,
+        20,
+        12
+      ],
+      [
+        90,
+        0,
+        30,
+        13
+      ],
+      [
+        120,
+        0,
+        40,
+        14
+      ],
+      [
+        0,
+        50,
+        1,
+        17
+      ],
+      [
+        30,
+        50,
+        11,
+        18
+      ],
+      [
+        60,
+        50,
+        21,
+        19
+      ],
+      [
+        90,
+        50,
+        31,
+        20
+      ],
+      [
+        120,
+        50,
+        41,
+        21
+      ],
+      [
+        0,
+        100,
+        2,
+        24
+      ],
+      [
+        30,
+        100,
+        12,
+        25
+      ],
+      [
+        60,
+        100,
+        22,
+        26
+      ],
+      [
+        90,
+        100,
+        32,
+        27
+      ],
+      [
+        120,
+        100,
+        42,
+        28
+      ]
+    ]
+  }
+}

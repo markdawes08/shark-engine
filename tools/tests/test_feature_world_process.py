@@ -62,7 +62,7 @@ def main():
         case_ids = manifest['featureworld']['case_ids']
         assert catalog['suites'] == {'featureworld': case_ids}
         assert catalog['cases'] == ['foundation', 'intentional-failure', *case_ids]
-        assert len(set(case_ids)) == 11
+        assert len(set(case_ids)) == 12
         mapped = []
         external = []
         for category in ('components', 'commands'):
@@ -99,7 +99,7 @@ def main():
             assert first['project_id'] == '20000000-0000-4000-8000-000000000001'
             assert first['scene_id'] == '20000000-0000-4000-8000-000000000003'
             assert [case['id'] for case in first['cases']] == case_ids
-            assert [case['final_revision']['value'] for case in first['cases']] == [4, 11, 7, 6, 4, 4, 4, 4, 4, 4, 4]
+            assert [case['final_revision']['value'] for case in first['cases']] == [4, 11, 7, 6, 4, 4, 4, 4, 4, 4, 4, 4]
             for case in first['cases']:
                 assert case['status'] == 'PASS' and case['failure'] is None
                 assert case['ticks_completed'] == 3 and case['assertions'] >= 10
@@ -137,6 +137,8 @@ def main():
             assert failures['featureworld.gltf-source']['failure'] is None
             assert failures['featureworld.gltf-geometry']['status'] == 'PASS'
             assert failures['featureworld.gltf-geometry']['failure'] is None
+            assert failures['featureworld.gltf-textures']['status'] == 'PASS'
+            assert failures['featureworld.gltf-textures']['failure'] is None
             assert sentinel.read_text() == 'keep'
             # A valid source edit must fail actual expectations, not merely parse.
             scene = json.loads(scene_file.read_text(encoding='utf-8'))

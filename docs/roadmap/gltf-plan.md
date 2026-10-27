@@ -51,7 +51,7 @@ Preserve 45 geometry cases/988 assertions, all 41 source cases/1,794 assertions
 and every earlier workload/limit. The [geometry contract](../gltf-geometry.md)
 and [ADR 0029](../architecture/0029-bounded-gltf-geometry.md) fix shared instances,
 transform/bounds semantics and the documented per-triangle generated tangent basis.
-Full REQ-12 remains NOT_RUN pending 12c-12e. Next: 12c.
+The completed image/texture checkpoint is recorded below; full REQ-12 remains NOT_RUN.
 
 ## 12c - Images and textures
 
@@ -64,6 +64,19 @@ Normal/data mips need their documented semantic treatment.
 Gate: independent expected pixel/color/mip results, sampler behavior, one image
 in different roles, malformed/truncated images, missing images and decoder
 allocation failures. Keep CPU work independent of windows, editors and GPUs.
+
+**Status: PASS under current-machine scope.** The
+[handoff](../handoffs/12c-gltf-textures.md) and
+[receipt](../coverage/evidence/12c-gltf-textures.json) record 507 fresh outcomes,
+48 public-example compiles, 36 actual sanitizer objects and protected packages.
+The 231 full client Debug, 140 Tools selections and 136 fresh full Server
+outcomes are distinct; standalone Tools 56 is included in 140. Follow
+[ADR 0030](../architecture/0030-bounded-gltf-textures.md), the
+[texture contract](../gltf-textures.md) and [decoder review](../dependencies/stb-image.md).
+Preserve 43 texture cases/9,022 assertions, source 41/1,794, geometry 45/988,
+all independent budgets and every earlier workload/limit. FeatureWorld retains
+twelve native cases, 30 process checks, 43 CPU surfaces and one external GPU command.
+Full REQ-12 remains NOT_RUN pending 12d-12e. Next: 12d, materials and asset integration.
 
 ## 12d - Materials and asset integration
 

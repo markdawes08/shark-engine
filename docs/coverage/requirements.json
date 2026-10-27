@@ -328,7 +328,7 @@
       "planned_fixture": "LicensedGLTFProfile corpus with EmbeddedExternal, SparsePolicy, MalformedAccessor, RequiredExtension, ImageColorSpace and PathTraversal cases; FeatureWorld/ImportedStaticMeshes uses accepted assets.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "12a source inspection and 12b bounded static geometry/hierarchy conversion are PASS under current-machine scope. 12b qualifies 357 fresh outcomes, 45 public-example compiles, 32 actual sanitizer objects and protected packages, with 136 explicitly inherited full Server outcomes from unchanged 12a protected inputs. Geometry includes sparse data, triangle expansion, generated flat normals/documented tangents, UV/color semantics, shared mirrored instances, Core transforms and bounds. Image decoding remains 12c, complete material/resource/cache integration and optional fallback 12d, and integrated full REQ-12 qualification 12e. Final PBR rendering acceptance belongs to 26. See docs/handoffs/12b-gltf-geometry.md and docs/roadmap/gltf-plan.md.",
+        "reason": "12a source inspection, 12b bounded static geometry/hierarchy and 12c images/textures are PASS under current-machine scope. 12c qualifies 507 fresh outcomes (231 full client Debug, 140 complete declared Tools selections and 136 fresh full Server; standalone Tools 56 is included in 140), 48 public-example compiles, 36 actual sanitizer objects and protected packages. Pure source-owned PNG/JPEG decoding returns RGBA8/16LE with independent budgets, usage-specific sRGB/data/normal mips, exact linear data/alpha filtering, complete NPOT chains and per-use samplers. Preserve 43 texture cases/9022 assertions, source 41/1794, geometry 45/988 and all earlier workloads/limits. Complete material/resource/cache integration and optional fallback remain 12d; integrated full REQ-12 qualification remains 12e. Final PBR rendering acceptance belongs to 26. See docs/handoffs/12c-gltf-textures.md and docs/roadmap/gltf-plan.md.",
         "checkpoints": {
           "12a": {
             "status": "PASS",
@@ -342,6 +342,13 @@
             "evidence": {
               "path": "docs/coverage/evidence/12b-gltf-geometry.json",
               "sha256": "586d7ad4f2e956808489995ba47c7c01ce67ffe04a783a2fcf5db565d87fd929"
+            }
+          },
+          "12c": {
+            "status": "PASS",
+            "evidence": {
+              "path": "docs/coverage/evidence/12c-gltf-textures.json",
+              "sha256": "7dcb601d00408cad60585ec568397c93c787103eb86880e5e2098a63d3c02b76"
             }
           }
         }
@@ -2557,9 +2564,56 @@
           "tests/fixtures/gltf_geometry/manifest.json",
           "tests/fixtures/gltf_geometry/LICENSE"
         ],
-        "fixture_reason": "Pure bounded CPU geometry conversion consumes the same explicit immutable source snapshots, expands sparse accessors and triangle topology, validates vertex attributes and node TRS, and returns owned shared geometry, hierarchy, transforms and bounds. The eleventh native FeatureWorld case checks independent triangle values, sparse expansion, shared mirrored instances, resource identity, repeated conversion and rejection/cancellation without changing its AuthoredScene. Licensed geometry fixtures exercise additional semantics and bounds. Image decoding, material/cache publication and rendering retain their later owners.",
+        "fixture_reason": "Pure bounded CPU geometry conversion consumes the same explicit immutable source snapshots, expands sparse accessors and triangle topology, validates vertex attributes and node TRS, and returns owned shared geometry, hierarchy, transforms and bounds. The eleventh native FeatureWorld case checks independent triangle values, sparse expansion, shared mirrored instances, resource identity, repeated conversion and rejection/cancellation without changing its AuthoredScene. Licensed geometry fixtures exercise additional semantics and bounds. Image decoding uses the separate texture conversion operation; material/cache publication and rendering retain their later owners.",
         "featureworld_cases": [
           "featureworld.gltf-geometry"
+        ]
+      },
+      {
+        "id": "tools.gltf-textures",
+        "name": "Bounded static glTF images, textures and semantic mip conversion",
+        "requirement_ids": [
+          "REQ-12"
+        ],
+        "test_ids": [
+          "shark.tools.gltf-textures",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification",
+          "shark.tooling.image-dependencies"
+        ],
+        "test_sources": [
+          "tests/gltf_texture_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py",
+          "tools/tests/test_image_dependencies.py"
+        ],
+        "fixtures": [
+          "tests/fixtures/gltf_textures/README.md",
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/gltf-textures.md",
+          "tests/fixtures/gltf_textures/external.gltf",
+          "tests/fixtures/gltf_textures/embedded.gltf",
+          "tests/fixtures/gltf_textures/embedded.glb",
+          "tests/fixtures/gltf_textures/triangle.bin",
+          "tests/fixtures/gltf_textures/gamma-alpha.png",
+          "tests/fixtures/gltf_textures/data-npot.png",
+          "tests/fixtures/gltf_textures/normal-pair.png",
+          "tests/fixtures/gltf_textures/normal-cancel.png",
+          "tests/fixtures/gltf_textures/precision16.png",
+          "tests/fixtures/gltf_textures/adam7.png",
+          "tests/fixtures/gltf_textures/palette2.png",
+          "tests/fixtures/gltf_textures/baseline.jpg",
+          "tests/fixtures/gltf_textures/progressive.jpg",
+          "tests/fixtures/gltf_textures/generate.py",
+          "tests/fixtures/gltf_textures/manifest.json",
+          "tests/fixtures/gltf_textures/LICENSE"
+        ],
+        "fixture_reason": "Pure bounded CPU texture conversion consumes the existing explicit immutable glTF snapshots, privately decodes PNG/JPEG and returns owned semantic RGBA mip variants plus per-use UV and sampler fields. The twelfth native FeatureWorld case independently checks inline black/white pixels, sRGB versus linear mips, straight alpha, cancelling-normal fallback, five roles sharing three semantic variants, persistent image identity/digest, repeatability, rejection and cancellation with unchanged AuthoredScene. Licensed offline fixtures and allocation sweeps cover formats, malformed bytes and bounds. It performs no file/cache/Scene publication or rendering.",
+        "featureworld_cases": [
+          "featureworld.gltf-textures"
         ]
       }
     ],
@@ -4066,9 +4120,56 @@
           "tests/fixtures/gltf_geometry/manifest.json",
           "tests/fixtures/gltf_geometry/LICENSE"
         ],
-        "fixture_reason": "Pure bounded CPU geometry conversion consumes the same explicit immutable source snapshots, expands sparse accessors and triangle topology, validates vertex attributes and node TRS, and returns owned shared geometry, hierarchy, transforms and bounds. The eleventh native FeatureWorld case checks independent triangle values, sparse expansion, shared mirrored instances, resource identity, repeated conversion and rejection/cancellation without changing its AuthoredScene. Licensed geometry fixtures exercise additional semantics and bounds. Image decoding, material/cache publication and rendering retain their later owners.",
+        "fixture_reason": "Pure bounded CPU geometry conversion consumes the same explicit immutable source snapshots, expands sparse accessors and triangle topology, validates vertex attributes and node TRS, and returns owned shared geometry, hierarchy, transforms and bounds. The eleventh native FeatureWorld case checks independent triangle values, sparse expansion, shared mirrored instances, resource identity, repeated conversion and rejection/cancellation without changing its AuthoredScene. Licensed geometry fixtures exercise additional semantics and bounds. Image decoding uses the separate texture conversion operation; material/cache publication and rendering retain their later owners.",
         "featureworld_cases": [
           "featureworld.gltf-geometry"
+        ]
+      },
+      {
+        "id": "asset.gltf.textures",
+        "name": "convert_gltf_textures",
+        "requirement_ids": [
+          "REQ-12"
+        ],
+        "test_ids": [
+          "shark.tools.gltf-textures",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification",
+          "shark.tooling.image-dependencies"
+        ],
+        "test_sources": [
+          "tests/gltf_texture_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py",
+          "tools/tests/test_image_dependencies.py"
+        ],
+        "fixtures": [
+          "tests/fixtures/gltf_textures/README.md",
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/gltf-textures.md",
+          "tests/fixtures/gltf_textures/external.gltf",
+          "tests/fixtures/gltf_textures/embedded.gltf",
+          "tests/fixtures/gltf_textures/embedded.glb",
+          "tests/fixtures/gltf_textures/triangle.bin",
+          "tests/fixtures/gltf_textures/gamma-alpha.png",
+          "tests/fixtures/gltf_textures/data-npot.png",
+          "tests/fixtures/gltf_textures/normal-pair.png",
+          "tests/fixtures/gltf_textures/normal-cancel.png",
+          "tests/fixtures/gltf_textures/precision16.png",
+          "tests/fixtures/gltf_textures/adam7.png",
+          "tests/fixtures/gltf_textures/palette2.png",
+          "tests/fixtures/gltf_textures/baseline.jpg",
+          "tests/fixtures/gltf_textures/progressive.jpg",
+          "tests/fixtures/gltf_textures/generate.py",
+          "tests/fixtures/gltf_textures/manifest.json",
+          "tests/fixtures/gltf_textures/LICENSE"
+        ],
+        "fixture_reason": "Pure bounded CPU texture conversion consumes the existing explicit immutable glTF snapshots, privately decodes PNG/JPEG and returns owned semantic RGBA mip variants plus per-use UV and sampler fields. The twelfth native FeatureWorld case independently checks inline black/white pixels, sRGB versus linear mips, straight alpha, cancelling-normal fallback, five roles sharing three semantic variants, persistent image identity/digest, repeatability, rejection and cancellation with unchanged AuthoredScene. Licensed offline fixtures and allocation sweeps cover formats, malformed bytes and bounds. It performs no file/cache/Scene publication or rendering.",
+        "featureworld_cases": [
+          "featureworld.gltf-textures"
         ]
       }
     ],
@@ -4088,7 +4189,8 @@
       "featureworld.asset-jobs",
       "featureworld.asset-pipeline",
       "featureworld.gltf-source",
-      "featureworld.gltf-geometry"
+      "featureworld.gltf-geometry",
+      "featureworld.gltf-textures"
     ],
     "case_source": "engine_tools/src/feature_world.cpp"
   }

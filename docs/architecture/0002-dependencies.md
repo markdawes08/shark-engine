@@ -6,6 +6,17 @@ Scope: Assignment 00. Assignment 01 implements the build and lock mechanism; lat
 
 ## Decision
 
+12c integrates **stb_image 2.30** privately in EngineTools, from immutable
+upstream commit `003501f6d7a8668ce8b6d875e34dd97ad0d5d5b5`. The exact archive,
+complete regular-file inventory and MIT license selection are pinned in the
+dependency lock and [decoder review](../dependencies/stb-image.md). Only the
+unmodified header's bounded memory PNG/JPEG path is compiled. The private
+`Shark::StbImage` SYSTEM interface never enters Core, Client, Runtime or Server;
+upstream build files and tests never execute. Offline Tools configurations pass
+`SHARK_IMAGE_ARCHIVE`; protected Tools-OFF builds do not populate it. Engine
+limits, container validation, allocation cleanup and color/mip behavior remain
+required independently of vendor decoding.
+
 M03a adds **SQLite 3.54.1** only to EngineStorage. The official amalgamation,
 source ID, exact archive/source/notice hashes, compile options and no-patch policy
 are recorded in the lock and [ADR 0015](0015-durable-store.md). The storage helper

@@ -31,14 +31,14 @@ SCENE_SURFACES = {
     'asset.cache.clear', 'asset.cache.recover',
     'asset.jobs.submit', 'asset.jobs.query', 'asset.jobs.cancel', 'asset.jobs.drain',
     'asset.jobs.take', 'asset.jobs.close',
-    'asset.gltf.inspect', 'asset.gltf.convert',
+    'asset.gltf.inspect', 'asset.gltf.convert', 'asset.gltf.textures',
 }
 GPU_SURFACES = {'tools.scene-runner.gpu'}
 FEATUREWORLD_CASES = [
     'featureworld.components', 'featureworld.commands', 'featureworld.batches-history',
     'featureworld.retries', 'featureworld.persistence', 'featureworld.asset-identity',
     'featureworld.asset-import', 'featureworld.asset-jobs', 'featureworld.asset-pipeline',
-    'featureworld.gltf-source', 'featureworld.gltf-geometry',
+    'featureworld.gltf-source', 'featureworld.gltf-geometry', 'featureworld.gltf-textures',
 ]
 
 

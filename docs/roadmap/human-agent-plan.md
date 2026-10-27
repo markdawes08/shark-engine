@@ -38,8 +38,15 @@ behavior; human/editor and terminal protocol parity remains with its later owner
 snapshots, with owned diagnostics/references and no editor/device requirement.
 12b adds pure [static geometry conversion](../gltf-geometry.md) through that
 same source owner, with owned shared geometry, hierarchy and bounds. The eleventh
-FeatureWorld case exercises it without changing the authored scene. Later image/
-material conversion and adapters preserve the same owner/publication fences.
+FeatureWorld case exercises it without changing the authored scene.
+12c adds pure [image and texture conversion](../gltf-textures.md) through the
+same captured-source owner, with owned RGBA8/16 values, semantic mip chains and
+per-use samplers. The twelfth native FeatureWorld case and public CPU example
+exercise this shared behavior without an editor/device requirement. Its
+[handoff](../handoffs/12c-gltf-textures.md) records 507 fresh outcomes, 48 public-
+example compiles, 36 actual sanitizer objects and protected packages. Materials
+and asset integration follow in 12d; terminal/editor adapters retain 15/16 and
+the original owner/publication fences. Full REQ-12 remains NOT_RUN pending 12d-12e.
 
 ## Assessment of existing work
 

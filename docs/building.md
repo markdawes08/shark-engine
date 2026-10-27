@@ -456,6 +456,19 @@ geometry/source/FeatureWorld families, standalone Tools, Release and sanitizer
 builds. The generated result is CPU geometry and hierarchy; image decoding and
 material/cache publication retain 12c/12d.
 
+12c adds memory-only PNG/JPEG texture conversion and
+`shark.tools.gltf-textures` (90 seconds, seed 1337), plus
+`shark.tooling.image-dependencies` (60 seconds). Offline Tools also supply
+`-DSHARK_IMAGE_ARCHIVE=/absolute/path/stb-003501f6d7a8668ce8b6d875e34dd97ad0d5d5b5.tar.gz`.
+Keep the single canonical archive in `out/dependency-cache/`; the exact full
+source inventory is verified before use. Protected profiles keep Tools OFF and
+must not populate the image decoder. The [texture contract](gltf-textures.md)
+provides the sixteenth public CPU example and fixed pixel/mip/allocation/work
+limits. Preserve all source/geometry cases and the ordinary decoder exception
+model. The changed global lock/private dependency fixtures require fresh full
+Server profiles and current protected package qualification; GPU work remains
+with later rendering checkpoints.
+
 08b adds `AuthoredSceneTests` and `shark.tools.authored-scene` (seed 1337,
 60-second timeout) for revision-consistent capture, project/world references,
 candidate construction and failure-safe Scene activation. After listing the test

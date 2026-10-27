@@ -68,7 +68,7 @@ TEST_CASE("Saved FeatureWorld connects all current scene surfaces through the na
         REQUIRE(result.initial_revision->revision == 4);
     }
     REQUIRE(run.value().status == SceneRunStatus::passed);
-    REQUIRE(run.value().cases.size() == 11);
+    REQUIRE(run.value().cases.size() == 12);
     REQUIRE(run.value().cases[0].final_revision->revision == 4);
     REQUIRE(run.value().cases[1].final_revision->revision == 11);
     REQUIRE(run.value().cases[2].final_revision->revision == 7);
@@ -80,6 +80,7 @@ TEST_CASE("Saved FeatureWorld connects all current scene surfaces through the na
     REQUIRE(run.value().cases[8].final_revision == run.value().cases[8].initial_revision);
     REQUIRE(run.value().cases[9].final_revision == run.value().cases[9].initial_revision);
     REQUIRE(run.value().cases[10].final_revision == run.value().cases[10].initial_revision);
+    REQUIRE(run.value().cases[11].final_revision == run.value().cases[11].initial_revision);
     REQUIRE(run.value().cases[4].final_revision->scene_instance !=
             run.value().cases[4].initial_revision->scene_instance);
     REQUIRE(encode_scene_run_report(run.value()));
@@ -150,6 +151,14 @@ TEST_CASE(
     REQUIRE(result.failure->phase == SceneRunPhase::tick);
     REQUIRE(result.failure->tick == 0);
     REQUIRE(result.initial_revision == result.final_revision);
+    REQUIRE(read(sentinel) == "keep");
+    const std::array pure_texture{cases[11]};
+    const auto texture_run =
+        run_scene_cases(fixture.project, fixture.scene, config(), pure_texture);
+    REQUIRE(texture_run);
+    REQUIRE(texture_run.value().status == SceneRunStatus::passed);
+    REQUIRE(texture_run.value().cases.front().initial_revision ==
+            texture_run.value().cases.front().final_revision);
     REQUIRE(read(sentinel) == "keep");
     REQUIRE(fs::remove(sentinel));
     REQUIRE(fs::is_empty(fixture.scratch));

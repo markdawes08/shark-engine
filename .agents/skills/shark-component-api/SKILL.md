@@ -5,6 +5,14 @@ description: Add or change Shark components and public command or Lua APIs while
 
 # Shark component and API integration
 
+12c adds pure CPU `asset.gltf.textures` under the
+[texture contract](../../../docs/gltf-textures.md). The twelfth FeatureWorld case
+checks source identities, role variants, independent pixel/mip values and
+samplers without changing its authored owner. Maintain 43 CPU surfaces plus the
+external GPU command, actual cases and independent mappings together. These
+owned CPU byte values introduce no scene component, material payload, protocol
+adapter or Lua surface; preserve the existing source/publication boundary.
+
 12b exposes pure CPU `asset.gltf.convert` through the existing validated source
 owner; follow the [geometry contract](../../../docs/gltf-geometry.md). Its
 eleventh FeatureWorld case checks independent geometry, sparse data, mirrored

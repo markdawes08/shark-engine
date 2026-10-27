@@ -39,9 +39,22 @@ the independent inventory to 42 CPU surfaces plus one external GPU command.
 It checks independent dense/sparse triangle values, bounds, shared mirrored
 instances, local/world transforms, source identities and explicit rejection while
 preserving the saved owner. Image decoding and material/cache integration retain
-their later checkpoints; conversion alone claims no rendered result.
+their separate checkpoints; conversion alone claims no rendered result.
 
-The fixture runs all eleven saved-world cases through the public supervisor, then
+12c adds `asset.gltf.textures` and a twelfth pure texture-conversion case,
+extending the independent inventory to 43 CPU surfaces plus one external GPU
+command. One inline original PNG exercises five core usages sharing three
+semantic variants. Independent expected RGBA values distinguish sRGB filtering,
+linear data averaging, straight alpha and cancelling-normal fallback. The case
+retains sampler defaults/overrides, source image identity/digest, repeatability,
+rejection and cancellation through the same saved owner. No external image path
+or scratch directory is required. The five existing native filesystem failure
+controls remain, while this pure case succeeds with an invalid scratch parent.
+The FeatureWorld process family now has thirty checks. The texture family has a
+90-second limit and seed 1337; the private decoder dependency family has a
+60-second limit. Material/cache publication and rendering remain later owners.
+
+The fixture runs all twelve saved-world cases through the public supervisor, then
 the intentional failing assertion through the same executable/result path. It
 compares stdout with create-only published results, native results and every
 artifact's bytes/hash. Failure remains exit 1 with the original case, phase,

@@ -5,6 +5,16 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+12c adds `shark.tools.gltf-textures` (90 seconds, seed 1337) and
+`shark.tooling.image-dependencies` (60 seconds). Offline Tools additionally pass
+the exact `SHARK_IMAGE_ARCHIVE`; protected profiles never populate stb_image.
+Preserve source41/1794 and geometry45/988 workloads. Verify actual decoder/test
+sanitizer objects, sixteen public CPU examples and twelve FeatureWorld cases,
+30 process checks, 43 CPU surfaces plus the external GPU command. The decoder
+keeps ordinary exception settings; only cgltf retains its private `/EHc-`.
+The global lock/private dependency fixtures changed, so refresh both full Server
+profiles and current protected builds/packages, not inherited Server counts.
+
 12b adds `shark.tools.gltf-geometry` (60 seconds, Catch seed 1337), documented
 in the [geometry contract](../../../docs/gltf-geometry.md). Keep all source
 cases/allocation sweeps and earlier limits. Verify actual geometry-test sanitizer

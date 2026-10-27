@@ -22,7 +22,7 @@ owner causes explicit failure. Copy the two source files to a writable project
 root when testing from a read-only checkout. Run from any current directory by
 passing explicit paths. There is no compiled-in checkout or fixture location.
 
-`--case featureworld` selects all eleven cases in catalog order. Each concrete ID
+`--case featureworld` selects all twelve cases in catalog order. Each concrete ID
 also selects one case. Supply `--workspace EXISTING_DIRECTORY` for the suite or
 persistence/asset-identity/asset-import/asset-jobs/asset-pipeline case. Each creates a unique child with its own
 project/scenes and remove their known files on exit. Input source bytes are
@@ -42,13 +42,14 @@ caller-selected parent. Generated results belong under ignored `out/` or `build/
 | `featureworld.asset-pipeline` | One persisted scene/reference through async publication, coordinated source/sidecar move, matching-key reuse, a gated worker concurrent with owner source/settings edits, stale completion rejection, explicit retry, parent/leaf key and byte checks, cancellation, missing/private dependency rejection, fresh-scope reopen and explicit cache maintenance |
 | `featureworld.gltf-source` | Pure glTF source inspection over an explicit authored triangle snapshot: counts/default scene, contained parent URI, persistent external reference, independent byte digest, repeatability, missing/escaping sources, required-extension/animation errors and cancellation with unchanged AuthoredScene |
 | `featureworld.gltf-geometry` | Pure geometry conversion over explicit authored triangle/sparse bytes: independently expected vertices, normals, triangle indices and bounds, shared ordinary/mirrored instances, local/world transforms, inverse-transpose normals, retained source/resource identities, repeatability, invalid scene/singular transforms and cancellation with unchanged AuthoredScene |
+| `featureworld.gltf-textures` | Pure texture conversion over an inline original PNG and triangle: five core roles share three semantic variants; independent pixels, color/data/normal mips, straight alpha, default and explicit samplers, image identity/digest, repeatability, missing/truncated images, missing UVs, invalid scene and cancellation with unchanged AuthoredScene |
 
 Every case receives a fresh owner from the same saved baseline. Functional work
 occurs at tick zero; subsequent fixed ticks check stable identity/entity counts.
 The fixture has no input actions and performs no RNG draws. Seed/rate/tick
 context remains explicit in results; foundation cases separately exercise input
 and seeded data. At three ticks, initial revision values are 4 and final values
-are 4, 11, 7, 6, 4, 4, 4, 4, 4, 4 and 4. Persistence's final value belongs to a fresh incarnation.
+are 4, 11, 7, 6, 4, 4, 4, 4, 4, 4, 4 and 4. Persistence's final value belongs to a fresh incarnation.
 The asset reference in scene extras is `20000000-0000-4000-8000-00000000000a`;
 it is preserved through native save/reopen and is not a new asset component.
 Identity fixtures create their own authored source/metadata in scratch; no source
@@ -68,8 +69,18 @@ The eleventh case converts the same captured-byte boundary into owned geometry
 and node values. Independent dense/sparse triangles verify actual vertex/index
 contents; a shared mesh retains its local winding across ordinary and mirrored
 instances with different bounds and normal matrices. Geometry conversion performs
-no file or Scene writes. Image decoding, material/cache integration and rendering
-remain assigned to later checkpoints; see the [geometry contract](gltf-geometry.md).
+no file or Scene writes; see the [geometry contract](gltf-geometry.md).
+The twelfth case converts one original 2x1 RGBA8 PNG used as base color,
+metallic-roughness, normal, occlusion and emissive. Literal transparent-black and
+opaque-white source pixels yield RGB 188 for color, RGB 128 for data and the
+documented +Z fallback for cancelling normals; all one-pixel mips retain linear
+alpha 128. It checks semantic sharing independently from source texture and
+sampler identity. Default linear/repeat behavior and explicit nearest/clamp/mirror
+fields remain per use. The inline PNG needs no test-fixture directory or image
+file on disk. Invalid scratch parents therefore leave pure source, geometry and
+texture cases successful while the five native file-service cases retain their
+original failures. Material/cache publication and rendering remain later owners;
+see the [texture contract](gltf-textures.md).
 The identity case keeps the [identity contract](asset-identity.md).
 Process-local incarnation IDs vary and are excluded from semantic repeat checks.
 
@@ -86,6 +97,11 @@ unchanged. No renderer is initialized by these cases.
 catalog and maps every current component/command to real case IDs. The independent
 process fixture resolves discovery, executes every case, verifies repeat results
 and checks that neither the versioned input nor its temporary copy changed.
+It now performs thirty checks. The independent coverage inventory contains
+43 CPU surfaces and one external GPU command; `asset.gltf.textures` maps to the
+twelfth native case and the separate texture/dependency families. The texture
+Catch family keeps a 90-second limit and seed 1337; its private dependency family
+keeps 60 seconds.
 Existing behavior suites still cover large scenes, allocation limits, native
 faults and lifetime/resource boundaries. Network/storage/platform fixtures remain
 separate. Lua stays empty until19; terminal/editor authoring remain15/16.

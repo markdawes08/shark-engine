@@ -126,6 +126,21 @@ if(TARGET EngineStorage)
 endif()
 
 if(TARGET EngineTools)
+    add_executable(GltfTextureTests gltf_texture_tests.cpp)
+    target_link_libraries(GltfTextureTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_include_directories(GltfTextureTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
+    target_compile_definitions(GltfTextureTests PRIVATE
+        SHARK_GLTF_TEXTURE_FIXTURE_DIRECTORY="${PROJECT_SOURCE_DIR}/tests/fixtures/gltf_textures")
+    shark_configure_target(GltfTextureTests)
+    shark_classify_target(GltfTextureTests test)
+    add_test(NAME shark.tools.gltf-textures COMMAND GltfTextureTests "[gltf-textures]" --rng-seed 1337
+        --reporter xml --out "${CMAKE_CURRENT_BINARY_DIR}/gltf-texture-cases.xml")
+    set_tests_properties(shark.tools.gltf-textures PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 90)
+    add_test(NAME shark.tooling.image-dependencies
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_image_dependencies.py"
+            --archive "${SHARK_IMAGE_ARCHIVE_INPUT}" --cmake "${CMAKE_COMMAND}" --ninja "${CMAKE_MAKE_PROGRAM}")
+    set_tests_properties(shark.tooling.image-dependencies PROPERTIES LABELS "cpu;tooling;boundary" TIMEOUT 60)
+
     add_executable(GltfGeometryTests gltf_geometry_tests.cpp)
     target_link_libraries(GltfGeometryTests PRIVATE EngineTools Catch2::Catch2WithMain)
     target_include_directories(GltfGeometryTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
@@ -785,7 +800,7 @@ if(TARGET EngineStorage)
     set(shark_storage_json_fixture_args)
     if(TARGET EngineTools)
         list(APPEND shark_storage_json_fixture_args --json-archive "${SHARK_JSON_ARCHIVE_INPUT}"
-            --cgltf-archive "${SHARK_CGLTF_ARCHIVE_INPUT}")
+            --cgltf-archive "${SHARK_CGLTF_ARCHIVE_INPUT}" --image-archive "${SHARK_IMAGE_ARCHIVE_INPUT}")
     endif()
     add_test(NAME shark.tooling.storage-dependencies
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_storage_dependencies.py"
@@ -825,6 +840,7 @@ if(TARGET EngineTools)
             --entt-archive "${SHARK_EnTT_ARCHIVE}" --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}"
             --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}" --json-archive "${SHARK_JSON_ARCHIVE_INPUT}"
             --cgltf-archive "${SHARK_CGLTF_ARCHIVE_INPUT}"
+            --image-archive "${SHARK_IMAGE_ARCHIVE_INPUT}"
             ${shark_storage_fixture_args} -v)
     set_tests_properties(shark.tooling.source-document-dependencies PROPERTIES
         LABELS "cpu;tooling;boundary" TIMEOUT 240 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")

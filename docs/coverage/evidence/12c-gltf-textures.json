@@ -1,0 +1,1612 @@
+{
+  "format": "shark.checkpoint-evidence",
+  "schema_version": 1,
+  "checkpoint": "12c",
+  "requirement": "REQ-12",
+  "status": "PASS",
+  "requirement_status": "NOT_RUN",
+  "base_revision": "2ca0f97",
+  "branch": "main",
+  "initial_worktree": "clean",
+  "result": "unstaged uncommitted changes",
+  "generated_at_utc": "2026-10-27T19:38:56.882510+00:00",
+  "scope": "Current-machine pure CPU bounded static glTF PNG/JPEG decoding, texture roles, samplers and mip generation. Material/cache integration and full qualification remain12d-12e.",
+  "qualification_method": "Two full client Debug inventories, five complete declared Tools selections and two fresh full Server inventories. Disjoint functional/I/O partitions retain raw JUnit/time/hash provenance at unchanged limits. The 56 standalone Tools executions are a subset of the 140 Tools selections; historical baselines are controls only.",
+  "source_freeze": {
+    "path": "out/12c-work/source-freeze.json",
+    "sha256": "1aa303222791b8b36e3ed670942c571f5f4e5f430c5256c46d3e5d3d1cd71bbe",
+    "bytes": 99691
+  },
+  "frozen_inputs": 564,
+  "execution_harness": [
+    {
+      "path": "out/12c-work/qualify.py",
+      "sha256": "a8159335ce33261e72987a328646f339d390fde4d8e71e183e238a270e9a79df",
+      "bytes": 20573
+    },
+    {
+      "path": "out/12c-work/create_freeze.py",
+      "sha256": "028de348ee071f2c4a03b3471b2f688d254f75a8c58a0b6249be67f2201c2e8f",
+      "bytes": 4254
+    },
+    {
+      "path": "out/12c-work/native.py",
+      "sha256": "7ff019c2c193e219e7b14b8a0f33254cee5935158fab884addf30ae9d5066e10",
+      "bytes": 2241
+    },
+    {
+      "path": "out/12c-work/wsl.py",
+      "sha256": "e367921d8ce00cb16fecfa3c013149b3e1c5d4b3f11911e0923d4b20cea2ce8a",
+      "bytes": 2302
+    },
+    {
+      "path": "out/12c-work/wsl.sh",
+      "sha256": "008c2102c4ff451669fe5a0b0e7eab4cb764b27ffea164ab95b38b4c427e7f26",
+      "bytes": 3473
+    },
+    {
+      "path": "out/12c-work/public-api.py",
+      "sha256": "2b1dd3788f8dfec3e65fff3ae1770ca2e466573ada714cf9a47385bf0fdb72a5",
+      "bytes": 6558
+    },
+    {
+      "path": "out/12c-work/sanitizer_audit.py",
+      "sha256": "e83a7197555e091d6d6cafbd1182299c093bad0ec35a47ede3c20d1d44a437d7",
+      "bytes": 3773
+    },
+    {
+      "path": "out/12c-work/native_audit.py",
+      "sha256": "1210efd1a15b2e798c3b8a1773cd42217ae24dda9751af70ea785ff1892636ba",
+      "bytes": 4383
+    },
+    {
+      "path": "out/12c-work/wsl_protected.py",
+      "sha256": "2ce006a0258addfe930dd057cad9945ec915aa35d82d55add2b2375705af0e07",
+      "bytes": 1929
+    },
+    {
+      "path": "out/12c-work/retain_package.py",
+      "sha256": "112f9e9bce665e57654da28c71864c7ec1d4fd5047febf15e62f7e6c7aeeca31",
+      "bytes": 4905
+    }
+  ],
+  "qualification_configuration": {
+    "path": "out/12c-work/config.json",
+    "sha256": "6f4d3a0e40ca85f49c8c8125092b88a026935aca54bb4461503ad9aaf9c01fd9",
+    "bytes": 4313
+  },
+  "implemented_manifest_sha256": "b8dee4fa0152522a5303da6eb6c57219ba830d10b17347fd94e1f31dad9fbe01",
+  "profile_counts": {
+    "windows-debug": 119,
+    "windows-release": 28,
+    "windows-asan": 28,
+    "linux-debug": 112,
+    "linux-asan-ubsan": 28,
+    "windows-tools-debug": 28,
+    "linux-tools-debug": 28,
+    "server-debug": 68,
+    "server-asan-ubsan": 68
+  },
+  "full_client_ctest_executions": 231,
+  "full_server_ctest_executions": 136,
+  "full_ctest_executions": 367,
+  "tools_selected_executions": 140,
+  "standalone_tools_executions": 56,
+  "total_profile_outcomes": 507,
+  "total_ctest_executions": 507,
+  "profiles": [
+    {
+      "name": "windows-debug",
+      "status": "PASS",
+      "qualified_tests": 119,
+      "selection": "full",
+      "tools_bearing": true,
+      "standalone_tools": false,
+      "qualification_kind": "complete-inventory-partitioned-runs",
+      "summary": {
+        "path": "out/12c-work/windows-debug/summary.json",
+        "sha256": "811f903e13359260be5a419fbf90054cb7d9b37403e5896417972bb80639e453",
+        "bytes": 13922
+      },
+      "inventory": {
+        "path": "out/12c-work/windows-debug/inventory.json",
+        "sha256": "422ac019a10ef2da45ad113cc3bcc99e6315887081f605c7e9a3b1755c6b5414",
+        "bytes": 107518
+      },
+      "baseline_inventory": {
+        "path": "out/12b-work/windows-debug/inventory.json",
+        "sha256": "c9b05e0b7cb2f19ffbbbb0f8648776427b065e6ab7da7a983cbd18725919d301",
+        "bytes": 105159
+      },
+      "junit": {
+        "path": "out/12c-work/windows-debug/qualified-selection.xml",
+        "sha256": "689a0695ffa54f47b0cab05119f0f04085c243dd86021fbedd2b10f9f2d408ad",
+        "bytes": 73443
+      },
+      "qualified_results": {
+        "path": "out/12c-work/windows-debug/qualified-results.json",
+        "sha256": "54ea4c49674a2649903dbbde82b5845ba43ec6243a770fafcc714900abb4a37e",
+        "bytes": 33706
+      },
+      "phases": [
+        {
+          "name": "functional",
+          "count": 112,
+          "junit": "out/12c-work/windows-debug/functional.xml",
+          "sha256": "455868bf6b262b961bfc46abd0fab2f649c730e36b304f8e3bbfe189df6fd3ba"
+        },
+        {
+          "name": "heavy",
+          "count": 7,
+          "junit": "out/12c-work/windows-debug/heavy.xml",
+          "sha256": "6f038e83c00026c51bc30f0904d73122886f0fd65fe75824bce77eea811dc33c"
+        }
+      ],
+      "artifact_validation": {
+        "path": "out/12c-work/windows-debug/artifact-validation.json",
+        "sha256": "40d1bd910a03a4ed43facbf9aca057ba2bbf05963fc330cd019531248df94353",
+        "bytes": 2220
+      }
+    },
+    {
+      "name": "windows-release",
+      "status": "PASS",
+      "qualified_tests": 28,
+      "selection": "tools",
+      "tools_bearing": true,
+      "standalone_tools": false,
+      "qualification_kind": "complete-tools-selection-in-client-profile",
+      "summary": {
+        "path": "out/12c-work/windows-release/summary.json",
+        "sha256": "e3d2cdbaf7a8adac9064bc1c53e15d5bfdf4f076e3c0bc8d0651bc5abb1dff22",
+        "bytes": 8025
+      },
+      "inventory": {
+        "path": "out/12c-work/windows-release/inventory.json",
+        "sha256": "6b5e9192d9daed0d3d96b1c9c535cfb4669983ec870c306b06359eca88779b51",
+        "bytes": 107928
+      },
+      "baseline_inventory": {
+        "path": "out/12b-work/windows-release/inventory.json",
+        "sha256": "9efdddf676a6caf01e403e45c2faf569c9a24b878b780c27af6d12670a2c71b6",
+        "bytes": 105561
+      },
+      "junit": {
+        "path": "out/12c-work/windows-release/qualified-selection.xml",
+        "sha256": "361907ceb50196ea36490d86d7b4bfb81ff523e1f51d2280251a10eb5acb6dd3",
+        "bytes": 15608
+      },
+      "qualified_results": {
+        "path": "out/12c-work/windows-release/qualified-results.json",
+        "sha256": "2fc9ef7b3365c779c6607357ea3420c5abb6c44d2a53d531e054b004526c436b",
+        "bytes": 8066
+      },
+      "phases": [
+        {
+          "name": "functional",
+          "count": 26,
+          "junit": "out/12c-work/windows-release/functional.xml",
+          "sha256": "f04be100379d1a01c0b317e0652fa9204a8f836b69e830b00f2572ccdde4a099"
+        },
+        {
+          "name": "heavy",
+          "count": 2,
+          "junit": "out/12c-work/windows-release/heavy.xml",
+          "sha256": "0e7a8344cd4505474c88dca423e4b79a70cdbbac916ffd3eecee85d06cf76ccb"
+        }
+      ],
+      "artifact_validation": {
+        "path": "out/12c-work/windows-release/artifact-validation.json",
+        "sha256": "680145da3f1c663eabc803b6ec8e26420d12dfc309718c7fcb16309c0136e067",
+        "bytes": 2220
+      }
+    },
+    {
+      "name": "windows-asan",
+      "status": "PASS",
+      "qualified_tests": 28,
+      "selection": "tools",
+      "tools_bearing": true,
+      "standalone_tools": false,
+      "qualification_kind": "complete-tools-selection-in-client-profile",
+      "summary": {
+        "path": "out/12c-work/windows-asan/summary.json",
+        "sha256": "14121d92b5ae4fc77183cd2552063db31ac21bd0dd80ed3efa558a1b796d45a9",
+        "bytes": 7992
+      },
+      "inventory": {
+        "path": "out/12c-work/windows-asan/inventory.json",
+        "sha256": "2d8f57c33209e630a092558ffd8bc648f4a22a225cb6981619fa87b4f7d96327",
+        "bytes": 107323
+      },
+      "baseline_inventory": {
+        "path": "out/12b-work/windows-asan/inventory.json",
+        "sha256": "2040ac47cba0cb825aa477ba6403e2e73d96322afbf31b06e95f6c674af3dd98",
+        "bytes": 104968
+      },
+      "junit": {
+        "path": "out/12c-work/windows-asan/qualified-selection.xml",
+        "sha256": "81068e4728f00858562171c28588cb61b957fc457bc067bfc747d2442b7be93b",
+        "bytes": 15600
+      },
+      "qualified_results": {
+        "path": "out/12c-work/windows-asan/qualified-results.json",
+        "sha256": "4baa047c4d22a4c4c4308d87000d3e68f9235e43a12cedfea0f15d8dafb2bd8f",
+        "bytes": 7974
+      },
+      "phases": [
+        {
+          "name": "functional",
+          "count": 26,
+          "junit": "out/12c-work/windows-asan/functional.xml",
+          "sha256": "76364f76146825563ccfdd5c9f74590056ab98ba3734dd59e1d6799ce8fc62ef"
+        },
+        {
+          "name": "heavy",
+          "count": 2,
+          "junit": "out/12c-work/windows-asan/heavy.xml",
+          "sha256": "aed6074a3972d30d1384b5c3b834c2d09f430c24294258fbc275d4409200fc39"
+        }
+      ],
+      "artifact_validation": {
+        "path": "out/12c-work/windows-asan/artifact-validation.json",
+        "sha256": "565ce94ff2fb88232fff725260549a6f09c1b269314d42131f1f5a055cae1f6a",
+        "bytes": 2220
+      }
+    },
+    {
+      "name": "linux-debug",
+      "status": "PASS",
+      "qualified_tests": 112,
+      "selection": "full",
+      "tools_bearing": true,
+      "standalone_tools": false,
+      "qualification_kind": "complete-inventory-partitioned-runs",
+      "summary": {
+        "path": "out/12c-work/wsl/linux-debug/summary.json",
+        "sha256": "f437aec091ad599b108eab75e6383dedb6858329369620b1c7d7d1eb7f9d9762",
+        "bytes": 13160
+      },
+      "inventory": {
+        "path": "out/12c-work/wsl/linux-debug/inventory.json",
+        "sha256": "40ac0210452bcc8659be148cd5687e0601e560062b988248aeff43f7e9f08eff",
+        "bytes": 94229
+      },
+      "baseline_inventory": {
+        "path": "out/12b-work/wsl/linux-debug/inventory.json",
+        "sha256": "b4ad2e5aa2c31629dcbafa3d7e76a7ffeb4e75502fa324e1c847453ad82f1f77",
+        "bytes": 92058
+      },
+      "junit": {
+        "path": "out/12c-work/wsl/linux-debug/qualified-selection.xml",
+        "sha256": "1af4ebbcb3e5296e71fe412ad2b7db2269f24722af2bf32bcecc73728c665dcf",
+        "bytes": 70047
+      },
+      "qualified_results": {
+        "path": "out/12c-work/wsl/linux-debug/qualified-results.json",
+        "sha256": "a6bfc4f47e76c37caabf1dc7165a3bc3e2dfbf11ca1c2946c651adfbc6b1d57f",
+        "bytes": 31193
+      },
+      "phases": [
+        {
+          "name": "functional",
+          "count": 105,
+          "junit": "/evidence/linux-debug/functional.xml",
+          "sha256": "e4c1cd18fcc39f649e21829aae26f5822dec643dca1f63031276df4f46890468"
+        },
+        {
+          "name": "heavy",
+          "count": 7,
+          "junit": "/evidence/linux-debug/heavy.xml",
+          "sha256": "8b79385d4b0103512feea966bbb6e5490f65d2c4921e7f0d80c86495872c7497"
+        }
+      ],
+      "artifact_validation": {
+        "path": "out/12c-work/wsl/linux-debug/artifact-validation.json",
+        "sha256": "d410e304f06cc3ae14bc9ee73b2ba37afd682e4da4a5a7170303ee329ff10d6d",
+        "bytes": 2220
+      }
+    },
+    {
+      "name": "linux-asan-ubsan",
+      "status": "PASS",
+      "qualified_tests": 28,
+      "selection": "tools",
+      "tools_bearing": true,
+      "standalone_tools": false,
+      "qualification_kind": "complete-tools-selection-in-client-profile",
+      "summary": {
+        "path": "out/12c-work/wsl/linux-asan-ubsan/summary.json",
+        "sha256": "c71df2221d560f3a2106b946fd841ae6d0f699409d6bfdeb6a6efaf1f8fb47b5",
+        "bytes": 7803
+      },
+      "inventory": {
+        "path": "out/12c-work/wsl/linux-asan-ubsan/inventory.json",
+        "sha256": "a6f3cae86bb58bc5231890ed271001f85a540b635e505f4f544967dd74ce9579",
+        "bytes": 95242
+      },
+      "baseline_inventory": {
+        "path": "out/12b-work/wsl/linux-asan-ubsan/inventory.json",
+        "sha256": "6eb53082844d94b3bb85e09696c60a95fab988a81d7c2184a9c6c03cd78b203d",
+        "bytes": 93051
+      },
+      "junit": {
+        "path": "out/12c-work/wsl/linux-asan-ubsan/qualified-selection.xml",
+        "sha256": "02c460a588e3c53de6ddab478b8252005c7019e5b7b8f6b37548829fe8d70fb9",
+        "bytes": 15360
+      },
+      "qualified_results": {
+        "path": "out/12c-work/wsl/linux-asan-ubsan/qualified-results.json",
+        "sha256": "14cc4301a4f1730e8e80ebbe386b4a39d58c179a8a94b6175f62305a65021ccb",
+        "bytes": 8003
+      },
+      "phases": [
+        {
+          "name": "functional",
+          "count": 26,
+          "junit": "/evidence/linux-asan-ubsan/functional.xml",
+          "sha256": "39dbad2babc5ec3e6d0819505a6097551fd86179787b941df77250a0e6bf25d1"
+        },
+        {
+          "name": "heavy",
+          "count": 2,
+          "junit": "/evidence/linux-asan-ubsan/heavy.xml",
+          "sha256": "3d14ede44261a4767277c1671cef67435d20b70f2bf106650ab19caec5fe364a"
+        }
+      ],
+      "artifact_validation": {
+        "path": "out/12c-work/wsl/linux-asan-ubsan/artifact-validation.json",
+        "sha256": "615e5f96e964f0a66f21ef8c746dd5e7f7f19dd8b24ecef56bb417be4aa5957e",
+        "bytes": 2220
+      }
+    },
+    {
+      "name": "windows-tools-debug",
+      "status": "PASS",
+      "qualified_tests": 28,
+      "selection": "tools",
+      "tools_bearing": true,
+      "standalone_tools": true,
+      "qualification_kind": "complete-standalone-tools-selection",
+      "summary": {
+        "path": "out/12c-work/tools-debug/summary.json",
+        "sha256": "69dee8e1cb6662583dfef4ef41a901804ba254edc7da7687966c67a3e10c40a2",
+        "bytes": 7973
+      },
+      "inventory": {
+        "path": "out/12c-work/tools-debug/inventory.json",
+        "sha256": "3eeefbeec1a0f6712f9903dde733f17dfd907eaefdbfaccc0257240e3111c446",
+        "bytes": 74413
+      },
+      "baseline_inventory": {
+        "path": "out/12b-work/tools-debug/inventory.json",
+        "sha256": "37b2074fba80cea5d4e1fd5abd9b9cdbb017b37d4498443682fa4b7466ca67ad",
+        "bytes": 72203
+      },
+      "junit": {
+        "path": "out/12c-work/tools-debug/qualified-selection.xml",
+        "sha256": "18707d9bed87a0474778335ffcf1261f2ed9db64e3b17ab0bc3794034a89c01e",
+        "bytes": 15597
+      },
+      "qualified_results": {
+        "path": "out/12c-work/tools-debug/qualified-results.json",
+        "sha256": "527ae90853bae48be292391d98082ea75efd8d74e728701bf2265a6e0a322e0a",
+        "bytes": 7943
+      },
+      "phases": [
+        {
+          "name": "functional",
+          "count": 26,
+          "junit": "out/12c-work/tools-debug/functional.xml",
+          "sha256": "1276cb256353be1b68980e9826b43700e022a9066645138499ecec16d79c2665"
+        },
+        {
+          "name": "heavy",
+          "count": 2,
+          "junit": "out/12c-work/tools-debug/heavy.xml",
+          "sha256": "488c2cc9b9e0cad6da1dbbd90172f859bbe8c4e941f191bd881dfd137b0d4da3"
+        }
+      ],
+      "artifact_validation": {
+        "path": "out/12c-work/tools-debug/artifact-validation.json",
+        "sha256": "d6c7127f0e718c553e16d404de657b776d2f48031ff16dad9245d18ba71636b7",
+        "bytes": 2220
+      }
+    },
+    {
+      "name": "linux-tools-debug",
+      "status": "PASS",
+      "qualified_tests": 28,
+      "selection": "tools",
+      "tools_bearing": true,
+      "standalone_tools": true,
+      "qualification_kind": "complete-standalone-tools-selection",
+      "summary": {
+        "path": "out/12c-work/wsl/tools-debug/summary.json",
+        "sha256": "edb48c90b7d5e4c0a15c28a6f35a3e2c9b88ee32a8c3e59181b7ef375a4ca4c7",
+        "bytes": 7645
+      },
+      "inventory": {
+        "path": "out/12c-work/wsl/tools-debug/inventory.json",
+        "sha256": "c98b4b8016918620942bb0b413b44321c30711470c8fe1ae869444b4de12fbc1",
+        "bytes": 66677
+      },
+      "baseline_inventory": {
+        "path": "out/12b-work/wsl/tools-debug/inventory.json",
+        "sha256": "97527bd7f30b34a5ebe53fe4cc337c1c4da2fd8f4618f1c1687a875c37649aae",
+        "bytes": 64701
+      },
+      "junit": {
+        "path": "out/12c-work/wsl/tools-debug/qualified-selection.xml",
+        "sha256": "f1983c2c16ab6e020266c985ff17693d75af0339d5ddad66a024535570edc178",
+        "bytes": 15366
+      },
+      "qualified_results": {
+        "path": "out/12c-work/wsl/tools-debug/qualified-results.json",
+        "sha256": "fcd3328f98f1933513f72909e7e0aa908b8da615988242bb8abb780c1dd03a51",
+        "bytes": 7869
+      },
+      "phases": [
+        {
+          "name": "functional",
+          "count": 26,
+          "junit": "/evidence/tools-debug/functional.xml",
+          "sha256": "db9e829500a5535e69ee46595d02bc112d5393b257ae22c487ab87b71168a95d"
+        },
+        {
+          "name": "heavy",
+          "count": 2,
+          "junit": "/evidence/tools-debug/heavy.xml",
+          "sha256": "7213df959764ee84b0744d5db03530d409f567bae8dd624f778c547b3fda6222"
+        }
+      ],
+      "artifact_validation": {
+        "path": "out/12c-work/wsl/tools-debug/artifact-validation.json",
+        "sha256": "d745d792d4fe88686d4d4422e1abdeb5bfade8fe3bf481dd52e4342ab8ea61d8",
+        "bytes": 2220
+      }
+    },
+    {
+      "name": "server-debug",
+      "status": "PASS",
+      "qualified_tests": 68,
+      "selection": "server",
+      "tools_bearing": false,
+      "standalone_tools": false,
+      "qualification_kind": "complete-server-inventory-partitioned-runs",
+      "summary": {
+        "path": "out/12c-work/wsl/server-debug/summary.json",
+        "sha256": "c762ce9359881baab01401d6cd3f05941c5f13507d7e50fea4e1402f08a73f59",
+        "bytes": 7619
+      },
+      "inventory": {
+        "path": "out/12c-work/wsl/server-debug/inventory.json",
+        "sha256": "eb23dc9325a38c40102f074bb42c125a4ea06d01b9f77363ecfbb11f542bc2ad",
+        "bytes": 54513
+      },
+      "baseline_inventory": {
+        "path": "out/12a-verified/wsl/server-debug/inventory.json",
+        "sha256": "14f83aef8918c3a09b3f165b40c54ce5db88192e7e01f18421a2c7c5c054f688",
+        "bytes": 54513
+      },
+      "junit": {
+        "path": "out/12c-work/wsl/server-debug/qualified-selection.xml",
+        "sha256": "e8e0b15bb2978c1f064227dcab4cacc4ce41fa24eb1735e4240976ed8093ef4c",
+        "bytes": 48082
+      },
+      "qualified_results": {
+        "path": "out/12c-work/wsl/server-debug/qualified-results.json",
+        "sha256": "7303205e7c834ca2b23a7c06a403c4e395d3e9af4278e655390bb773ab4fa650",
+        "bytes": 18948
+      },
+      "phases": [
+        {
+          "name": "functional",
+          "count": 64,
+          "junit": "/evidence/server-debug/functional.xml",
+          "sha256": "6037b097317f91034f2bcbc9e7e2ec8e206c5b695b8ccf3e511f2e2cd5d1c72f"
+        },
+        {
+          "name": "heavy",
+          "count": 4,
+          "junit": "/evidence/server-debug/heavy.xml",
+          "sha256": "017b98f8582b88d449074132e3ccc77a8ca431c0d5e6399c017b68f9e92c5ed5"
+        }
+      ],
+      "artifact_validation": {
+        "path": "out/12c-work/wsl/server-debug/artifact-validation.json",
+        "sha256": "448fe3f289e4fa3113f326f8472dca8cade2901aca98829b5268de28425024d1",
+        "bytes": 119
+      }
+    },
+    {
+      "name": "server-asan-ubsan",
+      "status": "PASS",
+      "qualified_tests": 68,
+      "selection": "server",
+      "tools_bearing": false,
+      "standalone_tools": false,
+      "qualification_kind": "complete-server-inventory-partitioned-runs",
+      "summary": {
+        "path": "out/12c-work/wsl/server-asan-ubsan/summary.json",
+        "sha256": "b90ce4440bc0d155c681a8dac071ce3725228e7a43821671a6a8eb3cec7e41a8",
+        "bytes": 7674
+      },
+      "inventory": {
+        "path": "out/12c-work/wsl/server-asan-ubsan/inventory.json",
+        "sha256": "9f81a2049960e70e816d8a560fce94f2ebd5396e4ca42ff0bba7617521e5bfc1",
+        "bytes": 55025
+      },
+      "baseline_inventory": {
+        "path": "out/12a-verified/wsl/server-asan-ubsan/inventory.json",
+        "sha256": "368177aafb2861a19cc0ee2cb2f5d89540c697f4fb413ac4bdf5985e581bac7f",
+        "bytes": 55025
+      },
+      "junit": {
+        "path": "out/12c-work/wsl/server-asan-ubsan/qualified-selection.xml",
+        "sha256": "08f3215ddc2f253645580554f16c0988970a6db0fa92950162c914a0ed3bd750",
+        "bytes": 48089
+      },
+      "qualified_results": {
+        "path": "out/12c-work/wsl/server-asan-ubsan/qualified-results.json",
+        "sha256": "234cff02ebdeea2a1e91f7d8f2ce61528b17cb2741d58258c3d9d805bf24e640",
+        "bytes": 19270
+      },
+      "phases": [
+        {
+          "name": "functional",
+          "count": 64,
+          "junit": "/evidence/server-asan-ubsan/functional.xml",
+          "sha256": "5edfdd932582950ee6f65dcecb76df7f868d1544c17432bc0d29e2ce44d31a5f"
+        },
+        {
+          "name": "heavy",
+          "count": 4,
+          "junit": "/evidence/server-asan-ubsan/heavy.xml",
+          "sha256": "211ffe8e65d15a5297a9136743121425949ce9086b751412b949f4181628ff3e"
+        }
+      ],
+      "artifact_validation": {
+        "path": "out/12c-work/wsl/server-asan-ubsan/artifact-validation.json",
+        "sha256": "448fe3f289e4fa3113f326f8472dca8cade2901aca98829b5268de28425024d1",
+        "bytes": 119
+      }
+    }
+  ],
+  "actual_execution_mapping": [
+    {
+      "id": "asset.gltf.textures",
+      "test_ids": [
+        "shark.tools.gltf-textures",
+        "shark.tools.featureworld",
+        "shark.tools.featureworld-process",
+        "shark.tools.scene-qualification",
+        "shark.tooling.image-dependencies"
+      ],
+      "featureworld_cases": [
+        "featureworld.gltf-textures"
+      ],
+      "passing_profiles": [
+        "windows-debug",
+        "windows-release",
+        "windows-asan",
+        "linux-debug",
+        "linux-asan-ubsan",
+        "windows-tools-debug",
+        "linux-tools-debug"
+      ]
+    },
+    {
+      "id": "tools.gltf-textures",
+      "test_ids": [
+        "shark.tools.gltf-textures",
+        "shark.tools.featureworld",
+        "shark.tools.featureworld-process",
+        "shark.tools.scene-qualification",
+        "shark.tooling.image-dependencies"
+      ],
+      "featureworld_cases": [
+        "featureworld.gltf-textures"
+      ],
+      "passing_profiles": [
+        "windows-debug",
+        "windows-release",
+        "windows-asan",
+        "linux-debug",
+        "linux-asan-ubsan",
+        "windows-tools-debug",
+        "linux-tools-debug"
+      ]
+    }
+  ],
+  "historical_baseline_controls": [
+    {
+      "group": "clients",
+      "checkpoint": "12b",
+      "receipt": {
+        "path": "docs/coverage/evidence/12b-gltf-geometry.json",
+        "sha256": "586d7ad4f2e956808489995ba47c7c01ce67ffe04a783a2fcf5db565d87fd929",
+        "bytes": 94156
+      },
+      "inventory_names": [
+        "linux-asan-ubsan",
+        "linux-debug",
+        "linux-tools-debug",
+        "windows-asan",
+        "windows-debug",
+        "windows-release",
+        "windows-tools-debug"
+      ],
+      "counted_as_fresh": false
+    },
+    {
+      "group": "server",
+      "checkpoint": "12a",
+      "receipt": {
+        "path": "docs/coverage/evidence/12a-gltf-foundation.json",
+        "sha256": "5ca69849c0a91fdd30f808bf8093428838ba0458735b378fc3a95941e34765e9",
+        "bytes": 98602
+      },
+      "inventory_names": [
+        "server-asan-ubsan",
+        "server-debug"
+      ],
+      "counted_as_fresh": false
+    }
+  ],
+  "protected_implementation": {
+    "status": "PASS",
+    "unchanged_roots": [
+      "engine/core",
+      "engine/client",
+      "engine/include",
+      "runtime",
+      "server"
+    ],
+    "unchanged_boundary_policies": [
+      "cmake/CheckRuntimeBoundary.cmake",
+      "tools/check_server_closure.py"
+    ],
+    "dependency_lock_unchanged": false,
+    "dependency_lock_change": "Reviewed private stb_image addition only",
+    "fresh_full_server_executions": 136
+  },
+  "gltf_source": {
+    "test": "shark.tools.gltf-source",
+    "cases": 41,
+    "minimum_assertions": 1794,
+    "seed": 1337,
+    "timeout_seconds": 60,
+    "tools_bearing_profile_executions": 7
+  },
+  "gltf_geometry": {
+    "test": "shark.tools.gltf-geometry",
+    "cases": 45,
+    "minimum_assertions": 988,
+    "seed": 1337,
+    "timeout_seconds": 60,
+    "tools_bearing_profile_executions": 7,
+    "native_compile_policy": [
+      {
+        "profile": "windows-debug",
+        "compile_commands": {
+          "path": "build/windows-debug/compile_commands.json",
+          "sha256": "6f3d684bc18315e766ba8ee09cfc91278b15575ff4c0cb1e20f09655bee152f8",
+          "bytes": 675900
+        },
+        "source": "engine_tools/src/gltf_source.cpp",
+        "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /Ob0 /Od /RTC1 -std:c++20 -MDd -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /EHc- /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\gltf_source.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\gltf_source.cpp",
+        "private_c_linkage_unwind": "/EHc- after all /EHsc; absent on every other translation unit",
+        "decoder_source": "engine_tools/src/gltf_image_decoder.cpp",
+        "decoder_compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /Ob0 /Od /RTC1 -std:c++20 -MDd -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\gltf_image_decoder.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\gltf_image_decoder.cpp",
+        "decoder_c_linkage_unwind_override": false
+      },
+      {
+        "profile": "windows-release",
+        "compile_commands": {
+          "path": "build/windows-release/compile_commands.json",
+          "sha256": "6da319686c4366caeb19aabdf56e77fcb974fc2e697a29da047bb7732fc4f53d",
+          "bytes": 680602
+        },
+        "source": "engine_tools/src/gltf_source.cpp",
+        "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-release\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-release\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-release\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-release\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++20 -MD /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /EHc- /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\gltf_source.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\gltf_source.cpp",
+        "private_c_linkage_unwind": "/EHc- after all /EHsc; absent on every other translation unit",
+        "decoder_source": "engine_tools/src/gltf_image_decoder.cpp",
+        "decoder_compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-release\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-release\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-release\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-release\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob2 /DNDEBUG -std:c++20 -MD /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\gltf_image_decoder.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\gltf_image_decoder.cpp",
+        "decoder_c_linkage_unwind_override": false
+      },
+      {
+        "profile": "windows-asan",
+        "compile_commands": {
+          "path": "build/windows-asan/compile_commands.json",
+          "sha256": "7c93c62bf68429f489126a8fa4f315bcdb3b26d3f0e4a51b7172345be2eb306d",
+          "bytes": 678884
+        },
+        "source": "engine_tools/src/gltf_source.cpp",
+        "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /EHc- /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\gltf_source.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\gltf_source.cpp",
+        "private_c_linkage_unwind": "/EHc- after all /EHsc; absent on every other translation unit",
+        "decoder_source": "engine_tools/src/gltf_image_decoder.cpp",
+        "decoder_compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\gltf_image_decoder.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\gltf_image_decoder.cpp",
+        "decoder_c_linkage_unwind_override": false
+      },
+      {
+        "profile": "tools-debug",
+        "compile_commands": {
+          "path": "build/tools-debug/compile_commands.json",
+          "sha256": "786486c58a416492a367c01934150ab04d1ad82bb1e548aebed0d35e9d3e8972",
+          "bytes": 513627
+        },
+        "source": "engine_tools/src/gltf_source.cpp",
+        "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\tools-debug\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\tools-debug\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\tools-debug\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\tools-debug\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /Ob0 /Od /RTC1 -std:c++20 -MDd -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /EHc- /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\gltf_source.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\gltf_source.cpp",
+        "private_c_linkage_unwind": "/EHc- after all /EHsc; absent on every other translation unit",
+        "decoder_source": "engine_tools/src/gltf_image_decoder.cpp",
+        "decoder_compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\tools-debug\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\tools-debug\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\tools-debug\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\tools-debug\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /Ob0 /Od /RTC1 -std:c++20 -MDd -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\gltf_image_decoder.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\gltf_image_decoder.cpp",
+        "decoder_c_linkage_unwind_override": false
+      }
+    ]
+  },
+  "gltf_textures": {
+    "test": "shark.tools.gltf-textures",
+    "cases": 43,
+    "minimum_assertions": 9022,
+    "seed": 1337,
+    "timeout_seconds": 90,
+    "dependency_test": "shark.tooling.image-dependencies",
+    "dependency_timeout_seconds": 60,
+    "tools_bearing_profile_executions": 7
+  },
+  "featureworld": {
+    "native_cases": 12,
+    "process_checks": 30,
+    "cpu_surfaces": 43,
+    "external_gpu_commands": 1,
+    "qualification_checks": 19,
+    "negative_controls": 15,
+    "case": "featureworld.gltf-textures",
+    "saved_entity_ids_preserved": true
+  },
+  "public_example_compiles": 48,
+  "public_examples": [
+    {
+      "status": "PASS",
+      "examples": 16,
+      "summary": {
+        "path": "out/12c-work/native-audit/public-api/summary.json",
+        "sha256": "db706168807fb7cb9df60eba197882baf8e358099b9965c497066dfb0fc62f90",
+        "bytes": 1387115
+      },
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "sha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+        "bytes": 893328
+      }
+    },
+    {
+      "status": "PASS",
+      "examples": 16,
+      "summary": {
+        "path": "out/12c-work/wsl/g++-13-public-api/summary.json",
+        "sha256": "9a2921af8d45a5f6964259e06b220cabb193b9b85f587d0cc11af99084da128a",
+        "bytes": 1703893
+      },
+      "compiler": {
+        "path": "/usr/bin/x86_64-linux-gnu-g++-13",
+        "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+        "bytes": 1027128
+      }
+    },
+    {
+      "status": "PASS",
+      "examples": 16,
+      "summary": {
+        "path": "out/12c-work/wsl/clang++-18-public-api/summary.json",
+        "sha256": "d84e317acdcdd66688675539b3ccf847f323851a47d956ed7701589b8e7bd2c7",
+        "bytes": 1744497
+      },
+      "compiler": {
+        "path": "/usr/lib/llvm-18/bin/clang",
+        "sha256": "8ef402d453d1ba4902e4ee0f0f847f6cfa01400c95aa43c24e97818b9c0e3f45",
+        "bytes": 140592
+      }
+    }
+  ],
+  "sanitizer_objects": 36,
+  "actual_sanitizer_objects": [
+    {
+      "status": "PASS",
+      "objects": 18,
+      "summary": {
+        "path": "out/12c-work/sanitizer-audit/summary.json",
+        "sha256": "e67a8d86b1563c308d1247c9815ddd4d71e16e49db127b48a408f8a699dd7025",
+        "bytes": 30039
+      },
+      "actual_instrumentation": [
+        {
+          "source": "engine/core/src/content_digest.cpp",
+          "source_sha256": "afe20aa95055edc0b9f6d0d05518a4455b494cf0b226b46467896a8fceee6a96",
+          "object_sha256": "07670e88d8978615f7c9e32619f923525dc00540fa61fa674bb7ab9e1c7e0184",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DMBEDTLS_USER_CONFIG_FILE=\\\"C:/Users/mrkda/Projects/shark/cmake/mbedtls_user_config.h\\\" -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\engine\\core\\generated -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\entt-src\\src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\tf-psa-crypto\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\tf-psa-crypto\\drivers\\builtin\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-build\\tf-psa-crypto\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\tf-psa-crypto\\drivers\\everest\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\tf-psa-crypto\\drivers\\p256-m\\p256-m -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\tf-psa-crypto\\drivers\\pqcp\\include -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Foengine\\core\\CMakeFiles\\EngineCore.dir\\src\\content_digest.cpp.obj /Fdengine\\core\\CMakeFiles\\EngineCore.dir\\EngineCore.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src\\content_digest.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/content_digest.log",
+            "sha256": "60e632f6c2bb097cc488ec9cf0f08fa5b0600e668a1e62aaa555a8c9fbc72e1e",
+            "bytes": 11108
+          }
+        },
+        {
+          "source": "engine/core/src/crypto_runtime.cpp",
+          "source_sha256": "86582ea2605421ff7e428bca45921923ad07d0882fd24791d501aa4e6d1ebfde",
+          "object_sha256": "4d51537a9f90741cb0aae06706daa7e6771408176d2bf88aa6f73e16c04dd2f4",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DMBEDTLS_USER_CONFIG_FILE=\\\"C:/Users/mrkda/Projects/shark/cmake/mbedtls_user_config.h\\\" -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\engine\\core\\generated -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\entt-src\\src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\tf-psa-crypto\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\tf-psa-crypto\\drivers\\builtin\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-build\\tf-psa-crypto\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\tf-psa-crypto\\drivers\\everest\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\tf-psa-crypto\\drivers\\p256-m\\p256-m -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\tf-psa-crypto\\drivers\\pqcp\\include -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Foengine\\core\\CMakeFiles\\EngineCore.dir\\src\\crypto_runtime.cpp.obj /Fdengine\\core\\CMakeFiles\\EngineCore.dir\\EngineCore.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src\\crypto_runtime.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/crypto_runtime.log",
+            "sha256": "c6420e6f149bc36a04f5647c4e73e436bc90aed7fb754f0014a3873c2787e3fd",
+            "bytes": 6626
+          }
+        },
+        {
+          "source": "engine/core/src/net_transport.cpp",
+          "source_sha256": "f844a8c02c4f2ec779bc024b593e7f8a9a2e96a7b3622038543a770ac9f17aad",
+          "object_sha256": "bc4281b8d2b9e0cf22b9057eaaaec71cf3d18c44a61e27869f5d2077e66792f7",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DMBEDTLS_USER_CONFIG_FILE=\\\"C:/Users/mrkda/Projects/shark/cmake/mbedtls_user_config.h\\\" -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\engine\\core\\generated -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\entt-src\\src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\tf-psa-crypto\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\tf-psa-crypto\\drivers\\builtin\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-build\\tf-psa-crypto\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\tf-psa-crypto\\drivers\\everest\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\tf-psa-crypto\\drivers\\p256-m\\p256-m -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\mbedtls-src\\tf-psa-crypto\\drivers\\pqcp\\include -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Foengine\\core\\CMakeFiles\\EngineCore.dir\\src\\net_transport.cpp.obj /Fdengine\\core\\CMakeFiles\\EngineCore.dir\\EngineCore.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src\\net_transport.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/net_transport.log",
+            "sha256": "0dd28d1447a37645b1fb40aa07d730a6219722c5928dd4ae7c8c7dac1efb1cb0",
+            "bytes": 78356
+          }
+        },
+        {
+          "source": "engine_tools/src/source_document.cpp",
+          "source_sha256": "3087e80943eef8d91a1130adc6ff7099421c6d16b74d5038789762bf49efa630",
+          "object_sha256": "3604364d9e138bb262afd3008ae4b674622a135f44979ce8aac2adf203c034ef",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\source_document.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\source_document.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/source_document.log",
+            "sha256": "76351acc499924bfb10f3465c7136f0438d82eae59da329f5a86fdeb6f24cba8",
+            "bytes": 536882
+          }
+        },
+        {
+          "source": "engine_tools/src/project_files.cpp",
+          "source_sha256": "030ebdec3bb7ae5da2c72e0f9f884283e51d3d94b44ca51ed7b34ff4c7b37a7f",
+          "object_sha256": "43f451a546ed3292319248f494531a1259627fdc35f2ee8a3907ecebf7e4e06f",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\project_files.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\project_files.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/project_files.log",
+            "sha256": "378af1aaa5f59be002140b30ee1e694a269e864e5dc7bfa109704b9f1262bc8b",
+            "bytes": 95212
+          }
+        },
+        {
+          "source": "engine_tools/src/project_files_native.cpp",
+          "source_sha256": "f21bf25b43dc971faaae1bb0e41b7faab276bc60c17261714f10afc1d4b41a10",
+          "object_sha256": "43b53b28beecb26c6c7428690259ccb6db6baeed9f654a1aa76321fbd49ed13d",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\project_files_native.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\project_files_native.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/project_files_native.log",
+            "sha256": "df02786b12e6bffd105e1662c52fec8827c50ed06416e0c274f069f7f1e4a77c",
+            "bytes": 69540
+          }
+        },
+        {
+          "source": "engine_tools/src/asset_import.cpp",
+          "source_sha256": "ee98b477a616118df0d34d591ce50f9587cee314f867a3701b43419370dd7e26",
+          "object_sha256": "ea1b4d9157f6b12aabf76e59d4333cd4444f5ba5c8432ea808759b7dce58c927",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\asset_import.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\asset_import.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/asset_import.log",
+            "sha256": "6e1b3d58307007d174ceb2473792d7dd198127b3a7baabb57e985bb8a3462a00",
+            "bytes": 145220
+          }
+        },
+        {
+          "source": "engine_tools/src/asset_cache_format.cpp",
+          "source_sha256": "670897dd3bce334563bd1d285e431367b822e94410cd4f3227502a3a8ff7494f",
+          "object_sha256": "b033e2a5e892a7508b41517aef11713d459eb6ef6b2ca318ec6362066aaf4102",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\asset_cache_format.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\asset_cache_format.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/asset_cache_format.log",
+            "sha256": "453422b1aed0440d82fe85a50ad8cc0c9b28d67454f1f69433a95340252f5a30",
+            "bytes": 64616
+          }
+        },
+        {
+          "source": "engine_tools/src/feature_world.cpp",
+          "source_sha256": "c35e6820e5227fd5db5cec72f5a5f373c22519bf3eccec422b73c7b10cb7cf03",
+          "object_sha256": "09c79c1d61091a7cd84439fb7c41a2d851097586a9fc47f36eee038ba4987d52",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\feature_world.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\feature_world.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/feature_world.log",
+            "sha256": "4fa096081a7b6fa373294aca2d73b0df396836b7c2601faad697639ae7e19404",
+            "bytes": 180635
+          }
+        },
+        {
+          "source": "tests/core_digest_tests.cpp",
+          "source_sha256": "cbceba3adbbc4abe481bc9c0fc593b4fed530cea38959a3eb93d48e28470fd77",
+          "object_sha256": "b912e2d63c78222c636a2784a17d44545015dcba537c7ee7a55977017c77ea98",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DSHARK_EXPECTED_VERSION=\\\"0.1.0\\\" -DSHARK_INJECT_TEST_FAILURE=0 -DSHARK_NETWORK_FIXTURE_DIRECTORY=\\\"C:/Users/mrkda/Projects/shark/tests/fixtures/network\\\" -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\client\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\client\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\catch2-src\\src\\catch2\\.. -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\catch2-build\\generated-includes -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Fotests\\CMakeFiles\\Tests.dir\\core_digest_tests.cpp.obj /Fdtests\\CMakeFiles\\Tests.dir\\ /FS -c C:\\Users\\mrkda\\Projects\\shark\\tests\\core_digest_tests.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/core_digest_tests.log",
+            "sha256": "c4c3524632e15e4b3812f8a7f7c4b1122caafbedbd8e1e144a0ccc842ef8fbab",
+            "bytes": 23146
+          }
+        },
+        {
+          "source": "tests/asset_import_tests.cpp",
+          "source_sha256": "7f5b2e101221450c650c9226d3c174a82d776206819eb36442c6c0f8800d397a",
+          "object_sha256": "504323d1601bf7c98f1316aad7914e3a3911b58a5005542a93f53e2cb8d781bf",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\catch2-src\\src\\catch2\\.. -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\catch2-build\\generated-includes -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Fotests\\CMakeFiles\\AssetImportTests.dir\\asset_import_tests.cpp.obj /Fdtests\\CMakeFiles\\AssetImportTests.dir\\ /FS -c C:\\Users\\mrkda\\Projects\\shark\\tests\\asset_import_tests.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/asset_import_tests.log",
+            "sha256": "b9e1b6b3dc6e15cd10ed5e4ec3b20371160d2c933e01c17de95531fc733c700e",
+            "bytes": 138323
+          }
+        },
+        {
+          "source": "tests/asset_import_process.cpp",
+          "source_sha256": "06ff14455d19a5898a494dcbb8233967f196577136dcccf0fd57367d1a2660ae",
+          "object_sha256": "fe0f97404150fc488c6967ef4caf3722e23beb5bc4170b6d7bbcc4eb4edaf295",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Fotests\\CMakeFiles\\AssetImportProcess.dir\\asset_import_process.cpp.obj /Fdtests\\CMakeFiles\\AssetImportProcess.dir\\ /FS -c C:\\Users\\mrkda\\Projects\\shark\\tests\\asset_import_process.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/asset_import_process.log",
+            "sha256": "c48b12eaa35fb082a266e8029fbbf28e7cf00a26903dab259b5d991bb9a736ec",
+            "bytes": 62718
+          }
+        },
+        {
+          "source": "tests/asset_import_jobs_tests.cpp",
+          "source_sha256": "61e1cfbbc3c34ac0ca17a5192bc6b7f269b89f0be6adf81f3ed92e9391dacd36",
+          "object_sha256": "2c1f6b55bbe02dcdc995dfb80484ac211f516cc670a1078e6683279f9fafac15",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\catch2-src\\src\\catch2\\.. -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\catch2-build\\generated-includes -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Fotests\\CMakeFiles\\AssetImportJobsTests.dir\\asset_import_jobs_tests.cpp.obj /Fdtests\\CMakeFiles\\AssetImportJobsTests.dir\\ /FS -c C:\\Users\\mrkda\\Projects\\shark\\tests\\asset_import_jobs_tests.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/asset_import_jobs_tests.log",
+            "sha256": "0965fd7e0690b50232c3a6db32b156d92fdbbd167caee465afba1997977f13f6",
+            "bytes": 132524
+          }
+        },
+        {
+          "source": "engine_tools/src/gltf_source.cpp",
+          "source_sha256": "d5bf028c7a07c6893c30b32aa1de4566efb682027c0b99e6fd4847f10ae95202",
+          "object_sha256": "d73ab4e3cf740af97cde93cc63d89a914e2b46b06cd51f570220ac1a64852741",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /EHc- /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\gltf_source.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\gltf_source.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/gltf_source.log",
+            "sha256": "9f2dce68a724e26582017f5f4767b2bd8a7e3ee028dcaa503fac4b1e75ce0676",
+            "bytes": 270422
+          }
+        },
+        {
+          "source": "tests/gltf_source_tests.cpp",
+          "source_sha256": "37ba00b56417f15114cb49eb254aed5d5c17cdce54fc772edc8ddf609ac94a6e",
+          "object_sha256": "fe74f41eb6c6701d9099c6d0f85a3b1bdb586ff2b05b50c34a1fae24773a6c6c",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DSHARK_GLTF_FIXTURE_DIRECTORY=\\\"C:/Users/mrkda/Projects/shark/tests/fixtures/gltf_source\\\" -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\catch2-src\\src\\catch2\\.. -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\catch2-build\\generated-includes -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Fotests\\CMakeFiles\\GltfSourceTests.dir\\gltf_source_tests.cpp.obj /Fdtests\\CMakeFiles\\GltfSourceTests.dir\\ /FS -c C:\\Users\\mrkda\\Projects\\shark\\tests\\gltf_source_tests.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/gltf_source_tests.log",
+            "sha256": "f8cc3611eab74d0c7fff0ce773c0ff9d80a33a40ccf0f81d93204256b92ce561",
+            "bytes": 152889
+          }
+        },
+        {
+          "source": "tests/gltf_geometry_tests.cpp",
+          "source_sha256": "c06575989847405e883f6ebf5d7f06d106ad2cd78894c3f325d7b692f23c3c1b",
+          "object_sha256": "9289423e530e4bb83838a455e02f97e3c2c6310d33977d2a3a215d61b09179f4",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DSHARK_GLTF_GEOMETRY_FIXTURE_DIRECTORY=\\\"C:/Users/mrkda/Projects/shark/tests/fixtures/gltf_geometry\\\" -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\catch2-src\\src\\catch2\\.. -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\catch2-build\\generated-includes -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Fotests\\CMakeFiles\\GltfGeometryTests.dir\\gltf_geometry_tests.cpp.obj /Fdtests\\CMakeFiles\\GltfGeometryTests.dir\\ /FS -c C:\\Users\\mrkda\\Projects\\shark\\tests\\gltf_geometry_tests.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/gltf_geometry_tests.log",
+            "sha256": "354c184c26f286138a5c7bbcbd30745a773d8a44c63977d81481d1177d9cd063",
+            "bytes": 118325
+          }
+        },
+        {
+          "source": "engine_tools/src/gltf_image_decoder.cpp",
+          "source_sha256": "13efc3d3eef6a71f13833a94ea97e0e5913564fe45c8713e9c6b1db97e806eef",
+          "object_sha256": "da272ecba1a03b2bcaa1b4673a2abc6c324e83ab1496971458c2a4eb3a900015",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\json-src\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\cgltf-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\stb_image-src -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Foengine_tools\\CMakeFiles\\EngineTools.dir\\src\\gltf_image_decoder.cpp.obj /Fdengine_tools\\CMakeFiles\\EngineTools.dir\\EngineTools.pdb /FS -c C:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src\\gltf_image_decoder.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/gltf_image_decoder.log",
+            "sha256": "58d255b2f1ff89d5b8fb29b5d49385ef6e9bed0ab825571c942d52be7a9f3341",
+            "bytes": 62749
+          }
+        },
+        {
+          "source": "tests/gltf_texture_tests.cpp",
+          "source_sha256": "054b76acd1eb122e5c289a26727df96ecdf0d705892bfff92e8d5892e6c4a18f",
+          "object_sha256": "508c345b8d304a56c24cd38d847e9813e8ab9a0a10a7e36116097a8b3e69f567",
+          "compiler_command": "C:\\PROGRA~1\\MIB055~1\\18\\COMMUN~1\\VC\\Tools\\MSVC\\1451~1.362\\bin\\Hostx64\\x64\\cl.exe  /nologo /TP -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DSHARK_GLTF_TEXTURE_FIXTURE_DIRECTORY=\\\"C:/Users/mrkda/Projects/shark/tests/fixtures/gltf_textures\\\" -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\src -IC:\\Users\\mrkda\\Projects\\shark\\engine_tools\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\..\\include -IC:\\Users\\mrkda\\Projects\\shark\\engine\\core\\include -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\glm-src -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\catch2-src\\src\\catch2\\.. -external:IC:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan\\_deps\\catch2-build\\generated-includes -external:W0 /DWIN32 /D_WINDOWS /EHsc /O2 /Ob1 /DNDEBUG -std:c++20 -MD -Zi /W4 /WX /permissive- /Zc:__cplusplus /utf-8 /EHsc /fsanitize=address /Fotests\\CMakeFiles\\GltfTextureTests.dir\\gltf_texture_tests.cpp.obj /Fdtests\\CMakeFiles\\GltfTextureTests.dir\\ /FS -c C:\\Users\\mrkda\\Projects\\shark\\tests\\gltf_texture_tests.cpp",
+          "symbols": {
+            "path": "out/12c-work/sanitizer-audit/gltf_texture_tests.log",
+            "sha256": "32f7ad27d422b19e4dc6adf9836ee8f59ca15e0a799552bb6eacb426782cc377",
+            "bytes": 145725
+          }
+        }
+      ]
+    },
+    {
+      "status": "PASS",
+      "objects": 18,
+      "summary": {
+        "path": "out/12c-work/wsl/sanitizer-audit/summary.json",
+        "sha256": "32b16fd07d67cca996a61cc3b80ad0cbeb0a7698aa5a0f1991ad236cd649f16b",
+        "bytes": 23026
+      },
+      "actual_instrumentation": [
+        {
+          "source": "engine/core/src/content_digest.cpp",
+          "source_sha256": "afe20aa95055edc0b9f6d0d05518a4455b494cf0b226b46467896a8fceee6a96",
+          "object_sha256": "1caf9822745bffcb1e398dd8c3c08ca7c02e278171e14b5bb00a1d582571cb86",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DMBEDTLS_USER_CONFIG_FILE=\\\"/source/cmake/mbedtls_user_config.h\\\" -I/source/engine/core/../include -I/source/engine/core/include -I/work/build-05a-final-client/linux-asan-ubsan/engine/core/generated -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/entt-src/src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/tf-psa-crypto/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/tf-psa-crypto/drivers/builtin/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-build/tf-psa-crypto/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/tf-psa-crypto/drivers/everest/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/tf-psa-crypto/drivers/p256-m/p256-m -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/tf-psa-crypto/drivers/pqcp/include -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o engine/core/CMakeFiles/EngineCore.dir/src/content_digest.cpp.o -c /source/engine/core/src/content_digest.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/content_digest.log",
+            "sha256": "df2ed211930093ac094b0cea60ed94f7d7fbf0892ef188a1c08c0aa21121a5b9",
+            "bytes": 1365
+          }
+        },
+        {
+          "source": "engine/core/src/crypto_runtime.cpp",
+          "source_sha256": "86582ea2605421ff7e428bca45921923ad07d0882fd24791d501aa4e6d1ebfde",
+          "object_sha256": "c8776a06a91e09a1e927045a1b765cd9f9b282a28a0a0a039eb32cf7d295aeaa",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DMBEDTLS_USER_CONFIG_FILE=\\\"/source/cmake/mbedtls_user_config.h\\\" -I/source/engine/core/../include -I/source/engine/core/include -I/work/build-05a-final-client/linux-asan-ubsan/engine/core/generated -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/entt-src/src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/tf-psa-crypto/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/tf-psa-crypto/drivers/builtin/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-build/tf-psa-crypto/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/tf-psa-crypto/drivers/everest/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/tf-psa-crypto/drivers/p256-m/p256-m -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/tf-psa-crypto/drivers/pqcp/include -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o engine/core/CMakeFiles/EngineCore.dir/src/crypto_runtime.cpp.o -c /source/engine/core/src/crypto_runtime.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/crypto_runtime.log",
+            "sha256": "68fecfb202a45301c14ac3aca94a05e925d7c4b87e3e1431ef567d1ce6e00144",
+            "bytes": 1010
+          }
+        },
+        {
+          "source": "engine/core/src/net_transport.cpp",
+          "source_sha256": "f844a8c02c4f2ec779bc024b593e7f8a9a2e96a7b3622038543a770ac9f17aad",
+          "object_sha256": "fd1ecffed55139538e01f0966d0424fd3330d4398886bc6726884c8a0e5d90dd",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DMBEDTLS_USER_CONFIG_FILE=\\\"/source/cmake/mbedtls_user_config.h\\\" -I/source/engine/core/../include -I/source/engine/core/include -I/work/build-05a-final-client/linux-asan-ubsan/engine/core/generated -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/entt-src/src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/tf-psa-crypto/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/tf-psa-crypto/drivers/builtin/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-build/tf-psa-crypto/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/tf-psa-crypto/drivers/everest/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/tf-psa-crypto/drivers/p256-m/p256-m -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/mbedtls-src/tf-psa-crypto/drivers/pqcp/include -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o engine/core/CMakeFiles/EngineCore.dir/src/net_transport.cpp.o -c /source/engine/core/src/net_transport.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/net_transport.log",
+            "sha256": "b6c1a33112f137744de800028db6c54beb2f697f78ed23098481486e286d588b",
+            "bytes": 1995
+          }
+        },
+        {
+          "source": "engine_tools/src/source_document.cpp",
+          "source_sha256": "3087e80943eef8d91a1130adc6ff7099421c6d16b74d5038789762bf49efa630",
+          "object_sha256": "a86ced319208396c3a732753e4db3aae90ff701816026d8ee9e7cefa20af0d55",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -I/source/engine_tools/include -I/source/engine/core/src -I/source/engine/core/../include -I/source/engine/core/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/json-src/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/cgltf-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/stb_image-src -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o engine_tools/CMakeFiles/EngineTools.dir/src/source_document.cpp.o -c /source/engine_tools/src/source_document.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/source_document.log",
+            "sha256": "cf19737411bb3b77748d1d5fee0bae365c01322eaae42fe626dea2635591adc3",
+            "bytes": 2099
+          }
+        },
+        {
+          "source": "engine_tools/src/project_files.cpp",
+          "source_sha256": "030ebdec3bb7ae5da2c72e0f9f884283e51d3d94b44ca51ed7b34ff4c7b37a7f",
+          "object_sha256": "66a5fad49f907a3c6e6ac56ad8e84c0b42317c6ee007a10a49685da26ada6294",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -I/source/engine_tools/include -I/source/engine/core/src -I/source/engine/core/../include -I/source/engine/core/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/json-src/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/cgltf-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/stb_image-src -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o engine_tools/CMakeFiles/EngineTools.dir/src/project_files.cpp.o -c /source/engine_tools/src/project_files.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/project_files.log",
+            "sha256": "bd948a6cc2a5e71a3f36379c82214b34a58e3c89df55c5288f10452caef152a0",
+            "bytes": 1367
+          }
+        },
+        {
+          "source": "engine_tools/src/project_files_native.cpp",
+          "source_sha256": "f21bf25b43dc971faaae1bb0e41b7faab276bc60c17261714f10afc1d4b41a10",
+          "object_sha256": "678d0203d4d2c35ebbfafa1fcc1ee2d2d486e3813be855a669881e01ce28657e",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -I/source/engine_tools/include -I/source/engine/core/src -I/source/engine/core/../include -I/source/engine/core/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/json-src/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/cgltf-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/stb_image-src -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o engine_tools/CMakeFiles/EngineTools.dir/src/project_files_native.cpp.o -c /source/engine_tools/src/project_files_native.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/project_files_native.log",
+            "sha256": "bb8eb9032a32d565850b216ec3988baefdb642a8834e290fb4b8bab20a5a62a8",
+            "bytes": 1591
+          }
+        },
+        {
+          "source": "engine_tools/src/asset_import.cpp",
+          "source_sha256": "ee98b477a616118df0d34d591ce50f9587cee314f867a3701b43419370dd7e26",
+          "object_sha256": "51aba2063ddb96f14f7d55c424ff77cb3077d1f3b2e6654a4b86611c7d502274",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -I/source/engine_tools/include -I/source/engine/core/src -I/source/engine/core/../include -I/source/engine/core/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/json-src/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/cgltf-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/stb_image-src -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o engine_tools/CMakeFiles/EngineTools.dir/src/asset_import.cpp.o -c /source/engine_tools/src/asset_import.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/asset_import.log",
+            "sha256": "3824a2fc857860f91f2af4c807150e65226c26b3879195bc19e8bfa09cd6c80d",
+            "bytes": 1943
+          }
+        },
+        {
+          "source": "engine_tools/src/asset_cache_format.cpp",
+          "source_sha256": "670897dd3bce334563bd1d285e431367b822e94410cd4f3227502a3a8ff7494f",
+          "object_sha256": "b173ca449df7cbcb524ee20f2b9e7f9b41fafb97e5ada76f8fcc59ddb14b7683",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -I/source/engine_tools/include -I/source/engine/core/src -I/source/engine/core/../include -I/source/engine/core/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/json-src/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/cgltf-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/stb_image-src -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o engine_tools/CMakeFiles/EngineTools.dir/src/asset_cache_format.cpp.o -c /source/engine_tools/src/asset_cache_format.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/asset_cache_format.log",
+            "sha256": "ccc28fcb99ca6feeaafe53d2205c743f77a5f97f71c286e07f6bf2602e77afb6",
+            "bytes": 1695
+          }
+        },
+        {
+          "source": "engine_tools/src/feature_world.cpp",
+          "source_sha256": "c35e6820e5227fd5db5cec72f5a5f373c22519bf3eccec422b73c7b10cb7cf03",
+          "object_sha256": "23319473929f6ff3ac814cad2274835263c50225ccd59cfee952b4e39d737c80",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -I/source/engine_tools/include -I/source/engine/core/src -I/source/engine/core/../include -I/source/engine/core/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/json-src/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/cgltf-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/stb_image-src -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o engine_tools/CMakeFiles/EngineTools.dir/src/feature_world.cpp.o -c /source/engine_tools/src/feature_world.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/feature_world.log",
+            "sha256": "eecdfafde10d68435f324502cf5a3808c97046ceb84ae157b2d157ec017f34ff",
+            "bytes": 2105
+          }
+        },
+        {
+          "source": "tests/core_digest_tests.cpp",
+          "source_sha256": "cbceba3adbbc4abe481bc9c0fc593b4fed530cea38959a3eb93d48e28470fd77",
+          "object_sha256": "3c8921dd50363bdd36fed926209f618767cb9be9615919aacec8ee26d8a2297e",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DSHARK_EXPECTED_VERSION=\\\"0.1.0\\\" -DSHARK_INJECT_TEST_FAILURE=0 -DSHARK_NETWORK_FIXTURE_DIRECTORY=\\\"/source/tests/fixtures/network\\\" -I/source/engine/core/src -I/source/engine/client/src -I/source/engine/core/../include -I/source/engine/core/include -I/source/engine/client/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/catch2-src/src/catch2/.. -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/catch2-build/generated-includes -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o tests/CMakeFiles/Tests.dir/core_digest_tests.cpp.o -c /source/tests/core_digest_tests.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/core_digest_tests.log",
+            "sha256": "0af782acc771e87f96bea921b073da14956218da24fa05a9d81a8351a4556829",
+            "bytes": 1691
+          }
+        },
+        {
+          "source": "tests/asset_import_tests.cpp",
+          "source_sha256": "7f5b2e101221450c650c9226d3c174a82d776206819eb36442c6c0f8800d397a",
+          "object_sha256": "0ef6f473d0f378975f56949bdd74c73a1b5b0f3c05ff4fa488206a98bfc48808",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -I/source/engine_tools/src -I/source/engine_tools/include -I/source/engine/core/../include -I/source/engine/core/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/catch2-src/src/catch2/.. -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/catch2-build/generated-includes -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o tests/CMakeFiles/AssetImportTests.dir/asset_import_tests.cpp.o -c /source/tests/asset_import_tests.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/asset_import_tests.log",
+            "sha256": "0421066b436842db56745bd803d06e7661dc4abb7817fdf3057027571201c90f",
+            "bytes": 2064
+          }
+        },
+        {
+          "source": "tests/asset_import_process.cpp",
+          "source_sha256": "06ff14455d19a5898a494dcbb8233967f196577136dcccf0fd57367d1a2660ae",
+          "object_sha256": "61d0597fcf70e94c8d8513d0d46aa2ad8c92bff1e01da2a8a3d1409fbf40bec0",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -I/source/engine_tools/src -I/source/engine_tools/include -I/source/engine/core/../include -I/source/engine/core/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o tests/CMakeFiles/AssetImportProcess.dir/asset_import_process.cpp.o -c /source/tests/asset_import_process.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/asset_import_process.log",
+            "sha256": "77f33e59e4d46bbe747d2c320f53d326f62fe753bd82b2b6b914cd81d4375ecc",
+            "bytes": 1886
+          }
+        },
+        {
+          "source": "tests/asset_import_jobs_tests.cpp",
+          "source_sha256": "61e1cfbbc3c34ac0ca17a5192bc6b7f269b89f0be6adf81f3ed92e9391dacd36",
+          "object_sha256": "0b037967794f66dd847d5ba171488541c48ca142a8fc14ec394ebde6c6ad3419",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -I/source/engine_tools/src -I/source/engine_tools/include -I/source/engine/core/../include -I/source/engine/core/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/catch2-src/src/catch2/.. -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/catch2-build/generated-includes -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o tests/CMakeFiles/AssetImportJobsTests.dir/asset_import_jobs_tests.cpp.o -c /source/tests/asset_import_jobs_tests.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/asset_import_jobs_tests.log",
+            "sha256": "b9013ba10892684df5f4d59715ff3284e529b7c324f7f0985c7450132748dfe7",
+            "bytes": 2010
+          }
+        },
+        {
+          "source": "engine_tools/src/gltf_source.cpp",
+          "source_sha256": "d5bf028c7a07c6893c30b32aa1de4566efb682027c0b99e6fd4847f10ae95202",
+          "object_sha256": "c08309c11e2b3793607ed953606a9bd9b16712adb6cbfa50799a8ca68f1b0734",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -I/source/engine_tools/include -I/source/engine/core/src -I/source/engine/core/../include -I/source/engine/core/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/json-src/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/cgltf-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/stb_image-src -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o engine_tools/CMakeFiles/EngineTools.dir/src/gltf_source.cpp.o -c /source/engine_tools/src/gltf_source.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/gltf_source.log",
+            "sha256": "ae1d8d09e3a7ba6b3deb54bb0a4469a1233d57c07d4fb327f306cb138d791bbe",
+            "bytes": 2178
+          }
+        },
+        {
+          "source": "tests/gltf_source_tests.cpp",
+          "source_sha256": "37ba00b56417f15114cb49eb254aed5d5c17cdce54fc772edc8ddf609ac94a6e",
+          "object_sha256": "36faa95892e6a6452a320d90176dc433218726c3be15fa5c492b56c632a1c289",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DSHARK_GLTF_FIXTURE_DIRECTORY=\\\"/source/tests/fixtures/gltf_source\\\" -I/source/engine_tools/src -I/source/engine_tools/include -I/source/engine/core/../include -I/source/engine/core/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/catch2-src/src/catch2/.. -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/catch2-build/generated-includes -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o tests/CMakeFiles/GltfSourceTests.dir/gltf_source_tests.cpp.o -c /source/tests/gltf_source_tests.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/gltf_source_tests.log",
+            "sha256": "abc38b8dd86f487d7cf4263bb4d482f43ce50cf188734a28918e733ca4e18ed4",
+            "bytes": 1890
+          }
+        },
+        {
+          "source": "tests/gltf_geometry_tests.cpp",
+          "source_sha256": "c06575989847405e883f6ebf5d7f06d106ad2cd78894c3f325d7b692f23c3c1b",
+          "object_sha256": "aa76c62091f67ab2c2cb42e2c0c1e8080a1c3626c872524d453af1e4665ef2ee",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DSHARK_GLTF_GEOMETRY_FIXTURE_DIRECTORY=\\\"/source/tests/fixtures/gltf_geometry\\\" -I/source/engine_tools/src -I/source/engine_tools/include -I/source/engine/core/../include -I/source/engine/core/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/catch2-src/src/catch2/.. -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/catch2-build/generated-includes -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o tests/CMakeFiles/GltfGeometryTests.dir/gltf_geometry_tests.cpp.o -c /source/tests/gltf_geometry_tests.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/gltf_geometry_tests.log",
+            "sha256": "dd9c58eb0ade3064b8698aaeff3d629db0163922df6d9db42eab397585bb984b",
+            "bytes": 1937
+          }
+        },
+        {
+          "source": "engine_tools/src/gltf_image_decoder.cpp",
+          "source_sha256": "13efc3d3eef6a71f13833a94ea97e0e5913564fe45c8713e9c6b1db97e806eef",
+          "object_sha256": "390725442d86b695d81ccb9487ea17bd64b2322a57aeec89bbccc961434542b6",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DJSON_USE_IMPLICIT_CONVERSIONS=0 -DJSON_USE_LEGACY_DISCARDED_VALUE_COMPARISON=0 -I/source/engine_tools/include -I/source/engine/core/src -I/source/engine/core/../include -I/source/engine/core/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/json-src/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/cgltf-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/stb_image-src -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o engine_tools/CMakeFiles/EngineTools.dir/src/gltf_image_decoder.cpp.o -c /source/engine_tools/src/gltf_image_decoder.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/gltf_image_decoder.log",
+            "sha256": "5cb98b226e0220f3e12793ea7380224b02dccde500d7a3812906f04d07fc2cca",
+            "bytes": 1975
+          }
+        },
+        {
+          "source": "tests/gltf_texture_tests.cpp",
+          "source_sha256": "054b76acd1eb122e5c289a26727df96ecdf0d705892bfff92e8d5892e6c4a18f",
+          "object_sha256": "bf46b47a7700625e1042924ad1f4a2ea8725e692a3e91f663c6a34ff6c345aef",
+          "compiler_command": "/usr/bin/clang++-18 -DGLM_FORCE_CTOR_INIT -DGLM_FORCE_DEPTH_ZERO_TO_ONE -DGLM_FORCE_EXPLICIT_CTOR -DGLM_FORCE_PURE -DGLM_FORCE_RADIANS -DSHARK_GLTF_TEXTURE_FIXTURE_DIRECTORY=\\\"/source/tests/fixtures/gltf_textures\\\" -I/source/engine_tools/src -I/source/engine_tools/include -I/source/engine/core/../include -I/source/engine/core/include -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/glm-src -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/catch2-src/src/catch2/.. -isystem /work/build-05a-final-client/linux-asan-ubsan/_deps/catch2-build/generated-includes -g -std=c++20 -Wall -Wextra -Wpedantic -Wconversion -Wsign-conversion -Werror -fsanitize=address,undefined -fno-omit-frame-pointer -o tests/CMakeFiles/GltfTextureTests.dir/gltf_texture_tests.cpp.o -c /source/tests/gltf_texture_tests.cpp",
+          "symbols": {
+            "path": "out/12c-work/wsl/sanitizer-audit/gltf_texture_tests.log",
+            "sha256": "1390b425e41e3e9af402d92b62996af303ef576874a96050d3d60e0d1cf167b6",
+            "bytes": 1937
+          }
+        }
+      ]
+    }
+  ],
+  "asynchronous_interruption": [
+    {
+      "profile": "windows-debug",
+      "checks": 113,
+      "children": 39,
+      "phases": [
+        "running",
+        "ready",
+        "staged",
+        "written",
+        "flushed",
+        "before_publish",
+        "published"
+      ],
+      "receipt": {
+        "path": "out/12c-work/windows-debug/asset-jobs-process.json",
+        "sha256": "e9d74e417dbda3a0be1943cb612d1c6d4cf2a5103494c014ddfe4cfad80ebae1",
+        "bytes": 34736
+      }
+    },
+    {
+      "profile": "windows-release",
+      "checks": 113,
+      "children": 39,
+      "phases": [
+        "running",
+        "ready",
+        "staged",
+        "written",
+        "flushed",
+        "before_publish",
+        "published"
+      ],
+      "receipt": {
+        "path": "out/12c-work/windows-release/asset-jobs-process.json",
+        "sha256": "2c74a63cdf91d23fc7f2ae75e1926a14d67832a0e03fca309440c5ac9bb593dd",
+        "bytes": 34736
+      }
+    },
+    {
+      "profile": "windows-asan",
+      "checks": 113,
+      "children": 39,
+      "phases": [
+        "running",
+        "ready",
+        "staged",
+        "written",
+        "flushed",
+        "before_publish",
+        "published"
+      ],
+      "receipt": {
+        "path": "out/12c-work/windows-asan/asset-jobs-process.json",
+        "sha256": "a84914d1c4f966a0a43758311603dc2c4d48f26399c80f544987eb43f649184b",
+        "bytes": 34736
+      }
+    },
+    {
+      "profile": "linux-debug",
+      "checks": 113,
+      "children": 39,
+      "phases": [
+        "running",
+        "ready",
+        "staged",
+        "written",
+        "flushed",
+        "before_publish",
+        "published"
+      ],
+      "receipt": {
+        "path": "out/12c-work/wsl/linux-debug/asset-jobs-process.json",
+        "sha256": "811feeaaf3d66ffbaeb184a8069e3dce366f393d8492f9ceca47d95dbaae1cdc",
+        "bytes": 34029
+      }
+    },
+    {
+      "profile": "linux-asan-ubsan",
+      "checks": 113,
+      "children": 39,
+      "phases": [
+        "running",
+        "ready",
+        "staged",
+        "written",
+        "flushed",
+        "before_publish",
+        "published"
+      ],
+      "receipt": {
+        "path": "out/12c-work/wsl/linux-asan-ubsan/asset-jobs-process.json",
+        "sha256": "b77e103f80a501c05d936a71e5ef0c782cf3223be28098aaccbaf79882611253",
+        "bytes": 34029
+      }
+    },
+    {
+      "profile": "windows-tools-debug",
+      "checks": 113,
+      "children": 39,
+      "phases": [
+        "running",
+        "ready",
+        "staged",
+        "written",
+        "flushed",
+        "before_publish",
+        "published"
+      ],
+      "receipt": {
+        "path": "out/12c-work/tools-debug/asset-jobs-process.json",
+        "sha256": "f9395792f44a652d8bce7d959bb99368bfc4fd16030c31a86f596549ff6ebe78",
+        "bytes": 34736
+      }
+    },
+    {
+      "profile": "linux-tools-debug",
+      "checks": 113,
+      "children": 39,
+      "phases": [
+        "running",
+        "ready",
+        "staged",
+        "written",
+        "flushed",
+        "before_publish",
+        "published"
+      ],
+      "receipt": {
+        "path": "out/12c-work/wsl/tools-debug/asset-jobs-process.json",
+        "sha256": "ef47c823f6b6ce732f7c65b5c9ac9b476644387d7f479c0ead7f49718da24eb9",
+        "bytes": 34029
+      }
+    }
+  ],
+  "cross_profile_reproducibility": {
+    "synchronous": {
+      "status": "PASS",
+      "snapshots": 35,
+      "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+      "key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0",
+      "bytes": 1960
+    },
+    "asynchronous": {
+      "status": "PASS",
+      "snapshots": 49,
+      "sha256": "e16c87d8912a5d60da6b1366bb3c7a61b3176b21d68d0d165b00efcb126168ca",
+      "key": "abe7e3b0a8ccc28ba91583d4ae62c894ef856e4afab2ffb621fa4e88d8d5beaf",
+      "dependency_key": "ae4d9e23858ac8b3d63d265169ff5bee5f1e59087f37aa663a67e42002fdd419",
+      "bytes": 4079
+    },
+    "note": "Comparisons are within each fixture; synchronous and asynchronous closures differ."
+  },
+  "packages": {
+    "native_audit": {
+      "path": "out/12c-work/native-audit/summary.json",
+      "sha256": "d1096cf249e20b7a43a890945b75f3e95352c9f6a0e5481c6f7efe9a999f8674",
+      "bytes": 3577
+    },
+    "runtime_manifest": {
+      "path": "out/12c-work/native-audit/runtime-package-manifest.json",
+      "sha256": "0d034b3277456391a2fdf10a35645772f8ff48f84719292df7297c27fca12e71",
+      "bytes": 13026
+    },
+    "runtime_files": 35,
+    "relocated_actual_child_tokens": [
+      {
+        "path": "out/12c-work/native-audit/relocated-version-security.json",
+        "sha256": "3addf8c0a1cab0d9a7f808755ddd6abc27fcc66d6e90fc73419279011bba8bbb",
+        "bytes": 676
+      },
+      {
+        "path": "out/12c-work/native-audit/relocated-help-security.json",
+        "sha256": "c1520e55fee3e6e89a82cd31ac0827e3dfadc6d19c41bae0416710ff9c217504",
+        "bytes": 677
+      }
+    ],
+    "shader_manifest": {
+      "path": "out/12c-work/shaders/shader-manifest.json",
+      "sha256": "1813e080c1046b2a2bae1b9d9fef52c1a03da6bd6b33c05e9e0d74c88c01b9a9",
+      "bytes": 2261
+    },
+    "validation_tools": {
+      "path": "out/12c-work/validation-tools-pinned/summary.json",
+      "sha256": "cd7f597b4f0adf28a5c9b079cf0086d7924cddf85badd90e36313b7c594b6703",
+      "bytes": 14739
+    },
+    "validation_tools_scope": "Offline current-lock validation of the existing canonical tool build; no GPU execution",
+    "native_audit_logs": [
+      {
+        "path": "out/12c-work/native-audit/public-examples.log",
+        "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        "bytes": 0
+      },
+      {
+        "path": "out/12c-work/native-audit/runtime-only-configure.log",
+        "sha256": "b6bfad900c990c5e93c6b77e2bfc122effd72a425d72fbe8301020de64e75d3f",
+        "bytes": 1090
+      },
+      {
+        "path": "out/12c-work/native-audit/runtime-only.log",
+        "sha256": "1b750e127cab621afae37fcb3f54968e870a8fe45f39efdf1814371803c2a709",
+        "bytes": 2140
+      },
+      {
+        "path": "out/12c-work/native-audit/server-only-configure.log",
+        "sha256": "d313d2a5cd4d49d743b376cd7679abacaa644bf2312a4d50c9cff6ab4669e70a",
+        "bytes": 987
+      },
+      {
+        "path": "out/12c-work/native-audit/server-only.log",
+        "sha256": "63692277c5c9733817f8ccf39d899061f11b3f883ad54b582371ff3324bf48ef",
+        "bytes": 1096
+      },
+      {
+        "path": "out/12c-work/native-audit/runtime-package.log",
+        "sha256": "b34752ab437208056f2e38ba9b52eacd5e6d5be255ca1ea247ac9d5d51e803d8",
+        "bytes": 286
+      },
+      {
+        "path": "out/12c-work/native-audit/format.log",
+        "sha256": "89d1a5fdd6388e7c144e8cb6bdb9b48ec63abac04cf17bc631de9ef1c0c019ef",
+        "bytes": 34
+      },
+      {
+        "path": "out/12c-work/native-audit/contract.log",
+        "sha256": "59392750c10ef9906107808a75f17f24f3363469640f6e60726543a0f0c2fc1d",
+        "bytes": 441
+      },
+      {
+        "path": "out/12c-work/native-audit/repository.log",
+        "sha256": "e39fe4cb3f05005fba55121444234bfb030f3c21b6783a9eabef6369957a58a4",
+        "bytes": 235
+      }
+    ],
+    "wsl_protected": {
+      "path": "out/12c-work/wsl/protected/summary.json",
+      "sha256": "eb9ca2313a263a128b8d90334e12553df91c788537fba967852900ae7095db71",
+      "bytes": 1835
+    },
+    "server_closure": {
+      "path": "out/12c-work/wsl/protected/server-closure.json",
+      "sha256": "7db8af2a93774b18e6ba0ebe0d45323ed7467e9914c4d85c82ea06d1d0c204be",
+      "bytes": 2975848
+    },
+    "server_files": 12,
+    "sdk_free": {
+      "path": "out/12c-work/wsl/sdk-free.json",
+      "sha256": "a83717a6ca07712221e071afa1af876e587a5428603ee2e380367198628d354c",
+      "bytes": 122
+    },
+    "retention": {
+      "path": "out/12c-work/server-package-retention.json",
+      "sha256": "7fdfb27d5e8b3e31d7c6ac47e8b40cbbee6f54135a851aaf1cc50e7be2bd388b",
+      "bytes": 4039
+    },
+    "expanded_deployment_removed": true
+  },
+  "drivers": {
+    "native": {
+      "path": "out/12c-work/native-summary.json",
+      "sha256": "7d463f1eea4595e1a798d8909f34f5ac07185f2387d7bbd0865d8f5292aab606",
+      "bytes": 2596
+    },
+    "wsl": {
+      "path": "out/12c-work/wsl/summary.json",
+      "sha256": "d28422231bd647cd1a4e65bd0e2d94156999a875a75ce76a384a477b0bdce591",
+      "bytes": 4189
+    }
+  },
+  "qualification_helpers": [
+    {
+      "path": "out/12c-work/check_helper_guards.py",
+      "sha256": "71692fd0def5df618807c6a8e737533052b304a50016abfef3b2df195403a18c",
+      "bytes": 4549
+    },
+    {
+      "path": "out/12c-work/close_receipt.py",
+      "sha256": "23da1c8a6b8095454afba9d512bf69f0bd50b93b113b3da0048eb2d8aebda8f0",
+      "bytes": 36240
+    },
+    {
+      "path": "out/12c-work/close_status.py",
+      "sha256": "98d91c7a09c974977b63371e812fa328c6a2329bd7ca5fbb1bdfdc0d3489cfc5",
+      "bytes": 31220
+    },
+    {
+      "path": "out/12c-work/contract-final.sh",
+      "sha256": "cada9ac1c15bf0db9aa851de31027cf0454f7f10d95a4d19c437d8d8913dc3cd",
+      "bytes": 1751
+    },
+    {
+      "path": "out/12c-work/contract_final.py",
+      "sha256": "6f7c4171b8f73625c667f2693f442ce66b2955ea5a529f8aca000d2005301ed2",
+      "bytes": 963
+    },
+    {
+      "path": "out/12c-work/create_freeze.py",
+      "sha256": "028de348ee071f2c4a03b3471b2f688d254f75a8c58a0b6249be67f2201c2e8f",
+      "bytes": 4254
+    },
+    {
+      "path": "out/12c-work/final_integrity.py",
+      "sha256": "7fa84f24420a1aae364b3687818216a7b63bdf8dcb68b2eb696e13155222e930",
+      "bytes": 4132
+    },
+    {
+      "path": "out/12c-work/final_quality.py",
+      "sha256": "1d2d924e22e021ddf01a4074df95cf7db5e06d368e10e1c26d0f9cd7449e1d2f",
+      "bytes": 994
+    },
+    {
+      "path": "out/12c-work/native.py",
+      "sha256": "7ff019c2c193e219e7b14b8a0f33254cee5935158fab884addf30ae9d5066e10",
+      "bytes": 2241
+    },
+    {
+      "path": "out/12c-work/native_audit.py",
+      "sha256": "1210efd1a15b2e798c3b8a1773cd42217ae24dda9751af70ea785ff1892636ba",
+      "bytes": 4383
+    },
+    {
+      "path": "out/12c-work/preflight-wsl.sh",
+      "sha256": "6d552b3bc7bd068ba89ebac9dfbe329b00e88ed3ed1a915d6c0eb32dc0cedd2f",
+      "bytes": 1749
+    },
+    {
+      "path": "out/12c-work/preflight_native.py",
+      "sha256": "80082ff71e2a132e7402fa8f463e2bf2e4a28f18b5493398f1ffb2c6a10d544e",
+      "bytes": 1827
+    },
+    {
+      "path": "out/12c-work/preflight_wsl.py",
+      "sha256": "21fca5e67c7782f426ffe32fef2f1fcc5682d9cd1f41e6e273f4eae41ed47291",
+      "bytes": 1829
+    },
+    {
+      "path": "out/12c-work/public-api.py",
+      "sha256": "2b1dd3788f8dfec3e65fff3ae1770ca2e466573ada714cf9a47385bf0fdb72a5",
+      "bytes": 6558
+    },
+    {
+      "path": "out/12c-work/qualify.py",
+      "sha256": "a8159335ce33261e72987a328646f339d390fde4d8e71e183e238a270e9a79df",
+      "bytes": 20573
+    },
+    {
+      "path": "out/12c-work/retain_package.py",
+      "sha256": "112f9e9bce665e57654da28c71864c7ec1d4fd5047febf15e62f7e6c7aeeca31",
+      "bytes": 4905
+    },
+    {
+      "path": "out/12c-work/sanitizer_audit.py",
+      "sha256": "e83a7197555e091d6d6cafbd1182299c093bad0ec35a47ede3c20d1d44a437d7",
+      "bytes": 3773
+    },
+    {
+      "path": "out/12c-work/wsl.py",
+      "sha256": "e367921d8ce00cb16fecfa3c013149b3e1c5d4b3f11911e0923d4b20cea2ce8a",
+      "bytes": 2302
+    },
+    {
+      "path": "out/12c-work/wsl.sh",
+      "sha256": "008c2102c4ff451669fe5a0b0e7eab4cb764b27ffea164ab95b38b4c427e7f26",
+      "bytes": 3473
+    },
+    {
+      "path": "out/12c-work/wsl_protected.py",
+      "sha256": "2ce006a0258addfe930dd057cad9945ec915aa35d82d55add2b2375705af0e07",
+      "bytes": 1929
+    }
+  ],
+  "not_run": [
+    "Full nonDebug client inventories: evidence is complete Tools selections, not whole-profile claims",
+    "New GPU qualification: conversion is pureCPU; scene renderer13 and material rendering26 remain later",
+    "Material/cache integration and complete optional fallback12d, fullREQ12 gate12e, terminal/editor adapters15/16, final cooked output31 and animationM06"
+  ],
+  "next": "12d, materials and asset integration"
+}

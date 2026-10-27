@@ -278,8 +278,8 @@ is pure over explicit byte snapshots; no raw-file bypass or cache publication.
 Keep aggregate accessor/resolved-byte budgets, pre-normalization URI validation,
 effective sparse-index checks and all allocator sweeps. Only the parser source
 uses private MSVC `/EHc-` after `/EHsc`; its bounded arena aborts incomplete parses
-inside the owned Result boundary. Full optional fallback/material/image behavior
-remains assigned to 12c/12d.
+inside the owned Result boundary. Complete optional fallback and material/cache
+integration remain assigned to 12d.
 **12b, static glTF geometry and hierarchy, is complete under current-machine scope.**
 Follow [ADR 0029](docs/architecture/0029-bounded-gltf-geometry.md), the
 [geometry contract](docs/gltf-geometry.md), [handoff](docs/handoffs/12b-gltf-geometry.md)
@@ -296,8 +296,24 @@ effective sparse data; meshes are shared across instances. Retain precharged
 vertex/index/output/work bounds, Core TRS/inverse validation, world shear and
 instance mirror metadata. Generated tangents use the documented per-triangle
 basis. No file/cache/Scene publication or new runtime dependency is introduced.
-Full REQ-12 remains NOT_RUN pending 12c-12e.
-**Next: 12c, images and textures.**
+**12c, images and textures, is complete under current-machine scope.**
+Follow [ADR 0030](docs/architecture/0030-bounded-gltf-textures.md), the
+[texture contract](docs/gltf-textures.md), [decoder review](docs/dependencies/stb-image.md),
+[handoff](docs/handoffs/12c-gltf-textures.md) and
+[receipt](docs/coverage/evidence/12c-gltf-textures.json): 507 fresh passing outcomes
+(231 full client Debug, 140 Tools selections, 136 fresh full Server), 48 public-
+example compiles, 36 actual sanitizer objects and protected packages. Standalone
+Tools 56 is included in 140. Preserve gltf-textures (90 seconds, seed 1337),
+43 cases/9,022 assertions, image-dependencies (60 seconds), source 41/1,794,
+geometry 45/988 and every earlier case/limit. Twelve native FeatureWorld cases
+retain 30 process checks, 43 CPU surfaces and one external GPU command. The private
+memory-only pinned decoder returns RGBA8/16LE; source ownership, independent
+decode/output/work/allocation bounds, complete NPOT mips, exact linear data/alpha,
+sRGB/normal semantics and per-use samplers remain required. No file/cache/Scene
+publication or new runtime dependency is introduced. Complete materials, typed
+external-resource identity/cache integration and usable optional fallback remain
+12d. Full REQ-12 remains NOT_RUN pending 12d-12e.
+**Next: 12d, materials and asset integration.**
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read

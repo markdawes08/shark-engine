@@ -51,7 +51,15 @@ compiles, 32 actual sanitizer objects and protected packages. `asset.gltf.conver
 connects 45 cases/988 assertions to the eleventh native FeatureWorld case, with
 29 process checks, 42 CPU surfaces and one external GPU command. Unchanged
 protected inputs explicitly inherit 12a's 136 full Server outcomes separately.
-Full REQ-12 remains NOT_RUN pending 12c-12e. Next: 12c.
+**12c is now PASS** in its [handoff](../handoffs/12c-gltf-textures.md) and
+[receipt](evidence/12c-gltf-textures.json): 507 fresh outcomes (231 full client
+Debug, 140 Tools selections, 136 fresh full Server), 48 public-example compiles,
+36 actual sanitizer objects and protected packages. Standalone Tools 56 is a
+subset of 140. `asset.gltf.textures` connects 43 cases/9,022 assertions to the
+twelfth native FeatureWorld case, with 30 process checks, 43 CPU surfaces and
+one external GPU command. Source 41/1,794, geometry 45/988 and all earlier
+workloads/limits remain required. Full REQ-12 remains NOT_RUN pending 12d-12e.
+Next: 12d, materials and asset integration.
 
 [requirements.json](requirements.json) is the version-3 requirement/coverage manifest for
 Shark. Each requirement has a unique ID, one owning roadmap assignment, observable

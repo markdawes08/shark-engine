@@ -135,7 +135,7 @@ reproducibility and protected packages under the
 [five checkpoints](../roadmap/gltf-plan.md); 12a is PASS in its
 [handoff](../handoffs/12a-gltf-foundation.md), with 486 selected outcomes,
 42 public-example compiles, 30 sanitizer objects and protected packages.
-Full REQ-12 remains NOT_RUN; the completed 12b checkpoint below continues with 12c.
+Full REQ-12 remains NOT_RUN; completed 12b/12c checkpoints below continue with 12d.
 
 | Record | Decision |
 | --- | --- |
@@ -168,12 +168,18 @@ Full REQ-12 remains NOT_RUN; the completed 12b checkpoint below continues with 1
 | [0027](0027-bounded-asset-jobs.md) | Bounded private import worker, retained jobs, cancellation and owner publication |
 | [0028](0028-bounded-gltf-sources.md) | Bounded pure glTF source snapshots, references, parser ownership and subsequent conversion contracts |
 | [0029](0029-bounded-gltf-geometry.md) | Bounded CPU static geometry, shared mesh hierarchy, transform validation and generated attributes |
+| [0030](0030-bounded-gltf-textures.md) | Bounded PNG/JPEG decoding, usage-specific texture mips and sampler preservation |
 
 12b qualifies [bounded static geometry and hierarchy](../gltf-geometry.md)
 under [ADR 0029](0029-bounded-gltf-geometry.md). Its
 [handoff](../handoffs/12b-gltf-geometry.md) records 357 fresh outcomes, 45 public
-examples, 32 actual sanitizer objects and protected packages. Full REQ-12 remains
-NOT_RUN pending 12c-12e; next is 12c images and textures.
+examples, 32 actual sanitizer objects and protected packages.
+12c qualifies [bounded images and semantic texture mips](../gltf-textures.md)
+under [ADR 0030](0030-bounded-gltf-textures.md), retaining the same pure source
+owner and private decoder boundary. Its [handoff](../handoffs/12c-gltf-textures.md)
+records 507 fresh outcomes, 48 public-example compiles, 36 actual sanitizer
+objects and protected packages, including two fresh full Server suites.
+Full REQ-12 remains NOT_RUN pending 12d-12e; next is 12d materials and asset integration.
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

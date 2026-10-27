@@ -60,8 +60,8 @@ CTest outcomes, 39 public-example compiles, 26 actual sanitizer objects and
 protected packages. One saved reference survives moves, owner edits during work,
 stale completion, cancellation, retry and reopen; actual async process interruption
 preserves complete cache snapshots and explicit recovery. Follow the
-[completed asset checkpoints](docs/roadmap/asset-plan.md). Source decoders remain
-planned; **next is assignment 12, glTF import**.
+[completed asset checkpoints](docs/roadmap/asset-plan.md). Source decoding and
+conversion follow the [glTF checkpoints](docs/roadmap/gltf-plan.md) below.
 
 **12a is complete under current-machine scope.** The shared CPU
 [glTF source inspector](docs/gltf-source.md) validates explicit byte snapshots,
@@ -72,8 +72,14 @@ references and bounds with a private pinned parser. Its
 returns validated sparse geometry, triangle topology, transforms, shared instances
 and bounds. Its [handoff](docs/handoffs/12b-gltf-geometry.md) records 357 fresh
 passing test outcomes, 45 public-example compiles, 32 actual sanitizer objects and
-protected packages. The [five checkpoints](docs/roadmap/gltf-plan.md) continue
-with **12c images and textures**; full REQ-12 remains NOT_RUN pending 12c-12e.
+protected packages. **12c is also complete:** shared CPU
+[image/texture conversion](docs/gltf-textures.md) returns bounded RGBA8/16 pixels,
+usage-specific color/data/normal mip chains and per-use samplers through the same
+captured-source owner. Its [handoff](docs/handoffs/12c-gltf-textures.md) records
+507 fresh outcomes, 48 public-example compiles, 36 actual sanitizer objects and
+protected packages, including 136 fresh full Server outcomes. The
+[five checkpoints](docs/roadmap/gltf-plan.md) continue with **12d materials and
+asset integration**; full REQ-12 remains NOT_RUN pending 12d-12e.
 
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
 **04c and full assignment 04 are complete under the current-machine scope.**

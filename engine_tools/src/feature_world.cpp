@@ -5,6 +5,7 @@
 #include "shark/tools/asset_import.hpp"
 #include "shark/tools/gltf_geometry.hpp"
 #include "shark/tools/gltf_source.hpp"
+#include "shark/tools/gltf_textures.hpp"
 #include "shark/tools/project_files.hpp"
 
 #include <algorithm>
@@ -21,11 +22,11 @@
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 11> case_ids{
-    "featureworld.components",   "featureworld.commands",     "featureworld.batches-history",
-    "featureworld.retries",      "featureworld.persistence",  "featureworld.asset-identity",
-    "featureworld.asset-import", "featureworld.asset-jobs",   "featureworld.asset-pipeline",
-    "featureworld.gltf-source",  "featureworld.gltf-geometry"};
+constexpr std::array<std::string_view, 12> case_ids{
+    "featureworld.components",   "featureworld.commands",      "featureworld.batches-history",
+    "featureworld.retries",      "featureworld.persistence",   "featureworld.asset-identity",
+    "featureworld.asset-import", "featureworld.asset-jobs",    "featureworld.asset-pipeline",
+    "featureworld.gltf-source",  "featureworld.gltf-geometry", "featureworld.gltf-textures"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -1272,6 +1273,132 @@ void gltf_geometry(SceneRunContext& context) {
             "Cancelled geometry conversion returned success");
     unchanged(context, before);
 }
+
+void gltf_textures(SceneRunContext& context) {
+    const auto before = take(context.owner().capture());
+    const auto source_path = take(ProjectPath::parse("models/textures.gltf"));
+    const auto buffer_path = take(ProjectPath::parse("sources/triangle.bin"));
+    const auto image_path = take(ProjectPath::parse("images/semantics.png"));
+    const auto image_asset = id<AssetId>('b');
+    const auto source_bytes = [](const std::string& text) {
+        return std::as_bytes(std::span{text.data(), text.size()});
+    };
+    constexpr std::array triangle_values{0.0F, 0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 1.0F,
+                                         0.0F, 0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 1.0F};
+    std::vector<std::byte> triangle;
+    for (const auto value : triangle_values) {
+        const auto bits = std::bit_cast<std::uint32_t>(value);
+        for (unsigned shift = 0; shift != 32; shift += 8)
+            triangle.push_back(static_cast<std::byte>((bits >> shift) & 0xffU));
+    }
+    // Original MIT-licensed Shark 2x1 RGBA8 PNG: transparent black then opaque white.
+    // Inline bytes keep this executable independent of test fixtures and paths.
+    constexpr std::array<unsigned char, 71> png{
+        0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a, 0x00, 0x00, 0x00, 0x0d, 0x49, 0x48, 0x44,
+        0x52, 0x00, 0x00, 0x00, 0x02, 0x00, 0x00, 0x00, 0x01, 0x08, 0x06, 0x00, 0x00, 0x00, 0xf4,
+        0x22, 0x7f, 0x8a, 0x00, 0x00, 0x00, 0x0e, 0x49, 0x44, 0x41, 0x54, 0x78, 0xda, 0x63, 0x60,
+        0x00, 0x82, 0xff, 0x40, 0x00, 0x00, 0x09, 0xff, 0x03, 0xfd, 0xcb, 0xeb, 0x0f, 0x61, 0x00,
+        0x00, 0x00, 0x00, 0x49, 0x45, 0x4e, 0x44, 0xae, 0x42, 0x60, 0x82};
+    const auto pixels = std::as_bytes(std::span{png});
+    const std::array resources{GltfExternalSource{buffer_path, id<AssetId>('a'), triangle},
+                               GltfExternalSource{image_path, image_asset, pixels}};
+    const std::string json =
+        R"({"asset":{"version":"2.0"},"scene":0,"scenes":[{"nodes":[0]}],"nodes":[{"mesh":0}],)"
+        R"("meshes":[{"primitives":[{"attributes":{"POSITION":0,"TEXCOORD_0":1},"material":0}]}],)"
+        R"("buffers":[{"byteLength":60,"uri":"../sources/triangle.bin"}],)"
+        R"("bufferViews":[{"buffer":0,"byteLength":36},{"buffer":0,"byteOffset":36,"byteLength":24}],)"
+        R"("accessors":[{"bufferView":0,"componentType":5126,"count":3,"type":"VEC3"},)"
+        R"({"bufferView":1,"componentType":5126,"count":3,"type":"VEC2"}],)"
+        R"("images":[{"uri":"../images/semantics.png"}],"textures":[{"source":0},{"source":0,"sampler":0}],)"
+        R"("samplers":[{"magFilter":9728,"minFilter":9984,"wrapS":33071,"wrapT":33648}],)"
+        R"("materials":[{"pbrMetallicRoughness":{"baseColorTexture":{"index":0},)"
+        R"("metallicRoughnessTexture":{"index":1}},"normalTexture":{"index":1},)"
+        R"("occlusionTexture":{"index":1},"emissiveTexture":{"index":0}}]})";
+    const auto converted =
+        take(convert_gltf_textures({source_path, source_bytes(json), resources}));
+    require(context, converted.selected_scene == 0 && converted.source.selected_scene == 0,
+            "Texture conversion changed selected scene identity");
+    require(context, converted.images.size() == 3 && converted.usages.size() == 5,
+            "One source image did not produce three shared semantic variants for five roles");
+    constexpr std::array semantics{GltfTextureSemantic::srgb_color,
+                                   GltfTextureSemantic::linear_data, GltfTextureSemantic::normal};
+    const std::vector<std::byte> expected_pixels{std::byte{0},   std::byte{0},   std::byte{0},
+                                                 std::byte{0},   std::byte{255}, std::byte{255},
+                                                 std::byte{255}, std::byte{255}};
+    const std::array expected_mips{
+        std::vector<std::byte>{std::byte{188}, std::byte{188}, std::byte{188}, std::byte{128}},
+        std::vector<std::byte>{std::byte{128}, std::byte{128}, std::byte{128}, std::byte{128}},
+        std::vector<std::byte>{std::byte{128}, std::byte{128}, std::byte{255}, std::byte{128}}};
+    for (std::size_t index = 0; index < semantics.size(); ++index) {
+        const auto& image = converted.images[index];
+        require(context,
+                image.source_image == 0 && image.semantic == semantics[index] &&
+                    image.component_bits == 8 && image.mips.size() == 2,
+                "Texture variant lost its source index, precision, semantic or full mip chain");
+        require(context,
+                image.mips[0] == GltfTextureMip{2, 1, expected_pixels} &&
+                    image.mips[1] == GltfTextureMip{1, 1, expected_mips[index]},
+                "Texture pixels differ from independent sRGB, linear, normal or alpha results");
+    }
+    constexpr std::array roles{GltfTextureRole::base_color, GltfTextureRole::metallic_roughness,
+                               GltfTextureRole::normal, GltfTextureRole::occlusion,
+                               GltfTextureRole::emissive};
+    constexpr std::array<std::size_t, 5> variants{0, 1, 2, 1, 0};
+    const GltfTextureSampler explicit_sampler{
+        GltfTextureFilter::nearest, GltfTextureFilter::nearest, GltfTextureMipFilter::nearest,
+        GltfTextureWrap::clamp_to_edge, GltfTextureWrap::mirrored_repeat};
+    for (std::size_t index = 0; index < roles.size(); ++index) {
+        const auto& usage = converted.usages[index];
+        const bool color = index == 0 || index == 4;
+        require(context,
+                usage.source_material == 0 && usage.role == roles[index] &&
+                    usage.source_texture == (color ? 0U : 1U) && usage.texcoord == 0 &&
+                    usage.image == variants[index],
+                "Texture usage lost material/role/UV correspondence or semantic sharing");
+        require(context, usage.sampler == (color ? GltfTextureSampler{} : explicit_sampler),
+                "Texture usage lost default filtering/repeat or explicit nearest/clamp/mirror");
+    }
+    const auto image =
+        std::find_if(converted.source.resources.begin(), converted.source.resources.end(),
+                     [](const auto& resource) { return resource.kind == GltfResourceKind::image; });
+    require(context,
+            image != converted.source.resources.end() && converted.source.resources.size() == 2,
+            "Texture conversion lost its captured external image mapping");
+    require(context,
+            image->index == 0 && image->storage == GltfResourceStorage::external &&
+                image->path == image_path && image->asset == image_asset &&
+                image->byte_count == 71 &&
+                image->digest.to_hex() ==
+                    "27f7e7462919f63872ab4ec74a1e532e39aacb4d00b5553d0203c6c21c964e02",
+            "Texture conversion lost persistent image identity or exact captured byte digest");
+    const auto repeated = take(convert_gltf_textures({source_path, source_bytes(json), resources}));
+    require(context,
+            repeated.images == converted.images && repeated.usages == converted.usages &&
+                repeated.selected_scene == converted.selected_scene,
+            "Repeated texture conversion changed pixels, sharing, samplers or scene identity");
+    const std::array missing_image{resources[0]};
+    const auto missing = convert_gltf_textures({source_path, source_bytes(json), missing_image});
+    require(context, !missing && missing.error().context.operation == "asset.gltf.textures",
+            "Missing texture image did not return its owned operation failure");
+    const std::array truncated{resources[0],
+                               GltfExternalSource{image_path, image_asset, pixels.first(70)}};
+    require(context, !convert_gltf_textures({source_path, source_bytes(json), truncated}),
+            "Texture conversion accepted a truncated captured PNG");
+    auto no_uv = json;
+    constexpr std::string_view uv_attribute = R"(,"TEXCOORD_0":1)";
+    no_uv.erase(no_uv.find(uv_attribute), uv_attribute.size());
+    require(context, !convert_gltf_textures({source_path, source_bytes(no_uv), resources}),
+            "Texture conversion accepted a material use without its referenced UV set");
+    require(context,
+            !convert_gltf_textures({source_path, source_bytes(json), resources}, {.scene = 1}),
+            "Texture conversion accepted an absent explicit scene");
+    std::stop_source stop;
+    stop.request_stop();
+    require(context,
+            !convert_gltf_textures({source_path, source_bytes(json), resources, stop.get_token()}),
+            "Cancelled texture conversion returned success");
+    unchanged(context, before);
+}
 } // namespace
 
 std::span<const std::string_view> feature_world_case_ids() noexcept {
@@ -1327,6 +1454,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 10:
                         gltf_geometry(context);
+                        break;
+                    case 11:
+                        gltf_textures(context);
                         break;
                     default:
                         break;
