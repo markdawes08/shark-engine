@@ -135,7 +135,7 @@ reproducibility and protected packages under the
 [five checkpoints](../roadmap/gltf-plan.md); 12a is PASS in its
 [handoff](../handoffs/12a-gltf-foundation.md), with 486 selected outcomes,
 42 public-example compiles, 30 sanitizer objects and protected packages.
-Full REQ-12 remains NOT_RUN pending 12b-12e. Next: 12b.
+Full REQ-12 remains NOT_RUN; the completed 12b checkpoint below continues with 12c.
 
 | Record | Decision |
 | --- | --- |
@@ -167,6 +167,13 @@ Full REQ-12 remains NOT_RUN pending 12b-12e. Next: 12b.
 | [0026](0026-development-asset-cache.md) | Dependency-keyed synchronous imports and atomic bounded development cache snapshots |
 | [0027](0027-bounded-asset-jobs.md) | Bounded private import worker, retained jobs, cancellation and owner publication |
 | [0028](0028-bounded-gltf-sources.md) | Bounded pure glTF source snapshots, references, parser ownership and subsequent conversion contracts |
+| [0029](0029-bounded-gltf-geometry.md) | Bounded CPU static geometry, shared mesh hierarchy, transform validation and generated attributes |
+
+12b qualifies [bounded static geometry and hierarchy](../gltf-geometry.md)
+under [ADR 0029](0029-bounded-gltf-geometry.md). Its
+[handoff](../handoffs/12b-gltf-geometry.md) records 357 fresh outcomes, 45 public
+examples, 32 actual sanitizer objects and protected packages. Full REQ-12 remains
+NOT_RUN pending 12c-12e; next is 12c images and textures.
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

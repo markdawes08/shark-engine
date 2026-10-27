@@ -3,11 +3,13 @@
 #include "shark/schema.hpp"
 #include "shark/tools/asset_catalog.hpp"
 #include "shark/tools/asset_import.hpp"
+#include "shark/tools/gltf_geometry.hpp"
 #include "shark/tools/gltf_source.hpp"
 #include "shark/tools/project_files.hpp"
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <chrono>
 #include <condition_variable>
 #include <fstream>
@@ -19,11 +21,11 @@
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 10> case_ids{
-    "featureworld.components",   "featureworld.commands",    "featureworld.batches-history",
-    "featureworld.retries",      "featureworld.persistence", "featureworld.asset-identity",
-    "featureworld.asset-import", "featureworld.asset-jobs",  "featureworld.asset-pipeline",
-    "featureworld.gltf-source"};
+constexpr std::array<std::string_view, 11> case_ids{
+    "featureworld.components",   "featureworld.commands",     "featureworld.batches-history",
+    "featureworld.retries",      "featureworld.persistence",  "featureworld.asset-identity",
+    "featureworld.asset-import", "featureworld.asset-jobs",   "featureworld.asset-pipeline",
+    "featureworld.gltf-source",  "featureworld.gltf-geometry"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -1128,6 +1130,148 @@ void gltf_source(SceneRunContext& context) {
             "Cancelled source inspection returned success");
     unchanged(context, before);
 }
+
+void gltf_geometry(SceneRunContext& context) {
+    const auto before = take(context.owner().capture());
+    const auto source_path = take(ProjectPath::parse("models/static.gltf"));
+    const auto resource_path = take(ProjectPath::parse("sources/triangle.bin"));
+    const auto resource_asset = id<AssetId>('a');
+    const auto source_bytes = [](const std::string& text) {
+        return std::as_bytes(std::span{text.data(), text.size()});
+    };
+    const auto position_bytes = [](std::span<const float> values) {
+        std::vector<std::byte> bytes;
+        for (const auto value : values) {
+            const auto bits = std::bit_cast<std::uint32_t>(value);
+            for (unsigned shift = 0; shift != 32; shift += 8)
+                bytes.push_back(static_cast<std::byte>((bits >> shift) & 0xffU));
+        }
+        return bytes;
+    };
+    constexpr std::array triangle_positions{0.0F, 0.0F, 0.0F, 1.0F, 0.0F, 0.0F, 0.0F, 1.0F, 0.0F};
+    const auto triangle = position_bytes(triangle_positions);
+    const std::array resources{GltfExternalSource{resource_path, resource_asset, triangle}};
+    const std::string json =
+        R"({"asset":{"version":"2.0"},"scene":0,"scenes":[{"nodes":[0]}],)"
+        R"("nodes":[{"name":"parent","mesh":0,"translation":[1,2,3],"children":[1]},)"
+        R"({"name":"mirrored","mesh":0,"translation":[4,0,0],"scale":[-2,3,1]}],)"
+        R"("meshes":[{"name":"shared triangle","primitives":[{"attributes":{"POSITION":0}}]}],)"
+        R"("buffers":[{"byteLength":36,"uri":"../sources/triangle.bin"}],)"
+        R"("bufferViews":[{"buffer":0,"byteLength":36}],)"
+        R"("accessors":[{"bufferView":0,"componentType":5126,"count":3,"type":"VEC3",)"
+        R"("min":[0,0,0],"max":[1,1,0]}]})";
+    const auto converted =
+        take(convert_gltf_geometry({source_path, source_bytes(json), resources}));
+    require(context, converted.selected_scene == 0 && converted.source.selected_scene == 0,
+            "Geometry conversion changed selected/default scene identity");
+    require(context,
+            converted.meshes.size() == 1 && converted.primitives.size() == 1 &&
+                converted.nodes.size() == 2 && converted.roots == std::vector<std::size_t>{0},
+            "Geometry conversion lost selected graph or duplicated a shared mesh");
+    const auto& mesh = converted.meshes.front();
+    const auto& primitive = converted.primitives.front();
+    require(context,
+            mesh.source_mesh == 0 && mesh.name == "shared triangle" &&
+                mesh.primitives == std::vector<std::size_t>{0} && primitive.source_mesh == 0 &&
+                primitive.source_primitive == 0 && !primitive.source_material,
+            "Geometry conversion confused source indices with dense references");
+    require(context,
+            primitive.vertices.size() == 3 &&
+                primitive.indices == std::vector<std::uint32_t>{0, 1, 2},
+            "Geometry conversion changed triangle topology or flat-normal splitting");
+    constexpr std::array expected_positions{
+        std::array{0.0F, 0.0F, 0.0F}, std::array{1.0F, 0.0F, 0.0F}, std::array{0.0F, 1.0F, 0.0F}};
+    for (std::size_t index = 0; index < expected_positions.size(); ++index) {
+        require(context,
+                primitive.vertices[index].position == expected_positions[index] &&
+                    primitive.vertices[index].normal == std::array{0.0F, 0.0F, 1.0F} &&
+                    primitive.vertices[index].color == std::array{1.0F, 1.0F, 1.0F, 1.0F},
+                "Geometry differs from independent triangle positions, normals or color defaults");
+    }
+    require(context,
+            primitive.generated_normals && !primitive.generated_tangents &&
+                !primitive.has_tangents && !primitive.has_texcoord0 && !primitive.has_texcoord1 &&
+                !primitive.has_color,
+            "Geometry presence/generation flags do not describe the actual attributes");
+    const GltfGeometryBounds local_bounds{math::Vec3{0.0, 0.0, 0.0}, math::Vec3{1.0, 1.0, 0.0}};
+    require(context, primitive.bounds == local_bounds && mesh.bounds == local_bounds,
+            "Geometry local bounds differ from the independent triangle bounds");
+    const auto& parent = converted.nodes[0];
+    const auto& mirrored = converted.nodes[1];
+    require(context,
+            parent.source_node == 0 && mirrored.source_node == 1 && !parent.parent &&
+                parent.children == std::vector<std::size_t>{1} && mirrored.parent == 0 &&
+                mirrored.children.empty() && parent.mesh == 0 && mirrored.mesh == 0,
+            "Geometry hierarchy does not retain root/child/source order and shared dense meshes");
+    require(context,
+            parent.name == "parent" && mirrored.name == "mirrored" && !parent.mirrored &&
+                mirrored.mirrored && parent.local.translation == math::Vec3{1.0, 2.0, 3.0} &&
+                mirrored.local.translation == math::Vec3{4.0, 0.0, 0.0} &&
+                mirrored.local.scale == math::Vec3{-2.0, 3.0, 1.0},
+            "Geometry hierarchy changed local TRS or per-instance reflection");
+    require(context,
+            math::Vec3{mirrored.world_matrix[3]} == math::Vec3{5.0, 2.0, 3.0} &&
+                mirrored.world_matrix[0][0] == -2.0 && mirrored.world_matrix[1][1] == 3.0 &&
+                mirrored.world_matrix[2][2] == 1.0,
+            "Geometry world matrix does not compose parent times local");
+    require(context,
+            parent.world_bounds ==
+                    GltfGeometryBounds{math::Vec3{1.0, 2.0, 3.0}, math::Vec3{2.0, 3.0, 3.0}} &&
+                mirrored.world_bounds ==
+                    GltfGeometryBounds{math::Vec3{3.0, 2.0, 3.0}, math::Vec3{5.0, 5.0, 3.0}} &&
+                converted.world_bounds ==
+                    GltfGeometryBounds{math::Vec3{1.0, 2.0, 3.0}, math::Vec3{5.0, 5.0, 3.0}},
+            "Geometry bounds do not include both ordinary and mirrored instances");
+    require(context,
+            mirrored.normal_matrix[0] == -0.5 && mirrored.normal_matrix[4] == 1.0 / 3.0 &&
+                mirrored.normal_matrix[8] == 1.0,
+            "Geometry inverse-transpose normal matrix lost nonuniform scale");
+    require(context,
+            converted.source.resources.size() == 1 &&
+                converted.source.resources[0].path == resource_path &&
+                converted.source.resources[0].asset == resource_asset,
+            "Geometry conversion lost persistent captured-resource identity");
+    const auto repeated = take(convert_gltf_geometry({source_path, source_bytes(json), resources}));
+    require(context,
+            repeated.primitives[0].vertices == primitive.vertices &&
+                repeated.primitives[0].indices == primitive.indices &&
+                repeated.world_bounds == converted.world_bounds &&
+                repeated.nodes[1].world_matrix == mirrored.world_matrix,
+            "Repeated geometry conversion changed owned values");
+
+    const std::string sparse_json =
+        R"({"asset":{"version":"2.0"},"scenes":[{"nodes":[0]}],"nodes":[{"mesh":0}],)"
+        R"("meshes":[{"primitives":[{"attributes":{"POSITION":0}}]}],)"
+        R"("buffers":[{"byteLength":40,"uri":"../sources/triangle.bin"}],)"
+        R"("bufferViews":[{"buffer":0,"byteLength":3},{"buffer":0,"byteOffset":4,"byteLength":36}],)"
+        R"("accessors":[{"componentType":5126,"count":3,"type":"VEC3","min":[0,0,0],"max":[1,1,0],)"
+        R"("sparse":{"count":3,"indices":{"bufferView":0,"componentType":5121},)"
+        R"("values":{"bufferView":1}}}]})";
+    std::vector<std::byte> sparse{std::byte{0}, std::byte{1}, std::byte{2}, std::byte{0}};
+    sparse.insert(sparse.end(), triangle.begin(), triangle.end());
+    const std::array sparse_resources{GltfExternalSource{resource_path, resource_asset, sparse}};
+    const auto expanded =
+        take(convert_gltf_geometry({source_path, source_bytes(sparse_json), sparse_resources}));
+    require(context,
+            expanded.primitives[0].vertices == primitive.vertices &&
+                expanded.primitives[0].indices == primitive.indices &&
+                expanded.primitives[0].bounds == local_bounds,
+            "Sparse geometry does not reproduce the independent dense triangle");
+    auto singular = json;
+    singular.replace(singular.find("[-2,3,1]"), 8, "[0,3,1]");
+    const auto rejected = convert_gltf_geometry({source_path, source_bytes(singular), resources});
+    require(context, !rejected && rejected.error().context.operation == "asset.gltf.convert",
+            "Singular geometry node did not return its owned conversion error");
+    require(context,
+            !convert_gltf_geometry({source_path, source_bytes(json), resources}, {.scene = 1}),
+            "Geometry conversion accepted an absent explicitly selected scene");
+    std::stop_source stop;
+    stop.request_stop();
+    require(context,
+            !convert_gltf_geometry({source_path, source_bytes(json), resources, stop.get_token()}),
+            "Cancelled geometry conversion returned success");
+    unchanged(context, before);
+}
 } // namespace
 
 std::span<const std::string_view> feature_world_case_ids() noexcept {
@@ -1180,6 +1324,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 9:
                         gltf_source(context);
+                        break;
+                    case 10:
+                        gltf_geometry(context);
                         break;
                     default:
                         break;

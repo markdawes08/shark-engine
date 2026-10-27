@@ -5,6 +5,14 @@ description: Add or change Shark components and public command or Lua APIs while
 
 # Shark component and API integration
 
+12b exposes pure CPU `asset.gltf.convert` through the existing validated source
+owner; follow the [geometry contract](../../../docs/gltf-geometry.md). Its
+eleventh FeatureWorld case checks independent geometry, sparse data, mirrored
+shared instances and bounds while retaining the owner and saved IDs. Extend
+actual cases, independent inventory and manifest together: 42 CPU surfaces and
+one external GPU command. No scene component, editor/terminal adapter or Lua
+surface is introduced by this conversion value API.
+
 12a exposes the read-only CPU `asset.gltf.inspect` operation under the
 [source contract](../../../docs/gltf-source.md). Its tenth native FeatureWorld
 case uses actual inspection and retains the AuthoredScene and saved entity IDs.

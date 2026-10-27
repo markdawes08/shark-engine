@@ -34,7 +34,14 @@ The case consumes explicit immutable authored bytes and validates source counts,
 references/digests and rejection paths while preserving the saved owner. Geometry
 conversion, image decoding and cache publication retain the later glTF checkpoints.
 
-The fixture runs all ten saved-world cases through the public supervisor, then
+12b adds `asset.gltf.convert` and an eleventh geometry-conversion case, extending
+the independent inventory to 42 CPU surfaces plus one external GPU command.
+It checks independent dense/sparse triangle values, bounds, shared mirrored
+instances, local/world transforms, source identities and explicit rejection while
+preserving the saved owner. Image decoding and material/cache integration retain
+their later checkpoints; conversion alone claims no rendered result.
+
+The fixture runs all eleven saved-world cases through the public supervisor, then
 the intentional failing assertion through the same executable/result path. It
 compares stdout with create-only published results, native results and every
 artifact's bytes/hash. Failure remains exit 1 with the original case, phase,

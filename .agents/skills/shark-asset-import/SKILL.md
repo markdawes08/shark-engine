@@ -5,6 +5,13 @@ description: Implement or change Shark asset import and cache behavior with boun
 
 # Shark asset import
 
+12b extends the same source owner with pure CPU geometry conversion under the
+[geometry contract](../../../docs/gltf-geometry.md). Preserve effective sparse
+bytewise reads, precharged output/work bounds, shared mesh instances and Core
+TRS/inverse validation. Generated corner tangents use the explicitly documented
+per-triangle basis. Extend the eleventh FeatureWorld case and independent
+expectations with geometry changes; cache/material publication remains 12d.
+
 12a starts the [five glTF checkpoints](../../../docs/roadmap/gltf-plan.md) under
 [ADR 0028](../../../docs/architecture/0028-bounded-gltf-sources.md). Follow the
 [source contract](../../../docs/gltf-source.md): pure inspection consumes explicit

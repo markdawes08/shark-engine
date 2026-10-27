@@ -5,6 +5,14 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+12b adds `shark.tools.gltf-geometry` (60 seconds, Catch seed 1337), documented
+in the [geometry contract](../../../docs/gltf-geometry.md). Keep all source
+cases/allocation sweeps and earlier limits. Verify actual geometry-test sanitizer
+objects, fifteen public CPU examples, eleven native FeatureWorld cases and its
+independent 42 CPU surfaces plus one external GPU command. Core/Server inputs
+stay unchanged; inherit 12a full Server evidence explicitly and refresh protected
+build/package gates. Reuse the current-lock shader bundle when unchanged.
+
 12a adds `shark.tools.gltf-source` (60 seconds, Catch seed 1337) and the private
 `shark.tooling.gltf-dependencies` family (60 seconds). Tools profiles require the
 exact `SHARK_CGLTF_ARCHIVE`; protected Runtime/Server keep Tools OFF and must not

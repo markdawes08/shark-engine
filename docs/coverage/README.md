@@ -44,8 +44,14 @@ the [five checkpoints](../roadmap/gltf-plan.md). **12a is PASS** in its
 [receipt](evidence/12a-gltf-foundation.json): 486 selected outcomes, 42 example
 compiles, 30 actual sanitizer objects and protected packages. `asset.gltf.inspect`
 connects 41 new cases to the tenth native FeatureWorld case; 28 process checks
-retain 41 CPU surfaces and one GPU command. Full REQ-12 remains NOT_RUN pending
-12b-12e. Next: 12b.
+retain 41 CPU surfaces and one GPU command. **12b is now PASS** in its
+[handoff](../handoffs/12b-gltf-geometry.md) and
+[receipt](evidence/12b-gltf-geometry.json): 357 fresh outcomes, 45 public-example
+compiles, 32 actual sanitizer objects and protected packages. `asset.gltf.convert`
+connects 45 cases/988 assertions to the eleventh native FeatureWorld case, with
+29 process checks, 42 CPU surfaces and one external GPU command. Unchanged
+protected inputs explicitly inherit 12a's 136 full Server outcomes separately.
+Full REQ-12 remains NOT_RUN pending 12c-12e. Next: 12c.
 
 [requirements.json](requirements.json) is the version-3 requirement/coverage manifest for
 Shark. Each requirement has a unique ID, one owning roadmap assignment, observable

@@ -1,4 +1,5 @@
 #include "shark/tools/gltf_source.hpp"
+#include "shark/tools/gltf_geometry.hpp"
 
 #include "gltf_source_test_port.hpp"
 #include "source_json.hpp"
@@ -30,6 +31,7 @@ template <typename Integer> Integer checked_gltf_integer(const char* text) {
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <cmath>
 #include <cstdlib>
 #include <initializer_list>
@@ -967,13 +969,576 @@ struct Inspection {
             fail("glTF parser metadata validation failed");
         cancelled(input.stop);
     }
-    GltfSourceInspection run() {
+    void prepare() {
         tables();
         resources();
         accessor_tables();
         meshes();
         graph();
         parser();
+    }
+    GltfSourceInspection run() {
+        prepare();
+        return std::move(result);
+    }
+};
+
+// Geometry stays on the validated source owner. No parser/data pointer crosses
+// this boundary, and neither cgltf's aligned reads nor its file helpers are used.
+struct GeometryConversion {
+    Inspection& source;
+    const GltfGeometrySettings& settings;
+    std::string& field;
+    GltfGeometry result{};
+    std::size_t output_bytes{};
+    std::size_t work_items{};
+    std::size_t vertices{};
+    std::size_t indices{};
+
+    void charge(std::size_t bytes) {
+        if (bytes > gltf_geometry_maximum_output_bytes - output_bytes)
+            fail("glTF geometry output exceeds its byte bound");
+        output_bytes += bytes;
+    }
+    void work(std::size_t count) {
+        if (count > gltf_geometry_maximum_work - work_items)
+            fail("glTF geometry conversion exceeds its work bound");
+        work_items += count;
+    }
+    void poll(std::size_t iteration = 0) const {
+        if ((iteration & 255U) == 0)
+            cancelled(source.input.stop);
+    }
+    std::string name(const Json& value) {
+        if (!value.contains("name"))
+            return {};
+        auto text = string(value.at("name"), gltf_source_maximum_uri_bytes);
+        charge(text.size());
+        return text;
+    }
+    static math::Vec3 vector(const std::array<float, 3>& value) {
+        return {value[0], value[1], value[2]};
+    }
+    static std::array<float, 3> packed(const math::Vec3& value) {
+        return {static_cast<float>(value.x), static_cast<float>(value.y),
+                static_cast<float>(value.z)};
+    }
+    static math::Vec3 unit(const math::Vec3& value) {
+        const auto length = std::hypot(value.x, value.y, value.z);
+        if (!std::isfinite(length) || length == 0.0)
+            fail("glTF direction must be finite and nonzero");
+        return value / length;
+    }
+    static void include(std::optional<GltfGeometryBounds>& bounds, const math::Vec3& point) {
+        if (!std::isfinite(point.x) || !std::isfinite(point.y) || !std::isfinite(point.z))
+            fail("glTF transformed geometry bound is nonfinite");
+        if (!bounds)
+            bounds = GltfGeometryBounds{point, point};
+        else {
+            bounds->minimum = glm::min(bounds->minimum, point);
+            bounds->maximum = glm::max(bounds->maximum, point);
+        }
+    }
+    static void include(std::optional<GltfGeometryBounds>& bounds,
+                        const GltfGeometryBounds& other) {
+        include(bounds, other.minimum);
+        include(bounds, other.maximum);
+    }
+    static GltfGeometryBounds transformed(const GltfGeometryBounds& bounds,
+                                          const math::Mat4& matrix) {
+        std::optional<GltfGeometryBounds> result;
+        for (unsigned corner = 0; corner != 8; ++corner) {
+            const math::Vec3 point{(corner & 1U) ? bounds.maximum.x : bounds.minimum.x,
+                                   (corner & 2U) ? bounds.maximum.y : bounds.minimum.y,
+                                   (corner & 4U) ? bounds.maximum.z : bounds.minimum.z};
+            include(result, math::Vec3{matrix * glm::dvec4{point, 1.0}});
+        }
+        return *result;
+    }
+    // Return the complete effective element, including sparse replacement or
+    // implicit zero base. All ranges/packing have already passed 12a preflight.
+    Bytes element(const Accessor& accessor, std::size_t position) const {
+        const auto found =
+            std::lower_bound(accessor.sparse.indices.begin(), accessor.sparse.indices.end(),
+                             static_cast<std::uint32_t>(position));
+        if (found != accessor.sparse.indices.end() && *found == position) {
+            const auto sparse = static_cast<std::size_t>(found - accessor.sparse.indices.begin());
+            return source.view_bytes(accessor.sparse.values_view)
+                .subspan(accessor.sparse.values_offset + sparse * accessor.element_bytes,
+                         accessor.element_bytes);
+        }
+        if (!accessor.view)
+            return {};
+        return source.view_bytes(*accessor.view)
+            .subspan(accessor.offset + position * accessor.stride, accessor.element_bytes);
+    }
+    std::array<float, 4> values(std::size_t accessor_index, std::size_t position,
+                                std::size_t components) const {
+        const auto& accessor = source.accessors[accessor_index];
+        const auto bytes = element(accessor, position);
+        std::array<float, 4> decoded{};
+        if (bytes.empty())
+            return decoded;
+        for (std::size_t component = 0; component < components; ++component) {
+            const auto bits =
+                little(bytes, component * accessor.component_bytes, accessor.component_bytes);
+            if (accessor.component == 5126)
+                decoded[component] = std::bit_cast<float>(bits);
+            else if (accessor.component == 5121)
+                decoded[component] = static_cast<float>(bits) / 255.0F;
+            else if (accessor.component == 5123)
+                decoded[component] = static_cast<float>(bits) / 65535.0F;
+            else
+                fail("Unsupported glTF vertex component representation");
+            if (!std::isfinite(decoded[component]))
+                fail("glTF vertex component is not finite");
+            if (decoded[component] == 0.0F)
+                decoded[component] = 0.0F;
+        }
+        return decoded;
+    }
+    std::size_t attribute(const Json& attributes, const char* semantic, const char* type,
+                          bool normalized_integer = false, bool color = false) {
+        const auto position = index(attributes.at(semantic), source.accessors.size());
+        const auto& accessor = source.accessors[position];
+        const auto& json = array(source.document, "accessors")[position];
+        const bool normalized = json.value("normalized", false);
+        if ((accessor.type != type && !(color && accessor.type == "VEC4")) ||
+            (accessor.component != 5126 &&
+             !(normalized_integer && normalized &&
+               (accessor.component == 5121 || accessor.component == 5123))))
+            fail(std::string{"Unsupported glTF vertex representation: "} + semantic);
+        if (accessor.view &&
+            (accessor.offset % 4 != 0 ||
+             add(source.views[*accessor.view].offset, accessor.offset) % 4 != 0 ||
+             (accessor.component_bytes != 4 && !source.views[*accessor.view].has_stride)))
+            fail(std::string{"glTF vertex attribute requires four-byte alignment: "} + semantic);
+        if (accessor.view && source.views[*accessor.view].has_target &&
+            integer(array(source.document, "bufferViews")[*accessor.view].at("target")) != 34962)
+            fail(std::string{"glTF vertex bufferView has an index target: "} + semantic);
+        return position;
+    }
+    std::optional<std::size_t> optional_attribute(const Json& attributes, const char* semantic,
+                                                  const char* type, bool normalized_integer = false,
+                                                  bool color = false) {
+        if (!attributes.contains(semantic))
+            return {};
+        return attribute(attributes, semantic, type, normalized_integer, color);
+    }
+    // Only the core texture-coordinate links required by geometry are consumed
+    // here; complete material conversion and fallback remain the 12d owner.
+    std::optional<std::size_t> material_uvs(const Json& primitive, const Json& attributes) {
+        if (!primitive.contains("material"))
+            return {};
+        const auto& material =
+            array(source.document,
+                  "materials")[index(primitive.at("material"), source.result.counts.materials)];
+        std::optional<std::size_t> normal_uv;
+        auto texture = [&](const Json& parent, const char* key, bool normal = false) {
+            if (!parent.contains(key))
+                return;
+            const auto& info = parent.at(key);
+            object(info);
+            static_cast<void>(index(info.at("index"), source.result.counts.textures));
+            const auto uv = optional_integer(info, "texCoord");
+            if (uv > 1 || !attributes.contains(uv == 0 ? "TEXCOORD_0" : "TEXCOORD_1"))
+                fail("glTF material references an unavailable supported UV set");
+            if (normal)
+                normal_uv = uv;
+        };
+        if (material.contains("pbrMetallicRoughness")) {
+            const auto& pbr = material.at("pbrMetallicRoughness");
+            object(pbr);
+            texture(pbr, "baseColorTexture");
+            texture(pbr, "metallicRoughnessTexture");
+        }
+        texture(material, "normalTexture", true);
+        texture(material, "occlusionTexture");
+        texture(material, "emissiveTexture");
+        return normal_uv;
+    }
+    GltfGeometryPrimitive primitive(const Json& value, std::size_t mesh_index,
+                                    std::size_t primitive_index) {
+        field = "meshes[" + std::to_string(mesh_index) + "].primitives[" +
+                std::to_string(primitive_index) + "]";
+        poll();
+        const auto& attributes = value.at("attributes");
+        const auto position = attribute(attributes, "POSITION", "VEC3");
+        const auto normal = optional_attribute(attributes, "NORMAL", "VEC3");
+        const auto tangent = optional_attribute(attributes, "TANGENT", "VEC4");
+        const auto uv0 = optional_attribute(attributes, "TEXCOORD_0", "VEC2", true);
+        const auto uv1 = optional_attribute(attributes, "TEXCOORD_1", "VEC2", true);
+        const auto color = optional_attribute(attributes, "COLOR_0", "VEC3", true, true);
+        for (const auto& [semantic, ignored] : attributes.items()) {
+            static_cast<void>(ignored);
+            if (semantic == "POSITION" || semantic == "NORMAL" || semantic == "TANGENT" ||
+                semantic == "TEXCOORD_0" || semantic == "TEXCOORD_1" || semantic == "COLOR_0")
+                continue;
+            if (!semantic.starts_with('_'))
+                fail("Unsupported glTF vertex semantic: " + semantic);
+            source.diagnostic("Ignored custom glTF vertex attribute: " + semantic);
+        }
+        const auto normal_uv = material_uvs(value, attributes);
+        const bool generate_normals = !normal;
+        const bool generate_tangents = normal_uv && (!normal || !tangent);
+        const bool split = generate_normals || generate_tangents;
+        const auto count = source.accessors[position].count;
+        const auto mode = optional_integer(value, "mode", 4);
+        const auto index_accessor =
+            value.contains("indices")
+                ? std::optional<std::size_t>{index(value.at("indices"), source.accessors.size())}
+                : std::nullopt;
+        const auto source_count = index_accessor ? source.accessors[*index_accessor].count : count;
+        if (index_accessor) {
+            const auto& accessor = source.accessors[*index_accessor];
+            const auto& descriptor = array(source.document, "accessors")[*index_accessor];
+            if (descriptor.value("normalized", false))
+                fail("glTF primitive indices cannot be normalized");
+            if (accessor.view && source.views[*accessor.view].has_target &&
+                integer(array(source.document, "bufferViews")[*accessor.view].at("target")) !=
+                    34963)
+                fail("glTF index bufferView has a vertex target");
+        }
+        if (source_count < 3 || (mode == 4 && source_count % 3 != 0))
+            fail("glTF triangle primitive has an invalid element count");
+        const auto triangle_indices = mode == 4 ? source_count : multiply(source_count - 2, 3);
+        const auto output_vertices = split ? triangle_indices : count;
+        if (output_vertices > gltf_geometry_maximum_vertices - vertices ||
+            triangle_indices > gltf_geometry_maximum_indices - indices)
+            fail("glTF geometry vertex/index inventory exceeds its bound");
+        vertices += output_vertices;
+        indices += triangle_indices;
+        charge(add(sizeof(GltfGeometryPrimitive),
+                   add(multiply(output_vertices, sizeof(GltfGeometryVertex)),
+                       multiply(triangle_indices, sizeof(std::uint32_t)))));
+        std::size_t components = 3;
+        if (normal)
+            components += 3;
+        if (normal && tangent)
+            components += 4;
+        if (uv0)
+            components += 2;
+        if (uv1)
+            components += 2;
+        if (color)
+            components += source.accessors[*color].type == "VEC3" ? 3U : 4U;
+        work(add(multiply(count, components), add(source_count, triangle_indices)));
+
+        GltfGeometryPrimitive converted;
+        converted.source_mesh = mesh_index;
+        converted.source_primitive = primitive_index;
+        if (value.contains("material"))
+            converted.source_material = integer(value.at("material"));
+        converted.has_texcoord0 = uv0.has_value();
+        converted.has_texcoord1 = uv1.has_value();
+        converted.has_color = color.has_value();
+        converted.has_tangents = (normal && tangent) || generate_tangents;
+        converted.generated_normals = generate_normals;
+        converted.generated_tangents = generate_tangents;
+        std::vector<GltfGeometryVertex> base(count);
+        for (std::size_t i = 0; i < count; ++i) {
+            poll(i);
+            auto& vertex = base[i];
+            const auto point = values(position, i, 3);
+            std::copy_n(point.begin(), 3, vertex.position.begin());
+            if (normal) {
+                const auto direction = values(*normal, i, 3);
+                const math::Vec3 raw{direction[0], direction[1], direction[2]};
+                if (std::abs(std::hypot(raw.x, raw.y, raw.z) - 1.0) > 1e-4)
+                    fail("glTF NORMAL must have unit length");
+                vertex.normal = packed(unit(raw));
+            }
+            if (normal && tangent) {
+                vertex.tangent = values(*tangent, i, 4);
+                const math::Vec3 raw{vertex.tangent[0], vertex.tangent[1], vertex.tangent[2]};
+                if (std::abs(std::hypot(raw.x, raw.y, raw.z) - 1.0) > 1e-4 ||
+                    std::abs(glm::dot(vector(vertex.normal), raw)) > 1e-4 ||
+                    (vertex.tangent[3] != 1.0F && vertex.tangent[3] != -1.0F))
+                    fail("glTF TANGENT requires an orthogonal unit direction and sign");
+                const auto direction = packed(unit(raw));
+                std::copy(direction.begin(), direction.end(), vertex.tangent.begin());
+            }
+            if (uv0) {
+                const auto uv = values(*uv0, i, 2);
+                std::copy_n(uv.begin(), 2, vertex.texcoord0.begin());
+            }
+            if (uv1) {
+                const auto uv = values(*uv1, i, 2);
+                std::copy_n(uv.begin(), 2, vertex.texcoord1.begin());
+            }
+            if (color) {
+                const auto n = source.accessors[*color].type == "VEC3" ? 3U : 4U;
+                const auto rgba = values(*color, i, n);
+                for (std::size_t component = 0; component < n; ++component) {
+                    if (rgba[component] < 0.0F || rgba[component] > 1.0F)
+                        fail("glTF COLOR_0 must stay in the unit interval");
+                    vertex.color[component] = rgba[component];
+                }
+            }
+        }
+        auto source_index = [&](std::size_t i) {
+            if (!index_accessor)
+                return static_cast<std::uint32_t>(i);
+            const auto& accessor = source.accessors[*index_accessor];
+            const auto value = source.scalar(accessor, i);
+            const auto reserved = accessor.component == 5121   ? 255U
+                                  : accessor.component == 5123 ? 65535U
+                                                               : 0xffffffffU;
+            if (value == reserved)
+                fail("glTF primitive uses a reserved maximum index value");
+            return value;
+        };
+        std::vector<std::uint32_t> triangles;
+        triangles.reserve(triangle_indices);
+        bool discarded = false;
+        auto triangle = [&](std::uint32_t a, std::uint32_t b, std::uint32_t c) {
+            const auto cross = glm::cross(vector(base[b].position) - vector(base[a].position),
+                                          vector(base[c].position) - vector(base[a].position));
+            if (std::hypot(cross.x, cross.y, cross.z) == 0.0) {
+                discarded = true;
+                return;
+            }
+            triangles.push_back(a);
+            triangles.push_back(b);
+            triangles.push_back(c);
+        };
+        if (mode == 4) {
+            for (std::size_t i = 0; i < source_count; i += 3) {
+                poll(i);
+                triangle(source_index(i), source_index(i + 1), source_index(i + 2));
+            }
+        } else {
+            const auto first = source_index(0);
+            auto a = first;
+            auto b = source_index(1);
+            for (std::size_t i = 2; i < source_count; ++i) {
+                poll(i);
+                const auto c = source_index(i);
+                if (mode == 6)
+                    triangle(first, b, c);
+                else if (i % 2 == 0)
+                    triangle(a, b, c);
+                else
+                    triangle(b, a, c);
+                a = b;
+                b = c;
+            }
+        }
+        if (triangles.empty())
+            fail("glTF primitive has no nondegenerate triangles");
+        if (discarded)
+            source.diagnostic("Discarded zero-area glTF triangles");
+        converted.indices.reserve(triangle_indices);
+        if (split)
+            converted.vertices.reserve(output_vertices);
+        else
+            converted.vertices = std::move(base);
+        bool degenerate_uv = false;
+        std::optional<GltfGeometryBounds> bounds;
+        for (std::size_t i = 0; i < triangles.size(); i += 3) {
+            poll(i);
+            if (!split) {
+                if (converted.has_tangents &&
+                    (converted.vertices[triangles[i]].tangent[3] !=
+                         converted.vertices[triangles[i + 1]].tangent[3] ||
+                     converted.vertices[triangles[i]].tangent[3] !=
+                         converted.vertices[triangles[i + 2]].tangent[3]))
+                    fail("glTF triangle tangent handedness is inconsistent");
+                for (std::size_t corner = 0; corner < 3; ++corner) {
+                    converted.indices.push_back(triangles[i + corner]);
+                    include(bounds, vector(converted.vertices[triangles[i + corner]].position));
+                }
+                continue;
+            }
+            std::array<GltfGeometryVertex, 3> face{base[triangles[i]], base[triangles[i + 1]],
+                                                   base[triangles[i + 2]]};
+            const auto edge1 = vector(face[1].position) - vector(face[0].position);
+            const auto edge2 = vector(face[2].position) - vector(face[0].position);
+            if (generate_normals) {
+                const auto direction = packed(unit(glm::cross(edge1, edge2)));
+                for (auto& vertex : face)
+                    vertex.normal = direction;
+            }
+            if (generate_tangents) {
+                auto uv = [&](std::size_t corner) -> const std::array<float, 2>& {
+                    return *normal_uv == 0 ? face[corner].texcoord0 : face[corner].texcoord1;
+                };
+                const double u1 = static_cast<double>(uv(1)[0]) - uv(0)[0];
+                const double v1 = static_cast<double>(uv(1)[1]) - uv(0)[1];
+                const double u2 = static_cast<double>(uv(2)[0]) - uv(0)[0];
+                const double v2 = static_cast<double>(uv(2)[1]) - uv(0)[1];
+                const auto determinant = u1 * v2 - u2 * v1;
+                for (auto& vertex : face) {
+                    const auto n = vector(vertex.normal);
+                    math::Vec3 t{0.0};
+                    double sign = 1.0;
+                    if (determinant != 0.0) {
+                        const auto derivative = (edge1 * v2 - edge2 * v1) / determinant;
+                        const auto projected = derivative - n * glm::dot(n, derivative);
+                        if (std::hypot(projected.x, projected.y, projected.z) != 0.0) {
+                            t = unit(projected);
+                            const auto bitangent = (edge2 * u1 - edge1 * u2) / determinant;
+                            sign = glm::dot(glm::cross(n, t), bitangent) < 0.0 ? -1.0 : 1.0;
+                        } else {
+                            degenerate_uv = true;
+                        }
+                    } else {
+                        degenerate_uv = true;
+                    }
+                    if (determinant == 0.0 || t == math::Vec3{0.0}) {
+                        const auto absolute = glm::abs(n);
+                        const math::Vec3 axis = absolute.x <= absolute.y && absolute.x <= absolute.z
+                                                    ? math::Vec3{1.0, 0.0, 0.0}
+                                                : absolute.y <= absolute.z
+                                                    ? math::Vec3{0.0, 1.0, 0.0}
+                                                    : math::Vec3{0.0, 0.0, 1.0};
+                        t = unit(glm::cross(axis, n));
+                    }
+                    const auto direction = packed(t);
+                    std::copy(direction.begin(), direction.end(), vertex.tangent.begin());
+                    vertex.tangent[3] = static_cast<float>(sign);
+                }
+            }
+            for (const auto& vertex : face) {
+                converted.indices.push_back(static_cast<std::uint32_t>(converted.vertices.size()));
+                converted.vertices.push_back(vertex);
+                include(bounds, vector(vertex.position));
+            }
+        }
+        if (degenerate_uv)
+            source.diagnostic("Used orthogonal fallback for degenerate glTF tangent UVs");
+        converted.bounds = *bounds;
+        return converted;
+    }
+    Transform local_transform(const Json& value) {
+        if (value.contains("matrix")) {
+            const auto& raw = value.at("matrix");
+            math::Mat4 matrix{1.0};
+            for (int column = 0; column < 4; ++column)
+                for (int row = 0; row < 4; ++row)
+                    matrix[column][row] =
+                        raw[static_cast<std::size_t>(column * 4 + row)].get<double>();
+            return take(decompose_transform(matrix));
+        }
+        Transform local;
+        for (const auto& [key, target] : std::array<std::pair<const char*, math::Vec3*>, 2>{
+                 {{"translation", &local.translation}, {"scale", &local.scale}}}) {
+            if (value.contains(key))
+                for (int axis = 0; axis < 3; ++axis)
+                    (*target)[axis] = value.at(key)[static_cast<std::size_t>(axis)].get<double>();
+        }
+        if (value.contains("rotation")) {
+            const auto& rotation = value.at("rotation");
+            local.rotation = math::Quat{rotation[3].get<double>(), rotation[0].get<double>(),
+                                        rotation[1].get<double>(), rotation[2].get<double>()};
+        }
+        return take(canonicalize_transform(local));
+    }
+    GltfGeometry run() {
+        poll();
+        result.selected_scene = source.result.selected_scene;
+        if (settings.scene)
+            result.selected_scene = index(Json(*settings.scene), source.result.counts.scenes);
+        charge(sizeof(GltfGeometry));
+        charge(multiply(gltf_source_maximum_diagnostics,
+                        sizeof(std::string) + gltf_source_maximum_diagnostic_bytes));
+        for (const auto& resource : source.result.resources) {
+            charge(sizeof(GltfResourceReference) + resource.mime_type.size() +
+                   (resource.path ? resource.path->text().size() : 0));
+        }
+        if (!result.selected_scene) {
+            result.source = std::move(source.result);
+            return std::move(result);
+        }
+        struct Pending {
+            std::size_t source;
+            std::optional<std::size_t> parent;
+        };
+        const auto& nodes = array(source.document, "nodes");
+        const auto& roots = array(source.document, "scenes")[*result.selected_scene];
+        std::vector<Pending> stack;
+        for (auto iterator = array(roots, "nodes").rbegin();
+             iterator != array(roots, "nodes").rend(); ++iterator)
+            stack.push_back({integer(*iterator), {}});
+        std::set<std::size_t> meshes;
+        while (!stack.empty()) {
+            poll(result.nodes.size());
+            const auto pending = stack.back();
+            stack.pop_back();
+            field = "nodes[" + std::to_string(pending.source) + "]";
+            const auto& value = nodes[pending.source];
+            charge(sizeof(GltfGeometryNode) + sizeof(std::size_t));
+            work(1);
+            GltfGeometryNode node;
+            node.source_node = pending.source;
+            node.name = name(value);
+            node.parent = pending.parent;
+            node.local = local_transform(value);
+            node.local_matrix = take(transform_matrix(node.local));
+            node.world_matrix = pending.parent
+                                    ? result.nodes[*pending.parent].world_matrix * node.local_matrix
+                                    : node.local_matrix;
+            take(validate_transform_matrix(node.world_matrix));
+            const auto inverse = take(inverse_transform_matrix(node.world_matrix));
+            for (int column = 0; column < 3; ++column)
+                for (int row = 0; row < 3; ++row)
+                    node.normal_matrix[static_cast<std::size_t>(column * 3 + row)] =
+                        inverse[row][column];
+            glm::dmat3 normalized{1.0};
+            for (int column = 0; column < 3; ++column)
+                normalized[column] = unit(math::Vec3{node.world_matrix[column]});
+            node.mirrored = glm::determinant(normalized) < 0.0;
+            if (value.contains("mesh")) {
+                node.mesh = integer(value.at("mesh"));
+                meshes.insert(*node.mesh);
+            }
+            const auto output = result.nodes.size();
+            if (pending.parent)
+                result.nodes[*pending.parent].children.push_back(output);
+            else
+                result.roots.push_back(output);
+            result.nodes.push_back(std::move(node));
+            const auto& children = array(value, "children");
+            for (auto iterator = children.rbegin(); iterator != children.rend(); ++iterator)
+                stack.push_back({integer(*iterator), output});
+        }
+        std::map<std::size_t, std::size_t> mesh_indices;
+        const auto& source_meshes = array(source.document, "meshes");
+        for (const auto mesh_index : meshes) {
+            poll();
+            field = "meshes[" + std::to_string(mesh_index) + "]";
+            const auto& value = source_meshes[mesh_index];
+            charge(sizeof(GltfGeometryMesh));
+            GltfGeometryMesh mesh;
+            mesh.source_mesh = mesh_index;
+            mesh.name = name(value);
+            std::optional<GltfGeometryBounds> bounds;
+            const auto& primitives = array(value, "primitives");
+            charge(multiply(primitives.size(), sizeof(std::size_t)));
+            for (std::size_t i = 0; i < primitives.size(); ++i) {
+                auto converted = primitive(primitives[i], mesh_index, i);
+                include(bounds, converted.bounds);
+                mesh.primitives.push_back(result.primitives.size());
+                result.primitives.push_back(std::move(converted));
+            }
+            mesh.bounds = *bounds;
+            mesh_indices.emplace(mesh_index, result.meshes.size());
+            result.meshes.push_back(std::move(mesh));
+        }
+        for (auto& node : result.nodes) {
+            poll();
+            if (node.mesh) {
+                field = "nodes[" + std::to_string(node.source_node) + "]";
+                node.mesh = mesh_indices.at(*node.mesh);
+                node.world_bounds =
+                    transformed(result.meshes[*node.mesh].bounds, node.world_matrix);
+                include(result.world_bounds, *node.world_bounds);
+            }
+        }
+        poll();
+        // Diagnostics added during conversion belong to this same owned report.
+        // Their fixed inherited limits also bound their output storage.
+        result.source = std::move(source.result);
         return std::move(result);
     }
 };
@@ -1032,6 +1597,36 @@ Result<GltfSourceInspection> inspect_gltf_source(const GltfSourceInput& input) {
         return Error{ErrorCode::execution_failed,
                      "glTF source inspection failed",
                      {.operation = "asset.gltf.inspect", .path = input.path.text()}};
+    }
+}
+
+Result<GltfGeometry> convert_gltf_geometry(const GltfSourceInput& input,
+                                           const GltfGeometrySettings& settings) {
+    std::string field;
+    try {
+        precharge(input);
+        Inspection source{input};
+        source.prepare();
+        return GeometryConversion{source, settings, field}.run();
+    } catch (Failure& failure) {
+        failure.error.context.operation = "asset.gltf.convert";
+        if (failure.error.context.path.empty())
+            failure.error.context.path = input.path.text();
+        if (!field.empty())
+            failure.error.message = field + ": " + failure.error.message;
+        return std::move(failure.error);
+    } catch (const std::bad_alloc&) {
+        return Error{ErrorCode::execution_failed,
+                     "glTF geometry allocation failed",
+                     {.operation = "asset.gltf.convert", .path = input.path.text()}};
+    } catch (const Json::exception&) {
+        return Error{ErrorCode::invalid_configuration,
+                     "Malformed glTF geometry fields: " + field,
+                     {.operation = "asset.gltf.convert", .path = input.path.text()}};
+    } catch (...) {
+        return Error{ErrorCode::execution_failed,
+                     "glTF geometry conversion failed: " + field,
+                     {.operation = "asset.gltf.convert", .path = input.path.text()}};
     }
 }
 } // namespace shark::tools

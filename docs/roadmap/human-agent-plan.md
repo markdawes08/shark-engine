@@ -36,7 +36,10 @@ reopen, plus actual async process interruption. This qualifies shared backend
 behavior; human/editor and terminal protocol parity remains with its later owners.
 12a adds shared pure [glTF source inspection](../gltf-source.md) over explicit byte
 snapshots, with owned diagnostics/references and no editor/device requirement.
-Later import conversion and adapters reuse that boundary and existing owner fences.
+12b adds pure [static geometry conversion](../gltf-geometry.md) through that
+same source owner, with owned shared geometry, hierarchy and bounds. The eleventh
+FeatureWorld case exercises it without changing the authored scene. Later image/
+material conversion and adapters preserve the same owner/publication fences.
 
 ## Assessment of existing work
 

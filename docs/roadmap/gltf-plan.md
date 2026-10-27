@@ -43,6 +43,16 @@ Gate: independent expected vertices/indices/transforms/bounds, sparse expansion,
 winding/tangent handedness, matrix packing, unsupported modes and malformed data.
 Reuse 12a bounds and captured bytes; renderer/Scene mutations remain later owners.
 
+**Status: PASS under current-machine scope.** The
+[handoff](../handoffs/12b-gltf-geometry.md) and
+[receipt](../coverage/evidence/12b-gltf-geometry.json) record 357 fresh outcomes,
+45 public-example compiles, 32 actual sanitizer objects and protected packages.
+Preserve 45 geometry cases/988 assertions, all 41 source cases/1,794 assertions
+and every earlier workload/limit. The [geometry contract](../gltf-geometry.md)
+and [ADR 0029](../architecture/0029-bounded-gltf-geometry.md) fix shared instances,
+transform/bounds semantics and the documented per-triangle generated tangent basis.
+Full REQ-12 remains NOT_RUN pending 12c-12e. Next: 12c.
+
 ## 12c - Images and textures
 
 Pin and privately integrate the selected PNG/JPEG decoder with checked encoded,

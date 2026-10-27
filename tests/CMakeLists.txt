@@ -126,6 +126,17 @@ if(TARGET EngineStorage)
 endif()
 
 if(TARGET EngineTools)
+    add_executable(GltfGeometryTests gltf_geometry_tests.cpp)
+    target_link_libraries(GltfGeometryTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_include_directories(GltfGeometryTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
+    target_compile_definitions(GltfGeometryTests PRIVATE
+        SHARK_GLTF_GEOMETRY_FIXTURE_DIRECTORY="${PROJECT_SOURCE_DIR}/tests/fixtures/gltf_geometry")
+    shark_configure_target(GltfGeometryTests)
+    shark_classify_target(GltfGeometryTests test)
+    add_test(NAME shark.tools.gltf-geometry COMMAND GltfGeometryTests "[gltf-geometry]" --rng-seed 1337
+        --reporter xml --out "${CMAKE_CURRENT_BINARY_DIR}/gltf-geometry-cases.xml")
+    set_tests_properties(shark.tools.gltf-geometry PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
+
     add_executable(GltfSourceTests gltf_source_tests.cpp)
     target_link_libraries(GltfSourceTests PRIVATE EngineTools Catch2::Catch2WithMain)
     target_include_directories(GltfSourceTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")

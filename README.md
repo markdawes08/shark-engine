@@ -68,8 +68,12 @@ planned; **next is assignment 12, glTF import**.
 references and bounds with a private pinned parser. Its
 [handoff](docs/handoffs/12a-gltf-foundation.md) records 486 selected passing tests,
 42 public-example compiles, 30 actual sanitizer objects and protected packages.
-The [five checkpoints](docs/roadmap/gltf-plan.md) continue with **12b geometry and
-hierarchy**; full REQ-12 remains NOT_RUN pending 12b-12e.
+**12b is also complete:** shared CPU [geometry conversion](docs/gltf-geometry.md)
+returns validated sparse geometry, triangle topology, transforms, shared instances
+and bounds. Its [handoff](docs/handoffs/12b-gltf-geometry.md) records 357 fresh
+passing test outcomes, 45 public-example compiles, 32 actual sanitizer objects and
+protected packages. The [five checkpoints](docs/roadmap/gltf-plan.md) continue
+with **12c images and textures**; full REQ-12 remains NOT_RUN pending 12c-12e.
 
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
 **04c and full assignment 04 are complete under the current-machine scope.**

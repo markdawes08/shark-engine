@@ -6,11 +6,52 @@
   "product_profile": "seamless-open-world-mmorpg",
   "planning_document": "docs/roadmap/mmorpg-plan.md",
   "assignment_order": [
-    "00", "01", "M01", "02", "03", "04", "05", "06", "07", "M02",
-    "08", "M03", "09", "10", "11", "12", "13", "14", "15", "16",
-    "17", "18", "19", "20", "21", "M04", "M05", "M06", "22", "23",
-    "24", "M07", "25", "26", "27", "28", "29", "30", "31", "M08",
-    "32", "33", "M09", "34", "M10", "35"
+    "00",
+    "01",
+    "M01",
+    "02",
+    "03",
+    "04",
+    "05",
+    "06",
+    "07",
+    "M02",
+    "08",
+    "M03",
+    "09",
+    "10",
+    "11",
+    "12",
+    "13",
+    "14",
+    "15",
+    "16",
+    "17",
+    "18",
+    "19",
+    "20",
+    "21",
+    "M04",
+    "M05",
+    "M06",
+    "22",
+    "23",
+    "24",
+    "M07",
+    "25",
+    "26",
+    "27",
+    "28",
+    "29",
+    "30",
+    "31",
+    "M08",
+    "32",
+    "33",
+    "M09",
+    "34",
+    "M10",
+    "35"
   ],
   "engine": "Shark",
   "roadmap": "AI_Game_Engine_Agent_Roadmap.txt",
@@ -91,7 +132,10 @@
         "Structured errors retain stable codes, operation/request context and readable messages through later terminal, protocol and editor adapters; unavailable capabilities and validation/conflict/execution failures remain distinguishable."
       ],
       "planned_fixture": "CoreLifecycle, StartupFailureInjection, ProjectPathResolution and ConfigurationErrors unit/integration fixtures; startup and ownership failures occur before a scene can run.",
-      "verification": {"status": "PASS", "reason": "Full assignment03 local gate passes across 03a contracts, 03b ownership/rollback and 03c controllable clocks, separate offline/server scheduling, bounded completions and callback/thread rules. Final Windows Debug/Release/ASan each25 CTests and pinned WSL GCC Debug/Clang ASan+UBSan each23 CTests pass, including prior error/configuration/identity/path and lifecycle regressions. Timing33 cases/30743 assertions and work11 cases/2635 assertions pass with seed1337 and no skips in all five configurations. Runtime-only/Server-only boundaries, Release Server closure and separate SDK-free WSL runtime smoke pass. Exact commands, hashes, scope and limits are in docs/coverage/evidence/03c-local.json and docs/handoffs/03c-time-and-work.md. No production world simulation, workers, authoring or MMO capacity is claimed. Assignment04 is next."}
+      "verification": {
+        "status": "PASS",
+        "reason": "Full assignment03 local gate passes across 03a contracts, 03b ownership/rollback and 03c controllable clocks, separate offline/server scheduling, bounded completions and callback/thread rules. Final Windows Debug/Release/ASan each25 CTests and pinned WSL GCC Debug/Clang ASan+UBSan each23 CTests pass, including prior error/configuration/identity/path and lifecycle regressions. Timing33 cases/30743 assertions and work11 cases/2635 assertions pass with seed1337 and no skips in all five configurations. Runtime-only/Server-only boundaries, Release Server closure and separate SDK-free WSL runtime smoke pass. Exact commands, hashes, scope and limits are in docs/coverage/evidence/03c-local.json and docs/handoffs/03c-time-and-work.md. No production world simulation, workers, authoring or MMO capacity is claimed. Assignment04 is next."
+      }
     },
     {
       "id": "REQ-04",
@@ -104,7 +148,10 @@
         "Window focus/minimize and local pause never stop an online authoritative world. Separate server ticks, client prediction, network snapshots and rendering; the offline 60 Hz policy is not the server clock."
       ],
       "planned_fixture": "WindowLifecycle hardware smoke, InputFocusRelease and FixedStepAccumulator fixtures; FeatureWorld/FrameTiming is connected when assignment 10 adds the scene runner.",
-      "verification": {"status": "PASS", "reason": "Full assignment04 current-machine gate passes across04a raw input,04b native GLFW lifecycle and04c frame/tick consumption, offline pause/single-step and long-frame qualification. Windows Debug/Release/ASan and WSL client GCC Debug/Clang ASan+UBSan each pass30 CTests; WSL headless configurations pass23 each:196 total. Frame26 cases/6220 assertions, window35/1941, input17/34172 and timing42/30942 pass with seed1337 and no family skips; six pump cases overlap frame/window tags. Three native Windows smoke runs each pass11 cases and17 engine-window lifetimes, including current144DPI/1.5scale, actual focus/minimize/resize/close, targeted synthetic callbacks, shared F6/F7 pump, bounded stalled-frame scheduling and independent ServerScheduler progress. Runtime/Editor bounded windows, standalone boundaries, WSL Release closure and isolated SDK-free runtime pass. All captured source/test/tool hashes match. Exact commands, scope and limits: docs/coverage/evidence/04c-local.json and docs/handoffs/04c-frame-loop.md. No production renderer, authoring UI, physical input qualification or MMO simulation/capacity is claimed. Assignment05 is next."}
+      "verification": {
+        "status": "PASS",
+        "reason": "Full assignment04 current-machine gate passes across04a raw input,04b native GLFW lifecycle and04c frame/tick consumption, offline pause/single-step and long-frame qualification. Windows Debug/Release/ASan and WSL client GCC Debug/Clang ASan+UBSan each pass30 CTests; WSL headless configurations pass23 each:196 total. Frame26 cases/6220 assertions, window35/1941, input17/34172 and timing42/30942 pass with seed1337 and no family skips; six pump cases overlap frame/window tags. Three native Windows smoke runs each pass11 cases and17 engine-window lifetimes, including current144DPI/1.5scale, actual focus/minimize/resize/close, targeted synthetic callbacks, shared F6/F7 pump, bounded stalled-frame scheduling and independent ServerScheduler progress. Runtime/Editor bounded windows, standalone boundaries, WSL Release closure and isolated SDK-free runtime pass. All captured source/test/tool hashes match. Exact commands, scope and limits: docs/coverage/evidence/04c-local.json and docs/handoffs/04c-frame-loop.md. No production renderer, authoring UI, physical input qualification or MMO simulation/capacity is claimed. Assignment05 is next."
+      }
     },
     {
       "id": "REQ-05",
@@ -117,7 +164,10 @@
         "Production graphics belongs to EngineClient and cannot become a configure/download/link requirement of EngineCore or Server."
       ],
       "planned_fixture": "PresentationLifecycle hardware stress, CapabilityRejection and GraphicsLossPolicy fixtures; these validate device infrastructure outside ordinary scene behavior.",
-      "verification": {"status": "NOT_RUN", "reason": "05a and 05b retain their completed current-machine gates. 05c stress/failure fixtures and protected Runtime deployment tooling are implemented, but qualification is open. Frozen-input regressions passed 265 CTests across Windows Debug/Release/ASan and WSL client/headless suites, plus short presentation/device/window checks and isolated Runtime/Server package checks. Current Debug stress FAIL: NVIDIA retains one GDI object per swapchain/window lifetime; Intel exceeded its initialized USER-object baseline during restore (a budget failure, not proof of a leak). An original Intel ASan fault child timed out after reporting complete native cleanup. A later fixture-only observer-lifetime correction passed focused fault CTests in all five client configurations and all 24 fresh native fault children; the earlier timeout remains unexplained and preserved. Failed evidence is preserved; Release/ASan sustained workloads remain NOT_RUN. User-directed amendment on 2026-10-18: remaining work is deferred to the nonblocking docs/backlog.md, with development beyond 06a explicitly authorized. Full REQ-05 stays NOT_RUN; retained historical failures and acceptance limits are unchanged. The following investigation history records evidence rather than an active progression gate. Evidence: docs/coverage/evidence/05c-local.json; docs/handoffs/05c-presentation-qualification.md; docs/presentation-qualification.md; docs/roadmap/graphics-device-plan.md. Historical 05a/05b receipts remain unchanged. Follow-up at cd97e87: an independent raw Win32/Vulkan reproducer confirms NVIDIA 610.62 desktop-DC retention; Intel USER counts remain elevated five seconds after teardown, with no growing HWND inventory; 48 bounded ASan diagnostics including the original binary do not reproduce or explain the timeout. No production correction or gate waiver was made. Follow-up evidence: docs/coverage/evidence/05c-investigation.json; docs/handoffs/05c-failure-investigation.md. Follow-up at 9613bec: Intel USER growth also reproduces in 40 complete raw Win32/Vulkan lifetimes without Shark/GLFW/NVRHI; a supported trace matches 11 retained USER objects to 11 failed driver-owned hook removals after driver-created target threads begin exit. The cause is attributed on this installed stack, with no supported engine correction demonstrated. 64 capture-ready ASan diagnostics do not reproduce or explain the original process-chain timeout. A separate Windows queue-worker thread-exit deadline defect is corrected with old-header red/green TLS tests, Windows/WSL CPU regression, both-GPU short native regression and relocated Runtime package checks. This fix does not resolve or waive the original failures. Latest handoff: docs/handoffs/05c-intel-asan-investigation.md; ASan evidence: docs/coverage/evidence/05c-asan-exit-investigation.json; queue-fix evidence: docs/coverage/evidence/05c-queue-exit-fix.json. Intel evidence: docs/coverage/evidence/05c-intel-user-investigation.json."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "05a and 05b retain their completed current-machine gates. 05c stress/failure fixtures and protected Runtime deployment tooling are implemented, but qualification is open. Frozen-input regressions passed 265 CTests across Windows Debug/Release/ASan and WSL client/headless suites, plus short presentation/device/window checks and isolated Runtime/Server package checks. Current Debug stress FAIL: NVIDIA retains one GDI object per swapchain/window lifetime; Intel exceeded its initialized USER-object baseline during restore (a budget failure, not proof of a leak). An original Intel ASan fault child timed out after reporting complete native cleanup. A later fixture-only observer-lifetime correction passed focused fault CTests in all five client configurations and all 24 fresh native fault children; the earlier timeout remains unexplained and preserved. Failed evidence is preserved; Release/ASan sustained workloads remain NOT_RUN. User-directed amendment on 2026-10-18: remaining work is deferred to the nonblocking docs/backlog.md, with development beyond 06a explicitly authorized. Full REQ-05 stays NOT_RUN; retained historical failures and acceptance limits are unchanged. The following investigation history records evidence rather than an active progression gate. Evidence: docs/coverage/evidence/05c-local.json; docs/handoffs/05c-presentation-qualification.md; docs/presentation-qualification.md; docs/roadmap/graphics-device-plan.md. Historical 05a/05b receipts remain unchanged. Follow-up at cd97e87: an independent raw Win32/Vulkan reproducer confirms NVIDIA 610.62 desktop-DC retention; Intel USER counts remain elevated five seconds after teardown, with no growing HWND inventory; 48 bounded ASan diagnostics including the original binary do not reproduce or explain the timeout. No production correction or gate waiver was made. Follow-up evidence: docs/coverage/evidence/05c-investigation.json; docs/handoffs/05c-failure-investigation.md. Follow-up at 9613bec: Intel USER growth also reproduces in 40 complete raw Win32/Vulkan lifetimes without Shark/GLFW/NVRHI; a supported trace matches 11 retained USER objects to 11 failed driver-owned hook removals after driver-created target threads begin exit. The cause is attributed on this installed stack, with no supported engine correction demonstrated. 64 capture-ready ASan diagnostics do not reproduce or explain the original process-chain timeout. A separate Windows queue-worker thread-exit deadline defect is corrected with old-header red/green TLS tests, Windows/WSL CPU regression, both-GPU short native regression and relocated Runtime package checks. This fix does not resolve or waive the original failures. Latest handoff: docs/handoffs/05c-intel-asan-investigation.md; ASan evidence: docs/coverage/evidence/05c-asan-exit-investigation.json; queue-fix evidence: docs/coverage/evidence/05c-queue-exit-fix.json. Intel evidence: docs/coverage/evidence/05c-intel-user-investigation.json."
+      }
     },
     {
       "id": "REQ-06",
@@ -130,7 +180,10 @@
         "Shader/GPU resources are client-only; keep server content and Core independent of shader toolchains and GPU resource types."
       ],
       "planned_fixture": "TexturedCubeReadback GPU fixture, ShaderCompileErrors, ShaderDependencyRebuild and DistributionShaderBoundary; cube case joins FeatureWorld in assignment 10.",
-      "verification": {"status": "PASS", "reason": "Full assignment 06 passes under ADR0010 current-machine scope: 06a offline tooling, 06b owned resources and 06c actual window cube plus verified shader distribution. Final Windows Debug/Release/ASan each55 and WSL GCC Debug/Clang ASan+UBSan each48 CTests pass (261 total). Both actual GPUs pass window/offscreen readbacks at fixed one-byte color and 0.00001 depth limits, resize/minimize/retirement, 36 native window/offscreen fault children and 2304 clear presentation regression frames across all three Windows profiles. Real shader dependency/rebuild/failure checks, protected Runtime/Server builds, both production application launches and both-GPU relocated compiler-free Runtime package checks pass. Commands, hashes, retained failures and limits are in docs/coverage/evidence/06c-window-distribution.json and docs/handoffs/06c-window-distribution.md. This is not scene authoring, MMO capacity or other-machine qualification. Assignment 07 is next."}
+      "verification": {
+        "status": "PASS",
+        "reason": "Full assignment 06 passes under ADR0010 current-machine scope: 06a offline tooling, 06b owned resources and 06c actual window cube plus verified shader distribution. Final Windows Debug/Release/ASan each55 and WSL GCC Debug/Clang ASan+UBSan each48 CTests pass (261 total). Both actual GPUs pass window/offscreen readbacks at fixed one-byte color and 0.00001 depth limits, resize/minimize/retirement, 36 native window/offscreen fault children and 2304 clear presentation regression frames across all three Windows profiles. Real shader dependency/rebuild/failure checks, protected Runtime/Server builds, both production application launches and both-GPU relocated compiler-free Runtime package checks pass. Commands, hashes, retained failures and limits are in docs/coverage/evidence/06c-window-distribution.json and docs/handoffs/06c-window-distribution.md. This is not scene authoring, MMO capacity or other-machine qualification. Assignment 07 is next."
+      }
     },
     {
       "id": "REQ-07",
@@ -145,7 +198,10 @@
         "Engine-owned schema metadata and immutable revisioned queries support semantic terminal inspection: property types, defaults, ranges, units, enums and mutability never require viewport or EnTT access."
       ],
       "planned_fixture": "SceneHandles, HierarchyMutation and TransformConventions fixtures; FeatureWorld/Hierarchy and later Lua/GPU stale-reference fixtures connect as their layers land.",
-      "verification": {"status": "PASS", "reason": "Full assignment 07 passes under current-machine scope: 07a private EnTT/scoped identity/deferred lifetime/world coordinates, 07b mandatory Name/Transform/hierarchy, and 07c owned version-1 schemas, shared pure validation and bounded immutable revisioned inspection. Windows Debug/Release/ASan each pass 62 CTests, WSL CPU client Debug/ASan+UBSan each55 and WSL Server Debug/ASan+UBSan each40:376 total with no failures/skips. Schema9 cases/654 assertions and query19 cases/3916 assertions pass with seed1337 alongside all earlier07 regressions. Protected Runtime/Server builds, exact dependency/source/license/ELF closure, isolated package launches, public-header audit and documented C++ example compilation pass; final source inputs are unchanged. Evidence: docs/coverage/evidence/07c-schema-inspection.json and docs/handoffs/07c-schema-inspection.md. M02 is next. FeatureWorld connects in10; persistence, transactions, terminal/editor/Lua adapters and networking retain their owners, with no MMO capacity claim."}
+      "verification": {
+        "status": "PASS",
+        "reason": "Full assignment 07 passes under current-machine scope: 07a private EnTT/scoped identity/deferred lifetime/world coordinates, 07b mandatory Name/Transform/hierarchy, and 07c owned version-1 schemas, shared pure validation and bounded immutable revisioned inspection. Windows Debug/Release/ASan each pass 62 CTests, WSL CPU client Debug/ASan+UBSan each55 and WSL Server Debug/ASan+UBSan each40:376 total with no failures/skips. Schema9 cases/654 assertions and query19 cases/3916 assertions pass with seed1337 alongside all earlier07 regressions. Protected Runtime/Server builds, exact dependency/source/license/ELF closure, isolated package launches, public-header audit and documented C++ example compilation pass; final source inputs are unchanged. Evidence: docs/coverage/evidence/07c-schema-inspection.json and docs/handoffs/07c-schema-inspection.md. M02 is next. FeatureWorld connects in10; persistence, transactions, terminal/editor/Lua adapters and networking retain their owners, with no MMO capacity claim."
+      }
     },
     {
       "id": "REQ-08",
@@ -160,7 +216,10 @@
         "File saves and scoped text writes detect changed on-disk revisions/digests and reject stale overwrites; external-edit, failed-save and subsequent reload fixtures preserve human and agent work."
       ],
       "planned_fixture": "ProjectSceneRoundTrip, SceneMigrationV1, FutureVersionRejection, InterruptedSave and ProjectRootEscape fixtures; FeatureWorld/Persistence provides the representative authored hierarchy.",
-      "verification": {"status": "PASS", "reason": "08a is PASS under the current-machine scope. EngineTools provides bounded strict UTF-8 JSON decoding, explicit version-0 migration, stable authored identity and hierarchy/reference validation, Core Name/Transform validation, canonical extras and deterministic revalidated version-1 encoding. All 484 full-suite CPU CTests pass without failures/skips: Windows Debug/Release/ASan 78 each, WSL clients 71 each and WSL Servers 54 each. Independent CPU Tools builds each add one focused CTest; the codec has 28 cases and 10,604 assertions. Protected builds/packages, private dependency and public API audits pass against 288 unchanged source/build/test/fixture inputs. Evidence: docs/coverage/evidence/08a-source-documents.json and docs/handoffs/08a-source-documents.md. Implementation maps to shark.tools.source-documents and independently authored legacy/current fixtures; see docs/source-documents.md and docs/roadmap/persistence-plan.md. 08b is also PASS under the current-machine scope. EngineTools AuthoredScene resolves project/catalog/world references, validates complete inactive candidates including composed transforms, captures revision-consistent owned source values and preserves unsaved active state on failed activation. Explicit replacement has dirty/revision/pending/visit/thread guards, incarnation-bound metadata and fresh-instance handle invalidation. All 489 full-suite CPU CTests pass without failures/skips: Windows Debug/Release/ASan 79 each, WSL clients 72 each and WSL Servers 54 each. Independent CPU Tools builds each add two focused CTests; the new family has 23 cases and 26,624 assertions. Protected builds/packages and public API audits pass against 291 unchanged source/build/test/fixture inputs. Evidence: docs/coverage/evidence/08b-scene-activation.json and docs/handoffs/08b-scene-activation.md; contract: docs/authored-scenes.md; implemented fixture: shark.tools.authored-scene. 08c implements typed project file I/O with root/path-bound exact-content revisions, native containment and alias checks, exclusive cooperating ownership, sibling staging and explicit committed durability outcomes. Save/reload reuse AuthoredScene with dirty/revision protection. 08c is PASS under the current-machine scope: 499 full-suite CPU CTests pass without failures/skips (Windows Debug/Release/ASan 81 each, WSL clients 74 each and WSL Servers 54 each), plus four focused standalone Tools tests per OS. The file family has 30 cases with 1,832 Windows/1,830 Linux assertions; seven process receipts each pass 44 checks including native locking, five interruption phases, complete-file recovery and orphan preservation. Protected packages, public/private API audits and all 298 frozen source/build/test inputs with 19 helpers pass unchanged. Evidence: docs/coverage/evidence/08c-project-files.json and docs/handoffs/08c-project-files.md; contract: docs/project-files.md. 08d and full REQ-08 are PASS under the current-machine scope. Integrated native file reads, legacy migration, Scene activation, edits, explicit saves, reopen and external-edit reconciliation preserve stable IDs, hierarchy, world/cell identity, metadata and unsaved work. All 504 full-suite CPU CTests pass without failures/skips (Windows Debug/Release/ASan 82 each, WSL clients 75 each and WSL Servers 54 each); standalone Tools builds add five focused tests per OS, ten separately counted passes. The integration family has 3 cases and 1,543 assertions, the file family has 31 cases, and all seven process receipts pass 55 checks including interrupted authored save, complete reactivation and explicit recovery saves. All three public C++ examples pass 27 checks, with protected Runtime/Server builds, isolated packages and dependency/API audits passing against 299 unchanged frozen source/build/test inputs and 18 helpers. Evidence: docs/coverage/evidence/08d-integrated-qualification.json and docs/handoffs/08d-integrated-qualification.md. M03 is next. No source reader is added to Core/Runtime/Server, and authored documents do not implement M03 live durable state."}
+      "verification": {
+        "status": "PASS",
+        "reason": "08a is PASS under the current-machine scope. EngineTools provides bounded strict UTF-8 JSON decoding, explicit version-0 migration, stable authored identity and hierarchy/reference validation, Core Name/Transform validation, canonical extras and deterministic revalidated version-1 encoding. All 484 full-suite CPU CTests pass without failures/skips: Windows Debug/Release/ASan 78 each, WSL clients 71 each and WSL Servers 54 each. Independent CPU Tools builds each add one focused CTest; the codec has 28 cases and 10,604 assertions. Protected builds/packages, private dependency and public API audits pass against 288 unchanged source/build/test/fixture inputs. Evidence: docs/coverage/evidence/08a-source-documents.json and docs/handoffs/08a-source-documents.md. Implementation maps to shark.tools.source-documents and independently authored legacy/current fixtures; see docs/source-documents.md and docs/roadmap/persistence-plan.md. 08b is also PASS under the current-machine scope. EngineTools AuthoredScene resolves project/catalog/world references, validates complete inactive candidates including composed transforms, captures revision-consistent owned source values and preserves unsaved active state on failed activation. Explicit replacement has dirty/revision/pending/visit/thread guards, incarnation-bound metadata and fresh-instance handle invalidation. All 489 full-suite CPU CTests pass without failures/skips: Windows Debug/Release/ASan 79 each, WSL clients 72 each and WSL Servers 54 each. Independent CPU Tools builds each add two focused CTests; the new family has 23 cases and 26,624 assertions. Protected builds/packages and public API audits pass against 291 unchanged source/build/test/fixture inputs. Evidence: docs/coverage/evidence/08b-scene-activation.json and docs/handoffs/08b-scene-activation.md; contract: docs/authored-scenes.md; implemented fixture: shark.tools.authored-scene. 08c implements typed project file I/O with root/path-bound exact-content revisions, native containment and alias checks, exclusive cooperating ownership, sibling staging and explicit committed durability outcomes. Save/reload reuse AuthoredScene with dirty/revision protection. 08c is PASS under the current-machine scope: 499 full-suite CPU CTests pass without failures/skips (Windows Debug/Release/ASan 81 each, WSL clients 74 each and WSL Servers 54 each), plus four focused standalone Tools tests per OS. The file family has 30 cases with 1,832 Windows/1,830 Linux assertions; seven process receipts each pass 44 checks including native locking, five interruption phases, complete-file recovery and orphan preservation. Protected packages, public/private API audits and all 298 frozen source/build/test inputs with 19 helpers pass unchanged. Evidence: docs/coverage/evidence/08c-project-files.json and docs/handoffs/08c-project-files.md; contract: docs/project-files.md. 08d and full REQ-08 are PASS under the current-machine scope. Integrated native file reads, legacy migration, Scene activation, edits, explicit saves, reopen and external-edit reconciliation preserve stable IDs, hierarchy, world/cell identity, metadata and unsaved work. All 504 full-suite CPU CTests pass without failures/skips (Windows Debug/Release/ASan 82 each, WSL clients 75 each and WSL Servers 54 each); standalone Tools builds add five focused tests per OS, ten separately counted passes. The integration family has 3 cases and 1,543 assertions, the file family has 31 cases, and all seven process receipts pass 55 checks including interrupted authored save, complete reactivation and explicit recovery saves. All three public C++ examples pass 27 checks, with protected Runtime/Server builds, isolated packages and dependency/API audits passing against 299 unchanged frozen source/build/test inputs and 18 helpers. Evidence: docs/coverage/evidence/08d-integrated-qualification.json and docs/handoffs/08d-integrated-qualification.md. M03 is next. No source reader is added to Core/Runtime/Server, and authored documents do not implement M03 live durable state."
+      }
     },
     {
       "id": "REQ-09",
@@ -177,7 +236,10 @@
         "Test alternating human/agent-equivalent edits, stale revisions, invalid batches and retry outcomes through the common service; process ownership is enforced in 15 and editor integration in 16."
       ],
       "planned_fixture": "CommandReplayUndoRedo, TransactionRollback, RevisionConflict and RequestRetry fixtures; FeatureWorld/AuthoringCommands is added with assignment 10. Add HumanAgentRevisionHistory, PureValidationPreview and LostReplyRetryScope fixtures.",
-      "verification": {"status": "PASS", "reason": "09a-09e and fullREQ09 PASS under current-machine scope. Eight connected authoring cases carry independently authored legacy/current documents and one real file lineage through alternating shared-owner edits, pure preview, atomic rollback, common undo/redo, retained successes/noops/errors, expiry, native I/O and postpublication faults, external text conflicts, explicit reload and fresh-owner reconciliation. All previous inventories, seeds, timeouts and workloads remain. Final qualification records625 full CPU CTest executions across seven profiles including both refreshed Server suites,22 standalone Tools checks,24 public-example compiles, actual sanitizer objects and protected packages. See docs/handoffs/09e-integrated-qualification.md, docs/coverage/evidence/09e-integrated-qualification.json and docs/authoring-qualification.md. These are local C++ source-authoring services; actual import/export jobs retain11-14, terminal/project ownership15, editor16 and FeatureWorld10. No player RPC or production MMO capacity is claimed. Next:10 FeatureWorld and automated scene runner."}
+      "verification": {
+        "status": "PASS",
+        "reason": "09a-09e and fullREQ09 PASS under current-machine scope. Eight connected authoring cases carry independently authored legacy/current documents and one real file lineage through alternating shared-owner edits, pure preview, atomic rollback, common undo/redo, retained successes/noops/errors, expiry, native I/O and postpublication faults, external text conflicts, explicit reload and fresh-owner reconciliation. All previous inventories, seeds, timeouts and workloads remain. Final qualification records625 full CPU CTest executions across seven profiles including both refreshed Server suites,22 standalone Tools checks,24 public-example compiles, actual sanitizer objects and protected packages. See docs/handoffs/09e-integrated-qualification.md, docs/coverage/evidence/09e-integrated-qualification.json and docs/authoring-qualification.md. These are local C++ source-authoring services; actual import/export jobs retain11-14, terminal/project ownership15, editor16 and FeatureWorld10. No player RPC or production MMO capacity is claimed. Next:10 FeatureWorld and automated scene runner."
+      }
     },
     {
       "id": "REQ-10",
@@ -266,13 +328,20 @@
       "planned_fixture": "LicensedGLTFProfile corpus with EmbeddedExternal, SparsePolicy, MalformedAccessor, RequiredExtension, ImageColorSpace and PathTraversal cases; FeatureWorld/ImportedStaticMeshes uses accepted assets.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "12a is PASS under current-machine scope: pure bounded .gltf/.glb source inspection, explicit immutable resource snapshots, checked URI/accessor/sparse storage, private pinned parser and complete allocation-failure cleanup. Qualification has 486 selected outcomes, 42 public-example compiles, 30 sanitizer objects and protected packages. Geometry conversion, decoded pixels, complete optional material/texture fallback and cache publication remain assigned to checkpoints 12b-12e; final PBR rendering acceptance belongs to 26. Full REQ-12 remains NOT_RUN. See docs/handoffs/12a-gltf-foundation.md and docs/roadmap/gltf-plan.md.",
+        "reason": "12a source inspection and 12b bounded static geometry/hierarchy conversion are PASS under current-machine scope. 12b qualifies 357 fresh outcomes, 45 public-example compiles, 32 actual sanitizer objects and protected packages, with 136 explicitly inherited full Server outcomes from unchanged 12a protected inputs. Geometry includes sparse data, triangle expansion, generated flat normals/documented tangents, UV/color semantics, shared mirrored instances, Core transforms and bounds. Image decoding remains 12c, complete material/resource/cache integration and optional fallback 12d, and integrated full REQ-12 qualification 12e. Final PBR rendering acceptance belongs to 26. See docs/handoffs/12b-gltf-geometry.md and docs/roadmap/gltf-plan.md.",
         "checkpoints": {
           "12a": {
             "status": "PASS",
             "evidence": {
               "path": "docs/coverage/evidence/12a-gltf-foundation.json",
               "sha256": "5ca69849c0a91fdd30f808bf8093428838ba0458735b378fc3a95941e34765e9"
+            }
+          },
+          "12b": {
+            "status": "PASS",
+            "evidence": {
+              "path": "docs/coverage/evidence/12b-gltf-geometry.json",
+              "sha256": "586d7ad4f2e956808489995ba47c7c01ce67ffe04a783a2fcf5db565d87fd929"
             }
           }
         }
@@ -290,7 +359,10 @@
         "Keep camera/render transforms local to a bounded origin with global cell identity; M05/M06 extend this milestone with streaming, culling/LOD and dense animated-world tests."
       ],
       "planned_fixture": "FeatureWorld/Cameras, FeatureWorld/ImportedStaticMeshes, FeatureWorld/BuiltinGeometry and VisibleEntityReload GPU fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Basic scene rendering/cameras are not implemented; owner assignment 13."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Basic scene rendering/cameras are not implemented; owner assignment 13."
+      }
     },
     {
       "id": "REQ-14",
@@ -328,7 +400,10 @@
         "Jobs expose stable IDs, bounded progress/status, diagnostics, cancellation and final artifacts. Timeouts/disconnects/cancellation around publication return the actual committed or uncommitted outcome with no partial activation."
       ],
       "planned_fixture": "PublicAuthoringProcess scenario, ProtocolInvalidRequests, ProtocolVersionMismatch, CancellationRetry and ScopedTextAsset fixtures; FeatureWorld/AgentAuthoredScene provides saved scene equivalence. Add NoTTYProtocolStreams, BoundedDiscoveryQueries, CPUAuthoringClosure, ProjectOwnerExclusion, TextWriteConflict and JobPublicationInterruption fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Agent command interface and discovery are not implemented; owner assignment 15."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Agent command interface and discovery are not implemented; owner assignment 15."
+      }
     },
     {
       "id": "REQ-16",
@@ -342,7 +417,10 @@
         "A human opens and continues a terminal-authored project, then the terminal continues human changes with equivalent semantic state and shared validation. The active owner preserves unsaved state/history; save/close/reopen handoff resolves dirty state and documents history reset or persistence. Stale edits and conflicting undo have tested outcomes; a clear busy response is valid when concurrent attachment is unsupported."
       ],
       "planned_fixture": "EditorApiStateEquivalence, EditorLifecycle and EditorFocusRouting fixtures; FeatureWorld/EditorAuthoring is the representative saved project. Add HumanTerminalProjectHandoff and UnsavedHistoryConflict fixtures.",
-      "verification": { "status": "NOT_RUN", "reason": "Editor shell is not implemented; owner assignment 16." }
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Editor shell is not implemented; owner assignment 16."
+      }
     },
     {
       "id": "REQ-17",
@@ -355,7 +433,10 @@
         "Semantic transform commands and UI gizmos use the same validation and revision/history rules, including human edits interleaved with stale agent requests; purely visual navigation need not mirror every widget as an API."
       ],
       "planned_fixture": "FeatureWorld/GizmoHierarchy, GizmoDragUndo, HighDpiViewportPicking and GizmoAgentEquivalence fixtures.",
-      "verification": { "status": "NOT_RUN", "reason": "Viewport navigation/picking/gizmos are not implemented; owner assignment 17." }
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Viewport navigation/picking/gizmos are not implemented; owner assignment 17."
+      }
     },
     {
       "id": "REQ-18",
@@ -369,7 +450,10 @@
         "Authoritative server physics uses fixed profile ticks and bounded local origins without rendering; client prediction is corrected, not assumed bit-identical lockstep. Static world collision is added in M05."
       ],
       "planned_fixture": "FeatureWorld/RigidBodies, FeatureWorld/CollisionLayers, FeatureWorld/Triggers, PhysicsRenderRateTolerance and PhysicsQueuedRemoval fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "3D physics core is not implemented; owner assignment 18."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "3D physics core is not implemented; owner assignment 18."
+      }
     },
     {
       "id": "REQ-19",
@@ -385,7 +469,10 @@
         "Scoped Lua editing detects stale content revisions, reports syntax/runtime diagnostics with script context and runs through public noninteractive tools; it grants no shell or production-server execution authority."
       ],
       "planned_fixture": "FeatureWorld/ScriptLifecycle, FeatureWorld/CoreLuaApi, LuaSyntaxRuntimeErrors, LuaRunawayRecovery and LuaStaleHandles fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Lua VM/core gameplay API is not implemented; owner assignment 19."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Lua VM/core gameplay API is not implemented; owner assignment 19."
+      }
     },
     {
       "id": "REQ-20",
@@ -399,7 +486,10 @@
         "Server owns collision/contact/gameplay outcomes, and callbacks queue validated changes to the owning region; M04/M05 test network corrections and cross-region interactions."
       ],
       "planned_fixture": "FeatureWorld/PhysicsQueries, FeatureWorld/ContactScripts, PhysicsCallbackMutation, PhysicsWorkerEventBoundary and PhysicsQueryInvalidInput fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Physics queries/events/Lua control are not implemented; owner assignment 20."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Physics queries/events/Lua control are not implemented; owner assignment 20."
+      }
     },
     {
       "id": "REQ-21",
@@ -413,7 +503,10 @@
         "Live spawning/destruction is authority-checked, replica-aware and ownership-epoch fenced; reconnect, replay and handoff cannot duplicate durable entities or rewards."
       ],
       "planned_fixture": "FeatureWorld/PrefabInstances, FeatureWorld/ScriptSpawning, PrefabReferenceRemap, PrefabNestingPolicy and SpawnDestroyLifetime fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Prefabs/spawning are not implemented; owner assignment 21."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Prefabs/spawning are not implemented; owner assignment 21."
+      }
     },
     {
       "id": "REQ-22",
@@ -427,7 +520,10 @@
         "Pause/step/stop affect offline editor play only. Connected clients cannot pause the shared server; their UI and prediction handle ongoing snapshots and explicit disconnect/recovery."
       ],
       "planned_fixture": "FeatureWorld/PlayLifecycle, PlayStopStateIsolation, PauseSingleTick and AgentPlayControls fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Editor play/pause/step/stop is not implemented; owner assignment 22."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Editor play/pause/step/stop is not implemented; owner assignment 22."
+      }
     },
     {
       "id": "REQ-23",
@@ -441,7 +537,10 @@
         "The minimal HUD is an intermediate milestone; M07 adds RPG character/health/target/inventory/party/chat/session UI, and live input emits validated intents rather than authoritative writes."
       ],
       "planned_fixture": "FeatureWorld/InputActions, FeatureWorld/RuntimeHud, RecordedInputParity, InputFocusIsolation, HudResize and ExportedHud fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Gameplay actions/runtime HUD are not implemented; owner assignment 23."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Gameplay actions/runtime HUD are not implemented; owner assignment 23."
+      }
     },
     {
       "id": "REQ-24",
@@ -455,7 +554,10 @@
         "Audio is client-only; headless Server never initializes audio devices. Replicated semantic events drive bounded client playback without replay duplication."
       ],
       "planned_fixture": "FeatureWorld/AudioSpatial, FeatureWorld/ScriptAudio, OfflineAudioMix, AudioVoiceLifetime and RealAudioDevice platform fixtures; offline success does not establish hardware playback.",
-      "verification": {"status": "NOT_RUN", "reason": "Audio integration is not implemented and real playback is unverified; owner assignment 24."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Audio integration is not implemented and real playback is unverified; owner assignment 24."
+      }
     },
     {
       "id": "REQ-25",
@@ -468,7 +570,10 @@
         "Transparency and overlays are composed in the declared color spaces and stages."
       ],
       "planned_fixture": "FeatureWorld/HdrColorRamps, FeatureWorld/Tonemapping, HdrBrightValueReadback, HdrResize and OverlayColorSpace GPU fixtures.",
-      "verification": { "status": "NOT_RUN", "reason": "HDR/color/tonemapping pipeline is not implemented; owner assignment 25." }
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "HDR/color/tonemapping pipeline is not implemented; owner assignment 25."
+      }
     },
     {
       "id": "REQ-26",
@@ -482,7 +587,10 @@
         "Measure PBR/direct-light cost with M06 animated-crowd and streamed-world fixtures; preserve explicit light limits or amend them with evidence before changing the profile."
       ],
       "planned_fixture": "FeatureWorld/PbrSpheres, FeatureWorld/AlphaModes, FeatureWorld/DirectLightTypes, LicensedGLTFMaterials, MaterialCommandRoundTrip and PbrNumericalStability fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "PBR/direct lighting is not implemented; owner assignment 26."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "PBR/direct lighting is not implemented; owner assignment 26."
+      }
     },
     {
       "id": "REQ-27",
@@ -495,7 +603,10 @@
         "A reproducible material-lighting reference scene and licensed fixture metadata are present; editor/API controls serialize and reproduce environment settings."
       ],
       "planned_fixture": "FeatureWorld/HdriIblReference, IblOrientationSeams, IblRoughnessEnergy, EnvironmentCacheInvalidation and CookedEnvironmentOffline fixtures.",
-      "verification": { "status": "NOT_RUN", "reason": "HDRI/IBL is not implemented; owner assignment 27." }
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "HDRI/IBL is not implemented; owner assignment 27."
+      }
     },
     {
       "id": "REQ-28",
@@ -509,7 +620,10 @@
         "Include dense actors, large-world origins and streaming in shadow cost/quality measurements; any depth or shadow-limit amendment requires recorded evidence."
       ],
       "planned_fixture": "FeatureWorld/ShadowCascades, FeatureWorld/MaskedShadowCasters, ShadowBiasThinGeometry, ShadowCameraStability and ShadowQualityCost GPU fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Filtered shadow mapping is not implemented; owner assignment 28."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Filtered shadow mapping is not implemented; owner assignment 28."
+      }
     },
     {
       "id": "REQ-29",
@@ -523,7 +637,10 @@
         "Include moving crowded/streamed scenes in AO cost and stability checks; visual-only optimization never changes server simulation authority."
       ],
       "planned_fixture": "FeatureWorld/AoComparison, AoThinSilhouette, AoMovingCamera, AoScaleContact, AoDisabledPath and AoComposition GPU fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Quality SSAO is not implemented; owner assignment 29."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Quality SSAO is not implemented; owner assignment 29."
+      }
     },
     {
       "id": "REQ-30",
@@ -538,7 +655,10 @@
         "Reload jobs detect source/revision conflicts, expose bounded status/cancellation and preserve the last valid active state; neither editor nor terminal silently overwrites external changes or reloads live server authority."
       ],
       "planned_fixture": "FeatureWorld/LiveReload, MalformedReplacementRetention, InterruptedAutosaveRecovery, ReloadRenameDelete and AtomicResourceSwapLifetime fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Reload/recovery is not implemented; owner assignment 30."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Reload/recovery is not implemented; owner assignment 30."
+      }
     },
     {
       "id": "REQ-31",
@@ -572,7 +692,10 @@
         "Audit every supported semantic authoring feature across shared schema/service, terminal discovery/commands, editor, persistence and tests. Explicit presentation-only exceptions are recorded; missing terminal or human authoring paths block completeness."
       ],
       "planned_fixture": "CompleteCoverageAudit, IntentionalCoverageHole, FeatureWorld/full-surface, FeatureWorld/CombinedLighting and isolated graphics/edge-case suites.",
-      "verification": {"status": "NOT_RUN", "reason": "Complete implemented-surface audit awaits assignments 01-31; owner assignment 32."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Complete implemented-surface audit awaits assignments 01-31; owner assignment 32."
+      }
     },
     {
       "id": "REQ-33",
@@ -690,7 +813,10 @@
         "Record the selected combat model, fixed tick/substep and any lag-compensation bounds from measurements; do not assume cross-CPU physics lockstep."
       ],
       "planned_fixture": "AuthoritativeCharacterMovement, PredictionCorrection, CombatAuthorityReject and ClientPauseWorldContinuity fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Planning amendment only; MMORPG implementation and qualification belong to M04. No server/network/persistence/streaming/load result is claimed."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Planning amendment only; MMORPG implementation and qualification belong to M04. No server/network/persistence/streaming/load result is claimed."
+      }
     },
     {
       "id": "REQ-M05",
@@ -739,7 +865,10 @@
         "Reference quests/items/characters/UI content can be authored by a human or terminal agent through shared public schemas/services; local content operations never become gameplay or live-admin privileges."
       ],
       "planned_fixture": "MMOWorld/QuestTradePartyLoop, ConcurrentTradeDisconnect, CharacterReconnectUI and BoundedChat fixtures.",
-      "verification": {"status": "NOT_RUN", "reason": "Planning amendment only; MMORPG implementation and qualification belong to M07. No server/network/persistence/streaming/load result is claimed."}
+      "verification": {
+        "status": "NOT_RUN",
+        "reason": "Planning amendment only; MMORPG implementation and qualification belong to M07. No server/network/persistence/streaming/load result is claimed."
+      }
     },
     {
       "id": "REQ-M08",
@@ -2397,6 +2526,41 @@
         "featureworld_cases": [
           "featureworld.gltf-source"
         ]
+      },
+      {
+        "id": "tools.gltf-geometry",
+        "name": "Bounded static glTF geometry and hierarchy conversion",
+        "requirement_ids": [
+          "REQ-12"
+        ],
+        "test_ids": [
+          "shark.tools.gltf-geometry",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/gltf_geometry_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "tests/fixtures/gltf_geometry/README.md",
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/gltf-geometry.md",
+          "tests/fixtures/gltf_geometry/shared-strip.gltf",
+          "tests/fixtures/gltf_geometry/shared-strip.bin",
+          "tests/fixtures/gltf_geometry/embedded-strip.gltf",
+          "tests/fixtures/gltf_geometry/shared-strip.glb",
+          "tests/fixtures/gltf_geometry/manifest.json",
+          "tests/fixtures/gltf_geometry/LICENSE"
+        ],
+        "fixture_reason": "Pure bounded CPU geometry conversion consumes the same explicit immutable source snapshots, expands sparse accessors and triangle topology, validates vertex attributes and node TRS, and returns owned shared geometry, hierarchy, transforms and bounds. The eleventh native FeatureWorld case checks independent triangle values, sparse expansion, shared mirrored instances, resource identity, repeated conversion and rejection/cancellation without changing its AuthoredScene. Licensed geometry fixtures exercise additional semantics and bounds. Image decoding, material/cache publication and rendering retain their later owners.",
+        "featureworld_cases": [
+          "featureworld.gltf-geometry"
+        ]
       }
     ],
     "components": [
@@ -3871,6 +4035,41 @@
         "featureworld_cases": [
           "featureworld.gltf-source"
         ]
+      },
+      {
+        "id": "asset.gltf.convert",
+        "name": "convert_gltf_geometry",
+        "requirement_ids": [
+          "REQ-12"
+        ],
+        "test_ids": [
+          "shark.tools.gltf-geometry",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/gltf_geometry_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "tests/fixtures/gltf_geometry/README.md",
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/gltf-geometry.md",
+          "tests/fixtures/gltf_geometry/shared-strip.gltf",
+          "tests/fixtures/gltf_geometry/shared-strip.bin",
+          "tests/fixtures/gltf_geometry/embedded-strip.gltf",
+          "tests/fixtures/gltf_geometry/shared-strip.glb",
+          "tests/fixtures/gltf_geometry/manifest.json",
+          "tests/fixtures/gltf_geometry/LICENSE"
+        ],
+        "fixture_reason": "Pure bounded CPU geometry conversion consumes the same explicit immutable source snapshots, expands sparse accessors and triangle topology, validates vertex attributes and node TRS, and returns owned shared geometry, hierarchy, transforms and bounds. The eleventh native FeatureWorld case checks independent triangle values, sparse expansion, shared mirrored instances, resource identity, repeated conversion and rejection/cancellation without changing its AuthoredScene. Licensed geometry fixtures exercise additional semantics and bounds. Image decoding, material/cache publication and rendering retain their later owners.",
+        "featureworld_cases": [
+          "featureworld.gltf-geometry"
+        ]
       }
     ],
     "lua_api": []
@@ -3888,7 +4087,8 @@
       "featureworld.asset-import",
       "featureworld.asset-jobs",
       "featureworld.asset-pipeline",
-      "featureworld.gltf-source"
+      "featureworld.gltf-source",
+      "featureworld.gltf-geometry"
     ],
     "case_source": "engine_tools/src/feature_world.cpp"
   }

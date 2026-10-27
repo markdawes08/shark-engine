@@ -279,8 +279,25 @@ Keep aggregate accessor/resolved-byte budgets, pre-normalization URI validation,
 effective sparse-index checks and all allocator sweeps. Only the parser source
 uses private MSVC `/EHc-` after `/EHsc`; its bounded arena aborts incomplete parses
 inside the owned Result boundary. Full optional fallback/material/image behavior
-remains assigned to 12c/12d. Full REQ-12 remains NOT_RUN pending 12b-12e.
-**Next: 12b, static geometry and hierarchy.**
+remains assigned to 12c/12d.
+**12b, static glTF geometry and hierarchy, is complete under current-machine scope.**
+Follow [ADR 0029](docs/architecture/0029-bounded-gltf-geometry.md), the
+[geometry contract](docs/gltf-geometry.md), [handoff](docs/handoffs/12b-gltf-geometry.md)
+and [receipt](docs/coverage/evidence/12b-gltf-geometry.json): 357 fresh passing
+outcomes (227 full client Debug, 130 Tools selections), 45 public-example compiles,
+32 actual sanitizer objects and protected packages. The 52 standalone Tools outcomes
+are included in 130. Unchanged protected implementation/lock/policies explicitly
+inherit 12a's 136 full Server outcomes; they are not counted fresh.
+Preserve `shark.tools.gltf-geometry` (60 seconds, seed 1337), all 45 cases/988
+assertions, all 41 source cases/1,794 assertions and every earlier workload/limit.
+The eleventh native FeatureWorld case retains 29 process checks, 42 CPU surfaces
+and one external GPU command. Conversion reuses the source owner and bytewise
+effective sparse data; meshes are shared across instances. Retain precharged
+vertex/index/output/work bounds, Core TRS/inverse validation, world shear and
+instance mirror metadata. Generated tangents use the documented per-triangle
+basis. No file/cache/Scene publication or new runtime dependency is introduced.
+Full REQ-12 remains NOT_RUN pending 12c-12e.
+**Next: 12c, images and textures.**
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read

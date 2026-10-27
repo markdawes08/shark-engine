@@ -46,8 +46,10 @@ actual async interruption/recovery, privacy and reproducibility under the
 [qualification contract](../asset-qualification.md). Full REQ-11 is PASS under
 current-machine scope. The [glTF checkpoints](gltf-plan.md) begin with qualified
 12a pure bounded source inspection, preserving client/server dependency separation.
-Geometry, textures and materials remain assigned to 12b-12d; full REQ-12 remains
-NOT_RUN pending 12b-12e.
+12b qualifies [static geometry and hierarchy](../handoffs/12b-gltf-geometry.md),
+retaining shared meshes, bounded CPU conversion and instance transforms without
+entering live simulation or streaming. Textures and materials remain assigned
+to 12c/12d; full REQ-12 remains NOT_RUN pending 12c-12e.
 
 ## Historical assessment of the pre-M01 foundation
 

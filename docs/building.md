@@ -447,6 +447,15 @@ After listing the inventory, run `shark.tools.gltf-source` and
 `shark.tooling.gltf-dependencies` (60 seconds each); Catch uses seed 1337. Source
 inspection exposes no filesystem callback, decoder, converted mesh or renderer.
 
+12b adds `GltfGeometryTests` and `shark.tools.gltf-geometry` (60 seconds, seed
+1337), using the same private parser/source boundary without a new dependency.
+The [geometry contract](gltf-geometry.md) provides the fifteenth public CPU
+example and exact output/work limits. Its fixtures are licensed local inputs;
+normal tests download no models. Reuse the canonical profiles and verify
+geometry/source/FeatureWorld families, standalone Tools, Release and sanitizer
+builds. The generated result is CPU geometry and hierarchy; image decoding and
+material/cache publication retain 12c/12d.
+
 08b adds `AuthoredSceneTests` and `shark.tools.authored-scene` (seed 1337,
 60-second timeout) for revision-consistent capture, project/world references,
 candidate construction and failure-safe Scene activation. After listing the test
