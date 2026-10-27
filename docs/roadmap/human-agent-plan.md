@@ -54,7 +54,10 @@ example compiles, 36 actual sanitizer objects and protected packages. 12d adds
 [material/asset APIs](../gltf-assets.md) and typed resource imports through the same
 owner, ready for later human/agent adapters. Its [handoff](../handoffs/12d-material-assets.md)
 records selected verification. Terminal/editor adapters retain 15/16 and the
-original owner/publication fences. Full REQ-12 remains NOT_RUN pending 12e.
+original owner/publication fences.
+[12e](../handoffs/12e-gltf-qualification.md) closes full REQ-12 through connected
+owner/process checks and independent fixture validation. The shared CPU APIs
+remain ready for those adapters; next is 13, basic scene rendering and cameras.
 
 ## Assessment of existing work
 

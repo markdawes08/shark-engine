@@ -23,5 +23,7 @@ All expected pixels are recorded independently in the manifest and C++ tests.
 `external.gltf`, `embedded.gltf` and `embedded.glb` share one triangle and the
 gamma/alpha image used in all five core roles. External paths carry caller-owned
 AssetIds; embedded sources retain source indices without invented persistent IDs.
+Their POSITION accessor records the exact required bounds `[0,0,0]` through
+`[1,1,0]`, corrected during the [12e independent validator check](../../../docs/dependencies/gltf-validator.md).
 Further malformed/header/allocation/selection fixtures are authored in memory by
 `tests/gltf_texture_tests.cpp` under the same original provenance and license.

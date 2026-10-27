@@ -1,0 +1,154 @@
+{
+  "format": "shark.checkpoint-evidence",
+  "schema_version": 1,
+  "checkpoint": "12e",
+  "requirement": "REQ-12",
+  "status": "PASS",
+  "requirement_status": "PASS",
+  "base_revision": "46cce58",
+  "branch": "main",
+  "worktree": "unstaged qualification fixtures, offline oracle and documentation; user owns staging, commits and pushing",
+  "scope": "Current-machine bounded static CPU glTF import; integrated assignment closure under docs/testing-policy.md. No rendering or production MMO claim.",
+  "profiles": {
+    "windows-debug": {
+      "scope": "full inventory",
+      "passing_tests": 123,
+      "junit": [
+        "out/12e-work/native-debug.xml",
+        "out/12e-work/scene-execution-fixed.xml"
+      ],
+      "reported_seconds": 981.0,
+      "resolved_failed_attempts": [
+        {
+          "test": "shark.tools.scene-execution",
+          "result": "FAIL",
+          "junit": "out/12e-work/native-debug.xml"
+        }
+      ]
+    },
+    "wsl-debug": {
+      "scope": "full inventory",
+      "passing_tests": 116,
+      "junit": [
+        "out/12e-work/wsl/debug.xml",
+        "out/12e-work/wsl/debug-boundary.xml"
+      ],
+      "reported_seconds": 444.0
+    },
+    "windows-release": {
+      "scope": "affected selection",
+      "passing_tests": 7,
+      "junit": [
+        "out/12e-work/native-release.xml"
+      ],
+      "reported_seconds": 4.0
+    },
+    "wsl-tools-debug": {
+      "scope": "affected selection",
+      "passing_tests": 8,
+      "junit": [
+        "out/12e-work/wsl/tools.xml"
+      ],
+      "reported_seconds": 4.0
+    },
+    "wsl-asan-ubsan": {
+      "scope": "affected selection",
+      "passing_tests": 8,
+      "junit": [
+        "out/12e-work/wsl/sanitizer.xml"
+      ],
+      "reported_seconds": 23.0
+    }
+  },
+  "passing_profile_results": 262,
+  "execution_note": "262 distinct profile-test results. Three passing development checks repeat final coverage; the full Windows run contains one failed supervisor expectation corrected by one focused passing rerun. 266 CTest executions total, including that resolved failure.",
+  "gltf_cases": {
+    "source": 41,
+    "geometry": 45,
+    "textures": 43,
+    "materials": 14,
+    "payload": 12,
+    "owner_integration": 19
+  },
+  "gltf_process": {
+    "checks": 50,
+    "children": 16,
+    "phases": [
+      "ready",
+      "before_publish",
+      "published"
+    ],
+    "timeout_seconds": 90,
+    "final_snapshots_per_profile": 3,
+    "result": "PASS"
+  },
+  "preserved_byte_process_checks": {
+    "synchronous": 59,
+    "asynchronous": 113
+  },
+  "featureworld": {
+    "native_cases": 13,
+    "process_checks": 31,
+    "cpu_surfaces": 47,
+    "external_gpu_surfaces": 1,
+    "new_public_surfaces": 0
+  },
+  "independent_oracle": {
+    "validator": "Khronos gltf-validator 2.0.0-dev.3.10",
+    "positive_fixtures": 12,
+    "negative_controls": 3,
+    "result": "PASS",
+    "report": "out/12e-work/oracle/final/summary.json"
+  },
+  "packages": {
+    "windows_runtime_files": 35,
+    "wsl_server_files": 12,
+    "isolated_launches": "PASS",
+    "report": "out/12e-work/packages/summary.json",
+    "cleanup": {
+      "status": "BLOCKED",
+      "retained": [
+        {
+          "path": "C:\\Users\\mrkda\\Projects\\shark\\out\\12e-work\\packages\\runtime-package",
+          "bytes": 3118754,
+          "MiB": 2.97
+        },
+        {
+          "path": "C:\\Users\\mrkda\\AppData\\Local\\Temp\\shark-12e-package-8289574a230e45b0a5ac0251322bd535",
+          "bytes": 3118754,
+          "MiB": 2.97
+        }
+      ],
+      "reason": "Automatic approval review rejected exact verified Remove-Item cleanup as blocked by policy without detailed reason"
+    }
+  },
+  "resolved_findings": [
+    "Three texture containers lacked required POSITION min/max. Corrected only metadata/generator/manifest; geometry/image bytes and expected values unchanged. Original oracle reports preserved.",
+    "Scene execution supervisor expected twelve FeatureWorld cases after 12d introduced the thirteenth. Corrected independent count, preserved original failure and reran only that check."
+  ],
+  "commands": {
+    "native_builds": [
+      "out/12e-work/native-debug-build.log",
+      "out/12e-work/native-release-build.log"
+    ],
+    "native_tests": [
+      "out/12e-work/native-debug.log",
+      "out/12e-work/native-release.log",
+      "out/12e-work/scene-execution-fixed.log"
+    ],
+    "wsl": [
+      "out/12e-work/wsl-commands.sh",
+      "out/12e-work/wsl-test-commands.sh",
+      "out/12e-work/wsl-boundary-commands.sh"
+    ],
+    "oracle": "node tools/check_gltf_oracle.cjs out/dependency-cache/gltf-validator-2.0.0-dev.3.10/package out/12e-work/oracle/final"
+  },
+  "reused_evidence": [
+    "12a-12c public-header examples and 12d MSVC gltf-assets example at46cce58: public headers/example code unchanged; zero fresh example compiles claimed.",
+    "12c shader bundle for protected Runtime packaging: lock/shader/graphics inputs unchanged."
+  ],
+  "not_run": [
+    "Additional dedicated Server matrices, Windows ASan/object audits and GPU runs: no engine implementation, dependency lock, instrumentation or graphics changes. Full Debug consumer inventories, relevant Release/WSL sanitizer selections and protected packages are fresh."
+  ],
+  "next": "Assignment13 basic scene rendering and cameras; plan checkpoints before implementation"
+}

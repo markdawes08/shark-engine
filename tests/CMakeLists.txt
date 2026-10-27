@@ -143,6 +143,8 @@ if(TARGET EngineTools)
 
     add_executable(GltfImportTests gltf_import_tests.cpp)
     target_link_libraries(GltfImportTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_compile_definitions(GltfImportTests PRIVATE
+        SHARK_GLTF_CORPUS_DIRECTORY="${PROJECT_SOURCE_DIR}/tests/fixtures")
     shark_configure_target(GltfImportTests)
     shark_classify_target(GltfImportTests test)
     add_test(NAME shark.tools.gltf-import COMMAND GltfImportTests "[gltf-import]" --rng-seed 1337)
@@ -633,6 +635,11 @@ if(TARGET ProjectFilesProcess)
             --probe "$<TARGET_FILE:AssetImportProcess>"
             --output "${CMAKE_CURRENT_BINARY_DIR}/asset-jobs-process.json")
     set_tests_properties(shark.tools.asset-jobs-process PROPERTIES LABELS "cpu;tooling;integration" TIMEOUT 150)
+    add_test(NAME shark.tools.gltf-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_asset_jobs_process.py"
+            --probe "$<TARGET_FILE:AssetImportProcess>" --gltf
+            --output "${CMAKE_CURRENT_BINARY_DIR}/gltf-process.json")
+    set_tests_properties(shark.tools.gltf-process PROPERTIES LABELS "cpu;tooling;integration" TIMEOUT 90)
     add_test(NAME shark.tools.project-files-process
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_project_files_process.py"
             --probe "$<TARGET_FILE:ProjectFilesProcess>"

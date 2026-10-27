@@ -3,8 +3,9 @@
 Date: 2026-10-27. Base: `20b028d`, initially clean `main`. Owner: REQ-12.
 The user approved five checkpoints after completing assignment 11. Preserve the
 [declared profile](../architecture/0006-v1-profile.md), [MMORPG direction](mmorpg-plan.md)
-and [human/agent contract](human-agent-plan.md). Full REQ-12 remains NOT_RUN until
-12e closes all gates. Rendering follows in 13; material rendering acceptance
+and [human/agent contract](human-agent-plan.md). **All five checkpoints and full REQ-12 are PASS** under current-machine scope;
+see the [12e handoff](../handoffs/12e-gltf-qualification.md).
+The per-checkpoint records below preserve their original scope. Rendering follows in 13; material rendering acceptance
 belongs to 26, skeletal animation to M06 and final cooked output to 31.
 
 **Testing amendment, 2026-10-27:** the [testing policy](../testing-policy.md)
@@ -131,3 +132,14 @@ Gate: accepted embedded/external scenes, missing resources, required-extension
 errors/core fallback, dependency reimport/moves/reopen, interrupted/failing work
 and retained valid output. Full REQ-12 passes only after every checkpoint. Reuse
 canonical builds/archive caches and clean successful temporary deployments.
+
+**Status: PASS under current-machine scope.** The
+[handoff](../handoffs/12e-gltf-qualification.md) and
+[results](../coverage/evidence/12e-gltf-qualification.json) close full REQ-12.
+262 passing profile-test results cover full Windows/WSL Debug inventories,
+selected Release/sanitizer and standalone Tools paths. Protected packages and
+12 positive/three negative independent oracle checks pass. The existing import
+family grows to nineteen cases; the new 90-second process family retains fifty
+checks/sixteen children/three interruption phases. All earlier cases/limits remain.
+Corrected fixture bounds and the stale FeatureWorld supervisor count are recorded.
+Next: assignment 13, basic scene rendering and cameras; plan checkpoints first.

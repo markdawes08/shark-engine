@@ -1,12 +1,13 @@
 # Requirement and API coverage
 
-**12d is complete** in its [handoff](../handoffs/12d-material-assets.md) and
-[selected results](evidence/12d-material-assets.json). Material/asset conversion,
-encoding and decoding extend native FeatureWorld to 13 cases / 47 CPU surfaces,
-with the existing external GPU command separate. Actual owner integration tests
-cover typed resources, cache identity, stale/cancelled jobs and last-valid output.
-The 28 passing profile results follow the testing policy; full REQ-12 remains
-NOT_RUN until 12e. These are selected checks, not new full-profile qualifications.
+**12e and full REQ-12 are complete** in the
+[handoff](../handoffs/12e-gltf-qualification.md) and
+[results](evidence/12e-gltf-qualification.json). The existing thirteen native
+FeatureWorld cases and 47 CPU surfaces remain. Connected saved GLB/sparse/fallback
+imports and actual glTF process interruption/recovery close the static profile.
+262 passing profile-test results, fifteen independent oracle results and protected
+package checks qualify under the testing policy. The original failed supervisor
+expectation and its passing correction are retained. Next: assignment 13.
 
 The user-approved [testing policy](../testing-policy.md), effective 2026-10-27,
 controls future execution cadence and evidence effort. Preserve the historical

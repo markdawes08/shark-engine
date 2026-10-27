@@ -344,7 +344,20 @@ capture/publication fences. Logical URI aliases live in normalized settings;
 never strip ByteAssetImporter envelopes to recover source. Preserve existing
 2 MiB artifact/16 MiB closure limits, new 60/90/90-second families (seed 1337),
 13 native FeatureWorld cases, 31 process checks and 47 CPU surfaces plus one GPU
-surface. Full REQ-12 remains NOT_RUN. **Next: 12e, integrated qualification.**
+surface. The later 12e gate below closes full REQ-12.
+**12e and full REQ-12 are complete under current-machine scope.** Follow the
+[qualification contract](docs/gltf-qualification.md),
+[handoff](docs/handoffs/12e-gltf-qualification.md) and
+[results](docs/coverage/evidence/12e-gltf-qualification.json): 262 passing
+profile-test results, independent offline fixture validation and protected
+packages. Preserve nineteen owner-import cases and `shark.tools.gltf-process`
+(90 seconds), its fifty checks/sixteen children/three phases, plus all earlier
+cases/limits. Actual glTF jobs retain whole old/new closures through interruption,
+explicit recovery and retry. Fixture POSITION metadata and a stale supervisor
+count were corrected without engine/API/format changes. Thirteen FeatureWorld
+cases and 47 CPU surfaces remain. Future verification follows the testing policy;
+this assignment-closure matrix is not a recurring subchunk requirement.
+**Next: 13, basic scene rendering and cameras; plan checkpoints first.**
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read

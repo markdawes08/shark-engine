@@ -1,9 +1,11 @@
 #include "shark/tools/asset_import.hpp"
+#include "shark/tools/gltf_asset.hpp"
 
 #include "project_files_native.hpp"
 
 #include <algorithm>
 #include <array>
+#include <bit>
 #include <charconv>
 #include <chrono>
 #include <condition_variable>
@@ -59,15 +61,18 @@ constexpr auto job_deadline = std::chrono::seconds{15};
 // process exit runs on the actual importer worker, without a project writer.
 class ExitImporter final : public AssetImporter {
   public:
-    explicit ExitImporter(bool exit_running) : exit_running_(exit_running) {}
+    explicit ExitImporter(bool exit_running, bool gltf)
+        : delegate_(gltf ? static_cast<AssetImporter&>(resource_)
+                         : static_cast<AssetImporter&>(bytes_)),
+          exit_running_(exit_running) {}
     const AssetImporterInfo& info() const noexcept override {
-        return bytes_.info();
+        return delegate_.info();
     }
     Result<std::string> normalize_settings(std::string_view text) const override {
-        return bytes_.normalize_settings(text);
+        return delegate_.normalize_settings(text);
     }
     Result<void> validate_payload(const AssetArtifact& artifact) const override {
-        return bytes_.validate_payload(artifact);
+        return delegate_.validate_payload(artifact);
     }
     Result<std::vector<std::byte>> import(const AssetImportInput& input) override {
         if (exit_running_ && input.asset == id<AssetId>('b')) {
@@ -80,7 +85,7 @@ class ExitImporter final : public AssetImporter {
                 std::_Exit(77);
             return Error{ErrorCode::execution_failed, "Running-exit gate cancelled", {}};
         }
-        return bytes_.import(input);
+        return delegate_.import(input);
     }
     void await_entry() {
         std::unique_lock lock{mutex_};
@@ -100,6 +105,8 @@ class ExitImporter final : public AssetImporter {
 
   private:
     ByteAssetImporter bytes_;
+    GltfResourceImporter resource_;
+    AssetImporter& delegate_;
     bool exit_running_;
     std::mutex mutex_;
     std::condition_variable changed_;
@@ -175,8 +182,23 @@ std::string payload_body(const AssetArtifact& artifact) {
             artifact.payload.size() - 36};
 }
 
+// Original MIT fixture: one triangle and a mirrored/nonuniform instance. Changing
+// only the typed external buffer must change both its key and the decoded mesh.
+std::string gltf_triangle(float x) {
+    const std::array<float, 9> values{0, 0, 0, x, 0, 0, 2, 1, 0};
+    std::string bytes;
+    for (const auto value : values) {
+        const auto bits = std::bit_cast<std::uint32_t>(value);
+        for (unsigned shift = 0; shift < 32; shift += 8)
+            bytes += static_cast<char>((bits >> shift) & 255U);
+    }
+    return bytes;
+}
+constexpr std::string_view gltf_model =
+    R"({"asset":{"version":"2.0"},"buffers":[{"uri":"leaf.bin","byteLength":36}],"bufferViews":[{"buffer":0,"byteLength":36}],"accessors":[{"bufferView":0,"componentType":5126,"count":3,"type":"VEC3","min":[0,0,0],"max":[2,1,0]}],"materials":[{"pbrMetallicRoughness":{"baseColorFactor":[0.25,0.5,0.75,0.5]},"alphaMode":"BLEND","doubleSided":true}],"meshes":[{"primitives":[{"attributes":{"POSITION":0},"material":0}]}],"nodes":[{"mesh":0,"scale":[-2,3,4]}],"scenes":[{"nodes":[0]}],"scene":0})";
+
 int run_jobs(std::string_view mode, const std::filesystem::path& root,
-             std::string_view selected_phase) {
+             std::string_view selected_phase, bool gltf) {
     const bool seed = mode == "seed-jobs";
     const bool interrupt = mode == "interrupt-jobs";
     const bool recover = mode == "recover-jobs";
@@ -190,24 +212,28 @@ int run_jobs(std::string_view mode, const std::filesystem::path& root,
     const auto root_sidecar = take(asset_sidecar_path(root_source));
     const auto leaf_sidecar = take(asset_sidecar_path(leaf_source));
     if (seed) {
-        write(root / "root.bin", "Root");
-        write(root / "leaf.bin", "Before");
-        take(files->write_asset_metadata(root_sidecar,
-                                         {id<ProjectId>('1'),
-                                          id<AssetId>('a'),
-                                          "bytes",
-                                          "Shark authored async process fixture",
-                                          "MIT",
-                                          "shark.bytes",
-                                          AssetAudience::client,
-                                          "{}",
-                                          {id<AssetId>('b')}},
-                                         {}));
-        take(files->write_asset_metadata(leaf_sidecar,
-                                         {id<ProjectId>('1'), id<AssetId>('b'), "bytes",
-                                          "Shark authored async process fixture", "MIT",
-                                          "shark.bytes", AssetAudience::shared},
-                                         {}));
+        write(root / "root.bin", gltf ? gltf_model : "Root");
+        write(root / "leaf.bin", gltf ? gltf_triangle(1) : "Before");
+        take(files->write_asset_metadata(
+            root_sidecar,
+            {id<ProjectId>('1'),
+             id<AssetId>('a'),
+             gltf ? "gltf" : "bytes",
+             "Shark authored async process fixture",
+             "MIT",
+             gltf ? "shark.gltf" : "shark.bytes",
+             AssetAudience::client,
+             gltf ? R"({"path":"model.gltf","resources":[{"path":"leaf.bin","asset":")" +
+                        id<AssetId>('b').value().to_string() + R"("}]})"
+                  : "{}",
+             {id<AssetId>('b')}},
+            {}));
+        take(files->write_asset_metadata(
+            leaf_sidecar,
+            {id<ProjectId>('1'), id<AssetId>('b'), gltf ? "gltf-resource" : "bytes",
+             "Shark authored async process fixture", "MIT",
+             gltf ? "shark.gltf-resource" : "shark.bytes", AssetAudience::shared},
+            {}));
     }
     auto catalog = take(AssetCatalog::create(*files, id<ProjectId>('1')));
     const std::array inventory{root_sidecar, leaf_sidecar};
@@ -221,8 +247,11 @@ int run_jobs(std::string_view mode, const std::filesystem::path& root,
             metadata.source.document != resolved.record->metadata)
             throw std::runtime_error{"Catalog and source metadata disagree"};
     }
-    ExitImporter importer{interrupt && selected_phase == "running"};
-    const std::array<AssetImporter*, 1> registry{&importer};
+    ExitImporter importer{interrupt && selected_phase == "running", gltf};
+    GltfAssetImporter model_importer;
+    std::vector<AssetImporter*> registry{&importer};
+    if (gltf)
+        registry.push_back(&model_importer);
     auto cache = take(AssetImports::open(*files, *catalog, id<ProjectId>('1'), registry));
     // This guard is destroyed before cache: every failure releases the callback
     // gate without exiting, allowing the service to join its worker safely.
@@ -232,9 +261,12 @@ int run_jobs(std::string_view mode, const std::filesystem::path& root,
             importer.release(false);
         }
     } release{importer};
-    const AssetTargetProfile target{"jobs-process-x64", AssetAudience::client};
+    const AssetTargetProfile target{gltf ? "gltf-process-x64" : "jobs-process-x64",
+                                    AssetAudience::client};
     const auto discovered = take(cache->importers());
-    if (discovered.size() != 1 || discovered[0] != importer.info())
+    if (discovered.size() != registry.size() ||
+        std::ranges::find(discovered, importer.info()) == discovered.end() ||
+        (gltf && std::ranges::find(discovered, model_importer.info()) == discovered.end()))
         throw std::runtime_error{"Async importer discovery changed"};
     const auto old_job = marked_job(root);
     bool rejected_old = false;
@@ -248,7 +280,7 @@ int run_jobs(std::string_view mode, const std::filesystem::path& root,
             throw std::runtime_error{"Restart accepted a foreign in-memory job identity"};
     }
     if (interrupt)
-        write(root / "leaf.bin", "After");
+        write(root / "leaf.bin", gltf ? gltf_triangle(2) : "After");
     const auto recovered = recover ? take(AssetImports::recover(*files)) : 0;
     std::optional<AssetImportJobStatus> completed;
     if (seed || interrupt || recover || blocked) {
@@ -306,9 +338,30 @@ int run_jobs(std::string_view mode, const std::filesystem::path& root,
     const auto dependency = take(cache->read(artifact.dependencies[0].key, revision));
     const bool after = recover || mode == "inspect-after-jobs";
     const bool fresh = seed || after;
-    if (payload_body(artifact) != "Root" ||
-        payload_body(dependency) != (after ? "After" : "Before") ||
-        dependency.audience != AssetAudience::shared ||
+    if (gltf) {
+        const auto mesh = take(decode_gltf_asset(artifact.payload));
+        const auto expected_x = after ? 2.0F : 1.0F;
+        if (mesh.geometry.primitives.size() != 1 || mesh.geometry.nodes.size() != 1 ||
+            mesh.materials.materials.size() != 1 || !mesh.textures.images.empty())
+            throw std::runtime_error{"Lost glTF payload closure after restart"};
+        const auto& primitive = mesh.geometry.primitives[0];
+        const auto& node = mesh.geometry.nodes[0];
+        const auto& material = mesh.materials.materials[0];
+        const auto expected_source = gltf_triangle(expected_x);
+        if (primitive.vertices.size() != 3 || primitive.vertices[1].position[0] != expected_x ||
+            primitive.indices != std::vector<std::uint32_t>{0, 1, 2} ||
+            primitive.source_material != 0 || !node.mirrored || !node.world_bounds ||
+            node.world_bounds->minimum.x != -4 || node.world_bounds->maximum.y != 3 ||
+            material.alpha_mode != GltfAlphaMode::blend || !material.double_sided ||
+            material.base_color != std::array<float, 4>{.25F, .5F, .75F, .5F} ||
+            dependency.kind != "gltf-resource" || dependency.importer != "shark.gltf-resource" ||
+            dependency.source_digest != take(sha256(std::as_bytes(std::span{expected_source}))))
+            throw std::runtime_error{
+                "Wrong decoded glTF dependency/material/transform after restart"};
+    } else if (payload_body(artifact) != "Root" ||
+               payload_body(dependency) != (after ? "After" : "Before"))
+        throw std::runtime_error{"Wrong byte payload after restart"};
+    if (dependency.audience != AssetAudience::shared ||
         status.state != (fresh ? AssetCacheState::fresh : AssetCacheState::stale))
         throw std::runtime_error{"Wrong last-valid dependency bytes or freshness after restart"};
     std::cout
@@ -317,7 +370,8 @@ int run_jobs(std::string_view mode, const std::filesystem::path& root,
         << (blocked ? "blocked"
             : fresh ? "fresh"
                     : "stale")
-        << "\",\"root_payload\":\"Root\",\"leaf_payload\":\"" << payload_body(dependency)
+        << "\",\"root_payload\":\"" << (gltf ? "StaticMesh" : "Root") << "\",\"leaf_payload\":\""
+        << (gltf ? (after ? "2" : "1") : payload_body(dependency))
         << "\",\"fresh\":" << (fresh ? "true" : "false") << ",\"recovered\":" << recovered
         << ",\"key\":\"" << status.last_valid_key->to_hex() << "\",\"dependency_key\":\""
         << dependency.key.to_hex() << "\",\"owner_scope\":\"" << revision.scope.to_string()
@@ -338,13 +392,17 @@ int run(int argc, char** argv) {
     try {
         if (argc < 3 || argc > 4)
             throw std::runtime_error{"expected mode root [phase]"};
-        const std::string_view mode{argv[1]};
+        std::string_view mode{argv[1]};
+        const bool gltf = mode.starts_with("gltf-");
+        if (gltf)
+            mode.remove_prefix(5);
         const std::string root_text{argv[2]};
         const auto root = std::filesystem::path{std::u8string{root_text.begin(), root_text.end()}};
         if (mode.ends_with("-jobs")) {
             if (argc != (mode == "interrupt-jobs" ? 4 : 3))
                 throw std::runtime_error{"Expected async mode root [phase]"};
-            return run_jobs(mode, root, argc == 4 ? std::string_view{argv[3]} : std::string_view{});
+            return run_jobs(mode, root, argc == 4 ? std::string_view{argv[3]} : std::string_view{},
+                            gltf);
         }
         auto files = take(ProjectFiles::open(root));
         const auto source = take(ProjectPath::parse("asset.bin"));

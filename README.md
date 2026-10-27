@@ -85,9 +85,12 @@ protected packages, including 136 fresh full Server outcomes. **12d is complete:
 [materials and asset integration](docs/gltf-assets.md) add core material values,
 bounded engine payloads and typed resource imports through the existing cache/job
 owner. Its [handoff](docs/handoffs/12d-material-assets.md) records selected Windows,
-WSL and sanitizer checks under the testing policy. The
-[five checkpoints](docs/roadmap/gltf-plan.md) continue with **12e integrated
-qualification**; full REQ-12 remains NOT_RUN until that gate closes.
+WSL and sanitizer checks under the testing policy. All
+[five checkpoints](docs/roadmap/gltf-plan.md) and **full REQ-12 are complete**.
+The [12e handoff](docs/handoffs/12e-gltf-qualification.md) records connected
+GLB/sparse/fallback and interruption/recovery acceptance, independent offline
+validation, 262 passing profile results and protected package checks.
+Next: **13, basic scene rendering and cameras**.
 
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
 **04c and full assignment 04 are complete under the current-machine scope.**

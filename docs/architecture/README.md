@@ -140,7 +140,7 @@ reproducibility and protected packages under the
 [five checkpoints](../roadmap/gltf-plan.md); 12a is PASS in its
 [handoff](../handoffs/12a-gltf-foundation.md), with 486 selected outcomes,
 42 public-example compiles, 30 sanitizer objects and protected packages.
-Full REQ-12 remains NOT_RUN; completed 12b/12c checkpoints below continue with 12d.
+The completed 12b-12e checkpoints below close full REQ-12.
 
 | Record | Decision |
 | --- | --- |
@@ -188,7 +188,9 @@ objects and protected packages, including two fresh full Server suites.
 12d adds [materials and asset integration](../gltf-assets.md) under ADR 0031,
 retaining existing cache/job ownership and bounds. Its
 [handoff](../handoffs/12d-material-assets.md) records selected verification under
-the testing policy. Full REQ-12 remains NOT_RUN; next is 12e integrated qualification.
+the testing policy. The [12e handoff](../handoffs/12e-gltf-qualification.md) closes
+full REQ-12 through connected owner/process acceptance, independent fixture
+validation and applicable CPU/package checks. Next is assignment 13.
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

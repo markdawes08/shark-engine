@@ -100,18 +100,18 @@
     },
     {
       "path": "external.gltf",
-      "bytes": 1401,
-      "sha256": "8d4802acc434a569db823ceb071e14c10dc25b179a9965212506e1a84abb7674"
+      "bytes": 1513,
+      "sha256": "86acc550781ae558bce453b5480b3956329336f69a9fe2ee6235c68df5fb4999"
     },
     {
       "path": "embedded.gltf",
-      "bytes": 1617,
-      "sha256": "d803624132c03f9692c64309797ed903ebf68c4f7dae9a217bd2e5aef3c148b4"
+      "bytes": 1729,
+      "sha256": "b026dee9ed3f8d1e0c2b9b5382b9b03e334b8b45760ff8c653d66c9d1d71655b"
     },
     {
       "path": "embedded.glb",
-      "bytes": 984,
-      "sha256": "bdfbd8c7754879fe39df2bbc3cb639a7c6d8e84daeb2c57e8476081e4f0e5aba"
+      "bytes": 1012,
+      "sha256": "c6d97a5f2ce81c24f2477763028ff654040a598bcf5f4b7121c2f4c52893fbf8"
     }
   ],
   "expected": {

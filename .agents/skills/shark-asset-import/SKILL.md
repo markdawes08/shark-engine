@@ -13,11 +13,18 @@ affected import and FeatureWorld regressions, then use the policy's subchunk or
 assignment-closure scope. A private Tools dependency change needs boundary checks,
 not automatically full Server suites, package deployments or GPU runs.
 
+The [static glTF qualification contract](../../../docs/gltf-qualification.md)
+connects the 12a-12d families to saved GLB/sparse/fallback owner tests and real
+glTF job interruption/recovery. Preserve those paths, the original byte-import
+controls and the offline licensed corpus. The pinned independent validator is
+an opt-in additional oracle, not a runtime dependency or a download during tests.
+Select future verification by actual changed behavior under the testing policy.
+
 12d adds [materials and asset payloads](../../../docs/gltf-assets.md). Require the
 typed identity-only resource importer and owner-supplied descriptor/source digest;
 never interpret transformed byte bodies as original sources. Logical URI aliases
 are normalized settings, not native file requests. Preserve the existing cache
-and job bounds/fences; broader glTF qualification remains 12e.
+and job bounds/fences; the qualification contract records the connected paths.
 
 12c adds pure [texture conversion](../../../docs/gltf-textures.md) through the
 same source owner. Preserve pinned memory-only PNG/JPEG, precision, strict PNG

@@ -5,6 +5,7 @@ import argparse
 import hashlib
 import json
 import re
+import struct
 import sys
 import tempfile
 import uuid
@@ -32,6 +33,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--probe", type=Path, required=True)
     parser.add_argument("--output", type=Path, required=True)
+    parser.add_argument("--gltf", action="store_true",
+                        help="Qualify actual glTF payloads at ready/pre/post-publication boundaries")
     args = parser.parse_args()
     output = args.output.resolve()
     output.parent.mkdir(parents=True, exist_ok=True)
@@ -39,9 +42,15 @@ def main():
     rows = []
     result = {"format": "shark.asset-jobs-process-supervisor", "schema_version": 1,
               "status": "FAIL", "records": rows}
+    phases = ("ready", "before_publish", "published") if args.gltf else PHASES
+    root_payload = "StaticMesh" if args.gltf else "Root"
+    before_payload, after_payload = ("1", "2") if args.gltf else ("Before", "After")
+    if args.gltf:
+        result["fixture"] = "gltf"
 
     def call(name, mode, root, *extra, expected=0):
-        process = run_process([str(probe), mode, str(root), *extra], timeout=20)
+        process = run_process([str(probe), ("gltf-" if args.gltf else "") + mode,
+                               str(root), *extra], timeout=20)
         ok = (process.returncode == expected and not process.timed_out and
               not process.cleanup_errors)
         row = {"name": name, "status": "PASS" if ok else "FAIL",
@@ -76,17 +85,21 @@ def main():
     try:
         with tempfile.TemporaryDirectory(prefix="shark-jobs-process-", dir=output.parent) as temporary:
             parent = Path(temporary)
-            for phase in PHASES:
+            for phase in phases:
                 root = parent / (phase + "-caf\u00e9 \u4e16\u754c")
                 root.mkdir()
                 first = call(phase + "-seed", "seed-jobs", root)
                 check(phase + "-seed-closure", first["state"] == "fresh" and first["fresh"] and
-                      first["root_payload"] == "Root" and first["leaf_payload"] == "Before" and
+                      first["root_payload"] == root_payload and first["leaf_payload"] == before_payload and
                       first["nodes"] == first["imported"] == 2 and first["reused"] == 0 and
                       first["changed"] and first["job_sequence"] == 1 and not first["old_job_rejected"] and
                       first["artifacts"] == 2 and not first["unpublished_stage"])
                 cache = root / ".shark-development-cache"
                 before = cache.read_bytes()
+                root_source = (root / "root.bin").read_bytes()
+                if args.gltf:
+                    check(phase + "-original-geometry", (root / "leaf.bin").read_bytes() ==
+                          struct.pack("<9f", 0, 0, 0, 1, 0, 0, 2, 1, 0))
                 sidecars = {name: (root / name).read_bytes()
                             for name in ("root.bin.sharkasset", "leaf.bin.sharkasset")}
                 source_stage = root / ".shark-stage-10000000-0000-4000-8000-000000000001"
@@ -103,15 +116,16 @@ def main():
                 observed = call(phase + "-reopen", "inspect-after-jobs" if committed else
                                 "inspect-before-jobs", root)
                 check(phase + "-atomic-cache", (cache.read_bytes() != before) == committed and
-                      observed["root_payload"] == "Root" and
-                      observed["leaf_payload"] == ("After" if committed else "Before") and
+                      observed["root_payload"] == root_payload and
+                      observed["leaf_payload"] == (after_payload if committed else before_payload) and
                       observed["fresh"] == committed and
                       (observed["key"] != first["key"]) == committed and
                       (observed["dependency_key"] != first["dependency_key"]) == committed)
                 check(phase + "-source-preserved", all((root / name).read_bytes() == data
                       for name, data in sidecars.items()) and
-                      (root / "root.bin").read_bytes() == b"Root" and
-                      (root / "leaf.bin").read_bytes() == b"After")
+                      (root / "root.bin").read_bytes() == (root_source if args.gltf else b"Root") and
+                      (root / "leaf.bin").read_bytes() ==
+                      (struct.pack("<9f", 0, 0, 0, 2, 0, 0, 2, 1, 0) if args.gltf else b"After"))
                 stages = list(root.glob(".shark-cache-stage-*"))
                 check(phase + "-stage-count", len(stages) == (1 if phase in STAGED_PHASES else 0) and
                       observed["unpublished_stage"] == (phase in STAGED_PHASES) and
@@ -125,8 +139,8 @@ def main():
                           list(root.glob(".shark-cache-stage-*")) == stages)
                 recovered = call(phase + "-recover", "recover-jobs", root)
                 check(phase + "-recovery-result", recovered["recovered"] ==
-                      (1 if phase in STAGED_PHASES else 0) and recovered["leaf_payload"] == "After" and
-                      recovered["root_payload"] == "Root" and recovered["fresh"] and
+                      (1 if phase in STAGED_PHASES else 0) and recovered["leaf_payload"] == after_payload and
+                      recovered["root_payload"] == root_payload and recovered["fresh"] and
                       recovered["key"] != first["key"] and
                       recovered["dependency_key"] != first["dependency_key"] and
                       recovered["changed"] != committed and recovered["nodes"] == 2 and

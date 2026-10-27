@@ -61,8 +61,11 @@ same captured-source owner: 507 fresh outcomes, 48 public-example compiles,
 suites for the private global dependency-lock addition. 12d completes
 [materials, typed resource identity and cache/job integration](../handoffs/12d-material-assets.md)
 with optional core fallback, bounded engine payloads and unchanged audience/
-publication fences. Selected checks follow the testing policy. Full REQ-12
-remains NOT_RUN pending 12e integrated qualification, which is next.
+publication fences. Selected checks follow the testing policy.
+[12e integrated qualification](../handoffs/12e-gltf-qualification.md) closes full
+REQ-12 with saved GLB/sparse/fallback paths, actual process recovery and an
+independent offline oracle. Next is 13, basic scene rendering and cameras;
+streaming, collision/navigation and animation retain their later owners.
 
 ## Historical assessment of the pre-M01 foundation
 

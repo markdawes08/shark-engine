@@ -51,6 +51,11 @@ std::string read(const fs::path& target) {
     REQUIRE(file.good());
     return {std::istreambuf_iterator<char>{file}, std::istreambuf_iterator<char>{}};
 }
+void replace(std::string& text, std::string_view before, std::string_view after) {
+    const auto at = text.find(before);
+    REQUIRE(at != std::string::npos);
+    text.replace(at, before.size(), after);
+}
 std::string from_hex(std::string_view text) {
     REQUIRE(text.size() % 2 == 0);
     const auto digit = [](char c) {
@@ -650,4 +655,172 @@ TEST_CASE("glTF oversized resources fail capture before an importer runs", "[glt
     CHECK(f.gltf.calls == 0);
     CHECK(take(f.imports->jobs()).empty());
     CHECK_FALSE(fs::exists(f.cache_file()));
+}
+
+TEST_CASE("glTF saved strip containers retain shared mirrored geometry through cache reopen",
+          "[gltf-import]") {
+    const fs::path corpus{SHARK_GLTF_CORPUS_DIRECTORY};
+    for (const auto* filename : {"shared-strip.gltf", "embedded-strip.gltf", "shared-strip.glb"}) {
+        INFO(filename);
+        Fixture f;
+        const bool external = std::string_view{filename} == "shared-strip.gltf";
+        const std::string logical = "models/" + std::string{filename};
+        auto configuration = R"({"path":")" + logical + '"';
+        std::vector<AssetId> dependencies;
+        if (external) {
+            f.seed(10, read(corpus / "gltf_geometry/shared-strip.bin"), "gltf-resource",
+                   "shark.gltf-resource");
+            dependencies.push_back(id<AssetId>(10));
+            configuration += R"(,"resources":[{"path":"models/shared-strip.bin","asset":")" +
+                             id<AssetId>(10).value().to_string() + R"("}])";
+        }
+        configuration += '}';
+        f.seed(20, read(corpus / "gltf_geometry" / filename), "gltf", "shark.gltf", configuration,
+               dependencies);
+        f.refresh();
+        const auto imported = f.commit();
+        CHECK(imported.nodes == (external ? 2 : 1));
+        const auto artifact = f.artifact(imported.root_key);
+        CHECK(artifact.dependencies.size() == dependencies.size());
+        const auto asset = take(decode_gltf_asset(artifact.payload));
+        REQUIRE(asset.geometry.primitives.size() == 1);
+        const auto& primitive = asset.geometry.primitives[0];
+        CHECK(primitive.indices == std::vector<std::uint32_t>{0, 1, 2, 2, 1, 3});
+        REQUIRE(primitive.vertices.size() == 4);
+        CHECK(primitive.vertices[0].position == std::array<float, 3>{0, 0, 0});
+        CHECK(primitive.vertices[3].position == std::array<float, 3>{1, 1, 0});
+        REQUIRE(asset.geometry.nodes.size() == 2);
+        CHECK(asset.geometry.meshes.size() == 1);
+        CHECK(asset.geometry.nodes[0].mesh == asset.geometry.nodes[1].mesh);
+        CHECK(asset.geometry.nodes[0].mirrored);
+        CHECK_FALSE(asset.geometry.nodes[1].mirrored);
+        REQUIRE(asset.geometry.world_bounds);
+        CHECK(asset.geometry.world_bounds->minimum == math::Vec3{-2, 0, 0});
+        CHECK(asset.geometry.world_bounds->maximum == math::Vec3{5, 3, 0});
+        CHECK(asset.materials.materials.empty());
+        const auto saved = read(f.cache_file());
+        f.reopen();
+        CHECK(f.artifact(imported.root_key) == artifact);
+        CHECK(f.commit().reused == imported.nodes);
+        CHECK(read(f.cache_file()) == saved);
+    }
+}
+
+TEST_CASE("glTF sparse effective indices survive publication and invalid async replacement",
+          "[gltf-import]") {
+    const fs::path corpus{SHARK_GLTF_CORPUS_DIRECTORY};
+    Fixture f;
+    const auto original = read(corpus / "gltf_source/repaired-indices.bin");
+    f.seed(10, original, "gltf-resource", "shark.gltf-resource");
+    const auto configuration =
+        R"({"path":"models/repaired-indices.gltf","resources":[{"path":"models/repaired-indices.bin","asset":")" +
+        id<AssetId>(10).value().to_string() + R"("}]})";
+    f.seed(20, read(corpus / "gltf_source/repaired-indices.gltf"), "gltf", "shark.gltf",
+           configuration, {id<AssetId>(10)});
+    f.refresh();
+    const auto first = f.commit();
+    const auto artifact = f.artifact(first.root_key);
+    const auto decoded = take(decode_gltf_asset(artifact.payload));
+    REQUIRE(decoded.geometry.primitives.size() == 1);
+    const auto& primitive = decoded.geometry.primitives[0];
+    CHECK(primitive.indices == std::vector<std::uint32_t>{0, 1, 2});
+    REQUIRE(primitive.vertices.size() == 3);
+    CHECK(primitive.vertices[1].position == std::array<float, 3>{1, 0, 0});
+    CHECK(primitive.vertices[2].position == std::array<float, 3>{0, 1, 0});
+    const auto saved = read(f.cache_file());
+    auto invalid = original;
+    REQUIRE(invalid.size() == 46);
+    invalid[44] = 3; // The sparse replacement itself now addresses an absent vertex.
+    write(f.root / f.source(10).text(), invalid);
+    const auto job = f.submit().id;
+    const auto failed = f.finish(job);
+    CHECK(failed.state == AssetImportJobState::failed);
+    REQUIRE(failed.error);
+    CHECK_FALSE(failed.commit);
+    take(f.imports->take_job(job));
+    CHECK(read(f.cache_file()) == saved);
+    f.reopen();
+    CHECK(f.query().last_valid_key == first.root_key);
+    CHECK(f.artifact(first.root_key) == artifact);
+    write(f.root / f.source(10).text(), original);
+    CHECK(f.commit().root_key == first.root_key);
+    CHECK(read(f.cache_file()) == saved);
+}
+
+TEST_CASE("glTF saved textured GLB preserves independent semantic mips through the owner",
+          "[gltf-import]") {
+    Fixture f;
+    f.seed(20, read(fs::path{SHARK_GLTF_CORPUS_DIRECTORY} / "gltf_textures/embedded.glb"), "gltf",
+           "shark.gltf", R"({"path":"models/embedded.glb"})");
+    f.refresh();
+    const auto job = f.submit().id;
+    const auto completed = f.finish(job);
+    REQUIRE(completed.state == AssetImportJobState::succeeded);
+    REQUIRE(completed.summary);
+    CHECK(completed.summary->nodes == 1);
+    const auto artifact = f.artifact(completed.summary->root_key);
+    CHECK(artifact.dependencies.empty());
+    const auto asset = take(decode_gltf_asset(artifact.payload));
+    REQUIRE(asset.geometry.primitives.size() == 1);
+    CHECK(asset.geometry.primitives[0].indices == std::vector<std::uint32_t>{0, 1, 2});
+    REQUIRE(asset.materials.materials.size() == 1);
+    CHECK(asset.materials.materials[0].base_color == std::array<float, 4>{1, 1, 1, 1});
+    CHECK(asset.materials.materials[0].alpha_mode == GltfAlphaMode::opaque);
+    CHECK_FALSE(asset.materials.materials[0].double_sided);
+    REQUIRE(asset.textures.usages.size() == 5);
+    REQUIRE(asset.textures.images.size() == 3);
+    const std::array<std::array<unsigned, 4>, 3> expected{
+        std::array<unsigned, 4>{188, 188, 188, 112}, std::array<unsigned, 4>{128, 128, 128, 112},
+        std::array<unsigned, 4>{128, 128, 255, 112}};
+    for (std::size_t i = 0; i < expected.size(); ++i) {
+        REQUIRE(asset.textures.images[i].mips.size() == 2);
+        const auto& mip = asset.textures.images[i].mips[1];
+        CHECK(mip.width == 1);
+        CHECK(mip.height == 1);
+        REQUIRE(mip.rgba.size() == 4);
+        for (std::size_t c = 0; c < 4; ++c)
+            CHECK(std::to_integer<unsigned>(mip.rgba[c]) == expected[i][c]);
+    }
+    take(f.imports->take_job(job));
+    f.reopen();
+    CHECK(f.artifact(completed.summary->root_key) == artifact);
+    CHECK(f.commit().reused == 1);
+}
+
+TEST_CASE("glTF core fallback cache survives required extension and missing image replacements",
+          "[gltf-import]") {
+    Fixture f;
+    f.seed_external();
+    auto fallback = model();
+    replace(fallback, R"(gamma.png"}])",
+            R"(gamma.png"},{"uri":"unavailable.ktx2","mimeType":"image/ktx2"}])");
+    replace(
+        fallback, R"("textures":[{"source":0}])",
+        R"("extensionsUsed":["KHR_texture_basisu"],"textures":[{"source":0,"extensions":{"KHR_texture_basisu":{"source":1}}}])");
+    write(f.root / f.source(20).text(), fallback);
+    const auto first = f.commit();
+    const auto artifact = f.artifact(first.root_key);
+    check_asset(take(decode_gltf_asset(artifact.payload)));
+    CHECK(artifact.dependencies.size() == 2);
+    const auto saved = read(f.cache_file());
+    auto required = fallback;
+    replace(required, R"("extensionsUsed":)",
+            R"("extensionsRequired":["KHR_texture_basisu"],"extensionsUsed":)");
+    write(f.root / f.source(20).text(), required);
+    const auto rejected =
+        f.imports->prepare(id<AssetId>(20), f.target, take(f.catalog->revision()), f.revision());
+    REQUIRE_FALSE(rejected);
+    CHECK(rejected.error().message.find("KHR_texture_basisu") != std::string::npos);
+    CHECK(read(f.cache_file()) == saved);
+    write(f.root / f.source(20).text(), fallback);
+    REQUIRE(fs::remove(f.root / f.source(11).text()));
+    REQUIRE_FALSE(
+        f.imports->prepare(id<AssetId>(20), f.target, take(f.catalog->revision()), f.revision()));
+    CHECK(read(f.cache_file()) == saved);
+    f.reopen();
+    CHECK(f.query().last_valid_key == first.root_key);
+    CHECK(f.artifact(first.root_key) == artifact);
+    write(f.root / f.source(11).text(), image());
+    CHECK(f.commit().root_key == first.root_key);
+    CHECK(read(f.cache_file()) == saved);
 }
