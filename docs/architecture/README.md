@@ -124,7 +124,10 @@ CPU profile outcomes, public examples, sanitizers and protected packages.
 dependency imports, deterministic bounded cache snapshots, last-valid output and
 explicit recovery under [ADR 0026](0026-development-asset-cache.md). Qualification
 retains 724 selected profile outcomes, public API/sanitizer audits and protected
-packages. Full REQ-11 remains NOT_RUN; next: 11c, bounded background jobs.
+packages. 11c is PASS in its [handoff](../handoffs/11c-asset-import-jobs.md),
+adding bounded private jobs under [ADR 0027](0027-bounded-asset-jobs.md), with
+595 current profile results, 39 public-example compiles, 26 actual sanitizer
+objects and protected packages. Full REQ-11 remains NOT_RUN; next: 11d.
 
 | Record | Decision |
 | --- | --- |
@@ -154,6 +157,7 @@ packages. Full REQ-11 remains NOT_RUN; next: 11c, bounded background jobs.
 | [0024](0024-headless-scene-runner.md) | Deterministic CPU cases through existing owners/scheduling, bounded assertions and versioned results |
 | [0025](0025-asset-identity.md) | Persistent adjacent asset sidecars, shared file publication and bounded revisioned catalog snapshots |
 | [0026](0026-development-asset-cache.md) | Dependency-keyed synchronous imports and atomic bounded development cache snapshots |
+| [0027](0027-bounded-asset-jobs.md) | Bounded private import worker, retained jobs, cancellation and owner publication |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

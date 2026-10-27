@@ -5,6 +5,15 @@ description: Implement or change Shark asset import and cache behavior with boun
 
 # Shark asset import
 
+11c adds [bounded jobs](../../../docs/asset-import-jobs.md) under
+[ADR 0027](../../../docs/architecture/0027-bounded-asset-jobs.md). Preserve the
+four retained slots, one private worker, independent aggregate source/cache
+budgets, cancellation/publication fences and explicit terminal take/retry.
+Importer instances are exclusively borrowed; callbacks are serialized and cannot
+reenter owner services. Worker views retain immutable revision ownership and
+never call ProjectFiles/catalog/Scene. Extend the eighth native FeatureWorld case
+and all six job mappings together; keep all earlier cases/limits.
+
 11b implements [dependency imports and the development cache](../../../docs/asset-import-cache.md)
 under [ADR 0026](../../../docs/architecture/0026-development-asset-cache.md).
 Preserve `shark.tools.asset-import` (90 seconds, Catch seed 1337), the real

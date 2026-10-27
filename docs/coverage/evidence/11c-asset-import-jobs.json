@@ -1,0 +1,1996 @@
+{
+  "format": "shark.checkpoint-evidence",
+  "schema_version": 1,
+  "checkpoint": "11c",
+  "requirement": "REQ-11",
+  "status": "PASS",
+  "base_revision": "ae023a0",
+  "branch": "main",
+  "initial_worktree": "clean",
+  "result": "unstaged uncommitted changes",
+  "generated_at_utc": "2026-10-27T05:04:34.387370+00:00",
+  "scope": "Current-machine CPU bounded background import jobs. Full REQ-11 remains NOT_RUN pending 11d.",
+  "qualification_method": "Seven passing profile selections from the final frozen implementation: four uninterrupted green full CTest inventories, Linux Debug explicitly selecting 105 original passing cases plus one isolated contract retry at its unchanged 30-second limit, and two standalone Tools selections. The original Linux Debug full run remains FAIL with its timeout intact. No stopped, failed or partial attempt is relabeled.",
+  "source_freeze": {
+    "path": "out/11c-work/source-freeze.json",
+    "sha256": "02e79edea605c27165faae0cb731b86b32d5167212978b93acda674492e91d20",
+    "bytes": 86715
+  },
+  "frozen_inputs": 489,
+  "implemented_manifest_sha256": "bcaec4807b057bda6fa89c30ef97ea7b014a4bbe04aad52a0256fddc55734173",
+  "profile_counts": {
+    "windows-debug": 113,
+    "windows-release": 113,
+    "windows-asan": 113,
+    "linux-debug": 106,
+    "linux-asan-ubsan": 106,
+    "windows-tools-debug": 22,
+    "linux-tools-debug": 22
+  },
+  "full_ctest_executions": 551,
+  "standalone_tools_executions": 44,
+  "selected_full_profile_outcomes": 551,
+  "isolated_retry_executions": 1,
+  "total_ctest_executions": 596,
+  "count_semantics": "551 full-inventory executions include the original single timeout; one extra isolated retry replaces that failed outcome in the 551 selected passing full-profile outcomes. Adding 44 standalone Tools executions yields 595 selected passing outcomes from 596 actual CTest executions.",
+  "total_profile_outcomes": 595,
+  "profiles": [
+    {
+      "name": "windows-debug",
+      "status": "PASS",
+      "qualified_tests": 113,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11c-work/windows-debug-final/summary.json",
+        "sha256": "69dd04424180cbdec16a67dbed2024115a778936e6ce050cda220abf96a6179b",
+        "bytes": 1482
+      },
+      "inventory": {
+        "path": "out/11c-work/windows-debug-final/inventory.json",
+        "sha256": "7f18ce71e84ecca4bac6c0c73ba3b686b9e0ca7690d79e25d3f548d22c47d15e",
+        "bytes": 105197
+      },
+      "junit": {
+        "path": "out/11c-work/windows-debug-final/tests.xml",
+        "sha256": "437c16a6e0b07b1e89b3fa91d987c4d4d83bdb248a29ac6af3d70abfeda75e3f",
+        "bytes": 71633
+      },
+      "commands": [
+        {
+          "name": "build",
+          "args": [
+            "cmake",
+            "--build",
+            "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "9e6f5afd4551238eee1afa880896044f26c634836383ad0eb33fa7879b163765"
+        },
+        {
+          "name": "inventory",
+          "args": [
+            "ctest",
+            "--test-dir",
+            "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug",
+            "--show-only=json-v1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "5b78294217c2dc96647dade2a2d1246f49716dcb7cae33db7af424165a19f8dd"
+        },
+        {
+          "name": "tests",
+          "args": [
+            "ctest",
+            "--test-dir",
+            "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-debug",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "C:\\Users\\mrkda\\Projects\\shark\\out\\11c-work\\windows-debug-final\\tests.xml"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "00a6e4a239b1d2da057c5db2fc02448d97f318f30b8cb6e12518e9d1c94bfaa9"
+        }
+      ],
+      "catch": {
+        "catalog": {
+          "cases": 18,
+          "assertions": 6190,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/windows-debug-final/asset-catalog-cases.xml",
+            "sha256": "c5bf6540015ad7d84c35d75da919cddd8e794443c56a489c5bbca8ee67ec078b",
+            "bytes": 5024
+          }
+        },
+        "imports": {
+          "cases": 22,
+          "assertions": 4361,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/windows-debug-final/asset-import-cases.xml",
+            "sha256": "4acde2670d2458fbbd2266635d0d4376b616615c9fec5b9c4c4372a8367c6e64",
+            "bytes": 6308
+          }
+        },
+        "jobs": {
+          "cases": 25,
+          "assertions": 2957,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/windows-debug-final/asset-import-jobs-cases.xml",
+            "sha256": "1d1497ddec0577d2e121358de39fedcc48b22942a5f2d151e4bd24b1a70cae49",
+            "bytes": 7061
+          }
+        },
+        "featureworld": {
+          "cases": 5,
+          "assertions": 178,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/windows-debug-final/featureworld-cases.xml",
+            "sha256": "deae5cf76785d6a7b1b82fc77480ec37bc5ef8d08e94974670926a8368106fdd",
+            "bytes": 1687
+          }
+        },
+        "runner": {
+          "cases": 13,
+          "assertions": 345,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/windows-debug-final/scene-runner-cases.xml",
+            "sha256": "7b311d9010e4294f4971a5afe4403b8d7cc8cd450c86d52b30a0117aa6358a3f",
+            "bytes": 3670
+          }
+        }
+      },
+      "process_receipts": {
+        "featureworld-process": {
+          "path": "out/11c-work/windows-debug-final/featureworld-process.json",
+          "sha256": "89ea423ea6a58767e936b55d28d94d5a8d0e3e16fd37c7ff8533df33873b6c32",
+          "bytes": 6370
+        },
+        "asset-import-process": {
+          "path": "out/11c-work/windows-debug-final/asset-import-process.json",
+          "sha256": "f313a4cff3b6564f72f4e6a12e5b59e9990a10f57cf6e0057ad9a56862e19fea",
+          "bytes": 13507
+        },
+        "scene-runner-process": {
+          "path": "out/11c-work/windows-debug-final/scene-runner-process.json",
+          "sha256": "afed7b34d90de0cb5311965a04c9c7ae05980ea8d9f21acf4f2ab58c1e71aabe",
+          "bytes": 2135
+        },
+        "scene-execution-process": {
+          "path": "out/11c-work/windows-debug-final/scene-execution-process.json",
+          "sha256": "5e5f5380d0a2bfa9b6610c34e7e72de1e347e77c202c6d397133c18400bfcd86",
+          "bytes": 1571
+        },
+        "scene-qualification": {
+          "path": "out/11c-work/windows-debug-final/scene-qualification.json",
+          "sha256": "ceae8ba442a0454824c0a977d5071e17dca50907d73e682d8d2cc9c9080c0142",
+          "bytes": 54641
+        }
+      },
+      "qualified_results": {
+        "path": "out/11c-work/windows-debug-final/qualified-results.json",
+        "sha256": "b54e67e838da2e66962540660f4213280d680142a4e2cf11c3ae4833c7d0f94c",
+        "bytes": 10934
+      }
+    },
+    {
+      "name": "windows-release",
+      "status": "PASS",
+      "qualified_tests": 113,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11c-work/windows-release-final/summary.json",
+        "sha256": "cec5385abc81f61e59cf1fb862fe1751146fb4e3343ece46e39a44d942dc9411",
+        "bytes": 1492
+      },
+      "inventory": {
+        "path": "out/11c-work/windows-release-final/inventory.json",
+        "sha256": "86ae366953c5598a6ccd85ed145fb56767f292e95140a9f5e39c76c55f6ca2a6",
+        "bytes": 105579
+      },
+      "junit": {
+        "path": "out/11c-work/windows-release-final/tests.xml",
+        "sha256": "4327ed51db9659c565e934d95d8a43238d5095227b315602daf28d065fdab095",
+        "bytes": 71665
+      },
+      "commands": [
+        {
+          "name": "build",
+          "args": [
+            "cmake",
+            "--build",
+            "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-release",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "e3459a872fcf2c66c5b2ed9256dc6d7bb12665c6ab8699b42914f8a091893a60"
+        },
+        {
+          "name": "inventory",
+          "args": [
+            "ctest",
+            "--test-dir",
+            "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-release",
+            "--show-only=json-v1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "2d958435ad798a0a1edeea6f93875481599e87b19f220cfb7bbb00e34e161d5a"
+        },
+        {
+          "name": "tests",
+          "args": [
+            "ctest",
+            "--test-dir",
+            "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-release",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "C:\\Users\\mrkda\\Projects\\shark\\out\\11c-work\\windows-release-final\\tests.xml"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "dd5433003b8db2695bc7e5f7df078acfaad8dde4391d91e7c3cb61bbbdb52e72"
+        }
+      ],
+      "catch": {
+        "catalog": {
+          "cases": 18,
+          "assertions": 6190,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/windows-release-final/asset-catalog-cases.xml",
+            "sha256": "c5bf6540015ad7d84c35d75da919cddd8e794443c56a489c5bbca8ee67ec078b",
+            "bytes": 5024
+          }
+        },
+        "imports": {
+          "cases": 22,
+          "assertions": 4361,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/windows-release-final/asset-import-cases.xml",
+            "sha256": "4acde2670d2458fbbd2266635d0d4376b616615c9fec5b9c4c4372a8367c6e64",
+            "bytes": 6308
+          }
+        },
+        "jobs": {
+          "cases": 25,
+          "assertions": 2957,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/windows-release-final/asset-import-jobs-cases.xml",
+            "sha256": "1d1497ddec0577d2e121358de39fedcc48b22942a5f2d151e4bd24b1a70cae49",
+            "bytes": 7061
+          }
+        },
+        "featureworld": {
+          "cases": 5,
+          "assertions": 178,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/windows-release-final/featureworld-cases.xml",
+            "sha256": "deae5cf76785d6a7b1b82fc77480ec37bc5ef8d08e94974670926a8368106fdd",
+            "bytes": 1687
+          }
+        },
+        "runner": {
+          "cases": 13,
+          "assertions": 345,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/windows-release-final/scene-runner-cases.xml",
+            "sha256": "7b311d9010e4294f4971a5afe4403b8d7cc8cd450c86d52b30a0117aa6358a3f",
+            "bytes": 3670
+          }
+        }
+      },
+      "process_receipts": {
+        "featureworld-process": {
+          "path": "out/11c-work/windows-release-final/featureworld-process.json",
+          "sha256": "89ea423ea6a58767e936b55d28d94d5a8d0e3e16fd37c7ff8533df33873b6c32",
+          "bytes": 6370
+        },
+        "asset-import-process": {
+          "path": "out/11c-work/windows-release-final/asset-import-process.json",
+          "sha256": "f313a4cff3b6564f72f4e6a12e5b59e9990a10f57cf6e0057ad9a56862e19fea",
+          "bytes": 13507
+        },
+        "scene-runner-process": {
+          "path": "out/11c-work/windows-release-final/scene-runner-process.json",
+          "sha256": "afed7b34d90de0cb5311965a04c9c7ae05980ea8d9f21acf4f2ab58c1e71aabe",
+          "bytes": 2135
+        },
+        "scene-execution-process": {
+          "path": "out/11c-work/windows-release-final/scene-execution-process.json",
+          "sha256": "5e5f5380d0a2bfa9b6610c34e7e72de1e347e77c202c6d397133c18400bfcd86",
+          "bytes": 1571
+        },
+        "scene-qualification": {
+          "path": "out/11c-work/windows-release-final/scene-qualification.json",
+          "sha256": "572ead6904c00666ed99a9d71be7782944cf48fa17f5e38d0170b5db828080c9",
+          "bytes": 54661
+        }
+      },
+      "qualified_results": {
+        "path": "out/11c-work/windows-release-final/qualified-results.json",
+        "sha256": "d2bd77a49382a65f8dc6f76af06ab55dffee81e5bd64d2ffe5e5652ab7236aee",
+        "bytes": 10954
+      }
+    },
+    {
+      "name": "windows-asan",
+      "status": "PASS",
+      "qualified_tests": 113,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11c-work/windows-asan-final/summary.json",
+        "sha256": "0d00808746f645100e8f108ca3b2be4775a5798653bdc024649d1f4972c98980",
+        "bytes": 1477
+      },
+      "inventory": {
+        "path": "out/11c-work/windows-asan-final/inventory.json",
+        "sha256": "2b6d32b896307408638cf24f2acdc09fd2cf3883fdb00a4d06d4f807ac5a5ca5",
+        "bytes": 105016
+      },
+      "junit": {
+        "path": "out/11c-work/windows-asan-final/tests.xml",
+        "sha256": "4d1b5adfa5e8a012fe802bb0e2bae229566a856bb558ec7f674b393eeb79086f",
+        "bytes": 71615
+      },
+      "commands": [
+        {
+          "name": "build",
+          "args": [
+            "cmake",
+            "--build",
+            "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "1943de3ca8f16050aa2323b77ea5fdbf14c2c39d7b440aadf60225aa2da9d221"
+        },
+        {
+          "name": "inventory",
+          "args": [
+            "ctest",
+            "--test-dir",
+            "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan",
+            "--show-only=json-v1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "87b24464c91154e7d5a5ab8dc38362bcf8c64daae1dd23a1e1a7b8a9b6d41387"
+        },
+        {
+          "name": "tests",
+          "args": [
+            "ctest",
+            "--test-dir",
+            "C:\\Users\\mrkda\\Projects\\shark\\build\\windows-asan",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "C:\\Users\\mrkda\\Projects\\shark\\out\\11c-work\\windows-asan-final\\tests.xml"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "c9b7b33b183aa454d8e30a46322fa105a24a9a1d218b6eb0d41d0c2e475b52c6"
+        }
+      ],
+      "catch": {
+        "catalog": {
+          "cases": 18,
+          "assertions": 6190,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/windows-asan-final/asset-catalog-cases.xml",
+            "sha256": "c5bf6540015ad7d84c35d75da919cddd8e794443c56a489c5bbca8ee67ec078b",
+            "bytes": 5024
+          }
+        },
+        "imports": {
+          "cases": 22,
+          "assertions": 4361,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/windows-asan-final/asset-import-cases.xml",
+            "sha256": "4acde2670d2458fbbd2266635d0d4376b616615c9fec5b9c4c4372a8367c6e64",
+            "bytes": 6308
+          }
+        },
+        "jobs": {
+          "cases": 25,
+          "assertions": 2957,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/windows-asan-final/asset-import-jobs-cases.xml",
+            "sha256": "1d1497ddec0577d2e121358de39fedcc48b22942a5f2d151e4bd24b1a70cae49",
+            "bytes": 7061
+          }
+        },
+        "featureworld": {
+          "cases": 5,
+          "assertions": 178,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/windows-asan-final/featureworld-cases.xml",
+            "sha256": "deae5cf76785d6a7b1b82fc77480ec37bc5ef8d08e94974670926a8368106fdd",
+            "bytes": 1687
+          }
+        },
+        "runner": {
+          "cases": 13,
+          "assertions": 345,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/windows-asan-final/scene-runner-cases.xml",
+            "sha256": "7b311d9010e4294f4971a5afe4403b8d7cc8cd450c86d52b30a0117aa6358a3f",
+            "bytes": 3670
+          }
+        }
+      },
+      "process_receipts": {
+        "featureworld-process": {
+          "path": "out/11c-work/windows-asan-final/featureworld-process.json",
+          "sha256": "89ea423ea6a58767e936b55d28d94d5a8d0e3e16fd37c7ff8533df33873b6c32",
+          "bytes": 6370
+        },
+        "asset-import-process": {
+          "path": "out/11c-work/windows-asan-final/asset-import-process.json",
+          "sha256": "f313a4cff3b6564f72f4e6a12e5b59e9990a10f57cf6e0057ad9a56862e19fea",
+          "bytes": 13507
+        },
+        "scene-runner-process": {
+          "path": "out/11c-work/windows-asan-final/scene-runner-process.json",
+          "sha256": "346081439b14335266311bc14c009b95218e574ee0fe122e680e4e93b088fe0f",
+          "bytes": 2135
+        },
+        "scene-execution-process": {
+          "path": "out/11c-work/windows-asan-final/scene-execution-process.json",
+          "sha256": "5e5f5380d0a2bfa9b6610c34e7e72de1e347e77c202c6d397133c18400bfcd86",
+          "bytes": 1571
+        },
+        "scene-qualification": {
+          "path": "out/11c-work/windows-asan-final/scene-qualification.json",
+          "sha256": "d76dfe0551f9da37ea6d1e2237421a72f84e965fc80719ee896b4a05bb2826c7",
+          "bytes": 54631
+        }
+      },
+      "qualified_results": {
+        "path": "out/11c-work/windows-asan-final/qualified-results.json",
+        "sha256": "40a1b47a132b50920a8381e6b33c6e2dc7f2d0ede1784d8aebda94c8aa669bea",
+        "bytes": 10924
+      }
+    },
+    {
+      "name": "linux-debug",
+      "status": "PASS",
+      "qualified_tests": 106,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11c-work/wsl-verified/linux-debug/summary.json",
+        "sha256": "7748e4d85c6f8cf4b5eac496fa4e2027877d679c09e3b03110a6843213929365",
+        "bytes": 2972
+      },
+      "inventory": {
+        "path": "out/11c-work/wsl-verified/linux-debug/inventory.json",
+        "sha256": "7145065c9172d8166061d72b5669ec290f9de573c9f19ce54f8a3c10c2761166",
+        "bytes": 88039
+      },
+      "junit": {
+        "path": "out/11c-work/wsl-verified/linux-debug/qualified-selection.xml",
+        "sha256": "94e5322db00aa9e53c632c20eeafa26db0a541fa4d85f2d5d9895cc5e71d721f",
+        "bytes": 101191
+      },
+      "commands": [
+        {
+          "name": "build",
+          "args": [
+            "cmake",
+            "--build",
+            "/work/build-05a-final-client/linux-debug",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "f9b42439a787fecf3c7a2c0baeb1dbd6a8e4ba9f2cd58aaacfaa30f56cfb7dc3"
+        },
+        {
+          "name": "inventory",
+          "args": [
+            "ctest",
+            "--test-dir",
+            "/work/build-05a-final-client/linux-debug",
+            "--show-only=json-v1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "d79f4e5b336950024551689e6b9ce345c52ac34986d188e22090e6df686ba9d5"
+        },
+        {
+          "name": "tests",
+          "args": [
+            "ctest",
+            "--test-dir",
+            "/work/build-05a-final-client/linux-debug",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "/evidence/linux-debug/tests.xml"
+          ],
+          "exit_code": 8,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "c1f223bd7143dfd897398daf25996e92ae2ad3c0b85a3eb722f4a8f7838f60c4"
+        }
+      ],
+      "catch": {
+        "catalog": {
+          "cases": 18,
+          "assertions": 6190,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/wsl-verified/linux-debug/asset-catalog-cases.xml",
+            "sha256": "009564dfd85e5b4b54f56000197353595bb255cabe58ca4603d82f6b1dc26028",
+            "bytes": 4565
+          }
+        },
+        "imports": {
+          "cases": 22,
+          "assertions": 4361,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/wsl-verified/linux-debug/asset-import-cases.xml",
+            "sha256": "104cd5d45ed2d9192651488c1a2a797516c4096361252c7abaa338ec50141ee3",
+            "bytes": 5749
+          }
+        },
+        "jobs": {
+          "cases": 25,
+          "assertions": 2957,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/wsl-verified/linux-debug/asset-import-jobs-cases.xml",
+            "sha256": "03a0dc24b915057eaac2b4164ac3cad3a1f8228238b2f0a136e972e2f23ec5fd",
+            "bytes": 6427
+          }
+        },
+        "featureworld": {
+          "cases": 5,
+          "assertions": 178,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/wsl-verified/linux-debug/featureworld-cases.xml",
+            "sha256": "f1396b637002d3b2fa9d62eeb7214dda28666ddf17ba4d12ee6711a9cf77017e",
+            "bytes": 1553
+          }
+        },
+        "runner": {
+          "cases": 13,
+          "assertions": 345,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/wsl-verified/linux-debug/scene-runner-cases.xml",
+            "sha256": "64ed847d33406a8982dab1a1cabf0843bf064c58e44437f7f1a568cd880efab8",
+            "bytes": 3336
+          }
+        }
+      },
+      "process_receipts": {
+        "featureworld-process": {
+          "path": "out/11c-work/wsl-verified/linux-debug/featureworld-process.json",
+          "sha256": "d6c7ade2aa6eedbcb59811cdb9e4a81323eaeaf0c5297fdcb600f85839290a34",
+          "bytes": 6081
+        },
+        "asset-import-process": {
+          "path": "out/11c-work/wsl-verified/linux-debug/asset-import-process.json",
+          "sha256": "084b5c055adbb3fd20b4a308650e8e7a37d81bc29b4ba067c116a7b7d5596474",
+          "bytes": 13117
+        },
+        "scene-runner-process": {
+          "path": "out/11c-work/wsl-verified/linux-debug/scene-runner-process.json",
+          "sha256": "8ae9a2fdecf3f4ff2af3f51f3e3ce3cc8e3bfb5821ee4f26746fbc8203e6055a",
+          "bytes": 2012
+        },
+        "scene-execution-process": {
+          "path": "out/11c-work/wsl-verified/linux-debug/scene-execution-process.json",
+          "sha256": "859b52761d66c681cdc08b34fbdde2f40c93318d20ef0a7266dcf2ce26a3db19",
+          "bytes": 1480
+        },
+        "scene-qualification": {
+          "path": "out/11c-work/wsl-verified/linux-debug/scene-qualification.json",
+          "sha256": "4ca48e1ba68b4afddd5efec7141eb379189c73e1dd23922d55926d04a5141766",
+          "bytes": 52699
+        }
+      },
+      "qualification_kind": "composite-passing-selection",
+      "original_full_run_summary": {
+        "path": "out/11c-work/wsl-final/linux-debug/summary.json",
+        "sha256": "2cc583f02a5122de841970394c68a28bcaa1534c0846e30abaefbe7d41329912",
+        "bytes": 5428
+      },
+      "original_failed_junit": {
+        "path": "out/11c-work/wsl-final/linux-debug/tests.xml",
+        "sha256": "f3b229b495e2a8a81aaedf6bbe4d85d606226bbaf39fecfd1587d55241daf498",
+        "bytes": 67856
+      },
+      "isolated_retry_summary": {
+        "path": "out/11c-work/contract-probe/summary.json",
+        "sha256": "e6f8015995b209c1e441240685099e46e38bd26d7980c248fd0ac4cedd2d64cc",
+        "bytes": 249
+      },
+      "isolated_retry_junit": {
+        "path": "out/11c-work/contract-probe/tests.xml",
+        "sha256": "4eb3548259257702c8af9ff9bfc840e8e80b6e9752f21fcb6f3cf83668cdbbeb",
+        "bytes": 843
+      },
+      "original_passes": 105,
+      "isolated_retry_passes": 1,
+      "description": "105 passing original full-run cases plus one isolated contract retry at the unchanged 30-second CTest limit. Original failed full-run files are preserved; this is not an uninterrupted green run.",
+      "qualified_results": {
+        "path": "out/11c-work/wsl-verified/linux-debug/qualified-results.json",
+        "sha256": "88ab8916198bbfc6c710da64797357697ac0c62b8295e4b325bcfadc2b48e306",
+        "bytes": 41216
+      }
+    },
+    {
+      "name": "linux-asan-ubsan",
+      "status": "PASS",
+      "qualified_tests": 106,
+      "standalone_tools": false,
+      "summary": {
+        "path": "out/11c-work/wsl-verified/linux-asan-ubsan/summary.json",
+        "sha256": "8d668046e2ff7db247f1828dcd8f2157c39ce91c33d4f199481560a760d623d0",
+        "bytes": 1359
+      },
+      "inventory": {
+        "path": "out/11c-work/wsl-verified/linux-asan-ubsan/inventory.json",
+        "sha256": "ac20550b8c122afda29f9c5c22003687712ed24f870edb15024b19263fb21db1",
+        "bytes": 88982
+      },
+      "junit": {
+        "path": "out/11c-work/wsl-verified/linux-asan-ubsan/tests.xml",
+        "sha256": "29cde7c9130d1e0a4f009619a15c9a32a253cc6df2da405cd02c1fb6366718b3",
+        "bytes": 68260
+      },
+      "commands": [
+        {
+          "name": "build",
+          "args": [
+            "cmake",
+            "--build",
+            "/work/build-05a-final-client/linux-asan-ubsan",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "e3600146b5df4a4e7568ab42be90c57b7b06318bcb586c4dd2f4b77da1af19a8"
+        },
+        {
+          "name": "inventory",
+          "args": [
+            "ctest",
+            "--test-dir",
+            "/work/build-05a-final-client/linux-asan-ubsan",
+            "--show-only=json-v1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "da4fbf24435309c2579a76077425a92a0e19bc7afa27d11b5ef9c59966eb5e4e"
+        },
+        {
+          "name": "tests",
+          "args": [
+            "ctest",
+            "--test-dir",
+            "/work/build-05a-final-client/linux-asan-ubsan",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "/evidence/linux-asan-ubsan/tests.xml"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "3a349a93d147a371708250e1be11bfcd1a02312f44bfa071d4c6ec2f85b8cc49"
+        }
+      ],
+      "catch": {
+        "catalog": {
+          "cases": 18,
+          "assertions": 6190,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/wsl-verified/linux-asan-ubsan/asset-catalog-cases.xml",
+            "sha256": "6712e66f0a909722cc004ebea3b98bb1972305a060fdb9952251bf79f6be4d94",
+            "bytes": 4565
+          }
+        },
+        "imports": {
+          "cases": 22,
+          "assertions": 4361,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/wsl-verified/linux-asan-ubsan/asset-import-cases.xml",
+            "sha256": "b2489b61401d8798bf0eb3c6192c2070e66dd03e59409262a2736c6558f7c57d",
+            "bytes": 5749
+          }
+        },
+        "jobs": {
+          "cases": 25,
+          "assertions": 2957,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/wsl-verified/linux-asan-ubsan/asset-import-jobs-cases.xml",
+            "sha256": "d47e90bb6f69b0b85fdd96dfcb096b48d21e8c60c0312632f72db68634286d5e",
+            "bytes": 6427
+          }
+        },
+        "featureworld": {
+          "cases": 5,
+          "assertions": 178,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/wsl-verified/linux-asan-ubsan/featureworld-cases.xml",
+            "sha256": "ad21cf4b8970b84f2085bc0ea80997b97370dc91f6a0a3b5bdf5c51878427fb8",
+            "bytes": 1553
+          }
+        },
+        "runner": {
+          "cases": 13,
+          "assertions": 345,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/wsl-verified/linux-asan-ubsan/scene-runner-cases.xml",
+            "sha256": "204b451c28d48959ec7df18fa44cbb596122c78423101b386c3f64e6a06a639f",
+            "bytes": 3336
+          }
+        }
+      },
+      "process_receipts": {
+        "featureworld-process": {
+          "path": "out/11c-work/wsl-verified/linux-asan-ubsan/featureworld-process.json",
+          "sha256": "d6c7ade2aa6eedbcb59811cdb9e4a81323eaeaf0c5297fdcb600f85839290a34",
+          "bytes": 6081
+        },
+        "asset-import-process": {
+          "path": "out/11c-work/wsl-verified/linux-asan-ubsan/asset-import-process.json",
+          "sha256": "084b5c055adbb3fd20b4a308650e8e7a37d81bc29b4ba067c116a7b7d5596474",
+          "bytes": 13117
+        },
+        "scene-runner-process": {
+          "path": "out/11c-work/wsl-verified/linux-asan-ubsan/scene-runner-process.json",
+          "sha256": "cc5089758249f7d184015338793ea0859a3ababd554da5d9f02e8a7dfd9de848",
+          "bytes": 2012
+        },
+        "scene-execution-process": {
+          "path": "out/11c-work/wsl-verified/linux-asan-ubsan/scene-execution-process.json",
+          "sha256": "859b52761d66c681cdc08b34fbdde2f40c93318d20ef0a7266dcf2ce26a3db19",
+          "bytes": 1480
+        },
+        "scene-qualification": {
+          "path": "out/11c-work/wsl-verified/linux-asan-ubsan/scene-qualification.json",
+          "sha256": "a57e0fc0266b23ee911654f59f70a5deae33df31a06f0fc3ede86437183bbafb",
+          "bytes": 52749
+        }
+      },
+      "qualified_results": {
+        "path": "out/11c-work/wsl-verified/linux-asan-ubsan/qualified-results.json",
+        "sha256": "7c94fa78dae57d2e6c4dd9d2e9919b285b0c5694efe753bc9c1866c9d65bb902",
+        "bytes": 10247
+      }
+    },
+    {
+      "name": "windows-tools-debug",
+      "status": "PASS",
+      "qualified_tests": 22,
+      "standalone_tools": true,
+      "summary": {
+        "path": "out/11c-work/tools-debug-final/summary.json",
+        "sha256": "bb5afb13557c149033396594973738cb0ae034dfeffcaf88bc962f723355f70e",
+        "bytes": 2318
+      },
+      "inventory": {
+        "path": "out/11c-work/tools-debug-final/inventory.json",
+        "sha256": "f6e266c0dd7cc1d941c49d925b9cd6789ff8540ed6849fb9d783b22049d7cc90",
+        "bytes": 71046
+      },
+      "junit": {
+        "path": "out/11c-work/tools-debug-final/tests.xml",
+        "sha256": "50842a4af92f33a72f3111726fa3dbdf5648e9701492bc61cdc6f0762d2c53b1",
+        "bytes": 13813
+      },
+      "commands": [
+        {
+          "name": "build",
+          "args": [
+            "cmake",
+            "--build",
+            "C:\\Users\\mrkda\\Projects\\shark\\build\\tools-debug",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "070562180d075be2e14ea9810ca140aee11f71ae47c1a524399e868dcec08817"
+        },
+        {
+          "name": "inventory",
+          "args": [
+            "ctest",
+            "--test-dir",
+            "C:\\Users\\mrkda\\Projects\\shark\\build\\tools-debug",
+            "--show-only=json-v1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "9b46285b7896916504aba65df33aec51dfc4fc9e8f54652b4186afae5f0ff8f7"
+        },
+        {
+          "name": "tests",
+          "args": [
+            "ctest",
+            "--test-dir",
+            "C:\\Users\\mrkda\\Projects\\shark\\build\\tools-debug",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "C:\\Users\\mrkda\\Projects\\shark\\out\\11c-work\\tools-debug-final\\tests.xml",
+            "-R",
+            "^(shark\\.tools\\.asset\\-import\\-jobs|shark\\.tools\\.asset\\-import|shark\\.tools\\.asset\\-catalog|shark\\.tools\\.featureworld|shark\\.tools\\.scene\\-runner|shark\\.tools\\.source\\-documents|shark\\.tools\\.authored\\-scene|shark\\.tools\\.authoring\\-retries|shark\\.tools\\.authoring\\-history|shark\\.tools\\.authoring\\-batches|shark\\.tools\\.authoring\\-commands|shark\\.tools\\.project\\-files|shark\\.tools\\.persistence\\-integration|shark\\.tools\\.authoring\\-integration|shark\\.tools\\.scene\\-qualification|shark\\.tools\\.scene\\-execution|shark\\.tooling\\.scene\\-execution\\-evidence|shark\\.tools\\.featureworld\\-process|shark\\.tools\\.scene\\-runner\\-process|shark\\.tools\\.asset\\-import\\-process|shark\\.tools\\.project\\-files\\-process|shark\\.tools\\.authoring\\-retries\\-process)$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "72bab70e0024106b1c6aa798b77f9563ae5a1a3abe16719ae395347e2f94d4d5"
+        }
+      ],
+      "catch": {
+        "catalog": {
+          "cases": 18,
+          "assertions": 6190,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/tools-debug-final/asset-catalog-cases.xml",
+            "sha256": "c5bf6540015ad7d84c35d75da919cddd8e794443c56a489c5bbca8ee67ec078b",
+            "bytes": 5024
+          }
+        },
+        "imports": {
+          "cases": 22,
+          "assertions": 4361,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/tools-debug-final/asset-import-cases.xml",
+            "sha256": "4acde2670d2458fbbd2266635d0d4376b616615c9fec5b9c4c4372a8367c6e64",
+            "bytes": 6308
+          }
+        },
+        "jobs": {
+          "cases": 25,
+          "assertions": 2957,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/tools-debug-final/asset-import-jobs-cases.xml",
+            "sha256": "1d1497ddec0577d2e121358de39fedcc48b22942a5f2d151e4bd24b1a70cae49",
+            "bytes": 7061
+          }
+        },
+        "featureworld": {
+          "cases": 5,
+          "assertions": 178,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/tools-debug-final/featureworld-cases.xml",
+            "sha256": "deae5cf76785d6a7b1b82fc77480ec37bc5ef8d08e94974670926a8368106fdd",
+            "bytes": 1687
+          }
+        },
+        "runner": {
+          "cases": 13,
+          "assertions": 345,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/tools-debug-final/scene-runner-cases.xml",
+            "sha256": "7b311d9010e4294f4971a5afe4403b8d7cc8cd450c86d52b30a0117aa6358a3f",
+            "bytes": 3670
+          }
+        }
+      },
+      "process_receipts": {
+        "featureworld-process": {
+          "path": "out/11c-work/tools-debug-final/featureworld-process.json",
+          "sha256": "89ea423ea6a58767e936b55d28d94d5a8d0e3e16fd37c7ff8533df33873b6c32",
+          "bytes": 6370
+        },
+        "asset-import-process": {
+          "path": "out/11c-work/tools-debug-final/asset-import-process.json",
+          "sha256": "f313a4cff3b6564f72f4e6a12e5b59e9990a10f57cf6e0057ad9a56862e19fea",
+          "bytes": 13507
+        },
+        "scene-runner-process": {
+          "path": "out/11c-work/tools-debug-final/scene-runner-process.json",
+          "sha256": "346081439b14335266311bc14c009b95218e574ee0fe122e680e4e93b088fe0f",
+          "bytes": 2135
+        },
+        "scene-execution-process": {
+          "path": "out/11c-work/tools-debug-final/scene-execution-process.json",
+          "sha256": "5e5f5380d0a2bfa9b6610c34e7e72de1e347e77c202c6d397133c18400bfcd86",
+          "bytes": 1571
+        },
+        "scene-qualification": {
+          "path": "out/11c-work/tools-debug-final/scene-qualification.json",
+          "sha256": "a8b8f0e2bc92eab7393e64dcc5fddbb13a8f6b8473f56e60b174121350578235",
+          "bytes": 54705
+        }
+      },
+      "qualified_results": {
+        "path": "out/11c-work/tools-debug-final/qualified-results.json",
+        "sha256": "4b1407e52f90ddef7e39fedadfff04431e13b82cc4f51e0a7adbe2f36d57d5dd",
+        "bytes": 2198
+      }
+    },
+    {
+      "name": "linux-tools-debug",
+      "status": "PASS",
+      "qualified_tests": 22,
+      "standalone_tools": true,
+      "summary": {
+        "path": "out/11c-work/wsl-verified/tools-debug/summary.json",
+        "sha256": "847884030c5356f78d15d8395610e90697062999073040f9a6dd77568417a0cf",
+        "bytes": 2121
+      },
+      "inventory": {
+        "path": "out/11c-work/wsl-verified/tools-debug/inventory.json",
+        "sha256": "f77dfdc0b85fd44349b0e445b590923bebcbb778409f0ccef45146322434524a",
+        "bytes": 60993
+      },
+      "junit": {
+        "path": "out/11c-work/wsl-verified/tools-debug/tests.xml",
+        "sha256": "e87491d57bb90a04a698ba852c99476f20d31cfd2e67b7f5d0294e94b5498f50",
+        "bytes": 13616
+      },
+      "commands": [
+        {
+          "name": "build",
+          "args": [
+            "cmake",
+            "--build",
+            "/work/build-09a-tools",
+            "--parallel",
+            "2"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "18020c0220d9a85eb24bf91b9027e975bc0c533044bb8b27fbb048bee9b5652b"
+        },
+        {
+          "name": "inventory",
+          "args": [
+            "ctest",
+            "--test-dir",
+            "/work/build-09a-tools",
+            "--show-only=json-v1"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "eb3cf29e4281c317bd0d8b521dcf9fd15cdcb082a8bd3bf527db4029d63004e7"
+        },
+        {
+          "name": "tests",
+          "args": [
+            "ctest",
+            "--test-dir",
+            "/work/build-09a-tools",
+            "--output-on-failure",
+            "--no-tests=error",
+            "--output-junit",
+            "/evidence/tools-debug/tests.xml",
+            "-R",
+            "^(shark\\.tools\\.asset\\-import\\-jobs|shark\\.tools\\.asset\\-import|shark\\.tools\\.asset\\-catalog|shark\\.tools\\.featureworld|shark\\.tools\\.scene\\-runner|shark\\.tools\\.source\\-documents|shark\\.tools\\.authored\\-scene|shark\\.tools\\.authoring\\-retries|shark\\.tools\\.authoring\\-history|shark\\.tools\\.authoring\\-batches|shark\\.tools\\.authoring\\-commands|shark\\.tools\\.project\\-files|shark\\.tools\\.persistence\\-integration|shark\\.tools\\.authoring\\-integration|shark\\.tools\\.scene\\-qualification|shark\\.tools\\.scene\\-execution|shark\\.tooling\\.scene\\-execution\\-evidence|shark\\.tools\\.featureworld\\-process|shark\\.tools\\.scene\\-runner\\-process|shark\\.tools\\.asset\\-import\\-process|shark\\.tools\\.project\\-files\\-process|shark\\.tools\\.authoring\\-retries\\-process)$"
+          ],
+          "exit_code": 0,
+          "timed_out": false,
+          "cleanup_errors": [],
+          "log_sha256": "0eb8e6ef1965009b3a6f36bf7918758cbb492cb9dfdeff8d420464f84bc3d61f"
+        }
+      ],
+      "catch": {
+        "catalog": {
+          "cases": 18,
+          "assertions": 6190,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/wsl-verified/tools-debug/asset-catalog-cases.xml",
+            "sha256": "009564dfd85e5b4b54f56000197353595bb255cabe58ca4603d82f6b1dc26028",
+            "bytes": 4565
+          }
+        },
+        "imports": {
+          "cases": 22,
+          "assertions": 4361,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/wsl-verified/tools-debug/asset-import-cases.xml",
+            "sha256": "104cd5d45ed2d9192651488c1a2a797516c4096361252c7abaa338ec50141ee3",
+            "bytes": 5749
+          }
+        },
+        "jobs": {
+          "cases": 25,
+          "assertions": 2957,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/wsl-verified/tools-debug/asset-import-jobs-cases.xml",
+            "sha256": "03a0dc24b915057eaac2b4164ac3cad3a1f8228238b2f0a136e972e2f23ec5fd",
+            "bytes": 6427
+          }
+        },
+        "featureworld": {
+          "cases": 5,
+          "assertions": 178,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/wsl-verified/tools-debug/featureworld-cases.xml",
+            "sha256": "f1396b637002d3b2fa9d62eeb7214dda28666ddf17ba4d12ee6711a9cf77017e",
+            "bytes": 1553
+          }
+        },
+        "runner": {
+          "cases": 13,
+          "assertions": 345,
+          "seed": 1337,
+          "result": {
+            "path": "out/11c-work/wsl-verified/tools-debug/scene-runner-cases.xml",
+            "sha256": "64ed847d33406a8982dab1a1cabf0843bf064c58e44437f7f1a568cd880efab8",
+            "bytes": 3336
+          }
+        }
+      },
+      "process_receipts": {
+        "featureworld-process": {
+          "path": "out/11c-work/wsl-verified/tools-debug/featureworld-process.json",
+          "sha256": "d6c7ade2aa6eedbcb59811cdb9e4a81323eaeaf0c5297fdcb600f85839290a34",
+          "bytes": 6081
+        },
+        "asset-import-process": {
+          "path": "out/11c-work/wsl-verified/tools-debug/asset-import-process.json",
+          "sha256": "084b5c055adbb3fd20b4a308650e8e7a37d81bc29b4ba067c116a7b7d5596474",
+          "bytes": 13117
+        },
+        "scene-runner-process": {
+          "path": "out/11c-work/wsl-verified/tools-debug/scene-runner-process.json",
+          "sha256": "8ae9a2fdecf3f4ff2af3f51f3e3ce3cc8e3bfb5821ee4f26746fbc8203e6055a",
+          "bytes": 2012
+        },
+        "scene-execution-process": {
+          "path": "out/11c-work/wsl-verified/tools-debug/scene-execution-process.json",
+          "sha256": "859b52761d66c681cdc08b34fbdde2f40c93318d20ef0a7266dcf2ce26a3db19",
+          "bytes": 1480
+        },
+        "scene-qualification": {
+          "path": "out/11c-work/wsl-verified/tools-debug/scene-qualification.json",
+          "sha256": "4c792d32a457ac875783712c1caee6574b032424ccb8c88d33727cf0627bc0c5",
+          "bytes": 52551
+        }
+      },
+      "qualified_results": {
+        "path": "out/11c-work/wsl-verified/tools-debug/qualified-results.json",
+        "sha256": "04428732aabc9d1c77db28cb3587f19934e00727509ae787e41aa3808f62835d",
+        "bytes": 2204
+      }
+    }
+  ],
+  "public_example_compiles": 39,
+  "public_examples": [
+    {
+      "examples": 13,
+      "summary": {
+        "path": "out/11c-work/native-audit/public-api/summary.json",
+        "sha256": "acc9f57d342d77be431ae3637a77d3e1422866477c070a067196c6278a5f288c",
+        "bytes": 1124246
+      },
+      "compiler": {
+        "path": "C:\\Program Files\\Microsoft Visual Studio\\18\\Community\\VC\\Tools\\MSVC\\14.51.36231\\bin\\Hostx64\\x64\\cl.exe",
+        "sha256": "dc8426b8760d92cf757df3d10b9f0244a95b454ff43194a58161568a0ec70d53",
+        "bytes": 893328
+      }
+    },
+    {
+      "examples": 13,
+      "summary": {
+        "path": "out/11c-work/wsl-verified/g++-13-public-api/summary.json",
+        "sha256": "8707726362844f3454d1a35f3be6d111770cf8185b222a12c3b9dc2f5ac236e1",
+        "bytes": 1377662
+      },
+      "compiler": {
+        "path": "/usr/bin/x86_64-linux-gnu-g++-13",
+        "sha256": "1353e9bdd29a7295c7226bf6c63abccce056d8cac31f112e5cdbecc3f28c2769",
+        "bytes": 1027128
+      }
+    },
+    {
+      "examples": 13,
+      "summary": {
+        "path": "out/11c-work/wsl-verified/clang++-18-public-api/summary.json",
+        "sha256": "5009d96ec64f217548ae8a1cc95f2c3278abf94e6044663c19e93230bfe474c7",
+        "bytes": 1410610
+      },
+      "compiler": {
+        "path": "/usr/lib/llvm-18/bin/clang",
+        "sha256": "8ef402d453d1ba4902e4ee0f0f847f6cfa01400c95aa43c24e97818b9c0e3f45",
+        "bytes": 140592
+      }
+    }
+  ],
+  "sanitizer_objects": 26,
+  "actual_sanitizer_objects": [
+    {
+      "objects": 13,
+      "summary": {
+        "path": "out/11c-work/sanitizer-audit/summary.json",
+        "sha256": "f02255a78b2de3537fdc3084d02b2e1180d54e6686ae01927d9b39e12956da9e",
+        "bytes": 21269
+      },
+      "actual_instrumentation": [
+        {
+          "source": "engine/core/src/content_digest.cpp",
+          "source_sha256": "afe20aa95055edc0b9f6d0d05518a4455b494cf0b226b46467896a8fceee6a96",
+          "object_sha256": "07670e88d8978615f7c9e32619f923525dc00540fa61fa674bb7ab9e1c7e0184",
+          "symbols": {
+            "path": "out/11c-work/sanitizer-audit/content_digest.log",
+            "sha256": "8285c9339dfb4203ee2d046df6bf89391d3d639f64582ae2b5961279c9014c42",
+            "bytes": 11207
+          }
+        },
+        {
+          "source": "engine/core/src/crypto_runtime.cpp",
+          "source_sha256": "86582ea2605421ff7e428bca45921923ad07d0882fd24791d501aa4e6d1ebfde",
+          "object_sha256": "4d51537a9f90741cb0aae06706daa7e6771408176d2bf88aa6f73e16c04dd2f4",
+          "symbols": {
+            "path": "out/11c-work/sanitizer-audit/crypto_runtime.log",
+            "sha256": "df0062587c68e25256d4c0c491e8a0eac3d69b02771105ca04c2930b9ce67872",
+            "bytes": 6694
+          }
+        },
+        {
+          "source": "engine/core/src/net_transport.cpp",
+          "source_sha256": "f844a8c02c4f2ec779bc024b593e7f8a9a2e96a7b3622038543a770ac9f17aad",
+          "object_sha256": "bc4281b8d2b9e0cf22b9057eaaaec71cf3d18c44a61e27869f5d2077e66792f7",
+          "symbols": {
+            "path": "out/11c-work/sanitizer-audit/net_transport.log",
+            "sha256": "5bff138707b71e57b0f515b84be669af0b0d3b13a36a07a03220889d9b3432b1",
+            "bytes": 78872
+          }
+        },
+        {
+          "source": "engine_tools/src/source_document.cpp",
+          "source_sha256": "a53e635ddb5c02e29d554934b9462a9a7d918aec22688ba5eb8ef79fbf74c306",
+          "object_sha256": "09736b543520cecfcc06589bd9e29a51fe19f4333ae3b57e41a4d6135ab4440a",
+          "symbols": {
+            "path": "out/11c-work/sanitizer-audit/source_document.log",
+            "sha256": "a79235a10fcd54f013c7a29152fe2252dec5406aa46242863ee8e8c1513fd97f",
+            "bytes": 525540
+          }
+        },
+        {
+          "source": "engine_tools/src/project_files.cpp",
+          "source_sha256": "030ebdec3bb7ae5da2c72e0f9f884283e51d3d94b44ca51ed7b34ff4c7b37a7f",
+          "object_sha256": "5645d5c456324c218377240b80ffd59b388b07d874a1810451ec705a024e583d",
+          "symbols": {
+            "path": "out/11c-work/sanitizer-audit/project_files.log",
+            "sha256": "7d2ab064106a6a085f86e98096042f27b961b17f771f669c6a83e6a739971b1a",
+            "bytes": 95708
+          }
+        },
+        {
+          "source": "engine_tools/src/project_files_native.cpp",
+          "source_sha256": "f21bf25b43dc971faaae1bb0e41b7faab276bc60c17261714f10afc1d4b41a10",
+          "object_sha256": "802dfc57bdeb06df869dbd25b85e9e3b56f5fecd425dc80b54de97517ba70cc6",
+          "symbols": {
+            "path": "out/11c-work/sanitizer-audit/project_files_native.log",
+            "sha256": "117554b463fd127338919a623ad9ee0a486632feef8049b6da4d7d28c1c78854",
+            "bytes": 70014
+          }
+        },
+        {
+          "source": "engine_tools/src/asset_import.cpp",
+          "source_sha256": "ee98b477a616118df0d34d591ce50f9587cee314f867a3701b43419370dd7e26",
+          "object_sha256": "e5dfee88db0e705e2fc3ed712b31a656178b6e5d8d47f737c19e40bba2745342",
+          "symbols": {
+            "path": "out/11c-work/sanitizer-audit/asset_import.log",
+            "sha256": "319461de52467784c6a54b2ae62d4df71c56872210c982b85958df9c831eac96",
+            "bytes": 145975
+          }
+        },
+        {
+          "source": "engine_tools/src/asset_cache_format.cpp",
+          "source_sha256": "670897dd3bce334563bd1d285e431367b822e94410cd4f3227502a3a8ff7494f",
+          "object_sha256": "e5f834046b957392cbbb4182fb39d9c92f3052df1fc95d2278b4b16b53ae70fb",
+          "symbols": {
+            "path": "out/11c-work/sanitizer-audit/asset_cache_format.log",
+            "sha256": "6564aa41bc5ece97e6061b2e467d86921c0c6755b52f49dfe8d53ca1e0184475",
+            "bytes": 64991
+          }
+        },
+        {
+          "source": "engine_tools/src/feature_world.cpp",
+          "source_sha256": "90fc1e4ce71c4a8afd715cbabc584c96e21ff7760d316a7ad737895676711e94",
+          "object_sha256": "a79d05288e94ff8625752aae0d287fa3f500431b660dcc8c810b7ac8c13c2623",
+          "symbols": {
+            "path": "out/11c-work/sanitizer-audit/feature_world.log",
+            "sha256": "f9e82fc96278cbdaca89f099e64a9dddd8efb747634c2d48f420174bdfa8c825",
+            "bytes": 133500
+          }
+        },
+        {
+          "source": "tests/core_digest_tests.cpp",
+          "source_sha256": "cbceba3adbbc4abe481bc9c0fc593b4fed530cea38959a3eb93d48e28470fd77",
+          "object_sha256": "b912e2d63c78222c636a2784a17d44545015dcba537c7ee7a55977017c77ea98",
+          "symbols": {
+            "path": "out/11c-work/sanitizer-audit/core_digest_tests.log",
+            "sha256": "550f610ea9ac7ec6b25e1f5b66ec1ad72a7ddc6dcd972a9bd062d8ea77e48333",
+            "bytes": 23392
+          }
+        },
+        {
+          "source": "tests/asset_import_tests.cpp",
+          "source_sha256": "7f5b2e101221450c650c9226d3c174a82d776206819eb36442c6c0f8800d397a",
+          "object_sha256": "504323d1601bf7c98f1316aad7914e3a3911b58a5005542a93f53e2cb8d781bf",
+          "symbols": {
+            "path": "out/11c-work/sanitizer-audit/asset_import_tests.log",
+            "sha256": "3ac613ac839534a327ca8324dc50e56347a3ac768fd492180900588e7760febd",
+            "bytes": 139473
+          }
+        },
+        {
+          "source": "tests/asset_import_process.cpp",
+          "source_sha256": "e7a86c65f8b56f279da71bd32fe673e7a92107d2e3de5bd2c090227f543864c2",
+          "object_sha256": "e0c6734547c89413a0cdedcf0b6b60f13f953d0632799b9f0bb8adffcd961bb5",
+          "symbols": {
+            "path": "out/11c-work/sanitizer-audit/asset_import_process.log",
+            "sha256": "97b9b2d53b85f675165cdde5d49298c5c8632d45a4ae9507a9dbad106f38cd6f",
+            "bytes": 31563
+          }
+        },
+        {
+          "source": "tests/asset_import_jobs_tests.cpp",
+          "source_sha256": "61e1cfbbc3c34ac0ca17a5192bc6b7f269b89f0be6adf81f3ed92e9391dacd36",
+          "object_sha256": "2c1f6b55bbe02dcdc995dfb80484ac211f516cc670a1078e6683279f9fafac15",
+          "symbols": {
+            "path": "out/11c-work/sanitizer-audit/asset_import_jobs_tests.log",
+            "sha256": "f166ca61c0acaee338eed72c0daa84c2e8d10c72c982cfaac5bc9ff0efc68be1",
+            "bytes": 133688
+          }
+        }
+      ]
+    },
+    {
+      "objects": 13,
+      "summary": {
+        "path": "out/11c-work/wsl-verified/sanitizer-audit/summary.json",
+        "sha256": "56fa80eb020063c9eb5e753d3e3531fd2e34e4231a10b33240893d6a5bd7f3fc",
+        "bytes": 16212
+      },
+      "actual_instrumentation": [
+        {
+          "source": "engine/core/src/content_digest.cpp",
+          "source_sha256": "afe20aa95055edc0b9f6d0d05518a4455b494cf0b226b46467896a8fceee6a96",
+          "object_sha256": "1caf9822745bffcb1e398dd8c3c08ca7c02e278171e14b5bb00a1d582571cb86",
+          "symbols": {
+            "path": "out/11c-work/wsl-verified/sanitizer-audit/content_digest.log",
+            "sha256": "df2ed211930093ac094b0cea60ed94f7d7fbf0892ef188a1c08c0aa21121a5b9",
+            "bytes": 1365
+          }
+        },
+        {
+          "source": "engine/core/src/crypto_runtime.cpp",
+          "source_sha256": "86582ea2605421ff7e428bca45921923ad07d0882fd24791d501aa4e6d1ebfde",
+          "object_sha256": "c8776a06a91e09a1e927045a1b765cd9f9b282a28a0a0a039eb32cf7d295aeaa",
+          "symbols": {
+            "path": "out/11c-work/wsl-verified/sanitizer-audit/crypto_runtime.log",
+            "sha256": "68fecfb202a45301c14ac3aca94a05e925d7c4b87e3e1431ef567d1ce6e00144",
+            "bytes": 1010
+          }
+        },
+        {
+          "source": "engine/core/src/net_transport.cpp",
+          "source_sha256": "f844a8c02c4f2ec779bc024b593e7f8a9a2e96a7b3622038543a770ac9f17aad",
+          "object_sha256": "fd1ecffed55139538e01f0966d0424fd3330d4398886bc6726884c8a0e5d90dd",
+          "symbols": {
+            "path": "out/11c-work/wsl-verified/sanitizer-audit/net_transport.log",
+            "sha256": "b6c1a33112f137744de800028db6c54beb2f697f78ed23098481486e286d588b",
+            "bytes": 1995
+          }
+        },
+        {
+          "source": "engine_tools/src/source_document.cpp",
+          "source_sha256": "a53e635ddb5c02e29d554934b9462a9a7d918aec22688ba5eb8ef79fbf74c306",
+          "object_sha256": "7c605e4ff69c025ab13146a9740300a4810a4ca8df38a468b2384ebf1b31f8f9",
+          "symbols": {
+            "path": "out/11c-work/wsl-verified/sanitizer-audit/source_document.log",
+            "sha256": "cf19737411bb3b77748d1d5fee0bae365c01322eaae42fe626dea2635591adc3",
+            "bytes": 2099
+          }
+        },
+        {
+          "source": "engine_tools/src/project_files.cpp",
+          "source_sha256": "030ebdec3bb7ae5da2c72e0f9f884283e51d3d94b44ca51ed7b34ff4c7b37a7f",
+          "object_sha256": "66a5fad49f907a3c6e6ac56ad8e84c0b42317c6ee007a10a49685da26ada6294",
+          "symbols": {
+            "path": "out/11c-work/wsl-verified/sanitizer-audit/project_files.log",
+            "sha256": "bd948a6cc2a5e71a3f36379c82214b34a58e3c89df55c5288f10452caef152a0",
+            "bytes": 1367
+          }
+        },
+        {
+          "source": "engine_tools/src/project_files_native.cpp",
+          "source_sha256": "f21bf25b43dc971faaae1bb0e41b7faab276bc60c17261714f10afc1d4b41a10",
+          "object_sha256": "678d0203d4d2c35ebbfafa1fcc1ee2d2d486e3813be855a669881e01ce28657e",
+          "symbols": {
+            "path": "out/11c-work/wsl-verified/sanitizer-audit/project_files_native.log",
+            "sha256": "bb8eb9032a32d565850b216ec3988baefdb642a8834e290fb4b8bab20a5a62a8",
+            "bytes": 1591
+          }
+        },
+        {
+          "source": "engine_tools/src/asset_import.cpp",
+          "source_sha256": "ee98b477a616118df0d34d591ce50f9587cee314f867a3701b43419370dd7e26",
+          "object_sha256": "51aba2063ddb96f14f7d55c424ff77cb3077d1f3b2e6654a4b86611c7d502274",
+          "symbols": {
+            "path": "out/11c-work/wsl-verified/sanitizer-audit/asset_import.log",
+            "sha256": "3824a2fc857860f91f2af4c807150e65226c26b3879195bc19e8bfa09cd6c80d",
+            "bytes": 1943
+          }
+        },
+        {
+          "source": "engine_tools/src/asset_cache_format.cpp",
+          "source_sha256": "670897dd3bce334563bd1d285e431367b822e94410cd4f3227502a3a8ff7494f",
+          "object_sha256": "b173ca449df7cbcb524ee20f2b9e7f9b41fafb97e5ada76f8fcc59ddb14b7683",
+          "symbols": {
+            "path": "out/11c-work/wsl-verified/sanitizer-audit/asset_cache_format.log",
+            "sha256": "ccc28fcb99ca6feeaafe53d2205c743f77a5f97f71c286e07f6bf2602e77afb6",
+            "bytes": 1695
+          }
+        },
+        {
+          "source": "engine_tools/src/feature_world.cpp",
+          "source_sha256": "90fc1e4ce71c4a8afd715cbabc584c96e21ff7760d316a7ad737895676711e94",
+          "object_sha256": "8f206bd74f87f010c04a8cc329105852867568630e1987068856c02f0392a26e",
+          "symbols": {
+            "path": "out/11c-work/wsl-verified/sanitizer-audit/feature_world.log",
+            "sha256": "61b3c3a081bc0e9c58ca1c9dae3aff424b41dbf2321bfbc53c815c7ac68a29fb",
+            "bytes": 1975
+          }
+        },
+        {
+          "source": "tests/core_digest_tests.cpp",
+          "source_sha256": "cbceba3adbbc4abe481bc9c0fc593b4fed530cea38959a3eb93d48e28470fd77",
+          "object_sha256": "3c8921dd50363bdd36fed926209f618767cb9be9615919aacec8ee26d8a2297e",
+          "symbols": {
+            "path": "out/11c-work/wsl-verified/sanitizer-audit/core_digest_tests.log",
+            "sha256": "0af782acc771e87f96bea921b073da14956218da24fa05a9d81a8351a4556829",
+            "bytes": 1691
+          }
+        },
+        {
+          "source": "tests/asset_import_tests.cpp",
+          "source_sha256": "7f5b2e101221450c650c9226d3c174a82d776206819eb36442c6c0f8800d397a",
+          "object_sha256": "0ef6f473d0f378975f56949bdd74c73a1b5b0f3c05ff4fa488206a98bfc48808",
+          "symbols": {
+            "path": "out/11c-work/wsl-verified/sanitizer-audit/asset_import_tests.log",
+            "sha256": "0421066b436842db56745bd803d06e7661dc4abb7817fdf3057027571201c90f",
+            "bytes": 2064
+          }
+        },
+        {
+          "source": "tests/asset_import_process.cpp",
+          "source_sha256": "e7a86c65f8b56f279da71bd32fe673e7a92107d2e3de5bd2c090227f543864c2",
+          "object_sha256": "5229916a36b577e921a09a6ef56c5d909dc695769e184a287b67c38e71e3a4c0",
+          "symbols": {
+            "path": "out/11c-work/wsl-verified/sanitizer-audit/asset_import_process.log",
+            "sha256": "e1888af585a3f630bbfe69a2eff41c197cf05d6e2ff724ef65f442a21f40ee8c",
+            "bytes": 1446
+          }
+        },
+        {
+          "source": "tests/asset_import_jobs_tests.cpp",
+          "source_sha256": "61e1cfbbc3c34ac0ca17a5192bc6b7f269b89f0be6adf81f3ed92e9391dacd36",
+          "object_sha256": "0b037967794f66dd847d5ba171488541c48ca142a8fc14ec394ebde6c6ad3419",
+          "symbols": {
+            "path": "out/11c-work/wsl-verified/sanitizer-audit/asset_import_jobs_tests.log",
+            "sha256": "b9013ba10892684df5f4d59715ff3284e529b7c324f7f0985c7450132748dfe7",
+            "bytes": 2010
+          }
+        }
+      ]
+    }
+  ],
+  "new_family": {
+    "name": "shark.tools.asset-import-jobs",
+    "timeout_seconds": 90,
+    "seed": 1337,
+    "cases": 25,
+    "profile_executions": 7
+  },
+  "featureworld": {
+    "native_cases": 8,
+    "process_checks": 26,
+    "cpu_surfaces": 40,
+    "external_gpu_commands": 1,
+    "qualification_checks": 19,
+    "negative_controls": 15,
+    "new_surface_execution_mapping": [
+      {
+        "id": "asset.jobs.submit",
+        "native_case": "featureworld.asset-jobs",
+        "tests": [
+          "shark.tools.asset-import-jobs",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "passing_profiles": [
+          "windows-debug",
+          "windows-release",
+          "windows-asan",
+          "linux-debug",
+          "linux-asan-ubsan",
+          "windows-tools-debug",
+          "linux-tools-debug"
+        ]
+      },
+      {
+        "id": "asset.jobs.query",
+        "native_case": "featureworld.asset-jobs",
+        "tests": [
+          "shark.tools.asset-import-jobs",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "passing_profiles": [
+          "windows-debug",
+          "windows-release",
+          "windows-asan",
+          "linux-debug",
+          "linux-asan-ubsan",
+          "windows-tools-debug",
+          "linux-tools-debug"
+        ]
+      },
+      {
+        "id": "asset.jobs.cancel",
+        "native_case": "featureworld.asset-jobs",
+        "tests": [
+          "shark.tools.asset-import-jobs",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "passing_profiles": [
+          "windows-debug",
+          "windows-release",
+          "windows-asan",
+          "linux-debug",
+          "linux-asan-ubsan",
+          "windows-tools-debug",
+          "linux-tools-debug"
+        ]
+      },
+      {
+        "id": "asset.jobs.drain",
+        "native_case": "featureworld.asset-jobs",
+        "tests": [
+          "shark.tools.asset-import-jobs",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "passing_profiles": [
+          "windows-debug",
+          "windows-release",
+          "windows-asan",
+          "linux-debug",
+          "linux-asan-ubsan",
+          "windows-tools-debug",
+          "linux-tools-debug"
+        ]
+      },
+      {
+        "id": "asset.jobs.take",
+        "native_case": "featureworld.asset-jobs",
+        "tests": [
+          "shark.tools.asset-import-jobs",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "passing_profiles": [
+          "windows-debug",
+          "windows-release",
+          "windows-asan",
+          "linux-debug",
+          "linux-asan-ubsan",
+          "windows-tools-debug",
+          "linux-tools-debug"
+        ]
+      },
+      {
+        "id": "asset.jobs.close",
+        "native_case": "featureworld.asset-jobs",
+        "tests": [
+          "shark.tools.asset-import-jobs",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "passing_profiles": [
+          "windows-debug",
+          "windows-release",
+          "windows-asan",
+          "linux-debug",
+          "linux-asan-ubsan",
+          "windows-tools-debug",
+          "linux-tools-debug"
+        ]
+      }
+    ]
+  },
+  "cross_profile_cache_reproducibility": {
+    "status": "PASS",
+    "snapshots": 35,
+    "sha256": "8021e7817f5ba073e0d752b1e3fe65c97871d45a8b6612ac3f9f7916793c33ce",
+    "root_key": "96cc5a30f7664b2ea1414b84e91a9d624a22ba94db376975251d2394ef6934f0"
+  },
+  "packages": {
+    "native_audit": {
+      "path": "out/11c-work/native-audit/summary.json",
+      "sha256": "f4113f89a5c45e723aa932718ef9563b42e7e21f8a1298c2a0275f7d7ba43938",
+      "bytes": 3069
+    },
+    "runtime_manifest": {
+      "path": "out/11c-work/native-audit/runtime-package-manifest.json",
+      "sha256": "c15370b4e1b81719455ff37556402349723f122d95917dbe6a0897d4023b40ea",
+      "bytes": 13026
+    },
+    "runtime_files": 35,
+    "wsl_protected": {
+      "path": "out/11c-work/wsl-verified/protected/summary.json",
+      "sha256": "8ec5e0a0ac4a1af89eb22cf3a38e7ec92e55f0b257a2e601b6fadbb420852708",
+      "bytes": 1118
+    },
+    "server_closure": {
+      "path": "out/11c-work/wsl-verified/protected/server-closure.json",
+      "sha256": "9abaa11c9b9a9e5958a3aca1f297492b7a5118c9be62ba198d56bc8e0b51ced8",
+      "bytes": 2975848
+    },
+    "server_files": 12,
+    "sdk_free": {
+      "path": "out/11c-work/wsl-verified/sdk-free.json",
+      "sha256": "a83717a6ca07712221e071afa1af876e587a5428603ee2e380367198628d354c",
+      "bytes": 122
+    },
+    "retention": {
+      "path": "out/11c-work/server-package-retention.json",
+      "sha256": "5a41edad62f51df8f969388f409aff2267b17c420c8eee6fce134eecb6bba0d3",
+      "bytes": 3269
+    }
+  },
+  "unchanged_protected_inputs": {
+    "status": "PASS",
+    "base_revision": "ae023a0",
+    "checked_roots": [
+      "engine/core",
+      "engine/client",
+      "engine/include",
+      "runtime",
+      "server",
+      "cmake",
+      "dependencies.lock.json",
+      "CMakeLists.txt"
+    ],
+    "new_full_server_suite_executions": 0,
+    "retained_full_server_evidence": {
+      "path": "docs/coverage/evidence/11b-asset-import-cache.json",
+      "sha256": "2892311895ae8867b92fbdba812e0d6817a42a8347a88e6d8bbb30181c23e78b",
+      "bytes": 96284
+    },
+    "retained_profiles": [
+      {
+        "name": "server-debug",
+        "qualified_tests": 68,
+        "summary": {
+          "path": "out/11b-work/wsl/boundary-qualified/server-debug/summary.json",
+          "sha256": "90bab147060081f0bac3d2513893b86f40439fff5f4e7b913bdeec9205c45e84",
+          "bytes": 1118
+        },
+        "junit": {
+          "path": "out/11b-work/wsl/boundary-qualified/server-debug/tests.xml",
+          "sha256": "81aa3824d16ea93fdf10f84d0c49a3e6a2b0fd1c202dcd4de378ec3b4fcb8886",
+          "bytes": 48064
+        }
+      },
+      {
+        "name": "server-asan-ubsan",
+        "qualified_tests": 68,
+        "summary": {
+          "path": "out/11b-work/wsl/boundary-qualified/server-asan-ubsan/summary.json",
+          "sha256": "b4f58b06920491be7418f74f8911a17e620a15f4a9ce5faeac2d7fad10ae5c70",
+          "bytes": 1138
+        },
+        "junit": {
+          "path": "out/11b-work/wsl/boundary-qualified/server-asan-ubsan/tests.xml",
+          "sha256": "37afa49f252296fd2f4e205f8076037bf57a3c0b80234595a2474c508b9532a7",
+          "bytes": 48068
+        }
+      }
+    ]
+  },
+  "drivers": {
+    "native": {
+      "path": "out/11c-work/native-final-summary.json",
+      "sha256": "54c0288d1f666f27d502eacbd2f86167d3638136a41f9a5a3cbc86cb06629c0f",
+      "bytes": 1356
+    },
+    "wsl": {
+      "path": "out/11c-work/wsl-verified/summary.json",
+      "sha256": "3f8f70b43a46f07798722d282a988fed23c2a41626f0edee2620b18a6b8678c1",
+      "bytes": 902
+    }
+  },
+  "linux_debug_reconciliation": {
+    "qualification_kind": "composite-passing-selection",
+    "original_failed_summary": {
+      "path": "out/11c-work/wsl-final/linux-debug/summary.json",
+      "sha256": "2cc583f02a5122de841970394c68a28bcaa1534c0846e30abaefbe7d41329912",
+      "bytes": 5428
+    },
+    "original_failed_junit": {
+      "path": "out/11c-work/wsl-final/linux-debug/tests.xml",
+      "sha256": "f3b229b495e2a8a81aaedf6bbe4d85d606226bbaf39fecfd1587d55241daf498",
+      "bytes": 67856
+    },
+    "isolated_retry_summary": {
+      "path": "out/11c-work/contract-probe/summary.json",
+      "sha256": "e6f8015995b209c1e441240685099e46e38bd26d7980c248fd0ac4cedd2d64cc",
+      "bytes": 249
+    },
+    "isolated_retry_junit": {
+      "path": "out/11c-work/contract-probe/tests.xml",
+      "sha256": "4eb3548259257702c8af9ff9bfc840e8e80b6e9752f21fcb6f3cf83668cdbbeb",
+      "bytes": 843
+    },
+    "selected_summary": {
+      "path": "out/11c-work/wsl-verified/linux-debug/summary.json",
+      "sha256": "7748e4d85c6f8cf4b5eac496fa4e2027877d679c09e3b03110a6843213929365",
+      "bytes": 2972
+    },
+    "selected_junit": {
+      "path": "out/11c-work/wsl-verified/linux-debug/qualified-selection.xml",
+      "sha256": "94e5322db00aa9e53c632c20eeafa26db0a541fa4d85f2d5d9895cc5e71d721f",
+      "bytes": 101191
+    },
+    "per_test_provenance": {
+      "path": "out/11c-work/wsl-verified/linux-debug/qualified-results.json",
+      "sha256": "88ab8916198bbfc6c710da64797357697ac0c62b8295e4b325bcfadc2b48e306",
+      "bytes": 41216
+    },
+    "unchanged_ctest_limit_seconds": 30,
+    "source_freeze_sha256": "02e79edea605c27165faae0cb731b86b32d5167212978b93acda674492e91d20"
+  },
+  "preserved_attempts": [
+    {
+      "evidence": {
+        "path": "out/11c-work/interrupted/receipt.json",
+        "sha256": "7aeb86ad3f1e8b24df0e497c483b0f424b3b2b0aea37d852c2cc70cd380282f1",
+        "bytes": 427
+      },
+      "resolution": "Original session interruption; partial runs are not qualification.",
+      "qualified_execution_count": 0
+    },
+    {
+      "evidence": {
+        "path": "out/11c-work/native-resumed-summary.json",
+        "sha256": "4e06eab15b992598def52b6bd751fd66ea27a7229916ee48292186a4a4d25cae",
+        "bytes": 510
+      },
+      "resolution": "Qualification deliberately stopped for diagnostic boundary hardening.",
+      "qualified_execution_count": 0
+    },
+    {
+      "evidence": {
+        "path": "out/11c-work/wsl-resumed/summary.json",
+        "sha256": "8c804c00e87568b3dfec3e4d4d3c96e03d1a5e74be711f6899cac18be12ae034",
+        "bytes": 1087
+      },
+      "resolution": "Qualification deliberately stopped for diagnostic boundary hardening.",
+      "qualified_execution_count": 0
+    },
+    {
+      "evidence": {
+        "path": "out/11c-work/diagnostic-boundary-draft-failure.xml",
+        "sha256": "69446252eefa1e0e9431f874df9fc7185c4c68d9bf628551a5699eed3854e663",
+        "bytes": 11021
+      },
+      "resolution": "Draft capacity check incorrectly discarded valid 1024-byte values and retained oversized operation storage. Final implementation preserves the fixed value limit, allows standard string rounding to 2048 capacity and replaces operation storage before retention.",
+      "qualified_execution_count": 0
+    }
+  ],
+  "source_amendments": {
+    "initial_freeze": {
+      "path": "out/11c-work/source-freeze-initial.json",
+      "sha256": "0a4b89164e0f07a75dab74a6e2b6d6b1569403072691ddcbc5419486f755f494",
+      "bytes": 85738
+    },
+    "diagnostic_draft_freeze": {
+      "path": "out/11c-work/source-freeze-diagnostics-draft.json",
+      "sha256": "fe87337258abde30b4e96e7a989251e0499ca035e67d5c23d0b6dbeef32c218f",
+      "bytes": 86197
+    },
+    "amendment": {
+      "initial_freeze": "out/11c-work/source-freeze-initial.json",
+      "changed": [
+        "docs/asset-import-jobs.md",
+        "engine_tools/src/asset_import.cpp",
+        "tests/asset_import_jobs_tests.cpp"
+      ],
+      "reason": "Stopped partial qualification before completion to tighten the exact 1024-byte diagnostic test and release oversized retained string capacity; narrowed cancellation wording. No partial run is qualified."
+    },
+    "diagnostic_boundary_resolution": {
+      "draft_freeze": "out/11c-work/source-freeze-diagnostics-draft.json",
+      "failed_probe": "out/11c-work/diagnostic-boundary-draft-failure.xml",
+      "resolution": "Preserve the exact 1024-byte value boundary with standard-library allocation rounding up to 2048 capacity. Release larger retained allocations. Replace operation strings with fresh bounded storage before retaining. All 25 focused cases pass after correction. Final full profiles rerun from this freeze."
+    }
+  },
+  "qualification_helpers": [
+    {
+      "path": "out/11c-work/close_receipt.py",
+      "sha256": "e011a055db8488c622f682e4a980102d4ccfac79cbea42e960f2cbefb740530d",
+      "bytes": 20753
+    },
+    {
+      "path": "out/11c-work/close_status.py",
+      "sha256": "ce23753625a136983290d68f475f8fb1300e14586cb313d78f8b1cd164f421a2",
+      "bytes": 15245
+    },
+    {
+      "path": "out/11c-work/contract-final.sh",
+      "sha256": "47339927541b96943281b77fbf7d2695452e0a4d6b2ad1290980bf29421bb364",
+      "bytes": 1532
+    },
+    {
+      "path": "out/11c-work/contract-probe.sh",
+      "sha256": "7e504a169378389f315298ec1b94a4ae9a7e4a3668b591996b5ecc3290d4a34e",
+      "bytes": 1532
+    },
+    {
+      "path": "out/11c-work/contract_probe.py",
+      "sha256": "61c43983ea9d0f2aded707e4dcd3c3c38be607d7645e8e46c88e30f8dbfa32ea",
+      "bytes": 1538
+    },
+    {
+      "path": "out/11c-work/final_integrity.py",
+      "sha256": "2d413b6ed419d54057940689a8ed71ae9d830b80efd0ee4f8817072e0880ff27",
+      "bytes": 2312
+    },
+    {
+      "path": "out/11c-work/final_quality.py",
+      "sha256": "fc72e54271d8020aaab0062673bc0a2268fbca0eaeffc4da05ea95a9d8c135ee",
+      "bytes": 932
+    },
+    {
+      "path": "out/11c-work/native.py",
+      "sha256": "7075fb1f5448cb3fd178a1dc43e58e0c184564d091ce5eea49b9811c763497a3",
+      "bytes": 1223
+    },
+    {
+      "path": "out/11c-work/native_audit.py",
+      "sha256": "7b16abb8be93e10e31e0a87b1a2c0a9c44930ffc9c86f3330d42a2b230a2a437",
+      "bytes": 3917
+    },
+    {
+      "path": "out/11c-work/native_final.py",
+      "sha256": "eed3565f1341268b57d221682c66b64c180ce07f73d2d0cebce189c0f5cc87d4",
+      "bytes": 2054
+    },
+    {
+      "path": "out/11c-work/prepare_helpers.py",
+      "sha256": "61d01764a28838694eaa07b5874b6ed8cc895c3cbb397828a9def480c8992121",
+      "bytes": 2977
+    },
+    {
+      "path": "out/11c-work/public-api.py",
+      "sha256": "7a3d2436ff8ffd0ee6c6958fdde647235aedf64c7579c81402fd3ed320d4971b",
+      "bytes": 6253
+    },
+    {
+      "path": "out/11c-work/qualify.py",
+      "sha256": "570e4091c2fb9642bb3ce291fe5d4498e093b9eaf1498c803226c945a6a15a60",
+      "bytes": 6270
+    },
+    {
+      "path": "out/11c-work/reconcile_linux_debug.py",
+      "sha256": "fa0746121c53ea5441937a43ffcb6402287caa19bb3d4f93cee172a2fb4a397a",
+      "bytes": 10791
+    },
+    {
+      "path": "out/11c-work/record_interruption.py",
+      "sha256": "c8a994b8fa5302dc09bfc5c2bbd89bc42c16fd8c327cff3bbab16b0a345dd38e",
+      "bytes": 689
+    },
+    {
+      "path": "out/11c-work/refreeze.py",
+      "sha256": "79e5f69840799617675df9b103b3ae92eb10d6b08d4c5e012397c4b12f2389a0",
+      "bytes": 1598
+    },
+    {
+      "path": "out/11c-work/refreeze_final.py",
+      "sha256": "9475511b847eeb6a3a7dfd780c0d6ccb153072b9fa5b63ef00e96668c1b7e29f",
+      "bytes": 1215
+    },
+    {
+      "path": "out/11c-work/resume.py",
+      "sha256": "6d5117c10979e0a46b5504a399d3eab2e26a724d016e68c8b4eb0dc03553002d",
+      "bytes": 2023
+    },
+    {
+      "path": "out/11c-work/retain_package.py",
+      "sha256": "3f103e22930031e4392bf39ebfaa5ffca9efebf549549225866acd6594f74e8a",
+      "bytes": 2514
+    },
+    {
+      "path": "out/11c-work/sanitizer_audit.py",
+      "sha256": "e9350e03c155533e34bb6933adc91b3ed321bac9600ad797eb6501373a3ee9c1",
+      "bytes": 2767
+    },
+    {
+      "path": "out/11c-work/setup_qualification.py",
+      "sha256": "dd33dc2e21a891236f944ab0426cd3fa041e300450b290de08d47b859445970b",
+      "bytes": 2201
+    },
+    {
+      "path": "out/11c-work/wsl-final.sh",
+      "sha256": "c90c847efe946a3b9f97c9bf4be63b1b30d0f5f3c032855a5020e9369e507310",
+      "bytes": 3260
+    },
+    {
+      "path": "out/11c-work/wsl-resumed.sh",
+      "sha256": "54805df169fe9058fe0285596a54233dac1a42b1e7599d07ac52fa7ba42eca9d",
+      "bytes": 3262
+    },
+    {
+      "path": "out/11c-work/wsl-verified.sh",
+      "sha256": "2e379baa51a4e9d693e2a71ae80fe0547e78db07a37458bf9ae2ddf190bda30f",
+      "bytes": 3272
+    },
+    {
+      "path": "out/11c-work/wsl.py",
+      "sha256": "2d06b71f12a9bb2cc72effe567198ff76d4e2afa8ed6f922550363c9fc910b3f",
+      "bytes": 1799
+    },
+    {
+      "path": "out/11c-work/wsl.sh",
+      "sha256": "518533ebc5fcb36086879ff35d12cca374220a480479e21c6bb5a386e2b70e95",
+      "bytes": 3254
+    },
+    {
+      "path": "out/11c-work/wsl_protected.py",
+      "sha256": "65c915244628cf0ae13fe89f300fe73b2707d36db5899a16c7aa56f3bc0a77ad",
+      "bytes": 1519
+    },
+    {
+      "path": "out/11c-work/wsl_verified.py",
+      "sha256": "fa70d5a044d9583725c67b42fb5b1135bfd895f92e3efcfda81fce67940c1332",
+      "bytes": 1966
+    }
+  ],
+  "not_run": [
+    "11d integrated asset qualification and full REQ-11 gate",
+    "New full Server suites: unchanged Core/Server implementation retains 11b evidence",
+    "Source decoders 12/24/27, final cooked format 31 and terminal/editor adapters 15/16",
+    "New GPU qualification: 11c changes only CPU Tools; earlier GPU evidence remains historical"
+  ],
+  "next": "11d, integrated asset qualification",
+  "post_closing_checks": {
+    "status": "PASS",
+    "generated_at_utc": "2026-10-27T05:06:25.333702+00:00",
+    "native_format_contract_repository": {
+      "path": "out/11c-work/native-final-quality.json",
+      "sha256": "e5cda907a11008e18505c99e0f7d897a0ecc171f20c27a55170c296ed73492b5",
+      "bytes": 675
+    },
+    "wsl_contract": {
+      "path": "out/11c-work/contract-final/summary.json",
+      "sha256": "09b812666ef594f2ee17878fa7cbe93e551c8e1487f2a336472684d7ad37a0fb",
+      "bytes": 243
+    },
+    "wsl_contract_junit": {
+      "path": "out/11c-work/contract-final/tests.xml",
+      "sha256": "2363c15221252c8d9e9871293d05ab8e20ea052ca7f307fe223fcca394c495df",
+      "bytes": 843
+    },
+    "documentation_only_closure": [
+      {
+        "path": "AGENTS.md",
+        "sha256": "98d5da39ae375cf534efa927d5f53a70ca026a5fab217f8c37364e91c07fc9f2",
+        "bytes": 44824
+      },
+      {
+        "path": "docs/architecture/README.md",
+        "sha256": "e88fec64bc8e12abc9a0df8285f9b2c6299273c4914688582674e5dc0f97b446",
+        "bytes": 13639
+      },
+      {
+        "path": "docs/coverage/README.md",
+        "sha256": "caeb30b38c5e5061a084bb092dad155f64c46ed20f87e0d09b2ba5e32fc07e3e",
+        "bytes": 35666
+      },
+      {
+        "path": "docs/coverage/requirements.json",
+        "sha256": "55b843ccf915efb75ea3e2dcb50b833bad0455a893cee118c7ab730b016329b7",
+        "bytes": 256073
+      },
+      {
+        "path": "docs/roadmap/asset-plan.md",
+        "sha256": "6b1106d60d8687a2431180af8029dd0e03158e23bc87748ca16c245f7cdddf03",
+        "bytes": 5366
+      },
+      {
+        "path": "docs/roadmap/human-agent-plan.md",
+        "sha256": "f4f49703e5ebd2a6c692599a683df94c0d44cc0cc502e059df454837f5b8ad41",
+        "bytes": 25015
+      },
+      {
+        "path": "docs/roadmap/mmorpg-plan.md",
+        "sha256": "e7aede3be3196f2f3b9d99b21ef0bcb35df3f3e950c8ebe3ce0a58b536e97781",
+        "bytes": 33288
+      },
+      {
+        "path": "docs/handoffs/11c-asset-import-jobs.md",
+        "sha256": "a2eea6244dddbd478fd53d3bb6f25b077113e18e43b157cedb12bf54a0f78ad5",
+        "bytes": 7958
+      }
+    ],
+    "helper": {
+      "path": "out/11c-work/record_closing.py",
+      "sha256": "90cc48e79c1a27c30d6a707e3356e49220e4cd70a062c8dc8e27db3686438e9d",
+      "bytes": 2081
+    },
+    "final_integrity": "out/11c-work/final-integrity.json",
+    "note": "Implementation and implemented manifest surfaces remain frozen; closing documentation and requirement verification text were checked after publication."
+  }
+}

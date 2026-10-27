@@ -38,7 +38,10 @@ implement dependency closure, imports or streaming. 11b adds a bounded synchrono
 [dependency import/cache service](../asset-import-cache.md), enforcing client/server
 privacy and shared-only dependencies for shared content. Target keys preserve
 separate content roots; source decoders, final cook and streaming keep later owners.
-Follow the [asset checkpoints](asset-plan.md); background jobs follow in 11c.
+11c adds [bounded private jobs](../asset-import-jobs.md) with owner-fenced
+publication, retained outcomes and cancellation through the same CPU services.
+No importer enters live simulation/render work. Follow the
+[asset checkpoints](asset-plan.md); integrated qualification follows in 11d.
 
 ## Historical assessment of the pre-M01 foundation
 

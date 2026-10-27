@@ -7,7 +7,9 @@ the later import/cache/job gates pass. **11a is PASS** in its
 [handoff](../handoffs/11a-asset-identity.md) and
 [receipt](../coverage/evidence/11a-asset-identity.json). **11b is PASS** in its
 [handoff](../handoffs/11b-asset-import-cache.md) and
-[receipt](../coverage/evidence/11b-asset-import-cache.json). Next: **11c**. Follow [ADR 0025](../architecture/0025-asset-identity.md),
+[receipt](../coverage/evidence/11b-asset-import-cache.json). **11c is PASS** in its
+[handoff](../handoffs/11c-asset-import-jobs.md) and
+[receipt](../coverage/evidence/11c-asset-import-jobs.json). Next: **11d**. Follow [ADR 0025](../architecture/0025-asset-identity.md),
 the [asset identity contract](../asset-identity.md), [MMORPG plan](mmorpg-plan.md)
 and [human/agent plan](human-agent-plan.md).
 
@@ -65,6 +67,14 @@ Gate: bounded admission, deduplication, cancellation before/after publication,
 worker errors, stale completions and explicit retry/recovery. Shared CPU services
 prepare both audiences' later adapters; the full terminal/editor interfaces keep
 their owners in 15/16.
+
+**Status: PASS under current-machine scope.** The [job contract](../asset-import-jobs.md)
+and [ADR 0027](../architecture/0027-bounded-asset-jobs.md) define four retained
+slots, one private worker, bounded immutable captures, pending-work deduplication,
+progress, cancellation, explicit take/retry and original-revision publication.
+The handoff/receipt above record 595 passing profile results, 39 public-example
+compiles, 26 actual sanitizer objects and protected packages. All earlier
+workloads/limits remain. Full REQ-11 remains NOT_RUN until 11d.
 
 ## 11d - Integrated qualification
 

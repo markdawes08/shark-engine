@@ -1,10 +1,15 @@
 #include "shark/tools/asset_import.hpp"
 
 #include "asset_cache_format.hpp"
+#include "shark/completion_queue.hpp"
 
 #include <algorithm>
+#include <array>
+#include <atomic>
+#include <condition_variable>
 #include <limits>
 #include <map>
+#include <mutex>
 #include <set>
 #include <thread>
 #include <tuple>
@@ -38,7 +43,7 @@ Result<T> boundary(const char* operation, Function&& function) {
         } else
             return function();
     } catch (Failure& failure) {
-        failure.error.context.operation = operation;
+        failure.error.context.operation = std::string{operation};
         return std::move(failure.error);
     } catch (...) {
         return Error{ErrorCode::execution_failed, "Asset import operation failed", {operation}};
@@ -58,6 +63,9 @@ void sort_state(detail::CacheState& state) {
 struct CapturedInput {
     AssetRecord record;
     FileRevision source;
+    // The owning immutable FileRevision remains in this node across handoff.
+    // Workers must never call ProjectFiles::revision_bytes (owner-thread only).
+    std::string_view bytes;
     std::string settings;
     AssetImporterInfo importer;
     AssetArtifact artifact;
@@ -70,6 +78,35 @@ struct RegisteredImporter {
     AssetImporter* importer;
     AssetImporterInfo info;
 };
+bool terminal(AssetImportJobState state) {
+    return state == AssetImportJobState::succeeded || state == AssetImportJobState::failed ||
+           state == AssetImportJobState::cancelled;
+}
+struct JobControlGuard {
+    bool& flag;
+    bool previous;
+    explicit JobControlGuard(bool& value) noexcept : flag(value), previous(value) {
+        flag = true;
+    }
+    ~JobControlGuard() {
+        flag = previous;
+    }
+};
+void bound_error(Error& error) noexcept {
+    // Only fixed known ASCII fallbacks survive an oversized callback diagnostic.
+    // Avoid truncating an arbitrary UTF-8 sequence in the middle of a codepoint.
+    auto bound = [](std::string& text) {
+        // Standard strings may round a 1024-byte value's capacity upward.
+        if (text.size() > 1024 || text.capacity() > 2048)
+            std::string{}.swap(text);
+    };
+    bound(error.message);
+    bound(error.context.operation);
+    bound(error.context.request_id);
+    bound(error.context.path);
+    bound(error.context.entity_id);
+    bound(error.context.asset_id);
+}
 } // namespace
 
 struct PreparedAssetImport::Impl {
@@ -98,13 +135,59 @@ struct AssetImports::Impl {
     std::optional<FileRevision> file;
     detail::CacheState cache;
     std::vector<RegisteredImporter> registry;
+    // All importer callbacks are serialized, including the legacy offline API.
+    // Owner calls try-lock: cancellation/status must not wait behind a callback.
+    mutable std::mutex callbacks;
+    struct Token {
+        std::size_t slot;
+        std::uint64_t sequence;
+    };
+    struct Job {
+        AssetImportJobStatus status;
+        ContentDigest work_key;
+        std::unique_ptr<PreparedAssetImport::Impl> plan;
+        detail::CacheState cached;
+        std::stop_source stop;
+        std::atomic<std::size_t> completed{0};
+        std::size_t source_bytes;
+        std::size_t cached_bytes;
+        Error fallback{ErrorCode::execution_failed,
+                       "Asset import worker failed",
+                       {.operation = "asset.jobs.worker"}};
+        Job(AssetImportJobStatus value, ProjectId project)
+            : status(std::move(value)), cached{project, {}, {}}, source_bytes(0), cached_bytes(0) {}
+    };
+    std::array<std::unique_ptr<Job>, asset_import_maximum_jobs> job_slots;
+    mutable std::mutex jobs_mutex;
+    std::condition_variable wake;
+    CompletionQueue<Token, 1> requests;
+    CompletionQueue<Token, 1> completions;
+    std::optional<Token> active;
+    std::uint64_t next_sequence{1};
+    bool closing{false};
+    bool publishing_job{false};
+    std::jthread worker;
 
     Impl(ProjectFiles& source, AssetCatalog& scene_catalog, ProjectId id, StableId scope)
         : files(source), catalog(scene_catalog), project(id), revision{scope, 0},
           cache{id, {}, {}} {}
+    ~Impl() {
+        shutdown();
+    }
+    std::unique_lock<std::mutex> callback_access() const {
+        std::unique_lock lock{callbacks, std::try_to_lock};
+        if (!lock.owns_lock())
+            fail(ErrorCode::conflict, "Importer worker is busy; drain or cancel its job first");
+        return lock;
+    }
     void check_owner() const {
         if (owner != std::this_thread::get_id())
             fail(ErrorCode::conflict, "Asset imports require their owner thread");
+    }
+    void check_job_access() const {
+        check_owner();
+        if (publishing_job)
+            fail(ErrorCode::conflict, "Job control cannot be reentered from a callback");
     }
     void check(AssetCacheRevision expected, bool disk = true) const {
         check_owner();
@@ -123,10 +206,10 @@ struct AssetImports::Impl {
         if (revision.value == std::numeric_limits<std::uint64_t>::max())
             fail(ErrorCode::conflict, "Cache revision exhausted; reopen explicitly");
     }
-    const RegisteredImporter& importer(const AssetMetadata& metadata) const {
+    const RegisteredImporter& importer(const AssetMetadata& metadata, bool inspect = true) const {
         for (const auto& item : registry) {
             if (item.info.id == metadata.importer) {
-                if (item.importer->info() != item.info)
+                if (inspect && item.importer->info() != item.info)
                     fail(ErrorCode::conflict, "Importer descriptor changed; create a new service");
                 if (item.info.kind != metadata.kind)
                     fail(ErrorCode::invalid_configuration, "Importer does not support this kind",
@@ -159,7 +242,8 @@ struct AssetImports::Impl {
             }
         }
     }
-    Inputs collect(AssetId root, const AssetTargetProfile& target, AssetCatalogRevision expected) {
+    Inputs collect(AssetId root, const AssetTargetProfile& target, AssetCatalogRevision expected,
+                   bool normalize = true) {
         check_catalog(expected);
         take(detail::validate_target(target));
         Inputs inputs;
@@ -186,12 +270,7 @@ struct AssetImports::Impl {
                 fail(ErrorCode::invalid_configuration, "Asset is private to the other content side",
                      record.sidecar.text(), id.value().to_string());
             }
-            const auto& registered = importer(record.metadata);
-            auto settings =
-                take(registered.importer->normalize_settings(record.metadata.settings_json));
-            if (settings.size() > 4096)
-                fail(ErrorCode::invalid_configuration, "Importer settings exceed 4096 bytes");
-            settings = take(detail::canonical_import_object(settings));
+            const auto& registered = importer(record.metadata, false);
             auto source = take(files.read_asset_bytes(record.source));
             if (source.byte_count() > asset_import_maximum_total_bytes - source_bytes)
                 fail(ErrorCode::invalid_configuration, "Import source closure exceeds 16 MiB");
@@ -205,12 +284,16 @@ struct AssetImports::Impl {
                                  registered.info.version,
                                  registered.info.payload_version,
                                  take(detail::hash_text(files.revision_bytes(source))),
-                                 take(detail::hash_text(settings)),
+                                 {},
                                  {},
                                  {},
                                  {}};
-            inputs.nodes.emplace(id, CapturedInput{std::move(record), std::move(source),
-                                                   std::move(settings), registered.info,
+            const auto bytes = files.revision_bytes(source);
+            inputs.nodes.emplace(id, CapturedInput{std::move(record),
+                                                   std::move(source),
+                                                   bytes,
+                                                   {},
+                                                   registered.info,
                                                    std::move(output)});
             colors[id] = 1;
         };
@@ -245,15 +328,205 @@ struct AssetImports::Impl {
                          "Shared content cannot depend on side-private content",
                          node.record.sidecar.text(), id.value().to_string());
                 }
-                node.artifact.dependencies.push_back({dependency, child.artifact.key});
             }
-            node.artifact.key = take(detail::import_key(project, node.artifact));
             colors[id] = 2;
             inputs.order.push_back(id);
             stack.pop_back();
         }
         check_catalog(expected);
+        if (normalize)
+            normalize_inputs(inputs);
         return inputs;
+    }
+    void normalize_inputs(Inputs& inputs) const {
+        for (const auto id : inputs.order) {
+            auto& node = inputs.nodes.at(id);
+            const auto& registered = importer(node.record.metadata);
+            auto settings =
+                take(registered.importer->normalize_settings(node.record.metadata.settings_json));
+            if (settings.size() > 4096)
+                fail(ErrorCode::invalid_configuration, "Importer settings exceed 4096 bytes");
+            node.settings = take(detail::canonical_import_object(settings));
+            node.artifact.settings_digest = take(detail::hash_text(node.settings));
+            node.artifact.dependencies.clear();
+            for (const auto dependency : node.record.metadata.dependencies)
+                node.artifact.dependencies.push_back(
+                    {dependency, inputs.nodes.at(dependency).artifact.key});
+            node.artifact.key = take(detail::import_key(project, node.artifact));
+        }
+    }
+    void prepare_inputs(PreparedAssetImport::Impl& plan, const detail::CacheState& retained,
+                        std::stop_token stop = {}, std::atomic<std::size_t>* progress = nullptr) {
+        normalize_inputs(plan.inputs);
+        std::size_t payload_bytes = 0;
+        for (const auto id : plan.inputs.order) {
+            if (stop.stop_requested())
+                return;
+            auto& node = plan.inputs.nodes.at(id);
+            const auto existing =
+                std::find_if(retained.artifacts.begin(), retained.artifacts.end(),
+                             [&](const auto& a) { return a.key == node.artifact.key; });
+            if (existing != retained.artifacts.end()) {
+                validate_payload(*existing);
+                node.artifact = *existing;
+                ++plan.summary.reused;
+            } else {
+                std::vector<AssetImportDependency> dependencies;
+                for (const auto& dependency : node.artifact.dependencies) {
+                    const auto& child = plan.inputs.nodes.at(dependency.asset).artifact;
+                    dependencies.push_back({child.asset, child.key, child.payload});
+                }
+                const auto& registered = importer(node.record.metadata);
+                AssetImportInput input{
+                    id,
+                    node.artifact.kind,
+                    {reinterpret_cast<const std::byte*>(node.bytes.data()), node.bytes.size()},
+                    node.settings,
+                    plan.summary.target,
+                    dependencies,
+                    stop};
+                auto payload = take(registered.importer->import(input));
+                if (stop.stop_requested())
+                    return;
+                if (payload.empty() || payload.size() > asset_import_maximum_payload_bytes ||
+                    payload.size() > asset_import_maximum_total_bytes - payload_bytes)
+                    fail(ErrorCode::invalid_configuration, "Import payload byte bound exceeded");
+                node.artifact.payload_digest = take(sha256(payload));
+                node.artifact.payload = std::move(payload);
+                take(registered.importer->validate_payload(node.artifact));
+                ++plan.summary.imported;
+            }
+            if (node.artifact.payload.size() > asset_import_maximum_total_bytes - payload_bytes)
+                fail(ErrorCode::invalid_configuration, "Import payload closure exceeds 16 MiB");
+            payload_bytes += node.artifact.payload.size();
+            if (progress)
+                progress->fetch_add(1);
+        }
+        plan.summary.root_key = plan.inputs.nodes.at(plan.summary.root).artifact.key;
+    }
+    Job& find_job(AssetImportJobId id) const {
+        if (id.scope != revision.scope)
+            fail(ErrorCode::conflict, "Job belongs to another import owner");
+        for (const auto& job : job_slots)
+            if (job && job->status.id == id)
+                return *job;
+        fail(ErrorCode::invalid_id, "Job is unknown or already taken; reconcile before retrying");
+    }
+    AssetImportJobStatus status(const Job& job) const {
+        auto result = job.status;
+        result.completed_nodes = job.completed.load();
+        return result;
+    }
+    void dispatch() {
+        // Called on the owner with jobs_mutex held. Only one job is in flight;
+        // its completion is consumed/published before another callback can start.
+        if (closing || active)
+            return;
+        std::optional<Token> next;
+        for (std::size_t index = 0; index < job_slots.size(); ++index) {
+            const auto& job = job_slots[index];
+            if (job && job->status.state == AssetImportJobState::queued &&
+                (!next || job->status.id.sequence < next->sequence))
+                next = Token{index, job->status.id.sequence};
+        }
+        if (!next)
+            return;
+        active = next;
+        Token token = *next;
+        if (requests.try_push(std::move(token)) != CompletionPush::accepted)
+            std::terminate();
+        wake.notify_one();
+    }
+    void run() noexcept {
+        try {
+            for (;;) {
+                Token token{};
+                Job* job = nullptr;
+                {
+                    std::unique_lock lock{jobs_mutex};
+                    wake.wait(lock, [&] { return closing || requests.size() != 0; });
+                    const auto next = requests.try_pop();
+                    if (!next)
+                        return;
+                    token = *next;
+                    job = job_slots[token.slot].get();
+                    job->status.state = AssetImportJobState::running;
+                }
+                auto result = boundary<void>("asset.jobs.worker", [&] {
+                    const std::lock_guard lock{callbacks};
+                    if (!job->stop.stop_requested())
+                        prepare_inputs(*job->plan, job->cached, job->stop.get_token(),
+                                       &job->completed);
+                });
+                {
+                    const std::lock_guard lock{jobs_mutex};
+                    if (!result) {
+                        auto error = std::move(result).error();
+                        bound_error(error);
+                        job->status.error = std::move(error);
+                    }
+                    job->status.state = AssetImportJobState::ready;
+                    if (completions.try_push(std::move(token)) != CompletionPush::accepted)
+                        std::terminate();
+                }
+            }
+        } catch (...) {
+            // Synchronization failures are exceptional; preserve a preallocated
+            // diagnostic rather than allowing an exception out of thread entry.
+            try {
+                const std::lock_guard lock{jobs_mutex};
+                if (active) {
+                    auto& job = *job_slots[active->slot];
+                    job.status.error = std::move(job.fallback);
+                    job.status.state = AssetImportJobState::ready;
+                    Token token = *active;
+                    if (completions.size() == 0 &&
+                        completions.try_push(std::move(token)) != CompletionPush::accepted)
+                        std::terminate();
+                }
+                closing = true;
+            } catch (...) {
+                std::terminate();
+            }
+        }
+    }
+    void shutdown() noexcept {
+        try {
+            JobControlGuard guard{publishing_job};
+            std::array<std::optional<std::stop_source>, asset_import_maximum_jobs> stops;
+            {
+                const std::lock_guard lock{jobs_mutex};
+                closing = true;
+                requests.close();
+                for (std::size_t index = 0; index < job_slots.size(); ++index)
+                    if (job_slots[index] && !terminal(job_slots[index]->status.state))
+                        stops[index] = job_slots[index]->stop;
+            }
+            for (auto& stop : stops)
+                if (stop)
+                    stop->request_stop();
+            wake.notify_all();
+            if (worker.joinable()) {
+                worker.request_stop();
+                worker.join();
+            }
+            completions.close();
+            while (completions.try_pop()) {
+            }
+            const std::lock_guard lock{jobs_mutex};
+            active.reset();
+            for (auto& job : job_slots)
+                if (job && !terminal(job->status.state)) {
+                    job->status.state = AssetImportJobState::cancelled;
+                    job->status.error.reset();
+                    job->plan.reset();
+                    job->cached.artifacts.clear();
+                    job->source_bytes = 0;
+                    job->cached_bytes = 0;
+                }
+        } catch (...) {
+            std::terminate();
+        }
     }
     AssetCacheCommit commit(detail::CacheState candidate) {
         sort_state(candidate);
@@ -300,6 +573,7 @@ AssetImports::open(ProjectFiles& files, AssetCatalog& catalog, ProjectId project
 Result<std::vector<AssetImporterInfo>> AssetImports::importers() const {
     return boundary<std::vector<AssetImporterInfo>>("asset.importers", [&] {
         impl_->check_owner();
+        const auto access = impl_->callback_access();
         std::vector<AssetImporterInfo> result;
         for (const auto& item : impl_->registry) {
             if (item.importer->info() != item.info)
@@ -320,49 +594,13 @@ Result<PreparedAssetImport> AssetImports::prepare(AssetId root, const AssetTarge
                                                   AssetCacheRevision expected_cache) {
     return boundary<PreparedAssetImport>("asset.import.prepare", [&] {
         impl_->check(expected_cache);
-        auto inputs = impl_->collect(root, target, expected_catalog);
-        std::size_t imported = 0;
-        std::size_t reused = 0;
-        std::size_t payload_bytes = 0;
-        for (const auto id : inputs.order) {
-            auto& node = inputs.nodes.at(id);
-            if (const auto* existing = impl_->artifact(node.artifact.key)) {
-                impl_->validate_payload(*existing);
-                node.artifact = *existing;
-                ++reused;
-            } else {
-                std::vector<AssetImportDependency> dependencies;
-                for (const auto& dependency : node.artifact.dependencies) {
-                    const auto& child = inputs.nodes.at(dependency.asset).artifact;
-                    dependencies.push_back({child.asset, child.key, child.payload});
-                }
-                const auto& registered = impl_->importer(node.record.metadata);
-                const auto source = impl_->files.revision_bytes(node.source);
-                AssetImportInput input{
-                    id,
-                    node.artifact.kind,
-                    {reinterpret_cast<const std::byte*>(source.data()), source.size()},
-                    node.settings,
-                    target,
-                    dependencies};
-                auto payload = take(registered.importer->import(input));
-                if (payload.empty() || payload.size() > asset_import_maximum_payload_bytes ||
-                    payload.size() > asset_import_maximum_total_bytes - payload_bytes)
-                    fail(ErrorCode::invalid_configuration, "Import payload byte bound exceeded");
-                node.artifact.payload_digest = take(sha256(payload));
-                node.artifact.payload = std::move(payload);
-                take(registered.importer->validate_payload(node.artifact));
-                ++imported;
-            }
-            if (node.artifact.payload.size() > asset_import_maximum_total_bytes - payload_bytes)
-                fail(ErrorCode::invalid_configuration, "Import payload closure exceeds 16 MiB");
-            payload_bytes += node.artifact.payload.size();
-        }
-        const auto key = inputs.nodes.at(root).artifact.key;
-        AssetImportSummary summary{expected_cache,      expected_catalog, root,  target, key,
-                                   inputs.nodes.size(), imported,         reused};
-        return PreparedAssetImport(std::make_unique<PreparedAssetImport::Impl>(
-            PreparedAssetImport::Impl{std::move(summary), std::move(inputs)}));
+        const auto access = impl_->callback_access();
+        auto inputs = impl_->collect(root, target, expected_catalog, false);
+        auto plan = std::make_unique<PreparedAssetImport::Impl>(PreparedAssetImport::Impl{
+            {expected_cache, expected_catalog, root, target, {}, inputs.nodes.size(), 0, 0},
+            std::move(inputs)});
+        impl_->prepare_inputs(*plan, impl_->cache);
+        return PreparedAssetImport(std::move(plan));
     });
 }
 Result<AssetCacheCommit> AssetImports::publish(PreparedAssetImport&& prepared,
@@ -371,6 +609,7 @@ Result<AssetCacheCommit> AssetImports::publish(PreparedAssetImport&& prepared,
     return boundary<AssetCacheCommit>("asset.import.publish", [&] {
         impl_->check(expected_cache);
         impl_->check_catalog(expected_catalog);
+        const auto access = impl_->callback_access();
         if (!prepared.impl_ || prepared.impl_->summary.cache_revision != expected_cache ||
             prepared.impl_->summary.catalog_revision != expected_catalog)
             fail(ErrorCode::conflict, "Prepared import belongs to another scope/revision");
@@ -423,6 +662,7 @@ Result<AssetCacheStatus> AssetImports::query(AssetId asset, const AssetTargetPro
     return boundary<AssetCacheStatus>("asset.cache.query", [&] {
         impl_->check(expected_cache);
         impl_->check_catalog(expected_catalog);
+        const auto access = impl_->callback_access();
         take(detail::validate_target(target));
         const auto last = impl_->binding(asset, target);
         AssetCacheStatus status{expected_cache,
@@ -449,6 +689,7 @@ Result<AssetCacheStatus> AssetImports::query(AssetId asset, const AssetTargetPro
 Result<AssetArtifact> AssetImports::read(AssetCacheKey key, AssetCacheRevision expected) const {
     return boundary<AssetArtifact>("asset.cache.read", [&] {
         impl_->check(expected);
+        const auto access = impl_->callback_access();
         const auto* artifact = impl_->artifact(key);
         if (!artifact)
             fail(ErrorCode::invalid_argument, "Cached artifact key is missing");
@@ -512,6 +753,190 @@ Result<AssetCacheCommit> AssetImports::clear(AssetCacheRevision expected) {
     return boundary<AssetCacheCommit>("asset.cache.clear", [&] {
         impl_->check(expected);
         return impl_->commit({impl_->project, {}, {}});
+    });
+}
+Result<AssetImportJobAdmission> AssetImports::submit(AssetId root, const AssetTargetProfile& target,
+                                                     AssetCatalogRevision expected_catalog,
+                                                     AssetCacheRevision expected_cache) {
+    return boundary<AssetImportJobAdmission>("asset.jobs.submit", [&] {
+        impl_->check_job_access();
+        impl_->check(expected_cache);
+        {
+            const std::lock_guard lock{impl_->jobs_mutex};
+            if (impl_->closing)
+                fail(ErrorCode::conflict, "Job admission is closed; create a new import owner");
+        }
+        // This path invokes no importer callbacks and is safe while the private
+        // worker processes an earlier immutable snapshot.
+        auto inputs = impl_->collect(root, target, expected_catalog, false);
+        std::string identity = "shark.asset.job.v1";
+        auto append = [&](std::string_view text) {
+            identity += std::to_string(text.size());
+            identity += ':';
+            identity += text;
+        };
+        append(root.value().to_string());
+        append(target.id);
+        append(std::to_string(static_cast<int>(target.side)));
+        append(expected_catalog.scope.to_string());
+        append(std::to_string(expected_catalog.value));
+        append(expected_cache.scope.to_string());
+        append(std::to_string(expected_cache.value));
+        std::size_t source_bytes = 0;
+        for (const auto& [id, node] : inputs.nodes) {
+            append(id.value().to_string());
+            append(node.record.source.text());
+            append(node.record.sidecar.text());
+            append(node.artifact.source_digest.to_hex());
+            append(
+                take(detail::hash_text(impl_->files.revision_bytes(node.record.metadata_revision)))
+                    .to_hex());
+            source_bytes += node.source.byte_count();
+        }
+        const auto work_key = take(detail::hash_text(identity));
+        std::size_t cached_bytes = 0;
+        for (const auto& artifact : impl_->cache.artifacts)
+            cached_bytes += artifact.payload.size();
+        const std::lock_guard lock{impl_->jobs_mutex};
+        std::size_t retained_source = 0;
+        std::size_t retained_cached = 0;
+        std::optional<std::size_t> free;
+        for (std::size_t index = 0; index < impl_->job_slots.size(); ++index) {
+            const auto& job = impl_->job_slots[index];
+            if (!job) {
+                if (!free)
+                    free = index;
+                continue;
+            }
+            if (!terminal(job->status.state) && !job->stop.stop_requested() &&
+                job->work_key == work_key)
+                return AssetImportJobAdmission{job->status.id, true};
+            retained_source += job->source_bytes;
+            retained_cached += job->cached_bytes;
+        }
+        if (!free || source_bytes > asset_import_jobs_maximum_source_bytes - retained_source ||
+            cached_bytes > asset_import_jobs_maximum_cached_bytes - retained_cached)
+            fail(ErrorCode::conflict, "Import job capacity is full; drain and take retained jobs");
+        if (impl_->next_sequence == std::numeric_limits<std::uint64_t>::max())
+            fail(ErrorCode::conflict, "Job sequence exhausted; create a new import owner");
+        const AssetImportJobId id{impl_->revision.scope, impl_->next_sequence};
+        auto job = std::make_unique<Impl::Job>(
+            AssetImportJobStatus{
+                id, AssetImportJobState::queued, 0, inputs.nodes.size(), {}, {}, {}},
+            impl_->project);
+        job->work_key = work_key;
+        job->source_bytes = source_bytes;
+        job->cached_bytes = cached_bytes;
+        job->cached = impl_->cache;
+        job->plan = std::make_unique<PreparedAssetImport::Impl>(PreparedAssetImport::Impl{
+            {expected_cache, expected_catalog, root, target, {}, inputs.nodes.size(), 0, 0},
+            std::move(inputs)});
+        if (!impl_->worker.joinable())
+            impl_->worker = std::jthread{[state = impl_.get()] { state->run(); }};
+        impl_->job_slots[*free] = std::move(job);
+        ++impl_->next_sequence;
+        impl_->dispatch();
+        return AssetImportJobAdmission{id, false};
+    });
+}
+Result<std::vector<AssetImportJobStatus>> AssetImports::jobs() const {
+    return boundary<std::vector<AssetImportJobStatus>>("asset.jobs.query", [&] {
+        impl_->check_job_access();
+        const std::lock_guard lock{impl_->jobs_mutex};
+        std::vector<AssetImportJobStatus> result;
+        for (const auto& job : impl_->job_slots)
+            if (job)
+                result.push_back(impl_->status(*job));
+        std::sort(result.begin(), result.end(),
+                  [](const auto& a, const auto& b) { return a.id.sequence < b.id.sequence; });
+        return result;
+    });
+}
+Result<AssetImportJobStatus> AssetImports::cancel_job(AssetImportJobId id) {
+    return boundary<AssetImportJobStatus>("asset.jobs.cancel", [&] {
+        impl_->check_job_access();
+        JobControlGuard guard{impl_->publishing_job};
+        std::unique_lock lock{impl_->jobs_mutex};
+        auto& job = impl_->find_job(id);
+        if (!terminal(job.status.state)) {
+            auto stop = job.stop;
+            lock.unlock();
+            stop.request_stop();
+            lock.lock();
+            if (job.status.state == AssetImportJobState::queued &&
+                (!impl_->active || impl_->active->sequence != id.sequence)) {
+                job.status.state = AssetImportJobState::cancelled;
+                job.plan.reset();
+                job.cached.artifacts.clear();
+                job.source_bytes = 0;
+                job.cached_bytes = 0;
+            }
+        }
+        return impl_->status(job);
+    });
+}
+Result<std::size_t> AssetImports::drain_jobs() {
+    return boundary<std::size_t>("asset.jobs.drain", [&] {
+        impl_->check_job_access();
+        const std::lock_guard lock{impl_->jobs_mutex};
+        const auto token = impl_->completions.try_pop();
+        if (!token)
+            return std::size_t{0};
+        auto& job = *impl_->job_slots[token->slot];
+        if (job.stop.stop_requested()) {
+            job.status.state = AssetImportJobState::cancelled;
+            job.status.error.reset();
+        } else if (job.status.error) {
+            job.status.state = AssetImportJobState::failed;
+        } else {
+            // Failure to allocate a reply must also consume this completion.
+            auto committed = boundary<AssetCacheCommit>("asset.jobs.publish", [&] {
+                job.status.summary = job.plan->summary;
+                const auto catalog = job.plan->summary.catalog_revision;
+                const auto cache = job.plan->summary.cache_revision;
+                PreparedAssetImport prepared{std::move(job.plan)};
+                JobControlGuard guard{impl_->publishing_job};
+                return take(publish(std::move(prepared), catalog, cache));
+            });
+            if (committed) {
+                job.status.commit = std::move(committed).value();
+                job.status.state = AssetImportJobState::succeeded;
+            } else {
+                auto error = std::move(committed).error();
+                bound_error(error);
+                job.status.error = std::move(error);
+                job.status.state = AssetImportJobState::failed;
+            }
+        }
+        job.plan.reset();
+        job.cached.artifacts.clear();
+        job.source_bytes = 0;
+        job.cached_bytes = 0;
+        impl_->active.reset();
+        impl_->dispatch();
+        return std::size_t{1};
+    });
+}
+Result<AssetImportJobStatus> AssetImports::take_job(AssetImportJobId id) {
+    return boundary<AssetImportJobStatus>("asset.jobs.take", [&] {
+        impl_->check_job_access();
+        const std::lock_guard lock{impl_->jobs_mutex};
+        auto& job = impl_->find_job(id);
+        if (!terminal(job.status.state))
+            fail(ErrorCode::conflict, "Job is not terminal; drain its completion before taking");
+        auto result = impl_->status(job);
+        for (auto& slot : impl_->job_slots)
+            if (slot.get() == &job) {
+                slot.reset();
+                break;
+            }
+        return result;
+    });
+}
+Result<void> AssetImports::close_jobs() {
+    return boundary<void>("asset.jobs.close", [&] {
+        impl_->check_job_access();
+        impl_->shutdown();
     });
 }
 Result<std::size_t> AssetImports::recover(ProjectFiles& files) {

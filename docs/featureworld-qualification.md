@@ -14,11 +14,15 @@ execution. Component/command mappings must have registered tests in the current
 Tools profile; their independently reviewed exercise inventory contains twenty-four
 scene surfaces and one external GPU command after 11a. 11b extends the independent
 inventory to 34 scene surfaces and one external GPU command, adding ten actual
-import/cache operations in the seventh native FeatureWorld case. Lua remains empty until real
-bindings land. New surfaces extend their actual cases, independent inventory and
-manifest together.
+import/cache operations in the seventh native FeatureWorld case. 11c extends it
+to 40 CPU scene surfaces and one external GPU command with six job operations in
+the eighth native case. It exercises real private-worker imports, pending-work
+deduplication, progress, owner-side publication, cancellation before/after commit,
+retained outcomes, explicit retry and closed admission. Lua remains empty until
+real bindings land. New surfaces extend their actual cases, independent inventory
+and manifest together.
 
-The fixture runs the six saved-world cases through the public supervisor, then
+The fixture runs all eight saved-world cases through the public supervisor, then
 the intentional failing assertion through the same executable/result path. It
 compares stdout with create-only published results, native results and every
 artifact's bytes/hash. Failure remains exit 1 with the original case, phase,

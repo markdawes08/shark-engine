@@ -126,6 +126,15 @@ if(TARGET EngineStorage)
 endif()
 
 if(TARGET EngineTools)
+    add_executable(AssetImportJobsTests asset_import_jobs_tests.cpp)
+    target_link_libraries(AssetImportJobsTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_include_directories(AssetImportJobsTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
+    shark_configure_target(AssetImportJobsTests)
+    shark_classify_target(AssetImportJobsTests test)
+    add_test(NAME shark.tools.asset-import-jobs COMMAND AssetImportJobsTests "[asset-import-jobs]" --rng-seed 1337
+        --reporter xml --out "${CMAKE_CURRENT_BINARY_DIR}/asset-import-jobs-cases.xml")
+    set_tests_properties(shark.tools.asset-import-jobs PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 90)
+
     add_executable(AssetImportTests asset_import_tests.cpp)
     target_link_libraries(AssetImportTests PRIVATE EngineTools Catch2::Catch2WithMain)
     target_include_directories(AssetImportTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")

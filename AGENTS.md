@@ -232,7 +232,23 @@ and one external GPU command, plus all earlier workloads/limits. The graph check
 caches canonical paths, never root policies; retain its three allowed/33 rejected
 controls and 10/30/5-second limits. The 43-case Server closure suite permits only
 the exact reviewed Core crypto inputs/compile identity; do not weaken other
-dependency checks. **Next: 11c, bounded background jobs.**
+dependency checks.
+**11c is complete under the current-machine scope.** Follow
+[ADR 0027](docs/architecture/0027-bounded-asset-jobs.md), the
+[job contract](docs/asset-import-jobs.md),
+[handoff](docs/handoffs/11c-asset-import-jobs.md) and
+[receipt](docs/coverage/evidence/11c-asset-import-jobs.json): 551 full-profile
+CTest results plus 44 standalone Tools checks, 39 public-example compiles,
+26 actual sanitizer objects and protected packages pass. Preserve
+`shark.tools.asset-import-jobs` (90 seconds, seed 1337), its 25 cases, eight native
+FeatureWorld cases/26 process checks and 40 CPU surfaces plus one external GPU
+command. One private worker uses the existing bounded value-completion primitive;
+only owner drain publishes after original source/metadata/catalog/cache fences.
+Keep four retained slots, independent 32 MiB source/cache budgets, pending dedup,
+terminal take, cooperative cancellation/closure and actual commit truth. Importers
+are exclusively borrowed; callbacks serialize and cannot reenter owner services.
+Core/Server implementation is unchanged; preserve 11b full Server evidence.
+Full REQ-11 remains NOT_RUN. **Next: 11d, integrated qualification.**
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read

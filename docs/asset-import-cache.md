@@ -3,9 +3,10 @@
 11b extends [persistent asset identity](asset-identity.md) through
 `shark/tools/asset_import.hpp`, following [ADR 0026](architecture/0026-development-asset-cache.md).
 The service borrows one ProjectFiles owner, catalog and immutable native importers;
-all must outlive it. Operations run on the creating offline authoring thread.
-Runtime/Server exclude EngineTools. Background workers/cancellation keep 11c and
-terminal/editor adapters keep 15/16. The existing source/metadata schemas remain 1.
+all must outlive it, with importer instances exclusively borrowed. Public operations
+run on the creating offline authoring thread. Runtime/Server exclude EngineTools.
+11c adds [bounded background jobs](asset-import-jobs.md) through the same preparation/
+publication path; terminal/editor adapters keep 15/16. Source/metadata schemas remain 1.
 
 ## Inputs, discovery and keys
 

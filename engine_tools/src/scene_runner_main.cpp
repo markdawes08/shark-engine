@@ -121,7 +121,8 @@ Result<Options> options(std::span<const std::string> args) {
         return cli_error("FeatureWorld cases have no input actions; offset belongs to foundation");
     if ((suite || result.case_id == "featureworld.persistence" ||
          result.case_id == "featureworld.asset-identity" ||
-         result.case_id == "featureworld.asset-import") &&
+         result.case_id == "featureworld.asset-import" ||
+         result.case_id == "featureworld.asset-jobs") &&
         result.workspace.empty())
         return cli_error("FeatureWorld persistence requires --workspace EXISTING_DIRECTORY");
     if (!feature && (seen.contains("--project") || seen.contains("--workspace")))

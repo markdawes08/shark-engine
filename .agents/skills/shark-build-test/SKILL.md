@@ -5,6 +5,15 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+11c adds `shark.tools.asset-import-jobs` (90 seconds, seed 1337), including
+deterministic callback gates, stop-callback reentry controls and the positive
+128-node closure. Run all 22 standalone Tools checks, all thirteen public examples
+and the actual job-test sanitizer object alongside previous instrumented objects.
+FeatureWorld has eight native cases, 26 process checks and 40 CPU surfaces plus
+one external GPU command. Core/Server implementation is unchanged; preserve 11b's
+full Server evidence and refresh protected dependency/package gates. Follow the
+[job contract](../../../docs/asset-import-jobs.md), preserving every older workload.
+
 11b adds `shark.core.content-digest` (15 seconds), `shark.tools.asset-import`
 (90 seconds), and `shark.tools.asset-import-process` (120 seconds). Catch uses
 seed 1337. Preserve the 128-node positive closure, independent source/payload

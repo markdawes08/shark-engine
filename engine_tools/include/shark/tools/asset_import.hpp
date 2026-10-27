@@ -3,6 +3,8 @@
 #include "shark/content_digest.hpp"
 #include "shark/tools/asset_catalog.hpp"
 
+#include <stop_token>
+
 namespace shark::tools {
 
 inline constexpr std::size_t asset_import_maximum_nodes = 128;
@@ -13,6 +15,9 @@ inline constexpr std::size_t asset_cache_maximum_entries = 128;
 inline constexpr std::size_t asset_cache_maximum_index_bytes = 4 * 1024 * 1024;
 inline constexpr std::size_t asset_cache_maximum_file_bytes = 24 * 1024 * 1024;
 inline constexpr std::string_view asset_cache_filename = asset_development_cache_name;
+inline constexpr std::size_t asset_import_maximum_jobs = 4;
+inline constexpr std::size_t asset_import_jobs_maximum_source_bytes = 32 * 1024 * 1024;
+inline constexpr std::size_t asset_import_jobs_maximum_cached_bytes = 32 * 1024 * 1024;
 
 using AssetCacheKey = ContentDigest;
 struct AssetTargetProfile {
@@ -61,10 +66,13 @@ struct AssetImportInput {
     std::string_view settings_json;
     const AssetTargetProfile& target;
     std::span<const AssetImportDependency> dependencies;
+    // Cooperative only. The owner also fences publication after cancellation.
+    std::stop_token stop{};
 };
 
 // Trusted native CPU importer, not a dynamically loaded plugin. References must
-// outlive the service. Callbacks are bounded/deterministic and publish nothing;
+// outlive the service and be exclusively borrowed by it. Callbacks cannot reenter
+// owner services, are bounded/deterministic and publish nothing;
 // their descriptor/version is immutable for a service's lifetime. No path, scene
 // or project writer is passed to callbacks. Exceptions become owned failures.
 class AssetImporter {
@@ -126,6 +134,26 @@ struct AssetCacheCommit {
     std::optional<FileCommit> file;
 };
 
+struct AssetImportJobId {
+    StableId scope;
+    std::uint64_t sequence;
+    bool operator==(const AssetImportJobId&) const = default;
+};
+enum class AssetImportJobState { queued, running, ready, succeeded, failed, cancelled };
+struct AssetImportJobStatus {
+    AssetImportJobId id;
+    AssetImportJobState state;
+    std::size_t completed_nodes;
+    std::size_t total_nodes;
+    std::optional<AssetImportSummary> summary;
+    std::optional<AssetCacheCommit> commit;
+    std::optional<Error> error;
+};
+struct AssetImportJobAdmission {
+    AssetImportJobId id;
+    bool deduplicated;
+};
+
 class PreparedAssetImport final {
   public:
     ~PreparedAssetImport();
@@ -144,7 +172,7 @@ class PreparedAssetImport final {
 
 // Creating-thread offline authoring service. ProjectFiles, catalog and importers
 // must outlive it. Preparation is synchronous/pure with respect to publication;
-// 11c supplies bounded workers before later UI/CLI adapters. Runtime/Server never
+// Bounded jobs use one private worker before later UI/CLI adapters. Runtime/Server never
 // link this service. Cache snapshots/retries use explicit revisions.
 class AssetImports final {
   public:
@@ -173,6 +201,21 @@ class AssetImports final {
     // the disposable cache; neither operation changes authored source/metadata.
     [[nodiscard]] Result<AssetCacheCommit> prune(AssetCacheRevision expected);
     [[nodiscard]] Result<AssetCacheCommit> clear(AssetCacheRevision expected);
+    // Captures inputs on the owner; callbacks execute serially on one worker.
+    // Retained terminal outcomes count against admission until explicitly taken.
+    [[nodiscard]] Result<AssetImportJobAdmission> submit(AssetId root,
+                                                         const AssetTargetProfile& target,
+                                                         AssetCatalogRevision expected_catalog,
+                                                         AssetCacheRevision expected_cache);
+    [[nodiscard]] Result<std::vector<AssetImportJobStatus>> jobs() const;
+    [[nodiscard]] Result<AssetImportJobStatus> cancel_job(AssetImportJobId id);
+    // Publishes at most one ready completion through the existing revision fence,
+    // then dispatches the next queued job. Never waits for a running importer.
+    [[nodiscard]] Result<std::size_t> drain_jobs();
+    [[nodiscard]] Result<AssetImportJobStatus> take_job(AssetImportJobId id);
+    // Closes admission permanently, cancels uncommitted work and joins the worker.
+    // Trusted callbacks must return/cooperate; cancellation cannot preempt C++.
+    [[nodiscard]] Result<void> close_jobs();
     // Exactly the reserved unpublished cache stage; never source-save stages.
     [[nodiscard]] static Result<std::size_t> recover(ProjectFiles& files);
 

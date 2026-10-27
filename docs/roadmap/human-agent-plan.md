@@ -26,7 +26,10 @@ pages and explicit missing/duplicate outcomes. Declared importer names do not
 advertise execution support. 11b adds [shared import/cache services](../asset-import-cache.md):
 registered importer/schema discovery, pure preparation, revision-fenced publication,
 fresh/stale/missing status and explicit reload/prune/clear/recovery. Both audiences
-reuse these CPU services. Background jobs keep 11c and adapters keep 15/16.
+reuse these CPU services. 11c adds [shared bounded jobs](../asset-import-jobs.md):
+scoped identities, progress/status, pending deduplication, cancellation and retained
+terminal outcomes through original revision-fenced publication. Adapters keep
+15/16; no GUI, LLM provider or protocol dependency enters these CPU services.
 
 ## Assessment of existing work
 

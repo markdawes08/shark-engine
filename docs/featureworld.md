@@ -22,9 +22,9 @@ owner causes explicit failure. Copy the two source files to a writable project
 root when testing from a read-only checkout. Run from any current directory by
 passing explicit paths. There is no compiled-in checkout or fixture location.
 
-`--case featureworld` selects all seven cases in catalog order. Each concrete ID
+`--case featureworld` selects all eight cases in catalog order. Each concrete ID
 also selects one case. Supply `--workspace EXISTING_DIRECTORY` for the suite or
-persistence/asset-identity/asset-import case. Each creates a unique child with its own
+persistence/asset-identity/asset-import/asset-jobs case. Each creates a unique child with its own
 project/scenes and remove their known files on exit. Input source bytes are
 preserved. A failed cleanup leaves inspectable remnants; it cannot delete the
 caller-selected parent. Generated results belong under ignored `out/` or `build/`.
@@ -38,18 +38,23 @@ caller-selected parent. Generated results belong under ignored `out/` or `build/
 | `featureworld.persistence` | Actual native create/save, dirty acknowledgement, retained history, exact-content file revisions, codec round trip, reopen/reload and fresh incarnation |
 | `featureworld.asset-identity` | Saved UUID reference, native typed sidecar publication, bounded revisioned catalog query/resolve, coordinated rename/move, missing source versus unknown ID, reopen and unchanged scene owner |
 | `featureworld.asset-import` | Synchronous dependency imports, matching-key reuse, source invalidation, last-valid output, atomic cache publication, prune/reopen/reload/recovery and explicit clear through the same scratch ProjectFiles owner |
+| `featureworld.asset-jobs` | Actual private-worker dependency imports, pending-work deduplication, bounded progress, owner-side publication, cancellation before/after publication, retained outcomes, explicit retry and closed admission through one scratch owner |
 
 Every case receives a fresh owner from the same saved baseline. Functional work
 occurs at tick zero; subsequent fixed ticks check stable identity/entity counts.
 The fixture has no input actions and performs no RNG draws. Seed/rate/tick
 context remains explicit in results; foundation cases separately exercise input
 and seeded data. At three ticks, initial revision values are 4 and final values
-are 4, 11, 7, 6, 4 and 4. Persistence's final value belongs to a fresh incarnation.
+are 4, 11, 7, 6, 4, 4, 4 and 4. Persistence's final value belongs to a fresh incarnation.
 The asset reference in scene extras is `20000000-0000-4000-8000-00000000000a`;
 it is preserved through native save/reopen and is not a new asset component.
 Identity fixtures create their own authored source/metadata in scratch; no source
 decoder success is inferred. The seventh native case exercises the focused byte
 importer and dependency cache; follow the [cache contract](asset-import-cache.md).
+The eighth native case moves the same byte-import path through bounded background
+jobs and owner-side publication; follow the [job contract](asset-import-jobs.md).
+Its progress waits yield with a fixed failure deadline and add no variable
+assertion counts, keeping semantic repeated runs comparable.
 The identity case keeps the [identity contract](asset-identity.md).
 Process-local incarnation IDs vary and are excluded from semantic repeat checks.
 

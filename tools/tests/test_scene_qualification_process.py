@@ -29,6 +29,8 @@ SCENE_SURFACES = {
     'asset.importers', 'asset.import.prepare', 'asset.import.publish', 'asset.cache.query',
     'asset.cache.read', 'asset.cache.usage', 'asset.cache.reload', 'asset.cache.prune',
     'asset.cache.clear', 'asset.cache.recover',
+    'asset.jobs.submit', 'asset.jobs.query', 'asset.jobs.cancel', 'asset.jobs.drain',
+    'asset.jobs.take', 'asset.jobs.close',
 }
 GPU_SURFACES = {'tools.scene-runner.gpu'}
 

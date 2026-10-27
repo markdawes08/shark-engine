@@ -7,16 +7,18 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <fstream>
+#include <thread>
 #include <utility>
 
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 7> case_ids{
-    "featureworld.components",  "featureworld.commands",    "featureworld.batches-history",
-    "featureworld.retries",     "featureworld.persistence", "featureworld.asset-identity",
-    "featureworld.asset-import"};
+constexpr std::array<std::string_view, 8> case_ids{
+    "featureworld.components",   "featureworld.commands",    "featureworld.batches-history",
+    "featureworld.retries",      "featureworld.persistence", "featureworld.asset-identity",
+    "featureworld.asset-import", "featureworld.asset-jobs"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -558,6 +560,121 @@ void asset_import(SceneRunContext& context, const fs::path& parent) {
             "Explicit cache clear changed source metadata");
     unchanged(context, before);
 }
+void asset_jobs(SceneRunContext& context, const fs::path& parent) {
+    const auto before = take(context.owner().capture());
+    std::error_code error;
+    const auto canonical = fs::canonical(parent, error);
+    require(context, !parent.empty() && !error && fs::is_directory(canonical, error) && !error,
+            "Asset jobs need an existing scratch parent");
+    const auto path = canonical / ("shark-featureworld-" + take(generate_stable_id()).to_string());
+    require(context, fs::create_directory(path, error) && !error,
+            "Cannot create asset jobs scratch");
+    Scratch scratch{path};
+    auto files = take(ProjectFiles::open(path));
+    auto write_source = [&](const char* name, const char* value) {
+        std::ofstream stream{path / name, std::ios::binary};
+        stream << value;
+        stream.close();
+        require(context, stream.good(), "Cannot write offline background import fixture");
+    };
+    write_source("one.txt", "Root bytes");
+    write_source("dependency.txt", "Leaf bytes");
+    AssetMetadata root{before.project.project,
+                       id<AssetId>('a'),
+                       "bytes",
+                       "Shark authored offline background import fixture",
+                       "MIT",
+                       "shark.bytes"};
+    root.dependencies = {id<AssetId>('b')};
+    const AssetMetadata leaf{before.project.project,
+                             id<AssetId>('b'),
+                             "bytes",
+                             "Shark authored offline background import fixture",
+                             "MIT",
+                             "shark.bytes"};
+    const std::array inventory{take(ProjectPath::parse("one.txt.sharkasset")),
+                               take(ProjectPath::parse("dependency.txt.sharkasset"))};
+    take(files->write_asset_metadata(inventory[0], root, {}));
+    take(files->write_asset_metadata(inventory[1], leaf, {}));
+    auto catalog = take(AssetCatalog::create(*files, before.project.project));
+    const auto cr = take(catalog->refresh(inventory, take(catalog->revision())));
+    ByteAssetImporter importer;
+    const std::array<AssetImporter*, 1> registry{&importer};
+    auto imports = take(AssetImports::open(*files, *catalog, before.project.project, registry));
+    const AssetTargetProfile target{"featureworld-x64", AssetAudience::client};
+    auto revision = take(imports->revision());
+    const auto first = take(imports->submit(root.asset, target, cr, revision));
+    const auto duplicate = take(imports->submit(root.asset, target, cr, revision));
+    require(context, !first.deduplicated && duplicate.deduplicated && first.id == duplicate.id,
+            "Matching pending background work did not share one job");
+    auto terminal = [](AssetImportJobState value) {
+        return value == AssetImportJobState::succeeded || value == AssetImportJobState::failed ||
+               value == AssetImportJobState::cancelled;
+    };
+    auto finish = [&](AssetImportJobId job) {
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds{5};
+        for (;;) {
+            take(imports->drain_jobs());
+            const auto statuses = take(imports->jobs());
+            const auto found = std::find_if(statuses.begin(), statuses.end(),
+                                            [&](const auto& item) { return item.id == job; });
+            if (found != statuses.end() && terminal(found->state))
+                return *found;
+            if (std::chrono::steady_clock::now() >= deadline)
+                throw CaseError{Error{ErrorCode::execution_failed,
+                                      "Background import did not reach a terminal outcome",
+                                      {.operation = "featureworld.asset-jobs"}}};
+            std::this_thread::yield();
+        }
+    };
+    const auto completed = finish(first.id);
+    require(context,
+            completed.state == AssetImportJobState::succeeded && completed.summary &&
+                completed.commit && !completed.error && completed.completed_nodes == 2 &&
+                completed.total_nodes == 2 && completed.summary->imported == 2 &&
+                completed.summary->root == root.asset && completed.commit->changed &&
+                completed.commit->file,
+            "Background import lost progress, closure, output or committed outcome");
+    revision = completed.commit->revision;
+    const auto cancelled_after = take(imports->cancel_job(first.id));
+    require(context,
+            cancelled_after.state == AssetImportJobState::succeeded && cancelled_after.commit &&
+                cancelled_after.commit->revision == revision,
+            "Cancellation after publication misreported a committed import");
+    require(context,
+            take(imports->take_job(first.id)).state == AssetImportJobState::succeeded &&
+                take(imports->jobs()).empty(),
+            "Taking the terminal import did not release retained work");
+    require(context,
+            take(imports->query(root.asset, target, cr, revision)).state == AssetCacheState::fresh,
+            "Background publication did not produce a fresh root binding");
+    const auto cancelled = take(imports->submit(root.asset, target, cr, revision));
+    take(imports->cancel_job(cancelled.id));
+    const auto stopped = finish(cancelled.id);
+    require(context,
+            stopped.state == AssetImportJobState::cancelled && !stopped.commit &&
+                take(imports->revision()) == revision,
+            "Cancellation before owner publication replaced cache output");
+    require(context, take(imports->take_job(cancelled.id)).state == AssetImportJobState::cancelled,
+            "Cancelled job lost its retained terminal outcome");
+    const auto retried = take(imports->submit(root.asset, target, cr, revision));
+    const auto retry = finish(retried.id);
+    require(context,
+            retried.id != cancelled.id && retry.state == AssetImportJobState::succeeded &&
+                retry.summary && retry.summary->reused == 2 && retry.summary->imported == 0 &&
+                retry.commit && !retry.commit->changed && retry.commit->revision == revision,
+            "Explicit background retry lost identity, matching reuse or no-op publication");
+    take(imports->take_job(retried.id));
+    take(imports->close_jobs());
+    require(context,
+            take(imports->jobs()).empty() && !imports->submit(root.asset, target, cr, revision),
+            "Closed background jobs admitted new work or leaked retained outcomes");
+    require(context,
+            take(files->read_asset_metadata(inventory[0])).source.document == root &&
+                take(files->read_asset_metadata(inventory[1])).source.document == leaf,
+            "Background import modified authored metadata");
+    unchanged(context, before);
+}
 } // namespace
 
 std::span<const std::string_view> feature_world_case_ids() noexcept {
@@ -601,6 +718,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 6:
                         asset_import(context, scratch_parent);
+                        break;
+                    case 7:
+                        asset_jobs(context, scratch_parent);
                         break;
                     default:
                         break;
