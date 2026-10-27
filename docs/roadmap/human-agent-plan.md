@@ -30,6 +30,10 @@ reuse these CPU services. 11c adds [shared bounded jobs](../asset-import-jobs.md
 scoped identities, progress/status, pending deduplication, cancellation and retained
 terminal outcomes through original revision-fenced publication. Adapters keep
 15/16; no GUI, LLM provider or protocol dependency enters these CPU services.
+11d [integrated qualification](../asset-qualification.md) proves one saved reference
+through moves, worker-time owner edits, stale rejection, cancellation, retry and
+reopen, plus actual async process interruption. This qualifies shared backend
+behavior; human/editor and terminal protocol parity remains with its later owners.
 
 ## Assessment of existing work
 

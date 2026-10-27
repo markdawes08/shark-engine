@@ -52,17 +52,16 @@ passes twelve native GPU runs and the recovered sanitizer gate; see the
 660 full CTests across seven profiles, 36 standalone Tools checks, protected
 packages and twelve both-GPU runs.
 
-**11a is complete under the current-machine scope:** the
-[asset identity handoff](docs/handoffs/11a-asset-identity.md) records persistent
-sidecars, a bounded revisioned catalog, saved-reference move/reopen coverage,
-569 qualified CPU profile outcomes, 33 public-example compiles and protected
-packages. Follow the [asset checkpoints](docs/roadmap/asset-plan.md).
-**11b is complete under the current-machine scope:** the
-[import/cache handoff](docs/handoffs/11b-asset-import-cache.md) records deterministic
-dependency imports, revision-fenced atomic cache publication, last-valid output
-and bounded recovery. 724 selected CPU/Tools outcomes, 36 public-example compiles,
-24 sanitizer objects and protected packages qualify. Full REQ-11 remains NOT_RUN.
-**Next: 11c, bounded background jobs.**
+**Assignment 11 is complete under the current-machine scope.** Shared CPU
+[asset identity/catalog](docs/asset-identity.md), [dependency imports/cache](docs/asset-import-cache.md)
+and [bounded background jobs](docs/asset-import-jobs.md) now pass
+[integrated qualification](docs/handoffs/11d-asset-qualification.md): 602 selected
+CTest outcomes, 39 public-example compiles, 26 actual sanitizer objects and
+protected packages. One saved reference survives moves, owner edits during work,
+stale completion, cancellation, retry and reopen; actual async process interruption
+preserves complete cache snapshots and explicit recovery. Follow the
+[completed asset checkpoints](docs/roadmap/asset-plan.md). Source decoders remain
+planned; **next is assignment 12, glTF import**.
 
 **Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
 **04c and full assignment 04 are complete under the current-machine scope.**

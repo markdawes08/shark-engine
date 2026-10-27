@@ -68,7 +68,7 @@ TEST_CASE("Saved FeatureWorld connects all current scene surfaces through the na
         REQUIRE(result.initial_revision->revision == 4);
     }
     REQUIRE(run.value().status == SceneRunStatus::passed);
-    REQUIRE(run.value().cases.size() == 8);
+    REQUIRE(run.value().cases.size() == 9);
     REQUIRE(run.value().cases[0].final_revision->revision == 4);
     REQUIRE(run.value().cases[1].final_revision->revision == 11);
     REQUIRE(run.value().cases[2].final_revision->revision == 7);
@@ -77,6 +77,7 @@ TEST_CASE("Saved FeatureWorld connects all current scene surfaces through the na
     REQUIRE(run.value().cases[5].final_revision == run.value().cases[5].initial_revision);
     REQUIRE(run.value().cases[6].final_revision == run.value().cases[6].initial_revision);
     REQUIRE(run.value().cases[7].final_revision == run.value().cases[7].initial_revision);
+    REQUIRE(run.value().cases[8].final_revision == run.value().cases[8].initial_revision);
     REQUIRE(run.value().cases[4].final_revision->scene_instance !=
             run.value().cases[4].initial_revision->scene_instance);
     REQUIRE(encode_scene_run_report(run.value()));

@@ -30,7 +30,15 @@ final Tools reruns; no failed/partial summary becomes a passing full run.
 objects and protected packages pass. The current independent inventory is 40 CPU
 surfaces plus one external GPU command, with eight native FeatureWorld cases and
 26 process checks. The 25-case job family preserves earlier workloads/limits.
-Full REQ-11 remains NOT_RUN. Next: 11d under the [asset checkpoints](../roadmap/asset-plan.md).
+**11d and full REQ-11 are PASS** in the
+[qualification handoff](../handoffs/11d-asset-qualification.md) and
+[receipt](evidence/11d-asset-qualification.json): 602 passing selected outcomes,
+39 public-example compiles, 26 actual sanitizer objects and protected packages.
+Nine native cases/27 process checks retain 40 CPU surfaces plus one GPU command.
+The new async interruption family has 113 checks/39 children/seven phases;
+35 synchronous/49 asynchronous snapshots reproduce. Full inventories use
+disjoint functional/I/O executions with actual per-test JUnit provenance.
+Earlier cases, fixtures, seeds and limits are preserved. Next: assignment 12.
 
 [requirements.json](requirements.json) is the version-3 requirement/coverage manifest for
 Shark. Each requirement has a unique ID, one owning roadmap assignment, observable

@@ -564,6 +564,11 @@ if(TARGET ProjectFilesProcess)
             --probe "$<TARGET_FILE:AssetImportProcess>"
             --output "${CMAKE_CURRENT_BINARY_DIR}/asset-import-process.json")
     set_tests_properties(shark.tools.asset-import-process PROPERTIES LABELS "cpu;tooling;integration" TIMEOUT 120)
+    add_test(NAME shark.tools.asset-jobs-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_asset_jobs_process.py"
+            --probe "$<TARGET_FILE:AssetImportProcess>"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/asset-jobs-process.json")
+    set_tests_properties(shark.tools.asset-jobs-process PROPERTIES LABELS "cpu;tooling;integration" TIMEOUT 150)
     add_test(NAME shark.tools.project-files-process
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_project_files_process.py"
             --probe "$<TARGET_FILE:ProjectFilesProcess>"

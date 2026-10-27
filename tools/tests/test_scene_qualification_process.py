@@ -33,6 +33,11 @@ SCENE_SURFACES = {
     'asset.jobs.take', 'asset.jobs.close',
 }
 GPU_SURFACES = {'tools.scene-runner.gpu'}
+FEATUREWORLD_CASES = [
+    'featureworld.components', 'featureworld.commands', 'featureworld.batches-history',
+    'featureworld.retries', 'featureworld.persistence', 'featureworld.asset-identity',
+    'featureworld.asset-import', 'featureworld.asset-jobs', 'featureworld.asset-pipeline',
+]
 
 
 def check(condition, message):
@@ -45,6 +50,7 @@ def audit(manifest, cpu, gpu, registered, declared):
     check(not errors, 'Invalid manifest: ' + '; '.join(errors))
     check(not validate_contract.validate_surface_files(manifest, ROOT), 'Missing or escaping fixture/source')
     cases = manifest['featureworld']['case_ids']
+    check(cases == FEATUREWORLD_CASES, 'Independent FeatureWorld case inventory drift')
     check(cpu['suites'].get('featureworld') == cases, 'Manifest/native suite drift')
     check([c for c in cpu['cases'] if c.startswith('featureworld.')] == cases, 'Manifest/native case drift')
     gpu_ids = gpu['catalog']['cases']

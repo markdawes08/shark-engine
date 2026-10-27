@@ -5,6 +5,13 @@ description: Add or change Shark components and public command or Lua APIs while
 
 # Shark component and API integration
 
+11d's [asset qualification](../../../docs/asset-qualification.md) connects one
+saved FeatureWorld reference through identity, move, dependency changes, worker
+completion fences and cache reopen. The ninth native case extends real mappings
+and independent expectations while preserving all 40 CPU surfaces and the
+external GPU command. Qualification introduces no new public command or Lua API;
+do not add synthetic capabilities to close the gate.
+
 Read [AGENTS.md](../../../AGENTS.md),
 [identity/version rules](../../../docs/architecture/0004-formats-and-identity.md),
 [mutation phases](../../../docs/architecture/0005-simulation-and-rendering.md) and

@@ -8,17 +8,20 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <condition_variable>
 #include <fstream>
+#include <iterator>
+#include <mutex>
 #include <thread>
 #include <utility>
 
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 8> case_ids{
+constexpr std::array<std::string_view, 9> case_ids{
     "featureworld.components",   "featureworld.commands",    "featureworld.batches-history",
     "featureworld.retries",      "featureworld.persistence", "featureworld.asset-identity",
-    "featureworld.asset-import", "featureworld.asset-jobs"};
+    "featureworld.asset-import", "featureworld.asset-jobs",  "featureworld.asset-pipeline"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -675,6 +678,382 @@ void asset_jobs(SceneRunContext& context, const fs::path& parent) {
             "Background import modified authored metadata");
     unchanged(context, before);
 }
+
+// A deterministic native fixture around the real byte importer. Its one gate
+// proves an owner edit happens during computation, without scheduler-dependent
+// sleeps or an additional worker. Ordinary importers receive no owner reference.
+class PipelineImporter final : public AssetImporter {
+  public:
+    const AssetImporterInfo& info() const noexcept override {
+        return bytes_.info();
+    }
+    Result<std::string> normalize_settings(std::string_view json) const override {
+        return bytes_.normalize_settings(json);
+    }
+    Result<void> validate_payload(const AssetArtifact& artifact) const override {
+        return bytes_.validate_payload(artifact);
+    }
+    Result<std::vector<std::byte>> import(const AssetImportInput& input) override {
+        {
+            std::unique_lock lock{mutex_};
+            if (armed_ && selected_ == input.asset) {
+                armed_ = false;
+                entered_ = true;
+                entered_wake_.notify_all();
+                if (!release_wake_.wait_until(lock, input.stop,
+                                              std::chrono::steady_clock::now() +
+                                                  std::chrono::seconds{10},
+                                              [&] { return released_; }) &&
+                    !input.stop.stop_requested())
+                    return Error{ErrorCode::execution_failed,
+                                 "Asset pipeline fixture gate timed out",
+                                 {.operation = "featureworld.asset-pipeline"}};
+            }
+        }
+        return bytes_.import(input);
+    }
+    void arm(AssetId selected) {
+        const std::lock_guard lock{mutex_};
+        selected_ = selected;
+        armed_ = true;
+        entered_ = false;
+        released_ = false;
+    }
+    bool entered() {
+        std::unique_lock lock{mutex_};
+        return entered_wake_.wait_for(lock, std::chrono::seconds{10}, [&] { return entered_; });
+    }
+    void release() noexcept {
+        {
+            const std::lock_guard lock{mutex_};
+            released_ = true;
+        }
+        release_wake_.notify_all();
+    }
+
+  private:
+    ByteAssetImporter bytes_;
+    std::mutex mutex_;
+    std::condition_variable entered_wake_;
+    std::condition_variable_any release_wake_;
+    std::optional<AssetId> selected_;
+    bool armed_{false};
+    bool entered_{false};
+    bool released_{false};
+};
+
+void asset_pipeline(SceneRunContext& context, const fs::path& parent) {
+    const auto before = take(context.owner().capture());
+    // The baseline has independently specified, canonical fixture extras. Read
+    // its actual saved reference, rather than inventing a second fixture ID.
+    const std::string_view marker{"\"asset_reference\":\""};
+    const auto offset = before.scene.extras_json.find(marker);
+    require(context, offset != std::string::npos, "Saved scene lost its asset reference");
+    const auto first_character = offset + marker.size();
+    const auto end = before.scene.extras_json.find('"', first_character);
+    require(context, end != std::string::npos, "Saved asset reference is incomplete");
+    const AssetId root_asset{take(StableId::parse(std::string_view{before.scene.extras_json}.substr(
+        first_character, end - first_character)))};
+    const auto leaf_asset = id<AssetId>('b');
+    require(context, root_asset == id<AssetId>('a'),
+            "Saved asset reference differs from the oracle");
+    std::error_code error;
+    const auto canonical = fs::canonical(parent, error);
+    require(context, !parent.empty() && !error && fs::is_directory(canonical, error) && !error,
+            "Asset pipeline needs an existing scratch parent");
+    const auto path = canonical / ("shark-featureworld-" + take(generate_stable_id()).to_string());
+    require(context, fs::create_directory(path, error) && !error,
+            "Cannot create asset pipeline scratch");
+    Scratch scratch{path};
+    require(context,
+            fs::create_directory(path / "scenes", error) && !error &&
+                fs::create_directory(path / "moved", error) && !error,
+            "Cannot create asset pipeline directories");
+    auto write_source = [&](const char* name, std::string_view value) {
+        std::ofstream stream{path / name, std::ios::binary | std::ios::trunc};
+        stream.write(value.data(), static_cast<std::streamsize>(value.size()));
+        stream.close();
+        require(context, stream.good(), "Cannot write asset pipeline source");
+    };
+    auto read_bytes = [&](const char* name) {
+        std::ifstream stream{path / name, std::ios::binary};
+        require(context, stream.good(), "Cannot read asset pipeline evidence");
+        return std::string{std::istreambuf_iterator<char>{stream},
+                           std::istreambuf_iterator<char>{}};
+    };
+    auto body = [&](const AssetArtifact& artifact) {
+        require(context,
+                artifact.payload.size() >= 36 && artifact.payload_version == 1 &&
+                    artifact.importer_version == 1 && artifact.importer == "shark.bytes",
+                "Pipeline artifact lost its byte payload version");
+        return std::string{reinterpret_cast<const char*>(artifact.payload.data() + 36),
+                           artifact.payload.size() - 36};
+    };
+    auto files = take(ProjectFiles::open(path));
+    const auto project_path = take(ProjectPath::parse("FeatureWorld.sharkproject"));
+    take(files->write_project(project_path, before.project, {}));
+    take(files->write_scene(before.project, before.scene, {}));
+    const auto saved_scene_bytes = read_bytes("scenes/FeatureWorld.sharkscene");
+    write_source("one.txt", "Root pipeline");
+    write_source("dependency.txt", "Initial leaf");
+    AssetMetadata root_metadata{before.project.project,
+                                root_asset,
+                                "bytes",
+                                "Shark authored connected pipeline fixture",
+                                "MIT",
+                                "shark.bytes"};
+    root_metadata.dependencies = {leaf_asset};
+    AssetMetadata leaf_metadata{before.project.project,
+                                leaf_asset,
+                                "bytes",
+                                "Shark authored connected pipeline fixture",
+                                "MIT",
+                                "shark.bytes"};
+    std::array inventory{take(ProjectPath::parse("one.txt.sharkasset")),
+                         take(ProjectPath::parse("dependency.txt.sharkasset"))};
+    take(files->write_asset_metadata(inventory[0], root_metadata, {}));
+    take(files->write_asset_metadata(inventory[1], leaf_metadata, {}));
+    auto catalog = take(AssetCatalog::create(*files, before.project.project));
+    auto catalog_revision = take(catalog->refresh(inventory, take(catalog->revision())));
+    PipelineImporter importer;
+    const std::array<AssetImporter*, 1> registry{&importer};
+    auto imports = take(AssetImports::open(*files, *catalog, before.project.project, registry));
+    // Release before Imports joins during exception unwinding; importer itself
+    // outlives every service borrowing it, including the explicit reopen below.
+    struct ReleaseGate {
+        PipelineImporter& importer;
+        ~ReleaseGate() {
+            importer.release();
+        }
+    } release_gate{importer};
+    const AssetTargetProfile target{"featureworld-x64", AssetAudience::client};
+    auto revision = take(imports->revision());
+    const auto first_page = take(catalog->query(catalog_revision, 0, 1));
+    const auto discovered = take(imports->importers());
+    require(context,
+            first_page.total == 2 && first_page.records.size() == 1 && first_page.next_offset &&
+                first_page.records[0].metadata.asset == root_asset && discovered.size() == 1 &&
+                discovered[0].id == "shark.bytes" && discovered[0].kind == "bytes" &&
+                discovered[0].version == 1 && discovered[0].payload_version == 1,
+            "Pipeline discovery lost its bounded catalog, importer kind or versions");
+    auto submit = [&] {
+        return take(imports->submit(root_asset, target, catalog_revision, revision));
+    };
+    auto terminal = [](AssetImportJobState state) {
+        return state == AssetImportJobState::succeeded || state == AssetImportJobState::failed ||
+               state == AssetImportJobState::cancelled;
+    };
+    auto wait = [&](AssetImportJobId id, bool drain) {
+        const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds{10};
+        for (;;) {
+            if (drain)
+                take(imports->drain_jobs());
+            const auto statuses = take(imports->jobs());
+            const auto found = std::find_if(statuses.begin(), statuses.end(),
+                                            [&](const auto& status) { return status.id == id; });
+            if (found != statuses.end() &&
+                (drain ? terminal(found->state) : found->state == AssetImportJobState::ready))
+                return *found;
+            if (found == statuses.end() || std::chrono::steady_clock::now() >= deadline ||
+                (!drain && terminal(found->state)))
+                throw CaseError{Error{ErrorCode::execution_failed,
+                                      "Asset pipeline job did not reach its expected phase",
+                                      {.operation = "featureworld.asset-pipeline"}}};
+            std::this_thread::yield();
+        }
+    };
+    const auto initial = submit();
+    require(context,
+            take(imports->submit(root_asset, target, catalog_revision, revision)).id == initial.id,
+            "Connected pipeline lost pending-work deduplication");
+    const auto first = wait(initial.id, true);
+    require(context,
+            first.state == AssetImportJobState::succeeded && first.summary && first.commit &&
+                first.summary->nodes == 2 && first.summary->imported == 2 &&
+                first.completed_nodes == 2,
+            "Initial connected job failed to import the complete closure");
+    revision = first.commit->revision;
+    const auto original_artifact = take(imports->read(first.summary->root_key, revision));
+    require(context,
+            original_artifact.asset == root_asset && body(original_artifact) == "Root pipeline" &&
+                original_artifact.dependencies.size() == 1 &&
+                original_artifact.dependencies[0].asset == leaf_asset &&
+                body(take(imports->read(original_artifact.dependencies[0].key, revision))) ==
+                    "Initial leaf",
+            "Initial pipeline output differs from independent root/leaf expectations");
+    take(imports->take_job(initial.id));
+    fs::rename(path / "one.txt", path / "moved/renamed.txt", error);
+    require(context, !error, "Cannot move connected root source");
+    fs::rename(path / "one.txt.sharkasset", path / "moved/renamed.txt.sharkasset", error);
+    require(context, !error, "Cannot move connected root sidecar");
+    inventory[0] = take(ProjectPath::parse("moved/renamed.txt.sharkasset"));
+    catalog_revision = take(catalog->refresh(inventory, catalog_revision));
+    const auto resolved = take(catalog->resolve(root_asset, catalog_revision));
+    require(context,
+            resolved.record && resolved.record->metadata == root_metadata &&
+                resolved.record->source.text() == "moved/renamed.txt",
+            "Coordinated move changed the saved asset identity");
+    const auto moved = submit();
+    const auto reused = wait(moved.id, true);
+    require(context,
+            reused.state == AssetImportJobState::succeeded && reused.summary && reused.commit &&
+                reused.summary->root_key == first.summary->root_key &&
+                reused.summary->reused == 2 && reused.summary->imported == 0 &&
+                !reused.commit->changed && reused.commit->revision == revision,
+            "Move changed path-independent content keys or republished matching output");
+    take(imports->take_job(moved.id));
+    const auto valid_cache = read_bytes(".shark-development-cache");
+    write_source("dependency.txt", "Captured leaf");
+    importer.arm(leaf_asset);
+    const auto stale = submit();
+    require(context, importer.entered(), "Real import worker never entered the leaf gate");
+    const auto running = take(imports->jobs());
+    require(context,
+            running.size() == 1 && running[0].id == stale.id &&
+                running[0].state == AssetImportJobState::running,
+            "Owner edit was not synchronized with a running import");
+    write_source("dependency.txt", "Human leaf");
+    auto leaf_source = take(files->read_asset_metadata(inventory[1]));
+    leaf_metadata.settings_json = "{\"transform\":\"uppercase-ascii\"}";
+    take(files->write_asset_metadata(inventory[1], leaf_metadata, leaf_source.revision));
+    importer.release();
+    const auto rejected = wait(stale.id, true);
+    require(context,
+            rejected.state == AssetImportJobState::failed && rejected.error &&
+                rejected.error->code == ErrorCode::conflict && !rejected.commit &&
+                read_bytes(".shark-development-cache") == valid_cache &&
+                take(imports->read(first.summary->root_key, revision)) == original_artifact,
+            "Human source/settings edits allowed stale publication or erased last-valid output");
+    take(imports->take_job(stale.id));
+    catalog_revision = take(catalog->refresh(inventory, catalog_revision));
+    const auto retried = submit();
+    const auto updated = wait(retried.id, true);
+    require(context,
+            retried.id != stale.id && updated.state == AssetImportJobState::succeeded &&
+                updated.summary && updated.commit && updated.commit->changed &&
+                updated.summary->imported == 2 &&
+                updated.summary->root_key != first.summary->root_key,
+            "Explicit retry did not invalidate the dependency closure with a fresh identity");
+    revision = updated.commit->revision;
+    const auto current_key = updated.summary->root_key;
+    const auto current_artifact = take(imports->read(current_key, revision));
+    require(context,
+            body(current_artifact) == "Root pipeline" &&
+                current_artifact.dependencies.size() == 1 &&
+                current_artifact.dependencies[0].asset == leaf_asset &&
+                current_artifact.dependencies[0].key != original_artifact.dependencies[0].key &&
+                body(take(imports->read(current_artifact.dependencies[0].key, revision))) ==
+                    "HUMAN LEAF" &&
+                take(imports->read(first.summary->root_key, revision)) == original_artifact,
+            "Parent/leaf keys, transformed bytes or retained old output disagree");
+    const auto committed_cancel = take(imports->cancel_job(retried.id));
+    require(context,
+            committed_cancel.state == AssetImportJobState::succeeded && committed_cancel.commit &&
+                committed_cancel.commit->revision == revision,
+            "Cancellation misreported a published pipeline commit");
+    take(imports->take_job(retried.id));
+    const auto latest_cache = read_bytes(".shark-development-cache");
+    write_source("dependency.txt", "Cancel leaf");
+    const auto cancelled = submit();
+    wait(cancelled.id, false);
+    const auto pending_input = take(imports->query(root_asset, target, catalog_revision, revision));
+    require(context,
+            pending_input.state == AssetCacheState::stale && pending_input.required_key &&
+                *pending_input.required_key != current_key &&
+                pending_input.last_valid_key == current_key,
+            "Ready cancellation did not contain a changed dependency closure");
+    take(imports->cancel_job(cancelled.id));
+    const auto stopped = wait(cancelled.id, true);
+    require(context,
+            stopped.state == AssetImportJobState::cancelled && !stopped.commit &&
+                take(imports->revision()) == revision &&
+                read_bytes(".shark-development-cache") == latest_cache &&
+                take(imports->read(current_key, revision)) == current_artifact,
+            "Ready cancellation published through the connected pipeline");
+    take(imports->take_job(cancelled.id));
+    require(context, fs::remove(path / "dependency.txt", error) && !error,
+            "Cannot remove pipeline leaf for the missing-source control");
+    catalog_revision = take(catalog->refresh(inventory, catalog_revision));
+    const auto missing = imports->submit(root_asset, target, catalog_revision, revision);
+    const auto blocked = take(imports->query(root_asset, target, catalog_revision, revision));
+    require(context,
+            !missing && blocked.state == AssetCacheState::stale && blocked.blocked_by &&
+                blocked.last_valid_key == current_key &&
+                read_bytes(".shark-development-cache") == latest_cache,
+            "Missing dependency erased the connected last-valid binding");
+    write_source("dependency.txt", "Human leaf");
+    leaf_source = take(files->read_asset_metadata(inventory[1]));
+    leaf_metadata.audience = AssetAudience::server;
+    take(files->write_asset_metadata(inventory[1], leaf_metadata, leaf_source.revision));
+    catalog_revision = take(catalog->refresh(inventory, catalog_revision));
+    const auto private_leaf = imports->submit(root_asset, target, catalog_revision, revision);
+    const auto private_status =
+        take(imports->query(root_asset, target, catalog_revision, revision));
+    require(context,
+            !private_leaf && private_leaf.error().code == ErrorCode::invalid_configuration &&
+                private_status.blocked_by && private_status.last_valid_key == current_key &&
+                read_bytes(".shark-development-cache") == latest_cache,
+            "Client pipeline admitted private server content or lost previous output");
+    leaf_source = take(files->read_asset_metadata(inventory[1]));
+    leaf_metadata.audience = AssetAudience::shared;
+    take(files->write_asset_metadata(inventory[1], leaf_metadata, leaf_source.revision));
+    catalog_revision = take(catalog->refresh(inventory, catalog_revision));
+    const auto restored = submit();
+    const auto restored_status = wait(restored.id, true);
+    require(context,
+            restored_status.state == AssetImportJobState::succeeded && restored_status.summary &&
+                restored_status.commit && !restored_status.commit->changed &&
+                restored_status.summary->root_key == current_key &&
+                restored_status.summary->reused == 2,
+            "Restoring a dependency did not reproduce its declared key and bytes");
+    take(imports->take_job(restored.id));
+    take(imports->close_jobs());
+    imports.reset();
+    catalog.reset();
+    files.reset();
+    files = take(ProjectFiles::open(path));
+    catalog = take(AssetCatalog::create(*files, before.project.project));
+    catalog_revision = take(catalog->refresh(inventory, take(catalog->revision())));
+    imports = take(AssetImports::open(*files, *catalog, before.project.project, registry));
+    revision = take(imports->revision());
+    const auto foreign = imports->cancel_job(retried.id);
+    require(
+        context,
+        revision.scope != retried.id.scope && !foreign &&
+            foreign.error().code == ErrorCode::conflict && take(imports->jobs()).empty() &&
+            take(imports->query(root_asset, target, catalog_revision, revision)).last_valid_key ==
+                current_key &&
+            take(imports->read(current_key, revision)) == current_artifact,
+        "Reopen revived old job authority or lost persistent output identity");
+    const auto saved_project = take(files->read_project(project_path));
+    const auto saved_scene =
+        take(files->read_scene(saved_project.source.document, before.scene.scene));
+    const auto reopened_root = take(catalog->resolve(root_asset, catalog_revision));
+    require(context,
+            saved_project.source.document == before.project &&
+                saved_scene.source.document == before.scene &&
+                read_bytes("scenes/FeatureWorld.sharkscene") == saved_scene_bytes &&
+                reopened_root.record && reopened_root.record->source.text() == "moved/renamed.txt",
+            "Asset moves/recovery changed the saved scene reference or project metadata");
+    revision = take(imports->reload(revision));
+    require(context, take(AssetImports::recover(*files)) == 0,
+            "Clean pipeline unexpectedly left an unpublished stage");
+    revision = take(imports->prune(revision)).revision;
+    require(context,
+            !imports->read(first.summary->root_key, revision) &&
+                take(imports->usage(revision)).artifacts == 2 &&
+                take(imports->query(root_asset, target, catalog_revision, revision)).state ==
+                    AssetCacheState::fresh,
+            "Explicit prune failed to retain the current complete dependency closure");
+    revision = take(imports->clear(revision)).revision;
+    require(context,
+            take(imports->usage(revision)).artifacts == 0 &&
+                take(files->read_asset_metadata(inventory[0])).source.document == root_metadata &&
+                take(files->read_asset_metadata(inventory[1])).source.document == leaf_metadata,
+            "Disposable cache clear changed persistent asset metadata");
+    take(imports->close_jobs());
+    unchanged(context, before);
+}
 } // namespace
 
 std::span<const std::string_view> feature_world_case_ids() noexcept {
@@ -721,6 +1100,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 7:
                         asset_jobs(context, scratch_parent);
+                        break;
+                    case 8:
+                        asset_pipeline(context, scratch_parent);
                         break;
                     default:
                         break;

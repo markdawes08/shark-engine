@@ -212,8 +212,8 @@ Catalog inputs are capped at 4096 entries/16 MiB with 128-record pages. Charge t
 complete inventory before path processing and retain sorted full paths, not every
 directory prefix. IDs survive coordinated source+sidecar moves; missing sources
 retain identity, duplicate IDs reject, and refresh/query require the owner scope
-and revision. ProjectFiles must outlive its borrowed catalog. Full REQ-11 remains
-NOT_RUN pending 11c/11d.
+and revision. ProjectFiles must outlive its borrowed catalog. The later 11d
+qualification below closes full REQ-11.
 **11b is complete under the current-machine scope.** Follow
 [ADR 0026](docs/architecture/0026-development-asset-cache.md), the
 [cache contract](docs/asset-import-cache.md),
@@ -248,7 +248,23 @@ Keep four retained slots, independent 32 MiB source/cache budgets, pending dedup
 terminal take, cooperative cancellation/closure and actual commit truth. Importers
 are exclusively borrowed; callbacks serialize and cannot reenter owner services.
 Core/Server implementation is unchanged; preserve 11b full Server evidence.
-Full REQ-11 remains NOT_RUN. **Next: 11d, integrated qualification.**
+**11d and full REQ-11 are complete under the current-machine scope.** Follow the
+[qualification contract](docs/asset-qualification.md),
+[handoff](docs/handoffs/11d-asset-qualification.md) and
+[receipt](docs/coverage/evidence/11d-asset-qualification.json): 602 passing selected
+outcomes (556 complete-profile partitions plus 46 standalone Tools checks),
+39 public-example compiles, 26 actual sanitizer objects and protected packages.
+Preserve `shark.tools.asset-jobs-process` (150 seconds), its 113 checks/39 children/
+seven abrupt-exit phases, the old synchronous 59 checks and every earlier limit.
+Nine native FeatureWorld cases/27 process checks retain four saved entity IDs,
+40 CPU surfaces and one external GPU command. The connected case preserves saved
+asset identity through moves, gated owner edits, stale rejection, changed-candidate
+cancellation, explicit retry/reopen and last-valid maintenance. Fresh job scopes
+require cache reconciliation; fixture markers never authorize durable replay.
+Thirty-five synchronous/49 async snapshots reproduce bytes and root keys within each fixture;
+async snapshots also reproduce dependency keys.
+Core/Server source is unchanged; preserve the qualified 11b full Server evidence.
+**Next: assignment 12, glTF import; plan its checkpoints before implementation.**
 Preserve `shark.tools.authoring-commands` (60 seconds, seed 1337)
 and all existing persistence cases. Private mutable access is limited to invariant
 fixtures; gameplay keeps Core's safe mutation without authoring history. Read

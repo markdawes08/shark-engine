@@ -22,7 +22,13 @@ retained outcomes, explicit retry and closed admission. Lua remains empty until
 real bindings land. New surfaces extend their actual cases, independent inventory
 and manifest together.
 
-The fixture runs all eight saved-world cases through the public supervisor, then
+11d adds a ninth connected asset-pipeline case while retaining those forty CPU
+surfaces. It carries one saved scene reference through asynchronous imports,
+coordinated moves, a real worker gate with owner source/settings edits, stale
+completion rejection, retry, cancellation, missing/private dependencies and
+reopen/maintenance. It adds no new authoring API or decoder.
+
+The fixture runs all nine saved-world cases through the public supervisor, then
 the intentional failing assertion through the same executable/result path. It
 compares stdout with create-only published results, native results and every
 artifact's bytes/hash. Failure remains exit 1 with the original case, phase,

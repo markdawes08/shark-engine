@@ -2,14 +2,17 @@
 
 Date: 2026-10-25. Base: `7b68135` on initially clean `main`. Owner: REQ-11.
 The user approved the following four-checkpoint split. Full REQ-10 is complete.
-11a implements identity/metadata/catalog only; full REQ-11 remains NOT_RUN until
-the later import/cache/job gates pass. **11a is PASS** in its
+11a implemented identity/metadata/catalog, followed by import/cache/jobs and the
+integrated gate. All four checkpoints and full REQ-11 are now PASS under the
+current-machine scope. **11a is PASS** in its
 [handoff](../handoffs/11a-asset-identity.md) and
 [receipt](../coverage/evidence/11a-asset-identity.json). **11b is PASS** in its
 [handoff](../handoffs/11b-asset-import-cache.md) and
 [receipt](../coverage/evidence/11b-asset-import-cache.json). **11c is PASS** in its
 [handoff](../handoffs/11c-asset-import-jobs.md) and
-[receipt](../coverage/evidence/11c-asset-import-jobs.json). Next: **11d**. Follow [ADR 0025](../architecture/0025-asset-identity.md),
+[receipt](../coverage/evidence/11c-asset-import-jobs.json). **11d and full REQ-11
+are PASS** in the [handoff](../handoffs/11d-asset-qualification.md) and
+[receipt](../coverage/evidence/11d-asset-qualification.json). Next: **12, glTF import**. Follow [ADR 0025](../architecture/0025-asset-identity.md),
 the [asset identity contract](../asset-identity.md), [MMORPG plan](mmorpg-plan.md)
 and [human/agent plan](human-agent-plan.md).
 
@@ -53,7 +56,7 @@ synchronous byte importer, revision-fenced preparation/publication, target/priva
 keys, bounded last-valid cache and explicit maintenance. Its handoff/receipt above
 record 724 selected CPU/Tools outcomes, 36 public-example compiles, 24 actual
 sanitizer objects and protected packages. Background work/cancellation remain 11c;
-full REQ-11 remains NOT_RUN until 11d.
+At that checkpoint full REQ-11 remained NOT_RUN; 11d below closes the gate.
 
 ## 11c - Bounded background jobs
 
@@ -74,7 +77,8 @@ slots, one private worker, bounded immutable captures, pending-work deduplicatio
 progress, cancellation, explicit take/retry and original-revision publication.
 The handoff/receipt above record 595 passing profile results, 39 public-example
 compiles, 26 actual sanitizer objects and protected packages. All earlier
-workloads/limits remain. Full REQ-11 remains NOT_RUN until 11d.
+workloads/limits remain. At that checkpoint full REQ-11 remained NOT_RUN; 11d
+below closes the gate.
 
 ## 11d - Integrated qualification
 
@@ -84,3 +88,13 @@ regressions, public examples and protected dependency/package gates. Preserve
 fixed seeds/limits and earlier cases. Full REQ-11 passes only after all four gates.
 Reuse canonical build directories/archive caches; clean successful temporary
 deployments and retain compact receipts and useful failure evidence.
+
+**Status: PASS under current-machine scope; full REQ-11 is PASS.** The
+[qualification contract](../asset-qualification.md) connects one saved-world
+reference through moves, dependency edits, worker completion fences, cancellation,
+retry and reopen, plus seven real async process-interruption phases. All 602
+selected outcomes, 39 public-example compiles, 26 actual sanitizer objects and
+protected package gates pass with unchanged limits. Complete inventories use
+explicit functional/I/O partitions with per-test JUnit provenance. Thirty-five
+sync/49 async snapshots reproduce. The handoff/receipt above retain exact evidence.
+Assignment 12 follows; no source decoder or future authoring adapter is implied.

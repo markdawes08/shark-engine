@@ -75,7 +75,7 @@ def main():
             saved=call('saved-featureworld',['--mode','cpu','--executable',str(worker),'--case','featureworld',
                  '--project',str(project/'FeatureWorld.sharkproject'),'--workspace',str(scratch),'--ticks','3',
                  '--output',str(folder/'saved')],0)
-            assert len(saved['cpu']['cases'])==8 and not list(scratch.iterdir())
+            assert len(saved['cpu']['cases'])==9 and not list(scratch.iterdir())
             for path in paths:assert (project/path).read_bytes()==original[path.as_posix()]
             sentinel=folder/'first/result.json';before=sentinel.read_bytes()
             conflict=call('no-overwrite',[*base,'--output',str(folder/'first')],2)

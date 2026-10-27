@@ -5,6 +5,15 @@ description: Implement or change Shark asset import and cache behavior with boun
 
 # Shark asset import
 
+11d connects the [asset qualification](../../../docs/asset-qualification.md)
+lineage through the ninth native FeatureWorld case and actual asynchronous
+process interruption/recovery. Preserve the earlier eight cases, all old limits,
+59 synchronous interruption checks and the new `shark.tools.asset-jobs-process`
+family (150 seconds). Root bytes alone cannot prove dependency invalidation:
+inspect dependency IDs/keys and literal dependency payloads too. Fresh owners
+reject old job scopes and reconcile real cache state; fixture markers are not
+durable job journals. New APIs/formats/decoders are outside this qualification.
+
 11c adds [bounded jobs](../../../docs/asset-import-jobs.md) under
 [ADR 0027](../../../docs/architecture/0027-bounded-asset-jobs.md). Preserve the
 four retained slots, one private worker, independent aggregate source/cache

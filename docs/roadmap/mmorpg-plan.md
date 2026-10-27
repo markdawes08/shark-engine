@@ -41,7 +41,10 @@ separate content roots; source decoders, final cook and streaming keep later own
 11c adds [bounded private jobs](../asset-import-jobs.md) with owner-fenced
 publication, retained outcomes and cancellation through the same CPU services.
 No importer enters live simulation/render work. Follow the
-[asset checkpoints](asset-plan.md); integrated qualification follows in 11d.
+[asset checkpoints](asset-plan.md); 11d now qualifies the connected pipeline,
+actual async interruption/recovery, privacy and reproducibility under the
+[qualification contract](../asset-qualification.md). Full REQ-11 is PASS under
+current-machine scope; glTF decoding follows in 12.
 
 ## Historical assessment of the pre-M01 foundation
 

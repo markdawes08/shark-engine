@@ -5,6 +5,16 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
+11d adds `shark.tools.asset-jobs-process` (150 seconds) beside the unchanged
+synchronous interruption fixture. Follow the
+[qualification contract](../../../docs/asset-qualification.md): nine native
+FeatureWorld cases, 27 process checks and 40 CPU surfaces plus one external GPU
+command. Run all 23 standalone Tools checks and the existing thirteen public
+examples, audit actual sanitizer objects and refresh protected packages.
+Complete inventories may use disjoint functional/I/O partitions with exact
+per-test JUnit provenance and one shared qualification I/O gate. Keep every
+original timeout; never label a partitioned selection an uninterrupted full run.
+
 11c adds `shark.tools.asset-import-jobs` (90 seconds, seed 1337), including
 deterministic callback gates, stop-callback reentry controls and the positive
 128-node closure. Run all 22 standalone Tools checks, all thirteen public examples

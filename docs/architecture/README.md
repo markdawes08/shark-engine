@@ -127,7 +127,11 @@ retains 724 selected profile outcomes, public API/sanitizer audits and protected
 packages. 11c is PASS in its [handoff](../handoffs/11c-asset-import-jobs.md),
 adding bounded private jobs under [ADR 0027](0027-bounded-asset-jobs.md), with
 595 current profile results, 39 public-example compiles, 26 actual sanitizer
-objects and protected packages. Full REQ-11 remains NOT_RUN; next: 11d.
+objects and protected packages. 11d now closes all four checkpoints in its
+[handoff](../handoffs/11d-asset-qualification.md), with 602 selected passing
+outcomes, nine connected native cases, actual async interruption/recovery,
+reproducibility and protected packages under the
+[qualification contract](../asset-qualification.md). Full REQ-11 is PASS; next: 12.
 
 | Record | Decision |
 | --- | --- |

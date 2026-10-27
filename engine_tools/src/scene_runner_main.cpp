@@ -122,7 +122,8 @@ Result<Options> options(std::span<const std::string> args) {
     if ((suite || result.case_id == "featureworld.persistence" ||
          result.case_id == "featureworld.asset-identity" ||
          result.case_id == "featureworld.asset-import" ||
-         result.case_id == "featureworld.asset-jobs") &&
+         result.case_id == "featureworld.asset-jobs" ||
+         result.case_id == "featureworld.asset-pipeline") &&
         result.workspace.empty())
         return cli_error("FeatureWorld persistence requires --workspace EXISTING_DIRECTORY");
     if (!feature && (seen.contains("--project") || seen.contains("--workspace")))
