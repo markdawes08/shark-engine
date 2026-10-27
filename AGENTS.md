@@ -1,5 +1,25 @@
 # Shark repository instructions
 
+## Testing policy precedence
+
+**User amendment, 2026-10-27:** read and follow the
+[testing policy](docs/testing-policy.md) before selecting verification. It
+supersedes older test-frequency, full-matrix and evidence-process instructions
+everywhere in this repository, including the checkpoint history below, skills,
+architecture records, qualification contracts and the ignored local roadmap. Preserve behavioral
+requirements, tests, workloads, seeds, timeouts and historical results; preserving
+them does not mean rerunning them in every profile on every subchunk.
+
+Use focused checks during edits; an affected Debug regression, relevant sanitizer
+tests and secondary-platform build/smoke at code subchunk closure; broader
+applicable coverage at full assignment closure or on a concrete change trigger.
+Documentation-only changes use relevant repository/link checks and diff review,
+without engine builds/tests. Reuse existing tooling and concise test reports;
+do not create per-subchunk freeze/receipt frameworks by default. Once selected
+checks pass, finish unless changes, failures or unresolved concerns justify more.
+The policy defines selection, escalation and reporting; applying it is already
+authorized and does not require another confirmation.
+
 ## Scope and source control
 
 Read the assigned roadmap increment, [architecture decisions](docs/architecture/README.md)
@@ -476,6 +496,10 @@ retained WSL environment wholesale based on age. Archive restoration may be need
 to inspect historical raw evidence; preserve its receipt and archive index.
 
 ## Build, tests and formatting
+
+Select commands with the [testing policy](docs/testing-policy.md). The commands
+and historical checkpoint matrices below are available procedures, not a list
+to execute for every task. Read only the domain contracts relevant to the change.
 
 Run commands from the repository root. [Building](docs/building.md) documents
 tool installation, all presets and platform requirements; [CI](docs/ci.md)

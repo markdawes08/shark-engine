@@ -5,11 +5,20 @@ description: Validate Shark graphics changes against Vulkan/NVRHI requirements, 
 
 # Shark renderer validation
 
+Apply the [testing policy](../../../docs/testing-policy.md) before choosing checks.
+Its 2026-10-27 cadence supersedes older recurring full-matrix instructions while
+preserving required GPU behaviors, validation and image tolerances. Run relevant
+graphics regressions on both local GPUs when graphics behavior changes; select
+configuration breadth by actual compiler/build impact and assignment closure.
+CPU-only import or documentation changes do not trigger GPU runs. Existing shader
+and package artifact validation remains required when those artifacts are rebuilt.
+
 10c's [test supervisor](../../../docs/scene-execution.md) connects the existing
 native offscreen/window cube fixtures through explicit GPU mode. Preserve exact
 UUID selection, required core/synchronization/NVRHI validation, fixed readback
-tolerances and independent raw-evidence checks. Both GPUs run serially in each
-Windows Debug/Release/ASan profile. CPU SceneRunner/Tools retain their protected
+tolerances and independent raw-evidence checks. The completed 10c matrix ran both
+GPUs serially in Windows Debug/Release/ASan; future selections follow the testing
+policy and keep GPU runs serial. CPU SceneRunner/Tools retain their protected
 dependencies. Synthetic evidence tests qualify no GPU; incomplete GPU work has
 unknown initialization rather than a false device-free result. Keep fixed shader
 payload preparation explicit and preserve failed/unavailable attempts.

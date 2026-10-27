@@ -5,6 +5,14 @@ description: Add or change Shark components and public command or Lua APIs while
 
 # Shark component and API integration
 
+Apply the [testing policy](../../../docs/testing-policy.md) before choosing checks.
+Its 2026-10-27 cadence governs future frequency, matrix scope and evidence work;
+completed checkpoint counts below describe historical results. Preserve behavior
+tests and real coverage mappings without rerunning every older API/example or
+configuration for each change. Compile changed public examples and exercise the
+affected validation, lifetime, persistence and FeatureWorld paths. Use broader
+shared-Core or adapter checks only where the change reaches those consumers.
+
 12c adds pure CPU `asset.gltf.textures` under the
 [texture contract](../../../docs/gltf-textures.md). The twelfth FeatureWorld case
 checks source identities, role variants, independent pixel/mip values and
@@ -134,10 +142,11 @@ uses its designated single writer. Physics workers queue events and never call L
 Bindings use checked handles instead of borrowed component pointers. Preserve
 edit/play isolation and the authored scene through failed operations.
 
-Use the native preset and actual existing CTest cases from
-[building](../../../docs/building.md), then run
-`python tools/validate_contract.py`. Add meaningful feature tests in the owning
-increment; the contract validator alone does not prove API behavior. Update
+Select the actual existing CTest cases and native preset from
+[building](../../../docs/building.md) under the testing policy; use
+`python tools/validate_contract.py` when contracts or coverage change. Add
+meaningful feature tests in the owning increment; the contract validator alone
+does not prove API behavior. Update
 migration/rejection rules, coverage and handoff together when the public contract
 changes, and follow AGENTS.md's user-owned commit policy.
 
@@ -258,7 +267,7 @@ Keep bounded tickets/bytes, explicit reconciliation and both Result levels.
 [receipt](../../../docs/coverage/evidence/09e-integrated-qualification.json):
 625 full CPU CTest executions across seven profiles, 22 standalone Tools checks,
 24 public-example compiles, actual sanitizer objects and protected packages pass.
-Both full Server suites are refreshed. Preserve the eight connected cases in
+Both full Server suites were refreshed for 09e. Preserve the eight connected cases in
 `shark.tools.authoring-integration` (90 seconds, seed 1337), native publication
 faults, real external-file lineage and every earlier case/limit. Connect supported
 components/commands to FeatureWorld in10; adapters remain15/16.

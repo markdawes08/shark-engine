@@ -1,5 +1,11 @@
 # Human and terminal-agent development plan and assessment
 
+**Contributor amendment, 2026-10-27:** human contributors and AI agents select
+verification using the [testing policy](../testing-policy.md). It supersedes
+older repeated matrix and evidence-process demands; preserve behavior tests and
+report actual selected results. The repository skills and AGENTS.md point to the
+same policy. This changes contributor workflow, not product authoring parity.
+
 Date: 2026-10-17. User direction: tune Shark for both a human developer and a
 terminal-based LLM agent. Reviewed clean `main` at `d9f53ef` (M01 implementation).
 This is a planning amendment, not implementation of the authoring CLI or editor.

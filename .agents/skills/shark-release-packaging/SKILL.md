@@ -5,12 +5,21 @@ description: Validate Shark standalone exports and packages for cooked dependenc
 
 # Shark export and release packaging
 
+Apply the [testing policy](../../../docs/testing-policy.md) before scheduling work.
+Its 2026-10-27 cadence supersedes older recurring matrix/evidence instructions.
+Use this workflow for requested packaging, assignment-closure package gates, or
+changes affecting package contents, dependency closure, install/launch behavior
+or artifact validation. Subchunks without those changes and documentation edits
+do not trigger deployment. A private Tools lock entry calls for protected-boundary
+checks, not automatically full Server behavior or unrelated GPU/package runs. Once packaging
+is in scope, retain the actual closure, license and isolated-launch checks below.
+
 09a's [shared commands](../../../docs/authoring-commands.md) stay in EngineTools.
 Protected Runtime/Server packages must not acquire authoring command services,
 JSON/source readers, mutable invariant-fixture access or the command test target.
-Compile the eight public Tools examples separately from those packages; all public
-AuthoredScene reads are const and ordinary edits use the typed service. 09a is
-PASS under the current-machine scope; follow its
+Compile affected public Tools examples separately from those packages under the
+testing policy; all public AuthoredScene reads are const and ordinary edits use
+the typed service. 09a is PASS under the current-machine scope; follow its
 [handoff](../../../docs/handoffs/09a-shared-commands.md) and
 [receipt](../../../docs/coverage/evidence/09a-shared-commands.json).
 09b is also PASS under the current-machine scope. Follow its
@@ -49,8 +58,8 @@ No authoring installer or terminal/editor adapter is added by 09a.
 M03f's [integrated durable qualification](../../../docs/durable-qualification.md)
 retains the existing package boundary. Connected integration probes, credentials,
 database lineages, backups and supervisor evidence never enter Runtime/Server
-packages. Refresh protected package and public API audits against the same frozen
-inputs as the Windows/WSL CPU and sanitizer matrix.
+packages. When package checks are selected, record their actual build inputs and
+outcomes; the historical frozen-input matrix is not a recurring subchunk gate.
 
 M03e adds explicit offline database maintenance within EngineStorage. Keep
 independent legacy/current SQL fixtures, temporary backups, restored candidates
@@ -67,13 +76,13 @@ in packages. Runtime/Tools/Core must not acquire the SQLite dependency.
 
 08c [project file storage](../../../docs/project-files.md) belongs only to
 EngineTools. Its native I/O, source readers, lock/stage files and crash fixtures
-must not enter Runtime/Server packages. Recheck protected source/dependency and
-installed file closures after changing authoring file services.
+must not enter Runtime/Server packages. Recheck affected source/dependency or
+installed-file closures when changes to authoring services reach those boundaries.
 
 08d closes the combined persistence gate using the same local boundaries. Keep
 the integrated migration/reopen and interrupted authored-save fixtures outside
 Runtime/Server packages; no source-file runtime mode or live player durability
-is implied. Verify all three public C++ examples alongside the protected packages.
+is implied. Compile changed public C++ examples according to the testing policy.
 
 Read [AGENTS.md](../../../AGENTS.md), the exact assigned export/release increment,
 [target boundaries](../../../docs/architecture/0001-targets-and-boundaries.md),
@@ -146,8 +155,10 @@ No compiler/SDK/source checkout is needed to launch.
 The Linux launcher verifies helper/payload hashes, uses the shared native
 evidence validator and bounds output/process groups, including SIGINT/SIGTERM.
 Retain its documented limits for escaping descendants, SIGKILL and machine loss.
-Exercise real Unicode/space relocation, required validation, negative inputs and
-the full 100/20/600 workload on both active Windows GPUs.
+For a probe package gate, exercise real Unicode/space relocation, required
+validation and negative inputs. The full 100/20/600 workload on both active
+Windows GPUs belongs to its graphics qualification gate; future reruns follow
+the testing policy's graphics-change and assignment-closure triggers.
 CPU launcher tests use synthetic children and cannot qualify GPUs. Windows
 relocation outside the checkout with system-only PATH, cleared development
 overrides and inspected DLL closure is accepted for the local package gate.
@@ -208,7 +219,7 @@ evidence; Tetris/desktop install checks alone cannot qualify an MMORPG release.
 [receipt](../../../docs/coverage/evidence/09e-integrated-qualification.json):
 625 full CPU CTest executions across seven profiles, 22 standalone Tools checks,
 24 public-example compiles, actual sanitizer objects and protected packages pass.
-Both full Server suites are refreshed. Preserve the eight connected cases in
+Both full Server suites were refreshed for 09e. Preserve the eight connected cases in
 `shark.tools.authoring-integration` (90 seconds, seed 1337), native publication
 faults, real external-file lineage and every earlier case/limit. Connect supported
 components/commands to FeatureWorld in10; adapters remain15/16.

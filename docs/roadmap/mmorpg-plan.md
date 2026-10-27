@@ -1,5 +1,11 @@
 # Shark MMORPG execution plan and foundation assessment
 
+**Testing amendment, 2026-10-27:** follow the [testing policy](../testing-policy.md)
+for every future increment. It supersedes older matrix/frequency/evidence-process
+requirements while preserving MMO behavior, acceptance workloads and historical
+results. Broad qualification belongs at assignment closure or a relevant change
+trigger; subchunks use affected verification.
+
 Date: 2026-10-17. Baseline reviewed: `3fecfc3` on `main`, initially clean.
 User direction: tune the engine for an MMORPG, with a **seamless open world**.
 This is a planning amendment, not an implementation of multiplayer features.

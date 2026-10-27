@@ -5,341 +5,133 @@ description: Configure, build and test Shark C++ targets, investigate CTest or s
 
 # Shark build and test
 
-12c adds `shark.tools.gltf-textures` (90 seconds, seed 1337) and
-`shark.tooling.image-dependencies` (60 seconds). Offline Tools additionally pass
-the exact `SHARK_IMAGE_ARCHIVE`; protected profiles never populate stb_image.
-Preserve source41/1794 and geometry45/988 workloads. Verify actual decoder/test
-sanitizer objects, sixteen public CPU examples and twelve FeatureWorld cases,
-30 process checks, 43 CPU surfaces plus the external GPU command. The decoder
-keeps ordinary exception settings; only cgltf retains its private `/EHc-`.
-The global lock/private dependency fixtures changed, so refresh both full Server
-profiles and current protected builds/packages, not inherited Server counts.
+Read and apply the [testing policy](../../../docs/testing-policy.md) before
+selecting checks. The user-approved 2026-10-27 policy governs future execution
+frequency, matrix scope and evidence work, superseding older checkpoint/skill
+instructions in those areas. Existing cases, behavioral acceptance, seeds,
+timeouts and historical results remain intact. Preserving tests does not require
+rerunning every test in every profile on every subchunk.
 
-12b adds `shark.tools.gltf-geometry` (60 seconds, Catch seed 1337), documented
-in the [geometry contract](../../../docs/gltf-geometry.md). Keep all source
-cases/allocation sweeps and earlier limits. Verify actual geometry-test sanitizer
-objects, fifteen public CPU examples, eleven native FeatureWorld cases and its
-independent 42 CPU surfaces plus one external GPU command. Core/Server inputs
-stay unchanged; inherit 12a full Server evidence explicitly and refresh protected
-build/package gates. Reuse the current-lock shader bundle when unchanged.
+## Select the work
 
-12a adds `shark.tools.gltf-source` (60 seconds, Catch seed 1337) and the private
-`shark.tooling.gltf-dependencies` family (60 seconds). Tools profiles require the
-exact `SHARK_CGLTF_ARCHIVE`; protected Runtime/Server keep Tools OFF and must not
-populate cgltf or JSON. Verify all glTF allocator sweep points in Debug, Release
-and sanitizers, including actual parser/test object symbols and private MSVC
-exception-flag ordering. Preserve earlier test limits and native fixture inputs.
-Ten native FeatureWorld cases/28 process checks cover 41 CPU surfaces and one
-external GPU command. Follow the [source contract](../../../docs/gltf-source.md).
+Read [AGENTS.md](../../../AGENTS.md), the assigned checkpoint and latest handoff.
+Use [building](../../../docs/building.md) for setup and [CI](../../../docs/ci.md)
+for the existing runners; completed handoffs are evidence, not recurring run lists.
 
-11d adds `shark.tools.asset-jobs-process` (150 seconds) beside the unchanged
-synchronous interruption fixture. Follow the
-[qualification contract](../../../docs/asset-qualification.md): nine native
-FeatureWorld cases, 27 process checks and 40 CPU surfaces plus one external GPU
-command. Run all 23 standalone Tools checks and the existing thirteen public
-examples, audit actual sanitizer objects and refresh protected packages.
-Complete inventories may use disjoint functional/I/O partitions with exact
-per-test JUnit provenance and one shared qualification I/O gate. Keep every
-original timeout; never label a partitioned selection an uninterrupted full run.
+- Documentation-only work needs relevant repository/link/diff checks, not engine
+  builds, CTest, sanitizers or packages.
+- During implementation, run new behavior tests and directly affected regressions.
+- Close a code subchunk with one primary Debug regression of affected behavior,
+  affected tests in one applicable sanitizer profile, an affected WSL build/smoke
+  for portable code and new/changed public examples. Windows Debug is the ordinary
+  primary; WSL is primary for WSL-owned Server work. Windows-only code does not
+  acquire a WSL behavior gate.
+- At assignment closure, run the relevant broader matrix, connected integration
+  cases and affected package checks. Expand earlier only for a concrete affected shared
+  service, dependency/build path, compiler setting, package or hardware behavior.
 
-11c adds `shark.tools.asset-import-jobs` (90 seconds, seed 1337), including
-deterministic callback gates, stop-callback reentry controls and the positive
-128-node closure. Run all 22 standalone Tools checks, all thirteen public examples
-and the actual job-test sanitizer object alongside previous instrumented objects.
-FeatureWorld has eight native cases, 26 process checks and 40 CPU surfaces plus
-one external GPU command. Core/Server implementation is unchanged; preserve 11b's
-full Server evidence and refresh protected dependency/package gates. Follow the
-[job contract](../../../docs/asset-import-jobs.md), preserving every older workload.
+A Tools-only dependency-lock addition calls for dependency and protected-boundary
+checks; it does not automatically require full Server behavioral suites or GPU
+runs. Compile affected public examples using public headers only. Inspect actual
+sanitizer objects for new or changed instrumentation-sensitive targets/sources,
+instrumentation/compiler configuration changes or a concrete coverage concern,
+rather than auditing unchanged objects each time.
+Stop when the selected checks pass unless subsequent changes, failures or an
+unresolved concern justify another run. Explain any expansion briefly.
 
-11b adds `shark.core.content-digest` (15 seconds), `shark.tools.asset-import`
-(90 seconds), and `shark.tools.asset-import-process` (120 seconds). Catch uses
-seed 1337. Preserve the 128-node positive closure, independent source/payload
-byte limits, 59 real interruption/recovery checks and all earlier workloads.
-FeatureWorld now has seven native cases and 34 scene surfaces plus one GPU
-command. Run all 21 standalone Tools checks on Windows/WSL, all twelve public
-Tools examples, relevant native/sanitizer suites, both full WSL Server suites
-for the shared private crypto runtime, and protected packages. Follow the
-[cache contract](../../../docs/asset-import-cache.md); no new dependency is added.
-The [11b handoff](../../../docs/handoffs/11b-asset-import-cache.md) closes this
-checkpoint. Preserve all three allowed/33 rejected graph controls, canonical-path
-reuse with independent root policy checks, and the 43-case Server closure suite.
-Its exact private Core crypto review never permits other Runtime dependencies.
+## Run existing tools
 
-11a adds `shark.tools.asset-catalog` (60 seconds, Catch seed 1337) and a sixth
-FeatureWorld case, `featureworld.asset-identity`. Follow the
-[identity contract](../../../docs/asset-identity.md). Preserve all earlier cases,
-extend actual coverage and independent inventory together, and qualify the CPU
-metadata/catalog through Windows/WSL Tools, native regression and sanitizers.
-Native sidecar reads enforce 64 KiB before allocation; ordinary project/scene
-reads retain 4 MiB. Protected targets keep no Tools/JSON/SQLite dependency changes.
-
-10d adds `shark.tools.scene-qualification` (90 seconds), connecting actual
-catalog/CTest coverage discovery, saved-world execution and intentional failure
-through the existing supervisor and published artifact hashes. Follow the
-[qualification contract](../../../docs/featureworld-qualification.md). Preserve
-its independent 19 scene/one GPU surface inventory and all earlier cases. A
-declared test in another profile is not a passing execution; closing receipts
-must resolve current component/command mappings to actual passing test results.
-
-10c adds `shark.tools.scene-execution` (21 real process checks) and
-`shark.tooling.scene-execution-evidence` (14 synthetic CPU tests), both 90 seconds.
-Preserve earlier runner/FeatureWorld cases and 19 CPU scene mappings; the GPU
-command has an explicit external fixture justification. Follow the
-[execution contract](../../../docs/scene-execution.md). GPU qualification runs
-the native fixtures explicitly on both local Windows devices; ordinary CTests
-remain device-free. Keep the original boundary timeout and preserve failures and
-explicit environment/prerequisite reconciliation in the handoff.
-
-10b adds the saved [FeatureWorld](../../../docs/featureworld.md) and two CTest
-families, `shark.tools.featureworld` and `shark.tools.featureworld-process`, both
-60 seconds; Catch uses seed 1337. Run all fifteen Tools families in standalone
-Windows/WSL builds and the relevant native/sanitizer regressions. Preserve the
-thirteen 10a runner cases and 29 process checks alongside the five new native cases
-and 23 FeatureWorld process checks. Compile all ten public Tools examples without
-private headers. Reuse current build directories, explicit scratch parents and
-protected Runtime/Server closure/package checks. See the
-[10b handoff](../../../docs/handoffs/10b-featureworld.md) for qualification status.
-
-09a adds `shark.tools.authoring-commands` (60 seconds, seed 1337) to the five
-existing Tools families. Its [command contract](../../../docs/authoring-commands.md)
-uses AuthoredScene's single owner, required revisions, typed effects and read-only
-Scene access. Preserve existing persistence cases as their ordinary edits move
-through commands; private access is only for lifecycle invariant fixtures.
-Run all eleven authoring families in standalone CPU Tools on Windows and existing WSL, alongside
-native/WSL regressions, sanitizers and protected boundaries. Compile all eight
-public Tools examples without private headers. 09a is PASS under the
-current-machine scope; its [handoff](../../../docs/handoffs/09a-shared-commands.md)
-and [receipt](../../../docs/coverage/evidence/09a-shared-commands.json) record
-461 CPU CTests, 12 standalone Tools checks and protected package/API gates.
-09b is also PASS under the current-machine scope. Follow its
-[transaction contract](../../../docs/authoring-transactions.md),
-[handoff](../../../docs/handoffs/09b-atomic-batches.md) and
-[receipt](../../../docs/coverage/evidence/09b-atomic-batches.json): 605 full CPU
-CTests, 14 standalone Tools checks, public examples, sanitizer objects and
-protected packages pass. Full REQ-09 remains NOT_RUN.
-09c is PASS under the current-machine scope. Follow the
-[history contract](../../../docs/authoring-history.md),
-[handoff](../../../docs/handoffs/09c-shared-history.md) and
-[receipt](../../../docs/coverage/evidence/09c-shared-history.json): 610 full CPU
-CTests, 16 additional Tools checks, 18 public-example compiles, actual sanitizer
-objects and protected packages pass. Preserve `shark.tools.authoring-history`
-(60 seconds, seed1337), all earlier families and the4096/4095 sparse workload.
-Undo/redo require the next ticket and current revision; save retains history,
-activation clears it, and restored incarnations receive fresh generations.
-Full REQ-09 is now PASS after09e. Next: 10, FeatureWorld and automated scene runner.
-
-09d is PASS under the current-machine scope. Follow the
-[retry contract](../../../docs/authoring-retries.md),
-[handoff](../../../docs/handoffs/09d-retained-retries.md) and
-[receipt](../../../docs/coverage/evidence/09d-retained-retries.json): 486 full CPU
-CTest executions, 20 standalone Tools checks, 21 public-example compiles, actual
-sanitizer objects and protected packages pass. Preserve both retry families
-(60/90 seconds, seed 1337), 25 cases, the real restart fixture and every earlier
-case/limit. Scope plus consecutive sequences and a nonrewinding watermark fence
-expired IDs; save/activation/history clear retain this owner's ledger. Check the
-outer Result, reply outcome and original operation result. Extend exact input
-comparison and payload charges when command/component fields grow. New owners
-require reconciliation; never blindly repeat expired requests. These remain
-Tools-only services, with no durable journal or terminal/editor/player adapter.
-
-
-09b adds `shark.tools.authoring-batches` (60 seconds) and `shark.core.scene-edit`
-(30 seconds), both seed 1337. Preserve all earlier cases and exact inventories;
-Core changes refresh both WSL Server profiles. Compile the fifth public Tools
-example and audit candidate code plus fixture sanitizer objects. Windows uses
-private allocation-boundary faults; Linux also sweeps ordinary/nothrow allocations.
-Keep candidates and their handles private; preview never reserves a revision.
-
-M03f connects the existing durable services in `shark.storage.integration-process`.
-Follow the [qualification contract](../../../docs/durable-qualification.md):
-validate one actual store lineage through migration, authenticated runtime work,
-lost acknowledgement, native I/O failure, reconciliation and isolated restore.
-Preserve every earlier storage/network family and the five public storage examples.
-Freeze the connected fixture and supervisor along with implementation inputs;
-audit every separate VFS object and require observed faults and exact state,
-not only successful child exits or counts.
-
-M03e adds `shark.storage.migration` (120 seconds, seed 1337) and
-`shark.storage.migration-process` (240 seconds). Use independently authored
-schema-1/2/3 SQL fixtures; preserve all earlier storage families. Validate complete
-identities, records, revocations and economic outcomes across interrupted upgrade,
-required pre-upgrade backup and isolated restore. Ordinary open still rejects
-legacy/future versions. Never treat a stale restored high-water mark as authority
-to replay an old operation. Compile the complete
-[maintenance example](../../../docs/durable-maintenance.md) with public headers
-only; fixture SQLite access stays test-private and packages exclude databases.
-
-M03d adds `shark.storage.recovery` (120 seconds, seed 1337) and
-`shark.storage.recovery-process` (240 seconds). Preserve the 69-row crash/VFS
-matrix, actual mTLS/Scene fences, retained-work limits and explicit timeout
-reconciliation. Never infer rollback from a timeout or issue a new transfer ID
-to retry an uncertain effect. Compile the [recovery example](../../../docs/durable-recovery.md)
-with public headers only; keep worker/SQLite ownership private to EngineStorage.
-
-M03c adds `shark.storage.transactions` and `shark.storage.transactions-process`.
-Preserve economic conservation, exact retries, terminal rejection, bounded
-retention and permanently expired operation identities across restart. Compile
-the [transaction example](../../../docs/durable-transactions.md) with public
-headers only. Ordinary open accepts schema 3 only; M03e migration is explicit.
-
-M03b adds durable character records and actual authenticated restart coverage in
-`shark.storage.characters` and `shark.storage.characters-process`. Preserve those,
-the original storage families and all session regression tests. Compile the
-[public character example](../../../docs/durable-characters.md) without private
-SQLite/TLS headers. Ordinary open rejects schema 1/2; use explicit M03e maintenance.
-
-M03a adds EngineStorage only with Server. Supply `SHARK_SQLITE_ARCHIVE` for
-offline Server configurations using `tools/storage_dependency.py --output`.
-Preserve `shark.storage.store`, `shark.storage.process` and
-`shark.tooling.storage-dependencies`, including native/WSL sanitizer builds.
-SQLite must remain absent from Core/Runtime/Tools source and target closures;
-compile the [public example](../../../docs/durable-store.md) without sqlite3.h.
-
-08d integrates legacy migration, activation, edits and native saves through
-`shark.tools.persistence-integration` (90 seconds, seed 1337). Preserve this family
-alongside all four earlier authoring families in native and standalone Tools
-builds. The process fixture now interrupts `save_scene`, then reopens the exact
-expected state and recovers through another authored save. Compile all three
-published source-document, authored-scene and project-file C++ examples with
-public headers only; keep private-dependency and protected-package audits.
-
-08c file-service fixtures use native filesystem operations without graphics.
-Keep test roots writable under build/out in retained WSL userspaces, and run
-both `shark.tools.project-files` and `shark.tools.project-files-process` alongside
-the source/activation families. Process interruption is distinct from hardware
-power-loss evidence; retain fault outcomes and publication/durability flags.
-
-Read [AGENTS.md](../../../AGENTS.md), [building](../../../docs/building.md) and
-[CI](../../../docs/ci.md). Run from the repository root with the native compiler
-environment; Windows Ninja presets need an x64 MSVC developer shell.
-
-Use matching configure/build/test preset names: `windows-debug` or `linux-debug`;
-corresponding `-release` variants; `windows-asan` or `linux-asan-ubsan` for sanitizers.
-Mac compatibility and CI are outside scope under
-[ADR 0009](../../../docs/architecture/0009-windows-linux-platform-scope.md).
-The later [current-machine scope](../../../docs/architecture/0010-current-machine-scope.md)
-uses native Windows builds and the existing WSL2 Ubuntu CPU/headless environments.
-Local checks determine roadmap progression; existing hosted CI is supplemental
-and remote branch protection is unchanged. Do not require another computer,
-hosted runner or native Linux display to finish an increment.
+Run from the repository root. Windows Ninja presets need the x64 MSVC developer
+environment; the wrapper also selects the pinned tools:
 
 ```text
-cmake --preset windows-debug
-cmake --build --preset windows-debug
-ctest --preset windows-debug
-python tools/check_format.py
-python tools/validate_contract.py
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/windows_dev.ps1 cmake --build --preset windows-debug --parallel 2
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/windows_dev.ps1 ctest --preset windows-debug --show-only
 ```
 
-Replace the example preset for the host. `python tools/ci.py --preset
-windows-debug --jobs 2` runs the recorded CPU workflow. Inspect the first failed
-step and retained evidence before changing code; do not relabel an unavailable
-compiler/runner as PASS. List tests with `ctest --preset windows-debug --show-only`
-and select real test names/labels. Do not run multiple builds against one build
-directory concurrently.
+List the actual inventory before selecting test names/labels. For example, when
+texture conversion is affected:
 
-After changes to target dependencies, configure/build `runtime-only` in the host
-compiler environment; its ALL boundary target must pass. This preset disables
-tests, so a native debug preset must still run CTest. Engine/Core/Client cannot depend
-on EngineTools; Runtime cannot acquire authoring or test libraries transitively.
-Keep exact dependency inputs in the checked-in lock; do not resolve a newer
-floating version as a repair.
+```text
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/windows_dev.ps1 ctest --preset windows-debug -R ^shark.tools.gltf-textures$ --output-on-failure --no-tests=error
+```
 
-For CI failure propagation, use the documented
-`python tools/ci.py --preset windows-debug --inject-test-failure` path and expect
-a nonzero result. Restore a normal run and record both results. Do not create a
-commit or stage files to test CI. This project leaves all staging/commits/pushes
-to the user; maintain `.gitignore` and provide suggested commit text.
+Use matching configure/build/test presets: `windows-debug` or `linux-debug`,
+corresponding Release variants, `windows-asan` or `linux-asan-ubsan`. Use
+`tools-debug` for independent CPU Tools with Client/Editor OFF, and WSL
+`server-debug` / `server-asan-ubsan` for Server tests. Follow the build guide for
+retained WSL paths and offline configuration. Reuse canonical builds and caches;
+never run concurrent builds in one directory or change host/WSL resource settings.
 
-Report exact command, revision/worktree state, toolchain, platform, outcome and
-unverified gates. CPU tests do not qualify GPUs, audio or packaged games. Current
-bootstrap executables are not working game/editor applications.
+`python tools/ci.py --preset windows-debug --jobs 2` runs the existing full CPU
+workflow when that profile is selected. For changed C/C++ use the pinned
+`tools/check_format.py`; for contract/coverage or skill changes use the relevant
+`tools/validate_contract.py` or `tools/check_repository.py` checks. Do not run
+unrelated checkers merely to lengthen a report.
 
-For MMORPG work, read the [execution order](../../../docs/roadmap/mmorpg-plan.md).
-Use `server-only` for the no-tests/no-download Release Server package and
-`server-debug` / Linux `server-asan-ubsan` for headless CTest. `runtime-only`
-does not prove this boundary. The minimal Ubuntu 24.04 command in
-[CI](../../../docs/ci.md) checks configure/download and final package closures
-as well as links, rejecting presentation dependencies even if client-runtime-safe.
-After dependency changes run both isolated builds and the actual server lifecycle
-and boundary fixtures. Keep Core/Server free of client and authoring sources.
-Add actual server/network/database/load commands only when their owners land;
-ordinary bootstrap CTest results are not simulation, capacity or seamlessness evidence.
+Investigate the first failure and retain its output. Preserve workloads, seeds,
+timeouts and baseline tolerances. Do not retry until green without understanding
+the failure; rerun the affected selection after a fix or justified environment
+reconciliation. An empty selection or missing prerequisite is not PASS.
 
-M02a's private static Mbed TLS integration adds a required C compiler alongside
-C++ in Core/Server builds. Prepare the exact EnTT, GLM and complete Mbed TLS
-archives through `tools/core_dependencies.py`; disconnected configurations pass
-`SHARK_ENTT_ARCHIVE`, `SHARK_GLM_ARCHIVE` and `SHARK_MBEDTLS_ARCHIVE` explicitly.
-The headless driver selects matching pinned GCC/Clang C and C++ compilers.
-Source closure validates the bundled TF-PSA/framework inputs; package checks
-require every locked nested Mbed TLS notice while excluding test credentials
-and shared TLS libraries. M02a's local TLS diagnostics do not qualify account
-authentication, gameplay authorization, replication or production capacity.
+## Dependency and compiler boundaries
 
-M02b [owned sessions](../../../docs/network-sessions.md) is **PASS** under the
-current-machine scope; the [handoff](../../../docs/handoffs/M02b-owned-sessions.md)
-records 425 passing CTests and protected package qualification. Follow
-[ADR 0012](../../../docs/architecture/0012-owned-sessions.md).
-Its `shark.core.net-mtls` and `shark.core.net-session` CTests use seed 1337 and
-30-second timeouts; `shark.core.net-sessions-process` has a 90-second timeout.
-Use actual mutual TLS peers and controlled monotonic clocks for service tests;
-retain separate-process evidence for enrollment, ownership, revocation, expiry,
-replay, reconnect and rate-limit behavior. Include public certificate fixtures and
-their generator in source-input freeze hashes. Keep test keys and SessionProbe
-out of installed packages. Preserve the existing Windows/WSL CPU, sanitizer and
-protected package gates when extending these services. M02c replication is PASS
-under current-machine scope: see the [replication contract](../../../docs/network-replication.md)
-and [handoff](../../../docs/handoffs/M02c-authoritative-replication.md). Its three
-additional CTest families use 20/30/90-second timeouts for wire, service and real
-process cases; preserve these earlier network families and freeze source/fixture
-hashes for full qualification. Session readiness alone does not qualify gameplay or capacity.
+Keep exact dependency inputs in the lock. Prepare offline archives with the
+existing helpers; do not fetch floating replacements to repair a build:
 
-M02d [spatial interest](../../../docs/network-interest.md) is locally qualified.
-Preserve the complete trusted catalog, authenticated character observer binding,
-unthrottled privacy maintenance and bounded managed admission. Its two new CTest
-families are `shark.core.net-interest` (30 seconds, seed 1337) and
-`shark.core.net-interest-process` (120 seconds); retain these families alongside
-the earlier network tests. Two active recipients and controlled reliable-stream
-delay do not establish the full LOCAL-MMO-1 workload or WAN behavior. The
-[M02d handoff](../../../docs/handoffs/M02d-spatial-interest.md) retains that gate's
-historical evidence; M02e subsequently closes integrated qualification.
+| Owner | Offline CMake inputs and helper |
+| --- | --- |
+| Core | `SHARK_ENTT_ARCHIVE`, `SHARK_GLM_ARCHIVE`, `SHARK_MBEDTLS_ARCHIVE` through `tools/core_dependencies.py` |
+| Server Storage | `SHARK_SQLITE_ARCHIVE` through `tools/storage_dependency.py` |
+| Tools source documents | `SHARK_JSON_ARCHIVE` through `tools/source_document_dependency.py` |
+| Tools glTF source | `SHARK_CGLTF_ARCHIVE` through `tools/gltf_dependency.py` |
+| Tools images | `SHARK_IMAGE_ARCHIVE` through `tools/image_dependency.py` |
 
-M02e adds `shark.core.net-adversity` (60 seconds, seed 1337) and
-`shark.core.net-adversity-process` (360 seconds), bringing the network prefix to
-fourteen CTest families. M02e and full REQ-M02 are PASS under the current-machine
-scope in the [handoff](../../../docs/handoffs/M02e-integrated-qualification.md);
-assignment 08 follows the [persistence checkpoints](../../../docs/roadmap/persistence-plan.md). Follow the
-[qualification contract](../../../docs/network-qualification.md): semantic faults
-operate on decoded authenticated state, while the bounded relay preserves TLS
-byte order. Record actual injected events, convergence, cleanup, retained vector
-capacity and separate process RSS/handle samples. Refresh all earlier network
-families and protected packages against the same frozen source inputs.
+Core/Server require matching pinned C and C++ compiler families for private TLS
+and SQLite. Only `gltf_source.cpp` uses private MSVC `/EHc-` after `/EHsc` for its
+bounded parser allocation boundary; the image decoder retains ordinary exception
+settings. Keep sanitizer instrumentation on affected implementation and tests.
 
-08a adds CPU EngineTools source-document tests and a private JSON dependency.
-The `tools-debug` preset must configure/build with Client/Editor OFF; inspect its
-inventory before selecting `shark.tools.source-documents` (60 seconds, seed 1337).
-`shark.tooling.source-document-dependencies` has a 240-second timeout. Offline
-Tools builds additionally supply the exact `SHARK_JSON_ARCHIVE`; protected
-Runtime/Server configurations keep Tools OFF and must not populate JSON. Compile
-the documented public example without JSON include paths. See the
-[source contract](../../../docs/source-documents.md) and
-[08a handoff](../../../docs/handoffs/08a-source-documents.md).
+For affected target dependencies, configure/build protected `runtime-only` and/or
+`server-only` as applicable and check their closure. They disable tests; a
+successful boundary build does not substitute for behavior tests. Runtime cannot
+acquire Tools/test dependencies; Core/Server exclude presentation and authoring.
+Tools-only parsers/decoders stay absent when Tools is OFF. SQLite remains private
+to EngineStorage/Server. Package checks must preserve all locked license notices.
 
-08b adds `shark.tools.authored-scene` (60 seconds, seed 1337) and the separate
-`AuthoredSceneTests` target. Run both Tools families in the independent CPU-only
-configuration, alongside native/WSL regressions and protected boundaries.
-Compile the complete [capture/activation example](../../../docs/authored-scenes.md)
-without private dependency headers. Its [handoff](../../../docs/handoffs/08b-scene-activation.md)
-records its historical qualification status; the completed 08c file services
-participate in the integrated 08d gate.
+## Read domain contracts when affected
 
-09e and full REQ-09 are PASS under the current-machine scope. Follow the
-[qualification contract](../../../docs/authoring-qualification.md),
-[handoff](../../../docs/handoffs/09e-integrated-qualification.md) and
-[receipt](../../../docs/coverage/evidence/09e-integrated-qualification.json):
-625 full CPU CTest executions across seven profiles, 22 standalone Tools checks,
-24 public-example compiles, actual sanitizer objects and protected packages pass.
-Both full Server suites are refreshed. Preserve the eight connected cases in
-`shark.tools.authoring-integration` (90 seconds, seed 1337), native publication
-faults, real external-file lineage and every earlier case/limit. Connect supported
-components/commands to FeatureWorld in10; adapters remain15/16.
+- Scene/authoring: [scene](../../../docs/scene-contracts.md),
+  [commands](../../../docs/authoring-commands.md),
+  [transactions](../../../docs/authoring-transactions.md),
+  [history](../../../docs/authoring-history.md) and
+  [retries](../../../docs/authoring-retries.md).
+- Persistence/network: [project files](../../../docs/project-files.md),
+  [durable qualification](../../../docs/durable-qualification.md) and
+  [network qualification](../../../docs/network-qualification.md). Retain actual
+  native I/O faults, process interruption and authenticated peers where required
+  to prove those behaviors; unit substitutes do not establish them.
+- Assets/glTF: [cache](../../../docs/asset-import-cache.md),
+  [jobs](../../../docs/asset-import-jobs.md),
+  [source](../../../docs/gltf-source.md),
+  [geometry](../../../docs/gltf-geometry.md) and
+  [textures](../../../docs/gltf-textures.md). Keep independent expected values,
+  allocation limits/failures and licensed offline fixtures.
+- [FeatureWorld](../../../docs/featureworld.md): extend real cases, independent
+  expectations and coverage mappings together when a supported surface grows.
+
+## Report and stop
+
+Use existing logs/JUnit and a short summary of change identity, selected commands,
+platform/toolchain, outcomes and justified omissions. Distinguish fresh results
+from unchanged historical evidence; do not count reused results as fresh runs.
+Do not create a new per-checkpoint qualification harness, frozen-source ledger
+or evidence-auditing layer without a concrete need under the testing policy.
+Existing artifact hashes and validators still apply when their artifacts change.
+
+Repeat the documented injected red/green path only when testing changes to CI
+failure propagation. No staging, commits or pushes, including temporary test
+repositories; the user owns these actions. Maintain `.gitignore` and provide
+suggested commit text. Use only this Windows PC and its retained WSL environment;
+Mac, extra hardware and hosted access are not local gates. CPU results do not
+qualify GPUs, audio, live MMO capacity or a packaged game.

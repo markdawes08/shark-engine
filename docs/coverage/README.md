@@ -1,5 +1,15 @@
 # Requirement and API coverage
 
+The user-approved [testing policy](../testing-policy.md), effective 2026-10-27,
+controls future execution cadence and evidence effort. Preserve the historical
+receipts and counts below; do not treat their full matrices or helper/source
+freezes as mandatory templates for each new subchunk. A concise report of actual
+commands, selected results, relevant change identity and log paths is the default.
+Keep required coverage mappings and consumed report formats. Distinguish fresh
+selected results, unchanged historical evidence and NOT_RUN; neither a selection
+nor a past result becomes a newly executed full suite. Behavioral acceptance and
+full-assignment completion criteria remain binding.
+
 All four [FeatureWorld checkpoints](../roadmap/featureworld-plan.md) and full
 REQ-10 are PASS under the current-machine scope. The
 [integrated handoff](../handoffs/10d-integrated-qualification.md) and

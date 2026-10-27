@@ -7,6 +7,18 @@ and [human/agent contract](human-agent-plan.md). Full REQ-12 remains NOT_RUN unt
 12e closes all gates. Rendering follows in 13; material rendering acceptance
 belongs to 26, skeletal animation to M06 and final cooked output to 31.
 
+**Testing amendment, 2026-10-27:** the [testing policy](../testing-policy.md)
+supersedes earlier per-checkpoint matrix and evidence-process instructions.
+12a-12c results remain historical. For 12d, run the new material/resource tests
+and affected source/geometry/texture, import/cache/job and FeatureWorld regressions
+in the primary Debug build, affected sanitizer tests and an affected WSL
+build/smoke. Include stale completion, cancellation and last-valid-output cases
+because their owner integration changes. Compile new/affected public examples.
+Use relevant dependency boundary checks if targets or locked inputs change;
+do not automatically rerun full Server suites or redeploy unrelated packages.
+12e owns the broader applicable glTF integration matrix and package checks.
+No behavioral workload, fixture, seed, timeout or product boundary is weakened.
+
 ## 12a - Import foundation
 
 Pin the private cgltf parser and define concrete input/parser/resource limits.

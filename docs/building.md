@@ -1,5 +1,13 @@
 # Build and test Shark
 
+The [testing policy](testing-policy.md) governs verification selection from
+2026-10-27 onward. Use focused checks during implementation, selected regression
+at subchunk closure and broader applicable coverage at assignment closure or
+when changed behavior/build inputs justify it. Documentation-only changes need
+no engine build. Procedures and completed-checkpoint inventories below are
+reference material, not a recurring checklist; the policy supersedes older
+matrix, source-freeze and evidence-process demands.
+
 M01 extends the C++20 foundation with static EngineCore, EngineClient and
 EngineTools libraries, an Engine interface composition, separate
 Editor/Runtime/Server entry points and Catch2 tests. Editor/Runtime provide
@@ -465,9 +473,10 @@ source inventory is verified before use. Protected profiles keep Tools OFF and
 must not populate the image decoder. The [texture contract](gltf-textures.md)
 provides the sixteenth public CPU example and fixed pixel/mip/allocation/work
 limits. Preserve all source/geometry cases and the ordinary decoder exception
-model. The changed global lock/private dependency fixtures require fresh full
-Server profiles and current protected package qualification; GPU work remains
-with later rendering checkpoints.
+model. The original 12c qualification refreshed full Server profiles and protected
+packages. Future Tools-only lock changes use affected dependency/boundary checks
+under the testing policy; they do not automatically refresh full Server behavior
+or unrelated graphics/package artifacts.
 
 08b adds `AuthoredSceneTests` and `shark.tools.authored-scene` (seed 1337,
 60-second timeout) for revision-consistent capture, project/world references,
@@ -492,8 +501,8 @@ services do not expose terminal commands yet.
 native reads, Scene activation, edits, explicit migration saves and reopen, and
 preserves dirty state through invalid external sources and conflicting edits.
 The existing file/process families additionally exercise failed and interrupted
-`save_scene` operations through recovery and exact reactivation. Run all five
-authoring families after listing the inventory:
+`save_scene` operations through recovery and exact reactivation. When persistence
+is affected, the following selects its five original authoring families:
 
 ```text
 ctest --preset tools-debug --show-only
@@ -523,14 +532,15 @@ and [receipt](coverage/evidence/09b-atomic-batches.json) record 605 full CPU CTe
 and protected packages. Preserve `shark.tools.authoring-batches` (60 seconds)
 and `shark.core.scene-edit` (30 seconds), seed 1337. Full REQ-09 remains NOT_RUN.
 **Next: 09c, Shared undo and redo.**
-List the inventory, then run all seven CPU Tools families:
+For changes affecting the original authoring/batch owner, this selects its seven
+original CPU Tools families; use the testing policy to determine relevance:
 
 ```text
 ctest --preset tools-debug --show-only
 ctest --preset tools-debug -R "^shark.tools.(source-documents|authored-scene|authoring-commands|authoring-batches|project-files|project-files-process|persistence-integration)$" --output-on-failure
 ```
 
-Compile all five public examples from the source-document, authored-scene,
+Compile new or affected public examples from the source-document, authored-scene,
 project-file, command and [transaction](authoring-transactions.md) contracts
 without private dependency or fixture headers. No Editor, Client, display or GPU
 is needed for these services. Atomic batches and preview are qualified in 09b;

@@ -1,5 +1,10 @@
 # Architecture contract
 
+**Testing amendment, 2026-10-27:** the [testing policy](../testing-policy.md)
+governs future verification cadence and evidence work, superseding older matrix
+and source-freeze scheduling in these records. Architectural boundaries and
+behavioral acceptance criteria remain binding; use their tests when affected.
+
 Decision date: 2026-10-17. Scope: roadmap assignment 00, Shark v1.
 These are accepted implementation decisions, not claims of implemented features.
 Platform feasibility remains an explicit assignment 02 gate.

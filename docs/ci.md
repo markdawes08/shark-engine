@@ -1,5 +1,12 @@
 # CPU and headless Server CI
 
+For local development, the [testing policy](testing-policy.md) controls which
+checks to run and supersedes older recurring matrix/freeze/audit instructions in
+this guide. The full CI commands below remain available for relevant broad
+verification; agents must not run all of them for each subchunk. Existing hosted
+workflows and branch protection are unchanged. Use normal command logs/JUnit and
+a concise scoped report for local work.
+
 Under [ADR 0010](architecture/0010-current-machine-scope.md), roadmap acceptance
 uses this PC's native Windows and existing WSL Ubuntu checks. The nine-job hosted
 workflow is retained as supplemental regression coverage; hosted availability is
@@ -409,10 +416,11 @@ requires a reviewed configuration/evidence update; do not mask that failure.
 
 M03f's `shark.storage.integration-process` connects the existing services on one
 real store lineage. Follow the [qualification contract](durable-qualification.md).
-The fresh source freeze includes the connected probe/supervisor and independent
-SQL inputs. Keep all prior families, five public storage examples, standalone
-Tools checks and protected packages. Actual sanitizer dependency audits include
-the integration probe's separate instance of the test-only VFS source.
+Its historical source freeze includes the connected probe/supervisor and
+independent SQL inputs. Preserve those fixtures and results. Select future
+storage regressions, public examples and package checks under the testing policy.
+When the VFS or its instrumentation changes, include the integration probe's
+separate VFS object in the affected sanitizer check.
 
 M03b extends the same gate with `shark.storage.characters` and
 `shark.storage.characters-process`, documented in [building](building.md#server-only-durable-storage).

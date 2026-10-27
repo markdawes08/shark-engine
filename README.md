@@ -1,5 +1,9 @@
 # Shark
 
+Contributors and AI agents must follow [AGENTS.md](AGENTS.md) and the
+[testing policy](docs/testing-policy.md): focused checks for subchunks, broader
+verification at assignment closure or when affected behavior warrants it.
+
 Shark is a C++20 game engine project targeting a **seamless open-world MMORPG**.
 Development and acceptance target **this Windows PC**, with its RTX 4070 Laptop
 and Intel GPUs for the editor/client and existing **WSL2 Ubuntu** for the headless

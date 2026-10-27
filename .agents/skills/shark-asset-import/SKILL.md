@@ -5,6 +5,14 @@ description: Implement or change Shark asset import and cache behavior with boun
 
 # Shark asset import
 
+Apply the [testing policy](../../../docs/testing-policy.md) before choosing checks.
+Its 2026-10-27 cadence supersedes older frequency, matrix and evidence-work
+instructions. Preserve existing cases, budgets, seeds and timeouts; preservation
+does not require rerunning all asset/process families in every profile. Select
+affected import and FeatureWorld regressions, then use the policy's subchunk or
+assignment-closure scope. A private Tools dependency change needs boundary checks,
+not automatically full Server suites, package deployments or GPU runs.
+
 12c adds pure [texture conversion](../../../docs/gltf-textures.md) through the
 same source owner. Preserve pinned memory-only PNG/JPEG, precision, strict PNG
 framing/inflate/palette checks, JPEG structural/scan-work checks, nullable arena
@@ -54,8 +62,9 @@ under [ADR 0026](../../../docs/architecture/0026-development-asset-cache.md).
 Preserve `shark.tools.asset-import` (90 seconds, Catch seed 1337), the real
 `shark.tools.asset-import-process` interruption fixture (120 seconds, 59 checks),
 the seventh native FeatureWorld case, and all earlier cases/limits. Core content
-hashing shares the existing private TLS crypto runtime; Core changes refresh both
-WSL Server profiles. Keep source/payload/closure/cache budgets independent,
+hashing shares the existing private TLS crypto runtime; changes to that shared
+runtime require the affected Core/Server regressions under the testing policy.
+Keep source/payload/closure/cache budgets independent,
 publication atomic, last-valid dependency closures retained, and recovery explicit.
 Background jobs remain 11c; there are no source decoders or live-thread imports.
 
@@ -79,8 +88,8 @@ jobs remain 11c, source decoders 12, audio 24 and HDRI 27. There is no import CL
 Use the existing native CPU checks from [building](../../../docs/building.md)
 and `python tools/validate_contract.py` for shared-code/contract changes without
 claiming import/cache behavior was exercised by identity tests. Run the actual
-asset and FeatureWorld families on Windows/WSL and sanitizer profiles, including
-the independent coverage inventory when adding public surfaces.
+affected asset and FeatureWorld families in the profiles selected by the testing
+policy, including the independent coverage inventory when adding public surfaces.
 
 Keep external parsers and image/audio codecs in EngineTools. Runtime loads
 validated engine-owned payloads; parser recognition never means rendering or
