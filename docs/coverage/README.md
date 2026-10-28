@@ -8,12 +8,11 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**14a is complete; 14b's implementation is delivered with verification pending.**
-The latest [handoff](../handoffs/14b-standalone-scene-export.md) records the export
-command, Runtime package startup, passing Debug/package checks and remaining
-Client/worker sanitizer selection after compiler crashes. Close that gate before
-14c in the [export checkpoints](../roadmap/export-plan.md); full REQ-14 remains
-NOT_RUN. [Full REQ-13](../handoffs/13e-runtime-scenes.md) and
+**Full REQ-14 is PASS under current-machine scope and the approved backlog amendment.**
+The latest [handoff](../handoffs/14c-isolated-export-acceptance.md) records isolated
+scene exports on both GPUs, actual module/content inspection, default startup
+and F5 rejection/replacement. The [export checkpoints](../roadmap/export-plan.md)
+link earlier implementation evidence. [Full REQ-13](../handoffs/13e-runtime-scenes.md) and
 [full REQ-12](../handoffs/12e-gltf-qualification.md) remain complete.
 Terminal/editor adapters remain 15/16.
 
@@ -114,3 +113,4 @@ remains authoritative for individual requirement status.
 | 13d offscreen rendering (partial REQ-13) | [Viewport](../scene-viewport.md), [handoff](../handoffs/13d-offscreen-scene-viewport.md) |
 | 13 scene rendering | [Runtime scenes](../runtime-scenes.md), [final handoff](../handoffs/13e-runtime-scenes.md) |
 | 14a export content (partial REQ-14) | [Client export](../client-export.md), [handoff](../handoffs/14a-client-export-content.md) |
+| 14b/14c standalone export (full REQ-14) | [Standalone export](../standalone-export.md), [isolated acceptance handoff](../handoffs/14c-isolated-export-acceptance.md) |

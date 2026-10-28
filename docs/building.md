@@ -240,17 +240,20 @@ client mesh cache, offline scene shaders and full asset notices. It uses the
 same protected Release builder and adds the pinned Runtime-only
 `msvcp140_2.dll` needed by scene math. Follow the
 [standalone export guide](standalone-export.md) for explicit target/profile,
-sidecar/notice inputs, structured outcomes and package launch. The clear/cube
-diagnostic checker below rejects scene exports; their isolated acceptance is 14c.
+sidecar/notice inputs, structured outcomes and package launch. Assignment 14c
+extends the same checker to scene exports and records their isolated acceptance.
 
 Copy the package to a fresh directory outside the checkout with spaces and
 Unicode in its path. `tools/package_runtime.py check --package <relocation>
 --manifest-sha256 <builder-reported-hash> --device <UUID> --device <other-UUID>
---output <fresh-output>` verifies exact inventory and loaded modules and selects
+--output <fresh-output>` verifies exact inventory and loaded modules. Scene exports
+use package-relative startup, isolated CPU inspection and bounded scene captures
+from separate initially empty working directories; diagnostic packages select
 `--cube` when bundle metadata is present. Run the checker through the documented
 standard-user wrapper. It uses a system-only PATH and cleared development
 overrides; inspection tooling runs outside the payload. This is local dependency
-isolation on the current PC, not an additional clean machine or a game exporter.
+isolation on the current PC. It does not claim an independent clean machine or
+production MMO qualification.
 
 Use the documented repository root and preset explicitly in automation; on
 Windows the wrapper below initializes the compiler without opening an IDE.

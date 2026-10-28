@@ -20,12 +20,12 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**14b's standalone scene export command and package launch are implemented.** The
-[latest handoff](docs/handoffs/14b-standalone-scene-export.md) records the working
-Release export, CPU checks and one validated package presentation. Selected
-sanitizer verification remains incomplete after compiler crashes; 14b closure and
-14c's isolated acceptance are still pending in the
-[export checkpoints](docs/roadmap/export-plan.md). Assignments 12 and 13 remain complete under current-machine scope,
+**Assignment 14's early standalone scene export is complete under current-machine scope.**
+The [latest handoff](docs/handoffs/14c-isolated-export-acceptance.md) records
+relocated presentation on both GPUs, isolated runtime dependencies, default startup
+and safe F5 replacement. The [export checkpoints](docs/roadmap/export-plan.md)
+link implementation and acceptance. Next is assignment 15's terminal authoring
+and local structured protocol. Assignments 12 and 13 remain complete,
 including Runtime scene presentation and safe reload on both GPUs. Completed
 checkpoints and their original results are indexed in
 [requirements and coverage](docs/coverage/README.md); historical counts are not

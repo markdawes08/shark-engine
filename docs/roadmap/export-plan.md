@@ -4,15 +4,16 @@ Date: 2026-10-28. Base: `5a8ed5c`, clean `main`. Owner: REQ-14.
 The user approved three subchunks following completed assignment 13. Follow the
 [testing policy](../testing-policy.md), [MMORPG plan](mmorpg-plan.md),
 [human/agent plan](human-agent-plan.md) and current-machine scope. Full REQ-14
-remains NOT_RUN until 14c's connected package acceptance.
+is PASS after 14c's connected package acceptance under current-machine scope.
 
 **14a is PASS under current-machine scope**, recorded in the
-[content handoff](../handoffs/14a-client-export-content.md). 14b's implementation,
-Debug/Release package checks and one package presentation are delivered. Its
-Client/worker sanitizer selection remains NOT_RUN after compiler crashes;
-[14b's handoff](../handoffs/14b-standalone-scene-export.md) records the failures
-and the startup codec's narrower ASan pass. Close or explicitly amend that
-remaining gate before 14c; no isolated package acceptance is claimed yet.
+[content handoff](../handoffs/14a-client-export-content.md). 14b's implementation
+and selected results are recorded in [its handoff](../handoffs/14b-standalone-scene-export.md);
+the user explicitly approved the narrow [backlog amendment](../backlog.md).
+**14c is PASS**, recorded in the [isolated acceptance handoff](../handoffs/14c-isolated-export-acceptance.md).
+Both local GPUs present the exported imported scene after Unicode/space relocation
+with isolated paths and observed module closure. Default startup, missing/corrupt
+content and actual F5 replacement/rejection are covered. Next is assignment 15.
 
 | Checkpoint | Deliverable and gate |
 | --- | --- |

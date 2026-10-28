@@ -5,7 +5,8 @@ Assignment 13e connects the [prepared content](prepared-content.md),
 Runtime reads explicit bounded engine payloads and precompiled scene shaders; it
 does not import source documents/glTF or discover an editor/compiler installation.
 14b adds [standalone export and package-relative startup](standalone-export.md);
-14c retains isolated package acceptance and 31 retains final cooking.
+[14c](handoffs/14c-isolated-export-acceptance.md) qualifies isolated package
+acceptance; 31 retains final cooking.
 
 `SceneContentFiles` names one scene and at most 126 mesh files. The loader admits
 regular files only, existing per-format limits and a combined 32 MiB input budget.

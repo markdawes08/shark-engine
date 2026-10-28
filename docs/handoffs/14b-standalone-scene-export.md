@@ -1,10 +1,10 @@
 # 14b: Standalone scene export and package launch
 
 Date: 2026-10-28. Base: `4cf7863`, initially clean `main`.
-**Implementation delivered; checkpoint closure is pending selected sanitizer
-verification.** Full REQ-14 remains NOT_RUN. Do not advance to 14c until the
-remaining gate below is closed or the user explicitly amends it. Staging,
-commits and pushing remain with the user.
+**Implementation delivered; the user explicitly deferred the remaining selected
+sanitizer checks on 2026-10-28 and authorized 14c.** Those checks remain NOT_RUN in
+[BL-14B-01](../backlog.md). Full REQ-14 remains NOT_RUN pending 14c's acceptance.
+Staging, commits and pushing remain with the user.
 
 ## Delivered behavior
 
@@ -92,7 +92,7 @@ image oracle. The package remains under `out/14b-work/imported-export`; its
 `bin/Runtime.exe` can be opened to view the imported scene. This is a local static
 unlit viewer, not a game-authoring editor or MMO release.
 
-## Failures and remaining gate
+## Failures and deferred verification
 
 The initial Debug compile crashed inside MSVC while parsing a GLM header for
 `prepared_startup.cpp`. One isolated compilation of the unchanged file and the
@@ -121,9 +121,44 @@ Preserve `wsl-launch.log`, `wsl-isolation-launch.log`, `wsl-worker-launch.log`,
 the Clang repro files in `wsl-isolation/compiler-repro`,
 `windows-asan-build.log`, `windows-asan-isolation.log` and
 `windows-asan-core-client-build.log`. Repeated whole builds were stopped. Only the
-new Core startup family obtained an ASan result. The remaining selected Client
-package/launch/shader-bundle and native export-process sanitizer checks must be
-closed or explicitly deferred by the user before advancing to 14c.
+new Core startup family obtained an ASan result. At the original 14b handoff, the
+remaining selected Client package/launch/shader-bundle and native export-process
+sanitizer checks prevented advancement to 14c without an explicit user deferral.
+
+### Sanitizer investigation follow-up, 2026-10-28
+
+Base: `f631476`, initially clean `main`. A bounded diagnostic replay used the
+retained export worker's fixed preprocessed input instead of rereading live
+headers. Clang's emitted reproduction script first rejected its own GNU line
+markers under the unchanged warning policy, including with the corrected
+preprocessed-C++ input kind. Those framing diagnostics are retained in
+`sanitizer-followup/fixed-input-repro.log` and `fixed-input-compile.log`.
+
+For this scratch diagnostic only, `-Wno-gnu-line-marker` allowed the generated
+preprocessing syntax; engine build flags, warnings and sanitizer instrumentation
+were not changed. The replay then crashed during code generation with
+`free(): invalid pointer`, at LLVM's Live DEBUG_VALUE analysis of a
+`std::variant<ProjectPath, Error>` operation. This differs from the earlier
+worker crashes in vector/frame-finalization and JSON instruction-selection code.
+No source-local trigger or underlying cause was established. Preserve
+`sanitizer-followup/fixed-input-codegen.log`, its exact command in
+`fixed-input-codegen-command.txt`, and the original input/script under
+`sanitizer-followup/compiler-repro/`.
+
+No canonical engine build or sanitizer behavior test was run in this follow-up.
+A read-only Ninja inventory showed two pending Client test compilations, the
+export worker and Runtime preparer, plus linking, in the retained WSL profile.
+Compiler attempts stopped after the diagnostic failure. The remaining selected
+Client/worker sanitizer selection is still NOT_RUN; this compiler reproduction is
+neither an engine sanitizer failure nor passing qualification.
+
+### User scope amendment, 2026-10-28
+
+After this investigation, the user explicitly deferred those outstanding Client
+and export-worker sanitizer checks and authorized 14c. Their current status and
+revisit triggers are [BL-14B-01](../backlog.md). This removes the advancement gate;
+it does not change the NOT_RUN results, resolve the compiler failures or qualify
+14c's independent package acceptance. Compiler attempts have stopped.
 
 ## Boundaries and next work
 

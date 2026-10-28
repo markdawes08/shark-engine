@@ -1,7 +1,7 @@
-"""Export Windows startup scenes and build/check diagnostic Runtime packages.
+"""Export Windows startup scenes and build/check standalone Runtime packages.
 
 The build command requires an already current runtime-only Release build. The
-diagnostic check command launches an explicit relocation outside the checkout, with a
+check command launches an explicit relocation outside the checkout, with a
 system-only environment and an observed module inventory. Python and dumpbin
 are verification tools, never packaged Runtime dependencies.
 """
@@ -12,12 +12,14 @@ import argparse
 from dataclasses import asdict
 from datetime import datetime, timezone
 import json
+import math
 import os
 from pathlib import Path
 import re
 import shutil
 import struct
 import sys
+import tempfile
 import uuid
 
 from package_graphics_probe import (CRT_NAMES, MAX_FILE, MAX_FILES, MAX_PACKAGE,
@@ -655,9 +657,145 @@ def completion(stdout: str, device: str, shader_hash: str | None = None) -> dict
     return row
 
 
+def one_json_record(text: str, what: str) -> dict:
+    if not isinstance(text, str) or len(text.encode("utf-8")) > 1024 * 1024:
+        raise ValueError(f"Missing or oversized {what}")
+    lines = [line for line in text.splitlines() if line.strip()]
+    if len(lines) != 1:
+        raise ValueError(f"Expected one {what}")
+    value = json.loads(lines[0], object_pairs_hook=unique_object,
+                       parse_constant=reject_constant, parse_float=finite_float)
+    if not isinstance(value, dict):
+        raise ValueError(f"Invalid {what}")
+    return value
+
+
+def scene_completion(stdout: str, device: str) -> dict:
+    row = one_json_record(stdout, "scene completion")
+    exact_record(row, {"event", "adapter_name", "driver_name", "driver_info", "driver_version",
+                       "adapter_uuid", "validation", "width", "height", "rendered_frames", "draw_count",
+                       "scene_instance", "scene_revision", "hidden", "culled", "mesh_instances",
+                       "warnings", "errors", "dropped", "presentation", "qualification", "capture"},
+                 "scene completion")
+    if (row["event"] != "runtime-scene-complete" or row["adapter_uuid"] != device
+            or row["validation"] != "off" or row["qualification"] != "NOT_RUN"):
+        raise ValueError("Scene completion identity or isolated validation policy differs")
+    for name in ("adapter_name", "driver_name", "driver_info"):
+        content_text(row[name], 4096)
+    for name in ("driver_version", "width", "height", "rendered_frames", "draw_count", "scene_instance",
+                 "scene_revision", "hidden", "culled", "mesh_instances", "warnings", "errors", "dropped"):
+        if type(row[name]) is not int or not 0 <= row[name] <= 0xffffffffffffffff:
+            raise ValueError(f"Invalid scene completion integer: {name}")
+    if ((row["width"], row["height"], row["rendered_frames"]) != (160, 120, 2)
+            or row["scene_instance"] == 0 or row["scene_revision"] == 0
+            or row["warnings"] or row["errors"] or row["dropped"]
+            or row["mesh_instances"] > 4096
+            or row["draw_count"] + row["hidden"] + row["culled"] != row["mesh_instances"]):
+        raise ValueError("Scene completion dimensions, counts, identity or diagnostics differ")
+    state = exact_record(row["presentation"], {"submitted", "completed", "presented", "generations",
+                                               "retired_generations", "in_flight", "closed", "faulted"},
+                          "scene presentation")
+    for name in ("submitted", "completed", "presented", "generations", "retired_generations", "in_flight"):
+        if type(state[name]) is not int or not 0 <= state[name] <= 0xffffffffffffffff:
+            raise ValueError("Invalid scene presentation counters")
+    if (state["closed"] is not True or state["faulted"] is not False or state["in_flight"] != 0
+            or state["submitted"] != state["completed"] or state["presented"] != 2
+            or state["submitted"] < state["presented"] or state["generations"] == 0
+            or state["generations"] != state["retired_generations"]):
+        raise ValueError("Scene presentation has incomplete or unretired GPU work")
+    if row["capture"] != {"color": "color.rgba", "depth": "depth.f64", "color_space": "srgb",
+                           "subpixel_precision_bits": 8}:
+        raise ValueError("Scene capture format differs")
+    return row
+
+
+def inspect_scene_capture(directory: Path, stdout: str, device: str) -> tuple[dict, dict]:
+    row = scene_completion(stdout, device)
+    assert_no_links(directory)
+    names = {path.name for path in directory.iterdir()}
+    expected = {"report.json": 1024 * 1024, "color.rgba": 160 * 120 * 4, "depth.f64": 160 * 120 * 8}
+    if names != set(expected):
+        raise ValueError("Scene capture file inventory differs")
+    content = {name: regular_file(directory / name, maximum=maximum) for name, maximum in expected.items()}
+    report = json.loads(content["report.json"], object_pairs_hook=unique_object,
+                        parse_constant=reject_constant, parse_float=finite_float)
+    if report != row or any(len(content[name]) != expected[name] for name in ("color.rgba", "depth.f64")):
+        raise ValueError("Saved scene capture differs from completion or bounded extent")
+    depth = struct.unpack(f"<{160 * 120}d", content["depth.f64"])
+    if any(not math.isfinite(value) or not 0 <= value <= 1 for value in depth):
+        raise ValueError("Scene capture has nonfinite or out-of-range depth")
+    return row, {"directory": str(directory),
+                 "files": {name: {"bytes": len(data), "sha256": digest(data)} for name, data in content.items()},
+                 "scope": "Bounded presented capture; fixture-specific image correctness is checked separately"}
+
+
+def package_inspection(stdout: str, manifest: dict) -> dict:
+    row = one_json_record(stdout, "Runtime package inspection")
+    expected = {"format": "shark.package-inspection", "schema_version": 1, "status": "PASS",
+                "renderer_initialized": False, "target": "windows-x86_64",
+                **{name: manifest["content"][name] for name in ("project", "world", "scene", "camera")},
+                "startup_sha256": manifest["files"][STARTUP]["sha256"],
+                "mesh_count": sum(path.endswith(".sharkmesh") for path in manifest["content"]["files"]),
+                "qualification": "NOT_RUN"}
+    if (row != expected or type(row.get("schema_version")) is not int
+            or type(row.get("mesh_count")) is not int or row.get("renderer_initialized") is not False):
+        raise ValueError("Runtime package inspection identity differs from the exported content")
+    return row
+
+
+def isolated_launch_report(report: dict, mode: str, directory: Path, working: Path,
+                           system: Path, device: str, capture: Path | None = None) -> None:
+    if (not isinstance(report, dict) or report.get("mode") != mode
+            or type(report.get("exit_code")) is not int or report["exit_code"] != 0
+            or report.get("timed_out") is not False
+            or not isinstance(report.get("stderr"), str) or report["stderr"].strip()
+            or not isinstance(report.get("stdout"), str) or len(report["stdout"].encode("utf-8")) > 1024 * 1024
+            or type(report.get("elapsed_seconds")) not in (float, int)
+            or not math.isfinite(report["elapsed_seconds"]) or not 0 <= report["elapsed_seconds"] <= 20
+            or type(report.get("module_poll_errors")) is not int or report["module_poll_errors"] < 0):
+        raise ValueError("Invalid isolated Runtime launch outcome")
+    expected_environment = {"PATH": str(system / "System32"), "SystemRoot": str(system),
+                            "VK_LOADER_LAYERS_DISABLE": "~implicit~", "inherited_development_overrides": False}
+    if (report.get("environment") != expected_environment
+            or report["environment"].get("inherited_development_overrides") is not False):
+        raise ValueError("Runtime launch environment was not isolated")
+    if (report.get("working_directory") != str(working)
+            or working.is_relative_to(directory) or working.is_relative_to(ROOT.resolve())):
+        raise ValueError("Runtime working directory is not the selected isolated directory")
+    command = [str(directory / "bin/Runtime.exe")]
+    if mode == "inspect":
+        command += ["--check-package", str(directory / STARTUP)]
+    elif mode == "scene" and capture is not None:
+        command += ["--package", str(directory / STARTUP), "--extent", "160x120", "--frames", "2",
+                    "--device", device, "--validation", "off", "--capture-directory", str(capture)]
+    else:
+        raise ValueError("Unknown isolated scene-check mode")
+    if (report.get("command") != command or not isinstance(report.get("arguments"), str)
+            or report.get("capture_directory") != (str(capture) if capture is not None else None)):
+        raise ValueError("Runtime launch command or capture path differs from the requested package")
+
+
+def working_directory_footprint(directory: Path) -> list[dict]:
+    """Record generated directory/file metadata without treating it as an input."""
+    assert_no_links(directory)
+    entries = []
+    for path in directory.rglob("*"):
+        if len(entries) >= 256:
+            raise ValueError("Runtime working-directory footprint exceeds its entry budget")
+        assert_no_links(path)
+        if path.is_dir():
+            kind, size = "directory", 0
+        elif path.is_file():
+            kind, size = "file", path.stat().st_size
+        else:
+            raise ValueError("Runtime working directory contains a nonordinary entry")
+        entries.append({"path": path.relative_to(directory).as_posix(), "kind": kind, "bytes": size})
+    return sorted(entries, key=lambda row: row["path"])
+
+
 def module_errors(modules: list[str], directory: Path, system: Path) -> list[str]:
     errors, package_modules = [], set()
-    if not modules or len(modules) > 512:
+    if not isinstance(modules, list) or not modules or len(modules) > 512:
         return ["Missing or excessive Runtime module inventory"]
     for name in modules:
         if not isinstance(name, str) or not Path(name).is_absolute():
@@ -685,15 +823,21 @@ def check_package(directory: Path, expected_manifest: str, devices: list[str], o
     if len(devices) != 2 or len(set(devices)) != 2 or any(not re.fullmatch("[0-9a-f]{32}", item) for item in devices):
         raise ValueError("Deployment check requires two distinct explicit GPU UUIDs")
     manifest = inspect_package(directory, expected_manifest)
-    if manifest["kind"] == "runtime-scene-export":
-        raise ValueError("Scene export deployment acceptance belongs to 14c; the diagnostic checker cannot qualify it")
+    scene_export = manifest["kind"] == "runtime-scene-export"
+    assert_no_links(output)
+    output = output.resolve()
+    if output.is_relative_to(directory) or directory.is_relative_to(output):
+        raise ValueError("Deployment evidence must be separate from the immutable package")
     output.mkdir(parents=True, exist_ok=False)
     cube = manifest.get("shader_bundle")
-    summary = {"schema_version": 1, "checkpoint": "06c" if cube else "05c", "status": "FAIL", "qualification": "NOT_RUN",
+    summary = {"schema_version": 1, "checkpoint": "14c" if scene_export else ("06c" if cube else "05c"),
+               "status": "FAIL", "qualification": "NOT_RUN",
                "scope": "Local relocated Runtime dependency and launch evidence; no independent clean machine or native correctness qualification",
                "package_directory": str(directory), "manifest_sha256": expected_manifest,
                "validation": "off", "runs": [], "errors": [],
                "limits": "Development tools remain installed; child PATH/environment and observed modules are isolated. Module polling observes loaded modules, not transient unload history."}
+    working_root = None
+    working_parent = Path(tempfile.gettempdir()).resolve()
     try:
         from windows_unelevated import process_security, _assert_standard
         summary["process_security"] = process_security()
@@ -703,7 +847,53 @@ def check_package(directory: Path, expected_manifest: str, devices: list[str], o
         helper = ROOT / "tools/runtime_package/Run-IsolatedRuntime.ps1"
         summary["helper_sha256"] = sha256(helper)
         summary["lock_sha256"] = manifest["dependency_lock_sha256"]
+        if scene_export:
+            working_root = Path(tempfile.mkdtemp(prefix="shark-runtime-working-")).resolve()
+            summary["working_directory"] = str(working_root)
+            for mode, device in [("inspect", devices[0]), *(("scene", device) for device in devices)]:
+                stem = "inspection" if mode == "inspect" else device
+                working = working_root / stem
+                working.mkdir()
+                if working.is_relative_to(directory) or working.is_relative_to(ROOT.resolve()):
+                    raise ValueError("Isolated working directory must be outside package and checkout")
+                if any(working.iterdir()):
+                    raise ValueError("Runtime working directory must be empty before launch")
+                capture = output / (device + "-capture") if mode == "scene" else None
+                command = [str(powershell), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(helper),
+                           "-Package", str(directory), "-Device", device, "-WorkingDirectory", str(working),
+                           "-Inspect" if mode == "inspect" else "-Scene"]
+                if capture is not None:
+                    command += ["-CaptureDirectory", str(capture)]
+                row = {"device": device if mode == "scene" else None, "status": "FAIL",
+                       "working_directory": str(working), "working_directory_initially_empty": True}
+                if mode == "inspect":
+                    summary["inspection"] = row
+                else:
+                    summary["runs"].append(row)
+                result = run_process(command, cwd=working, timeout=30)
+                row["process"] = asdict(result)
+                (output / (stem + ".stdout.json")).write_text(result.stdout, encoding="utf-8")
+                (output / (stem + ".stderr.log")).write_text(result.stderr, encoding="utf-8")
+                row["working_directory_after"] = working_directory_footprint(working)
+                if (result.returncode or result.timed_out or result.cleanup_errors or result.stderr.strip()
+                        or len(result.stdout.encode("utf-8")) > 2 * 1024 * 1024):
+                    raise ValueError(f"Isolated Runtime {mode} launcher failed")
+                report = json.loads(result.stdout.lstrip("\ufeff"), object_pairs_hook=unique_object,
+                                    parse_constant=reject_constant, parse_float=finite_float)
+                row["launch"] = report
+                isolated_launch_report(report, mode, directory, working, system, device, capture)
+                if mode == "inspect":
+                    row["content"] = package_inspection(report["stdout"], manifest)
+                else:
+                    row["completion"], row["capture"] = inspect_scene_capture(capture, report["stdout"], device)
+                    errors = module_errors(report.get("modules"), directory, system)
+                    if errors:
+                        raise ValueError("; ".join(errors))
+                inspect_package(directory, expected_manifest)
+                row["status"] = "PASS"
         for device in devices:
+            if scene_export:
+                break
             command = [str(powershell), "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", str(helper),
                        "-Package", str(directory), "-Device", device]
             if cube:
@@ -732,6 +922,19 @@ def check_package(directory: Path, expected_manifest: str, devices: list[str], o
     except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
         summary["errors"].append(str(error))
     finally:
+        if working_root is not None:
+            if summary["status"] == "PASS":
+                try:
+                    assert_no_links(working_root)
+                    if (working_root.resolve() != working_root or working_root.parent != working_parent
+                            or not working_root.name.startswith("shark-runtime-working-")):
+                        raise ValueError("Refusing cleanup outside the owned Runtime working parent")
+                    shutil.rmtree(working_root)
+                except (OSError, ValueError) as error:
+                    summary["status"] = "FAIL"
+                    summary["errors"].append(str(error))
+            if working_root.exists():
+                summary["retained_working_directory"] = str(working_root)
         (output / "summary.json").write_bytes(json_bytes(summary))
     return summary
 

@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "13",
+  "current_assignment": "14",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -398,8 +398,8 @@
       ],
       "planned_fixture": "EarlyStandaloneExport on the current Windows PC, with relocated package, isolated environment and dependency inspection; no additional machine is a gate under ADR0010.",
       "verification": {
-        "status": "NOT_RUN",
-        "reason": "14a is PASS. 14b implements the structured Windows export command, retained project-owner publication, complete notices, exact Runtime closure and bounded package-relative startup. Windows/WSL Debug, standalone Tools, actual Release export/inspection and one validated RTX package capture pass. The Core startup codec passes Windows ASan; the remaining Client/worker sanitizer selection is NOT_RUN because Clang and MSVC compiler processes crashed. docs/handoffs/14b-standalone-scene-export.md retains failures and exact remaining work. 14b closure remains pending; full REQ-14 remains NOT_RUN and 14c isolated acceptance has not begun. Follow docs/roadmap/export-plan.md."
+        "status": "PASS",
+        "reason": "14a-14c are complete under current-machine scope and the explicit backlog amendment in docs/backlog.md. docs/handoffs/14c-isolated-export-acceptance.md records Unicode/space relocation outside the checkout, distinct initially empty working directories, isolated environment and observed module closure on both Windows GPUs. Both imported-scene captures match the independent oracle; default no-argument startup, corrupted/missing content and actual F5 rejection/complete replacement pass. Prior unchanged 14a/14b CPU, protected Runtime and worker publication results remain applicable. This is an early local static unlit client export, not final cooking, an independent clean machine, a dedicated server or an MMO release."
       }
     },
     {
@@ -2821,7 +2821,7 @@
           "tests/gpu_shader_fixture.hpp",
           "docs/standalone-export.md"
         ],
-        "fixture_reason": "A bounded Core startup descriptor and Client loader consume fixed package-relative hashed snapshots without source importers. The actual CPU worker holds ProjectFiles ownership through staged publication and rechecks project/scene revisions, cached mesh closure and shaders. Process tests connect saved FeatureWorld and a fresh imported project to descriptor loading, conflict/timeout cleanup and final publication rejection. Python package controls check exact native/content/notice/shader inventory. CPU results do not qualify isolated graphical deployment; 14c owns that connected gate."
+        "fixture_reason": "A bounded Core startup descriptor and Client loader consume fixed package-relative hashed snapshots without source importers. The actual CPU worker holds ProjectFiles ownership through staged publication and rechecks project/scene revisions, cached mesh closure and shaders. Process tests connect saved FeatureWorld and a fresh imported project to descriptor loading, conflict/timeout cleanup and final publication rejection. Python package controls check exact native/content/notice/shader inventory, isolated launch reports and bounded captures. tools/runtime_package/Run-IsolatedRuntime.ps1 drives actual relocated Windows packages; docs/handoffs/14c-isolated-export-acceptance.md records both-GPU image/module evidence, default startup and native F5 acceptance separately from CPU results."
       }
     ],
     "components": [

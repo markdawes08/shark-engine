@@ -4,7 +4,7 @@ Assignment 14b connects [client content preparation](client-export.md) to the
 existing Runtime packager and package-relative launch. Follow
 [ADR 0038](architecture/0038-standalone-scene-export.md) and the
 [export checkpoints](roadmap/export-plan.md). Construction, CPU inspection and
-interactive launch do not close 14c's isolated deployment gate.
+interactive launch are distinct from [14c's completed isolated deployment gate](handoffs/14c-isolated-export-acceptance.md).
 
 ## Export command and inputs
 
@@ -185,6 +185,40 @@ returns `shark.package-inspection`, version 1, with the validated identities,
 startup digest, external mesh count and `renderer_initialized: false`. A failure
 has a nonzero exit and structured diagnostics. Inspection does not present a
 frame, qualify the GPU, audit all installed system prerequisites or establish
-same-machine isolation; its `qualification` remains `NOT_RUN`. The diagnostic
-clear/cube package checker cannot qualify a scene export. 14c owns that connected
-relocation and presentation acceptance on both available Windows GPUs.
+same-machine isolation; its `qualification` remains `NOT_RUN`.
+
+## Isolated package checking
+
+`tools/package_runtime.py check` now accepts scene exports as well as the earlier
+diagnostic packages. Supply the trusted manifest digest printed by `export`, an
+exact package copy relocated outside the checkout through a Unicode/space path,
+both explicit local GPU UUIDs, and a fresh evidence directory outside the package:
+
+```text
+python tools/package_runtime.py check --package "C:/Exports/Shark café" --manifest-sha256 DIGEST --device 863d6f59a51894ab8b4829aa9460c78d --device 868088a7040000000002000000000000 --output out/export-check
+```
+
+Run the checker as a standard user; the current-machine workflow can use
+`tools/windows_unelevated.py`. Python, PowerShell and inspection helpers supervise
+verification; they are not shipped or required to open Runtime. The checker first
+audits the exact package inventory/notices and runs packaged CPU inspection to
+bind the project, scene, camera and content digest. It then presents two 160x120
+frames per GPU, captures the result, checks finite depth and complete GPU teardown,
+and audits observed app-local Runtime/loader/CRT and Windows/driver modules.
+Unsupported authoring/compiler modules and changed package bytes reject.
+
+Each child starts in a fresh, initially empty directory outside both the package
+and checkout. Its environment has a system-only PATH and no inherited development
+overrides. Installed GPU drivers may create output there; the checker records a
+bounded directory/file footprint rather than treating output as a launch input.
+Passing working directories are cleaned; unexpected failures retain their paths.
+
+The scene checker writes checkpoint `14c` results with bounded capture identities
+and per-device launch evidence. Its `qualification` stays `NOT_RUN`: it proves
+local isolation and completed presentation, while fixture-specific image oracles
+and required-validation native tests establish rendering acceptance separately.
+Deployment uses validation off to avoid a validation SDK/layer prerequisite.
+The [14c handoff](handoffs/14c-isolated-export-acceptance.md) records both image
+oracles and validated native reload acceptance. System module polling does not
+capture transient unload history, and development tools remain installed on this
+PC; this is not an independent clean-machine or production MMO qualification.

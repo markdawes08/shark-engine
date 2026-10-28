@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 import json
+import math
+import os
 from pathlib import Path
 import sys
 import tempfile
@@ -16,6 +18,7 @@ from unittest.mock import patch
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import package_runtime as package
 import shader_pipeline as pipeline
+from process_runner import ProcessResult
 
 
 class RuntimePackageTests(unittest.TestCase):
@@ -373,6 +376,187 @@ class RuntimePackageTests(unittest.TestCase):
             for bad in (Path(temporary) / "SDK/vulkan-1.dll", system / "System32/dxcompiler.dll"):
                 with self.subTest(bad=bad):
                     self.assertTrue(package.module_errors([*modules, str(bad)], directory, system))
+
+    def scene_completion(self):
+        return {"event": "runtime-scene-complete", "adapter_uuid": "a" * 32, "validation": "off",
+                "adapter_name": "Fixture GPU", "driver_name": "Fixture driver", "driver_info": "CPU fixture",
+                "driver_version": 1, "width": 160, "height": 120, "rendered_frames": 2,
+                "draw_count": 0, "mesh_instances": 3, "hidden": 1, "culled": 2,
+                "scene_instance": 1, "scene_revision": 4, "warnings": 0, "errors": 0, "dropped": 0,
+                "presentation": {"submitted": 2, "completed": 2, "presented": 2, "generations": 1,
+                                 "retired_generations": 1, "in_flight": 0, "closed": True, "faulted": False},
+                "qualification": "NOT_RUN", "capture": {"color": "color.rgba", "depth": "depth.f64",
+                                                        "color_space": "srgb", "subpixel_precision_bits": 8}}
+
+    def test_isolated_scene_completion_accepts_arbitrary_geometry_and_rejects_unfinished_work(self):
+        baseline = self.scene_completion()
+        self.assertEqual(package.scene_completion(json.dumps(baseline), "a" * 32), baseline)
+        for changes in ({"validation": "required"}, {"adapter_uuid": "b" * 32}, {"width": 161},
+                        {"rendered_frames": 1}, {"rendered_frames": True}, {"scene_instance": 0},
+                        {"warnings": 1}, {"hidden": 2}, {"draw_count": -1}, {"qualification": "PASS"}):
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                package.scene_completion(json.dumps({**baseline, **changes}), "a" * 32)
+        for changes in ({"closed": False}, {"faulted": True}, {"in_flight": 1}, {"completed": 1},
+                        {"retired_generations": 0}, {"presented": 1}, {"generations": True}):
+            with self.subTest(changes=changes), self.assertRaises(ValueError):
+                value = {**baseline, "presentation": {**baseline["presentation"], **changes}}
+                package.scene_completion(json.dumps(value), "a" * 32)
+
+    def write_scene_capture(self, directory, row):
+        directory.mkdir()
+        (directory / "report.json").write_text(json.dumps(row), encoding="utf-8")
+        (directory / "color.rgba").write_bytes(bytes((0, 0, 0, 255)) * (160 * 120))
+        (directory / "depth.f64").write_bytes(struct.pack("<d", 1.) * (160 * 120))
+
+    def test_isolated_scene_capture_requires_exact_saved_result_lengths_and_finite_depth(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            baseline = self.scene_completion()
+            directory = Path(temporary) / "capture"
+            self.write_scene_capture(directory, baseline)
+            row, evidence = package.inspect_scene_capture(directory, json.dumps(baseline), "a" * 32)
+            self.assertEqual(row, baseline)
+            self.assertEqual(set(evidence["files"]), {"report.json", "color.rgba", "depth.f64"})
+            for value in (math.nan, math.inf, -0.01, 1.01):
+                (directory / "depth.f64").write_bytes(struct.pack("<d", value) + struct.pack("<d", 1.) * (160 * 120 - 1))
+                with self.subTest(value=value), self.assertRaisesRegex(ValueError, "depth"):
+                    package.inspect_scene_capture(directory, json.dumps(baseline), "a" * 32)
+            (directory / "depth.f64").write_bytes(struct.pack("<d", 1.) * (160 * 120))
+            (directory / "color.rgba").write_bytes(b"truncated")
+            with self.assertRaisesRegex(ValueError, "extent"):
+                package.inspect_scene_capture(directory, json.dumps(baseline), "a" * 32)
+            (directory / "color.rgba").write_bytes(bytes((0, 0, 0, 255)) * (160 * 120))
+            (directory / "report.json").write_text(json.dumps({**baseline, "draw_count": 1}), encoding="utf-8")
+            with self.assertRaisesRegex(ValueError, "completion"):
+                package.inspect_scene_capture(directory, json.dumps(baseline), "a" * 32)
+            (directory / "extra.txt").write_bytes(b"extra")
+            with self.assertRaisesRegex(ValueError, "inventory"):
+                package.inspect_scene_capture(directory, json.dumps(baseline), "a" * 32)
+
+    def launch_report(self, directory, working, system, mode, stdout, device, capture=None):
+        command = [str(directory / "bin/Runtime.exe")]
+        command += (["--check-package", str(directory / package.STARTUP)] if mode == "inspect" else
+                    ["--package", str(directory / package.STARTUP), "--extent", "160x120", "--frames", "2",
+                     "--device", device, "--validation", "off", "--capture-directory", str(capture)])
+        return {"mode": mode, "exit_code": 0, "timed_out": False, "elapsed_seconds": .05,
+                "stdout": stdout, "stderr": "", "module_poll_errors": 0,
+                "modules": [str(directory / name) for name in package.BINARIES],
+                "working_directory": str(working), "command": command, "arguments": "quoted fixture arguments",
+                "capture_directory": str(capture) if capture else None,
+                "environment": {"PATH": str(system / "System32"), "SystemRoot": str(system),
+                                "VK_LOADER_LAYERS_DISABLE": "~implicit~", "inherited_development_overrides": False}}
+
+    def test_isolated_scene_report_rejects_environment_cwd_arguments_and_failure_flags(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            directory, working, system, capture = root / "package", root / "cwd", root / "Windows", root / "capture"
+            working.mkdir()
+            report = self.launch_report(directory, working, system, "scene", "{}", "a" * 32, capture)
+            package.isolated_launch_report(report, "scene", directory, working, system, "a" * 32, capture)
+            (working / "driver-created").mkdir()
+            package.isolated_launch_report(report, "scene", directory, working, system, "a" * 32, capture)
+            for mutation in ("environment", "environment-type", "cwd", "command", "capture", "mode", "timeout", "stderr", "exit", "elapsed"):
+                value = copy.deepcopy(report)
+                if mutation == "environment":
+                    value["environment"]["inherited_development_overrides"] = True
+                elif mutation == "environment-type":
+                    value["environment"]["inherited_development_overrides"] = 0
+                elif mutation == "cwd":
+                    value["working_directory"] = str(directory)
+                elif mutation == "command":
+                    value["command"][1] = "--graphics"
+                elif mutation == "capture":
+                    value["capture_directory"] = str(directory)
+                elif mutation == "mode":
+                    value["mode"] = "graphics"
+                elif mutation == "timeout":
+                    value["timed_out"] = True
+                elif mutation == "stderr":
+                    value["stderr"] = "unexpected diagnostic"
+                elif mutation == "exit":
+                    value["exit_code"] = False
+                else:
+                    value["elapsed_seconds"] = math.nan
+                with self.subTest(mutation=mutation), self.assertRaises(ValueError):
+                    package.isolated_launch_report(value, "scene", directory, working, system, "a" * 32, capture)
+
+    def test_scene_package_checker_connects_one_cpu_inspection_and_two_isolated_captures(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            directory, record, shaders, payload, manifest, _ = self.scene_inputs(root / "inputs")
+            files, metadata = package.assemble_scene_package(payload, manifest, directory, record, shaders,
+                                                               content_notices={"CC0-1.0": b"Fixture waiver"})
+            relocated = root / "relocated package 世界"
+            published = package.publish(relocated, files, metadata)
+            expected_hash = package.sha256(relocated / "package-manifest.json")
+            system = root / "Windows"
+            calls = []
+
+            def invoke(command, *, cwd, timeout):
+                self.assertEqual(timeout, 30)
+                working = Path(command[command.index("-WorkingDirectory") + 1])
+                self.assertEqual(Path(cwd), working)
+                self.assertEqual(list(working.iterdir()), [])
+                device = command[command.index("-Device") + 1]
+                mode = "inspect" if "-Inspect" in command else "scene"
+                calls.append(mode)
+                capture = None
+                if mode == "inspect":
+                    value = {"format": "shark.package-inspection", "schema_version": 1, "status": "PASS",
+                             "renderer_initialized": False, "target": "windows-x86_64",
+                             **{key: record[key] for key in ("project", "world", "scene", "camera")},
+                             "startup_sha256": record["files"][package.STARTUP]["sha256"], "mesh_count": 1,
+                             "qualification": "NOT_RUN"}
+                else:
+                    value = {**self.scene_completion(), "adapter_uuid": device}
+                    capture = Path(command[command.index("-CaptureDirectory") + 1])
+                    self.write_scene_capture(capture, value)
+                    generated = working / "NVIDIA Corporation" / "umdlogs"
+                    generated.mkdir(parents=True)
+                    (generated / "fixture.log").write_bytes(b"driver output")
+                report = self.launch_report(relocated, working, system, mode, json.dumps(value), device, capture)
+                return ProcessResult(command, 0, json.dumps(report), "", False)
+
+            with patch.object(package, "run_process", side_effect=invoke), \
+                    patch.dict(os.environ, {"SystemRoot": str(system)}), \
+                    patch("windows_unelevated.process_security", return_value={"fixture": True}), \
+                    patch("windows_unelevated._assert_standard"):
+                result = package.check_package(relocated, expected_hash, ["a" * 32, "b" * 32], root / "results")
+            self.assertEqual(result["status"], "PASS", result["errors"])
+            self.assertEqual(result["checkpoint"], "14c")
+            self.assertEqual(result["qualification"], "NOT_RUN")
+            self.assertEqual(calls, ["inspect", "scene", "scene"])
+            self.assertEqual(result["inspection"]["content"]["camera"], record["camera"])
+            self.assertTrue(result["inspection"]["working_directory_initially_empty"])
+            self.assertEqual(result["inspection"]["working_directory_after"], [])
+            self.assertEqual(len(result["runs"]), 2)
+            self.assertNotEqual(result["runs"][0]["working_directory"], result["runs"][1]["working_directory"])
+            for row in result["runs"]:
+                self.assertTrue(row["working_directory_initially_empty"])
+                self.assertEqual(row["working_directory_after"], [
+                    {"path": "NVIDIA Corporation", "kind": "directory", "bytes": 0},
+                    {"path": "NVIDIA Corporation/umdlogs", "kind": "directory", "bytes": 0},
+                    {"path": "NVIDIA Corporation/umdlogs/fixture.log", "kind": "file", "bytes": 13}])
+            self.assertFalse(Path(result["working_directory"]).exists())
+            self.assertEqual(package.inspect_package(relocated, expected_hash), published)
+
+            retained = root / "shark-runtime-working-failure"
+            retained.mkdir()
+
+            def fail(command, *, cwd, timeout):
+                (Path(cwd) / "failure.log").write_bytes(b"inspect this failure")
+                return ProcessResult(command, 1, "", "injected launcher failure", False)
+
+            with patch.object(package, "run_process", side_effect=fail), \
+                    patch.object(package.tempfile, "mkdtemp", return_value=str(retained)), \
+                    patch.dict(os.environ, {"SystemRoot": str(system)}), \
+                    patch("windows_unelevated.process_security", return_value={"fixture": True}), \
+                    patch("windows_unelevated._assert_standard"):
+                failed = package.check_package(relocated, expected_hash, ["a" * 32, "b" * 32], root / "failure-results")
+            self.assertEqual(failed["status"], "FAIL")
+            self.assertEqual(failed["retained_working_directory"], str(retained))
+            self.assertEqual((retained / "inspection/failure.log").read_bytes(), b"inspect this failure")
+            self.assertEqual(failed["inspection"]["working_directory_after"],
+                             [{"path": "failure.log", "kind": "file", "bytes": 20}])
 
     def scene_inputs(self, root):
         """Independent byte fixture for package framing; no native/GPU claim."""

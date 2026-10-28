@@ -51,8 +51,12 @@ CPU validation with structured results and no renderer; actual package launch
 is restricted to Windows x86-64. Follow the
 [standalone export contract](../standalone-export.md) for formats and commands.
 
-The [export plan](../roadmap/export-plan.md) retains 14c for relocation, isolated
-environment/module inspection and actual package presentation on both current
-Windows GPUs. A local early scene export is not a dedicated server, MMO release,
+The [export plan](../roadmap/export-plan.md) records completed 14c relocation,
+isolated environment/module inspection and actual package presentation on both
+current Windows GPUs. The existing checker starts each scene launch in its own
+empty external working directory, records driver-created output, and checks
+unchanged package bytes plus complete presented captures. Isolation uses validation
+off; image oracles and required-validation rendering acceptance remain distinct.
+A local early scene export is not a dedicated server, MMO release,
 full material renderer or final cooked asset pipeline; those owners remain M08,
 later graphics assignments and 31.
