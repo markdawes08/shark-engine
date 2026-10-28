@@ -39,7 +39,8 @@ Full REQ-12 is complete under current-machine scope; the
 acceptance, independent fixture validation and applicable CPU/package checks.
 Assignment 13 follows [five checkpoints](../roadmap/scene-rendering-plan.md),
 with shared [Camera/MeshRenderer components](../render-components.md) and
-[prepared runtime content](../prepared-content.md). These CPU services do not
+[prepared runtime content](../prepared-content.md), and CPU
+[scene extraction/camera math](../scene-rendering.md). These CPU services do not
 yet draw an authored scene.
 Editor/Runtime currently provide `--cube`, `--graphics` and `--window` diagnostics
 with offline F6/F7 pause/step controls. Authored-scene rendering remains 13,
@@ -81,6 +82,7 @@ not establish file or gameplay-wire formats.
 | [0031](0031-gltf-material-assets.md) | Core materials, bounded engine payloads and typed resource integration through the asset owner |
 | [0032](0032-render-components.md) | Optional Camera/MeshRenderer values, shared authoring/persistence and runtime-safe asset identity |
 | [0033](0033-prepared-runtime-content.md) | Bounded prepared mesh/scene formats, immutable assets and built-in geometry without Runtime importers |
+| [0034](0034-scene-extraction.md) | Revisioned CPU extraction, full affine cameras, bounded local render coordinates and conservative frustum culling |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

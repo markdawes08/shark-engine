@@ -73,6 +73,9 @@ to Core. They use engine-owned bytes, identity, hashing and the existing Scene
 owner, without a renderer or source importer. Tools bridges cached glTF and
 authored captures to this representation. Runtime accesses the Core API through
 the existing Engine composition; no target dependency direction changes.
+13c adds pure [scene extraction and camera/bounds math](../scene-rendering.md)
+through the same Core owners so headless Tools can inspect visibility without
+linking Client. GPU submission and presentation remain exclusively in Client.
 
 There is no EngineCore-, EngineClient- or Engine-to-EngineTools dependency, even through a shared utility,
 generated header, static initializer, transitive target, or runtime plugin.

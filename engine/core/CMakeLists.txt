@@ -10,7 +10,9 @@ add_library(EngineCore STATIC
     src/prepared_scene.cpp
     src/project_path.cpp
     src/render_components.cpp
+    src/render_math.cpp
     src/scene.cpp
+    src/scene_render.cpp
     src/schema.cpp
     src/net_wire.cpp
     src/net_fault_link.cpp

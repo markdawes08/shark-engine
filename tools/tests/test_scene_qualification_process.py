@@ -35,6 +35,7 @@ SCENE_SURFACES = {
     'asset.gltf.inspect', 'asset.gltf.convert', 'asset.gltf.textures',
     'asset.gltf.materials', 'asset.gltf.asset.convert', 'asset.gltf.asset.encode', 'asset.gltf.asset.decode',
     'content.mesh.prepare', 'content.scene.prepare', 'content.gltf-scene.prepare',
+    'scene.render.extract',
 }
 GPU_SURFACES = {'tools.scene-runner.gpu'}
 FEATUREWORLD_CASES = [
@@ -43,6 +44,7 @@ FEATUREWORLD_CASES = [
     'featureworld.asset-import', 'featureworld.asset-jobs', 'featureworld.asset-pipeline',
     'featureworld.gltf-source', 'featureworld.gltf-geometry', 'featureworld.gltf-textures',
     'featureworld.gltf-assets', 'featureworld.render-components', 'featureworld.prepared-content',
+    'featureworld.scene-extraction',
 ]
 
 

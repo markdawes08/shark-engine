@@ -61,11 +61,17 @@ retry/persistence behavior; see the [current guide](featureworld.md). Earlier
 counts above describe the original checkpoints, not the current catalog.
 
 13b adds three preparation services and a connected prepared-content case, bringing
-the current inventory to 54 CPU surfaces and fifteen native cases. Core-only
+the then-current inventory to 54 CPU surfaces and fifteen native cases. Core-only
 fixtures validate bounded runtime bytes and ownership; the saved baseline now
 uses the built-in cube. No GPU acceptance is inferred from preparation/loading.
 
-The fixture runs all fifteen saved-world cases through the public supervisor, then
+13c adds one extraction service and the sixteenth native case, extending the
+independent inventory to 55 CPU surfaces and one external GPU command. It reads
+a prepared saved scene through the public CPU API and checks camera/origin math,
+reflected bounds/normals, culling, invalid references and retained lifetime. The
+process family has 34 checks; actual GPU drawing remains a later checkpoint.
+
+The fixture runs all sixteen saved-world cases through the public supervisor, then
 the intentional failing assertion through the same executable/result path. It
 compares stdout with create-only published results, native results and every
 artifact's bytes/hash. Failure remains exit 1 with the original case, phase,

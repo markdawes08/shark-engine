@@ -20,11 +20,11 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**13a/13b are complete under the current-machine scope.** The
-[latest handoff](docs/handoffs/13b-prepared-content.md) records prepared mesh/scene
-loading, immutable asset ownership and built-in geometry following the shared
-Camera/MeshRenderer components. Full assignment 12 remains complete.
-**Next: 13c, scene extraction, camera math, bounds and culling.** Completed
+**13a/13b/13c are complete under the current-machine scope.** The
+[latest handoff](docs/handoffs/13c-scene-extraction.md) records CPU scene extraction,
+camera math, conservative bounds and culling on the shared components and
+immutable prepared assets. Full assignment 12 remains complete.
+**Next: 13d, depth-tested offscreen rendering and viewport resize.** Completed
 checkpoints and their original results are indexed in
 [requirements and coverage](docs/coverage/README.md); historical counts are not
 recurring verification requirements. The user's [nonblocking backlog decision](docs/backlog.md)
@@ -45,7 +45,9 @@ Current capabilities include:
 - CPU [scene ownership](docs/scene-contracts.md), [Name/Transform and hierarchy](docs/transforms.md),
   [schemas and revisioned inspection](docs/scene-inspection.md),
   [source codecs](docs/source-documents.md), [capture/activation](docs/authored-scenes.md)
-  and [project-file conflict handling](docs/project-files.md).
+  and [project-file conflict handling](docs/project-files.md), plus
+  [prepared content](docs/prepared-content.md) and CPU
+  [render extraction/cameras/culling](docs/scene-rendering.md).
 - Shared [authoring commands](docs/authoring-commands.md),
   [atomic batches and preview](docs/authoring-transactions.md),
   [undo/redo](docs/authoring-history.md) and [retained retries](docs/authoring-retries.md)

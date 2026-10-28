@@ -27,8 +27,8 @@ and bytes. Magic is `SHKMESH1`, version 1. Payloads are capped at 2 MiB and logi
 decoded allocation at 16 MiB, with bounded mesh/primitive/vertex/index counts.
 Nonfinite attributes, invalid factors, malformed triangle/index structure,
 invalid versions, trailing bytes, invalid identity and digest mismatch reject.
-Bounds are derived from validated positions by the later extraction owner rather
-than trusting serialized bounding boxes. This is not a packed GPU vertex layout.
+Bounds are derived from validated positions by [CPU extraction](scene-rendering.md)
+rather than trusting serialized bounding boxes. This is not a packed GPU vertex layout.
 
 `PreparedAssets::create` accepts explicit `{AssetId, payload span}` inputs, copies
 decoded data into owned immutable storage and includes the two built-ins. At most
@@ -77,8 +77,8 @@ the world anchor. Missing assets or out-of-range mesh indices reject before a
 new owner is returned, including hidden meshes. No caller's existing scene is
 modified on failure. Successful reload produces a different scene incarnation;
 entity handles/references remain scoped to their original owner. `scene()` exposes
-normal Core mutation for gameplay, not Tools authoring history. Later extraction
-must resolve any renderer references introduced by subsequent Core mutations.
+normal Core mutation for gameplay, not Tools authoring history. [CPU extraction](scene-rendering.md)
+resolves renderer references again after subsequent Core mutations.
 
 ## Tools preparation
 

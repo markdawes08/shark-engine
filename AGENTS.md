@@ -40,8 +40,8 @@ Linux graphics is outside scope. Mac support, CI, packages and hardware requirem
 are retired by [ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md).
 Hosted CI is supplemental; remote branch protection is unchanged.
 
-**Current handoff: [13b, prepared content](docs/handoffs/13b-prepared-content.md).**
-13a/13b are complete; next is **13c, scene extraction, cameras, bounds and culling** in
+**Current handoff: [13c, scene extraction](docs/handoffs/13c-scene-extraction.md).**
+13a/13b/13c are complete; next is **13d, depth-tested offscreen rendering and resize** in
 the [five rendering checkpoints](docs/roadmap/scene-rendering-plan.md). Follow
 [ADR 0032](docs/architecture/0032-render-components.md) and the
 [component contract](docs/render-components.md): optional Camera/MeshRenderer share
@@ -50,8 +50,14 @@ fields explicitly. [Prepared content](docs/prepared-content.md) and
 [ADR 0033](docs/architecture/0033-prepared-runtime-content.md) define Core-only
 byte loading, immutable asset snapshots and reserved built-in cube/plane IDs.
 Tools prepares cached glTF/captured scenes; Runtime must retain its importer
-exclusion. Loading validates current references, not later Core mutations; 13c
-must resolve those during extraction. Full REQ-13 remains
+exclusion. [CPU extraction](docs/scene-rendering.md) and
+[ADR 0034](docs/architecture/0034-scene-extraction.md) define revisioned owned
+snapshots, full affine camera/model transforms, conservative bounds/culling and
+explicit bounded local origins distinct from global cell anchors. Extraction
+resolves post-load Core mesh mutations again, including hidden references.
+Preserve both new 60-second families (seed 1337), existing cases/limits and the
+sixteenth FeatureWorld case. GPU packing, draws and viewport resize are 13d;
+Runtime scene launch/connected acceptance remain 13e. Full REQ-13 remains
 NOT_RUN. Current Runtime/Editor window/graphics/cube
 flags are diagnostics; there is no game-authoring editor UI or scene renderer yet.
 Shared CPU authoring services exist; terminal/editor adapters remain 15/16.

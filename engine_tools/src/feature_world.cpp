@@ -1,5 +1,6 @@
 #include "shark/tools/feature_world.hpp"
 
+#include "shark/scene_render.hpp"
 #include "shark/schema.hpp"
 #include "shark/tools/asset_catalog.hpp"
 #include "shark/tools/asset_import.hpp"
@@ -14,22 +15,27 @@
 #include <array>
 #include <bit>
 #include <chrono>
+#include <cmath>
 #include <condition_variable>
 #include <fstream>
 #include <iterator>
 #include <mutex>
+#include <numbers>
 #include <thread>
 #include <utility>
 
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 15> case_ids{
-    "featureworld.components",   "featureworld.commands",          "featureworld.batches-history",
-    "featureworld.retries",      "featureworld.persistence",       "featureworld.asset-identity",
-    "featureworld.asset-import", "featureworld.asset-jobs",        "featureworld.asset-pipeline",
-    "featureworld.gltf-source",  "featureworld.gltf-geometry",     "featureworld.gltf-textures",
-    "featureworld.gltf-assets",  "featureworld.render-components", "featureworld.prepared-content"};
+constexpr std::array<std::string_view, 16> case_ids{
+    "featureworld.components",       "featureworld.commands",
+    "featureworld.batches-history",  "featureworld.retries",
+    "featureworld.persistence",      "featureworld.asset-identity",
+    "featureworld.asset-import",     "featureworld.asset-jobs",
+    "featureworld.asset-pipeline",   "featureworld.gltf-source",
+    "featureworld.gltf-geometry",    "featureworld.gltf-textures",
+    "featureworld.gltf-assets",      "featureworld.render-components",
+    "featureworld.prepared-content", "featureworld.scene-extraction"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -1673,6 +1679,114 @@ void prepared_content(SceneRunContext& context) {
             "Corrupt replacement changed valid runtime asset ownership");
     unchanged(context, before);
 }
+void scene_extraction(SceneRunContext& context) {
+    const auto before = take(context.owner().capture());
+    const auto bytes = take(prepare_scene(context.owner(), before.revision));
+    const auto assets = take(PreparedAssets::create());
+    auto loaded = take(LoadedPreparedScene::load(bytes, assets));
+    auto& scene = loaded->scene();
+    const auto camera_handle = take(scene.find(EntityIdentity{root()}));
+    const auto mesh_handle = take(scene.find(EntityIdentity{other()}));
+    Camera camera;
+    camera.vertical_fov_radians = std::numbers::pi / 2.0;
+    camera.near_clip = 1;
+    camera.far_clip = 9;
+    take(scene.set_camera(camera_handle, camera));
+    Transform placement;
+    placement.translation = {10, 0, -5};
+    placement.scale = {-2, 1, 1};
+    take(scene.set_transform(mesh_handle, placement));
+    const auto current_revision = [&scene] {
+        const auto stats = take(scene.stats());
+        return SceneRevision{stats.instance, stats.revision};
+    };
+    RenderExtractionOptions options{camera_handle, current_revision()};
+    options.viewport = {800, 400};
+    options.origin = {{10, 0, 0}, 7, loaded->world_origin()};
+    const auto visible = take(extract_render_scene(scene, *assets, options));
+    require(context,
+            visible.revision() == options.expected_revision &&
+                visible.camera_entity().handle == camera_handle && visible.stats().entities == 4 &&
+                visible.stats().mesh_instances == 1 && visible.stats().visible == 1 &&
+                visible.records().size() == 1,
+            "Saved scene did not extract one checked cube from its selected camera");
+    require(context,
+            visible.origin() == options.origin &&
+                visible.origin().world_anchor == before.scene.world_origin &&
+                visible.camera().view == math::Mat4{1},
+            "Render-local origin lost the saved global anchor or entered its view matrix");
+    const auto& record = visible.records().front();
+    const auto near_vec = [](const math::Vec3& actual, const math::Vec3& expected) {
+        return std::abs(actual.x - expected.x) < 1e-10 && std::abs(actual.y - expected.y) < 1e-10 &&
+               std::abs(actual.z - expected.z) < 1e-10;
+    };
+    require(context,
+            record.entity.handle == mesh_handle && record.mesh_index == 0 && record.mirrored &&
+                record.asset == take(assets->find(builtin_cube_asset_id())) &&
+                record.world_matrix[0][0] == -2 && record.world_matrix[3][2] == -5 &&
+                record.normal_matrix[0][0] == -0.5,
+            "Extracted cube lost checked identity, shared ownership or reflected normal transform");
+    require(context,
+            record.local_bounds == RenderBounds{{-0.5, -0.5, -0.5}, {0.5, 0.5, 0.5}} &&
+                near_vec(record.world_bounds.minimum, {-1, -0.5, -5.5}) &&
+                near_vec(record.world_bounds.maximum, {1, 0.5, -4.5}),
+            "Cube bounds differ from independently specified transformed corners");
+    require(context,
+            std::abs(visible.camera().projection[0][0] - 0.5) < 1e-12 &&
+                std::abs(visible.camera().projection[1][1] + 1.0) < 1e-12 &&
+                visible.camera().projection[2][2] == -1.125 &&
+                visible.camera().projection[3][2] == -1.125 &&
+                visible.camera().projection[2][3] == -1,
+            "Perspective extraction lost aspect, one Y flip or conventional Vulkan depth");
+    require(context,
+            visible.stats().unique_meshes == 1 && visible.stats().bounds_vertices == 24 &&
+                visible.stats().hidden == 0 && visible.stats().culled == 0,
+            "Extraction accounting differs from the built-in cube workload");
+
+    placement.translation.x = 24;
+    take(scene.set_transform(mesh_handle, placement));
+    require(context, !extract_render_scene(scene, *assets, options),
+            "Extraction accepted a stale scene revision after a Core mutation");
+    options.expected_revision = current_revision();
+    const auto culled = take(extract_render_scene(scene, *assets, options));
+    require(context, culled.records().empty() && culled.stats().culled == 1,
+            "Perspective frustum retained a cube beyond its right plane");
+    options.frustum_culling = false;
+    const auto uncull = take(extract_render_scene(scene, *assets, options));
+    require(context, uncull.records().size() == 1 && uncull.stats().culled == 0,
+            "Explicit culling disable changed visibility or lost the existing mesh");
+    options.frustum_culling = true;
+    camera.projection = CameraProjection::orthographic;
+    camera.orthographic_height = 20;
+    take(scene.set_camera(camera_handle, camera));
+    options.expected_revision = current_revision();
+    const auto orthographic = take(extract_render_scene(scene, *assets, options));
+    require(context,
+            orthographic.records().size() == 1 && orthographic.camera().projection[0][0] == 0.05 &&
+                orthographic.camera().projection[1][1] == -0.1,
+            "Orthographic camera failed to admit the same cube within its wider volume");
+    take(scene.set_mesh_renderer(mesh_handle, MeshRenderer{builtin_cube_asset_id(), 0, false}));
+    options.expected_revision = current_revision();
+    const auto hidden = take(extract_render_scene(scene, *assets, options));
+    require(context,
+            hidden.records().empty() && hidden.stats().hidden == 1 && hidden.stats().culled == 0,
+            "Hidden mesh was drawn or counted as a frustum rejection");
+    take(scene.set_mesh_renderer(mesh_handle, MeshRenderer{id<AssetId>('c'), 0, false}));
+    options.expected_revision = current_revision();
+    require(context,
+            !extract_render_scene(scene, *assets, options) &&
+                current_revision() == options.expected_revision,
+            "Post-load missing hidden reference escaped extraction or changed its Scene");
+    loaded = take(LoadedPreparedScene::load(bytes, assets));
+    const auto reloaded_stats = take(loaded->scene().stats());
+    options.expected_revision = {reloaded_stats.instance, reloaded_stats.revision};
+    require(context,
+            !extract_render_scene(loaded->scene(), *assets, options) &&
+                record.asset->meshes[0].primitives[0].vertices.size() == 24 &&
+                near_vec(record.world_bounds.minimum, {-1, -0.5, -5.5}),
+            "Reload revived the old camera or invalidated an owned render snapshot");
+    unchanged(context, before);
+}
 } // namespace
 
 std::span<const std::string_view> feature_world_case_ids() noexcept {
@@ -1740,6 +1854,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 14:
                         prepared_content(context);
+                        break;
+                    case 15:
+                        scene_extraction(context);
                         break;
                     default:
                         break;

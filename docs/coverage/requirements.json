@@ -2689,6 +2689,28 @@
           "docs/prepared-content.md"
         ],
         "fixture_reason": "Engine-owned byte codecs, immutable complete asset snapshots, reserved built-in cube/plane IDs and complete Core Scene loading without Tools or presentation dependencies. Existing source/import payloads remain unchanged."
+      },
+      {
+        "id": "core.scene-extraction",
+        "name": "Revisioned scene extraction, cameras, bounds and frustum culling",
+        "requirement_ids": [
+          "REQ-13"
+        ],
+        "test_ids": [
+          "shark.core.render-math",
+          "shark.core.scene-render",
+          "shark.tools.featureworld"
+        ],
+        "test_sources": [
+          "tests/render_math_tests.cpp",
+          "tests/scene_render_tests.cpp",
+          "tests/feature_world_tests.cpp"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "docs/scene-rendering.md"
+        ],
+        "fixture_reason": "Core-only extraction reads one checked committed Scene revision into owned render records with immutable prepared mesh leases. Independent CPU geometry/math cases verify perspective and orthographic Vulkan projections, full affine transforms and normals, mirrored parity, conservative bounds/culling, explicit bounded local origins, reference validation and lifetime. Global cell anchors remain separate; actual GPU drawing remains 13d."
       }
     ],
     "components": [
@@ -4637,6 +4659,36 @@
         "featureworld_cases": [
           "featureworld.prepared-content"
         ]
+      },
+      {
+        "id": "scene.render.extract",
+        "name": "extract_render_scene / make_render_camera",
+        "requirement_ids": [
+          "REQ-13"
+        ],
+        "test_ids": [
+          "shark.core.render-math",
+          "shark.core.scene-render",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/render_math_tests.cpp",
+          "tests/scene_render_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/scene-rendering.md"
+        ],
+        "fixture_reason": "The CPU C++ extraction service is shared by Runtime and headless Tools, without a new terminal/editor adapter. A prepared saved FeatureWorld scene exercises explicit camera selection, origin/anchor separation, reflected cube bounds/normals, perspective/orthographic culling, hidden and invalid post-load references, retained snapshot lifetime and stale camera rejection after reload. The original authored scene, IDs and revision remain unchanged; no GPU visibility or rendering-quality claim follows from these CPU checks.",
+        "featureworld_cases": [
+          "featureworld.scene-extraction"
+        ]
       }
     ],
     "lua_api": []
@@ -4659,7 +4711,8 @@
       "featureworld.gltf-textures",
       "featureworld.gltf-assets",
       "featureworld.render-components",
-      "featureworld.prepared-content"
+      "featureworld.prepared-content",
+      "featureworld.scene-extraction"
     ],
     "case_source": "engine_tools/src/feature_world.cpp"
   }
