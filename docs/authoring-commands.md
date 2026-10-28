@@ -15,14 +15,19 @@ Core's existing ID generation can supply it before constructing the command.
 
 | Command | Behavior |
 | --- | --- |
-| `CreateEntityCommand` | Create an ID with Name, local Transform and optional parent ID |
+| `CreateEntityCommand` | Create an ID with Name, local Transform, optional parent ID and optional Camera/MeshRenderer |
 | `DeleteEntityCommand` | Delete the target and its complete subtree |
 | `SetNameCommand` | Validate and set the mandatory display Name |
 | `SetTransformCommand` | Validate/canonicalize local TRS and all affected world transforms |
 | `ReparentEntityCommand` | Change parent using explicit keep-local or keep-world semantics |
+| `SetCameraCommand` | Validate and add/update Camera; an empty optional removes it |
+| `SetMeshRendererCommand` | Add/update the asset ID, mesh index and visibility; an empty optional removes the component |
 
-Name/Transform remain mandatory; removal and unknown component types are not
-supported. Validation uses the existing [component schemas](scene-inspection.md)
+Name/Transform remain mandatory and cannot be removed; unknown component types
+reject. Optional [Camera/MeshRenderer](render-components.md) follow
+[ADR 0032](architecture/0032-render-components.md). These edits store presentation
+values without selecting an active camera, loading assets or rendering.
+Validation uses the existing [component schemas](scene-inspection.md)
 and [transform/hierarchy rules](transforms.md), including representability,
 cycles, depth and composed-transform limits. Public `scene()` is read-only even
 on a mutable owner. It cannot enqueue, commit, close or otherwise mutate the Scene.

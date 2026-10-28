@@ -46,6 +46,8 @@ struct Scene::Impl {
         std::vector<EntityHandle> children;
         math::Mat4 world;
         std::size_t depth;
+        std::optional<Camera> camera;
+        std::optional<MeshRenderer> mesh_renderer;
     };
     struct Slot {
         entt::entity entity{entt::null};
@@ -65,7 +67,16 @@ struct Scene::Impl {
         std::optional<EntityHandle> parent;
         ReparentMode mode;
     };
-    using Mutation = std::variant<EntitySeed, EntityHandle, Rename, ChangeTransform, ChangeParent>;
+    struct ChangeCamera {
+        EntityHandle handle;
+        std::optional<Camera> camera;
+    };
+    struct ChangeMeshRenderer {
+        EntityHandle handle;
+        std::optional<MeshRenderer> renderer;
+    };
+    using Mutation = std::variant<EntitySeed, EntityHandle, Rename, ChangeTransform, ChangeParent,
+                                  ChangeCamera, ChangeMeshRenderer>;
     struct Pending {
         SceneMutationTicket ticket;
         Mutation mutation;
@@ -215,6 +226,16 @@ struct Scene::Impl {
         if (auto checked = validate_name(seed.name); !checked) {
             return checked.error();
         }
+        if (seed.camera) {
+            if (auto checked = validate_camera(*seed.camera); !checked) {
+                return checked.error();
+            }
+        }
+        if (seed.mesh_renderer) {
+            if (auto checked = validate_mesh_renderer(*seed.mesh_renderer); !checked) {
+                return checked.error();
+            }
+        }
         auto canonical = canonicalize_transform(seed.transform);
         if (!canonical) {
             return canonical.error();
@@ -316,6 +337,12 @@ struct Scene::Impl {
             result.hierarchy =
                 SceneInspectedHierarchy{entity.parent, entity.children.size(), entity.depth};
         }
+        if (fields.camera) {
+            result.camera = entity.camera;
+        }
+        if (fields.mesh_renderer) {
+            result.mesh_renderer = entity.mesh_renderer;
+        }
         return result;
     }
     Result<EntityHandle> insert(EntitySeed seed) {
@@ -355,7 +382,7 @@ struct Scene::Impl {
             registry.emplace<Record>(native, seed.identity, seed_authority(seed),
                                      std::move(seed.name), seed.transform, seed.parent,
                                      std::vector<EntityHandle>{}, prepared.value().world,
-                                     prepared.value().depth);
+                                     prepared.value().depth, seed.camera, seed.mesh_renderer);
             const EntityHandle handle{instance, static_cast<std::uint32_t>(index),
                                       slots[index].generation};
             identities.emplace(seed.identity, handle);
@@ -449,6 +476,46 @@ struct Scene::Impl {
         }
         entity.transform = canonical.value();
         publish_worlds(updates.value());
+        ++revision;
+        return change.handle;
+    }
+    Result<EntityHandle> camera(ChangeCamera change) {
+        if (auto checked = checked_slot(change.handle); !checked) {
+            return checked.error();
+        }
+        if (change.camera) {
+            if (auto checked = validate_camera(*change.camera); !checked) {
+                return checked.error();
+            }
+        }
+        auto& entity = record(change.handle);
+        if (entity.camera == change.camera) {
+            return change.handle;
+        }
+        if (auto checked = check_revision(); !checked) {
+            return checked.error();
+        }
+        entity.camera = change.camera;
+        ++revision;
+        return change.handle;
+    }
+    Result<EntityHandle> mesh_renderer(ChangeMeshRenderer change) {
+        if (auto checked = checked_slot(change.handle); !checked) {
+            return checked.error();
+        }
+        if (change.renderer) {
+            if (auto checked = validate_mesh_renderer(*change.renderer); !checked) {
+                return checked.error();
+            }
+        }
+        auto& entity = record(change.handle);
+        if (entity.mesh_renderer == change.renderer) {
+            return change.handle;
+        }
+        if (auto checked = check_revision(); !checked) {
+            return checked.error();
+        }
+        entity.mesh_renderer = change.renderer;
         ++revision;
         return change.handle;
     }
@@ -665,6 +732,21 @@ Result<void> Scene::set_transform(EntityHandle handle, Transform transform) {
                                 "scene.set-transform");
 }
 
+Result<void> Scene::set_camera(EntityHandle handle, std::optional<Camera> camera) {
+    if (auto checked = impl_->check_immediate(); !checked) {
+        return checked;
+    }
+    return impl_->finish_change(impl_->camera({handle, camera}), handle, "scene.set-camera");
+}
+
+Result<void> Scene::set_mesh_renderer(EntityHandle handle, std::optional<MeshRenderer> renderer) {
+    if (auto checked = impl_->check_immediate(); !checked) {
+        return checked;
+    }
+    return impl_->finish_change(impl_->mesh_renderer({handle, renderer}), handle,
+                                "scene.set-mesh-renderer");
+}
+
 Result<void> Scene::reparent(EntityHandle handle, std::optional<EntityHandle> parent,
                              ReparentMode mode) {
     if (auto checked = impl_->check_immediate(); !checked) {
@@ -689,7 +771,9 @@ Result<SceneEntityState> Scene::entity_state(EntityHandle handle) const {
                                 entity.parent,
                                 entity.children,
                                 entity.world,
-                                entity.depth};
+                                entity.depth,
+                                entity.camera,
+                                entity.mesh_renderer};
     } catch (...) {
         return impl_->contextualize(
             scene_error(ErrorCode::execution_failed, "entity state copy allocation failed"), handle,
@@ -929,6 +1013,40 @@ Result<SceneMutationTicket> Scene::defer_set_transform(EntityHandle handle, Tran
     return impl_->enqueue(Impl::ChangeTransform{handle, canonical.value()});
 }
 
+Result<SceneMutationTicket> Scene::defer_set_camera(EntityHandle handle,
+                                                    std::optional<Camera> camera) {
+    if (auto checked = impl_->check_live(); !checked) {
+        return checked.error();
+    }
+    if (auto checked = impl_->checked_slot(handle); !checked) {
+        return checked.error();
+    }
+    if (camera) {
+        if (auto checked = validate_camera(*camera); !checked) {
+            return impl_->contextualize(std::move(checked).error(), handle,
+                                        "scene.defer-set-camera");
+        }
+    }
+    return impl_->enqueue(Impl::ChangeCamera{handle, camera});
+}
+
+Result<SceneMutationTicket> Scene::defer_set_mesh_renderer(EntityHandle handle,
+                                                           std::optional<MeshRenderer> renderer) {
+    if (auto checked = impl_->check_live(); !checked) {
+        return checked.error();
+    }
+    if (auto checked = impl_->checked_slot(handle); !checked) {
+        return checked.error();
+    }
+    if (renderer) {
+        if (auto checked = validate_mesh_renderer(*renderer); !checked) {
+            return impl_->contextualize(std::move(checked).error(), handle,
+                                        "scene.defer-set-mesh-renderer");
+        }
+    }
+    return impl_->enqueue(Impl::ChangeMeshRenderer{handle, renderer});
+}
+
 Result<SceneMutationTicket>
 Scene::defer_reparent(EntityHandle handle, std::optional<EntityHandle> parent, ReparentMode mode) {
     if (auto checked = impl_->check_live(); !checked) {
@@ -974,6 +1092,12 @@ Result<SceneMutationReport> Scene::apply_deferred() {
                         } else if constexpr (std::is_same_v<Type, Impl::ChangeTransform>) {
                             return {pending.ticket, SceneMutationKind::set_transform,
                                     impl_->transform(mutation)};
+                        } else if constexpr (std::is_same_v<Type, Impl::ChangeCamera>) {
+                            return {pending.ticket, SceneMutationKind::set_camera,
+                                    impl_->camera(mutation)};
+                        } else if constexpr (std::is_same_v<Type, Impl::ChangeMeshRenderer>) {
+                            return {pending.ticket, SceneMutationKind::set_mesh_renderer,
+                                    impl_->mesh_renderer(mutation)};
                         } else {
                             return {pending.ticket, SceneMutationKind::reparent,
                                     impl_->reparent(mutation)};

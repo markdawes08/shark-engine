@@ -8,14 +8,15 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**Full REQ-12 is complete under current-machine scope.** The latest
-[12e handoff](../handoffs/12e-gltf-qualification.md) and
-[results](evidence/12e-gltf-qualification.json) record integrated static glTF
-qualification. Next is assignment 13, basic scene rendering and cameras.
+**13a is complete under current-machine scope.** The latest
+[handoff](../handoffs/13a-render-components.md) records shared Camera/MeshRenderer
+validation, authoring and persistence. Next is 13b in the
+[rendering checkpoints](../roadmap/scene-rendering-plan.md); full REQ-13 remains
+NOT_RUN. [Full REQ-12](../handoffs/12e-gltf-qualification.md) remains complete.
 Terminal/editor adapters remain 15/16; no playable authoring editor or scene
 renderer is claimed by the CPU import work.
 
-FeatureWorld has thirteen native cases, four saved entity IDs and 47 CPU surfaces
+FeatureWorld has fourteen native cases, four saved entity IDs and 51 CPU surfaces
 plus one separately qualified GPU command. Real source/geometry/texture/material/
 payload cases supplement owner/cache/job paths. The manifest and independent
 executable inventories, not this prose, define the actual mappings. Lua stays
@@ -105,3 +106,4 @@ remains authoritative for individual requirement status.
 | 10 FeatureWorld | [Qualification](../featureworld-qualification.md), [handoff](../handoffs/10d-integrated-qualification.md) |
 | 11 assets | [Qualification](../asset-qualification.md), [handoff](../handoffs/11d-asset-qualification.md) |
 | 12 static glTF | [Qualification](../gltf-qualification.md), [handoff](../handoffs/12e-gltf-qualification.md) |
+| 13a components (partial REQ-13) | [Component contract](../render-components.md), [handoff](../handoffs/13a-render-components.md) |

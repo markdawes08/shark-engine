@@ -353,6 +353,71 @@ Transform read_transform(const Json& object, const std::string& path, bool legac
     return validated_transform(result, path);
 }
 
+double number_value(const Json& value, const std::string& path) {
+    if (!value.is_number()) {
+        fail(path, "Expected a finite JSON number");
+    }
+    const auto result = value.get<double>();
+    if (!std::isfinite(result)) {
+        fail(path, "Expected a finite JSON number");
+    }
+    return result;
+}
+
+Camera read_camera(const Json& object, const std::string& path) {
+    members(object, {"schema_version"},
+            {"projection", "vertical_fov_radians", "orthographic_height", "near_clip", "far_clip"},
+            path);
+    static_cast<void>(version(object.at("schema_version"), path + "/schema_version", false));
+    Camera result;
+    if (object.contains("projection")) {
+        const auto projection = string_value(object.at("projection"), path + "/projection");
+        if (projection == "perspective") {
+            result.projection = CameraProjection::perspective;
+        } else if (projection == "orthographic") {
+            result.projection = CameraProjection::orthographic;
+        } else {
+            fail(path + "/projection", "Camera projection must be perspective or orthographic");
+        }
+    }
+    if (object.contains("vertical_fov_radians")) {
+        result.vertical_fov_radians =
+            number_value(object.at("vertical_fov_radians"), path + "/vertical_fov_radians");
+    }
+    if (object.contains("orthographic_height")) {
+        result.orthographic_height =
+            number_value(object.at("orthographic_height"), path + "/orthographic_height");
+    }
+    if (object.contains("near_clip")) {
+        result.near_clip = number_value(object.at("near_clip"), path + "/near_clip");
+    }
+    if (object.contains("far_clip")) {
+        result.far_clip = number_value(object.at("far_clip"), path + "/far_clip");
+    }
+    return checked(validate_camera(result), path);
+}
+
+MeshRenderer read_mesh_renderer(const Json& object, const std::string& path) {
+    members(object, {"schema_version", "asset_id"}, {"mesh_index", "visible"}, path);
+    static_cast<void>(version(object.at("schema_version"), path + "/schema_version", false));
+    MeshRenderer result{id_value<AssetId>(object.at("asset_id"), path + "/asset_id")};
+    if (object.contains("mesh_index")) {
+        const auto& index = object.at("mesh_index");
+        if (!index.is_number_integer() || index < Json(0) ||
+            index > Json(std::numeric_limits<std::uint32_t>::max())) {
+            fail(path + "/mesh_index", "Mesh index must be an unsigned 32-bit integer");
+        }
+        result.mesh_index = index.get<std::uint32_t>();
+    }
+    if (object.contains("visible")) {
+        if (!object.at("visible").is_boolean()) {
+            fail(path + "/visible", "Mesh visibility must be a JSON boolean");
+        }
+        result.visible = object.at("visible").get<bool>();
+    }
+    return checked(validate_mesh_renderer(result), path);
+}
+
 std::int64_t cell_value(const Json& value, const std::string& path) {
     if (!value.is_number_integer()) {
         fail(path, "World cell must be an integer");
@@ -571,7 +636,8 @@ SourceEntity read_entity(const Json& object, const std::string& path, bool legac
         } else {
             const auto& components = object.at("components");
             const auto components_path = path + "/components";
-            members(components, {"shark.name", "shark.transform"}, {}, components_path);
+            members(components, {"shark.name", "shark.transform"},
+                    {"shark.camera", "shark.mesh_renderer"}, components_path);
             const auto name_path = components_path + "/shark.name";
             const auto& name = components.at("shark.name");
             members(name, {"schema_version"}, {"value"}, name_path);
@@ -584,6 +650,14 @@ SourceEntity read_entity(const Json& object, const std::string& path, bool legac
             }
             entity.transform = read_transform(components.at("shark.transform"),
                                               components_path + "/shark.transform", false);
+            if (components.contains("shark.camera")) {
+                entity.camera =
+                    read_camera(components.at("shark.camera"), components_path + "/shark.camera");
+            }
+            if (components.contains("shark.mesh_renderer")) {
+                entity.mesh_renderer = read_mesh_renderer(components.at("shark.mesh_renderer"),
+                                                          components_path + "/shark.mesh_renderer");
+            }
         }
         return entity;
     } catch (SourceFailure& failure) {
@@ -668,7 +742,14 @@ SceneDocument validate_scene(const SceneDocument& document) {
                 {entity.id, entity.parent,
                  validated_name(entity.name, path + "/components/shark.name/value"),
                  validated_transform(entity.transform, path + "/components/shark.transform"),
-                 extras.parse(entity.extras_json, path + "/extras", 3)});
+                 extras.parse(entity.extras_json, path + "/extras", 3),
+                 entity.camera ? std::optional{checked(validate_camera(*entity.camera),
+                                                       path + "/components/shark.camera")}
+                               : std::nullopt,
+                 entity.mesh_renderer
+                     ? std::optional{checked(validate_mesh_renderer(*entity.mesh_renderer),
+                                             path + "/components/shark.mesh_renderer")}
+                     : std::nullopt});
         } catch (SourceFailure& failure) {
             failure.error.context.entity_id = entity.id.value().to_string();
             throw;
@@ -708,6 +789,25 @@ Json scene_json(const SceneDocument& document) {
                {transform.rotation.x, transform.rotation.y, transform.rotation.z,
                 transform.rotation.w}},
               {"scale", {transform.scale.x, transform.scale.y, transform.scale.z}}}}};
+        if (entity.camera) {
+            const auto& camera = *entity.camera;
+            components["shark.camera"] = Json{
+                {"schema_version", component_schema_version},
+                {"projection", camera.projection == CameraProjection::perspective ? "perspective"
+                                                                                  : "orthographic"},
+                {"vertical_fov_radians", camera.vertical_fov_radians},
+                {"orthographic_height", camera.orthographic_height},
+                {"near_clip", camera.near_clip},
+                {"far_clip", camera.far_clip}};
+        }
+        if (entity.mesh_renderer) {
+            const auto& renderer = *entity.mesh_renderer;
+            components["shark.mesh_renderer"] =
+                Json{{"schema_version", component_schema_version},
+                     {"asset_id", renderer.asset.value().to_string()},
+                     {"mesh_index", renderer.mesh_index},
+                     {"visible", renderer.visible}};
+        }
         entities.push_back(
             Json{{"entity_id", entity.id.value().to_string()},
                  {"parent", entity.parent ? Json(entity.parent->value().to_string()) : Json{}},

@@ -1,10 +1,14 @@
 #pragma once
 
+#include "shark/asset_id.hpp"
 #include "shark/tools/source_document.hpp"
 
 namespace shark::tools {
 
-using AssetId = TypedId<struct AssetIdDomain>;
+// Shared identity is a Core value so runtime scene components can refer to the
+// same assets without importing Tools. Keep the established Tools spellings.
+using AssetIdDomain = shark::AssetIdDomain;
+using AssetId = shark::AssetId;
 inline constexpr std::uint32_t asset_metadata_version = 1;
 inline constexpr std::size_t asset_metadata_maximum_bytes = 65536;
 inline constexpr std::size_t asset_maximum_dependencies = 256;

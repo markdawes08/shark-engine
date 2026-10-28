@@ -23,12 +23,12 @@
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 13> case_ids{
-    "featureworld.components",   "featureworld.commands",      "featureworld.batches-history",
-    "featureworld.retries",      "featureworld.persistence",   "featureworld.asset-identity",
-    "featureworld.asset-import", "featureworld.asset-jobs",    "featureworld.asset-pipeline",
-    "featureworld.gltf-source",  "featureworld.gltf-geometry", "featureworld.gltf-textures",
-    "featureworld.gltf-assets"};
+constexpr std::array<std::string_view, 14> case_ids{
+    "featureworld.components",   "featureworld.commands",         "featureworld.batches-history",
+    "featureworld.retries",      "featureworld.persistence",      "featureworld.asset-identity",
+    "featureworld.asset-import", "featureworld.asset-jobs",       "featureworld.asset-pipeline",
+    "featureworld.gltf-source",  "featureworld.gltf-geometry",    "featureworld.gltf-textures",
+    "featureworld.gltf-assets",  "featureworld.render-components"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -85,10 +85,10 @@ SceneDocument expected_scene() {
     return {id<ProjectId>('1'),
             id<SceneId>('3'),
             WorldPosition{id<WorldId>('2'), {1234567890, -7, 42}, {0.125, 1023.875, 0.0}},
-            {{root(), {}, Name{"Root"}, translated(10), "{\"role\":\"root\"}"},
+            {{root(), {}, Name{"Root"}, translated(10), "{\"role\":\"root\"}", Camera{}},
              {branch(), root(), Name{"Branch"}, translated(2)},
              {leaf(), branch(), Name{"Waypoint 雪"}, translated(3), "{\"keep\":true}"},
-             {other(), {}, Name{"Root"}, translated(-4)}},
+             {other(), {}, Name{"Root"}, translated(-4), "{}", {}, MeshRenderer{id<AssetId>('c')}}},
             "{\"asset_reference\":\"20000000-0000-4000-8000-00000000000a\",\"fixture\":\"10b\"}"};
 }
 void require(SceneRunContext& context, bool value, const char* message,
@@ -379,6 +379,115 @@ void persistence(SceneRunContext& context, const fs::path& parent) {
             take(owner.capture()).scene == expected && !take(owner.status()).dirty &&
                 take(owner.history()).undo_entries == 0,
             "Reload failed to restore saved values and clear history");
+}
+void render_components(SceneRunContext& context, const fs::path& parent) {
+    auto& owner = context.owner();
+    const auto before = take(owner.capture());
+    const auto schemas = component_schemas();
+    require(context,
+            schemas.size() == 4 && schemas[2].stable_id == "shark.camera" &&
+                schemas[3].stable_id == "shark.mesh_renderer" && !schemas[2].required &&
+                schemas[2].removable && !schemas[3].required && schemas[3].removable,
+            "Optional render component discovery differs from the authored catalog");
+    Camera camera;
+    camera.projection = CameraProjection::orthographic;
+    camera.orthographic_height = 24;
+    camera.near_clip = 0;
+    camera.far_clip = 300;
+    const MeshRenderer mesh{id<AssetId>('c'), 7, false};
+    AuthoringBatch batch{id<AuthoringBatchId>('8'),
+                         {SetCameraCommand{root(), camera}, SetMeshRendererCommand{other(), mesh}}};
+    require(context, take(take(owner.preview(batch, before.revision)).outcome).changed,
+            "Render component preview did not validate both changes");
+    unchanged(context, before);
+    auto invalid = batch;
+    auto bad_camera = camera;
+    bad_camera.far_clip = bad_camera.near_clip;
+    invalid.commands.push_back(SetCameraCommand{root(), bad_camera});
+    require(context, !take(owner.execute(invalid, before.revision)).outcome,
+            "Late invalid clipping committed a partial component batch");
+    unchanged(context, before);
+    const auto committed = take(owner.execute(batch, before.revision));
+    require(context,
+            take(committed.outcome).changed &&
+                committed.observed_revision.revision == before.revision.revision + 1,
+            "Component batch did not publish once");
+    auto expected = expected_scene();
+    expected.entities[0].camera = camera;
+    expected.entities[3].mesh_renderer = mesh;
+    require(context, take(owner.capture()).scene == expected,
+            "Component batch differs from independent expected source");
+    auto history = take(owner.history());
+    take(take(owner.undo(history.next_undo->ticket, revision(owner))).outcome);
+    require(context, take(owner.capture()).scene == before.scene,
+            "Undo lost the original camera or renderer");
+    history = take(owner.history());
+    take(take(owner.redo(history.next_redo->ticket, revision(owner))).outcome);
+    require(context, take(owner.capture()).scene == expected,
+            "Redo lost component fields or absence");
+    const auto status = take(owner.mutation_status());
+    AuthoringMutationRequest request{*status.next, status.revision,
+                                     AuthoringCommand{SetCameraCommand{root(), {}}}};
+    const auto reply = take(owner.mutate(request));
+    require(context, take(take(reply.outcome)->result).changed && !state(owner, root()).camera,
+            "Retained component removal did not remove the camera");
+    const auto replay = take(owner.mutate(request));
+    require(context,
+            replay.state == AuthoringMutationState::replayed &&
+                take(replay.outcome) == take(reply.outcome),
+            "Retained component removal ran again instead of replaying");
+    auto mismatch = request;
+    mismatch.mutation = AuthoringCommand{SetCameraCommand{root(), camera}};
+    require(context, take(owner.mutate(mismatch)).state == AuthoringMutationState::payload_mismatch,
+            "Retry identity accepted a changed component presence");
+    history = take(owner.history());
+    take(take(owner.undo(history.next_undo->ticket, revision(owner))).outcome);
+    const auto old_mesh = state(owner, other()).reference;
+    apply(context, DeleteEntityCommand{other()});
+    history = take(owner.history());
+    take(take(owner.undo(history.next_undo->ticket, revision(owner))).outcome);
+    require(context,
+            !take(owner.scene()).get().resolve(old_mesh) &&
+                state(owner, other()).mesh_renderer == mesh &&
+                take(owner.capture()).scene == expected,
+            "Recreated entity lost its renderer or revived the previous handle");
+    SceneQueryFields fields{false, false, false, true, true};
+    const auto inspected = take(owner.inspect_entity(root(), fields, revision(owner)));
+    require(context,
+            inspected.entities().front().camera == camera &&
+                !inspected.entities().front().mesh_renderer && !inspected.entities().front().name,
+            "Selected query did not distinguish absent and present components");
+
+    std::error_code error;
+    const auto canonical = fs::canonical(parent, error);
+    require(context, !parent.empty() && !error && fs::is_directory(canonical, error) && !error,
+            "Component persistence needs an existing scratch parent");
+    const auto path = canonical / ("shark-featureworld-" + take(generate_stable_id()).to_string());
+    require(context, fs::create_directory(path, error) && !error,
+            "Cannot create component persistence scratch");
+    Scratch scratch{path};
+    require(context, fs::create_directory(path / "scenes", error) && !error,
+            "Cannot create component persistence scene directory");
+    auto files = take(ProjectFiles::open(path));
+    take(files->write_project(take(ProjectPath::parse("FeatureWorld.sharkproject")), before.project,
+                              {}));
+    const auto saved = take(files->save_scene(owner, revision(owner), {}));
+    require(context, saved.current_scene_clean && take(owner.history()).undo_entries > 0,
+            "Component save failed to acknowledge source or discarded shared history");
+    const auto from_disk = take(files->read_scene(before.project, before.scene.scene));
+    require(context, from_disk.source.document == expected,
+            "Native source roundtrip lost render component values");
+    const auto old_camera = state(owner, root()).reference;
+    files.reset();
+    files = take(ProjectFiles::open(path));
+    take(files->reload_scene(owner, revision(owner)));
+    require(context,
+            take(owner.capture()).scene == expected &&
+                !take(owner.scene()).get().resolve(old_camera) &&
+                take(owner.history()).undo_entries == 0 && !take(owner.status()).dirty,
+            "Reload lost components, retained an old handle or kept dirty/history state");
+    require(context, inspected.entities().front().camera == camera,
+            "Owned query changed after scene replacement");
 }
 void asset_identity(SceneRunContext& context, const fs::path& parent) {
     const auto before = take(context.owner().capture());
@@ -1522,6 +1631,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 12:
                         gltf_assets(context);
+                        break;
+                    case 13:
+                        render_components(context, scratch_parent);
                         break;
                     default:
                         break;

@@ -13,6 +13,7 @@
       "entity_id": "20000000-0000-4000-8000-000000000004",
       "parent": null,
       "components": {
+        "shark.camera": {"schema_version": 1, "projection": "perspective", "vertical_fov_radians": 1.0471975511965976, "orthographic_height": 10, "near_clip": 0.1, "far_clip": 1000},
         "shark.name": {"schema_version": 1, "value": "Root"},
         "shark.transform": {"schema_version": 1, "translation": [10, 0, 0], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1]}
       },
@@ -40,6 +41,7 @@
       "entity_id": "20000000-0000-4000-8000-000000000007",
       "parent": null,
       "components": {
+        "shark.mesh_renderer": {"schema_version": 1, "asset_id": "20000000-0000-4000-8000-00000000000c", "mesh_index": 0, "visible": true},
         "shark.name": {"schema_version": 1, "value": "Root"},
         "shark.transform": {"schema_version": 1, "translation": [-4, 0, 0], "rotation": [0, 0, 0, 1], "scale": [1, 1, 1]}
       },

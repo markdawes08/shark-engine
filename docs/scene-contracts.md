@@ -7,6 +7,9 @@ CPU-only and shared by future human and terminal authoring services. EnTT is a
 private implementation dependency; callers receive engine values, never registry
 objects, component pointers or native entities. These C++ contracts are not a
 scene file format, gameplay wire protocol, authoring command or editor UI.
+13a adds optional [Camera/MeshRenderer values](render-components.md) under
+[ADR 0032](architecture/0032-render-components.md) on this same CPU owner;
+storing them neither loads an asset nor creates presentation services.
 07c adds [fixed component schemas and bounded revisioned inspection](scene-inspection.md)
 through [schema.hpp](../engine/core/include/shark/schema.hpp) and
 [scene_query.hpp](../engine/core/include/shark/scene_query.hpp). Schema discovery
@@ -60,7 +63,7 @@ closed object may be destroyed elsewhere with normal caller synchronization.
 Concurrent object destruction is never supported.
 The scene must outlive all active calls, including its visitor callbacks.
 
-Immediate create/destroy, Name/Transform edits and reparenting require no active
+Immediate create/destroy, component edits/removal and reparenting require no active
 visit and no pending deferred work. See the [transform and hierarchy contract](transforms.md).
 Visits use ascending slot order and pass owned reference values. Callbacks may
 inspect and enqueue bounded mutations; they cannot mutate immediately, apply the
@@ -73,7 +76,7 @@ operation revalidates current identity/lifetime/capacity and returns an outcome
 with its ticket. A failed operation does not prevent later valid operations.
 This is per-operation commit, not the atomic authoring transaction system planned
 for 09. A failed outcome allocation leaves the queue untouched. Successful create
-or subtree destroy increments the scene revision exactly once. Name/Transform
+or subtree destroy increments the scene revision exactly once. Component
 and hierarchy changes do likewise; exact no-ops leave the revision unchanged. Close cancels pending
 work, releases entities and invalidates every handle; repeated close succeeds.
 Stats remain available on the owner after close; other operations reject it.

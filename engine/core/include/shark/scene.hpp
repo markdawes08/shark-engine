@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shark/name.hpp"
+#include "shark/render_components.hpp"
 #include "shark/scene_identity.hpp"
 #include "shark/scene_query.hpp"
 #include "shark/transform.hpp"
@@ -23,6 +24,8 @@ struct EntitySeed {
     Name name{};
     Transform transform{};
     std::optional<EntityHandle> parent{};
+    std::optional<Camera> camera{};
+    std::optional<MeshRenderer> mesh_renderer{};
 };
 
 struct SceneLimits {
@@ -40,10 +43,18 @@ struct SceneStats {
     bool closed;
 };
 enum class ReparentMode { keep_local, keep_world };
-enum class SceneMutationKind { create, destroy, set_name, set_transform, reparent };
+enum class SceneMutationKind {
+    create,
+    destroy,
+    set_name,
+    set_transform,
+    reparent,
+    set_camera,
+    set_mesh_renderer
+};
 
 // Owned per-entity copy. World matrix is scene-local, not a global MMO location.
-// Name and Transform are mandatory; no component removal is supported in 07b.
+// Name and Transform are mandatory; Camera and MeshRenderer are optional.
 struct SceneEntityState {
     EntityReference reference;
     Name name;
@@ -52,6 +63,8 @@ struct SceneEntityState {
     std::vector<EntityHandle> children;
     math::Mat4 world_matrix;
     std::size_t depth;
+    std::optional<Camera> camera{};
+    std::optional<MeshRenderer> mesh_renderer{};
 };
 using SceneMutationTicket = std::uint64_t;
 struct SceneMutationOutcome {
@@ -82,6 +95,10 @@ class Scene final {
     [[nodiscard]] Result<void> destroy_entity(EntityHandle handle);
     [[nodiscard]] Result<void> set_name(EntityHandle handle, Name name);
     [[nodiscard]] Result<void> set_transform(EntityHandle handle, Transform transform);
+    // Null removes the optional component. Exact no-ops preserve the revision.
+    [[nodiscard]] Result<void> set_camera(EntityHandle handle, std::optional<Camera> camera);
+    [[nodiscard]] Result<void> set_mesh_renderer(EntityHandle handle,
+                                                 std::optional<MeshRenderer> renderer);
     [[nodiscard]] Result<void> reparent(EntityHandle handle, std::optional<EntityHandle> parent,
                                         ReparentMode mode);
     [[nodiscard]] Result<SceneEntityState> entity_state(EntityHandle handle) const;
@@ -103,6 +120,10 @@ class Scene final {
     [[nodiscard]] Result<SceneMutationTicket> defer_set_name(EntityHandle handle, Name name);
     [[nodiscard]] Result<SceneMutationTicket> defer_set_transform(EntityHandle handle,
                                                                   Transform transform);
+    [[nodiscard]] Result<SceneMutationTicket> defer_set_camera(EntityHandle handle,
+                                                               std::optional<Camera> camera);
+    [[nodiscard]] Result<SceneMutationTicket>
+    defer_set_mesh_renderer(EntityHandle handle, std::optional<MeshRenderer> renderer);
     [[nodiscard]] Result<SceneMutationTicket>
     defer_reparent(EntityHandle handle, std::optional<EntityHandle> parent, ReparentMode mode);
     // FIFO, per-operation outcomes; this is not an atomic authoring transaction.

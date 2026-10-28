@@ -64,8 +64,10 @@ with optional core fallback, bounded engine payloads and unchanged audience/
 publication fences. Selected checks follow the testing policy.
 [12e integrated qualification](../handoffs/12e-gltf-qualification.md) closes full
 REQ-12 with saved GLB/sparse/fallback paths, actual process recovery and an
-independent offline oracle. Next is 13, basic scene rendering and cameras;
-streaming, collision/navigation and animation retain their later owners.
+independent offline oracle. Assignment 13 follows the
+[scene rendering checkpoints](scene-rendering-plan.md). Its Camera/MeshRenderer
+CPU values are presentation-only and grant no player authority or new replication
+fields. Streaming, collision/navigation and animation retain their later owners.
 
 ## Historical assessment of the pre-M01 foundation
 

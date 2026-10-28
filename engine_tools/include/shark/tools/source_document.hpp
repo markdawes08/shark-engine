@@ -2,6 +2,7 @@
 
 #include "shark/name.hpp"
 #include "shark/project_path.hpp"
+#include "shark/render_components.hpp"
 #include "shark/scene_identity.hpp"
 #include "shark/transform.hpp"
 #include "shark/world_position.hpp"
@@ -54,6 +55,8 @@ struct SourceEntity {
     Name name{};
     Transform transform{};
     std::string extras_json{"{}"};
+    std::optional<Camera> camera{};
+    std::optional<MeshRenderer> mesh_renderer{};
     bool operator==(const SourceEntity&) const = default;
 };
 

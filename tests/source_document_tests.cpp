@@ -61,6 +61,11 @@ std::string scene_text(const std::string& entities = entity_text(),
            "\",\"entities\":[" + entities + "]" + std::string{fields} + "}";
 }
 
+std::string render_scene_text(const std::string_view components) {
+    return replace_one(scene_text(), "\"components\":{",
+                       "\"components\":{" + std::string{components} + ",");
+}
+
 SceneDocument scene() {
     auto decoded = decode_scene_document(scene_text());
     REQUIRE(decoded);
@@ -248,6 +253,143 @@ TEST_CASE("optional source fields use schema defaults and empty scenes remain va
     REQUIRE(empty);
     CHECK(empty.value().document.entities.empty());
     CHECK_FALSE(empty.value().document.world_origin);
+}
+
+TEST_CASE("optional render components preserve defaults and explicit source values",
+          "[source-documents]") {
+    constexpr std::string_view asset = "00000000-0000-4000-8000-000000000050";
+    const auto input = render_scene_text("\"shark.camera\":{\"schema_version\":1},"
+                                         "\"shark.mesh_renderer\":{\"schema_version\":1,"
+                                         "\"asset_id\":\"00000000-0000-4000-8000-000000000050\"}");
+    auto decoded = decode_scene_document(input);
+    REQUIRE(decoded);
+    CHECK(decoded.value().source_schema_version == 1);
+    auto value = decoded.value().document;
+    auto& entity = value.entities[0];
+    REQUIRE(entity.camera);
+    REQUIRE(entity.mesh_renderer);
+    CHECK(entity.camera->projection == shark::CameraProjection::perspective);
+    CHECK(entity.camera->vertical_fov_radians == 1.0471975511965976);
+    CHECK(entity.camera->orthographic_height == 10.0);
+    CHECK(entity.camera->near_clip == 0.1);
+    CHECK(entity.camera->far_clip == 1000.0);
+    CHECK(entity.mesh_renderer->asset == id<shark::AssetId>(asset));
+    CHECK(entity.mesh_renderer->mesh_index == 0);
+    CHECK(entity.mesh_renderer->visible);
+    entity.camera = shark::Camera{shark::CameraProjection::orthographic, 0.75, 12.5, 0.0, 1800.0};
+    entity.mesh_renderer->mesh_index = std::numeric_limits<std::uint32_t>::max();
+    entity.mesh_renderer->visible = false;
+    auto encoded = encode_scene_document(value);
+    REQUIRE(encoded);
+    CHECK(encoded.value().find("\"projection\": \"orthographic\"") != std::string::npos);
+    CHECK(encoded.value().find("\"mesh_index\": 4294967295") != std::string::npos);
+    auto reread = decode_scene_document(encoded.value());
+    REQUIRE(reread);
+    CHECK(reread.value().document == value);
+    auto repeated = encode_scene_document(reread.value().document);
+    REQUIRE(repeated);
+    CHECK(repeated.value() == encoded.value());
+
+    entity.camera->projection = shark::CameraProjection::perspective;
+    entity.camera->near_clip = 0.25;
+    auto perspective = encode_scene_document(value);
+    REQUIRE(perspective);
+    auto perspective_read = decode_scene_document(perspective.value());
+    REQUIRE(perspective_read);
+    CHECK(perspective_read.value().document == value);
+}
+
+TEST_CASE("render component source rejects unsupported shapes versions and values atomically",
+          "[source-documents]") {
+    const std::vector<std::string> camera_objects{
+        "null",
+        "{}",
+        "{\"schema_version\":0}",
+        "{\"schema_version\":2}",
+        "{\"schema_version\":1.0}",
+        "{\"schema_version\":1,\"projection\":0}",
+        "{\"schema_version\":1,\"projection\":\"fisheye\"}",
+        "{\"schema_version\":1,\"vertical_fov_radians\":false}",
+        "{\"schema_version\":1,\"vertical_fov_radians\":0}",
+        "{\"schema_version\":1,\"vertical_fov_radians\":3.141592653589793}",
+        "{\"schema_version\":1,\"orthographic_height\":0}",
+        "{\"schema_version\":1,\"near_clip\":0}",
+        "{\"schema_version\":1,\"near_clip\":1,\"far_clip\":1}",
+        "{\"schema_version\":1,\"far_clip\":1e9999}",
+        "{\"schema_version\":1,\"projection\":\"orthographic\",\"near_clip\":-1}",
+        "{\"schema_version\":1,\"projection\":\"orthographic\",\"vertical_fov_radians\":0}",
+        "{\"schema_version\":1,\"aspect\":1.5}",
+        "{\"schema_version\":1,\"near_clip\":1,\"near_clip\":2}"};
+    for (const auto& object : camera_objects) {
+        DYNAMIC_SECTION("Camera " << object) {
+            rejected_scene(render_scene_text("\"shark.camera\":" + object));
+        }
+    }
+    const std::vector<std::string> renderer_objects{
+        "null", "{\"schema_version\":1}",
+        "{\"schema_version\":2,\"asset_id\":\"00000000-0000-4000-8000-000000000050\"}",
+        "{\"schema_version\":1,\"asset_id\":\"00000000-0000-0000-0000-000000000000\"}",
+        "{\"schema_version\":1,\"asset_id\":12}"};
+    for (const auto& object : renderer_objects) {
+        DYNAMIC_SECTION("MeshRenderer " << object) {
+            rejected_scene(render_scene_text("\"shark.mesh_renderer\":" + object));
+        }
+    }
+    for (const auto field : {"\"mesh_index\":-1", "\"mesh_index\":4294967296", "\"mesh_index\":1.0",
+                             "\"mesh_index\":true", "\"visible\":0", "\"visible\":null",
+                             "\"material\":{}", "\"visible\":true,\"visible\":false"}) {
+        DYNAMIC_SECTION("MeshRenderer field " << field) {
+            rejected_scene(
+                render_scene_text("\"shark.mesh_renderer\":{\"schema_version\":1,"
+                                  "\"asset_id\":\"00000000-0000-4000-8000-000000000050\"," +
+                                  std::string{field} + "}"));
+        }
+    }
+    rejected_scene(render_scene_text("\"shark.camera\":{\"schema_version\":1},"
+                                     "\"shark.camera\":{\"schema_version\":1}"));
+}
+
+TEST_CASE("typed source render values use Core validation before encoding", "[source-documents]") {
+    auto value = scene();
+    value.entities[0].camera = shark::Camera{};
+    value.entities[0].mesh_renderer =
+        shark::MeshRenderer{id<shark::AssetId>("00000000-0000-4000-8000-000000000050"), 2, false};
+    SECTION("unknown projection") {
+        value.entities[0].camera->projection = static_cast<shark::CameraProjection>(27);
+    }
+    SECTION("nonfinite inactive height") {
+        value.entities[0].camera->orthographic_height = std::numeric_limits<double>::infinity();
+    }
+    SECTION("near far relationship") {
+        value.entities[0].camera->far_clip = value.entities[0].camera->near_clip;
+    }
+    rejected(validate_scene_document(value), "source.scene.validate",
+             "/entities/0/components/shark.camera");
+    rejected(encode_scene_document(value), "source.scene.encode",
+             "/entities/0/components/shark.camera");
+    CHECK(value.entities[0].mesh_renderer->mesh_index == 2);
+    CHECK_FALSE(value.entities[0].mesh_renderer->visible);
+}
+
+TEST_CASE("old source scenes acquire no render components and legacy shape stays strict",
+          "[source-documents]") {
+    for (const auto* name : {"scene-v0.sharkscene", "scene-v1.sharkscene"}) {
+        const auto input = fixture(name);
+        auto decoded = decode_scene_document(input);
+        REQUIRE(decoded);
+        for (const auto& entity : decoded.value().document.entities) {
+            CHECK_FALSE(entity.camera);
+            CHECK_FALSE(entity.mesh_renderer);
+        }
+        auto encoded = encode_scene_document(decoded.value().document);
+        REQUIRE(encoded);
+        CHECK(encoded.value().find("shark.camera") == std::string::npos);
+        CHECK(encoded.value().find("shark.mesh_renderer") == std::string::npos);
+        CHECK(fixture(name) == input);
+    }
+    rejected_scene(replace_one(fixture("scene-v0.sharkscene"), "\"entities\": [",
+                               "\"camera\": {\"schema_version\":1}, \"entities\": ["));
+    rejected_scene(scene_text(entity_text(",\"camera\":{\"schema_version\":1}")));
 }
 
 TEST_CASE("source versions and format discriminators reject unknown or incorrectly typed values",

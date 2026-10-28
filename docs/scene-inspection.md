@@ -16,16 +16,20 @@ replication policy.
 
 ## Schema discovery and validation
 
-`component_schemas()` returns the two supported component schemas in stable ID
+`component_schemas()` returns the four supported component schemas in stable ID
 order. `component_schema(id, version)` and
 `property_schema(component, property, version)` return checked owned copies.
 Changing a returned string, constraint or default cannot alter later discovery
-or engine validation. Name and Transform are mandatory and not removable.
+or engine validation. Name and Transform are mandatory and not removable;
+[Camera and MeshRenderer](render-components.md) are optional and removable under
+[ADR 0032](architecture/0032-render-components.md).
 
 | Component | Numeric ID | Stable text ID | Schema version |
 | --- | --- | --- | --- |
 | Name | 1 | `shark.name` | 1 |
 | Transform | 2 | `shark.transform` | 1 |
+| Camera | 3 | `shark.camera` | 1 |
+| MeshRenderer | 4 | `shark.mesh_renderer` | 1 |
 
 Property IDs are stable across the catalog; each property also has its component
 key, display name, typed default, constraints, unit and mutability.
@@ -36,8 +40,18 @@ key, display name, typed default, constraints, unit and mutability.
 | Transform `translation` | 2 | Three doubles, `[0,0,0]` | Meters | Finite signed components |
 | Transform `rotation` | 3 | Four doubles in `[x,y,z,w]` order, `[0,0,0,1]` | Dimensionless | Finite nonzero input; normalization and deterministic sign |
 | Transform `scale` | 4 | Three doubles, `[1,1,1]` | Dimensionless | Finite signed components with absolute magnitude at least `1e-6` |
+| Camera `projection` | 5 | Enumeration, perspective (0) | None | Perspective (0) or orthographic (1) |
+| Camera `vertical_fov_radians` | 6 | Double, pi / 3 | Radians | Finite, strictly between 0 and pi |
+| Camera `orthographic_height` | 7 | Double, 10 | Meters | Finite and positive |
+| Camera `near_clip` | 8 | Double, 0.1 | Meters | Finite; positive for perspective, nonnegative for orthographic |
+| Camera `far_clip` | 9 | Double, 1000 | Meters | Finite and greater than near |
+| MeshRenderer `asset_id` | 10 | Asset ID, no default | None | Required nonnil UUIDv4 |
+| MeshRenderer `mesh_index` | 11 | Unsigned 32-bit integer, 0 | None | Full uint32 range; actual asset bounds checked by the later loader |
+| MeshRenderer `visible` | 12 | Boolean, true | None | Boolean |
 
-Numeric component bounds are inclusive finite-double input limits. The scale
+Vector/quaternion bounds are inclusive finite-double input limits. Scalar metadata
+also states endpoint inclusivity; the complete Camera validator enforces the
+projection-dependent near bound and far/near relationship. The scale
 floor is an **absolute magnitude**, so negative and nonuniform scales remain
 valid. Quaternion input bounds apply before normalization; its canonical sign
 is positive W, then the first nonzero X/Y/Z when W is zero. Metadata uses explicit
@@ -46,19 +60,19 @@ Every current property has `scene_owner_write` mutability, referring to the
 existing validated Scene setters. It does not advertise an editor widget, CLI
 method or permission to mutate another authority's state.
 
-`validate_component(id, version, ComponentValue)` delegates to the same Name or
-Transform validation used by Scene and returns an owned canonical value. The
-fixed `ComponentValue` alternatives are Name and Transform. Unknown component or
+`validate_component(id, version, ComponentValue)` delegates to the same component
+validation used by Scene and returns an owned canonical value. The fixed
+alternatives are Name, Transform, Camera and MeshRenderer. Unknown component or
 property IDs, unsupported versions and mismatched value types reject explicitly.
 Local component validation does not test a candidate hierarchy, reserve a scene
 revision or change any scene. Scene mutation still validates all affected world
 matrices, depth and authority before committing.
 
 Schema version 1 versions this discovery/validation contract. It is independent
-of future scene-file, authoring-protocol, gameplay-wire and database versions.
-Numeric enums and GLM object memory are not serialized layouts. The current
-component properties have no enum-valued fields; the catalog's type, unit,
-mutability and quaternion-policy discriminators describe their actual behavior.
+of source, authoring-protocol, gameplay-wire and database versions. Numeric enums
+and GLM object memory are not serialized layouts. Camera projection exposes its
+named enumerants; the catalog's type, unit, mutability and quaternion-policy
+discriminators describe actual behavior.
 
 ## Query selection and work limits
 
@@ -89,15 +103,20 @@ empty page with a continuation cursor. **An empty page does not mean the query
 is complete.** Only the absence of `next_cursor()` means the remaining slot range
 has been exhausted. `scanned_slots()` reports the actual bounded work.
 
-Identity, scene scope and authority metadata are always returned. Three field
+Identity, scene scope and authority metadata are always returned. Five field
 groups select optional payloads:
 
 - `name`: the owned Name value.
 - `transform`: local TRS and the cached world matrix in the scene's local frame.
 - `hierarchy`: checked parent, direct `child_count` and depth.
+- `camera`: the owned optional Camera value.
+- `mesh_renderer`: the owned optional MeshRenderer value.
 
-All three flags false gives identity-only rows. Omitted fields are absent
-optionals, not fabricated default values. Queries do not copy complete child
+Name, transform and hierarchy default true; the two new flags default false, so
+existing `{false, false, false}` selections still give identity-only rows. Select
+Camera/MeshRenderer explicitly: an empty optional means absent component when
+selected, or omitted data when unselected. No default component is fabricated.
+Queries do not copy complete child
 vectors. Use a separately paged direct-children selection to enumerate a large
 family. Each row therefore has bounded text and fixed-size transform/hierarchy
 data, and the page never retains a full-scene snapshot.
@@ -123,7 +142,7 @@ caller's original options after a query cannot change its continuation.
 Cursor construction and assignment from rvalues also copy: the source token
 retains its original filter, fields, revision and position for safe replay.
 
-An actual create, subtree delete, rename, transform change or reparent invalidates
+An actual create, subtree delete, component change/removal or reparent invalidates
 older cursors and expected revisions. Failed operations and exact no-ops do not
 advance the revision. Enqueueing deferred work does not change the observed
 committed state; applying a successful mutation does. A cursor from another scene

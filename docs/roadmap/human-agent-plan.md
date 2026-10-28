@@ -57,7 +57,10 @@ records selected verification. Terminal/editor adapters retain 15/16 and the
 original owner/publication fences.
 [12e](../handoffs/12e-gltf-qualification.md) closes full REQ-12 through connected
 owner/process checks and independent fixture validation. The shared CPU APIs
-remain ready for those adapters; next is 13, basic scene rendering and cameras.
+remain ready for those adapters. Assignment 13 follows the
+[scene rendering checkpoints](scene-rendering-plan.md): Camera/MeshRenderer use
+the same CPU schemas, checked queries, commands, history and source persistence
+for both audiences. Device-dependent rendering follows in later checkpoints.
 
 ## Assessment of existing work
 

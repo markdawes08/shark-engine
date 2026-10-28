@@ -140,8 +140,8 @@ std::unique_ptr<ActiveScene> prepare(const ProjectDocument& project, const Scene
         const auto index = ordered[position];
         const auto& entity = document.entities[index];
         const auto parent = parents[index] ? handles[*parents[index]] : std::nullopt;
-        auto created =
-            scene->create_entity({entity.id, std::nullopt, entity.name, entity.transform, parent});
+        auto created = scene->create_entity({entity.id, std::nullopt, entity.name, entity.transform,
+                                             parent, entity.camera, entity.mesh_renderer});
         if (!created) {
             auto error = std::move(created).error();
             error.context.path = "/entities/" + std::to_string(index);
@@ -220,7 +220,9 @@ AuthoringCommandReply apply_command(Scene& scene, SceneLimits limits,
                     }
                 }
                 if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
-                              std::is_same_v<Command, SetNameCommand>) {
+                              std::is_same_v<Command, SetNameCommand> ||
+                              std::is_same_v<Command, SetCameraCommand> ||
+                              std::is_same_v<Command, SetMeshRendererCommand>) {
                     effect.affected_entities.push_back(request.id);
                 } else {
                     append_subtree(scene, *target, effect.affected_entities);
@@ -240,13 +242,18 @@ AuthoringCommandReply apply_command(Scene& scene, SceneLimits limits,
                     effect.affected_entities.end());
                 if constexpr (std::is_same_v<Command, CreateEntityCommand>) {
                     static_cast<void>(checked(scene.create_entity(
-                        {request.id, std::nullopt, request.name, request.transform, parent})));
+                        {request.id, std::nullopt, request.name, request.transform, parent,
+                         request.camera, request.mesh_renderer})));
                 } else if constexpr (std::is_same_v<Command, DeleteEntityCommand>) {
                     checked(scene.destroy_entity(*target));
                 } else if constexpr (std::is_same_v<Command, SetNameCommand>) {
                     checked(scene.set_name(*target, request.name));
                 } else if constexpr (std::is_same_v<Command, SetTransformCommand>) {
                     checked(scene.set_transform(*target, request.transform));
+                } else if constexpr (std::is_same_v<Command, SetCameraCommand>) {
+                    checked(scene.set_camera(*target, request.camera));
+                } else if constexpr (std::is_same_v<Command, SetMeshRendererCommand>) {
+                    checked(scene.set_mesh_renderer(*target, request.mesh_renderer));
                 } else {
                     checked(scene.reparent(*target, parent, request.mode));
                 }
@@ -281,6 +288,8 @@ SceneDocument capture_document(const ProjectDocument& project, const ActiveScene
     // Bound each read to one page of slots, including sparse empty pages.
     options.scan_budget = scene_query_maximum_page_size;
     options.expected_revision = revision;
+    options.fields.camera = true;
+    options.fields.mesh_renderer = true;
     auto page = checked(scene.query_entities(options));
     std::vector<SourceEntity> observed;
     std::vector<std::optional<EntityHandle>> parents;
@@ -301,7 +310,8 @@ SceneDocument capture_document(const ProjectDocument& project, const ActiveScene
                      "capture requires complete authored entity state", "/entities");
             }
             indices.emplace(row.reference.handle, observed.size());
-            observed.push_back({*id, std::nullopt, *row.name, row.transform->local, "{}"});
+            observed.push_back({*id, std::nullopt, *row.name, row.transform->local, "{}",
+                                row.camera, row.mesh_renderer});
             parents.push_back(row.hierarchy->parent);
         }
         if (!page.next_cursor()) {
@@ -414,6 +424,19 @@ bool same_transform_input(const Transform& left, const Transform& right) noexcep
            same_number(left.scale.z, right.scale.z);
 }
 
+bool same_camera_input(const std::optional<Camera>& left,
+                       const std::optional<Camera>& right) noexcept {
+    if (left.has_value() != right.has_value())
+        return false;
+    if (!left)
+        return true;
+    return left->projection == right->projection &&
+           same_number(left->vertical_fov_radians, right->vertical_fov_radians) &&
+           same_number(left->orthographic_height, right->orthographic_height) &&
+           same_number(left->near_clip, right->near_clip) &&
+           same_number(left->far_clip, right->far_clip);
+}
+
 bool same_command_input(const AuthoringCommand& left, const AuthoringCommand& right) {
     return std::visit(
         [&](const auto& value) {
@@ -423,11 +446,17 @@ bool same_command_input(const AuthoringCommand& left, const AuthoringCommand& ri
                 return false;
             if constexpr (std::is_same_v<T, CreateEntityCommand>) {
                 return value.name.value == other->name.value && value.parent == other->parent &&
-                       same_transform_input(value.transform, other->transform);
+                       same_transform_input(value.transform, other->transform) &&
+                       same_camera_input(value.camera, other->camera) &&
+                       value.mesh_renderer == other->mesh_renderer;
             } else if constexpr (std::is_same_v<T, SetNameCommand>) {
                 return value.name.value == other->name.value;
             } else if constexpr (std::is_same_v<T, SetTransformCommand>) {
                 return same_transform_input(value.transform, other->transform);
+            } else if constexpr (std::is_same_v<T, SetCameraCommand>) {
+                return same_camera_input(value.camera, other->camera);
+            } else if constexpr (std::is_same_v<T, SetMeshRendererCommand>) {
+                return value.mesh_renderer == other->mesh_renderer;
             } else if constexpr (std::is_same_v<T, ReparentEntityCommand>) {
                 return value.parent == other->parent && value.mode == other->mode;
             } else {
@@ -563,11 +592,13 @@ HistoryRestoration restore_document(Scene& candidate, const SceneDocument& targe
         if (found) {
             checked(candidate.set_name(found.value(), entity.name));
             checked(candidate.set_transform(found.value(), entity.transform));
+            checked(candidate.set_camera(found.value(), entity.camera));
+            checked(candidate.set_mesh_renderer(found.value(), entity.mesh_renderer));
             handles.emplace(entity.id, found.value());
         } else {
-            handles.emplace(entity.id,
-                            checked(candidate.create_entity({entity.id, std::nullopt, entity.name,
-                                                             entity.transform, std::nullopt})));
+            handles.emplace(entity.id, checked(candidate.create_entity(
+                                           {entity.id, std::nullopt, entity.name, entity.transform,
+                                            std::nullopt, entity.camera, entity.mesh_renderer})));
         }
     }
     checkpoint();

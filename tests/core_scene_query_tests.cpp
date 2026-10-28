@@ -551,7 +551,8 @@ TEST_CASE("scene query continuations become stale after every committed mutation
         for (const auto kind :
              {shark::SceneMutationKind::create, shark::SceneMutationKind::destroy,
               shark::SceneMutationKind::set_name, shark::SceneMutationKind::set_transform,
-              shark::SceneMutationKind::reparent}) {
+              shark::SceneMutationKind::reparent, shark::SceneMutationKind::set_camera,
+              shark::SceneMutationKind::set_mesh_renderer}) {
             CAPTURE(deferred, static_cast<int>(kind));
             auto owner = scene();
             const auto first = create(*owner, seed(1, "first"));
@@ -596,6 +597,22 @@ TEST_CASE("scene query continuations become stale after every committed mutation
                     REQUIRE(owner->defer_reparent(second, first, shark::ReparentMode::keep_local));
                 } else {
                     REQUIRE(owner->reparent(second, first, shark::ReparentMode::keep_local));
+                }
+                break;
+            case shark::SceneMutationKind::set_camera:
+                if (deferred) {
+                    REQUIRE(owner->defer_set_camera(second, shark::Camera{}));
+                } else {
+                    REQUIRE(owner->set_camera(second, shark::Camera{}));
+                }
+                break;
+            case shark::SceneMutationKind::set_mesh_renderer:
+                if (deferred) {
+                    REQUIRE(owner->defer_set_mesh_renderer(
+                        second, shark::MeshRenderer{id<shark::AssetId>(30)}));
+                } else {
+                    REQUIRE(owner->set_mesh_renderer(second,
+                                                     shark::MeshRenderer{id<shark::AssetId>(30)}));
                 }
                 break;
             }

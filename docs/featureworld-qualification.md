@@ -54,7 +54,13 @@ The FeatureWorld process family now has thirty checks. The texture family has a
 90-second limit and seed 1337; the private decoder dependency family has a
 60-second limit. Material/cache publication and rendering remain later owners.
 
-The fixture runs all twelve saved-world cases through the public supervisor, then
+13a adds optional Camera/MeshRenderer and their two shared commands, bringing the
+current inventory to 51 CPU surfaces, one external GPU command and fourteen native
+cases. The new connected component case and saved values extend preview/history/
+retry/persistence behavior; see the [current guide](featureworld.md). Earlier
+counts above describe the original checkpoints, not the current catalog.
+
+The fixture runs all fourteen saved-world cases through the public supervisor, then
 the intentional failing assertion through the same executable/result path. It
 compares stdout with create-only published results, native results and every
 artifact's bytes/hash. Failure remains exit 1 with the original case, phase,
@@ -82,13 +88,10 @@ numeric oracles. Optional assignment-02 probe CLI declarations retain their
 separate historical qualification; they are not silently counted as current
 CTest executions.
 
-The final gate refreshes all seven full Windows/WSL CPU/sanitizer/Server profiles,
-standalone Tools, public examples and protected packages against frozen inputs.
-Record inventories, complete JUnit, injected failure context, exact helper and
-source hashes, actual sanitizer objects and native GPU receipts. Validate all
-current component/command test IDs against the union of passing executions.
-Preserve incomplete attempts and report metadata-only closure changes separately
-from implementation inputs. Reuse current build/cache/userspace directories and
-remove successful temporary deployments. This establishes local development
-coverage; MMORPG capacity, MMOWorld and authored scene rendering retain their
-later owners.
+The [testing policy](testing-policy.md) governs subsequent verification. Select
+affected owners and consumers, reuse valid evidence and retain failures; do not
+repeat the historical seven-profile closure or add source-freeze ledgers to each
+component change. Current mappings must identify actual registered cases. Reuse
+build/cache/userspace directories and remove successful temporary deployments.
+This establishes local development coverage; MMORPG capacity, MMOWorld and actual
+authored scene rendering retain their later owners.

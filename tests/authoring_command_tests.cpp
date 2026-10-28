@@ -179,7 +179,7 @@ static_assert(std::is_same_v<decltype(std::declval<AuthoredScene&>().scene()),
                              Result<std::reference_wrapper<const Scene>>>);
 static_assert(std::is_same_v<decltype(std::declval<const AuthoredScene&>().scene()),
                              Result<std::reference_wrapper<const Scene>>>);
-static_assert(std::variant_size_v<AuthoringCommand> == 5);
+static_assert(std::variant_size_v<AuthoringCommand> == 7);
 
 } // namespace
 
@@ -2274,4 +2274,258 @@ TEST_CASE("retained request owns exact name bytes after caller storage is reused
     input = rename_request(*value, "Another intent");
     CHECK(take(value->mutate(exact)).outcome.value() == original);
     CHECK(state(*value, 40).name.value == "Original owned name long enough to allocate");
+}
+
+TEST_CASE("optional render commands preserve incarnation and expose owned selected fields",
+          "[authoring-commands]") {
+    auto value = owner();
+    const auto original = find(*value, 30);
+    const Camera camera{CameraProjection::orthographic, 0.75, 24.0, 0.0, 900.0};
+    const MeshRenderer mesh{id<AssetId>(70), 3, false};
+    changed(*value, SetCameraCommand{id<AuthoredEntityId>(30), camera}, {id<AuthoredEntityId>(30)});
+    changed(*value, SetMeshRendererCommand{id<AuthoredEntityId>(30), mesh},
+            {id<AuthoredEntityId>(30)});
+    CHECK(find(*value, 30) == original);
+    CHECK(state(*value, 30).camera == camera);
+    CHECK(state(*value, 30).mesh_renderer == mesh);
+    SceneQueryFields fields{false, false, false};
+    fields.camera = true;
+    fields.mesh_renderer = true;
+    const auto page = take(value->inspect_entity(id<AuthoredEntityId>(30), fields));
+    REQUIRE(page.entities().size() == 1);
+    CHECK_FALSE(page.entities().front().name);
+    CHECK(page.entities().front().camera == camera);
+    CHECK(page.entities().front().mesh_renderer == mesh);
+    const auto before_noop = capture(*value);
+    auto noop = take(
+        value->execute(SetCameraCommand{id<AuthoredEntityId>(30), camera}, before_noop.revision));
+    REQUIRE(noop.outcome);
+    CHECK_FALSE(noop.outcome.value().changed);
+    CHECK(noop.outcome.value().affected_entities.empty());
+    same_capture(capture(*value), before_noop);
+    changed(*value, SetCameraCommand{id<AuthoredEntityId>(30), std::nullopt},
+            {id<AuthoredEntityId>(30)});
+    changed(*value, SetMeshRendererCommand{id<AuthoredEntityId>(30), std::nullopt},
+            {id<AuthoredEntityId>(30)});
+    CHECK_FALSE(state(*value, 30).camera);
+    CHECK_FALSE(state(*value, 30).mesh_renderer);
+    CHECK(page.entities().front().camera == camera);
+    CHECK(page.entities().front().mesh_renderer == mesh);
+}
+
+TEST_CASE("render component commands create save and reload through the shared file owner",
+          "[authoring-commands]") {
+    FileFixture fixture;
+    auto files = take(ProjectFiles::open(fixture.root));
+    auto value = owner();
+    const Camera camera{CameraProjection::perspective, 0.8, 12.0, 0.25, 700.0};
+    const MeshRenderer mesh{id<AssetId>(71), 7, true};
+    changed(
+        *value,
+        CreateEntityCommand{
+            id<AuthoredEntityId>(50), {"Camera mesh"}, {}, id<AuthoredEntityId>(40), camera, mesh},
+        {id<AuthoredEntityId>(40), id<AuthoredEntityId>(50)});
+    const auto original = find(*value, 50);
+    const auto captured = capture(*value);
+    CHECK(captured_entity(captured, 50).camera == camera);
+    CHECK(captured_entity(captured, 50).mesh_renderer == mesh);
+    const auto saved = take(files->save_scene(*value, captured.revision, std::nullopt));
+    CHECK(saved.current_scene_clean);
+    CHECK(history(*value).undo_entries == 1);
+    auto reopened = take(files->load_scene(project(), id<SceneId>(3)));
+    CHECK(capture(*reopened.owner).scene == captured.scene);
+    CHECK(state(*reopened.owner, 50).camera == camera);
+    CHECK(state(*reopened.owner, 50).mesh_renderer == mesh);
+    CHECK(find(*reopened.owner, 50) != original);
+    REQUIRE(files->reload_scene(*value, status(*value).revision));
+    CHECK(state(*value, 50).camera == camera);
+    CHECK(state(*value, 50).mesh_renderer == mesh);
+    CHECK(history(*value).undo_entries == 0);
+    rejected(live(*value).reference(original), ErrorCode::invalid_id);
+}
+
+TEST_CASE("render component batch preview validates intermediate state and publishes once",
+          "[authoring-batches]") {
+    auto value = owner();
+    const auto initial = capture(*value);
+    const auto initial_history = history(*value);
+    const Camera camera{};
+    const MeshRenderer mesh{id<AssetId>(72), 2, true};
+    auto edits = batch({SetCameraCommand{id<AuthoredEntityId>(30), camera},
+                        SetMeshRendererCommand{id<AuthoredEntityId>(30), mesh}});
+    auto preview = take(value->preview(edits, initial.revision));
+    REQUIRE(preview.outcome);
+    CHECK(preview.outcome.value().changed);
+    same_capture(capture(*value), initial);
+    same_history(history(*value), initial_history);
+    auto invalid = camera;
+    invalid.far_clip = invalid.near_clip;
+    auto rejected_edits = edits;
+    rejected_edits.commands.push_back(SetCameraCommand{id<AuthoredEntityId>(30), invalid});
+    auto rejection = take(value->execute(rejected_edits, initial.revision));
+    rejected(rejection.outcome, ErrorCode::invalid_argument);
+    CHECK(rejection.outcome.error().context.path == "/commands/2");
+    CHECK(rejection.outcome.error().context.entity_id ==
+          id<AuthoredEntityId>(30).value().to_string());
+    same_capture(capture(*value), initial);
+    same_history(history(*value), initial_history);
+    auto committed = take(value->execute(edits, initial.revision));
+    REQUIRE(committed.outcome);
+    CHECK(committed.observed_revision.revision == initial.revision.revision + 1);
+    CHECK(committed.outcome.value().affected_entities ==
+          std::vector<AuthoredEntityId>{id<AuthoredEntityId>(30)});
+    CHECK(state(*value, 30).camera == camera);
+    CHECK(state(*value, 30).mesh_renderer == mesh);
+    REQUIRE(history(*value).next_undo);
+    CHECK(history(*value).next_undo->command_count == 2);
+    auto stale = take(value->execute(edits, initial.revision));
+    rejected(stale.outcome, ErrorCode::conflict);
+}
+
+TEST_CASE("render history preserves optional values across removal deletion and recreation",
+          "[authoring-history]") {
+    auto document = source();
+    const Camera camera{CameraProjection::orthographic, 0.6, 30.0, 0.0, 500.0};
+    const MeshRenderer mesh{id<AssetId>(73), 5, false};
+    document.entities.front().camera = camera;
+    document.entities.front().mesh_renderer = mesh;
+    auto value = owner(document);
+    const auto initial = capture(*value);
+    const auto survivor = find(*value, 40);
+    const auto original = find(*value, 30);
+    REQUIRE(
+        take(value->execute(batch({SetCameraCommand{id<AuthoredEntityId>(30), std::nullopt},
+                                   SetMeshRendererCommand{id<AuthoredEntityId>(30), std::nullopt}}),
+                            initial.revision))
+            .outcome);
+    CHECK_FALSE(state(*value, 30).camera);
+    CHECK_FALSE(state(*value, 30).mesh_renderer);
+    move_history(*value);
+    CHECK(capture(*value).scene == initial.scene);
+    CHECK(find(*value, 30) == original);
+    move_history(*value, true);
+    CHECK_FALSE(state(*value, 30).camera);
+    CHECK_FALSE(state(*value, 30).mesh_renderer);
+    move_history(*value);
+    REQUIRE(
+        take(value->execute(DeleteEntityCommand{id<AuthoredEntityId>(30)}, status(*value).revision))
+            .outcome);
+    move_history(*value);
+    CHECK(capture(*value).scene == initial.scene);
+    CHECK(find(*value, 30) != original);
+    CHECK(find(*value, 40) == survivor);
+    CHECK(state(*value, 30).camera == camera);
+    CHECK(state(*value, 30).mesh_renderer == mesh);
+    rejected(live(*value).reference(original), ErrorCode::invalid_id);
+    const auto restored = find(*value, 30);
+    REQUIRE(
+        take(value->execute(batch({DeleteEntityCommand{id<AuthoredEntityId>(30)},
+                                   CreateEntityCommand{id<AuthoredEntityId>(30),
+                                                       {"Replacement"},
+                                                       {},
+                                                       {},
+                                                       Camera{},
+                                                       MeshRenderer{id<AssetId>(74), 1, true}}}),
+                            status(*value).revision))
+            .outcome);
+    const auto replacement = capture(*value);
+    move_history(*value);
+    CHECK(capture(*value).scene == initial.scene);
+    CHECK(find(*value, 30) != restored);
+    move_history(*value, true);
+    CHECK(capture(*value).scene == replacement.scene);
+    CHECK(state(*value, 30).mesh_renderer->asset == id<AssetId>(74));
+}
+
+TEST_CASE("retained render commands compare every optional field including creation payloads",
+          "[authoring-retries]") {
+    const Camera original{};
+    const MeshRenderer mesh{id<AssetId>(75), 2, true};
+    for (const bool creation : {false, true}) {
+        for (std::size_t field = 0; field < 10; ++field) {
+            auto value = owner();
+            const auto target = id<AuthoredEntityId>(creation ? 50U : 40U);
+            const auto command = [&](std::optional<Camera> camera,
+                                     std::optional<MeshRenderer> renderer) -> AuthoringCommand {
+                if (creation)
+                    return CreateEntityCommand{target, {}, {}, {}, camera, renderer};
+                if (field < 6)
+                    return SetCameraCommand{target, camera};
+                return SetMeshRendererCommand{target, renderer};
+            };
+            auto input = request(*value, command(original, mesh));
+            const auto outcome = recorded(*value, input);
+            REQUIRE(outcome->result);
+            const auto before_replay = capture(*value);
+            auto replay = take(value->mutate(input));
+            CHECK(replay.state == AuthoringMutationState::replayed);
+            REQUIRE(replay.outcome);
+            CHECK(replay.outcome.value() == outcome);
+            same_capture(capture(*value), before_replay);
+            std::optional<Camera> camera = original;
+            std::optional<MeshRenderer> renderer = mesh;
+            switch (field) {
+            case 0:
+                camera.reset();
+                break;
+            case 1:
+                camera->projection = CameraProjection::orthographic;
+                break;
+            case 2:
+                camera->vertical_fov_radians += 0.125;
+                break;
+            case 3:
+                camera->orthographic_height += 0.125;
+                break;
+            case 4:
+                camera->near_clip += 0.125;
+                break;
+            case 5:
+                camera->far_clip += 0.125;
+                break;
+            case 6:
+                renderer.reset();
+                break;
+            case 7:
+                renderer->asset = id<AssetId>(76);
+                break;
+            case 8:
+                ++renderer->mesh_index;
+                break;
+            case 9:
+                renderer->visible = false;
+                break;
+            default:
+                FAIL("invalid test field");
+            }
+            input.mutation = command(camera, renderer);
+            mutation_denied(*value, input, AuthoringMutationState::payload_mismatch);
+        }
+    }
+}
+
+TEST_CASE("retained camera input preserves signed zero and invalid floating point payload bits",
+          "[authoring-retries]") {
+    auto value = owner();
+    Camera camera{CameraProjection::orthographic, 0.5, 20.0, 0.0, 500.0};
+    auto input =
+        request(*value, AuthoringCommand{SetCameraCommand{id<AuthoredEntityId>(40), camera}});
+    REQUIRE(recorded(*value, input)->result);
+    camera.near_clip = -0.0;
+    input.mutation = AuthoringCommand{SetCameraCommand{id<AuthoredEntityId>(40), camera}};
+    mutation_denied(*value, input, AuthoringMutationState::payload_mismatch);
+    camera.vertical_fov_radians = std::bit_cast<double>(std::uint64_t{0x7ff8000000000001});
+    auto invalid =
+        request(*value, AuthoringCommand{SetCameraCommand{id<AuthoredEntityId>(40), camera}});
+    const auto before = capture(*value);
+    const auto failure = recorded(*value, invalid);
+    REQUIRE_FALSE(failure->result);
+    same_capture(capture(*value), before);
+    auto replay = take(value->mutate(invalid));
+    CHECK(replay.state == AuthoringMutationState::replayed);
+    REQUIRE(replay.outcome);
+    CHECK(replay.outcome.value() == failure);
+    camera.vertical_fov_radians = std::bit_cast<double>(std::uint64_t{0x7ff8000000000002});
+    invalid.mutation = AuthoringCommand{SetCameraCommand{id<AuthoredEntityId>(40), camera}};
+    mutation_denied(*value, invalid, AuthoringMutationState::payload_mismatch);
 }

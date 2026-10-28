@@ -30,6 +30,11 @@ from valid hierarchy composition remains supported. Bounds may be lower than the
 source defaults, but entity capacity cannot exceed 4096 and hierarchy depth cannot
 exceed 256; Core's pending-work bounds still apply.
 
+13a's optional [Camera/MeshRenderer values](render-components.md) use these same
+creation and validation paths. Loading preserves component absence and unresolved
+asset references; successful activation does not establish asset availability or
+render any geometry. See [ADR 0032](architecture/0032-render-components.md).
+
 All methods require the creating thread, checked before reading mutable owner
 state. The owner cannot move or copy. Its Scene must be destroyed on its owner
 thread while live, following the existing Core lifetime contract. Concurrent
@@ -52,8 +57,9 @@ Capture does not apply queued work, mutate the Scene, clear dirty state or
 acknowledge a disk save.
 
 Capture follows all bounded query pages at one committed revision, including
-empty pages with continuations. It reads mandatory Name/Transform values and
-resolves parent handles into authored IDs. A final source validation checks the
+empty pages with continuations. It reads mandatory Name/Transform values, explicitly
+selects optional Camera/MeshRenderer values and resolves parent handles into
+authored IDs. A final source validation checks the
 complete candidate; failure returns no partial snapshot. Returned values survive
 later mutations, replacement and owner destruction and can be passed to the
 existing encoder. Encoding retains its separate output-byte budget.

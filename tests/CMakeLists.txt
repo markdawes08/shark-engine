@@ -11,6 +11,7 @@ add_executable(Tests
     core_identity_tests.cpp
     core_hierarchy_tests.cpp
     core_path_tests.cpp
+    core_render_component_tests.cpp
     core_scene_tests.cpp
     core_scene_edit_tests.cpp
     core_scene_query_tests.cpp
@@ -348,6 +349,8 @@ set_tests_properties(shark.core.hierarchy PROPERTIES LABELS "cpu;unit;server" TI
 add_test(NAME shark.core.transform COMMAND Tests "[transform]" --rng-seed 1337)
 set_tests_properties(shark.core.transform PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
 add_test(NAME shark.core.schema COMMAND Tests "[schema]" --rng-seed 1337)
+add_test(NAME shark.core.render-components COMMAND Tests "[render-components]" --rng-seed 1337)
+set_tests_properties(shark.core.render-components PROPERTIES LABELS "cpu;unit;scene" TIMEOUT 30)
 set_tests_properties(shark.core.schema PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
 add_test(NAME shark.core.scene-query COMMAND Tests "[scene-query]" --rng-seed 1337)
 set_tests_properties(shark.core.scene-query PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)

@@ -1,18 +1,18 @@
 # Saved FeatureWorld
 
-12d adds the thirteenth native case, `featureworld.gltf-assets`, with independent
-core material factors, triangle/node values and deterministic engine-payload
-encoding/decoding. The [material/asset contract](gltf-assets.md) joins the existing
-source, geometry and texture cases; all preserve the four saved entities. Coverage
-now maps 47 CPU surfaces and one external GPU command. Separate real cache/job
-fixtures test typed resources and original publication fences.
+13a adds the fourteenth native case, `featureworld.render-components`, following
+the [component contract](render-components.md). The saved root has a perspective
+Camera and the fourth entity has a MeshRenderer reference. The connected case
+checks preview/rollback, edits, history, retries, recreation and native save/reload
+against independent values. Coverage maps 51 CPU surfaces and one external GPU
+command. Earlier source/geometry/texture/material/cache/job cases remain intact.
 
 Checkpoint 10b connects the [CPU runner](scene-runner.md) to the versioned
 [project](../assets/FeatureWorld/FeatureWorld.sharkproject) and
 [scene](../assets/FeatureWorld/scenes/FeatureWorld.sharkscene), following
 [ADR 0024](architecture/0024-headless-scene-runner.md). This small regression
 fixture grows with supported components and APIs. It currently contains four
-entities with mandatory Name/Transform, a three-level hierarchy, duplicate display
+entities with mandatory Name/Transform and optional Camera/MeshRenderer, a three-level hierarchy, duplicate display
 names, Unicode text, source extras and a stable global cell anchor. The anchor
 does not implement streaming, origin rebasing or live region authority.
 
@@ -29,9 +29,9 @@ owner causes explicit failure. Copy the two source files to a writable project
 root when testing from a read-only checkout. Run from any current directory by
 passing explicit paths. There is no compiled-in checkout or fixture location.
 
-`--case featureworld` selects all thirteen cases in catalog order. Each concrete ID
+`--case featureworld` selects all fourteen cases in catalog order. Each concrete ID
 also selects one case. Supply `--workspace EXISTING_DIRECTORY` for the suite or
-persistence/asset-identity/asset-import/asset-jobs/asset-pipeline case. Each creates a unique child with its own
+persistence/asset-identity/asset-import/asset-jobs/asset-pipeline/render-components case. Each creates a unique child with its own
 project/scenes and remove their known files on exit. Input source bytes are
 preserved. A failed cleanup leaves inspectable remnants; it cannot delete the
 caller-selected parent. Generated results belong under ignored `out/` or `build/`.
@@ -51,13 +51,20 @@ caller-selected parent. Generated results belong under ignored `out/` or `build/
 | `featureworld.gltf-geometry` | Pure geometry conversion over explicit authored triangle/sparse bytes: independently expected vertices, normals, triangle indices and bounds, shared ordinary/mirrored instances, local/world transforms, inverse-transpose normals, retained source/resource identities, repeatability, invalid scene/singular transforms and cancellation with unchanged AuthoredScene |
 | `featureworld.gltf-textures` | Pure texture conversion over an inline original PNG and triangle: five core roles share three semantic variants; independent pixels, color/data/normal mips, straight alpha, default and explicit samplers, image identity/digest, repeatability, missing/truncated images, missing UVs, invalid scene and cancellation with unchanged AuthoredScene |
 | `featureworld.gltf-assets` | Core material defaults/factors/alpha/culling, independent triangle/node values, deterministic engine-payload roundtrip, corrupt payload and cancellation rejection with unchanged AuthoredScene |
+| `featureworld.render-components` | Saved perspective Camera and mesh reference; optional schema/query selection, orthographic/clipping/visibility edits, pure preview and late-invalid rollback, undo/redo, retained removal/replay/mismatch, deleted-entity recreation and actual save/reopen/reload |
 
 Every case receives a fresh owner from the same saved baseline. Functional work
 occurs at tick zero; subsequent fixed ticks check stable identity/entity counts.
 The fixture has no input actions and performs no RNG draws. Seed/rate/tick
 context remains explicit in results; foundation cases separately exercise input
 and seeded data. At three ticks, initial revision values are 4 and final values
-are 4, 11, 7, 6, 4, 4, 4, 4, 4, 4, 4, 4 and 4. Persistence's final value belongs to a fresh incarnation.
+are 4, 11, 7, 6, 4, 4, 4, 4, 4, 4, 4, 4, 4 and 4. Persistence and render-components
+finish with fresh incarnations. The MeshRenderer reference is
+`20000000-0000-4000-8000-00000000000c`, mesh zero, visible. It is deliberately an
+unresolved reference in this CPU fixture; 13a performs no asset loading or draw.
+13b supplies actual runtime assets. The new case changes it to mesh seven/hidden
+to prove field persistence without treating a syntactically valid index as a
+resolved resource.
 The asset reference in scene extras is `20000000-0000-4000-8000-00000000000a`;
 it is preserved through native save/reopen and is not a new asset component.
 Identity fixtures create their own authored source/metadata in scratch; no source
@@ -86,7 +93,7 @@ alpha 128. It checks semantic sharing independently from source texture and
 sampler identity. Default linear/repeat behavior and explicit nearest/clamp/mirror
 fields remain per use. The inline PNG needs no test-fixture directory or image
 file on disk. Invalid scratch parents therefore leave pure source, geometry and
-texture cases successful while the five native file-service cases retain their
+texture cases successful while the original five native file-service cases retain their
 original failures. Material/cache integration is qualified through the separate owner fixtures;
 rendering remains a later owner. See the [texture contract](gltf-textures.md) and
 [static glTF qualification](gltf-qualification.md).
@@ -106,8 +113,8 @@ unchanged. No renderer is initialized by these cases.
 catalog and maps every current component/command to real case IDs. The independent
 process fixture resolves discovery, executes every case, verifies repeat results
 and checks that neither the versioned input nor its temporary copy changed.
-It now performs 31 checks. The independent coverage inventory contains
-47 CPU surfaces and one external GPU command; `asset.gltf.textures` maps to the
+It now performs 32 checks. The independent coverage inventory contains
+51 CPU surfaces and one external GPU command; `asset.gltf.textures` maps to the
 twelfth native case and the separate texture/dependency families. The texture
 Catch family keeps a 90-second limit and seed 1337; its private dependency family
 keeps 60 seconds.

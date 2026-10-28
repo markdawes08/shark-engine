@@ -86,7 +86,7 @@ shark::EntitySeed seed() {
 TEST_CASE("schema catalog publishes stable required component and typed property identities",
           "[schema]") {
     const auto catalog = shark::component_schemas();
-    REQUIRE(catalog.size() == 2);
+    REQUIRE(catalog.size() == 4);
     CHECK(catalog[0].id == ComponentSchemaId::name);
     CHECK(catalog[0].stable_id == "shark.name");
     CHECK(catalog[0].display_name == "Name");
@@ -98,8 +98,10 @@ TEST_CASE("schema catalog publishes stable required component and typed property
     CHECK(shark::component_schema_version == 1);
     for (const auto& component : catalog) {
         CHECK(component.version == 1);
-        CHECK(component.required);
-        CHECK_FALSE(component.removable);
+        const bool mandatory =
+            component.id == ComponentSchemaId::name || component.id == ComponentSchemaId::transform;
+        CHECK(component.required == mandatory);
+        CHECK(component.removable == !mandatory);
         const auto lookup = shark::component_schema(component.id, component.version);
         REQUIRE(lookup);
         CHECK(lookup.value() == component);
@@ -197,14 +199,16 @@ TEST_CASE("schema metadata and defaults are owned copies isolated from later dis
 
 TEST_CASE("schema lookups and validation reject unknown identities versions and value types",
           "[schema]") {
-    for (const auto unknown : std::array{0U, 3U, std::numeric_limits<std::uint32_t>::max()}) {
+    for (const auto unknown : std::array{0U, 5U, std::numeric_limits<std::uint32_t>::max()}) {
         const auto id = static_cast<ComponentSchemaId>(unknown);
         schema_failure(shark::component_schema(id), "schema.lookup");
         schema_failure(shark::property_schema(id, PropertyId::name_value), "schema.property");
         schema_failure(shark::validate_component(id, 1, shark::Name{}), "schema.validate");
     }
     for (const auto version : std::array{0U, 2U, std::numeric_limits<std::uint32_t>::max()}) {
-        for (const auto id : std::array{ComponentSchemaId::name, ComponentSchemaId::transform}) {
+        for (const auto id :
+             std::array{ComponentSchemaId::name, ComponentSchemaId::transform,
+                        ComponentSchemaId::camera, ComponentSchemaId::mesh_renderer}) {
             const auto lookup = shark::component_schema(id, version);
             schema_failure(lookup, "schema.lookup");
             CHECK(lookup.error().message.find("supported version is 1") != std::string::npos);

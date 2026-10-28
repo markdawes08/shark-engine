@@ -41,9 +41,11 @@ default. Arrays retain their input order; JSON object key order is not semantic.
 | Project scene entry | `scene_id`, `path` | None |
 | Scene | `format`, `schema_version`, `project_id`, `scene_id`, `entities` | `world_origin`, `extras` |
 | Scene entity | `entity_id`, `components` | `parent`, `extras` |
-| Components | `shark.name`, `shark.transform` | None |
+| Components | `shark.name`, `shark.transform` | `shark.camera`, `shark.mesh_renderer` |
 | Name | `schema_version` (1) | `value` (default `Entity`) |
 | Transform | `schema_version` (1) | `translation`, `rotation`, `scale` (Core defaults) |
+| Camera | `schema_version` (1) | `projection`, `vertical_fov_radians`, `orthographic_height`, `near_clip`, `far_clip` |
+| MeshRenderer | `schema_version` (1), `asset_id` | `mesh_index` (default 0), `visible` (default true) |
 | World origin | `world_id`, `cell`, `offset` | None |
 
 Project names use the same Name validator as entities. A project contains 1..256
@@ -59,6 +61,16 @@ for roots, otherwise it references another entity in this document. Forward
 references are allowed; dangling references, self-parenting, cycles and excessive
 depth reject. Parent references cannot cross scene boundaries. The fixed current
 component set requires Name and Transform; this is not a generic plugin registry.
+
+13a adds optional [Camera and MeshRenderer](render-components.md) under
+[ADR 0032](architecture/0032-render-components.md). Their absence stays absent on
+load and is omitted on save; null component objects reject. Camera projection is
+`"perspective"` or `"orthographic"`, with the contract's defaults and cross-field
+validation. MeshRenderer stores a UUIDv4 asset ID, unsigned 32-bit mesh index and
+boolean visibility. This codec does not load the referenced asset or validate its
+mesh count. The source envelope remains 1: older readers explicitly reject the
+new component names instead of discarding them, and future component versions
+reject. Existing sources and the strict legacy-0 shape keep their meanings.
 
 Translation and scale are numeric three-element arrays. Rotation is explicitly
 `[x,y,z,w]`, converted to the Core quaternion constructor's `[w,x,y,z]` order.

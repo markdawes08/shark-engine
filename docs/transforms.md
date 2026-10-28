@@ -66,6 +66,11 @@ authority and depth before adding the entity. Roots have depth one. The default
 maximum depth is 256 and the supported hard maximum is 1024. Traversal and subtree
 deletion are iterative; depth limits do not depend on the C++ call stack.
 
+13a appends optional [Camera/MeshRenderer](render-components.md) values to seeds
+and owned entity state under [ADR 0032](architecture/0032-render-components.md).
+Camera uses this existing Transform for pose; it stores no second position or
+rotation. Component add/update/removal does not change hierarchy or world matrices.
+
 `entity_state` returns an owned copy of reference, Name, local Transform, parent,
 ordered children, world matrix and depth. Child order is ascending runtime slot;
 it is not an authored sibling-order format. Changes update all affected cached

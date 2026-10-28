@@ -37,7 +37,8 @@ owner. Their domain contracts and completed-owner handoffs are linked from
 Full REQ-12 is complete under current-machine scope; the
 [12e handoff](../handoffs/12e-gltf-qualification.md) records connected owner/process
 acceptance, independent fixture validation and applicable CPU/package checks.
-**Next is assignment 13, basic scene rendering and cameras; plan checkpoints first.**
+Assignment 13 follows [five checkpoints](../roadmap/scene-rendering-plan.md),
+starting with shared [Camera/MeshRenderer components](../render-components.md).
 Editor/Runtime currently provide `--cube`, `--graphics` and `--window` diagnostics
 with offline F6/F7 pause/step controls. Authored-scene rendering remains 13,
 terminal/editor adapters remain 15/16, and MMOWorld remains M09. Schema IDs do
@@ -76,6 +77,7 @@ not establish file or gameplay-wire formats.
 | [0029](0029-bounded-gltf-geometry.md) | Bounded CPU static geometry, shared mesh hierarchy, transform validation and generated attributes |
 | [0030](0030-bounded-gltf-textures.md) | Bounded PNG/JPEG decoding, usage-specific texture mips and sampler preservation |
 | [0031](0031-gltf-material-assets.md) | Core materials, bounded engine payloads and typed resource integration through the asset owner |
+| [0032](0032-render-components.md) | Optional Camera/MeshRenderer values, shared authoring/persistence and runtime-safe asset identity |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

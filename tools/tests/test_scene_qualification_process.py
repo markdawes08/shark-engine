@@ -17,7 +17,8 @@ ROOT = scene_runner.ROOT
 # Independently reviewed against public services and the native FeatureWorld
 # callbacks. New surfaces must extend their actual exercises and this inventory.
 SCENE_SURFACES = {
-    'component.name', 'component.transform', 'tools.scene-runner.catalog',
+    'component.name', 'component.transform', 'component.camera', 'component.mesh-renderer',
+    'authoring.camera.set', 'authoring.mesh-renderer.set', 'tools.scene-runner.catalog',
     'tools.scene-runner.run', 'tools.scene-runner.results',
     'authoring.mutation.status', 'authoring.mutation.execute', 'authoring.mutation.query',
     'authoring.entity.create', 'authoring.entity.delete', 'authoring.entity.reparent',
@@ -40,7 +41,7 @@ FEATUREWORLD_CASES = [
     'featureworld.retries', 'featureworld.persistence', 'featureworld.asset-identity',
     'featureworld.asset-import', 'featureworld.asset-jobs', 'featureworld.asset-pipeline',
     'featureworld.gltf-source', 'featureworld.gltf-geometry', 'featureworld.gltf-textures',
-    'featureworld.gltf-assets',
+    'featureworld.gltf-assets', 'featureworld.render-components',
 ]
 
 

@@ -7,6 +7,7 @@ add_library(EngineCore STATIC
     src/log.cpp
     src/name.cpp
     src/project_path.cpp
+    src/render_components.cpp
     src/scene.cpp
     src/schema.cpp
     src/net_wire.cpp

@@ -13,6 +13,8 @@ struct CreateEntityCommand {
     Name name{};
     Transform transform{};
     std::optional<AuthoredEntityId> parent{};
+    std::optional<Camera> camera{};
+    std::optional<MeshRenderer> mesh_renderer{};
 };
 
 struct DeleteEntityCommand {
@@ -29,6 +31,18 @@ struct SetTransformCommand {
     Transform transform;
 };
 
+// Empty values remove the optional component. These do not load an asset or
+// select an active viewport camera; both remain presentation-owner decisions.
+struct SetCameraCommand {
+    AuthoredEntityId id;
+    std::optional<Camera> camera;
+};
+
+struct SetMeshRendererCommand {
+    AuthoredEntityId id;
+    std::optional<MeshRenderer> mesh_renderer;
+};
+
 struct ReparentEntityCommand {
     AuthoredEntityId id;
     std::optional<AuthoredEntityId> parent{};
@@ -37,8 +51,9 @@ struct ReparentEntityCommand {
 
 // Typed local authoring values, not a player or serialized authoring protocol.
 // A command is one immediate edit; no batch, history or retry identity is implied.
-using AuthoringCommand = std::variant<CreateEntityCommand, DeleteEntityCommand, SetNameCommand,
-                                      SetTransformCommand, ReparentEntityCommand>;
+using AuthoringCommand =
+    std::variant<CreateEntityCommand, DeleteEntityCommand, SetNameCommand, SetTransformCommand,
+                 ReparentEntityCommand, SetCameraCommand, SetMeshRendererCommand>;
 
 struct AuthoringCommandEffect {
     bool changed;

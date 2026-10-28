@@ -382,7 +382,7 @@
       "planned_fixture": "FeatureWorld/Cameras, FeatureWorld/ImportedStaticMeshes, FeatureWorld/BuiltinGeometry and VisibleEntityReload GPU fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "Basic scene rendering/cameras are not implemented; owner assignment 13."
+        "reason": "13a CPU Camera/MeshRenderer validation, discovery, Scene mutation, shared authoring/history/retries and source persistence pass selected Windows/WSL checks recorded in docs/handoffs/13a-render-components.md. Full REQ-13 remains NOT_RUN pending 13b runtime assets/built-ins, 13c extraction/camera math/culling, 13d offscreen rendering and 13e connected Runtime/GPU acceptance in docs/roadmap/scene-rendering-plan.md."
       }
     },
     {
@@ -2772,6 +2772,78 @@
           "featureworld.persistence",
           "featureworld.asset-identity"
         ]
+      },
+      {
+        "id": "component.camera",
+        "name": "Camera",
+        "requirement_ids": [
+          "REQ-13",
+          "REQ-09"
+        ],
+        "test_ids": [
+          "shark.core.render-components",
+          "shark.tools.source-documents",
+          "shark.tools.authoring-commands",
+          "shark.tools.authoring-batches",
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-retries",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/core_render_component_tests.cpp",
+          "tests/source_document_tests.cpp",
+          "tests/authoring_command_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/render-components.md"
+        ],
+        "fixture_reason": "Optional CPU presentation values use the existing Scene owner, schemas, deferred edits and shared authoring commands. Focused cases exercise validation, revisions/lifetime, preview, atomic rollback, history, bit-exact retries and native source save/reload. The saved FeatureWorld independently checks component values and a connected edit/history/retry/file lifecycle. Asset availability, projection math and actual rendering remain later checkpoints; no GPU behavior is claimed.",
+        "featureworld_cases": [
+          "featureworld.render-components"
+        ]
+      },
+      {
+        "id": "component.mesh-renderer",
+        "name": "MeshRenderer",
+        "requirement_ids": [
+          "REQ-13",
+          "REQ-09"
+        ],
+        "test_ids": [
+          "shark.core.render-components",
+          "shark.tools.source-documents",
+          "shark.tools.authoring-commands",
+          "shark.tools.authoring-batches",
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-retries",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/core_render_component_tests.cpp",
+          "tests/source_document_tests.cpp",
+          "tests/authoring_command_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/render-components.md"
+        ],
+        "fixture_reason": "Optional CPU presentation values use the existing Scene owner, schemas, deferred edits and shared authoring commands. Focused cases exercise validation, revisions/lifetime, preview, atomic rollback, history, bit-exact retries and native source save/reload. The saved FeatureWorld independently checks component values and a connected edit/history/retry/file lifecycle. Asset availability, projection math and actual rendering remain later checkpoints; no GPU behavior is claimed.",
+        "featureworld_cases": [
+          "featureworld.render-components"
+        ]
       }
     ],
     "commands": [
@@ -3002,7 +3074,8 @@
         ],
         "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
         "featureworld_cases": [
-          "featureworld.retries"
+          "featureworld.retries",
+          "featureworld.render-components"
         ]
       },
       {
@@ -3072,7 +3145,8 @@
         ],
         "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
         "featureworld_cases": [
-          "featureworld.commands"
+          "featureworld.commands",
+          "featureworld.render-components"
         ]
       },
       {
@@ -3248,7 +3322,8 @@
         ],
         "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
         "featureworld_cases": [
-          "featureworld.batches-history"
+          "featureworld.batches-history",
+          "featureworld.render-components"
         ]
       },
       {
@@ -3284,7 +3359,8 @@
         ],
         "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
         "featureworld_cases": [
-          "featureworld.batches-history"
+          "featureworld.batches-history",
+          "featureworld.render-components"
         ]
       },
       {
@@ -3350,7 +3426,8 @@
         ],
         "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
         "featureworld_cases": [
-          "featureworld.batches-history"
+          "featureworld.batches-history",
+          "featureworld.render-components"
         ]
       },
       {
@@ -3383,7 +3460,8 @@
         ],
         "fixture_reason": "Saved FeatureWorld native cases exercise this current CPU surface through AuthoredScene, the shared validated services and the 10a runner. Stable source IDs, independently specified component/hierarchy values, revision transitions and repeated executable runs are checked. Earlier isolated fixtures retain malformed inputs, workload/allocation/lifetime bounds and process/platform failures beyond this small scene. Terminal/editor adapters remain15/16; selected Lua bindings remain19. GPU execution remains10c.",
         "featureworld_cases": [
-          "featureworld.batches-history"
+          "featureworld.batches-history",
+          "featureworld.render-components"
         ]
       },
       {
@@ -4365,6 +4443,78 @@
         "featureworld_cases": [
           "featureworld.gltf-assets"
         ]
+      },
+      {
+        "id": "authoring.camera.set",
+        "name": "SetCameraCommand",
+        "requirement_ids": [
+          "REQ-13",
+          "REQ-09"
+        ],
+        "test_ids": [
+          "shark.core.render-components",
+          "shark.tools.source-documents",
+          "shark.tools.authoring-commands",
+          "shark.tools.authoring-batches",
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-retries",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/core_render_component_tests.cpp",
+          "tests/source_document_tests.cpp",
+          "tests/authoring_command_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/render-components.md"
+        ],
+        "fixture_reason": "Optional CPU presentation values use the existing Scene owner, schemas, deferred edits and shared authoring commands. Focused cases exercise validation, revisions/lifetime, preview, atomic rollback, history, bit-exact retries and native source save/reload. The saved FeatureWorld independently checks component values and a connected edit/history/retry/file lifecycle. Asset availability, projection math and actual rendering remain later checkpoints; no GPU behavior is claimed.",
+        "featureworld_cases": [
+          "featureworld.render-components"
+        ]
+      },
+      {
+        "id": "authoring.mesh-renderer.set",
+        "name": "SetMeshRendererCommand",
+        "requirement_ids": [
+          "REQ-13",
+          "REQ-09"
+        ],
+        "test_ids": [
+          "shark.core.render-components",
+          "shark.tools.source-documents",
+          "shark.tools.authoring-commands",
+          "shark.tools.authoring-batches",
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-retries",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/core_render_component_tests.cpp",
+          "tests/source_document_tests.cpp",
+          "tests/authoring_command_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/render-components.md"
+        ],
+        "fixture_reason": "Optional CPU presentation values use the existing Scene owner, schemas, deferred edits and shared authoring commands. Focused cases exercise validation, revisions/lifetime, preview, atomic rollback, history, bit-exact retries and native source save/reload. The saved FeatureWorld independently checks component values and a connected edit/history/retry/file lifecycle. Asset availability, projection math and actual rendering remain later checkpoints; no GPU behavior is claimed.",
+        "featureworld_cases": [
+          "featureworld.render-components"
+        ]
       }
     ],
     "lua_api": []
@@ -4385,7 +4535,8 @@
       "featureworld.gltf-source",
       "featureworld.gltf-geometry",
       "featureworld.gltf-textures",
-      "featureworld.gltf-assets"
+      "featureworld.gltf-assets",
+      "featureworld.render-components"
     ],
     "case_source": "engine_tools/src/feature_world.cpp"
   }

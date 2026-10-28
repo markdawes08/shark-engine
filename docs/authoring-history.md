@@ -67,6 +67,9 @@ invariant fixtures, never an adapter escape hatch.
 Undo/redo build a private Core candidate from the current scene and restore a
 complete immutable authored snapshot through validated Core mutations. All source
 values, parent links, global origin, entity order and bounded extras round-trip.
+This includes optional [Camera/MeshRenderer](render-components.md) fields and
+absence: history can restore removed components or remove subsequently added ones
+without resolving assets or selecting a viewport camera.
 Internal child iteration order is not a source format guarantee. Detaching deepest
 first and rebuilding parent-first avoids invalid transient composition/depth.
 An entry records IDs replaced within its group: those incarnations are removed

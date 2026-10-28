@@ -1,7 +1,7 @@
 # Atomic authoring batches and preview
 
 09b extends the same [AuthoredScene owner](authored-scenes.md) and
-[five typed commands](authoring-commands.md). See
+[typed commands](authoring-commands.md). See
 [ADR 0021](architecture/0021-atomic-authoring-batches.md) and the
 [checkpoint plan](roadmap/authoring-plan.md). This is CPU C++ EngineTools behavior.
 
@@ -16,7 +16,8 @@ mutation identities, payload matching, expiry and lost replies.
 
 `authoring_maximum_batch_commands` is 256. Empty batches are allowed. The bound
 is checked before copying or evaluating any command. Existing Name UTF-8/256-byte,
-Transform, hierarchy and configured Scene bounds apply to every intermediate
+Transform, optional [Camera/MeshRenderer](render-components.md), hierarchy and
+configured Scene bounds apply to every intermediate
 candidate state. Commands execute in order: a later command can use an earlier
 creation, but a temporary invalid cycle, missing parent or capacity overflow
 rejects immediately even if a later command could repair it. This is not an
@@ -68,9 +69,9 @@ changed commit. Old owned query pages remain owned snapshots.
 ## Publication and failure boundary
 
 Core owns an internal staging/publication port, private to Core and Tools.
-Preparation copies live records, cached transforms, identity maps and exact slot
-generations into one nonauthoritative candidate. No native EnTT value is public.
-The five existing mutation implementations validate candidate operations;
+Preparation copies live records, including optional components, cached transforms,
+identity maps and exact slot generations into one nonauthoritative candidate.
+No native EnTT value is public. The existing Core mutation implementations validate candidate operations;
 the deferred FIFO remains per-operation and is never used as a transaction.
 
 All candidate copying, mutation work, ID-set construction and result allocation

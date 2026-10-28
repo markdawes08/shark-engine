@@ -40,7 +40,9 @@ apply any operation. Refresh current state before preparing the next intent.
 
 Input matching includes expected revision, operation variant, ordered batch
 commands and every command field: stable IDs, exact Name bytes, parent, reparent
-mode and all ten Transform doubles. Double equality compares raw bits, including
+mode and all ten Transform doubles. Optional [Camera/MeshRenderer](render-components.md)
+inputs include presence, projection, all four Camera doubles, asset ID, mesh index
+and visibility, both on create and set/remove commands. Double equality compares raw bits, including
 signed zero and NaN payloads; normalized equivalents are different inputs. Undo
 and redo include direction and ticket. Clear includes its operation type and
 revision. Within the admission bounds, a changed retained payload returns

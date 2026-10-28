@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shark/name.hpp"
+#include "shark/render_components.hpp"
 #include "shark/scene_identity.hpp"
 #include "shark/transform.hpp"
 
@@ -29,6 +30,9 @@ struct SceneQueryFields {
     bool name{true};
     bool transform{true};
     bool hierarchy{true};
+    // Opt in explicitly; older {false,false,false} callers remain identity-only.
+    bool camera{false};
+    bool mesh_renderer{false};
     bool operator==(const SceneQueryFields&) const = default;
 };
 
@@ -61,6 +65,8 @@ struct SceneInspectedEntity {
     std::optional<Name> name;
     std::optional<SceneInspectedTransform> transform;
     std::optional<SceneInspectedHierarchy> hierarchy;
+    std::optional<Camera> camera{};
+    std::optional<MeshRenderer> mesh_renderer{};
 };
 
 class Scene;
