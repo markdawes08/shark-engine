@@ -76,6 +76,10 @@ its own actual native viewport and fault fixtures. The independent audit keeps
 the existing SceneRunner GPU catalog mapping strict and separately requires the
 viewport fixture, wrapper and portable oracle tests. The CPU FeatureWorld
 catalog remains sixteen cases and 55 surfaces; Tools never links Client.
+13e extends the same external surface with actual Runtime captures and seven
+native replacement/destruction/reload/resize phases. Its independent audit requires
+the Tools preparer, Client lifecycle fixture, Runtime supervisor and oracle tests;
+see the [Runtime scene handoff](handoffs/13e-runtime-scenes.md).
 
 The fixture runs all sixteen saved-world cases through the public supervisor, then
 the intentional failing assertion through the same executable/result path. It

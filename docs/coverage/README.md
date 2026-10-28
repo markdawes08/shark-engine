@@ -109,3 +109,4 @@ remains authoritative for individual requirement status.
 | 13b prepared content (partial REQ-13) | [Prepared content](../prepared-content.md), [handoff](../handoffs/13b-prepared-content.md) |
 | 13c scene extraction (partial REQ-13) | [Extraction](../scene-rendering.md), [handoff](../handoffs/13c-scene-extraction.md) |
 | 13d offscreen rendering (partial REQ-13) | [Viewport](../scene-viewport.md), [handoff](../handoffs/13d-offscreen-scene-viewport.md) |
+| 13 scene rendering | [Runtime scenes](../runtime-scenes.md), [final handoff](../handoffs/13e-runtime-scenes.md) |

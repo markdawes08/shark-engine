@@ -150,6 +150,14 @@ class GraphicsDevice final {
     // requires surface TRANSFER_SRC support and retains capture staging.
     [[nodiscard]] Result<void> set_presentation_draw(const OffscreenRequest& request,
                                                      bool enable_readback = false);
+    // Installs/replaces an owned scene snapshot after a bounded drain. Fixed
+    // cube draws and scene draws are mutually exclusive. Capture mode is fixed
+    // after presentation starts. The request must match the window framebuffer;
+    // present returns recreate_pending on a changed extent until repacked.
+    // Rejected input leaves the previous snapshot intact. RGB is encoded once
+    // by the sRGB swapchain; capture_presented returns that actual attachment.
+    [[nodiscard]] Result<void> set_presentation_scene(const SceneViewportRequest& request,
+                                                      bool enable_readback = false);
     // Reads the actual last successfully presented attachment, not another
     // render. A bounded wait proves submission completion. Returns RGBA8 sRGB
     // RGB / linear alpha and D32; resources stay live (retired count is zero).

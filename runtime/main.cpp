@@ -1,6 +1,7 @@
 #include <shark/bootstrap.hpp>
 #include <shark/client/bootstrap.hpp>
 #include <shark/client/presentation_launch.hpp>
+#include <shark/client/scene_launch.hpp>
 #include <shark/client/window_launch.hpp>
 #include <shark/log.hpp>
 
@@ -14,12 +15,29 @@ int main(int argc, char* argv[]) {
         if (!logger.write(shark::LogLevel::error, error)) {
             return 1;
         }
-        std::cerr << "Usage: Runtime [--help | --version | --window [--window-ms 1..60000] | "
-                     "--graphics | --cube [--graphics-ms 1..60000] [--device UUID|auto] "
-                     "[--validation required|off] [--shader-bundle PATH]]\n"
-                  << std::flush;
+        std::cerr << shark::client::runtime_help() << std::flush;
         return std::cerr ? 2 : 1;
     };
+    if (argc >= 2 && std::string_view{argv[1]} == "--scene") {
+        if (static_cast<std::size_t>(argc - 1) > shark::client::scene_launch_maximum_arguments) {
+            return invalid_arguments({shark::ErrorCode::invalid_argument,
+                                      "Too many scene launch arguments",
+                                      {.operation = "client.scene.arguments.parse"}});
+        }
+        std::array<std::string_view, shark::client::scene_launch_maximum_arguments> arguments;
+        for (int index = 1; index < argc; ++index)
+            arguments[static_cast<std::size_t>(index - 1)] = argv[index];
+        auto parsed = shark::client::parse_scene_arguments(
+            std::span{arguments}.first(static_cast<std::size_t>(argc - 1)));
+        if (!parsed)
+            return invalid_arguments(parsed.error());
+        auto result = shark::client::run_scene("Shark Runtime - Scene", parsed.value());
+        if (!result) {
+            static_cast<void>(logger.write(shark::LogLevel::error, result.error()));
+            return 1;
+        }
+        return 0;
+    }
     // Explicit opt-in: informational commands never initialize a display.
     if (argc >= 2 &&
         (std::string_view{argv[1]} == "--graphics" || std::string_view{argv[1]} == "--cube")) {

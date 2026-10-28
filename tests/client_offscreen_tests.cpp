@@ -41,6 +41,10 @@ struct OffscreenState {
     bool throw_capture{false};
     bool capture_enabled{false};
     std::optional<OffscreenRequest> draw;
+    std::optional<SceneViewportRequest> scene;
+    WindowExtent framebuffer{640, 480};
+    bool wait_present{false};
+    std::uint32_t retired_swapchains{0};
     SceneViewportStats viewport;
     detail::GraphicsDiagnosticSink* sink{nullptr};
 };
@@ -148,6 +152,19 @@ class OffscreenBackend final : public detail::GraphicsBackend {
         state_.capture_enabled = capture;
         return {};
     }
+    Result<void> set_presentation_scene(const SceneViewportRequest& request,
+                                        bool capture) override {
+        ++state_.configurations;
+        if (state_.throw_configuration)
+            throw std::runtime_error("CPU injected scene configuration failure");
+        if (state_.fail_configuration)
+            return Error{ErrorCode::execution_failed,
+                         "CPU injected scene configuration failure",
+                         {"test.window_scene.configure", "owned-request"}};
+        state_.scene = request;
+        state_.capture_enabled = capture;
+        return {};
+    }
     Result<OffscreenReadback> capture_presented() override {
         ++state_.captures;
         if (state_.throw_capture) {
@@ -163,7 +180,8 @@ class OffscreenBackend final : public detail::GraphicsBackend {
         }
         OffscreenReadback result;
         result.color_encoding = ReadbackColorEncoding::srgb;
-        result.rgba8 = state_.draw->texture_rgba8;
+        result.rgba8 = state_.scene ? std::vector<std::uint8_t>{255, 128, 64, 255}
+                                    : state_.draw->texture_rgba8;
         result.depth = {0.25F};
         result.submitted = 2;
         result.completed = 2;
@@ -171,7 +189,7 @@ class OffscreenBackend final : public detail::GraphicsBackend {
         return result;
     }
     Result<WindowState> window_state() override {
-        return WindowState{.content = {640, 480}, .framebuffer = {640, 480}};
+        return WindowState{.content = state_.framebuffer, .framebuffer = state_.framebuffer};
     }
     Result<PresentationSync> create_presentation() override {
         ++state_.presentations;
@@ -190,7 +208,11 @@ class OffscreenBackend final : public detail::GraphicsBackend {
         return {};
     }
     Result<detail::PresentStatus> present(std::uint32_t, std::uint32_t, std::uint64_t) override {
-        return detail::PresentStatus::presented;
+        return state_.wait_present ? detail::PresentStatus::waiting
+                                   : detail::PresentStatus::presented;
+    }
+    void destroy_swapchain() noexcept override {
+        ++state_.retired_swapchains;
     }
     Result<detail::DrainStatus> drain_presentation(std::uint64_t timeout) override {
         ++state_.drains;
@@ -554,4 +576,136 @@ TEST_CASE("Scene viewport diagnostics cannot be returned as successful pixels",
     CHECK(state.renders == 1);
     CHECK_FALSE(device->close());
     CHECK(state.destroys == 5);
+}
+
+TEST_CASE("Scene presentation owns replacement snapshots and waits for a repacked extent",
+          "[scene-viewport]") {
+    OffscreenState state;
+    state.complete = true;
+    auto device = create(state);
+    auto request = test::scene_viewport_request_fixture();
+    request.extent = state.framebuffer;
+    auto invalid = request;
+    invalid.indices.back() = 999;
+    CHECK_FALSE(device->set_presentation_scene(invalid));
+    CHECK(state.configurations == 0);
+    CHECK(state.drains == 0);
+    std::optional<Result<void>> wrong_thread;
+    std::thread worker([&] { wrong_thread = device->set_presentation_scene(request); });
+    worker.join();
+    REQUIRE(wrong_thread.has_value());
+    CHECK_FALSE(*wrong_thread);
+    REQUIRE(device->set_presentation_scene(request, true));
+    CHECK_FALSE(device->set_presentation_draw(test::offscreen_request_fixture()));
+    request.scene_revision.revision = 99;
+    REQUIRE(state.scene);
+    CHECK(state.scene->scene_revision.revision == 4);
+    REQUIRE(device->present());
+    REQUIRE(device->capture_presented());
+    REQUIRE(device->set_presentation_scene(request, true));
+    CHECK(state.scene->scene_revision.revision == 99);
+    CHECK(state.drains > 0);
+    CHECK(state.retired_swapchains == 0);
+    state.framebuffer = {800, 600};
+    const auto mismatch = device->present();
+    REQUIRE(mismatch);
+    CHECK(mismatch.value().status == PresentationStatus::recreate_pending);
+    CHECK_FALSE(mismatch.value().stats.faulted);
+    request.extent = state.framebuffer;
+    REQUIRE(device->set_presentation_scene(request, true));
+    const auto resized = device->present();
+    REQUIRE(resized);
+    CHECK(resized.value().status == PresentationStatus::presented);
+    CHECK(resized.value().stats.extent == state.framebuffer);
+    CHECK(state.retired_swapchains == 1);
+    REQUIRE(device->close());
+    CHECK_FALSE(device->set_presentation_scene(request, true));
+}
+
+TEST_CASE("Scene replacement preserves the previous snapshot across failures and GPU waits",
+          "[scene-viewport]") {
+    OffscreenState state;
+    auto device = create(state);
+    CompleteAtExit completion{state};
+    auto request = test::scene_viewport_request_fixture();
+    request.extent = state.framebuffer;
+    REQUIRE(device->set_presentation_scene(request, true));
+    REQUIRE(device->present());
+    CHECK_FALSE(device->set_presentation_scene(request, false));
+    CHECK(state.configurations == 1);
+    request.scene_revision.revision = 5;
+    const auto timeout = device->set_presentation_scene(request, true);
+    REQUIRE_FALSE(timeout);
+    CHECK(timeout.error().context.operation == "graphics.presentation.drain_timeout");
+    CHECK(state.scene->scene_revision.revision == 4);
+    CHECK(state.configurations == 1);
+    state.complete = true;
+    state.fail_configuration = true;
+    const auto failed = device->set_presentation_scene(request, true);
+    REQUIRE_FALSE(failed);
+    CHECK(failed.error().context.operation == "test.window_scene.configure");
+    CHECK(state.scene->scene_revision.revision == 4);
+    state.fail_configuration = false;
+    state.throw_configuration = true;
+    const auto threw = device->set_presentation_scene(request, true);
+    REQUIRE_FALSE(threw);
+    CHECK(threw.error().context.operation == "graphics.window_scene.configure");
+    CHECK(state.scene->scene_revision.revision == 4);
+    state.throw_configuration = false;
+    state.pending = true;
+    CHECK_FALSE(device->set_presentation_scene(request, true));
+    state.pending = false;
+    REQUIRE(device->set_presentation_scene(request, true));
+    CHECK(state.scene->scene_revision.revision == 5);
+    REQUIRE(device->close());
+}
+
+TEST_CASE("Scene replacement retires an acquired pending image only after a completed drain",
+          "[scene-viewport]") {
+    OffscreenState state;
+    state.complete = true;
+    state.wait_present = true;
+    auto device = create(state);
+    auto request = test::scene_viewport_request_fixture();
+    request.extent = state.framebuffer;
+    REQUIRE(device->set_presentation_scene(request));
+    auto first = device->present();
+    REQUIRE(first);
+    CHECK(first.value().status == PresentationStatus::waiting);
+    request.scene_revision.revision = 5;
+    REQUIRE(device->set_presentation_scene(request));
+    CHECK(state.retired_swapchains == 1);
+    state.wait_present = false;
+    auto next = device->present();
+    REQUIRE(next);
+    CHECK(next.value().status == PresentationStatus::presented);
+    CHECK(next.value().stats.generation == 2);
+    CHECK(next.value().stats.completed == next.value().stats.submitted);
+    REQUIRE(device->close());
+}
+
+TEST_CASE("Scene configuration cannot replace a fixed presentation draw", "[scene-viewport]") {
+    OffscreenState state;
+    auto device = create(state);
+    REQUIRE(device->set_presentation_draw(test::offscreen_request_fixture()));
+    CHECK_FALSE(device->set_presentation_scene(test::scene_viewport_request_fixture()));
+    CHECK(state.configurations == 1);
+    CHECK_FALSE(state.scene);
+    REQUIRE(device->close());
+}
+
+TEST_CASE("Scene resize waiting does not hide asynchronous validation errors", "[scene-viewport]") {
+    OffscreenState state;
+    auto device = create(state);
+    auto request = test::scene_viewport_request_fixture();
+    request.extent = state.framebuffer;
+    REQUIRE(device->set_presentation_scene(request));
+    state.framebuffer = {800, 600};
+    state.sink->record(true, "CPU injected asynchronous validation error");
+    const auto result = device->present();
+    REQUIRE_FALSE(result);
+    CHECK(result.error().code == ErrorCode::execution_failed);
+    CHECK(state.presentations == 0);
+    // Diagnostic failure remains observable, while no GPU work was started.
+    CHECK_FALSE(device->close());
 }

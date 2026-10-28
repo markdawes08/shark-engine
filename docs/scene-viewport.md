@@ -4,7 +4,7 @@
 and `GraphicsDevice::render_scene_offscreen` in EngineClient. It consumes the
 existing [CPU extraction](scene-rendering.md) without borrowing a mutable Scene.
 [ADR 0035](architecture/0035-offscreen-scene-viewport.md) records the ownership
-decision. Runtime file launch/connected scene acceptance remains 13e.
+decision. 13e connects it to [Runtime loading and presentation](runtime-scenes.md).
 
 ## Preparation and shader profile
 
@@ -118,3 +118,9 @@ qualify geometric readbacks, target reuse/resize and resource-failure behavior o
 both available GPUs. CPU CTest selections cover preparation, shader interfaces,
 front-end ownership, device-free CLI and independent oracle/rejection controls;
 they never establish native rendering success.
+
+13e adds [Runtime scene loading and presentation](runtime-scenes.md). The same
+draw implementation can target an sRGB swapchain through
+`GraphicsDevice::set_presentation_scene`, with complete replacement after bounded
+drain and actual presented capture. Offscreen RGBA8 remains linear; the window
+attachment encodes once. Existing offscreen limits and behavior are unchanged.

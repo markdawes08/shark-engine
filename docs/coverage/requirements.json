@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "12",
+  "current_assignment": "13",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -381,8 +381,8 @@
       ],
       "planned_fixture": "FeatureWorld/Cameras, FeatureWorld/ImportedStaticMeshes, FeatureWorld/BuiltinGeometry and VisibleEntityReload GPU fixtures.",
       "verification": {
-        "status": "NOT_RUN",
-        "reason": "13a Camera/MeshRenderer authoring/persistence and 13b prepared runtime mesh/scene codecs, immutable asset ownership and built-in cube/plane geometry pass selected Windows/WSL/sanitizer checks recorded in docs/handoffs/13a-render-components.md and docs/handoffs/13b-prepared-content.md. Full REQ-13 remains NOT_RUN pending 13c extraction/camera math/culling, 13d offscreen rendering and 13e connected Runtime/GPU acceptance in docs/roadmap/scene-rendering-plan.md."
+        "status": "PASS",
+        "reason": "All five rendering checkpoints pass under current-machine scope. docs/handoffs/13e-runtime-scenes.md records connected Runtime FeatureWorld/imported/fresh-built-in captures on both GPUs, seven native replacement/destruction/reload/resize phases per GPU, refreshed offscreen/cube regressions, affected Windows/WSL/sanitizer CPU selections and protected Runtime/API checks. Earlier unchanged 13a-13d evidence remains linked by docs/roadmap/scene-rendering-plan.md. Temporary opaque unlit materials do not claim PBR, streaming or MMO capacity."
       }
     },
     {
@@ -2738,7 +2738,34 @@
           "shaders/scene_unlit.hlsl",
           "docs/scene-viewport.md"
         ],
-        "fixture_reason": "EngineClient packs immutable Core snapshots into bounded shared geometry and ordered unlit draws, preserving camera/model parity and explicit scene/origin metadata. One persistent RGBA8/D32 target uses the existing Vulkan/NVRHI device, queue and bounded completion owner. Explicit native fixtures independently compare geometry/depth on both current-PC GPUs through same-size reuse, resize, empty clears and retained failure recovery; CPU tests alone qualify no GPU. Runtime launch remains13e."
+        "fixture_reason": "EngineClient packs immutable Core snapshots into bounded shared geometry and ordered unlit draws, preserving camera/model parity and explicit scene/origin metadata. One persistent RGBA8/D32 target uses the existing Vulkan/NVRHI device, queue and bounded completion owner. Explicit native fixtures independently compare geometry/depth on both current-PC GPUs through same-size reuse, resize, empty clears and retained failure recovery; CPU tests alone qualify no GPU. Runtime launch and connected presentation are covered by client.runtime-scenes."
+      },
+      {
+        "id": "client.runtime-scenes",
+        "name": "Prepared Runtime scene loading, presentation and capture",
+        "requirement_ids": [
+          "REQ-13"
+        ],
+        "test_ids": [
+          "shark.client.scene-content",
+          "shark.client.scene-launch",
+          "shark.client.scene-viewport",
+          "shark.tools.runtime-scene-prepare",
+          "shark.tooling.runtime-scene-smoke"
+        ],
+        "test_sources": [
+          "tests/client_scene_content_tests.cpp",
+          "tests/client_scene_launch_tests.cpp",
+          "tests/client_offscreen_tests.cpp",
+          "tools/tests/test_runtime_scene_smoke.py"
+        ],
+        "fixtures": [
+          "tests/runtime_scene_prepare.cpp",
+          "tests/runtime_scene_lifecycle.cpp",
+          "tools/runtime_scene_smoke.py",
+          "docs/runtime-scenes.md"
+        ],
+        "fixture_reason": "Runtime reads bounded explicit prepared files with complete-candidate publication and no source importer dependency. Actual Runtime processes display prepared FeatureWorld, fresh built-in cube/plane and a licensed imported scene; independent images check geometry/depth. Connected native lifetime checks cover rejected candidate replacement, visible deletion, fresh-incarnation reload, resize and retained snapshots. CPU checks alone establish no GPU behavior."
       }
     ],
     "components": [
@@ -4720,26 +4747,34 @@
       },
       {
         "id": "graphics.scene.render",
-        "name": "Prepare, render and inspect the offscreen scene viewport",
+        "name": "Load, launch, prepare, present, capture and inspect prepared scenes",
         "requirement_ids": [
           "REQ-13"
         ],
         "test_ids": [
-          "shark.tooling.scene-render-smoke"
+          "shark.tooling.scene-render-smoke",
+          "shark.tooling.runtime-scene-smoke"
         ],
         "test_sources": [
           "tools/tests/test_scene_render_smoke.py",
           "tests/client_scene_viewport_tests.cpp",
-          "tests/client_offscreen_tests.cpp"
+          "tests/client_offscreen_tests.cpp",
+          "tools/tests/test_runtime_scene_smoke.py",
+          "tests/client_scene_content_tests.cpp",
+          "tests/client_scene_launch_tests.cpp"
         ],
         "fixtures": [
           "tests/scene_render_smoke.cpp",
           "tools/scene_render_smoke.py",
-          "docs/scene-viewport.md"
+          "docs/scene-viewport.md",
+          "tests/runtime_scene_prepare.cpp",
+          "tests/runtime_scene_lifecycle.cpp",
+          "tools/runtime_scene_smoke.py",
+          "docs/runtime-scenes.md"
         ],
         "fixture_reason": "The always-registered CPU tooling family verifies the independent readback oracle and evidence rejection. Client-specific packing/owner tests and actual native rendering are additionally mapped by client.scene-viewport; an unavailable Client profile does not count those as executed.",
         "featureworld_cases": [],
-        "external_fixture_reason": "Rendering requires the native Windows Client/device, so CPU FeatureWorld retains its Core/Tools independence and sixteen existing cases. SceneRenderSmoke directly consumes Core extraction and prepared assets, renders five connected frames and three resource-fault controls through the public viewport service. It is an explicit GPU fixture, not a new SceneRunner GPU catalog entry or terminal/editor adapter."
+        "external_fixture_reason": "Rendering requires the native Windows Client/device, so CPU FeatureWorld retains its Core/Tools independence and sixteen existing cases. SceneRenderSmoke directly consumes Core extraction and prepared assets, renders five connected frames and three resource-fault controls through the public viewport service. It is an explicit GPU fixture, not a new SceneRunner GPU catalog entry or terminal/editor adapter. Runtime loading/presentation also belongs to Client, keeping CPU Tools independent. Three real Runtime captures and the native lifetime fixture exercise prepared FeatureWorld, imported geometry and fresh built-ins through the same public owners."
       }
     ],
     "lua_api": []

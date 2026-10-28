@@ -11,6 +11,9 @@ class Presentation final {
         : backend_(backend), sink_(sink) {}
     [[nodiscard]] Result<PresentationReport> frame(ClearColor color);
     [[nodiscard]] Result<void> drain();
+    // Replacement may discard an acquired but unpresented image only after
+    // draining and retiring its swapchain. Completed frames retain the chain.
+    [[nodiscard]] Result<void> prepare_draw_update();
     [[nodiscard]] Result<void> close();
     [[nodiscard]] Error fault(Error error);
     [[nodiscard]] const PresentationStats& stats() const noexcept {

@@ -40,9 +40,10 @@ Linux graphics is outside scope. Mac support, CI, packages and hardware requirem
 are retired by [ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md).
 Hosted CI is supplemental; remote branch protection is unchanged.
 
-**Current handoff: [13d, offscreen scene viewport](docs/handoffs/13d-offscreen-scene-viewport.md).**
-13a-13d are complete; next is **13e, connected Runtime scene acceptance** in
-the [five rendering checkpoints](docs/roadmap/scene-rendering-plan.md). Follow
+**Current handoff: [13e, connected Runtime acceptance](docs/handoffs/13e-runtime-scenes.md).**
+All [five rendering checkpoints](docs/roadmap/scene-rendering-plan.md) and full
+REQ-13 are complete under current-machine scope. Next is **14, early standalone
+game export**. Follow
 [ADR 0032](docs/architecture/0032-render-components.md) and the
 [component contract](docs/render-components.md): optional Camera/MeshRenderer share
 Scene validation, authoring, history, retries and source persistence. Query their
@@ -62,10 +63,13 @@ packing and shared-depth draws through the existing GraphicsDevice. One target
 persists across frames, resize adopts complete candidates, and failed GPU work
 retains owners until drain/close. Preserve the new scene-unlit shader profile,
 fixed readback limits and native resize/timeout/recording controls. CPU Tools stays
-independent of Client. Runtime scene launch/connected acceptance remains 13e. Full REQ-13 remains
-NOT_RUN. Current Runtime/Editor window/graphics/cube
-flags are diagnostics; application authored-scene launch and game-authoring editor UI
-are not implemented yet. The offscreen renderer is available as a Client C++ API.
+independent of Client. [Runtime scenes](docs/runtime-scenes.md) and
+[ADR 0036](docs/architecture/0036-runtime-scene-launch.md) add explicit bounded
+prepared-file loading, selected camera, dynamic sRGB presentation, F5 candidate
+reload and actual presented capture. Preserve complete-candidate replacement,
+fresh incarnations, bounded drain and seven native lifetime phases. Runtime has
+no source importer or authoring UI. The existing Editor window/graphics/cube
+flags remain diagnostics; a game-authoring editor UI is not implemented yet.
 Shared CPU authoring services exist; terminal/editor adapters remain 15/16.
 
 The user deferred remaining 05c work to the [nonblocking backlog](docs/backlog.md)

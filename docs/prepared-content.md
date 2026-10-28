@@ -102,8 +102,9 @@ It preserves TRS, parents and dense mesh references, uses `Node` for empty names
 and rejects invalid nonempty Names. It creates neither camera nor global origin;
 those are explicit authoring/runtime inputs. Node ID counts/uniqueness must match.
 
-These services return owned bytes only. Assignment 13e integrates application
-loading and assignment 14 stages files for a standalone export. No new filesystem
+These services return owned bytes only. Assignment 13e adds
+[bounded application loading](runtime-scenes.md), and assignment 14 stages files
+for a standalone export. No new filesystem
 resolver, implicit import, export CLI or final-cook claim is made in 13b.
 
 ## Public Core example

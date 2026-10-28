@@ -55,39 +55,57 @@ void read_rows(nvrhi::IDevice& device, nvrhi::IStagingTexture* staging, WindowEx
     for (std::uint32_t row = 0; row < extent.height; ++row)
         std::memcpy(output + row * packed_pitch, mapped + row * pitch, packed_pitch);
 }
-} // namespace
 
-std::unique_ptr<SceneTarget> create_scene_target(nvrhi::IDevice& device, WindowExtent extent,
-                                                 bool fail_partial) {
+std::unique_ptr<SceneTarget> create_target(nvrhi::IDevice& device, WindowExtent extent,
+                                           bool fail_partial, nvrhi::ITexture* color,
+                                           bool capture) {
     auto target = std::make_unique<SceneTarget>();
     target->extent = extent;
-    target->color = checked(device.createTexture(target_desc(extent, nvrhi::Format::RGBA8_UNORM,
-                                                             "Shark scene viewport color")),
-                            *target);
+    target->color =
+        color ? nvrhi::TextureHandle(color)
+              : checked(device.createTexture(target_desc(extent, nvrhi::Format::RGBA8_UNORM,
+                                                         "Shark scene viewport color")),
+                        *target);
     target->depth = checked(
         device.createTexture(target_desc(extent, nvrhi::Format::D32, "Shark scene viewport depth")),
         *target);
     if (fail_partial)
         throw failure("graphics.test.scene_partial_creation",
                       "Injected failure after creating candidate scene attachments");
-    target->color_readback = checked(
-        device.createStagingTexture(target->color->getDesc(), nvrhi::CpuAccessMode::Read), *target);
-    target->depth_readback = checked(
-        device.createStagingTexture(target->depth->getDesc(), nvrhi::CpuAccessMode::Read), *target);
+    if (capture) {
+        target->color_readback = checked(
+            device.createStagingTexture(target->color->getDesc(), nvrhi::CpuAccessMode::Read),
+            *target);
+        target->depth_readback = checked(
+            device.createStagingTexture(target->depth->getDesc(), nvrhi::CpuAccessMode::Read),
+            *target);
+    }
     target->framebuffer = checked(device.createFramebuffer(nvrhi::FramebufferDesc()
                                                                .addColorAttachment(target->color)
                                                                .setDepthAttachment(target->depth)),
                                   *target);
     return target;
 }
+} // namespace
+
+std::unique_ptr<SceneTarget> create_scene_target(nvrhi::IDevice& device, WindowExtent extent,
+                                                 bool fail_partial) {
+    return create_target(device, extent, fail_partial, nullptr, true);
+}
+std::unique_ptr<SceneTarget> create_window_scene_target(nvrhi::IDevice& device,
+                                                        nvrhi::ITexture* color, WindowExtent extent,
+                                                        bool capture, bool fail_partial) {
+    return create_target(device, extent, fail_partial, color, capture);
+}
 
 std::unique_ptr<SceneFrameResources> create_scene_frame(nvrhi::IDevice& device,
                                                         const SceneViewportRequest& request,
                                                         const SceneTarget& target,
-                                                        bool fail_partial) {
+                                                        bool fail_partial, bool own_commands) {
     auto frame = std::make_unique<SceneFrameResources>();
     auto& resources = *frame;
-    resources.commands = checked(device.createCommandList(), resources);
+    if (own_commands)
+        resources.commands = checked(device.createCommandList(), resources);
     if (fail_partial)
         throw failure("graphics.test.scene_partial_creation",
                       "Injected failure while creating a candidate scene frame");
@@ -179,10 +197,11 @@ std::unique_ptr<SceneFrameResources> create_scene_frame(nvrhi::IDevice& device,
     return frame;
 }
 
-void record_scene_frame(SceneFrameResources& resources, const SceneViewportRequest& request,
-                        const SceneTarget& target) {
-    auto& commands = *resources.commands;
-    if (!request.draws.empty()) {
+namespace {
+void record_frame(SceneFrameResources& resources, const SceneViewportRequest& request,
+                  const SceneTarget& target, nvrhi::ICommandList& commands, bool upload,
+                  bool clear_color) {
+    if (upload && !request.draws.empty()) {
         commands.writeBuffer(resources.vertices, request.vertices.data(),
                              request.vertices.size() * sizeof(SceneViewportVertex));
         commands.writeBuffer(resources.indices, request.indices.data(),
@@ -193,7 +212,8 @@ void record_scene_frame(SceneFrameResources& resources, const SceneViewportReque
             commands.writeBuffer(resources.draws[index].constants, &constants, sizeof(constants));
         }
     }
-    commands.clearTextureFloat(target.color, nvrhi::AllSubresources, nvrhi::Color(0, 0, 0, 1));
+    if (clear_color)
+        commands.clearTextureFloat(target.color, nvrhi::AllSubresources, nvrhi::Color(0, 0, 0, 1));
     commands.clearDepthStencilTexture(target.depth, nvrhi::AllSubresources, true, 1.0F, false, 0);
     for (std::size_t index = 0; index < request.draws.size(); ++index) {
         const auto& draw = request.draws[index];
@@ -219,11 +239,23 @@ void record_scene_frame(SceneFrameResources& resources, const SceneViewportReque
                                  .setVertexCount(draw.index_count)
                                  .setStartIndexLocation(draw.first_index));
     }
-    commands.copyTexture(target.color_readback, nvrhi::TextureSlice(), target.color,
-                         nvrhi::TextureSlice());
-    commands.copyTexture(target.depth_readback, nvrhi::TextureSlice(), target.depth,
-                         nvrhi::TextureSlice());
-    commands.close();
+    if (target.color_readback) {
+        commands.copyTexture(target.color_readback, nvrhi::TextureSlice(), target.color,
+                             nvrhi::TextureSlice());
+        commands.copyTexture(target.depth_readback, nvrhi::TextureSlice(), target.depth,
+                             nvrhi::TextureSlice());
+    }
+}
+} // namespace
+void record_scene_frame(SceneFrameResources& resources, const SceneViewportRequest& request,
+                        const SceneTarget& target) {
+    record_frame(resources, request, target, *resources.commands, true, true);
+    resources.commands->close();
+}
+void record_window_scene_frame(SceneFrameResources& resources, const SceneViewportRequest& request,
+                               const SceneTarget& target, nvrhi::ICommandList& commands,
+                               bool upload) {
+    record_frame(resources, request, target, commands, upload, false);
 }
 
 OffscreenReadback read_scene_frame(nvrhi::IDevice& device, const SceneFrameResources& frame,

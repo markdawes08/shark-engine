@@ -89,8 +89,11 @@ def audit(manifest, cpu, gpu, registered, declared):
             if entry['id'] == 'graphics.scene.render':
                 check(not mapped and not entry.get('gpu_case_ids')
                       and entry.get('external_fixture_reason', '').strip()
-                      and {'tests/scene_render_smoke.cpp', 'tools/scene_render_smoke.py'} <= set(entry['fixtures'])
-                      and 'shark.tooling.scene-render-smoke' in tests, 'Scene viewport external fixture drift')
+                      and {'tests/scene_render_smoke.cpp', 'tools/scene_render_smoke.py',
+                           'tests/runtime_scene_prepare.cpp', 'tests/runtime_scene_lifecycle.cpp',
+                           'tools/runtime_scene_smoke.py'} <= set(entry['fixtures'])
+                      and {'shark.tooling.scene-render-smoke', 'shark.tooling.runtime-scene-smoke'} <= set(tests),
+                      'Scene viewport/Runtime external fixture drift')
             rows.append({'id': entry['id'], 'category': category, 'featureworld_cases': mapped,
                          'registered_tests': sorted(set(tests) & registered),
                          'declared_other_profile_tests': sorted(set(tests) - registered)})

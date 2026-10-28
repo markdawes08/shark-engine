@@ -85,6 +85,7 @@ not establish file or gameplay-wire formats.
 | [0033](0033-prepared-runtime-content.md) | Bounded prepared mesh/scene formats, immutable assets and built-in geometry without Runtime importers |
 | [0034](0034-scene-extraction.md) | Revisioned CPU extraction, full affine cameras, bounded local render coordinates and conservative frustum culling |
 | [0035](0035-offscreen-scene-viewport.md) | Persistent offscreen scene targets, bounded unlit draws and safe resize through the existing graphics owner |
+| [0036](0036-runtime-scene-launch.md) | Explicit prepared Runtime loading, dynamic scene presentation and complete-candidate reload |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

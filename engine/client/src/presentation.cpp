@@ -173,6 +173,13 @@ void Presentation::retire_swapchain() noexcept {
     stats_.extent = {};
     pending_.reset();
 }
+Result<void> Presentation::prepare_draw_update() {
+    if (auto drained = drain(); !drained)
+        return drained.error();
+    if (pending_)
+        retire_swapchain();
+    return {};
+}
 Result<void> Presentation::close() {
     if (stats_.closed) {
         return failure_ ? Result<void>{*failure_} : Result<void>{};

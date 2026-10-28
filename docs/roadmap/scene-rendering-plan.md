@@ -4,12 +4,12 @@ Date: 2026-10-27. Base: `c1a3e64`, clean `main`. Owner: REQ-13.
 The user approved five subchunks. Follow the [testing policy](../testing-policy.md),
 [render conventions](../architecture/0005-simulation-and-rendering.md),
 [MMORPG plan](mmorpg-plan.md) and [human/agent plan](human-agent-plan.md).
-Full REQ-13 remains NOT_RUN until the connected rendering acceptance in 13e.
-**13a-13d are PASS under current-machine scope**; see their
+**All five checkpoints and full REQ-13 are PASS under current-machine scope**; see their
 [component](../handoffs/13a-render-components.md),
 [prepared-content](../handoffs/13b-prepared-content.md),
 [extraction](../handoffs/13c-scene-extraction.md) and
-[offscreen viewport](../handoffs/13d-offscreen-scene-viewport.md) handoffs. Next: 13e.
+[offscreen viewport](../handoffs/13d-offscreen-scene-viewport.md) and
+[connected Runtime](../handoffs/13e-runtime-scenes.md) handoffs. Next: assignment 14.
 
 | Checkpoint | Deliverable and gate |
 | --- | --- |
@@ -27,7 +27,9 @@ updates its concrete contract before changing that boundary. 13c uses the
 [CPU extraction contract](../scene-rendering.md) and
 [ADR 0034](../architecture/0034-scene-extraction.md). 13d uses the
 [viewport contract](../scene-viewport.md) and
-[ADR 0035](../architecture/0035-offscreen-scene-viewport.md). No editor or terminal
+[ADR 0035](../architecture/0035-offscreen-scene-viewport.md). 13e follows the
+[Runtime scene contract](../runtime-scenes.md) and
+[ADR 0036](../architecture/0036-runtime-scene-launch.md). No editor or terminal
 adapter is introduced before its assigned owner (16 and 15 respectively).
 
 Verification is focused per checkpoint: affected primary Debug regressions,

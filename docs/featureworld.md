@@ -10,6 +10,9 @@ shared/mirrored geometry and immutable loading. Coverage maps 55 CPU surfaces
 and two external GPU commands; these CPU cases do not initialize a renderer.
 13d adds the separate [native viewport fixture](scene-viewport.md), keeping this
 CPU catalog and its Core/Tools dependency boundary unchanged.
+13e extends that external fixture coverage with [actual Runtime scenes](runtime-scenes.md):
+a prepared FeatureWorld view, a fresh cube/plane project, imported geometry and
+visible-entity lifetime checks. The saved source and CPU case inventory stay unchanged.
 
 Checkpoint 10b connects the [CPU runner](scene-runner.md) to the versioned
 [project](../assets/FeatureWorld/FeatureWorld.sharkproject) and

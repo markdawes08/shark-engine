@@ -4,7 +4,8 @@
 EngineCore. It consumes the existing [Scene](scene-contracts.md) and immutable
 [prepared assets](prepared-content.md), without initializing graphics or loading
 files. See [ADR 0034](architecture/0034-scene-extraction.md). The [offscreen viewport](scene-viewport.md) consumes these snapshots in 13d;
-application scene loading/connected acceptance remains 13e.
+application loading and connected acceptance follow the completed
+[Runtime scene contract](runtime-scenes.md).
 
 ## Snapshot boundary
 

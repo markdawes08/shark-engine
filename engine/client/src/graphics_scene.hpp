@@ -46,11 +46,16 @@ struct SceneFrameResources final {
 // before opening the command list; only the backend may prove completion.
 [[nodiscard]] std::unique_ptr<SceneTarget> create_scene_target(nvrhi::IDevice&, WindowExtent,
                                                                bool fail_partial);
-[[nodiscard]] std::unique_ptr<SceneFrameResources> create_scene_frame(nvrhi::IDevice&,
-                                                                      const SceneViewportRequest&,
-                                                                      const SceneTarget&,
+[[nodiscard]] std::unique_ptr<SceneTarget> create_window_scene_target(nvrhi::IDevice&,
+                                                                      nvrhi::ITexture*,
+                                                                      WindowExtent, bool capture,
                                                                       bool fail_partial);
+[[nodiscard]] std::unique_ptr<SceneFrameResources>
+create_scene_frame(nvrhi::IDevice&, const SceneViewportRequest&, const SceneTarget&,
+                   bool fail_partial, bool own_commands = true);
 void record_scene_frame(SceneFrameResources&, const SceneViewportRequest&, const SceneTarget&);
+void record_window_scene_frame(SceneFrameResources&, const SceneViewportRequest&,
+                               const SceneTarget&, nvrhi::ICommandList&, bool upload);
 [[nodiscard]] OffscreenReadback read_scene_frame(nvrhi::IDevice&, const SceneFrameResources&,
                                                  const SceneTarget&);
 

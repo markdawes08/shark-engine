@@ -264,6 +264,7 @@ struct GraphicsDevice::Impl {
     const char* operation{"graphics.startup"};
     bool presentation_started{false};
     bool draw_configured{false};
+    std::optional<WindowExtent> scene_extent;
     bool capture_enabled{false};
 
     explicit Impl(std::unique_ptr<detail::GraphicsBackend> value)
@@ -570,12 +571,28 @@ Result<PresentationReport> GraphicsDevice::present(ClearColor color) {
         return graphics_error(ErrorCode::conflict, "graphics.presentation.offscreen_pending",
                               "Offscreen resources require an explicit drain before presentation");
     }
+    if (impl_->scene_extent && !impl_->presentation.stats().faulted) {
+        if (auto checked = impl_->check_diagnostics(); !checked)
+            return checked.error();
+        auto state = window_state();
+        if (!state)
+            return state.error();
+        if (!state.value().close_requested && !state.value().iconified &&
+            state.value().framebuffer.width != 0 && state.value().framebuffer.height != 0 &&
+            state.value().framebuffer != *impl_->scene_extent)
+            return PresentationReport{PresentationStatus::recreate_pending,
+                                      impl_->presentation.stats(), false};
+    }
     impl_->presentation_started = true;
     return impl_->presentation.frame(color);
 }
 Result<void> detail::GraphicsBackend::set_presentation_draw(const OffscreenRequest&, bool) {
     return graphics_error(ErrorCode::capability_unavailable, "graphics.window_draw.backend",
                           "Window draw backend is unavailable");
+}
+Result<void> detail::GraphicsBackend::set_presentation_scene(const SceneViewportRequest&, bool) {
+    return graphics_error(ErrorCode::capability_unavailable, "graphics.window_scene.backend",
+                          "Window scene backend is unavailable");
 }
 Result<OffscreenReadback> detail::GraphicsBackend::capture_presented() {
     return graphics_error(ErrorCode::capability_unavailable, "graphics.capture.backend",
@@ -586,7 +603,7 @@ Result<void> GraphicsDevice::set_presentation_draw(const OffscreenRequest& reque
     if (auto checked = impl_->check_live(); !checked) {
         return checked.error();
     }
-    if (impl_->presentation_started || impl_->draw_configured ||
+    if (impl_->presentation_started || impl_->draw_configured || impl_->scene_extent ||
         impl_->backend->offscreen_pending()) {
         return graphics_error(ErrorCode::conflict, "graphics.window_draw.configuration",
                               "Configure one draw before presentation, with no pending owners");
@@ -608,6 +625,34 @@ Result<void> GraphicsDevice::set_presentation_draw(const OffscreenRequest& reque
     } catch (...) {
         return graphics_error(ErrorCode::execution_failed, "graphics.window_draw.configure",
                               "Window draw configuration threw before presentation");
+    }
+}
+Result<void> GraphicsDevice::set_presentation_scene(const SceneViewportRequest& request,
+                                                    bool enable_readback) {
+    if (auto checked = impl_->check_live(); !checked)
+        return checked.error();
+    if (auto checked = validate_scene_viewport_request(request); !checked)
+        return checked.error();
+    if (impl_->draw_configured || impl_->presentation.stats().faulted ||
+        impl_->backend->offscreen_pending() ||
+        (impl_->presentation_started && enable_readback != impl_->capture_enabled))
+        return graphics_error(ErrorCode::conflict, "graphics.window_scene.configuration",
+                              "Scene replacement requires healthy completed work, no fixed draw "
+                              "and unchanged capture mode after presentation starts");
+    try {
+        if (auto checked = impl_->check_diagnostics(); !checked)
+            return checked.error();
+        if (auto drained = impl_->presentation.prepare_draw_update(); !drained)
+            return drained.error();
+        auto configured = impl_->backend->set_presentation_scene(request, enable_readback);
+        if (!configured)
+            return configured.error();
+        impl_->scene_extent = request.extent;
+        impl_->capture_enabled = enable_readback;
+        return impl_->check_diagnostics();
+    } catch (...) {
+        return graphics_error(ErrorCode::execution_failed, "graphics.window_scene.configure",
+                              "Scene replacement failed; GPU owners remain retained");
     }
 }
 Result<OffscreenReadback> GraphicsDevice::capture_presented() {
