@@ -55,12 +55,17 @@ The FeatureWorld process family now has thirty checks. The texture family has a
 60-second limit. Material/cache publication and rendering remain later owners.
 
 13a adds optional Camera/MeshRenderer and their two shared commands, bringing the
-current inventory to 51 CPU surfaces, one external GPU command and fourteen native
+then-current inventory to 51 CPU surfaces, one external GPU command and fourteen native
 cases. The new connected component case and saved values extend preview/history/
 retry/persistence behavior; see the [current guide](featureworld.md). Earlier
 counts above describe the original checkpoints, not the current catalog.
 
-The fixture runs all fourteen saved-world cases through the public supervisor, then
+13b adds three preparation services and a connected prepared-content case, bringing
+the current inventory to 54 CPU surfaces and fifteen native cases. Core-only
+fixtures validate bounded runtime bytes and ownership; the saved baseline now
+uses the built-in cube. No GPU acceptance is inferred from preparation/loading.
+
+The fixture runs all fifteen saved-world cases through the public supervisor, then
 the intentional failing assertion through the same executable/result path. It
 compares stdout with create-only published results, native results and every
 artifact's bytes/hash. Failure remains exit 1 with the original case, phase,

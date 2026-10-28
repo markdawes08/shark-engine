@@ -382,7 +382,7 @@
       "planned_fixture": "FeatureWorld/Cameras, FeatureWorld/ImportedStaticMeshes, FeatureWorld/BuiltinGeometry and VisibleEntityReload GPU fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "13a CPU Camera/MeshRenderer validation, discovery, Scene mutation, shared authoring/history/retries and source persistence pass selected Windows/WSL checks recorded in docs/handoffs/13a-render-components.md. Full REQ-13 remains NOT_RUN pending 13b runtime assets/built-ins, 13c extraction/camera math/culling, 13d offscreen rendering and 13e connected Runtime/GPU acceptance in docs/roadmap/scene-rendering-plan.md."
+        "reason": "13a Camera/MeshRenderer authoring/persistence and 13b prepared runtime mesh/scene codecs, immutable asset ownership and built-in cube/plane geometry pass selected Windows/WSL/sanitizer checks recorded in docs/handoffs/13a-render-components.md and docs/handoffs/13b-prepared-content.md. Full REQ-13 remains NOT_RUN pending 13c extraction/camera math/culling, 13d offscreen rendering and 13e connected Runtime/GPU acceptance in docs/roadmap/scene-rendering-plan.md."
       }
     },
     {
@@ -2665,6 +2665,30 @@
         "featureworld_cases": [
           "featureworld.gltf-assets"
         ]
+      },
+      {
+        "id": "core.prepared-content",
+        "name": "Prepared runtime mesh and scene ownership",
+        "requirement_ids": [
+          "REQ-13"
+        ],
+        "test_ids": [
+          "shark.core.prepared-assets",
+          "shark.core.prepared-scene",
+          "shark.tools.prepared-content",
+          "shark.tools.featureworld"
+        ],
+        "test_sources": [
+          "tests/prepared_assets_tests.cpp",
+          "tests/prepared_scene_tests.cpp",
+          "tests/prepared_content_tests.cpp",
+          "tests/feature_world_tests.cpp"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "docs/prepared-content.md"
+        ],
+        "fixture_reason": "Engine-owned byte codecs, immutable complete asset snapshots, reserved built-in cube/plane IDs and complete Core Scene loading without Tools or presentation dependencies. Existing source/import payloads remain unchanged."
       }
     ],
     "components": [
@@ -2806,7 +2830,8 @@
         ],
         "fixture_reason": "Optional CPU presentation values use the existing Scene owner, schemas, deferred edits and shared authoring commands. Focused cases exercise validation, revisions/lifetime, preview, atomic rollback, history, bit-exact retries and native source save/reload. The saved FeatureWorld independently checks component values and a connected edit/history/retry/file lifecycle. Asset availability, projection math and actual rendering remain later checkpoints; no GPU behavior is claimed.",
         "featureworld_cases": [
-          "featureworld.render-components"
+          "featureworld.render-components",
+          "featureworld.prepared-content"
         ]
       },
       {
@@ -2842,7 +2867,8 @@
         ],
         "fixture_reason": "Optional CPU presentation values use the existing Scene owner, schemas, deferred edits and shared authoring commands. Focused cases exercise validation, revisions/lifetime, preview, atomic rollback, history, bit-exact retries and native source save/reload. The saved FeatureWorld independently checks component values and a connected edit/history/retry/file lifecycle. Asset availability, projection math and actual rendering remain later checkpoints; no GPU behavior is claimed.",
         "featureworld_cases": [
-          "featureworld.render-components"
+          "featureworld.render-components",
+          "featureworld.prepared-content"
         ]
       }
     ],
@@ -4515,6 +4541,102 @@
         "featureworld_cases": [
           "featureworld.render-components"
         ]
+      },
+      {
+        "id": "content.mesh.prepare",
+        "name": "prepare_mesh_asset",
+        "requirement_ids": [
+          "REQ-13"
+        ],
+        "test_ids": [
+          "shark.core.prepared-assets",
+          "shark.core.prepared-scene",
+          "shark.tools.prepared-content",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/prepared_assets_tests.cpp",
+          "tests/prepared_scene_tests.cpp",
+          "tests/prepared_content_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/prepared-content.md"
+        ],
+        "fixture_reason": "Shared CPU preparation bridges validated cached glTF meshes and captured authored scenes into versioned runtime-safe values. Core-only tests validate binary bounds/integrity, immutable sharing/lifetime, built-in geometry and complete scene/reference loading; the connected FeatureWorld case independently checks both built-ins, saved hierarchy, imported mirrored/shared geometry, reload and rejected replacement. No source parser enters Runtime and no GPU/export/final-cook behavior is claimed.",
+        "featureworld_cases": [
+          "featureworld.prepared-content"
+        ]
+      },
+      {
+        "id": "content.scene.prepare",
+        "name": "prepare_scene",
+        "requirement_ids": [
+          "REQ-13"
+        ],
+        "test_ids": [
+          "shark.core.prepared-assets",
+          "shark.core.prepared-scene",
+          "shark.tools.prepared-content",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/prepared_assets_tests.cpp",
+          "tests/prepared_scene_tests.cpp",
+          "tests/prepared_content_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/prepared-content.md"
+        ],
+        "fixture_reason": "Shared CPU preparation bridges validated cached glTF meshes and captured authored scenes into versioned runtime-safe values. Core-only tests validate binary bounds/integrity, immutable sharing/lifetime, built-in geometry and complete scene/reference loading; the connected FeatureWorld case independently checks both built-ins, saved hierarchy, imported mirrored/shared geometry, reload and rejected replacement. No source parser enters Runtime and no GPU/export/final-cook behavior is claimed.",
+        "featureworld_cases": [
+          "featureworld.prepared-content"
+        ]
+      },
+      {
+        "id": "content.gltf-scene.prepare",
+        "name": "prepare_gltf_scene",
+        "requirement_ids": [
+          "REQ-13"
+        ],
+        "test_ids": [
+          "shark.core.prepared-assets",
+          "shark.core.prepared-scene",
+          "shark.tools.prepared-content",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/prepared_assets_tests.cpp",
+          "tests/prepared_scene_tests.cpp",
+          "tests/prepared_content_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/prepared-content.md"
+        ],
+        "fixture_reason": "Shared CPU preparation bridges validated cached glTF meshes and captured authored scenes into versioned runtime-safe values. Core-only tests validate binary bounds/integrity, immutable sharing/lifetime, built-in geometry and complete scene/reference loading; the connected FeatureWorld case independently checks both built-ins, saved hierarchy, imported mirrored/shared geometry, reload and rejected replacement. No source parser enters Runtime and no GPU/export/final-cook behavior is claimed.",
+        "featureworld_cases": [
+          "featureworld.prepared-content"
+        ]
       }
     ],
     "lua_api": []
@@ -4536,7 +4658,8 @@
       "featureworld.gltf-geometry",
       "featureworld.gltf-textures",
       "featureworld.gltf-assets",
-      "featureworld.render-components"
+      "featureworld.render-components",
+      "featureworld.prepared-content"
     ],
     "case_source": "engine_tools/src/feature_world.cpp"
   }

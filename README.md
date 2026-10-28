@@ -20,10 +20,11 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**Full assignment 12 is complete under the current-machine scope.** The
-[12e handoff](docs/handoffs/12e-gltf-qualification.md) records connected glTF
-import, interruption/recovery, offline fixture validation and package acceptance.
-**Next: 13, basic scene rendering and cameras; plan checkpoints first.** Completed
+**13a/13b are complete under the current-machine scope.** The
+[latest handoff](docs/handoffs/13b-prepared-content.md) records prepared mesh/scene
+loading, immutable asset ownership and built-in geometry following the shared
+Camera/MeshRenderer components. Full assignment 12 remains complete.
+**Next: 13c, scene extraction, camera math, bounds and culling.** Completed
 checkpoints and their original results are indexed in
 [requirements and coverage](docs/coverage/README.md); historical counts are not
 recurring verification requirements. The user's [nonblocking backlog decision](docs/backlog.md)

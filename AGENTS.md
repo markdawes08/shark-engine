@@ -40,14 +40,18 @@ Linux graphics is outside scope. Mac support, CI, packages and hardware requirem
 are retired by [ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md).
 Hosted CI is supplemental; remote branch protection is unchanged.
 
-**Current handoff: [13a, render components](docs/handoffs/13a-render-components.md).**
-13a is complete; next is **13b, runtime asset ownership and built-in geometry** in
+**Current handoff: [13b, prepared content](docs/handoffs/13b-prepared-content.md).**
+13a/13b are complete; next is **13c, scene extraction, cameras, bounds and culling** in
 the [five rendering checkpoints](docs/roadmap/scene-rendering-plan.md). Follow
 [ADR 0032](docs/architecture/0032-render-components.md) and the
 [component contract](docs/render-components.md): optional Camera/MeshRenderer share
 Scene validation, authoring, history, retries and source persistence. Query their
-fields explicitly; Core AssetId does not load assets. Runtime must retain its
-Tools/importer exclusion when loading prepared content in 13b. Full REQ-13 remains
+fields explicitly. [Prepared content](docs/prepared-content.md) and
+[ADR 0033](docs/architecture/0033-prepared-runtime-content.md) define Core-only
+byte loading, immutable asset snapshots and reserved built-in cube/plane IDs.
+Tools prepares cached glTF/captured scenes; Runtime must retain its importer
+exclusion. Loading validates current references, not later Core mutations; 13c
+must resolve those during extraction. Full REQ-13 remains
 NOT_RUN. Current Runtime/Editor window/graphics/cube
 flags are diagnostics; there is no game-authoring editor UI or scene renderer yet.
 Shared CPU authoring services exist; terminal/editor adapters remain 15/16.

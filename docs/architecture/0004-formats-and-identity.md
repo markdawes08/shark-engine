@@ -57,6 +57,12 @@ resources visible. Container and per-kind payload versions are independent from
 source schema and engine release versions. Hashes detect inconsistent payloads;
 they are not a signature or a hostile-content sandbox.
 
+13b's [prepared runtime format](../prepared-content.md) implements independently
+versioned `SHKMESH1` and `SHKSCNE1` development payloads. Core validates the bytes
+without source decoders; Tools prepares them from captured scenes and cached
+glTF. Existing source and import/cache formats remain unchanged. Unsupported
+prepared versions require re-preparation. This is not the final cooked format.
+
 Assignment 14 stages only validated development payloads and runtime scene data
 prepared by EngineTools. It is a temporary, explicitly versioned export mode.
 Assignment 31 replaces it with cooked dependency closure, including script-selected

@@ -46,7 +46,7 @@ key, display name, typed default, constraints, unit and mutability.
 | Camera `near_clip` | 8 | Double, 0.1 | Meters | Finite; positive for perspective, nonnegative for orthographic |
 | Camera `far_clip` | 9 | Double, 1000 | Meters | Finite and greater than near |
 | MeshRenderer `asset_id` | 10 | Asset ID, no default | None | Required nonnil UUIDv4 |
-| MeshRenderer `mesh_index` | 11 | Unsigned 32-bit integer, 0 | None | Full uint32 range; actual asset bounds checked by the later loader |
+| MeshRenderer `mesh_index` | 11 | Unsigned 32-bit integer, 0 | None | Full uint32 range; actual asset bounds checked by [prepared asset resolution](prepared-content.md) |
 | MeshRenderer `visible` | 12 | Boolean, true | None | Boolean |
 
 Vector/quaternion bounds are inclusive finite-double input limits. Scalar metadata

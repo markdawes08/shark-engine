@@ -27,7 +27,8 @@ in 13c, including finite zero-to-one depth and a single projection-Y inversion.
 `MeshRenderer` requires `AssetId asset`, with `uint32_t mesh_index` default zero
 and `bool visible` default true. The ID is a validated, nonnil UUIDv4. Mesh index
 selects a mesh in the prepared asset; its range against an actual asset is checked
-by the later resolver. Core stores unresolved references without doing I/O.
+by [prepared asset resolution](prepared-content.md). Core Scene values still
+store unresolved references without doing I/O.
 All primitives of the selected mesh belong to that renderer. No material override,
 PBR claim, GPU handle or resource pointer is stored here. Visibility is presentation
 state and does not authorize gameplay or replace recipient privacy.
@@ -77,7 +78,7 @@ An absent component is omitted, never serialized as null or synthesized on load.
 Existing sources and legacy-0 migration retain their meanings. Old readers reject
 new component names explicitly; they cannot silently drop authored values. New
 readers reject future component versions. JSON source remains private to Tools;
-Runtime consumes prepared data only when 13b lands.
+13b's [Core loader](prepared-content.md) consumes prepared data without a source reader.
 
 ## Public CPU example
 

@@ -68,7 +68,7 @@ TEST_CASE("Saved FeatureWorld connects all current scene surfaces through the na
         REQUIRE(result.initial_revision->revision == 4);
     }
     REQUIRE(run.value().status == SceneRunStatus::passed);
-    REQUIRE(run.value().cases.size() == 14);
+    REQUIRE(run.value().cases.size() == 15);
     REQUIRE(run.value().cases[0].final_revision->revision == 4);
     REQUIRE(run.value().cases[1].final_revision->revision == 11);
     REQUIRE(run.value().cases[2].final_revision->revision == 7);
@@ -83,6 +83,7 @@ TEST_CASE("Saved FeatureWorld connects all current scene surfaces through the na
     REQUIRE(run.value().cases[11].final_revision == run.value().cases[11].initial_revision);
     REQUIRE(run.value().cases[12].final_revision == run.value().cases[12].initial_revision);
     REQUIRE(run.value().cases[13].final_revision->revision == 4);
+    REQUIRE(run.value().cases[14].final_revision == run.value().cases[14].initial_revision);
     REQUIRE(run.value().cases[13].final_revision->scene_instance !=
             run.value().cases[13].initial_revision->scene_instance);
     REQUIRE(run.value().cases[4].final_revision->scene_instance !=
@@ -180,7 +181,7 @@ TEST_CASE("FeatureWorld source keeps explicit versions stable IDs global anchor 
     REQUIRE(fixture.scene.entities[0].camera == Camera{});
     REQUIRE(fixture.scene.entities[3].mesh_renderer);
     REQUIRE(fixture.scene.entities[3].mesh_renderer->asset.value().to_string() ==
-            "20000000-0000-4000-8000-00000000000c");
+            "00000000-0000-4000-8000-000000000013");
     REQUIRE(fixture.scene.entities[3].mesh_renderer->mesh_index == 0);
     REQUIRE(fixture.scene.entities[3].mesh_renderer->visible);
     REQUIRE(fixture.scene.entities[2].parent == fixture.scene.entities[1].id);

@@ -7,6 +7,7 @@
 #include "shark/tools/gltf_geometry.hpp"
 #include "shark/tools/gltf_source.hpp"
 #include "shark/tools/gltf_textures.hpp"
+#include "shark/tools/prepared_content.hpp"
 #include "shark/tools/project_files.hpp"
 
 #include <algorithm>
@@ -23,12 +24,12 @@
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 14> case_ids{
-    "featureworld.components",   "featureworld.commands",         "featureworld.batches-history",
-    "featureworld.retries",      "featureworld.persistence",      "featureworld.asset-identity",
-    "featureworld.asset-import", "featureworld.asset-jobs",       "featureworld.asset-pipeline",
-    "featureworld.gltf-source",  "featureworld.gltf-geometry",    "featureworld.gltf-textures",
-    "featureworld.gltf-assets",  "featureworld.render-components"};
+constexpr std::array<std::string_view, 15> case_ids{
+    "featureworld.components",   "featureworld.commands",          "featureworld.batches-history",
+    "featureworld.retries",      "featureworld.persistence",       "featureworld.asset-identity",
+    "featureworld.asset-import", "featureworld.asset-jobs",        "featureworld.asset-pipeline",
+    "featureworld.gltf-source",  "featureworld.gltf-geometry",     "featureworld.gltf-textures",
+    "featureworld.gltf-assets",  "featureworld.render-components", "featureworld.prepared-content"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -88,7 +89,13 @@ SceneDocument expected_scene() {
             {{root(), {}, Name{"Root"}, translated(10), "{\"role\":\"root\"}", Camera{}},
              {branch(), root(), Name{"Branch"}, translated(2)},
              {leaf(), branch(), Name{"Waypoint 雪"}, translated(3), "{\"keep\":true}"},
-             {other(), {}, Name{"Root"}, translated(-4), "{}", {}, MeshRenderer{id<AssetId>('c')}}},
+             {other(),
+              {},
+              Name{"Root"},
+              translated(-4),
+              "{}",
+              {},
+              MeshRenderer{builtin_cube_asset_id()}}},
             "{\"asset_reference\":\"20000000-0000-4000-8000-00000000000a\",\"fixture\":\"10b\"}"};
 }
 void require(SceneRunContext& context, bool value, const char* message,
@@ -1570,6 +1577,102 @@ void gltf_assets(SceneRunContext& context) {
     require(context, !decode_gltf_asset(payload, stop.get_token()), "Cancelled decode succeeded");
     unchanged(context, before);
 }
+void prepared_content(SceneRunContext& context) {
+    auto& owner = context.owner();
+    const auto before = take(owner.capture());
+    const auto assets = take(PreparedAssets::create());
+    require(context, assets->size() == 2, "Fresh content has no complete built-in inventory");
+    const auto cube = take(assets->find(builtin_cube_asset_id()));
+    const auto plane = take(assets->find(builtin_plane_asset_id()));
+    require(context,
+            cube->meshes.size() == 1 && cube->meshes[0].primitives.size() == 1 &&
+                cube->meshes[0].primitives[0].vertices.size() == 24 &&
+                cube->meshes[0].primitives[0].indices.size() == 36,
+            "Built-in cube topology differs from its independent expected shape");
+    require(context,
+            plane->meshes.size() == 1 && plane->meshes[0].primitives.size() == 1 &&
+                plane->meshes[0].primitives[0].vertices.size() == 4 &&
+                plane->meshes[0].primitives[0].indices.size() == 6,
+            "Built-in plane topology differs from its independent expected shape");
+    const auto bytes = take(prepare_scene(owner, before.revision));
+    require(context, take(prepare_scene(owner, before.revision)) == bytes,
+            "Prepared scene bytes changed without an authored revision");
+    auto loaded = take(LoadedPreparedScene::load(bytes, assets));
+    require(context,
+            loaded->world_origin() == before.scene.world_origin &&
+                take(loaded->scene().stats()).live_entities == 4,
+            "Runtime scene lost the saved global anchor or entity inventory");
+    const auto root_handle = take(loaded->scene().find(EntityIdentity{root()}));
+    require(context, take(loaded->scene().entity_state(root_handle)).camera == Camera{},
+            "Prepared scene lost the saved Camera");
+    const auto leaf_handle = take(loaded->scene().find(EntityIdentity{leaf()}));
+    require(context, take(loaded->scene().entity_state(leaf_handle)).world_matrix[3][0] == 15,
+            "Prepared hierarchy changed the scene-local world transform");
+    const auto mesh_handle = take(loaded->scene().find(EntityIdentity{other()}));
+    const auto mesh_state = take(loaded->scene().entity_state(mesh_handle));
+    require(context,
+            mesh_state.mesh_renderer && take(assets->resolve(*mesh_state.mesh_renderer)) == cube,
+            "Scene reference did not share the built-in asset owner");
+    take(loaded->scene().destroy_entity(mesh_handle));
+    require(context, cube->meshes[0].primitives[0].indices.size() == 36,
+            "Destroying an entity invalidated its shared mesh");
+    const auto old_reference = take(loaded->scene().reference(root_handle));
+    loaded = take(LoadedPreparedScene::load(bytes, assets));
+    require(context, !loaded->scene().resolve(old_reference),
+            "Reload revived an old scene incarnation");
+
+    // Original unit triangle: two nodes share one imported mesh. Tools consumes
+    // its existing validated cache representation; Core sees only prepared data.
+    const std::string json =
+        R"({"asset":{"version":"2.0"},"scene":0,"scenes":[{"nodes":[0]}],)"
+        R"("nodes":[{"mesh":0,"children":[1]},{"mesh":0,"translation":[2,0,0],"scale":[-1,1,1]}],)"
+        R"("meshes":[{"primitives":[{"attributes":{"POSITION":0},"material":0}]}],)"
+        R"("buffers":[{"byteLength":36,"uri":"data:application/octet-stream;base64,AAAAAAAAAAAAAAAAAACAPwAAAAAAAAAAAAAAAAAAgD8AAAAA"}],)"
+        R"("bufferViews":[{"buffer":0,"byteLength":36}],"accessors":[{"bufferView":0,"componentType":5126,"count":3,"type":"VEC3"}],)"
+        R"("materials":[{"pbrMetallicRoughness":{"baseColorFactor":[0.25,0.5,0.75,1]},"doubleSided":true}]})";
+    const auto imported =
+        take(convert_gltf_asset({take(ProjectPath::parse("models/prepared.gltf")),
+                                 std::as_bytes(std::span{json.data(), json.size()})}));
+    const auto cache = take(encode_gltf_asset(imported));
+    const auto prepared = take(prepare_mesh_asset(id<AssetId>('c'), cache));
+    const std::array inputs{PreparedAssetInput{id<AssetId>('c'), prepared}};
+    const auto imported_assets = take(PreparedAssets::create(inputs));
+    const auto imported_mesh = take(imported_assets->find(id<AssetId>('c')));
+    require(context,
+            imported_mesh->meshes.size() == 1 &&
+                imported_mesh->meshes[0].primitives[0].vertices[1].position ==
+                    std::array{1.0F, 0.0F, 0.0F} &&
+                imported_mesh->meshes[0].primitives[0].indices ==
+                    std::vector<std::uint32_t>{0, 1, 2},
+            "Prepared import lost independent triangle geometry");
+    require(context,
+            imported_mesh->meshes[0].primitives[0].material.base_color ==
+                    std::array{0.25F, 0.5F, 0.75F, 1.0F} &&
+                imported_mesh->meshes[0].primitives[0].material.double_sided,
+            "Prepared import lost temporary material factors/culling");
+    const std::array node_ids{temporary(), child()};
+    const auto imported_scene =
+        take(prepare_gltf_scene(id<AssetId>('c'), id<SceneId>('b'), cache, node_ids));
+    require(context, !LoadedPreparedScene::load(imported_scene, assets),
+            "Runtime scene admitted a missing imported asset");
+    const auto imported_owner = take(LoadedPreparedScene::load(imported_scene, imported_assets));
+    const auto a = take(imported_owner->scene().find(EntityIdentity{temporary()}));
+    const auto b = take(imported_owner->scene().find(EntityIdentity{child()}));
+    const auto a_state = take(imported_owner->scene().entity_state(a));
+    const auto b_state = take(imported_owner->scene().entity_state(b));
+    require(context,
+            b_state.parent == a && b_state.world_matrix[3][0] == 2 &&
+                b_state.local_transform.scale.x == -1 &&
+                take(imported_assets->resolve(*a_state.mesh_renderer)) == imported_mesh &&
+                take(imported_assets->resolve(*b_state.mesh_renderer)) == imported_mesh,
+            "Runtime import lost mirrored hierarchy or shared mesh ownership");
+    auto corrupt = prepared;
+    corrupt.back() ^= std::byte{1};
+    const std::array invalid{PreparedAssetInput{id<AssetId>('c'), corrupt}};
+    require(context, !PreparedAssets::create(invalid) && imported_assets->size() == 3,
+            "Corrupt replacement changed valid runtime asset ownership");
+    unchanged(context, before);
+}
 } // namespace
 
 std::span<const std::string_view> feature_world_case_ids() noexcept {
@@ -1634,6 +1737,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 13:
                         render_components(context, scratch_parent);
+                        break;
+                    case 14:
+                        prepared_content(context);
                         break;
                     default:
                         break;

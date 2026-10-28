@@ -1,11 +1,12 @@
 # Saved FeatureWorld
 
-13a adds the fourteenth native case, `featureworld.render-components`, following
-the [component contract](render-components.md). The saved root has a perspective
-Camera and the fourth entity has a MeshRenderer reference. The connected case
-checks preview/rollback, edits, history, retries, recreation and native save/reload
-against independent values. Coverage maps 51 CPU surfaces and one external GPU
-command. Earlier source/geometry/texture/material/cache/job cases remain intact.
+13b adds the fifteenth native case, `featureworld.prepared-content`, following
+the [prepared content contract](prepared-content.md). It checks built-ins, prepared
+saved-scene loading, imported shared/mirrored geometry, immutable ownership, reload
+and rejected replacement against independent values. The saved root has a Camera;
+the fourth entity now references the built-in cube. Coverage maps 54 CPU surfaces
+and one external GPU command. Earlier component, source/import and owner cases
+remain intact; the four entity IDs and global cell anchor are unchanged.
 
 Checkpoint 10b connects the [CPU runner](scene-runner.md) to the versioned
 [project](../assets/FeatureWorld/FeatureWorld.sharkproject) and
@@ -29,7 +30,7 @@ owner causes explicit failure. Copy the two source files to a writable project
 root when testing from a read-only checkout. Run from any current directory by
 passing explicit paths. There is no compiled-in checkout or fixture location.
 
-`--case featureworld` selects all fourteen cases in catalog order. Each concrete ID
+`--case featureworld` selects all fifteen cases in catalog order. Each concrete ID
 also selects one case. Supply `--workspace EXISTING_DIRECTORY` for the suite or
 persistence/asset-identity/asset-import/asset-jobs/asset-pipeline/render-components case. Each creates a unique child with its own
 project/scenes and remove their known files on exit. Input source bytes are
@@ -52,19 +53,21 @@ caller-selected parent. Generated results belong under ignored `out/` or `build/
 | `featureworld.gltf-textures` | Pure texture conversion over an inline original PNG and triangle: five core roles share three semantic variants; independent pixels, color/data/normal mips, straight alpha, default and explicit samplers, image identity/digest, repeatability, missing/truncated images, missing UVs, invalid scene and cancellation with unchanged AuthoredScene |
 | `featureworld.gltf-assets` | Core material defaults/factors/alpha/culling, independent triangle/node values, deterministic engine-payload roundtrip, corrupt payload and cancellation rejection with unchanged AuthoredScene |
 | `featureworld.render-components` | Saved perspective Camera and mesh reference; optional schema/query selection, orthographic/clipping/visibility edits, pure preview and late-invalid rollback, undo/redo, retained removal/replay/mismatch, deleted-entity recreation and actual save/reopen/reload |
+| `featureworld.prepared-content` | Built-in cube/plane topology, prepared saved hierarchy/camera/global anchor, shared mesh ownership across deletion/reload, imported triangle/material factors and mirrored hierarchy, missing-asset and corrupt replacement rejection with unchanged authoring owner |
 
 Every case receives a fresh owner from the same saved baseline. Functional work
 occurs at tick zero; subsequent fixed ticks check stable identity/entity counts.
 The fixture has no input actions and performs no RNG draws. Seed/rate/tick
 context remains explicit in results; foundation cases separately exercise input
 and seeded data. At three ticks, initial revision values are 4 and final values
-are 4, 11, 7, 6, 4, 4, 4, 4, 4, 4, 4, 4, 4 and 4. Persistence and render-components
+are 4, 11, 7, 6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4 and 4. Persistence and render-components
 finish with fresh incarnations. The MeshRenderer reference is
-`20000000-0000-4000-8000-00000000000c`, mesh zero, visible. It is deliberately an
-unresolved reference in this CPU fixture; 13a performs no asset loading or draw.
-13b supplies actual runtime assets. The new case changes it to mesh seven/hidden
-to prove field persistence without treating a syntactically valid index as a
-resolved resource.
+`00000000-0000-4000-8000-000000000013`, built-in cube mesh zero, visible.
+The component case still deliberately changes it to unresolved asset
+`20000000-0000-4000-8000-00000000000c`, mesh seven/hidden, to prove field persistence
+without mistaking a syntactically valid reference for a resolved resource. The
+prepared-content case loads the valid baseline and separately rejects missing
+assets. Its imported triangle uses the latter ID in an explicit immutable snapshot.
 The asset reference in scene extras is `20000000-0000-4000-8000-00000000000a`;
 it is preserved through native save/reopen and is not a new asset component.
 Identity fixtures create their own authored source/metadata in scratch; no source
@@ -113,8 +116,8 @@ unchanged. No renderer is initialized by these cases.
 catalog and maps every current component/command to real case IDs. The independent
 process fixture resolves discovery, executes every case, verifies repeat results
 and checks that neither the versioned input nor its temporary copy changed.
-It now performs 32 checks. The independent coverage inventory contains
-51 CPU surfaces and one external GPU command; `asset.gltf.textures` maps to the
+It now performs 33 checks. The independent coverage inventory contains
+54 CPU surfaces and one external GPU command; `asset.gltf.textures` maps to the
 twelfth native case and the separate texture/dependency families. The texture
 Catch family keeps a 90-second limit and seed 1337; its private dependency family
 keeps 60 seconds.

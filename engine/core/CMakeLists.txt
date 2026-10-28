@@ -6,6 +6,8 @@ add_library(EngineCore STATIC
     src/error.cpp
     src/log.cpp
     src/name.cpp
+    src/prepared_assets.cpp
+    src/prepared_scene.cpp
     src/project_path.cpp
     src/render_components.cpp
     src/scene.cpp

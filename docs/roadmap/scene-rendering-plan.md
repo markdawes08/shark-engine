@@ -5,8 +5,9 @@ The user approved five subchunks. Follow the [testing policy](../testing-policy.
 [render conventions](../architecture/0005-simulation-and-rendering.md),
 [MMORPG plan](mmorpg-plan.md) and [human/agent plan](human-agent-plan.md).
 Full REQ-13 remains NOT_RUN until the connected rendering acceptance in 13e.
-**13a is PASS under current-machine scope**; see its
-[handoff](../handoffs/13a-render-components.md). Next: 13b.
+**13a and 13b are PASS under current-machine scope**; see their
+[component](../handoffs/13a-render-components.md) and
+[prepared-content](../handoffs/13b-prepared-content.md) handoffs. Next: 13c.
 
 | Checkpoint | Deliverable and gate |
 | --- | --- |
@@ -17,7 +18,9 @@ Full REQ-13 remains NOT_RUN until the connected rendering acceptance in 13e.
 | 13e: Connected Runtime acceptance | Load FeatureWorld and an imported scene in Runtime, exercise built-ins in a fresh project, camera transforms/clipping/culling/resize and destruction/reload of visible entities without resource errors. Reuse valid earlier evidence and close the complete affected rendering subsystem under the testing policy. |
 
 13a uses the [component contract](../render-components.md) and
-[ADR 0032](../architecture/0032-render-components.md). Each later checkpoint
+[ADR 0032](../architecture/0032-render-components.md). 13b uses the
+[prepared content contract](../prepared-content.md) and
+[ADR 0033](../architecture/0033-prepared-runtime-content.md). Each later checkpoint
 updates its concrete contract before changing that boundary. No editor or terminal
 adapter is introduced before its assigned owner (16 and 15 respectively).
 

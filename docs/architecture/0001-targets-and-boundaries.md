@@ -68,6 +68,12 @@ publicly consumes Core's owned values and privately consumes the locked JSON
 parser; its public source-document header exposes neither JSON nor native types.
 See the [source contract](../source-documents.md).
 
+13b adds device-free [prepared mesh/scene codecs and asset ownership](../prepared-content.md)
+to Core. They use engine-owned bytes, identity, hashing and the existing Scene
+owner, without a renderer or source importer. Tools bridges cached glTF and
+authored captures to this representation. Runtime accesses the Core API through
+the existing Engine composition; no target dependency direction changes.
+
 There is no EngineCore-, EngineClient- or Engine-to-EngineTools dependency, even through a shared utility,
 generated header, static initializer, transitive target, or runtime plugin.
 Runtime must neither link nor load Editor, EngineTools, ImGui, ImGuizmo, cgltf,

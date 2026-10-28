@@ -108,4 +108,8 @@ prepare_static_asset(const shark::tools::GltfSourceInput& captured) {
 For cache publication, register the two importer instances with the existing
 AssetImports owner and use its `prepare`/`publish` or `submit`/`drain_jobs` flow.
 Check the Result and actual commit/terminal status at each boundary. Renderer
-consumption and terminal/editor adapters remain assigned to later checkpoints.
+consumption and terminal/editor adapters retain their later checkpoints.
+13b adds [pure preparation bridges](prepared-content.md) from these validated
+cache bytes to Runtime-safe mesh/scene data. The full cache and its import limits
+remain unchanged; the prepared temporary unlit profile does not contain the full
+material/texture representation.
