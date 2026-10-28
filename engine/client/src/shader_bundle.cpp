@@ -1,17 +1,12 @@
 #include <shark/client/shader_bundle.hpp>
 
+#include "executable_path.hpp"
 #include "shader_digest.hpp"
 #include "shader_path.hpp"
 
 #include <algorithm>
 #include <fstream>
 #include <system_error>
-
-#if defined(_WIN32)
-#define WIN32_LEAN_AND_MEAN
-#define NOMINMAX
-#include <Windows.h>
-#endif
 
 namespace shark::client {
 namespace {
@@ -112,30 +107,14 @@ Result<ShaderBundle> load_shader_bundle(const std::filesystem::path& path) {
 }
 
 Result<std::filesystem::path> default_shader_bundle_path() {
-    const auto fail = []() -> Result<std::filesystem::path> {
+    auto directory = detail::executable_directory();
+    if (!directory)
+        return directory.error();
+    auto result = directory.value() / "assets" / "cube.sharkshader";
+    if (!detail::artifact_path_text(result))
         return Error{ErrorCode::io_failure,
-                     "Cannot resolve a bounded executable path for the shader bundle",
+                     "Cannot resolve a bounded shader bundle path",
                      {"shader.bundle.locate"}};
-    };
-    std::filesystem::path executable;
-#if defined(_WIN32)
-    std::array<wchar_t, 4097> buffer{};
-    const auto size = GetModuleFileNameW(nullptr, buffer.data(), static_cast<DWORD>(buffer.size()));
-    if (size == 0 || size >= buffer.size()) {
-        return fail();
-    }
-    executable = std::wstring(buffer.data(), size);
-#else
-    std::error_code error;
-    executable = std::filesystem::read_symlink("/proc/self/exe", error);
-    if (error || !executable.is_absolute()) {
-        return fail();
-    }
-#endif
-    auto result = executable.parent_path() / "assets" / "cube.sharkshader";
-    if (!detail::artifact_path_text(result)) {
-        return fail();
-    }
     return result;
 }
 

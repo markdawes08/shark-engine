@@ -399,7 +399,7 @@
       "planned_fixture": "EarlyStandaloneExport on the current Windows PC, with relocated package, isolated environment and dependency inspection; no additional machine is a gate under ADR0010.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "14a is PASS under current-machine scope: CPU Tools captures startup scene/camera and fresh client mesh closures into an owned bounded candidate with dependency attribution and publication-time revalidation. Selected Windows Debug, standalone Tools, WSL Debug and ASan/UBSan checks pass; the initial unreproduced process failure is retained in docs/handoffs/14a-client-export-content.md. Full REQ-14 remains NOT_RUN: noninteractive command/package launch is 14b and isolated deployment acceptance is 14c, following docs/roadmap/export-plan.md."
+        "reason": "14a is PASS. 14b implements the structured Windows export command, retained project-owner publication, complete notices, exact Runtime closure and bounded package-relative startup. Windows/WSL Debug, standalone Tools, actual Release export/inspection and one validated RTX package capture pass. The Core startup codec passes Windows ASan; the remaining Client/worker sanitizer selection is NOT_RUN because Clang and MSVC compiler processes crashed. docs/handoffs/14b-standalone-scene-export.md retains failures and exact remaining work. 14b closure remains pending; full REQ-14 remains NOT_RUN and 14c isolated acceptance has not begun. Follow docs/roadmap/export-plan.md."
       }
     },
     {
@@ -2794,6 +2794,34 @@
         "featureworld_cases": [
           "featureworld.client-export"
         ]
+      },
+      {
+        "id": "tools.standalone-scene-export",
+        "name": "Noninteractive standalone scene export and package startup",
+        "requirement_ids": [
+          "REQ-14"
+        ],
+        "test_ids": [
+          "shark.core.prepared-startup",
+          "shark.client.prepared-package",
+          "shark.client.scene-launch",
+          "shark.tools.client-export-process",
+          "shark.tooling.runtime-package"
+        ],
+        "test_sources": [
+          "tests/prepared_startup_tests.cpp",
+          "tests/client_prepared_package_tests.cpp",
+          "tests/client_scene_launch_tests.cpp",
+          "tools/tests/test_client_export_process.py",
+          "tools/tests/test_runtime_package.py"
+        ],
+        "fixtures": [
+          "tests/runtime_scene_prepare.cpp",
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "tests/gpu_shader_fixture.hpp",
+          "docs/standalone-export.md"
+        ],
+        "fixture_reason": "A bounded Core startup descriptor and Client loader consume fixed package-relative hashed snapshots without source importers. The actual CPU worker holds ProjectFiles ownership through staged publication and rechecks project/scene revisions, cached mesh closure and shaders. Process tests connect saved FeatureWorld and a fresh imported project to descriptor loading, conflict/timeout cleanup and final publication rejection. Python package controls check exact native/content/notice/shader inventory. CPU results do not qualify isolated graphical deployment; 14c owns that connected gate."
       }
     ],
     "components": [
@@ -4831,6 +4859,30 @@
         "featureworld_cases": [
           "featureworld.client-export"
         ]
+      },
+      {
+        "id": "content.client-export.package",
+        "name": "package_runtime.py export / Runtime --package and --check-package",
+        "requirement_ids": [
+          "REQ-14"
+        ],
+        "test_ids": [
+          "shark.tools.client-export-process",
+          "shark.tooling.runtime-package"
+        ],
+        "test_sources": [
+          "tools/tests/test_client_export_process.py",
+          "tools/tests/test_runtime_package.py"
+        ],
+        "fixtures": [
+          "tests/runtime_scene_prepare.cpp",
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "tests/gpu_shader_fixture.hpp",
+          "docs/standalone-export.md"
+        ],
+        "fixture_reason": "A bounded Core startup descriptor and Client loader consume fixed package-relative hashed snapshots without source importers. The actual CPU worker holds ProjectFiles ownership through staged publication and rechecks project/scene revisions, cached mesh closure and shaders. Process tests connect saved FeatureWorld and a fresh imported project to descriptor loading, conflict/timeout cleanup and final publication rejection. Python package controls check exact native/content/notice/shader inventory. CPU results do not qualify isolated graphical deployment; 14c owns that connected gate.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Packaging requires real process ownership and filesystem publication outside the in-process FeatureWorld callback. The separate CPU process fixture exports the saved FeatureWorld source through the public worker and verifies its exact startup identities; it also exports a fresh imported project and checks final fences and project-lock release. Runtime loader/codec cases are mapped by tools.standalone-scene-export. No device or isolated launch is inferred from CPU checks."
       }
     ],
     "lua_api": []

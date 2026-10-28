@@ -138,12 +138,13 @@ def inspect_closure(binaries: dict[str, Path], inspector: Path) -> dict:
             "scope": "Static and delay-load imports; vendor ICDs are separately installed system driver prerequisites"}
 
 
-def crt_inputs(directory: Path, manifest: dict) -> tuple[dict[str, Path], dict[str, bytes], dict]:
+def crt_inputs(directory: Path, manifest: dict, *, required_names=CRT_NAMES
+               ) -> tuple[dict[str, Path], dict[str, bytes], dict]:
     assert_no_links(directory)
     if (manifest.get("architecture") != "x86_64"
             or not isinstance(manifest.get("version"), str) or not manifest["version"]
-            or not isinstance(manifest.get("files"), dict) or set(manifest["files"]) != CRT_NAMES):
-        raise ValueError("CRT receipt must identify the exact three release CRT DLLs, source and version")
+            or not isinstance(manifest.get("files"), dict) or set(manifest["files"]) != required_names):
+        raise ValueError("CRT receipt must identify the exact selected release CRT DLLs, source and version")
     # An explicit redistributable directory is required, never an implicit
     # system DLL search. Its selected bytes are pinned by the reviewable receipt.
     binaries = {}

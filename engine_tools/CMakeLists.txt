@@ -20,3 +20,8 @@ add_executable(SceneRunner src/scene_runner_main.cpp)
 target_link_libraries(SceneRunner PRIVATE EngineTools)
 shark_configure_target(SceneRunner)
 shark_classify_target(SceneRunner authoring)
+
+add_executable(ExportContent src/client_export_main.cpp)
+target_link_libraries(ExportContent PRIVATE EngineTools nlohmann_json::nlohmann_json)
+shark_configure_target(ExportContent)
+shark_classify_target(ExportContent authoring)

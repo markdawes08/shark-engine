@@ -10,6 +10,7 @@ import unittest
 import copy
 import hashlib
 import struct
+import uuid
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -18,6 +19,40 @@ import shader_pipeline as pipeline
 
 
 class RuntimePackageTests(unittest.TestCase):
+    def test_runtime_crt_addition_keeps_the_diagnostic_probe_selection_unchanged(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory = Path(temporary)
+            hashes = {}
+            for name in package.RUNTIME_CRT_NAMES:
+                binary = directory / name
+                binary.write_bytes(b"synthetic CRT fixture " + name.encode("ascii"))
+                hashes[name] = package.sha256(binary)
+            notice = directory / "NOTICE.txt"
+            notice.write_bytes(b"synthetic redistributable notice")
+            original = {"version": "fixture", "architecture": "x86_64",
+                        "files": {name: hashes[name] for name in package.CRT_NAMES},
+                        "runtime_additional_files": {"msvcp140_2.dll": hashes["msvcp140_2.dll"]},
+                        "license_files": [{"path": "NOTICE.txt", "destination": "NOTICE.txt",
+                                           "sha256": package.sha256(notice)}]}
+            snapshot = copy.deepcopy(original)
+            merged = package.runtime_crt_manifest(original)
+            self.assertEqual(original, snapshot)
+            with patch("package_graphics_probe.ROOT", directory):
+                probe_binaries, _, _ = package.crt_inputs(directory, original)
+                self.assertEqual(set(probe_binaries), {"bin/" + name for name in package.CRT_NAMES})
+                self.assertNotIn("bin/msvcp140_2.dll", probe_binaries)
+                runtime_binaries, _, _ = package.crt_inputs(directory, merged, required_names=package.RUNTIME_CRT_NAMES)
+                self.assertEqual(set(runtime_binaries), {"bin/" + name for name in package.RUNTIME_CRT_NAMES})
+                with self.assertRaisesRegex(ValueError, "exact selected"):
+                    package.crt_inputs(directory, merged)
+                (directory / "msvcp140_2.dll").write_bytes(b"changed")
+                with self.assertRaisesRegex(ValueError, "changed"):
+                    package.crt_inputs(directory, merged, required_names=package.RUNTIME_CRT_NAMES)
+                package.crt_inputs(directory, original)
+            for additional in ({}, {"unreviewed.dll": "a" * 64}, None):
+                with self.subTest(additional=additional), self.assertRaisesRegex(ValueError, "exact base"):
+                    package.runtime_crt_manifest({**original, "runtime_additional_files": additional})
+
     def test_production_notices_include_core_headers_and_bundled_tls_from_verified_caches(self):
         lock = {"dependencies": {name: {"url": f"https://example.invalid/{name}.tar.gz",
                                        "sha256": name, "license": "MIT"}
@@ -338,6 +373,218 @@ class RuntimePackageTests(unittest.TestCase):
             for bad in (Path(temporary) / "SDK/vulkan-1.dll", system / "System32/dxcompiler.dll"):
                 with self.subTest(bad=bad):
                     self.assertTrue(package.module_errors([*modules, str(bad)], directory, system))
+
+    def scene_inputs(self, root):
+        """Independent byte fixture for package framing; no native/GPU claim."""
+        root.mkdir()
+        shaders = root / "shaders"
+        shaders.mkdir()
+        recipe = {"schema_version": 1, "convention": "shark-vulkan-1",
+                  "shaders": [{**row, "source": "scene_unlit.hlsl"} for row in package.SCENE_SHADERS]}
+        inputs = {"recipe": recipe, "sources": {"scene_unlit.hlsl": {"sha256": "1" * 64, "bytes": 20}},
+                  "toolchain": {"lock_sha256": "a" * 64, "host": "windows-x86_64",
+                                "compiler_archive_sha256": "2" * 64, "compiler_files": {"dxc.exe": "3" * 64},
+                                "validator_sha256": "4" * 64, "validator_revision": "5" * 40},
+                  "flags": pipeline.FLAGS, "pipeline_sha256": "6" * 64}
+        generation = package.digest(pipeline.canonical(inputs))
+        binaries, rows = [], []
+        generation_dir = shaders / "generations" / generation
+        generation_dir.mkdir(parents=True)
+        for shader, stage, bindings in ((package.SCENE_SHADERS[0], 0, (256,)),
+                                        (package.SCENE_SHADERS[1], 4, ())):
+            name = shader["entry"].encode() + b"\0"
+            name += b"\0" * (-len(name) % 4)
+            args = [stage, 1, *struct.unpack(f"<{len(name) // 4}I", name)]
+            words = [0x07230203, 0x10600, 0, 64, 0, ((len(args) + 1) << 16) | 15, *args]
+            for index, binding in enumerate(bindings, 2):
+                words.extend([(4 << 16) | 71, index, 33, binding, (4 << 16) | 71, index, 34, 0])
+            binary = struct.pack(f"<{len(words)}I", *words)
+            binaries.append(binary)
+            (generation_dir / (shader["id"] + ".spv")).write_bytes(binary)
+            rows.append({"id": shader["id"], "file": f"generations/{generation}/{shader['id']}.spv",
+                         "sha256": package.digest(binary), "bytes": len(binary)})
+        provenance = {"schema_version": 1, "convention": "shark-vulkan-1", "generation": generation,
+                      "inputs": inputs, "shaders": rows}
+        (shaders / "shader-manifest.json").write_bytes(pipeline.canonical(provenance))
+        mesh = "40000000-0000-4000-8000-000000000001"
+        record = {"format": "shark.client-export-content", "schema_version": 1,
+                  "project": "10000000-0000-4000-8000-000000000001",
+                  "world": "10000000-0000-4000-8000-000000000002",
+                  "scene": "10000000-0000-4000-8000-000000000003",
+                  "camera": "10000000-0000-4000-8000-000000000004",
+                  "name": "Export 世界", "target": "test-client", "dirty": False,
+                  "sources": [{"asset": mesh, "key": "b" * 64, "origin": "Original fixture", "license": "CC0-1.0"}]}
+        content = {package.STARTUP_SCENE: b"synthetic prepared scene", package.SCENE_VERTEX: binaries[0],
+                   package.SCENE_PIXEL: binaries[1], f"bin/content/{mesh}.sharkmesh": b"synthetic prepared mesh"}
+        identities = {path: {"sha256": package.digest(data), "bytes": len(data)} for path, data in content.items()}
+        body = b"".join(uuid.UUID(record[key]).bytes for key in ("project", "world", "scene", "camera"))
+        for text in (record["name"], "windows-x86_64"):
+            encoded = text.encode("utf-8")
+            body += struct.pack("<I", len(encoded)) + encoded
+        for path in (package.STARTUP_SCENE, package.SCENE_VERTEX, package.SCENE_PIXEL):
+            body += struct.pack("<I", identities[path]["bytes"]) + bytes.fromhex(identities[path]["sha256"])
+        body += struct.pack("<I", 1) + uuid.UUID(mesh).bytes
+        mesh_identity = identities[f"bin/content/{mesh}.sharkmesh"]
+        body += struct.pack("<I", mesh_identity["bytes"]) + bytes.fromhex(mesh_identity["sha256"])
+        descriptor = b"SHKSTRT1" + struct.pack("<I", 1) + hashlib.sha256(body).digest() + body
+        content[package.STARTUP] = descriptor
+        record["files"] = {path: {"sha256": package.digest(data), "bytes": len(data)} for path, data in content.items()}
+        directory = root / "content"
+        directory.mkdir()
+        for path, data in content.items():
+            destination = directory / path
+            destination.parent.mkdir(parents=True, exist_ok=True)
+            destination.write_bytes(data)
+        payload = {name: b"synthetic binary" for name in package.BINARIES}
+        payload.update({name: b"synthetic notice" for name in package.scene_license_paths()
+                        if name not in {package.CONTENT_ATTRIBUTION, package.CONTENT_NOTICES}})
+        manifest = {"schema_version": 1, "kind": "runtime-deployment-fixture", "status": "PASS",
+                    "qualification": "NOT_RUN", "platform": "windows-x86_64", "configuration": "Release",
+                    "dependency_lock_sha256": "a" * 64}
+        return directory, record, shaders, payload, manifest, provenance
+
+    def test_scene_export_preserves_descriptor_closure_attribution_and_shader_provenance(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory, record, shaders, payload, manifest, provenance = self.scene_inputs(Path(temporary) / "inputs")
+            vertex, pixel, observed = package.scene_shader_inputs(shaders)
+            self.assertEqual(observed, provenance)
+            self.assertEqual(vertex.name, "scene-unlit-vs.spv")
+            self.assertEqual(pixel.name, "scene-unlit-ps.spv")
+            files, metadata = package.assemble_scene_package(payload, manifest, directory, record, shaders,
+                                                               provenance["generation"],
+                                                               content_notices={"CC0-1.0": b"Fixture source notice\n"})
+            output = Path(temporary) / "package"
+            package.publish(output, files, metadata)
+            actual = package.inspect_package(output, package.sha256(output / "package-manifest.json"))
+            self.assertEqual(actual["kind"], "runtime-scene-export")
+            self.assertEqual(actual["content"], record)
+            self.assertEqual(json.loads(files[package.CONTENT_ATTRIBUTION])["sources"], record["sources"])
+            self.assertEqual(json.loads(files[package.CONTENT_NOTICES])["entries"],
+                             [{"license": "CC0-1.0", "sha256": package.digest(b"Fixture source notice\n"),
+                               "bytes": 22, "text": "Fixture source notice\n"}])
+            self.assertEqual(actual["qualification"], "NOT_RUN")
+            self.assertNotIn("shader_bundle", actual)
+
+    def test_scene_content_rejects_versions_paths_budgets_and_incomplete_attribution(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            _, source, _, _, _, _ = self.scene_inputs(Path(temporary) / "inputs")
+            mutations = {
+                "version": lambda row: row.update(schema_version=2),
+                "boolean-version": lambda row: row.update(schema_version=True),
+                "unknown-field": lambda row: row.update(source_path="private/source.gltf"),
+                "bad-id": lambda row: row.update(camera="not-a-uuid"),
+                "bad-target": lambda row: row.update(target="Server"),
+                "control-name": lambda row: row.update(name="Name\u0080"),
+                "absent-startup": lambda row: row["files"].pop(package.STARTUP),
+                "escaping-file": lambda row: row["files"].update({"../private.bin": {"sha256": "a" * 64, "bytes": 1}}),
+                "large-scene": lambda row: row["files"][package.STARTUP_SCENE].update(bytes=4 * 1024 * 1024 + 1),
+                "invalid-shader": lambda row: row["files"][package.SCENE_VERTEX].update(bytes=21),
+                "missing-attribution": lambda row: row.update(sources=[]),
+                "duplicate-attribution": lambda row: row["sources"].append(copy.deepcopy(row["sources"][0])),
+                "source-path": lambda row: row["sources"][0].update(path="secret.gltf"),
+            }
+            for name, mutate in mutations.items():
+                with self.subTest(name=name), self.assertRaises(ValueError):
+                    record = copy.deepcopy(source)
+                    mutate(record)
+                    package.validate_content_record(record)
+
+    def test_scene_assembly_rejects_extra_files_and_changed_shader_generation(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory, record, shaders, payload, manifest, _ = self.scene_inputs(Path(temporary) / "inputs")
+            with self.assertRaisesRegex(ValueError, "generation"):
+                package.assemble_scene_package(payload, manifest, directory, record, shaders, "0" * 64)
+            (directory / "source.gltf").write_bytes(b"private")
+            with self.assertRaisesRegex(ValueError, "inventory"):
+                package.assemble_scene_package(payload, manifest, directory, record, shaders)
+
+    def test_scene_package_rejects_descriptor_content_attribution_and_provenance_disagreement(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            directory, record, shaders, payload, manifest, _ = self.scene_inputs(Path(temporary) / "inputs")
+            original_files, original_manifest = package.assemble_scene_package(
+                payload, manifest, directory, record, shaders,
+                content_notices={"CC0-1.0": b"Fixture source notice\n"})
+            for mutation in ("descriptor", "camera", "mesh", "attribution", "shader-profile", "shader-hash",
+                             "platform", "private", "missing-shader", "extra-license", "notice"):
+                with self.subTest(mutation=mutation):
+                    files, metadata = copy.deepcopy(original_files), copy.deepcopy(original_manifest)
+                    if mutation == "descriptor":
+                        files[package.STARTUP] += b"trailing"
+                        metadata["content"]["files"][package.STARTUP] = {
+                            "sha256": package.digest(files[package.STARTUP]), "bytes": len(files[package.STARTUP])}
+                    elif mutation == "camera":
+                        metadata["content"]["camera"] = "10000000-0000-4000-8000-000000000005"
+                    elif mutation == "mesh":
+                        mesh_path = next(path for path in files if path.endswith(".sharkmesh"))
+                        files[mesh_path] += b"changed"
+                        metadata["content"]["files"][mesh_path] = {
+                            "sha256": package.digest(files[mesh_path]), "bytes": len(files[mesh_path])}
+                    elif mutation == "attribution":
+                        files[package.CONTENT_ATTRIBUTION] = b"{}"
+                    elif mutation == "notice":
+                        notices = json.loads(files[package.CONTENT_NOTICES])
+                        notices["entries"][0]["text"] = "Changed text, original digest"
+                        files[package.CONTENT_NOTICES] = package.canonical(notices)
+                    elif mutation == "shader-profile":
+                        metadata["scene_shaders"]["profile"] = "textured-cube"
+                    elif mutation == "shader-hash":
+                        metadata["scene_shaders"]["artifact_manifest_sha256"] = "0" * 64
+                    elif mutation == "platform":
+                        metadata["platform"] = "linux-x86_64"
+                    elif mutation == "private":
+                        files["bin/content/source.gltf"] = b"private"
+                    elif mutation == "extra-license":
+                        files["licenses/Content/source.gltf"] = b"private"
+                    else:
+                        del files[package.SCENE_PIXEL]
+                    output = Path(temporary) / mutation
+                    package.publish(output, files, metadata)
+                    with self.assertRaises(ValueError):
+                        package.inspect_package(output, package.sha256(output / "package-manifest.json"))
+
+    def test_content_notices_require_exact_bounded_text_for_every_used_license(self):
+        record = {"sources": [{"license": "MIT"}, {"license": "MIT"}, {"license": "CC0-1.0"}]}
+        notices = {"MIT": b"Copyright fixture\r\nPermission fixture\n", "CC0-1.0": b"Fixture waiver\n"}
+        encoded = package.content_notice_payload(record, notices)
+        package.inspect_content_notices(encoded, record)
+        self.assertEqual([entry["license"] for entry in json.loads(encoded)["entries"]], ["CC0-1.0", "MIT"])
+        for invalid in (None, {}, {"MIT": b"Missing second license"}, {**notices, "unused": b"extra"},
+                        {**notices, "MIT": b""}, {**notices, "MIT": b"\xff"},
+                        {**notices, "MIT": b"bad\0notice"}, {**notices, "MIT": b"a" * (64 * 1024 + 1)}):
+            with self.subTest(invalid=invalid is None), self.assertRaises(ValueError):
+                package.content_notice_payload(record, invalid)
+        oversized = {f"license-{number}": b"a" * (64 * 1024) for number in range(17)}
+        with self.assertRaisesRegex(ValueError, "combined byte budget"):
+            package.content_notice_payload({"sources": [{"license": key} for key in oversized]}, oversized)
+        with self.assertRaisesRegex(ValueError, "complete and sorted"):
+            changed = json.loads(encoded)
+            changed["entries"].reverse()
+            package.inspect_content_notices(package.canonical(changed), record)
+        package.inspect_content_notices(package.content_notice_payload({"sources": []}, None), {"sources": []})
+
+    def test_final_publication_fence_runs_after_staging_and_failure_preserves_destination(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            parent = Path(temporary)
+            output = parent / "package"
+            calls = []
+
+            def reject():
+                calls.append("validate")
+                self.assertFalse(output.exists())
+                stages = list(parent.glob(".runtime-package-*"))
+                self.assertEqual(len(stages), 1)
+                self.assertEqual((stages[0] / "bin/Runtime.exe").read_bytes(), b"candidate")
+                self.assertTrue((stages[0] / "package-manifest.json").is_file())
+                raise ValueError("source changed before publication")
+
+            with self.assertRaisesRegex(ValueError, "source changed"):
+                package.publish(output, {"bin/Runtime.exe": b"candidate"}, {}, before_publish=reject)
+            self.assertEqual(calls, ["validate"])
+            self.assertFalse(output.exists())
+            self.assertEqual(list(parent.iterdir()), [])
+            package.publish(output, {"bin/Runtime.exe": b"candidate"}, {}, before_publish=lambda: calls.append("accept"))
+            self.assertEqual(calls, ["validate", "accept"])
+            self.assertEqual((output / "bin/Runtime.exe").read_bytes(), b"candidate")
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+#include <shark/client/prepared_package.hpp>
 #include <shark/client/scene_launch.hpp>
 
 #include "shader_path.hpp"
@@ -33,7 +34,8 @@ std::string json_string(std::string_view value) {
 }
 Error invalid() {
     return {ErrorCode::invalid_argument,
-            "Expected --scene PATH --camera UUID --vertex-shader PATH --pixel-shader PATH; "
+            "Expected --package PATH or --scene PATH --camera UUID --vertex-shader PATH "
+            "--pixel-shader PATH; "
             "optional --mesh PATH, --extent WxH, --scene-ms, --frames, --capture-directory, "
             "--device and --validation; only --mesh may repeat",
             {.operation = "client.scene.arguments.parse"}};
@@ -90,11 +92,49 @@ Result<void> write_bytes(const std::filesystem::path& path, const char* data, st
     }
     return {};
 }
+struct SceneCandidate {
+    std::unique_ptr<LoadedPreparedScene> content;
+    AuthoredEntityId camera;
+    ShaderArtifact vertex;
+    ShaderArtifact pixel;
+    std::optional<PreparedStartup> startup;
+};
+Result<SceneCandidate> load_candidate(const SceneLaunchOptions& options,
+                                      const SceneCandidate* current = nullptr) {
+    if (!options.package.empty()) {
+        auto package = load_prepared_package(options.package);
+        if (!package)
+            return package.error();
+        auto value = std::move(package).value();
+        return SceneCandidate{std::move(value.content), value.startup.camera,
+                              std::move(value.vertex_shader), std::move(value.pixel_shader),
+                              std::move(value.startup)};
+    }
+    auto loaded = load_scene_content(options.content);
+    if (!loaded)
+        return loaded.error();
+    if (current)
+        return SceneCandidate{
+            std::move(loaded).value(), current->camera, current->vertex, current->pixel, {}};
+    auto vertex = load_shader_artifact(options.vertex_shader, ShaderStage::vertex,
+                                       ShaderInterface::scene_unlit);
+    if (!vertex)
+        return vertex.error();
+    auto pixel = load_shader_artifact(options.pixel_shader, ShaderStage::pixel,
+                                      ShaderInterface::scene_unlit);
+    if (!pixel)
+        return pixel.error();
+    return SceneCandidate{std::move(loaded).value(),
+                          *options.camera,
+                          std::move(vertex).value(),
+                          std::move(pixel).value(),
+                          {}};
+}
 } // namespace
 
 Result<SceneLaunchOptions> parse_scene_arguments(std::span<const std::string_view> arguments) {
-    if (arguments.empty() || arguments.front() != "--scene" || arguments.size() % 2 != 0 ||
-        arguments.size() > scene_launch_maximum_arguments)
+    if (arguments.empty() || (arguments.front() != "--scene" && arguments.front() != "--package") ||
+        arguments.size() % 2 != 0 || arguments.size() > scene_launch_maximum_arguments)
         return invalid();
     try {
         SceneLaunchOptions result;
@@ -104,12 +144,15 @@ Result<SceneLaunchOptions> parse_scene_arguments(std::span<const std::string_vie
             const auto value = arguments[index + 1];
             if (key != "--mesh" && !seen.insert(key).second)
                 return invalid();
-            if (key == "--scene" || key == "--mesh" || key == "--vertex-shader" ||
-                key == "--pixel-shader" || key == "--capture-directory") {
+            if (key == "--package" || key == "--scene" || key == "--mesh" ||
+                key == "--vertex-shader" || key == "--pixel-shader" ||
+                key == "--capture-directory") {
                 auto path = path_argument(value);
                 if (!path)
                     return path.error();
-                if (key == "--scene")
+                if (key == "--package")
+                    result.package = std::move(path).value();
+                else if (key == "--scene")
                     result.content.scene = std::move(path).value();
                 else if (key == "--mesh") {
                     if (result.content.meshes.size() == 126)
@@ -155,7 +198,10 @@ Result<SceneLaunchOptions> parse_scene_arguments(std::span<const std::string_vie
             } else
                 return invalid();
         }
-        if (!result.camera || result.vertex_shader.empty() || result.pixel_shader.empty())
+        if (result.package.empty()
+                ? (!result.camera || result.vertex_shader.empty() || result.pixel_shader.empty())
+                : (!result.content.scene.empty() || !result.content.meshes.empty() ||
+                   result.camera || !result.vertex_shader.empty() || !result.pixel_shader.empty()))
             return invalid();
         return result;
     } catch (...) {
@@ -164,8 +210,13 @@ Result<SceneLaunchOptions> parse_scene_arguments(std::span<const std::string_vie
 }
 
 Result<void> run_scene(std::string_view title, const SceneLaunchOptions& options) {
-    if (!options.camera || options.extent.width == 0 || options.extent.height == 0 ||
-        options.extent.width > 2048 || options.extent.height > 2048 ||
+    if ((options.package.empty()
+             ? !options.camera
+             : (options.camera || !options.content.scene.empty() ||
+                !options.content.meshes.empty() || !options.vertex_shader.empty() ||
+                !options.pixel_shader.empty())) ||
+        options.extent.width == 0 || options.extent.height == 0 || options.extent.width > 2048 ||
+        options.extent.height > 2048 ||
         (options.duration && (*options.duration < std::chrono::milliseconds{1} ||
                               *options.duration > std::chrono::milliseconds{60000})) ||
         (options.frames && (*options.frames == 0 || *options.frames > 600)) ||
@@ -174,21 +225,20 @@ Result<void> run_scene(std::string_view title, const SceneLaunchOptions& options
          options.validation != GraphicsValidation::off))
         return invalid();
     try {
-        auto loaded = load_scene_content(options.content);
+#if !defined(_WIN32) || (!defined(_M_X64) && !defined(__x86_64__))
+        if (!options.package.empty())
+            return Error{ErrorCode::capability_unavailable,
+                         "Prepared package launch currently requires Windows x86-64; CPU "
+                         "inspection is portable",
+                         {.operation = "client.package.run"}};
+#endif
+        auto loaded = load_candidate(options);
         if (!loaded)
             return loaded.error();
-        auto content = std::move(loaded).value();
-        auto vertex = load_shader_artifact(options.vertex_shader, ShaderStage::vertex,
-                                           ShaderInterface::scene_unlit);
-        if (!vertex)
-            return vertex.error();
-        auto pixel = load_shader_artifact(options.pixel_shader, ShaderStage::pixel,
-                                          ShaderInterface::scene_unlit);
-        if (!pixel)
-            return pixel.error();
+        auto active = std::move(loaded).value();
         RenderExtractionStats extraction;
-        auto initial = frame_request(*content, *options.camera, options.extent, vertex.value(),
-                                     pixel.value(), extraction);
+        auto initial = frame_request(*active.content, active.camera, options.extent, active.vertex,
+                                     active.pixel, extraction);
         if (!initial)
             return initial.error();
         const bool capture = !options.capture_directory.empty();
@@ -203,7 +253,7 @@ Result<void> run_scene(std::string_view title, const SceneLaunchOptions& options
                              {.operation = "client.scene.capture", .path = valid.value()}};
         }
         GraphicsConfig config;
-        config.window.title = title;
+        config.window.title = active.startup ? active.startup->name.value : std::string{title};
         config.window.content = options.extent;
         config.adapter_uuid = options.adapter_uuid;
         config.validation = options.validation;
@@ -249,24 +299,24 @@ Result<void> run_scene(std::string_view title, const SceneLaunchOptions& options
                 return written.error();
             if (!state.iconified && state.framebuffer.width != 0 && state.framebuffer.height != 0) {
                 if (reload || state.framebuffer != current.extent) {
-                    std::unique_ptr<LoadedPreparedScene> candidate;
+                    std::optional<SceneCandidate> candidate;
                     if (reload) {
-                        auto replacement = load_scene_content(options.content);
+                        auto replacement = load_candidate(options, &active);
                         if (replacement)
                             candidate = std::move(replacement).value();
                         else if (!diagnostics.write(LogLevel::error, replacement.error()))
                             return replacement.error();
                     }
                     RenderExtractionStats next_extraction;
-                    auto next = frame_request(candidate ? *candidate : *content, *options.camera,
-                                              state.framebuffer, vertex.value(), pixel.value(),
-                                              next_extraction);
+                    const auto& source = candidate ? *candidate : active;
+                    auto next = frame_request(*source.content, source.camera, state.framebuffer,
+                                              source.vertex, source.pixel, next_extraction);
                     if (!next && candidate) {
                         if (!diagnostics.write(LogLevel::error, next.error()))
                             return next.error();
                         candidate.reset();
-                        next = frame_request(*content, *options.camera, state.framebuffer,
-                                             vertex.value(), pixel.value(), next_extraction);
+                        next = frame_request(*active.content, active.camera, state.framebuffer,
+                                             active.vertex, active.pixel, next_extraction);
                     }
                     if (!next)
                         return next.error();
@@ -276,7 +326,7 @@ Result<void> run_scene(std::string_view title, const SceneLaunchOptions& options
                     current = std::move(next).value();
                     extraction = next_extraction;
                     if (candidate)
-                        content = std::move(candidate);
+                        active = std::move(*candidate);
                 }
             }
             auto presented = graphics->present();

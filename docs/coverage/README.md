@@ -8,16 +8,18 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**14a is complete under current-machine scope.** The latest
-[handoff](../handoffs/14a-client-export-content.md) records CPU export content
-preparation, freshness/privacy fences and owned dependency attribution. Next is
-14b in the [export checkpoints](../roadmap/export-plan.md); full REQ-14 remains
+**14a is complete; 14b's implementation is delivered with verification pending.**
+The latest [handoff](../handoffs/14b-standalone-scene-export.md) records the export
+command, Runtime package startup, passing Debug/package checks and remaining
+Client/worker sanitizer selection after compiler crashes. Close that gate before
+14c in the [export checkpoints](../roadmap/export-plan.md); full REQ-14 remains
 NOT_RUN. [Full REQ-13](../handoffs/13e-runtime-scenes.md) and
 [full REQ-12](../handoffs/12e-gltf-qualification.md) remain complete.
 Terminal/editor adapters remain 15/16.
 
-FeatureWorld has seventeen native cases, four saved entity IDs and 56 CPU surfaces
-plus two separately qualified GPU commands. Real source/geometry/texture/material/
+FeatureWorld has seventeen native cases, four saved entity IDs and 56 exercised
+CPU surfaces, plus one external CPU export command and two GPU commands.
+Real source/geometry/texture/material/
 payload cases supplement owner/cache/job paths. The manifest and independent
 executable inventories, not this prose, define the actual mappings. Lua stays
 empty until bindings exist.

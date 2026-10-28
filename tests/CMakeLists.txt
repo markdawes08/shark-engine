@@ -45,7 +45,7 @@ if(TARGET EngineClient)
     endif()
     shark_configure_target(RuntimeSceneLifecycle)
     shark_classify_target(RuntimeSceneLifecycle test)
-    target_sources(Tests PRIVATE client_scene_content_tests.cpp client_scene_launch_tests.cpp)
+    target_sources(Tests PRIVATE client_scene_content_tests.cpp client_scene_launch_tests.cpp client_prepared_package_tests.cpp)
     target_sources(Tests PRIVATE client_input_tests.cpp client_window_tests.cpp client_window_launch_tests.cpp client_frame_tests.cpp client_graphics_tests.cpp client_presentation_tests.cpp client_presentation_launch_tests.cpp client_queue_waiter_tests.cpp client_gpu_resources_tests.cpp client_offscreen_tests.cpp client_shader_bundle_tests.cpp client_scene_viewport_tests.cpp)
     target_include_directories(Tests PRIVATE "${PROJECT_SOURCE_DIR}/engine/client/src")
     target_link_libraries(Tests PRIVATE EngineClient)
@@ -163,6 +163,13 @@ shark_configure_target(PreparedAssetsTests)
 shark_classify_target(PreparedAssetsTests test)
 add_test(NAME shark.core.prepared-assets COMMAND PreparedAssetsTests "[prepared-assets]" --rng-seed 1337)
 set_tests_properties(shark.core.prepared-assets PROPERTIES LABELS "cpu;unit" TIMEOUT 60)
+
+add_executable(PreparedStartupTests prepared_startup_tests.cpp)
+target_link_libraries(PreparedStartupTests PRIVATE EngineCore Catch2::Catch2WithMain)
+shark_configure_target(PreparedStartupTests)
+shark_classify_target(PreparedStartupTests test)
+add_test(NAME shark.core.prepared-startup COMMAND PreparedStartupTests "[prepared-startup]" --rng-seed 1337)
+set_tests_properties(shark.core.prepared-startup PROPERTIES LABELS "cpu;unit;integration" TIMEOUT 60)
 
 add_executable(PreparedSceneTests prepared_scene_tests.cpp)
 target_link_libraries(PreparedSceneTests PRIVATE EngineCore Catch2::Catch2WithMain)
@@ -455,6 +462,8 @@ if(TARGET EngineClient)
     set_tests_properties(shark.client.scene-viewport PROPERTIES LABELS "cpu;unit;client" TIMEOUT 60)
     add_test(NAME shark.client.scene-content COMMAND Tests "[scene-content]" --rng-seed 1337)
     set_tests_properties(shark.client.scene-content PROPERTIES LABELS "cpu;unit;client" TIMEOUT 60)
+    add_test(NAME shark.client.prepared-package COMMAND Tests "[prepared-package]" --rng-seed 1337)
+    set_tests_properties(shark.client.prepared-package PROPERTIES LABELS "cpu;unit;client;integration" TIMEOUT 60)
     add_test(NAME shark.client.scene-launch COMMAND Tests "[scene-launch]" --rng-seed 1337)
     set_tests_properties(shark.client.scene-launch PROPERTIES LABELS "cpu;unit;client" TIMEOUT 30)
     add_test(NAME shark.client.shader-bundle COMMAND Tests "[shader-bundle]" --rng-seed 1337)
@@ -787,6 +796,16 @@ foreach(shark_tooling_fixture IN ITEMS presentation-stress presentation-faults r
         LABELS "cpu;tooling" TIMEOUT 30 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 endforeach()
 if(TARGET RuntimeScenePrepare)
+    set(shark_export_runtime_argument)
+    if(TARGET Runtime)
+        list(APPEND shark_export_runtime_argument --runtime "$<TARGET_FILE:Runtime>")
+    endif()
+    add_test(NAME shark.tools.client-export-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_client_export_process.py"
+            --exporter "$<TARGET_FILE:ExportContent>" --prepare "$<TARGET_FILE:RuntimeScenePrepare>"
+            ${shark_export_runtime_argument} -v)
+    set_tests_properties(shark.tools.client-export-process PROPERTIES
+        LABELS "cpu;integration;tooling" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
     add_test(NAME shark.tools.runtime-scene-prepare
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/runtime_scene_smoke.py"
             --prepare-only --prepare-executable "$<TARGET_FILE:RuntimeScenePrepare>")

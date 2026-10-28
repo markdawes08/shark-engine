@@ -1,7 +1,8 @@
 add_library(EngineClient STATIC
     src/bootstrap.cpp src/input.cpp src/frame_loop.cpp src/window.cpp src/window_events.cpp src/window_launch.cpp
     src/graphics.cpp src/gpu_resources.cpp src/shader_bundle.cpp src/cube_sample.cpp src/scene_viewport.cpp
-    src/presentation.cpp src/presentation_launch.cpp src/scene_content.cpp src/scene_launch.cpp)
+    src/presentation.cpp src/presentation_launch.cpp src/scene_content.cpp src/scene_launch.cpp
+    src/executable_path.cpp src/prepared_package.cpp)
 if(WIN32)
     target_sources(EngineClient PRIVATE src/graphics_queue_waiter_win32.cpp)
 endif()

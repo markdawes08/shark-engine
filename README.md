@@ -20,12 +20,12 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**14a, client export content preparation, is complete.** The
-[latest handoff](docs/handoffs/14a-client-export-content.md) records CPU preparation
-of startup scenes, fresh client mesh content and dependency attribution without
-changing the authored project. **Next: 14b, export command and package launch** in
-the [export checkpoints](docs/roadmap/export-plan.md); full assignment 14 remains
-pending. Assignments 12 and 13 remain complete under current-machine scope,
+**14b's standalone scene export command and package launch are implemented.** The
+[latest handoff](docs/handoffs/14b-standalone-scene-export.md) records the working
+Release export, CPU checks and one validated package presentation. Selected
+sanitizer verification remains incomplete after compiler crashes; 14b closure and
+14c's isolated acceptance are still pending in the
+[export checkpoints](docs/roadmap/export-plan.md). Assignments 12 and 13 remain complete under current-machine scope,
 including Runtime scene presentation and safe reload on both GPUs. Completed
 checkpoints and their original results are indexed in
 [requirements and coverage](docs/coverage/README.md); historical counts are not
@@ -54,7 +54,8 @@ Current capabilities include:
   [prepared Runtime scene launch/capture](docs/runtime-scenes.md).
 - CPU [client export preparation](docs/client-export.md), capturing the startup
   scene and camera with fresh client assets into an owned, revalidatable candidate.
-  The export command and standalone package are the next checkpoints.
+  The [standalone exporter](docs/standalone-export.md) publishes a Windows Runtime
+  package with prepared content, offline shaders and redistribution notices.
 - Shared [authoring commands](docs/authoring-commands.md),
   [atomic batches and preview](docs/authoring-transactions.md),
   [undo/redo](docs/authoring-history.md) and [retained retries](docs/authoring-retries.md)

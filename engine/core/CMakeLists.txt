@@ -8,6 +8,7 @@ add_library(EngineCore STATIC
     src/name.cpp
     src/prepared_assets.cpp
     src/prepared_scene.cpp
+    src/prepared_startup.cpp
     src/project_path.cpp
     src/render_components.cpp
     src/render_math.cpp

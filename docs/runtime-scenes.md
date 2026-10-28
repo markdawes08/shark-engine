@@ -4,7 +4,8 @@ Assignment 13e connects the [prepared content](prepared-content.md),
 [extraction](scene-rendering.md) and [viewport](scene-viewport.md) owners to Runtime.
 Runtime reads explicit bounded engine payloads and precompiled scene shaders; it
 does not import source documents/glTF or discover an editor/compiler installation.
-Assignment 14 retains export staging and 31 retains final cooking.
+14b adds [standalone export and package-relative startup](standalone-export.md);
+14c retains isolated package acceptance and 31 retains final cooking.
 
 `SceneContentFiles` names one scene and at most 126 mesh files. The loader admits
 regular files only, existing per-format limits and a combined 32 MiB input budget.
@@ -12,7 +13,9 @@ Embedded asset IDs, duplicate/reserved identities, checksums and every scene
 reference are validated before a fresh `LoadedPreparedScene` is returned. Failure
 leaves an existing owner untouched. File snapshots are explicit development inputs,
 not a coherent multi-file publisher; checksums/references detect invalid mixtures,
-and an export generation protocol remains with its later owner.
+and this explicit-file mode does not supply export generation consistency.
+The package mode validates the startup descriptor's exact file sizes/digests
+and decodes those same snapshots before replacing a complete scene/shader owner.
 
 `Runtime --scene PATH --camera UUID --vertex-shader PATH --pixel-shader PATH`
 accepts repeated `--mesh PATH`, `--device UUID|auto`, `--validation required|off`,

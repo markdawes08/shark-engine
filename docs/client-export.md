@@ -4,9 +4,11 @@
 [client_export.hpp](../engine_tools/include/shark/tools/client_export.hpp) is a
 CPU EngineTools service. It borrows the current AuthoredScene, AssetCatalog and
 AssetImports on their owner thread. It writes no source, cache or output file,
-does not run imports, and initializes no Client/device. The
-[export checkpoints](roadmap/export-plan.md) assign command/package work to 14b
-and deployment to 14c. Final cooked content remains assignment 31.
+does not run imports, and initializes no Client/device. The 14b
+[standalone export command](standalone-export.md) consumes this candidate while
+retaining its owners through publication. The
+[export checkpoints](roadmap/export-plan.md) retain isolated acceptance in 14c.
+Final cooked content remains assignment 31.
 
 The request requires exact scene/catalog/cache revisions, an explicit authored
 camera ID and a syntactically valid client-side content profile. That target ID

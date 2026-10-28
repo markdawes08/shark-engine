@@ -160,6 +160,38 @@ void imported(const std::filesystem::path& source, const std::filesystem::path& 
     write(output / "mesh.bin", take(prepare_mesh_asset(asset, cached)));
     const auto license = read(source / "tests/fixtures/gltf_source/LICENSE");
     write(output / "LICENSE", std::as_bytes(std::span{license.data(), license.size()}));
+
+    // The standalone export command consumes the actual saved project and fresh
+    // import cache, not this fixture's already prepared mesh.bin shortcut.
+    write(output / "embedded.gltf", std::as_bytes(std::span{input.data(), input.size()}));
+    auto files = take(ProjectFiles::open(output));
+    const auto sidecar = take(ProjectPath::parse("embedded.gltf.sharkasset"));
+    const auto metadata = AssetMetadata{project_document.project,
+                                        asset,
+                                        "gltf",
+                                        "Shark original static glTF fixture",
+                                        "MIT",
+                                        "shark.gltf",
+                                        AssetAudience::client,
+                                        R"({"path":"embedded.gltf"})",
+                                        {},
+                                        "{}"};
+    static_cast<void>(take(files->write_asset_metadata(sidecar, metadata, std::nullopt)));
+    auto catalog = take(AssetCatalog::create(*files, project_document.project));
+    const std::array sidecars{sidecar};
+    const auto catalog_revision = take(catalog->refresh(sidecars, take(catalog->revision())));
+    GltfAssetImporter gltf;
+    GltfResourceImporter resource;
+    const std::array<AssetImporter*, 2> importers{&gltf, &resource};
+    auto imports = take(AssetImports::open(*files, *catalog, project_document.project, importers));
+    const AssetTargetProfile target{"windows-x64-export-test", AssetAudience::client};
+    const auto cache_revision = take(imports->revision());
+    auto prepared_import = take(imports->prepare(asset, target, catalog_revision, cache_revision));
+    const auto summary = take(prepared_import.summary());
+    const auto committed =
+        take(imports->publish(std::move(prepared_import), catalog_revision, cache_revision));
+    if (take(imports->read(summary.root_key, committed.revision)).payload != cached)
+        throw std::runtime_error("Cached fixture changed the independently prepared geometry");
 }
 
 std::filesystem::path path(std::string_view value) {

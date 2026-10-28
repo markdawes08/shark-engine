@@ -4,7 +4,10 @@
 [client export preparation](client-export.md). It checks the startup scene/camera,
 built-in content, independent saved hierarchy/global anchor, owned bytes/digest,
 repeatability and context/revision failures without changing the authoring owner.
-The current inventory is 56 CPU surfaces and two external GPU commands.
+The current inventory is 56 FeatureWorld CPU surfaces, one external CPU export
+command and two external GPU commands. 14b's export process fixture consumes the
+same saved source through a separate native project owner; it preserves this
+in-process catalog.
 
 13c adds the sixteenth native case, `featureworld.scene-extraction`, following
 [CPU scene extraction](scene-rendering.md). It prepares the saved scene into a
@@ -131,7 +134,8 @@ catalog and maps every current component/command to real case IDs. The independe
 process fixture resolves discovery, executes every case, verifies repeat results
 and checks that neither the versioned input nor its temporary copy changed.
 It now performs 35 checks. The independent coverage inventory contains
-56 CPU surfaces and two external GPU commands; `asset.gltf.textures` maps to the
+56 FeatureWorld CPU surfaces, one external CPU export command and two external
+GPU commands; `asset.gltf.textures` maps to the
 twelfth native case and the separate texture/dependency families. The texture
 Catch family keeps a 90-second limit and seed 1337; its private dependency family
 keeps 60 seconds.

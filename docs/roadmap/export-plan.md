@@ -7,7 +7,12 @@ The user approved three subchunks following completed assignment 13. Follow the
 remains NOT_RUN until 14c's connected package acceptance.
 
 **14a is PASS under current-machine scope**, recorded in the
-[content handoff](../handoffs/14a-client-export-content.md). Next is 14b.
+[content handoff](../handoffs/14a-client-export-content.md). 14b's implementation,
+Debug/Release package checks and one package presentation are delivered. Its
+Client/worker sanitizer selection remains NOT_RUN after compiler crashes;
+[14b's handoff](../handoffs/14b-standalone-scene-export.md) records the failures
+and the startup codec's narrower ASan pass. Close or explicitly amend that
+remaining gate before 14c; no isolated package acceptance is claimed yet.
 
 | Checkpoint | Deliverable and gate |
 | --- | --- |

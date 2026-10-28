@@ -235,6 +235,14 @@ are absent from the payload. Shader-tools preparation is not needed to export
 or check a previously verified generation. Omitting `--shaders` retains the
 older clear-only deployment fixture.
 
+Assignment 14b adds `package_runtime.py export` for a saved startup scene, fresh
+client mesh cache, offline scene shaders and full asset notices. It uses the
+same protected Release builder and adds the pinned Runtime-only
+`msvcp140_2.dll` needed by scene math. Follow the
+[standalone export guide](standalone-export.md) for explicit target/profile,
+sidecar/notice inputs, structured outcomes and package launch. The clear/cube
+diagnostic checker below rejects scene exports; their isolated acceptance is 14c.
+
 Copy the package to a fresh directory outside the checkout with spaces and
 Unicode in its path. `tools/package_runtime.py check --package <relocation>
 --manifest-sha256 <builder-reported-hash> --device <UUID> --device <other-UUID>

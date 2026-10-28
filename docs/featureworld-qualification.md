@@ -87,6 +87,11 @@ checks. It verifies preparation and revalidation through public Tools services,
 independent saved-scene expectations and unchanged owners; package deployment
 remains the later export checkpoints.
 
+14b maps the separate `content.client-export.package` command to actual CPU
+export processes and package controls. The independent audit checks that external
+mapping separately from the 56 in-process surfaces and two GPU surfaces. It
+preserves the 17 saved cases and does not treat CPU export as GPU qualification.
+
 The fixture runs all seventeen saved-world cases through the public supervisor, then
 the intentional failing assertion through the same executable/result path. It
 compares stdout with create-only published results, native results and every

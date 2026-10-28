@@ -1148,6 +1148,9 @@
         "vcruntime140.dll": "d1f4225df2cd877dbf130d5668a021dce3f94118455ff5ec952061c30afc9ce7",
         "vcruntime140_1.dll": "a7146c08f89fe5b04541ab507cdb59ff7b44534d4ba3c668a426c6450a03434e"
       },
+      "runtime_additional_files": {
+        "msvcp140_2.dll": "d50d7883f20d1dc6191768d3746f52dd9cac89c346ffaed5be1f110c2f34a838"
+      },
       "license_files": [
         {
           "path": "tools/graphics_package/licenses/Microsoft-VC-Runtime-2026.txt",
@@ -1155,7 +1158,7 @@
           "destination": "Microsoft-VC-Runtime-2026.txt"
         }
       ],
-      "verification": "Local file hashes, file version and Valid Authenticode signatures checked 2026-10-18. Debug CRT prohibited. Package construction recursively checks PE imports; Windows 11 system API sets and driver prerequisites are not redistributed."
+      "verification": "Base diagnostic CRT hashes, file version and Valid Authenticode signatures checked 2026-10-18. Runtime additionally requires msvcp140_2.dll for imported __std_smf_hypot3/hypot3f: installed x64 redistributable bytes (274872), SHA-256, file/product version 14.51.36247.0 and Valid Microsoft Windows Software Compatibility Publisher Authenticode signature checked 2026-10-28. The unchanged graphics probe retains its original three-DLL closure. Debug CRT prohibited. Package construction recursively checks PE imports; Windows 11 system API sets and driver prerequisites are not redistributed."
     }
   }
 }

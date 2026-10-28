@@ -42,7 +42,10 @@ with shared [Camera/MeshRenderer components](../render-components.md) and
 [prepared runtime content](../prepared-content.md), and CPU
 [scene extraction/camera math](../scene-rendering.md). EngineClient now consumes
 those snapshots through a bounded [offscreen scene viewport](../scene-viewport.md);
-application scene launch and connected Runtime acceptance remain 13e.
+application scene launch and connected Runtime acceptance completed in 13e.
+14b adds [standalone scene export](../standalone-export.md) through CPU Tools
+and a Core startup descriptor; its verification status is recorded in the
+[export checkpoints](../roadmap/export-plan.md).
 Editor/Runtime currently provide `--cube`, `--graphics` and `--window` diagnostics
 with offline F6/F7 pause/step controls. Authored-scene rendering remains 13,
 terminal/editor adapters remain 15/16, and MMOWorld remains M09. Schema IDs do
@@ -87,6 +90,7 @@ not establish file or gameplay-wire formats.
 | [0035](0035-offscreen-scene-viewport.md) | Persistent offscreen scene targets, bounded unlit draws and safe resize through the existing graphics owner |
 | [0036](0036-runtime-scene-launch.md) | Explicit prepared Runtime loading, dynamic scene presentation and complete-candidate reload |
 | [0037](0037-client-export-content.md) | Bounded CPU export candidates from the startup scene and fresh client import closure |
+| [0038](0038-standalone-scene-export.md) | Live-owner export publication and bounded package-relative Runtime startup |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

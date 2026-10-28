@@ -12,6 +12,9 @@ namespace shark::client {
 inline constexpr std::size_t scene_launch_maximum_arguments = 274;
 
 struct SceneLaunchOptions {
+    // Mutually exclusive with explicit content/camera/shader paths. The package
+    // descriptor selects those values and they are revalidated together on F5.
+    std::filesystem::path package;
     SceneContentFiles content;
     std::optional<AuthoredEntityId> camera;
     std::filesystem::path vertex_shader;
