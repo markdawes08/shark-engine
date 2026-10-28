@@ -40,8 +40,9 @@ acceptance, independent fixture validation and applicable CPU/package checks.
 Assignment 13 follows [five checkpoints](../roadmap/scene-rendering-plan.md),
 with shared [Camera/MeshRenderer components](../render-components.md) and
 [prepared runtime content](../prepared-content.md), and CPU
-[scene extraction/camera math](../scene-rendering.md). These CPU services do not
-yet draw an authored scene.
+[scene extraction/camera math](../scene-rendering.md). EngineClient now consumes
+those snapshots through a bounded [offscreen scene viewport](../scene-viewport.md);
+application scene launch and connected Runtime acceptance remain 13e.
 Editor/Runtime currently provide `--cube`, `--graphics` and `--window` diagnostics
 with offline F6/F7 pause/step controls. Authored-scene rendering remains 13,
 terminal/editor adapters remain 15/16, and MMOWorld remains M09. Schema IDs do
@@ -83,6 +84,7 @@ not establish file or gameplay-wire formats.
 | [0032](0032-render-components.md) | Optional Camera/MeshRenderer values, shared authoring/persistence and runtime-safe asset identity |
 | [0033](0033-prepared-runtime-content.md) | Bounded prepared mesh/scene formats, immutable assets and built-in geometry without Runtime importers |
 | [0034](0034-scene-extraction.md) | Revisioned CPU extraction, full affine cameras, bounded local render coordinates and conservative frustum culling |
+| [0035](0035-offscreen-scene-viewport.md) | Persistent offscreen scene targets, bounded unlit draws and safe resize through the existing graphics owner |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

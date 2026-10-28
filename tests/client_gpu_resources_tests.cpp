@@ -31,6 +31,14 @@ ShaderArtifact pixel_shader() {
     return {ShaderStage::pixel, "psMain", {ps_words.begin(), ps_words.end()}};
 }
 
+ShaderArtifact scene_vertex_shader() {
+    return {ShaderStage::vertex, "vsScene", {scene_vs_words.begin(), scene_vs_words.end()}};
+}
+
+ShaderArtifact scene_pixel_shader() {
+    return {ShaderStage::pixel, "psScene", {scene_ps_words.begin(), scene_ps_words.end()}};
+}
+
 std::vector<std::byte> encode(const ShaderArtifact& artifact) {
     std::vector<std::byte> bytes;
     for (const auto word : artifact.words) {
@@ -108,6 +116,103 @@ TEST_CASE("Owned shader artifacts decode real pinned compiler output", "[client]
         CHECK(validate_shader_artifact(decoded.value()));
         CHECK_FALSE(decode_shader_artifact(bytes, shader.stage));
     }
+}
+
+TEST_CASE("Scene shader profile loads real artifacts without accepting cube interfaces",
+          "[client][gpu-resources]") {
+    ShaderFiles files;
+    for (const auto& shader : {scene_vertex_shader(), scene_pixel_shader()}) {
+        REQUIRE(validate_shader_artifact(shader, ShaderInterface::scene_unlit));
+        CHECK_FALSE(validate_shader_artifact(shader));
+        const auto bytes = encode(shader);
+        const auto decoded =
+            decode_shader_artifact(bytes, shader.stage, ShaderInterface::scene_unlit);
+        REQUIRE(decoded);
+        CHECK(decoded.value().words == shader.words);
+        CHECK(decoded.value().entry_point == shader.entry_point);
+        CHECK_FALSE(decode_shader_artifact(bytes, shader.stage));
+        const auto path = files.path / (shader.entry_point + ".spv");
+        {
+            std::ofstream stream(path, std::ios::binary);
+            stream.write(reinterpret_cast<const char*>(bytes.data()),
+                         static_cast<std::streamsize>(bytes.size()));
+            REQUIRE(stream.good());
+        }
+        const auto loaded = load_shader_artifact(path, shader.stage, ShaderInterface::scene_unlit);
+        REQUIRE(loaded);
+        CHECK(loaded.value().words == shader.words);
+        CHECK_FALSE(load_shader_artifact(path, shader.stage));
+        CHECK_FALSE(validate_shader_artifact(shader, static_cast<ShaderInterface>(123)));
+    }
+    CHECK_FALSE(validate_shader_artifact(vertex_shader(), ShaderInterface::scene_unlit));
+    CHECK_FALSE(validate_shader_artifact(pixel_shader(), ShaderInterface::scene_unlit));
+}
+
+TEST_CASE("Scene shader layout requires the exact matrix and material constant members",
+          "[client][gpu-resources]") {
+    auto shader = scene_vertex_shader();
+    const auto factor = instruction(shader, 72, 1, 2);
+    const auto structure_id = shader.words[factor + 1];
+    const auto structure = instruction(shader, 30, structure_id);
+    SECTION("factor offset") {
+        shader.words[factor + 4] = 80;
+    }
+    SECTION("factor type") {
+        shader.words[structure + 3] = shader.words[structure + 2];
+    }
+    SECTION("factor cannot be a matrix") {
+        shader.words.insert(shader.words.end(), {(4U << 16) | 72U, structure_id, 1, 4});
+    }
+    SECTION("factor cannot have matrix stride") {
+        shader.words.insert(shader.words.end(), {(5U << 16) | 72U, structure_id, 1, 7, 16});
+    }
+    SECTION("third member decoration") {
+        shader.words[factor + 2] = 2;
+    }
+    SECTION("third member type") {
+        shader.words[structure] = (5U << 16) | 30U;
+        shader.words.insert(shader.words.begin() + static_cast<std::ptrdiff_t>(structure + 4),
+                            shader.words[structure + 3]);
+    }
+    SECTION("matrix offset") {
+        const auto matrix = instruction(shader, 72, 0, 2);
+        shader.words[matrix + 4] = 16;
+    }
+    SECTION("matrix layout") {
+        shader.words[instruction(shader, 72, 4, 3) + 3] = 5;
+    }
+    SECTION("descriptor slot") {
+        shader.words[instruction(shader, 71, 33, 2) + 3] = 257;
+    }
+    REQUIRE_FALSE(validate_shader_artifact(shader, ShaderInterface::scene_unlit));
+}
+
+TEST_CASE("Scene shader stages require color interfaces and no pixel descriptors",
+          "[client][gpu-resources]") {
+    auto shader = scene_vertex_shader();
+    SECTION("vertex color location") {
+        for (std::size_t offset = 5; offset < shader.words.size();) {
+            const auto count = shader.words[offset] >> 16U;
+            if ((shader.words[offset] & 0xffffU) == 71U && count == 4 &&
+                shader.words[offset + 2] == 30 && shader.words[offset + 3] == 1) {
+                shader.words[offset + 3] = 2;
+                break;
+            }
+            offset += count;
+        }
+    }
+    SECTION("pixel color type") {
+        shader = scene_pixel_shader();
+        shader.words[instruction(shader, 23, 4, 3) + 3] = 3;
+    }
+    SECTION("pixel descriptor profile") {
+        shader = pixel_shader();
+        shader.entry_point = "psScene";
+        const auto entry = instruction(shader, 15, 4);
+        shader.words[entry + 3] = 0x63537370U; // psSc
+        shader.words[entry + 4] = 0x00656e65U; // ene\0
+    }
+    REQUIRE_FALSE(validate_shader_artifact(shader, ShaderInterface::scene_unlit));
 }
 
 TEST_CASE("Shader artifact file loading reports paths and owns its bytes",

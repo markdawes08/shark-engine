@@ -13,9 +13,11 @@
 namespace shark::client {
 
 enum class ShaderStage { vertex, pixel };
+enum class ShaderInterface { textured_cube, scene_unlit };
 
-// Owned precompiled SPIR-V. The loader checks the supported textured-cube
-// interface; it is not a full SPIR-V validator or an authentication boundary.
+// Owned precompiled SPIR-V. Callers explicitly select the bounded interface;
+// the default preserves the textured-cube contract. This reader is not a full
+// SPIR-V validator or an authentication boundary.
 // Offline publication must first pass the shader pipeline's independent
 // validation and artifact integrity checks. Requests revalidate mutable values.
 struct ShaderArtifact {
@@ -24,11 +26,15 @@ struct ShaderArtifact {
     std::vector<std::uint32_t> words;
 };
 
-[[nodiscard]] Result<ShaderArtifact> load_shader_artifact(const std::filesystem::path& path,
-                                                          ShaderStage stage);
-[[nodiscard]] Result<ShaderArtifact> decode_shader_artifact(std::span<const std::byte> bytes,
-                                                            ShaderStage stage);
-[[nodiscard]] Result<void> validate_shader_artifact(const ShaderArtifact& artifact);
+[[nodiscard]] Result<ShaderArtifact>
+load_shader_artifact(const std::filesystem::path& path, ShaderStage stage,
+                     ShaderInterface shader_interface = ShaderInterface::textured_cube);
+[[nodiscard]] Result<ShaderArtifact>
+decode_shader_artifact(std::span<const std::byte> bytes, ShaderStage stage,
+                       ShaderInterface shader_interface = ShaderInterface::textured_cube);
+[[nodiscard]] Result<void>
+validate_shader_artifact(const ShaderArtifact& artifact,
+                         ShaderInterface shader_interface = ShaderInterface::textured_cube);
 
 struct ResourceVertex {
     std::array<float, 3> position{};

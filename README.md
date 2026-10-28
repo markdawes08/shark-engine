@@ -20,11 +20,11 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**13a/13b/13c are complete under the current-machine scope.** The
-[latest handoff](docs/handoffs/13c-scene-extraction.md) records CPU scene extraction,
-camera math, conservative bounds and culling on the shared components and
-immutable prepared assets. Full assignment 12 remains complete.
-**Next: 13d, depth-tested offscreen rendering and viewport resize.** Completed
+**13a-13d are complete under the current-machine scope.** The
+[latest handoff](docs/handoffs/13d-offscreen-scene-viewport.md) records depth-tested
+unlit scene rendering, persistent offscreen targets and safe viewport resize,
+qualified on both GPUs. Full assignment 12 remains complete.
+**Next: 13e, connected Runtime scene loading and acceptance.** Completed
 checkpoints and their original results are indexed in
 [requirements and coverage](docs/coverage/README.md); historical counts are not
 recurring verification requirements. The user's [nonblocking backlog decision](docs/backlog.md)
@@ -47,7 +47,8 @@ Current capabilities include:
   [source codecs](docs/source-documents.md), [capture/activation](docs/authored-scenes.md)
   and [project-file conflict handling](docs/project-files.md), plus
   [prepared content](docs/prepared-content.md) and CPU
-  [render extraction/cameras/culling](docs/scene-rendering.md).
+  [render extraction/cameras/culling](docs/scene-rendering.md), consumed by Client
+  [offscreen scene rendering](docs/scene-viewport.md).
 - Shared [authoring commands](docs/authoring-commands.md),
   [atomic batches and preview](docs/authoring-transactions.md),
   [undo/redo](docs/authoring-history.md) and [retained retries](docs/authoring-retries.md)
@@ -75,8 +76,8 @@ Current capabilities include:
 Editor/Runtime currently expose version/help, `--cube`, `--graphics` and
 `--window` diagnostics. Server exposes validated startup, timed execution and
 shutdown. These bootstraps have no active player connections, world simulation,
-scene renderer or game-authoring UI yet; implemented networking, persistence
-and editing services are C++ APIs.
+authored-scene launch or game-authoring UI yet; implemented networking, persistence,
+editing and offscreen scene rendering services are C++ APIs.
 
 - [Architecture decisions](docs/architecture/README.md) define target boundaries,
   dependencies, formats, simulation conventions and the MMORPG profile.

@@ -9,6 +9,10 @@ material, streaming or public authoring API. 06c extends the same resource and
 presentation owners with the window sample described below. Its complete local
 qualification is recorded in the [06c handoff](handoffs/06c-window-distribution.md).
 
+13d adds a separate [scene viewport](scene-viewport.md) on the same graphics
+owner. Its explicit scene-unlit shader profile and persistent resizeable targets
+do not change the original cube request, shader recipe, bundle or test limits.
+
 ## Artifact and upload contract
 
 The [offline pipeline](shader-pipeline.md) independently validates SPIR-V and

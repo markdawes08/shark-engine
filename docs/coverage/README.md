@@ -8,16 +8,15 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**13a/13b/13c are complete under current-machine scope.** The latest
-[handoff](../handoffs/13c-scene-extraction.md) records revisioned CPU extraction,
-camera math, full affine bounds and conservative culling. Next is 13d in the
+**13a-13d are complete under current-machine scope.** The latest
+[handoff](../handoffs/13d-offscreen-scene-viewport.md) records depth-tested unlit
+scene draws, persistent targets and safe resize on both current GPUs. Next is 13e in the
 [rendering checkpoints](../roadmap/scene-rendering-plan.md); full REQ-13 remains
 NOT_RUN. [Full REQ-12](../handoffs/12e-gltf-qualification.md) remains complete.
-Terminal/editor adapters remain 15/16; no playable authoring editor or scene
-renderer is claimed by the CPU import work.
+Terminal/editor adapters remain 15/16. Runtime authored-scene launch remains 13e.
 
 FeatureWorld has sixteen native cases, four saved entity IDs and 55 CPU surfaces
-plus one separately qualified GPU command. Real source/geometry/texture/material/
+plus two separately qualified GPU commands. Real source/geometry/texture/material/
 payload cases supplement owner/cache/job paths. The manifest and independent
 executable inventories, not this prose, define the actual mappings. Lua stays
 empty until bindings exist.
@@ -109,3 +108,4 @@ remains authoritative for individual requirement status.
 | 13a components (partial REQ-13) | [Component contract](../render-components.md), [handoff](../handoffs/13a-render-components.md) |
 | 13b prepared content (partial REQ-13) | [Prepared content](../prepared-content.md), [handoff](../handoffs/13b-prepared-content.md) |
 | 13c scene extraction (partial REQ-13) | [Extraction](../scene-rendering.md), [handoff](../handoffs/13c-scene-extraction.md) |
+| 13d offscreen rendering (partial REQ-13) | [Viewport](../scene-viewport.md), [handoff](../handoffs/13d-offscreen-scene-viewport.md) |

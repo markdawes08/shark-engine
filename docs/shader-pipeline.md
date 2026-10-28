@@ -72,6 +72,16 @@ The native [resource loader](gpu-resources.md) validates the supported typed
 interface. The distribution bundle below carries the fixed cube sample's two
 precompiled stages; this is not a general asset cooker or game export format.
 
+## Scene viewport artifacts
+
+13d adds [scene_recipe.json](../shaders/scene_recipe.json), built and verified by
+the same offline pipeline. Its vertex/pixel artifacts use an explicit
+`ShaderInterface::scene_unlit` native profile with an 80-byte MVP/factor constant
+block and position/color vertices. The [scene viewport contract](scene-viewport.md)
+defines the exact interface and single-Y-flip behavior. The original cube recipe,
+profile and distribution bundle remain unchanged. Scene artifact loading is
+explicit; no generic bundle/export or Runtime launch workflow is added here.
+
 ## Prepare and distribute the cube sample
 
 After building the desired C++ preset, explicitly prepare its adjacent bundle:

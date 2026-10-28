@@ -2711,6 +2711,34 @@
           "docs/scene-rendering.md"
         ],
         "fixture_reason": "Core-only extraction reads one checked committed Scene revision into owned render records with immutable prepared mesh leases. Independent CPU geometry/math cases verify perspective and orthographic Vulkan projections, full affine transforms and normals, mirrored parity, conservative bounds/culling, explicit bounded local origins, reference validation and lifetime. Global cell anchors remain separate; actual GPU drawing remains 13d."
+      },
+      {
+        "id": "client.scene-viewport",
+        "name": "Bounded depth-tested offscreen scene viewport with safe resize",
+        "requirement_ids": [
+          "REQ-13"
+        ],
+        "test_ids": [
+          "shark.client.scene-viewport",
+          "shark.client.gpu-resources",
+          "shark.client.offscreen",
+          "shark.client.scene-render-cli",
+          "shark.tooling.scene-render-smoke"
+        ],
+        "test_sources": [
+          "tests/client_scene_viewport_tests.cpp",
+          "tests/client_offscreen_tests.cpp",
+          "tests/client_gpu_resources_tests.cpp",
+          "tools/tests/test_scene_render_smoke.py"
+        ],
+        "fixtures": [
+          "tests/scene_render_smoke.cpp",
+          "tools/scene_render_smoke.py",
+          "shaders/scene_recipe.json",
+          "shaders/scene_unlit.hlsl",
+          "docs/scene-viewport.md"
+        ],
+        "fixture_reason": "EngineClient packs immutable Core snapshots into bounded shared geometry and ordered unlit draws, preserving camera/model parity and explicit scene/origin metadata. One persistent RGBA8/D32 target uses the existing Vulkan/NVRHI device, queue and bounded completion owner. Explicit native fixtures independently compare geometry/depth on both current-PC GPUs through same-size reuse, resize, empty clears and retained failure recovery; CPU tests alone qualify no GPU. Runtime launch remains13e."
       }
     ],
     "components": [
@@ -4689,6 +4717,29 @@
         "featureworld_cases": [
           "featureworld.scene-extraction"
         ]
+      },
+      {
+        "id": "graphics.scene.render",
+        "name": "Prepare, render and inspect the offscreen scene viewport",
+        "requirement_ids": [
+          "REQ-13"
+        ],
+        "test_ids": [
+          "shark.tooling.scene-render-smoke"
+        ],
+        "test_sources": [
+          "tools/tests/test_scene_render_smoke.py",
+          "tests/client_scene_viewport_tests.cpp",
+          "tests/client_offscreen_tests.cpp"
+        ],
+        "fixtures": [
+          "tests/scene_render_smoke.cpp",
+          "tools/scene_render_smoke.py",
+          "docs/scene-viewport.md"
+        ],
+        "fixture_reason": "The always-registered CPU tooling family verifies the independent readback oracle and evidence rejection. Client-specific packing/owner tests and actual native rendering are additionally mapped by client.scene-viewport; an unavailable Client profile does not count those as executed.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Rendering requires the native Windows Client/device, so CPU FeatureWorld retains its Core/Tools independence and sixteen existing cases. SceneRenderSmoke directly consumes Core extraction and prepared assets, renders five connected frames and three resource-fault controls through the public viewport service. It is an explicit GPU fixture, not a new SceneRunner GPU catalog entry or terminal/editor adapter."
       }
     ],
     "lua_api": []

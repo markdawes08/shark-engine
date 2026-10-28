@@ -1,6 +1,7 @@
 #pragma once
 
 #include <shark/client/gpu_resources.hpp>
+#include <shark/client/scene_viewport.hpp>
 #include <shark/client/window.hpp>
 
 #include <array>
@@ -158,6 +159,13 @@ class GraphicsDevice final {
     // wait timeout retains owners until drain/close proves completion; retry
     // rendering requires first draining the retained submission.
     [[nodiscard]] Result<OffscreenReadback> render_offscreen(const OffscreenRequest& request);
+    // One persistent offscreen scene viewport per device. Same-size frames reuse
+    // targets; resize adopts a complete replacement only after prior use completes.
+    // This synchronous path reads back after a bounded wait, retaining resources
+    // on failure until explicit drain/close proves completion.
+    [[nodiscard]] Result<SceneViewportReadback>
+    render_scene_offscreen(const SceneViewportRequest& request);
+    [[nodiscard]] Result<SceneViewportStats> scene_viewport_stats() const;
     // Waits up to one second for application GPU/presentation synchronization.
     // A timeout retains live resources; callers must exit or retry explicitly.
     [[nodiscard]] Result<void> drain();

@@ -683,4 +683,40 @@ Result<OffscreenReadback> GraphicsDevice::render_offscreen(const OffscreenReques
     }
 }
 
+Result<SceneViewportReadback>
+detail::GraphicsBackend::render_scene_offscreen(const SceneViewportRequest&) {
+    return graphics_error(ErrorCode::capability_unavailable, "graphics.scene.backend",
+                          "Scene viewport backend is unavailable");
+}
+Result<SceneViewportReadback>
+GraphicsDevice::render_scene_offscreen(const SceneViewportRequest& request) {
+    if (auto checked = impl_->check_live(); !checked)
+        return checked.error();
+    if (auto checked = validate_scene_viewport_request(request); !checked)
+        return checked.error();
+    if (impl_->presentation.stats().faulted || impl_->backend->offscreen_pending())
+        return graphics_error(
+            ErrorCode::conflict, "graphics.scene.pending",
+            "Resolve prior GPU work or presentation failure before scene rendering");
+    try {
+        if (auto checked = impl_->check_diagnostics(); !checked)
+            return checked.error();
+        auto result = impl_->backend->render_scene_offscreen(request);
+        if (!result)
+            return result.error();
+        if (auto checked = impl_->check_diagnostics(); !checked)
+            return checked.error();
+        return result;
+    } catch (...) {
+        return graphics_error(
+            ErrorCode::execution_failed, "graphics.scene.render",
+            "Scene rendering threw; GPU owners remain retained until safe cleanup");
+    }
+}
+Result<SceneViewportStats> GraphicsDevice::scene_viewport_stats() const {
+    if (auto checked = impl_->check_thread(); !checked)
+        return checked.error();
+    return impl_->backend->scene_viewport_stats();
+}
+
 } // namespace shark::client

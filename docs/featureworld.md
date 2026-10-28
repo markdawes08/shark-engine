@@ -7,7 +7,9 @@ local-origin/global-anchor separation, culling, hidden invalid references and
 snapshot lifetime across reload. The authoring owner and four saved IDs remain
 unchanged. The earlier prepared-content case still covers built-ins, imported
 shared/mirrored geometry and immutable loading. Coverage maps 55 CPU surfaces
-and one external GPU command; these CPU cases do not initialize a renderer.
+and two external GPU commands; these CPU cases do not initialize a renderer.
+13d adds the separate [native viewport fixture](scene-viewport.md), keeping this
+CPU catalog and its Core/Tools dependency boundary unchanged.
 
 Checkpoint 10b connects the [CPU runner](scene-runner.md) to the versioned
 [project](../assets/FeatureWorld/FeatureWorld.sharkproject) and
@@ -119,7 +121,7 @@ catalog and maps every current component/command to real case IDs. The independe
 process fixture resolves discovery, executes every case, verifies repeat results
 and checks that neither the versioned input nor its temporary copy changed.
 It now performs 34 checks. The independent coverage inventory contains
-55 CPU surfaces and one external GPU command; `asset.gltf.textures` maps to the
+55 CPU surfaces and two external GPU commands; `asset.gltf.textures` maps to the
 twelfth native case and the separate texture/dependency families. The texture
 Catch family keeps a 90-second limit and seed 1337; its private dependency family
 keeps 60 seconds.

@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "convention": "shark-vulkan-1",
+  "shaders": [
+    {
+      "id": "scene-unlit-vs",
+      "source": "scene_unlit.hlsl",
+      "entry": "vsScene",
+      "stage": "vertex",
+      "bindings": [{"kind": "constant_buffer", "slot": 0}]
+    },
+    {
+      "id": "scene-unlit-ps",
+      "source": "scene_unlit.hlsl",
+      "entry": "psScene",
+      "stage": "pixel",
+      "bindings": []
+    }
+  ]
+}

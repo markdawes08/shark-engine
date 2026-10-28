@@ -13,7 +13,8 @@
 
 namespace shark::client::test {
 OffscreenRequest offscreen_request_fixture();
-}
+SceneViewportRequest scene_viewport_request_fixture();
+} // namespace shark::client::test
 
 namespace {
 using namespace shark::client;
@@ -40,6 +41,7 @@ struct OffscreenState {
     bool throw_capture{false};
     bool capture_enabled{false};
     std::optional<OffscreenRequest> draw;
+    SceneViewportStats viewport;
     detail::GraphicsDiagnosticSink* sink{nullptr};
 };
 
@@ -112,6 +114,25 @@ class OffscreenBackend final : public detail::GraphicsBackend {
     }
     bool offscreen_pending() const noexcept override {
         return state_.pending;
+    }
+    Result<SceneViewportReadback>
+    render_scene_offscreen(const SceneViewportRequest& request) override {
+        // Reuse the existing owner fault seam; this fixture initializes no GPU.
+        OffscreenRequest upload;
+        upload.extent = request.extent;
+        upload.texture_rgba8 = {255, 128, 64, 255};
+        auto pixels = render_offscreen(upload);
+        if (!pixels)
+            return pixels.error();
+        state_.viewport = {request.extent, 1, 0, 1, 5, false};
+        return SceneViewportReadback{std::move(pixels).value(), state_.viewport,
+                                     request.scene_revision, request.origin,
+                                     static_cast<std::uint32_t>(request.draws.size())};
+    }
+    SceneViewportStats scene_viewport_stats() const noexcept override {
+        auto result = state_.viewport;
+        result.pending = state_.pending;
+        return result;
     }
     Result<void> set_presentation_draw(const OffscreenRequest& request, bool capture) override {
         ++state_.configurations;
@@ -440,6 +461,97 @@ TEST_CASE("Window capture failure retains its owner for explicit retry and valid
     CHECK(result.error().context.operation == "graphics.validation");
     CHECK_FALSE(device->capture_presented());
     CHECK(state.captures == 4);
+    CHECK_FALSE(device->close());
+    CHECK(state.destroys == 5);
+}
+
+TEST_CASE("Scene viewport owner validates inputs thread and closed access before backend calls",
+          "[scene-viewport]") {
+    OffscreenState state;
+    auto device = create(state);
+    auto request = test::scene_viewport_request_fixture();
+    request.indices.front() = 100;
+    const auto invalid = device->render_scene_offscreen(request);
+    REQUIRE_FALSE(invalid);
+    CHECK(invalid.error().code == ErrorCode::invalid_argument);
+    CHECK(state.renders == 0);
+    request = test::scene_viewport_request_fixture();
+    std::optional<Result<SceneViewportReadback>> wrong_thread;
+    std::optional<Result<SceneViewportStats>> wrong_stats;
+    std::thread worker([&] {
+        wrong_thread = device->render_scene_offscreen(request);
+        wrong_stats = device->scene_viewport_stats();
+    });
+    worker.join();
+    REQUIRE(wrong_thread);
+    REQUIRE(wrong_stats);
+    CHECK_FALSE(*wrong_thread);
+    CHECK_FALSE(*wrong_stats);
+    CHECK(state.renders == 0);
+    const auto result = device->render_scene_offscreen(request);
+    REQUIRE(result);
+    CHECK(result.value().scene_revision == request.scene_revision);
+    CHECK(result.value().origin == request.origin);
+    CHECK(result.value().draw_count == 1);
+    CHECK(result.value().pixels.extent == request.extent);
+    REQUIRE(device->scene_viewport_stats());
+    CHECK(device->scene_viewport_stats().value().generation == 1);
+    request.scene_revision.revision = 99;
+    request.origin.generation = 99;
+    CHECK(result.value().scene_revision.revision == 4);
+    CHECK(result.value().origin.generation == 7);
+    REQUIRE(device->close());
+    CHECK_FALSE(device->render_scene_offscreen(request));
+    REQUIRE(device->scene_viewport_stats());
+    CHECK(state.renders == 1);
+    CHECK(result.value().pixels.rgba8.front() == 255);
+}
+
+TEST_CASE("Scene viewport submission failures retain owners and require explicit drain",
+          "[scene-viewport]") {
+    OffscreenState state;
+    auto device = create(state);
+    const CompleteAtExit completion_guard{state};
+    const auto request = test::scene_viewport_request_fixture();
+    SECTION("timeout preserves backend context") {
+        state.fail_render = true;
+    }
+    SECTION("throw becomes owned failure") {
+        state.throw_render = true;
+    }
+    const auto result = device->render_scene_offscreen(request);
+    REQUIRE_FALSE(result);
+    if (state.fail_render)
+        CHECK(result.error().context.request_id == "owned-request");
+    else
+        CHECK(result.error().context.operation == "graphics.scene.render");
+    CHECK(state.pending);
+    CHECK(state.destroys == 0);
+    const auto blocked = device->render_scene_offscreen(request);
+    REQUIRE_FALSE(blocked);
+    CHECK(blocked.error().code == ErrorCode::conflict);
+    CHECK(state.renders == 1);
+    CHECK_FALSE(device->close());
+    CHECK(state.timeout == 1'000'000'000);
+    CHECK(state.destroys == 0);
+    state.complete = true;
+    REQUIRE(device->drain());
+    CHECK_FALSE(state.pending);
+    REQUIRE(device->close());
+    CHECK(state.destroys == 5);
+}
+
+TEST_CASE("Scene viewport diagnostics cannot be returned as successful pixels",
+          "[scene-viewport]") {
+    OffscreenState state;
+    state.validate_error = true;
+    auto device = create(state);
+    const auto request = test::scene_viewport_request_fixture();
+    const auto result = device->render_scene_offscreen(request);
+    REQUIRE_FALSE(result);
+    CHECK(result.error().context.operation == "graphics.validation");
+    CHECK_FALSE(device->render_scene_offscreen(request));
+    CHECK(state.renders == 1);
     CHECK_FALSE(device->close());
     CHECK(state.destroys == 5);
 }

@@ -5,10 +5,11 @@ The user approved five subchunks. Follow the [testing policy](../testing-policy.
 [render conventions](../architecture/0005-simulation-and-rendering.md),
 [MMORPG plan](mmorpg-plan.md) and [human/agent plan](human-agent-plan.md).
 Full REQ-13 remains NOT_RUN until the connected rendering acceptance in 13e.
-**13a, 13b and 13c are PASS under current-machine scope**; see their
+**13a-13d are PASS under current-machine scope**; see their
 [component](../handoffs/13a-render-components.md),
-[prepared-content](../handoffs/13b-prepared-content.md) and
-[extraction](../handoffs/13c-scene-extraction.md) handoffs. Next: 13d.
+[prepared-content](../handoffs/13b-prepared-content.md),
+[extraction](../handoffs/13c-scene-extraction.md) and
+[offscreen viewport](../handoffs/13d-offscreen-scene-viewport.md) handoffs. Next: 13e.
 
 | Checkpoint | Deliverable and gate |
 | --- | --- |
@@ -24,7 +25,9 @@ Full REQ-13 remains NOT_RUN until the connected rendering acceptance in 13e.
 [ADR 0033](../architecture/0033-prepared-runtime-content.md). Each later checkpoint
 updates its concrete contract before changing that boundary. 13c uses the
 [CPU extraction contract](../scene-rendering.md) and
-[ADR 0034](../architecture/0034-scene-extraction.md). No editor or terminal
+[ADR 0034](../architecture/0034-scene-extraction.md). 13d uses the
+[viewport contract](../scene-viewport.md) and
+[ADR 0035](../architecture/0035-offscreen-scene-viewport.md). No editor or terminal
 adapter is introduced before its assigned owner (16 and 15 respectively).
 
 Verification is focused per checkpoint: affected primary Debug regressions,

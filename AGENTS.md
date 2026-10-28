@@ -40,8 +40,8 @@ Linux graphics is outside scope. Mac support, CI, packages and hardware requirem
 are retired by [ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md).
 Hosted CI is supplemental; remote branch protection is unchanged.
 
-**Current handoff: [13c, scene extraction](docs/handoffs/13c-scene-extraction.md).**
-13a/13b/13c are complete; next is **13d, depth-tested offscreen rendering and resize** in
+**Current handoff: [13d, offscreen scene viewport](docs/handoffs/13d-offscreen-scene-viewport.md).**
+13a-13d are complete; next is **13e, connected Runtime scene acceptance** in
 the [five rendering checkpoints](docs/roadmap/scene-rendering-plan.md). Follow
 [ADR 0032](docs/architecture/0032-render-components.md) and the
 [component contract](docs/render-components.md): optional Camera/MeshRenderer share
@@ -56,10 +56,16 @@ snapshots, full affine camera/model transforms, conservative bounds/culling and
 explicit bounded local origins distinct from global cell anchors. Extraction
 resolves post-load Core mesh mutations again, including hidden references.
 Preserve both new 60-second families (seed 1337), existing cases/limits and the
-sixteenth FeatureWorld case. GPU packing, draws and viewport resize are 13d;
-Runtime scene launch/connected acceptance remain 13e. Full REQ-13 remains
+sixteenth FeatureWorld case. [Offscreen scene rendering](docs/scene-viewport.md)
+and [ADR 0035](docs/architecture/0035-offscreen-scene-viewport.md) add bounded float
+packing and shared-depth draws through the existing GraphicsDevice. One target
+persists across frames, resize adopts complete candidates, and failed GPU work
+retains owners until drain/close. Preserve the new scene-unlit shader profile,
+fixed readback limits and native resize/timeout/recording controls. CPU Tools stays
+independent of Client. Runtime scene launch/connected acceptance remains 13e. Full REQ-13 remains
 NOT_RUN. Current Runtime/Editor window/graphics/cube
-flags are diagnostics; there is no game-authoring editor UI or scene renderer yet.
+flags are diagnostics; application authored-scene launch and game-authoring editor UI
+are not implemented yet. The offscreen renderer is available as a Client C++ API.
 Shared CPU authoring services exist; terminal/editor adapters remain 15/16.
 
 The user deferred remaining 05c work to the [nonblocking backlog](docs/backlog.md)

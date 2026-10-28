@@ -71,6 +71,12 @@ a prepared saved scene through the public CPU API and checks camera/origin math,
 reflected bounds/normals, culling, invalid references and retained lifetime. The
 process family has 34 checks; actual GPU drawing remains a later checkpoint.
 
+13d adds `graphics.scene.render` as a second external GPU surface, verified by
+its own actual native viewport and fault fixtures. The independent audit keeps
+the existing SceneRunner GPU catalog mapping strict and separately requires the
+viewport fixture, wrapper and portable oracle tests. The CPU FeatureWorld
+catalog remains sixteen cases and 55 surfaces; Tools never links Client.
+
 The fixture runs all sixteen saved-world cases through the public supervisor, then
 the intentional failing assertion through the same executable/result path. It
 compares stdout with create-only published results, native results and every

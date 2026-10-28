@@ -3,8 +3,8 @@
 13c adds [scene_render.hpp](../engine/core/include/shark/scene_render.hpp) to
 EngineCore. It consumes the existing [Scene](scene-contracts.md) and immutable
 [prepared assets](prepared-content.md), without initializing graphics or loading
-files. See [ADR 0034](architecture/0034-scene-extraction.md). Offscreen drawing
-belongs to 13d and application scene loading/connected acceptance to 13e.
+files. See [ADR 0034](architecture/0034-scene-extraction.md). The [offscreen viewport](scene-viewport.md) consumes these snapshots in 13d;
+application scene loading/connected acceptance remains 13e.
 
 ## Snapshot boundary
 

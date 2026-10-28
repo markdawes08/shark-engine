@@ -1,6 +1,7 @@
 #include "graphics_backend.hpp"
 #include "graphics_offscreen.hpp"
 #include "graphics_queue_waiter.hpp"
+#include "graphics_scene.hpp"
 #if defined(SHARK_GRAPHICS_TEST_HOOKS)
 #include "graphics_native_test.hpp"
 #endif
@@ -298,7 +299,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
     explicit VulkanBackend(detail::NativeGraphicsTestControl& test) noexcept : test_(&test) {}
 #endif
     ~VulkanBackend() noexcept override {
-        if (queue_waiter_.pending() || offscreen_) {
+        if (queue_waiter_.pending() || offscreen_ || scene_frame_ || scene_target_) {
             std::terminate();
         }
     }
@@ -1077,12 +1078,12 @@ class VulkanBackend final : public detail::GraphicsBackend {
     }
 
     bool offscreen_pending() const noexcept override {
-        return static_cast<bool>(offscreen_);
+        return static_cast<bool>(offscreen_) || static_cast<bool>(scene_frame_);
     }
 
     Result<OffscreenReadback> render_offscreen(const OffscreenRequest& request) override {
         return phase<OffscreenReadback>([&]() -> Result<OffscreenReadback> {
-            if (offscreen_ || queue_waiter_.pending() || device_lost_) {
+            if (offscreen_ || scene_frame_ || queue_waiter_.pending() || device_lost_) {
                 return failure(ErrorCode::conflict, "graphics.offscreen.pending",
                                "GPU owners are pending retirement or the device is lost; drain "
                                "before retrying");
@@ -1162,7 +1163,114 @@ class VulkanBackend final : public detail::GraphicsBackend {
         });
     }
 
+    SceneViewportStats scene_viewport_stats() const noexcept override {
+        auto result = scene_stats_;
+        result.extent = scene_target_ ? scene_target_->extent : WindowExtent{};
+        result.live_target_resources = scene_target_ ? scene_target_->created : 0;
+        result.pending = static_cast<bool>(scene_frame_);
+        return result;
+    }
+
+    Result<SceneViewportReadback>
+    render_scene_offscreen(const SceneViewportRequest& request) override {
+        return phase<SceneViewportReadback>([&]() -> Result<SceneViewportReadback> {
+            if (offscreen_ || scene_frame_ || queue_waiter_.pending() || device_lost_) {
+                return failure(ErrorCode::conflict, "graphics.scene.pending",
+                               "GPU owners are pending retirement or the device is lost; drain "
+                               "before retrying");
+            }
+            for (const auto& frame : frames_) {
+                if (frame.unretired_recording)
+                    return failure(ErrorCode::conflict, "graphics.scene.recording",
+                                   "An unresolved presentation recording retains the device");
+            }
+            const bool resize = !scene_target_ || scene_target_->extent != request.extent;
+            if (scene_stats_.rendered_frames == std::numeric_limits<std::uint64_t>::max() ||
+                (resize && scene_stats_.generation == std::numeric_limits<std::uint64_t>::max()))
+                return failure(ErrorCode::conflict, "graphics.scene.exhausted",
+                               "Scene viewport frame or generation counter is exhausted");
+            bool fail_partial = false;
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+            fail_partial = inject(detail::NativeGraphicsFault::scene_partial_creation);
+#endif
+            // Build the whole candidate before replacing an idle viewport.
+            // Allocation/resource creation failures leave its old target usable.
+            std::unique_ptr<detail::SceneTarget> candidate;
+            if (resize)
+                candidate = detail::create_scene_target(*validation_, request.extent, fail_partial);
+            const auto& target = candidate ? *candidate : *scene_target_;
+            auto frame =
+                detail::create_scene_frame(*validation_, request, target, fail_partial && !resize);
+            if (nvrhi_diagnostics_.sink->has_errors())
+                return failure(ErrorCode::execution_failed, "graphics.scene.create",
+                               "Validation reported an error while creating scene resources");
+            if (candidate) {
+                retire_scene_target();
+                scene_target_ = std::move(candidate);
+                ++scene_stats_.generation;
+            }
+            scene_frame_ = std::move(frame);
+            auto& resources = *scene_frame_;
+            resources.unretired_recording = true;
+            resources.commands->open();
+            if (nvrhi_diagnostics_.sink->has_errors())
+                return failure(ErrorCode::execution_failed, "graphics.scene.record",
+                               "Validation reported an error while opening scene commands");
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+            if (inject(detail::NativeGraphicsFault::scene_recording_error))
+                return failure(ErrorCode::execution_failed, "graphics.test.scene_recording_error",
+                               "Injected failure after opening an owned scene command list");
+#endif
+            detail::record_scene_frame(resources, request, *scene_target_);
+            if (nvrhi_diagnostics_.sink->has_errors())
+                return failure(ErrorCode::execution_failed, "graphics.scene.record",
+                               "Validation reported an error while recording scene commands");
+            try {
+                resources.submitted = validation_->executeCommandList(resources.commands);
+            } catch (const vk::DeviceLostError&) {
+                device_lost_ = true;
+                return failure(ErrorCode::execution_failed, "graphics.scene.device_lost",
+                               "Vulkan device was lost during scene submission");
+            }
+            if (resources.submitted == 0)
+                return failure(ErrorCode::execution_failed, "graphics.scene.submit",
+                               "NVRHI did not return a valid scene submission serial");
+            resources.unretired_recording = false;
+            if (nvrhi_diagnostics_.sink->has_errors())
+                return failure(ErrorCode::execution_failed, "graphics.scene.submit",
+                               "Validation reported an error during scene submission");
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+            if (inject(detail::NativeGraphicsFault::scene_submission_timeout))
+                return failure(
+                    ErrorCode::execution_failed, "graphics.scene.wait_timeout",
+                    "Injected unsatisfied completion observation; submitted owners are retained");
+#endif
+            if (!wait_timeline(resources.submitted, 1'000'000'000ULL))
+                return failure(
+                    ErrorCode::execution_failed, "graphics.scene.wait_timeout",
+                    "Scene submission did not complete within one second; owners are retained");
+            validation_->runGarbageCollection();
+            SceneViewportReadback result;
+            result.pixels = detail::read_scene_frame(*validation_, resources, *scene_target_);
+            VkPhysicalDeviceProperties properties{};
+            vkGetPhysicalDeviceProperties(selected_, &properties);
+            result.pixels.subpixel_precision_bits = properties.limits.subPixelPrecisionBits;
+            result.scene_revision = request.scene_revision;
+            result.origin = request.origin;
+            result.draw_count = static_cast<std::uint32_t>(request.draws.size());
+            scene_frame_.reset();
+            result.pixels.retired_resources = result.pixels.created_resources;
+            ++scene_stats_.rendered_frames;
+            result.viewport = scene_viewport_stats();
+            return result;
+        });
+    }
+
     Result<detail::DrainStatus> drain_presentation(std::uint64_t timeout_ns) override {
+        if (scene_frame_ && scene_frame_->unretired_recording)
+            return failure(
+                ErrorCode::execution_failed, "graphics.scene.drain",
+                "Scene recording or submission is unresolved; live resources are retained");
         if (offscreen_ && offscreen_->unretired_recording) {
             return failure(
                 ErrorCode::execution_failed, "graphics.offscreen.drain",
@@ -1184,11 +1292,14 @@ class VulkanBackend final : public detail::GraphicsBackend {
             }
             if (device_lost_) {
                 offscreen_.reset();
+                scene_frame_.reset();
                 return detail::DrainStatus::device_lost;
             }
             if (offscreen_ && !wait_timeline(offscreen_->submitted, remaining(deadline))) {
                 return detail::DrainStatus::waiting;
             }
+            if (scene_frame_ && !wait_timeline(scene_frame_->submitted, remaining(deadline)))
+                return detail::DrainStatus::waiting;
             for (auto& frame : frames_) {
                 if (!wait_timeline(frame.submitted, remaining(deadline))) {
                     return detail::DrainStatus::waiting;
@@ -1217,16 +1328,19 @@ class VulkanBackend final : public detail::GraphicsBackend {
                 validation_->runGarbageCollection();
             }
             offscreen_.reset();
+            scene_frame_.reset();
             return detail::DrainStatus::complete;
         } catch (Error& error) {
             if (device_lost_) {
                 offscreen_.reset();
+                scene_frame_.reset();
             }
             return device_lost_ ? Result<detail::DrainStatus>{detail::DrainStatus::device_lost}
                                 : Result<detail::DrainStatus>{std::move(error)};
         } catch (const vk::DeviceLostError&) {
             device_lost_ = true;
             offscreen_.reset();
+            scene_frame_.reset();
             return detail::DrainStatus::device_lost;
         }
     }
@@ -1239,6 +1353,13 @@ class VulkanBackend final : public detail::GraphicsBackend {
             result.offscreen_resources = offscreen_->created;
             result.offscreen_submissions = offscreen_->submitted != 0 ? 1U : 0U;
             result.offscreen_recordings = offscreen_->unretired_recording ? 1U : 0U;
+        }
+        if (scene_target_)
+            result.scene_target_resources = scene_target_->created;
+        if (scene_frame_) {
+            result.scene_frame_resources = scene_frame_->created;
+            result.scene_submissions = scene_frame_->submitted != 0 ? 1U : 0U;
+            result.scene_recordings = scene_frame_->unretired_recording ? 1U : 0U;
         }
         for (const auto& frame : frames_) {
             result.command_lists += frame.commands ? 1U : 0U;
@@ -1308,9 +1429,10 @@ class VulkanBackend final : public detail::GraphicsBackend {
 
     void destroy_nvrhi() noexcept override {
         record_teardown();
-        if (offscreen_) {
+        if (offscreen_ || scene_frame_) {
             std::terminate();
         }
+        retire_scene_target();
         // Configuration may have succeeded without any present attempt, in
         // which case the presentation phase itself was never initialized.
         window_draw_.reset();
@@ -1364,6 +1486,12 @@ class VulkanBackend final : public detail::GraphicsBackend {
     }
 
   private:
+    void retire_scene_target() noexcept {
+        if (scene_target_) {
+            scene_target_.reset();
+            ++scene_stats_.retired_generations;
+        }
+    }
     void record_teardown() noexcept {
 #if defined(SHARK_GRAPHICS_TEST_HOOKS)
         if (test_) {
@@ -1476,6 +1604,9 @@ class VulkanBackend final : public detail::GraphicsBackend {
     };
     std::array<Frame, 2> frames_{};
     std::unique_ptr<detail::OffscreenResources> offscreen_;
+    std::unique_ptr<detail::SceneTarget> scene_target_;
+    std::unique_ptr<detail::SceneFrameResources> scene_frame_;
+    SceneViewportStats scene_stats_;
     std::optional<OffscreenRequest> window_draw_;
     std::optional<std::uint32_t> captured_image_;
     bool capture_enabled_{false};

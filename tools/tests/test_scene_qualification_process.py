@@ -37,7 +37,7 @@ SCENE_SURFACES = {
     'content.mesh.prepare', 'content.scene.prepare', 'content.gltf-scene.prepare',
     'scene.render.extract',
 }
-GPU_SURFACES = {'tools.scene-runner.gpu'}
+GPU_SURFACES = {'tools.scene-runner.gpu', 'graphics.scene.render'}
 FEATUREWORLD_CASES = [
     'featureworld.components', 'featureworld.commands', 'featureworld.batches-history',
     'featureworld.retries', 'featureworld.persistence', 'featureworld.asset-identity',
@@ -83,9 +83,14 @@ def audit(manifest, cpu, gpu, registered, declared):
             if entry['id'] in SCENE_SURFACES:
                 check(mapped, 'Exercised surface lost its FeatureWorld mapping: ' + entry['id'])
                 covered.update(mapped)
-            if entry['id'] in GPU_SURFACES:
+            if entry['id'] == 'tools.scene-runner.gpu':
                 check(not mapped and set(entry.get('gpu_case_ids', [])) == set(gpu_ids)
                       and entry.get('external_fixture_reason', '').strip(), 'GPU external fixture drift')
+            if entry['id'] == 'graphics.scene.render':
+                check(not mapped and not entry.get('gpu_case_ids')
+                      and entry.get('external_fixture_reason', '').strip()
+                      and {'tests/scene_render_smoke.cpp', 'tools/scene_render_smoke.py'} <= set(entry['fixtures'])
+                      and 'shark.tooling.scene-render-smoke' in tests, 'Scene viewport external fixture drift')
             rows.append({'id': entry['id'], 'category': category, 'featureworld_cases': mapped,
                          'registered_tests': sorted(set(tests) & registered),
                          'declared_other_profile_tests': sorted(set(tests) - registered)})

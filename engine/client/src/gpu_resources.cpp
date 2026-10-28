@@ -37,7 +37,7 @@ struct Node {
     std::uint32_t opcode{0};
     std::vector<std::uint32_t> operands;
     Decoration decoration;
-    Decoration member;
+    std::array<Decoration, 2> members;
 };
 
 bool assign(std::optional<std::uint32_t>& target, std::span<const std::uint32_t> words) {
@@ -83,7 +83,8 @@ bool decorate(Decoration& target, std::uint32_t kind, std::span<const std::uint3
 
 class InterfaceReader {
   public:
-    explicit InterfaceReader(const ShaderArtifact& artifact) : artifact_(artifact) {}
+    InterfaceReader(const ShaderArtifact& artifact, ShaderInterface shader_interface)
+        : artifact_(artifact), interface_(shader_interface) {}
 
     Result<void> validate() {
         const auto& words = artifact_.words;
@@ -94,9 +95,16 @@ class InterfaceReader {
         if (artifact_.stage != ShaderStage::vertex && artifact_.stage != ShaderStage::pixel) {
             return resource_error("Unsupported shader stage", "shader.layout");
         }
-        const auto expected = artifact_.stage == ShaderStage::vertex ? "vsMain" : "psMain";
+        if (interface_ != ShaderInterface::textured_cube &&
+            interface_ != ShaderInterface::scene_unlit) {
+            return resource_error("Unsupported shader interface", "shader.layout");
+        }
+        const auto expected =
+            interface_ == ShaderInterface::textured_cube
+                ? (artifact_.stage == ShaderStage::vertex ? "vsMain" : "psMain")
+                : (artifact_.stage == ShaderStage::vertex ? "vsScene" : "psScene");
         if (artifact_.entry_point != expected) {
-            return resource_error("Shader entry point does not match the supported cube interface",
+            return resource_error("Shader entry point does not match the selected interface",
                                   "shader.layout");
         }
         nodes_.resize(words[3]);
@@ -176,7 +184,7 @@ class InterfaceReader {
     }
 
     bool instruction(std::uint32_t opcode, std::span<const std::uint32_t> args) {
-        if (opcode == 17) { // OpCapability: the fixed cube requires only Shader.
+        if (opcode == 17) { // OpCapability: both fixed profiles require only Shader.
             if (args.size() != 1 || args[0] != 1 || shader_capability_seen_) {
                 return false;
             }
@@ -210,7 +218,7 @@ class InterfaceReader {
             if (args.size() < 3 || args.size() > 4 || !valid_id(args[0])) {
                 return false;
             }
-            // Global cube resources do not have initializers. Function locals
+            // Global resources do not have initializers. Function locals
             // are handled by offline validation, not interface reflection.
             if ((args[2] != 7 && args.size() != 3) || (args[2] == 7) != in_function_) {
                 return false;
@@ -221,8 +229,9 @@ class InterfaceReader {
             return args.size() >= 2 && valid_id(args[0]) &&
                    decorate(nodes_[args[0]].decoration, args[1], args.subspan(2), false);
         } else if (opcode == 72) {
-            return args.size() >= 3 && valid_id(args[0]) && args[1] == 0 &&
-                   decorate(nodes_[args[0]].member, args[2], args.subspan(3), true);
+            const auto member_count = interface_ == ShaderInterface::scene_unlit ? 2U : 1U;
+            return args.size() >= 3 && valid_id(args[0]) && args[1] < member_count &&
+                   decorate(nodes_[args[0]].members[args[1]], args[2], args.subspan(3), true);
         } else if (opcode >= 73 && opcode <= 75) {
             // Decoration groups could hide a layout change from this reader.
             return false;
@@ -249,12 +258,23 @@ class InterfaceReader {
     }
 
     bool globals(std::uint32_t id) const {
-        const auto* structure = node(id, 30, 1);
+        const bool scene = interface_ == ShaderInterface::scene_unlit;
+        const auto* structure = node(id, 30, scene ? 2 : 1);
         if (structure == nullptr || !structure->decoration.block ||
-            structure->decoration.unsupported || structure->member.unsupported ||
-            structure->member.offset != 0 || structure->member.stride != 16 ||
-            !structure->member.row_major) {
+            structure->decoration.unsupported) {
             return false;
+        }
+        const auto& transform = structure->members[0];
+        if (transform.unsupported || transform.offset != 0 || transform.stride != 16 ||
+            !transform.row_major) {
+            return false;
+        }
+        if (scene) {
+            const auto& factor = structure->members[1];
+            if (factor.unsupported || factor.offset != 64 || factor.stride || factor.row_major ||
+                !float_vector(structure->operands[1], 4)) {
+                return false;
+            }
         }
         const auto* matrix = node(structure->operands[0], 24, 2);
         return matrix != nullptr && matrix->operands[1] == 4 &&
@@ -272,6 +292,7 @@ class InterfaceReader {
 
     Result<void> validate_variables() const {
         const bool vertex = artifact_.stage == ShaderStage::vertex;
+        const bool scene = interface_ == ShaderInterface::scene_unlit;
         std::set<std::uint32_t> inputs;
         std::set<std::uint32_t> outputs;
         std::set<std::uint32_t> bindings;
@@ -309,8 +330,9 @@ class InterfaceReader {
                     }
                     const auto location = *decoration.location;
                     auto& locations = storage == 1 ? inputs : outputs;
-                    const auto width = vertex && storage == 1 ? (location == 0 ? 3U : 2U)
-                                                              : (!vertex && storage == 3 ? 4U : 2U);
+                    const auto width = vertex && storage == 1
+                                           ? (location == 0 ? 3U : (scene ? 4U : 2U))
+                                           : (scene || (!vertex && storage == 3) ? 4U : 2U);
                     if (!locations.insert(location).second || !float_vector(type, width)) {
                         return resource_error("Shader input/output type or location mismatch",
                                               "shader.layout");
@@ -324,10 +346,10 @@ class InterfaceReader {
                                           "shader.layout");
                 }
                 const auto binding = *decoration.binding;
-                const bool valid =
-                    vertex ? storage == 2 && binding == 256 && globals(type)
-                           : storage == 0 && ((binding == 0 && texture(type)) ||
-                                              (binding == 128 && node(type, 26, 0) != nullptr));
+                const bool valid = vertex ? storage == 2 && binding == 256 && globals(type)
+                                          : !scene && storage == 0 &&
+                                                ((binding == 0 && texture(type)) ||
+                                                 (binding == 128 && node(type, 26, 0) != nullptr));
                 if (!valid) {
                     return resource_error(
                         "Shader descriptor type or constant-buffer layout mismatch",
@@ -340,17 +362,19 @@ class InterfaceReader {
         const std::set<std::uint32_t> expected_inputs =
             vertex ? std::set<std::uint32_t>{0, 1} : std::set<std::uint32_t>{0};
         const std::set<std::uint32_t> expected_bindings =
-            vertex ? std::set<std::uint32_t>{256} : std::set<std::uint32_t>{0, 128};
+            vertex ? std::set<std::uint32_t>{256}
+                   : (scene ? std::set<std::uint32_t>{} : std::set<std::uint32_t>{0, 128});
         if (inputs != expected_inputs || outputs != std::set<std::uint32_t>{0} ||
             bindings != expected_bindings || positions != (vertex ? 1U : 0U) ||
             globals_seen != entry_interfaces_) {
-            return resource_error("Shader stage interface does not match the textured-cube layout",
+            return resource_error("Shader stage interface does not match the selected layout",
                                   "shader.layout");
         }
         return {};
     }
 
     const ShaderArtifact& artifact_;
+    ShaderInterface interface_;
     std::vector<Node> nodes_;
     std::set<std::uint32_t> entry_interfaces_;
     bool entry_seen_{false};
@@ -367,16 +391,21 @@ bool valid_extent(WindowExtent extent) {
 
 } // namespace
 
-Result<void> validate_shader_artifact(const ShaderArtifact& artifact) {
-    return InterfaceReader(artifact).validate();
+Result<void> validate_shader_artifact(const ShaderArtifact& artifact,
+                                      ShaderInterface shader_interface) {
+    return InterfaceReader(artifact, shader_interface).validate();
 }
 
-Result<ShaderArtifact> decode_shader_artifact(std::span<const std::byte> bytes, ShaderStage stage) {
+Result<ShaderArtifact> decode_shader_artifact(std::span<const std::byte> bytes, ShaderStage stage,
+                                              ShaderInterface shader_interface) {
     if (bytes.size() < 20 || bytes.size() > max_shader_bytes || bytes.size() % 4 != 0) {
         return resource_error(
             "Shader artifact must contain 20..4194304 bytes aligned to four bytes");
     }
-    ShaderArtifact artifact{stage, stage == ShaderStage::vertex ? "vsMain" : "psMain", {}};
+    const auto entry = shader_interface == ShaderInterface::scene_unlit
+                           ? (stage == ShaderStage::vertex ? "vsScene" : "psScene")
+                           : (stage == ShaderStage::vertex ? "vsMain" : "psMain");
+    ShaderArtifact artifact{stage, entry, {}};
     artifact.words.reserve(bytes.size() / 4);
     for (std::size_t offset = 0; offset < bytes.size(); offset += 4) {
         std::uint32_t value = 0;
@@ -385,14 +414,15 @@ Result<ShaderArtifact> decode_shader_artifact(std::span<const std::byte> bytes, 
         }
         artifact.words.push_back(value);
     }
-    auto valid = validate_shader_artifact(artifact);
+    auto valid = validate_shader_artifact(artifact, shader_interface);
     if (!valid) {
         return valid.error();
     }
     return artifact;
 }
 
-Result<ShaderArtifact> load_shader_artifact(const std::filesystem::path& path, ShaderStage stage) {
+Result<ShaderArtifact> load_shader_artifact(const std::filesystem::path& path, ShaderStage stage,
+                                            ShaderInterface shader_interface) {
     auto path_text = detail::artifact_path_text(path);
     if (!path_text) {
         return path_text.error();
@@ -418,7 +448,7 @@ Result<ShaderArtifact> load_shader_artifact(const std::filesystem::path& path, S
         stream.peek() != std::char_traits<char>::eof()) {
         return fail("Cannot read a stable complete shader artifact", ErrorCode::io_failure);
     }
-    auto artifact = decode_shader_artifact(bytes, stage);
+    auto artifact = decode_shader_artifact(bytes, stage, shader_interface);
     if (!artifact) {
         auto error = artifact.error();
         error.context.path = path_text.value();
