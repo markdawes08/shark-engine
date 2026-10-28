@@ -191,6 +191,12 @@ class AssetImports final {
     AssetImports& operator=(const AssetImports&) = delete;
     [[nodiscard]] Result<std::vector<AssetImporterInfo>> importers() const;
     [[nodiscard]] Result<AssetCacheRevision> revision() const;
+    // Check the borrowed project/catalog/cache owner and on-disk cache fence,
+    // including for consumers with no asset roots. Does not mutate or import;
+    // per-root query remains required to establish current input freshness.
+    [[nodiscard]] Result<void> check_context(ProjectId expected_project,
+                                             AssetCatalogRevision expected_catalog,
+                                             AssetCacheRevision expected_cache) const;
     [[nodiscard]] Result<PreparedAssetImport> prepare(AssetId root,
                                                       const AssetTargetProfile& target,
                                                       AssetCatalogRevision expected_catalog,

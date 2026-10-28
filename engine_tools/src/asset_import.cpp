@@ -591,6 +591,17 @@ Result<AssetCacheRevision> AssetImports::revision() const {
         return impl_->revision;
     });
 }
+Result<void> AssetImports::check_context(ProjectId expected_project,
+                                         AssetCatalogRevision expected_catalog,
+                                         AssetCacheRevision expected_cache) const {
+    return boundary<void>("asset.cache.context", [&] {
+        impl_->check(expected_cache);
+        impl_->check_catalog(expected_catalog);
+        const auto access = impl_->callback_access();
+        if (impl_->project != expected_project)
+            fail(ErrorCode::conflict, "Asset cache belongs to another project");
+    });
+}
 Result<PreparedAssetImport> AssetImports::prepare(AssetId root, const AssetTargetProfile& target,
                                                   AssetCatalogRevision expected_catalog,
                                                   AssetCacheRevision expected_cache) {

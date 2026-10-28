@@ -15,6 +15,12 @@ glTF requires its separate identity-only resource payload rather than interpreti
 a possibly transformed byte payload as source. Owner capture and publication
 fences are unchanged.
 
+14a adds `AssetImports::check_context` for composition by the
+[client export service](client-export.md). It checks the expected project,
+catalog/cache scopes and revisions, cache disk state and callback availability
+without importing or writing. It also fences built-in-only exports that have no
+cache roots; freshness of actual roots still requires the existing query path.
+
 ## Inputs, discovery and keys
 
 Importer discovery returns only registered implementations with bounded settings

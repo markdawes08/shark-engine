@@ -81,7 +81,13 @@ native replacement/destruction/reload/resize phases. Its independent audit requi
 the Tools preparer, Client lifecycle fixture, Runtime supervisor and oracle tests;
 see the [Runtime scene handoff](handoffs/13e-runtime-scenes.md).
 
-The fixture runs all sixteen saved-world cases through the public supervisor, then
+14a adds `content.client-export` and the seventeenth saved-world case. The current
+inventory is 56 CPU surfaces plus two external GPU commands, with 35 process
+checks. It verifies preparation and revalidation through public Tools services,
+independent saved-scene expectations and unchanged owners; package deployment
+remains the later export checkpoints.
+
+The fixture runs all seventeen saved-world cases through the public supervisor, then
 the intentional failing assertion through the same executable/result path. It
 compares stdout with create-only published results, native results and every
 artifact's bytes/hash. Failure remains exit 1 with the original case, phase,

@@ -86,6 +86,7 @@ not establish file or gameplay-wire formats.
 | [0034](0034-scene-extraction.md) | Revisioned CPU extraction, full affine cameras, bounded local render coordinates and conservative frustum culling |
 | [0035](0035-offscreen-scene-viewport.md) | Persistent offscreen scene targets, bounded unlit draws and safe resize through the existing graphics owner |
 | [0036](0036-runtime-scene-launch.md) | Explicit prepared Runtime loading, dynamic scene presentation and complete-candidate reload |
+| [0037](0037-client-export-content.md) | Bounded CPU export candidates from the startup scene and fresh client import closure |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

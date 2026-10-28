@@ -8,14 +8,15 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**13a-13d are complete under current-machine scope.** The latest
-[handoff](../handoffs/13d-offscreen-scene-viewport.md) records depth-tested unlit
-scene draws, persistent targets and safe resize on both current GPUs. Next is 13e in the
-[rendering checkpoints](../roadmap/scene-rendering-plan.md); full REQ-13 remains
-NOT_RUN. [Full REQ-12](../handoffs/12e-gltf-qualification.md) remains complete.
-Terminal/editor adapters remain 15/16. Runtime authored-scene launch remains 13e.
+**14a is complete under current-machine scope.** The latest
+[handoff](../handoffs/14a-client-export-content.md) records CPU export content
+preparation, freshness/privacy fences and owned dependency attribution. Next is
+14b in the [export checkpoints](../roadmap/export-plan.md); full REQ-14 remains
+NOT_RUN. [Full REQ-13](../handoffs/13e-runtime-scenes.md) and
+[full REQ-12](../handoffs/12e-gltf-qualification.md) remain complete.
+Terminal/editor adapters remain 15/16.
 
-FeatureWorld has sixteen native cases, four saved entity IDs and 55 CPU surfaces
+FeatureWorld has seventeen native cases, four saved entity IDs and 56 CPU surfaces
 plus two separately qualified GPU commands. Real source/geometry/texture/material/
 payload cases supplement owner/cache/job paths. The manifest and independent
 executable inventories, not this prose, define the actual mappings. Lua stays
@@ -110,3 +111,4 @@ remains authoritative for individual requirement status.
 | 13c scene extraction (partial REQ-13) | [Extraction](../scene-rendering.md), [handoff](../handoffs/13c-scene-extraction.md) |
 | 13d offscreen rendering (partial REQ-13) | [Viewport](../scene-viewport.md), [handoff](../handoffs/13d-offscreen-scene-viewport.md) |
 | 13 scene rendering | [Runtime scenes](../runtime-scenes.md), [final handoff](../handoffs/13e-runtime-scenes.md) |
+| 14a export content (partial REQ-14) | [Client export](../client-export.md), [handoff](../handoffs/14a-client-export-content.md) |

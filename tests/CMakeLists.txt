@@ -172,6 +172,12 @@ add_test(NAME shark.core.prepared-scene COMMAND PreparedSceneTests "[prepared-sc
 set_tests_properties(shark.core.prepared-scene PROPERTIES LABELS "cpu;unit;integration" TIMEOUT 60)
 
 if(TARGET EngineTools)
+    add_executable(ClientExportTests client_export_tests.cpp)
+    target_link_libraries(ClientExportTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    shark_configure_target(ClientExportTests)
+    shark_classify_target(ClientExportTests test)
+    add_test(NAME shark.tools.client-export COMMAND ClientExportTests "[client-export]" --rng-seed 1337)
+    set_tests_properties(shark.tools.client-export PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
     add_executable(RuntimeScenePrepare runtime_scene_prepare.cpp)
     target_link_libraries(RuntimeScenePrepare PRIVATE EngineTools)
     shark_configure_target(RuntimeScenePrepare)

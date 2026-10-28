@@ -399,7 +399,7 @@
       "planned_fixture": "EarlyStandaloneExport on the current Windows PC, with relocated package, isolated environment and dependency inspection; no additional machine is a gate under ADR0010.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "Early export is not implemented; owner assignment 14."
+        "reason": "14a is PASS under current-machine scope: CPU Tools captures startup scene/camera and fresh client mesh closures into an owned bounded candidate with dependency attribution and publication-time revalidation. Selected Windows Debug, standalone Tools, WSL Debug and ASan/UBSan checks pass; the initial unreproduced process failure is retained in docs/handoffs/14a-client-export-content.md. Full REQ-14 remains NOT_RUN: noninteractive command/package launch is 14b and isolated deployment acceptance is 14c, following docs/roadmap/export-plan.md."
       }
     },
     {
@@ -2766,6 +2766,34 @@
           "docs/runtime-scenes.md"
         ],
         "fixture_reason": "Runtime reads bounded explicit prepared files with complete-candidate publication and no source importer dependency. Actual Runtime processes display prepared FeatureWorld, fresh built-in cube/plane and a licensed imported scene; independent images check geometry/depth. Connected native lifetime checks cover rejected candidate replacement, visible deletion, fresh-incarnation reload, resize and retained snapshots. CPU checks alone establish no GPU behavior."
+      },
+      {
+        "id": "tools.client-export-content",
+        "name": "Bounded startup scene and asset export candidates",
+        "requirement_ids": [
+          "REQ-14"
+        ],
+        "test_ids": [
+          "shark.tools.client-export",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/client_export_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/client-export.md"
+        ],
+        "fixture_reason": "CPU export preparation captures the existing startup owner at an exact revision and resolves every visible or hidden renderer through builtin assets or fresh client-permitted typed glTF cache artifacts. Existing project/catalog/cache/source fences prevent stale/private inputs; the immutable candidate owns prepared scene/meshes and dependency attribution with count/byte/repeated-work bounds. Native public-service tests use real imports and ProjectFiles; the saved FeatureWorld case independently checks unchanged identity/hierarchy/global origin, complete builtin loading, revisions and rejection fences. No file publication, export CLI, graphics or deployment is claimed in 14a.",
+        "featureworld_cases": [
+          "featureworld.client-export"
+        ]
       }
     ],
     "components": [
@@ -4774,7 +4802,35 @@
         ],
         "fixture_reason": "The always-registered CPU tooling family verifies the independent readback oracle and evidence rejection. Client-specific packing/owner tests and actual native rendering are additionally mapped by client.scene-viewport; an unavailable Client profile does not count those as executed.",
         "featureworld_cases": [],
-        "external_fixture_reason": "Rendering requires the native Windows Client/device, so CPU FeatureWorld retains its Core/Tools independence and sixteen existing cases. SceneRenderSmoke directly consumes Core extraction and prepared assets, renders five connected frames and three resource-fault controls through the public viewport service. It is an explicit GPU fixture, not a new SceneRunner GPU catalog entry or terminal/editor adapter. Runtime loading/presentation also belongs to Client, keeping CPU Tools independent. Three real Runtime captures and the native lifetime fixture exercise prepared FeatureWorld, imported geometry and fresh built-ins through the same public owners."
+        "external_fixture_reason": "Rendering requires the native Windows Client/device, so CPU FeatureWorld retains its Core/Tools independence and seventeen existing cases. SceneRenderSmoke directly consumes Core extraction and prepared assets, renders five connected frames and three resource-fault controls through the public viewport service. It is an explicit GPU fixture, not a new SceneRunner GPU catalog entry or terminal/editor adapter. Runtime loading/presentation also belongs to Client, keeping CPU Tools independent. Three real Runtime captures and the native lifetime fixture exercise prepared FeatureWorld, imported geometry and fresh built-ins through the same public owners."
+      },
+      {
+        "id": "content.client-export",
+        "name": "prepare_client_export / validate_client_export / AssetImports::check_context",
+        "requirement_ids": [
+          "REQ-14"
+        ],
+        "test_ids": [
+          "shark.tools.client-export",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process",
+          "shark.tools.scene-qualification"
+        ],
+        "test_sources": [
+          "tests/client_export_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py",
+          "tools/tests/test_scene_qualification_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/client-export.md"
+        ],
+        "fixture_reason": "CPU export preparation captures the existing startup owner at an exact revision and resolves every visible or hidden renderer through builtin assets or fresh client-permitted typed glTF cache artifacts. Existing project/catalog/cache/source fences prevent stale/private inputs; the immutable candidate owns prepared scene/meshes and dependency attribution with count/byte/repeated-work bounds. Native public-service tests use real imports and ProjectFiles; the saved FeatureWorld case independently checks unchanged identity/hierarchy/global origin, complete builtin loading, revisions and rejection fences. No file publication, export CLI, graphics or deployment is claimed in 14a.",
+        "featureworld_cases": [
+          "featureworld.client-export"
+        ]
       }
     ],
     "lua_api": []
@@ -4798,7 +4854,8 @@
       "featureworld.gltf-assets",
       "featureworld.render-components",
       "featureworld.prepared-content",
-      "featureworld.scene-extraction"
+      "featureworld.scene-extraction",
+      "featureworld.client-export"
     ],
     "case_source": "engine_tools/src/feature_world.cpp"
   }

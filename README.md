@@ -20,11 +20,13 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**Assignment 13 is complete under the current-machine scope.** The
-[latest handoff](docs/handoffs/13e-runtime-scenes.md) records prepared Runtime
-scene loading, depth-tested unlit presentation, resize and safe entity reload,
-qualified on both GPUs. Full assignment 12 remains complete.
-**Next: 14, early standalone game export.** Completed
+**14a, client export content preparation, is complete.** The
+[latest handoff](docs/handoffs/14a-client-export-content.md) records CPU preparation
+of startup scenes, fresh client mesh content and dependency attribution without
+changing the authored project. **Next: 14b, export command and package launch** in
+the [export checkpoints](docs/roadmap/export-plan.md); full assignment 14 remains
+pending. Assignments 12 and 13 remain complete under current-machine scope,
+including Runtime scene presentation and safe reload on both GPUs. Completed
 checkpoints and their original results are indexed in
 [requirements and coverage](docs/coverage/README.md); historical counts are not
 recurring verification requirements. The user's [nonblocking backlog decision](docs/backlog.md)
@@ -50,6 +52,9 @@ Current capabilities include:
   [render extraction/cameras/culling](docs/scene-rendering.md), consumed by Client
   [offscreen scene rendering](docs/scene-viewport.md) and
   [prepared Runtime scene launch/capture](docs/runtime-scenes.md).
+- CPU [client export preparation](docs/client-export.md), capturing the startup
+  scene and camera with fresh client assets into an owned, revalidatable candidate.
+  The export command and standalone package are the next checkpoints.
 - Shared [authoring commands](docs/authoring-commands.md),
   [atomic batches and preview](docs/authoring-transactions.md),
   [undo/redo](docs/authoring-history.md) and [retained retries](docs/authoring-retries.md)

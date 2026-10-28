@@ -40,10 +40,17 @@ Linux graphics is outside scope. Mac support, CI, packages and hardware requirem
 are retired by [ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md).
 Hosted CI is supplemental; remote branch protection is unchanged.
 
-**Current handoff: [13e, connected Runtime acceptance](docs/handoffs/13e-runtime-scenes.md).**
+**Current handoff: [14a, client export content](docs/handoffs/14a-client-export-content.md).**
 All [five rendering checkpoints](docs/roadmap/scene-rendering-plan.md) and full
-REQ-13 are complete under current-machine scope. Next is **14, early standalone
-game export**. Follow
+REQ-13 are complete under current-machine scope. Export content preparation is
+complete; next is **14b, export command and package launch** in the
+[export checkpoints](docs/roadmap/export-plan.md). Full REQ-14 remains NOT_RUN.
+Follow [ADR 0037](docs/architecture/0037-client-export-content.md) and the
+[client export contract](docs/client-export.md): capture the startup scene and
+explicit camera through CPU Tools, require fresh client-permitted mesh closures,
+preserve unsaved edits/history and validate the owned candidate again before
+publication. Retain bounded work, dependency attribution and the seventeenth
+FeatureWorld case. Extend existing packaging tools in 14b. Follow
 [ADR 0032](docs/architecture/0032-render-components.md) and the
 [component contract](docs/render-components.md): optional Camera/MeshRenderer share
 Scene validation, authoring, history, retries and source persistence. Query their

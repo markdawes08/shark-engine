@@ -35,8 +35,15 @@ def main():
 
     def call(name, options, expected, catalog=False):
         process = run_process([str(args.runner.resolve()), *options], cwd=output.parent, timeout=10)
-        assert not process.timed_out and not process.cleanup_errors, name
-        assert process.returncode == expected and not process.stderr.strip(), (name, process.stdout, process.stderr)
+        record = {'name': name, 'exit_code': process.returncode}
+        records.append(record)
+        if (process.timed_out or process.cleanup_errors or process.returncode != expected
+                or process.stderr.strip()):
+            record.update(expected_exit_code=expected, timed_out=process.timed_out,
+                          cleanup_errors=list(process.cleanup_errors), args=process.args,
+                          stdout=process.stdout, stderr=process.stderr)
+        assert not process.timed_out and not process.cleanup_errors, record
+        assert process.returncode == expected and not process.stderr.strip(), record
         assert len(process.stdout.encode('utf-8')) <= 1024 * 1024, name
         document = json.loads(process.stdout, object_pairs_hook=unique)
         assert type(document['schema_version']) is int and document['schema_version'] == 1
@@ -45,7 +52,6 @@ def main():
             assert document['status'] == {0: 'PASS', 1: 'FAIL', 2: 'ERROR'}[expected]
             assert document['mode'] == ('none' if expected == 2 else 'cpu')
             assert document['renderer_initialized'] is False
-        records.append({'name': name, 'exit_code': process.returncode})
         return document
 
     def semantic(document):
@@ -62,7 +68,7 @@ def main():
         case_ids = manifest['featureworld']['case_ids']
         assert catalog['suites'] == {'featureworld': case_ids}
         assert catalog['cases'] == ['foundation', 'intentional-failure', *case_ids]
-        assert len(set(case_ids)) == 16
+        assert len(set(case_ids)) == 17
         mapped = []
         external = []
         for category in ('components', 'commands'):
@@ -99,7 +105,7 @@ def main():
             assert first['project_id'] == '20000000-0000-4000-8000-000000000001'
             assert first['scene_id'] == '20000000-0000-4000-8000-000000000003'
             assert [case['id'] for case in first['cases']] == case_ids
-            assert [case['final_revision']['value'] for case in first['cases']] == [4, 11, 7, 6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+            assert [case['final_revision']['value'] for case in first['cases']] == [4, 11, 7, 6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
             for case in first['cases']:
                 assert case['status'] == 'PASS' and case['failure'] is None
                 assert case['ticks_completed'] == 3 and case['assertions'] >= 10
@@ -132,7 +138,8 @@ def main():
             failures = {case['id']: case for case in failed['cases']}
             for case_id in ('featureworld.persistence', 'featureworld.asset-identity',
                             'featureworld.asset-import', 'featureworld.asset-jobs',
-                            'featureworld.asset-pipeline', 'featureworld.render-components'):
+                            'featureworld.asset-pipeline', 'featureworld.render-components',
+                            'featureworld.client-export'):
                 assert failures[case_id]['failure']['phase'] == 'tick'
             assert failures['featureworld.gltf-source']['status'] == 'PASS'
             assert failures['featureworld.gltf-source']['failure'] is None

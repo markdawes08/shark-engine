@@ -4,6 +4,7 @@
 #include "shark/schema.hpp"
 #include "shark/tools/asset_catalog.hpp"
 #include "shark/tools/asset_import.hpp"
+#include "shark/tools/client_export.hpp"
 #include "shark/tools/gltf_asset.hpp"
 #include "shark/tools/gltf_geometry.hpp"
 #include "shark/tools/gltf_source.hpp"
@@ -27,7 +28,7 @@
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 16> case_ids{
+constexpr std::array<std::string_view, 17> case_ids{
     "featureworld.components",       "featureworld.commands",
     "featureworld.batches-history",  "featureworld.retries",
     "featureworld.persistence",      "featureworld.asset-identity",
@@ -35,7 +36,8 @@ constexpr std::array<std::string_view, 16> case_ids{
     "featureworld.asset-pipeline",   "featureworld.gltf-source",
     "featureworld.gltf-geometry",    "featureworld.gltf-textures",
     "featureworld.gltf-assets",      "featureworld.render-components",
-    "featureworld.prepared-content", "featureworld.scene-extraction"};
+    "featureworld.prepared-content", "featureworld.scene-extraction",
+    "featureworld.client-export"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -1787,6 +1789,106 @@ void scene_extraction(SceneRunContext& context) {
             "Reload revived the old camera or invalidated an owned render snapshot");
     unchanged(context, before);
 }
+void client_export(SceneRunContext& context, const fs::path& parent) {
+    auto& owner = context.owner();
+    const auto before = take(owner.capture());
+    const auto history = take(owner.history());
+    std::error_code error;
+    const auto canonical = fs::canonical(parent, error);
+    require(context, !parent.empty() && !error && fs::is_directory(canonical, error) && !error,
+            "Client export needs an existing scratch parent");
+    const auto path = canonical / ("shark-featureworld-" + take(generate_stable_id()).to_string());
+    require(context, fs::create_directory(path, error) && !error,
+            "Cannot create client export scratch");
+    Scratch scratch{path};
+    auto files = take(ProjectFiles::open(path));
+    auto catalog = take(AssetCatalog::create(*files, before.project.project));
+    auto imports = take(AssetImports::open(*files, *catalog, before.project.project, {}));
+    const auto catalog_revision = take(catalog->revision());
+    const auto cache_revision = take(imports->revision());
+    take(imports->check_context(before.project.project, catalog_revision, cache_revision));
+    require(context, !imports->check_context(id<ProjectId>('f'), catalog_revision, cache_revision),
+            "Empty asset closure bypassed the project ownership fence");
+    const ClientExportRequest request{root(),
+                                      before.revision,
+                                      catalog_revision,
+                                      cache_revision,
+                                      {"featureworld-x64", AssetAudience::client}};
+    const auto candidate = take(prepare_client_export(owner, *catalog, *imports, request));
+    require(context,
+            candidate.project() == id<ProjectId>('1') && candidate.world() == id<WorldId>('2') &&
+                candidate.scene() == id<SceneId>('3') && candidate.name() == Name{"FeatureWorld"} &&
+                candidate.request().camera == root() && !candidate.dirty(),
+            "Client export lost its explicit startup identity or camera");
+    require(context,
+            candidate.request().scene_revision == before.revision &&
+                candidate.request().catalog_revision == catalog_revision &&
+                candidate.request().cache_revision == cache_revision &&
+                candidate.request().target == request.target,
+            "Client export lost the required owner revisions or content target");
+    require(context, candidate.meshes().empty() && candidate.sources().empty(),
+            "Built-in-only scene exported external source content or fabricated attribution");
+    require(context,
+            candidate.payload_bytes() == candidate.scene_payload().size() &&
+                candidate.scene_digest() == take(sha256(candidate.scene_payload())),
+            "Client export payload charge or digest differs from its owned bytes");
+    const auto decoded = take(decode_prepared_scene(candidate.scene_payload()));
+    require(context,
+            decoded.scene == id<SceneId>('3') && decoded.entities.size() == 4 &&
+                decoded.world_origin ==
+                    WorldPosition{id<WorldId>('2'), {1234567890, -7, 42}, {0.125, 1023.875, 0.0}},
+            "Client export lost the saved entity inventory or distinct global anchor");
+    for (const auto& expected : expected_scene().entities) {
+        const auto found =
+            std::find_if(decoded.entities.begin(), decoded.entities.end(),
+                         [&](const PreparedEntity& value) { return value.id == expected.id; });
+        require(context,
+                found != decoded.entities.end() && found->parent == expected.parent &&
+                    found->name == expected.name && found->transform == expected.transform &&
+                    found->camera == expected.camera &&
+                    found->mesh_renderer == expected.mesh_renderer,
+                "Client export changed an independently specified saved entity", expected.id);
+    }
+    const auto assets = take(PreparedAssets::create());
+    const auto loaded = take(LoadedPreparedScene::load(candidate.scene_payload(), assets));
+    const auto leaf_handle = take(loaded->scene().find(EntityIdentity{leaf()}));
+    const auto mesh_handle = take(loaded->scene().find(EntityIdentity{other()}));
+    require(context,
+            take(loaded->scene().stats()).live_entities == 4 &&
+                take(loaded->scene().entity_state(leaf_handle)).world_matrix[3][0] == 15 &&
+                take(loaded->scene().entity_state(mesh_handle)).mesh_renderer ==
+                    MeshRenderer{builtin_cube_asset_id(), 0, true},
+            "Client export could not load its prepared hierarchy and builtin reference");
+    take(validate_client_export(candidate, owner, *catalog, *imports));
+    auto bad = request;
+    bad.camera = leaf();
+    require(context, !prepare_client_export(owner, *catalog, *imports, bad),
+            "Client export accepted an entity without a Camera");
+    bad = request;
+    ++bad.scene_revision.revision;
+    require(context, !prepare_client_export(owner, *catalog, *imports, bad),
+            "Client export accepted a stale authored revision");
+    bad = request;
+    ++bad.catalog_revision.value;
+    require(context, !prepare_client_export(owner, *catalog, *imports, bad),
+            "Built-in-only client export accepted a stale catalog revision");
+    const auto repeat = take(prepare_client_export(owner, *catalog, *imports, request));
+    require(context,
+            candidate.scene_digest() == repeat.scene_digest() &&
+                std::equal(candidate.scene_payload().begin(), candidate.scene_payload().end(),
+                           repeat.scene_payload().begin(), repeat.scene_payload().end()),
+            "Client export changed bytes without any input change");
+    const auto after_history = take(owner.history());
+    require(context,
+            take(catalog->revision()) == catalog_revision &&
+                take(imports->revision()) == cache_revision &&
+                take(imports->usage(cache_revision)).artifacts == 0 &&
+                history.undo_entries == after_history.undo_entries &&
+                history.redo_entries == after_history.redo_entries &&
+                history.retained_bytes == after_history.retained_bytes,
+            "Read-only client export changed history or published an import");
+    unchanged(context, before);
+}
 } // namespace
 
 std::span<const std::string_view> feature_world_case_ids() noexcept {
@@ -1857,6 +1959,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 15:
                         scene_extraction(context);
+                        break;
+                    case 16:
+                        client_export(context, scratch_parent);
                         break;
                     default:
                         break;
