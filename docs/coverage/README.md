@@ -1,565 +1,107 @@
 # Requirement and API coverage
 
-**12e and full REQ-12 are complete** in the
-[handoff](../handoffs/12e-gltf-qualification.md) and
-[results](evidence/12e-gltf-qualification.json). The existing thirteen native
-FeatureWorld cases and 47 CPU surfaces remain. Connected saved GLB/sparse/fallback
-imports and actual glTF process interruption/recovery close the static profile.
-262 passing profile-test results, fifteen independent oracle results and protected
-package checks qualify under the testing policy. The original failed supervisor
-expectation and its passing correction are retained. Next: assignment 13.
+[requirements.json](requirements.json) is the versioned source for assignment
+order, acceptance criteria, implementation mappings and PASS/FAIL/NOT_RUN status.
+The ignored local roadmap is optional context, never a build or CI dependency.
+The [testing policy](../testing-policy.md) controls verification selection and
+evidence effort; historical full-profile counts are not recurring run lists.
 
-The user-approved [testing policy](../testing-policy.md), effective 2026-10-27,
-controls future execution cadence and evidence effort. Preserve the historical
-receipts and counts below; do not treat their full matrices or helper/source
-freezes as mandatory templates for each new subchunk. A concise report of actual
-commands, selected results, relevant change identity and log paths is the default.
-Keep required coverage mappings and consumed report formats. Distinguish fresh
-selected results, unchanged historical evidence and NOT_RUN; neither a selection
-nor a past result becomes a newly executed full suite. Behavioral acceptance and
-full-assignment completion criteria remain binding.
+## Current state
 
-All four [FeatureWorld checkpoints](../roadmap/featureworld-plan.md) and full
-REQ-10 are PASS under the current-machine scope. The
-[integrated handoff](../handoffs/10d-integrated-qualification.md) and
-[receipt](evidence/10d-integrated-qualification.json) record 660 full CTests across
-seven profiles, 36 standalone Tools checks, 30 public-example compiles, actual
-sanitizer objects, protected packages and twelve real GPU runs with 48 readback
-comparisons. All current component/command test IDs resolve to passing executions.
+**Full REQ-12 is complete under current-machine scope.** The latest
+[12e handoff](../handoffs/12e-gltf-qualification.md) and
+[results](evidence/12e-gltf-qualification.json) record integrated static glTF
+qualification. Next is assignment 13, basic scene rendering and cameras.
+Terminal/editor adapters remain 15/16; no playable authoring editor or scene
+renderer is claimed by the CPU import work.
 
-The [qualification contract](../featureworld-qualification.md) distinguishes
-actual executions from other-profile declarations. The optional assignment-02
-probe CLI/report declarations retain historical evidence and are not counted as
-new runs. Nineteen scene surfaces and one external GPU command are independently
-audited; CPU assertions do not qualify graphics. Preserve the five saved cases,
-stable source IDs and all earlier fixtures, seeds, timeouts and limits. New
-features extend native cases, independent expectations and mappings together.
-**11a is PASS** in the [identity handoff](../handoffs/11a-asset-identity.md)
-and [receipt](evidence/11a-asset-identity.json): 531 qualified full-profile
-outcomes plus 38 standalone Tools checks, 33 public-example compiles, twelve
-actual sanitizer objects and protected packages pass. The current inventory
-extends to 24 scene surfaces and one external GPU command, with six native
-FeatureWorld cases and 24 process checks. The original five cases/23 process
-checks remain. Qualification explicitly resolves retained full results with
-final Tools reruns; no failed/partial summary becomes a passing full run.
-11b also passes [dependency/cache qualification](../handoffs/11b-asset-import-cache.md).
-**11c is PASS** in the [job handoff](../handoffs/11c-asset-import-jobs.md) and
-[receipt](evidence/11c-asset-import-jobs.json): 551 full-profile results plus
-44 standalone Tools checks, 39 public-example compiles, 26 actual sanitizer
-objects and protected packages pass. The current independent inventory is 40 CPU
-surfaces plus one external GPU command, with eight native FeatureWorld cases and
-26 process checks. The 25-case job family preserves earlier workloads/limits.
-**11d and full REQ-11 are PASS** in the
-[qualification handoff](../handoffs/11d-asset-qualification.md) and
-[receipt](evidence/11d-asset-qualification.json): 602 passing selected outcomes,
-39 public-example compiles, 26 actual sanitizer objects and protected packages.
-Nine native cases/27 process checks retain 40 CPU surfaces plus one GPU command.
-The new async interruption family has 113 checks/39 children/seven phases;
-35 synchronous/49 asynchronous snapshots reproduce. Full inventories use
-disjoint functional/I/O executions with actual per-test JUnit provenance.
-Earlier cases, fixtures, seeds and limits are preserved. Assignment 12 follows
-the [five checkpoints](../roadmap/gltf-plan.md). **12a is PASS** in its
-[handoff](../handoffs/12a-gltf-foundation.md) and
-[receipt](evidence/12a-gltf-foundation.json): 486 selected outcomes, 42 example
-compiles, 30 actual sanitizer objects and protected packages. `asset.gltf.inspect`
-connects 41 new cases to the tenth native FeatureWorld case; 28 process checks
-retain 41 CPU surfaces and one GPU command. **12b is now PASS** in its
-[handoff](../handoffs/12b-gltf-geometry.md) and
-[receipt](evidence/12b-gltf-geometry.json): 357 fresh outcomes, 45 public-example
-compiles, 32 actual sanitizer objects and protected packages. `asset.gltf.convert`
-connects 45 cases/988 assertions to the eleventh native FeatureWorld case, with
-29 process checks, 42 CPU surfaces and one external GPU command. Unchanged
-protected inputs explicitly inherit 12a's 136 full Server outcomes separately.
-**12c is now PASS** in its [handoff](../handoffs/12c-gltf-textures.md) and
-[receipt](evidence/12c-gltf-textures.json): 507 fresh outcomes (231 full client
-Debug, 140 Tools selections, 136 fresh full Server), 48 public-example compiles,
-36 actual sanitizer objects and protected packages. Standalone Tools 56 is a
-subset of 140. `asset.gltf.textures` connects 43 cases/9,022 assertions to the
-twelfth native FeatureWorld case, with 30 process checks, 43 CPU surfaces and
-one external GPU command. Source 41/1,794, geometry 45/988 and all earlier
-workloads/limits remain required. Full REQ-12 remains NOT_RUN pending 12d-12e.
-Next: 12d, materials and asset integration.
+FeatureWorld has thirteen native cases, four saved entity IDs and 47 CPU surfaces
+plus one separately qualified GPU command. Real source/geometry/texture/material/
+payload cases supplement owner/cache/job paths. The manifest and independent
+executable inventories, not this prose, define the actual mappings. Lua stays
+empty until bindings exist.
 
-[requirements.json](requirements.json) is the version-3 requirement/coverage manifest for
-Shark. Each requirement has a unique ID, one owning roadmap assignment, observable
-acceptance criteria, a planned FeatureWorld case or external fixture, and an
-honest verification state. Related assignments can contribute without changing
-which assignment owns the gate.
+The current qualification profile is the Windows PC and retained WSL environment
+under [ADR 0010](../architecture/0010-current-machine-scope.md). Historical unsupported
+hardware rows remain NOT_RUN, not retroactive passes. The user's
+[nonblocking backlog](../backlog.md) preserves the sequencing exception for remaining
+05c work and full REQ-05's NOT_RUN status.
 
-Assignment 03 is split into [03a/03b/03c](../roadmap/core-plan.md). The implemented
-Core diagnostics/configuration and identity/path features map to real unit and
-process fixtures. The [03a handoff](../handoffs/03a-core-contracts.md) records their
-local results. The [03c handoff](../handoffs/03c-time-and-work.md) closes full
-`REQ-03` with final local Windows/WSL regressions, separate clock policies,
-bounded completions and callback/thread rules.
+## Maintain the manifest
 
-The 03b [application lifecycle](../application-lifecycle.md) feature adds
-`shark.core.lifecycle` and extends the real Server process path. Its
-[handoff](../handoffs/03b-application-lifecycle.md) records native/injected signal
-ownership, partial-start rollback, repeated cycles and cleanup-failure evidence.
-The [03c timing/work](../time-and-work.md) features map to `shark.core.timing`
-and `shark.core.work`, using controlled clocks and real thread fixtures. No world
-simulation or production worker is inferred from those foundation tests.
+Schema 3 retains assignments 00-35 and inserts M01-M10 in the explicit
+`assignment_order`. Preserve prerequisite ordering and every owner. MMO and
+human/agent requirements have executable owners through the versioned
+[MMORPG](../roadmap/mmorpg-plan.md) and [human/agent](../roadmap/human-agent-plan.md)
+plans. A future assignment must remain NOT_RUN.
 
-Assignment 04 follows the [window/input checkpoints](../roadmap/window-input-plan.md).
-The `client.raw-input` feature maps 04a's device-free state to `shark.client.input`
-in client-enabled builds; headless Server builds exclude it. The
-[04a handoff](../handoffs/04a-input-contracts.md) preserves its CPU evidence.
-04b's `client.native-window` feature adds owned GLFW lifecycle, CPU backend/CLI
-fixtures and explicit Windows smoke evidence in the
-[04b handoff](../handoffs/04b-native-window.md). The `client.offline-frame-loop`
-feature maps 04c's frame/tick input, pause/step and shared sample pump to
-`shark.client.frame`, window fixtures and Core timing tests. The
-[04c handoff](../handoffs/04c-frame-loop.md) records its final qualification.
-Full `REQ-04` is PASS under the current-machine gate: all three checkpoints are
-complete, with final evidence in [04c-local.json](evidence/04c-local.json).
+Each requirement records a stable ID, owner, acceptance criteria and
+`planned_fixture`. Planned fixtures describe future evidence; their names do not
+prove implementation or qualify a requirement. Verification needs a meaningful
+reason and actual evidence scoped to the active qualification profile.
 
-The user selected a seamless open-world MMORPG. The
-[versioned execution plan](../roadmap/mmorpg-plan.md) and
-[ADR 0007](../architecture/0007-mmorpg-architecture.md) expand the original 00-35
-assignments with M01-M10. There are 50 requirements across 46 ordered assignments.
-`assignment_order` records dependency order; M01 follows 01 and precedes 02, and
-the validator checks order rather than comparing IDs lexically. The product
-profile and plan path are explicit machine-readable fields.
+Each `implemented_surface` feature/component/command/Lua entry identifies:
 
-[ADR 0008](../architecture/0008-human-agent-authoring.md) and the
-[human/terminal-agent plan](../roadmap/human-agent-plan.md) strengthen existing
-owners and add `REQ-CROSS-HUMAN-AGENT` (audit owner 32). Shared services, terminal
-discovery/results, one project owner and semantic editor/CLI parity are required
-as their layers land; 33/M09 add fresh terminal and human continuation evidence.
-This adds no assignment or implemented API and does not change schema 3.
-Historical PASS records are retained; documentation checks do not qualify the new
-authoring gates. The later [ADR 0009](../architecture/0009-windows-linux-platform-scope.md)
-removes Mac requirements and retires 02c. The user then limited the project to
-resources already available on this PC in
-[ADR 0010](../architecture/0010-current-machine-scope.md). Active targets are the
-native Windows client/editor on its RTX 4070 Laptop and Intel Raptor Lake-S Mobile
-GPUs, plus CPU/headless-server and isolated package checks in the existing WSL2
-Ubuntu environment. Native Linux graphics, other hardware and independent clean
-physical machines are outside the current gate. Their historical NOT_RUN records
-remain unchanged.
+- A unique stable ID/name and existing owning requirement IDs.
+- Actual registered test IDs and test-source paths.
+- Executable FeatureWorld cases, or justified external fixture paths/reasons.
+- Supported behavior, including deliberate limits and unavailable capabilities.
 
-`qualification_profile: current-machine` and `scope_document` record that scope
-as additive schema-3 fields. REQ-02 is PASS for the amended local gate, with
-explicit scope and SHA-256-pinned references to the unchanged 02d receipts.
-The validator verifies those references and retained bytes; it does not rerun
-graphics or interpret an old aggregate NOT_RUN as a universal PASS.
-M03a maps `server.durable-store` to real-file unit/process tests and locked
-dependency checks. Its [contract](../durable-store.md) and
-[six-checkpoint plan](../roadmap/durable-state-plan.md) distinguish the foundation
-from character, economy, recovery and migration gates. M03a is PASS under the
-current-machine scope: [the receipt](evidence/M03a-durable-store.json) and
-[handoff](../handoffs/M03a-durable-store.md) record 525 full CPU CTests, ten
-additional standalone Tools checks and protected package/API gates.
-Full REQ-M03 is now PASS after all six checkpoints and integrated qualification.
+Do not register placeholders or duplicate capabilities to increase counts. A
+mapping is not a test pass. When a public surface grows, update its real behavior,
+independent expected state, case discovery and manifest together. Preserve earlier
+workloads, seeds, timeouts and failure cases.
 
-M03b maps `server.durable-characters` to real database records, shared session
-admission and authenticated process restart. The
-[character contract](../durable-characters.md) defines bounded enrollment and
-revocation, immutable ownership/identity and roster/character revision conflicts.
-Fixture-only local discovery does not add a player roster protocol. Economic
-transactions, full runtime recovery and migration/restore remain separate gates;
-FeatureWorld and MMOWorld attach in 10/M09. M03b is PASS under the current-machine
-scope: [the receipt](evidence/M03b-owned-characters.json) and
-[handoff](../handoffs/M03b-owned-characters.md) record 539 full CPU CTests,
-ten separately counted standalone Tools checks and protected package/API gates.
-M03c atomic transactions are also PASS under the current-machine scope;
-[the handoff](../handoffs/M03c-atomic-transactions.md) and
-[receipt](evidence/M03c-atomic-transactions.json) record 553 full CPU CTests, ten
-standalone Tools checks and protected package/API gates. M03d is also PASS:
-its [handoff](../handoffs/M03d-runtime-recovery.md) records 567 full CPU CTests
-and 10 standalone Tools checks with protected gates. M03e is also PASS:
-its [handoff](../handoffs/M03e-migration-restoration.md) records 581 CPU CTests
-and 10 standalone Tools checks with protected gates. M03f and full REQ-M03
-are PASS: the [handoff](../handoffs/M03f-integrated-qualification.md) records
-588 CPU CTests and 10 standalone Tools checks with protected gates.
-09a's shared command foundation is PASS under the current-machine scope. Its
-[handoff](../handoffs/09a-shared-commands.md) and
-[receipt](evidence/09a-shared-commands.json) record 461 passing CPU CTests,
-12 standalone Tools checks and protected package/API gates. Full REQ-09 remains
-NOT_RUN. The completed 09b qualification follows below.
+The additive `featureworld` catalog records the saved project/scene, native case
+source and case IDs. `featureworld_cases` references those IDs; an explicit
+`external_fixture_reason` justifies isolated network, storage, platform or GPU
+work. `shark.tools.featureworld-process` independently compares native discovery,
+resolves mappings and executes saved cases. Scene assertions cannot replace those
+isolated boundaries or establish GPU rendering correctness.
 
-09b is PASS under the current-machine scope. Its
-[transaction contract](../authoring-transactions.md), [handoff](../handoffs/09b-atomic-batches.md)
-and [receipt](evidence/09b-atomic-batches.json) record 605 full CPU CTests across seven profiles,
-14 standalone Tools checks, 15 public-example compiles, actual sanitizer objects
-and protected packages. Preserve `shark.tools.authoring-batches` (60 seconds)
-and `shark.core.scene-edit` (30 seconds), seed 1337. Full REQ-09 remains NOT_RUN.
-09c is PASS under the current-machine scope. Its
-[history contract](../authoring-history.md), [handoff](../handoffs/09c-shared-history.md)
-and [receipt](evidence/09c-shared-history.json) record 610 full CPU CTests,
-16 standalone Tools checks, 18 public-example compiles, sanitizer audits and
-protected packages. Preserve `shark.tools.authoring-history` (60 seconds, seed1337).
-**09d is PASS under the current-machine scope.** Follow the
-[retry contract](../authoring-retries.md), [handoff](../handoffs/09d-retained-retries.md)
-and [receipt](../coverage/evidence/09d-retained-retries.json): 486 full CPU CTest
-executions, 20 additional standalone Tools checks, 21 public-example compiles,
-actual sanitizer objects and protected packages pass. Core/Server implementation
-is unchanged; their full Server suites remain historical until 09e.
-**09e and full REQ-09 are PASS under the current-machine scope.** The
-[qualification contract](../authoring-qualification.md),
-[handoff](../handoffs/09e-integrated-qualification.md) and
-[receipt](../coverage/evidence/09e-integrated-qualification.json) record 625 full
-CPU CTest executions across seven profiles, 22 standalone Tools checks, 24 public-
-example compiles, actual sanitizer objects and protected packages. Both full
-Server suites are refreshed. **Next: 10, FeatureWorld and automated scene runner.**
+## Validation and evidence
 
-`current_assignment: 10` follows the completed shared-authoring and durable-state gates and
-[five network checkpoints](../roadmap/network-plan.md) and
-[four persistence checkpoints](../roadmap/persistence-plan.md). Project/scene
-checkpoints 08a-08d and full REQ-08 are PASS under the current-machine scope.
-The `core.network-foundation` feature maps M02a's bounded TLS/wire/fault APIs to
-three unit families and a real-process encrypted fixture, plus exact dependency
-and package checks. M02a is PASS: the [handoff](../handoffs/M02a-transport-wire.md)
-and [receipt](evidence/M02a-transport-wire.json) record 404 passing CPU CTests
-without failures/skips, protected builds and isolated packages. The narrow
-postqualification CI compiler-forwarding amendment is recorded separately from
-the unchanged compiled inputs. The prior
-[07 checkpoint plan](../roadmap/scene-plan.md) is complete.
-M02b's `core.owned-sessions` feature maps mutual TLS, explicit enrollment, typed
-owned session controls, expiry/revocation and reconnect fencing to two new unit
-families and a separate-process fixture. Its [contract](../network-sessions.md)
-and [ADR](../architecture/0012-owned-sessions.md) separate session authority from
-authoring, administration and future gameplay. M02b is PASS: the
-[handoff](../handoffs/M02b-owned-sessions.md) and
-[receipt](evidence/M02b-owned-sessions.json) record 425 passing CPU CTests, no
-failures/skips, protected builds and isolated package checks. Later M02
-checkpoints qualify replication, interest and integrated adversity below.
-`core.scene-ownership` maps checked scene/entity lifetime, deferred mutation,
-world coordinates and the private EnTT boundary to executable CPU fixtures.
-The [07a handoff](../handoffs/07a-entity-ownership.md) records checkpoint results.
-07b's `core.transform-hierarchy` feature and `component.name` / `component.transform`
-entries map mandatory values, validated hierarchy and mutation behavior to
-`shark.core.hierarchy`, `shark.core.transform` and their dependency fixtures.
-07b is complete under the current-machine scope. The
-[handoff](../handoffs/07b-transform-hierarchy.md) and
-[receipt](evidence/07b-transform-hierarchy.json) record **362 passing CPU CTests
-with no skips**: Windows Debug/Release/ASan 60 each, WSL client Debug/ASan+UBSan
-53 each, and WSL Server Debug/ASan+UBSan 38 each. Protected Runtime/Server builds,
-dependency/license closure and isolated package execution also pass. The
-[transform contract](../transforms.md) specifies the delivered C++ behavior.
-07c implements [fixed component schemas and bounded revisioned inspection](../scene-inspection.md).
-`shark.core.schema` and `shark.core.scene-query` cover metadata/default agreement,
-pure validation, invalid IDs/versions, bounded results, stale revisions and owned
-snapshot lifetime. The [07c handoff](../handoffs/07c-schema-inspection.md) records
-the completed gate. Full REQ-07 is PASS under the current-machine scope. The
-[07c receipt](evidence/07c-schema-inspection.json) records **376 passing CPU
-CTests with no failures/skips**: Windows Debug/Release/ASan 62 each, WSL client
-Debug/ASan+UBSan 55 each, and WSL Server Debug/ASan+UBSan 40 each. Schema coverage
-has 9 cases/654 assertions and query coverage 19 cases/3,916 assertions. Protected
-Runtime/Server builds, source/link/license closure and fresh isolated package
-checks pass; all 221 qualification source inputs were unchanged in that record.
-M02a-M02e and full REQ-M02 are PASS under the current-machine scope.
-Assignment 08, Project and scene persistence, is complete: 08a-08d and full
-REQ-08 are PASS. M03 and all six checkpoints are complete; 09a,
-09b, 09c, 09d and 09e are qualified; assignment 10 is next.
-FeatureWorld integration remains assignment 10.
-The user's sequencing amendment moved remaining 05c work to the
-[nonblocking backlog](../backlog.md), preserving historical results and `REQ-05`
-NOT_RUN. Existing presentation/device fixtures and their earlier handoffs retain
-scope-specific evidence; backlog status is not a retroactive qualification pass.
+Run relevant documentation checks from the repository root:
 
-`tooling.offline-shaders` maps the [06a shader builder](../shader-pipeline.md) to
-CPU and explicit real-tool fixtures. `client.gpu-resources` maps the
-[06b resource contract](../gpu-resources.md) to typed shader/upload validation,
-CPU ownership tests, native fault children and independent color/depth readbacks.
-The [06b handoff](../handoffs/06b-gpu-resources.md) records scoped results on the
-current Windows GPUs and device-free Windows/WSL regression. These fixtures
-exercise the production device without exposing native handles or invoking a
-runtime compiler. Full `REQ-06` is PASS after 06c window integration and distribution qualification;
-see the [06c handoff](../handoffs/06c-window-distribution.md). FeatureWorld connects these isolated
-fixtures in assignment 10.
-
-`planned_fixture` describes future evidence, not an existing test. `NOT_RUN`
-means precisely that; documentation validation cannot pass a future engine gate.
-The `implemented_surface.features` entries map the bootstrap behavior and runtime
-build boundary, server lifecycle, Server/Core closure and graphics setup/executable cases to their actual tests
-and external fixtures. Name and Transform have implemented component entries with
-C++ validation/mutation fixtures, fixed schemas and implemented source codecs.
-Typed authoring commands now have real entries and saved FeatureWorld exercises;
-the Lua array remains empty until bindings exist. Filesystem services retain their
-completed persistence evidence. Assignment10 connects supported scene surfaces
-to executable FeatureWorld coverage;32 audits completeness. Do not register
-placeholder APIs.
-
-An implemented entry identifies its stable name, owning requirement IDs, actual
-automated test IDs, test source paths and FeatureWorld or justified external
-fixture paths. Coverage registration is not proof of correct behavior;
-those tests must run with recorded platform and PASS/FAIL/NOT_RUN evidence.
-
-The additive schema-3 `featureworld` catalog records project/scene paths, native
-case source and executable case IDs. `featureworld_cases` on a surface references
-those IDs; an explicit `external_fixture_reason` can justify a surface requiring
-an isolated system fixture. Structural validation checks unique bounded IDs,
-references and files. `shark.tools.featureworld-process` independently compares
-the real `shark.scene-cases` discovery output, resolves current component/command
-mappings and executes every saved case. Neither registration nor a scene run
-substitutes for network, durable storage, GPU or platform qualification.
-
-Run from the workspace root:
-
-```powershell
+```text
 python tools/validate_contract.py
-python tools/validate_contract.py --self-test
 ```
 
-The check rejects malformed/duplicate IDs, missing owners or criteria, missing
-assignment coverage, unsupported verification claims, missing ADRs, and broken
-relative Markdown document links. Its negative cases confirm that omissions
-actually fail. It does not parse natural language to prove all requirements are
-present; the handoff records a separate review against the source roadmap.
-Local-scope negative cases reject absent/altered scope and evidence references,
-and retain rejection of future PASS claims after assignment 02 closes.
+Use `--self-test` when changing validator behavior. It rejects unsupported schemas,
+duplicate/malformed IDs, missing owners/criteria, invalid ordering, unsupported
+future PASS claims, bad mapping references and broken Markdown links. The
+current-machine graphics PASS also retains both exact pinned 02d receipts and its
+scope reference. This is structural validation, not engine/platform/GPU or
+natural-language completeness qualification.
 
-Schema 2 added `current_assignment` and structured implemented-surface entries to
-schema 1. Schema 3 adds the MMORPG product/plan fields and ordered expanded owner
-set. This planning manifest was migrated directly; the checker explicitly rejects
-earlier/future versions, missing MMO owners, invalid ordering and unsupported
-future PASS claims. No project/scene/runtime/wire/database data format has been
-implemented or migrated by this amendment. M01 adds implemented server lifecycle
-and dependency-isolation features; registration alone does not pass their gate.
+Record selected runs with commands, profiles, results and logs under the testing
+policy. Distinguish full affected-subsystem inventories, selections, repeats and
+unchanged historical evidence; profile totals are not unique test counts. Preserve
+failed attempts and their resolution. Update required machine-readable records
+when consumed by tools, but do not add another receipt/freeze framework for ordinary
+edits. Keep existing receipt bytes and pins unchanged.
 
-The ignored local roadmap is amended for consistency but remains optional context,
-not a CI input. REQ-00's PASS records its historical planning evidence, not MMO
-implementation. REQ-01 is PASS: the repaired hosted CPU matrix and required
-deliberate-failure/red-to-green proof are verified at the recorded historical
-revision. REQ-M01 is PASS. Its
-implementation and local qualification are recorded in the
-[M01 handoff](../handoffs/M01-headless-server.md). The
-[local receipt](evidence/M01-local.json) records Windows 45/45 CTests,
-Ubuntu 26/26 restored CTests, the expected injected sentinel failure and package
-closure/lifecycle evidence. The [hosted follow-up](../handoffs/M01-ci-verification.md)
-and [gate receipt](evidence/M01-ci-gate.json) record the historical fifteen jobs passing,
-206/206 restored CTests, the expected thirteen injected sentinel failures,
-Docker/package closure and the then-required fifteen checks. The current Windows/Linux
-CI policy is documented in [CI](../ci.md). Existing hosted jobs and branch
-protection remain unchanged; hosted runs are supplemental to local roadmap gates.
-Assignment 02 delivered setup, executable GPU/validation fixtures and probe packages.
-Native Mac 02c is retired by ADR 0009; the earlier
-[deferral](../handoffs/02c-mac-deferred.md) remains a historical record.
-The [02b handoff](../handoffs/02b-graphics-cases.md) separates local evidence from
-the hardware matrix required at that time. The [graphics checkpoint plan](../roadmap/graphics-plan.md)
-and [probe guide](../graphics-probe.md) distinguish setup diagnostics from the
-current local hardware gate.
-The [Windows 02d handoff](../handoffs/02d-windows-validation.md) and
-[receipt](evidence/02d-windows-local.json) record the portable package, supplemental
-NVIDIA full soak, Intel short cases and retained failures at their recorded input
-hashes. Those receipts retain their original nine-row scope. The later six-row
-Windows/Linux matrix and independent clean-machine results also remain NOT_RUN
-in their original evidence; ADR 0010 removes those unavailable targets from the
-current plan. The
-[final local handoff](../handoffs/02d-final-verification.md) records the current
-package/link changes, refreshed Windows evidence and isolated Ubuntu
-CPU/package checks. The [hosted audit](evidence/02d-hosted-ci.json) verifies nine
-jobs and 156 CTests at `39110d4`; it does not cover the subsequent 02d changes.
-The [scope amendment](../handoffs/current-machine-scope-amendment.md) reassesses
-the [Windows refresh](evidence/02d-windows-refresh.json) and
-[Linux local](evidence/02d-linux-local.json) receipts at `2ef281b`. Both actual
-Windows GPUs passed the complete 100 resize / 20 device / 600-second lifecycle
-and readback/validation cases; local package isolation and failure checks passed.
-This closes REQ-02 only for LOCAL-W-NV and LOCAL-W-INTEL plus the stated local
-package/CPU evidence. It is not a new run, production renderer or general Windows
-support claim. Future renderer work revalidates those devices as features land.
+## Completed-owner records
 
-Future packaging, release and MMORPG gates use this PC, separate real local
-processes, the actual local store, shaped network faults and existing WSL
-userspaces. ADR 0007's provisional LOCAL-MMO-1 profile uses 16 active synthetic
-players, 16 NPCs, two region processes, 32 visible animated actors, 100 crossings
-and a two-hour active soak. The two real graphical-client semantic test runs
-separately from synthetic load. These are planned tests, not achieved capacity;
-external hosting, multihost failover, WAN testing, paid services and public signing
-credentials are not prerequisites. Human/terminal parity and seamless authoritative
-world behavior remain required. Multiplayer requirements remain NOT_RUN. See the
-[CI verification handoff](../handoffs/01-ci-verification.md) for 01's tested
-revision, run URLs and qualification limits.
+These links retain detailed behavior, limits, commands and historical evidence
+without copying checkpoint chronologies into every guidance document. The manifest
+remains authoritative for individual requirement status.
 
-Full `REQ-06` is PASS under the current-machine scope. The
-[06c handoff](../handoffs/06c-window-distribution.md) and
-[receipt](evidence/06c-window-distribution.json) record 261 CPU CTests, both-GPU
-window/offscreen references, lifetime failures, shader rebuilds and relocated
-Runtime shader closure. `client.window-cube-distribution` maps the implemented
-surface to device-free tests and explicit hardware fixtures. 07a introduces the
-CPU scene foundation; 07b implements Name/Transform and hierarchy. 07c adds fixed
-schema metadata, shared pure validation and bounded revisioned CPU inspection.
-These C++ APIs do not claim source persistence, terminal/editor adapters or Lua
-bindings. Those layers retain their later assignment owners and planned fixtures.
-
-M02c adds `core.authoritative-replication`, mapped to strict wire, service and
-real-process fixtures. Its [handoff](../handoffs/M02c-authoritative-replication.md)
-and [receipt](evidence/M02c-authoritative-replication.json) record 446 passing CPU
-CTests and protected package checks. The public field allowlist is independent
-of authoring schemas. M02d [spatial interest](../network-interest.md) is qualified
-under the current-machine scope: its
-[handoff](../handoffs/M02d-spatial-interest.md) records 460 passing CPU CTests,
-protected package checks and active two-recipient privacy, byte/work and
-reliable-stream delay measurements.
-
-M02e adds integrated adversity and retained-storage observations to the existing
-network contracts. `shark.core.net-adversity` (60 seconds) and
-`shark.core.net-adversity-process` (360 seconds) bring the network prefix to
-fourteen CTest families. Full REQ-M02 is PASS under the current-machine scope:
-Windows Debug/Release/ASan pass 76 CTests each, WSL CPU client Debug/ASan+UBSan
-pass 69 each and WSL Server Debug/ASan+UBSan pass 54 each, totaling 474 with no
-failures or skips. The [handoff](../handoffs/M02e-integrated-qualification.md) and
-[receipt](evidence/M02e-integrated-qualification.json) record 277 unchanged frozen
-inputs, all six integrated scenarios and 21 children per process run, independent
-receipt checks and protected package qualification. These are local network
-foundation results; the full LOCAL-MMO-1 workload, durable gameplay and MMO
-release qualification retain their later owners. FeatureWorld and MMOWorld
-remain planned for assignments 10 and M09.
-
-08a adds `tools.source-documents`, mapped to `shark.tools.source-documents`
-(60 seconds, seed 1337) and independently authored version-0/version-1 project
-and scene fixtures. Its [source contract](../source-documents.md) specifies the
-strict bounded parser, in-memory legacy migration, stable references, shared
-component validation, canonical extras and deterministic version-1 encoder.
-Tests cover explicit expected migrated values, Unicode and world-cell endpoints,
-malformed input, duplicate keys/IDs, unknown schemas, hierarchy rejection and
-resource limits. The separate EngineTools/Catch2 target supports CPU authoring
-without Editor, Client or a graphics device; public values expose no JSON library.
-
-08a is PASS under the current-machine scope: 484 full-suite CPU CTests and two
-additional standalone Tools tests pass, with protected builds/packages and public
-API audits. The [handoff](../handoffs/08a-source-documents.md) and
-[receipt](evidence/08a-source-documents.json) retain exact evidence and limits.
-Full `REQ-08` subsequently passes the
-[integrated persistence checkpoint](../roadmap/persistence-plan.md), 08d,
-recorded below. No game-authoring command,
-Lua binding or FeatureWorld case is fabricated: FeatureWorld/Persistence connects
-in 10, the shared authoring services and adapters retain 09/15/16, and live
-durable gameplay state retains M03.
-
-08b adds `tools.authored-scene`, mapped to `shark.tools.authored-scene`
-(60 seconds, seed 1337) and independent public API fixtures in
-`tests/authored_scene_tests.cpp`. The [contract](../authored-scenes.md) covers
-complete revision-consistent capture, catalog/world references, composed-transform
-validation and replacement preserving unsaved state on rejection. The fixtures
-cover maximum-size and sparse scenes, hierarchy bounds, source metadata lifetime,
-dirty/revision/queue/visit/thread guards and old-handle invalidation.
-08b is PASS under the current-machine scope: 489 full-suite CPU CTests pass
-without failures or skips (Windows Debug/Release/ASan 79 each, WSL clients
-72 each and WSL Servers 54 each). Independent Tools builds each pass two
-additional focused CTests. The new family has 23 cases and 26,624 assertions;
-291 frozen source/build/test/fixture inputs remain unchanged. Protected
-packages and public API audits pass. The
-[08b handoff](../handoffs/08b-scene-activation.md) and
-[receipt](evidence/08b-scene-activation.json) retain exact evidence and limits.
-08c safe files and conflicts and 08d integrated qualification are complete
-below. General authoring commands and Lua registries remain unchanged;
-FeatureWorld integration stays with 10.
-
-08c adds `tools.project-files`, mapped to `shark.tools.project-files` and
-`shark.tools.project-files-process` (90 seconds each; Catch2 seed 1337). The
-[contract](../project-files.md) specifies typed I/O, exact-content revisions,
-native path/ownership checks and publication with explicit durability outcomes.
-Thirty cases verify revisions, Unicode, aliases, limits, faults, owner-thread and
-dirty save/reload behavior, plus the different native ancestor-relocation rules.
-The process fixture verifies 44 checks across exclusive ownership, five abrupt
-publication phases, whole-file results and preservation of orphan stages.
-
-08c is PASS under the current-machine scope: **499 full-suite CPU CTests**, zero
-failures or skips (Windows Debug/Release/ASan 81 each, WSL clients 74 each and
-WSL Servers 54 each). Standalone Tools builds add four focused passes per OS.
-Windows has 1,832 file-case assertions; Linux has 1,830 because native topology
-checks differ. Protected packages, public/private API audits and all seven
-process receipts pass against 298 unchanged source/build/test inputs and 19
-qualification helpers. The [handoff](../handoffs/08c-project-files.md) and
-[receipt](evidence/08c-project-files.json) retain exact commands and evidence.
-08d subsequently closes full REQ-08 below. No command, Lua or FeatureWorld
-coverage is fabricated before those owners land.
-
-08d's `shark.tools.persistence-integration` (CPU/tooling/integration,
-90 seconds, seed 1337) adds three cases with 1,543 assertions spanning
-legacy files, migration, live Scene edits, save/reopen, nine invalid-source
-variants and explicit external-edit reconciliation. The file family now
-has 31 cases; seven process receipts each pass 55 checks, including exact
-reactivation and recovery after interruption of an authored save.
-
-**08d and full REQ-08 are PASS under the current-machine scope:** all 504
-full-suite CPU CTests pass without failures or skips (Windows
-Debug/Release/ASan 82 each, WSL clients 75 each and WSL Servers 54 each).
-Standalone Tools builds add five passes per OS. All three public C++
-examples pass 27 checks; protected builds, isolated packages and API audits
-pass against 299 unchanged inputs and 18 helpers. The
-[handoff](../handoffs/08d-integrated-qualification.md) and
-[receipt](evidence/08d-integrated-qualification.json) retain exact evidence,
-including the corrected final file-case inventory. M03 separately owns live
-player/economy durability; its store, character, atomic transaction and runtime
-recovery, database maintenance and integrated qualification are complete;
-09a, 09b, 09c, 09d and 09e are qualified; assignment 10 is next.
-
-M03c maps `server.durable-transactions` to `shark.storage.transactions`,
-`shark.storage.transactions-process` and authenticated owner regressions in
-`shark.storage.characters`. The [transaction contract](../durable-transactions.md)
-defines conservation, expected economic revisions, complete-payload retries,
-terminal business outcomes and a permanently advanced operation high-water mark.
-The completed [M03c handoff](../handoffs/M03c-atomic-transactions.md) records
-exact source/receipt counts and current-machine qualification. Economic fixtures are external CPU
-fixtures; FeatureWorld/MMOWorld remain 10/M09. M03f subsequently closes full REQ-M03.
-
-M03d maps `server.durable-recovery` to the two recovery CTest families and
-earlier authenticated owner/transaction regressions. Twenty-one runtime cases
-exercise bounded retained work, real session/Scene fences, timeout, exceptions,
-shutdown and explicit failed/successful reopen. Sixty-nine process rows cover
-every mutation commit boundary, lost acknowledgements, pruning and observed
-native-VFS write/sync/full errors. The [receipt](evidence/M03d-runtime-recovery.json)
-binds full local qualification; migration/restore and integrated M03 remain
-separate gates. No new component, authoring command or Lua entry is introduced.
-
-M03e maps `server.durable-maintenance` to `shark.storage.migration` and
-`shark.storage.migration-process`, retaining the earlier recovery VFS regression.
-Independent schema-1/2/3 SQL fixtures cover complete identity, character,
-revocation and economic-history preservation. Twenty-five unit cases exercise
-explicit maintenance, strict compatibility and fresh authenticated restored
-restart; 66 process rows cover interrupted/failed upgrades and copies, including
-actual hot-journal recovery. The [maintenance contract](../durable-maintenance.md)
-keeps ordinary open nonmigrating and old restore candidates isolated. These are
-CPU external fixtures; FeatureWorld/MMOWorld remain 10/M09. The [receipt](evidence/M03e-migration-restoration.json) records PASS under the
-current-machine scope. M03f subsequently closes full REQ-M03 in its
-[integrated receipt](evidence/M03f-integrated-qualification.json).
-
-M03f adds `shark.storage.integration-process` to all five existing durable
-feature mappings. It connects one independent legacy store to real mTLS runtime
-operations, economic contention, committed lost reply, observed native database
-outage, recovery and isolated restored restart. The
-[qualification contract](../durable-qualification.md) fixes the connected workload
-and evidence requirements. This extends executable CPU external coverage;
-FeatureWorld/MMOWorld integration remains assigned to 10/M09. A passing individual
-process run alone cannot close the complete cross-platform and package gate.
-
-09a maps the five typed EngineTools commands and shared inspection entry points
-to `shark.tools.authoring-commands` (60 seconds, seed 1337), with ordinary edits
-in all existing authored-scene/file/integration fixtures migrated to that same
-AuthoredScene owner. Create/delete/Name/Transform/reparent commands require the
-observed SceneRevision; the public Scene borrow is read-only. Tests exercise
-unchanged rejection, one-step revision advances, canonical no-ops, complete
-bounded refresh IDs, owned queries, source metadata and save baselines.
-The [command contract](../authoring-commands.md) distinguishes outer access/reply
-failure from the nested command outcome and its observed current revision.
-These are implemented CPU C++ commands, not terminal methods or Lua bindings.
-FeatureWorld/AuthoringCommands remains planned for 10; its current justification
-is the executable external CPU fixture. 09a qualification is PASS; full REQ-09
-stays NOT_RUN until the later atomic/history/retry/integrated gates.
-
-09c maps bounded history discovery and undo/redo/clear services to
-`shark.tools.authoring-history`, through the same AuthoredScene owner. Eighteen
-CPU cases exercise grouped replay, source metadata/order, generation lifetimes,
-revision/ticket conflicts, redo invalidation, reconciliation, save/reload,
-entry/byte bounds and allocation rollback. Name/Transform and earlier commands
-connect to those fixtures. FeatureWorld/AuthoringCommands remains an external
-CPU-fixture justification until10. 09d now supplies retained retries; integrated
-qualification is complete in09e. This does not add a terminal, editor or Lua adapter.
-
-09d maps mutation discovery/submission/outcome lookup to 25 retry cases and a
-three-process lost-reply/restart fixture, including strict independent source and
-receipt validation. Commands, atomic batches and history share the same owner.
-Exact payload matching, immutable terminal decisions, bounded FIFO retention and
-permanent expiry fencing preserve later edits. All three Result levels are
-explicit. FeatureWorld remains an external CPU-fixture justification until10;
-full REQ-09 is PASS after09e.
-
-09e completes full REQ-09 with a real file lineage and eight connected cases,
-including independent expected documents, unchanged-state assertions, observed
-native I/O faults and actual persisted-byte checks. All seven full profiles and
-standalone Tools/public API/package gates pass. The supported Name/Transform and
-command entries map to this family; FeatureWorld connects them in10.
+| Owner | Contract / final handoff |
+| --- | --- |
+| 00 architecture | [Decisions](../architecture/README.md), [handoff](../handoffs/00-architecture-contract.md) |
+| 01 build foundation | [CI](../ci.md), [hosted gate](../handoffs/01-ci-verification.md) |
+| M01 headless split | [Target boundaries](../architecture/0001-targets-and-boundaries.md), [hosted gate](../handoffs/M01-ci-verification.md) |
+| 02 graphics feasibility | [Probe](../graphics-probe.md), [scope handoff](../handoffs/current-machine-scope-amendment.md) |
+| 03 Core | [Core](../core-contracts.md), [time/work handoff](../handoffs/03c-time-and-work.md) |
+| 04 input/frame loop | [Frame loop](../frame-loop.md), [handoff](../handoffs/04c-frame-loop.md) |
+| 05 device/presentation | [Presentation](../presentation-lifecycle.md), [05b handoff](../handoffs/05b-presentation-lifecycle.md), [remaining backlog](../backlog.md) |
+| 06 shaders/resources | [GPU resources](../gpu-resources.md), [handoff](../handoffs/06c-window-distribution.md) |
+| 07 scenes | [Inspection](../scene-inspection.md), [handoff](../handoffs/07c-schema-inspection.md) |
+| M02 networking | [Qualification](../network-qualification.md), [handoff](../handoffs/M02e-integrated-qualification.md) |
+| 08 source persistence | [Source/file contract](../project-files.md), [handoff](../handoffs/08d-integrated-qualification.md) |
+| M03 durable state | [Qualification](../durable-qualification.md), [handoff](../handoffs/M03f-integrated-qualification.md) |
+| 09 authoring | [Qualification](../authoring-qualification.md), [handoff](../handoffs/09e-integrated-qualification.md) |
+| 10 FeatureWorld | [Qualification](../featureworld-qualification.md), [handoff](../handoffs/10d-integrated-qualification.md) |
+| 11 assets | [Qualification](../asset-qualification.md), [handoff](../handoffs/11d-asset-qualification.md) |
+| 12 static glTF | [Qualification](../gltf-qualification.md), [handoff](../handoffs/12e-gltf-qualification.md) |

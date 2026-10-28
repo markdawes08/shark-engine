@@ -16,6 +16,7 @@ import threading
 import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from control_report import temporary_control_report
 from process_runner import run_process
 
 WORLD = "00000000-0000-4000-8000-000000000001"
@@ -236,17 +237,18 @@ def negative_controls(args, phases: list[dict]) -> list[dict]:
                 raise AssertionError()
             return changed
 
-        output = args.output.with_name(args.output.stem + ".negative-" + name + ".json")
-        capture = io.StringIO()
-        with redirect_stdout(capture):
-            code = main(["--probe", str(args.probe), "--fixtures", str(args.fixtures), "--output", str(output)],
-                        scenario_runner=injected, run_controls=False)
-        result = json.loads(output.read_text(encoding="utf-8"))
-        summary = json.loads(capture.getvalue().splitlines()[-1])
-        require(calls == 1 and code == 1 and result["status"] == "FAIL" and summary["status"] == "FAIL"
-                and result["error"] and result["error"] == summary["error"], "Supervisor accepted " + name)
-        controls.append({"name": name, "status": "PASS", "exit_code": code, "runner_calls": calls,
-                         "reported_status": result["status"], "summary_status": summary["status"], "error": result["error"]})
+        destination = args.output.with_name(args.output.stem + ".negative-" + name + ".json")
+        with temporary_control_report(destination) as output:
+            capture = io.StringIO()
+            with redirect_stdout(capture):
+                code = main(["--probe", str(args.probe), "--fixtures", str(args.fixtures), "--output", str(output)],
+                            scenario_runner=injected, run_controls=False)
+            result = json.loads(output.read_text(encoding="utf-8"))
+            summary = json.loads(capture.getvalue().splitlines()[-1])
+            require(calls == 1 and code == 1 and result["status"] == "FAIL" and summary["status"] == "FAIL"
+                    and result["error"] and result["error"] == summary["error"], "Supervisor accepted " + name)
+            controls.append({"name": name, "status": "PASS", "exit_code": code, "runner_calls": calls,
+                             "reported_status": result["status"], "summary_status": summary["status"], "error": result["error"]})
     return controls
 
 

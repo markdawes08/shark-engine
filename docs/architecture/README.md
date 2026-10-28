@@ -1,146 +1,47 @@
 # Architecture contract
 
-**Testing amendment, 2026-10-27:** the [testing policy](../testing-policy.md)
-governs future verification cadence and evidence work, superseding older matrix
-and source-freeze scheduling in these records. Architectural boundaries and
-behavioral acceptance criteria remain binding; use their tests when affected.
+The [testing policy](../testing-policy.md) governs verification selection and
+evidence work, superseding older matrix and source-freeze schedules in these
+records. Architectural boundaries and behavioral acceptance criteria remain
+binding; select their tests when affected.
 
-Decision date: 2026-10-17. Scope: roadmap assignment 00, Shark v1.
-These are accepted implementation decisions, not claims of implemented features.
-Platform feasibility remains an explicit assignment 02 gate.
+The original decisions date to 2026-10-17, assignment 00. They describe accepted
+contracts, not automatic claims of implemented features. The
+[machine-readable requirements](../coverage/requirements.json) and
+[coverage index](../coverage/README.md) retain implementation status, original
+handoffs and qualification receipts.
 
-MMORPG amendment, 2026-10-17: the user selected a seamless open world. ADR 0007
-and the [versioned execution plan](../roadmap/mmorpg-plan.md) supersede the original
-offline-only v1 scope. Earlier records are amended in place where their contracts
-conflicted; historical handoffs keep their original evidence. MMO behavior was
-planned at that amendment; the current implementation status appears below.
-Original 00-35 IDs are retained with M01-M10 inserted by dependency.
+The seamless-world MMORPG amendment in [ADR 0007](0007-mmorpg-architecture.md)
+and the [execution plan](../roadmap/mmorpg-plan.md) supersedes the original
+offline-only scope. Original assignment IDs 00-35 remain; M01-M10 are inserted
+by dependency. [ADR 0008](0008-human-agent-authoring.md) and the
+[human/agent plan](../roadmap/human-agent-plan.md) make shared human-editor and
+terminal-LLM authoring equal requirements without implying finished adapters.
 
-Human/agent amendment, 2026-10-17: [ADR 0008](0008-human-agent-authoring.md) and
-the [terminal-development plan](../roadmap/human-agent-plan.md) make human editor
-and terminal LLM workflows equal product requirements. They strengthen existing
-authoring assignments without changing order or implying a working CLI/editor.
+[ADR 0009](0009-windows-linux-platform-scope.md) removes Mac compatibility.
+[ADR 0010](0010-current-machine-scope.md) limits required acceptance to this
+Windows PC, its two GPUs and existing WSL2 Ubuntu. Former hardware rows remain
+historical evidence, not active requirements. The user's
+[backlog decision](../backlog.md) authorizes continued development under each
+increment's own acceptance criteria. Historical evidence and behavioral limits
+remain intact.
 
-Platform amendment, 2026-10-17: [ADR 0009](0009-windows-linux-platform-scope.md)
-records the user's removal of Mac compatibility and qualification work. The later
-[ADR 0010](0010-current-machine-scope.md) limits required acceptance to the current
-Windows PC and its WSL2 environment. The two actual local GPUs and local package
-gates pass assignment 02; the former six rows remain historically untested but
-are no longer requirements. Assignment 03 is split into the
-[Core checkpoints](../roadmap/core-plan.md); the
-[03a handoff](../handoffs/03a-core-contracts.md) and
-[03b handoff](../handoffs/03b-application-lifecycle.md) record completed contracts
-and lifecycle verification. The [03c handoff](../handoffs/03c-time-and-work.md)
-closes scheduling, bounded work and the full Core gate. **05b, swapchain,
-submission and presentation lifecycle, is complete under the current-machine
-scope.**
-The [device guide](../graphics-device.md),
-[presentation contract](../presentation-lifecycle.md),
-[05 checkpoint plan](../roadmap/graphics-device-plan.md) and
-[05b handoff](../handoffs/05b-presentation-lifecycle.md) record the lifecycle and
-passing local gate. The [05a handoff](../handoffs/05a-graphics-device.md) retains the
-completed device-foundation evidence. The user's 2026-10-18
-[backlog decision](../backlog.md) defers remaining qualification work and authorizes
-06b and later development, superseding the earlier CPU-only exception. The
-[06 checkpoint plan](../roadmap/shader-resource-plan.md) and
-[06a handoff](../handoffs/06a-offline-shaders.md) record the completed offline checkpoint and its verification limits.
-The [input guide](../input-contracts.md),
-[window lifecycle guide](../window-lifecycle.md),
-[frame-loop guide](../frame-loop.md), [04c handoff](../handoffs/04c-frame-loop.md) and
-[checkpoint plan](../roadmap/window-input-plan.md) record the contracts and scope.
-Editor/Runtime provide explicit `--graphics` clear presentation and `--window`
-diagnostics through the same offline frame/input pump, with local F6/F7 sample
-pause/step controls. Scene rendering and authoring UI remain planned. Full `REQ-04` is PASS
-after final Windows/WSL, native-window and standalone/package qualification.
+Implemented foundations include Core services, offline input/frame scheduling,
+Windows device/presentation/resource ownership and the precompiled cube sample;
+CPU scenes, source persistence, shared commands/batches/history/retries;
+authenticated transport/replication and server-only durable state; FeatureWorld,
+asset identity/cache/jobs and bounded glTF conversion through the existing asset
+owner. Their domain contracts and completed-owner handoffs are linked from
+[AGENTS.md](../../AGENTS.md) and the [coverage index](../coverage/README.md).
 
-Assignment 07 implements the shared CPU scene foundation: checked identities,
-mandatory Name/Transform, validated hierarchy and fixed version-1 schemas with
-bounded revisioned semantic inspection. The [inspection contract](../scene-inspection.md)
-defines the implemented discovery and query APIs; the
-[07 checkpoint plan](../roadmap/scene-plan.md) and
-[07c handoff](../handoffs/07c-schema-inspection.md) track qualification.
-07c and full REQ-07 are PASS under the current-machine scope, recorded in the
-[07c receipt](../coverage/evidence/07c-schema-inspection.json). M02 is complete; the
-[M02a handoff](../handoffs/M02a-transport-wire.md) closes the transport foundation,
-and [M02b authentication and owned sessions](../handoffs/M02b-owned-sessions.md)
-is **PASS** under the current-machine scope. [ADR 0012](0012-owned-sessions.md) and the
-[session contract](../network-sessions.md) define explicit certificate enrollment,
-transport-bound ownership, revocation and reconnect fencing. M02c replication is
-PASS under current-machine scope, following [ADR 0013](0013-authoritative-replication.md)
-and its [handoff](../handoffs/M02c-authoritative-replication.md). M02d interest/budgets
-is complete under [ADR 0014](0014-spatial-interest.md). The
-[M02e handoff](../handoffs/M02e-integrated-qualification.md) and
-[receipt](../coverage/evidence/M02e-integrated-qualification.json) close integrated
-qualification and full REQ-M02 under the current-machine scope. Assignment 08,
-Project and scene persistence, follows the [four checkpoints](../roadmap/persistence-plan.md).
-08a's source codec is qualified; 08b adds [Scene capture and activation](../authored-scenes.md)
-through the same Core owner. Its [handoff](../handoffs/08b-scene-activation.md) records
-the completed local gate. 08c [safe project files and conflicts](../project-files.md)
-are qualified under the current-machine scope; the
-[handoff](../handoffs/08c-project-files.md) records the completed gate.
-08d and full REQ-08 are PASS under the current-machine scope: the
-[handoff](../handoffs/08d-integrated-qualification.md) and
-[receipt](../coverage/evidence/08d-integrated-qualification.json) record
-504 CPU CTests, ten additional standalone Tools checks, public API examples
-and protected packages. M03 follows the [six durable-state checkpoints](../roadmap/durable-state-plan.md).
-M03a's [server-only store foundation](../durable-store.md) is PASS under the
-current-machine scope: [its handoff](../handoffs/M03a-durable-store.md) records
-525 passing CPU CTests and protected package/API gates.
-M03b's [owned durable characters](../durable-characters.md) are also PASS under
-the current-machine scope: [the handoff](../handoffs/M03b-owned-characters.md)
-records 539 CPU CTests and protected package/API gates.
-M03c [atomic transactions](../durable-transactions.md) are PASS under the same
-scope: [the handoff](../handoffs/M03c-atomic-transactions.md) records 553 CPU
-CTests and protected package/API gates. M03d [runtime recovery](../durable-recovery.md)
-is also PASS under this scope; its [handoff](../handoffs/M03d-runtime-recovery.md)
-records 567 CPU CTests and protected gates. M03e maintenance is PASS: its [handoff](../handoffs/M03e-migration-restoration.md)
-records 581 CPU CTests, 10 standalone Tools checks and protected gates.
-M03f and full REQ-M03 are PASS: the [handoff](../handoffs/M03f-integrated-qualification.md)
-records 588 CPU CTests, 10 standalone Tools checks and protected gates.
-The [connected qualification](../durable-qualification.md) covers one real
-database lineage through authenticated operations, crash/outage recovery and
-isolated restore. Assignment 09 follows its [five authoring checkpoints](../roadmap/authoring-plan.md).
-09a through 09d are qualified under current-machine scope: shared single commands,
-atomic batches/preview, history and scoped retained retries use the same owner.
-The [09d handoff](../handoffs/09d-retained-retries.md) records 486 full CPU CTest
-executions, 20 standalone Tools checks, 21 public-example compiles and protected
-gates. Core/Server implementation is unchanged; full Server suites retain their
-historical 09c evidence until 09e. The
-[09e qualification](../handoffs/09e-integrated-qualification.md) now refreshes all
-seven profiles: 625 full CPU CTest executions, 22 standalone Tools checks,
-24 public-example compiles and protected gates pass. Full REQ-09 is PASS;
-assignment 10 follows its FeatureWorld checkpoints. Terminal adapters and editor UI
-retain their later owners;
-schema IDs do not establish file or gameplay-wire formats. The current-machine
-scope remains unchanged.
-
-All four assignment-10 checkpoints and full REQ-10 are complete under the
-current-machine scope. The [saved FeatureWorld](../featureworld.md), explicit
-CPU/GPU supervisor and [integrated qualification](../handoffs/10d-integrated-qualification.md)
-retain actual coverage, assertion-failure results, 660 full CTests across seven
-profiles, 36 standalone Tools checks and twelve both-GPU runs. Authored scene
-rendering remains 13, terminal/editor adapters remain 15/16, and MMOWorld remains
-M09. Assignment 11 follows the [asset checkpoints](../roadmap/asset-plan.md).
-11a adds persistent sidecar identity and a bounded revisioned CPU catalog through
-the existing ProjectFiles service; import/cache/jobs retain 11b/11c.
-11a is PASS in its [handoff](../handoffs/11a-asset-identity.md), with 569 qualified
-CPU profile outcomes, public examples, sanitizers and protected packages.
-11b is PASS in its [handoff](../handoffs/11b-asset-import-cache.md), with synchronous
-dependency imports, deterministic bounded cache snapshots, last-valid output and
-explicit recovery under [ADR 0026](0026-development-asset-cache.md). Qualification
-retains 724 selected profile outcomes, public API/sanitizer audits and protected
-packages. 11c is PASS in its [handoff](../handoffs/11c-asset-import-jobs.md),
-adding bounded private jobs under [ADR 0027](0027-bounded-asset-jobs.md), with
-595 current profile results, 39 public-example compiles, 26 actual sanitizer
-objects and protected packages. 11d now closes all four checkpoints in its
-[handoff](../handoffs/11d-asset-qualification.md), with 602 selected passing
-outcomes, nine connected native cases, actual async interruption/recovery,
-reproducibility and protected packages under the
-[qualification contract](../asset-qualification.md). Full REQ-11 is PASS. Assignment 12 follows its
-[five checkpoints](../roadmap/gltf-plan.md); 12a is PASS in its
-[handoff](../handoffs/12a-gltf-foundation.md), with 486 selected outcomes,
-42 public-example compiles, 30 sanitizer objects and protected packages.
-The completed 12b-12e checkpoints below close full REQ-12.
+Full REQ-12 is complete under current-machine scope; the
+[12e handoff](../handoffs/12e-gltf-qualification.md) records connected owner/process
+acceptance, independent fixture validation and applicable CPU/package checks.
+**Next is assignment 13, basic scene rendering and cameras; plan checkpoints first.**
+Editor/Runtime currently provide `--cube`, `--graphics` and `--window` diagnostics
+with offline F6/F7 pause/step controls. Authored-scene rendering remains 13,
+terminal/editor adapters remain 15/16, and MMOWorld remains M09. Schema IDs do
+not establish file or gameplay-wire formats.
 
 | Record | Decision |
 | --- | --- |
@@ -175,22 +76,6 @@ The completed 12b-12e checkpoints below close full REQ-12.
 | [0029](0029-bounded-gltf-geometry.md) | Bounded CPU static geometry, shared mesh hierarchy, transform validation and generated attributes |
 | [0030](0030-bounded-gltf-textures.md) | Bounded PNG/JPEG decoding, usage-specific texture mips and sampler preservation |
 | [0031](0031-gltf-material-assets.md) | Core materials, bounded engine payloads and typed resource integration through the asset owner |
-
-12b qualifies [bounded static geometry and hierarchy](../gltf-geometry.md)
-under [ADR 0029](0029-bounded-gltf-geometry.md). Its
-[handoff](../handoffs/12b-gltf-geometry.md) records 357 fresh outcomes, 45 public
-examples, 32 actual sanitizer objects and protected packages.
-12c qualifies [bounded images and semantic texture mips](../gltf-textures.md)
-under [ADR 0030](0030-bounded-gltf-textures.md), retaining the same pure source
-owner and private decoder boundary. Its [handoff](../handoffs/12c-gltf-textures.md)
-records 507 fresh outcomes, 48 public-example compiles, 36 actual sanitizer
-objects and protected packages, including two fresh full Server suites.
-12d adds [materials and asset integration](../gltf-assets.md) under ADR 0031,
-retaining existing cache/job ownership and bounds. Its
-[handoff](../handoffs/12d-material-assets.md) records selected verification under
-the testing policy. The [12e handoff](../handoffs/12e-gltf-qualification.md) closes
-full REQ-12 through connected owner/process acceptance, independent fixture
-validation and applicable CPU/package checks. Next is assignment 13.
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

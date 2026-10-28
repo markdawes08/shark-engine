@@ -33,7 +33,7 @@ planning artifact or ask the user to approve ordinary test selection.
 | Documentation, policy or skill text only | Relevant existing link/manifest/repository checks and diff review. No engine configure, build, CTest, sanitizer or package runs. Compile examples only if their code changed. |
 | Implementation in progress | New behavior and directly affected regression tests in the primary build. Add tests for meaningful behavior and failures, not trivial implementation details or wording. |
 | A code subchunk | One primary Debug regression pass for the affected subsystem and consumers; affected tests in an applicable sanitizer configuration; an affected WSL build/smoke for portable code; new/changed public examples. This is a selected regression, not a mandatory full CPU inventory. |
-| A full assignment/integrated checkpoint | Full applicable Windows/WSL Debug inventories, the assignment's connected acceptance cases, relevant Release/sanitizer coverage, and affected standalone/package checks. Select profiles by actual ownership; no automatic repetition of every suite in every profile. |
+| A full assignment/integrated checkpoint | Complete affected subsystem coverage in the primary Debug profile, the assignment's connected acceptance cases, relevant secondary-platform/Release/sanitizer selections, and affected standalone/package checks. A configured build's entire CTest inventory is not the default closure gate. |
 
 Windows Debug is the normal primary build. WSL Server Debug is primary for
 Server-only work; Windows-only work does not invent a WSL behavior gate.
@@ -42,6 +42,21 @@ compiler, platform, allocator, exception or optimization differences matter.
 Run portable affected behavior on WSL; do not repeat all Tools integration tests
 just to establish that a second configuration builds. A suitable existing run
 on the final relevant inputs satisfies the check; do not repeat it at closure.
+
+**Whole-project cleanup amendment, 2026-10-27:** "full applicable" means the
+affected subsystem and its consumers, not every test available in a build.
+The combined client presets also enable Server and include expensive dependency,
+package and test-tool checks. Their availability does not make them applicable.
+For example, Tools-only import qualification does not rerun unchanged network,
+durable storage, graphics tooling or their dependency configuration matrices.
+Use test names to select the owning subsystem (for example
+`-R '^shark\.tools\.'` for the complete Tools behavior inventory), narrowing
+further during implementation. Inspect the actual inventory before choosing the
+selection; the broad `cpu`, `tooling` and `boundary` labels span several owners.
+Add a dependency/configuration check when its inputs or boundary changed, not
+merely because it appears in a preset. Bare CTest and `tools/ci.py` remain useful
+explicit whole-project/hosted-CI workflows; do not use them as routine local
+subchunk or single-subsystem closure commands. Hosted CI is unchanged.
 
 Full assignment acceptance still requires all of its behavioral gates. Earlier
 unchanged results may support unaffected areas when their applicability is
@@ -102,6 +117,13 @@ add infrastructure only for an actual missing capability. Artifact hashes,
 dependency locks and integrity checks required by the product remain intact.
 Extra evidence mechanisms need a concrete reproduction, artifact or release
 requirement. Preserve historical receipts without editing or regenerating them.
+
+Keep one complete primary report and compact named outcomes for rejection
+controls. Temporary copies of that report mutated to test its validator belong
+in managed scratch; delete them after expected rejection, and retain unexpected
+failures for diagnosis. Do not keep a full multi-megabyte copy per successful
+negative control. Avoid repeating checkpoint histories in agent instructions and
+skills; link the authoritative contract and handoff instead.
 
 After the selected checks pass, stop testing and finish the deliverable. Repeat
 only after relevant changes, a failure, or an unresolved concern. A documentation

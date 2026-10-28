@@ -5,269 +5,99 @@ description: Add or change Shark components and public command or Lua APIs while
 
 # Shark component and API integration
 
-Apply the [testing policy](../../../docs/testing-policy.md) before choosing checks.
-Its 2026-10-27 cadence governs future frequency, matrix scope and evidence work;
-completed checkpoint counts below describe historical results. Preserve behavior
-tests and real coverage mappings without rerunning every older API/example or
-configuration for each change. Compile changed public examples and exercise the
-affected validation, lifetime, persistence and FeatureWorld paths. Use broader
-shared-Core or adapter checks only where the change reaches those consumers.
+Apply the [testing policy](../../../docs/testing-policy.md). Read [AGENTS.md](../../../AGENTS.md)
+and the assigned increment; use the [coverage guide](../../../docs/coverage/README.md)
+for current mappings and historical handoffs, rather than copied case counts.
 
-12c adds pure CPU `asset.gltf.textures` under the
-[texture contract](../../../docs/gltf-textures.md). The twelfth FeatureWorld case
-checks source identities, role variants, independent pixel/mip values and
-samplers without changing its authored owner. Maintain 43 CPU surfaces plus the
-external GPU command, actual cases and independent mappings together. These
-owned CPU byte values introduce no scene component, material payload, protocol
-adapter or Lua surface; preserve the existing source/publication boundary.
-
-12b exposes pure CPU `asset.gltf.convert` through the existing validated source
-owner; follow the [geometry contract](../../../docs/gltf-geometry.md). Its
-eleventh FeatureWorld case checks independent geometry, sparse data, mirrored
-shared instances and bounds while retaining the owner and saved IDs. Extend
-actual cases, independent inventory and manifest together: 42 CPU surfaces and
-one external GPU command. No scene component, editor/terminal adapter or Lua
-surface is introduced by this conversion value API.
-
-12a exposes the read-only CPU `asset.gltf.inspect` operation under the
-[source contract](../../../docs/gltf-source.md). Its tenth native FeatureWorld
-case uses actual inspection and retains the AuthoredScene and saved entity IDs.
-Extend independent inventory/mappings together; there are 41 CPU surfaces plus
-one external GPU command. Owned source reports do not advertise converted meshes,
-decoded pixels, terminal protocol methods or material rendering.
-
-11d's [asset qualification](../../../docs/asset-qualification.md) connects one
-saved FeatureWorld reference through identity, move, dependency changes, worker
-completion fences and cache reopen. The ninth native case extends real mappings
-and independent expectations while preserving all 40 CPU surfaces and the
-external GPU command. Qualification introduces no new public command or Lua API;
-do not add synthetic capabilities to close the gate.
-
-Read [AGENTS.md](../../../AGENTS.md),
-[identity/version rules](../../../docs/architecture/0004-formats-and-identity.md),
+Before design, read [identity/version rules](../../../docs/architecture/0004-formats-and-identity.md),
 [mutation phases](../../../docs/architecture/0005-simulation-and-rendering.md) and
-[coverage policy](../../../docs/coverage/README.md). Extend the authoritative
-engine schema/services rather than adding a parallel UI or script scene model.
-Follow the [human and terminal-agent contract](../../../docs/architecture/0008-human-agent-authoring.md)
-and its [implementation plan](../../../docs/roadmap/human-agent-plan.md) as each
-authoring layer lands; the bootstrap does not yet provide these interfaces.
+[human/agent authoring](../../../docs/architecture/0008-human-agent-authoring.md).
+Extend authoritative engine services, not a parallel UI/script scene model.
 
-The implemented-surface manifest includes the mandatory Name and Transform C++
-components and their validation/mutation tests. 07c adds real fixed schema and
-bounded revisioned query coverage. 09a adds real typed authoring command entries
-through the existing AuthoredScene owner. 09b supplies atomic authoring batches and pure preview. Lua and
-FeatureWorld arrive in 19 and 10 respectively. Do not fabricate unimplemented
-bindings or fill the Lua array with placeholders. Connect each earlier component
-when its missing layer is introduced.
+## Schema, scene and lifetime
 
-07a now supplies [scene identity and lifetime](../../../docs/scene-contracts.md)
-through EngineCore, with private EnTT, checked scoped references and an explicit
-deferred boundary. 07b implements mandatory Name/Transform and hierarchy; follow
-the [transform contract](../../../docs/transforms.md) and
-[07 checkpoint plan](../../../docs/roadmap/scene-plan.md). Its
-[current-machine qualification is complete](../../../docs/handoffs/07b-transform-hierarchy.md).
-Follow the implemented [schema and inspection contract](../../../docs/scene-inspection.md)
-and [07c handoff](../../../docs/handoffs/07c-schema-inspection.md).
-07c and full REQ-07 are PASS under the current-machine scope; the
-[07c receipt](../../../docs/coverage/evidence/07c-schema-inspection.json) records
-376 passing CPU CTests and protected dependency/package checks. M02 is complete;
-[M02b owned sessions](../../../docs/handoffs/M02b-owned-sessions.md) is **PASS**
-under the current-machine scope. M02c [replication](../../../docs/network-replication.md)
-is also locally qualified; follow [ADR 0013](../../../docs/architecture/0013-authoritative-replication.md).
-Only explicitly selected validated affine poses enter its public schema; authoring
-metadata never grants player visibility or mutation authority. The bounded client
-cache is presentation-only. Preserve stream/session fences and atomic updates.
-Do not introduce a second registry or expose
-native entities. Include math through `shark/math.hpp`
-and its SharkMath target so every consumer shares the central GLM configuration.
-Cached scene world matrices use a local frame; global WorldPosition, future M05
-origins and later physics constraints remain distinct.
+Follow [scene ownership](../../../docs/scene-contracts.md),
+[transforms](../../../docs/transforms.md) and [inspection](../../../docs/scene-inspection.md).
+Name/Transform are mandatory version-1 components. Keep EnTT private; include math
+through `shark/math.hpp` and SharkMath. Local world matrices and global cell
+coordinates have distinct roles. Do not expose native entities or borrowed
+component pointers across mutations.
 
-Extend the fixed schema catalog through engine-owned IDs, explicit versions and
-typed defaults/ranges/units/mutability. Name and Transform are version 1 and
-mandatory/nonremovable; unknown IDs, versions and mismatched value types reject.
-Reuse their existing validators rather than interpreting caller-edited metadata
-as validation policy. Pure validation does not reserve a scene revision or prove
-hierarchy/world feasibility. Query through the existing scene owner with bounded
-fields/results, revision checks and owned immutable pages. These are CPU C++
-contracts, not source files, terminal framing or gameplay permissions. Preserve
-explicit xyzw quaternion metadata and signed scale's absolute magnitude floor.
+Extend engine-owned schema IDs, versions, typed defaults/ranges/units/mutability
+and validators together. Unknown IDs/versions/value types reject. Caller-edited
+metadata never becomes validation policy. Pure validation neither reserves a
+revision nor proves hierarchy feasibility; queries return bounded owned pages
+with explicit revision/consistency checks. Preserve xyzw quaternion metadata and
+signed scale's magnitude floor.
 
-Name and Transform cannot be removed. Reuse scene validation, checked parent
-links and the existing deferred queue for component changes. Keep-local preserves
-local TRS; keep-world rejects nonrepresentable local TRS before publishing links
-or any descendant world matrix. Delete removes the subtree in one operation.
-Actual changes advance the revision once; no-ops do not. Test stale/cyclic/foreign
-parents, authority mismatch, depth/scale failures and complete rollback, alongside
-owned state copies and deferred FIFO revalidation.
+Reuse the scene owner/deferred queue. Keep-local preserves local TRS; keep-world
+rejects nonrepresentable TRS before changing links or descendant matrices. Delete
+removes a subtree atomically. Changes advance one revision; no-ops do not. Exercise
+relevant stale/foreign/cyclic handles, authority mismatch, depth/scale failure,
+rollback and deferred ordering without reducing earlier workloads.
 
-Follow [MMORPG authority and identity](../../../docs/architecture/0007-mmorpg-architecture.md):
-classify state as server-authoritative, predicted, replicated or presentation-only.
-Player requests are bounded authenticated intents, not authoring transactions or
-arbitrary component setters. Separate durable identity from local/replica handles;
-test stale ownership epochs, reconnect, region handoff and duplicate durable actions
-when those layers exist. Render-frame Lua must not decide live gameplay outcomes.
+## Authoring and persistence
 
-For M02b, follow [ADR 0012](../../../docs/architecture/0012-owned-sessions.md) and
-the [session contract](../../../docs/network-sessions.md). SessionAuthority takes
-the actual ready server-side mutual TLS transport for each request; copied peer
-identity values cannot establish provenance. AccountId, CharacterId and SessionId
-are separate from scene and replica identities. Readiness changes session state
-only; it grants no gameplay outcome, arbitrary component mutation or authoring
-access. Preserve bounded enrollment, revocation, lifetime, rate limits and
-reconnect fencing when extending admitted intents. Editor/terminal adapters and
-durable ownership still require their assigned later services.
+Use [shared commands](../../../docs/authoring-commands.md),
+[batches](../../../docs/authoring-transactions.md), [history](../../../docs/authoring-history.md)
+and [retries](../../../docs/authoring-retries.md) on the same AuthoredScene owner.
+Its public scene borrow is read-only. Ordinary edits preserve incarnation, live
+handles, metadata and saved baseline; activation is not a command shortcut.
+Never expose candidate handles or private invariant-fixture mutation ports.
 
-For an implemented surface, trace valid and invalid behavior through engine
-validation, serialization/versioning, editor fields, typed commands, selected
-Lua bindings and cooked export as applicable. Document intentional unsupported
-operations. Every exposed API gets a stable manifest entry linked to real tests
-and a FeatureWorld exercise or justified external fixture.
+Batches validate every intermediate state and allocate complete replies before
+one publication. Preview publishes nothing and is not a commit token. Changed
+edits/batches form one history group; preview/no-op/rejected work preserves stacks.
+Undo/redo require the current revision and next ticket. Save retains history;
+activation clears it; recreated entities receive fresh generations. Extend Core
+candidate copying and metadata/history capture/restoration when components grow.
 
-Human editor actions and terminal-agent commands must call the same validated
-services, schemas and transactions. Publish machine-readable discovery for
-supported fields, operations, limits and capability requirements alongside human
-help. CPU authoring operations must run without an editor process, window or GPU;
-preview/render operations declare and check their separate capabilities. Preserve
-stable JSON diagnostics and request/job IDs, bounded output, cancellation status
-and artifact references for long work. Test both adapters against the same
-validation, revision-conflict, retry/idempotency and undo/redo behavior where
-applicable. Explicitly identify irreversible operations; never silently overwrite
-another actor's edits or imply that an unsupported operation can be undone.
+Retained mutations check outer access, reply outcome and original operation Result.
+Keep scope/consecutive sequence/watermark semantics, bounded retention and exact
+input comparison/charges. Foreign/expired identities and out-of-band writes need
+explicit reconciliation, never blind replay. New command fields extend matching,
+serialization and retained-memory charges together.
 
-Test stale handles, missing components, duplicate IDs, rollback, callback ordering,
-scene reload and deferred create/destroy where relevant. The local editor/client
-controlling thread commits its scene changes; each authoritative server region
-uses its designated single writer. Physics workers queue events and never call Lua.
-Bindings use checked handles instead of borrowed component pointers. Preserve
-edit/play isolation and the authored scene through failed operations.
+Follow [source documents](../../../docs/source-documents.md),
+[activation](../../../docs/authored-scenes.md) and [project files](../../../docs/project-files.md)
+for persisted fields. Extend capture and reconstruction together, retaining dirty,
+revision, pending/visit/thread and incarnation-bound metadata checks. Native files
+use root/path content revisions and explicit create-only writes. A committed
+post-publication durability limitation must not appear as rollback. Extend actual
+save/reopen/conflict cases when persisted behavior changes.
 
-Select the actual existing CTest cases and native preset from
-[building](../../../docs/building.md) under the testing policy; use
-`python tools/validate_contract.py` when contracts or coverage change. Add
-meaningful feature tests in the owning increment; the contract validator alone
-does not prove API behavior. Update
-migration/rejection rules, coverage and handoff together when the public contract
-changes, and follow AGENTS.md's user-owned commit policy.
+## Authority and adapters
 
-10b connects the saved [FeatureWorld](../../../docs/featureworld.md) to five real
-native CPU cases through the existing scene runner. Every current component and
-command has `featureworld_cases` references in the manifest, resolved against the
-actual executable catalog by `shark.tools.featureworld-process`. Extend saved
-source, independent expected state, native cases and mappings together when a
-scene surface grows. Keep isolated process/storage/platform/fault fixtures; a
-scene assertion cannot qualify those boundaries. Lua remains empty until19.
-Input source is never a save destination: persistence uses an explicit scratch
-parent and the existing ProjectFiles service on the runner's AuthoredScene owner.
+Under the [MMORPG contract](../../../docs/architecture/0007-mmorpg-architecture.md),
+classify state as authoritative, predicted, replicated or presentation-only.
+Players submit bounded authenticated intents, not arbitrary component setters or
+authoring transactions. Keep durable identity, ownership epochs, local handles
+and replica/session identities distinct. Client/render Lua cannot grant outcomes.
 
-M02d [spatial interest](../../../docs/network-interest.md) is locally qualified.
-Preserve the complete trusted catalog, authenticated character observer binding,
-unthrottled privacy maintenance and bounded managed admission. Its two new CTest
-families are `shark.core.net-interest` (30 seconds, seed 1337) and
-`shark.core.net-interest-process` (120 seconds); retain these families alongside
-the earlier network tests. Two active recipients and controlled reliable-stream
-delay do not establish the full LOCAL-MMO-1 workload or WAN behavior. The
-[M02d handoff](../../../docs/handoffs/M02d-spatial-interest.md) retains that gate's
-historical evidence; M02e subsequently closes integrated qualification.
+When touching networking, read [sessions](../../../docs/network-sessions.md),
+[replication](../../../docs/network-replication.md) and [interest](../../../docs/network-interest.md).
+Only actual ready server-side mTLS establishes admission, not copied identity.
+Only explicitly selected public fields replicate. Preserve owner/session/stream
+fences, privacy maintenance, bounded resources and nonmutating rejection. Logical
+retained-capacity statistics are not wire fields or total process memory.
 
-M02e's additive `ReplicationStats`, `InterestStats` and `ReplicaClientStats`
-report owner-thread logical counts and actual retained vector capacity bytes.
-They are not wire fields or total process memory. Preserve cleanup semantics,
-reserved capacity and nonmutating rejection checks when extending these APIs.
-Retain all fourteen network CTest families, including `shark.core.net-adversity`
-(60 seconds) and `shark.core.net-adversity-process` (360 seconds). The
-[qualification contract](../../../docs/network-qualification.md) and
-[M02e handoff](../../../docs/handoffs/M02e-integrated-qualification.md) record
-full REQ-M02 PASS under the current-machine scope. Assignment 08 follows the
-[persistence checkpoints](../../../docs/roadmap/persistence-plan.md).
-08a [source documents](../../../docs/source-documents.md) reuse the shared
-Name/Transform validators and explicit component version 1. Extend format fields,
-strict rejection policy and migration fixtures together when components gain
-persistence. The codec is CPU EngineTools only; Scene activation, file commits,
-shared command history and terminal/editor adapters retain their owners.
+Human and terminal adapters use identical validated services, schema discovery,
+revision conflicts, retries and history. CPU operations need no editor/window/GPU;
+preview/capture exposes separate capabilities. Keep structured diagnostics,
+request/job IDs, cancellation and truthful artifact/commit outcomes. Workers
+return bounded values and observed revisions to the owner, never mutable state.
+Bindings use checked handles and retain edit/play isolation.
 
-08b's [authored Scene owner](../../../docs/authored-scenes.md) captures complete
-committed state and replaces only a fully validated candidate. Preserve immutable
-source metadata, incarnation-bound extras, expected revisions, dirty protection
-and pending/visit/thread rejection. No ordinary Scene setter becomes an atomic
-batch; shared history remains 09. Extend capture and construction together when
-new persisted components land, through the existing Scene validators.
+## Coverage and verification
 
-09a's [shared command contract](../../../docs/authoring-commands.md) makes the
-public AuthoredScene borrow read-only. Use its typed create/delete/Name/Transform/
-reparent commands with an expected revision; check both outer and nested Results.
-The reply reports the current revision and a sorted bounded refresh-ID set.
-Ordinary edits preserve the Scene instance, retained handles, source metadata
-and saved baseline. Never use activation as a command shortcut or expose private
-invariant-fixture access through an adapter. 09b batches and pure preview reuse
-that owner and an internal Core candidate/publication port. 09c adds shared history and 09d retained retries; terminal/editor integration remains 15/16.
-09a is PASS under the current-machine scope; follow its
-[handoff](../../../docs/handoffs/09a-shared-commands.md) and
-[receipt](../../../docs/coverage/evidence/09a-shared-commands.json).
-09b is also PASS under the current-machine scope. Follow its
-[transaction contract](../../../docs/authoring-transactions.md),
-[handoff](../../../docs/handoffs/09b-atomic-batches.md) and
-[receipt](../../../docs/coverage/evidence/09b-atomic-batches.json): 605 full CPU
-CTests, 14 standalone Tools checks, public examples, sanitizer objects and
-protected packages pass. Full REQ-09 remains NOT_RUN.
-09c is PASS under the current-machine scope. Follow the
-[history contract](../../../docs/authoring-history.md),
-[handoff](../../../docs/handoffs/09c-shared-history.md) and
-[receipt](../../../docs/coverage/evidence/09c-shared-history.json): 610 full CPU
-CTests, 16 additional Tools checks, 18 public-example compiles, actual sanitizer
-objects and protected packages pass. Preserve `shark.tools.authoring-history`
-(60 seconds, seed1337), all earlier families and the4096/4095 sparse workload.
-Undo/redo require the next ticket and current revision; save retains history,
-activation clears it, and restored incarnations receive fresh generations.
-Full REQ-09 is now PASS after09e. Next: 10, FeatureWorld and automated scene runner.
+For a new supported surface, connect validation, persistence/versioning, typed
+commands, editor fields, Lua and export where those layers exist. Document current
+unsupported operations; never fabricate future bindings or placeholder Lua entries.
+Connect actual [FeatureWorld](../../../docs/featureworld.md) cases, independent
+expected state and manifest IDs together. Preserve saved source/IDs and write only
+to explicit scratch through ProjectFiles. Isolated system fixtures remain necessary.
 
-09d is PASS under the current-machine scope. Follow the
-[retry contract](../../../docs/authoring-retries.md),
-[handoff](../../../docs/handoffs/09d-retained-retries.md) and
-[receipt](../../../docs/coverage/evidence/09d-retained-retries.json): 486 full CPU
-CTest executions, 20 standalone Tools checks, 21 public-example compiles, actual
-sanitizer objects and protected packages pass. Preserve both retry families
-(60/90 seconds, seed 1337), 25 cases, the real restart fixture and every earlier
-case/limit. Scope plus consecutive sequences and a nonrewinding watermark fence
-expired IDs; save/activation/history clear retain this owner's ledger. Check the
-outer Result, reply outcome and original operation result. Extend exact input
-comparison and payload charges when command/component fields grow. New owners
-require reconciliation; never blindly repeat expired requests. These remain
-Tools-only services, with no durable journal or terminal/editor/player adapter.
-
-
-Extend the staged Core record copy and validated mutation path together when
-persisted components land. Batches contain at most 256 ordered commands; each
-intermediate state must validate. Allocate complete replies before publication.
-Preserve revision/no-op, metadata, handle-generation and dirty-baseline semantics.
-Workers deliver owned bounded values and the observed revision to the owner;
-never expose internal candidate handles or treat preview as a commit token.
-
-08c's [project file service](../../../docs/project-files.md) reuses those values
-and validators. Preserve root/path-bound exact-content revisions, explicit
-create-only writes, dirty/revision-safe save/reload and committed durability
-results. A failed post-publication flush must not become an uncommitted error.
-The storage lock does not provide shared command history or distributed authority.
-
-The 08d integrated persistence fixture carries the independent legacy/current
-documents through file reads, Scene edits, migration saves, reload conflicts and
-reopen. Extend that chain when persisted components change. Failed authored saves
-must retain dirty snapshots and old bytes; a committed durability limitation
-must not masquerade as a rollback. FeatureWorld/Persistence still attaches in 10.
-
-Extend history capture/restoration and Core candidate record copying together
-when components or source metadata gain mutation. Reuse revision-bound immutable
-snapshots; never introduce a second authoritative mutable scene. Changed single
-edits/batches are one group, while preview/noops/rejections preserve both stacks.
-Keep bounded tickets/bytes, explicit reconciliation and both Result levels.
-
-09e and full REQ-09 are PASS under the current-machine scope. Follow the
-[qualification contract](../../../docs/authoring-qualification.md),
-[handoff](../../../docs/handoffs/09e-integrated-qualification.md) and
-[receipt](../../../docs/coverage/evidence/09e-integrated-qualification.json):
-625 full CPU CTest executions across seven profiles, 22 standalone Tools checks,
-24 public-example compiles, actual sanitizer objects and protected packages pass.
-Both full Server suites were refreshed for 09e. Preserve the eight connected cases in
-`shark.tools.authoring-integration` (90 seconds, seed 1337), native publication
-faults, real external-file lineage and every earlier case/limit. Connect supported
-components/commands to FeatureWorld in10; adapters remain15/16.
+Choose affected validation/lifetime/persistence/FeatureWorld checks under the
+policy; compile changed public examples. Broaden to Core/Server/adapters only when
+the change reaches them. Update contracts, migration/rejection rules, mappings and
+handoff together. The contract validator checks structure, not API behavior.

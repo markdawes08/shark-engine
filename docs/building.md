@@ -4,7 +4,7 @@ The [testing policy](testing-policy.md) governs verification selection from
 2026-10-27 onward. Use focused checks during implementation, selected regression
 at subchunk closure and broader applicable coverage at assignment closure or
 when changed behavior/build inputs justify it. Documentation-only changes need
-no engine build. Procedures and completed-checkpoint inventories below are
+no engine build. Procedures and test inventories below are
 reference material, not a recurring checklist; the policy supersedes older
 matrix, source-freeze and evidence-process demands.
 
@@ -46,7 +46,8 @@ dependencies, terminal diagnostics, analytic GPU cases and offline validation to
 02d adds matching `graphics-windows-release` and `graphics-linux-release`
 configure/build/test presets for standalone probe packages; see the
 [probe guide](graphics-probe.md) for packaging and bounded launch commands.
-Scene rendering, gameplay, scene import, authoring UI and export remain unimplemented.
+Scene rendering, gameplay, authoring UI and game export remain unimplemented;
+CPU scene persistence and glTF asset import are implemented below.
 CPU build success does not qualify a GPU, audio device or final release platform.
 
 05a adds the [owned graphics device](graphics-device.md), with CPU lifecycle and
@@ -104,15 +105,10 @@ offline population, private EnTT/TLS includes and public math configuration with
 display (240-second tooling timeout). M02a requires C/C++ compilers. The fixture
 compiles the math wrapper with the
 central definitions and defaults, then rejects prior GLM includes and conflicting
-configuration. The [07a handoff](handoffs/07a-entity-ownership.md) and
-[07b handoff](handoffs/07b-transform-hierarchy.md) record their qualification;
-the [07c handoff](handoffs/07c-schema-inspection.md) and
-[receipt](coverage/evidence/07c-schema-inspection.json) close full REQ-07 as PASS
-under the current-machine scope. All 376 CTests pass with no failures/skips:
-Windows Debug/Release/ASan 62 each, WSL client Debug/ASan+UBSan 55 each, and
-WSL Server Debug/ASan+UBSan 40 each. Protected builds and isolated package checks
-also pass. M02 follows the [network checkpoints](roadmap/network-plan.md);
-these results do not add a terminal/editor adapter.
+configuration. The [07c handoff](handoffs/07c-schema-inspection.md) closes full
+REQ-07 under the current-machine scope and links the original checkpoint results.
+These CPU services do not add a terminal/editor adapter. Networking follows the
+[network checkpoints](roadmap/network-plan.md).
 
 M02b adds `shark.core.net-mtls`, `shark.core.net-session` and
 `shark.core.net-sessions-process` to the same prefix. The last test launches the
@@ -127,20 +123,15 @@ fixture certificates and no production listener. See the
 The latter runs `NetInterestProbe` with two actual clients and a bounded opaque
 TCP relay, recording `interest-process.json`. It measures active per-connection
 traffic and ordered-stream delay without changing installed bootstraps. Follow
-the [interest contract](network-interest.md). Its
-[M02d handoff](handoffs/M02d-spatial-interest.md) records the earlier 460 passing
-CPU CTests and protected package gate. M02e adds `shark.core.net-adversity`
+the [interest contract](network-interest.md). M02e adds `shark.core.net-adversity`
 (60 seconds, seed 1337) and `shark.core.net-adversity-process` (360 seconds).
 The latter launches test-only `NetAdversityProbe` processes and bounded opaque
 relays, recording `adversity-process.json`, with live owned-process memory and
 handle/descriptor samples. Follow the [qualification contract](network-qualification.md).
-M02e and full REQ-M02 are PASS under the current-machine scope: the
-[handoff](handoffs/M02e-integrated-qualification.md) and
-[receipt](coverage/evidence/M02e-integrated-qualification.json) record 474 passing
-CPU CTests and protected package checks. Assignment 08 follows the
-[persistence checkpoints](roadmap/persistence-plan.md); see the
-[08a handoff](handoffs/08a-source-documents.md) for source-codec qualification.
-Check all fourteen network families
+The [M02e handoff](handoffs/M02e-integrated-qualification.md) records completed
+current-machine network qualification. The [persistence checkpoints](roadmap/persistence-plan.md)
+retain subsequent source/scene/file qualification. When the whole network owner
+is affected, check all fourteen network families
 noninteractively after a native build:
 
 ```text
@@ -319,7 +310,7 @@ or invoke concurrent builds in it.
 | Release | `windows-release` | `linux-release` |
 | Sanitizers | `windows-asan` | `linux-asan-ubsan` |
 
-For Windows debug:
+For an explicit whole-project Windows Debug build/test run:
 
 ```text
 cmake --preset windows-debug
@@ -327,8 +318,11 @@ cmake --build --preset windows-debug
 ctest --preset windows-debug
 ```
 
-Use the same three commands with `linux-debug` in the existing Linux userspace,
-or with the corresponding release/sanitizer preset. The default build includes
+Use the same commands with `linux-debug` in the existing Linux userspace,
+or with the corresponding release/sanitizer preset when broad verification is
+selected. For routine work, build affected targets and filter tests under the
+[testing policy](testing-policy.md); a preset's complete inventory is not the
+default subchunk or single-subsystem closure gate. The default build includes
 EngineCore, EngineClient, EngineTools, Editor, Runtime, Server, Tests and both
 dependency-boundary checks. Engine is an interface target. Catch2 is the sole
 engine test framework; third-party tests are not enabled.
@@ -340,10 +334,11 @@ ctest --preset windows-debug --show-only
 
 Use real names/labels from that output or `tests/CMakeLists.txt`. A test selection
 containing no tests cannot establish a feature gate. Tests need bounded timeouts,
-deterministic seeds/clocks where relevant and meaningful failure cases. GPU/audio/
-scene-runner/export commands will be added with their owning increments.
+deterministic seeds/clocks where relevant and meaningful failure cases. Future
+audio/export commands retain their owning increments; current CPU/GPU runner commands
+are documented in the [scene-execution guide](scene-execution.md).
 
-| Current CTest cases | Labels |
+| Selected CTest families (inspect the live inventory for all cases) | Labels |
 | --- | --- |
 | `shark.unit`, `shark.failure-sentinel` | `cpu`, `unit` |
 | `shark.core.contracts` | `cpu`, `unit` |
@@ -459,10 +454,10 @@ inspection exposes no filesystem callback, decoder, converted mesh or renderer.
 1337), using the same private parser/source boundary without a new dependency.
 The [geometry contract](gltf-geometry.md) provides the fifteenth public CPU
 example and exact output/work limits. Its fixtures are licensed local inputs;
-normal tests download no models. Reuse the canonical profiles and verify
-geometry/source/FeatureWorld families, standalone Tools, Release and sanitizer
-builds. The generated result is CPU geometry and hierarchy; image decoding and
-material/cache publication retain 12c/12d.
+normal tests download no models. Reuse canonical profiles and select affected
+geometry/source/FeatureWorld checks under the testing policy. The generated
+result is CPU geometry and hierarchy; texture and material integration use the
+subsequent contracts below.
 
 12c adds memory-only PNG/JPEG texture conversion and
 `shark.tools.gltf-textures` (90 seconds, seed 1337), plus
@@ -484,8 +479,9 @@ and `shark.tools.gltf-import` (90 seconds), all seed 1337. They cover core mater
 values, bounded engine payloads and actual typed-resource owner/cache/job behavior.
 The [asset contract](gltf-assets.md) includes the new public example. The
 [12d handoff](handoffs/12d-material-assets.md) records the affected Windows/WSL
-checks; full REQ-12 still requires 12e, and no renderer or cooked runtime output
-is claimed. Use the testing policy to select future checks.
+checks. The [12e handoff](handoffs/12e-gltf-qualification.md) closes full REQ-12;
+no renderer or cooked runtime output is claimed. Use the testing policy to select
+future checks.
 
 08b adds `AuthoredSceneTests` and `shark.tools.authored-scene` (seed 1337,
 60-second timeout) for revision-consistent capture, project/world references,
@@ -528,19 +524,14 @@ five typed edits on the existing AuthoredScene owner, required revisions, nested
 command outcomes and bounded queries. Public Scene access is read-only; the
 existing persistence fixtures perform ordinary edits through these commands.
 Private fixture access retains pending/visit/closed-state invariant checks.
-09a is PASS under the current-machine scope: its
-[handoff](handoffs/09a-shared-commands.md) and
-[receipt](coverage/evidence/09a-shared-commands.json) record 461 CPU CTests,
-12 standalone Tools checks and protected package/API gates. Full REQ-09 remains
-NOT_RUN. The completed 09b qualification follows below.
+The [command handoff](handoffs/09a-shared-commands.md) and
+[batch handoff](handoffs/09b-atomic-batches.md) retain their original results.
+[Atomic batches and preview](authoring-transactions.md) use
+`shark.tools.authoring-batches` (60 seconds) and `shark.core.scene-edit`
+(30 seconds), both seed 1337. [Shared history](authoring-history.md) and
+[retained retries](authoring-retries.md) are also implemented; the
+[09e handoff](handoffs/09e-integrated-qualification.md) closes full REQ-09.
 
-09b is PASS under the current-machine scope. Its
-[transaction contract](authoring-transactions.md), [handoff](handoffs/09b-atomic-batches.md)
-and [receipt](coverage/evidence/09b-atomic-batches.json) record 605 full CPU CTests across seven profiles,
-14 standalone Tools checks, 15 public-example compiles, actual sanitizer objects
-and protected packages. Preserve `shark.tools.authoring-batches` (60 seconds)
-and `shark.core.scene-edit` (30 seconds), seed 1337. Full REQ-09 remains NOT_RUN.
-**Next: 09c, Shared undo and redo.**
 For changes affecting the original authoring/batch owner, this selects its seven
 original CPU Tools families; use the testing policy to determine relevance:
 
@@ -552,8 +543,7 @@ ctest --preset tools-debug -R "^shark.tools.(source-documents|authored-scene|aut
 Compile new or affected public examples from the source-document, authored-scene,
 project-file, command and [transaction](authoring-transactions.md) contracts
 without private dependency or fixture headers. No Editor, Client, display or GPU
-is needed for these services. Atomic batches and preview are qualified in 09b;
-undo/redo and retry retention remain 09c/09d. Terminal/editor adapters remain 15/16.
+is needed for these services. Terminal/editor adapters remain 15/16.
 
 ## Opt-in graphics package builds
 
@@ -818,6 +808,11 @@ the matching pair, for example `-DCMAKE_C_COMPILER=clang-18` and
 The private TLS C targets receive the selected sanitizer instrumentation without
 inheriting engine C++ warning flags.
 
+MSVC test executables declared in `tests/CMakeLists.txt` use `/INCREMENTAL:NO`.
+Their `/DEBUG` PDBs remain available; the next selected test link is a full link
+and creates no incremental-link (`.ilk`) file. Application and native-validation
+build options are unchanged.
+
 ```text
 python tools/check_format.py
 python tools/check_format.py --fix
@@ -853,8 +848,10 @@ python tools/ci.py --preset windows-debug --inject-test-failure --jobs 2
 python tools/toolchain_report.py --output out/toolchain.json --build-dir build/windows-debug
 ```
 
-Use the native preset. The injected run intentionally returns nonzero when the
-test harness works; run the ordinary workflow again to prove the injection is
+Use these whole-project helpers only when broad verification or a
+failure-propagation check is selected. Use the native preset. The injected run
+intentionally returns nonzero when the test harness works; run the ordinary
+workflow again to prove the injection is
 removed and the real suite passes. CI uses the same entry point. See [CI](ci.md)
 for artifact paths, job names and how each result is interpreted. Never stage,
 commit or push, even to manufacture CI evidence; the user owns those operations.
@@ -868,7 +865,8 @@ outcomes visible in the handoff without treating out-of-scope machines as active
 blockers. Generated output belongs under
 ignored build/evidence paths, and `.gitignore` is reviewed each increment.
 
-To verify source eligibility and a fresh build before the user creates a commit:
+When a source-eligibility or clean-build change warrants a fresh whole-project
+snapshot check, this optional command verifies it without staging or committing:
 
 ```text
 python tools/check_clean_source.py --preset windows-debug --jobs 2
@@ -952,8 +950,5 @@ check. Do not change user-level Codex settings to make repository validation pas
 The files are unignored repository sources; staging and committing them remains
 the user's responsibility.
 
-Assignment 01 also exercised the installed Codex CLI 0.163.0 app-server
-`skills/list` with this repository as its working directory and `forceReload=true`.
-All five skills were enabled with repository scope and no discovery errors.
-The local evidence is `out/ci/skills-discovery.json`; see the
-[assignment handoff](handoffs/01-build-foundation.md) for the verified result.
+The [assignment-01 handoff](handoffs/01-build-foundation.md) preserves the
+original client-side discovery result, tool version and evidence path.

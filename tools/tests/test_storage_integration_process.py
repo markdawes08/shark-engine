@@ -17,6 +17,7 @@ import time
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 sys.path.insert(0, str(Path(__file__).resolve().parent))
+from control_report import temporary_control_report
 from process_runner import run_process
 
 from test_storage_migration_process import expected_snapshot, fixture_hashes, identity
@@ -465,20 +466,21 @@ def negative_controls(args, phases: list[dict]) -> list[dict]:
                 raise AssertionError()
             return changed
 
-        output = args.output.with_name(args.output.stem + ".negative-" + name + ".json")
-        capture = io.StringIO()
-        with redirect_stdout(capture):
-            code = main(["--probe", str(args.probe), "--fixtures", str(args.fixtures),
-                         "--storage-fixtures", str(args.storage_fixtures), "--output", str(output)],
-                        scenario_runner=injected, run_controls=False)
-        result = json.loads(output.read_text(encoding="utf-8"))
-        reported = json.loads(capture.getvalue().splitlines()[-1])
-        require(calls == 1 and code == 1 and result["status"] == reported["status"] == "FAIL"
-                and result["error"] and result["error"] == reported["error"],
-                "integration supervisor accepted " + name)
-        controls.append({"name": name, "status": "PASS", "exit_code": code, "runner_calls": calls,
-                         "reported_status": result["status"], "summary_status": reported["status"],
-                         "error": result["error"]})
+        destination = args.output.with_name(args.output.stem + ".negative-" + name + ".json")
+        with temporary_control_report(destination) as output:
+            capture = io.StringIO()
+            with redirect_stdout(capture):
+                code = main(["--probe", str(args.probe), "--fixtures", str(args.fixtures),
+                             "--storage-fixtures", str(args.storage_fixtures), "--output", str(output)],
+                            scenario_runner=injected, run_controls=False)
+            result = json.loads(output.read_text(encoding="utf-8"))
+            reported = json.loads(capture.getvalue().splitlines()[-1])
+            require(calls == 1 and code == 1 and result["status"] == reported["status"] == "FAIL"
+                    and result["error"] and result["error"] == reported["error"],
+                    "integration supervisor accepted " + name)
+            controls.append({"name": name, "status": "PASS", "exit_code": code, "runner_calls": calls,
+                             "reported_status": result["status"], "summary_status": reported["status"],
+                             "error": result["error"]})
     return controls
 
 

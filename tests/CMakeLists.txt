@@ -1,3 +1,9 @@
+if(MSVC)
+    # Test executables retain /DEBUG symbols, but do not need a separate large
+    # incremental-link database per binary. Application link settings are unchanged.
+    add_link_options(/INCREMENTAL:NO)
+endif()
+
 add_executable(Tests
     bootstrap_tests.cpp
     core_digest_tests.cpp

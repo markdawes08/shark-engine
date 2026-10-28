@@ -15,6 +15,7 @@ import tempfile
 from types import SimpleNamespace
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+from control_report import temporary_control_report
 from process_runner import run_process
 
 
@@ -189,23 +190,24 @@ def negative_controls(probe: Path, output: Path) -> list[dict]:
                                    timed_out=name == "timeout",
                                    cleanup_errors=["controlled cleanup failure"] if name == "cleanup-failure" else [])
 
-        report_path = output.with_name(output.stem + ".negative-" + name + ".json")
-        captured = io.StringIO()
-        with redirect_stdout(captured):
-            result = main(["--probe", str(probe), "--output", str(report_path)],
-                          runner=fake_runner, run_controls=False)
-        report = json.loads(report_path.read_text(encoding="utf-8"))
-        summary = json.loads(captured.getvalue().splitlines()[-1])
-        require(calls == 1 and result == 1 and report["status"] == "FAIL" and summary["status"] == "FAIL"
-                and isinstance(report["error"], str) and bool(report["error"])
-                and summary["error"] == report["error"], "supervisor falsely accepted " + name)
-        expected_error = {"invalid-store-id": "metadata store ID is not a canonical UUIDv4",
-                          "wrong-world": "metadata world differs", "future-schema": "metadata schema version differs",
-                          "empty-exception": "AssertionError"}.get(name)
-        require(expected_error is None or report["error"] == expected_error,
-                "supervisor rejected the wrong condition for " + name)
-        rows.append({"name": name, "status": "PASS", "exit_code": result, "reported_status": report["status"],
-                     "summary_status": summary["status"], "error": report["error"]})
+        destination = output.with_name(output.stem + ".negative-" + name + ".json")
+        with temporary_control_report(destination) as report_path:
+            captured = io.StringIO()
+            with redirect_stdout(captured):
+                result = main(["--probe", str(probe), "--output", str(report_path)],
+                              runner=fake_runner, run_controls=False)
+            report = json.loads(report_path.read_text(encoding="utf-8"))
+            summary = json.loads(captured.getvalue().splitlines()[-1])
+            require(calls == 1 and result == 1 and report["status"] == "FAIL" and summary["status"] == "FAIL"
+                    and isinstance(report["error"], str) and bool(report["error"])
+                    and summary["error"] == report["error"], "supervisor falsely accepted " + name)
+            expected_error = {"invalid-store-id": "metadata store ID is not a canonical UUIDv4",
+                              "wrong-world": "metadata world differs", "future-schema": "metadata schema version differs",
+                              "empty-exception": "AssertionError"}.get(name)
+            require(expected_error is None or report["error"] == expected_error,
+                    "supervisor rejected the wrong condition for " + name)
+            rows.append({"name": name, "status": "PASS", "exit_code": result, "reported_status": report["status"],
+                         "summary_status": summary["status"], "error": report["error"]})
     return rows
 
 

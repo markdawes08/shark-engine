@@ -1,283 +1,94 @@
 # Shark
 
 Contributors and AI agents must follow [AGENTS.md](AGENTS.md) and the
-[testing policy](docs/testing-policy.md): focused checks for subchunks, broader
-verification at assignment closure or when affected behavior warrants it.
+[testing policy](docs/testing-policy.md). Select checks for affected behavior;
+whole-project workflows are available for explicitly broad verification.
 
-Shark is a C++20 game engine project targeting a **seamless open-world MMORPG**.
-Development and acceptance target **this Windows PC**, with its RTX 4070 Laptop
-and Intel GPUs for the editor/client and existing **WSL2 Ubuntu** for the headless
-server. [ADR 0010](docs/architecture/0010-current-machine-scope.md) limits the plan
-to available resources; other hardware, native Linux graphics, cloud deployment
-and Mac compatibility are outside current scope.
-The [MMORPG plan and existing-code assessment](docs/roadmap/mmorpg-plan.md) define
-the authoritative server, persistent world and staged client/server work.
-These are planned capabilities; the current engine provides Core services, raw
-input, owned Windows windows, offline frame/input scheduling, graphics-device
-ownership, clear presentation and fixed textured-cube rendering. CPU scenes provide
-checked entity ownership, Name/Transform, hierarchy, fixed component schemas and
-bounded revisioned inspection. M02a adds bounded loopback TLS/wire APIs and a
-deterministic fault model. M02b adds [mutual TLS and owned sessions](docs/network-sessions.md);
-local qualification is complete. M02c adds [authoritative pose replication](docs/network-replication.md)
-with bounded baselines, deltas and resynchronization. M02d adds
-[spatial interest](docs/network-interest.md), recipient privacy and bounded
-publication with measured per-connection traffic. M02e adds retained-storage
-observations and [integrated network qualification](docs/network-qualification.md)
-through active local processes and deterministic faults. CPU authoring now includes
-[versioned project/scene value codecs](docs/source-documents.md), with validation
-and legacy migration, plus [authored Scene capture and activation](docs/authored-scenes.md).
-08c adds [project file saves and external-edit conflicts](docs/project-files.md);
-its current-machine qualification is complete.
-09a adds [typed authoring commands](docs/authoring-commands.md) on that same
-owner, with expected revisions, bounded results and read-only Scene access.
-A separate opt-in graphics
-feasibility probe contains analytic draw/compute/readback cases.
-The versioned
-[requirements manifest](docs/coverage/requirements.json) preserves assignment
-scope and acceptance criteria for clean checkouts.
+Shark is a C++20 game engine targeting a **seamless open-world MMORPG**, usable
+by both human editor users and terminal-based LLM agents through shared services.
+Development and acceptance target **this Windows PC**, its RTX 4070 Laptop and
+Intel GPUs, and existing **WSL2 Ubuntu** for CPU/headless Server work.
+[ADR 0010](docs/architecture/0010-current-machine-scope.md) limits the plan to
+available resources; other hardware, native Linux graphics, cloud deployment
+and Mac compatibility are outside current scope. The planned local workload is
+16 active synthetic players across two region processes, plus a separate
+two-client graphical fixture; this is a development target, not a production
+capacity claim.
 
-The engine is designed for **both human editor users and terminal-based LLM
-agents**, with shared authoring services and no required model/provider integration.
-The [human/agent plan and foundation assessment](docs/roadmap/human-agent-plan.md)
-define noninteractive tools, discoverable schemas and safe project handoff.
-Shared CPU editing services are implemented; terminal/editor adapters remain
-assigned to 15/16. Terminal build/test tools work today.
-The [saved FeatureWorld](docs/featureworld.md) and CPU `SceneRunner` now exercise
-supported components and shared authoring/persistence services from a terminal,
-with explicit seed/ticks, case discovery and versioned JSON results. This is a
-test workflow; graphical scene authoring retains its later checkpoints.
-**10b is complete:** its [handoff](docs/handoffs/10b-featureworld.md) records
-311 passing CTest profile results, public API/sanitizer audits and protected
-packages. **10c is complete:** its [test supervisor](docs/scene-execution.md)
-passes twelve native GPU runs and the recovered sanitizer gate; see the
-[handoff](docs/handoffs/10c-gpu-execution.md).
-**10d and full assignment 10 are complete:** the
-[integrated qualification](docs/handoffs/10d-integrated-qualification.md) records
-660 full CTests across seven profiles, 36 standalone Tools checks, protected
-packages and twelve both-GPU runs.
+The [MMORPG plan](docs/roadmap/mmorpg-plan.md) defines the authoritative server
+and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.md)
+defines shared authoring, discoverable schemas, noninteractive results and safe
+project handoff without requiring a model or provider integration.
 
-**Assignment 11 is complete under the current-machine scope.** Shared CPU
-[asset identity/catalog](docs/asset-identity.md), [dependency imports/cache](docs/asset-import-cache.md)
-and [bounded background jobs](docs/asset-import-jobs.md) now pass
-[integrated qualification](docs/handoffs/11d-asset-qualification.md): 602 selected
-CTest outcomes, 39 public-example compiles, 26 actual sanitizer objects and
-protected packages. One saved reference survives moves, owner edits during work,
-stale completion, cancellation, retry and reopen; actual async process interruption
-preserves complete cache snapshots and explicit recovery. Follow the
-[completed asset checkpoints](docs/roadmap/asset-plan.md). Source decoding and
-conversion follow the [glTF checkpoints](docs/roadmap/gltf-plan.md) below.
+**Full assignment 12 is complete under the current-machine scope.** The
+[12e handoff](docs/handoffs/12e-gltf-qualification.md) records connected glTF
+import, interruption/recovery, offline fixture validation and package acceptance.
+**Next: 13, basic scene rendering and cameras; plan checkpoints first.** Completed
+checkpoints and their original results are indexed in
+[requirements and coverage](docs/coverage/README.md); historical counts are not
+recurring verification requirements. The user's [nonblocking backlog decision](docs/backlog.md)
+authorizes continued development under each increment's acceptance criteria.
 
-**12a is complete under current-machine scope.** The shared CPU
-[glTF source inspector](docs/gltf-source.md) validates explicit byte snapshots,
-references and bounds with a private pinned parser. Its
-[handoff](docs/handoffs/12a-gltf-foundation.md) records 486 selected passing tests,
-42 public-example compiles, 30 actual sanitizer objects and protected packages.
-**12b is also complete:** shared CPU [geometry conversion](docs/gltf-geometry.md)
-returns validated sparse geometry, triangle topology, transforms, shared instances
-and bounds. Its [handoff](docs/handoffs/12b-gltf-geometry.md) records 357 fresh
-passing test outcomes, 45 public-example compiles, 32 actual sanitizer objects and
-protected packages. **12c is also complete:** shared CPU
-[image/texture conversion](docs/gltf-textures.md) returns bounded RGBA8/16 pixels,
-usage-specific color/data/normal mip chains and per-use samplers through the same
-captured-source owner. Its [handoff](docs/handoffs/12c-gltf-textures.md) records
-507 fresh outcomes, 48 public-example compiles, 36 actual sanitizer objects and
-protected packages, including 136 fresh full Server outcomes. **12d is complete:**
-[materials and asset integration](docs/gltf-assets.md) add core material values,
-bounded engine payloads and typed resource imports through the existing cache/job
-owner. Its [handoff](docs/handoffs/12d-material-assets.md) records selected Windows,
-WSL and sanitizer checks under the testing policy. All
-[five checkpoints](docs/roadmap/gltf-plan.md) and **full REQ-12 are complete**.
-The [12e handoff](docs/handoffs/12e-gltf-qualification.md) records connected
-GLB/sparse/fallback and interruption/recovery acceptance, independent offline
-validation, 262 passing profile results and protected package checks.
-Next: **13, basic scene rendering and cameras**.
+Current capabilities include:
 
-**Assignment 03 and its [three checkpoints](docs/roadmap/core-plan.md) are complete.**
-**04c and full assignment 04 are complete under the current-machine scope.**
-**05a, graphics device foundation, is complete under the current-machine scope.**
-**05b, swapchain, submission and presentation lifecycle, is complete under the
-current-machine scope.** The [05b handoff](docs/handoffs/05b-presentation-lifecycle.md)
-records 236 passing CTests and 2,304 validated presentations across both local
-GPUs, with repeated resize, minimize/restore and teardown.
-**06a, CPU/offline shader tooling, is complete.** The
-[06 checkpoint plan](docs/roadmap/shader-resource-plan.md),
-[shader contract](docs/shader-pipeline.md) and
-[06a handoff](docs/handoffs/06a-offline-shaders.md) record the offline checkpoint
-and its verification limits. The user has authorized continued development under
-the [nonblocking backlog decision](docs/backlog.md). **06b is complete:**
-[owned GPU resources and offscreen rendering](docs/gpu-resources.md) pass on both
-local GPUs in Debug, Release and ASan. The [06b handoff](docs/handoffs/06b-gpu-resources.md)
-records 240 passing CPU CTests and native readback/failure/lifecycle evidence.
-**06c and full assignment 06 are complete** under the current-machine scope,
-including window cube integration and precompiled Runtime distribution. The
-[06c handoff](docs/handoffs/06c-window-distribution.md) records 261 CPU tests, both-GPU
-validation and isolated package execution. Assignment 07 now follows [three checkpoints](docs/roadmap/scene-plan.md).
-**07a is complete**: CPU scene ownership, checked identities, deferred mutation and
-global-cell coordinates. **07b is complete under the current-machine scope.**
-The [07b handoff](docs/handoffs/07b-transform-hierarchy.md) and
-[receipt](docs/coverage/evidence/07b-transform-hierarchy.json) record 362 passing
-CPU CTests, protected Runtime/Server builds and isolated package checks.
-[Scene contracts](docs/scene-contracts.md) and the
-[Name/Transform guide](docs/transforms.md) describe mandatory components, validated
-hierarchy, local/world reparenting and subtree deletion. 07c implements
-[schemas and bounded revisioned inspection](docs/scene-inspection.md) as CPU C++
-APIs; file formats, terminal commands and editor controls keep their later owners.
-**07c and full REQ-07 are complete under the current-machine scope.** The
-[07c handoff](docs/handoffs/07c-schema-inspection.md) and
-[receipt](docs/coverage/evidence/07c-schema-inspection.json) record 376 passing CPU
-CTests with no failures/skips, protected builds and isolated package checks.
-**M02a is complete under the current-machine scope**: 404 CPU CTests pass, including
-sanitizers and real TLS client/server processes, with protected builds and isolated
-package checks. The [handoff](docs/handoffs/M02a-transport-wire.md) records the
-results. **M02b, authentication and owned sessions, is complete**: 425 CPU CTests
-and protected package checks pass. Its [handoff](docs/handoffs/M02b-owned-sessions.md)
-records the evidence. **M02c, authoritative replication and resynchronization, is complete**:
-446 CPU CTests and protected package checks pass. The
-[handoff](docs/handoffs/M02c-authoritative-replication.md) records the evidence.
-**M02d spatial interest, privacy and connection budgets is complete**: its
-[handoff](docs/handoffs/M02d-spatial-interest.md) records 460 passing CPU CTests
-and protected package checks. **M02e and full REQ-M02 are PASS under the
-current-machine scope.** The [handoff](docs/handoffs/M02e-integrated-qualification.md)
-and [receipt](docs/coverage/evidence/M02e-integrated-qualification.json) record
-474 passing CPU CTests and protected package qualification across the
-[five network checkpoints](docs/roadmap/network-plan.md).
-**M03a, Store foundation, is complete:** the [server-only store](docs/durable-store.md)
-passes 525 CPU CTests, ten additional standalone Tools checks and protected
-package/API gates. Its [handoff](docs/handoffs/M03a-durable-store.md) records the
-current-machine evidence. **M03b, Owned durable characters, is complete:**
-[durable character services](docs/durable-characters.md) preserve ownership,
-revocation and revision-checked checkpoints across authenticated restart.
-Its [handoff](docs/handoffs/M03b-owned-characters.md) records 539 passing CPU CTests,
-ten additional standalone Tools checks and protected package/API gates.
-**M03c, Atomic transactions, is complete:** [atomic transfers](docs/durable-transactions.md)
-conserve the modeled currency/items and retain bounded durable retry outcomes.
-Its [handoff](docs/handoffs/M03c-atomic-transactions.md) records 553 passing CPU
-CTests, ten additional standalone Tools checks and protected package/API gates.
-**M03d, Runtime failure recovery, is complete:** the
-[bounded storage worker](docs/durable-recovery.md) preserves outcomes across
-timeouts and fences late results against current sessions and scene entities.
-Its [handoff](docs/handoffs/M03d-runtime-recovery.md) records 567 passing CPU
-CTests, 10 standalone Tools checks and protected package/API gates.
-**M03e, Database migration and restoration, is complete:** explicit
-[maintenance services](docs/durable-maintenance.md) validate backups, upgrade
-historical stores and create isolated restore candidates. Its
-[handoff](docs/handoffs/M03e-migration-restoration.md) records 581 passing CPU
-CTests, 10 standalone Tools checks and protected package/API gates.
-**M03f and full REQ-M03 are complete under the current-machine scope.** The
-[handoff](docs/handoffs/M03f-integrated-qualification.md) records 588 passing CPU
-CTests, 10 standalone Tools checks and protected package/API gates. The
-[connected fixture](docs/durable-qualification.md) qualifies migration,
-authenticated runtime work, crash/outage recovery and isolated restored restart.
-**09a, shared command foundation, is complete under the current-machine scope.**
-Its [handoff](docs/handoffs/09a-shared-commands.md) and
-[receipt](docs/coverage/evidence/09a-shared-commands.json) record 461 passing CPU
-CTests, 12 standalone Tools checks and protected package/API gates.
-The [five-checkpoint plan](docs/roadmap/authoring-plan.md) keeps full REQ-09
-NOT_RUN.
-**09b, atomic transactions and preview, is complete under the current-machine scope.**
-The [transaction contract](docs/authoring-transactions.md) and
-[handoff](docs/handoffs/09b-atomic-batches.md) describe bounded C++ batches,
-pure preview and one revision-checked publication preserving surviving handles
-and unsaved state. Its [receipt](docs/coverage/evidence/09b-atomic-batches.json)
-records 605 full CPU CTests, 14 standalone Tools checks, public examples,
-sanitizer audits and protected packages.
-**09c, Shared undo and redo, is complete under the current-machine scope.**
-The [history contract](docs/authoring-history.md),
-[handoff](docs/handoffs/09c-shared-history.md) and
-[receipt](docs/coverage/evidence/09c-shared-history.json) record bounded shared
-history, revision/ticket conflicts, safe incarnation restoration and save/reload
-policy. Qualification passes 610 full CPU CTests, 16 standalone Tools checks,
-18 public-example compiles, sanitizer audits and protected packages.
-09d/09e subsequently completed safe retries and integrated qualification;
-[full REQ-09 is PASS](docs/handoffs/09e-integrated-qualification.md). Assignment10
-follows its [FeatureWorld checkpoints](docs/roadmap/featureworld-plan.md).
-Assignment 08, Project and scene persistence, completed its
-[four checkpoints](docs/roadmap/persistence-plan.md). 08a adds CPU project/scene
-formats, validation and migration through [owned C++ values](docs/source-documents.md).
-**08a is complete:** its [handoff](docs/handoffs/08a-source-documents.md) records
-484 passing CPU CTests, standalone Tools tests and protected package checks.
-**08b is complete:** [Scene capture and transactional activation](docs/authored-scenes.md)
-passes 489 full-suite CPU CTests, standalone Tools tests, protected package
-checks and public API audits. Its [handoff](docs/handoffs/08b-scene-activation.md)
-and [receipt](docs/coverage/evidence/08b-scene-activation.json) retain the evidence.
-**08c is complete:** [safe project files and conflicts](docs/project-files.md)
-pass 499 full-suite CPU CTests, eight additional standalone Tools checks and
-protected package/API audits. The [handoff](docs/handoffs/08c-project-files.md)
-and [receipt](docs/coverage/evidence/08c-project-files.json) retain the evidence.
-**08d and full REQ-08 are PASS under the current-machine scope:** 504 CPU
-CTests, ten additional standalone Tools checks, all three public examples
-and protected packages pass against 299 unchanged inputs. The
-[handoff](docs/handoffs/08d-integrated-qualification.md) and
-[receipt](docs/coverage/evidence/08d-integrated-qualification.json) record
-integrated migration, save/reopen, conflict and interrupted-save evidence.
-See the [transport contract](docs/network-transport.md) and the
-[cube launch workflow](docs/building.md#cube-sample-and-runtime-package).
-The [05a handoff](docs/handoffs/05a-graphics-device.md) records 211 passing CTests
-and 112 validated device lifetimes across the two local GPUs.
-The [05 checkpoint plan](docs/roadmap/graphics-device-plan.md) separates device
-ownership, presentation in 05b, and full failure/stress qualification in 05c.
-See the [device API and terminal commands](docs/graphics-device.md) and
-[presentation lifecycle and sample](docs/presentation-lifecycle.md).
-See the [input guide](docs/input-contracts.md),
-[window lifecycle guide](docs/window-lifecycle.md),
-[frame-loop guide](docs/frame-loop.md),
-[04c handoff](docs/handoffs/04c-frame-loop.md) and
-[window/input plan](docs/roadmap/window-input-plan.md). Full `REQ-04` is PASS:
-196 Windows/WSL CTests, three native window smoke runs and protected
-standalone/package checks passed.
-See the [03c handoff](docs/handoffs/03c-time-and-work.md),
-[Core API guide](docs/core-contracts.md), [lifecycle guide](docs/application-lifecycle.md)
-and [timing/work guide](docs/time-and-work.md). Reusable CPU scheduling and bounded
-completions pass local qualification. The client frame loop now reuses Core
-timing for bounded 60 Hz ticks, pause/step and input consumption across frames.
-Assignment 02 is complete under
-the current-machine scope. The headless server and Core/Client
-separation have passed local and hosted qualification, including deliberate test
-failure and restored success. The [graphics probe](docs/graphics-probe.md) adds
-locked dependencies, device inventory, validated GPU readbacks and bounded lifecycle; the
-[local graphics gate](docs/roadmap/graphics-plan.md) passes on both available GPUs. Editor/Runtime provide
-version, bootstrap help, explicit `--cube` textured rendering, `--graphics` clear presentation and `--window`
-diagnostics through a shared offline frame/input pump;
-Server adds validated startup, timed execution and
-shutdown. Scene rendering, gameplay and editor UI remain future increments;
-typed file services and editing are CPU C++ APIs. CPU build results do not
-establish graphics or release-platform support.
+- [Core services](docs/core-contracts.md), [application ownership](docs/application-lifecycle.md)
+  and [bounded timing/work](docs/time-and-work.md), with separate Core, Client,
+  Tools and headless Server boundaries.
+- [Input](docs/input-contracts.md), [Windows windows](docs/window-lifecycle.md)
+  and an [offline frame/input loop](docs/frame-loop.md), with owned
+  [graphics devices](docs/graphics-device.md), [clear presentation](docs/presentation-lifecycle.md),
+  [GPU resources](docs/gpu-resources.md) and a fixed textured-cube sample using
+  [precompiled shaders](docs/shader-pipeline.md). The opt-in
+  [graphics probe](docs/graphics-probe.md) supplies analytic draw/compute/readback
+  cases. CPU build success does not establish graphics or release-platform support.
+- CPU [scene ownership](docs/scene-contracts.md), [Name/Transform and hierarchy](docs/transforms.md),
+  [schemas and revisioned inspection](docs/scene-inspection.md),
+  [source codecs](docs/source-documents.md), [capture/activation](docs/authored-scenes.md)
+  and [project-file conflict handling](docs/project-files.md).
+- Shared [authoring commands](docs/authoring-commands.md),
+  [atomic batches and preview](docs/authoring-transactions.md),
+  [undo/redo](docs/authoring-history.md) and [retained retries](docs/authoring-retries.md)
+  through one owner. Terminal/editor adapters retain assignments 15/16.
+- Bounded [TLS/wire transport](docs/network-transport.md),
+  [mutually authenticated owned sessions](docs/network-sessions.md),
+  [authoritative replication](docs/network-replication.md) and
+  [spatial interest/privacy/budgets](docs/network-interest.md), qualified through
+  [local processes and deterministic faults](docs/network-qualification.md).
+- Server-only [durable storage](docs/durable-store.md),
+  [owned characters](docs/durable-characters.md), [atomic transactions](docs/durable-transactions.md),
+  [runtime recovery](docs/durable-recovery.md) and [migration/restore](docs/durable-maintenance.md),
+  with [connected qualification](docs/durable-qualification.md).
+- CPU [asset identity/catalog](docs/asset-identity.md),
+  [dependency imports/cache](docs/asset-import-cache.md) and
+  [bounded background jobs](docs/asset-import-jobs.md). The completed
+  [glTF checkpoints](docs/roadmap/gltf-plan.md) add [source inspection](docs/gltf-source.md),
+  [geometry/hierarchy](docs/gltf-geometry.md), [images/textures](docs/gltf-textures.md)
+  and [materials/typed asset integration](docs/gltf-assets.md).
+- The saved [FeatureWorld](docs/featureworld.md), CPU [SceneRunner](docs/scene-runner.md)
+  and explicit [CPU/GPU supervisor](docs/scene-execution.md), with case discovery,
+  seed/tick controls and versioned JSON results. These are test workflows;
+  graphical scene authoring retains its later checkpoints.
 
-The [02b handoff](docs/handoffs/02b-graphics-cases.md) records local cases, validation
-and limits. Checkpoint 02c is retired by the
-[platform scope amendment](docs/handoffs/windows-linux-scope-amendment.md);
-the former six hardware rows and independent-machine checks were subsequently
-removed from mandatory scope by the user's current-machine decision.
-The [final 02d local handoff](docs/handoffs/02d-final-verification.md) records
-Windows/Linux probe packaging, Windows lifecycle evidence and isolated Ubuntu
-CPU/package checks under its original scope. The
-[current-machine handoff](docs/handoffs/current-machine-scope-amendment.md) records
-the amended gate and local MMO plan. The planned workload is 16 active synthetic
-players across two local region processes, with a separate two-client graphical
-fixture; this is a development target, not a production capacity claim.
+Editor/Runtime currently expose version/help, `--cube`, `--graphics` and
+`--window` diagnostics. Server exposes validated startup, timed execution and
+shutdown. These bootstraps have no active player connections, world simulation,
+scene renderer or game-authoring UI yet; implemented networking, persistence
+and editing services are C++ APIs.
 
-- [Architecture decisions](docs/architecture/README.md): targets, dependencies,
-  platform candidates, formats, simulation conventions and the MMORPG profile.
-- [Requirements and coverage](docs/coverage/README.md): every roadmap assignment
-  has owned requirements and observable acceptance criteria. Foundation features
-  and the Name/Transform components map to executable tests; terminal/editor and
-  Lua integration retain their later owners.
+- [Architecture decisions](docs/architecture/README.md) define target boundaries,
+  dependencies, formats, simulation conventions and the MMORPG profile.
+- [Requirements and coverage](docs/coverage/README.md) retain assignment scope,
+  acceptance criteria, surface mappings and original handoff/receipt navigation.
 - [Build instructions](docs/building.md), [CI](docs/ci.md) and [agent guidance](AGENTS.md)
-  describe native presets, tool versions, checks and ownership policies.
-- [Assignment 01 handoff](docs/handoffs/01-build-foundation.md) records local
-  verification and the hosted CI gate that was open at that handoff.
-- [CI verification follow-up](docs/handoffs/01-ci-verification.md) records the
-  historical hosted CPU matrix, sanitizer repair and verified
-  deliberate-failure/red-to-green proof.
-- [MMORPG planning handoff](docs/handoffs/mmorpg-planning-amendment.md) records
-  the scope change and repository state at that handoff.
-- [M01 handoff](docs/handoffs/M01-headless-server.md) records the headless server
-  implementation and local evidence; its [hosted CI follow-up](docs/handoffs/M01-ci-verification.md)
-  closes the native CPU, headless Docker and deliberate-failure/restored-success gate.
-- [Human/agent planning handoff](docs/handoffs/human-agent-planning-amendment.md)
-  records the shared-authoring amendment and review of the existing foundation.
+  describe tools, commands and ownership policies.
+- The [01 CI follow-up](docs/handoffs/01-ci-verification.md) and
+  [M01 CI follow-up](docs/handoffs/M01-ci-verification.md) preserve the completed
+  hosted CPU, headless Docker and deliberate-failure/restored-success evidence.
+  Hosted CI remains supplemental to current-machine roadmap acceptance.
 
-From an x64 Visual Studio developer shell with the documented tools installed:
+For an explicit whole-project build/test run, use an x64 Visual Studio developer
+shell with the documented tools installed. For incremental work, select affected
+targets/tests under the [testing policy](docs/testing-policy.md):
 
 ```powershell
 cmake --preset windows-debug

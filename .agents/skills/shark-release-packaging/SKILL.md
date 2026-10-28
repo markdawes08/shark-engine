@@ -3,223 +3,86 @@ name: shark-release-packaging
 description: Validate Shark standalone exports and packages for cooked dependency completeness, runtime separation, licenses and isolated deployment on the current machine.
 ---
 
-# Shark export and release packaging
+# Shark release and package qualification
 
-Apply the [testing policy](../../../docs/testing-policy.md) before scheduling work.
-Its 2026-10-27 cadence supersedes older recurring matrix/evidence instructions.
-Use this workflow for requested packaging, assignment-closure package gates, or
-changes affecting package contents, dependency closure, install/launch behavior
-or artifact validation. Subchunks without those changes and documentation edits
-do not trigger deployment. A private Tools lock entry calls for protected-boundary
-checks, not automatically full Server behavior or unrelated GPU/package runs. Once packaging
-is in scope, retain the actual closure, license and isolated-launch checks below.
-
-09a's [shared commands](../../../docs/authoring-commands.md) stay in EngineTools.
-Protected Runtime/Server packages must not acquire authoring command services,
-JSON/source readers, mutable invariant-fixture access or the command test target.
-Compile affected public Tools examples separately from those packages under the
-testing policy; all public AuthoredScene reads are const and ordinary edits use
-the typed service. 09a is PASS under the current-machine scope; follow its
-[handoff](../../../docs/handoffs/09a-shared-commands.md) and
-[receipt](../../../docs/coverage/evidence/09a-shared-commands.json).
-09b is also PASS under the current-machine scope. Follow its
-[transaction contract](../../../docs/authoring-transactions.md),
-[handoff](../../../docs/handoffs/09b-atomic-batches.md) and
-[receipt](../../../docs/coverage/evidence/09b-atomic-batches.json): 605 full CPU
-CTests, 14 standalone Tools checks, public examples, sanitizer objects and
-protected packages pass. Full REQ-09 remains NOT_RUN.
-09c is PASS under the current-machine scope. Follow the
-[history contract](../../../docs/authoring-history.md),
-[handoff](../../../docs/handoffs/09c-shared-history.md) and
-[receipt](../../../docs/coverage/evidence/09c-shared-history.json): 610 full CPU
-CTests, 16 additional Tools checks, 18 public-example compiles, actual sanitizer
-objects and protected packages pass. Preserve `shark.tools.authoring-history`
-(60 seconds, seed1337), all earlier families and the4096/4095 sparse workload.
-Undo/redo require the next ticket and current revision; save retains history,
-activation clears it, and restored incarnations receive fresh generations.
-Full REQ-09 is now PASS after09e. Next: 10, FeatureWorld and automated scene runner.
-
-09d is PASS under the current-machine scope. Follow the
-[retry contract](../../../docs/authoring-retries.md),
-[handoff](../../../docs/handoffs/09d-retained-retries.md) and
-[receipt](../../../docs/coverage/evidence/09d-retained-retries.json): 486 full CPU
-CTest executions, 20 standalone Tools checks, 21 public-example compiles, actual
-sanitizer objects and protected packages pass. Preserve both retry families
-(60/90 seconds, seed 1337), 25 cases, the real restart fixture and every earlier
-case/limit. Scope plus consecutive sequences and a nonrewinding watermark fence
-expired IDs; save/activation/history clear retain this owner's ledger. Check the
-outer Result, reply outcome and original operation result. Extend exact input
-comparison and payload charges when command/component fields grow. New owners
-require reconciliation; never blindly repeat expired requests. These remain
-Tools-only services, with no durable journal or terminal/editor/player adapter.
-
-No authoring installer or terminal/editor adapter is added by 09a.
-
-M03f's [integrated durable qualification](../../../docs/durable-qualification.md)
-retains the existing package boundary. Connected integration probes, credentials,
-database lineages, backups and supervisor evidence never enter Runtime/Server
-packages. When package checks are selected, record their actual build inputs and
-outcomes; the historical frozen-input matrix is not a recurring subchunk gate.
-
-M03e adds explicit offline database maintenance within EngineStorage. Keep
-independent legacy/current SQL fixtures, temporary backups, restored candidates
-and migration probes outside Runtime/Server packages. Maintenance public examples
-compile without SQLite headers. Isolated same-machine restore is distinct from
-host/disk-loss protection and must not silently roll back acknowledged outcomes.
-
-M03a adds private static SQLite through EngineStorage to the Server build only.
-Offline Server builds also require `SHARK_SQLITE_ARCHIVE`; prepare it separately
-with `tools/storage_dependency.py --output`. The installed Server closure includes
-`licenses/SQLite/LICENSE.txt` derived from the exact upstream notice. Reject
-database files, journals, SQLite shared libraries, the upstream shell and fixtures
-in packages. Runtime/Tools/Core must not acquire the SQLite dependency.
-
-08c [project file storage](../../../docs/project-files.md) belongs only to
-EngineTools. Its native I/O, source readers, lock/stage files and crash fixtures
-must not enter Runtime/Server packages. Recheck affected source/dependency or
-installed-file closures when changes to authoring services reach those boundaries.
-
-08d closes the combined persistence gate using the same local boundaries. Keep
-the integrated migration/reopen and interrupted authored-save fixtures outside
-Runtime/Server packages; no source-file runtime mode or live player durability
-is implied. Compile changed public C++ examples according to the testing policy.
-
-Read [AGENTS.md](../../../AGENTS.md), the exact assigned export/release increment,
+Apply the [testing policy](../../../docs/testing-policy.md). Use this workflow for
+an explicit package/export gate or changes to install rules, binary closure,
+licenses, artifact formats or deployment behavior. Ordinary CPU edits and a private
+Tools lock entry do not automatically require package redeployment. Read [AGENTS.md](../../../AGENTS.md),
 [target boundaries](../../../docs/architecture/0001-targets-and-boundaries.md),
-[platform matrix](../../../docs/architecture/0003-platforms.md) and
-[cooked-format rules](../../../docs/architecture/0004-formats-and-identity.md).
-Apply [ADR 0010](../../../docs/architecture/0010-current-machine-scope.md): Windows
-client/editor acceptance uses this PC, while Linux headless/CPU/package acceptance
-uses its existing WSL environments. No additional physical machine, native Linux
-desktop/GPU or broad shipping compatibility gate is active.
-Follow the [human and terminal-agent contract](../../../docs/architecture/0008-human-agent-authoring.md)
-and [implementation plan](../../../docs/roadmap/human-agent-plan.md) at the owning
-export and acceptance gates; those authoring interfaces remain planned.
+[format rules](../../../docs/architecture/0004-formats-and-identity.md) and the
+assigned export increment. Bootstrap launch is not a playable exported game.
 
-Assignment 01 has no game export, cooker, installer or signing workflow. Bootstrap
-Runtime is not a playable distributed game. The available boundary check is the
-host's `runtime-only` configure/build preset and ALL boundary target in
-[building](../../../docs/building.md); `python tools/validate_contract.py` checks
-contracts. Do not invent export commands or treat a bootstrap launch as the
-acceptance gate for 14, 31 or 35. Add real commands when their owner implements them.
+## Scope and protected closures
 
-M01 adds the `server-only` preset and `cmake --install build/server-only --prefix
-out/server-package --component Server` for a Server closure fixture.
-The minimal Ubuntu job independently inspects its source, link and ELF closure
-and starts the installed executable. It is not a game export or licensed release
-package; do not claim M08/35 acceptance from this bootstrap fixture.
-07a adds the private EnTT Core dependency; 07b adds centrally configured GLM as
-the approved public math exception through `SharkMath` and `<shark/math.hpp>`.
-M02a adds private static Mbed TLS and its bundled TF-PSA Crypto implementation.
-Prepare all three exact archives with `python tools/core_dependencies.py --output
-out/dependency-cache` before a disconnected Server configure, then pass
-`SHARK_ENTT_ARCHIVE`, `SHARK_GLM_ARCHIVE` and `SHARK_MBEDTLS_ARCHIVE` as described in
-[building](../../../docs/building.md#headless-server). Read-only source mounts
-require a writable archive directory and absolute input paths. Source closure
-compares populated dependency files with their verified archives; missing,
-changed or additional inputs fail. Server installation and Runtime notices must
-retain `licenses/EnTT/LICENSE` and the complete `licenses/GLM/copying.txt` under
-GLM's selected MIT option. Both dependencies are header-only and add no shared
-library payload. Mbed TLS uses the official complete release archive, including
-the pinned TF-PSA/framework inputs, and its dependency verifier records the
-reviewed unused test/example symlinks that are not populated. Preserve every
-locked notice under `licenses/MbedTLS/`, including nested bundled notices; the
-Runtime inspector rejects each missing notice and unexpected TLS payloads.
-TLS libraries are static and private to Core, so no third-party TLS DLLs, test
-certificates or private keys belong in Runtime/Server packages. The dependency
-needs a C compiler in the build environment, not in the installed runtime.
-The GLM exception does not authorize other public third-party
-types or presentation/authoring dependencies in Core. These additions do not
-qualify a shipping MMO package.
+The [current-machine scope](../../../docs/architecture/0010-current-machine-scope.md)
+uses native Windows relocation and the retained SDK-free WSL Ubuntu userspace.
+No additional physical machine, native Linux GPU, Mac, cloud, signing service or
+external distribution channel is required. Describe same-machine isolation honestly;
+development tools remain installed on Windows.
 
-08a's [source-document codec](../../../docs/source-documents.md) privately uses
-locked nlohmann/json in EngineTools. Protected Runtime/Server presets set
-`SHARK_BUILD_TOOLS=OFF`; verify that they neither populate JSON nor package its
-headers, authoring library or source fixtures. The JSON notice belongs with a
-future authoring distribution, not these protected packages. 08a does not add an
-authoring installer, source-file export mode or cooked game payload.
+Runtime cannot acquire Tools/editor/GUI authoring, JSON/cgltf/source decoders,
+source shader compilers, test libraries or private fixture interfaces. Server uses
+Core and private Storage without presentation/authoring dependencies. Typed authoring
+commands, retries, cache/job services, credentials and process/recovery fixtures
+never enter protected packages. Core/Client/Tools/Runtime cannot acquire SQLite.
 
-Assignment 02d adds Windows/Linux graphics probe packages, documented in
-the [probe guide](../../../docs/graphics-probe.md). Use the explicit
-`graphics-windows-release` preset and `tools/package_graphics_probe.py` inputs;
-the builder rejects Debug CRT, stale artifacts and unresolved DLLs. The package's
-PowerShell launcher verifies files/results and bounds process trees without a
-checkout, Python or SDK. Linux uses `graphics-linux-release`,
-`tools/package_graphics_probe_linux.py` and the package's
-`python3 -I -B run_graphics_probe.py` launcher. Inspect every bundled ELF and
-reject RPATHs, unsupported imports and newer-than-baseline symbol requirements.
-Require Ubuntu 24.04 x86-64, Python 3.12+ standard library and OS runtime/X11
-libraries; graphical modes additionally need an installed vendor ICD and display.
-The accepted local describe/unavailable-display checks do not require a GPU.
-No compiler/SDK/source checkout is needed to launch.
-The Linux launcher verifies helper/payload hashes, uses the shared native
-evidence validator and bounds output/process groups, including SIGINT/SIGTERM.
-Retain its documented limits for escaping descendants, SIGKILL and machine loss.
-For a probe package gate, exercise real Unicode/space relocation, required
-validation and negative inputs. The full 100/20/600 workload on both active
-Windows GPUs belongs to its graphics qualification gate; future reruns follow
-the testing policy's graphics-change and assignment-closure triggers.
-CPU launcher tests use synthetic children and cannot qualify GPUs. Windows
-relocation outside the checkout with system-only PATH, cleared development
-overrides and inspected DLL closure is accepted for the local package gate.
-The SDK-free Linux runtime userspace establishes its CPU/dependency path. Neither
-claims independent physical clean-machine execution or broad compatibility.
-Native Linux GPU launch is outside scope. Mac 02c is retired under
-[ADR 0009](../../../docs/architecture/0009-windows-linux-platform-scope.md);
-the former six hardware rows retain historical NOT_RUN outcomes but no longer
-block progression. Assignment 02 closes by aggregating local package, failure and
-both full GPU workloads under ADR 0010; package construction alone is insufficient.
+Use existing `runtime-only` / `server-only` presets and the builders/inspectors in
+[building](../../../docs/building.md). Server installation uses the Server component;
+tests are disabled in these protected presets, so a build does not prove behavior.
+Core offline inputs are `SHARK_ENTT_ARCHIVE`, `SHARK_GLM_ARCHIVE` and
+`SHARK_MBEDTLS_ARCHIVE`; Server additionally uses `SHARK_SQLITE_ARCHIVE`. Reuse exact
+cached archives. Source closure compares populated inputs with verified archives;
+missing, changed or extra dependency files must reject. Read-only source mounts
+need absolute inputs and a writable archive/build location.
 
-Early export 14 may use explicitly versioned engine-owned development payloads;
-31 replaces them with validated cooked dependency closure. Include declared roots
-for script-selected/dynamically assembled prefab, scene and audio IDs, precompiled
-shaders, derived IBL, scripts, fonts/audio and redistribution notices. Missing
-dependencies fail atomically with machine-readable errors and progress status.
-Keep source importers, authoring services, GUI libraries and offline compilers out
-of Runtime. Client/editor packages target this Windows PC; headless Server
-packages target the existing isolated WSL Ubuntu runtime.
+Retain all locked redistribution notices, including EnTT, GLM's complete MIT-selected
+`copying.txt`, complete Mbed TLS/TF-PSA nested notices and SQLite's upstream notice.
+Private static dependencies do not authorize shipping shared TLS/SQLite libraries,
+upstream shells, test certificates, keys, database files/journals or source fixtures.
+Tools-OFF configurations must neither populate nor package JSON/cgltf/image decoders.
 
-Launch future Windows exports outside the checkout with explicit dependency
-closure, isolated PATH/developer overrides and no runtime access to editor/source
-payloads. Launch Linux Server packages in the separate SDK-free WSL runtime
-userspace. Record that Windows development tools remain installed; do not claim a
-physical clean-machine test. Verify host/target restrictions, startup scenes and a
-prefab plus sound chosen only by script. Test repeatable cooking under pinned
-inputs; signing does not need byte-identical package output. Preserve
-logs, build inputs, symbols and precise OS/CPU/GPU/driver evidence per matrix row.
+## Build, inspect and relocate
 
-Qualify authoring from a fresh terminal-agent session using only documented
-discovery, schemas and public commands, then hand the same project to a human in
-the editor and back without conversion or state loss. Exercise shared validation,
-revision conflicts, safe retries and undo/recovery semantics. CPU validation,
-import/cook and packaging must run without an editor, window or GPU; declare
-hardware-dependent operations separately. Retain structured diagnostics, job
-status/cancellation results and artifact manifests so terminal automation can
-determine success without parsing UI text. Missing GUI/hardware qualification
-remains NOT RUN even when the terminal workflow passes.
+Use `tools/package_runtime.py` for the existing Runtime package. Graphics-probe
+packages use the exact Release presets and builders documented in the
+[probe guide](../../../docs/graphics-probe.md); they are diagnostic packages, not
+game exports. Windows rejects Debug CRT, stale artifacts and unresolved DLLs.
+Its bounded PowerShell launcher needs no checkout, Python or SDK. Linux's launcher
+uses Python 3.12+ standard library on Ubuntu24.04 x86-64; inspect every bundled ELF,
+RPATH, import and baseline symbol requirement. Native graphics also needs its
+explicit app-local loader, vendor ICD and display; CPU startup claims none of that.
 
-External distribution/signing infrastructure is outside this local plan. If a
-later scope amendment selects signing, use only its authorized channel with
-secrets outside the repository. Missing active local prerequisites remain
-explicit blockers; unavailable out-of-scope machines do not. Do not stage, commit
-or push: the user's repository policy reserves these source-control actions to
-them. Provide a reviewable change set,
-remaining release gates, handoff and suggested commit text.
+For a selected package gate, inspect actual source/link/binary/license closure,
+relocate through Unicode/space paths outside the checkout and launch from a different
+working directory. Clear development overrides and use system-only search paths;
+retain standard-user execution and bounded process/output cleanup. Use SDK-free WSL
+for Server launch. Verify manifests/helper/payload hashes and selected negative
+inputs with the existing launcher. Synthetic child tests cannot replace native
+GPU execution, and construction alone cannot establish isolated launch.
 
-The [MMORPG release plan](../../../docs/roadmap/mmorpg-plan.md) also requires separate
-client/server packages in M08, compatible wire/content/database versions, private
-server roots, authenticated content, drain/restart and tested backup/restore.
-The Server package must run in its qualified local WSL Ubuntu environment without
-presentation dependencies. M09/M10 supply multi-client seamless-world, failure and active-load
-evidence; Tetris/desktop install checks alone cannot qualify an MMORPG release.
+Use managed temporary deployment directories with exact-path cleanup. Keep passing
+manifests/results instead of repeated executable copies; retain unexpected failure
+evidence. Follow [storage retention](../../../docs/building.md#storage-retention)
+and preserve canonical builds/caches. Do not delete whole output or WSL trees.
 
-09e and full REQ-09 are PASS under the current-machine scope. Follow the
-[qualification contract](../../../docs/authoring-qualification.md),
-[handoff](../../../docs/handoffs/09e-integrated-qualification.md) and
-[receipt](../../../docs/coverage/evidence/09e-integrated-qualification.json):
-625 full CPU CTest executions across seven profiles, 22 standalone Tools checks,
-24 public-example compiles, actual sanitizer objects and protected packages pass.
-Both full Server suites were refreshed for 09e. Preserve the eight connected cases in
-`shark.tools.authoring-integration` (90 seconds, seed 1337), native publication
-faults, real external-file lineage and every earlier case/limit. Connect supported
-components/commands to FeatureWorld in10; adapters remain15/16.
+## Later export owners
+
+Assignment14 may use versioned engine-owned development payloads;31 owns final
+cooked dependency closure. When implementing those owners, include declared roots
+for dynamically/script-selected assets, scenes/prefabs, shaders, IBL, scripts,
+fonts/audio and licenses. Missing dependencies fail atomically with structured
+status. Test startup scenes and assets chosen only by script, host/target restrictions
+and repeatability under pinned inputs; signing need not be byte-identical.
+
+The [human/agent plan](../../../docs/roadmap/human-agent-plan.md) requires public,
+noninteractive discovery/commands, structured jobs/cancellation/artifact results and
+human continuation of the same project. CPU validation/import/cook/package work needs
+no editor/window/GPU. Only claim those adapter and GUI behaviors when implemented
+and exercised; a terminal success cannot pass unavailable GUI/device work.
+
+The [MMORPG plan](../../../docs/roadmap/mmorpg-plan.md) assigns separate client/server
+packages, private server roots, compatible wire/content/database versions and
+recovery to M08; M09/M10 qualify the reference world and load. Desktop installation
+alone is not an MMO release. Report precise actual scope, outcomes and limitations;
+leave staging, commits and pushing to the user.

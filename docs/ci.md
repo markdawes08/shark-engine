@@ -2,8 +2,9 @@
 
 For local development, the [testing policy](testing-policy.md) controls which
 checks to run and supersedes older recurring matrix/freeze/audit instructions in
-this guide. The full CI commands below remain available for relevant broad
-verification; agents must not run all of them for each subchunk. Existing hosted
+this guide. The full CI commands below are explicit whole-project/hosted-CI
+workflows; routine local subchunks and single-subsystem closure use affected
+owner selections, not the entire configured CTest inventory. Existing hosted
 workflows and branch protection are unchanged. Use normal command logs/JUnit and
 a concise scoped report for local work.
 
@@ -15,61 +16,29 @@ protection still governs GitHub merges and is unchanged. Do not label an absent
 or failing hosted run PASS, and investigate real failures affecting the local
 targets. No hosted run is required for this planning-only scope amendment.
 
-Assignment 01's hosted gate is **PASS** on
-`3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de`. After repairing the macOS ARM Xcode
-selection, the ordinary push passed all fourteen jobs. The subsequent injected
-run failed only the sentinel in each of twelve CPU jobs; the restored run passed
-all fourteen jobs and all 120 CPU tests on the same revision. See the
-[CI verification handoff](handoffs/01-ci-verification.md) and
-[durable gate evidence](coverage/evidence/01-ci-gate.json). The user reserves Git
-staging, committing and pushing.
+Completed hosted proofs remain tied to their tested revisions. The
+[01 CI handoff](handoffs/01-ci-verification.md) and
+[gate evidence](coverage/evidence/01-ci-gate.json) preserve the CPU red/green
+proof at `3620fab38a999a6dd6b6fdbb8c8a25b9a680b6de`. The
+[M01 hosted follow-up](handoffs/M01-ci-verification.md) and
+[gate evidence](coverage/evidence/M01-ci-gate.json) preserve the headless
+Docker/package and red/green proof at `d658d69c21c492c844f5678f931b1ddf955d25cd`.
+Their historical job counts predate the platform amendment.
 
-**M01's hosted gate is PASS** at
-`d658d69c21c492c844f5678f931b1ddf955d25cd`. The ordinary push and restored manual
-run pass all fifteen jobs and all 206 CTests. The intervening injected run reaches
-193 tests, failing only the thirteen intended sentinels while the other 180 pass;
-headless sanitizer and clean-runtime stages stop after its Debug failure.
-The [M01 hosted follow-up](handoffs/M01-ci-verification.md) and
-[durable gate evidence](coverage/evidence/M01-ci-gate.json) record actual runs,
-Docker/package qualification and the fifteen checks required at that revision. The
-[MMORPG execution plan](roadmap/mmorpg-plan.md) records the completed 04c and full
-assignment-04 local gate, following local 03/04a/04b qualification.
-05a device ownership is complete locally. **05b presentation lifecycle is
-complete under the current-machine scope.** The
-[05b handoff](handoffs/05b-presentation-lifecycle.md) records 236 passing CTests,
-2,304 validated presentations across both local GPUs, application and protected
-package checks. Deferred qualification work is tracked in the
-[nonblocking backlog](backlog.md); the user's decision authorizes continued
-development under each increment's own acceptance criteria. The
-[06 checkpoint plan](roadmap/shader-resource-plan.md) and
-[06a handoff](handoffs/06a-offline-shaders.md) record the completed offline checkpoint.
-The [05a handoff](handoffs/05a-graphics-device.md) records 211 CTests and both-GPU
-device qualification. The [opt-in probe](graphics-probe.md) adds CPU checks to
-ordinary CI while graphics builds/device runs use explicit graphics presets.
-The historical job/test counts above remain tied to their recorded revisions.
 [ADR 0009](architecture/0009-windows-linux-platform-scope.md) removes Mac from
-the active product and CI scope, retiring 02c and removing the six Mac CPU jobs.
-The current workflow has nine jobs, described below. At `39110d4`,
-[run 39092472102](https://github.com/markdawes08/shark-engine/actions/runs/39092472102)
-passed all nine jobs and 156/156 CTests; the
-[02d audit](coverage/evidence/02d-hosted-ci.json) preserves artifact digests,
-toolchains, boundary results and protection readback. This verifies the platform
-scope amendment, not the later Linux package and link changes committed at
-`2ef281b`. No new hosted execution of that revision is claimed here. Windows
-relocation and SDK-free WSL package checks meet the amended local acceptance
-scope; they remain distinct from independent-machine or native Linux GPU evidence.
-The CPU package rejection suite
-is registered as `shark.tooling.graphics-package`, with the Linux package and
-process-cleanup suite in `shark.tooling.graphics-package-linux`; Windows launcher integration and
-GPU soak remain opt-in. M02a's [local TLS/wire foundation](handoffs/M02a-transport-wire.md)
-passes current-machine CPU/sanitizer and protected package qualification.
-M02b [owned sessions](handoffs/M02b-owned-sessions.md) is **PASS** under the
-current-machine scope. M02c [replication](handoffs/M02c-authoritative-replication.md)
-is also PASS locally: 446 CPU CTests and protected package checks. M02d
-interest/budgets and M02e integrated qualification are complete. Full REQ-M02
-is PASS under the current-machine scope in the
-[M02e handoff](handoffs/M02e-integrated-qualification.md); database, world-handoff
-and active-load tiers retain their later gates.
+active product and CI scope. The nine-job workflow passed at `39110d4` in
+[run 39092472102](https://github.com/markdawes08/shark-engine/actions/runs/39092472102);
+the [02d audit](coverage/evidence/02d-hosted-ci.json) preserves artifact digests,
+toolchains, boundary results and protection readback. It does not establish a
+hosted pass for later revisions. The [coverage index](coverage/README.md) links
+subsequent local checkpoint results. Windows relocation and SDK-free WSL checks
+remain distinct from independent-machine or native Linux GPU evidence.
+
+The opt-in [graphics probe](graphics-probe.md) contributes CPU checks to ordinary
+CI; graphics builds/device runs require explicit graphics presets. CPU package
+rejection uses `shark.tooling.graphics-package`, with Linux package/process
+cleanup in `shark.tooling.graphics-package-linux`. Windows launcher integration
+and GPU soak remain opt-in. The user reserves staging, committing and pushing.
 
 ## Jobs and required checks
 
@@ -174,11 +143,10 @@ both GPUs, checks resize/minimize/restore, resource lifetime and failure behavio
 and runs a relocated Release Runtime payload with the bundle and no source shader
 compiler. The [build workflow](building.md#cube-sample-and-runtime-package) and
 [resource contract](gpu-resources.md#window-cube-and-capture) define those paths.
-Windows Debug/Release/ASan, WSL CPU/sanitizer and protected target boundaries remain
-required regression. All passed for 06c: Windows 55 tests in each configuration,
-WSL 48 tests in each configuration, six window/offscreen GPU suites, native failure
-children and isolated Runtime launches. See the [06c handoff](handoffs/06c-window-distribution.md)
-and [receipt](coverage/evidence/06c-window-distribution.json).
+The [06c handoff](handoffs/06c-window-distribution.md) and
+[receipt](coverage/evidence/06c-window-distribution.json) preserve completed
+CPU, GPU, package and boundary qualification. Select future regression under
+the testing policy.
 `shark.tooling.cube-smoke` and `shark.tooling.cube-faults` validate strict evidence
 and fixed references without graphics; `shark.client.cube-cli` and
 `shark.client.cube-faults-cli` validate native fixture arguments without a device.
@@ -218,18 +186,10 @@ installed notices. Runtime package
 tests also require EnTT, GLM and all eight TLS notices. Windows CPU/sanitizer, existing WSL
 CPU/headless and protected target builds qualify these checkpoints; the CPU scene
 layer does not require repeating 06c's GPU acceptance.
-07c and full REQ-07 are PASS under the current-machine scope. The
-[07c receipt](coverage/evidence/07c-schema-inspection.json) records 376 passing
-CTests with no failures/skips: Windows Debug/Release/ASan 62 each, WSL client
-Debug/ASan+UBSan 55 each, and WSL Server Debug/ASan+UBSan 40 each. Protected
-Runtime/Server builds, source/link/license closure and fresh isolated package
-checks pass with all 221 qualification source inputs unchanged.
-See the [07 plan](roadmap/scene-plan.md),
-[07a handoff](handoffs/07a-entity-ownership.md),
-[07b handoff](handoffs/07b-transform-hierarchy.md) and
-[07c handoff](handoffs/07c-schema-inspection.md). M02 follows its
-[five checkpoints](roadmap/network-plan.md);
-hosted CI stays supplemental under the unchanged current-machine scope.
+The [07c handoff](handoffs/07c-schema-inspection.md) and
+[receipt](coverage/evidence/07c-schema-inspection.json) close full REQ-07 and link
+its earlier checkpoint results. Hosted CI stays supplemental under the unchanged
+current-machine scope.
 
 M02a adds `shark.core.net-wire`, `shark.core.net-fault`, `shark.core.net-transport`
 and `shark.core.net-process`. The first three use seed 1337 and bounded CPU/loopback
@@ -249,32 +209,16 @@ enrollment and ownership, revocation, malformed/replayed requests, expiry, rate
 bounds and reconnect fencing. Session readiness is the only mutable admitted
 state; movement, combat and entity replication remain outside this checkpoint.
 
-Qualification is **PASS**: native Windows Debug/Release/ASan pass 69 CTests each,
-existing WSL CPU client Debug/ASan+UBSan pass 62 each and Server Debug/ASan+UBSan
-pass 47 each, totaling **425 with zero failures or skips**. Protected builds,
-lifecycle checks, source/link/license closure and isolated package audits pass.
-The fresh Runtime package passes relocation and ten missing-notice rejection cases;
-the SDK-free WSL audit verifies the 11-file Server package and unchanged 92-package
-runtime inventory. Compile-input and sanitizer audits pass, including all 116
-private TLS C units. Public certificate fixtures and their generator
-belong to the source-input receipt; test credentials and SessionProbe must not
-enter installed packages. [ADR 0012](architecture/0012-owned-sessions.md) and the
-[session contract](network-sessions.md) define the acceptance boundary. The
-[M02b handoff](handoffs/M02b-owned-sessions.md) records the observed results.
-M02c replication is PASS under the current-machine scope: Windows Debug/Release/ASan
-pass 72 CTests each, WSL CPU client Debug/ASan+UBSan pass 65 each and WSL
-Server Debug/ASan+UBSan pass 50 each, totaling 446 with no failures or skips.
-The [M02c handoff](handoffs/M02c-authoritative-replication.md) records protected
-build, package and real-process convergence checks. M02d spatial interest, privacy
-and connection budgets is complete: its [handoff](handoffs/M02d-spatial-interest.md)
-records 460 passing CPU CTests and protected package checks.
+Public certificate fixtures and their generator belong to source inputs;
+test credentials and SessionProbe must not enter installed packages.
+[ADR 0012](architecture/0012-owned-sessions.md) and the
+[session contract](network-sessions.md) define the acceptance boundary.
+The [M02b handoff](handoffs/M02b-owned-sessions.md),
+[M02c handoff](handoffs/M02c-authoritative-replication.md) and
+[M02d handoff](handoffs/M02d-spatial-interest.md) preserve original session,
+replication and spatial-interest qualification.
 
-M02e and full REQ-M02 are PASS under the current-machine scope. Windows
-Debug/Release/ASan pass 76 CTests each, WSL CPU client Debug/ASan+UBSan pass
-69 each and WSL Server Debug/ASan+UBSan pass 54 each: 474 total without failures
-or skips. All fourteen network families, protected builds and isolated package
-checks pass against 277 unchanged frozen inputs. The new
-`shark.core.net-adversity` and `shark.core.net-adversity-process` families have
+M02e adds `shark.core.net-adversity` and `shark.core.net-adversity-process`, with
 60-second and 360-second timeouts respectively. The
 [handoff](handoffs/M02e-integrated-qualification.md) and
 [receipt](coverage/evidence/M02e-integrated-qualification.json) retain exact
@@ -288,23 +232,15 @@ resource bounds and shared component validation against independent fixtures.
 The second verifies the exact private JSON source and rejects graph/include
 leaks into protected targets. `tools-debug` additionally demonstrates CPU authoring
 without Editor or Client. See the [08a handoff](handoffs/08a-source-documents.md)
-for final current-machine evidence: 484 full-suite CPU CTests pass (Windows
-Debug/Release/ASan 78 each, WSL clients 71 each, WSL Servers 54 each), plus one
-focused Tools-only CTest on each OS. Protected builds/packages and public API
-audits pass. This 08a evidence remains separate from 08b qualification below.
+for original current-machine qualification.
 
 08b adds `shark.tools.authored-scene` (CPU/unit/tooling/integration, seed 1337,
 60 seconds) when Tools is enabled. It exercises complete capture, immutable
 source metadata, cross-document references, composed-transform rejection,
 revision/dirty/queue/visit/thread guards and replacement lifetime through the
 public EngineTools owner. The [08b handoff](handoffs/08b-scene-activation.md)
-and [receipt](coverage/evidence/08b-scene-activation.json) record PASS under
-the current-machine scope: 489 full-suite CPU CTests, without failures or
-skips (Windows Debug/Release/ASan 79 each, WSL clients 72 each, WSL Servers
-54 each). Each independent Tools build passes two additional focused CTests.
-The new family passes 23 cases and 26,624 assertions; all 291 frozen inputs
-are unchanged. Protected package checks and public API audits pass. 08c safe
-files and conflicts and 08d integrated qualification are complete below.
+and [receipt](coverage/evidence/08b-scene-activation.json) preserve its original
+current-machine qualification.
 
 08c registers `shark.tools.project-files` (CPU/unit/tooling/integration, seed 1337)
 and `shark.tools.project-files-process` (CPU/tooling/integration), each with a
@@ -315,28 +251,16 @@ the build tree with complete-file hashes, unpublished-stage retention and bounde
 child outcomes. See the [file contract](project-files.md) and
 [08c handoff](handoffs/08c-project-files.md) for exact scope and qualification.
 
-08c's [receipt](coverage/evidence/08c-project-files.json) records PASS: all 499
-full-suite CPU CTests and eight additional standalone Tools tests pass without
-failures or skips. Windows profiles register/run 81 tests each, WSL clients 74
-each and WSL Servers 54 each. Protected packages and compiler/API audits pass
-with all 298 source/build/test inputs and 19 helper hashes unchanged. This
-historical gate is followed by the full 08d qualification below.
-
 08d registers `shark.tools.persistence-integration` (CPU/tooling/integration,
-seed 1337, 90 seconds). Its three cases pass 1,543 assertions; the retained
-file family contains 31 cases, and seven process receipts each pass 55
-checks with complete authored-save reactivation and recovery. **08d and
-full REQ-08 are PASS under the current-machine scope:** all 504 CPU CTests
-pass without failures/skips (Windows Debug/Release/ASan 82 each, WSL
-clients 75 each and WSL Servers 54 each), with five additional standalone
-Tools passes per OS. All three public examples pass 27 checks. Protected
-Runtime/Server builds, isolated packages and dependency/API audits pass
-against 299 unchanged source/build/test inputs and 18 helpers. The
-[handoff](handoffs/08d-integrated-qualification.md) and
-[receipt](coverage/evidence/08d-integrated-qualification.json) record exact
-commands, the corrected file-case inventory and verification limits. M03
-separately owns live durability; M03 and all six checkpoints are complete.
-The qualified 09a command foundation uses these persistence regressions.
+seed 1337, 90 seconds). Its three connected cases exercise complete authored-save
+reactivation and recovery through the existing file/process owners. Preserve
+their independent expectations, all 31 file cases, the 55-check process fixture
+and the acceptance limits in the
+[persistence plan](roadmap/persistence-plan.md). The
+[08d handoff](handoffs/08d-integrated-qualification.md) and
+[receipt](coverage/evidence/08d-integrated-qualification.json) close full REQ-08
+and retain the original qualification counts and commands. M03 separately owns
+live durability; authored source persistence does not replace that service.
 
 09a registers `shark.tools.authoring-commands` (CPU/unit/tooling/integration,
 seed 1337, 60 seconds). It tests five typed edits, revision and hierarchy rejection,
@@ -344,30 +268,20 @@ complete bounded refresh IDs, query consistency, incarnation/metadata lifetime,
 save baselines and alternating human/agent-equivalent requests through one owner.
 Existing persistence families retain their cases and use commands for ordinary
 edits; private fixture access injects lifecycle invariant failures only.
-09a is PASS under the current-machine scope. Its
-[handoff](handoffs/09a-shared-commands.md) and
-[receipt](coverage/evidence/09a-shared-commands.json) record 461 passing CPU CTests
-across five profiles, 12 standalone Tools checks and protected package/API gates.
-Full REQ-09 remains NOT_RUN. The completed 09b qualification follows below.
+The [09a handoff](handoffs/09a-shared-commands.md) and
+[09b handoff](handoffs/09b-atomic-batches.md) retain original command/batch results.
+The [transaction contract](authoring-transactions.md) specifies bounded atomic
+batches and preview. Preserve `shark.tools.authoring-batches` (60 seconds) and
+`shark.core.scene-edit` (30 seconds), seed 1337. Shared history and retained
+retries are implemented; the [09e handoff](handoffs/09e-integrated-qualification.md)
+closes full REQ-09.
 
-09b is PASS under the current-machine scope. Its
-[transaction contract](authoring-transactions.md), [handoff](handoffs/09b-atomic-batches.md)
-and [receipt](coverage/evidence/09b-atomic-batches.json) record 605 full CPU CTests across seven profiles,
-14 standalone Tools checks, 15 public-example compiles, actual sanitizer objects
-and protected packages. Preserve `shark.tools.authoring-batches` (60 seconds)
-and `shark.core.scene-edit` (30 seconds), seed 1337. Full REQ-09 remains NOT_RUN.
-**Next: 09c, Shared undo and redo.**
-
-Run native Debug/Release/ASan and existing WSL CPU Debug/ASan+UBSan regressions,
-plus all seven standalone Tools families on both systems. Core changes also
-refresh both WSL Server profiles. Compile the five public
-Tools examples, including the [command example](authoring-commands.md), without
-private headers. Freeze current sources and evidence helpers; preserve exact
-test names, labels, timeouts and seed 1337. Require exact named Catch cases and
-nonzero assertions; duplicate/missing cases and skipped/failing receipts reject.
-Protected Runtime/Server builds and packages must still exclude EngineTools,
-JSON, authoring fixture access and source-document payloads. This CPU gate adds
-no GPU, terminal-adapter, editor or gameplay qualification.
+Select affected authoring regressions, public examples and boundary checks under
+the testing policy. Preserve exact test names, labels, timeouts and seeds;
+selected fixtures require their real cases and assertions, not skipped or
+fabricated success. Protected Runtime/Server builds and packages exclude
+EngineTools, JSON, authoring fixture access and source-document payloads.
+CPU results do not establish GPU, terminal-adapter, editor or gameplay qualification.
 
 ## Locked tools and hosted-image limits
 
@@ -429,25 +343,10 @@ authenticated local clients exercise the same durable character coordinator,
 then a fresh server process reopens the store without reseeding ownership.
 Fixture-only ID discovery is local test metadata, not a product roster protocol.
 The public character example compiles using only public Core/Storage headers.
-M03b is PASS under the current-machine scope: its
-[handoff](handoffs/M03b-owned-characters.md) and
-[receipt](coverage/evidence/M03b-owned-characters.json) record 539 full CPU CTests,
-ten additional standalone Tools checks and protected package/API audits against
-318 unchanged source inputs and 15 final helpers. That checkpoint did not close full REQ-M03;
-M03c atomic transactions are PASS under the same scope: its
-[handoff](handoffs/M03c-atomic-transactions.md) and
-[receipt](coverage/evidence/M03c-atomic-transactions.json) record 553 full CPU
-CTests (89 native each, 82 WSL clients each, 61 WSL Servers each), ten additional
-standalone Tools checks and protected package/API gates. M03d is also PASS:
-its [handoff](handoffs/M03d-runtime-recovery.md) records 567 full CPU CTests
-and 10 standalone Tools checks with protected package/API qualification.
-M03e database migration/restore is PASS: its
-[handoff](handoffs/M03e-migration-restoration.md) records 581 CPU CTests,
-10 standalone Tools checks and protected package/API gates.
-M03f and full REQ-M03 are PASS: the [handoff](handoffs/M03f-integrated-qualification.md)
-records 588 CPU CTests, 10 standalone Tools checks and protected gates.
-09a's shared command foundation is also qualified; its evidence remains separate
-from this completed durable-state gate. 09b is qualified; 09c is the next checkpoint.
+The [M03f handoff](handoffs/M03f-integrated-qualification.md) closes full REQ-M03
+and links the original storage, character, transaction, recovery and maintenance
+checkpoint results. These remain separate from authored-source persistence and
+authoring qualification.
 
 M03a adds the three storage families documented in [building](building.md#server-only-durable-storage).
 The Server build has a separate `storage` dependency domain; Core, Runtime and
@@ -576,7 +475,9 @@ test or clean-runtime result is unrun, never a passing gate.
 
 ## Shared local and CI command
 
-After installing the locked tools and entering the appropriate compiler environment:
+For an explicit whole-project/hosted-CI run, install the locked tools and enter
+the appropriate compiler environment. Local owner-scoped work uses selected
+commands under the [testing policy](testing-policy.md):
 
 ```text
 python tools/ci.py --preset windows-debug
