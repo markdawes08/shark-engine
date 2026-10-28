@@ -91,6 +91,7 @@ not establish file or gameplay-wire formats.
 | [0036](0036-runtime-scene-launch.md) | Explicit prepared Runtime loading, dynamic scene presentation and complete-candidate reload |
 | [0037](0037-client-export-content.md) | Bounded CPU export candidates from the startup scene and fresh client import closure |
 | [0038](0038-standalone-scene-export.md) | Live-owner export publication and bounded package-relative Runtime startup |
+| [0039](0039-terminal-authoring-protocol.md) | Bounded terminal protocol, retained project ownership, discovery and revisioned queries |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

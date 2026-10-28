@@ -40,14 +40,21 @@ Linux graphics is outside scope. Mac support, CI, packages and hardware requirem
 are retired by [ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md).
 Hosted CI is supplemental; remote branch protection is unchanged.
 
-**Current handoff: [14c, isolated export acceptance](docs/handoffs/14c-isolated-export-acceptance.md).**
+**Current handoff: [15a, terminal protocol foundation](docs/handoffs/15a-terminal-protocol.md).**
+15a supplies the CPU `SharkAuthor` one-shot/stdio host, discovery, retained project
+ownership and read-only queries. Follow [ADR 0039](docs/architecture/0039-terminal-authoring-protocol.md)
+and the [protocol contract](docs/authoring-protocol.md): bounded UTF-8 framing,
+truthful capabilities, one project writer and revision-bound single-use cursors.
+Native handles stay private. Next is **15b, editing and persistence**, in the
+[terminal checkpoints](docs/roadmap/terminal-authoring-plan.md). Route new writes
+through the retained shared owner; request correlation is not mutation retry identity.
+Full REQ-15 remains NOT_RUN until connected acceptance in 15e.
 All [five rendering checkpoints](docs/roadmap/scene-rendering-plan.md) and full
 REQ-13 are complete under current-machine scope. Full REQ-14 is complete under
 the approved scope and [backlog amendment](docs/backlog.md). The
 [export checkpoints](docs/roadmap/export-plan.md) record isolated scene packages
-on both GPUs, default startup and actual F5 rejection/replacement. Next is
-**15, terminal authoring and the local structured protocol**. Extend the existing
-shared owners; do not introduce a second mutation path or player protocol.
+on both GPUs, default startup and actual F5 rejection/replacement. Extend the
+existing shared owners; do not introduce a second mutation path or player protocol.
 Follow [ADR 0038](docs/architecture/0038-standalone-scene-export.md) and the
 [standalone export contract](docs/standalone-export.md): preserve the retained
 project owner through final validation/publication, full asset notices, exact
@@ -89,7 +96,7 @@ reload and actual presented capture. Preserve complete-candidate replacement,
 fresh incarnations, bounded drain and seven native lifetime phases. Runtime has
 no source importer or authoring UI. The existing Editor window/graphics/cube
 flags remain diagnostics; a game-authoring editor UI is not implemented yet.
-Shared CPU authoring services exist; terminal/editor adapters remain 15/16.
+Shared CPU authoring services exist; later terminal operations and the editor remain 15b-15e/16.
 
 The user deferred remaining 05c work to the [nonblocking backlog](docs/backlog.md)
 and authorized later development. Full REQ-05 remains NOT_RUN. Preserve historical

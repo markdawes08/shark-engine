@@ -8,16 +8,18 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**Full REQ-14 is PASS under current-machine scope and the approved backlog amendment.**
-The latest [handoff](../handoffs/14c-isolated-export-acceptance.md) records isolated
-scene exports on both GPUs, actual module/content inspection, default startup
-and F5 rejection/replacement. The [export checkpoints](../roadmap/export-plan.md)
-link earlier implementation evidence. [Full REQ-13](../handoffs/13e-runtime-scenes.md) and
-[full REQ-12](../handoffs/12e-gltf-qualification.md) remain complete.
-Terminal/editor adapters remain 15/16.
+**15a is complete; full REQ-15 remains NOT_RUN.** The latest
+[handoff](../handoffs/15a-terminal-protocol.md) records CPU terminal discovery,
+retained ownership and bounded read-only queries, with actual Windows/WSL pipes
+and sanitizer checks. [Terminal checkpoints](../roadmap/terminal-authoring-plan.md)
+15b-15e retain edits, jobs, run/export/capture and connected acceptance. The editor
+remains 16. Full [REQ-14](../handoffs/14c-isolated-export-acceptance.md),
+[REQ-13](../handoffs/13e-runtime-scenes.md) and [REQ-12](../handoffs/12e-gltf-qualification.md)
+remain complete under current-machine scope and approved amendments.
 
 FeatureWorld has seventeen native cases, four saved entity IDs and 56 exercised
-CPU surfaces, plus one external CPU export command and two GPU commands.
+CPU surfaces, plus nine external CPU commands (export and eight terminal methods)
+and two GPU commands.
 Real source/geometry/texture/material/
 payload cases supplement owner/cache/job paths. The manifest and independent
 executable inventories, not this prose, define the actual mappings. Lua stays
@@ -114,3 +116,4 @@ remains authoritative for individual requirement status.
 | 13 scene rendering | [Runtime scenes](../runtime-scenes.md), [final handoff](../handoffs/13e-runtime-scenes.md) |
 | 14a export content (partial REQ-14) | [Client export](../client-export.md), [handoff](../handoffs/14a-client-export-content.md) |
 | 14b/14c standalone export (full REQ-14) | [Standalone export](../standalone-export.md), [isolated acceptance handoff](../handoffs/14c-isolated-export-acceptance.md) |
+| 15a terminal foundation (partial REQ-15) | [Protocol](../authoring-protocol.md), [handoff](../handoffs/15a-terminal-protocol.md) |

@@ -812,6 +812,20 @@ if(TARGET RuntimeScenePrepare)
     set_tests_properties(shark.tools.runtime-scene-prepare PROPERTIES
         LABELS "cpu;integration;tooling" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 endif()
+if(TARGET SharkAuthor)
+    add_executable(AuthoringProtocolTests authoring_protocol_tests.cpp)
+    target_link_libraries(AuthoringProtocolTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    shark_configure_target(AuthoringProtocolTests)
+    shark_classify_target(AuthoringProtocolTests test)
+    add_test(NAME shark.tools.authoring-protocol
+        COMMAND AuthoringProtocolTests "[authoring-protocol]" --rng-seed 1337)
+    set_tests_properties(shark.tools.authoring-protocol PROPERTIES LABELS "cpu;unit;tooling" TIMEOUT 60)
+    add_test(NAME shark.tools.authoring-protocol-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_authoring_protocol_process.py"
+            --author "$<TARGET_FILE:SharkAuthor>" -v)
+    set_tests_properties(shark.tools.authoring-protocol-process PROPERTIES
+        LABELS "cpu;tooling;integration" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+endif()
 set_tests_properties(shark.tooling.runtime-package PROPERTIES LABELS "cpu;tooling;boundary")
 if(TARGET OffscreenSmoke)
     add_test(NAME shark.client.offscreen-cli

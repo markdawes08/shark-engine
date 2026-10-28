@@ -39,6 +39,11 @@ SCENE_SURFACES = {
 }
 GPU_SURFACES = {'tools.scene-runner.gpu', 'graphics.scene.render'}
 EXPORT_SURFACES = {'content.client-export.package'}
+TERMINAL_SURFACES = {
+    'terminal.protocol.discover', 'terminal.schema.components', 'terminal.project.open',
+    'terminal.project.status', 'terminal.project.close', 'terminal.scene.query',
+    'terminal.scene.inspect', 'terminal.scene.continue',
+}
 FEATUREWORLD_CASES = [
     'featureworld.components', 'featureworld.commands', 'featureworld.batches-history',
     'featureworld.retries', 'featureworld.persistence', 'featureworld.asset-identity',
@@ -68,7 +73,8 @@ def audit(manifest, cpu, gpu, registered, declared):
           and len(gpu_ids) == len(set(gpu_ids)), 'Invalid device-free GPU catalog')
     surfaces = manifest['implemented_surface']
     actual = {e['id'] for category in ('components', 'commands') for e in surfaces[category]}
-    check(actual == SCENE_SURFACES | GPU_SURFACES | EXPORT_SURFACES, 'Public surface/exercised inventory drift')
+    check(actual == SCENE_SURFACES | GPU_SURFACES | EXPORT_SURFACES | TERMINAL_SURFACES,
+          'Public surface/exercised inventory drift')
     check(not surfaces['lua_api'], 'Lua needs actual binding exercises before coverage is claimed')
     rows = []
     covered = set()
@@ -100,6 +106,11 @@ def audit(manifest, cpu, gpu, registered, declared):
                       and {'shark.tools.client-export-process', 'shark.tooling.runtime-package'} <= set(tests)
                       and 'tests/runtime_scene_prepare.cpp' in entry['fixtures'],
                       'Standalone export process fixture drift')
+            if entry['id'] in TERMINAL_SURFACES:
+                check(not mapped and entry.get('external_fixture_reason', '').strip()
+                      and 'shark.tools.authoring-protocol-process' in tests
+                      and 'tools/tests/test_authoring_protocol_process.py' in entry['test_sources'],
+                      'Terminal protocol process fixture drift')
             rows.append({'id': entry['id'], 'category': category, 'featureworld_cases': mapped,
                          'registered_tests': sorted(set(tests) & registered),
                          'declared_other_profile_tests': sorted(set(tests) - registered)})
@@ -178,6 +189,7 @@ def main():
         summary['scene_surfaces'] = sorted(SCENE_SURFACES)
         summary['external_gpu_surfaces'] = sorted(GPU_SURFACES)
         summary['external_export_surfaces'] = sorted(EXPORT_SURFACES)
+        summary['external_terminal_surfaces'] = sorted(TERMINAL_SURFACES)
         summary['source_sha256'] = {name: scene_runner.sha(ROOT/name) for name in (
             'docs/coverage/requirements.json', 'assets/FeatureWorld/FeatureWorld.sharkproject',
             'assets/FeatureWorld/scenes/FeatureWorld.sharkscene')}

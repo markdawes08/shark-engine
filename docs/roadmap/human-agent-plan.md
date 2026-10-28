@@ -201,8 +201,13 @@ no second computer or specific provider integration is part of the requirement.
 
 ## Reviewable parts of assignment 15
 
+The user-approved [five terminal checkpoints](terminal-authoring-plan.md) now
+refine the broad phases below. [15a](../handoffs/15a-terminal-protocol.md) completes
+discovery, retained ownership and read-only access; 15b is next. Full REQ-15
+remains open through 15e's connected acceptance.
+
 Keep 15 as one manifest owner and final gate, but implement it in these dependent
-parts. This plan does not start assignment 15. Assignments 02/03/04 are complete
+parts. Assignments 02/03/04 are complete
 under the current-machine scope; the [window/input plan](window-input-plan.md)
 records the completed 04c gate. 05a device ownership and 05b presentation
 lifecycle are complete under the current-machine scope.

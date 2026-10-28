@@ -20,12 +20,12 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**Assignment 14's early standalone scene export is complete under current-machine scope.**
-The [latest handoff](docs/handoffs/14c-isolated-export-acceptance.md) records
-relocated presentation on both GPUs, isolated runtime dependencies, default startup
-and safe F5 replacement. The [export checkpoints](docs/roadmap/export-plan.md)
-link implementation and acceptance. Next is assignment 15's terminal authoring
-and local structured protocol. Assignments 12 and 13 remain complete,
+**15a's terminal protocol foundation is complete under current-machine scope.**
+The [latest handoff](docs/handoffs/15a-terminal-protocol.md) records the CPU
+`SharkAuthor` host, schema/capability discovery, retained project ownership and
+read-only queries through ordinary UTF-8 pipes. Next is 15b's editing and
+persistence in the [terminal checkpoints](docs/roadmap/terminal-authoring-plan.md).
+Full assignment 15 remains open. Assignments 12, 13 and 14 remain complete,
 including Runtime scene presentation and safe reload on both GPUs. Completed
 checkpoints and their original results are indexed in
 [requirements and coverage](docs/coverage/README.md); historical counts are not
@@ -34,6 +34,9 @@ authorizes continued development under each increment's acceptance criteria.
 
 Current capabilities include:
 
+- [Terminal discovery and inspection](docs/authoring-protocol.md) through one-shot
+  JSON or persistent stdio, with bounded pages, stable IDs and explicit revisions.
+  This initial protocol does not expose editing, import jobs or GPU capture yet.
 - [Core services](docs/core-contracts.md), [application ownership](docs/application-lifecycle.md)
   and [bounded timing/work](docs/time-and-work.md), with separate Core, Client,
   Tools and headless Server boundaries.

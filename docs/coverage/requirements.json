@@ -423,7 +423,7 @@
       "planned_fixture": "PublicAuthoringProcess scenario, ProtocolInvalidRequests, ProtocolVersionMismatch, CancellationRetry and ScopedTextAsset fixtures; FeatureWorld/AgentAuthoredScene provides saved scene equivalence. Add NoTTYProtocolStreams, BoundedDiscoveryQueries, CPUAuthoringClosure, ProjectOwnerExclusion, TextWriteConflict and JobPublicationInterruption fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "Agent command interface and discovery are not implemented; owner assignment 15."
+        "reason": "15a completes the CPU terminal protocol foundation: bounded versioned one-shot/stdio UTF-8 messages, actual schema/capability discovery, one retained project owner and read-only revisioned queries with bounded single-use cursors. docs/handoffs/15a-terminal-protocol.md records Windows Debug, standalone CPU Tools, WSL Debug/ASan+UBSan and real process/ownership checks. Shared editing/persistence, imports/jobs, run/export/capture and connected acceptance remain 15b-15e in docs/roadmap/terminal-authoring-plan.md; full REQ-15 remains NOT_RUN."
       }
     },
     {
@@ -2822,6 +2822,26 @@
           "docs/standalone-export.md"
         ],
         "fixture_reason": "A bounded Core startup descriptor and Client loader consume fixed package-relative hashed snapshots without source importers. The actual CPU worker holds ProjectFiles ownership through staged publication and rechecks project/scene revisions, cached mesh closure and shaders. Process tests connect saved FeatureWorld and a fresh imported project to descriptor loading, conflict/timeout cleanup and final publication rejection. Python package controls check exact native/content/notice/shader inventory, isolated launch reports and bounded captures. tools/runtime_package/Run-IsolatedRuntime.ps1 drives actual relocated Windows packages; docs/handoffs/14c-isolated-export-acceptance.md records both-GPU image/module evidence, default startup and native F5 acceptance separately from CPU results."
+      },
+      {
+        "id": "tools.authoring-protocol",
+        "name": "CPU terminal protocol and retained project ownership",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-protocol",
+          "shark.tools.authoring-protocol-process"
+        ],
+        "test_sources": [
+          "tests/authoring_protocol_tests.cpp",
+          "tools/tests/test_authoring_protocol_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public C++ owner enforces creating-thread access. Actual non-TTY Windows/WSL subprocesses use saved FeatureWorld inputs with independent expected hierarchy and transform values to check Unicode streams, native component metadata, bounded queries, revision/consumed-cursor conflicts, one project writer, process-death/EOF lock release and broken-output failure. This profile has no mutation or GPU methods."
       }
     ],
     "components": [
@@ -4883,6 +4903,166 @@
         "fixture_reason": "A bounded Core startup descriptor and Client loader consume fixed package-relative hashed snapshots without source importers. The actual CPU worker holds ProjectFiles ownership through staged publication and rechecks project/scene revisions, cached mesh closure and shaders. Process tests connect saved FeatureWorld and a fresh imported project to descriptor loading, conflict/timeout cleanup and final publication rejection. Python package controls check exact native/content/notice/shader inventory. CPU results do not qualify isolated graphical deployment; 14c owns that connected gate.",
         "featureworld_cases": [],
         "external_fixture_reason": "Packaging requires real process ownership and filesystem publication outside the in-process FeatureWorld callback. The separate CPU process fixture exports the saved FeatureWorld source through the public worker and verifies its exact startup identities; it also exports a fresh imported project and checks final fences and project-lock release. Runtime loader/codec cases are mapped by tools.standalone-scene-export. No device or isolated launch is inferred from CPU checks."
+      },
+      {
+        "id": "terminal.protocol.discover",
+        "name": "SharkAuthor JSON-RPC protocol.discover",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-protocol-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_protocol_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Implemented version-1 method over the existing CPU authoring owner; the real subprocess fixture invokes this method and checks independent results, structured failures and source preservation. Discovery advertises only implemented methods.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal framing, Unicode pipes, cross-process writer exclusion and process-lifetime cleanup require actual separate processes. The fixture opens a saved FeatureWorld copy through the public host; it does not add an in-process FeatureWorld callback or claim a human editor/device workflow."
+      },
+      {
+        "id": "terminal.schema.components",
+        "name": "SharkAuthor JSON-RPC schema.components",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-protocol-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_protocol_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Implemented version-1 method over the existing CPU authoring owner; the real subprocess fixture invokes this method and checks independent results, structured failures and source preservation. Discovery advertises only implemented methods.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal framing, Unicode pipes, cross-process writer exclusion and process-lifetime cleanup require actual separate processes. The fixture opens a saved FeatureWorld copy through the public host; it does not add an in-process FeatureWorld callback or claim a human editor/device workflow."
+      },
+      {
+        "id": "terminal.project.open",
+        "name": "SharkAuthor JSON-RPC project.open",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-protocol-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_protocol_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Implemented version-1 method over the existing CPU authoring owner; the real subprocess fixture invokes this method and checks independent results, structured failures and source preservation. Discovery advertises only implemented methods.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal framing, Unicode pipes, cross-process writer exclusion and process-lifetime cleanup require actual separate processes. The fixture opens a saved FeatureWorld copy through the public host; it does not add an in-process FeatureWorld callback or claim a human editor/device workflow."
+      },
+      {
+        "id": "terminal.project.status",
+        "name": "SharkAuthor JSON-RPC project.status",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-protocol-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_protocol_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Implemented version-1 method over the existing CPU authoring owner; the real subprocess fixture invokes this method and checks independent results, structured failures and source preservation. Discovery advertises only implemented methods.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal framing, Unicode pipes, cross-process writer exclusion and process-lifetime cleanup require actual separate processes. The fixture opens a saved FeatureWorld copy through the public host; it does not add an in-process FeatureWorld callback or claim a human editor/device workflow."
+      },
+      {
+        "id": "terminal.project.close",
+        "name": "SharkAuthor JSON-RPC project.close",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-protocol-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_protocol_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Implemented version-1 method over the existing CPU authoring owner; the real subprocess fixture invokes this method and checks independent results, structured failures and source preservation. Discovery advertises only implemented methods.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal framing, Unicode pipes, cross-process writer exclusion and process-lifetime cleanup require actual separate processes. The fixture opens a saved FeatureWorld copy through the public host; it does not add an in-process FeatureWorld callback or claim a human editor/device workflow."
+      },
+      {
+        "id": "terminal.scene.query",
+        "name": "SharkAuthor JSON-RPC scene.query",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-protocol-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_protocol_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Implemented version-1 method over the existing CPU authoring owner; the real subprocess fixture invokes this method and checks independent results, structured failures and source preservation. Discovery advertises only implemented methods.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal framing, Unicode pipes, cross-process writer exclusion and process-lifetime cleanup require actual separate processes. The fixture opens a saved FeatureWorld copy through the public host; it does not add an in-process FeatureWorld callback or claim a human editor/device workflow."
+      },
+      {
+        "id": "terminal.scene.inspect",
+        "name": "SharkAuthor JSON-RPC scene.inspect",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-protocol-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_protocol_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Implemented version-1 method over the existing CPU authoring owner; the real subprocess fixture invokes this method and checks independent results, structured failures and source preservation. Discovery advertises only implemented methods.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal framing, Unicode pipes, cross-process writer exclusion and process-lifetime cleanup require actual separate processes. The fixture opens a saved FeatureWorld copy through the public host; it does not add an in-process FeatureWorld callback or claim a human editor/device workflow."
+      },
+      {
+        "id": "terminal.scene.continue",
+        "name": "SharkAuthor JSON-RPC scene.continue",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-protocol-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_protocol_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Implemented version-1 method over the existing CPU authoring owner; the real subprocess fixture invokes this method and checks independent results, structured failures and source preservation. Discovery advertises only implemented methods.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal framing, Unicode pipes, cross-process writer exclusion and process-lifetime cleanup require actual separate processes. The fixture opens a saved FeatureWorld copy through the public host; it does not add an in-process FeatureWorld callback or claim a human editor/device workflow."
       }
     ],
     "lua_api": []

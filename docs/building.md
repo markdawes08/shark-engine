@@ -235,6 +235,19 @@ are absent from the payload. Shader-tools preparation is not needed to export
 or check a previously verified generation. Omitting `--shaders` retains the
 older clear-only deployment fixture.
 
+Assignment 15a adds the CPU terminal host:
+
+```text
+powershell -NoProfile -ExecutionPolicy Bypass -File tools/windows_dev.ps1 cmake --build --preset tools-debug --target SharkAuthor
+build/tools-debug/bin/SharkAuthor.exe --help
+```
+
+Use `--request` for a single JSON request on stdin or `--stdio` for a retained
+session. The [terminal protocol guide](authoring-protocol.md) supplies exact UTF-8
+examples, discovery and bounded query semantics. The independent `tools-debug`
+profile has Client/Editor/native window/graphics OFF; CPU authoring does not start
+a renderer. Protected Runtime and Server targets exclude this host and its services.
+
 Assignment 14b adds `package_runtime.py export` for a saved startup scene, fresh
 client mesh cache, offline scene shaders and full asset notices. It uses the
 same protected Release builder and adds the pinned Runtime-only
