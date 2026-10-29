@@ -1,6 +1,7 @@
 # ADR 0039: Bounded terminal authoring protocol
 
-Date: 2026-10-28. Status: accepted implementation decision for assignment 15a.
+Date: 2026-10-28. Status: accepted. The original 15a decision follows;
+the dated 15b extension below adds editing and persistence.
 
 Implement a CPU terminal adapter in EngineTools and a `SharkAuthor` executable.
 The adapter uses the existing ProjectFiles and AuthoredScene services and Core
@@ -73,3 +74,56 @@ with redirected UTF-8 streams, invalid input, ownership conflict, bounded paging
 cursor expiry and clean shutdown. Existing component/source/query coverage remains
 applicable. The [testing policy](../testing-policy.md) determines selected compiler,
 platform and sanitizer checks; this CPU adapter does not require GPU qualification.
+
+## 15b extension: editing and persistence, 2026-10-28
+
+Extend the existing host and version-1 discovery to nineteen implemented methods,
+with `mutations:true`. Add project creation, pure batch preview, retained command/
+batch/undo/redo/clear operations, history and mutation lookup, scene save/reload and
+scoped text read/write/release. Keep the same ProjectFiles/AuthoredScene ownership pair.
+No new command executor, history model, retry ledger, listener or scheduler exists.
+The protocol guide defines the exact fields, schemas and executable examples.
+
+Require current revisions for scene writes and native scoped/sequenced mutation
+IDs for every command/history mutation. Structural wire decoding retains the
+original typed values; shared services validate components and ordered batches.
+Return both the current enclosing revision and immutable original decision.
+Preserve all three result levels: RPC/service access, retry admission/lookup, and
+the original operation. A retained rejection is not successful editing. Preview
+has no retention or publication; a successful preview reserves nothing.
+
+Save preserves history and retry retention. Reload validates a complete candidate,
+defaults to rejecting unsaved edits and supports explicit revision-bound discard.
+Reload creates a fresh scene incarnation and clears history/cursors while keeping
+the native retry scope. Close/open creates a new owner and expires all such state.
+Close also supports explicit revision-bound discard; this permits deliberate
+handoff when external project edits block saving. EOF/destruction never saves;
+callers must keep the stdio session alive and explicitly publish intended changes.
+
+Project creation uses caller-owned durable IDs and two absent destinations in
+existing directories. Publish the empty scene first and then its project catalog.
+Return each successful file publication separately; a failed second publication
+does not roll back or delete the first. Saves use retained exact scene content
+revisions and report publication separately from durability. Save, reload and text
+access additionally check the retained project's exact bytes before proceeding,
+so external catalog changes cannot silently redirect operations.
+
+Text access is limited to `scripts/**/*.lua` (including direct `scripts/*.lua`)
+through ProjectFiles, with exact lowercase directory/suffix spelling, 32 KiB UTF-8
+content and no NUL. It does not parse or execute Lua. Exclude the active project
+and every declared scene path, including case aliases and path-prefix overlaps;
+typed source ownership cannot be bypassed by changing filename extensions.
+Raise the protocol preflight decoded-string limit to 32 KiB while retaining the
+64 KiB complete request bound and existing smaller field limits. Keep at most 32
+owner/path-bound text revision tokens with no silent eviction. Null means
+create-only; successful replacement returns a new token and consumes the old one.
+Explicit token release recovers observation capacity without accessing files.
+
+Scene mutation retry recovery uses the native ledger; file publications are not
+retained mutations. Output failure can follow successful dispatch/publication.
+Report reconciliation context on post-dispatch reply-preparation failure and
+require retained-outcome lookup or file inspection before another intent. Neither
+a broken pipe nor a missing response proves rollback or exactly-once delivery.
+Retain the existing same-machine file race/durability limits. New acceptance
+extends actual subprocess workflows and native publication fault fixtures under
+the testing policy; unrelated GPU/Server matrices remain outside this CPU change.

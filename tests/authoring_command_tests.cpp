@@ -2149,6 +2149,7 @@ TEST_CASE("mutation admission allocation faults do not evict or consume the next
         bool exhausted = false;
         std::size_t faults = 0;
         for (std::size_t index = 0; index < 512; ++index) {
+            CAPTURE(index);
             auto value = owner(source(), {}, {}, {1, authoring_maximum_mutation_bytes});
             auto first = rename_request(*value, "Before");
             auto original = recorded(*value, first);
@@ -2192,8 +2193,10 @@ TEST_CASE("mutation admission allocation faults do not evict or consume the next
                     REQUIRE(reply.value().outcome);
                     REQUIRE_FALSE(reply.value().outcome.value()->result);
                     CHECK(ledger(*value).high_watermark == 2);
-                    CHECK(take(value->mutate(input)).outcome.value() ==
-                          reply.value().outcome.value());
+                    auto replay = take(value->mutate(input));
+                    REQUIRE(replay.outcome);
+                    REQUIRE(replay.outcome.value());
+                    CHECK(replay.outcome.value() == reply.value().outcome.value());
                     same_capture(capture(*value), before);
                     same_history(history(*value), old);
                 }

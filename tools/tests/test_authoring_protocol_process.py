@@ -23,7 +23,9 @@ PROJECT = "20000000-0000-4000-8000-000000000001"
 SCENE = "20000000-0000-4000-8000-000000000003"
 ENTITIES = ["20000000-0000-4000-8000-00000000000" + digit for digit in "4567"]
 METHODS = {"protocol.discover", "schema.components", "project.open", "project.status",
-           "project.close", "scene.query", "scene.inspect", "scene.continue"}
+           "project.close", "scene.query", "scene.inspect", "scene.continue", "project.create",
+           "scene.preview", "scene.mutate", "scene.history", "scene.mutation_status",
+           "scene.mutation_outcome", "scene.save", "scene.reload", "text.read", "text.write", "text.release"}
 
 
 def unique(pairs):
@@ -219,16 +221,17 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
         self.assertEqual(discovery["protocol_version"], 1)
         self.assertEqual(discovery["transport"], {"framing": "newline-delimited-json", "batch": False,
                                                  "notifications": True})
-        self.assertEqual(discovery["limits"], {"request_bytes": REQUEST_BYTES,
-                                              "response_bytes": RESPONSE_BYTES, "retained_cursors": 32})
+        self.assertEqual(discovery["limits"]["request_bytes"], REQUEST_BYTES)
+        self.assertEqual(discovery["limits"]["response_bytes"], RESPONSE_BYTES)
+        self.assertEqual(discovery["limits"]["retained_cursors"], 32)
         self.assertEqual(discovery["capabilities"], {"cpu_authoring": True, "device_capture": False,
-                                                    "mutations": False})
+                                                    "mutations": True})
         self.assertEqual({method["name"] for method in discovery["methods"]}, METHODS)
         for method in discovery["methods"]:
             self.assertTrue(method["params"] and method["result"] and method["example"], method)
             self.assertEqual(method["execution_context"], "cpu_owner_thread")
-            self.assertIs(method["requires_open_project"], method["name"].startswith("scene."))
-            self.assertIs(method["requires_project_root"], method["name"] == "project.open")
+            self.assertIs(method["requires_open_project"], method["name"].startswith(("scene.", "text.")))
+            self.assertIs(method["requires_project_root"], method["name"] in {"project.open", "project.create"})
         schema = self.finite("--request", encoded(request("schema.components")), root=False)["result"]
         self.assertEqual(schema["components"], discovery["components"])
         components = {value["stable_id"]: value for value in schema["components"]}

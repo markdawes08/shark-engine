@@ -2,6 +2,7 @@
 
 #include "project_files_native.hpp"
 #include "shark/tools/asset_import.hpp"
+#include "utf8.hpp"
 
 #include <map>
 #include <new>
@@ -84,6 +85,21 @@ void validate_references(const ProjectDocument& project, const SceneDocument& sc
     if (scene.world_origin && scene.world_origin->world != project.world) {
         fail(ErrorCode::invalid_configuration, "scene origin belongs to a different world",
              "/world_origin/world_id");
+    }
+}
+
+void validate_text_path(const ProjectPath& path) {
+    const auto& value = path.text();
+    if (!value.starts_with("scripts/") || !value.ends_with(".lua")) {
+        fail(ErrorCode::invalid_path, "Text access requires a scripts/ path ending in .lua", value);
+    }
+}
+
+void validate_text(std::string_view text, const ProjectPath& path) {
+    if (text.size() > project_text_maximum_bytes || text.find('\0') != std::string_view::npos ||
+        !shark::detail::valid_utf8(text)) {
+        fail(ErrorCode::invalid_argument, "Text must be at most 32768 UTF-8 bytes without NUL",
+             path.text());
     }
 }
 
@@ -204,6 +220,31 @@ Result<ReadSource<ProjectDocument>> ProjectFiles::read_project(const ProjectPath
         source.document = impl_->catalog(source.document, &path);
         return ReadSource<ProjectDocument>{std::move(source),
                                            make_revision(path, std::move(bytes))};
+    });
+}
+
+Result<ReadText> ProjectFiles::read_text(const ProjectPath& path) {
+    return boundary<ReadText>("source.file.read_text", [&] {
+        impl_->check_owner();
+        validate_text_path(path);
+        auto text = checked(impl_->native->read(path, project_text_maximum_bytes));
+        validate_text(text, path);
+        auto revision = make_revision(path, text);
+        return ReadText{std::move(text), std::move(revision)};
+    });
+}
+
+Result<FileCommit> ProjectFiles::write_text(const ProjectPath& path, std::string_view text,
+                                            std::optional<FileRevision> expected) {
+    return boundary<FileCommit>("source.file.write_text", [&] {
+        impl_->check_owner();
+        validate_text_path(path);
+        validate_text(text, path);
+        const auto prior = expected_bytes(path, expected);
+        auto revision = make_revision(path, std::string{text});
+        const auto durability = checked(
+            impl_->native->replace(path, revision.data_->bytes, prior, project_text_maximum_bytes));
+        return FileCommit{std::move(revision), durability};
     });
 }
 

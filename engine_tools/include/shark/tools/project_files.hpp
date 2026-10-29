@@ -6,6 +6,8 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <string>
+#include <string_view>
 
 namespace shark::tools {
 
@@ -37,6 +39,13 @@ template <typename Document> struct ReadSource {
 struct FileCommit {
     FileRevision revision;
     FileDurability durability;
+};
+
+inline constexpr std::size_t project_text_maximum_bytes = 32 * 1024;
+
+struct ReadText {
+    std::string text;
+    FileRevision revision;
 };
 
 struct LoadedAuthoredScene {
@@ -73,6 +82,13 @@ class ProjectFiles final {
     ProjectFiles& operator=(ProjectFiles&&) = delete;
 
     [[nodiscard]] Result<ReadSource<ProjectDocument>> read_project(const ProjectPath& path);
+    // Raw UTF-8 text only, confined to scripts/*.lua (including nested paths).
+    // Empty text and newlines are valid; NUL, invalid UTF-8 and over 32 KiB reject.
+    // No Lua parsing/execution is implied. Adapters must also exclude their owned
+    // project/catalog paths, whose document formats are extension-independent.
+    [[nodiscard]] Result<ReadText> read_text(const ProjectPath& path);
+    [[nodiscard]] Result<FileCommit> write_text(const ProjectPath& path, std::string_view text,
+                                                std::optional<FileRevision> expected);
     [[nodiscard]] Result<ReadSource<AssetMetadata>> read_asset_metadata(const ProjectPath& sidecar);
     [[nodiscard]] Result<FileCommit> write_asset_metadata(const ProjectPath& sidecar,
                                                           const AssetMetadata& metadata,

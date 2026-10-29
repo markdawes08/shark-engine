@@ -3,6 +3,7 @@
 08c adds the device-free EngineTools [ProjectFiles API](../engine_tools/include/shark/tools/project_files.hpp)
 over the existing [source codec](source-documents.md) and
 [authored Scene owner](authored-scenes.md). It performs typed project/scene I/O;
+15b adds scoped raw script text through the same native storage owner.
 Core, Runtime and Server never load these documents. Follow the
 [persistence checkpoints](roadmap/persistence-plan.md) for qualification status.
 
@@ -88,6 +89,34 @@ file contents against an uncooperative writer. Likewise, hostile directory
 topology changes must not race the final identity check and syscall. Retained
 handles, no-follow opens, sharing restrictions and rechecks reject observed
 changes; this service is not an adversarial OS sandbox or a distributed lock.
+
+## Scoped script text
+
+`read_text(path)` returns `ReadText { text, revision }`; `write_text(path, text,
+expected)` returns the existing `FileCommit`. These operations use the same
+creating-thread guard, root lock, native path checks, exact-content revisions and
+atomic publication as typed documents. `nullopt` is create-only. They never create
+parent directories or silently overwrite external changes.
+
+Paths must start with exact lowercase `scripts/` and end with exact lowercase
+`.lua`; nested directories are allowed. Content is at most 32,768 UTF-8 bytes,
+permits empty text and line breaks, and rejects NUL or malformed UTF-8. Reads and
+writes preserve exact bytes, including line endings. These are raw source-file
+operations, not Lua parsing, validation, execution or a claim of an implemented
+Lua API. The scripting subsystem remains assignment 19.
+
+This path domain does not infer document kind from extension. A caller that owns
+an active project must also exclude that project file and every declared scene
+path, including case-folded and file/directory prefix overlaps. The terminal
+adapter applies those checks and fences the retained project catalog before text
+access. Typed source changes continue through the existing document/owner methods;
+raw text is not a way to replace a live scene or clear its dirty/history state.
+Text file publication is separate from Scene undo/redo and mutation retries.
+
+`project_text_maximum_bytes` publishes the byte bound. Errors use
+`source.file.read_text` and `source.file.write_text` with path context.
+Before-publication failures preserve old bytes; a returned `FileCommit` always
+means publication occurred, even when its durability confirmation is limited.
 
 ## Publication and durability
 

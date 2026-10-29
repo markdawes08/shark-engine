@@ -44,6 +44,13 @@ TERMINAL_SURFACES = {
     'terminal.project.status', 'terminal.project.close', 'terminal.scene.query',
     'terminal.scene.inspect', 'terminal.scene.continue',
 }
+TERMINAL_EDITING_SURFACES = {
+    'terminal.project.create', 'terminal.scene.preview', 'terminal.scene.mutate',
+    'terminal.scene.history', 'terminal.scene.mutation_status', 'terminal.scene.mutation_outcome',
+    'terminal.scene.save', 'terminal.scene.reload', 'terminal.text.read', 'terminal.text.write',
+    'terminal.text.release',
+}
+TERMINAL_SURFACES |= TERMINAL_EDITING_SURFACES
 FEATUREWORLD_CASES = [
     'featureworld.components', 'featureworld.commands', 'featureworld.batches-history',
     'featureworld.retries', 'featureworld.persistence', 'featureworld.asset-identity',
@@ -107,9 +114,12 @@ def audit(manifest, cpu, gpu, registered, declared):
                       and 'tests/runtime_scene_prepare.cpp' in entry['fixtures'],
                       'Standalone export process fixture drift')
             if entry['id'] in TERMINAL_SURFACES:
+                editing = entry['id'] in TERMINAL_EDITING_SURFACES
+                terminal_test = 'authoring-editing-process' if editing else 'authoring-protocol-process'
+                terminal_source = 'authoring_editing_process' if editing else 'authoring_protocol_process'
                 check(not mapped and entry.get('external_fixture_reason', '').strip()
-                      and 'shark.tools.authoring-protocol-process' in tests
-                      and 'tools/tests/test_authoring_protocol_process.py' in entry['test_sources'],
+                      and 'shark.tools.' + terminal_test in tests
+                      and 'tools/tests/test_' + terminal_source + '.py' in entry['test_sources'],
                       'Terminal protocol process fixture drift')
             rows.append({'id': entry['id'], 'category': category, 'featureworld_cases': mapped,
                          'registered_tests': sorted(set(tests) & registered),

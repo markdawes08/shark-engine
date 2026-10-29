@@ -5,8 +5,10 @@
 
 #include <algorithm>
 #include <charconv>
+#include <cmath>
 #include <cstdint>
 #include <initializer_list>
+#include <limits>
 #include <new>
 #include <string>
 #include <system_error>
@@ -22,12 +24,12 @@ struct WireFailure {
     Error error;
 };
 
-[[noreturn]] void fail(const char* path, const char* message,
+[[noreturn]] void fail(std::string_view path, const char* message,
                        ErrorCode code = ErrorCode::invalid_argument) {
-    throw WireFailure{Error{code, message, {.path = path}}};
+    throw WireFailure{Error{code, message, {.path = std::string(path)}}};
 }
 
-template <typename T> T checked(Result<T> result, const char* path) {
+template <typename T> T checked(Result<T> result, std::string_view path) {
     if (!result) {
         auto error = std::move(result).error();
         error.context.path = path;
@@ -54,7 +56,8 @@ Result<T> boundary(const char* operation, Function&& function) {
     }
 }
 
-void object(const Json& value, std::initializer_list<std::string_view> keys, const char* path) {
+void object(const Json& value, std::initializer_list<std::string_view> keys,
+            std::string_view path) {
     if (!value.is_object()) {
         fail(path, "Expected a parameter object");
     }
@@ -65,14 +68,14 @@ void object(const Json& value, std::initializer_list<std::string_view> keys, con
     }
 }
 
-const std::string& text(const Json& value, const char* path) {
+const std::string& text(const Json& value, std::string_view path) {
     if (!value.is_string()) {
         fail(path, "Expected a string");
     }
     return value.get_ref<const std::string&>();
 }
 
-std::uint64_t decimal(const Json& value, const char* path) {
+std::uint64_t decimal(const Json& value, std::string_view path) {
     const auto& input = text(value, path);
     if (input.empty() || input.size() > 20 || (input.size() > 1 && input.front() == '0') ||
         !std::all_of(input.begin(), input.end(),
@@ -153,8 +156,250 @@ std::size_t bounded_integer(const Json& value, std::size_t maximum, const char* 
     return static_cast<std::size_t>(number);
 }
 
-AuthoredEntityId entity_id(const Json& value, const char* path) {
+AuthoredEntityId entity_id(const Json& value, std::string_view path) {
     return AuthoredEntityId{checked(StableId::parse(text(value, path)), path)};
+}
+
+const Json& required(const Json& value, const char* key, std::string_view path) {
+    const auto found = value.find(key);
+    if (found == value.end()) {
+        fail(std::string(path) + '/' + key, "Required field is missing");
+    }
+    return *found;
+}
+
+SceneRevision revision(const Json& value, std::string_view path) {
+    object(value, {"scene_instance", "revision"}, path);
+    return {decimal(required(value, "scene_instance", path), std::string(path) + "/scene_instance"),
+            decimal(required(value, "revision", path), std::string(path) + "/revision")};
+}
+
+AuthoringMutationId mutation_id(const Json& value, std::string_view path) {
+    object(value, {"scope", "sequence"}, path);
+    const auto scope_path = std::string(path) + "/scope";
+    return {AuthoringMutationScope{checked(
+                StableId::parse(text(required(value, "scope", path), scope_path)), scope_path)},
+            decimal(required(value, "sequence", path), std::string(path) + "/sequence")};
+}
+
+double scalar(const Json& value, std::string_view path) {
+    if (!value.is_number()) {
+        fail(path, "Expected a finite number, not a boolean or string");
+    }
+    const auto result = value.get<double>();
+    if (!std::isfinite(result)) {
+        fail(path, "Expected a finite number");
+    }
+    return result;
+}
+
+void vector_size(const Json& value, std::size_t size, std::string_view path) {
+    if (!value.is_array() || value.size() != size) {
+        fail(path, "Expected an array with the declared vector length");
+    }
+}
+
+math::Vec3 vector3(const Json& value, std::string_view path) {
+    vector_size(value, 3, path);
+    return {scalar(value[0], path), scalar(value[1], path), scalar(value[2], path)};
+}
+
+Transform transform(const Json& value, std::string_view path) {
+    object(value, {"translation", "rotation", "scale"}, path);
+    const auto rotation_path = std::string(path) + "/rotation";
+    const auto& rotation = required(value, "rotation", path);
+    vector_size(rotation, 4, rotation_path);
+    return {vector3(required(value, "translation", path), std::string(path) + "/translation"),
+            math::Quat{scalar(rotation[3], rotation_path), scalar(rotation[0], rotation_path),
+                       scalar(rotation[1], rotation_path), scalar(rotation[2], rotation_path)},
+            vector3(required(value, "scale", path), std::string(path) + "/scale")};
+}
+
+std::optional<AuthoredEntityId> parent(const Json& value, std::string_view path) {
+    if (value.is_null()) {
+        return std::nullopt;
+    }
+    return entity_id(value, path);
+}
+
+std::optional<Camera> camera(const Json& value, std::string_view path) {
+    if (value.is_null()) {
+        return std::nullopt;
+    }
+    object(value,
+           {"projection", "vertical_fov_radians", "orthographic_height", "near_clip", "far_clip"},
+           path);
+    const auto projection_path = std::string(path) + "/projection";
+    const auto& name = text(required(value, "projection", path), projection_path);
+    CameraProjection projection;
+    if (name == "perspective") {
+        projection = CameraProjection::perspective;
+    } else if (name == "orthographic") {
+        projection = CameraProjection::orthographic;
+    } else {
+        fail(projection_path, "Unknown camera projection");
+    }
+    return Camera{projection,
+                  scalar(required(value, "vertical_fov_radians", path),
+                         std::string(path) + "/vertical_fov_radians"),
+                  scalar(required(value, "orthographic_height", path),
+                         std::string(path) + "/orthographic_height"),
+                  scalar(required(value, "near_clip", path), std::string(path) + "/near_clip"),
+                  scalar(required(value, "far_clip", path), std::string(path) + "/far_clip")};
+}
+
+std::optional<MeshRenderer> mesh_renderer(const Json& value, std::string_view path) {
+    if (value.is_null()) {
+        return std::nullopt;
+    }
+    object(value, {"asset_id", "mesh_index", "visible"}, path);
+    const auto asset_path = std::string(path) + "/asset_id";
+    const auto asset = AssetId{
+        checked(StableId::parse(text(required(value, "asset_id", path), asset_path)), asset_path)};
+    const auto& index_value = required(value, "mesh_index", path);
+    const auto index_path = std::string(path) + "/mesh_index";
+    if (!index_value.is_number_integer() ||
+        (index_value.is_number_integer() && !index_value.is_number_unsigned() &&
+         index_value.get<std::int64_t>() < 0)) {
+        fail(index_path, "Expected an unsigned 32-bit integer");
+    }
+    const auto index = index_value.get<std::uint64_t>();
+    if (index > std::numeric_limits<std::uint32_t>::max()) {
+        fail(index_path, "Mesh index exceeds the unsigned 32-bit range");
+    }
+    const auto& visible = required(value, "visible", path);
+    if (!visible.is_boolean()) {
+        fail(std::string(path) + "/visible", "Expected a boolean");
+    }
+    return MeshRenderer{asset, static_cast<std::uint32_t>(index), visible.get<bool>()};
+}
+
+Name command_name(const Json& value, std::string_view path) {
+    const auto& name = text(value, path);
+    if (name.size() > authoring_maximum_mutation_name_bytes) {
+        fail(path, "Name exceeds the retained input byte limit");
+    }
+    return Name{name};
+}
+
+AuthoringCommand command(const Json& value, std::string_view path) {
+    if (!value.is_object()) {
+        fail(path, "Expected a command object");
+    }
+    const auto& type = text(required(value, "type", path), std::string(path) + "/type");
+    const auto id = entity_id(required(value, "entity_id", path), std::string(path) + "/entity_id");
+    if (type == "create_entity") {
+        object(value,
+               {"type", "entity_id", "name", "transform", "parent_id", "camera", "mesh_renderer"},
+               path);
+        CreateEntityCommand result{id};
+        if (value.contains("name")) {
+            result.name = command_name(value["name"], std::string(path) + "/name");
+        }
+        if (value.contains("transform")) {
+            result.transform = transform(value["transform"], std::string(path) + "/transform");
+        }
+        if (value.contains("parent_id")) {
+            result.parent = parent(value["parent_id"], std::string(path) + "/parent_id");
+        }
+        if (value.contains("camera")) {
+            result.camera = camera(value["camera"], std::string(path) + "/camera");
+        }
+        if (value.contains("mesh_renderer")) {
+            result.mesh_renderer =
+                mesh_renderer(value["mesh_renderer"], std::string(path) + "/mesh_renderer");
+        }
+        return result;
+    }
+    if (type == "delete_entity") {
+        object(value, {"type", "entity_id"}, path);
+        return DeleteEntityCommand{id};
+    }
+    if (type == "set_name") {
+        object(value, {"type", "entity_id", "name"}, path);
+        return SetNameCommand{
+            id, command_name(required(value, "name", path), std::string(path) + "/name")};
+    }
+    if (type == "set_transform") {
+        object(value, {"type", "entity_id", "transform"}, path);
+        return SetTransformCommand{
+            id, transform(required(value, "transform", path), std::string(path) + "/transform")};
+    }
+    if (type == "set_camera") {
+        object(value, {"type", "entity_id", "camera"}, path);
+        return SetCameraCommand{
+            id, camera(required(value, "camera", path), std::string(path) + "/camera")};
+    }
+    if (type == "set_mesh_renderer") {
+        object(value, {"type", "entity_id", "mesh_renderer"}, path);
+        return SetMeshRendererCommand{id, mesh_renderer(required(value, "mesh_renderer", path),
+                                                        std::string(path) + "/mesh_renderer")};
+    }
+    if (type == "reparent_entity") {
+        object(value, {"type", "entity_id", "parent_id", "mode"}, path);
+        const auto mode_path = std::string(path) + "/mode";
+        const auto& mode = text(required(value, "mode", path), mode_path);
+        ReparentMode native_mode;
+        if (mode == "keep_local") {
+            native_mode = ReparentMode::keep_local;
+        } else if (mode == "keep_world") {
+            native_mode = ReparentMode::keep_world;
+        } else {
+            fail(mode_path, "Unknown reparent mode");
+        }
+        return ReparentEntityCommand{
+            id, parent(required(value, "parent_id", path), std::string(path) + "/parent_id"),
+            native_mode};
+    }
+    fail(std::string(path) + "/type", "Unknown authoring command type");
+}
+
+AuthoringBatch batch(const Json& value, std::string_view path) {
+    object(value, {"id", "commands"}, path);
+    const auto id_path = std::string(path) + "/id";
+    const auto id = AuthoringBatchId{
+        checked(StableId::parse(text(required(value, "id", path), id_path)), id_path)};
+    const auto& commands = required(value, "commands", path);
+    const auto commands_path = std::string(path) + "/commands";
+    if (!commands.is_array() || commands.size() > authoring_maximum_batch_commands) {
+        fail(commands_path, "Expected at most 256 ordered commands");
+    }
+    AuthoringBatch result{id, {}};
+    result.commands.reserve(commands.size());
+    for (std::size_t index = 0; index < commands.size(); ++index) {
+        result.commands.push_back(
+            command(commands[index], commands_path + '/' + std::to_string(index)));
+    }
+    return result;
+}
+
+AuthoringMutation operation(const Json& value, std::string_view path) {
+    if (!value.is_object()) {
+        fail(path, "Expected an operation object");
+    }
+    const auto& type = text(required(value, "type", path), std::string(path) + "/type");
+    if (type == "command") {
+        object(value, {"type", "command"}, path);
+        return command(required(value, "command", path), std::string(path) + "/command");
+    }
+    if (type == "batch") {
+        object(value, {"type", "batch"}, path);
+        return batch(required(value, "batch", path), std::string(path) + "/batch");
+    }
+    if (type == "undo" || type == "redo") {
+        object(value, {"type", "ticket"}, path);
+        const AuthoringHistoryTicket ticket{
+            decimal(required(value, "ticket", path), std::string(path) + "/ticket")};
+        if (type == "undo") {
+            return UndoAuthoringMutation{ticket};
+        }
+        return RedoAuthoringMutation{ticket};
+    }
+    if (type == "clear_history") {
+        object(value, {"type"}, path);
+        return ClearAuthoringHistoryMutation{};
+    }
+    fail(std::string(path) + "/type", "Unknown authoring mutation type");
 }
 
 const char* property_type(PropertyType value) {
@@ -360,6 +605,206 @@ Json entity_json(const Scene& scene, const SceneInspectedEntity& entity,
     return result;
 }
 
+Json id_json(AuthoringMutationId value) {
+    return {{"scope", value.scope.value().to_string()},
+            {"sequence", std::to_string(value.sequence)}};
+}
+
+Json error_json(const Error& value) {
+    return {{"code", error_code_name(value.code)},
+            {"message", value.message},
+            {"context",
+             {{"operation", value.context.operation},
+              {"request_id", value.context.request_id},
+              {"path", value.context.path},
+              {"entity_id", value.context.entity_id},
+              {"asset_id", value.context.asset_id}}}};
+}
+
+Json effect_json(const Result<AuthoringCommandEffect>& value) {
+    if (!value) {
+        return {{"ok", false}, {"error", error_json(value.error())}};
+    }
+    Json affected = Json::array();
+    for (const auto id : value.value().affected_entities) {
+        affected.push_back(id.value().to_string());
+    }
+    return {{"ok", true},
+            {"value",
+             {{"changed", value.value().changed}, {"affected_entities", std::move(affected)}}}};
+}
+
+Json group_json(const std::optional<AuthoringHistoryGroup>& value) {
+    if (!value) {
+        return nullptr;
+    }
+    return {{"ticket", std::to_string(value->ticket.value)},
+            {"command_count", value->command_count}};
+}
+
+Json object_schema(Json properties, Json required_keys) {
+    return {{"type", "object"},
+            {"additionalProperties", false},
+            {"properties", std::move(properties)},
+            {"required", std::move(required_keys)}};
+}
+
+Json nullable_schema(Json value) {
+    return {{"oneOf", {std::move(value), Json{{"type", "null"}}}}};
+}
+
+Json id_schema() {
+    return {{"type", "string"},
+            {"format", "uuid"},
+            {"pattern", "^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$"}};
+}
+
+Json decimal_schema() {
+    return {{"type", "string"},
+            {"pattern", "^(0|[1-9][0-9]{0,19})$"},
+            {"maximum_decimal", "18446744073709551615"}};
+}
+
+Json revision_schema() {
+    return object_schema({{"scene_instance", decimal_schema()}, {"revision", decimal_schema()}},
+                         {"scene_instance", "revision"});
+}
+
+Json mutation_id_schema() {
+    return object_schema({{"scope", id_schema()}, {"sequence", decimal_schema()}},
+                         {"scope", "sequence"});
+}
+
+Json scalar_schema() {
+    return {{"type", "number"}, {"finite_only", true}};
+}
+
+Json vector_schema(std::size_t size) {
+    return {{"type", "array"}, {"minItems", size}, {"maxItems", size}, {"items", scalar_schema()}};
+}
+
+Json transform_schema() {
+    return object_schema({{"translation", vector_schema(3)},
+                          {"rotation", vector_schema(4)},
+                          {"scale", vector_schema(3)}},
+                         {"translation", "rotation", "scale"});
+}
+
+Json camera_schema() {
+    return nullable_schema(object_schema(
+        {{"projection", {{"enum", {"perspective", "orthographic"}}}},
+         {"vertical_fov_radians", scalar_schema()},
+         {"orthographic_height", scalar_schema()},
+         {"near_clip", scalar_schema()},
+         {"far_clip", scalar_schema()}},
+        {"projection", "vertical_fov_radians", "orthographic_height", "near_clip", "far_clip"}));
+}
+
+Json mesh_schema() {
+    return nullable_schema(object_schema(
+        {{"asset_id", id_schema()},
+         {"mesh_index", {{"type", "integer"}, {"minimum", 0}, {"maximum", 4294967295ULL}}},
+         {"visible", {{"type", "boolean"}}}},
+        {"asset_id", "mesh_index", "visible"}));
+}
+
+Json command_schema() {
+    const Json name{{"type", "string"},
+                    {"maximum_utf8_bytes", authoring_maximum_mutation_name_bytes}};
+    const Json entity = id_schema();
+    const Json transform = transform_schema();
+    const Json parent = nullable_schema(id_schema());
+    const Json camera = camera_schema();
+    const Json mesh = mesh_schema();
+    Json options = Json::array();
+    options.push_back(object_schema({{"type", {{"const", "create_entity"}}},
+                                     {"entity_id", entity},
+                                     {"name", name},
+                                     {"transform", transform},
+                                     {"parent_id", parent},
+                                     {"camera", camera},
+                                     {"mesh_renderer", mesh}},
+                                    {"type", "entity_id"}));
+    options.push_back(object_schema({{"type", {{"const", "delete_entity"}}}, {"entity_id", entity}},
+                                    {"type", "entity_id"}));
+    options.push_back(
+        object_schema({{"type", {{"const", "set_name"}}}, {"entity_id", entity}, {"name", name}},
+                      {"type", "entity_id", "name"}));
+    options.push_back(object_schema(
+        {{"type", {{"const", "set_transform"}}}, {"entity_id", entity}, {"transform", transform}},
+        {"type", "entity_id", "transform"}));
+    options.push_back(object_schema(
+        {{"type", {{"const", "set_camera"}}}, {"entity_id", entity}, {"camera", camera}},
+        {"type", "entity_id", "camera"}));
+    options.push_back(object_schema({{"type", {{"const", "set_mesh_renderer"}}},
+                                     {"entity_id", entity},
+                                     {"mesh_renderer", mesh}},
+                                    {"type", "entity_id", "mesh_renderer"}));
+    options.push_back(object_schema({{"type", {{"const", "reparent_entity"}}},
+                                     {"entity_id", entity},
+                                     {"parent_id", parent},
+                                     {"mode", {{"enum", {"keep_local", "keep_world"}}}}},
+                                    {"type", "entity_id", "parent_id", "mode"}));
+    return {{"oneOf", std::move(options)},
+            {"description",
+             "Typed commands are structurally decoded here; shared component and scene "
+             "validators decide the retained operation outcome. Create defaults use the "
+             "native Name and Transform; optional components are absent."}};
+}
+
+Json batch_schema() {
+    return object_schema({{"id", id_schema()},
+                          {"commands",
+                           {{"type", "array"},
+                            {"maxItems", authoring_maximum_batch_commands},
+                            {"items", command_schema()}}}},
+                         {"id", "commands"});
+}
+
+Json operation_schema() {
+    Json options = Json::array();
+    options.push_back(object_schema(
+        {{"type", {{"const", "command"}}}, {"command", command_schema()}}, {"type", "command"}));
+    options.push_back(object_schema({{"type", {{"const", "batch"}}}, {"batch", batch_schema()}},
+                                    {"type", "batch"}));
+    options.push_back(
+        object_schema({{"type", {{"enum", {"undo", "redo"}}}}, {"ticket", decimal_schema()}},
+                      {"type", "ticket"}));
+    options.push_back(object_schema({{"type", {{"const", "clear_history"}}}}, {"type"}));
+    return {{"oneOf", std::move(options)}};
+}
+
+Json error_schema() {
+    const Json text{{"type", "string"}};
+    return object_schema(
+        {{"code", text},
+         {"message", text},
+         {"context", object_schema({{"operation", text},
+                                    {"request_id", text},
+                                    {"path", text},
+                                    {"entity_id", text},
+                                    {"asset_id", text}},
+                                   {"operation", "request_id", "path", "entity_id", "asset_id"})}},
+        {"code", "message", "context"});
+}
+
+Json result_schema(Json value) {
+    Json options = Json::array();
+    options.push_back(
+        object_schema({{"ok", {{"const", true}}}, {"value", std::move(value)}}, {"ok", "value"}));
+    options.push_back(
+        object_schema({{"ok", {{"const", false}}}, {"error", error_schema()}}, {"ok", "error"}));
+    return {{"oneOf", std::move(options)}};
+}
+
+Json effect_schema() {
+    return result_schema(object_schema(
+        {{"changed", {{"type", "boolean"}}},
+         {"affected_entities",
+          {{"type", "array"}, {"maxItems", 8192}, {"uniqueItems", true}, {"items", id_schema()}}}},
+        {"changed", "affected_entities"}));
+}
+
 } // namespace
 
 Result<Query> parse_query(const Json& params) {
@@ -422,6 +867,178 @@ Result<Inspect> parse_inspect(const Json& params) {
         return Inspect{entity_id(params["entity_id"], "/params/entity_id"), fields(params),
                        expected_revision(params)};
     });
+}
+
+Result<SceneRevision> parse_revision(const Json& value) {
+    return boundary<SceneRevision>("authoring.protocol.revision",
+                                   [&] { return revision(value, "/params/expected_revision"); });
+}
+
+Result<std::optional<SceneRevision>> parse_optional_revision(const Json& params) {
+    return boundary<std::optional<SceneRevision>>("authoring.protocol.revision", [&] {
+        object(params, {"expected_revision"}, "/params");
+        return expected_revision(params);
+    });
+}
+
+Result<AuthoringMutationId> parse_mutation_id(const Json& value) {
+    return boundary<AuthoringMutationId>("scene.mutation_outcome",
+                                         [&] { return mutation_id(value, "/params/mutation_id"); });
+}
+
+Result<AuthoringMutationRequest> parse_mutation(const Json& params) {
+    return boundary<AuthoringMutationRequest>("scene.mutate", [&] {
+        object(params, {"mutation_id", "expected_revision", "operation"}, "/params");
+        return AuthoringMutationRequest{
+            mutation_id(required(params, "mutation_id", "/params"), "/params/mutation_id"),
+            revision(required(params, "expected_revision", "/params"), "/params/expected_revision"),
+            operation(required(params, "operation", "/params"), "/params/operation")};
+    });
+}
+
+Result<Preview> parse_preview(const Json& params) {
+    return boundary<Preview>("scene.preview", [&] {
+        object(params, {"batch", "expected_revision"}, "/params");
+        return Preview{batch(required(params, "batch", "/params"), "/params/batch"),
+                       revision(required(params, "expected_revision", "/params"),
+                                "/params/expected_revision")};
+    });
+}
+
+Json history_json(const AuthoringHistoryStatus& value) {
+    return {{"revision", revision_json(value.revision)},
+            {"synchronized", value.synchronized},
+            {"undo_entries", value.undo_entries},
+            {"redo_entries", value.redo_entries},
+            {"retained_bytes", value.retained_bytes},
+            {"limits",
+             {{"max_entries", value.limits.max_entries},
+              {"max_retained_bytes", value.limits.max_retained_bytes}}},
+            {"next_undo", group_json(value.next_undo)},
+            {"next_redo", group_json(value.next_redo)}};
+}
+
+Json mutation_status_json(const AuthoringMutationStatus& value) {
+    return {{"scope", value.scope.value().to_string()},
+            {"revision", revision_json(value.revision)},
+            {"high_watermark", std::to_string(value.high_watermark)},
+            {"next", value.next ? id_json(*value.next) : Json(nullptr)},
+            {"oldest_retained",
+             value.oldest_retained ? id_json(*value.oldest_retained) : Json(nullptr)},
+            {"retained_entries", value.retained_entries},
+            {"retained_bytes", value.retained_bytes},
+            {"limits",
+             {{"max_entries", value.limits.max_entries},
+              {"max_retained_bytes", value.limits.max_retained_bytes}}}};
+}
+
+Json mutation_reply_json(const AuthoringMutationReply& value) {
+    Json outcome;
+    if (!value.outcome) {
+        outcome = {{"ok", false}, {"error", error_json(value.outcome.error())}};
+    } else {
+        const auto& original = *value.outcome.value();
+        Json record{{"mutation_id", id_json(original.id)},
+                    {"observed_revision", revision_json(original.observed_revision)},
+                    {"result", effect_json(original.result)},
+                    {"history_after", original.history_after ? history_json(*original.history_after)
+                                                             : Json(nullptr)}};
+        outcome = {{"ok", true}, {"value", std::move(record)}};
+    }
+    return {{"mutation_id", id_json(value.id)},
+            {"state", authoring_mutation_state_name(value.state)},
+            {"observed_revision", revision_json(value.observed_revision)},
+            {"outcome", std::move(outcome)}};
+}
+
+Json batch_reply_json(const AuthoringBatchReply& value) {
+    return {{"batch_id", value.id.value().to_string()},
+            {"observed_revision", revision_json(value.observed_revision)},
+            {"outcome", effect_json(value.outcome)}};
+}
+
+Json mutation_params_schema() {
+    return object_schema({{"mutation_id", mutation_id_schema()},
+                          {"expected_revision", revision_schema()},
+                          {"operation", operation_schema()}},
+                         {"mutation_id", "expected_revision", "operation"});
+}
+
+Json preview_params_schema() {
+    return object_schema({{"batch", batch_schema()}, {"expected_revision", revision_schema()}},
+                         {"batch", "expected_revision"});
+}
+
+Json history_schema() {
+    const Json count{{"type", "integer"}, {"minimum", 0}};
+    const Json group = nullable_schema(object_schema(
+        {{"ticket", decimal_schema()}, {"command_count", count}}, {"ticket", "command_count"}));
+    return object_schema(
+        {{"revision", revision_schema()},
+         {"synchronized", {{"type", "boolean"}}},
+         {"undo_entries", count},
+         {"redo_entries", count},
+         {"retained_bytes", count},
+         {"limits", object_schema({{"max_entries",
+                                    {{"type", "integer"},
+                                     {"minimum", 1},
+                                     {"maximum", authoring_maximum_history_entries}}},
+                                   {"max_retained_bytes",
+                                    {{"type", "integer"},
+                                     {"minimum", 1},
+                                     {"maximum", authoring_maximum_history_bytes}}}},
+                                  {"max_entries", "max_retained_bytes"})},
+         {"next_undo", group},
+         {"next_redo", group}},
+        {"revision", "synchronized", "undo_entries", "redo_entries", "retained_bytes", "limits",
+         "next_undo", "next_redo"});
+}
+
+Json mutation_status_schema() {
+    const Json count{{"type", "integer"}, {"minimum", 0}};
+    return object_schema(
+        {{"scope", id_schema()},
+         {"revision", revision_schema()},
+         {"high_watermark", decimal_schema()},
+         {"next", nullable_schema(mutation_id_schema())},
+         {"oldest_retained", nullable_schema(mutation_id_schema())},
+         {"retained_entries", count},
+         {"retained_bytes", count},
+         {"limits", object_schema({{"max_entries",
+                                    {{"type", "integer"},
+                                     {"minimum", 1},
+                                     {"maximum", authoring_maximum_mutation_entries}}},
+                                   {"max_retained_bytes",
+                                    {{"type", "integer"},
+                                     {"minimum", 1},
+                                     {"maximum", authoring_maximum_mutation_bytes}}}},
+                                  {"max_entries", "max_retained_bytes"})}},
+        {"scope", "revision", "high_watermark", "next", "oldest_retained", "retained_entries",
+         "retained_bytes", "limits"});
+}
+
+Json mutation_reply_schema() {
+    const Json original =
+        object_schema({{"mutation_id", mutation_id_schema()},
+                       {"observed_revision", revision_schema()},
+                       {"result", effect_schema()},
+                       {"history_after", nullable_schema(history_schema())}},
+                      {"mutation_id", "observed_revision", "result", "history_after"});
+    return object_schema({{"mutation_id", mutation_id_schema()},
+                          {"state",
+                           {{"enum",
+                             {"recorded", "retained", "replayed", "not_recorded", "unknown_outcome",
+                              "payload_mismatch", "out_of_order", "not_admitted"}}}},
+                          {"observed_revision", revision_schema()},
+                          {"outcome", result_schema(original)}},
+                         {"mutation_id", "state", "observed_revision", "outcome"});
+}
+
+Json batch_reply_schema() {
+    return object_schema({{"batch_id", id_schema()},
+                          {"observed_revision", revision_schema()},
+                          {"outcome", effect_schema()}},
+                         {"batch_id", "observed_revision", "outcome"});
 }
 
 Result<Json> component_schemas_json() {

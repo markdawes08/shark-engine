@@ -813,8 +813,9 @@ if(TARGET RuntimeScenePrepare)
         LABELS "cpu;integration;tooling" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 endif()
 if(TARGET SharkAuthor)
-    add_executable(AuthoringProtocolTests authoring_protocol_tests.cpp)
+    add_executable(AuthoringProtocolTests authoring_protocol_tests.cpp authoring_protocol_file_tests.cpp)
     target_link_libraries(AuthoringProtocolTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_include_directories(AuthoringProtocolTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
     shark_configure_target(AuthoringProtocolTests)
     shark_classify_target(AuthoringProtocolTests test)
     add_test(NAME shark.tools.authoring-protocol
@@ -824,6 +825,11 @@ if(TARGET SharkAuthor)
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_authoring_protocol_process.py"
             --author "$<TARGET_FILE:SharkAuthor>" -v)
     set_tests_properties(shark.tools.authoring-protocol-process PROPERTIES
+        LABELS "cpu;tooling;integration" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+    add_test(NAME shark.tools.authoring-editing-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_authoring_editing_process.py"
+            --author "$<TARGET_FILE:SharkAuthor>" -v)
+    set_tests_properties(shark.tools.authoring-editing-process PROPERTIES
         LABELS "cpu;tooling;integration" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 endif()
 set_tests_properties(shark.tooling.runtime-package PROPERTIES LABELS "cpu;tooling;boundary")

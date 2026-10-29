@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shark/scene_query.hpp"
+#include "shark/tools/authoring_retries.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -24,6 +25,32 @@ struct Inspect {
 
 [[nodiscard]] Result<Query> parse_query(const nlohmann::json& params);
 [[nodiscard]] Result<Inspect> parse_inspect(const nlohmann::json& params);
+
+struct Preview {
+    AuthoringBatch batch;
+    SceneRevision expected_revision;
+};
+
+// Decode structure without canonicalizing command values: the shared owner
+// validates them and retains the exact typed input and its terminal decision.
+[[nodiscard]] Result<SceneRevision> parse_revision(const nlohmann::json& value);
+[[nodiscard]] Result<std::optional<SceneRevision>>
+parse_optional_revision(const nlohmann::json& params);
+[[nodiscard]] Result<AuthoringMutationId> parse_mutation_id(const nlohmann::json& value);
+[[nodiscard]] Result<AuthoringMutationRequest> parse_mutation(const nlohmann::json& params);
+[[nodiscard]] Result<Preview> parse_preview(const nlohmann::json& params);
+
+[[nodiscard]] nlohmann::json history_json(const AuthoringHistoryStatus& value);
+[[nodiscard]] nlohmann::json mutation_status_json(const AuthoringMutationStatus& value);
+[[nodiscard]] nlohmann::json mutation_reply_json(const AuthoringMutationReply& value);
+[[nodiscard]] nlohmann::json batch_reply_json(const AuthoringBatchReply& value);
+
+[[nodiscard]] nlohmann::json mutation_params_schema();
+[[nodiscard]] nlohmann::json preview_params_schema();
+[[nodiscard]] nlohmann::json mutation_reply_schema();
+[[nodiscard]] nlohmann::json history_schema();
+[[nodiscard]] nlohmann::json mutation_status_schema();
+[[nodiscard]] nlohmann::json batch_reply_schema();
 
 // Returns the catalog array; the service owns the method-result envelope.
 [[nodiscard]] Result<nlohmann::json> component_schemas_json();

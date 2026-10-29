@@ -423,7 +423,7 @@
       "planned_fixture": "PublicAuthoringProcess scenario, ProtocolInvalidRequests, ProtocolVersionMismatch, CancellationRetry and ScopedTextAsset fixtures; FeatureWorld/AgentAuthoredScene provides saved scene equivalence. Add NoTTYProtocolStreams, BoundedDiscoveryQueries, CPUAuthoringClosure, ProjectOwnerExclusion, TextWriteConflict and JobPublicationInterruption fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "15a completes the CPU terminal protocol foundation: bounded versioned one-shot/stdio UTF-8 messages, actual schema/capability discovery, one retained project owner and read-only revisioned queries with bounded single-use cursors. docs/handoffs/15a-terminal-protocol.md records Windows Debug, standalone CPU Tools, WSL Debug/ASan+UBSan and real process/ownership checks. Shared editing/persistence, imports/jobs, run/export/capture and connected acceptance remain 15b-15e in docs/roadmap/terminal-authoring-plan.md; full REQ-15 remains NOT_RUN."
+        "reason": "15a and 15b complete the CPU terminal foundation and editing/persistence adapters: bounded versioned pipes, discovery, one project owner, revisioned queries, retained edits/batches/history, preview, exact-content save/reload, explicit discard-close, project creation with partial-publication receipts, and bounded Lua source text. docs/handoffs/15b-terminal-editing.md records focused Windows/WSL Debug and Windows ASan qualification through real processes; WSL ASan/UBSan remains NOT_RUN after reproduced compiler crashes. Imports/jobs, run/export/capture and connected acceptance remain 15c-15e in docs/roadmap/terminal-authoring-plan.md; full REQ-15 remains NOT_RUN."
       }
     },
     {
@@ -2841,7 +2841,29 @@
           "assets/FeatureWorld/FeatureWorld.sharkproject",
           "docs/authoring-protocol.md"
         ],
-        "fixture_reason": "The public C++ owner enforces creating-thread access. Actual non-TTY Windows/WSL subprocesses use saved FeatureWorld inputs with independent expected hierarchy and transform values to check Unicode streams, native component metadata, bounded queries, revision/consumed-cursor conflicts, one project writer, process-death/EOF lock release and broken-output failure. This profile has no mutation or GPU methods."
+        "fixture_reason": "The public C++ owner enforces creating-thread access. Actual non-TTY Windows/WSL subprocesses use saved FeatureWorld inputs with independent expected hierarchy and transform values to check Unicode streams, native component metadata, bounded queries, revision/consumed-cursor conflicts, one project writer, process-death/EOF lock release and broken-output failure. 15b adds separately mapped editing/persistence methods; no GPU method is advertised."
+      },
+      {
+        "id": "tools.authoring-editing",
+        "name": "Terminal retained edits, source persistence and scoped script text",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-protocol",
+          "shark.tools.authoring-editing-process",
+          "shark.tools.project-files"
+        ],
+        "test_sources": [
+          "tests/authoring_protocol_file_tests.cpp",
+          "tools/tests/test_authoring_editing_process.py",
+          "tests/project_files_tests.cpp"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Real process calls exercise all seven typed commands, preview/batches, shared history, three-level retained outcomes, replay/mismatch/expiry/restart, source preservation, exact-byte external conflicts and explicit reload/discard. Native fault controls independently prove partial two-file creation receipts and script write rollback/committed durability limits. Script text is not a Lua binding or execution capability; imports/jobs/device adapters remain later checkpoints."
       }
     ],
     "components": [
@@ -4991,10 +5013,12 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-protocol-process"
+          "shark.tools.authoring-protocol-process",
+          "shark.tools.authoring-editing-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_protocol_process.py"
+          "tools/tests/test_authoring_protocol_process.py",
+          "tools/tests/test_authoring_editing_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
@@ -5063,6 +5087,226 @@
         "fixture_reason": "Implemented version-1 method over the existing CPU authoring owner; the real subprocess fixture invokes this method and checks independent results, structured failures and source preservation. Discovery advertises only implemented methods.",
         "featureworld_cases": [],
         "external_fixture_reason": "Terminal framing, Unicode pipes, cross-process writer exclusion and process-lifetime cleanup require actual separate processes. The fixture opens a saved FeatureWorld copy through the public host; it does not add an in-process FeatureWorld callback or claim a human editor/device workflow."
+      },
+      {
+        "id": "terminal.project.create",
+        "name": "SharkAuthor JSON-RPC project.create",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-editing-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_editing_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal delivery, process ownership and file publication require separate real-process fixtures. Tests use a saved FeatureWorld copy and a freshly created project through public methods; existing in-process FeatureWorld command/history/retry cases remain unchanged. No human editor or GPU workflow is claimed."
+      },
+      {
+        "id": "terminal.scene.preview",
+        "name": "SharkAuthor JSON-RPC scene.preview",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-editing-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_editing_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal delivery, process ownership and file publication require separate real-process fixtures. Tests use a saved FeatureWorld copy and a freshly created project through public methods; existing in-process FeatureWorld command/history/retry cases remain unchanged. No human editor or GPU workflow is claimed."
+      },
+      {
+        "id": "terminal.scene.mutate",
+        "name": "SharkAuthor JSON-RPC scene.mutate",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-editing-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_editing_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal delivery, process ownership and file publication require separate real-process fixtures. Tests use a saved FeatureWorld copy and a freshly created project through public methods; existing in-process FeatureWorld command/history/retry cases remain unchanged. No human editor or GPU workflow is claimed."
+      },
+      {
+        "id": "terminal.scene.history",
+        "name": "SharkAuthor JSON-RPC scene.history",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-editing-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_editing_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal delivery, process ownership and file publication require separate real-process fixtures. Tests use a saved FeatureWorld copy and a freshly created project through public methods; existing in-process FeatureWorld command/history/retry cases remain unchanged. No human editor or GPU workflow is claimed."
+      },
+      {
+        "id": "terminal.scene.mutation_status",
+        "name": "SharkAuthor JSON-RPC scene.mutation_status",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-editing-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_editing_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal delivery, process ownership and file publication require separate real-process fixtures. Tests use a saved FeatureWorld copy and a freshly created project through public methods; existing in-process FeatureWorld command/history/retry cases remain unchanged. No human editor or GPU workflow is claimed."
+      },
+      {
+        "id": "terminal.scene.mutation_outcome",
+        "name": "SharkAuthor JSON-RPC scene.mutation_outcome",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-editing-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_editing_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal delivery, process ownership and file publication require separate real-process fixtures. Tests use a saved FeatureWorld copy and a freshly created project through public methods; existing in-process FeatureWorld command/history/retry cases remain unchanged. No human editor or GPU workflow is claimed."
+      },
+      {
+        "id": "terminal.scene.save",
+        "name": "SharkAuthor JSON-RPC scene.save",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-editing-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_editing_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal delivery, process ownership and file publication require separate real-process fixtures. Tests use a saved FeatureWorld copy and a freshly created project through public methods; existing in-process FeatureWorld command/history/retry cases remain unchanged. No human editor or GPU workflow is claimed."
+      },
+      {
+        "id": "terminal.scene.reload",
+        "name": "SharkAuthor JSON-RPC scene.reload",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-editing-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_editing_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal delivery, process ownership and file publication require separate real-process fixtures. Tests use a saved FeatureWorld copy and a freshly created project through public methods; existing in-process FeatureWorld command/history/retry cases remain unchanged. No human editor or GPU workflow is claimed."
+      },
+      {
+        "id": "terminal.text.read",
+        "name": "SharkAuthor JSON-RPC text.read",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-editing-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_editing_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal delivery, process ownership and file publication require separate real-process fixtures. Tests use a saved FeatureWorld copy and a freshly created project through public methods; existing in-process FeatureWorld command/history/retry cases remain unchanged. No human editor or GPU workflow is claimed."
+      },
+      {
+        "id": "terminal.text.write",
+        "name": "SharkAuthor JSON-RPC text.write",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-editing-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_editing_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal delivery, process ownership and file publication require separate real-process fixtures. Tests use a saved FeatureWorld copy and a freshly created project through public methods; existing in-process FeatureWorld command/history/retry cases remain unchanged. No human editor or GPU workflow is claimed."
+      },
+      {
+        "id": "terminal.text.release",
+        "name": "SharkAuthor JSON-RPC text.release",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-editing-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_editing_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Terminal delivery, process ownership and file publication require separate real-process fixtures. Tests use a saved FeatureWorld copy and a freshly created project through public methods; existing in-process FeatureWorld command/history/retry cases remain unchanged. No human editor or GPU workflow is claimed."
       }
     ],
     "lua_api": []

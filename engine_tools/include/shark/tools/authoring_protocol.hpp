@@ -38,8 +38,11 @@ class AuthoringProtocol final {
     AuthoringProtocol& operator=(AuthoringProtocol&&) = delete;
 
     // The outer Result reports service-access/output failures. Protocol and
-    // operation failures are serialized replies with failed=true. Unsupported
-    // batch requests never dispatch any member operation.
+    // operation failures are serialized replies with failed=true, including
+    // nested retained decisions carried by a JSON-RPC result. Unsupported RPC
+    // batches never dispatch. Scene mutations use the shared retained ledger;
+    // uncertain/lost output requires outcome lookup or file reconciliation,
+    // never an assumption that a failed reply rolled back a dispatched write.
     [[nodiscard]] Result<AuthoringProtocolReply> handle(std::string_view request);
 
   private:

@@ -20,11 +20,11 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**15a's terminal protocol foundation is complete under current-machine scope.**
-The [latest handoff](docs/handoffs/15a-terminal-protocol.md) records the CPU
-`SharkAuthor` host, schema/capability discovery, retained project ownership and
-read-only queries through ordinary UTF-8 pipes. Next is 15b's editing and
-persistence in the [terminal checkpoints](docs/roadmap/terminal-authoring-plan.md).
+**15b's terminal editing and persistence is complete under current-machine scope.**
+The [latest handoff](docs/handoffs/15b-terminal-editing.md) records retained edits,
+preview, shared history/retries, project creation, save/reload and scoped script
+text through `SharkAuthor`. Next is 15c's imports and jobs in the
+[terminal checkpoints](docs/roadmap/terminal-authoring-plan.md).
 Full assignment 15 remains open. Assignments 12, 13 and 14 remain complete,
 including Runtime scene presentation and safe reload on both GPUs. Completed
 checkpoints and their original results are indexed in
@@ -34,9 +34,9 @@ authorizes continued development under each increment's acceptance criteria.
 
 Current capabilities include:
 
-- [Terminal discovery and inspection](docs/authoring-protocol.md) through one-shot
-  JSON or persistent stdio, with bounded pages, stable IDs and explicit revisions.
-  This initial protocol does not expose editing, import jobs or GPU capture yet.
+- [Terminal authoring](docs/authoring-protocol.md) through one-shot JSON or
+  persistent stdio, with discovery, bounded queries, retained edits, preview,
+  undo/redo and conflict-aware persistence. Import jobs and GPU capture remain later work.
 - [Core services](docs/core-contracts.md), [application ownership](docs/application-lifecycle.md)
   and [bounded timing/work](docs/time-and-work.md), with separate Core, Client,
   Tools and headless Server boundaries.

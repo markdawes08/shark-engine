@@ -820,7 +820,8 @@ TEST_CASE("project file methods reject foreign threads without touching files or
     const auto project_document = project();
     const auto scene_document = scene();
     const auto scene_id = id<SceneId>(3);
-    std::array<bool, 7> results{};
+    std::array<bool, 9> results{};
+    const auto script_path = path("scripts/main.lua");
     std::thread foreign{[&] {
         const auto check = [](const auto& result) {
             return !result && result.error().code == ErrorCode::conflict;
@@ -833,6 +834,8 @@ TEST_CASE("project file methods reject foreign threads without touching files or
         results[4] = check(files->load_scene(project_document, scene_id));
         results[5] = check(files->reload_scene(*loaded.owner, expected));
         results[6] = check(files->save_scene(*loaded.owner, expected, loaded.file_revision));
+        results[7] = check(files->read_text(script_path));
+        results[8] = check(files->write_text(script_path, "return 1\n", std::nullopt));
     }};
     foreign.join();
     for (const auto result : results) {
@@ -840,6 +843,101 @@ TEST_CASE("project file methods reject foreign threads without touching files or
     }
     CHECK(read_bytes(fixture.scene_path()) == old);
     CHECK(status(*loaded.owner).revision == expected);
+}
+
+TEST_CASE("script text preserves UTF-8 bytes and rejects conflicting content revisions",
+          "[project-files][project-text]") {
+    Fixture fixture;
+    REQUIRE(fs::create_directory(fixture.root / "scripts"));
+    auto files = fixture.open();
+    const auto script = path("scripts/main.lua");
+    const auto second = path("scripts/other.lua");
+    const std::string original = "-- \xe9\x9b\xaa\r\nreturn 1\n";
+    const auto first = take(files->write_text(script, original, std::nullopt));
+    const auto read = take(files->read_text(script));
+    CHECK(read.text == original);
+    CHECK(read.revision == first.revision);
+    CHECK(read.revision.byte_count() == original.size());
+    rejected(files->write_text(script, "return 2\n", std::nullopt), ErrorCode::conflict);
+    rejected(files->write_text(second, "return 2\n", read.revision), ErrorCode::conflict);
+    CHECK_FALSE(fs::exists(fixture.root / "scripts/other.lua"));
+
+    const auto timestamp = fs::last_write_time(fixture.root / "scripts/main.lua");
+    auto external = original;
+    external[external.size() - 2] = '3';
+    write_bytes(fixture.root / "scripts/main.lua", external);
+    fs::last_write_time(fixture.root / "scripts/main.lua", timestamp);
+    rejected(files->write_text(script, "return 2\n", read.revision), ErrorCode::conflict);
+    CHECK(read_bytes(fixture.root / "scripts/main.lua") == external);
+    CHECK(read.text == original);
+
+    write_bytes(fixture.root / "scripts/main.lua", original);
+    const auto changed = take(files->write_text(script, "return 2\n", read.revision));
+    CHECK(take(files->read_text(script)).revision == changed.revision);
+    files.reset();
+    files = fixture.open();
+    const auto empty = take(files->write_text(script, "", changed.revision));
+    CHECK(empty.revision.byte_count() == 0);
+    CHECK(take(files->read_text(script)).text.empty());
+}
+
+TEST_CASE("script text enforces bounded UTF-8 and a distinct path domain",
+          "[project-files][project-text]") {
+    Fixture fixture;
+    REQUIRE(fs::create_directory(fixture.root / "scripts"));
+    auto files = fixture.open();
+    const auto script = path("scripts/main.lua");
+    for (const auto rejected_path :
+         {"main.lua", "Scripts/main.lua", "scripts/main.LUA", "scripts/main.sharkscene",
+          "scripts/.shark-stage-main.lua", "scripts/.shark-write.lock/main.lua"}) {
+        INFO(rejected_path);
+        rejected(files->write_text(path(rejected_path), "return 1\n", std::nullopt),
+                 ErrorCode::invalid_path);
+        rejected(files->read_text(path(rejected_path)), ErrorCode::invalid_path);
+    }
+    for (const auto& invalid : {std::string{"a\0b", 3}, std::string{"\xc0\xaf", 2},
+                                std::string(project_text_maximum_bytes + 1, 'x')}) {
+        rejected(files->write_text(script, invalid, std::nullopt), ErrorCode::invalid_argument);
+        CHECK_FALSE(fs::exists(fixture.root / "scripts/main.lua"));
+    }
+    const std::string maximum(project_text_maximum_bytes, 'x');
+    const auto saved = take(files->write_text(script, maximum, std::nullopt));
+    CHECK(take(files->read_text(script)).text == maximum);
+    write_bytes(fixture.root / "scripts/main.lua", std::string{"a\0b", 3});
+    rejected(files->read_text(script), ErrorCode::invalid_argument);
+    write_bytes(fixture.root / "scripts/main.lua", std::string{"\xc0\xaf", 2});
+    rejected(files->read_text(script), ErrorCode::invalid_argument);
+    write_bytes(fixture.root / "scripts/main.lua",
+                std::string(project_text_maximum_bytes + 1, 'x'));
+    REQUIRE_FALSE(files->read_text(script));
+    REQUIRE_FALSE(files->write_text(path("scripts/missing/main.lua"), "", std::nullopt));
+    CHECK_FALSE(fs::exists(fixture.root / "scripts/missing"));
+    CHECK(saved.revision.byte_count() == project_text_maximum_bytes);
+}
+
+TEST_CASE("script text reports prepublication rollback and committed durability limits",
+          "[project-files][project-text]") {
+    Fixture fixture;
+    REQUIRE(fs::create_directory(fixture.root / "scripts"));
+    auto files = fixture.open();
+    const auto script = path("scripts/main.lua");
+    const auto original = take(files->write_text(script, "return 1\n", std::nullopt));
+    {
+        Control control{{detail::FileFault::publish, nullptr, nullptr}};
+        rejected(files->write_text(script, "return 2\n", original.revision), ErrorCode::io_failure);
+    }
+    CHECK(read_bytes(fixture.root / "scripts/main.lua") == "return 1\n");
+    CHECK(take(files->read_text(script)).revision == original.revision);
+    CHECK(regular_files(fixture.root / "scripts") == 1);
+    std::optional<FileCommit> committed;
+    {
+        Control control{{detail::FileFault::directory_flush, nullptr, nullptr}};
+        committed = take(files->write_text(script, "return 2\n", original.revision));
+    }
+    CHECK(committed->durability == FileDurability::directory_flush_failed);
+    CHECK(take(files->read_text(script)).text == "return 2\n");
+    CHECK(take(files->read_text(script)).revision == committed->revision);
+    rejected(files->write_text(script, "return 3\n", original.revision), ErrorCode::conflict);
 }
 
 TEST_CASE("capture and save during a read visit are permitted while reload cannot replace it",
