@@ -1,7 +1,7 @@
 shark_setup_source_document_dependencies()
 shark_setup_gltf_dependencies()
 shark_setup_image_dependencies()
-add_library(EngineTools STATIC src/build_info.cpp src/source_document.cpp src/authored_scene.cpp
+add_library(EngineTools STATIC src/build_info.cpp src/source_document.cpp src/authored_scene.cpp src/transform_manipulation.cpp
     src/project_files.cpp src/project_files_native.cpp src/asset_catalog.cpp src/asset_cache_format.cpp src/asset_import.cpp
     src/scene_runner.cpp src/feature_world.cpp src/gltf_source.cpp src/gltf_image_decoder.cpp
     src/gltf_asset.cpp src/prepared_content.cpp src/client_export.cpp

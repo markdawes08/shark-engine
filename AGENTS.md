@@ -49,14 +49,22 @@ This user amendment permits later implementation to proceed before those checks;
 it does not qualify untested behavior or close full UI acceptance. Do not infer
 permission to resume from elapsed time or a new coding request.
 
-**Current handoff: [17a, viewport navigation and picking](docs/handoffs/17a-viewport-navigation.md).**
+**Current handoff: [17b, transform manipulation and drag transactions](docs/handoffs/17b-transform-manipulation.md).**
+Follow [ADR 0043](docs/architecture/0043-transform-manipulation.md) and the
+[manipulation contract](docs/transform-manipulation.md): cumulative local/world
+math uses full parent matrices, explicit snapping and existing TRS rejection.
+Drag updates use pure preview; one retained set_transform commits one history
+group. Cancel never writes a stale baseline, and a rejected newest update cannot
+commit an older candidate. Preserve selection/revision fences and original
+uncertain-outcome reconciliation. Next is 17c, gizmo integration and candidate
+presentation through these services, in the
+[viewport checkpoints](docs/roadmap/viewport-interaction-plan.md).
 17a adds display-only orbit/pan/dolly and revision-bound triangle picking from the
 same RenderScene used for the viewport. Follow [ADR 0042](docs/architecture/0042-viewport-navigation-and-picking.md)
 and the [navigation contract](docs/viewport-navigation.md): validate the optional
 view camera before culling, retain authored-camera provenance and full affine
 transforms, use actual image bounds and preserve focus/modal cancellation.
-Navigation/selection must not change authored state or history. Next is 17b,
-shared transform and drag transactions, in the [viewport checkpoints](docs/roadmap/viewport-interaction-plan.md).
+Navigation/selection must not change authored state or history.
 Full REQ-17 remains NOT_RUN. 16e's headless project handoff remains recorded in its
 [handoff](docs/handoffs/16e-editor-terminal-acceptance.md); actual connected UI
 acceptance follows the [procedure](docs/editor-acceptance.md) after explicit
@@ -89,8 +97,8 @@ Metadata edits are outside scene undo, and unapplied drafts require explicit
 close resolution. Bounded console logging cannot alter operation outcomes.
 Project status observation failure marks cached state unknown while preserving
 the original reply; scoped cleanup stays available. Actual UI/terminal parity
-retains 16e; transform drag transactions and gizmos remain later assignment-17
-checkpoints. Full REQ-16 remains NOT_RUN; current assignment is 17.
+retains 16e; gizmos and connected transform acceptance remain 17c-17d.
+Full REQ-16 remains NOT_RUN; current assignment is 17.
 
 15a-15d supply the CPU `SharkAuthor` host, retained project ownership, shared
 editing/persistence/imports, static deterministic runs and configured export.

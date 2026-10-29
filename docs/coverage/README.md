@@ -8,9 +8,9 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**17a adds display-only navigation and snapshot triangle picking;
+**17b adds shared local/world transform math and one-commit drag transactions;
 selected headless qualification is tracked in the
-[handoff](../handoffs/17a-viewport-navigation.md).
+[handoff](../handoffs/17b-transform-manipulation.md).
 Full REQ-16 and REQ-17 remain NOT_RUN.** Native composition and actual UI acceptance are
 deferred under the user's
 [coding-only amendment](../backlog.md); it is not a passing UI qualification.
@@ -33,6 +33,10 @@ process adapter is not a second public authoring host.
 before culling and maps the [navigation contract](../viewport-navigation.md)
 to CPU geometry and headless routing fixtures. No source/protocol version,
 component, command or FeatureWorld case is added.
+17b maps the [manipulation contract](../transform-manipulation.md) to focused
+math and retained-owner drag fixtures, including terminal-equivalent resulting
+edits. Existing `set_transform` remains the semantic command; previews publish
+nothing and one changed commit adds one undo group. Gizmo UI remains 17c.
 
 **15e and full REQ-15 are complete under current-machine scope.** The
 [public example](../../examples/terminal_authoring.py) creates a fresh project,

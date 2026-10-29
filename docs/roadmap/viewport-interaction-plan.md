@@ -12,10 +12,14 @@ coding, without closing full REQ-16 or qualifying actual UI interaction.
 | 17c: Gizmo integration | Translate/rotate/scale controls through 17b's common validation/history path. Integrate focus, capture, cancellation and local/world modes; select/pin any new dependency before use. |
 | 17d: Connected acceptance | Equivalent human/terminal transforms, stale requests, save/reopen and undo, including actual navigation/picking/gizmo input and the required native rendering checks. Reuse valid earlier focused results. |
 
-17a is the current increment; full REQ-17 remains NOT_RUN. Its
+17a is implemented with selected headless verification. Its
 [navigation contract](../viewport-navigation.md) and
 [handoff](../handoffs/17a-viewport-navigation.md) separate implemented behavior
-from deferred actual input/GPU acceptance. 17b is next.
+from deferred actual input/GPU acceptance. 17b adds the shared
+[transform and drag contract](../transform-manipulation.md); results and limits
+belong to its [handoff](../handoffs/17b-transform-manipulation.md). Next is 17c,
+gizmo integration. Full REQ-17 remains NOT_RUN until connected acceptance and
+the required deferred UI checks.
 
 Editor camera navigation and selection are presentation state, not authored
 transform mutations or gameplay intents. Subsequent gizmo writes use the original

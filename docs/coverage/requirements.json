@@ -456,7 +456,7 @@
       "planned_fixture": "FeatureWorld/GizmoHierarchy, GizmoDragUndo, HighDpiViewportPicking and GizmoAgentEquivalence fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "17a implements display-only orbit/pan/dolly and same-snapshot triangle picking over the retained editor owner. Optional validated Core/Tools view overrides run before culling, preserving authored Camera provenance, source/dirty/history state and fresh asset fences. Selected CPU/headless results and limitations are recorded in docs/handoffs/17a-viewport-navigation.md. Actual input/layout/GPU acceptance remains NOT_RUN in BL-16A-UI-01 under the user desktop pause. Shared transform/drag transactions, gizmo integration and connected acceptance remain17b-17d in docs/roadmap/viewport-interaction-plan.md; full REQ-17 remains NOT_RUN."
+        "reason": "17a implements display-only navigation and snapshot triangle picking; its results remain in docs/handoffs/17a-viewport-navigation.md. 17b adds shared local/world transform math, cumulative snapping, affine parent conversion and explicit shear/singular rejection. Its editor-private drag controller validates through existing scene.preview, commits one retained set_transform history group and fences selection/revision changes without rollback writes. Selected headless results and limitations belong to docs/handoffs/17b-transform-manipulation.md. Existing terminal commands reproduce the resulting transform. Gizmo UI and connected acceptance remain17c-17d in docs/roadmap/viewport-interaction-plan.md. Actual input/layout/GPU acceptance remains NOT_RUN in BL-16A-UI-01 under the user desktop pause; full REQ-17 remains NOT_RUN."
       }
     },
     {
@@ -3162,6 +3162,31 @@
         ],
         "fixture_reason": "The existing Scene/PreparedAssets extraction supplies immutable geometry and validated display camera matrices for bounded orbit/pan/dolly and exact indexed triangle picking. Independent CPU cases cover actual image offsets and DPI mapping, near/far bounds, silhouettes, backfaces/double-sided geometry, nearest/tied hits, hidden instances, full affine hierarchy/reflection/origin, stale revisions, work limits and atomic navigation rejection. Headless routing cases use raw InputSnapshot and a real ImGui image rectangle without native windows; they cover fresh-press drag ownership and focus/modal/layout cancellation.",
         "external_fixture_reason": "Editor-private camera/pointer state and revisioned display selection are presentation concerns outside FeatureWorld commands. Native controls, focus/layout, rendered view changes and both-GPU selection remain NOT_RUN in the UI backlog. No new component or semantic authoring command is added; later gizmo writes retain the shared owner/history path.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "editor.transform-drag",
+        "name": "Shared transform manipulation and retained one-commit drag transactions",
+        "requirement_ids": [
+          "REQ-17"
+        ],
+        "test_ids": [
+          "shark.tools.transform-manipulation",
+          "shark.editor.transform-drag"
+        ],
+        "test_sources": [
+          "tests/transform_manipulation_tests.cpp",
+          "tests/editor_transform_drag_tests.cpp"
+        ],
+        "fixtures": [
+          "tests/transform_manipulation_tests.cpp",
+          "tests/editor_transform_drag_tests.cpp",
+          "docs/transform-manipulation.md",
+          "docs/architecture/0043-transform-manipulation.md",
+          "docs/handoffs/17b-transform-manipulation.md"
+        ],
+        "fixture_reason": "Independent CPU matrix expectations cover local/world axes, rotated/nonuniform/mirrored/sheared parents, cumulative snapping, signed scales, preserved pivots, no-ops and numeric/representability rejection. Retained-project fixtures cover pure preview, one-command commit/history, cancellation, rejected latest candidates, selection/revision/reopen conflicts and terminal-equivalent set_transform results through the same shared owner.",
+        "external_fixture_reason": "Gesture state belongs to the editor adapter and pure value math, outside FeatureWorld scene commands. Existing AuthoringCommands coverage remains the set_transform semantic owner; no new component, RPC or command is added. Actual gizmo controls/candidate rendering remain17c and actual connected UI acceptance remains NOT_RUN under the desktop pause.",
         "featureworld_cases": []
       }
     ],

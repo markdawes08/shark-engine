@@ -143,7 +143,25 @@ Editor checks on both current-PC GPUs. They remain **NOT_RUN** while paused:
 
 Retain the earlier required-validation scene-composition gates and valid prior
 results. CPU geometry and synthetic routing do not qualify these native outcomes
-or close full REQ-17. Later 17b-17d increments append their own actual acceptance.
+or close full REQ-17.
+
+### BL-16A-UI-01: 17b transform acceptance additions
+
+The [transform/drag contract](transform-manipulation.md) supplies headless services;
+17c still owns actual gizmo controls and rendered candidate integration. Once
+those controls land and desktop testing resumes, these checks remain required:
+
+- On both GPUs, exercise local/world translation, rotation and scale with snapping,
+  rotated/nonuniform/mirrored parents and deliberate shear/singular rejection.
+  Verify a drag preview leaves dirty/history/source unchanged until one release
+  commits one history group, and one undo reverses the entire gesture.
+- Cancel with Escape, selection/revision changes, focus loss, modal/layout/tab
+  changes and project close. A failed latest candidate must not commit an older
+  pose; cancellation must not overwrite intervening edits or clear an unresolved
+  retained mutation. Check fresh-press behavior after cancellation.
+- Compare actual gizmo results with terminal `set_transform`, including stale
+  requests, save/reopen and undo/redo. Headless protocol parity is preparation,
+  not a passing UI or rendered-preview result. Status: **NOT_RUN**.
 
 This deferral does not authorize driver installation, host resource changes,
 foreign-handle cleanup or relaxed acceptance limits. The active implementation

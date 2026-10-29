@@ -6,6 +6,7 @@
 #include <array>
 #include <charconv>
 #include <cmath>
+#include <limits>
 #include <map>
 #include <thread>
 #include <utility>
@@ -104,6 +105,24 @@ Json optional_id(const std::optional<AuthoredEntityId>& value) {
 
 Json vector_json(const math::Vec3& value) {
     return Json::array({value.x, value.y, value.z});
+}
+
+Json transform_command(AuthoredEntityId id, const Transform& transform) {
+    const std::array numbers{transform.translation.x, transform.translation.y,
+                             transform.translation.z, transform.rotation.x,
+                             transform.rotation.y,    transform.rotation.z,
+                             transform.rotation.w,    transform.scale.x,
+                             transform.scale.y,       transform.scale.z};
+    if (!std::all_of(numbers.begin(), numbers.end(),
+                     [](double value) { return std::isfinite(value); }))
+        fail(ErrorCode::invalid_argument, "Transform values must be finite");
+    return {{"type", "set_transform"},
+            {"entity_id", id.value().to_string()},
+            {"transform",
+             {{"translation", vector_json(transform.translation)},
+              {"rotation", Json::array({transform.rotation.x, transform.rotation.y,
+                                        transform.rotation.z, transform.rotation.w})},
+              {"scale", vector_json(transform.scale)}}}};
 }
 
 Json component_commands(const InspectorValues& values) {
@@ -265,6 +284,7 @@ struct ScenePanel::Impl {
     std::vector<HierarchyRow> rows;
     SceneRevision revision{};
     std::optional<SceneSelection> selection;
+    std::uint64_t selection_epoch{0};
     std::optional<Pending> pending;
     std::optional<std::string> cursor;
     SceneRevision cursor_revision{};
@@ -276,6 +296,15 @@ struct ScenePanel::Impl {
     void check_thread() const {
         if (thread != std::this_thread::get_id())
             fail(ErrorCode::conflict, "Scene panel operations require the creating thread");
+    }
+
+    void select(std::optional<SceneSelection> value) noexcept {
+        if ((!selection && !value) || (selection && value && selection->id == value->id &&
+                                       selection->revision == value->revision))
+            return;
+        if (selection_epoch != std::numeric_limits<std::uint64_t>::max())
+            ++selection_epoch;
+        selection = value;
     }
 
     bool current() const noexcept {
@@ -339,7 +368,7 @@ struct ScenePanel::Impl {
         take(session.refresh());
         const auto expected = session.state().revision;
         if (expected != revision || !session.state().open)
-            selection.reset();
+            select({});
         if (!session.state().open) {
             rows.clear();
             revision = {};
@@ -387,7 +416,7 @@ struct ScenePanel::Impl {
         rows = std::move(candidate);
         revision = expected;
         if (selection && !find(selection->id))
-            selection.reset();
+            select({});
         const auto pages_available = std::max<std::size_t>(1, (rows.size() + 63) / 64);
         page = std::min(page, pages_available - 1);
         stale = false;
@@ -404,6 +433,28 @@ struct ScenePanel::Impl {
     void require_entity(AuthoredEntityId id) const {
         if (!find(id))
             fail(ErrorCode::conflict, "Entity is absent from this observed hierarchy");
+    }
+
+    void require_selection(SceneSelection expected) {
+        require_revision(expected.revision);
+        require_entity(expected.id);
+        if (!selection || selection->id != expected.id || selection->revision != expected.revision)
+            fail(ErrorCode::conflict, "Transform selection changed; begin a new drag");
+    }
+
+    Json transform_observation(AuthoredEntityId id, SceneRevision expected) {
+        const auto value = call("scene.inspect", {{"entity_id", id.value().to_string()},
+                                                  {"fields", {"transform", "hierarchy"}},
+                                                  {"expected_revision", revision_json(expected)}});
+        if (revision_value(value.at("revision")) != expected || value.at("entities").size() != 1 ||
+            !value.at("complete").get<bool>() || !value.at("next_cursor").is_null() ||
+            value.at("scope").at("kind") != "authored" ||
+            value.at("scope").at("scene_id") != session.state().scene_id)
+            fail(ErrorCode::execution_failed, "Transform received an inconsistent observation");
+        auto entity = value.at("entities").at(0);
+        if (entity_id(entity.at("entity_id")) != id || !entity.at("authority").is_null())
+            fail(ErrorCode::execution_failed, "Transform received a different entity");
+        return entity;
     }
 
     SceneEditReceipt decode_mutation(const Json& value) {
@@ -435,14 +486,14 @@ struct ScenePanel::Impl {
         const bool select_after = pending->select_after;
         pending.reset();
         stale = true;
-        selection.reset();
+        select({});
         try {
             refresh();
             // Successful create/reparent/component edits may reselect their
             // known surviving entity. External refresh never rebinds selection.
             if (select_after && receipt.entity && revision == receipt.revision &&
                 find(*receipt.entity))
-                selection = SceneSelection{*receipt.entity, revision};
+                select(SceneSelection{*receipt.entity, revision});
         } catch (Failure& failure) {
             receipt.refresh_error = std::move(failure.error);
         } catch (...) {
@@ -530,18 +581,21 @@ bool ScenePanel::previous_page() noexcept {
 const std::optional<SceneSelection>& ScenePanel::selection() const noexcept {
     return impl_->selection;
 }
+std::uint64_t ScenePanel::selection_epoch() const noexcept {
+    return impl_->selection_epoch;
+}
 Result<void> ScenePanel::select(AuthoredEntityId id) {
     return boundary<void>([&] {
         impl_->check_thread();
         if (!impl_->current())
             fail(ErrorCode::conflict, "Refresh the hierarchy before selecting an entity");
         impl_->require_entity(id);
-        impl_->selection = SceneSelection{id, impl_->revision};
+        impl_->select(SceneSelection{id, impl_->revision});
         return Result<void>{};
     });
 }
 void ScenePanel::clear_selection() noexcept {
-    impl_->selection.reset();
+    impl_->select({});
 }
 Result<SceneEditReceipt> ScenePanel::create(std::string_view name,
                                             std::optional<AuthoredEntityId> parent,
@@ -628,6 +682,69 @@ Result<SceneEditReceipt> ScenePanel::apply_components(const InspectorValues& val
              {"batch",
               {{"id", take(generate_stable_id()).to_string()}, {"commands", std::move(commands)}}}},
             values.selection.revision, true);
+    });
+}
+
+Result<TransformObservation> ScenePanel::observe_transform(SceneSelection expected) {
+    return boundary<TransformObservation>([&] {
+        impl_->require_selection(expected);
+        const auto value = impl_->transform_observation(expected.id, expected.revision);
+        const auto& local = value.at("transform").at("local");
+        const auto& rotation = local.at("rotation");
+        TransformObservation result{expected,
+                                    {vector_value(local.at("translation")),
+                                     {rotation.at(3).get<double>(), rotation.at(0).get<double>(),
+                                      rotation.at(1).get<double>(), rotation.at(2).get<double>()},
+                                     vector_value(local.at("scale"))},
+                                    math::Mat4{1.0}};
+        const auto& parent = value.at("hierarchy").at("parent_id");
+        if (!parent.is_null()) {
+            const auto observed =
+                impl_->transform_observation(entity_id(parent), expected.revision);
+            const auto& world = observed.at("transform").at("world_matrix");
+            if (world.at("layout") != "column_major" || world.at("values").size() != 16)
+                fail(ErrorCode::execution_failed, "Transform received an invalid parent matrix");
+            for (int column = 0; column < 4; ++column)
+                for (int row = 0; row < 4; ++row)
+                    result.parent_world[column][row] =
+                        world.at("values")
+                            .at(static_cast<std::size_t>(column * 4 + row))
+                            .get<double>();
+        }
+        take(validate_transform_matrix(result.parent_world));
+        impl_->require_selection(expected);
+        return result;
+    });
+}
+
+Result<void> ScenePanel::preview_transform(SceneSelection expected, const Transform& transform) {
+    return boundary<void>([&] {
+        impl_->require_selection(expected);
+        const auto batch_id = take(generate_stable_id()).to_string();
+        const auto parameters =
+            Json{{"batch",
+                  {{"id", batch_id},
+                   {"commands", Json::array({transform_command(expected.id, transform)})}}},
+                 {"expected_revision", revision_json(expected.revision)}};
+        const auto value =
+            result_value(take(impl_->session.request("scene.preview", parameters.dump())));
+        if (value.at("batch_id") != batch_id ||
+            revision_value(value.at("observed_revision")) != expected.revision)
+            fail(ErrorCode::conflict, "Transform preview observation changed");
+        const auto& outcome = value.at("outcome");
+        if (!outcome.at("ok").get<bool>())
+            throw Failure{decode_error(outcome.at("error"))};
+        impl_->require_selection(expected);
+        return Result<void>{};
+    });
+}
+
+Result<SceneEditReceipt> ScenePanel::apply_transform(SceneSelection expected,
+                                                     const Transform& transform) {
+    return boundary<SceneEditReceipt>([&] {
+        impl_->require_selection(expected);
+        return impl_->mutate(expected.id, transform_command(expected.id, transform),
+                             expected.revision, true);
     });
 }
 

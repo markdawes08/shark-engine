@@ -6,6 +6,7 @@
 #include <shark/schema.hpp>
 #include <shark/tools/authoring_history.hpp>
 
+#include <cstdint>
 #include <memory>
 #include <optional>
 #include <span>
@@ -47,6 +48,12 @@ struct InspectorValues {
     std::optional<MeshRenderer> mesh_renderer;
 };
 
+struct TransformObservation {
+    SceneSelection selection;
+    Transform local;
+    math::Mat4 parent_world{1.0};
+};
+
 // Read-only bounded display snapshot over one ProjectSession, never another
 // mutable scene. The borrowed session must outlive the panel on its owner thread.
 // Query cursors are consumed completely; display paging retains no wire cursor.
@@ -69,6 +76,9 @@ class ScenePanel final {
     bool next_page() noexcept;
     bool previous_page() noexcept;
     [[nodiscard]] const std::optional<SceneSelection>& selection() const noexcept;
+    // Changes on selection transitions, including away-and-back without a scene
+    // mutation. Exhaustion invalidates future drag captures instead of wrapping.
+    [[nodiscard]] std::uint64_t selection_epoch() const noexcept;
     [[nodiscard]] Result<void> select(AuthoredEntityId id);
     void clear_selection() noexcept;
 
@@ -85,6 +95,11 @@ class ScenePanel final {
     [[nodiscard]] Result<InspectorValues> inspect(AuthoredEntityId id, SceneRevision expected);
     // One atomic retained batch and history group for a complete component draft.
     [[nodiscard]] Result<SceneEditReceipt> apply_components(const InspectorValues& values);
+    [[nodiscard]] Result<TransformObservation> observe_transform(SceneSelection expected);
+    [[nodiscard]] Result<void> preview_transform(SceneSelection expected,
+                                                 const Transform& transform);
+    [[nodiscard]] Result<SceneEditReceipt> apply_transform(SceneSelection expected,
+                                                           const Transform& transform);
     [[nodiscard]] Result<tools::AuthoringHistoryStatus> history(SceneRevision expected);
     [[nodiscard]] Result<SceneEditReceipt> undo(tools::AuthoringHistoryTicket ticket,
                                                 SceneRevision expected);

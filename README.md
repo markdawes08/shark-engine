@@ -20,11 +20,12 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**Assignment 17a adds viewport navigation and triangle picking** through the
-existing editor and retained scene owner. Orbit/pan/dolly change the display view,
-while picking uses the same geometry snapshot and preserves authored history.
+**Assignment 17b adds shared transform manipulation and drag transactions**
+through the existing retained scene owner. Local/world math and snapping produce
+validated previews; one committed drag creates one undo group. Navigation and
+picking from 17a remain display-only. Gizmo controls follow in 17c.
 Headless verification is tracked in the
-[latest handoff](docs/handoffs/17a-viewport-navigation.md).
+[latest handoff](docs/handoffs/17b-transform-manipulation.md).
 Native rendering and actual UI acceptance remain deferred in the
 [nonblocking backlog](docs/backlog.md): the user paused desktop interaction until
 explicitly resumed, while authorizing continued coding and headless checks.
