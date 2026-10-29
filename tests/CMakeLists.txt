@@ -841,6 +841,11 @@ if(TARGET SharkAuthor)
             --author "$<TARGET_FILE:SharkAuthor>" -v)
     set_tests_properties(shark.tools.authoring-execution-process PROPERTIES
         LABELS "cpu;tooling;integration" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+    add_test(NAME shark.tools.authoring-workflow-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_authoring_workflow_process.py"
+            --author "$<TARGET_FILE:SharkAuthor>" -v)
+    set_tests_properties(shark.tools.authoring-workflow-process PROPERTIES
+        LABELS "cpu;tooling;integration" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
     if(WIN32)
         add_test(NAME shark.tools.authoring-export-controls
             COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_authoring_export_controls.py"

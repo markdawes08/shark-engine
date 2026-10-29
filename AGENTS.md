@@ -40,15 +40,19 @@ Linux graphics is outside scope. Mac support, CI, packages and hardware requirem
 are retired by [ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md).
 Hosted CI is supplemental; remote branch protection is unchanged.
 
-**Current handoff: [15d, terminal run/export/capture](docs/handoffs/15d-terminal-execution.md).**
+**Current handoff: [15e, connected terminal acceptance](docs/handoffs/15e-terminal-acceptance.md).**
 15a-15d supply the CPU `SharkAuthor` host, retained project ownership, shared
 editing/persistence/imports, static deterministic runs and configured export.
 `SharkAuthorClient` adds optional native capture through the same transport.
 Follow [ADR 0039](docs/architecture/0039-terminal-authoring-protocol.md)
 and the [protocol contract](docs/authoring-protocol.md): bounded UTF-8 framing,
 truthful capabilities, one project writer and revision-bound single-use cursors.
-Native handles stay private. Next is **15e, connected acceptance**, in the
-[terminal checkpoints](docs/roadmap/terminal-authoring-plan.md). Route new writes
+Native handles stay private. Full REQ-15 is complete under current-machine scope;
+the [terminal checkpoints](docs/roadmap/terminal-authoring-plan.md) record its gates.
+Next is **16, the human editor UI**, consuming the same services and ownership.
+The [public terminal example](examples/terminal_authoring.py) creates, imports,
+edits, saves/reopens, runs and optionally captures/exports a real project.
+Route new writes
 through the retained shared owner; request correlation is not mutation retry identity.
 Preserve all three mutation outcome levels and explicit file publication/durability
 receipts. Text access excludes typed catalog paths and retains exact file tokens;
@@ -62,7 +66,8 @@ trusted startup helper paths, existing package assembly and final owner validati
 lost completion after a publish grant requires destination reconciliation. Capture
 uses a separate capability-gated Client adapter, bounded raw image/depth artifacts
 and explicit source versus reconstructed scene identities. CPU Tools stays independent.
-Full REQ-15 remains NOT_RUN until connected acceptance in 15e.
+Preserve connected public-process coverage and independent imported-geometry checks;
+the example is not a second authoring service or a gameplay runner.
 All [five rendering checkpoints](docs/roadmap/scene-rendering-plan.md) and full
 REQ-13 are complete under current-machine scope. Full REQ-14 is complete under
 the approved scope and [backlog amendment](docs/backlog.md). The
@@ -110,7 +115,7 @@ reload and actual presented capture. Preserve complete-candidate replacement,
 fresh incarnations, bounded drain and seven native lifetime phases. Runtime has
 no source importer or authoring UI. The existing Editor window/graphics/cube
 flags remain diagnostics; a game-authoring editor UI is not implemented yet.
-Shared CPU authoring services exist; terminal connected acceptance and the editor remain 15e/16.
+Shared CPU services and terminal authoring are implemented; the human editor remains 16.
 
 The user deferred remaining 05c work to the [nonblocking backlog](docs/backlog.md)
 and authorized later development. Full REQ-05 remains NOT_RUN. Preserve historical

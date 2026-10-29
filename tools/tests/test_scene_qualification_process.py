@@ -63,6 +63,20 @@ TERMINAL_IMPORT_SURFACES = {
 TERMINAL_SURFACES |= TERMINAL_IMPORT_SURFACES
 TERMINAL_EXECUTION_SURFACES = {'terminal.scene.run', 'terminal.scene.export'}
 TERMINAL_SURFACES |= TERMINAL_EXECUTION_SURFACES
+TERMINAL_WORKFLOW_FEATURES = {
+    'tools.authoring-protocol', 'tools.authoring-editing',
+    'tools.authoring-imports', 'tools.authoring-execution',
+}
+TERMINAL_WORKFLOW_SURFACES = {
+    'terminal.protocol.discover', 'terminal.project.create', 'terminal.project.open',
+    'terminal.project.status', 'terminal.project.close', 'terminal.scene.query',
+    'terminal.scene.preview', 'terminal.scene.mutation_status', 'terminal.scene.mutate',
+    'terminal.scene.history', 'terminal.scene.save', 'terminal.scene.run',
+    'terminal.asset.metadata.write', 'terminal.asset.metadata.read', 'terminal.asset.metadata.release',
+    'terminal.asset.catalog.status', 'terminal.asset.catalog.refresh',
+    'terminal.asset.cache.status', 'terminal.asset.cache.inspect',
+    'terminal.asset.jobs.submit', 'terminal.asset.jobs.drain', 'terminal.asset.jobs.take',
+}
 FEATUREWORLD_CASES = [
     'featureworld.components', 'featureworld.commands', 'featureworld.batches-history',
     'featureworld.retries', 'featureworld.persistence', 'featureworld.asset-identity',
@@ -102,6 +116,17 @@ def audit(manifest, cpu, gpu, registered, declared):
             tests = entry['test_ids']
             check(len(tests) == len(set(tests)) and set(tests) <= registered | declared,
                   'Unknown/duplicate CTest mapping: ' + entry['id'])
+            if entry['id'] in TERMINAL_WORKFLOW_FEATURES:
+                check('shark.tools.authoring-workflow-process' in tests
+                      and 'tools/tests/test_authoring_workflow_process.py' in entry['test_sources']
+                      and {'examples/terminal_authoring.py',
+                           'tools/tests/test_authoring_workflow_process.py'} <= set(entry['fixtures']),
+                      'Connected terminal workflow fixture drift')
+            if entry['id'] in TERMINAL_WORKFLOW_SURFACES:
+                check('shark.tools.authoring-workflow-process' in tests
+                      and 'tools/tests/test_authoring_workflow_process.py' in entry['test_sources']
+                      and 'examples/terminal_authoring.py' in entry['fixtures'],
+                      'Connected terminal method mapping drift')
             if category in ('components', 'commands'):
                 check(set(tests) <= registered, 'Public scene surface lacks tests in this profile: ' + entry['id'])
             check(set(entry.get('gpu_case_ids', [])) <= set(gpu_ids), 'Unknown native GPU case: ' + entry['id'])
@@ -124,7 +149,8 @@ def audit(manifest, cpu, gpu, registered, declared):
                 check(not mapped and not entry.get('gpu_case_ids')
                       and entry.get('external_fixture_reason', '').strip()
                       and {'tools/tests/test_authoring_artifact_process.py',
-                           'tools/runtime_scene_smoke.py', 'tools/scene_render_smoke.py'} <= set(entry['fixtures'])
+                           'tools/runtime_scene_smoke.py', 'tools/scene_render_smoke.py',
+                           'examples/terminal_authoring.py'} <= set(entry['fixtures'])
                       and 'tools/tests/test_authoring_artifact_process.py' in entry['test_sources']
                       and {'shark.tools.authoring-execution-process', 'shark.tooling.scene-render-smoke'} <= set(tests),
                       'Terminal capture external GPU fixture drift')
@@ -148,6 +174,7 @@ def audit(manifest, cpu, gpu, registered, declared):
                 if entry['id'] == 'terminal.scene.export':
                     check('shark.tools.client-export-process' in tests
                           and 'tools/tests/test_authoring_artifact_process.py' in entry['fixtures']
+                          and 'examples/terminal_authoring.py' in entry['fixtures']
                           and 'tools/tests/test_authoring_artifact_process.py' in entry['test_sources'],
                           'Terminal same-owner export fixture drift')
             rows.append({'id': entry['id'], 'category': category, 'featureworld_cases': mapped,
@@ -241,6 +268,9 @@ def main():
             'missing-gpu-reason': lambda m: m['implemented_surface']['commands'][0].pop('external_fixture_reason'),
             'missing-scene-mapping': lambda m: m['implemented_surface']['components'][0].update(featureworld_cases=[]),
             'missing-fixture': lambda m: m['implemented_surface']['components'][0]['fixtures'].append('assets/FeatureWorld/missing.fixture'),
+            'missing-connected-workflow': lambda m: next(
+                entry for entry in m['implemented_surface']['features']
+                if entry['id'] == 'tools.authoring-execution')['fixtures'].remove('examples/terminal_authoring.py'),
         }
         for name, mutate in mutations.items():
             changed = copy.deepcopy(manifest); mutate(changed)

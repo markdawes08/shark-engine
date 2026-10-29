@@ -248,3 +248,15 @@ configured package publication and real optional captures on both available GPUs
 Use the testing policy's affected Debug/sanitizer/WSL selection and existing
 independent image/depth references and package tooling. Full REQ-15 remains open
 until 15e connects the complete public authoring workflow.
+
+## 15e qualification, 2026-10-29
+
+The [connected handoff](../handoffs/15e-terminal-acceptance.md) closes REQ-15
+under current-machine scope. Its public standard-library example creates typed
+project/scene/metadata through the protocol, imports and modifies a licensed
+glTF dependency closure, saves/reopens, runs and optionally captures/exports the
+retained unsaved scene before an explicit final save and owner handoff. Independent
+checks bind saved fields, import keys and actual readbacks/packages to that intent.
+No protocol method, source format, engine service or dependency changes in 15e.
+The same CPU workflow runs on Windows and WSL; native capture/deployment stays
+Windows-only. Human editor consumption and parity remain assignments 16/17.

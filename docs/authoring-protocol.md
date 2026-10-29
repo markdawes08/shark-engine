@@ -9,7 +9,8 @@ editor, display, GPU, network listener, model provider or MCP client. 15c adds
 typed asset metadata, explicit catalog inventory, cache inspection/maintenance
 and the existing bounded import jobs. 15d adds deterministic static-scene runs,
 configured Windows standalone export and optional GPU capture through the same
-retained owner. Connected acceptance remains 15e.
+retained owner. [15e](handoffs/15e-terminal-acceptance.md) completes connected
+acceptance through the [runnable example](#complete-terminal-example).
 
 [ADR 0039](architecture/0039-terminal-authoring-protocol.md) defines this bounded
 profile. The public C++ owner is
@@ -1044,4 +1045,74 @@ assert export["published"] and export["status"] == "PASS"
 Do not run this fragment against the saved FeatureWorld root with guessed inputs.
 Use deliberate scratch projects and fresh output directories, preserve complete
 asset notices, and inspect a failed/lost operation's original output before retry.
-15e qualifies the connected create/edit/import/save/reopen/run/capture/export flow.
+The complete example below connects these operations to a new authored project.
+
+## Complete terminal example
+
+[examples/terminal_authoring.py](../examples/terminal_authoring.py) is a runnable
+Python standard-library example. It uses the public redirected stdio protocol;
+it needs no engine Python binding, test module, editor, model provider or MCP
+client. From the repository root, after building the CPU host:
+
+```powershell
+New-Item -ItemType Directory -Force out | Out-Null
+& ./tools/windows_dev.ps1 -CommandArguments @('cmake','--build','--preset','tools-debug','--target','SharkAuthor','--parallel','2')
+.tools/venv/Scripts/python.exe examples/terminal_authoring.py --author build/tools-debug/bin/SharkAuthor.exe --output out/terminal-example
+```
+
+Use a fresh output name for each invocation. On WSL, use the built `SharkAuthor`
+path, `python3` and a writable output parent. All argument paths are resolved
+before launching the host, so an invocation can also start outside the checkout.
+Fixed UUIDs belong to this repeatable sample; real new content should generate
+fresh durable IDs.
+
+The example creates `project/Terminal.sharkproject` and its startup scene, copies
+the repository's licensed offline glTF triangle and external buffer, and writes
+typed sidecars through the protocol. It imports the dependency closure, edits the
+copied glTF's generator and import settings, then explicitly refreshes/reimports.
+Direct filesystem writes ingest/edit external glTF, buffer and license inputs;
+typed project, scene and metadata writes all use the retained owner. Original
+fixtures are unchanged.
+
+It previews/commits a shared Camera/MeshRenderer batch, saves and reopens in a new
+process, adds an unsaved Unicode name edit, runs three static integrity ticks with
+seed 1337, and optionally captures/exports that dirty state. It checks unchanged
+history, retry state and source bytes before explicitly saving the last edit.
+A third process reopens the clean saved project and releases ownership. A human
+or another terminal owner can continue that project; assignment 16 supplies the
+human editor UI.
+
+`summary.json` retains the import outcomes, source identities, save/reopen state,
+run report, optional artifact results and final handoff. Standard output contains
+one JSON completion, and failure returns nonzero with a diagnostic. Pipe reads,
+writes and process waits are bounded. A failed invocation retains its directory
+for inspection; it never silently resumes or replaces an existing output.
+
+To add a CPU-only Windows package export, pass these flags to the same example
+with a new output directory:
+
+```text
+--export-python .tools/venv/Scripts/python.exe
+--export-tool tools/package_runtime.py
+--runtime-build build/runtime-only
+--crt-dir "C:/Program Files/Microsoft Visual Studio/18/Community/VC/Redist/MSVC/14.51.36231/x64/Microsoft.VC145.CRT"
+--shaders out/14b-work/scene-shaders
+```
+
+Run export through `tools/windows_dev.ps1` to supply its MSVC build-inspection
+environment. Those paths name this PC's retained inputs; use the current protected
+build, exact CRT and verified shader generation described by the
+[export guide](standalone-export.md). The example supplies the complete copied MIT
+notice and publishes `package/`; the source importer and terminal authoring host
+are absent from that package.
+
+For optional capture, select `SharkAuthorClient` and supply all three flags
+`--capture-vertex-shader`, `--capture-pixel-shader` and `--capture-device` with
+explicit validated scene SPIR-V files and GPU UUID. `--capture-validation required`
+is the default and needs the configured validation layer environment. An explicit
+`--capture-validation off` is available for ordinary preview; it is not qualifying
+render evidence. Capture writes `capture/color.rgba`, `capture/depth.f32` and the
+artifact report. The existing artifact fixture's `--connected` mode invokes this
+same example with the locked validation environment on both selected GPUs and
+compares against the independent imported-triangle reference. It does not replace
+the public example or introduce another editing API.

@@ -208,8 +208,9 @@ adds retained edits/history, creation, persistence and scoped script text;
 [15c](../handoffs/15c-terminal-imports.md) adds metadata/catalog/cache and bounded
 import jobs through the retained owner. [15d](../handoffs/15d-terminal-execution.md)
 adds static integrity runs, configured same-owner export and optional Client capture.
-15e connected acceptance is next. Full REQ-15
-remains open through 15e's connected acceptance.
+[15e](../handoffs/15e-terminal-acceptance.md) closes full REQ-15 with a runnable
+public example, real imported-content captures and isolated package acceptance.
+Assignment 16's human editor UI and semantic handoff/parity are next.
 
 Keep 15 as one manifest owner and final gate, but implement it in these dependent
 parts. Assignments 02/03/04 are complete
@@ -244,7 +245,8 @@ Current available terminal development entry points are documented in
 qualification covers bootstrap/lifecycle/boundaries only. It does not prove project authoring, agent
 discovery, human/agent parity, graphics or live MMO operations. The separate
 [amendment handoff](../handoffs/human-agent-planning-amendment.md) records the
-checks for this planning change. The full authoring gate remains NOT_RUN.
+checks for this planning change. Terminal authoring is now qualified by
+[15e](../handoffs/15e-terminal-acceptance.md); human editor parity remains with 16/17.
 
 M01's hosted qualification is complete. Assignment 02's recorded local evidence
 now closes its gate under ADR 0010; assignment 03 is complete across

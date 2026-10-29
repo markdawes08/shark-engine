@@ -8,14 +8,17 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**15d adds run/export/capture; full REQ-15 remains NOT_RUN.** The latest
-[handoff](../handoffs/15d-terminal-execution.md) records selected CPU checks and
-actual native artifact results separately. Deterministic static scene runs use
-current unsaved values; configured export preserves the retained project writer;
-optional capture belongs to the separate Client adapter. CPU capability/oracle
-checks do not qualify GPU execution or isolated deployment.
-[Terminal checkpoints](../roadmap/terminal-authoring-plan.md)
-15e retains connected public workflow acceptance. The editor
+**15e and full REQ-15 are complete under current-machine scope.** The
+[public example](../../examples/terminal_authoring.py) creates a fresh project,
+imports and modifies licensed glTF content, authors a scene, saves/reopens and
+runs static integrity assertions. Configured capture/export consume the current
+retained owner. The [15e handoff](../handoffs/15e-terminal-acceptance.md) records
+selected Windows/WSL/CPU sanitizer checks, actual validated captures on both GPUs
+and isolated package results separately. The tools-only host also exports without
+GUI/device libraries. CPU checks do not qualify device execution or deployment.
+Existing focused rejection and
+lifetime cases retain their evidence under the
+[terminal checkpoints](../roadmap/terminal-authoring-plan.md). The editor
 remains 16. Full [REQ-14](../handoffs/14c-isolated-export-acceptance.md),
 [REQ-13](../handoffs/13e-runtime-scenes.md) and [REQ-12](../handoffs/12e-gltf-qualification.md)
 remain complete under current-machine scope and approved amendments.
@@ -123,3 +126,4 @@ remains authoritative for individual requirement status.
 | 15b terminal editing (partial REQ-15) | [Protocol](../authoring-protocol.md), [handoff](../handoffs/15b-terminal-editing.md) |
 | 15c terminal imports/jobs (partial REQ-15) | [Protocol](../authoring-protocol.md), [handoff](../handoffs/15c-terminal-imports.md) |
 | 15d terminal run/export/capture (partial REQ-15) | [Protocol](../authoring-protocol.md), [handoff](../handoffs/15d-terminal-execution.md) |
+| 15e connected terminal workflow (full REQ-15) | [Public example](../../examples/terminal_authoring.py), [handoff](../handoffs/15e-terminal-acceptance.md) |

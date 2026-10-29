@@ -20,12 +20,12 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**15d connects terminal scene runs, export and capture under current-machine scope.**
-The [latest handoff](docs/handoffs/15d-terminal-execution.md) records static
-deterministic integrity runs, retained-owner package export and optional GPU capture,
-preserving unsaved edits and shared history. Next is 15e's connected acceptance in the
-[terminal checkpoints](docs/roadmap/terminal-authoring-plan.md).
-Full assignment 15 remains open. Assignments 12, 13 and 14 remain complete,
+**Assignment 15 is complete under current-machine scope.** The
+[latest handoff](docs/handoffs/15e-terminal-acceptance.md) records the connected
+create/import/edit/save/reopen/run/capture/export workflow. Try the
+[public terminal example](docs/authoring-protocol.md#complete-terminal-example),
+which leaves a saved project ready for another owner. Next is assignment 16's
+human editor UI using the same services. Assignments 12, 13 and 14 remain complete,
 including Runtime scene presentation and safe reload on both GPUs. Completed
 checkpoints and their original results are indexed in
 [requirements and coverage](docs/coverage/README.md); historical counts are not
@@ -64,7 +64,7 @@ Current capabilities include:
 - Shared [authoring commands](docs/authoring-commands.md),
   [atomic batches and preview](docs/authoring-transactions.md),
   [undo/redo](docs/authoring-history.md) and [retained retries](docs/authoring-retries.md)
-  through one owner. Terminal/editor adapters retain assignments 15/16.
+  through one owner. Terminal operations are implemented; the editor remains 16.
 - Bounded [TLS/wire transport](docs/network-transport.md),
   [mutually authenticated owned sessions](docs/network-sessions.md),
   [authoritative replication](docs/network-replication.md) and
@@ -89,8 +89,9 @@ Runtime additionally exposes `--scene` with an explicit camera and precompiled
 shaders, F5 reload and terminal capture output. Editor/Runtime retain version/help,
 `--cube`, `--graphics` and `--window` diagnostics. Server exposes validated startup,
 timed execution and shutdown. There are no active player connections, world
-simulation or game-authoring UI yet; networking, persistence and editing services
-are C++ APIs. See the [Runtime scene guide](docs/runtime-scenes.md) for launch syntax.
+simulation or game-authoring UI yet; networking and live persistence remain C++
+services, while authoring also has the terminal protocol. See the
+[Runtime scene guide](docs/runtime-scenes.md) for launch syntax.
 
 - [Architecture decisions](docs/architecture/README.md) define target boundaries,
   dependencies, formats, simulation conventions and the MMORPG profile.

@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "14",
+  "current_assignment": "15",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -422,8 +422,8 @@
       ],
       "planned_fixture": "PublicAuthoringProcess scenario, ProtocolInvalidRequests, ProtocolVersionMismatch, CancellationRetry and ScopedTextAsset fixtures; FeatureWorld/AgentAuthoredScene provides saved scene equivalence. Add NoTTYProtocolStreams, BoundedDiscoveryQueries, CPUAuthoringClosure, ProjectOwnerExclusion, TextWriteConflict and JobPublicationInterruption fixtures.",
       "verification": {
-        "status": "NOT_RUN",
-        "reason": "15a-15c supply the bounded terminal foundation, retained project owner, queries, edits/history/retries, source persistence and native import/jobs. 15d adds deterministic static scene-integrity runs from current unsaved values, configured same-owner Windows standalone export and a separate capability-gated Client capture adapter. CPU and native artifact fixtures distinguish unavailable capabilities, actual GPU readbacks, retained source/history, publication and package inspection. Selected results and limitations are recorded in docs/handoffs/15d-terminal-execution.md; CPU CTest results alone do not qualify GPU capture or isolated deployment. Connected public create/edit/import/save/reopen/run/capture/export acceptance remains 15e in docs/roadmap/terminal-authoring-plan.md; full REQ-15 remains NOT_RUN."
+        "status": "PASS",
+        "reason": "15a-15e are complete under current-machine scope. docs/handoffs/15e-terminal-acceptance.md records the public examples/terminal_authoring.py workflow creating a fresh project, importing and modifying licensed glTF content, authoring through shared mutations, saving/reopening, and running static integrity assertions before optional same-owner capture/export. The terminal Debug inventory, portable WSL and selected CPU ASan checks pass; required-validation captures on both current-PC GPUs match the fixed independent imported-content oracle. The independent tools-only host exports without GUI/device libraries, and its relocated package passes isolated launches on both GPUs with observed module closure. Existing 15a-15d framing, revision/retry, cancellation, publication and owner-lifetime results remain applicable to unchanged implementations; the handoff distinguishes reused evidence and verification limits. CPU tests alone do not qualify GPU execution. This closes local terminal authoring, not gameplay/Lua execution, the assignment-16 editor UI, final cooking or an MMO release."
       }
     },
     {
@@ -2831,17 +2831,21 @@
         ],
         "test_ids": [
           "shark.tools.authoring-protocol",
-          "shark.tools.authoring-protocol-process"
+          "shark.tools.authoring-protocol-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
           "tests/authoring_protocol_tests.cpp",
-          "tools/tests/test_authoring_protocol_process.py"
+          "tools/tests/test_authoring_protocol_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
-        "fixture_reason": "The public C++ owner enforces creating-thread access. Actual non-TTY Windows/WSL subprocesses use saved FeatureWorld inputs with independent expected hierarchy and transform values to check Unicode streams, native component metadata, bounded queries, revision/consumed-cursor conflicts, one project writer, process-death/EOF lock release and broken-output failure. 15b adds separately mapped editing/persistence methods; no GPU method is advertised."
+        "fixture_reason": "The public C++ owner enforces creating-thread access. Actual non-TTY Windows/WSL subprocesses use saved FeatureWorld inputs with independent expected hierarchy and transform values to check Unicode streams, native component metadata, bounded queries, revision/consumed-cursor conflicts, one project writer, process-death/EOF lock release and broken-output failure. Editing/persistence methods and optional device capture remain separately mapped. The connected public example creates a fresh project, imports and modifies licensed glTF content, authors its scene through shared mutations, saves/reopens and runs deterministic integrity assertions. The CPU workflow fixture checks independent persisted state and owner handoff; explicit connected artifact runs extend this same example through capture and export without changing the API surface."
       },
       {
         "id": "tools.authoring-editing",
@@ -2852,18 +2856,22 @@
         "test_ids": [
           "shark.tools.authoring-protocol",
           "shark.tools.authoring-editing-process",
-          "shark.tools.project-files"
+          "shark.tools.project-files",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
           "tests/authoring_protocol_file_tests.cpp",
           "tools/tests/test_authoring_editing_process.py",
-          "tests/project_files_tests.cpp"
+          "tests/project_files_tests.cpp",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
-        "fixture_reason": "Real process calls exercise all seven typed commands, preview/batches, shared history, three-level retained outcomes, replay/mismatch/expiry/restart, source preservation, exact-byte external conflicts and explicit reload/discard. Native fault controls independently prove partial two-file creation receipts and script write rollback/committed durability limits. Script text is not a Lua binding or execution capability; imports/jobs/device adapters remain later checkpoints."
+        "fixture_reason": "Real process calls exercise all seven typed commands, preview/batches, shared history, three-level retained outcomes, replay/mismatch/expiry/restart, source preservation, exact-byte external conflicts and explicit reload/discard. Native fault controls independently prove partial two-file creation receipts and script write rollback/committed durability limits. Script text is not a Lua binding or execution capability; imports/jobs/device adapters have their own mapped fixtures. The connected public example creates a fresh project, imports and modifies licensed glTF content, authors its scene through shared mutations, saves/reopens and runs deterministic integrity assertions. The CPU workflow fixture checks independent persisted state and owner handoff; explicit connected artifact runs extend this same example through capture and export without changing the API surface."
       },
       {
         "id": "tools.authoring-imports",
@@ -2876,20 +2884,24 @@
           "shark.tools.asset-import-jobs",
           "shark.tools.asset-import",
           "shark.tools.asset-catalog",
-          "shark.tools.gltf-import"
+          "shark.tools.gltf-import",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
           "tools/tests/test_authoring_import_process.py",
           "tests/asset_import_jobs_tests.cpp",
           "tests/asset_import_tests.cpp",
           "tests/asset_catalog_tests.cpp",
-          "tests/gltf_import_tests.cpp"
+          "tests/gltf_import_tests.cpp",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
-        "fixture_reason": "Real subprocesses adapt the same retained ProjectFiles/catalog/import owner, checking explicit publication, bounded pending/terminal jobs, cancellation, stale inputs, last-valid content, exact metadata revisions, dirty-scene preservation and owner cleanup. Existing native fixtures cover importer/publication failure boundaries independently. No GPU, run/export adapter, alternate scheduler or source decoder is introduced."
+        "fixture_reason": "Real subprocesses adapt the same retained ProjectFiles/catalog/import owner, checking explicit publication, bounded pending/terminal jobs, cancellation, stale inputs, last-valid content, exact metadata revisions, dirty-scene preservation and owner cleanup. Existing native fixtures cover importer/publication failure boundaries independently. These CPU import checks do not qualify GPU execution or introduce an alternate scheduler or source decoder. The connected public example creates a fresh project, imports and modifies licensed glTF content, authors its scene through shared mutations, saves/reopens and runs deterministic integrity assertions. The CPU workflow fixture checks independent persisted state and owner handoff; explicit connected artifact runs extend this same example through capture and export without changing the API surface."
       },
       {
         "id": "tools.authoring-execution",
@@ -2901,14 +2913,16 @@
           "shark.tools.authoring-execution-process",
           "shark.tools.authoring-export-controls",
           "shark.tools.client-export-process",
-          "shark.tooling.scene-render-smoke"
+          "shark.tooling.scene-render-smoke",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
           "tools/tests/test_authoring_execution_process.py",
           "tools/tests/test_authoring_export_controls.py",
           "tools/tests/test_client_export_process.py",
           "tools/tests/test_scene_render_smoke.py",
-          "tools/tests/test_authoring_artifact_process.py"
+          "tools/tests/test_authoring_artifact_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
@@ -2916,9 +2930,11 @@
           "tools/tests/test_authoring_artifact_process.py",
           "tools/runtime_scene_smoke.py",
           "docs/authoring-protocol.md",
-          "docs/standalone-export.md"
+          "docs/standalone-export.md",
+          "examples/terminal_authoring.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
-        "fixture_reason": "Real terminal pipes execute native scene-integrity runs from the current unsaved snapshot, independently bind its digest to explicitly saved bytes, and preserve source, history and retained mutations. Windows export controls exercise the supervised package helper and publication/reconciliation boundaries; portable export-process fixtures retain native content fences. The separate artifact fixture performs actual same-owner package publication and required-validation captures on both current-PC GPUs, with the existing independent readback oracle and packaged CPU inspection. The CPU CTests do not prove those GPU or deployment outcomes; actual results and omissions belong to docs/handoffs/15d-terminal-execution.md. No gameplay/Lua execution or editor UI is claimed."
+        "fixture_reason": "Real terminal pipes execute native scene-integrity runs from the current unsaved snapshot, independently bind its digest to explicitly saved bytes, and preserve source, history and retained mutations. Windows export controls exercise the supervised package helper and publication/reconciliation boundaries; portable export-process fixtures retain native content fences. The separate artifact fixture performs actual same-owner package publication and required-validation captures on both current-PC GPUs, with the existing independent readback oracle and packaged CPU inspection. The CPU CTests do not prove those GPU or deployment outcomes; actual results and omissions belong to docs/handoffs/15d-terminal-execution.md. No gameplay/Lua execution or editor UI is claimed. The connected public example creates a fresh project, imports and modifies licensed glTF content, authors its scene through shared mutations, saves/reopens and runs deterministic integrity assertions. The CPU workflow fixture checks independent persisted state and owner handoff; explicit connected artifact runs extend this same example through capture and export without changing the API surface."
       }
     ],
     "components": [
@@ -4988,14 +5004,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-protocol-process"
+          "shark.tools.authoring-protocol-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_protocol_process.py"
+          "tools/tests/test_authoring_protocol_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "Implemented version-1 method over the existing CPU authoring owner; the real subprocess fixture invokes this method and checks independent results, structured failures and source preservation. Discovery advertises only implemented methods.",
         "featureworld_cases": [],
@@ -5028,14 +5047,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-protocol-process"
+          "shark.tools.authoring-protocol-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_protocol_process.py"
+          "tools/tests/test_authoring_protocol_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "Implemented version-1 method over the existing CPU authoring owner; the real subprocess fixture invokes this method and checks independent results, structured failures and source preservation. Discovery advertises only implemented methods.",
         "featureworld_cases": [],
@@ -5048,14 +5070,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-protocol-process"
+          "shark.tools.authoring-protocol-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_protocol_process.py"
+          "tools/tests/test_authoring_protocol_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "Implemented version-1 method over the existing CPU authoring owner; the real subprocess fixture invokes this method and checks independent results, structured failures and source preservation. Discovery advertises only implemented methods.",
         "featureworld_cases": [],
@@ -5069,15 +5094,18 @@
         ],
         "test_ids": [
           "shark.tools.authoring-protocol-process",
-          "shark.tools.authoring-editing-process"
+          "shark.tools.authoring-editing-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
           "tools/tests/test_authoring_protocol_process.py",
-          "tools/tests/test_authoring_editing_process.py"
+          "tools/tests/test_authoring_editing_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "Implemented version-1 method over the existing CPU authoring owner; the real subprocess fixture invokes this method and checks independent results, structured failures and source preservation. Discovery advertises only implemented methods.",
         "featureworld_cases": [],
@@ -5090,14 +5118,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-protocol-process"
+          "shark.tools.authoring-protocol-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_protocol_process.py"
+          "tools/tests/test_authoring_protocol_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "Implemented version-1 method over the existing CPU authoring owner; the real subprocess fixture invokes this method and checks independent results, structured failures and source preservation. Discovery advertises only implemented methods.",
         "featureworld_cases": [],
@@ -5150,14 +5181,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-editing-process"
+          "shark.tools.authoring-editing-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_editing_process.py"
+          "tools/tests/test_authoring_editing_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
         "featureworld_cases": [],
@@ -5170,14 +5204,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-editing-process"
+          "shark.tools.authoring-editing-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_editing_process.py"
+          "tools/tests/test_authoring_editing_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
         "featureworld_cases": [],
@@ -5190,14 +5227,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-editing-process"
+          "shark.tools.authoring-editing-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_editing_process.py"
+          "tools/tests/test_authoring_editing_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
         "featureworld_cases": [],
@@ -5210,14 +5250,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-editing-process"
+          "shark.tools.authoring-editing-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_editing_process.py"
+          "tools/tests/test_authoring_editing_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
         "featureworld_cases": [],
@@ -5230,14 +5273,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-editing-process"
+          "shark.tools.authoring-editing-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_editing_process.py"
+          "tools/tests/test_authoring_editing_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
         "featureworld_cases": [],
@@ -5270,14 +5316,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-editing-process"
+          "shark.tools.authoring-editing-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_editing_process.py"
+          "tools/tests/test_authoring_editing_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
         "featureworld_cases": [],
@@ -5390,14 +5439,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-import-process"
+          "shark.tools.authoring-import-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_import_process.py"
+          "tools/tests/test_authoring_import_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
         "featureworld_cases": [],
@@ -5410,14 +5462,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-import-process"
+          "shark.tools.authoring-import-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_import_process.py"
+          "tools/tests/test_authoring_import_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
         "featureworld_cases": [],
@@ -5430,14 +5485,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-import-process"
+          "shark.tools.authoring-import-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_import_process.py"
+          "tools/tests/test_authoring_import_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
         "featureworld_cases": [],
@@ -5450,14 +5508,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-import-process"
+          "shark.tools.authoring-import-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_import_process.py"
+          "tools/tests/test_authoring_import_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
         "featureworld_cases": [],
@@ -5470,14 +5531,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-import-process"
+          "shark.tools.authoring-import-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_import_process.py"
+          "tools/tests/test_authoring_import_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
         "featureworld_cases": [],
@@ -5530,14 +5594,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-import-process"
+          "shark.tools.authoring-import-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_import_process.py"
+          "tools/tests/test_authoring_import_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
         "featureworld_cases": [],
@@ -5570,14 +5637,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-import-process"
+          "shark.tools.authoring-import-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_import_process.py"
+          "tools/tests/test_authoring_import_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
         "featureworld_cases": [],
@@ -5670,14 +5740,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-import-process"
+          "shark.tools.authoring-import-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_import_process.py"
+          "tools/tests/test_authoring_import_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
         "featureworld_cases": [],
@@ -5730,14 +5803,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-import-process"
+          "shark.tools.authoring-import-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_import_process.py"
+          "tools/tests/test_authoring_import_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
         "featureworld_cases": [],
@@ -5750,14 +5826,17 @@
           "REQ-15"
         ],
         "test_ids": [
-          "shark.tools.authoring-import-process"
+          "shark.tools.authoring-import-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_import_process.py"
+          "tools/tests/test_authoring_import_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
         "featureworld_cases": [],
@@ -5787,14 +5866,17 @@
         "id": "terminal.scene.run",
         "name": "SharkAuthor JSON-RPC scene.run",
         "test_ids": [
-          "shark.tools.authoring-execution-process"
+          "shark.tools.authoring-execution-process",
+          "shark.tools.authoring-workflow-process"
         ],
         "test_sources": [
-          "tools/tests/test_authoring_execution_process.py"
+          "tools/tests/test_authoring_execution_process.py",
+          "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/authoring-protocol.md"
+          "docs/authoring-protocol.md",
+          "examples/terminal_authoring.py"
         ],
         "fixture_reason": "The public subprocess runs the captured dirty scene with the existing deterministic scene runner, checks expected entity-count failure and input/revision rejection, compares repeated semantic reports and hashes the later explicitly saved canonical bytes independently. Runs preserve active source/history/retry ownership.",
         "external_fixture_reason": "Real redirected terminal streams and retained owner state require a process fixture. The scene-integrity case validates current static authored values; it does not execute gameplay, Lua, graphics or the hardcoded FeatureWorld regression suite.",
@@ -5819,10 +5901,11 @@
           "assets/FeatureWorld/FeatureWorld.sharkproject",
           "tools/tests/test_authoring_artifact_process.py",
           "docs/authoring-protocol.md",
-          "docs/standalone-export.md"
+          "docs/standalone-export.md",
+          "examples/terminal_authoring.py"
         ],
-        "fixture_reason": "Portable CTest mappings cover explicit unavailable-host results and shared native export ownership/publication fences; they do not establish successful Windows terminal packaging. The actual artifact fixture exports the current unsaved owner, compares prepared content with its capture, checks packaged Runtime inspection and verifies the original project writer/history remain retained. Windows supervised-helper controls are additionally mapped by tools.authoring-execution.",
-        "external_fixture_reason": "Actual standalone export requires the configured trusted Windows packager, protected Release Runtime/CRT/shader inputs and a fresh external destination. The same retained project owner validates the candidate through publication; no source-reloading writer is substituted. Native execution and isolated deployment evidence are recorded separately in docs/handoffs/15d-terminal-execution.md.",
+        "fixture_reason": "Portable CTest mappings cover explicit unavailable-host results and shared native export ownership/publication fences; they do not establish successful Windows terminal packaging. The actual artifact fixture exports the current unsaved owner, compares prepared content with its capture, checks packaged Runtime inspection and verifies the original project writer/history remain retained. Windows supervised-helper controls are additionally mapped by tools.authoring-execution. The artifact fixture also supports --connected to execute the public example from fresh project creation through modified imported glTF, save/reopen, run and final artifacts; GPU and deployment results are recorded separately from CPU tests.",
+        "external_fixture_reason": "Actual standalone export requires the configured trusted Windows packager, protected Release Runtime/CRT/shader inputs and a fresh external destination. The same retained project owner validates the candidate through publication; no source-reloading writer is substituted. Native execution and isolated deployment evidence are recorded separately in docs/handoffs/15d-terminal-execution.md. Connected acceptance is recorded in docs/handoffs/15e-terminal-acceptance.md.",
         "requirement_ids": [
           "REQ-15"
         ],
@@ -5846,10 +5929,11 @@
           "tools/runtime_scene_smoke.py",
           "tools/scene_render_smoke.py",
           "docs/authoring-protocol.md",
-          "docs/scene-viewport.md"
+          "docs/scene-viewport.md",
+          "examples/terminal_authoring.py"
         ],
-        "fixture_reason": "The portable CPU CTests check capability-unavailable rejection and independent oracle/evidence validation only. Actual native capture uses the separate Client adapter and the public terminal process artifact fixture: current dirty scene and explicit camera, both GPU UUIDs with required validation, bounded RGBA8/D32F readbacks, complete device retirement, exact artifact hashes and fixed independent image/depth tolerances. CPU CLI success never qualifies a GPU.",
-        "external_fixture_reason": "This optional device operation belongs to the Client host, not EngineTools or in-process CPU FeatureWorld. tools/tests/test_authoring_artifact_process.py supplies real current-PC GPU execution; it is not a SceneRunner GPU catalog case. docs/handoffs/15d-terminal-execution.md records actual device results independently of the always-registered CPU checks.",
+        "fixture_reason": "The portable CPU CTests check capability-unavailable rejection and independent oracle/evidence validation only. Actual native capture uses the separate Client adapter and the public terminal process artifact fixture: current dirty scene and explicit camera, both GPU UUIDs with required validation, bounded RGBA8/D32F readbacks, complete device retirement, exact artifact hashes and fixed independent image/depth tolerances. CPU CLI success never qualifies a GPU. The artifact fixture also supports --connected to execute the public example from fresh project creation through modified imported glTF, save/reopen, run and final artifacts; GPU and deployment results are recorded separately from CPU tests.",
+        "external_fixture_reason": "This optional device operation belongs to the Client host, not EngineTools or in-process CPU FeatureWorld. tools/tests/test_authoring_artifact_process.py supplies real current-PC GPU execution; it is not a SceneRunner GPU catalog case. docs/handoffs/15d-terminal-execution.md records actual device results independently of the always-registered CPU checks. Connected acceptance is recorded in docs/handoffs/15e-terminal-acceptance.md.",
         "requirement_ids": [
           "REQ-15"
         ],

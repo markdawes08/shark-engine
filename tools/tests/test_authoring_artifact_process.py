@@ -48,7 +48,8 @@ def preserve(client, before, history, mutations, original):
             "Artifact operation changed saved source bytes")
 
 
-def capture_check(report, directory, device, revision):
+def capture_check(report, directory, device, revision, *,
+                  identities=(pipes.PROJECT, pipes.SCENE, CAMERA), reference="featureworld"):
     require(report.get("format") == "shark.authoring-capture" and report.get("schema_version") == 1,
             "Unsupported terminal capture report")
     require(report.get("published") is True and report.get("succeeded") is True and
@@ -58,7 +59,7 @@ def capture_check(report, directory, device, revision):
             report.get("rendered_revision", {}).get("scene_instance") != revision["scene_instance"],
             "Capture did not distinguish source and reconstructed scene identity")
     require((report.get("project_id"), report.get("scene_id"), report.get("camera_id")) ==
-            (pipes.PROJECT, pipes.SCENE, CAMERA), "Capture identities differ from retained owner")
+            identities, "Capture identities differ from retained owner")
     require((report.get("width"), report.get("height"), report.get("color_space")) ==
             (WIDTH, HEIGHT, "linear") and report.get("subpixel_precision_bits") == 8,
             "Capture changed extent, encoding or fixed current-PC subpixel profile")
@@ -92,7 +93,7 @@ def capture_check(report, directory, device, revision):
                 path.stat().st_size == WIDTH * HEIGHT * 4, "Capture file differs from its bounded identity")
     comparison = raster.compare_readback((directory / "color.rgba").read_bytes(),
                                          (directory / "depth.f32").read_bytes(),
-                                         runtime_scene_smoke.reference("featureworld"))
+                                         runtime_scene_smoke.reference(reference))
     require(comparison["status"] == "PASS", f"Capture failed the independent fixed oracle: {comparison}")
     return comparison
 
@@ -111,6 +112,9 @@ def run(args, summary):
     implicit = output / "implicit-layers-empty"
     implicit.mkdir()
     environment, summary["layer_environment"] = layer_environment(validation, settings, implicit)
+    if args.connected:
+        run_connected(args, summary, environment, vertex, pixel)
+        return
     project = output / "project"
     (project / "scenes").mkdir(parents=True)
     original = {}
@@ -247,11 +251,78 @@ def run(args, summary):
     summary["status"] = "PASS"
 
 
+def run_connected(args, summary, environment, vertex, pixel):
+    # The same public example is the CPU test and the actual device workflow;
+    # acceptance checks its saved files and native results independently.
+    from test_authoring_workflow_process import check_workflow
+
+    for index, device in enumerate(args.device):
+        directory = args.output / f"workflow-{index}"
+        row = {"device": device, "status": "FAIL", "workflow": str(directory / "summary.json")}
+        summary["captures"].append(row)
+        command = [str(args.python), str(pipes.ROOT / "examples/terminal_authoring.py"),
+                   "--author", str(args.author), "--output", str(directory),
+                   "--capture-vertex-shader", str(vertex), "--capture-pixel-shader", str(pixel),
+                   "--capture-device", device, "--capture-validation", "required"]
+        artifacts = {"capture"}
+        if index == 0:
+            command += ["--export-python", str(args.python), "--export-tool", str(args.export_tool),
+                        "--runtime-build", str(args.runtime_build), "--crt-dir", str(args.crt_dir),
+                        "--shaders", str(args.shaders)]
+            artifacts.add("export")
+        process = run_process(command, cwd=args.output, timeout=150, env=environment)
+        (args.output / f"workflow-{index}.process.json").write_text(
+            json.dumps(asdict(process), indent=2) + "\n", encoding="utf-8")
+        require(process.returncode == 0 and not process.timed_out and not process.cleanup_errors
+                and not process.stderr, f"Connected example failed: {asdict(process)}")
+        completion = json.loads(process.stdout)
+        require(completion["status"] == "PASS" and not completion["errors"] and
+                Path(completion["summary"]).resolve() == (directory / "summary.json").resolve(),
+                "Connected example did not name its passing summary")
+        workflow = json.loads((directory / "summary.json").read_text(encoding="utf-8"))
+        check_workflow(workflow, directory, artifacts=artifacts)
+        ids = workflow["ids"]
+        captured = workflow["capture"]
+        row["report"] = captured
+        row["comparison"] = capture_check(
+            captured, directory / "capture", device, workflow["prior_artifacts"]["status"]["revision"],
+            identities=(ids["project"], ids["scene"], ids["camera"]), reference="imported")
+        if index == 0:
+            exported = workflow["export"]
+            summary["export"] = exported
+            package = directory / "package"
+            content = exported["content"]
+            require(content["files"]["bin/content/startup.sharkscene"]["sha256"] == captured["scene_digest"],
+                    "Connected export and capture used different prepared scenes")
+            require({source["asset"] for source in content["sources"]} == {ids["mesh"], ids["resource"]},
+                    "Connected export lost the imported mesh/resource attribution closure")
+            inspection_process = run_process(
+                [str(package / "bin/Runtime.exe"), "--check-package", str(package / "bin/startup.sharkstart")],
+                cwd=args.output, timeout=15)
+            require(inspection_process.returncode == 0 and not inspection_process.timed_out
+                    and not inspection_process.cleanup_errors and not inspection_process.stderr,
+                    f"Connected package CPU inspection failed: {asdict(inspection_process)}")
+            inspection = json.loads(inspection_process.stdout)
+            require(inspection["format"] == "shark.package-inspection" and inspection["schema_version"] == 1
+                    and inspection["status"] == "PASS" and inspection["renderer_initialized"] is False
+                    and inspection["qualification"] == "NOT_RUN"
+                    and (inspection["project"], inspection["scene"], inspection["camera"],
+                         inspection["target"], inspection["mesh_count"]) ==
+                    (ids["project"], ids["scene"], ids["camera"], "windows-x86_64", 1)
+                    and inspection["startup_sha256"] == content["files"]["bin/startup.sharkstart"]["sha256"],
+                    "Connected package did not inspect the authored scene and imported mesh")
+            summary["package_inspection"] = inspection
+        row["status"] = "PASS"
+    summary["status"] = "PASS"
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("author", "shaders", "validation-manifest", "python", "export-tool", "runtime-build", "crt-dir", "output"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--device", action="append", required=True)
+    parser.add_argument("--connected", action="store_true",
+                        help="Qualify the public create/import/edit/save/reopen/run/artifact example")
     args = parser.parse_args()
     for name in ("author", "shaders", "validation_manifest", "python", "export_tool", "runtime_build", "crt_dir", "output"):
         setattr(args, name, getattr(args, name).resolve())
@@ -261,7 +332,7 @@ def main():
         parser.error("Evidence output must be a fresh directory")
     args.output.mkdir(parents=True)
     pipes.ARGS = args
-    summary = {"checkpoint": "15d", "status": "FAIL", "full_requirement_15": "NOT_RUN",
+    summary = {"checkpoint": "15e" if args.connected else "15d", "status": "FAIL", "full_requirement_15": "NOT_RUN",
                "captures": [], "errors": []}
     started = time.monotonic()
     try:
