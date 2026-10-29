@@ -456,7 +456,7 @@
       "planned_fixture": "FeatureWorld/GizmoHierarchy, GizmoDragUndo, HighDpiViewportPicking and GizmoAgentEquivalence fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "17a navigation/picking and 17b shared manipulation/drag services remain qualified by their original focused headless results. 17c adds native ImGui axis/ring controls, local/world modes, snapping, focus/capture cancellation and render-validated one-commit gestures. Core/Tools optional subtree previews preserve live scene/history and recalculate descendants before camera, bounds, normals and culling; marked snapshots cannot authorize picking. Selected CPU/headless results and limits belong to docs/handoffs/17c-viewport-gizmos.md. Connected acceptance remains17d in docs/roadmap/viewport-interaction-plan.md. Actual input/layout/GPU acceptance remains NOT_RUN in BL-16A-UI-01 under the user desktop pause; full REQ-17 remains NOT_RUN."
+        "reason": "17a-17c implement display navigation/picking, shared transform manipulation/drag transactions, native gizmo controls and immutable subtree previews. 17d extends the existing CPU editor-adapter and real public-terminal process handoff fixture with independent local/world transform expectations, retained stale-decision/history checks and saved-project continuation. Selected headless results and limits belong to docs/handoffs/17d-connected-viewport-acceptance.md; unchanged focused rendering/geometry results remain in their original handoffs. Actual connected UI, input/layout and both-GPU rendering acceptance remains NOT_RUN in BL-16A-UI-01 under the user desktop pause, following docs/viewport-acceptance.md. Full REQ-17 remains NOT_RUN; later coding is permitted by the explicit backlog amendment. 17d also corrects held invalid scale gestures so they can cross rejected snapped zero without committing stale candidates; the headless ImGui regression verifies correction, invalid release and single-group undo."
       }
     },
     {
@@ -3113,7 +3113,8 @@
         "id": "editor.terminal-handoff",
         "name": "Connected CPU editor adapters and public terminal project continuation",
         "requirement_ids": [
-          "REQ-16"
+          "REQ-16",
+          "REQ-17"
         ],
         "test_ids": [
           "shark.editor.handoff-process"
@@ -3129,10 +3130,12 @@
           "tests/fixtures/gltf_source/triangle.bin",
           "tests/fixtures/gltf_source/LICENSE",
           "docs/editor-acceptance.md",
-          "docs/handoffs/16e-editor-terminal-acceptance.md"
+          "docs/handoffs/16e-editor-terminal-acceptance.md",
+          "docs/viewport-acceptance.md",
+          "docs/handoffs/17d-connected-viewport-acceptance.md"
         ],
-        "fixture_reason": "One connected real-process flow reuses the public terminal example and its independent oracle, then continues the same project through the CPU editor adapters and public SharkAuthor processes. Independent expected source/component/hierarchy and asset/cache values cover edit/import/save/reopen, reciprocal busy ownership, dirty close protection and shared history preservation/reset. The test-only fixed-action helper has no GUI, renderer or second authoring service.",
-        "external_fixture_reason": "Cross-process ProjectFiles ownership and terminal transport require an external fixture rather than a new FeatureWorld command. Headless adapter results are preparation only: actual human controls, focus/modal/layout, viewport rendering and connected UI state equivalence remain NOT_RUN in BL-16A-UI-01.",
+        "fixture_reason": "One connected real-process flow reuses the public terminal example and its independent oracle, then continues the same project through the CPU editor adapters and public SharkAuthor processes. Independent expected source/component/hierarchy and asset/cache values cover edit/import/save/reopen, reciprocal busy ownership, dirty close protection and shared history preservation/reset. The test-only fixed-action helper has no GUI, renderer or second authoring service. 17d extends this same fixed-action CPU helper and process runner with parented local/world transform gestures, immutable typed preview extraction, one-group undo, stale retained decisions, independent terminal reproduction and saved-source continuation. Expected local/world matrices are independently specified; source/asset identity and owner handoff remain checked.",
+        "external_fixture_reason": "Cross-process ProjectFiles ownership and terminal transport require an external fixture rather than a new FeatureWorld command. Headless adapter results are preparation only: actual human controls, focus/modal/layout, viewport rendering and connected UI state equivalence remain NOT_RUN in BL-16A-UI-01. 17d headless transform results likewise do not close actual viewport input/rendering acceptance; docs/viewport-acceptance.md records that remaining gate.",
         "featureworld_cases": []
       },
       {
@@ -3200,14 +3203,17 @@
           "shark.editor.gui-adapter",
           "shark.core.scene-render",
           "shark.tools.authoring-viewport",
-          "shark.editor.viewport-navigation"
+          "shark.editor.viewport-navigation",
+          "shark.editor.handoff-process"
         ],
         "test_sources": [
           "tests/editor_gizmo_tests.cpp",
           "tests/editor_gizmo_gui_tests.cpp",
           "tests/scene_render_tests.cpp",
           "tests/authoring_viewport_tests.cpp",
-          "tests/editor_viewport_navigation_tests.cpp"
+          "tests/editor_viewport_navigation_tests.cpp",
+          "tests/editor_handoff.cpp",
+          "tools/tests/test_editor_handoff_process.py"
         ],
         "fixtures": [
           "tests/editor_gizmo_tests.cpp",
@@ -3216,9 +3222,11 @@
           "tests/authoring_viewport_tests.cpp",
           "docs/viewport-gizmos.md",
           "docs/architecture/0044-viewport-gizmos.md",
-          "docs/handoffs/17c-viewport-gizmos.md"
+          "docs/handoffs/17c-viewport-gizmos.md",
+          "docs/viewport-acceptance.md",
+          "docs/handoffs/17d-connected-viewport-acceptance.md"
         ],
-        "fixture_reason": "Independent bounded CPU geometry expectations cover projected axes, affine ring planes, cumulative ray motion, snapping, reflection, clipping and origin/DPI coordinates. Actual headless ImGui input uses the retained project owner for preview/commit/undo, stale/cancel and render-rejection behavior. Core/Tools fixtures prove immutable complete-subtree recomposition before camera/bounds/normals/culling, newly visible descendants, hidden/nonrendered validation, source/asset fences and no live revision/history/ledger changes. Picking rejects marked previews.",
+        "fixture_reason": "Independent bounded CPU geometry expectations cover projected axes, affine ring planes, cumulative ray motion, snapping, reflection, clipping and origin/DPI coordinates. Actual headless ImGui input uses the retained project owner for preview/commit/undo, stale/cancel and render-rejection behavior. Core/Tools fixtures prove immutable complete-subtree recomposition before camera/bounds/normals/culling, newly visible descendants, hidden/nonrendered validation, source/asset fences and no live revision/history/ledger changes. Picking rejects marked previews. 17d adds sampled positive-to-zero-to-negative scale correction with no live mutation in the invalid interval, rejection on invalid release and one-group undo after a corrected commit.",
         "external_fixture_reason": "Editor overlay/input state and immutable render preparation require external adapter/geometry fixtures rather than new FeatureWorld commands. Existing shared set_transform/AuthoringCommands remains the semantic owner. No new dependency, component, RPC or source version is introduced. Actual native input/focus/layout and both-GPU preview/rendering acceptance remain NOT_RUN under the desktop pause;17d owns connected acceptance.",
         "featureworld_cases": []
       }

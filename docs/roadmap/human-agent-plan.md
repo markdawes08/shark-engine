@@ -40,8 +40,10 @@ Its display-only navigation and selection do not alter authored state. Shared
 transform manipulation and whole-drag undo now use the same retained
 `set_transform`/preview/history path as terminal edits, as defined in the
 [17b contract](../transform-manipulation.md). [17c gizmos](../viewport-gizmos.md)
-connect those services with validated display previews. Actual connected
-acceptance remains 17d; visual camera controls need no redundant RPC surface.
+connect those services with validated display previews. 17d adds connected
+headless process continuation and an [actual UI procedure](../viewport-acceptance.md),
+which remains deferred until desktop testing resumes. Visual camera controls need
+no redundant RPC surface.
 
 11a adds [shared CPU asset metadata/catalog services](../asset-identity.md),
 qualified in the [identity handoff](../handoffs/11a-asset-identity.md). Both

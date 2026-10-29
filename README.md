@@ -20,12 +20,12 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**Assignment 17c adds translate/rotate/scale gizmos and subtree previews**
-through the existing retained scene owner. Local/world controls and snapping use
-validated previews; one committed drag creates one undo group. Navigation and
-picking remain display-only. Connected acceptance follows in 17d.
+**Assignment 17d connects viewport transforms and terminal continuation** through
+the existing retained scene owner and saved projects. Local/world gizmos and
+snapping use validated previews; one committed drag creates one undo group.
+The connected headless workflow preserves stale-edit, undo and persistence rules.
 Headless verification is tracked in the
-[latest handoff](docs/handoffs/17c-viewport-gizmos.md).
+[latest handoff](docs/handoffs/17d-connected-viewport-acceptance.md).
 Native rendering and actual UI acceptance remain deferred in the
 [nonblocking backlog](docs/backlog.md): the user paused desktop interaction until
 explicitly resumed, while authorizing continued coding and headless checks.

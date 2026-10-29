@@ -319,8 +319,16 @@ GizmoFrameResult GizmoWidget::overlay(const client::InputSnapshot& input,
     }
     const auto updated = value.drag.update(motion.value());
     if (!updated) {
-        // No old candidate can be released. A fresh gesture is required after a
-        // rejected pointer position rather than hiding a discarded preview.
+        if (updated.error().code == ErrorCode::invalid_argument && left.held) {
+            // The shared drag has already discarded its newest candidate. Keep
+            // the captured gesture so motion through an invalid zero-scale
+            // interval can reach a valid signed scale without a new baseline.
+            // With no candidate the workspace restores committed rendering;
+            // releasing here still cancels rather than applying an older pose.
+            value.error = updated.error();
+            result.error = updated.error();
+            return result;
+        }
         fail(updated.error());
         return result;
     }

@@ -23,6 +23,12 @@ it never writes a baseline back. One release uses one retained set_transform/his
 entry. Existing single-owner, retry and source/asset fences remain authoritative.
 Close cancels transient gestures before the normal dirty/draft decisions.
 
+17d usability correction: a shared transform `invalid_argument` while the button
+is held clears the candidate but retains the frozen gesture, allowing correction
+past zero scale. The unchanged validator still rejects zero; release while invalid
+discards the gesture without history. Conflicts, projection and render-preparation
+failures continue to cancel. No prior candidate becomes eligible for commit.
+
 This changes no shader, GPU lifetime, renderer ownership, gameplay protocol or
 global cell identity. Headless checks cover CPU preparation and adapter input;
 actual focus/layout/controls/rendering on both GPUs remain NOT_RUN until explicit

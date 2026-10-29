@@ -2,6 +2,8 @@
 // executable is test-only: it is neither another authoring host nor a UI test.
 #include "../editor/asset_panel.hpp"
 #include "../editor/inspector_panel.hpp"
+#include "../editor/transform_drag.hpp"
+#include "../editor/viewport_gizmo.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -9,7 +11,10 @@
 #include <array>
 #include <chrono>
 #include <filesystem>
+#include <fstream>
 #include <iostream>
+#include <iterator>
+#include <numbers>
 #include <stdexcept>
 #include <string>
 #include <thread>
@@ -24,6 +29,7 @@ constexpr std::string_view project_path = "Terminal.sharkproject";
 constexpr std::string_view triangle_id = "15e00000-0000-4000-8000-000000000005";
 constexpr std::string_view camera_id = "15e00000-0000-4000-8000-000000000004";
 constexpr std::string_view mesh_id = "15e00000-0000-4000-8000-000000000006";
+constexpr std::string_view transform_parent_id = "17d00000-0000-4000-8000-000000000001";
 constexpr std::array<std::string_view, 2> sidecars{"models/triangle.gltf.sharkasset",
                                                    "models/triangle.bin.sharkasset"};
 const AssetTargetProfile target{"terminal-example", AssetAudience::client};
@@ -331,6 +337,278 @@ void continuation(const std::filesystem::path& root) {
           {"guards", guards},
           {"status", call(*session, "project.status")}});
 }
+
+Json revision_json(SceneRevision revision) {
+    return {{"scene_instance", std::to_string(revision.scene_instance)},
+            {"revision", std::to_string(revision.revision)}};
+}
+Json transform_entity(ProjectSession& session, ScenePanel& scene,
+                      std::string_view id = triangle_id) {
+    const auto page =
+        call(session, "scene.inspect",
+             {{"entity_id", id},
+              {"fields", {"name", "transform", "hierarchy", "camera", "mesh_renderer"}},
+              {"expected_revision", revision_json(scene.revision())}});
+    require(page.at("complete") && page.at("entities").size() == 1,
+            "Expected one complete transform observation");
+    return page.at("entities").front();
+}
+std::string source_bytes(const std::filesystem::path& root) {
+    const auto path = root / "scenes/Main.sharkscene";
+    require(std::filesystem::file_size(path) <= 1024 * 1024, "Fixture source exceeded its bound");
+    std::ifstream input{path, std::ios::binary};
+    require(static_cast<bool>(input), "Cannot read fixture source");
+    return {std::istreambuf_iterator<char>{input}, {}};
+}
+Json matrix_values(const math::Mat4& matrix) {
+    auto result = Json::array();
+    for (int column = 0; column < 4; ++column)
+        for (int row = 0; row < 4; ++row)
+            result.push_back(matrix[column][row]);
+    return result;
+}
+AuthoringViewportRequest transform_view(ScenePanel& scene) {
+    return {entity(camera_id), scene.revision(), {640, 360}, {}, 1, target};
+}
+SceneEditReceipt committed(TransformDrag& drag) {
+    const auto result = take(drag.commit());
+    require(result.changed && !result.refresh_error, "Drag did not commit one refreshed change");
+    return result;
+}
+void transforms(const std::filesystem::path& root) {
+    auto session = take(ProjectSession::create(root, project_path));
+    ScenePanel scene{*session};
+    const auto initial = observe(*session, scene);
+    require(!session->state().dirty && initial.at("history").at("undo_entries") == 0,
+            "Transform handoff must start clean with empty history");
+    accepted(session->refresh_asset_inventory(sidecars));
+    accepted(scene.select(entity(triangle_id)));
+    TransformDrag drag{scene};
+    const auto original_source = source_bytes(root);
+    const auto original_ledger = call(*session, "scene.mutation_status");
+    accepted(drag.begin());
+    TransformManipulation cancelled;
+    cancelled.space = TransformSpace::world;
+    cancelled.translation = {0, 2, 0};
+    accepted(drag.update(cancelled));
+    accepted(drag.cancel());
+    require(call(*session, "project.status") == initial.at("status") &&
+                call(*session, "scene.history") == initial.at("history") &&
+                call(*session, "scene.mutation_status") == original_ledger &&
+                source_bytes(root) == original_source,
+            "Cancelled preview changed the retained owner or saved source");
+
+    // A real nonuniform parent makes this world rotation nonrepresentable. Undo
+    // the parent probe through shared history, then explicitly save the baseline.
+    accepted(scene.select(entity(transform_parent_id)));
+    const auto parent_selection = *scene.selection();
+    auto parent = take(scene.inspect(parent_selection.id, parent_selection.revision)).transform;
+    parent.scale = {2, 1, 1};
+    const auto parent_edit = take(scene.apply_transform(parent_selection, parent));
+    require(parent_edit.changed && !parent_edit.refresh_error, "Parent probe did not apply");
+    const auto shear_parent = transform_entity(*session, scene, transform_parent_id);
+    accepted(scene.select(entity(triangle_id)));
+    accepted(drag.begin());
+    TransformManipulation rotation;
+    rotation.space = TransformSpace::world;
+    rotation.operation = TransformOperation::rotate;
+    rotation.rotation_axis = {0, 0, 1};
+    rotation.rotation_radians = std::numbers::pi / 4;
+    const auto sheared = drag.update(rotation);
+    require(!sheared && sheared.error().code == ErrorCode::invalid_argument && !drag.candidate(),
+            "Nonrepresentable world rotation did not reject");
+    conflict(drag.commit());
+    const auto probe_history = take(scene.history(scene.revision()));
+    require(probe_history.undo_entries == 1 && probe_history.next_undo,
+            "Rejected rotation changed history");
+    const auto parent_undo =
+        take(scene.undo(probe_history.next_undo->ticket, probe_history.revision));
+    require(parent_undo.changed && !parent_undo.refresh_error, "Parent probe undo failed");
+    const auto baseline_save = take(session->save(scene.revision()));
+    require(baseline_save.published && baseline_save.current_scene_clean &&
+                source_bytes(root) == original_source,
+            "Parent probe did not restore the saved baseline");
+
+    accepted(scene.select(entity(triangle_id)));
+    const auto observation = take(scene.observe_transform(*scene.selection()));
+    const auto snapshot = take(session->viewport_snapshot(transform_view(scene)));
+    const ViewportRectangle image{100, 200, 640, 360};
+    const auto geometry = take(make_viewport_gizmo(
+        snapshot, observation, TransformOperation::translate, TransformSpace::world, image));
+    require(geometry.axes()[1].visible, "World Y gizmo is unavailable");
+    const auto pivot = geometry.pivot();
+    const auto tip = geometry.axes()[1].points[1];
+    const GizmoPoint start{pivot.x + (tip.x - pivot.x) * .25, pivot.y + (tip.y - pivot.y) * .25};
+    ViewportGizmoGesture gesture;
+    TransformSnap snap;
+    snap.translation = 1;
+    accepted(drag.begin());
+    accepted(gesture.begin(geometry, 1, start.x, start.y, snap));
+    const auto before_preview = call(*session, "project.status");
+    const auto history_before_preview = call(*session, "scene.history");
+    const auto ledger_before_preview = call(*session, "scene.mutation_status");
+    auto previews = Json::array();
+    // Height16 and image360 give22.5 logicalpixels/meter. These cumulative
+    // displacements exercise shared snapping to2m and4m, independently checked
+    // by the Python caller rather than deriving its oracle from our receipt.
+    for (const double pixels : {50.85, 95.4}) {
+        accepted(drag.update(take(gesture.update(start.x, start.y - pixels))));
+        require(drag.candidate().has_value(), "Gizmo update lost its candidate");
+        auto request = transform_view(scene);
+        request.transform_preview =
+            AuthoringTransformPreview{entity(triangle_id), *drag.candidate()};
+        const auto preview = take(session->viewport_snapshot(request));
+        require(preview.transform_preview() && preview.records().size() == 1 &&
+                    preview.revision() == scene.revision(),
+                "Expected one marked immutable render preview");
+        previews.push_back({{"world", matrix_values(preview.records().front().world_matrix)},
+                            {"revision", revision_json(preview.revision())},
+                            {"marked", true}});
+    }
+    require(call(*session, "project.status") == before_preview &&
+                call(*session, "scene.history") == history_before_preview &&
+                call(*session, "scene.mutation_status") == ledger_before_preview &&
+                source_bytes(root) == original_source,
+            "Gizmo/render preview changed live state, history, ledger or source");
+    committed(drag);
+    auto steps = Json::array();
+    steps.push_back({{"step", "world_translate"}, {"entity", transform_entity(*session, scene)}});
+    auto history = take(scene.history(scene.revision()));
+    require(history.undo_entries == 1 && history.next_undo && history.next_undo->command_count == 1,
+            "One gizmo drag was not one history group");
+    take(scene.undo(history.next_undo->ticket, history.revision));
+    steps.push_back({{"step", "undo"}, {"entity", transform_entity(*session, scene)}});
+    history = take(scene.history(scene.revision()));
+    require(history.next_redo.has_value(), "Undo did not produce redo");
+    take(scene.redo(history.next_redo->ticket, history.revision));
+    steps.push_back({{"step", "redo"}, {"entity", transform_entity(*session, scene)}});
+    const auto before_save_history = call(*session, "scene.history");
+    const auto mid_save = take(session->save(scene.revision()));
+    require(mid_save.published && mid_save.current_scene_clean &&
+                call(*session, "scene.history") == before_save_history,
+            "Save changed drag history");
+    history = take(scene.history(scene.revision()));
+    take(scene.undo(history.next_undo->ticket, history.revision));
+    require(session->state().dirty, "Undo after save did not become dirty");
+    history = take(scene.history(scene.revision()));
+    take(scene.redo(history.next_redo->ticket, history.revision));
+
+    // A new admissible identity carrying the old observation is a rejected
+    // terminal intent. Replaying an already admitted identity would test replay.
+    const auto stale_status = call(*session, "scene.mutation_status");
+    const auto before_stale = transform_entity(*session, scene);
+    const auto stale_parameters = Json{{"mutation_id", stale_status.at("next")},
+                                       {"expected_revision", initial.at("status").at("revision")},
+                                       {"operation",
+                                        {{"type", "command"},
+                                         {"command",
+                                          {{"type", "set_name"},
+                                           {"entity_id", triangle_id},
+                                           {"name", "Stale terminal overwrite"}}}}}};
+    const auto stale_reply = take(session->request("scene.mutate", stale_parameters.dump()));
+    const auto stale_envelope = Json::parse(stale_reply.json);
+    require(stale_reply.failed && !stale_envelope.contains("error"),
+            "Stale terminal decision did not return its retained outcome");
+    const auto stale = stale_envelope.at("result");
+    require(stale.at("state") == "recorded" && stale.at("outcome").at("ok") &&
+                !stale.at("outcome").at("value").at("result").at("ok") &&
+                stale.at("outcome").at("value").at("result").at("error").at("code") == "conflict" &&
+                transform_entity(*session, scene) == before_stale,
+            "Stale terminal request changed the human transform");
+
+    accepted(scene.select(entity(triangle_id)));
+    accepted(drag.begin());
+    rotation.rotation_radians = 1.5;
+    rotation.snap.rotation_radians = std::numbers::pi / 2;
+    accepted(drag.update(rotation));
+    committed(drag);
+    steps.push_back({{"step", "world_rotate"}, {"entity", transform_entity(*session, scene)}});
+    accepted(drag.begin());
+    TransformManipulation local_move;
+    local_move.translation = {2.1, 0, 0};
+    local_move.snap.translation = 1;
+    accepted(drag.update(local_move));
+    committed(drag);
+    steps.push_back({{"step", "local_translate"}, {"entity", transform_entity(*session, scene)}});
+    accepted(drag.begin());
+    TransformManipulation scale;
+    scale.operation = TransformOperation::scale;
+    scale.scale_factors = {-1.9, 1.49, .49};
+    scale.snap.scale = .5;
+    accepted(drag.update(scale));
+    committed(drag);
+    steps.push_back({{"step", "signed_scale"}, {"entity", transform_entity(*session, scene)}});
+    const auto final_history = call(*session, "scene.history");
+    accepted(drag.begin());
+    accepted(drag.update({}));
+    const auto noop = take(drag.commit());
+    require(!noop.changed && !noop.refresh_error &&
+                call(*session, "scene.history") == final_history,
+            "No-op gesture changed history");
+    auto ready = observe(*session, scene);
+    require(ready.at("history").at("undo_entries") == 4 &&
+                ready.at("history").at("redo_entries") == 0,
+            "Transform sequence did not retain four one-command drag groups");
+    ready["event"] = "transforms-ready";
+    ready["initial"] = initial;
+    ready["previews"] = previews;
+    ready["steps"] = steps;
+    ready["shear_parent"] = shear_parent;
+    ready["shear_rejection"] = error_code_name(sheared.error().code);
+    ready["stale"] = stale;
+    ready["mid_save"] = {{"published", mid_save.published},
+                         {"current_scene_clean", mid_save.current_scene_clean},
+                         {"durability", mid_save.durability}};
+    ready["guards"] = dirty_guards(*session);
+    emit(std::move(ready));
+    std::array<char, 32> command{};
+    std::cin.getline(command.data(), static_cast<std::streamsize>(command.size()));
+    require(static_cast<bool>(std::cin) && std::string_view{command.data()} == "save-close",
+            "Expected fixed save-close barrier");
+    const auto saved = take(session->save(scene.revision()));
+    require(saved.published && saved.current_scene_clean &&
+                call(*session, "scene.history") == final_history,
+            "Final transform save lost history");
+    const auto closed = take(session->close(CloseChoice::reject, scene.revision()));
+    require(closed.closed && !closed.error, "Transform handoff close failed");
+    emit({{"event", "closed"},
+          {"save",
+           {{"published", saved.published},
+            {"current_scene_clean", saved.current_scene_clean},
+            {"bytes", saved.bytes},
+            {"durability", saved.durability}}},
+          {"history_before", final_history},
+          {"history_after", final_history},
+          {"status", call(*session, "project.status")}});
+}
+void transforms_continuation(const std::filesystem::path& root) {
+    auto session = take(ProjectSession::create(root, project_path));
+    ScenePanel scene{*session};
+    auto reopened = observe(*session, scene);
+    require(!session->state().dirty && reopened.at("history").at("undo_entries") == 0 &&
+                reopened.at("history").at("redo_entries") == 0,
+            "Transform continuation retained old dirty state or history");
+    accepted(session->refresh_asset_inventory(sidecars));
+    const auto snapshot = take(session->viewport_snapshot(transform_view(scene)));
+    require(!snapshot.transform_preview() && snapshot.records().size() == 1,
+            "Reopened committed viewport differs");
+    accepted(scene.select(entity(triangle_id)));
+    TransformDrag drag{scene};
+    const auto ledger = call(*session, "scene.mutation_status");
+    accepted(drag.begin());
+    TransformManipulation move;
+    move.translation = {1, 0, 0};
+    accepted(drag.update(move));
+    accepted(drag.cancel());
+    require(call(*session, "scene.mutation_status") == ledger && !session->state().dirty,
+            "Continuation cancel changed the terminal result");
+    reopened["event"] = "transforms-reopened";
+    reopened["world"] = matrix_values(snapshot.records().front().world_matrix);
+    const auto closed = take(session->close(CloseChoice::reject, scene.revision()));
+    require(closed.closed && !closed.error, "Read-only transform continuation did not close");
+    reopened["closed"] = true;
+    emit(std::move(reopened));
+}
 } // namespace
 
 int run(const std::filesystem::path& root, std::string_view phase) {
@@ -339,6 +617,10 @@ int run(const std::filesystem::path& root, std::string_view phase) {
             edit(root);
         else if (phase == "continue")
             continuation(root);
+        else if (phase == "transforms")
+            transforms(root);
+        else if (phase == "transforms-continue")
+            transforms_continuation(root);
         else if (phase == "busy") {
             auto session = take(ProjectSession::create(root));
             const auto opened = session->open(project_path);
@@ -362,10 +644,13 @@ int wmain(int argc, wchar_t** argv) {
         std::wstring_view{argv[3]} != L"--phase")
         return 2;
     const std::wstring_view phase{argv[4]};
-    return run(std::filesystem::path{argv[2]}, phase == L"edit"       ? "edit"
-                                               : phase == L"continue" ? "continue"
-                                               : phase == L"busy"     ? "busy"
-                                                                      : "invalid");
+    return run(std::filesystem::path{argv[2]}, phase == L"edit"         ? "edit"
+                                               : phase == L"continue"   ? "continue"
+                                               : phase == L"busy"       ? "busy"
+                                               : phase == L"transforms" ? "transforms"
+                                               : phase == L"transforms-continue"
+                                                   ? "transforms-continue"
+                                                   : "invalid");
 }
 #else
 int main(int argc, char** argv) {

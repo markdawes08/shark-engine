@@ -20,8 +20,11 @@ from deferred actual input/GPU acceptance. 17b adds the shared
 belong to its [handoff](../handoffs/17b-transform-manipulation.md). 17c connects
 [native gizmos and rendered previews](../viewport-gizmos.md), with selected
 headless results in its [handoff](../handoffs/17c-viewport-gizmos.md).
-Next is 17d, connected acceptance. Full REQ-17 remains NOT_RUN until that work and
-the required deferred UI checks.
+17d connects CPU adapter and public terminal processes through saved projects;
+its [handoff](../handoffs/17d-connected-viewport-acceptance.md) records the headless
+results. The [actual acceptance procedure](../viewport-acceptance.md) and required
+native checks remain deferred. Full REQ-17 stays NOT_RUN. Later coding may proceed
+to assignment 18 under the user's explicit nonblocking desktop amendment.
 
 Editor camera navigation and selection are presentation state, not authored
 transform mutations or gameplay intents. Gizmo writes use the original

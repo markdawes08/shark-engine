@@ -187,3 +187,14 @@ foreign-handle cleanup or relaxed acceptance limits. The active implementation
 sequence for 05c's immediate successors is recorded in the
 [06 checkpoint plan](roadmap/shader-resource-plan.md); current export work follows
 the [export checkpoint plan](roadmap/export-plan.md).
+
+### BL-16A-UI-01: 17d connected acceptance
+
+17d completes headless connected preparation through the existing editor adapter
+and public terminal processes. The [viewport acceptance procedure](viewport-acceptance.md)
+still requires actual human controls and rendering on both current-PC GPUs after
+explicit desktop resumption. Complete the parented local/world/snapping transform
+comparison, stale requests, single-drag undo, save/reopen and reverse continuation,
+along with the earlier native navigation/picking/gizmo/focus/layout checks and
+required-validation scene composition. Status: **NOT_RUN**; full REQ-17 stays open.
+The existing amendment authorizes later coding without relabeling these results.

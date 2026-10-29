@@ -8,9 +8,9 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**17c connects native gizmo controls and immutable subtree previews;
+**17d adds connected transform and public-terminal process continuation;
 selected headless qualification is tracked in the
-[handoff](../handoffs/17c-viewport-gizmos.md).
+[handoff](../handoffs/17d-connected-viewport-acceptance.md).
 Full REQ-16 and REQ-17 remain NOT_RUN.** Native composition and actual UI acceptance are
 deferred under the user's
 [coding-only amendment](../backlog.md); it is not a passing UI qualification.
@@ -40,7 +40,9 @@ nothing and one changed commit adds one undo group. 17c's
 [gizmo contract](../viewport-gizmos.md) maps actual headless ImGui controls and
 pointer gestures, Core subtree extraction and retained Tools preview validation
 to focused fixtures. No new semantic command or FeatureWorld case is introduced.
-Actual input/rendering acceptance remains deferred; 17d is next.
+17d extends the existing process handoff fixture with independent transform and
+saved-source expectations. Actual input/rendering acceptance remains deferred
+under the [viewport procedure](../viewport-acceptance.md); full REQ-17 is not closed.
 
 **15e and full REQ-15 are complete under current-machine scope.** The
 [public example](../../examples/terminal_authoring.py) creates a fresh project,

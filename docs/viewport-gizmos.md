@@ -20,8 +20,12 @@ Drag with the left button and release inside the image to commit once. Snap is
 optional: translation steps are meters, rotation steps display degrees and convert
 to radians, and scale steps are factor increments around one. The shared helper
 performs snapping and validation. Signed/nonuniform scale is supported; zero,
-unresolved bases and unrepresentable local shear reject explicitly. A rejected
-pointer candidate cancels the gesture; release cannot commit an older value.
+unresolved bases and unrepresentable local shear reject explicitly. Since 17d,
+a rejected transform value while held clears the candidate and restores committed
+rendering while retaining the frozen gesture for correction. This permits signed
+scale to cross the rejected zero/snap-to-zero interval. Release on an invalid value
+cancels without committing an older pose. Selection/revision, pointer projection
+and render-preparation failures still cancel and require a fresh press.
 
 The camera, image rectangle, selected entity/revision, parent matrix, tool, space
 and snap settings are frozen for a gesture. Translation and scale use the closest

@@ -49,7 +49,12 @@ This user amendment permits later implementation to proceed before those checks;
 it does not qualify untested behavior or close full UI acceptance. Do not infer
 permission to resume from elapsed time or a new coding request.
 
-**Current handoff: [17c, viewport gizmos](docs/handoffs/17c-viewport-gizmos.md).**
+**Current handoff: [17d, connected viewport acceptance](docs/handoffs/17d-connected-viewport-acceptance.md).**
+17d connects portable gizmo/drag adapters and public terminal processes over saved
+projects. The [actual acceptance procedure](docs/viewport-acceptance.md) remains
+NOT_RUN until explicit desktop resumption; full REQ-17 stays open. Continue later
+coding under the existing backlog amendment, with assignment 18's physics work
+next. Preserve one shared owner and explicit transform authority when it lands.
 Follow [ADR 0044](docs/architecture/0044-viewport-gizmos.md) and the
 [gizmo contract](docs/viewport-gizmos.md). Native axis/ring controls use 17b's
 shared drag owner, actual image coordinates and fresh-press cancellation.
@@ -57,8 +62,7 @@ Optional typed transform previews recompose complete subtrees before culling;
 marked snapshots retain original revisions but cannot authorize picking.
 Validate extraction/packing before release, restore committed requests on cancel,
 and keep new previews out of live Scene/history until one retained commit.
-Close cancels transient gestures before dirty/draft decisions. Next is 17d,
-connected acceptance; continue headless preparation while desktop work is paused.
+Close cancels transient gestures before dirty/draft decisions.
 Follow [ADR 0043](docs/architecture/0043-transform-manipulation.md) and the
 [manipulation contract](docs/transform-manipulation.md): cumulative local/world
 math uses full parent matrices, explicit snapping and existing TRS rejection.
@@ -105,7 +109,7 @@ Metadata edits are outside scene undo, and unapplied drafts require explicit
 close resolution. Bounded console logging cannot alter operation outcomes.
 Project status observation failure marks cached state unknown while preserving
 the original reply; scoped cleanup stays available. Actual UI/terminal parity
-retains 16e; connected transform acceptance remains 17d.
+retains 16e; actual connected transform acceptance remains 17d's deferred gate.
 Full REQ-16 remains NOT_RUN; current assignment is 17.
 
 15a-15d supply the CPU `SharkAuthor` host, retained project ownership, shared

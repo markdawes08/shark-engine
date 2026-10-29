@@ -10,6 +10,8 @@
 #include <imgui.h>
 
 #include <filesystem>
+#include <fstream>
+#include <iterator>
 #include <numbers>
 
 namespace {
@@ -392,4 +394,108 @@ TEST_CASE("Gizmo widget render rejection and mode changes cannot commit an older
     CHECK(work.panel.revision() == revision);
     CHECK_FALSE(work.session->state().dirty);
     CHECK(take(work.panel.history(revision)).undo_entries == 0);
+}
+
+TEST_CASE("Gizmo scale gestures cross rejected snapped zero without committing an older pose",
+          "[editor-gui]") {
+    Workspace work;
+    accepted(
+        work.widget.configure(TransformOperation::scale, TransformSpace::local, {.scale = .5}));
+    const auto scene = work.snapshot();
+    const auto revision = work.panel.revision();
+    const auto initial = take(work.panel.inspect(work.fixture.entity, revision)).transform;
+    const auto source_bytes = [&] {
+        std::ifstream source{work.fixture.root / "Scene.sharkscene", std::ios::binary};
+        REQUIRE(source);
+        return std::string{std::istreambuf_iterator<char>{source}, {}};
+    };
+    const auto saved_source = source_bytes();
+    HeadlessGui gui;
+    gui.warm(work, scene);
+    const auto observed = take(work.panel.observe_transform(*work.panel.selection()));
+    const auto geometry = take(make_viewport_gizmo(scene, observed, TransformOperation::scale,
+                                                   TransformSpace::local, gui.rectangle));
+    REQUIRE(geometry.axes()[0].visible);
+    const auto tip = geometry.axes()[0].points[1];
+    const auto shaft = tip.x - geometry.pivot().x;
+    REQUIRE(shaft > 0);
+    std::size_t previews = 0;
+    const GizmoPreviewValidator validate = [&](const AuthoringTransformPreview& preview) {
+        auto request = work.request();
+        request.transform_preview = preview;
+        const auto captured = work.session->viewport_snapshot(request);
+        if (!captured)
+            return Result<void>{captured.error()};
+        REQUIRE(captured.value().transform_preview());
+        CHECK(captured.value().transform_preview()->local == preview.local);
+        ++previews;
+        return Result<void>{};
+    };
+    press(work, tip.x, tip.y);
+    REQUIRE_FALSE(gui.draw(work, scene, false, validate).error);
+    accepted(work.input.on_cursor(tip.x + .5 * shaft, tip.y));
+    REQUIRE_FALSE(gui.draw(work, scene, false, validate).error);
+    REQUIRE(work.widget.preview());
+    CHECK(work.widget.preview()->local.scale.x == Catch::Approx(1.5));
+    CHECK(previews == 2);
+
+    // This is a separate captured position in the zero snap interval, not a
+    // pointer jump from positive directly to negative scale.
+    accepted(work.input.on_cursor(geometry.pivot().x, tip.y));
+    const auto invalid = gui.draw(work, scene, false, validate);
+    CHECK(invalid.consumed);
+    REQUIRE(invalid.error);
+    CHECK(invalid.error->code == ErrorCode::invalid_argument);
+    CHECK_FALSE(invalid.receipt);
+    CHECK_FALSE(work.widget.preview());
+    CHECK(work.widget.has_changes());
+    CHECK(previews == 2);
+    CHECK(work.panel.revision() == revision);
+    CHECK_FALSE(work.session->state().dirty);
+    CHECK(take(work.panel.inspect(work.fixture.entity, revision)).transform == initial);
+    CHECK(take(work.panel.history(revision)).undo_entries == 0);
+    CHECK(source_bytes() == saved_source);
+
+    SECTION("Corrected negative scale commits one group and undoes once") {
+        accepted(work.input.on_cursor(tip.x - 3 * shaft, tip.y));
+        REQUIRE_FALSE(gui.draw(work, scene, false, validate).error);
+        REQUIRE(work.widget.preview());
+        CHECK(work.widget.preview()->local.scale.x == Catch::Approx(-2));
+        accepted(work.input.on_mouse_button(MouseButton::left, ButtonAction::release));
+        const auto committed = gui.draw(work, scene, false, validate);
+        REQUIRE_FALSE(committed.error);
+        REQUIRE(committed.receipt);
+        CHECK(committed.receipt->changed);
+        CHECK_FALSE(work.widget.has_changes());
+        CHECK_FALSE(work.widget.preview());
+        CHECK(previews == 4);
+        const auto transform =
+            take(work.panel.inspect(work.fixture.entity, work.panel.revision())).transform;
+        CHECK(transform.translation == initial.translation);
+        CHECK(transform.rotation == initial.rotation);
+        CHECK((transform.scale == math::Vec3{-2, 1, 1}));
+        const auto history = take(work.panel.history(work.panel.revision()));
+        REQUIRE(history.next_undo);
+        CHECK(history.undo_entries == 1);
+        CHECK(history.next_undo->command_count == 1);
+        static_cast<void>(take(work.panel.undo(history.next_undo->ticket, history.revision)));
+        CHECK(take(work.panel.inspect(work.fixture.entity, work.panel.revision())).transform ==
+              initial);
+    }
+    SECTION("Releasing invalid scale rejects without the prior positive candidate") {
+        accepted(work.input.on_mouse_button(MouseButton::left, ButtonAction::release));
+        const auto released = gui.draw(work, scene, false, validate);
+        CHECK(released.consumed);
+        REQUIRE(released.error);
+        CHECK(released.error->code == ErrorCode::invalid_argument);
+        CHECK_FALSE(released.receipt);
+        CHECK_FALSE(work.widget.has_changes());
+        CHECK_FALSE(work.widget.preview());
+        CHECK(work.panel.revision() == revision);
+        CHECK_FALSE(work.session->state().dirty);
+        CHECK(take(work.panel.inspect(work.fixture.entity, revision)).transform == initial);
+        CHECK(take(work.panel.history(revision)).undo_entries == 0);
+        CHECK(previews == 2);
+    }
+    CHECK(source_bytes() == saved_source);
 }
