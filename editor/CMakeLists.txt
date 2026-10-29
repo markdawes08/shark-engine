@@ -1,7 +1,7 @@
 add_executable(Editor main.cpp)
 target_link_libraries(Editor PRIVATE EngineTools EngineClient)
 if(TARGET Shark::ImGui)
-    target_sources(Editor PRIVATE editor_shell.cpp gui_adapter.cpp project_session.cpp scene_panel.cpp inspector_panel.cpp inspector_widget.cpp asset_panel.cpp asset_widget.cpp console_log.cpp console_widget.cpp workspace_panel.cpp)
+    target_sources(Editor PRIVATE editor_shell.cpp gui_adapter.cpp project_session.cpp scene_panel.cpp inspector_panel.cpp inspector_widget.cpp asset_panel.cpp asset_widget.cpp console_log.cpp console_widget.cpp workspace_panel.cpp viewport_navigation.cpp)
     target_link_libraries(Editor PRIVATE Shark::ImGui nlohmann_json::nlohmann_json)
     target_compile_definitions(Editor PRIVATE SHARK_EDITOR_GUI=1)
 endif()

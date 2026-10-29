@@ -40,8 +40,10 @@ not establish production scale, real WAN behavior or independent failure recover
 Assignment 16 now follows the [human editor checkpoints](editor-plan.md). Its
 initial [project shell](../editor-shell.md) uses the existing authoring owner;
 it changes no live authority, global cell identity, persistence or LOCAL-MMO-1
-workload. Scene panels and actual human/terminal handoff acceptance retain later
-checkpoints, with navigation/picking/gizmos in assignment 17.
+workload. Scene panels and headless project handoff are implemented, while actual
+UI acceptance remains deferred under the user desktop pause. Assignment 17 follows
+the [viewport interaction checkpoints](viewport-interaction-plan.md); display-only
+navigation keeps bounded local origins separate from global cell authority.
 
 11a completes [persistent asset identity and metadata](../handoffs/11a-asset-identity.md)
 under the current-machine scope. Its audience/dependency-ID fields preserve the

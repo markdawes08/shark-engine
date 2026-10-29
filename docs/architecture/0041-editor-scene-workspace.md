@@ -51,7 +51,9 @@ diagnostic display consumes original structured replies without becoming a comma
 executor or altering their outcomes. No additional catalog, worker, importer or
 public engine API is introduced.
 
-Navigation, picking and gizmos remain assignment 17; connected human/terminal acceptance is
-16e. The user's desktop pause defers native composition and actual UI acceptance,
+17a adds display-only navigation and snapshot picking under
+[ADR 0042](0042-viewport-navigation-and-picking.md); gizmos and drag transactions
+remain later [assignment-17 checkpoints](../roadmap/viewport-interaction-plan.md).
+Connected human/terminal acceptance is 16e. The user's desktop pause defers native composition and actual UI acceptance,
 without qualifying this behavior or closing full REQ-16. See the
 [workspace contract](../editor-scene-workspace.md) and [backlog](../backlog.md).

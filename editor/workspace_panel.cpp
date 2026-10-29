@@ -37,6 +37,70 @@ bool selectable_literal(const std::string& text, bool selected) {
 }
 } // namespace
 
+ViewportPointerActions ViewportPointerRouter::route(const client::InputSnapshot& input,
+                                                    const ViewportRectangle& rectangle,
+                                                    bool hovered, bool blocked) noexcept {
+    ViewportPointerActions result{};
+    const auto& cursor = input.cursor;
+    if (blocked || !hovered || !input.focused || input.focus_lost ||
+        input.key(client::Key::escape).pressed || !cursor.valid || !std::isfinite(cursor.x) ||
+        !std::isfinite(cursor.y) || !std::isfinite(rectangle.x) || !std::isfinite(rectangle.y) ||
+        !std::isfinite(rectangle.width) || !std::isfinite(rectangle.height) ||
+        rectangle.width <= 0 || rectangle.height <= 0 || cursor.x < rectangle.x ||
+        cursor.y < rectangle.y || cursor.x - rectangle.x >= rectangle.width ||
+        cursor.y - rectangle.y >= rectangle.height) {
+        cancel();
+        return result;
+    }
+    const bool moved =
+        rectangle_ &&
+        (rectangle_->x != rectangle.x || rectangle_->y != rectangle.y ||
+         rectangle_->width != rectangle.width || rectangle_->height != rectangle.height);
+    rectangle_ = rectangle;
+    if (moved) {
+        drag_ = Drag::none;
+        return result;
+    }
+    result.x = cursor.x;
+    result.y = cursor.y;
+    const auto left = input.mouse_button(client::MouseButton::left);
+    const auto right = input.mouse_button(client::MouseButton::right);
+    const auto middle = input.mouse_button(client::MouseButton::middle);
+    if (left.held || left.pressed || (right.held && middle.held))
+        drag_ = Drag::none;
+    if (!left.held && !left.pressed && right.pressed && right.held && !middle.held)
+        drag_ = Drag::orbit;
+    else if (!left.held && !left.pressed && middle.pressed && middle.held && !right.held)
+        drag_ = Drag::pan;
+    const bool beginning =
+        (drag_ == Drag::orbit && right.pressed) || (drag_ == Drag::pan && middle.pressed);
+    if ((drag_ == Drag::orbit && !right.held) || (drag_ == Drag::pan && !middle.held))
+        drag_ = Drag::none;
+    if (drag_ != Drag::none && !beginning) {
+        const auto dx = cursor.x - previous_x_;
+        const auto dy = cursor.y - previous_y_;
+        if (drag_ == Drag::orbit) {
+            result.motion.orbit_x = dx;
+            result.motion.orbit_y = dy;
+        } else {
+            result.motion.pan_x = dx;
+            result.motion.pan_y = dy;
+        }
+    }
+    previous_x_ = cursor.x;
+    previous_y_ = cursor.y;
+    if (drag_ == Drag::none && !right.held && !middle.held && !right.pressed && !middle.pressed) {
+        result.pick = left.pressed;
+        if (!left.held && !left.pressed && std::isfinite(input.scroll.y))
+            result.motion.dolly = input.scroll.y;
+    }
+    return result;
+}
+void ViewportPointerRouter::cancel() noexcept {
+    drag_ = Drag::none;
+    rectangle_.reset();
+}
+
 struct WorkspacePanel::Impl {
     ProjectSession& session;
     ScenePanel hierarchy;
@@ -61,6 +125,9 @@ struct WorkspacePanel::Impl {
     std::optional<SceneSelection> camera;
     std::string camera_name;
     std::optional<SceneViewportRequest> view;
+    std::optional<RenderScene> snapshot;
+    ViewportNavigation navigation;
+    ViewportPointerRouter pointer;
     std::optional<Error> error;
     std::optional<Error> view_error;
     std::string notice;
@@ -84,12 +151,19 @@ struct WorkspacePanel::Impl {
     void synchronize() {
         if (camera && (!hierarchy.current() || camera->revision != hierarchy.revision())) {
             camera.reset();
-            view.reset();
+            invalidate_view(true);
             view_error.reset();
             notice = "Scene changed. Select a camera again to refresh the view.";
         }
         if (!hierarchy.current())
-            view.reset();
+            invalidate_view(true);
+    }
+    void invalidate_view(bool reset_navigation = false) {
+        view.reset();
+        snapshot.reset();
+        pointer.cancel();
+        if (reset_navigation)
+            navigation.clear();
     }
     std::optional<HierarchyRow> selected_row() const {
         if (!hierarchy.selection())
@@ -227,6 +301,7 @@ struct WorkspacePanel::Impl {
             if (selected->has_camera && ImGui::Button("View through camera")) {
                 camera = selection;
                 camera_name = selected->name;
+                invalidate_view(true);
                 refresh_view = true;
                 notice.clear();
             }
@@ -259,7 +334,7 @@ struct WorkspacePanel::Impl {
             lines.remove_prefix(end + 1);
         }
         const auto result = session.refresh_asset_inventory(paths);
-        view.reset();
+        invalidate_view();
         if (!result)
             view_error = result.error();
         else {
@@ -267,14 +342,14 @@ struct WorkspacePanel::Impl {
             refresh_view = true;
         }
     }
-    void draw_viewport(const GraphicsWindowFrame& frame) {
+    void draw_viewport(const GraphicsWindowFrame& frame, bool blocked) {
         ImGui::TextUnformatted("SCENE VIEWPORT");
         ImGui::SameLine();
         ImGui::TextDisabled("%s", camera ? camera_name.c_str() : "No camera selected");
         if (ImGui::CollapsingHeader("Viewport resources")) {
             ImGui::SetNextItemWidth(-1);
             if (ImGui::InputText("Import target", target.data(), target.size())) {
-                view.reset();
+                invalidate_view();
                 refresh_view = true;
             }
             ImGui::TextWrapped("For imported meshes, list their project-relative asset sidecars, "
@@ -287,7 +362,12 @@ struct WorkspacePanel::Impl {
         ImGui::BeginDisabled(!camera);
         if (ImGui::Button("Refresh view")) {
             refresh_view = true;
-            view.reset();
+            invalidate_view();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("Reset view")) {
+            refresh_view = true;
+            invalidate_view(true);
         }
         ImGui::EndDisabled();
         if (view_error)
@@ -298,32 +378,62 @@ struct WorkspacePanel::Impl {
             return;
         }
         if (!frame.state.framebuffer.width || !frame.state.framebuffer.height ||
-            frame.state.iconified)
+            frame.state.iconified) {
+            pointer.cancel();
             return;
+        }
+        ImGui::TextWrapped("Right drag: orbit. Middle drag: pan. Wheel: zoom. Left click: select. "
+                           "Esc: stop navigation. Scene cameras are unchanged.");
         const auto available = ImGui::GetContentRegionAvail();
         if (available.x < 1 || available.y < 1)
             return;
         const auto scale = ImGui::GetIO().DisplayFramebufferScale;
+        if (!std::isfinite(scale.x) || !std::isfinite(scale.y) || scale.x <= 0 || scale.y <= 0) {
+            pointer.cancel();
+            return;
+        }
         const WindowExtent extent{static_cast<std::uint32_t>(
                                       std::clamp(std::floor(available.x * scale.x), 1.0F, 2048.0F)),
                                   static_cast<std::uint32_t>(std::clamp(
                                       std::floor(available.y * scale.y), 1.0F, 2048.0F))};
+        if (view && view->extent != extent)
+            pointer.cancel();
         if (refresh_view || (view && view->extent != extent)) {
             refresh_view = false;
             tools::AuthoringViewportRequest request{camera->id, camera->revision};
             request.viewport = {extent.width, extent.height};
             request.target = {target.data(), tools::AssetAudience::client};
-            auto snapshot = session.viewport_snapshot(request);
-            if (!snapshot) {
-                view.reset();
-                view_error = snapshot.error();
+            request.view_camera = navigation.view();
+            auto captured = session.viewport_snapshot(request);
+            if (!captured) {
+                invalidate_view();
+                view_error = captured.error();
             } else {
-                auto prepared = make_scene_viewport_request(snapshot.value(), vertex, pixel);
+                if (!navigation.view()) {
+                    const auto observed = hierarchy.inspect(camera->id, camera->revision);
+                    if (!observed || !observed.value().camera) {
+                        invalidate_view(true);
+                        view_error = observed ? Error{ErrorCode::conflict,
+                                                      "Selected view camera is no longer available",
+                                                      {.operation = "editor.viewport.seed"}}
+                                              : observed.error();
+                        return;
+                    }
+                    const auto seeded =
+                        navigation.reset(captured.value(), *observed.value().camera);
+                    if (!seeded) {
+                        invalidate_view(true);
+                        view_error = seeded.error();
+                        return;
+                    }
+                }
+                auto prepared = make_scene_viewport_request(captured.value(), vertex, pixel);
                 if (!prepared) {
-                    view.reset();
+                    invalidate_view();
                     view_error = prepared.error();
                 } else {
                     view = std::move(prepared).value();
+                    snapshot = std::move(captured).value();
                     view_error.reset();
                 }
             }
@@ -334,6 +444,50 @@ struct WorkspacePanel::Impl {
                          {static_cast<float>(view->extent.width) / scale.x,
                           static_cast<float>(view->extent.height) / scale.y});
             image_drawn = true;
+            const auto minimum = ImGui::GetItemRectMin();
+            const auto maximum = ImGui::GetItemRectMax();
+            const ViewportRectangle rectangle{minimum.x, minimum.y, maximum.x - minimum.x,
+                                              maximum.y - minimum.y};
+            const bool input_blocked = blocked || deleting || !session.state_current() ||
+                                       !hierarchy.current() || hierarchy.needs_reconciliation() ||
+                                       ImGui::GetIO().WantTextInput || ImGui::IsAnyItemActive() ||
+                                       ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
+            const auto actions =
+                pointer.route(frame.input, rectangle, ImGui::IsItemHovered(), input_blocked);
+            if (actions.pick && snapshot) {
+                const auto hit =
+                    pick_viewport(*snapshot, hierarchy.revision(), rectangle, actions.x, actions.y);
+                if (!hit)
+                    view_error = hit.error();
+                else if (hit.value()) {
+                    const auto selected = hierarchy.select(hit.value()->entity);
+                    if (!selected)
+                        error = selected.error();
+                    else {
+                        error.reset();
+                        notice = inspector_widget.has_changes()
+                                     ? "Selection changed; unapplied inspector draft is retained."
+                                     : "Viewport selection updated. Inspect selection to edit.";
+                    }
+                } else {
+                    hierarchy.clear_selection();
+                    notice = inspector_widget.has_changes()
+                                 ? "Selection cleared; unapplied inspector draft is retained."
+                                 : "No visible mesh at this point.";
+                }
+            }
+            if (!input_blocked && snapshot) {
+                auto moved = navigation.navigate(actions.motion, snapshot->viewport(), rectangle);
+                if (!moved) {
+                    pointer.cancel();
+                    view_error = moved.error();
+                } else if (moved.value()) {
+                    // Retain the exact snapshot used above and in this frame's
+                    // image. The new camera is extracted before the next image.
+                    refresh_view = true;
+                    view_error.reset();
+                }
+            }
         }
     }
     void confirmation() {
@@ -387,8 +541,9 @@ void WorkspacePanel::draw(const GraphicsWindowFrame& frame, bool blocked) {
                 value.synchronize();
             ImGui::EndChild();
             ImGui::SameLine();
-            ImGui::BeginChild("Viewport", {0, 0}, ImGuiChildFlags_Borders);
-            value.draw_viewport(frame);
+            ImGui::BeginChild("Viewport", {0, 0}, ImGuiChildFlags_Borders,
+                              ImGuiWindowFlags_NoScrollbar | ImGuiWindowFlags_NoScrollWithMouse);
+            value.draw_viewport(frame, blocked);
             ImGui::EndChild();
             ImGui::EndDisabled();
             ImGui::EndTabItem();
@@ -396,7 +551,7 @@ void WorkspacePanel::draw(const GraphicsWindowFrame& frame, bool blocked) {
         if (ImGui::BeginTabItem("Assets")) {
             ImGui::BeginChild("Asset workspace", {0, 0}, ImGuiChildFlags_Borders);
             if (value.asset_widget.draw(blocked)) {
-                value.view.reset();
+                value.invalidate_view();
                 value.refresh_view = true;
             }
             ImGui::EndChild();
@@ -408,9 +563,12 @@ void WorkspacePanel::draw(const GraphicsWindowFrame& frame, bool blocked) {
         }
         ImGui::EndTabBar();
     }
+    if (!value.image_drawn)
+        value.pointer.cancel();
 }
 void WorkspacePanel::cancel_confirmation() noexcept {
     impl_->deleting.reset();
+    impl_->pointer.cancel();
 }
 bool WorkspacePanel::has_unapplied_drafts() const noexcept {
     return impl_->inspector_widget.has_changes() || impl_->asset_widget.has_changes();

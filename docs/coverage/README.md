@@ -8,10 +8,10 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**16e adds connected CPU editor/terminal process handoff coverage;
+**17a adds display-only navigation and snapshot triangle picking;
 selected headless qualification is tracked in the
-[handoff](../handoffs/16e-editor-terminal-acceptance.md).
-Full REQ-16 remains NOT_RUN.** Native composition and actual UI acceptance are
+[handoff](../handoffs/17a-viewport-navigation.md).
+Full REQ-16 and REQ-17 remain NOT_RUN.** Native composition and actual UI acceptance are
 deferred under the user's
 [coding-only amendment](../backlog.md); it is not a passing UI qualification.
 The [shell contract](../editor-shell.md) and
@@ -20,7 +20,7 @@ dirty-state decisions, bounded hierarchy and revision-scoped selection, retained
 entity edits, typed CPU viewport preparation and GUI scene composition. Their
 feature mappings refer to the owning session/panel/adapter, CPU and native
 fixtures; an unexecuted native fixture is not a GPU pass. Current assignment is
-16. The [inspector contract](../editor-inspector.md) adds entity/revision-bound
+17. The [inspector contract](../editor-inspector.md) adds entity/revision-bound
 drafts, atomic component Apply and ticket-bound history through the same owner.
 The [asset/console contract](../editor-assets-console.md) covers explicit inventory,
 metadata tokens, job publication/acknowledgement and bounded diagnostics. Actual
@@ -29,6 +29,10 @@ bidirectional UI/terminal acceptance follows the
 [editor checkpoints](../roadmap/editor-plan.md).
 16e adds no component, terminal RPC method or FeatureWorld case; its test-only
 process adapter is not a second public authoring host.
+17a extends Core/Tools extraction with an optional validated display camera
+before culling and maps the [navigation contract](../viewport-navigation.md)
+to CPU geometry and headless routing fixtures. No source/protocol version,
+component, command or FeatureWorld case is added.
 
 **15e and full REQ-15 are complete under current-machine scope.** The
 [public example](../../examples/terminal_authoring.py) creates a fresh project,

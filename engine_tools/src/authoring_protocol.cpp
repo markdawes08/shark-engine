@@ -1311,8 +1311,10 @@ Result<RenderScene> AuthoringProtocol::viewport_snapshot(const AuthoringViewport
         const auto camera = take(scene.find(request.camera));
         const RenderOrigin origin{request.local_origin, request.origin_generation,
                                   captured.scene.world_origin};
-        auto result = take(extract_render_scene(
-            scene, *prepared, {camera, request.expected_revision, request.viewport, origin, true}));
+        auto result =
+            take(extract_render_scene(scene, *prepared,
+                                      {camera, request.expected_revision, request.viewport, origin,
+                                       true, request.view_camera}));
         // The extracted values own their immutable leases. Before returning the
         // candidate, fence the same retained sources and asset owner once more.
         impl_->check_source_files(current);

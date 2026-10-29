@@ -168,6 +168,103 @@ TEST_CASE("extraction retains hierarchy shear reflection and inverse transpose n
           Catch::Approx(0.0).margin(1e-10));
 }
 
+TEST_CASE("display camera overrides visibility before culling without changing the authored view",
+          "[scene-render]") {
+    const auto assets = take(PreparedAssets::create());
+    const auto owner = scene();
+    const auto active = camera(*owner);
+    const auto original_object = mesh(*owner, 2, {0, 0, -5});
+    const auto navigated_object = mesh(*owner, 3, {20, 0, -5});
+    auto request = options(*owner, active);
+    const auto original = take(extract_render_scene(*owner, *assets, request));
+    REQUIRE(original.records().size() == 1);
+    CHECK(original.records()[0].entity.handle == original_object);
+    const auto authored = take(owner->entity_state(active));
+
+    Camera display;
+    display.projection = CameraProjection::orthographic;
+    display.orthographic_height = 4;
+    display.near_clip = 1;
+    display.far_clip = 10;
+    math::Mat4 display_world{1.0};
+    display_world[0].x = -1;
+    display_world[3].x = 20;
+    request.view_camera = RenderViewCamera{display, display_world};
+    request.viewport = {800, 400};
+    request.origin = {{19, 0, 0}, 3, WorldPosition{id<WorldId>(99), {8, -2, 4}, {0, 0, 0}}};
+    const auto navigated = take(extract_render_scene(*owner, *assets, request));
+    REQUIRE(navigated.records().size() == 1);
+    CHECK(navigated.records()[0].entity.handle == navigated_object);
+    CHECK(navigated.stats().culled == 1);
+    CHECK(navigated.camera_entity() == original.camera_entity());
+    CHECK(navigated.revision() == original.revision());
+    CHECK(navigated.origin() == request.origin);
+    CHECK(navigated.viewport() == request.viewport);
+    CHECK(navigated.camera().mirrored);
+    CHECK(navigated.camera().view[0].x == -1);
+    CHECK(navigated.camera().view[3].x == 1);
+    CHECK(navigated.camera().projection[0].x == Catch::Approx(0.25));
+    CHECK(navigated.camera().projection[1].y == Catch::Approx(-0.5));
+    const auto clip = navigated.camera().view_projection * navigated.records()[0].world_matrix *
+                      glm::dvec4{0, 0, 0, 1};
+    equal_vec(math::Vec3{clip}, {0, 0, 4.0 / 9.0});
+    CHECK(clip.w == 1);
+    equal_vec(math::Vec3{navigated.records()[0].world_matrix[3]}, {1, 0, -5});
+
+    request.origin.scene_local_offset.x += 3;
+    ++request.origin.generation;
+    const auto shifted = take(extract_render_scene(*owner, *assets, request));
+    REQUIRE(shifted.records().size() == 1);
+    equal_matrix(shifted.camera().view_projection * shifted.records()[0].world_matrix,
+                 navigated.camera().view_projection * navigated.records()[0].world_matrix);
+    const auto unchanged = take(owner->entity_state(active));
+    CHECK(unchanged.camera == authored.camera);
+    CHECK(unchanged.local_transform == authored.local_transform);
+    CHECK(revision(*owner) == request.expected_revision);
+    request.view_camera.reset();
+    request.origin = {};
+    request.viewport = original.viewport();
+    const auto restored = take(extract_render_scene(*owner, *assets, request));
+    REQUIRE(restored.records().size() == 1);
+    CHECK(restored.records()[0].entity.handle == original_object);
+    equal_matrix(restored.camera().view_projection, original.camera().view_projection);
+}
+
+TEST_CASE("display camera rejects invalid values and cannot bypass source camera ownership",
+          "[scene-render]") {
+    const auto assets = take(PreparedAssets::create());
+    const auto owner = scene();
+    const auto active = camera(*owner);
+    const auto object = mesh(*owner, 2, {0, 0, -5});
+    auto request = options(*owner, active);
+    request.view_camera = RenderViewCamera{};
+    SECTION("invalid projection") {
+        request.view_camera->camera.projection = static_cast<CameraProjection>(99);
+    }
+    SECTION("singular world matrix") {
+        request.view_camera->scene_local_world[0] = glm::dvec4{0};
+    }
+    SECTION("nonfinite world matrix") {
+        request.view_camera->scene_local_world[3].x = std::numeric_limits<double>::infinity();
+    }
+    SECTION("nonaffine world matrix") {
+        request.view_camera->scene_local_world[0].w = 1;
+    }
+    SECTION("unbounded camera relative translation") {
+        request.view_camera->scene_local_world[3].x = render_coordinate_limit + 1;
+    }
+    SECTION("source camera remains required") {
+        request.camera = object;
+    }
+    SECTION("stale source revision remains rejected") {
+        ++request.expected_revision.revision;
+    }
+    const auto before = revision(*owner);
+    const auto result = extract_render_scene(*owner, *assets, request);
+    rejected(result);
+    CHECK(revision(*owner) == before);
+}
+
 TEST_CASE("extraction subtracts the explicit local origin without flattening global cells",
           "[scene-render]") {
     const auto assets = take(PreparedAssets::create());

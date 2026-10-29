@@ -49,13 +49,18 @@ This user amendment permits later implementation to proceed before those checks;
 it does not qualify untested behavior or close full UI acceptance. Do not infer
 permission to resume from elapsed time or a new coding request.
 
-**Current handoff: [16e, connected acceptance preparation](docs/handoffs/16e-editor-terminal-acceptance.md).**
-16e connects the CPU editor adapters to real terminal processes through one saved
-project, with independent semantic checks and reciprocal writer conflicts.
-This is headless preparation, not actual human UI acceptance. Follow the
-[connected acceptance procedure](docs/editor-acceptance.md) after desktop testing
-explicitly resumes. Full REQ-16 remains NOT_RUN; the desktop backlog authorizes
-later coding without qualifying the outstanding UI behavior.
+**Current handoff: [17a, viewport navigation and picking](docs/handoffs/17a-viewport-navigation.md).**
+17a adds display-only orbit/pan/dolly and revision-bound triangle picking from the
+same RenderScene used for the viewport. Follow [ADR 0042](docs/architecture/0042-viewport-navigation-and-picking.md)
+and the [navigation contract](docs/viewport-navigation.md): validate the optional
+view camera before culling, retain authored-camera provenance and full affine
+transforms, use actual image bounds and preserve focus/modal cancellation.
+Navigation/selection must not change authored state or history. Next is 17b,
+shared transform and drag transactions, in the [viewport checkpoints](docs/roadmap/viewport-interaction-plan.md).
+Full REQ-17 remains NOT_RUN. 16e's headless project handoff remains recorded in its
+[handoff](docs/handoffs/16e-editor-terminal-acceptance.md); actual connected UI
+acceptance follows the [procedure](docs/editor-acceptance.md) after explicit
+desktop resumption. Full REQ-16 remains NOT_RUN under the backlog amendment.
 Follow the [editor checkpoints](docs/roadmap/editor-plan.md),
 [shell contract](docs/editor-shell.md), [workspace contract](docs/editor-scene-workspace.md)
 the [inspector contract](docs/editor-inspector.md) and
@@ -84,8 +89,8 @@ Metadata edits are outside scene undo, and unapplied drafts require explicit
 close resolution. Bounded console logging cannot alter operation outcomes.
 Project status observation failure marks cached state unknown while preserving
 the original reply; scoped cleanup stays available. Actual UI/terminal parity
-retains 16e; navigation, picking
-and gizmos remain 17. Full REQ-16 remains NOT_RUN; current assignment is 16.
+retains 16e; transform drag transactions and gizmos remain later assignment-17
+checkpoints. Full REQ-16 remains NOT_RUN; current assignment is 17.
 
 15a-15d supply the CPU `SharkAuthor` host, retained project ownership, shared
 editing/persistence/imports, static deterministic runs and configured export.

@@ -61,9 +61,12 @@ Result<RenderScene> extract_render_scene(const Scene& scene, const PreparedAsset
         const auto revision = camera_page.revision();
         const auto& camera_entity = camera_page.entities().front();
         require(camera_entity.camera.has_value(), "Selected render entity has no Camera");
+        const auto& selected_camera =
+            options.view_camera ? options.view_camera->camera : *camera_entity.camera;
+        const auto& camera_world = options.view_camera ? options.view_camera->scene_local_world
+                                                       : camera_entity.transform->world_matrix;
         auto camera =
-            make_render_camera(*camera_entity.camera, camera_entity.transform->world_matrix,
-                               options.viewport, options.origin);
+            make_render_camera(selected_camera, camera_world, options.viewport, options.origin);
         if (!camera) {
             auto error = std::move(camera).error();
             error.context.entity_id =

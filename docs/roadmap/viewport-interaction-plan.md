@@ -1,0 +1,30 @@
+# Assignment 17: viewport interaction checkpoints
+
+Date: 2026-10-29. Base: `7a54cf2`, initially clean `main`. Owner: REQ-17.
+This four-checkpoint plan follows [16e's headless preparation](../handoffs/16e-editor-terminal-acceptance.md).
+The user's [desktop pause](../backlog.md#desktop-ui-deferral) permits continued
+coding, without closing full REQ-16 or qualifying actual UI interaction.
+
+| Checkpoint | Deliverable and acceptance |
+| --- | --- |
+| 17a: Viewport navigation and picking | Display-only orbit/pan/dolly, actual-image coordinate mapping including DPI/offsets, same-snapshot triangle picking and revision-safe selection. Validate the chosen view before culling; preserve authored cameras, source, dirty state and history. |
+| 17b: Transform manipulation and drag transactions | Shared local/world transform math, parented/rotated parents, snapping, supported scale and explicit shear/singular rejection. Complete drag/cancel/conflict semantics, with one undo group per committed drag and equivalent terminal results. |
+| 17c: Gizmo integration | Translate/rotate/scale controls through 17b's common validation/history path. Integrate focus, capture, cancellation and local/world modes; select/pin any new dependency before use. |
+| 17d: Connected acceptance | Equivalent human/terminal transforms, stale requests, save/reopen and undo, including actual navigation/picking/gizmo input and the required native rendering checks. Reuse valid earlier focused results. |
+
+17a is the current increment; full REQ-17 remains NOT_RUN. Its
+[navigation contract](../viewport-navigation.md) and
+[handoff](../handoffs/17a-viewport-navigation.md) separate implemented behavior
+from deferred actual input/GPU acceptance. 17b is next.
+
+Editor camera navigation and selection are presentation state, not authored
+transform mutations or gameplay intents. Subsequent gizmo writes use the original
+ProjectSession and shared authoring services. Keep scene-local coordinates and
+bounded render origins distinct from global MMO cell identity; world streaming,
+authority and physics remain with their existing owners.
+
+Use the [testing policy](../testing-policy.md): focused CPU math/adapter checks,
+affected renderer preparation and retained-owner regressions. Native windows,
+input and GPU qualification stay NOT_RUN until explicit desktop resumption.
+Record the required checks in the backlog; do not substitute synthetic input for
+actual UI acceptance or repeat unrelated engine matrices.

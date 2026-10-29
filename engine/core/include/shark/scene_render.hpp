@@ -78,12 +78,20 @@ struct RenderExtractionStats {
     std::size_t unique_meshes{0};
     std::size_t bounds_vertices{0};
 };
+// Display-only camera values. They do not replace the selected source camera,
+// mutate a Scene or become source content. The complete world matrix retains
+// its affine scale/shear and is validated through make_render_camera.
+struct RenderViewCamera {
+    Camera camera;
+    math::Mat4 scene_local_world{1.0};
+};
 struct RenderExtractionOptions {
     EntityHandle camera;
     SceneRevision expected_revision;
     RenderViewport viewport{};
     RenderOrigin origin{};
     bool frustum_culling{true};
+    std::optional<RenderViewCamera> view_camera{};
 };
 
 class RenderScene final {

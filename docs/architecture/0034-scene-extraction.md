@@ -8,6 +8,10 @@ results before Client submits graphics work. Add a pure CPU extraction service t
 EngineCore, using these owners and existing revisioned query pages. Do not create
 another registry, asset manager, scheduler or renderer backend.
 
+17a adds an optional validated display-camera override before culling, under
+[ADR 0042](0042-viewport-navigation-and-picking.md). The selected authored Camera
+remains required and retained as provenance; default extraction is unchanged.
+
 `extract_render_scene` requires an explicit camera handle, exact SceneRevision,
 viewport and render origin. It reads committed state on the Scene owner thread;
 pending writes remain pending. It returns owned values and shared const asset

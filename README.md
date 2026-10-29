@@ -20,14 +20,15 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**Assignment 16e connects editor adapters and real terminal processes** through
-one saved project, extending the editor's scene, asset and console panels.
+**Assignment 17a adds viewport navigation and triangle picking** through the
+existing editor and retained scene owner. Orbit/pan/dolly change the display view,
+while picking uses the same geometry snapshot and preserves authored history.
 Headless verification is tracked in the
-[latest handoff](docs/handoffs/16e-editor-terminal-acceptance.md).
+[latest handoff](docs/handoffs/17a-viewport-navigation.md).
 Native rendering and actual UI acceptance remain deferred in the
 [nonblocking backlog](docs/backlog.md): the user paused desktop interaction until
 explicitly resumed, while authorizing continued coding and headless checks.
-Full REQ-16 remains NOT_RUN. Assignment 15 is complete under current-machine scope;
+Full REQ-16 and REQ-17 remain NOT_RUN. Assignment 15 is complete under current-machine scope;
 its [handoff](docs/handoffs/15e-terminal-acceptance.md) records the connected
 create/import/edit/save/reopen/run/capture/export workflow. Try the
 [public terminal example](docs/authoring-protocol.md#complete-terminal-example),
@@ -49,6 +50,8 @@ Current capabilities include:
   The [inspector](docs/editor-inspector.md) adds explicit component drafts and
   shared undo/redo. [Asset and console panels](docs/editor-assets-console.md)
   expose explicit metadata and import-job workflows through the same owner.
+  [Viewport navigation and picking](docs/viewport-navigation.md) add display-only
+  camera controls and revision-bound triangle selection; gizmos follow later.
   [Connected human/terminal UI acceptance](docs/editor-acceptance.md) remains deferred.
 - [Terminal authoring](docs/authoring-protocol.md) through one-shot JSON or
   persistent stdio, with discovery, bounded queries, retained edits, preview,

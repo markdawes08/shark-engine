@@ -35,6 +35,11 @@ acceptance is still required under the [acceptance procedure](../editor-acceptan
 A passing CPU adapter does not prove human UI interaction. The historical
 foundation assessment below remains tied to its base.
 
+Assignment 17 follows the [viewport interaction checkpoints](viewport-interaction-plan.md).
+Its display-only navigation and selection do not alter authored state. Shared
+transform manipulation and whole-drag undo still require equivalent terminal
+results when they land; visual camera controls need no redundant RPC surface.
+
 11a adds [shared CPU asset metadata/catalog services](../asset-identity.md),
 qualified in the [identity handoff](../handoffs/11a-asset-identity.md). Both
 audiences use the same typed validation, exact file revisions, bounded query

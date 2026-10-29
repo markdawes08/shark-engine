@@ -123,6 +123,28 @@ explicitly resumes desktop testing:
   current-PC GPUs, reusing valid prior results. CPU snapshots and process handoff
   do not establish GUI state equivalence or replace required rendering evidence.
 
+### BL-16A-UI-01: 17a viewport interaction additions
+
+The [navigation and picking contract](viewport-navigation.md) adds these actual
+Editor checks on both current-PC GPUs. They remain **NOT_RUN** while paused:
+
+- Seed and reset from perspective and orthographic authored Cameras. Orbit, pan
+  and dolly to reveal content outside the old frustum; verify the rendered image,
+  depth/face policy and authored Camera/source/history remaining unchanged.
+- Pick overlapping and empty/silhouette geometry, including rotated/nonuniform/
+  mirrored parents and an affine camera. Verify hierarchy selection and retained
+  inspector drafts, exact viewport offsets, framebuffer scaling, the 2048-pixel
+  clamp, resize and scroll/layout behavior. Repeat after scene edits and reopen
+  so stale views cannot select recreated entities.
+- Exercise drag starts, Escape, leaving/reentering the image, focus loss/regain,
+  minimize/restore, text input, close/delete modals and Scene/Assets/Console tabs.
+  A held button must not resume a cancelled gesture. Confirm viewport wheel input
+  does not unexpectedly scroll other panes or affect authoring controls.
+
+Retain the earlier required-validation scene-composition gates and valid prior
+results. CPU geometry and synthetic routing do not qualify these native outcomes
+or close full REQ-17. Later 17b-17d increments append their own actual acceptance.
+
 This deferral does not authorize driver installation, host resource changes,
 foreign-handle cleanup or relaxed acceptance limits. The active implementation
 sequence for 05c's immediate successors is recorded in the

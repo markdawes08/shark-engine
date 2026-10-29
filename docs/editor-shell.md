@@ -8,7 +8,8 @@ projects. [16b's scene workspace](editor-scene-workspace.md) now adds hierarchy,
 selection, entity edits and a scene viewport. The [inspector/history](editor-inspector.md)
 and [asset/console panels](editor-assets-console.md) are implemented; connected
 actual UI acceptance follows the [16e procedure](editor-acceptance.md).
-Navigation, picking and gizmos remain 17.
+[17a navigation/picking](viewport-navigation.md) extends the viewport; transform
+drag transactions and gizmos remain later assignment-17 checkpoints.
 
 Desktop testing is currently paused by user instruction. The launch instructions
 below remain available for later use; agents must follow the

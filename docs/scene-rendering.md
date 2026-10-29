@@ -34,6 +34,16 @@ out-of-range content does not silently disappear merely because it is offscreen.
 `frustum_culling=false` keeps all valid visible-flag instances for diagnostics.
 No per-entity partial success is returned.
 
+17a appends an optional `RenderViewCamera` through `view_camera` in extraction
+options. It contains Camera values and a full scene-local world matrix for a
+display-only view. The explicit selected Camera handle and expected revision
+remain required; `camera_entity()` retains that source identity even when the
+matrices use the override. Validate the override with `make_render_camera` before
+culling so the snapshot contains geometry visible from the actual requested
+view. Omitted overrides preserve existing behavior. No component, source or
+prepared format changes; the original Scene is never mutated. See
+[ADR 0042](architecture/0042-viewport-navigation-and-picking.md).
+
 ## Coordinates, camera and raster conventions
 
 `RenderOrigin.world_anchor`, when present, is the canonical global WorldPosition

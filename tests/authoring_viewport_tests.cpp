@@ -72,7 +72,7 @@ SceneRevision revision(AuthoringProtocol& owner) {
     return {std::stoull(value.at("scene_instance").get<std::string>()),
             std::stoull(value.at("revision").get<std::string>())};
 }
-void move_mesh(AuthoringProtocol& owner) {
+void move_mesh(AuthoringProtocol& owner, double x = 1) {
     const auto status = call(owner, "scene.mutation_status");
     const auto changed = call(owner, "scene.mutate",
                               {{"mutation_id", status.at("next")},
@@ -83,7 +83,7 @@ void move_mesh(AuthoringProtocol& owner) {
                                   {{"type", "set_transform"},
                                    {"entity_id", mesh_text},
                                    {"transform",
-                                    {{"translation", {1, 0, -4}},
+                                    {{"translation", {x, 0, -4}},
                                      {"rotation", {0, 0, 0, 1}},
                                      {"scale", {1, 1, 1}}}}}}}}});
     REQUIRE(changed.at("outcome").at("ok").get<bool>());
@@ -269,6 +269,54 @@ TEST_CASE("Retained viewport rejects invalid camera bounds profile and foreign t
         rejected(*result, ErrorCode::conflict);
     }
     CHECK_FALSE(call(*owner, "project.status").at("dirty").get<bool>());
+}
+
+TEST_CASE("Retained viewport navigation culls through the display view and preserves dirty history",
+          "[authoring-viewport]") {
+    Fixture fixture;
+    auto owner = fixture.open();
+    const auto saved = read(fixture.root / "scene.sharkscene");
+    move_mesh(*owner, 20);
+    const auto state = call(*owner, "project.status");
+    const auto history = call(*owner, "scene.history");
+    const auto mutations = call(*owner, "scene.mutation_status");
+    REQUIRE(state.at("dirty").get<bool>());
+    auto request = fixture.request(*owner);
+    const auto source_view = take(owner->viewport_snapshot(request));
+    CHECK(source_view.records().empty());
+    Camera display;
+    display.projection = CameraProjection::orthographic;
+    display.orthographic_height = 4;
+    display.near_clip = 1;
+    display.far_clip = 10;
+    math::Mat4 world{1.0};
+    world[3].x = 20;
+    request.view_camera = RenderViewCamera{display, world};
+    request.local_origin = {19, 0, 0};
+    request.origin_generation = 9;
+    const auto navigated = take(owner->viewport_snapshot(request));
+    REQUIRE(navigated.records().size() == 1);
+    CHECK(navigated.records()[0].world_matrix[3].x == 1);
+    CHECK(navigated.camera().view[3].x == -1);
+    CHECK(navigated.camera().projection[1].y == -0.5);
+    CHECK(navigated.camera_entity() == source_view.camera_entity());
+    CHECK(navigated.revision() == request.expected_revision);
+    CHECK(navigated.origin().generation == 9);
+    CHECK(navigated.origin().world_anchor == source_view.origin().world_anchor);
+    request.view_camera->scene_local_world[0] = glm::dvec4{0};
+    rejected(owner->viewport_snapshot(request), ErrorCode::invalid_argument);
+    request.view_camera->scene_local_world = world;
+    CHECK(call(*owner, "project.status") == state);
+    CHECK(call(*owner, "scene.history") == history);
+    CHECK(call(*owner, "scene.mutation_status") == mutations);
+    CHECK(read(fixture.root / "scene.sharkscene") == saved);
+    CHECK_FALSE(fs::exists(fixture.root / std::string{asset_cache_filename}));
+    // Supplying a view cannot evade the original source-file publication fence.
+    write(fixture.root / "scene.sharkscene", saved + "\n");
+    rejected(owner->viewport_snapshot(request), ErrorCode::conflict);
+    CHECK(read(fixture.root / "scene.sharkscene") == saved + "\n");
+    CHECK(call(*owner, "project.status") == state);
+    CHECK(call(*owner, "scene.history") == history);
 }
 
 TEST_CASE("Retained viewport fences external source changes without replacing dirty state",

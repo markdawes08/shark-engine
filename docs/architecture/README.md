@@ -94,6 +94,7 @@ not establish file or gameplay-wire formats.
 | [0039](0039-terminal-authoring-protocol.md) | Bounded terminal protocol, retained project ownership, discovery and revisioned queries |
 | [0040](0040-human-editor-shell.md) | Native human editor shell over shared project ownership, bounded GUI presentation and explicit dirty-state decisions |
 | [0041](0041-editor-scene-workspace.md) | Retained scene/asset workspace, revision-scoped drafts, shared history, explicit import publication, diagnostic console and GUI scene composition |
+| [0042](0042-viewport-navigation-and-picking.md) | Display-only camera navigation, validated view overrides before culling and revision-bound snapshot triangle picking |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

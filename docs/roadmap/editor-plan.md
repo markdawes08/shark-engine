@@ -50,6 +50,8 @@ No player protocol, server authority, world streaming or MMO capacity changes
 belong here. Camera navigation, ray picking, translate/rotate/scale gizmos,
 snapping and continuous-drag undo transactions belong to assignment 17. ImGuizmo
 is not introduced before that owner.
+Its [four checkpoints](viewport-interaction-plan.md) now begin with 17a navigation
+and picking, under the same desktop deferral; this does not close REQ-16.
 
 Select verification by the changed owners. Native GUI changes need the available
 GPUs and real window lifecycle evidence; CPU adapter checks do not replace those

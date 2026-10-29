@@ -58,8 +58,11 @@ The viewport read does not save, import, mutate history or clear dirty state.
 
 Select a hierarchy entity with Camera, then explicitly use it for the viewport.
 Extent changes request a new projection at the current revision. The existing
-unlit scene pipeline supplies the displayed geometry; no navigation, picking,
-gizmos, material inspector or gameplay execution is advertised.
+unlit scene pipeline supplies the displayed geometry. 17a adds
+[display-only navigation and snapshot picking](viewport-navigation.md): the
+typed request's optional `view_camera` supplies a validated affine display view
+before culling, while the selected authored Camera remains provenance. Gizmos,
+material inspection and gameplay execution remain with their later owners.
 
 ## GPU composition and lifetime
 

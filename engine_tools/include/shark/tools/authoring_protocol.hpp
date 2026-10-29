@@ -44,6 +44,9 @@ struct AuthoringViewportRequest {
     math::Vec3 local_origin{0.0};
     std::uint64_t origin_generation{1};
     AssetTargetProfile target;
+    // Optional display-only navigation view; the selected authored Camera is
+    // still required and retained as provenance. No scene edit/history occurs.
+    std::optional<RenderViewCamera> view_camera{};
 };
 
 // Creating-thread CPU adapter over ProjectFiles and one AuthoredScene. The root
@@ -74,6 +77,7 @@ class AuthoringProtocol final {
     // original scene identities with immutable fresh client asset leases; no
     // mutable Scene borrow, source write, implicit catalog scan/import or GPU.
     // The caller explicitly selects a camera, scene revision and content target.
+    // A display-only view_camera is validated and applied before frustum culling.
     // Dimensions are 1..2048, local origin is bounded by render_coordinate_limit,
     // and the source world anchor is retained independently of that local offset.
     // Imported content requires an explicitly populated retained asset catalog.
