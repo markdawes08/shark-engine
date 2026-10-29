@@ -37,8 +37,13 @@ TLS_DIRECTORIES = {"", "framework", "include", "library", "pkgconfig", "tf-psa-c
                    "tf-psa-crypto/extras", "tf-psa-crypto/platform", "tf-psa-crypto/utilities",
                    "tf-psa-crypto/core", "tf-psa-crypto/pkgconfig"}
 STORAGE_TARGETS = {"EngineStorage", "SharkSQLite"}
-TARGETS = {"EngineCore", "Server", "shark_check_server_boundary"} | STORAGE_TARGETS | TLS_STATIC | TLS_OBJECT | TLS_UTILITIES
-PACKAGE_FILES = {"bin/Server", "licenses/EnTT/LICENSE", "licenses/GLM/copying.txt", "licenses/SQLite/LICENSE.txt"} | {
+PHYSICS_TARGETS = {"Jolt"}
+JOLT_TARGET_METADATA = frozenset({
+    "_deps/jolt-src/Jolt/Jolt.cmake",
+    "_deps/jolt-src/Jolt/Physics/Collision/Shape/TaperedCapsuleShape.gliffy",
+})
+TARGETS = {"EngineCore", "Server", "shark_check_server_boundary"} | STORAGE_TARGETS | TLS_STATIC | TLS_OBJECT | TLS_UTILITIES | PHYSICS_TARGETS
+PACKAGE_FILES = {"bin/Server", "licenses/EnTT/LICENSE", "licenses/GLM/copying.txt", "licenses/Jolt/LICENSE", "licenses/SQLite/LICENSE.txt"} | {
     "licenses/MbedTLS/" + item for item in MBEDTLS_LICENSE_FILES}
 # These private Core inputs own the existing TLS/content crypto lifetime, not
 # client Runtime code. Keep this review exact; the general dependency heuristic
@@ -88,7 +93,7 @@ def plain_path(path: Path, root: Path) -> Path:
     return path
 
 
-def source_path(path: Path, source: Path, build: Path, *, generated=False) -> Path:
+def source_path(path: Path, source: Path, build: Path, *, generated=False, noncompiled_target=None) -> Path:
     if path.is_absolute() and path.is_relative_to(build):
         generated = True
     base = build if generated else source
@@ -104,7 +109,10 @@ def source_path(path: Path, source: Path, build: Path, *, generated=False) -> Pa
                      and not set(Path(relative).parts) & {"framework", "tests", "test", "examples", "programs"})
     network_config = not generated and relative == "cmake/mbedtls_user_config.h"
     storage_input = generated and relative in ("_deps/sqlite-src/sqlite3.c", "_deps/sqlite-src/sqlite3.h")
-    require(relative.startswith(allowed) or dependency_header or network_input or network_config or storage_input,
+    physics_input = (generated and relative.startswith("_deps/jolt-src/Jolt/")
+                     and path.suffix in (".cpp", ".h", ".inl"))
+    physics_metadata = generated and noncompiled_target == "Jolt" and relative in JOLT_TARGET_METADATA
+    require(relative.startswith(allowed) or dependency_header or network_input or network_config or storage_input or physics_input or physics_metadata,
             f"Non-Core source/include path: {path}")
     reviewed_crypto = not generated and relative in CORE_CRYPTO_INPUTS
     require(reviewed_crypto or not FORBIDDEN.search(relative), f"Forbidden source/include path: {path}")
@@ -126,7 +134,8 @@ def include_path(path: Path, source: Path, build: Path) -> Path:
         if path.is_relative_to(base):
             path = plain_path(path, base)
             relative = path.relative_to(base).as_posix()
-            require(any(relative == item or relative.startswith(item + "/") for item in allowed),
+            physics_include = base == build and (relative == "_deps/jolt-src" or relative.startswith("_deps/jolt-src/Jolt/"))
+            require(physics_include or any(relative == item or relative.startswith(item + "/") for item in allowed),
                     f"Non-Core include directory: {path}")
             require(not FORBIDDEN.search(relative), f"Forbidden include directory: {path}")
             require(not set(Path(relative).parts) & {"tests", "test", "examples", "programs"},
@@ -170,10 +179,11 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
                for item in targets if item["name"] in TLS_OBJECT for artifact in item.get("artifacts", [])}
     target_ids = {item["id"] for item in targets}
     require(len(target_ids) == len(targets), "Duplicate target IDs")
+    jolt_metadata_paths = {build / relative for relative in JOLT_TARGET_METADATA}
     for item in targets:
         require(item["name"] in TARGETS, "File-api target identity mismatch")
-        if item["name"] in TLS_STATIC | TLS_OBJECT | TLS_UTILITIES | STORAGE_TARGETS:
-            expected_type = "STATIC_LIBRARY" if item["name"] in TLS_STATIC | STORAGE_TARGETS else (
+        if item["name"] in TLS_STATIC | TLS_OBJECT | TLS_UTILITIES | STORAGE_TARGETS | PHYSICS_TARGETS:
+            expected_type = "STATIC_LIBRARY" if item["name"] in TLS_STATIC | STORAGE_TARGETS | PHYSICS_TARGETS else (
                 "OBJECT_LIBRARY" if item["name"] in TLS_OBJECT else "UTILITY")
             require(item.get("type") == expected_type, "Unexpected reviewed TLS target type")
         for dependency in item.get("dependencies", []):
@@ -190,8 +200,13 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
                         "Private SQLite include escaped storage target")
                 require(item["name"] != "EngineCore" or not directory.is_relative_to(source / "server"),
                         "Server storage include escaped into shared Core")
+                require(item["name"] in {"EngineCore", "Jolt"} or not directory.is_relative_to(build / "_deps/jolt-src"),
+                        "Private Jolt include escaped the physics implementation")
         for entry in item.get("sources", []):
             path = Path(entry["path"])
+            full = path if path.is_absolute() else source / path
+            jolt_metadata = (item["name"] == "Jolt" and "compileGroupIndex" not in entry
+                             and Path(os.path.abspath(full)) in jolt_metadata_paths)
             if item["name"] in TLS_UTILITIES | {"shark_check_server_boundary"}:
                 # CMake may expose the utility's generated .rule pseudo-source.
                 full = path if path.is_absolute() else source / path
@@ -203,6 +218,10 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
             elif item["name"] == "SharkTLS_tfpsacrypto" and entry.get("isGenerated") and path.suffix == ".o":
                 full = Path(os.path.abspath(path if path.is_absolute() else source / path))
                 require(full in network_objects, f"Unreviewed network object source: {full}")
+            elif jolt_metadata:
+                # The pinned SDK lists only these reviewed script/diagram inputs as metadata.
+                # It is neither a compiler/include input nor another target's source.
+                source_path(full, source, build, noncompiled_target="Jolt")
             else:
                 suffixes = ((".c",) if item["name"] in TLS_STATIC | TLS_OBJECT | {"SharkSQLite"} else (".cpp", ".cc", ".cxx")) if "compileGroupIndex" in entry else (".h", ".hh", ".hpp", ".hxx", ".inl")
                 require(path.suffix in suffixes, f"Unreviewed prebuilt/noncompiled source input: {path}")
@@ -218,7 +237,8 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
         full = Path(os.path.abspath(source / relative))
         network = build / "_deps/mbedtls-src"
         network_directory = full.is_relative_to(network) and full.relative_to(network).as_posix().replace(".", "", 1) in TLS_DIRECTORIES
-        require(relative in (".", "engine", "engine/core", "server") or network_directory,
+        physics_directory = full == build / "_deps/jolt-src/Build"
+        require(relative in (".", "engine", "engine/core", "server") or network_directory or physics_directory,
                 f"Non-Core configured directory: {relative}")
     cache_items = objects["cache"].get("entries", [])
     cache = {entry["name"]: entry["value"] for entry in cache_items}
@@ -228,7 +248,13 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
                 "SHARK_BUILD_SERVER": "ON", "CMAKE_EXPORT_COMPILE_COMMANDS": "ON", "CMAKE_GENERATOR": "Ninja"}
     # Upstream's CRT option name contains "runtime"; review its exact locked
     # disabled value rather than treating it as a presentation discovery.
-    expected.update(read_json(source / "dependencies.lock.json")["dependencies"]["MbedTLS"].get("options", {}))
+    locked = read_json(source / "dependencies.lock.json")["dependencies"]
+    expected.update(locked["MbedTLS"].get("options", {}))
+    # Physics options are function-scoped normal CMake variables, so they need
+    # not exist in the cache. A user-provided cache spelling must still agree
+    # with the reviewed choice rather than hiding an enabled sample/backend.
+    expected.update({name: ("ON" if value else "OFF") if isinstance(value, bool) else str(value)
+                     for name, value in locked["Jolt"].get("options", {}).items() if name in cache})
     for name, value in expected.items():
         require(cache.get(name) == value, f"Expected {name}={value}, found {cache.get(name)!r}")
     require(cache.get("SHARK_SANITIZER") in ("none", "address", "address-undefined"), "Unknown sanitizer configuration")
@@ -259,6 +285,12 @@ def compile_inventory(build: Path, source: Path, targets: list[dict]) -> list[di
         path = source_path(Path(entry["file"]), source, build)
         require(path.suffix in (".cpp", ".cc", ".cxx", ".c"), f"Unexpected compile input: {path}")
         args = entry.get("arguments") or shlex.split(entry["command"])
+        if path.is_relative_to(build / "_deps/jolt-src/Jolt"):
+            for argument in args:
+                require(not re.fullmatch(r"(?:-m(?:avx[^ ]*|sse[34][^ ]*|ssse3|fma[^ ]*|f16c|lzcnt|bmi[^ ]*)|-m(?:cpu|tune)=native|-flto(?:=.*)?|-ffast-math|/arch:AVX[^ ]*)", argument, re.IGNORECASE)
+                        and (not argument.startswith("-march=") or argument == "-march=x86-64")
+                        and not re.match(r"^-DJPH_(?:DOUBLE_PRECISION|ENABLE_ASSERTS|DEBUG_RENDERER|PROFILE_ENABLED|OBJECT_STREAM|USE_(?:DX12|VK|MTL|CPU_COMPUTE))(?:=|$)", argument),
+                        f"Unreviewed Jolt precision, CPU or backend option: {argument}")
         require(args and not any(arg.startswith("@") for arg in args), "Opaque compiler response file")
         dependency_args = args
         if path == source / "engine/core/src/crypto_runtime.cpp":
@@ -338,7 +370,7 @@ def link_inventory(targets: list[dict], build: Path) -> list[dict]:
     fragments = server.get("link", {}).get("commandFragments", [])
     require(bool(fragments), "Missing actual Server linker inputs")
     archives = []
-    for name in ("EngineStorage", "EngineCore", "SharkTLS_mbedtls", "SharkTLS_mbedx509", "SharkTLS_tfpsacrypto", "SharkSQLite"):
+    for name in ("EngineStorage", "EngineCore", "SharkTLS_mbedtls", "SharkTLS_mbedx509", "SharkTLS_tfpsacrypto", "Jolt", "SharkSQLite"):
         core = next(item for item in targets if item["name"] == name)
         artifacts = core.get("artifacts", [])
         require(core.get("type") == "STATIC_LIBRARY" and len(artifacts) == 1, "Expected one static Core/TLS artifact")
@@ -393,12 +425,15 @@ def compiler_headers(output: str, compiled: list[dict], source: Path, build: Pat
     for entry in compiled:
         owner = Path(entry.get("path", source / "engine/core/unknown.cpp"))
         storage = owner.is_relative_to(source / "server/storage/src") or owner == build / "_deps/sqlite-src/sqlite3.c"
+        physics = owner.is_relative_to(source / "engine/core") or owner.is_relative_to(build / "_deps/jolt-src/Jolt")
         for value in groups[entry["object"]]:
             path = Path(os.path.abspath(value if Path(value).is_absolute() else build / value))
             require(storage or not path.is_relative_to(build / "_deps/sqlite-src"),
                     "Private SQLite compiler-discovered input escaped storage")
             require(not owner.is_relative_to(source / "engine/core") or not path.is_relative_to(source / "server/storage"),
                     "Storage compiler-discovered input escaped into shared Core")
+            require(physics or not path.is_relative_to(build / "_deps/jolt-src"),
+                    "Private Jolt compiler-discovered input escaped the physics implementation")
     headers, system = [], []
     for name in sorted({path for name, group in groups.items() if name in objects for path in group}):
         path = Path(name)

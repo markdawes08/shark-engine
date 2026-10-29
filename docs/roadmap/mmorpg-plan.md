@@ -45,6 +45,11 @@ UI acceptance remains deferred under the user desktop pause. Assignment 17 follo
 the [viewport interaction checkpoints](viewport-interaction-plan.md); display-only
 navigation keeps bounded local origins separate from global cell authority.
 
+Assignment 18 follows the [physics checkpoints](physics-plan.md). Its private CPU
+world starts with bounded empty updates and explicit owner/authority contracts;
+body simulation and server scheduling integration land in later checkpoints.
+Single-precision native positions remain separate from global cell identity.
+
 11a completes [persistent asset identity and metadata](../handoffs/11a-asset-identity.md)
 under the current-machine scope. Its audience/dependency-ID fields preserve the
 client/server content distinction for later cook/streaming owners; they do not

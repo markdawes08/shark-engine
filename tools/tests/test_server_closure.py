@@ -17,6 +17,9 @@ from check_server_closure import (ClosureError, codemodel_source, compile_invent
                                   resolved_libraries, source_path, system_header_owners, TLS_STATIC, TLS_OBJECT, TLS_UTILITIES)
 from core_dependencies import MBEDTLS_LICENSE_FILES, DEPENDENCIES
 from storage_dependency import DEFINITIONS as SQLITE_DEFINITIONS
+from physics_dependency import entry as physics_entry, REVIEWED_SOURCES
+
+JOLT_METADATA = ("Jolt/Jolt.cmake", "Jolt/Physics/Collision/Shape/TaperedCapsuleShape.gliffy")
 
 
 class ServerClosureTests(unittest.TestCase):
@@ -68,8 +71,16 @@ class ServerClosureTests(unittest.TestCase):
              "artifacts": [{"path": "libSharkSQLite.a"}],
              "sources": [{"path": str(self.build / "_deps/sqlite-src/sqlite3.c"), "compileGroupIndex": 0}],
              "compileGroups": [{"language": "C"}]}]
+        self.targets.append({"name": "Jolt", "id": "physics", "type": "STATIC_LIBRARY",
+                             "artifacts": [{"path": "_deps/jolt-build/libJolt.a"}],
+                             "sources": [{"path": str(self.build / "_deps/jolt-src/Jolt/Physics/PhysicsSystem.cpp"), "compileGroupIndex": 0}]
+                                        + [{"path": str(self.build / "_deps/jolt-src" / relative)} for relative in JOLT_METADATA],
+                             "compileGroups": [{"language": "CXX", "includes": [{"path": str(self.build / "_deps/jolt-src"), "isSystem": True}]}]})
+        self.targets[0]["dependencies"] = [{"id": "physics"}]
+        self.targets[1]["link"]["commandFragments"][1]["fragment"] = self.targets[1]["link"]["commandFragments"][1]["fragment"].replace(
+            " libSharkSQLite.a", " _deps/jolt-build/libJolt.a libSharkSQLite.a")
         self.targets[1]["dependencies"].append({"id": "storage"})
-        self.configuration = {"name": "Release", "directories": [{"source": value} for value in (".", "engine", "engine/core", "server")],
+        self.configuration = {"name": "Release", "directories": [{"source": value} for value in (".", "engine", "engine/core", "server", str(self.build / "_deps/jolt-src/Build"))],
                               "targets": [{"name": item["name"], "id": item["id"], "jsonFile": item["id"] + ".json"}
                                           for item in self.targets]}
         self.model = {"paths": {"source": str(self.source), "build": str(self.build)}, "configurations": [self.configuration]}
@@ -87,10 +98,18 @@ class ServerClosureTests(unittest.TestCase):
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(b"built fixture")
         self.add_core_dependency_fixtures()
+        self.add_physics_dependency_fixture()
         self.add_storage_dependency_fixture()
         self.commands.append({"directory": str(self.build), "file": str(self.build / "_deps/sqlite-src/sqlite3.c"),
                               "arguments": ["cc", *["-D" + item for item in SQLITE_DEFINITIONS], "-c",
                                             str(self.build / "_deps/sqlite-src/sqlite3.c"), "-o", "sqlite3.c.o"]})
+        physics = self.build / "_deps/jolt-src/Jolt/Physics/PhysicsSystem.cpp"
+        output = self.build / "_deps/jolt-build/PhysicsSystem.cpp.o"
+        output.write_bytes(b"built physics object")
+        (self.build / "_deps/jolt-build/libJolt.a").write_bytes(b"built physics library")
+        self.commands.append({"directory": str(self.build), "file": str(physics),
+                              "arguments": ["c++", "-I" + str(physics.parents[2]), "-c", str(physics),
+                                            "-o", str(output)]})
         for target in self.targets:
             if target["name"] in TLS_STATIC | TLS_OBJECT:
                 path = target["sources"][0]["path"]
@@ -105,6 +124,8 @@ class ServerClosureTests(unittest.TestCase):
         (self.package / "licenses/EnTT/LICENSE").write_bytes(b"fixture license")
         (self.package / "licenses/GLM").mkdir()
         (self.package / "licenses/GLM/copying.txt").write_bytes(b"fixture license")
+        (self.package / "licenses/Jolt").mkdir()
+        (self.package / "licenses/Jolt/LICENSE").write_bytes(b"fixture physics license")
         (self.package / "licenses/SQLite").mkdir()
         (self.package / "licenses/SQLite/LICENSE.txt").write_bytes(b"/* fixture notice */\n")
         for relative in MBEDTLS_LICENSE_FILES:
@@ -180,6 +201,36 @@ class ServerClosureTests(unittest.TestCase):
             (directory / name).write_bytes(content)
         self.cache["entries"].append({"name": "SHARK_SQLITE_ARCHIVE_INPUT", "value": str(archive)})
 
+    def add_physics_dependency_fixture(self):
+        locked = physics_entry()
+        contents = {path: b"// fixture physics input\n" for path in REVIEWED_SOURCES}
+        contents["LICENSE"] = b"fixture physics license"
+        contents["Jolt/Physics/PhysicsSystem.cpp"] = b"int physics_fixture;\n"
+        contents["Jolt/Physics/Collision/Shape/TaperedCapsuleShape.gliffy"] = b'{"stage":{"objects":[]}}\n'
+        archive = self.root / "jolt.tar.gz"
+        with tarfile.open(archive, "w:gz") as stream:
+            for path, data in contents.items():
+                item = tarfile.TarInfo(locked["archive_prefix"] + "/" + path)
+                item.size = len(data)
+                stream.addfile(item, io.BytesIO(data))
+        locked.update(sha256=hashlib.sha256(archive.read_bytes()).hexdigest(),
+                      archive_bytes=archive.stat().st_size, source_file_count=len(contents),
+                      source_bytes=sum(map(len, contents.values())),
+                      source_sha256={path: hashlib.sha256(contents[path]).hexdigest() for path in REVIEWED_SOURCES})
+        for relative in ("_deps/jolt-src", "_deps/jolt-build"):
+            (self.build / relative).mkdir()
+        for relative, data in contents.items():
+            path = self.build / "_deps/jolt-src" / relative
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+        lock_path = self.source / "dependencies.lock.json"
+        record = json.loads(lock_path.read_text())
+        record["dependencies"]["Jolt"] = locked
+        lock_path.write_text(json.dumps(record))
+        self.cache["entries"].append({"name": "SHARK_JOLT_ARCHIVE_INPUT", "value": str(archive)})
+        self.cache["entries"].extend({"name": name, "value": ("ON" if value else "OFF") if isinstance(value, bool) else str(value)}
+                                     for name, value in locked.get("options", {}).items())
+
     def write_evidence(self):
         data = {"index-1.json": {"objects": [
             {"kind": "codemodel", "version": {"major": 2}, "jsonFile": "model.json"},
@@ -192,7 +243,7 @@ class ServerClosureTests(unittest.TestCase):
 
     def test_accepts_exact_core_server_graph_and_compile_inventory(self):
         source, _, targets, _ = file_api(self.build)
-        self.assertEqual(len(compile_inventory(self.build, source, targets)), 14)
+        self.assertEqual(len(compile_inventory(self.build, source, targets)), 15)
 
     def add_reviewed_crypto_fixture(self):
         cpp = self.source / "engine/core/src/crypto_runtime.cpp"
@@ -213,7 +264,7 @@ class ServerClosureTests(unittest.TestCase):
         cpp, header, output, _ = self.add_reviewed_crypto_fixture()
         source, _, targets, _ = file_api(self.build)
         compiled = compile_inventory(self.build, source, targets)
-        self.assertEqual(len(compiled), 15)
+        self.assertEqual(len(compiled), 16)
         relative = output.relative_to(self.build).as_posix()
         evidence = f"{relative}: #deps 2, deps mtime 1 (VALID)\n    {cpp}\n    {header}\n"
         rows, system = compiler_headers(evidence, [{"path": str(cpp), "object": relative}], self.source, self.build)
@@ -374,6 +425,94 @@ class ServerClosureTests(unittest.TestCase):
         path.write_bytes(b"unreviewed TLS code")
         with self.assertRaisesRegex(ClosureError, "Populated MbedTLS source differs"):
             file_api(self.build)
+
+    def test_jolt_source_and_notice_require_the_locked_population(self):
+        file_api(self.build)
+        for relative in ("Jolt/Jolt.h", *JOLT_METADATA):
+            path = self.build / "_deps/jolt-src" / relative
+            original = path.read_bytes()
+            path.write_bytes(b"unreviewed physics input")
+            with self.subTest(relative=relative), self.assertRaisesRegex(ClosureError, "Populated Jolt source differs"):
+                file_api(self.build)
+            path.write_bytes(original)
+        (self.package / "licenses/Jolt/LICENSE").unlink()
+        with self.assertRaisesRegex(ClosureError, "Incomplete Server package"):
+            package_inventory(self.package)
+
+    def test_jolt_target_metadata_is_reviewed_and_not_a_compiler_input(self):
+        source, _, targets, _ = file_api(self.build)
+        self.assertEqual(len(compile_inventory(self.build, source, targets)), 15)
+        command = next(item for item in self.commands if "jolt-src" in item["file"])
+        for relative in JOLT_METADATA:
+            with self.subTest(relative=relative):
+                metadata = self.build / "_deps/jolt-src" / relative
+                with self.assertRaisesRegex(ClosureError, "Non-Core source"):
+                    source_path(metadata, self.source, self.build)
+                command["file"] = str(metadata)
+                self.write_evidence()
+                with self.assertRaisesRegex(ClosureError, "Non-Core source"):
+                    compile_inventory(self.build, source, targets)
+
+    def test_jolt_metadata_rejects_unknown_compiled_or_wrong_target_entries(self):
+        target = next(item for item in self.targets if item["name"] == "Jolt")
+        for metadata in target["sources"][1:]:
+            original = dict(metadata)
+            path = Path(metadata["path"])
+            unknown = path.with_name("Unknown" + path.suffix)
+            unknown.write_text("Unreviewed metadata.\n", encoding="utf-8")
+            for entry in ({"path": str(unknown)}, {**original, "compileGroupIndex": 0}):
+                with self.subTest(entry=entry):
+                    metadata.clear()
+                    metadata.update(entry)
+                    self.write_evidence()
+                    with self.assertRaisesRegex(ClosureError, "Unreviewed prebuilt/noncompiled source"):
+                        file_api(self.build)
+            metadata.clear()
+            metadata.update(original)
+            unknown.unlink()
+            for owner in (self.targets[0], self.targets[1]):
+                with self.subTest(path=path, owner=owner["name"]):
+                    owner["sources"].append(dict(original))
+                    self.write_evidence()
+                    with self.assertRaisesRegex(ClosureError, "Unreviewed prebuilt/noncompiled source"):
+                        file_api(self.build)
+                    owner["sources"].pop()
+            self.write_evidence()
+            file_api(self.build)
+
+    def test_private_jolt_headers_cannot_escape_into_server_sources(self):
+        header = self.build / "_deps/jolt-src/Jolt/Jolt.h"
+        self.targets[1]["compileGroups"] = [{"language": "CXX", "includes": [{"path": str(header.parents[1])}]}]
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "Private Jolt include escaped"):
+            file_api(self.build)
+        evidence = f"server.o: #deps 1, deps mtime 1 (VALID)\n    {header}\n"
+        with self.assertRaisesRegex(ClosureError, "Private Jolt compiler-discovered"):
+            compiler_headers(evidence, [{"path": str(self.source / "server/main.cpp"), "object": "server.o"}],
+                             self.source, self.build)
+
+    def test_jolt_samples_cannot_enter_the_configured_or_compiled_graph(self):
+        sample = self.build / "_deps/jolt-src/Samples/Sample.cpp"
+        sample.parent.mkdir()
+        sample.write_text("int unbuilt_sample;\n", encoding="utf-8")
+        with self.assertRaisesRegex(ClosureError, "Non-Core source"):
+            source_path(sample, self.source, self.build, generated=True)
+        self.configuration["directories"].append({"source": str(sample.parent)})
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "configured directory"):
+            file_api(self.build)
+
+    def test_jolt_actual_compiler_options_preserve_the_reviewed_cpu_profile(self):
+        source, _, targets, _ = file_api(self.build)
+        command = next(item for item in self.commands if "jolt-src" in item["file"])
+        for option in ("-mavx2", "-march=native", "-march=x86-64-v3", "-ffast-math", "-flto",
+                       "-DJPH_DOUBLE_PRECISION", "-DJPH_PROFILE_ENABLED", "-DJPH_USE_VK"):
+            with self.subTest(option=option):
+                command["arguments"].append(option)
+                self.write_evidence()
+                with self.assertRaisesRegex(ClosureError, "Unreviewed Jolt"):
+                    compile_inventory(self.build, source, targets)
+                command["arguments"].pop()
 
     def test_sqlite_source_header_notice_and_missing_archive_reject_drift(self):
         for name in ("sqlite3.c", "sqlite3.h", "LICENSE.txt"):

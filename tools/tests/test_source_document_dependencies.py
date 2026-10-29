@@ -17,7 +17,7 @@ from source_document_dependency import populate
 
 class SourceDocumentDependencyTests(unittest.TestCase):
     def test_population_rejects_missing_added_and_modified_inputs(self):
-        with tempfile.TemporaryDirectory(prefix="shark-json-source-integrity-") as temporary:
+        with tempfile.TemporaryDirectory(prefix="shark-json-source-integrity-", dir=OPTIONS.scratch_parent) as temporary:
             build = Path(temporary)
             original = populate(build, OPTIONS.json_archive)
             self.assertEqual(populate(build, OPTIONS.json_archive), original)
@@ -38,7 +38,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                     (source / "extra.hpp").unlink(missing_ok=True)
 
     def configure(self, extra, expected=None, *, tools=True, client=False, editor=False, drift=False):
-        with tempfile.TemporaryDirectory(prefix="shark-source-dependencies-") as temporary:
+        with tempfile.TemporaryDirectory(prefix="shark-source-dependencies-", dir=OPTIONS.scratch_parent) as temporary:
             build = Path(temporary) / "build"
             command = [OPTIONS.cmake, "-S", str(ROOT), "-B", str(build), "-G", "Ninja",
                        f"-DCMAKE_MAKE_PROGRAM={OPTIONS.ninja}",
@@ -53,6 +53,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                        f"-DSHARK_ENTT_ARCHIVE={OPTIONS.entt_archive}",
                        f"-DSHARK_GLM_ARCHIVE={OPTIONS.glm_archive}",
                        f"-DSHARK_MBEDTLS_ARCHIVE={OPTIONS.mbedtls_archive}",
+                       f"-DSHARK_JOLT_ARCHIVE={OPTIONS.jolt_archive}",
                        f"-DSHARK_JSON_ARCHIVE={OPTIONS.json_archive}",
                        f"-DSHARK_CGLTF_ARCHIVE={OPTIONS.cgltf_archive}",
                        f"-DSHARK_IMAGE_ARCHIVE={OPTIONS.image_archive}",
@@ -67,7 +68,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, output)
             dependencies = {path.name for path in (build / "_deps").iterdir()}
             expected_dependencies = {"entt-src", "entt-build", "entt-subbuild", "glm-src", "glm-build",
-                                     "glm-subbuild", "mbedtls-src", "mbedtls-build"}
+                                     "glm-subbuild", "mbedtls-src", "mbedtls-build", "jolt-src", "jolt-build"}
             if tools:
                 expected_dependencies.add("json-src")
                 expected_dependencies.add("cgltf-src")
@@ -82,6 +83,11 @@ class SourceDocumentDependencyTests(unittest.TestCase):
             graph = graph_path.read_text(encoding="utf-8")
             commands = json.loads((build / "compile_commands.json").read_text(encoding="utf-8"))
             tool_commands = []
+            json_cli_sources = {
+                ROOT / "engine_tools/src/client_export_main.cpp": "ExportContent",
+                ROOT / "engine_tools/src/authoring_main.cpp": "SharkAuthor",
+            } if tools else {}
+            observed_json_cli_sources = set()
             for entry in commands:
                 source = Path(entry["file"])
                 command_text = entry["command"].replace("\\", "/")
@@ -95,27 +101,36 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                         self.assertGreater(c_linkage_unwind[0].start(), standard_unwind[-1].start(), command_text)
                     else:
                         self.assertFalse(c_linkage_unwind, command_text)
-                if source.is_relative_to(ROOT / "engine_tools") and source.name != "scene_runner_main.cpp":
+                tools_library = "CMakeFiles/EngineTools.dir/" in command_text
+                json_cli = source in json_cli_sources
+                if tools_library:
+                    self.assertTrue(source.is_relative_to(ROOT / "engine_tools"), command_text)
                     tool_commands.append(entry)
+                if json_cli:
+                    self.assertIn("CMakeFiles/" + json_cli_sources[source] + ".dir/", command_text)
+                    observed_json_cli_sources.add(source)
+                if tools_library or json_cli:
                     self.assertIn("/json-src/include", command_text)
                     self.assertIn("JSON_USE_IMPLICIT_CONVERSIONS=0", command_text)
                     system_flag = (r"(?:/|-)external:I" if OPTIONS.compiler.lower().endswith(("cl", "cl.exe"))
                                    else r"-isystem\s+")
                     self.assertRegex(command_text, system_flag + r'"?' +
                                      re.escape((build / "_deps/json-src/include").as_posix()))
-                    self.assertRegex(command_text, system_flag + r'"?' +
-                                     re.escape((build / "_deps/cgltf-src").as_posix()))
-                    self.assertRegex(command_text, system_flag + r'"?' +
-                                     re.escape((build / "_deps/stb_image-src").as_posix()))
                 else:
                     self.assertNotIn("json-src", command_text)
-                    self.assertNotIn("cgltf-src", command_text)
-                    self.assertNotIn("stb_image-src", command_text)
                     self.assertNotIn("JSON_USE_IMPLICIT_CONVERSIONS", command_text)
+                for dependency in ("cgltf-src", "stb_image-src"):
+                    if tools_library:
+                        self.assertRegex(command_text, system_flag + r'"?' +
+                                         re.escape((build / "_deps" / dependency).as_posix()))
+                    else:
+                        self.assertNotIn(dependency, command_text)
+            self.assertEqual(observed_json_cli_sources, set(json_cli_sources))
             expected_sources = {
                 ROOT / "engine_tools/src/build_info.cpp",
                 ROOT / "engine_tools/src/source_document.cpp",
                 ROOT / "engine_tools/src/authored_scene.cpp",
+                ROOT / "engine_tools/src/transform_manipulation.cpp",
                 ROOT / "engine_tools/src/project_files.cpp",
                 ROOT / "engine_tools/src/project_files_native.cpp",
                 ROOT / "engine_tools/src/asset_catalog.cpp",
@@ -126,6 +141,16 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                 ROOT / "engine_tools/src/gltf_asset.cpp",
                 ROOT / "engine_tools/src/scene_runner.cpp",
                 ROOT / "engine_tools/src/feature_world.cpp",
+                ROOT / "engine_tools/src/prepared_content.cpp",
+                ROOT / "engine_tools/src/client_export.cpp",
+                ROOT / "engine_tools/src/authoring_protocol.cpp",
+                ROOT / "engine_tools/src/authoring_wire.cpp",
+                ROOT / "engine_tools/src/authoring_assets.cpp",
+                ROOT / "engine_tools/src/authoring_asset_wire.cpp",
+                ROOT / "engine_tools/src/authoring_run.cpp",
+                ROOT / "engine_tools/src/authoring_execution_wire.cpp",
+                ROOT / "engine_tools/src/authoring_export.cpp",
+                ROOT / "engine_tools/src/export_content_stage.cpp",
             } if tools else set()
             self.assertEqual({Path(entry["file"]) for entry in tool_commands}, expected_sources)
             if tools:
@@ -192,8 +217,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     for option in ("cmake", "ninja", "compiler", "c-compiler"):
         parser.add_argument("--" + option, required=True)
-    for option in ("mbedtls-archive", "entt-archive", "glm-archive", "json-archive", "cgltf-archive", "image-archive"):
+    for option in ("mbedtls-archive", "jolt-archive", "entt-archive", "glm-archive", "json-archive", "cgltf-archive", "image-archive"):
         parser.add_argument("--" + option, type=Path, required=True)
+    parser.add_argument("--scratch-parent", type=Path, required=True)
     parser.add_argument("--sqlite-archive", type=Path)
     OPTIONS, remaining = parser.parse_known_args()
+    OPTIONS.scratch_parent.mkdir(parents=True, exist_ok=True)
     unittest.main(argv=[__file__, *remaining])

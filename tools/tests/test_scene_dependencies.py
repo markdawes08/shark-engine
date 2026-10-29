@@ -26,6 +26,7 @@ class SceneDependencyTests(unittest.TestCase):
                        f"-DSHARK_ENTT_ARCHIVE={OPTIONS.entt_archive}",
                        f"-DSHARK_GLM_ARCHIVE={OPTIONS.glm_archive}",
                        f"-DSHARK_MBEDTLS_ARCHIVE={OPTIONS.mbedtls_archive}",
+                       f"-DSHARK_JOLT_ARCHIVE={OPTIONS.jolt_archive}",
                        *([f"-DSHARK_SQLITE_ARCHIVE={OPTIONS.sqlite_archive}"] if OPTIONS.sqlite_archive else []), *extra]
             result = subprocess.run(command, text=True, capture_output=True, timeout=120)
             text = result.stdout + result.stderr
@@ -36,7 +37,7 @@ class SceneDependencyTests(unittest.TestCase):
             else:
                 self.assertEqual(result.returncode, 0, text)
                 self.assertEqual({p.name for p in (build / "_deps").iterdir()},
-                                 {"entt-src", "entt-build", "entt-subbuild", "glm-src", "glm-build", "glm-subbuild", "mbedtls-src", "mbedtls-build"} |
+                                 {"entt-src", "entt-build", "entt-subbuild", "glm-src", "glm-build", "glm-subbuild", "mbedtls-src", "mbedtls-build", "jolt-src", "jolt-build"} |
                                  ({"sqlite-src"} if OPTIONS.sqlite_archive else set()))
                 cache = (build / "CMakeCache.txt").read_text(encoding="utf-8")
                 self.assertIn("FETCHCONTENT_FULLY_DISCONNECTED:BOOL=ON", cache)
@@ -47,11 +48,12 @@ class SceneDependencyTests(unittest.TestCase):
                 self.assertIn("SHARK_DOMAIN_EnTT::EnTT [==[core]==]", graph)
                 self.assertIn("SHARK_DOMAIN_SharkMath [==[core]==]", graph)
                 self.assertIn("SHARK_DOMAIN_SharkTLS_mbedtls [==[core]==]", graph)
+                self.assertIn("SHARK_DOMAIN_Jolt [==[core]==]", graph)
                 self.assertIn("GEN_FILES:BOOL=OFF", cache)
                 self.assertIn("USE_SHARED_MBEDTLS_LIBRARY:BOOL=OFF", cache)
                 commands = json.loads((build / "compile_commands.json").read_text(encoding="utf-8"))
                 for item in commands:
-                    if Path(item["file"]).suffix == ".c":
+                    if Path(item["file"]).suffix == ".c" or Path(item["file"]).is_relative_to(build / "_deps/jolt-src"):
                         continue
                     for definition in ("GLM_FORCE_RADIANS", "GLM_FORCE_DEPTH_ZERO_TO_ONE",
                                        "GLM_FORCE_EXPLICIT_CTOR", "GLM_FORCE_CTOR_INIT", "GLM_FORCE_PURE"):
@@ -60,6 +62,7 @@ class SceneDependencyTests(unittest.TestCase):
                         self.assertNotIn("entt-src", item["command"])
                         self.assertIn("glm-src", item["command"])
                         self.assertNotIn("mbedtls-src", item["command"])
+                        self.assertNotIn("jolt-src", item["command"])
                         self.assertNotIn("MBEDTLS_USER_CONFIG_FILE", item["command"])
                 check = subprocess.run([OPTIONS.cmake, "-DSHARK_GRAPH=" + str(next(build.glob("shark-target-graph-*.cmake"))),
                                         "-DSHARK_BOUNDARY_MODE=server", "-P", str(ROOT / "cmake/CheckRuntimeBoundary.cmake")],
@@ -163,6 +166,7 @@ if __name__ == "__main__":
     parser.add_argument("--compiler", required=True)
     parser.add_argument("--c-compiler", required=True)
     parser.add_argument("--mbedtls-archive", type=Path, required=True)
+    parser.add_argument("--jolt-archive", type=Path, required=True)
     parser.add_argument("--entt-archive", type=Path, required=True)
     parser.add_argument("--glm-archive", type=Path, required=True)
     parser.add_argument("--sqlite-archive", type=Path)

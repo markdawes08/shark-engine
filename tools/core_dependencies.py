@@ -8,6 +8,7 @@ import io
 import json
 import os
 from pathlib import Path, PurePosixPath
+import stat
 import tarfile
 import tempfile
 import urllib.request
@@ -15,6 +16,8 @@ import urllib.request
 
 MAX_ARCHIVE = 8 * 1024 * 1024
 MAX_CONTENT = 32 * 1024 * 1024
+# WinNT.h IsReparseTagNameSurrogate: junctions and other redirected names.
+WINDOWS_NAME_SURROGATE = 0x20000000
 MBEDTLS_LICENSE_FILES = (
     "LICENSE", "framework/LICENSE", "tf-psa-crypto/LICENSE", "tf-psa-crypto/framework/LICENSE",
     "tf-psa-crypto/drivers/everest/library/Hacl_Curve25519.c",
@@ -29,6 +32,8 @@ DEPENDENCIES = {
             "cache": "SHARK_GLM_ARCHIVE_INPUT"},
     "MbedTLS": {"prefix": "mbedtls", "license": "LICENSE", "header": "include/mbedtls/ssl.h",
                 "cache": "SHARK_MbedTLS_ARCHIVE_INPUT"},
+    "Jolt": {"prefix": "jolt", "license": "LICENSE", "header": "Jolt/Jolt.h",
+             "cache": "SHARK_JOLT_ARCHIVE_INPUT"},
 }
 
 
@@ -39,6 +44,9 @@ def specification(name: str) -> dict:
 
 
 def entry(source: Path, name: str = "EnTT") -> dict:
+    if name == "Jolt":
+        from physics_dependency import entry as physics_entry
+        return physics_entry(source)
     spec = specification(name)
     result = json.loads((source / "dependencies.lock.json").read_text(encoding="utf-8"))["dependencies"][name]
     licenses = list(MBEDTLS_LICENSE_FILES) if name == "MbedTLS" else [spec["license"]]
@@ -50,6 +58,9 @@ def entry(source: Path, name: str = "EnTT") -> dict:
 
 
 def archive_files(archive: Path, locked: dict, name: str = "EnTT") -> dict[str, bytes]:
+    if name == "Jolt":
+        from physics_dependency import archive_files as physics_archive_files
+        return physics_archive_files(archive, locked)
     spec = specification(name)
     if (not archive.is_file() or archive.is_symlink() or archive.stat().st_size > MAX_ARCHIVE):
         raise ValueError("Missing, linked or oversized " + name + " archive")
@@ -95,6 +106,9 @@ def archive_files(archive: Path, locked: dict, name: str = "EnTT") -> dict[str, 
 
 def prepare(source: Path, destination: Path, name: str = "EnTT") -> Path:
     """Explicit preparation before a disconnected configure, outside its graph."""
+    if name == "Jolt":
+        from physics_dependency import prepare as prepare_physics
+        return prepare_physics(source, destination)
     locked = entry(source, name)
     destination.mkdir(parents=True, exist_ok=True)
     filename = "mbedtls-" + locked["version"] + ".tar.bz2" if name == "MbedTLS" else locked["commit"] + ".tar.gz"
@@ -115,19 +129,36 @@ def prepare(source: Path, destination: Path, name: str = "EnTT") -> Path:
 
 def verify_sources(source: Path, build: Path, archive: Path, name: str = "EnTT") -> dict:
     """Compare the complete extracted source inventory with its verified archive."""
-    spec = specification(name)
+    if name == "Jolt":
+        from physics_dependency import verify_sources as verify_physics_sources
+        return verify_physics_sources(source, build, archive)
     locked = entry(source, name)
     files = archive_files(archive, locked, name)
+    return _verify_source_files(build, archive, name, locked, files)
+
+
+def _verify_source_files(build: Path, archive: Path, name: str,
+                         locked: dict, files: dict[str, bytes]) -> dict:
+    """Check every populated byte against this invocation's verified archive."""
+    spec = specification(name)
     populated = build / "_deps" / (spec["prefix"] + "-src")
-    if not populated.is_dir() or populated.is_symlink():
+    try:
+        root_metadata = populated.lstat()
+    except FileNotFoundError:
+        raise ValueError("Missing or linked " + name + " source directory") from None
+    if (not stat.S_ISDIR(root_metadata.st_mode)
+            or getattr(root_metadata, "st_reparse_tag", 0) & WINDOWS_NAME_SURROGATE):
         raise ValueError("Missing or linked " + name + " source directory")
     actual = {}
     for path in populated.rglob("*"):
-        if path.is_symlink() or not (path.is_file() or path.is_dir()):
+        metadata = path.lstat()
+        mode = metadata.st_mode
+        if (stat.S_ISLNK(mode) or getattr(metadata, "st_reparse_tag", 0) & WINDOWS_NAME_SURROGATE
+                or not (stat.S_ISREG(mode) or stat.S_ISDIR(mode))):
             raise ValueError("Linked or nonregular " + name + " source input")
-        if path.is_file():
+        if stat.S_ISREG(mode):
             relative = path.relative_to(populated).as_posix()
-            if (relative not in files or path.stat().st_size != len(files[relative])
+            if (relative not in files or metadata.st_size != len(files[relative])
                     or path.read_bytes() != files[relative]):
                 raise ValueError("Populated " + name + " source differs from the locked archive: " + relative)
             actual[relative] = hashlib.sha256(files[relative]).hexdigest()
@@ -144,7 +175,8 @@ def verify_sources(source: Path, build: Path, archive: Path, name: str = "EnTT")
 def populate_network(source: Path, build: Path, archive: Path) -> dict:
     """Materialize only the reviewed release's regular files; never repair drift."""
     name = "MbedTLS"
-    files = archive_files(archive, entry(source, name), name)
+    locked = entry(source, name)
+    files = archive_files(archive, locked, name)
     dependencies = build / "_deps"
     if dependencies.is_symlink():
         raise ValueError("Linked Core dependency directory")
@@ -156,22 +188,26 @@ def populate_network(source: Path, build: Path, archive: Path) -> dict:
         with tempfile.TemporaryDirectory(prefix=".mbedtls-", dir=dependencies) as temporary:
             candidate = Path(temporary) / "source"
             candidate.mkdir()
+            directories = {parent for relative in files for parent in Path(relative).parents
+                           if parent != Path(".")}
+            for directory in sorted(directories, key=lambda path: (len(path.parts), path.as_posix())):
+                (candidate / directory).mkdir()
             for relative, data in files.items():
                 path = candidate / relative
-                path.parent.mkdir(parents=True, exist_ok=True)
                 path.write_bytes(data)
             os.replace(candidate, populated)
-    return verify_sources(source, build, archive, name)
+    return _verify_source_files(build, archive, name, locked, files)
 
 
 def verify_build(source: Path, build: Path, archives: dict[str, Path]) -> dict:
-    """The headless graph allows exactly the three reviewed Core dependencies."""
+    """The headless graph allows exactly the reviewed Core dependencies."""
     if set(archives) != set(DEPENDENCIES):
         raise ValueError("Missing locked Core archive evidence")
     dependencies = build / "_deps"
     expected = {spec["prefix"] + suffix for spec in DEPENDENCIES.values()
                 for suffix in ("-src", "-build", "-subbuild")}
     expected.remove("mbedtls-subbuild")
+    expected.remove("jolt-subbuild")
     if (not dependencies.is_dir() or dependencies.is_symlink()
             or {item.name for item in dependencies.iterdir()} != expected
             or any(item.is_symlink() or not item.is_dir() for item in dependencies.iterdir())):

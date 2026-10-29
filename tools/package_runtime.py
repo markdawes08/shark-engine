@@ -33,6 +33,7 @@ from toolchain_report import collect
 from shader_pipeline import (bundle_payload, canonical, inspect_bundle, inspect_spirv,
                              verify as verify_shaders)
 from core_dependencies import archive_files as core_archive_files, entry as core_dependency_entry
+from physics_dependency import archive_files as physics_archive_files
 
 RUNTIME_CRT_NAMES = CRT_NAMES | {"msvcp140_2.dll"}
 BINARIES = {"bin/Runtime.exe", "bin/vulkan-1.dll", *("bin/" + name for name in RUNTIME_CRT_NAMES)}
@@ -342,7 +343,7 @@ def inspect_scene_package(directory: Path, manifest: dict) -> None:
 def scene_license_paths() -> set[str]:
     lock = read_json(ROOT / "dependencies.lock.json")
     paths = {f"licenses/{name}/{path}"
-             for name in ("EnTT", "GLM", "MbedTLS", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader")
+             for name in ("EnTT", "GLM", "MbedTLS", "Jolt", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader")
              for path in lock["dependencies"][name]["license_files"]}
     paths.update("licenses/MicrosoftVC/" + row["destination"]
                  for row in lock["graphics_distribution"]["WindowsCRT"]["license_files"])
@@ -380,19 +381,22 @@ def cache_values(build: Path) -> dict[str, str]:
 def production_notices(build: Path, lock: dict) -> tuple[dict[str, bytes], dict]:
     payload, records = {}, {}
     cache = cache_values(build)
-    for name in ("EnTT", "GLM", "MbedTLS", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader"):
+    for name in ("EnTT", "GLM", "MbedTLS", "Jolt", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader"):
         entry = lock["dependencies"][name]
         lower = name.lower()
         archive = build / f"_deps/{lower}-subbuild/{lower}-populate-prefix/src" / entry["url"].rsplit("/", 1)[-1]
-        if name in ("EnTT", "GLM", "MbedTLS"):
+        if name in ("EnTT", "GLM", "MbedTLS", "Jolt"):
             cache_key = {"EnTT": "SHARK_EnTT_ARCHIVE", "GLM": "SHARK_GLM_ARCHIVE_INPUT",
-                         "MbedTLS": "SHARK_MbedTLS_ARCHIVE_INPUT"}[name]
+                         "MbedTLS": "SHARK_MbedTLS_ARCHIVE_INPUT", "Jolt": "SHARK_JOLT_ARCHIVE_INPUT"}[name]
             archive = Path(cache.get(cache_key, str(archive)))
         if name == "MbedTLS":
             # The official bz2 archive includes reviewed unused test symlinks;
             # use the dependency owner's exact-file verifier, not the graphics
             # tar.gz reader or the mutable populated build tree.
             verified = core_archive_files(archive, entry, name)
+            notices = {path: verified[path] for path in entry["license_files"]}
+        elif name == "Jolt":
+            verified = physics_archive_files(archive, entry)
             notices = {path: verified[path] for path in entry["license_files"]}
         else:
             notices = archive_notices(archive, entry)
@@ -405,7 +409,7 @@ def production_notices(build: Path, lock: dict) -> tuple[dict[str, bytes], dict]
 
 
 def required_core_notices() -> dict[str, tuple[str, ...]]:
-    return {"EnTT": ("LICENSE",), "GLM": ("copying.txt",),
+    return {"EnTT": ("LICENSE",), "GLM": ("copying.txt",), "Jolt": ("LICENSE",),
             "MbedTLS": tuple(core_dependency_entry(ROOT, "MbedTLS")["license_files"])}
 
 
@@ -596,9 +600,9 @@ def inspect_package(directory: Path, expected_manifest: str) -> dict:
         expected = {f"licenses/{name}/{path}" for path in required}
         if not expected <= files.keys():
             raise ValueError(f"Package lacks {name} license notices: {sorted(expected - files.keys())}")
-        if name == "MbedTLS" and {path for path in files if path.startswith("licenses/MbedTLS/")} != expected:
-            raise ValueError("Unexpected MbedTLS notice or test credential payload")
-    for name in ("EnTT", "GLM", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader", "MicrosoftVC"):
+        if name in {"MbedTLS", "Jolt"} and {path for path in files if path.startswith(f"licenses/{name}/")} != expected:
+            raise ValueError(f"Unexpected {name} notice or source payload")
+    for name in ("EnTT", "GLM", "Jolt", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader", "MicrosoftVC"):
         if not any(path.startswith(f"licenses/{name}/") for path in files):
             raise ValueError(f"Package lacks {name} license notices")
     if has_shaders:

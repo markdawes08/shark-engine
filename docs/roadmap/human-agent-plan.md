@@ -45,6 +45,11 @@ headless process continuation and an [actual UI procedure](../viewport-acceptanc
 which remains deferred until desktop testing resumes. Visual camera controls need
 no redundant RPC surface.
 
+Assignment 18 follows the [physics checkpoints](physics-plan.md). The native CPU
+foundation adds no placeholder authoring methods. Each supported body/collider
+feature gains schemas, persistence, shared commands and terminal discovery with
+its implementation; editor fields reuse those same services.
+
 11a adds [shared CPU asset metadata/catalog services](../asset-identity.md),
 qualified in the [identity handoff](../handoffs/11a-asset-identity.md). Both
 audiences use the same typed validation, exact file revisions, bounded query

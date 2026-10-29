@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "17",
+  "current_assignment": "18",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -473,7 +473,7 @@
       "planned_fixture": "FeatureWorld/RigidBodies, FeatureWorld/CollisionLayers, FeatureWorld/Triggers, PhysicsRenderRateTolerance and PhysicsQueuedRemoval fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "3D physics core is not implemented; owner assignment 18."
+        "reason": "18a implements the private CPU Jolt world foundation with bounded real empty updates, owner-thread access and native registration/teardown. Selected Windows/WSL, sanitizer and dependency/closure results are recorded in docs/handoffs/18a-physics-foundation.md. Bodies, colliders, scene synchronization, layers/triggers, component authoring and connected acceptance retain 18b-18e; full REQ-18 remains NOT_RUN."
       }
     },
     {
@@ -3228,6 +3228,37 @@
         ],
         "fixture_reason": "Independent bounded CPU geometry expectations cover projected axes, affine ring planes, cumulative ray motion, snapping, reflection, clipping and origin/DPI coordinates. Actual headless ImGui input uses the retained project owner for preview/commit/undo, stale/cancel and render-rejection behavior. Core/Tools fixtures prove immutable complete-subtree recomposition before camera/bounds/normals/culling, newly visible descendants, hidden/nonrendered validation, source/asset fences and no live revision/history/ledger changes. Picking rejects marked previews. 17d adds sampled positive-to-zero-to-negative scale correction with no live mutation in the invalid interval, rejection on invalid release and one-group undo after a corrected commit.",
         "external_fixture_reason": "Editor overlay/input state and immutable render preparation require external adapter/geometry fixtures rather than new FeatureWorld commands. Existing shared set_transform/AuthoringCommands remains the semantic owner. No new dependency, component, RPC or source version is introduced. Actual native input/focus/layout and both-GPU preview/rendering acceptance remain NOT_RUN under the desktop pause;17d owns connected acceptance.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "physics.world-foundation",
+        "name": "Private bounded CPU physics world and native registration ownership",
+        "requirement_ids": [
+          "REQ-18"
+        ],
+        "test_ids": [
+          "shark.core.physics",
+          "shark.core.physics-public-example",
+          "shark.tooling.physics-dependencies",
+          "shark.tooling.server-closure",
+          "shark.tooling.runtime-package"
+        ],
+        "test_sources": [
+          "tests/core_physics_tests.cpp",
+          "examples/physics_world.cpp",
+          "tools/tests/test_physics_dependencies.py",
+          "tools/tests/test_server_closure.py",
+          "tools/tests/test_runtime_package.py"
+        ],
+        "fixtures": [
+          "tests/core_physics_tests.cpp",
+          "examples/physics_world.cpp",
+          "docs/physics-world.md",
+          "docs/architecture/0045-physics-foundation.md",
+          "docs/handoffs/18a-physics-foundation.md"
+        ],
+        "fixture_reason": "Real empty native worlds exercise bounded configuration, fixed-duration updates, tick statistics, repeated/overlapping leases, exact callback restoration, foreign factory rejection and owner-thread guards. The public-header-only example links EngineCore without SDK includes; locked-archive and protected closure/package fixtures check private dependency and notice consumption.",
+        "external_fixture_reason": "Process-global native registrations, empty-world lifetime and dependency/deployment boundaries require isolated native/tooling fixtures. No body component, terminal method, Lua API or FeatureWorld body case exists in 18a; real scene/body mappings follow their implementation in 18b-18e.",
         "featureworld_cases": []
       }
     ],

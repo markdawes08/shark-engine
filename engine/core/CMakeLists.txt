@@ -6,6 +6,7 @@ add_library(EngineCore STATIC
     src/error.cpp
     src/log.cpp
     src/name.cpp
+    src/physics.cpp
     src/prepared_assets.cpp
     src/prepared_scene.cpp
     src/prepared_startup.cpp
@@ -34,10 +35,13 @@ target_include_directories(EngineCore PUBLIC ../include include PRIVATE "${CMAKE
 # Standard-library sleeping and ordinary worker synchronization use the OS thread
 # runtime. No fetched dependency, worker pool or presentation service is introduced.
 find_package(Threads REQUIRED)
-set_property(TARGET Threads::Threads PROPERTY IMPORTED_GLOBAL TRUE)
+get_target_property(shark_threads_global Threads::Threads IMPORTED_GLOBAL)
+if(NOT shark_threads_global)
+    set_property(TARGET Threads::Threads PROPERTY IMPORTED_GLOBAL TRUE)
+endif()
 shark_classify_target(Threads::Threads core)
 target_link_libraries(EngineCore PUBLIC Threads::Threads SharkMath)
-target_link_libraries(EngineCore PRIVATE EnTT::EnTT SharkTLS_mbedtls)
+target_link_libraries(EngineCore PRIVATE EnTT::EnTT SharkTLS_mbedtls SharkPhysics_jolt)
 if(WIN32)
     # Windows OS entropy for persistent UUIDs; no third-party or presentation dependency.
     find_library(SHARK_WINDOWS_BCRYPT_LIBRARY NAMES bcrypt REQUIRED)

@@ -49,12 +49,21 @@ This user amendment permits later implementation to proceed before those checks;
 it does not qualify untested behavior or close full UI acceptance. Do not infer
 permission to resume from elapsed time or a new coding request.
 
-**Current handoff: [17d, connected viewport acceptance](docs/handoffs/17d-connected-viewport-acceptance.md).**
+**Current handoff: [18a, CPU physics foundation](docs/handoffs/18a-physics-foundation.md).**
+Follow [ADR 0045](docs/architecture/0045-physics-foundation.md) and the
+[physics-world contract](docs/physics-world.md): Jolt is a private locked Core
+dependency, with one creating-thread world owner and bounded explicit stepping.
+Preserve native registration leases, saved callbacks and reverse teardown.
+18a exposes real empty updates, not bodies or component/protocol capabilities.
+Next is 18b in the [physics checkpoints](docs/roadmap/physics-plan.md): enforce
+root/positive-uniform-scale and mode-specific transform authority while adding
+bodies, colliders, source/commands/history/retries and terminal authoring together.
+Tick frequency and collision substeps are distinct; reuse existing schedulers.
 17d connects portable gizmo/drag adapters and public terminal processes over saved
 projects. The [actual acceptance procedure](docs/viewport-acceptance.md) remains
 NOT_RUN until explicit desktop resumption; full REQ-17 stays open. Continue later
-coding under the existing backlog amendment, with assignment 18's physics work
-next. Preserve one shared owner and explicit transform authority when it lands.
+coding under the existing backlog amendment. Preserve one shared authoring owner
+and explicit runtime transform authority as physics lands.
 Follow [ADR 0044](docs/architecture/0044-viewport-gizmos.md) and the
 [gizmo contract](docs/viewport-gizmos.md). Native axis/ring controls use 17b's
 shared drag owner, actual image coordinates and fresh-press cancellation.
@@ -110,7 +119,7 @@ close resolution. Bounded console logging cannot alter operation outcomes.
 Project status observation failure marks cached state unknown while preserving
 the original reply; scoped cleanup stays available. Actual UI/terminal parity
 retains 16e; actual connected transform acceptance remains 17d's deferred gate.
-Full REQ-16 remains NOT_RUN; current assignment is 17.
+Full REQ-16 and REQ-17 remain NOT_RUN; current assignment is 18.
 
 15a-15d supply the CPU `SharkAuthor` host, retained project ownership, shared
 editing/persistence/imports, static deterministic runs and configured export.

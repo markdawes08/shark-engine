@@ -20,12 +20,12 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**Assignment 17d connects viewport transforms and terminal continuation** through
-the existing retained scene owner and saved projects. Local/world gizmos and
-snapping use validated previews; one committed drag creates one undo group.
-The connected headless workflow preserves stale-edit, undo and persistence rules.
+**Assignment 18a adds a private CPU physics foundation** with pinned Jolt,
+bounded world ownership, real empty fixed-duration updates and explicit teardown.
+Bodies and colliders follow in 18b. The existing editor/terminal transform workflow
+preserves shared history and saved-project continuation.
 Headless verification is tracked in the
-[latest handoff](docs/handoffs/17d-connected-viewport-acceptance.md).
+[latest handoff](docs/handoffs/18a-physics-foundation.md).
 Native rendering and actual UI acceptance remain deferred in the
 [nonblocking backlog](docs/backlog.md): the user paused desktop interaction until
 explicitly resumed, while authorizing continued coding and headless checks.

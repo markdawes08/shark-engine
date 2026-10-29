@@ -116,7 +116,8 @@ std::vector<SceneInspectedEntity> preview_entities(const Scene& scene, SceneRevi
         const auto& descendants = children[pending[cursor]];
         require(descendants.size() <= render_scene_maximum_entities - pending.size(),
                 "Render preview subtree exceeds its entity limit");
-        pending.insert(pending.end(), descendants.begin(), descendants.end());
+        for (const auto descendant : descendants)
+            pending.push_back(descendant);
     }
     return entities;
 }

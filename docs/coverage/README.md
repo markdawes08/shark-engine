@@ -8,9 +8,9 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**17d adds connected transform and public-terminal process continuation;
+**18a adds the private CPU Jolt world foundation;
 selected headless qualification is tracked in the
-[handoff](../handoffs/17d-connected-viewport-acceptance.md).
+[handoff](../handoffs/18a-physics-foundation.md).
 Full REQ-16 and REQ-17 remain NOT_RUN.** Native composition and actual UI acceptance are
 deferred under the user's
 [coding-only amendment](../backlog.md); it is not a passing UI qualification.
@@ -20,7 +20,7 @@ dirty-state decisions, bounded hierarchy and revision-scoped selection, retained
 entity edits, typed CPU viewport preparation and GUI scene composition. Their
 feature mappings refer to the owning session/panel/adapter, CPU and native
 fixtures; an unexecuted native fixture is not a GPU pass. Current assignment is
-17. The [inspector contract](../editor-inspector.md) adds entity/revision-bound
+18. The [inspector contract](../editor-inspector.md) adds entity/revision-bound
 drafts, atomic component Apply and ticket-bound history through the same owner.
 The [asset/console contract](../editor-assets-console.md) covers explicit inventory,
 metadata tokens, job publication/acknowledgement and bounded diagnostics. Actual
@@ -43,6 +43,11 @@ to focused fixtures. No new semantic command or FeatureWorld case is introduced.
 17d extends the existing process handoff fixture with independent transform and
 saved-source expectations. Actual input/rendering acceptance remains deferred
 under the [viewport procedure](../viewport-acceptance.md); full REQ-17 is not closed.
+
+18a's [physics owner](../physics-world.md) has bounded real empty updates and
+native-registration/lifetime coverage. No body component, terminal method or
+FeatureWorld body case is claimed; those follow the [physics checkpoints](../roadmap/physics-plan.md).
+Full REQ-18 remains NOT_RUN.
 
 **15e and full REQ-15 are complete under current-machine scope.** The
 [public example](../../examples/terminal_authoring.py) creates a fresh project,

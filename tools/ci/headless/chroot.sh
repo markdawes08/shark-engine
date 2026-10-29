@@ -59,6 +59,7 @@ mkdir -p "$task_runtime/package/bin" "$task_runtime/package/licenses/EnTT" "$tas
 cp "$task_output/server-only/package/bin/Server" "$task_runtime/package/bin/Server"
 cp "$task_output/server-only/package/licenses/EnTT/LICENSE" "$task_runtime/package/licenses/EnTT/LICENSE"
 cp "$task_output/server-only/package/licenses/GLM/copying.txt" "$task_runtime/package/licenses/GLM/copying.txt"
+cp -R "$task_output/server-only/package/licenses/Jolt" "$task_runtime/package/licenses/Jolt"
 cp -R "$task_output/server-only/package/licenses/MbedTLS" "$task_runtime/package/licenses/MbedTLS"
 cp -R "$task_output/server-only/package/licenses/SQLite" "$task_runtime/package/licenses/SQLite"
 chmod 755 "$task_runtime/package/bin/Server"

@@ -34,6 +34,14 @@ M02a's private TLS graph. 05a also defaults
 Vulkan loader/headers and NVRHI. Set both native options OFF for a device-free
 client build; graphics requires native windows. Server-only and WSL CPU
 configurations leave both OFF and never fetch presentation dependencies.
+
+18a adds private CPU Jolt in every Core configuration. Use `SHARK_JOLT_ARCHIVE`
+for its exact locked archive; the canonical local cache under
+`out/dependency-cache/` is reused when present. The existing Core dependency helper
+also prepares/verifies Jolt. [Physics foundation](physics-world.md) documents its
+single-precision/SSE2 options and public-header-only example. Native physics
+sources and MIT notices stay in the existing build/package flow; Core/Server
+still require no window, GPU or authoring SDK.
 Ordinary CTest does not open native windows or initialize graphics.
 04c adds the [offline frame loop](frame-loop.md). `shark.client.frame` uses seed
 1337 and a 20-second timeout for deterministic input/time, pause/step, overflow,
@@ -427,7 +435,7 @@ documentation utility targets are excluded from the default dependency build.
 [ADR 0002](architecture/0002-dependencies.md) records the header pins and selected
 MIT licenses, plus the TLS pin and selected Apache-2.0 option.
 Ordinary builds can fetch a missing archive; the disconnected
-Server workflow below requires the three Core archives plus the separately
+Server workflow below requires the four Core archives plus the separately
 verified SQLite archive prepared beforehand.
 
 M02a uses the exact official Mbed TLS 4.1.1 release archive and bundled crypto
@@ -720,11 +728,11 @@ These presets never create EngineClient, Engine, Runtime, EngineTools or Editor:
 
 | Preset | Configuration | Tests / compiler |
 | --- | --- | --- |
-| `server-only` | Release | No tests or network downloads; verified local EnTT/GLM/TLS/SQLite archives, host C/C++ compilers |
+| `server-only` | Release | No tests or network downloads; verified local EnTT/GLM/TLS/Jolt/SQLite archives, host C/C++ compilers |
 | `server-debug` | Debug | Catch2/CTest enabled, host compiler |
 | `server-asan-ubsan` | Debug, ASan + UBSan | Catch2/CTest enabled, Linux Clang |
 
-Prepare the exact EnTT, GLM, Mbed TLS and SQLite archives before the first disconnected configure.
+Prepare the exact EnTT, GLM, Mbed TLS, Jolt and SQLite archives before the first disconnected configure.
 This explicit command downloads only the locked bytes, or verifies an existing
 cache; configure itself makes no network request. On Windows from ordinary PowerShell:
 
@@ -734,8 +742,9 @@ cache; configure itself makes no network request. On Windows from ordinary Power
 $taskEnTT = (Resolve-Path 'out/dependency-cache/85c6bba014049b5de8fad49d25424df2f1f6a8c1.tar.gz').Path
 $taskGLM = (Resolve-Path 'out/dependency-cache/8d1fd52e5ab5590e2c81768ace50c72bae28f2ed.tar.gz').Path
 $taskTLS = (Resolve-Path 'out/dependency-cache/mbedtls-4.1.1.tar.bz2').Path
+$taskJolt = (Resolve-Path 'out/dependency-cache/jolt-e77f175595e64cb44218cc9d9d56fc365ad0e36a.tar.gz').Path
 $taskSQLite = (Resolve-Path 'out/dependency-cache/sqlite-amalgamation-3540100.zip').Path
-& ./tools/windows_dev.ps1 -CommandArguments @('cmake','--preset','server-only',"-DSHARK_ENTT_ARCHIVE=$taskEnTT","-DSHARK_GLM_ARCHIVE=$taskGLM","-DSHARK_MBEDTLS_ARCHIVE=$taskTLS","-DSHARK_SQLITE_ARCHIVE=$taskSQLite")
+& ./tools/windows_dev.ps1 -CommandArguments @('cmake','--preset','server-only',"-DSHARK_ENTT_ARCHIVE=$taskEnTT","-DSHARK_GLM_ARCHIVE=$taskGLM","-DSHARK_MBEDTLS_ARCHIVE=$taskTLS","-DSHARK_JOLT_ARCHIVE=$taskJolt","-DSHARK_SQLITE_ARCHIVE=$taskSQLite")
 & ./tools/windows_dev.ps1 -CommandArguments @('cmake','--build','--preset','server-only')
 ./build/server-only/bin/Server.exe --version
 ./build/server-only/bin/Server.exe --run-for-ms 1000
@@ -751,6 +760,7 @@ cmake --preset server-only \
   -DSHARK_ENTT_ARCHIVE="$PWD/out/dependency-cache/85c6bba014049b5de8fad49d25424df2f1f6a8c1.tar.gz" \
   -DSHARK_GLM_ARCHIVE="$PWD/out/dependency-cache/8d1fd52e5ab5590e2c81768ace50c72bae28f2ed.tar.gz" \
   -DSHARK_MBEDTLS_ARCHIVE="$PWD/out/dependency-cache/mbedtls-4.1.1.tar.bz2" \
+  -DSHARK_JOLT_ARCHIVE="$PWD/out/dependency-cache/jolt-e77f175595e64cb44218cc9d9d56fc365ad0e36a.tar.gz" \
   -DSHARK_SQLITE_ARCHIVE="$PWD/out/dependency-cache/sqlite-amalgamation-3540100.zip"
 cmake --build --preset server-only
 build/server-only/bin/Server --version
@@ -758,9 +768,9 @@ build/server-only/bin/Server --run-for-ms 1000
 cmake --install build/server-only --prefix out/server-package --component Server
 ```
 
-For a read-only source mount, prepare all four archives under a writable work directory
+For a read-only source mount, prepare all five archives under a writable work directory
 and pass their absolute paths instead. `SHARK_ENTT_ARCHIVE`, `SHARK_GLM_ARCHIVE`,
-`SHARK_MBEDTLS_ARCHIVE` and `SHARK_SQLITE_ARCHIVE`
+`SHARK_MBEDTLS_ARCHIVE`, `SHARK_JOLT_ARCHIVE` and `SHARK_SQLITE_ARCHIVE`
 must each match the lock's SHA-256; arbitrary extracted source overrides are
 rejected. Previously populated standard FetchContent archive caches satisfy
 EnTT/GLM reconfiguration; Mbed TLS uses the verified archive under
@@ -771,7 +781,7 @@ extraction on that path. It does not enable remote fetching or acquire client
 dependencies.
 
 The install component contains `bin/Server` (or `bin/Server.exe`),
-`licenses/EnTT/LICENSE`, `licenses/GLM/copying.txt` and the eight locked notices
+`licenses/EnTT/LICENSE`, `licenses/GLM/copying.txt`, `licenses/Jolt/LICENSE` and the eight locked notices
 under `licenses/MbedTLS/`, plus `licenses/SQLite/LICENSE.txt`. It is a dependency-closure
 probe, not a shipping distribution; full deployment packaging remains future work.
 A clean package directory is required for closure verification. Runtime packages also retain the
