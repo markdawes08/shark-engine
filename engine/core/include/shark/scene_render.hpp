@@ -85,6 +85,14 @@ struct RenderViewCamera {
     Camera camera;
     math::Mat4 scene_local_world{1.0};
 };
+// Display-only local transform for one live entity and its descendants. The
+// source revision and entity identities remain committed observations; this
+// override is provenance, not a mutation or authorization to commit one.
+struct RenderTransformOverride {
+    EntityHandle entity;
+    Transform local;
+    bool operator==(const RenderTransformOverride&) const = default;
+};
 struct RenderExtractionOptions {
     EntityHandle camera;
     SceneRevision expected_revision;
@@ -92,6 +100,7 @@ struct RenderExtractionOptions {
     RenderOrigin origin{};
     bool frustum_culling{true};
     std::optional<RenderViewCamera> view_camera{};
+    std::optional<RenderTransformOverride> transform_preview{};
 };
 
 class RenderScene final {
@@ -121,6 +130,11 @@ class RenderScene final {
     [[nodiscard]] RenderExtractionStats stats() const noexcept {
         return stats_;
     }
+    [[nodiscard]] const std::optional<RenderTransformOverride>&
+    transform_preview() const& noexcept {
+        return transform_preview_;
+    }
+    const std::optional<RenderTransformOverride>& transform_preview() const&& = delete;
 
   private:
     friend Result<RenderScene> extract_render_scene(const Scene&, const PreparedAssets&,
@@ -136,6 +150,7 @@ class RenderScene final {
     RenderOrigin origin_;
     std::vector<RenderRecord> records_;
     RenderExtractionStats stats_;
+    std::optional<RenderTransformOverride> transform_preview_;
 };
 
 // Reads one exact committed revision on the Scene owner thread; pending writes

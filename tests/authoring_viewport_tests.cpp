@@ -342,6 +342,59 @@ TEST_CASE("Retained viewport fences external source changes without replacing di
     CHECK(call(*owner, "scene.history") == history);
 }
 
+TEST_CASE(
+    "Retained viewport transform previews preserve dirty history source and mutation identity",
+    "[authoring-viewport]") {
+    Fixture fixture;
+    auto owner = fixture.open();
+    const auto saved = read(fixture.root / "scene.sharkscene");
+    move_mesh(*owner, 20);
+    const auto state = call(*owner, "project.status");
+    const auto history = call(*owner, "scene.history");
+    const auto mutations = call(*owner, "scene.mutation_status");
+    auto request = fixture.request(*owner);
+    const auto baseline = take(owner->viewport_snapshot(request));
+    CHECK(baseline.records().empty());
+    Transform candidate;
+    candidate.translation = {1, 0, -4};
+    request.transform_preview =
+        AuthoringTransformPreview{id<AuthoredEntityId>(mesh_text), candidate};
+    request.local_origin = {0.5, 0, 0};
+    request.origin_generation = 9;
+    const auto preview = take(owner->viewport_snapshot(request));
+    REQUIRE(preview.records().size() == 1);
+    REQUIRE(preview.transform_preview());
+    CHECK(preview.transform_preview()->local == candidate);
+    CHECK(preview.transform_preview()->entity == preview.records()[0].entity.handle);
+    CHECK(preview.records()[0].world_matrix[3].x == 0.5);
+    CHECK(preview.records()[0].world_matrix[3].z == -4);
+    CHECK(preview.revision() == request.expected_revision);
+    CHECK(preview.camera_entity().handle.scene_instance ==
+          request.expected_revision.scene_instance);
+    CHECK(preview.origin().generation == 9);
+    REQUIRE(preview.origin().world_anchor);
+    CHECK(preview.origin().world_anchor->cell.x == 123456789);
+    request.transform_preview->local.scale.x = 0;
+    const auto failed = owner->viewport_snapshot(request);
+    rejected(failed, ErrorCode::invalid_argument);
+    CHECK(failed.error().context.operation == "authoring.batch.preview");
+    request.transform_preview->local = candidate;
+    CHECK(call(*owner, "project.status") == state);
+    CHECK(call(*owner, "scene.history") == history);
+    CHECK(call(*owner, "scene.mutation_status") == mutations);
+    CHECK(read(fixture.root / "scene.sharkscene") == saved);
+    CHECK_FALSE(fs::exists(fixture.root / std::string{asset_cache_filename}));
+    // Candidate display does not weaken either stale-revision or source fences.
+    auto stale = request;
+    --stale.expected_revision.revision;
+    rejected(owner->viewport_snapshot(stale), ErrorCode::conflict);
+    write(fixture.root / "scene.sharkscene", saved + "\n");
+    rejected(owner->viewport_snapshot(request), ErrorCode::conflict);
+    CHECK(call(*owner, "project.status") == state);
+    CHECK(call(*owner, "scene.history") == history);
+    CHECK(call(*owner, "scene.mutation_status") == mutations);
+}
+
 TEST_CASE("Retained viewport uses explicit fresh imported closure without importing or writing",
           "[authoring-viewport]") {
     Fixture fixture{true};

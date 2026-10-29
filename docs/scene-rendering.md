@@ -44,6 +44,14 @@ view. Omitted overrides preserve existing behavior. No component, source or
 prepared format changes; the original Scene is never mutated. See
 [ADR 0042](architecture/0042-viewport-navigation-and-picking.md).
 
+17c appends optional `transform_preview` with a checked entity handle and local
+TRS. Extraction recomposes its entire subtree from bounded owned hierarchy values
+before camera/bounds/normals/culling, without a Scene write. The returned snapshot
+retains original identities/revision and exposes `transform_preview()` provenance.
+An explicit display camera still takes precedence over affected authored camera
+transforms. Omitted previews retain the streaming committed extraction path.
+See [gizmos and previews](viewport-gizmos.md) for Tools validation and UI adoption.
+
 ## Coordinates, camera and raster conventions
 
 `RenderOrigin.world_anchor`, when present, is the canonical global WorldPosition

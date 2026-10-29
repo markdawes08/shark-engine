@@ -85,6 +85,8 @@ Empty-space clicks clear selection. Selection/navigation do not mutate history.
 Camera icons, bounds-only selection of nonrendered entities, occlusion buffers,
 spatial acceleration, gizmos and continuous-drag authoring transactions are not
 added here. Nonrendered entities remain selectable through the hierarchy; shared
-transform/drag behavior is defined by [17b](transform-manipulation.md) and gizmos
-are 17c. Native input/layout and both-GPU
+transform/drag behavior is defined by [17b](transform-manipulation.md) and
+[17c gizmos](viewport-gizmos.md) consume pointer input before navigation/picking.
+Picking rejects preview-marked snapshots even at the committed revision.
+Native input/layout and both-GPU
 navigation/picking remain in the [UI backlog](backlog.md#desktop-ui-deferral).

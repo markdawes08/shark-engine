@@ -1,6 +1,7 @@
 #include "workspace_panel.hpp"
 #include "asset_widget.hpp"
 #include "console_widget.hpp"
+#include "gizmo_widget.hpp"
 #include "inspector_widget.hpp"
 #include "scene_panel.hpp"
 
@@ -104,6 +105,7 @@ void ViewportPointerRouter::cancel() noexcept {
 struct WorkspacePanel::Impl {
     ProjectSession& session;
     ScenePanel hierarchy;
+    GizmoWidget gizmo;
     InspectorPanel inspector;
     InspectorWidget inspector_widget;
     AssetPanel assets;
@@ -125,6 +127,10 @@ struct WorkspacePanel::Impl {
     std::optional<SceneSelection> camera;
     std::string camera_name;
     std::optional<SceneViewportRequest> view;
+    // Keep the committed request while a preview is displayed. Cancellation
+    // restores it by move before submission, without recapturing or allocating.
+    std::optional<SceneViewportRequest> committed_view;
+    std::optional<tools::AuthoringTransformPreview> shown_preview;
     std::optional<RenderScene> snapshot;
     ViewportNavigation navigation;
     ViewportPointerRouter pointer;
@@ -133,7 +139,7 @@ struct WorkspacePanel::Impl {
     std::string notice;
 
     Impl(ProjectSession& owner, const ShaderArtifact& vs, const ShaderArtifact& ps)
-        : session(owner), hierarchy(owner), inspector(hierarchy),
+        : session(owner), hierarchy(owner), gizmo(hierarchy), inspector(hierarchy),
           inspector_widget(inspector, hierarchy), assets(owner), asset_widget(assets, owner),
           vertex(vs), pixel(ps) {
         text_buffer(create_name, "Entity");
@@ -149,6 +155,8 @@ struct WorkspacePanel::Impl {
         synchronize();
     }
     void synchronize() {
+        if (!gizmo.preview())
+            restore_committed_view();
         if (camera && (!hierarchy.current() || camera->revision != hierarchy.revision())) {
             camera.reset();
             invalidate_view(true);
@@ -159,11 +167,47 @@ struct WorkspacePanel::Impl {
             invalidate_view(true);
     }
     void invalidate_view(bool reset_navigation = false) {
+        gizmo.cancel();
+        committed_view.reset();
+        shown_preview.reset();
         view.reset();
         snapshot.reset();
         pointer.cancel();
         if (reset_navigation)
             navigation.clear();
+    }
+    void restore_committed_view() noexcept {
+        if (shown_preview && committed_view)
+            view = std::move(committed_view);
+        committed_view.reset();
+        shown_preview.reset();
+    }
+    void cancel_gizmo() noexcept {
+        gizmo.cancel();
+        restore_committed_view();
+    }
+    Result<void> prepare_preview(const tools::AuthoringTransformPreview& preview) {
+        if (!camera || !snapshot || !view || !hierarchy.current() ||
+            snapshot->revision() != hierarchy.revision())
+            return Error{ErrorCode::conflict,
+                         "Refresh the scene view before manipulating",
+                         {.operation = "editor.gizmo.preview"}};
+        tools::AuthoringViewportRequest request{camera->id, camera->revision};
+        request.viewport = {view->extent.width, view->extent.height};
+        request.target = {target.data(), tools::AssetAudience::client};
+        request.view_camera = navigation.view();
+        request.transform_preview = preview;
+        auto captured = session.viewport_snapshot(request);
+        if (!captured)
+            return std::move(captured).error();
+        auto prepared = make_scene_viewport_request(captured.value(), vertex, pixel);
+        if (!prepared)
+            return std::move(prepared).error();
+        if (!shown_preview)
+            committed_view = std::move(view);
+        view = std::move(prepared).value();
+        shown_preview = preview;
+        return {};
     }
     std::optional<HierarchyRow> selected_row() const {
         if (!hierarchy.selection())
@@ -370,6 +414,9 @@ struct WorkspacePanel::Impl {
             invalidate_view(true);
         }
         ImGui::EndDisabled();
+        gizmo.controls(blocked || !hierarchy.current() || hierarchy.needs_reconciliation());
+        if (!gizmo.preview())
+            restore_committed_view();
         if (view_error)
             error_text(*view_error);
         if (!camera) {
@@ -380,24 +427,29 @@ struct WorkspacePanel::Impl {
         if (!frame.state.framebuffer.width || !frame.state.framebuffer.height ||
             frame.state.iconified) {
             pointer.cancel();
+            cancel_gizmo();
             return;
         }
-        ImGui::TextWrapped("Right drag: orbit. Middle drag: pan. Wheel: zoom. Left click: select. "
-                           "Esc: stop navigation. Scene cameras are unchanged.");
+        ImGui::TextWrapped(
+            "Right drag: orbit. Middle drag: pan. Wheel: zoom. Left click: select. "
+            "Drag a colored handle to edit. Esc: cancel. Navigation never edits the camera.");
         const auto available = ImGui::GetContentRegionAvail();
         if (available.x < 1 || available.y < 1)
             return;
         const auto scale = ImGui::GetIO().DisplayFramebufferScale;
         if (!std::isfinite(scale.x) || !std::isfinite(scale.y) || scale.x <= 0 || scale.y <= 0) {
             pointer.cancel();
+            cancel_gizmo();
             return;
         }
         const WindowExtent extent{static_cast<std::uint32_t>(
                                       std::clamp(std::floor(available.x * scale.x), 1.0F, 2048.0F)),
                                   static_cast<std::uint32_t>(std::clamp(
                                       std::floor(available.y * scale.y), 1.0F, 2048.0F))};
-        if (view && view->extent != extent)
+        if (view && view->extent != extent) {
             pointer.cancel();
+            cancel_gizmo();
+        }
         if (refresh_view || (view && view->extent != extent)) {
             refresh_view = false;
             tools::AuthoringViewportRequest request{camera->id, camera->revision};
@@ -432,6 +484,8 @@ struct WorkspacePanel::Impl {
                     invalidate_view();
                     view_error = prepared.error();
                 } else {
+                    committed_view.reset();
+                    shown_preview.reset();
                     view = std::move(prepared).value();
                     snapshot = std::move(captured).value();
                     view_error.reset();
@@ -452,8 +506,37 @@ struct WorkspacePanel::Impl {
                                        !hierarchy.current() || hierarchy.needs_reconciliation() ||
                                        ImGui::GetIO().WantTextInput || ImGui::IsAnyItemActive() ||
                                        ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
-            const auto actions =
-                pointer.route(frame.input, rectangle, ImGui::IsItemHovered(), input_blocked);
+            GizmoFrameResult manipulated;
+            if (snapshot) {
+                manipulated = gizmo.overlay(frame.input, rectangle, *snapshot,
+                                            ImGui::IsItemHovered(), input_blocked,
+                                            [&](const tools::AuthoringTransformPreview& preview) {
+                                                return prepare_preview(preview);
+                                            });
+                // The widget retains its diagnostic in a fixed-height status
+                // area; repeating it above the image would change drag geometry.
+                if (manipulated.receipt) {
+                    const auto& receipt = *manipulated.receipt;
+                    error = receipt.refresh_error;
+                    notice = receipt.changed ? "Transform committed; one undo restores the drag."
+                                             : "No transform change";
+                    // A known set_transform keeps the camera's identity alive.
+                    // Preserve navigation and explicitly rebind only this known
+                    // same-incarnation commit; unrelated edits still invalidate it.
+                    if (camera && !receipt.refresh_error && hierarchy.current() &&
+                        camera->revision.scene_instance == receipt.revision.scene_instance)
+                        camera->revision = receipt.revision;
+                    // The validated preview is this commit's geometry. Retain it
+                    // for the already emitted image; capture its new revision
+                    // before next frame's input. No stale snapshot is picked.
+                    committed_view.reset();
+                    shown_preview.reset();
+                    refresh_view = true;
+                } else if (!gizmo.preview())
+                    restore_committed_view();
+            }
+            const auto actions = pointer.route(frame.input, rectangle, ImGui::IsItemHovered(),
+                                               input_blocked || manipulated.consumed);
             if (actions.pick && snapshot) {
                 const auto hit =
                     pick_viewport(*snapshot, hierarchy.revision(), rectangle, actions.x, actions.y);
@@ -476,7 +559,7 @@ struct WorkspacePanel::Impl {
                                  : "No visible mesh at this point.";
                 }
             }
-            if (!input_blocked && snapshot) {
+            if (!input_blocked && !manipulated.consumed && snapshot) {
                 auto moved = navigation.navigate(actions.motion, snapshot->viewport(), rectangle);
                 if (!moved) {
                     pointer.cancel();
@@ -563,17 +646,22 @@ void WorkspacePanel::draw(const GraphicsWindowFrame& frame, bool blocked) {
         }
         ImGui::EndTabBar();
     }
-    if (!value.image_drawn)
+    if (!value.image_drawn) {
         value.pointer.cancel();
+        value.cancel_gizmo();
+    }
 }
 void WorkspacePanel::cancel_confirmation() noexcept {
     impl_->deleting.reset();
     impl_->pointer.cancel();
+    impl_->cancel_gizmo();
 }
 bool WorkspacePanel::has_unapplied_drafts() const noexcept {
-    return impl_->inspector_widget.has_changes() || impl_->asset_widget.has_changes();
+    return impl_->gizmo.has_changes() || impl_->inspector_widget.has_changes() ||
+           impl_->asset_widget.has_changes();
 }
 Result<void> WorkspacePanel::discard_drafts() {
+    impl_->cancel_gizmo();
     auto result = impl_->asset_widget.discard_draft();
     if (!result)
         return result;

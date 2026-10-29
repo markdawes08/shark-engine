@@ -148,8 +148,8 @@ or close full REQ-17.
 ### BL-16A-UI-01: 17b transform acceptance additions
 
 The [transform/drag contract](transform-manipulation.md) supplies headless services;
-17c still owns actual gizmo controls and rendered candidate integration. Once
-those controls land and desktop testing resumes, these checks remain required:
+17c now supplies gizmo controls and rendered candidate integration. Once
+desktop testing resumes, these checks remain required:
 
 - On both GPUs, exercise local/world translation, rotation and scale with snapping,
   rotated/nonuniform/mirrored parents and deliberate shear/singular rejection.
@@ -162,6 +162,25 @@ those controls land and desktop testing resumes, these checks remain required:
 - Compare actual gizmo results with terminal `set_transform`, including stale
   requests, save/reopen and undo/redo. Headless protocol parity is preparation,
   not a passing UI or rendered-preview result. Status: **NOT_RUN**.
+
+### BL-16A-UI-01: 17c gizmo acceptance additions
+
+The [native gizmo contract](viewport-gizmos.md) adds these checks on both GPUs,
+all **NOT_RUN** under the desktop pause:
+
+- Verify visible X/Y/Z shaft/ring overlays, active highlights and clipping in the
+  actual scaled image, including nonuniform DPI, viewport offsets and resizing.
+  Exercise Local/World and meter/degree/factor snapping, unavailable edge-on axes,
+  affine/mirrored parents and rotation through the angle wrap boundary.
+- Drag parent transforms so previously culled descendants enter the view; check
+  geometry, normals/winding and camera behavior. Cancel and reject candidates and
+  verify the committed image returns immediately with no dirty/history change.
+  Check source/asset changes before release reject invalid render preparation.
+- Verify a handle press/release never also picks or navigates, including entering
+  and pressing in one frame, leaving/reentering held, focus/text/modal/tab changes,
+  close cancellation and tool/snap changes. One release commits one undo group,
+  retains navigation and refreshes the new revision before further interaction.
+  Complete 17d's connected terminal/save/reopen/undo comparison with actual input.
 
 This deferral does not authorize driver installation, host resource changes,
 foreign-handle cleanup or relaxed acceptance limits. The active implementation

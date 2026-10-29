@@ -37,6 +37,11 @@ struct AuthoringProtocolReply {
     bool failed;
 };
 
+struct AuthoringTransformPreview {
+    AuthoredEntityId entity;
+    Transform local;
+};
+
 struct AuthoringViewportRequest {
     AuthoredEntityId camera;
     SceneRevision expected_revision;
@@ -47,6 +52,9 @@ struct AuthoringViewportRequest {
     // Optional display-only navigation view; the selected authored Camera is
     // still required and retained as provenance. No scene edit/history occurs.
     std::optional<RenderViewCamera> view_camera{};
+    // Pure shared-owner validation, then display-only subtree recomposition.
+    // Neither source state nor history changes. Returned snapshot marks preview.
+    std::optional<AuthoringTransformPreview> transform_preview{};
 };
 
 // Creating-thread CPU adapter over ProjectFiles and one AuthoredScene. The root
@@ -78,6 +86,8 @@ class AuthoringProtocol final {
     // mutable Scene borrow, source write, implicit catalog scan/import or GPU.
     // The caller explicitly selects a camera, scene revision and content target.
     // A display-only view_camera is validated and applied before frustum culling.
+    // An optional transform_preview uses shared authoring preview validation;
+    // subtree transforms/bounds/culling are recomputed without changing the owner.
     // Dimensions are 1..2048, local origin is bounded by render_coordinate_limit,
     // and the source world anchor is retained independently of that local offset.
     // Imported content requires an explicitly populated retained asset catalog.

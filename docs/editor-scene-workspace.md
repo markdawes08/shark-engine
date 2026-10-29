@@ -61,8 +61,10 @@ Extent changes request a new projection at the current revision. The existing
 unlit scene pipeline supplies the displayed geometry. 17a adds
 [display-only navigation and snapshot picking](viewport-navigation.md): the
 typed request's optional `view_camera` supplies a validated affine display view
-before culling, while the selected authored Camera remains provenance. Gizmos,
-material inspection and gameplay execution remain with their later owners.
+before culling, while the selected authored Camera remains provenance.
+[17c gizmos](viewport-gizmos.md) add validated subtree previews and one-commit
+transform gestures; cancellation restores committed rendering without Scene writes.
+Material inspection and gameplay execution remain with their later owners.
 
 ## GPU composition and lifetime
 

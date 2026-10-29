@@ -4,7 +4,7 @@
 over the existing ProjectSession/ScenePanel. Follow
 [ADR 0043](architecture/0043-transform-manipulation.md), the
 [transform rules](transforms.md) and [viewport checkpoints](roadmap/viewport-interaction-plan.md).
-Gizmo controls and rendered candidate presentation belong to 17c. Actual desktop
+17c connects [gizmo controls and rendered candidate presentation](viewport-gizmos.md). Actual desktop
 acceptance remains deferred under the user's pause.
 
 ## Shared math
@@ -66,12 +66,12 @@ gesture. Uncertain delivery still belongs to ScenePanel's original mutation
 identity and explicit outcome reconciliation. A known successful commit remains
 successful when a later display refresh fails.
 
-17c must connect Escape, focus/modal/layout/tab changes, selection changes and
+17c connects Escape, focus/modal/layout/tab changes, selection changes and
 close decisions to this lifecycle. Gate candidate display on `active() && !stale()`:
 the read-only candidate accessor may retain an owned value until update/cancel.
 Render only a current validated candidate without
-temporarily mutating the live scene. This increment does not claim those controls
-or GPU previews exist.
+temporarily mutating the live scene. The [17c contract](viewport-gizmos.md)
+distinguishes implemented controls from deferred actual UI/GPU qualification.
 
 ## Terminal equivalence
 

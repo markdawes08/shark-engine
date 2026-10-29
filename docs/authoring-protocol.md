@@ -680,6 +680,12 @@ Imported content requires an explicit existing catalog inventory; the call does
 not scan files, import, save or render. Final candidate validation fences the
 returned snapshot. CPU Tools gains no Client dependency.
 
+17c appends optional `transform_preview` (authored entity ID and local TRS).
+It runs the same pure owner preview before extracting a marked, immutable subtree
+candidate. Live source/revision/history and retry identities are unchanged;
+camera/bounds/culling reflect the candidate with the same fresh content fences.
+This typed display option is described in the [gizmo contract](viewport-gizmos.md).
+
 This typed addition is not a JSON-RPC method, advertised terminal capability or
 format revision. Existing terminal queries/capture/export retain their contracts.
 The [workspace contract](editor-scene-workspace.md#read-only-viewport-preparation)

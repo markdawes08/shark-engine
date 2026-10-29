@@ -456,7 +456,7 @@
       "planned_fixture": "FeatureWorld/GizmoHierarchy, GizmoDragUndo, HighDpiViewportPicking and GizmoAgentEquivalence fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "17a implements display-only navigation and snapshot triangle picking; its results remain in docs/handoffs/17a-viewport-navigation.md. 17b adds shared local/world transform math, cumulative snapping, affine parent conversion and explicit shear/singular rejection. Its editor-private drag controller validates through existing scene.preview, commits one retained set_transform history group and fences selection/revision changes without rollback writes. Selected headless results and limitations belong to docs/handoffs/17b-transform-manipulation.md. Existing terminal commands reproduce the resulting transform. Gizmo UI and connected acceptance remain17c-17d in docs/roadmap/viewport-interaction-plan.md. Actual input/layout/GPU acceptance remains NOT_RUN in BL-16A-UI-01 under the user desktop pause; full REQ-17 remains NOT_RUN."
+        "reason": "17a navigation/picking and 17b shared manipulation/drag services remain qualified by their original focused headless results. 17c adds native ImGui axis/ring controls, local/world modes, snapping, focus/capture cancellation and render-validated one-commit gestures. Core/Tools optional subtree previews preserve live scene/history and recalculate descendants before camera, bounds, normals and culling; marked snapshots cannot authorize picking. Selected CPU/headless results and limits belong to docs/handoffs/17c-viewport-gizmos.md. Connected acceptance remains17d in docs/roadmap/viewport-interaction-plan.md. Actual input/layout/GPU acceptance remains NOT_RUN in BL-16A-UI-01 under the user desktop pause; full REQ-17 remains NOT_RUN."
       }
     },
     {
@@ -3187,6 +3187,39 @@
         ],
         "fixture_reason": "Independent CPU matrix expectations cover local/world axes, rotated/nonuniform/mirrored/sheared parents, cumulative snapping, signed scales, preserved pivots, no-ops and numeric/representability rejection. Retained-project fixtures cover pure preview, one-command commit/history, cancellation, rejected latest candidates, selection/revision/reopen conflicts and terminal-equivalent set_transform results through the same shared owner.",
         "external_fixture_reason": "Gesture state belongs to the editor adapter and pure value math, outside FeatureWorld scene commands. Existing AuthoringCommands coverage remains the set_transform semantic owner; no new component, RPC or command is added. Actual gizmo controls/candidate rendering remain17c and actual connected UI acceptance remains NOT_RUN under the desktop pause.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "editor.viewport-gizmos",
+        "name": "Native transform gizmos and retained immutable subtree previews",
+        "requirement_ids": [
+          "REQ-17"
+        ],
+        "test_ids": [
+          "shark.editor.gizmo",
+          "shark.editor.gui-adapter",
+          "shark.core.scene-render",
+          "shark.tools.authoring-viewport",
+          "shark.editor.viewport-navigation"
+        ],
+        "test_sources": [
+          "tests/editor_gizmo_tests.cpp",
+          "tests/editor_gizmo_gui_tests.cpp",
+          "tests/scene_render_tests.cpp",
+          "tests/authoring_viewport_tests.cpp",
+          "tests/editor_viewport_navigation_tests.cpp"
+        ],
+        "fixtures": [
+          "tests/editor_gizmo_tests.cpp",
+          "tests/editor_gizmo_gui_tests.cpp",
+          "tests/scene_render_tests.cpp",
+          "tests/authoring_viewport_tests.cpp",
+          "docs/viewport-gizmos.md",
+          "docs/architecture/0044-viewport-gizmos.md",
+          "docs/handoffs/17c-viewport-gizmos.md"
+        ],
+        "fixture_reason": "Independent bounded CPU geometry expectations cover projected axes, affine ring planes, cumulative ray motion, snapping, reflection, clipping and origin/DPI coordinates. Actual headless ImGui input uses the retained project owner for preview/commit/undo, stale/cancel and render-rejection behavior. Core/Tools fixtures prove immutable complete-subtree recomposition before camera/bounds/normals/culling, newly visible descendants, hidden/nonrendered validation, source/asset fences and no live revision/history/ledger changes. Picking rejects marked previews.",
+        "external_fixture_reason": "Editor overlay/input state and immutable render preparation require external adapter/geometry fixtures rather than new FeatureWorld commands. Existing shared set_transform/AuthoringCommands remains the semantic owner. No new dependency, component, RPC or source version is introduced. Actual native input/focus/layout and both-GPU preview/rendering acceptance remain NOT_RUN under the desktop pause;17d owns connected acceptance.",
         "featureworld_cases": []
       }
     ],

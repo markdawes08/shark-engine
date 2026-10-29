@@ -17,12 +17,14 @@ coding, without closing full REQ-16 or qualifying actual UI interaction.
 [handoff](../handoffs/17a-viewport-navigation.md) separate implemented behavior
 from deferred actual input/GPU acceptance. 17b adds the shared
 [transform and drag contract](../transform-manipulation.md); results and limits
-belong to its [handoff](../handoffs/17b-transform-manipulation.md). Next is 17c,
-gizmo integration. Full REQ-17 remains NOT_RUN until connected acceptance and
+belong to its [handoff](../handoffs/17b-transform-manipulation.md). 17c connects
+[native gizmos and rendered previews](../viewport-gizmos.md), with selected
+headless results in its [handoff](../handoffs/17c-viewport-gizmos.md).
+Next is 17d, connected acceptance. Full REQ-17 remains NOT_RUN until that work and
 the required deferred UI checks.
 
 Editor camera navigation and selection are presentation state, not authored
-transform mutations or gameplay intents. Subsequent gizmo writes use the original
+transform mutations or gameplay intents. Gizmo writes use the original
 ProjectSession and shared authoring services. Keep scene-local coordinates and
 bounded render origins distinct from global MMO cell identity; world streaming,
 authority and physics remain with their existing owners.

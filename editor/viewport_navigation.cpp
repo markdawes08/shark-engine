@@ -200,6 +200,8 @@ Result<std::optional<ViewportHit>> pick_viewport(const RenderScene& scene,
     try {
         require(scene.revision() == expected_revision,
                 "Picking requires the displayed scene revision", ErrorCode::conflict);
+        require(!scene.transform_preview(), "Finish the transform preview before picking",
+                ErrorCode::conflict);
         const auto coordinates = take(viewport_coordinates(rect, x, y));
         if (!coordinates)
             return std::optional<ViewportHit>{};

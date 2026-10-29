@@ -49,15 +49,23 @@ This user amendment permits later implementation to proceed before those checks;
 it does not qualify untested behavior or close full UI acceptance. Do not infer
 permission to resume from elapsed time or a new coding request.
 
-**Current handoff: [17b, transform manipulation and drag transactions](docs/handoffs/17b-transform-manipulation.md).**
+**Current handoff: [17c, viewport gizmos](docs/handoffs/17c-viewport-gizmos.md).**
+Follow [ADR 0044](docs/architecture/0044-viewport-gizmos.md) and the
+[gizmo contract](docs/viewport-gizmos.md). Native axis/ring controls use 17b's
+shared drag owner, actual image coordinates and fresh-press cancellation.
+Optional typed transform previews recompose complete subtrees before culling;
+marked snapshots retain original revisions but cannot authorize picking.
+Validate extraction/packing before release, restore committed requests on cancel,
+and keep new previews out of live Scene/history until one retained commit.
+Close cancels transient gestures before dirty/draft decisions. Next is 17d,
+connected acceptance; continue headless preparation while desktop work is paused.
 Follow [ADR 0043](docs/architecture/0043-transform-manipulation.md) and the
 [manipulation contract](docs/transform-manipulation.md): cumulative local/world
 math uses full parent matrices, explicit snapping and existing TRS rejection.
 Drag updates use pure preview; one retained set_transform commits one history
 group. Cancel never writes a stale baseline, and a rejected newest update cannot
 commit an older candidate. Preserve selection/revision fences and original
-uncertain-outcome reconciliation. Next is 17c, gizmo integration and candidate
-presentation through these services, in the
+uncertain-outcome reconciliation. Continue through the
 [viewport checkpoints](docs/roadmap/viewport-interaction-plan.md).
 17a adds display-only orbit/pan/dolly and revision-bound triangle picking from the
 same RenderScene used for the viewport. Follow [ADR 0042](docs/architecture/0042-viewport-navigation-and-picking.md)
@@ -97,7 +105,7 @@ Metadata edits are outside scene undo, and unapplied drafts require explicit
 close resolution. Bounded console logging cannot alter operation outcomes.
 Project status observation failure marks cached state unknown while preserving
 the original reply; scoped cleanup stays available. Actual UI/terminal parity
-retains 16e; gizmos and connected transform acceptance remain 17c-17d.
+retains 16e; connected transform acceptance remains 17d.
 Full REQ-16 remains NOT_RUN; current assignment is 17.
 
 15a-15d supply the CPU `SharkAuthor` host, retained project ownership, shared

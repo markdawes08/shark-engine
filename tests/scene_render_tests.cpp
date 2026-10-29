@@ -168,6 +168,134 @@ TEST_CASE("extraction retains hierarchy shear reflection and inverse transpose n
           Catch::Approx(0.0).margin(1e-10));
 }
 
+TEST_CASE("transform previews recompose descendants before bounds normals and culling",
+          "[scene-render]") {
+    const auto assets = take(PreparedAssets::create());
+    const auto owner = scene();
+    const auto active = camera(*owner);
+    Camera orthographic;
+    orthographic.projection = CameraProjection::orthographic;
+    orthographic.orthographic_height = 20;
+    orthographic.near_clip = 0;
+    orthographic.far_clip = 20;
+    REQUIRE(owner->set_camera(active, orthographic));
+    EntitySeed parent{id<AuthoredEntityId>(2)};
+    parent.transform.translation = {100, 2, -6};
+    parent.transform.scale = {2, 1, 1};
+    const auto root = take(owner->create_entity(parent));
+    EntitySeed child{id<AuthoredEntityId>(3)};
+    child.parent = root;
+    child.transform.rotation =
+        math::Quat{std::cos(std::numbers::pi / 8), 0, 0, std::sin(std::numbers::pi / 8)};
+    child.transform.scale = {-1, 1, 1};
+    child.mesh_renderer = MeshRenderer{builtin_cube_asset_id()};
+    const auto object = take(owner->create_entity(child));
+    auto request = options(*owner, active);
+    const auto baseline = take(extract_render_scene(*owner, *assets, request));
+    REQUIRE(baseline.records().empty());
+    CHECK_FALSE(baseline.transform_preview());
+    auto candidate = parent.transform;
+    candidate.translation.x = 1;
+    request.transform_preview = RenderTransformOverride{root, candidate};
+    request.origin.scene_local_offset = {1, 2, 0};
+    request.origin.generation = 7;
+    const auto preview = take(extract_render_scene(*owner, *assets, request));
+    REQUIRE(preview.records().size() == 1);
+    REQUIRE(preview.transform_preview());
+    CHECK(*preview.transform_preview() == *request.transform_preview);
+    CHECK(preview.revision() == request.expected_revision);
+    CHECK(preview.origin() == request.origin);
+    CHECK(preview.records()[0].entity.handle == object);
+    CHECK(preview.records()[0].mirrored);
+    const auto q = std::sqrt(0.5);
+    math::Mat4 expected{1.0};
+    expected[0] = {-2 * q, -q, 0, 0};
+    expected[1] = {-2 * q, q, 0, 0};
+    expected[3] = {0, 0, -6, 1};
+    equal_matrix(preview.records()[0].world_matrix, expected);
+    math::Mat4 normal{1.0};
+    normal[0] = {-q / 2, -q, 0, 0};
+    normal[1] = {-q / 2, q, 0, 0};
+    equal_matrix(preview.records()[0].normal_matrix, normal);
+    equal_vec(preview.records()[0].world_bounds.minimum, {-2 * q, -q, -6.5});
+    equal_vec(preview.records()[0].world_bounds.maximum, {2 * q, q, -5.5});
+    CHECK(take(owner->entity_state(root)).local_transform == parent.transform);
+    CHECK(revision(*owner) == request.expected_revision);
+    REQUIRE(owner->set_transform(root, candidate));
+    request.expected_revision = revision(*owner);
+    request.transform_preview.reset();
+    const auto committed = take(extract_render_scene(*owner, *assets, request));
+    REQUIRE(committed.records().size() == 1);
+    equal_matrix(committed.records()[0].world_matrix, preview.records()[0].world_matrix);
+    equal_matrix(committed.records()[0].normal_matrix, preview.records()[0].normal_matrix);
+    CHECK(committed.records()[0].world_bounds == preview.records()[0].world_bounds);
+    CHECK_FALSE(committed.transform_preview());
+}
+
+TEST_CASE("transform previews move descendant cameras unless a display view is explicit",
+          "[scene-render]") {
+    const auto assets = take(PreparedAssets::create());
+    const auto owner = scene();
+    const auto active = camera(*owner);
+    const auto root = take(owner->create_entity(EntitySeed{id<AuthoredEntityId>(2)}));
+    REQUIRE(owner->reparent(active, root, ReparentMode::keep_local));
+    const auto object = mesh(*owner, 3, {20, 0, -5});
+    auto request = options(*owner, active);
+    const auto baseline = take(extract_render_scene(*owner, *assets, request));
+    CHECK(baseline.records().empty());
+    Transform candidate;
+    candidate.translation.x = 20;
+    request.transform_preview = RenderTransformOverride{root, candidate};
+    const auto preview = take(extract_render_scene(*owner, *assets, request));
+    REQUIRE(preview.records().size() == 1);
+    CHECK(preview.records()[0].entity.handle == object);
+    CHECK(preview.camera().view[3].x == -20);
+    CHECK(preview.camera_entity() == baseline.camera_entity());
+    CHECK(take(owner->entity_state(active)).world_matrix[3].x == 0);
+    CHECK(revision(*owner) == request.expected_revision);
+    request.view_camera =
+        RenderViewCamera{*take(owner->entity_state(active)).camera, math::Mat4{1}};
+    const auto fixed_view = take(extract_render_scene(*owner, *assets, request));
+    CHECK(fixed_view.records().empty());
+    CHECK(fixed_view.camera().view[3].x == 0);
+    CHECK(fixed_view.transform_preview());
+}
+
+TEST_CASE("transform previews reject stale targets and invalid hidden descendant worlds",
+          "[scene-render]") {
+    const auto assets = take(PreparedAssets::create());
+    const auto owner = scene();
+    const auto active = camera(*owner);
+    const auto root = take(owner->create_entity(EntitySeed{id<AuthoredEntityId>(2)}));
+    EntitySeed descendant{id<AuthoredEntityId>(3)};
+    descendant.parent = root;
+    descendant.transform.scale = {1e200, 1e200, 1e200};
+    const auto child = take(owner->create_entity(descendant));
+    auto request = options(*owner, active);
+    request.transform_preview = RenderTransformOverride{root, Transform{}};
+    SECTION("non-renderable descendant still rejects overflow") {
+        request.transform_preview->local.scale = {1e200, 1e200, 1e200};
+    }
+    SECTION("hidden descendant still rejects overflow") {
+        REQUIRE(owner->set_mesh_renderer(child, MeshRenderer{builtin_cube_asset_id(), 0, false}));
+        request.expected_revision = revision(*owner);
+        request.transform_preview->local.scale = {1e200, 1e200, 1e200};
+    }
+    SECTION("singular local override") {
+        request.transform_preview->local.scale.x = 0;
+    }
+    SECTION("foreign target") {
+        auto foreign = scene();
+        request.transform_preview->entity = camera(*foreign);
+    }
+    SECTION("stale generation") {
+        ++request.transform_preview->entity.generation;
+    }
+    rejected(extract_render_scene(*owner, *assets, request));
+    CHECK(revision(*owner) == request.expected_revision);
+    CHECK(take(owner->entity_state(root)).local_transform == Transform{});
+}
+
 TEST_CASE("display camera overrides visibility before culling without changing the authored view",
           "[scene-render]") {
     const auto assets = take(PreparedAssets::create());

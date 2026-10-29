@@ -8,9 +8,9 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**17b adds shared local/world transform math and one-commit drag transactions;
+**17c connects native gizmo controls and immutable subtree previews;
 selected headless qualification is tracked in the
-[handoff](../handoffs/17b-transform-manipulation.md).
+[handoff](../handoffs/17c-viewport-gizmos.md).
 Full REQ-16 and REQ-17 remain NOT_RUN.** Native composition and actual UI acceptance are
 deferred under the user's
 [coding-only amendment](../backlog.md); it is not a passing UI qualification.
@@ -36,7 +36,11 @@ component, command or FeatureWorld case is added.
 17b maps the [manipulation contract](../transform-manipulation.md) to focused
 math and retained-owner drag fixtures, including terminal-equivalent resulting
 edits. Existing `set_transform` remains the semantic command; previews publish
-nothing and one changed commit adds one undo group. Gizmo UI remains 17c.
+nothing and one changed commit adds one undo group. 17c's
+[gizmo contract](../viewport-gizmos.md) maps actual headless ImGui controls and
+pointer gestures, Core subtree extraction and retained Tools preview validation
+to focused fixtures. No new semantic command or FeatureWorld case is introduced.
+Actual input/rendering acceptance remains deferred; 17d is next.
 
 **15e and full REQ-15 are complete under current-machine scope.** The
 [public example](../../examples/terminal_authoring.py) creates a fresh project,

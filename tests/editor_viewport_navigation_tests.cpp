@@ -275,3 +275,19 @@ TEST_CASE("Viewport picking charges all instance triangles before returning a hi
     rejected(pick_viewport(snapshot, snapshot.revision(), image, 300, 250),
              ErrorCode::invalid_argument);
 }
+
+TEST_CASE("Viewport picking rejects display previews at the committed revision",
+          "[editor-viewport-navigation]") {
+    Fixture fixture;
+    const auto mesh = fixture.mesh(2);
+    RenderExtractionOptions options{fixture.active, revision(*fixture.owner), {800, 800}};
+    Transform transform;
+    transform.translation.z = -4;
+    options.transform_preview = RenderTransformOverride{mesh, transform};
+    const auto preview = take(extract_render_scene(*fixture.owner, *fixture.assets, options));
+    REQUIRE(preview.transform_preview());
+    REQUIRE(preview.records().size() == 1);
+    rejected(pick_viewport(preview, revision(*fixture.owner), image, 300, 250),
+             ErrorCode::conflict);
+    REQUIRE(take(pick_viewport(fixture.snapshot(), revision(*fixture.owner), image, 300, 250)));
+}

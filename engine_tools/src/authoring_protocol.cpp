@@ -1297,6 +1297,13 @@ Result<RenderScene> AuthoringProtocol::viewport_snapshot(const AuthoringViewport
                          {.operation = "authoring.viewport.snapshot"}};
         auto& current = impl_->require_session();
         impl_->check_source_files(current);
+        if (request.transform_preview) {
+            const auto& value = *request.transform_preview;
+            const AuthoringBatch batch{AuthoringBatchId{take(generate_stable_id())},
+                                       {SetTransformCommand{value.entity, value.local}}};
+            const auto preview = take(current.owner->preview(batch, request.expected_revision));
+            take(preview.outcome);
+        }
         const auto captured = take(current.owner->capture(request.expected_revision));
         auto& assets = impl_->assets(current);
         const auto candidate = assets.prepare_current_export(
@@ -1309,12 +1316,16 @@ Result<RenderScene> AuthoringProtocol::viewport_snapshot(const AuthoringViewport
         const auto scene_borrow = take(current.owner->scene());
         const auto& scene = scene_borrow.get();
         const auto camera = take(scene.find(request.camera));
+        std::optional<RenderTransformOverride> preview;
+        if (request.transform_preview)
+            preview = RenderTransformOverride{take(scene.find(request.transform_preview->entity)),
+                                              request.transform_preview->local};
         const RenderOrigin origin{request.local_origin, request.origin_generation,
                                   captured.scene.world_origin};
         auto result =
             take(extract_render_scene(scene, *prepared,
                                       {camera, request.expected_revision, request.viewport, origin,
-                                       true, request.view_camera}));
+                                       true, request.view_camera, preview}));
         // The extracted values own their immutable leases. Before returning the
         // candidate, fence the same retained sources and asset owner once more.
         impl_->check_source_files(current);
