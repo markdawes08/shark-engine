@@ -68,6 +68,7 @@
 .shark-cache-stage-*
 .shark-stage-*
 .shark-run-stage-*
+.shark-capture-stage-*
 .runtime-package-*
 .runtime-export-*
 

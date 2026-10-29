@@ -423,7 +423,7 @@
       "planned_fixture": "PublicAuthoringProcess scenario, ProtocolInvalidRequests, ProtocolVersionMismatch, CancellationRetry and ScopedTextAsset fixtures; FeatureWorld/AgentAuthoredScene provides saved scene equivalence. Add NoTTYProtocolStreams, BoundedDiscoveryQueries, CPUAuthoringClosure, ProjectOwnerExclusion, TextWriteConflict and JobPublicationInterruption fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "15a-15c complete the CPU terminal foundation, editing/persistence and import/job adapters: bounded versioned pipes, discovery, one retained project owner, revisioned queries, edits/history/retries, project creation/save/reload, scoped script text, typed metadata with exact-file tokens, catalog/cache inspection and the native four-slot import service. Explicit drain publishes fenced candidates; cancellation, retained terminal outcomes, last-valid cache and EOF/process-death release preserve owner semantics and dirty history. docs/handoffs/15c-terminal-imports.md records selected Windows/WSL Debug and Windows ASan qualification and the runnable import example. Run/export/capture and connected acceptance remain 15d-15e in docs/roadmap/terminal-authoring-plan.md; full REQ-15 remains NOT_RUN."
+        "reason": "15a-15c supply the bounded terminal foundation, retained project owner, queries, edits/history/retries, source persistence and native import/jobs. 15d adds deterministic static scene-integrity runs from current unsaved values, configured same-owner Windows standalone export and a separate capability-gated Client capture adapter. CPU and native artifact fixtures distinguish unavailable capabilities, actual GPU readbacks, retained source/history, publication and package inspection. Selected results and limitations are recorded in docs/handoffs/15d-terminal-execution.md; CPU CTest results alone do not qualify GPU capture or isolated deployment. Connected public create/edit/import/save/reopen/run/capture/export acceptance remains 15e in docs/roadmap/terminal-authoring-plan.md; full REQ-15 remains NOT_RUN."
       }
     },
     {
@@ -2890,6 +2890,35 @@
           "docs/authoring-protocol.md"
         ],
         "fixture_reason": "Real subprocesses adapt the same retained ProjectFiles/catalog/import owner, checking explicit publication, bounded pending/terminal jobs, cancellation, stale inputs, last-valid content, exact metadata revisions, dirty-scene preservation and owner cleanup. Existing native fixtures cover importer/publication failure boundaries independently. No GPU, run/export adapter, alternate scheduler or source decoder is introduced."
+      },
+      {
+        "id": "tools.authoring-execution",
+        "name": "Retained terminal scene runs, standalone export and optional capture",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-execution-process",
+          "shark.tools.authoring-export-controls",
+          "shark.tools.client-export-process",
+          "shark.tooling.scene-render-smoke"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_execution_process.py",
+          "tools/tests/test_authoring_export_controls.py",
+          "tools/tests/test_client_export_process.py",
+          "tools/tests/test_scene_render_smoke.py",
+          "tools/tests/test_authoring_artifact_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "tools/tests/test_authoring_artifact_process.py",
+          "tools/runtime_scene_smoke.py",
+          "docs/authoring-protocol.md",
+          "docs/standalone-export.md"
+        ],
+        "fixture_reason": "Real terminal pipes execute native scene-integrity runs from the current unsaved snapshot, independently bind its digest to explicitly saved bytes, and preserve source, history and retained mutations. Windows export controls exercise the supervised package helper and publication/reconciliation boundaries; portable export-process fixtures retain native content fences. The separate artifact fixture performs actual same-owner package publication and required-validation captures on both current-PC GPUs, with the existing independent readback oracle and packaged CPU inspection. The CPU CTests do not prove those GPU or deployment outcomes; actual results and omissions belong to docs/handoffs/15d-terminal-execution.md. No gameplay/Lua execution or editor UI is claimed."
       }
     ],
     "components": [
@@ -5753,6 +5782,78 @@
         "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
         "featureworld_cases": [],
         "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.scene.run",
+        "name": "SharkAuthor JSON-RPC scene.run",
+        "test_ids": [
+          "shark.tools.authoring-execution-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_execution_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public subprocess runs the captured dirty scene with the existing deterministic scene runner, checks expected entity-count failure and input/revision rejection, compares repeated semantic reports and hashes the later explicitly saved canonical bytes independently. Runs preserve active source/history/retry ownership.",
+        "external_fixture_reason": "Real redirected terminal streams and retained owner state require a process fixture. The scene-integrity case validates current static authored values; it does not execute gameplay, Lua, graphics or the hardcoded FeatureWorld regression suite.",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "featureworld_cases": []
+      },
+      {
+        "id": "terminal.scene.export",
+        "name": "SharkAuthor configured JSON-RPC scene.export",
+        "test_ids": [
+          "shark.tools.authoring-execution-process",
+          "shark.tools.client-export-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_execution_process.py",
+          "tools/tests/test_client_export_process.py",
+          "tools/tests/test_authoring_artifact_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "tools/tests/test_authoring_artifact_process.py",
+          "docs/authoring-protocol.md",
+          "docs/standalone-export.md"
+        ],
+        "fixture_reason": "Portable CTest mappings cover explicit unavailable-host results and shared native export ownership/publication fences; they do not establish successful Windows terminal packaging. The actual artifact fixture exports the current unsaved owner, compares prepared content with its capture, checks packaged Runtime inspection and verifies the original project writer/history remain retained. Windows supervised-helper controls are additionally mapped by tools.authoring-execution.",
+        "external_fixture_reason": "Actual standalone export requires the configured trusted Windows packager, protected Release Runtime/CRT/shader inputs and a fresh external destination. The same retained project owner validates the candidate through publication; no source-reloading writer is substituted. Native execution and isolated deployment evidence are recorded separately in docs/handoffs/15d-terminal-execution.md.",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "featureworld_cases": []
+      },
+      {
+        "id": "terminal.scene.capture",
+        "name": "SharkAuthorClient configured JSON-RPC scene.capture",
+        "test_ids": [
+          "shark.tools.authoring-execution-process",
+          "shark.tooling.scene-render-smoke"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_execution_process.py",
+          "tools/tests/test_scene_render_smoke.py",
+          "tools/tests/test_authoring_artifact_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "tools/tests/test_authoring_artifact_process.py",
+          "tools/runtime_scene_smoke.py",
+          "tools/scene_render_smoke.py",
+          "docs/authoring-protocol.md",
+          "docs/scene-viewport.md"
+        ],
+        "fixture_reason": "The portable CPU CTests check capability-unavailable rejection and independent oracle/evidence validation only. Actual native capture uses the separate Client adapter and the public terminal process artifact fixture: current dirty scene and explicit camera, both GPU UUIDs with required validation, bounded RGBA8/D32F readbacks, complete device retirement, exact artifact hashes and fixed independent image/depth tolerances. CPU CLI success never qualifies a GPU.",
+        "external_fixture_reason": "This optional device operation belongs to the Client host, not EngineTools or in-process CPU FeatureWorld. tools/tests/test_authoring_artifact_process.py supplies real current-PC GPU execution; it is not a SceneRunner GPU catalog case. docs/handoffs/15d-terminal-execution.md records actual device results independently of the always-registered CPU checks.",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "featureworld_cases": []
       }
     ],
     "lua_api": []

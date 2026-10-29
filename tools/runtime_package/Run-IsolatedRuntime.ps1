@@ -112,16 +112,53 @@ $taskWindowObservedAt = 0.0
 $taskWindowProcess = 0
 $taskCloseRequested = $false
 $taskDefaultObservationSeconds = 1.0
-if ($DefaultStartup) {
+$taskSceneWindow = $null
+if ($DefaultStartup -or $Scene) {
     Add-Type -TypeDefinition @'
 using System;
 using System.Runtime.InteropServices;
 public static class SharkPackageWindow {
+    [StructLayout(LayoutKind.Sequential)]
+    public struct Rect { public int Left, Top, Right, Bottom; }
     [DllImport("user32.dll", SetLastError = true)]
     public static extern uint GetWindowThreadProcessId(IntPtr window, out uint processId);
     [DllImport("user32.dll")]
     [return: MarshalAs(UnmanagedType.Bool)]
     public static extern bool IsWindowVisible(IntPtr window);
+    [DllImport("user32.dll")]
+    public static extern uint GetDpiForWindow(IntPtr window);
+    [DllImport("user32.dll")]
+    public static extern IntPtr GetWindowDpiAwarenessContext(IntPtr window);
+    [DllImport("user32.dll")]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool AreDpiAwarenessContextsEqual(IntPtr first, IntPtr second);
+    [DllImport("user32.dll", SetLastError = true)]
+    public static extern IntPtr SetThreadDpiAwarenessContext(IntPtr context);
+    [DllImport("user32.dll", SetLastError = true)]
+    [return: MarshalAs(UnmanagedType.Bool)]
+    public static extern bool GetClientRect(IntPtr window, out Rect rectangle);
+
+    // This helper thread temporarily observes physical pixels. It changes no
+    // display setting or target-process policy, and always restores its context.
+    public static bool ObserveScene(IntPtr window, out uint dpi, out int width,
+                                    out int height, out bool perMonitorV2) {
+        dpi = 0; width = 0; height = 0; perMonitorV2 = false;
+        IntPtr previous = SetThreadDpiAwarenessContext(new IntPtr(-4));
+        if (previous == IntPtr.Zero) return false;
+        try {
+            Rect rectangle;
+            if (!GetClientRect(window, out rectangle)) return false;
+            dpi = GetDpiForWindow(window);
+            width = rectangle.Right - rectangle.Left;
+            height = rectangle.Bottom - rectangle.Top;
+            perMonitorV2 = AreDpiAwarenessContextsEqual(
+                GetWindowDpiAwarenessContext(window), new IntPtr(-4));
+            return dpi != 0 && width > 0 && height > 0;
+        } finally {
+            if (SetThreadDpiAwarenessContext(previous) == IntPtr.Zero)
+                throw new InvalidOperationException("Could not restore verifier thread DPI context");
+        }
+    }
 }
 '@
 }
@@ -141,6 +178,30 @@ try {
             # Startup/exit races are retained; the verifier requires the complete
             # known Runtime/loader/CRT module set from successful observations.
             $taskPollErrors += 1
+        }
+        if ($Scene -and -not $taskProcess.HasExited) {
+            $taskWindow = [IntPtr]::Zero
+            try { $taskWindow = $taskProcess.MainWindowHandle } catch { $taskPollErrors += 1 }
+            [uint32]$taskOwner = 0
+            [uint32]$taskDpi = 0
+            [int]$taskClientWidth = 0
+            [int]$taskClientHeight = 0
+            [bool]$taskPerMonitorV2 = $false
+            if ($taskWindow -ne [IntPtr]::Zero -and
+                [SharkPackageWindow]::GetWindowThreadProcessId($taskWindow, [ref]$taskOwner) -ne 0 -and
+                $taskOwner -eq $taskProcess.Id -and [SharkPackageWindow]::IsWindowVisible($taskWindow) -and
+                [SharkPackageWindow]::ObserveScene($taskWindow, [ref]$taskDpi, [ref]$taskClientWidth,
+                    [ref]$taskClientHeight, [ref]$taskPerMonitorV2)) {
+                $taskSceneWindow = [ordered]@{
+                    window_observed = $true
+                    window_process_id = $taskOwner
+                    process_id = $taskProcess.Id
+                    dpi = $taskDpi
+                    client_width = $taskClientWidth
+                    client_height = $taskClientHeight
+                    per_monitor_v2 = $taskPerMonitorV2
+                }
+            }
         }
         if ($DefaultStartup -and -not $taskCloseRequested -and -not $taskProcess.HasExited) {
             $taskWindow = [IntPtr]::Zero
@@ -195,6 +256,7 @@ try {
         arguments = $taskInfo.Arguments
         command = @($taskInfo.FileName) + $taskArguments
         default_startup = $taskDefaultStartup
+        scene_window = $taskSceneWindow
         exit_code = $taskProcess.ExitCode
         timed_out = $taskTimedOut
         elapsed_seconds = $taskTimer.Elapsed.TotalSeconds

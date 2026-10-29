@@ -57,7 +57,14 @@ The source project and declared startup scene are loaded through ProjectFiles.
 Another cooperating project owner rejects conflicting access. This command
 exports saved state; it cannot reach an unsaved editor session. The underlying
 14a C++ service can capture an existing owner's unsaved state without saving it.
-Authoring adapters and a human editor remain their later checkpoints.
+The [terminal adapter](authoring-protocol.md) now uses that existing owner through
+`scene.export`; the human editor remains assignment 16. Configured terminal hosts
+use the same staging and package assembly, with an inverted bounded child exchange:
+the Python helper prepares package inputs, the retained native owner stages its
+current candidate and grants publication only after final source/candidate/shader
+validation. The helper never opens a second ProjectFiles owner. Its process tree
+is contained and bounded to 60 seconds; a missing completion after the grant
+reports uncertainty and requires destination inspection before retrying.
 
 ## Publication and structured results
 
@@ -202,10 +209,17 @@ Run the checker as a standard user; the current-machine workflow can use
 `tools/windows_unelevated.py`. Python, PowerShell and inspection helpers supervise
 verification; they are not shipped or required to open Runtime. The checker first
 audits the exact package inventory/notices and runs packaged CPU inspection to
-bind the project, scene, camera and content digest. It then presents two 160x120
+bind the project, scene, camera and content digest. It then requests two 160x120
 frames per GPU, captures the result, checks finite depth and complete GPU teardown,
 and audits observed app-local Runtime/loader/CRT and Windows/driver modules.
 Unsupported authoring/compiler modules and changed package bytes reject.
+
+The window contract applies per-monitor scaling to requested content dimensions.
+The launcher independently samples the child window's DPI and physical client
+rectangle. Completion dimensions and raw capture byte lengths must match that
+exact DPI-derived extent, within the existing 2048 scene extent and readback
+bounds. The requested 160x120 size and two-frame workload stay fixed; no host
+display setting or rendering tolerance changes to obtain a pass.
 
 Each child starts in a fresh, initially empty directory outside both the package
 and checkout. Its environment has a system-only PATH and no inherited development

@@ -417,7 +417,8 @@ def runtime_crt_manifest(manifest: dict) -> dict:
     return {**manifest, "files": {**manifest["files"], **additional}}
 
 
-def publish(output: Path, payload: dict[str, bytes], manifest: dict, before_publish=None) -> dict:
+def publish(output: Path, payload: dict[str, bytes], manifest: dict, before_publish=None,
+            *, staging_parent: Path | None = None) -> dict:
     assert_no_links(output)
     if output.exists():
         raise ValueError("Package output must be fresh; existing output was preserved")
@@ -431,7 +432,9 @@ def publish(output: Path, payload: dict[str, bytes], manifest: dict, before_publ
                                       for name, data in sorted(payload.items())}}
     output.parent.mkdir(parents=True, exist_ok=True)
     assert_no_links(output.parent)
-    staging = output.parent / (".runtime-package-" + uuid.uuid4().hex)
+    stage_parent = output.parent if staging_parent is None else staging_parent
+    assert_no_links(stage_parent)
+    staging = stage_parent / (".runtime-package-" + uuid.uuid4().hex)
     staging.mkdir()
     try:
         for name, content in payload.items():
@@ -448,7 +451,7 @@ def publish(output: Path, payload: dict[str, bytes], manifest: dict, before_publ
     finally:
         if staging.exists():
             assert_no_links(staging)
-            if staging.resolve().parent != output.parent.resolve():
+            if staging.resolve().parent != stage_parent.resolve():
                 raise ValueError("Refusing cleanup outside owned package staging parent")
             shutil.rmtree(staging)
     return manifest
@@ -670,7 +673,28 @@ def one_json_record(text: str, what: str) -> dict:
     return value
 
 
-def scene_completion(stdout: str, device: str) -> dict:
+def scene_window_extent(observation: dict) -> tuple[int, int]:
+    row = exact_record(observation, {"window_observed", "window_process_id", "process_id", "dpi",
+                                     "client_width", "client_height", "per_monitor_v2"}, "scene window")
+    if row["window_observed"] is not True or row["per_monitor_v2"] is not True:
+        raise ValueError("Scene window was not independently observed with PerMonitorV2 awareness")
+    for name in ("window_process_id", "process_id", "dpi", "client_width", "client_height"):
+        if type(row[name]) is not int or not 0 < row[name] <= 0xffffffff:
+            raise ValueError(f"Invalid scene window integer: {name}")
+    # GLFW_SCALE_TO_MONITOR scales the fixed requested content extent and
+    # truncates to physical client pixels. Never derive this from Runtime output.
+    expected = (160 * row["dpi"] // 96, 120 * row["dpi"] // 96)
+    if (row["window_process_id"] != row["process_id"]
+            or any(not 1 <= value <= 2048 for value in expected)
+            or (row["client_width"], row["client_height"]) != expected):
+        raise ValueError("Scene window owner or exact DPI-scaled client extent differs")
+    return expected
+
+
+def scene_completion(stdout: str, device: str, expected_extent: tuple[int, int] = (160, 120)) -> dict:
+    if (not isinstance(expected_extent, tuple) or len(expected_extent) != 2
+            or any(type(value) is not int or not 1 <= value <= 2048 for value in expected_extent)):
+        raise ValueError("Invalid independently observed scene extent")
     row = one_json_record(stdout, "scene completion")
     exact_record(row, {"event", "adapter_name", "driver_name", "driver_info", "driver_version",
                        "adapter_uuid", "validation", "width", "height", "rendered_frames", "draw_count",
@@ -686,7 +710,7 @@ def scene_completion(stdout: str, device: str) -> dict:
                  "scene_revision", "hidden", "culled", "mesh_instances", "warnings", "errors", "dropped"):
         if type(row[name]) is not int or not 0 <= row[name] <= 0xffffffffffffffff:
             raise ValueError(f"Invalid scene completion integer: {name}")
-    if ((row["width"], row["height"], row["rendered_frames"]) != (160, 120, 2)
+    if ((row["width"], row["height"], row["rendered_frames"]) != (*expected_extent, 2)
             or row["scene_instance"] == 0 or row["scene_revision"] == 0
             or row["warnings"] or row["errors"] or row["dropped"]
             or row["mesh_instances"] > 4096
@@ -709,11 +733,13 @@ def scene_completion(stdout: str, device: str) -> dict:
     return row
 
 
-def inspect_scene_capture(directory: Path, stdout: str, device: str) -> tuple[dict, dict]:
-    row = scene_completion(stdout, device)
+def inspect_scene_capture(directory: Path, stdout: str, device: str,
+                          expected_extent: tuple[int, int] = (160, 120)) -> tuple[dict, dict]:
+    row = scene_completion(stdout, device, expected_extent)
     assert_no_links(directory)
     names = {path.name for path in directory.iterdir()}
-    expected = {"report.json": 1024 * 1024, "color.rgba": 160 * 120 * 4, "depth.f64": 160 * 120 * 8}
+    pixels = expected_extent[0] * expected_extent[1]
+    expected = {"report.json": 1024 * 1024, "color.rgba": pixels * 4, "depth.f64": pixels * 8}
     if names != set(expected):
         raise ValueError("Scene capture file inventory differs")
     content = {name: regular_file(directory / name, maximum=maximum) for name, maximum in expected.items()}
@@ -721,7 +747,7 @@ def inspect_scene_capture(directory: Path, stdout: str, device: str) -> tuple[di
                         parse_constant=reject_constant, parse_float=finite_float)
     if report != row or any(len(content[name]) != expected[name] for name in ("color.rgba", "depth.f64")):
         raise ValueError("Saved scene capture differs from completion or bounded extent")
-    depth = struct.unpack(f"<{160 * 120}d", content["depth.f64"])
+    depth = struct.unpack(f"<{pixels}d", content["depth.f64"])
     if any(not math.isfinite(value) or not 0 <= value <= 1 for value in depth):
         raise ValueError("Scene capture has nonfinite or out-of-range depth")
     return row, {"directory": str(directory),
@@ -744,7 +770,7 @@ def package_inspection(stdout: str, manifest: dict) -> dict:
 
 
 def isolated_launch_report(report: dict, mode: str, directory: Path, working: Path,
-                           system: Path, device: str, capture: Path | None = None) -> None:
+                           system: Path, device: str, capture: Path | None = None) -> tuple[int, int] | None:
     if (not isinstance(report, dict) or report.get("mode") != mode
             or type(report.get("exit_code")) is not int or report["exit_code"] != 0
             or report.get("timed_out") is not False
@@ -773,6 +799,7 @@ def isolated_launch_report(report: dict, mode: str, directory: Path, working: Pa
     if (report.get("command") != command or not isinstance(report.get("arguments"), str)
             or report.get("capture_directory") != (str(capture) if capture is not None else None)):
         raise ValueError("Runtime launch command or capture path differs from the requested package")
+    return scene_window_extent(report.get("scene_window")) if mode == "scene" else None
 
 
 def working_directory_footprint(directory: Path) -> list[dict]:
@@ -881,11 +908,12 @@ def check_package(directory: Path, expected_manifest: str, devices: list[str], o
                 report = json.loads(result.stdout.lstrip("\ufeff"), object_pairs_hook=unique_object,
                                     parse_constant=reject_constant, parse_float=finite_float)
                 row["launch"] = report
-                isolated_launch_report(report, mode, directory, working, system, device, capture)
+                expected_extent = isolated_launch_report(report, mode, directory, working, system, device, capture)
                 if mode == "inspect":
                     row["content"] = package_inspection(report["stdout"], manifest)
                 else:
-                    row["completion"], row["capture"] = inspect_scene_capture(capture, report["stdout"], device)
+                    row["completion"], row["capture"] = inspect_scene_capture(
+                        capture, report["stdout"], device, expected_extent)
                     errors = module_errors(report.get("modules"), directory, system)
                     if errors:
                         raise ValueError("; ".join(errors))
@@ -945,6 +973,11 @@ class StructuredParser(argparse.ArgumentParser):
 
 
 def main() -> int:
+    # Private synchronous adapter exchange. The native caller retains the project
+    # owner and supervises this process tree; this does not reopen source state.
+    if len(sys.argv) == 4 and sys.argv[1:3] == ["authoring-export", "--request"]:
+        from export_runtime import authoring_export
+        return authoring_export(Path(sys.argv[3]))
     parser = StructuredParser(description=__doc__)
     commands = parser.add_subparsers(dest="mode", required=True)
     build = commands.add_parser("build")

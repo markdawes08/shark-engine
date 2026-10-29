@@ -37,7 +37,7 @@ SCENE_SURFACES = {
     'content.mesh.prepare', 'content.scene.prepare', 'content.gltf-scene.prepare',
     'scene.render.extract', 'content.client-export',
 }
-GPU_SURFACES = {'tools.scene-runner.gpu', 'graphics.scene.render'}
+GPU_SURFACES = {'tools.scene-runner.gpu', 'graphics.scene.render', 'terminal.scene.capture'}
 EXPORT_SURFACES = {'content.client-export.package'}
 TERMINAL_SURFACES = {
     'terminal.protocol.discover', 'terminal.schema.components', 'terminal.project.open',
@@ -61,6 +61,8 @@ TERMINAL_IMPORT_SURFACES = {
     'terminal.asset.jobs.drain', 'terminal.asset.jobs.take', 'terminal.asset.jobs.close',
 }
 TERMINAL_SURFACES |= TERMINAL_IMPORT_SURFACES
+TERMINAL_EXECUTION_SURFACES = {'terminal.scene.run', 'terminal.scene.export'}
+TERMINAL_SURFACES |= TERMINAL_EXECUTION_SURFACES
 FEATUREWORLD_CASES = [
     'featureworld.components', 'featureworld.commands', 'featureworld.batches-history',
     'featureworld.retries', 'featureworld.persistence', 'featureworld.asset-identity',
@@ -118,6 +120,14 @@ def audit(manifest, cpu, gpu, registered, declared):
                            'tools/runtime_scene_smoke.py'} <= set(entry['fixtures'])
                       and {'shark.tooling.scene-render-smoke', 'shark.tooling.runtime-scene-smoke'} <= set(tests),
                       'Scene viewport/Runtime external fixture drift')
+            if entry['id'] == 'terminal.scene.capture':
+                check(not mapped and not entry.get('gpu_case_ids')
+                      and entry.get('external_fixture_reason', '').strip()
+                      and {'tools/tests/test_authoring_artifact_process.py',
+                           'tools/runtime_scene_smoke.py', 'tools/scene_render_smoke.py'} <= set(entry['fixtures'])
+                      and 'tools/tests/test_authoring_artifact_process.py' in entry['test_sources']
+                      and {'shark.tools.authoring-execution-process', 'shark.tooling.scene-render-smoke'} <= set(tests),
+                      'Terminal capture external GPU fixture drift')
             if entry['id'] in EXPORT_SURFACES:
                 check(not mapped and entry.get('external_fixture_reason', '').strip()
                       and {'shark.tools.client-export-process', 'shark.tooling.runtime-package'} <= set(tests)
@@ -129,10 +139,17 @@ def audit(manifest, cpu, gpu, registered, declared):
                 terminal_source = 'authoring_editing_process' if editing else 'authoring_protocol_process'
                 if entry['id'] in TERMINAL_IMPORT_SURFACES:
                     terminal_test, terminal_source = 'authoring-import-process', 'authoring_import_process'
+                if entry['id'] in TERMINAL_EXECUTION_SURFACES:
+                    terminal_test, terminal_source = 'authoring-execution-process', 'authoring_execution_process'
                 check(not mapped and entry.get('external_fixture_reason', '').strip()
                       and 'shark.tools.' + terminal_test in tests
                       and 'tools/tests/test_' + terminal_source + '.py' in entry['test_sources'],
                       'Terminal protocol process fixture drift')
+                if entry['id'] == 'terminal.scene.export':
+                    check('shark.tools.client-export-process' in tests
+                          and 'tools/tests/test_authoring_artifact_process.py' in entry['fixtures']
+                          and 'tools/tests/test_authoring_artifact_process.py' in entry['test_sources'],
+                          'Terminal same-owner export fixture drift')
             rows.append({'id': entry['id'], 'category': category, 'featureworld_cases': mapped,
                          'registered_tests': sorted(set(tests) & registered),
                          'declared_other_profile_tests': sorted(set(tests) - registered)})

@@ -34,6 +34,7 @@ METHODS |= {
     "asset.jobs.submit", "asset.jobs.list", "asset.jobs.cancel", "asset.jobs.drain",
     "asset.jobs.take", "asset.jobs.close",
 }
+METHODS.add("scene.run")
 
 
 def unique(pairs):
@@ -68,15 +69,17 @@ def decode(line):
 class PipeClient:
     """One known native child, bounded response queue and explicit EOF/kill cleanup."""
 
-    def __init__(self, cwd, root=None, project=None):
+    def __init__(self, cwd, root=None, project=None, *, options=(), timeout=TIMEOUT, env=None):
         command = [str(ARGS.author), "--stdio"]
         if root is not None:
             command += ["--root", str(root)]
         if project is not None:
             command += ["--project", project]
+        command += list(options)
+        self.timeout = timeout
         self.stderr = tempfile.TemporaryFile()
         self.process = subprocess.Popen(command, cwd=cwd, stdin=subprocess.PIPE,
-                                        stdout=subprocess.PIPE, stderr=self.stderr)
+                                        stdout=subprocess.PIPE, stderr=self.stderr, env=env)
         self.rows = queue.Queue(maxsize=8)
         self.reader_failure = threading.Event()
         self.writers = []
@@ -116,7 +119,7 @@ class PipeClient:
 
     def row(self):
         try:
-            line = self.rows.get(timeout=TIMEOUT)
+            line = self.rows.get(timeout=self.timeout)
         except queue.Empty as error:
             raise AssertionError("Authoring response deadline expired") from error
         assert not self.reader_failure.is_set(), "Authoring output exceeded supervisor bounds"
@@ -141,7 +144,7 @@ class PipeClient:
                 self.process.stdin.close()
             except BrokenPipeError:
                 assert expected != 0, "Successful host closed its input unexpectedly"
-        assert self.process.wait(timeout=TIMEOUT) == expected, self.process.returncode
+        assert self.process.wait(timeout=self.timeout) == expected, self.process.returncode
         self.reader.join(timeout=1)
         assert not self.reader.is_alive() and not self.reader_failure.is_set()
         assert self.rows.get(timeout=1) == b"", "Unexpected trailing authoring output"
@@ -234,7 +237,8 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
         self.assertEqual(discovery["limits"]["retained_cursors"], 32)
         self.assertEqual(discovery["capabilities"], {"cpu_authoring": True, "device_capture": False,
                                                     "mutations": True, "imports": True,
-                                                    "background_jobs": True})
+                                                    "background_jobs": True, "scene_runs": True,
+                                                    "standalone_export": False})
         self.assertEqual({method["name"] for method in discovery["methods"]}, METHODS)
         for method in discovery["methods"]:
             self.assertTrue(method["params"] and method["result"] and method["example"], method)

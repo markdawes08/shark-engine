@@ -14,10 +14,11 @@ three broad phases in the [human/agent plan](human-agent-plan.md), following
 | 15d: Run, export and capture | Connect deterministic runs and export to the active project owner; optional GPU capture uses a separate client adapter and explicit capabilities. Calling the standalone exporter cannot acquire a second writer or silently close/discard the active session. |
 | 15e: Connected acceptance | A public subprocess workflow creates/edits/imports/saves/reopens/runs/captures/exports, with failure/retry/cancellation and ownership handoff evidence. Publish usable examples and complete coverage; reuse valid focused results from earlier checkpoints. |
 
-**15a-15c are PASS**, recorded in the [protocol handoff](../handoffs/15a-terminal-protocol.md),
+**15a-15d are PASS**, recorded in the [protocol handoff](../handoffs/15a-terminal-protocol.md),
 [editing handoff](../handoffs/15b-terminal-editing.md) and
-[imports handoff](../handoffs/15c-terminal-imports.md).
-15d is next. Full REQ-15 remains NOT_RUN until 15e. Advertise
+[imports handoff](../handoffs/15c-terminal-imports.md) and
+[execution handoff](../handoffs/15d-terminal-execution.md).
+15e is next. Full REQ-15 remains NOT_RUN until 15e. Advertise
 only implemented methods at each checkpoint; later work extends the same protocol
 and services. No network listener, LLM SDK, MCP client or editor is required.
 Ordinary terminal subprocesses are the initial adapter; an MCP bridge is optional

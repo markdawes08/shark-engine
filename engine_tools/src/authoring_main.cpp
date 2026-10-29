@@ -1,5 +1,9 @@
 #include "shark/tools/authoring_protocol.hpp"
 
+#ifdef SHARK_AUTHOR_CLIENT
+#include "../../editor/authoring_capture.hpp"
+#endif
+
 #include <nlohmann/json.hpp>
 
 #include <csignal>
@@ -25,13 +29,22 @@ using namespace shark::tools;
 using Json = nlohmann::json;
 
 constexpr std::string_view help =
+#ifdef SHARK_AUTHOR_CLIENT
+    "SharkAuthorClient - local project authoring with optional GPU capture\n"
+#else
     "SharkAuthor - local CPU project authoring\n"
+#endif
     "Usage: SharkAuthor --stdio|--request [--root DIRECTORY] [--project RELATIVE_PATH]\n"
     "       SharkAuthor --help|--version\n"
     "--stdio   Read bounded UTF-8 JSON-RPC requests, one per LF-terminated line.\n"
     "--request Read one bounded JSON-RPC request from stdin through EOF.\n"
     "--root    Fix the project root for this process; omitted permits discovery only.\n"
     "--project Open this source project before processing requests (requires --root).\n"
+    "--export-python PATH --export-tool PATH enable trusted standalone export tooling.\n"
+#ifdef SHARK_AUTHOR_CLIENT
+    "--capture-vertex-shader PATH --capture-pixel-shader PATH --capture-device UUID\n"
+    "--capture-validation required|off enable capture; all four options are required.\n"
+#endif
     "Discover methods with protocol.discover and protocol_version:1. No TTY is needed.\n"
     "Machine stdout contains only JSON responses; startup errors go to stderr.\n"
     "Exit: 0 completed, 1 one-shot request failed, 2 startup/framing/I/O failure.\n";
@@ -84,28 +97,78 @@ int run(const std::vector<std::string>& arguments) {
     std::optional<bool> stream_mode;
     std::optional<std::string> root;
     std::optional<std::string> project;
+    std::optional<std::string> export_python;
+    std::optional<std::string> export_tool;
+#ifdef SHARK_AUTHOR_CLIENT
+    std::optional<std::string> capture_vertex;
+    std::optional<std::string> capture_pixel;
+    std::optional<std::string> capture_device;
+    std::optional<std::string> capture_validation;
+#endif
     for (std::size_t index = 0; index < arguments.size(); ++index) {
         const auto& argument = arguments[index];
         if (argument == "--stdio" || argument == "--request") {
             if (stream_mode)
                 return failure(std::cerr, "arguments", "Select exactly one transport mode");
             stream_mode = argument == "--stdio";
-        } else if (argument == "--root" || argument == "--project") {
-            auto& destination = argument == "--root" ? root : project;
-            if (destination || ++index == arguments.size() || arguments[index].empty())
-                return failure(std::cerr, "arguments", "Expected one nonempty path per option");
-            destination = arguments[index];
         } else {
-            return failure(std::cerr, "arguments", "Unknown authoring option; use --help");
+            std::optional<std::string>* destination = nullptr;
+            if (argument == "--root")
+                destination = &root;
+            else if (argument == "--project")
+                destination = &project;
+            else if (argument == "--export-python")
+                destination = &export_python;
+            else if (argument == "--export-tool")
+                destination = &export_tool;
+#ifdef SHARK_AUTHOR_CLIENT
+            else if (argument == "--capture-vertex-shader")
+                destination = &capture_vertex;
+            else if (argument == "--capture-pixel-shader")
+                destination = &capture_pixel;
+            else if (argument == "--capture-device")
+                destination = &capture_device;
+            else if (argument == "--capture-validation")
+                destination = &capture_validation;
+#endif
+            if (!destination)
+                return failure(std::cerr, "arguments", "Unknown authoring option; use --help");
+            if (*destination || ++index == arguments.size() || arguments[index].empty())
+                return failure(std::cerr, "arguments", "Expected one nonempty value per option");
+            *destination = arguments[index];
         }
     }
     if (!stream_mode || (project && !root))
         return failure(std::cerr, "arguments", "A mode is required and --project requires --root");
-    std::filesystem::path native_root;
+    if (export_python.has_value() != export_tool.has_value())
+        return failure(std::cerr, "arguments", "Export requires both trusted tool paths");
+    const auto native_path = [](const std::string& value) {
+        return std::filesystem::path{
+            std::u8string{reinterpret_cast<const char8_t*>(value.data()), value.size()}};
+    };
+    AuthoringProtocolOptions options;
     if (root)
-        native_root = std::filesystem::path{
-            std::u8string{reinterpret_cast<const char8_t*>(root->data()), root->size()}};
-    auto created = AuthoringProtocol::create(native_root);
+        options.root = native_path(*root);
+    if (export_python) {
+        options.export_python = native_path(*export_python);
+        options.export_tool = native_path(*export_tool);
+    }
+#ifdef SHARK_AUTHOR_CLIENT
+    std::unique_ptr<AuthoringCaptureProvider> capture;
+    if (capture_vertex || capture_pixel || capture_device || capture_validation) {
+        if (!capture_vertex || !capture_pixel || !capture_device || !capture_validation)
+            return failure(std::cerr, "arguments",
+                           "Capture requires two shaders, a GPU UUID and validation mode");
+        auto configured = shark::editor::make_authoring_capture(
+            {native_path(*capture_vertex), native_path(*capture_pixel), *capture_device,
+             *capture_validation});
+        if (!configured)
+            return service_failure(configured.error());
+        capture = std::move(configured).value();
+        options.capture = capture.get();
+    }
+#endif
+    auto created = AuthoringProtocol::create(std::move(options));
     if (!created)
         return service_failure(created.error());
     auto session = std::move(created).value();
@@ -192,7 +255,7 @@ int guarded_run(const std::vector<std::string>& arguments) noexcept {
 #ifdef _WIN32
 int wmain(int argc, wchar_t** argv) {
     try {
-        if (argc > 7)
+        if (argc > 19)
             return failure(std::cerr, "arguments", "Too many authoring arguments");
         std::vector<std::string> arguments;
         for (int index = 1; index < argc; ++index) {
@@ -215,7 +278,7 @@ int wmain(int argc, wchar_t** argv) {
 #else
 int main(int argc, char** argv) {
     try {
-        if (argc > 7)
+        if (argc > 19)
             return failure(std::cerr, "arguments", "Too many authoring arguments");
         std::vector<std::string> arguments;
         for (int index = 1; index < argc; ++index) {

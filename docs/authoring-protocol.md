@@ -7,8 +7,9 @@ and inspection; 15b adds project creation, shared edits/preview/history, retaine
 mutation outcomes, save/reload and scoped script text. These operations need no
 editor, display, GPU, network listener, model provider or MCP client. 15c adds
 typed asset metadata, explicit catalog inventory, cache inspection/maintenance
-and the existing bounded import jobs. Runs, captures and export through this
-protocol remain later checkpoints.
+and the existing bounded import jobs. 15d adds deterministic static-scene runs,
+configured Windows standalone export and optional GPU capture through the same
+retained owner. Connected acceptance remains 15e.
 
 [ADR 0039](architecture/0039-terminal-authoring-protocol.md) defines this bounded
 profile. The public C++ owner is
@@ -21,7 +22,11 @@ from gameplay requests and live-world administration.
 
 ```text
 SharkAuthor --stdio|--request [--root DIRECTORY] [--project RELATIVE_PATH]
+            [--export-python PATH --export-tool PATH]
 SharkAuthor --help|--version
+SharkAuthorClient --stdio|--request [same ownership/export options]
+                  [--capture-vertex-shader PATH --capture-pixel-shader PATH
+                   --capture-device UUID --capture-validation required|off]
 ```
 
 Select exactly one transport mode. `--root` fixes an existing project root for the
@@ -31,6 +36,22 @@ closed-project status are available, but `project.open`/`project.create` fail. `
 open selects the project's declared startup scene. A failed startup open writes
 its structured error to stderr and exits 2; success produces no startup response.
 Use `project.open` to select another declared scene explicitly.
+
+The optional export pair configures trusted host-startup programs, not executables
+selected by an RPC. Use the local Python interpreter and
+[`tools/package_runtime.py`](../tools/package_runtime.py); both must be existing
+regular files. Actual standalone export is Windows x64 only. Without that pair,
+`scene.export` is absent from discovery and rejects with `capability_unavailable`.
+
+`SharkAuthorClient` is the separate Tools + Client composition; `SharkAuthor` and
+EngineTools remain CPU-only. All four capture options are required together.
+The shader inputs must be complete precompiled scene-unlit artifacts from the
+[offline pipeline](shader-pipeline.md), the device must be an exact lowercase
+32-hex UUID, and validation is explicitly `required` or `off`. Configuration
+validates/retains shaders without creating a window or GPU. The device is created
+only for an actual capture, using a hidden window. Unconfigured discovery/help
+remain device-free, and no foreground editor window is opened. Qualification
+uses required validation; validation-off execution is diagnostic only.
 
 Both modes accept UTF-8 through redirected stdin with no TTY or prompt:
 
@@ -132,7 +153,9 @@ close another owner, or switch the active project.
 
 `protocol.discover` is the executable source of available method names, parameter
 and result descriptions, examples, component metadata, limits and capability
-flags. It advertises exactly these forty methods:
+flags. The CPU base advertises 41 methods. Configured Windows export adds one;
+configured Client capture adds one, for at most 43. Query the actual host rather
+than assuming a method count or device capability:
 
 | Method | Parameters | Result |
 | --- | --- | --- |
@@ -175,11 +198,16 @@ flags. It advertises exactly these forty methods:
 | `asset.jobs.drain` | `{}` | `{drained,jobs:[...]}`; publishes at most one ready completion |
 | `asset.jobs.take` | `job_id` | Terminal status, acknowledging and releasing its retained slot |
 | `asset.jobs.close` | `{}` | `{closed:true,jobs:[...]}` after stopping and joining the worker |
+| `scene.run` | `expected_revision`; optional `seed`, `ticks`, `hz`, `run_id`, `revision`, `expected_entities` | Captured revision/dirty state, entity count, source digest and native scene-run report |
+| `scene.export` (configured Windows host) | Common content fields below plus `build_dir`, `crt_dir`, `shaders`; optional `notices` | Existing standalone export report with status and publication outcome |
+| `scene.capture` (configured Client host) | Common content fields below; optional `width`, `height`, `local_origin` | Capture artifact report with source identity, raw-file digests and actual GPU diagnostics |
 
-The capabilities are `cpu_authoring: true`, `device_capture: false`,
-`mutations: true`, `imports: true` and `background_jobs: true`.
-There is no advertised editor, export or GPU
-operation whose implementation is deferred.
+The fixed capabilities are `cpu_authoring:true`, `mutations:true`, `imports:true`,
+`background_jobs:true` and `scene_runs:true`. `standalone_export` reflects the
+configured Windows helper, and `device_capture` reflects the installed Client
+adapter. These flags advertise supported paths, not a claim that arbitrary inputs
+or hardware will succeed. Unavailable export/capture requests fail explicitly even
+though their names are absent from the current method inventory.
 
 `schema.components` returns all four native schemas and twelve properties in
 stable catalog order. Components include numeric `id`, `stable_id`, `display_name`,
@@ -544,6 +572,102 @@ latency is promised. Keep a stdio owner alive, explicitly drain/take outcomes an
 save intended scene changes before close. One-shot submit cannot retain a worker
 across process exit.
 
+## Deterministic runs and generated artifacts
+
+`scene.run` captures the active committed revision, including unsaved edits, and
+passes those owned values to the existing [scene runner](scene-runner.md).
+Its single `scene-integrity` case checks the captured values and entity count,
+then observes an unchanged isolated scene at each deterministic tick. It does
+not execute gameplay, Lua, imported scripts, physics or arbitrary user callbacks.
+The isolated run is never activated back into the authoring session. Source
+files, dirty baseline, history, retry ledger and query cursors remain unchanged.
+The run intentionally uses the retained scene even when an external source file
+has changed; producing an export or capture instead checks those files below.
+
+Only `expected_revision` is required. Defaults are seed `"1337"`, 60 ticks,
+60 Hz, `run_id:"local"` and diagnostic `revision:"unspecified"`. Seed is a
+canonical uint64 decimal string. Tick count is 1..10,000; Hz is 1..1,000. Run ID
+and diagnostic revision must match `[A-Za-z0-9._-]{1,64}`. `expected_entities` is an
+optional integer 0..4,096; a mismatch produces a truthful failed assertion in the
+report. That diagnostic `revision` label is distinct from `expected_revision`.
+Runs use rational ticks through the existing scheduler, not elapsed wall time.
+
+The result has `observed_revision`, `dirty`, `entity_count`, `source_digest` and
+`report`. `source_digest` identifies the canonical captured source-scene encoding.
+The report retains `format:"shark.scene-run"`, schema version 1, cases, ticks,
+assertions and native failure details. Inspect `report.status` (`PASS`, `FAIL`,
+`CANCELLED` or `NOT_RUN`); an outer JSON-RPC result does not imply a passing run.
+A failed run makes one-shot exit 1. Stdio remains serial: there is no concurrent
+run-cancel RPC or added job scheduler. Supervisors still bound process waits.
+
+Export and capture share these required content fields:
+
+| Field | Meaning |
+| --- | --- |
+| `expected_revision` | Exact active scene incarnation/revision |
+| `expected_catalog` / `expected_cache` | Current UUID-scoped native catalog/cache revisions |
+| `camera_id` | Explicit authored Camera UUID in the startup scene |
+| `target` | `{id,side:"client"}` for the existing fresh import closure |
+| `output` | New artifact directory outside the project root, with an existing parent |
+
+Both operations use [prepare/validate client export](client-export.md) through the
+retained project, scene, catalog and import owners. They require the declared
+startup scene, resolve hidden references as well as visible ones, reject stale or
+server-only content, and never import implicitly. Built-in geometry needs no
+sidecars. Observe the current catalog/cache revisions even for built-in content.
+The active project and scene source files must still match their exact retained
+file revisions; external edits cannot redirect publication. Unsaved in-memory
+edits are included without being marked saved or removing undo/retry history.
+
+Output is create-only, outside the source project. Existing destinations, links,
+reparse points and unsafe topology reject. A private staged artifact is validated
+again against the same source files, owner revisions and selected asset keys
+immediately before final publication. The project lock remains held throughout.
+This is cooperating-writer coordination, not a hostile-filesystem transaction;
+uncooperative source/topology changes must not race final validation and rename.
+
+`scene.export` adds `build_dir` (the configured protected Runtime-only Release
+build), `crt_dir` (its exact redistributable CRT directory), and `shaders` (the
+validated scene shader artifact directory). Optional `notices` is a bounded array
+of `{license,path}` entries; licenses must be unique and every used import license
+must have its complete notice. It reuses the existing
+[standalone exporter](standalone-export.md), dependency checks and package format.
+Its private helper receives immutable staged content and requests validation from
+the still-live owner before publication. It never opens a second source writer or
+reloads the saved scene behind unsaved authoring state. Return fields remain the
+`shark.client-export` version-1 report, including `status`, `published`, artifact
+metadata and `qualification:"NOT_RUN"`. Package creation alone is not GPU or
+isolated deployment qualification.
+
+`scene.capture` defaults to 160x120. Each dimension is 1..2,048 and the combined
+limit is 1,048,576 pixels. Optional `local_origin` is three finite numbers within
+the existing +/-65,536 meter local-coordinate range; generation is 1 for this
+standalone snapshot. The original world anchor is preserved separately and is
+never added to a matrix. The Client adapter reconstructs a private Core scene
+from the immutable prepared bytes, extracts a bounded snapshot and uses the
+existing [offscreen viewport](scene-viewport.md). The result distinguishes the
+original `source_revision` from the fresh `rendered_revision`; reconstruction
+does not become another editable project owner.
+
+Capture writes `color.rgba` (tightly packed top-left linear RGBA8), `depth.f32`
+(little-endian normalized depth floats) and `report.json`. The returned
+`shark.authoring-capture` schema-1 object equals that report and includes
+`published`, `succeeded`, output path, project/scene/camera IDs, `source_dirty`,
+prepared scene digest, both revisions, origin, dimensions, draw/extraction counts,
+pixel-file sizes/digests, selected adapter/driver, validation, diagnostics and
+closed resource counters. It writes no inline image bytes. GPU completion and
+clean teardown are required before staging; final validation precedes publication.
+`durability:"not_confirmed"` makes no file/directory flush guarantee. This is an
+offscreen unlit capture, not an actually presented window screenshot or a claim
+of texture/PBR/gameplay completeness.
+
+Neither artifact operation is a retained mutation retry. Inspect `published`
+separately from success/status. A failed or lost response after dispatch can leave
+a published artifact: inspect/reconcile the original destination and report before
+retrying with another path. Request IDs cannot roll back or deduplicate file
+publication. Failed unpublished staging is cleaned when possible; process death
+can leave a reserved stage for deliberate inspection/cleanup.
+
 ## Queries and durable identity
 
 `scene.query` accepts only these keys:
@@ -676,8 +800,9 @@ with subprocess.Popen(
 ```
 
 This independent example creates a temporary project under `out/`, previews and
-commits a new entity, replays the retained intent, saves and reopens it. It checks
-each nested result; a different JSON-RPC request ID does not execute the edit again:
+commits a new entity, replays the retained intent, runs the unsaved scene, then
+saves and reopens it. It checks each nested result; a different JSON-RPC request
+ID does not execute the edit again:
 
 ```python
 import json
@@ -743,6 +868,15 @@ with tempfile.TemporaryDirectory(prefix="terminal-example-", dir="out") as tempo
         replayed = call("scene.mutate", intent)
         assert replayed["state"] == "replayed"
         assert value(replayed["outcome"]) == original
+        history = call("scene.history", {})
+        run = call("scene.run", {
+            "expected_revision": committed["observed_revision"],
+            "ticks": 3, "seed": "1337", "expected_entities": 1,
+        })
+        assert run["report"]["status"] == "PASS" and run["dirty"]
+        assert run["entity_count"] == 1
+        assert run["observed_revision"] == committed["observed_revision"]
+        assert call("scene.history", {}) == history
         saved = call("scene.save", {"expected_revision": committed["observed_revision"]})
         assert saved["publication"]["published"] and saved["current_scene_clean"]
         call("project.close", {})
@@ -752,7 +886,7 @@ with tempfile.TemporaryDirectory(prefix="terminal-example-", dir="out") as tempo
         call("project.close", {})
         process.stdin.close()
         assert process.wait(timeout=10) == 0
-print("Created, previewed, edited, replayed, saved and reopened the project.")
+print("Created, previewed, edited, replayed, ran, saved and reopened the project.")
 ```
 
 This independent import example writes a new temporary byte source, registers its
@@ -871,7 +1005,43 @@ Use the relevant binary path on WSL. Production supervisors should retain stderr
 bound each pipe wait and terminate/drain a failed child. Requests dispatch serially
 on the owner thread while import computation uses the existing private worker.
 
-Later 15 checkpoints adapt runs, captures and export.
-An export adapter must use the active owner or reject a conflicting open project;
-it cannot launch an independent source-reloading export worker behind an active
-authoring session and claim to preserve unsaved changes.
+For artifact work, start the configured host with the same ownership options.
+These example argument paths name your existing build/tool inputs; replace the
+shader files and GPU UUID with the validated local values:
+
+```text
+build/windows-debug/bin/SharkAuthorClient.exe --stdio --root PROJECT_ROOT --project Project.sharkproject
+  --export-python .tools/venv/Scripts/python.exe --export-tool tools/package_runtime.py
+  --capture-vertex-shader SCENE_VERTEX_SPV --capture-pixel-shader SCENE_PIXEL_SPV
+  --capture-device EXACT_GPU_UUID --capture-validation required
+```
+
+With that host open, a request builder can reuse the editing example's
+`call(method, params)` helper. This fragment assumes an existing startup Camera
+and already-imported fresh client content; the uppercase values are caller inputs:
+
+```python
+# Fragment for an already configured live host, not an independent script.
+common = {
+    "expected_revision": call("project.status", {})["revision"],
+    "expected_catalog": call("asset.catalog.status", {})["revision"],
+    "expected_cache": call("asset.cache.status", {})["revision"],
+    "camera_id": CAMERA_UUID,
+    "target": {"id": CONTENT_TARGET, "side": "client"},
+}
+capture = call("scene.capture", {
+    **common, "output": NEW_CAPTURE_DIRECTORY, "width": 160, "height": 120,
+})
+assert capture["published"] and capture["succeeded"]
+export = call("scene.export", {
+    **common, "output": NEW_PACKAGE_DIRECTORY,
+    "build_dir": RUNTIME_ONLY_RELEASE_BUILD, "crt_dir": EXACT_RELEASE_CRT_DIRECTORY,
+    "shaders": SCENE_SHADER_ARTIFACT_DIRECTORY, "notices": CONTENT_NOTICES,
+})
+assert export["published"] and export["status"] == "PASS"
+```
+
+Do not run this fragment against the saved FeatureWorld root with guessed inputs.
+Use deliberate scratch projects and fresh output directories, preserve complete
+asset notices, and inspect a failed/lost operation's original output before retry.
+15e qualifies the connected create/edit/import/save/reopen/run/capture/export flow.

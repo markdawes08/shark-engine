@@ -1,7 +1,7 @@
 # ADR 0039: Bounded terminal authoring protocol
 
 Date: 2026-10-28. Status: accepted. The original 15a decision follows;
-the dated extensions below add editing/persistence and imports/jobs.
+the dated extensions below add editing/persistence, imports/jobs and run/artifact adapters.
 
 Implement a CPU terminal adapter in EngineTools and a `SharkAuthor` executable.
 The adapter uses the existing ProjectFiles and AuthoredScene services and Core
@@ -189,3 +189,62 @@ foreign identities, cancellation/take/closure and owner handoff. Reuse native jo
 fault and decoder coverage; the testing policy selects affected Debug, applicable
 sanitizer and portable WSL checks without repeating unrelated device matrices.
 Full REQ-15 remains open until connected 15e acceptance.
+
+## 15d extension: run, export and capture, 2026-10-28
+
+Extend the same version-1 protocol with `scene.run` and capability-gated
+`scene.export`/`scene.capture`. Discovery reports actual installed adapters:
+41 methods in the CPU base, an additional configured Windows export method, and
+an additional configured Client capture method. Unavailable artifact methods
+reject explicitly rather than requiring a GUI, silently saving or replacing the
+active project. Existing protocol/source/cooked versions remain unchanged.
+
+Capture the exact committed revision through AuthoredScene, including dirty
+values. Feed the existing deterministic scene runner an owned isolated snapshot
+for the static `scene-integrity` case, with bounded seed/ticks/Hz, entity-count
+expectation and native assertion/status report. No gameplay, Lua, arbitrary
+callback execution or write-back is implied. Preserve authoring history, retry
+state, source files and dirty baseline. A failed assertion remains FAIL even when
+its enclosing RPC successfully returns the report. This synchronous adapter adds
+no scheduler, job retention or concurrent cancel command.
+
+For artifacts, reuse the retained ProjectFiles/AuthoredScene/catalog/import owners
+and `prepare_client_export`/`validate_client_export`. Require startup-scene camera,
+current scene/catalog/cache revisions and fresh client-permitted dependencies,
+including hidden references. Observe the exact saved project and scene files;
+external source edits reject publication without discarding current unsaved work.
+Both adapters capture immutable content and revalidate through the still-live
+owner immediately before publishing a fresh output outside the project root.
+Do not construct another source writer or reload saved state behind the session.
+
+Configure executable export helpers only at trusted host startup. Extend the
+existing package tool to consume staged immutable content and request final
+validation from the live owner. Keep the project lock through helper completion,
+bounded child I/O/lifetime and final rename. Preserve existing package checks,
+exact Runtime CRT closure, full content notices and Core-only startup data.
+The existing export report separates success and publication; lost acknowledgement
+after publication requires output reconciliation. Package creation is not
+isolated deployment or native rendering qualification.
+
+Keep EngineTools and `SharkAuthor` independent of Client. A separate
+`SharkAuthorClient` composition installs an application-owned capture provider
+using engine-owned request/result types. The provider consumes immutable prepared
+content, reconstructs a private read-only Core scene and invokes the existing
+offscreen scene renderer. It reports original source identity separately from the
+fresh rendered Core incarnation. Preserve the global world anchor independently
+of the bounded local offset. Configuration retains validated scene shaders but
+initializes no device; actual capture creates only a hidden native window/device.
+
+Capture requires bounded dimensions/pixels, GPU completion, clean diagnostics and
+safe resource close before preparing its raw linear RGBA8/depth artifact. Stage
+all files, revalidate the retained owner and publish by final rename. Return
+bounded artifact metadata/digests instead of inline pixels. Its publication flag
+does not promise disk-flush durability, actual window presentation or final PBR
+quality. Client/device failures preserve the existing bounded retention and fatal
+shutdown rules; no second renderer or completion system is added.
+
+Qualify public redirected CPU run/rejection flows, dirty/history/source fences,
+configured package publication and real optional captures on both available GPUs.
+Use the testing policy's affected Debug/sanitizer/WSL selection and existing
+independent image/depth references and package tooling. Full REQ-15 remains open
+until 15e connects the complete public authoring workflow.

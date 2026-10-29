@@ -171,6 +171,16 @@ AuthoringAssets::AuthoringAssets(ProjectFiles& files, const ProjectDocument& pro
     : impl_(std::make_unique<Impl>(files, project, path)) {}
 AuthoringAssets::~AuthoringAssets() = default;
 
+PreparedClientExport AuthoringAssets::prepare_export(const AuthoredScene& owner,
+                                                     const ClientExportRequest& request) {
+    return take(prepare_client_export(owner, *impl_->catalog, impl_->cache(), request));
+}
+
+Result<void> AuthoringAssets::validate_export(const PreparedClientExport& candidate,
+                                              const AuthoredScene& owner) {
+    return validate_client_export(candidate, owner, *impl_->catalog, impl_->cache());
+}
+
 bool AuthoringAssets::supports(std::string_view method) noexcept {
     return std::find(methods.begin(), methods.end(), method) != methods.end();
 }

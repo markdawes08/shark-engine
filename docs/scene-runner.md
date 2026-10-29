@@ -4,6 +4,12 @@ The [CPU/GPU test supervisor](scene-execution.md) adds explicit GPU fixture
 execution in 10c while this native worker remains CPU-only. Its target dependency
 boundary and native version-1 result/catalog contracts remain unchanged.
 
+The [terminal adapter](authoring-protocol.md) adds `scene.run` over the active
+owner's captured source, including unsaved edits. Its bounded `scene-integrity`
+case checks isolated values and deterministic ticks, with optional expected
+entity count. It reuses this runner and preserves the original owner/history;
+it does not execute gameplay, Lua or input actions.
+
 Checkpoint 10a implements the shared CPU foundation described in
 [ADR 0024](architecture/0024-headless-scene-runner.md) and the
 [four-checkpoint plan](roadmap/featureworld-plan.md). `SceneRunner` is built with

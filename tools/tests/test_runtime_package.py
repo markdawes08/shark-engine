@@ -405,8 +405,9 @@ class RuntimePackageTests(unittest.TestCase):
     def write_scene_capture(self, directory, row):
         directory.mkdir()
         (directory / "report.json").write_text(json.dumps(row), encoding="utf-8")
-        (directory / "color.rgba").write_bytes(bytes((0, 0, 0, 255)) * (160 * 120))
-        (directory / "depth.f64").write_bytes(struct.pack("<d", 1.) * (160 * 120))
+        pixels = row["width"] * row["height"]
+        (directory / "color.rgba").write_bytes(bytes((0, 0, 0, 255)) * pixels)
+        (directory / "depth.f64").write_bytes(struct.pack("<d", 1.) * pixels)
 
     def test_isolated_scene_capture_requires_exact_saved_result_lengths_and_finite_depth(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -442,8 +443,36 @@ class RuntimePackageTests(unittest.TestCase):
                 "modules": [str(directory / name) for name in package.BINARIES],
                 "working_directory": str(working), "command": command, "arguments": "quoted fixture arguments",
                 "capture_directory": str(capture) if capture else None,
+                "scene_window": {"window_observed": True, "window_process_id": 42, "process_id": 42,
+                                 "dpi": 96, "client_width": 160, "client_height": 120,
+                                 "per_monitor_v2": True} if mode == "scene" else None,
                 "environment": {"PATH": str(system / "System32"), "SystemRoot": str(system),
                                 "VK_LOADER_LAYERS_DISABLE": "~implicit~", "inherited_development_overrides": False}}
+
+    def test_isolated_scene_uses_independent_144_dpi_window_extent_and_rejects_mismatches(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            root = Path(temporary).resolve()
+            directory, working, system, capture = root / "package", root / "cwd", root / "Windows", root / "capture"
+            baseline = {**self.scene_completion(), "width": 240, "height": 180}
+            report = self.launch_report(directory, working, system, "scene", json.dumps(baseline), "a" * 32, capture)
+            report["scene_window"].update(dpi=144, client_width=240, client_height=180)
+            extent = package.isolated_launch_report(report, "scene", directory, working, system, "a" * 32, capture)
+            self.assertEqual(extent, (240, 180))
+            self.write_scene_capture(capture, baseline)
+            row, evidence = package.inspect_scene_capture(capture, report["stdout"], "a" * 32, extent)
+            self.assertEqual(row, baseline)
+            self.assertEqual(evidence["files"]["depth.f64"]["bytes"], 240 * 180 * 8)
+            with self.assertRaisesRegex(ValueError, "dimensions"):
+                package.scene_completion(json.dumps(self.scene_completion()), "a" * 32, extent)
+            (capture / "color.rgba").write_bytes(bytes(160 * 120 * 4))
+            with self.assertRaisesRegex(ValueError, "extent"):
+                package.inspect_scene_capture(capture, report["stdout"], "a" * 32, extent)
+            for changes in ({"dpi": 96}, {"client_width": 241}, {"window_process_id": 43},
+                            {"per_monitor_v2": False}, {"window_observed": False}, {"dpi": True},
+                            {"dpi": 1536, "client_width": 2560, "client_height": 1920}):
+                value = {**report, "scene_window": {**report["scene_window"], **changes}}
+                with self.subTest(changes=changes), self.assertRaises(ValueError):
+                    package.isolated_launch_report(value, "scene", directory, working, system, "a" * 32, capture)
 
     def test_isolated_scene_report_rejects_environment_cwd_arguments_and_failure_flags(self):
         with tempfile.TemporaryDirectory() as temporary:

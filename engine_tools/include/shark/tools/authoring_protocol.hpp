@@ -11,6 +11,18 @@
 
 namespace shark::tools {
 
+class AuthoringCaptureProvider;
+
+struct AuthoringProtocolOptions {
+    std::filesystem::path root;
+    // Trusted host-startup configuration, never programs selected by an RPC.
+    // Both paths are required to enable native Windows standalone export.
+    std::filesystem::path export_python;
+    std::filesystem::path export_tool;
+    // Borrowed application provider; it must outlive the protocol owner.
+    AuthoringCaptureProvider* capture{nullptr};
+};
+
 inline constexpr std::uint32_t authoring_protocol_version = 1;
 inline constexpr std::size_t authoring_protocol_maximum_request_bytes = 64 * 1024;
 inline constexpr std::size_t authoring_protocol_maximum_response_bytes = 1024 * 1024;
@@ -31,6 +43,8 @@ class AuthoringProtocol final {
   public:
     [[nodiscard]] static Result<std::unique_ptr<AuthoringProtocol>>
     create(std::filesystem::path root = {});
+    [[nodiscard]] static Result<std::unique_ptr<AuthoringProtocol>>
+    create(AuthoringProtocolOptions options);
     ~AuthoringProtocol();
     AuthoringProtocol(const AuthoringProtocol&) = delete;
     AuthoringProtocol& operator=(const AuthoringProtocol&) = delete;

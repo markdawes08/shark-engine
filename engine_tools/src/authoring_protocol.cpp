@@ -2,6 +2,9 @@
 
 #include "authoring_asset_wire.hpp"
 #include "authoring_assets.hpp"
+#include "authoring_execution_wire.hpp"
+#include "authoring_export.hpp"
+#include "authoring_run.hpp"
 #include "authoring_wire.hpp"
 #include "shark/tools/project_files.hpp"
 #include "source_json.hpp"
@@ -183,7 +186,7 @@ Json page_schema() {
         {"revision", "scope", "entities", "scanned_slots", "complete", "next_cursor"});
 }
 
-Json discovery() {
+Json discovery(bool export_available, bool capture_available) {
     const auto components = take(wire::component_schemas_json());
     const Json empty = object_schema(Json::object());
     const Json selected{
@@ -365,6 +368,8 @@ Json discovery() {
         {{"revision", "00000000-0000-4000-8000-000000000008"}});
     for (auto& method : authoring_asset_wire::methods_json())
         methods.push_back(std::move(method));
+    for (auto& method : authoring_execution_wire::methods(export_available, capture_available))
+        methods.push_back(std::move(method));
     return {{"protocol_version", authoring_protocol_version},
             {"transport",
              {{"framing", "newline-delimited-json"}, {"batch", false}, {"notifications", true}}},
@@ -379,10 +384,12 @@ Json discovery() {
               {"retained_import_jobs", asset_import_maximum_jobs}}},
             {"capabilities",
              {{"cpu_authoring", true},
-              {"device_capture", false},
+              {"device_capture", capture_available},
               {"mutations", true},
               {"imports", true},
-              {"background_jobs", true}}},
+              {"background_jobs", true},
+              {"scene_runs", true},
+              {"standalone_export", export_available}}},
             {"methods", std::move(methods)},
             {"components", components}};
 }
@@ -515,10 +522,66 @@ struct Dispatch {
 struct AuthoringProtocol::Impl {
     const std::thread::id thread{std::this_thread::get_id()};
     std::filesystem::path root;
+    std::filesystem::path export_python;
+    std::filesystem::path export_tool;
+    AuthoringCaptureProvider* capture_provider;
     std::unique_ptr<Session> session;
     bool outcome_may_have_changed{false};
 
-    explicit Impl(std::filesystem::path value) : root(std::move(value)) {}
+    explicit Impl(AuthoringProtocolOptions value)
+        : root(std::move(value.root)), export_python(std::move(value.export_python)),
+          export_tool(std::move(value.export_tool)), capture_provider(value.capture) {}
+
+    bool export_available() const noexcept {
+#ifdef _WIN32
+        return !export_python.empty() && !export_tool.empty();
+#else
+        return false;
+#endif
+    }
+
+    AuthoringAssets& assets(Session& current) {
+        if (!current.assets)
+            current.assets =
+                std::make_unique<AuthoringAssets>(*current.files, current.project, current.path);
+        return *current.assets;
+    }
+
+    void check_source_files(Session& current) {
+        check_project_file(current);
+        const auto observed = take(current.files->read_scene(current.project, current.scene));
+        if (!current.scene_revision || observed.revision != *current.scene_revision)
+            fail(-32000, ErrorCode::conflict,
+                 "Scene source changed externally; preserve current edits and reconcile before "
+                 "producing artifacts");
+    }
+
+    void check_output_path(const std::filesystem::path& output) {
+        try {
+            if (output.empty())
+                fail(-32602, ErrorCode::invalid_path,
+                     "Artifact output must name a fresh directory");
+            const auto absolute = std::filesystem::absolute(output).lexically_normal();
+            if (absolute.filename().empty() || std::filesystem::exists(absolute))
+                fail(-32000, ErrorCode::conflict,
+                     "Artifact output already exists or has no directory name");
+            auto parent = std::filesystem::canonical(absolute.parent_path());
+            while (!parent.empty()) {
+                if (std::filesystem::equivalent(parent, root))
+                    fail(-32000, ErrorCode::path_outside_root,
+                         "Artifact output must be outside the source project root");
+                const auto next = parent.parent_path();
+                if (next == parent)
+                    break;
+                parent = next;
+            }
+        } catch (const std::filesystem::filesystem_error&) {
+            const auto path = output.u8string();
+            fail(-32000, ErrorCode::invalid_path,
+                 "Artifact output needs an accessible existing parent directory",
+                 {reinterpret_cast<const char*>(path.data()), path.size()});
+        }
+    }
 
     Session& require_session() {
         if (!session)
@@ -572,21 +635,84 @@ struct AuthoringProtocol::Impl {
     }
 
     Dispatch dispatch(std::string_view method, const Json& parameters) {
+        if (method == "scene.run") {
+            auto& current = require_session();
+            const auto request = take(authoring_execution_wire::parse_run(parameters), -32602);
+            auto result = take(run_authoring_scene(*current.owner, request));
+            Dispatch reply{
+                Json{{"observed_revision", wire::revision_json(result.observed_revision)},
+                     {"dirty", result.dirty},
+                     {"entity_count", result.entity_count},
+                     {"source_digest", result.source_digest},
+                     {"report", Json::parse(result.report_json)}}};
+            reply.failed = result.status != SceneRunStatus::passed;
+            return reply;
+        }
+        if (method == "scene.export" || method == "scene.capture") {
+            if ((method == "scene.export" && !export_available()) ||
+                (method == "scene.capture" && !capture_provider))
+                fail(-32000, ErrorCode::capability_unavailable,
+                     "This host has no configured adapter for the requested artifact operation");
+            auto& current = require_session();
+            const auto request = take(authoring_execution_wire::parse_content(parameters), -32602);
+            const bool exporting = method == "scene.export";
+            const auto export_request =
+                exporting ? std::optional{take(authoring_execution_wire::parse_export(parameters),
+                                               -32602)}
+                          : std::nullopt;
+            const auto capture_request =
+                !exporting ? std::optional{take(authoring_execution_wire::parse_capture(parameters),
+                                                -32602)}
+                           : std::nullopt;
+            check_output_path(exporting ? export_request->output : capture_request->output);
+            check_source_files(current);
+            auto& asset_owner = assets(current);
+            const auto candidate = asset_owner.prepare_export(*current.owner, request);
+            const auto validate = [&]() -> Result<void> {
+                try {
+                    check_source_files(current);
+                    return asset_owner.validate_export(candidate, *current.owner);
+                } catch (ProtocolFailure& failure) {
+                    return std::move(failure.error);
+                } catch (AuthoringAssetFailure& failure) {
+                    return std::move(failure.error);
+                } catch (...) {
+                    return Error{ErrorCode::execution_failed,
+                                 "Cannot validate retained artifact owner",
+                                 {.operation = "authoring.artifact.validate"}};
+                }
+            };
+            outcome_may_have_changed = true;
+            auto artifact =
+                take(exporting ? export_authoring_scene(candidate, root, export_python, export_tool,
+                                                        *export_request, validate)
+                               : capture_provider->capture(candidate, *capture_request, validate));
+            if (artifact.json.size() > authoring_protocol_maximum_response_bytes)
+                fail(-32000, ErrorCode::execution_failed,
+                     "Artifact report exceeds response bounds; inspect output before retrying");
+            auto encoded = Json::parse(artifact.json);
+            if (!encoded.is_object() || !encoded.contains("published") ||
+                !encoded.at("published").is_boolean() ||
+                encoded.at("published").get<bool>() != artifact.published)
+                fail(-32000, ErrorCode::execution_failed,
+                     "Artifact adapter returned an inconsistent publication outcome; reconcile "
+                     "output");
+            Dispatch reply{std::move(encoded)};
+            reply.failed = !artifact.succeeded;
+            return reply;
+        }
         if (AuthoringAssets::supports(method)) {
             auto& current = require_session();
             if (AuthoringAssets::requires_project_fence(method))
                 check_project_file(current);
-            if (!current.assets)
-                current.assets = std::make_unique<AuthoringAssets>(*current.files, current.project,
-                                                                   current.path);
-            auto reply = current.assets->dispatch(method, parameters, outcome_may_have_changed);
+            auto reply = assets(current).dispatch(method, parameters, outcome_may_have_changed);
             Dispatch prepared{std::move(reply.result)};
             prepared.assets = std::move(reply);
             return prepared;
         }
         if (method == "protocol.discover") {
             empty_parameters(parameters);
-            return {discovery()};
+            return {discovery(export_available(), capture_provider != nullptr)};
         }
         if (method == "schema.components") {
             empty_parameters(parameters);
@@ -1103,15 +1229,34 @@ AuthoringProtocol::AuthoringProtocol(std::unique_ptr<Impl> impl) noexcept
 AuthoringProtocol::~AuthoringProtocol() = default;
 
 Result<std::unique_ptr<AuthoringProtocol>> AuthoringProtocol::create(std::filesystem::path root) {
+    return create(AuthoringProtocolOptions{std::move(root), {}, {}, nullptr});
+}
+
+Result<std::unique_ptr<AuthoringProtocol>>
+AuthoringProtocol::create(AuthoringProtocolOptions options) {
     try {
+        auto& root = options.root;
         if (!root.empty()) {
             auto resolved = ProjectRoot::open(root, {.operation = "authoring.protocol.create"});
             if (!resolved)
                 return std::move(resolved).error();
             root = resolved.value().native_path();
         }
+        if (options.export_python.empty() != options.export_tool.empty())
+            return Error{ErrorCode::invalid_argument,
+                         "Export requires both trusted host helper paths",
+                         {.operation = "authoring.protocol.create"}};
+        for (auto* path : {&options.export_python, &options.export_tool}) {
+            if (path->empty())
+                continue;
+            if (!std::filesystem::is_regular_file(*path))
+                return Error{ErrorCode::invalid_path,
+                             "Export helper must be an existing regular file",
+                             {.operation = "authoring.protocol.create"}};
+            *path = std::filesystem::canonical(*path);
+        }
         return std::unique_ptr<AuthoringProtocol>{
-            new AuthoringProtocol(std::make_unique<Impl>(std::move(root)))};
+            new AuthoringProtocol(std::make_unique<Impl>(std::move(options)))};
     } catch (...) {
         return Error{ErrorCode::execution_failed,
                      "Cannot create authoring protocol service",

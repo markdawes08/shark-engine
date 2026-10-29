@@ -15,6 +15,7 @@ import queue
 import shutil
 import struct
 import subprocess
+import sys
 import tempfile
 import threading
 import time
@@ -252,3 +253,94 @@ def export_package(args) -> dict:
         report["error"] = (error.detail if isinstance(error, ExportError) else
                            {"code": "execution_failed", "message": str(error)})
         return report
+
+
+def authoring_export(request_file: Path) -> int:
+    """Private inverted exchange: caller owns ProjectFiles and captured content.
+
+    The native caller owns the process-tree deadline. No source project is opened
+    here, and no independent ExportContent child can acquire a second writer.
+    """
+    import package_runtime as package
+
+    def emit(value):
+        raw = json.dumps(value, ensure_ascii=True, separators=(",", ":")).encode("utf-8") + b"\n"
+        if len(raw) > 1024 * 1024:
+            raise ExportError("execution_failed", "Authoring export response exceeds its bound")
+        sys.stdout.buffer.write(raw)
+        sys.stdout.buffer.flush()
+
+    def receive(expected):
+        if sys.stdin.buffer.readline(17) != expected + b"\n":
+            raise ExportError("conflict", "Authoring owner closed or rejected package publication")
+
+    report = {"format": "shark.client-export", "schema_version": 1, "status": "ERROR",
+              "published": False, "qualification": "NOT_RUN", "renderer_initialized": False,
+              "platform": "windows-x86_64", "artifacts": []}
+    try:
+        require_host("windows-x86_64")
+        request = json.loads(package.regular_file(request_file, maximum=1024 * 1024),
+                             object_pairs_hook=unique_object, parse_constant=reject_constant,
+                             parse_float=finite_float)
+        package.exact_record(request, {"format", "schema_version", "project_root", "build_dir",
+                                      "crt_dir", "shaders", "output", "content_directory",
+                                      "content_record", "notices"}, "authoring export request")
+        if request["format"] != "shark.authoring-export-request" or type(request["schema_version"]) is not int or request["schema_version"] != 1:
+            raise ExportError("invalid_argument", "Unsupported authoring export request")
+        paths = {}
+        for name in ("project_root", "build_dir", "crt_dir", "shaders", "output",
+                     "content_directory", "content_record"):
+            paths[name] = Path(package.content_text(request[name], 4096)).absolute()
+            package.assert_no_links(paths[name])
+        output = paths["output"]
+        if output.exists():
+            raise ExportError("conflict", "Package output must be fresh; existing output was preserved")
+        if output.resolve().is_relative_to(paths["project_root"].resolve()):
+            raise ExportError("invalid_argument", "Export output must be outside the source project root")
+        payload, manifest = package.collect_runtime_payload(paths["build_dir"], paths["crt_dir"])
+        vertex, pixel, provenance = package.scene_shader_inputs(paths["shaders"])
+        if not isinstance(request["notices"], list) or len(request["notices"]) > 128:
+            raise ExportError("invalid_argument", "Content notices exceed their inventory bound")
+        notices, notice_inputs = {}, {}
+        for row in request["notices"]:
+            package.exact_record(row, {"license", "path"}, "content notice")
+            license_id = package.content_text(row["license"], 128)
+            if license_id in notices:
+                raise ExportError("invalid_argument", "Content notice license is duplicated")
+            path = Path(package.content_text(row["path"], 4096)).absolute()
+            data = package.regular_file(path, maximum=64 * 1024)
+            notices[license_id], notice_inputs[path] = data, data
+        if sum(map(len, notices.values())) > 1024 * 1024:
+            raise ExportError("invalid_argument", "Content notices exceed their combined byte bound")
+        emit({"format": "shark.authoring-export-helper", "schema_version": 1,
+              "status": "INPUTS", "vertex": str(vertex), "pixel": str(pixel)})
+        receive(b"ASSEMBLE")
+        content = json.loads(package.regular_file(paths["content_record"], maximum=1024 * 1024),
+                             object_pairs_hook=unique_object, parse_constant=reject_constant,
+                             parse_float=finite_float)
+        payload, manifest = package.assemble_scene_package(
+            payload, manifest, paths["content_directory"], content, paths["shaders"],
+            expected_generation=provenance["generation"], content_notices=notices)
+
+        def validate():
+            emit({"format": "shark.authoring-export-helper", "schema_version": 1,
+                  "status": "READY_TO_PUBLISH"})
+            receive(b"PUBLISH")
+            for path, data in notice_inputs.items():
+                if package.regular_file(path, maximum=64 * 1024) != data:
+                    raise ExportError("conflict", "Content notice changed before publication", path=str(path))
+
+        # Keep child staging inside the native caller's owned scratch tree. It
+        # can remove uncommitted bytes even if this process is terminated.
+        published = package.publish(output, payload, manifest, before_publish=validate,
+                                    staging_parent=request_file.absolute().parent)
+        report.update(status="PASS", published=True, package_directory=str(output),
+                      manifest_sha256=package.digest(package.json_bytes(published)),
+                      files=len(published["files"]), content=content)
+        report["artifacts"] = [{"path": "package-manifest.json", "sha256": report["manifest_sha256"]}]
+    except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
+        report["status"] = "FAIL" if report["published"] else "ERROR"
+        report["error"] = (error.detail if isinstance(error, ExportError) else
+                           {"code": "execution_failed", "message": str(error)})
+    emit(report)
+    return 0 if report["status"] == "PASS" else (1 if report["published"] else 2)

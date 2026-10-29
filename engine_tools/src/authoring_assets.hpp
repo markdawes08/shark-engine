@@ -1,6 +1,6 @@
 #pragma once
 
-#include "shark/tools/asset_import.hpp"
+#include "shark/tools/client_export.hpp"
 
 #include <nlohmann/json.hpp>
 
@@ -46,6 +46,10 @@ class AuthoringAssets final {
     // A read token or take acknowledgement is admitted only after the enclosing
     // protocol has successfully encoded and bounded its entire response.
     void admit(AuthoringAssetReply& reply);
+    [[nodiscard]] PreparedClientExport prepare_export(const AuthoredScene& owner,
+                                                      const ClientExportRequest& request);
+    [[nodiscard]] Result<void> validate_export(const PreparedClientExport& candidate,
+                                               const AuthoredScene& owner);
 
   private:
     struct Impl;
