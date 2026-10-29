@@ -20,9 +20,10 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**Assignment 16b adds hierarchy, scene edits and an authored-scene viewport**
-to the human editor shell. Selected headless verification is tracked in the
-[latest handoff](docs/handoffs/16b-editor-scene-workspace.md). Native rendering and
+**Assignment 16c adds a component inspector and shared undo/redo**
+to the human editor's existing hierarchy and scene viewport. Selected headless
+verification is tracked in the [latest handoff](docs/handoffs/16c-editor-inspector.md).
+Native rendering and
 actual UI acceptance for these changes remain deferred in the
 [nonblocking backlog](docs/backlog.md): the user paused desktop interaction until
 explicitly resumed, while authorizing continued coding and headless checks.
@@ -45,7 +46,8 @@ Current capabilities include:
   close, saved/dirty status and close decisions through the same retained authoring
   owner. The [scene workspace](docs/editor-scene-workspace.md) adds bounded
   hierarchy/selection, create/delete/reparent and an explicit-camera viewport.
-  Inspector/history, asset and console panels remain later checkpoints.
+  The [inspector](docs/editor-inspector.md) adds explicit component drafts and
+  shared undo/redo. Asset and console panels remain later checkpoints.
 - [Terminal authoring](docs/authoring-protocol.md) through one-shot JSON or
   persistent stdio, with discovery, bounded queries, retained edits, preview,
   undo/redo, conflict-aware persistence, bounded asset import jobs and static scene

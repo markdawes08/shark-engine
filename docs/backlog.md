@@ -67,6 +67,25 @@ RTX 4070 Laptop and Intel GPUs. All are **NOT_RUN** while desktop testing is pau
   Preserve focus/text/modal shortcut gates and complete the retained 16a lifecycle
   checks. Actual bidirectional terminal continuation remains 16e.
 
+### BL-16A-UI-01: 16c acceptance additions
+
+The [inspector and history](editor-inspector.md) add these actual Editor checks,
+all **NOT_RUN** until the user resumes desktop testing:
+
+- Select entities and inspect/edit Name, local Transform, Camera and MeshRenderer.
+  Exercise optional-component addition/removal, signed scale, quaternion order,
+  camera cross-field rejection and invalid asset IDs. Verify errors retain the
+  draft and leave authoritative state unchanged; successful edits update the
+  hierarchy, dirty indicator and explicitly refreshed viewport.
+- Change selection or scene revision while a draft exists; verify it cannot be
+  silently applied to another entity or newer revision. Exercise explicit reload
+  and draft handling around hierarchy edits, undo/redo and project close.
+- Use shared undo/redo across hierarchy and inspector edits, including stale
+  history decisions. Verify saving keeps history, undo after save becomes dirty,
+  and close/reopen resets owner-local history. Check focus/text/modal behavior,
+  scrolling/layout and save/discard/cancel with the final controls on both GPUs.
+  Connected terminal continuation remains 16e.
+
 This deferral does not authorize driver installation, host resource changes,
 foreign-handle cleanup or relaxed acceptance limits. The active implementation
 sequence for 05c's immediate successors is recorded in the

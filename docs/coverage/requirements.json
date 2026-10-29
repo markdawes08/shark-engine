@@ -440,7 +440,7 @@
       "planned_fixture": "EditorApiStateEquivalence, EditorLifecycle and EditorFocusRouting fixtures; FeatureWorld/EditorAuthoring is the representative saved project. Add HumanTerminalProjectHandoff and UnsavedHistoryConflict fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "16a implements the Windows project shell over the retained authoring owner; 16b adds bounded hierarchy and selection, retained entity create/delete/reparent, an explicit camera and metadata inventory, typed CPU viewport extraction and GUI scene composition. Selected results and limits belong to docs/handoffs/16a-editor-shell.md and docs/handoffs/16b-editor-scene-workspace.md. The user deferred desktop acceptance to nonblocking backlog BL-16A-UI-01 and authorized continued coding/headless checks until desktop testing is explicitly resumed. All 16b native composition and actual UI checks remain NOT_RUN. Full REQ-16 remains NOT_RUN: inspector, asset browser, console, UI undo/redo and connected human/terminal semantic parity retain checkpoints 16c-16e. CPU session, hierarchy, extraction and ImGui fixtures do not qualify native graphics or the complete editor workflow."
+        "reason": "16a implements the Windows project shell; 16b adds retained hierarchy, lifecycle edits and scene viewport composition. 16c adds entity/revision-bound component drafts, atomic Apply and ticket-bound shared undo/redo through the same retained mutation path. Selected results and limits belong to docs/handoffs/16c-editor-inspector.md and the earlier shell/workspace handoffs. The user deferred desktop acceptance to nonblocking backlog BL-16A-UI-01 and authorized continued coding/headless checks until desktop testing is explicitly resumed. Native composition and actual inspector/history/UI checks remain NOT_RUN. Full REQ-16 remains NOT_RUN: asset browser, console and connected human/terminal semantic parity retain checkpoints 16d-16e. CPU adapters and ImGui fixtures do not qualify native graphics or the complete editor workflow."
       }
     },
     {
@@ -2989,6 +2989,35 @@
         ],
         "fixture_reason": "Real temporary projects exercise complete bounded protocol queries, single-use continuations, parent-first hierarchy ordering, local display pages and explicit Camera/MeshRenderer observations. Selection and confirmations bind to an observed revision; external deletion, undo recreation and reopen cannot silently rebind a selected durable ID. Create, subtree delete and keep-local/keep-world reparent use the existing retained mutation sequence, inspect all three outcome levels and preserve dirty state, shared history and save behavior. Tests independently check cycle and stale-revision rejection, failed refresh and foreign-thread access. No mutable Scene, command schema or second persistence path is introduced.",
         "external_fixture_reason": "The Editor-private ScenePanel and ProjectSession adapters require real ProjectFiles and retained protocol owners rather than another FeatureWorld command. CPU fixtures establish shared edits and observation fences; actual hierarchy selection, camera choice, confirmation dialogs, save interactions and bidirectional UI/terminal acceptance remain deferred/NOT_RUN in BL-16A-UI-01.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "editor.inspector-history",
+        "name": "Revision-bound component drafts and retained shared undo/redo",
+        "requirement_ids": [
+          "REQ-16"
+        ],
+        "test_ids": [
+          "shark.editor.inspector",
+          "shark.editor.scene-panel",
+          "shark.editor.gui-adapter",
+          "shark.editor.project-session"
+        ],
+        "test_sources": [
+          "tests/editor_inspector_tests.cpp",
+          "tests/editor_inspector_gui_tests.cpp",
+          "tests/editor_scene_panel_tests.cpp",
+          "tests/editor_project_session_tests.cpp"
+        ],
+        "fixtures": [
+          "editor/inspector_panel.cpp",
+          "editor/inspector_widget.cpp",
+          "editor/scene_panel.cpp",
+          "docs/editor-inspector.md",
+          "docs/handoffs/16c-editor-inspector.md"
+        ],
+        "fixture_reason": "Real temporary ProjectFiles owners exercise Name/Transform/Camera/MeshRenderer drafts, atomic four-command Apply as one history group, canonical quaternion and signed scale, optional component removal, exact uint32 mesh indices, rejection without partial state, revision/selection fences, stale tickets, save preserving history and fresh reopen. Inspector and hierarchy share one retained pending mutation path and all three outcome levels. A headless ImGui fixture exercises draft rendering and blocked/stale behavior without a native window. Existing Core schemas, authoring commands, history and source formats are unchanged.",
+        "external_fixture_reason": "Editor-private draft and widget state requires adapter fixtures over actual retained project services; it adds no FeatureWorld command. Native field entry, optional component controls, Apply, shared history, focus/layout and draft/close dialogs remain NOT_RUN in BL-16A-UI-01. CPU evidence does not establish UI/terminal semantic parity or full REQ-16 acceptance.",
         "featureworld_cases": []
       },
       {

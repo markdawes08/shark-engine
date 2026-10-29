@@ -6,7 +6,7 @@ This five-checkpoint plan follows the completed
 [human/agent contract](human-agent-plan.md), [MMORPG plan](mmorpg-plan.md) and
 [testing policy](../testing-policy.md). Scope is the current Windows PC; portable
 shared-owner behavior retains WSL coverage. Full REQ-16 remains NOT_RUN;
-`current_assignment` is 16; 16b is the current implementation checkpoint.
+`current_assignment` is 16; 16c is the current implementation checkpoint.
 
 | Checkpoint | Deliverable and acceptance |
 | --- | --- |
@@ -22,7 +22,9 @@ the [shell handoff](../handoffs/16a-editor-shell.md). The current
 [workspace contract](../editor-scene-workspace.md) and
 [ADR 0041](../architecture/0041-editor-scene-workspace.md) cover hierarchy,
 revision-scoped selection, shared lifecycle commands and native scene composition.
-Selected headless verification is complete; 16c is the next coding checkpoint. 16c-16e
+16c adds [component drafts and shared history](../editor-inspector.md); its
+[handoff](../handoffs/16c-editor-inspector.md) records implementation and headless
+verification. Selected checks are complete; 16d is the next coding checkpoint. 16d-16e
 remain planned; neither current implementation nor deferred qualification closes
 the full requirement.
 

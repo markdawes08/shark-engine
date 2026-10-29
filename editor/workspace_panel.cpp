@@ -1,4 +1,5 @@
 #include "workspace_panel.hpp"
+#include "inspector_widget.hpp"
 #include "scene_panel.hpp"
 
 #include <algorithm>
@@ -37,6 +38,8 @@ bool selectable_literal(const std::string& text, bool selected) {
 struct WorkspacePanel::Impl {
     ProjectSession& session;
     ScenePanel hierarchy;
+    InspectorPanel inspector;
+    InspectorWidget inspector_widget;
     ShaderArtifact vertex;
     ShaderArtifact pixel;
     std::array<char, 257> create_name{};
@@ -58,7 +61,8 @@ struct WorkspacePanel::Impl {
     std::string notice;
 
     Impl(ProjectSession& owner, const ShaderArtifact& vs, const ShaderArtifact& ps)
-        : session(owner), hierarchy(owner), vertex(vs), pixel(ps) {
+        : session(owner), hierarchy(owner), inspector(hierarchy),
+          inspector_widget(inspector, hierarchy), vertex(vs), pixel(ps) {
         text_buffer(create_name, "Entity");
         text_buffer(target, "windows-client");
         refresh();
@@ -364,9 +368,15 @@ void WorkspacePanel::draw(const GraphicsWindowFrame& frame, bool blocked) {
         value.confirmation();
     ImGui::BeginDisabled(blocked);
     const float width = ImGui::GetContentRegionAvail().x;
-    const float left = std::clamp(width * .34F, 280.0F, 430.0F);
+    const float left = std::clamp(width * .25F, 230.0F, 350.0F);
     ImGui::BeginChild("Hierarchy", {left, 0}, ImGuiChildFlags_Borders);
     value.draw_hierarchy();
+    ImGui::EndChild();
+    ImGui::SameLine();
+    const float inspector_width = std::clamp(width * .29F, 280.0F, 410.0F);
+    ImGui::BeginChild("Inspector", {inspector_width, 0}, ImGuiChildFlags_Borders);
+    if (value.inspector_widget.draw(blocked))
+        value.synchronize();
     ImGui::EndChild();
     ImGui::SameLine();
     ImGui::BeginChild("Viewport", {0, 0}, ImGuiChildFlags_Borders);
@@ -376,6 +386,12 @@ void WorkspacePanel::draw(const GraphicsWindowFrame& frame, bool blocked) {
 }
 void WorkspacePanel::cancel_confirmation() noexcept {
     impl_->deleting.reset();
+}
+bool WorkspacePanel::has_inspector_draft() const noexcept {
+    return impl_->inspector_widget.has_changes();
+}
+void WorkspacePanel::discard_inspector_draft() noexcept {
+    impl_->inspector_widget.discard_draft();
 }
 const client::SceneViewportRequest* WorkspacePanel::viewport() const noexcept {
     return impl_->image_drawn && impl_->view ? &*impl_->view : nullptr;

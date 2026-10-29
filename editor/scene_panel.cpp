@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <array>
 #include <charconv>
+#include <cmath>
 #include <map>
 #include <thread>
 #include <utility>
@@ -101,6 +102,105 @@ Json optional_id(const std::optional<AuthoredEntityId>& value) {
     return value ? Json(value->value().to_string()) : Json(nullptr);
 }
 
+Json vector_json(const math::Vec3& value) {
+    return Json::array({value.x, value.y, value.z});
+}
+
+Json component_commands(const InspectorValues& values) {
+    const auto id = values.selection.id.value().to_string();
+    const auto& transform = values.transform;
+    // JSON cannot represent nonfinite doubles. Reject before serializing rather
+    // than silently converting an invalid input to null.
+    const std::array numbers{transform.translation.x, transform.translation.y,
+                             transform.translation.z, transform.rotation.x,
+                             transform.rotation.y,    transform.rotation.z,
+                             transform.rotation.w,    transform.scale.x,
+                             transform.scale.y,       transform.scale.z};
+    if (!std::all_of(numbers.begin(), numbers.end(),
+                     [](double value) { return std::isfinite(value); }))
+        fail(ErrorCode::invalid_argument, "Inspector transform values must be finite");
+    Json camera = nullptr;
+    if (values.camera) {
+        const auto& value = *values.camera;
+        const std::array camera_numbers{value.vertical_fov_radians, value.orthographic_height,
+                                        value.near_clip, value.far_clip};
+        if (!std::all_of(camera_numbers.begin(), camera_numbers.end(),
+                         [](double number) { return std::isfinite(number); }) ||
+            (value.projection != CameraProjection::perspective &&
+             value.projection != CameraProjection::orthographic))
+            fail(ErrorCode::invalid_argument, "Inspector Camera fields cannot be represented");
+        camera = {{"projection", value.projection == CameraProjection::perspective
+                                     ? "perspective"
+                                     : "orthographic"},
+                  {"vertical_fov_radians", value.vertical_fov_radians},
+                  {"orthographic_height", value.orthographic_height},
+                  {"near_clip", value.near_clip},
+                  {"far_clip", value.far_clip}};
+    }
+    Json mesh = nullptr;
+    if (values.mesh_renderer) {
+        const auto& value = *values.mesh_renderer;
+        mesh = {{"asset_id", value.asset.value().to_string()},
+                {"mesh_index", value.mesh_index},
+                {"visible", value.visible}};
+    }
+    return Json::array(
+        {{{"type", "set_name"}, {"entity_id", id}, {"name", values.name.value}},
+         {{"type", "set_transform"},
+          {"entity_id", id},
+          {"transform",
+           {{"translation", vector_json(transform.translation)},
+            {"rotation", Json::array({transform.rotation.x, transform.rotation.y,
+                                      transform.rotation.z, transform.rotation.w})},
+            {"scale", vector_json(transform.scale)}}}},
+         {{"type", "set_camera"}, {"entity_id", id}, {"camera", std::move(camera)}},
+         {{"type", "set_mesh_renderer"}, {"entity_id", id}, {"mesh_renderer", std::move(mesh)}}});
+}
+
+math::Vec3 vector_value(const Json& value) {
+    return {value.at(0).get<double>(), value.at(1).get<double>(), value.at(2).get<double>()};
+}
+
+InspectorValues inspector_value(const Json& value, SceneRevision revision) {
+    InspectorValues result{{entity_id(value.at("entity_id")), revision},
+                           {value.at("name").get<std::string>()},
+                           {},
+                           {},
+                           {}};
+    const auto& transform = value.at("transform").at("local");
+    const auto& rotation = transform.at("rotation");
+    result.transform = {vector_value(transform.at("translation")),
+                        {rotation.at(3).get<double>(), rotation.at(0).get<double>(),
+                         rotation.at(1).get<double>(), rotation.at(2).get<double>()},
+                        vector_value(transform.at("scale"))};
+    if (!value.at("camera").is_null()) {
+        const auto& camera = value.at("camera");
+        const auto projection = camera.at("projection").get<std::string>();
+        if (projection != "perspective" && projection != "orthographic")
+            fail(ErrorCode::execution_failed, "Inspector received an unknown Camera projection");
+        result.camera =
+            Camera{projection == "perspective" ? CameraProjection::perspective
+                                               : CameraProjection::orthographic,
+                   camera.at("vertical_fov_radians").get<double>(),
+                   camera.at("orthographic_height").get<double>(),
+                   camera.at("near_clip").get<double>(), camera.at("far_clip").get<double>()};
+    }
+    if (!value.at("mesh_renderer").is_null()) {
+        const auto& mesh = value.at("mesh_renderer");
+        result.mesh_renderer = MeshRenderer{
+            AssetId{take(StableId::parse(mesh.at("asset_id").get<std::string>()))},
+            mesh.at("mesh_index").get<std::uint32_t>(), mesh.at("visible").get<bool>()};
+    }
+    return result;
+}
+
+std::optional<tools::AuthoringHistoryGroup> history_group(const Json& value) {
+    if (value.is_null())
+        return {};
+    return tools::AuthoringHistoryGroup{{decimal(value.at("ticket"))},
+                                        value.at("command_count").get<std::size_t>()};
+}
+
 HierarchyRow decode_row(const Json& value) {
     const auto& hierarchy = value.at("hierarchy");
     HierarchyRow result{entity_id(value.at("entity_id")),
@@ -156,7 +256,7 @@ struct ScenePanel::Impl {
     struct Pending {
         Json identity;
         std::string input;
-        AuthoredEntityId entity;
+        std::optional<AuthoredEntityId> entity;
         bool select_after;
     };
 
@@ -337,10 +437,11 @@ struct ScenePanel::Impl {
         selection.reset();
         try {
             refresh();
-            // Only an explicit successful create/reparent may reselect its
+            // Successful create/reparent/component edits may reselect their
             // known surviving entity. External refresh never rebinds selection.
-            if (select_after && revision == receipt.revision && find(receipt.entity))
-                selection = SceneSelection{receipt.entity, revision};
+            if (select_after && receipt.entity && revision == receipt.revision &&
+                find(*receipt.entity))
+                selection = SceneSelection{*receipt.entity, revision};
         } catch (Failure& failure) {
             receipt.refresh_error = std::move(failure.error);
         } catch (...) {
@@ -351,8 +452,8 @@ struct ScenePanel::Impl {
         return receipt;
     }
 
-    SceneEditReceipt mutate(AuthoredEntityId entity, Json command, SceneRevision expected,
-                            bool select_after) {
+    SceneEditReceipt mutate_operation(std::optional<AuthoredEntityId> entity, Json operation,
+                                      SceneRevision expected, bool select_after) {
         require_revision(expected);
         const auto status =
             call("scene.mutation_status", {{"expected_revision", revision_json(expected)}});
@@ -360,7 +461,7 @@ struct ScenePanel::Impl {
             fail(ErrorCode::conflict, "Authoring mutation identities are exhausted");
         Json parameters{{"mutation_id", status.at("next")},
                         {"expected_revision", revision_json(expected)},
-                        {"operation", {{"type", "command"}, {"command", std::move(command)}}}};
+                        {"operation", std::move(operation)}};
         pending.emplace(Pending{status.at("next"), parameters.dump(), entity, select_after});
         auto reply = take(session.request("scene.mutate", pending->input));
         auto document = Json::parse(reply.json);
@@ -374,6 +475,12 @@ struct ScenePanel::Impl {
             throw Failure{std::move(decoded)};
         }
         return decode_mutation(document.at("result"));
+    }
+
+    SceneEditReceipt mutate(AuthoredEntityId entity, Json command, SceneRevision expected,
+                            bool select_after) {
+        return mutate_operation(entity, {{"type", "command"}, {"command", std::move(command)}},
+                                expected, select_after);
     }
 };
 
@@ -483,6 +590,79 @@ Result<SceneEditReceipt> ScenePanel::reparent(AuthoredEntityId id,
 }
 bool ScenePanel::needs_reconciliation() const noexcept {
     return impl_->pending.has_value();
+}
+
+Result<InspectorValues> ScenePanel::inspect(AuthoredEntityId id, SceneRevision expected) {
+    return boundary<InspectorValues>([&] {
+        impl_->check_thread();
+        if (!impl_->current() || expected != impl_->revision)
+            fail(ErrorCode::conflict, "Inspector observation changed; refresh explicitly");
+        impl_->require_entity(id);
+        const auto value = impl_->call(
+            "scene.inspect", {{"entity_id", id.value().to_string()},
+                              {"fields", {"name", "transform", "camera", "mesh_renderer"}},
+                              {"expected_revision", revision_json(expected)}});
+        if (revision_value(value.at("revision")) != expected || value.at("entities").size() != 1 ||
+            !value.at("complete").get<bool>() || !value.at("next_cursor").is_null() ||
+            value.at("scope").at("kind") != "authored" ||
+            value.at("scope").at("scene_id") != impl_->session.state().scene_id)
+            fail(ErrorCode::execution_failed, "Inspector received an inconsistent observation");
+        auto result = inspector_value(value.at("entities").at(0), expected);
+        if (result.selection.id != id || !value.at("entities").at(0).at("authority").is_null())
+            fail(ErrorCode::execution_failed, "Inspector received a different entity");
+        return result;
+    });
+}
+
+Result<SceneEditReceipt> ScenePanel::apply_components(const InspectorValues& values) {
+    return boundary<SceneEditReceipt>([&] {
+        impl_->require_revision(values.selection.revision);
+        impl_->require_entity(values.selection.id);
+        if (values.name.value.size() > 4096)
+            fail(ErrorCode::invalid_argument, "Inspector Name exceeds the retained input bound");
+        auto commands = component_commands(values);
+        return impl_->mutate_operation(
+            values.selection.id,
+            {{"type", "batch"},
+             {"batch",
+              {{"id", take(generate_stable_id()).to_string()}, {"commands", std::move(commands)}}}},
+            values.selection.revision, true);
+    });
+}
+
+Result<tools::AuthoringHistoryStatus> ScenePanel::history(SceneRevision expected) {
+    return boundary<tools::AuthoringHistoryStatus>([&] {
+        impl_->check_thread();
+        const auto value =
+            impl_->call("scene.history", {{"expected_revision", revision_json(expected)}});
+        if (revision_value(value.at("revision")) != expected)
+            fail(ErrorCode::execution_failed, "History received another scene revision");
+        const auto& limits = value.at("limits");
+        return tools::AuthoringHistoryStatus{expected,
+                                             value.at("synchronized").get<bool>(),
+                                             value.at("undo_entries").get<std::size_t>(),
+                                             value.at("redo_entries").get<std::size_t>(),
+                                             value.at("retained_bytes").get<std::size_t>(),
+                                             {limits.at("max_entries").get<std::size_t>(),
+                                              limits.at("max_retained_bytes").get<std::size_t>()},
+                                             history_group(value.at("next_undo")),
+                                             history_group(value.at("next_redo"))};
+    });
+}
+
+Result<SceneEditReceipt> ScenePanel::undo(tools::AuthoringHistoryTicket ticket,
+                                          SceneRevision expected) {
+    return boundary<SceneEditReceipt>([&] {
+        return impl_->mutate_operation(
+            {}, {{"type", "undo"}, {"ticket", std::to_string(ticket.value)}}, expected, false);
+    });
+}
+Result<SceneEditReceipt> ScenePanel::redo(tools::AuthoringHistoryTicket ticket,
+                                          SceneRevision expected) {
+    return boundary<SceneEditReceipt>([&] {
+        return impl_->mutate_operation(
+            {}, {{"type", "redo"}, {"ticket", std::to_string(ticket.value)}}, expected, false);
+    });
 }
 Result<SceneEditReceipt> ScenePanel::reconcile() {
     return boundary<SceneEditReceipt>([&] {

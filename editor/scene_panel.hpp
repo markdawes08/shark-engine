@@ -3,6 +3,8 @@
 #include "project_session.hpp"
 
 #include <shark/scene.hpp>
+#include <shark/schema.hpp>
+#include <shark/tools/authoring_history.hpp>
 
 #include <memory>
 #include <optional>
@@ -30,11 +32,19 @@ struct SceneSelection {
 };
 
 struct SceneEditReceipt {
-    AuthoredEntityId entity;
+    std::optional<AuthoredEntityId> entity;
     bool changed;
     SceneRevision revision;
     // A known successful edit remains a success if display refresh fails.
     std::optional<Error> refresh_error;
+};
+
+struct InspectorValues {
+    SceneSelection selection;
+    Name name;
+    Transform transform;
+    std::optional<Camera> camera;
+    std::optional<MeshRenderer> mesh_renderer;
 };
 
 // Read-only bounded display snapshot over one ProjectSession, never another
@@ -71,6 +81,15 @@ class ScenePanel final {
     [[nodiscard]] Result<SceneEditReceipt> reparent(AuthoredEntityId id,
                                                     std::optional<AuthoredEntityId> parent,
                                                     ReparentMode mode, SceneRevision expected);
+
+    [[nodiscard]] Result<InspectorValues> inspect(AuthoredEntityId id, SceneRevision expected);
+    // One atomic retained batch and history group for a complete component draft.
+    [[nodiscard]] Result<SceneEditReceipt> apply_components(const InspectorValues& values);
+    [[nodiscard]] Result<tools::AuthoringHistoryStatus> history(SceneRevision expected);
+    [[nodiscard]] Result<SceneEditReceipt> undo(tools::AuthoringHistoryTicket ticket,
+                                                SceneRevision expected);
+    [[nodiscard]] Result<SceneEditReceipt> redo(tools::AuthoringHistoryTicket ticket,
+                                                SceneRevision expected);
 
     // Ambiguous delivery blocks new intents. Lookup the original retained
     // mutation; never allocate a replacement identity or silently replay it.

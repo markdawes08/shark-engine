@@ -35,6 +35,8 @@ correlation never creates a replacement mutation. A successful mutation with a
 failed hierarchy refresh returns its success and a separate refresh error.
 Save, dirty close decisions and history continue through the original shell
 session. This increment adds no component schemas or alternate persistence path.
+[16c's inspector](editor-inspector.md) extends this same retained path with
+component drafts and shared undo/redo.
 
 ## Read-only viewport preparation
 

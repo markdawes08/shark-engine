@@ -49,14 +49,16 @@ This user amendment permits later implementation to proceed before those checks;
 it does not qualify untested behavior or close full UI acceptance. Do not infer
 permission to resume from elapsed time or a new coding request.
 
-**Current handoff: [16b, scene workspace](docs/handoffs/16b-editor-scene-workspace.md).**
-16b adds bounded hierarchy/selection, shared lifecycle commands and scene viewport
-composition. Its handoff records selected headless results; remaining desktop
-acceptance is deferred under the user's amendment. Next coding work after those
-headless checks is 16c; append its desktop checks to the same later session.
+**Current handoff: [16c, inspector and history](docs/handoffs/16c-editor-inspector.md).**
+16c extends the retained scene workspace with schema-informed component drafts
+and shared undo/redo. Its handoff records implementation and selected headless
+status; remaining desktop acceptance is deferred under the user's amendment.
+Selected headless checks are complete; next coding work is 16d. Append its desktop
+checks to the same later session.
 Follow the [editor checkpoints](docs/roadmap/editor-plan.md),
 [shell contract](docs/editor-shell.md), [workspace contract](docs/editor-scene-workspace.md)
-and [ADR 0041](docs/architecture/0041-editor-scene-workspace.md). The native shell adapts
+and [inspector contract](docs/editor-inspector.md), following
+[ADR 0041](docs/architecture/0041-editor-scene-workspace.md). The native shell adapts
 the existing retained authoring owner in process; display values are not another
 mutable Scene. Preserve revision-bound save/discard, original publication receipts,
 one writer and explicit save/close/reopen handoff. Native close cancellation lets
@@ -67,7 +69,12 @@ retained mutation outcomes. The typed CPU viewport read extracts the original
 retained scene with fresh client asset closures and explicit catalog inventory;
 it never imports or writes source implicitly. GUI composition retains scene GPU
 owners through completion and exposes only engine-owned texture choices.
-The later panels and actual UI/terminal parity retain 16c-16e; navigation, picking
+Inspector drafts bind to an entity and full revision, require explicit Apply,
+and never silently rebase after a selection or history change. Hierarchy,
+component edits and ticket-bound undo/redo use one retained mutation path;
+preserve known success if a subsequent display refresh fails. Save preserves
+history and does not implicitly apply a draft.
+The later panels and actual UI/terminal parity retain 16d-16e; navigation, picking
 and gizmos remain 17. Full REQ-16 remains NOT_RUN; current assignment is 16.
 
 15a-15d supply the CPU `SharkAuthor` host, retained project ownership, shared

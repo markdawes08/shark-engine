@@ -166,7 +166,8 @@ TEST_CASE("Editor entity controls share retained validation history and saved so
     REQUIRE_FALSE(created.refresh_error);
     CHECK(session->state().dirty);
     CHECK(panel.selection()->id == created.entity);
-    CHECK(row(panel, created.entity).parent == entity(1));
+    REQUIRE(created.entity);
+    CHECK(row(panel, *created.entity).parent == entity(1));
     CHECK(row(panel, entity(1)).child_count == 2);
     CHECK(call(*session, "scene.history").at("undo_entries") == 1);
 
@@ -179,7 +180,7 @@ TEST_CASE("Editor entity controls share retained validation history and saved so
     CHECK(call(*session, "scene.history").at("undo_entries") == 1);
     CHECK(call(*session, "scene.mutation_status").at("high_watermark") !=
           before_rejection.at("high_watermark"));
-    rejected(panel.erase(created.entity, initial), ErrorCode::conflict);
+    rejected(panel.erase(*created.entity, initial), ErrorCode::conflict);
     CHECK(panel.rows().size() == 5);
     const auto history = call(*session, "scene.history");
     const auto saved = take(session->save(panel.revision()));

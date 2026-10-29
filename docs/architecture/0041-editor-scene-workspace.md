@@ -36,8 +36,16 @@ values; SceneRevision alone cannot identify a camera or viewport change. Failed
 recording/submission retains adopted owners through the existing bounded cleanup
 path. Removing/readding the scene image preserves the configured GUI atlas.
 
-Navigation, picking and gizmos remain assignment 17. Inspector/history and
-asset/job/console panels retain 16c-16d; connected human/terminal acceptance is
+16c extends this same Editor-private ScenePanel with component inspection and
+ticket-bound undo/redo. The [inspector](../editor-inspector.md) keeps bounded
+entity/revision-bound drafts and consumes the shared schema catalog and existing
+retained mutation path. It adds no source/protocol version or public engine API.
+Draft editing does not mutate the owner until explicit Apply; stale drafts need
+explicit reload, and history movement never rebinds recreated entities by ID.
+Original mutation success survives a later display-refresh failure.
+
+Navigation, picking and gizmos remain assignment 17. Asset/job/console panels
+retain 16d; connected human/terminal acceptance is
 16e. The user's desktop pause defers native composition and actual UI acceptance,
 without qualifying this behavior or closing full REQ-16. See the
 [workspace contract](../editor-scene-workspace.md) and [backlog](../backlog.md).

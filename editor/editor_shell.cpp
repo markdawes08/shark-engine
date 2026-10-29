@@ -101,11 +101,15 @@ class Shell {
         return session_ && session_->state().dirty;
     }
     void request_close(bool exit) {
-        if (pending_close_)
+        if (pending_close_ || pending_draft_close_)
             return;
         if (workspace_)
             workspace_->cancel_confirmation();
         exit_after_close_ = exit;
+        if (workspace_ && workspace_->has_inspector_draft()) {
+            pending_draft_close_ = true;
+            return;
+        }
         if (!session_ || !session_->state().open) {
             exiting_ = exit;
             return;
@@ -119,8 +123,8 @@ class Shell {
     }
     void draw(const GraphicsWindowFrame& frame) {
         frame_invalidated_ = false;
-        const bool modal =
-            pending_close_ || ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
+        const bool modal = pending_close_ || pending_draft_close_ ||
+                           ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
         const bool text = ImGui::GetIO().WantTextInput;
         if (editor_shortcut(frame.input, Key::s, text, modal))
             save();
@@ -213,8 +217,31 @@ class Shell {
                 ImGui::TextWrapped("%s", error_->context.path.c_str());
         }
         if (is_open() && workspace_)
-            workspace_->draw(frame, pending_close_);
+            workspace_->draw(frame, pending_close_ || pending_draft_close_);
         ImGui::End();
+        if (pending_draft_close_) {
+            ImGui::OpenPopup("Unapplied inspector edits");
+            ImGui::SetNextWindowSize({460 * scale_, 0}, ImGuiCond_Appearing);
+            if (ImGui::BeginPopupModal("Unapplied inspector edits", nullptr,
+                                       ImGuiWindowFlags_AlwaysAutoResize)) {
+                ImGui::TextWrapped("The inspector contains unapplied edits. They are not part of "
+                                   "the scene and cannot be saved until you apply them.");
+                if (ImGui::Button("Keep editing")) {
+                    pending_draft_close_ = false;
+                    exit_after_close_ = false;
+                    ImGui::CloseCurrentPopup();
+                }
+                ImGui::SameLine();
+                if (ImGui::Button("Discard draft and continue")) {
+                    if (workspace_)
+                        workspace_->discard_inspector_draft();
+                    pending_draft_close_ = false;
+                    ImGui::CloseCurrentPopup();
+                    request_close(exit_after_close_);
+                }
+                ImGui::EndPopup();
+            }
+        }
         if (pending_close_) {
             ImGui::OpenPopup("Unsaved changes");
             ImGui::SetNextWindowSize({460 * scale_, 0}, ImGuiCond_Appearing);
@@ -297,6 +324,8 @@ class Shell {
         notice_ = saved.value().durability == "directory_flush_failed"
                       ? "Scene published; directory durability could not be confirmed"
                       : "Scene saved";
+        if (workspace_ && workspace_->has_inspector_draft())
+            notice_ += "; inspector draft is still unapplied";
     }
     void close(CloseChoice choice, SceneRevision revision) {
         if (!is_open()) {
@@ -360,6 +389,7 @@ class Shell {
     SceneRevision close_revision_{};
     bool focus_open_{false};
     bool pending_close_{false};
+    bool pending_draft_close_{false};
     bool exit_after_close_{false};
     bool exiting_{false};
     bool frame_invalidated_{false};
