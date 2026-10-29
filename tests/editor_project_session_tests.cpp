@@ -165,6 +165,10 @@ TEST_CASE("Editor project session retains shared dirty history and releases one 
     CHECK(saved.current_scene_clean);
     CHECK(saved.bytes == fs::file_size(fixture.scene_path()));
     CHECK_FALSE(saved.durability.empty());
+    CHECK(editor->state_current());
+    REQUIRE_FALSE(editor->console().entries().empty());
+    CHECK(editor->console().entries().back().published);
+    CHECK(editor->console().entries().back().durability == saved.durability);
     CHECK_FALSE(editor->state().dirty);
     CHECK(call(*editor, "scene.history") == history);
     CHECK(call(*editor, "scene.mutation_status") == retries);
@@ -262,6 +266,11 @@ TEST_CASE("Editor session preserves strict protocol rejection and owner-thread a
     const auto& retained = document.at("result").at("outcome");
     REQUIRE(retained.at("ok").get<bool>());
     CHECK_FALSE(retained.at("value").at("result").at("ok").get<bool>());
+    CHECK(editor->state_current());
+    REQUIRE_FALSE(editor->console().entries().empty());
+    CHECK(editor->console().entries().back().level == LogLevel::error);
+    REQUIRE(editor->console().entries().back().error);
+    CHECK(editor->console().entries().back().method == "scene.mutate");
     CHECK(editor->state() == before);
     CHECK(call(*editor, "scene.mutation_status").at("retained_entries") == 1);
 }

@@ -279,7 +279,8 @@ struct ScenePanel::Impl {
     }
 
     bool current() const noexcept {
-        return !stale && session.state().open && revision == session.state().revision;
+        return !stale && session.state_current() && session.state().open &&
+               revision == session.state().revision;
     }
 
     const HierarchyRow* find(AuthoredEntityId id) const noexcept {

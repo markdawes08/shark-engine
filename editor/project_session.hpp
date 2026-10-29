@@ -1,5 +1,7 @@
 #pragma once
 
+#include "console_log.hpp"
+
 #include <shark/scene_query.hpp>
 #include <shark/tools/authoring_protocol.hpp>
 
@@ -59,6 +61,9 @@ class ProjectSession final {
 
     [[nodiscard]] const std::filesystem::path& root() const noexcept;
     [[nodiscard]] const ProjectState& state() const noexcept;
+    [[nodiscard]] bool state_current() const noexcept;
+    [[nodiscard]] const ConsoleLog& console() const noexcept;
+    [[nodiscard]] Result<void> clear_console();
     [[nodiscard]] Result<void> refresh();
     [[nodiscard]] Result<void> open(std::string_view relative_project);
     [[nodiscard]] Result<SaveReceipt> save(SceneRevision expected_revision);
@@ -72,6 +77,8 @@ class ProjectSession final {
     // Request correlation is generated locally; it is never mutation retry ID.
     // The reply remains the complete protocol envelope, including failed=true
     // for rejected nested decisions. Callers must inspect those owned outcomes.
+    // A subsequent status-refresh failure preserves this original reply and
+    // clears state_current(); refresh explicitly before using cached UI state.
     [[nodiscard]] Result<tools::AuthoringProtocolReply>
     request(std::string_view method, std::string_view parameters_json = "{}");
 

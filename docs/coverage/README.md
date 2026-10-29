@@ -8,9 +8,9 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**16c adds component drafts and shared undo/redo to the retained scene workspace;
+**16d adds asset/job controls and a diagnostic console to the retained workspace;
 selected headless qualification is tracked in the
-[handoff](../handoffs/16c-editor-inspector.md).
+[handoff](../handoffs/16d-editor-assets-console.md).
 Full REQ-16 remains NOT_RUN.** Native composition and actual UI acceptance are
 deferred under the user's
 [coding-only amendment](../backlog.md); it is not a passing UI qualification.
@@ -22,9 +22,11 @@ feature mappings refer to the owning session/panel/adapter, CPU and native
 fixtures; an unexecuted native fixture is not a GPU pass. Current assignment is
 16. The [inspector contract](../editor-inspector.md) adds entity/revision-bound
 drafts, atomic component Apply and ticket-bound history through the same owner.
-Asset/console panels and actual bidirectional UI/terminal acceptance remain in
+The [asset/console contract](../editor-assets-console.md) covers explicit inventory,
+metadata tokens, job publication/acknowledgement and bounded diagnostics. Actual
+bidirectional UI/terminal acceptance remains in
 the [editor checkpoints](../roadmap/editor-plan.md).
-16c adds no component, terminal RPC method or FeatureWorld case.
+16d adds no component, terminal RPC method or FeatureWorld case.
 
 **15e and full REQ-15 are complete under current-machine scope.** The
 [public example](../../examples/terminal_authoring.py) creates a fresh project,

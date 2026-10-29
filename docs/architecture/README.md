@@ -93,7 +93,7 @@ not establish file or gameplay-wire formats.
 | [0038](0038-standalone-scene-export.md) | Live-owner export publication and bounded package-relative Runtime startup |
 | [0039](0039-terminal-authoring-protocol.md) | Bounded terminal protocol, retained project ownership, discovery and revisioned queries |
 | [0040](0040-human-editor-shell.md) | Native human editor shell over shared project ownership, bounded GUI presentation and explicit dirty-state decisions |
-| [0041](0041-editor-scene-workspace.md) | Retained hierarchy, revision-scoped selection and component drafts, shared history, CPU viewport snapshots and completion-safe GUI scene composition |
+| [0041](0041-editor-scene-workspace.md) | Retained scene/asset workspace, revision-scoped drafts, shared history, explicit import publication, diagnostic console and GUI scene composition |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

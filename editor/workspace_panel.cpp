@@ -1,4 +1,6 @@
 #include "workspace_panel.hpp"
+#include "asset_widget.hpp"
+#include "console_widget.hpp"
 #include "inspector_widget.hpp"
 #include "scene_panel.hpp"
 
@@ -40,6 +42,9 @@ struct WorkspacePanel::Impl {
     ScenePanel hierarchy;
     InspectorPanel inspector;
     InspectorWidget inspector_widget;
+    AssetPanel assets;
+    AssetWidget asset_widget;
+    ConsoleWidget console;
     ShaderArtifact vertex;
     ShaderArtifact pixel;
     std::array<char, 257> create_name{};
@@ -62,7 +67,8 @@ struct WorkspacePanel::Impl {
 
     Impl(ProjectSession& owner, const ShaderArtifact& vs, const ShaderArtifact& ps)
         : session(owner), hierarchy(owner), inspector(hierarchy),
-          inspector_widget(inspector, hierarchy), vertex(vs), pixel(ps) {
+          inspector_widget(inspector, hierarchy), assets(owner), asset_widget(assets, owner),
+          vertex(vs), pixel(ps) {
         text_buffer(create_name, "Entity");
         text_buffer(target, "windows-client");
         refresh();
@@ -364,34 +370,57 @@ void WorkspacePanel::draw(const GraphicsWindowFrame& frame, bool blocked) {
     value.image_drawn = false;
     value.synchronize();
     // Resolve last frame's confirmation before emitting this frame's scene image.
-    if (!blocked)
+    if (!blocked && value.session.state_current())
         value.confirmation();
-    ImGui::BeginDisabled(blocked);
-    const float width = ImGui::GetContentRegionAvail().x;
-    const float left = std::clamp(width * .25F, 230.0F, 350.0F);
-    ImGui::BeginChild("Hierarchy", {left, 0}, ImGuiChildFlags_Borders);
-    value.draw_hierarchy();
-    ImGui::EndChild();
-    ImGui::SameLine();
-    const float inspector_width = std::clamp(width * .29F, 280.0F, 410.0F);
-    ImGui::BeginChild("Inspector", {inspector_width, 0}, ImGuiChildFlags_Borders);
-    if (value.inspector_widget.draw(blocked))
-        value.synchronize();
-    ImGui::EndChild();
-    ImGui::SameLine();
-    ImGui::BeginChild("Viewport", {0, 0}, ImGuiChildFlags_Borders);
-    value.draw_viewport(frame);
-    ImGui::EndChild();
-    ImGui::EndDisabled();
+    if (ImGui::BeginTabBar("Workspace panels")) {
+        if (ImGui::BeginTabItem("Scene")) {
+            ImGui::BeginDisabled(blocked || !value.session.state_current());
+            const float width = ImGui::GetContentRegionAvail().x;
+            const float left = std::clamp(width * .25F, 230.0F, 350.0F);
+            ImGui::BeginChild("Hierarchy", {left, 0}, ImGuiChildFlags_Borders);
+            value.draw_hierarchy();
+            ImGui::EndChild();
+            ImGui::SameLine();
+            const float inspector_width = std::clamp(width * .29F, 280.0F, 410.0F);
+            ImGui::BeginChild("Inspector", {inspector_width, 0}, ImGuiChildFlags_Borders);
+            if (value.inspector_widget.draw(blocked))
+                value.synchronize();
+            ImGui::EndChild();
+            ImGui::SameLine();
+            ImGui::BeginChild("Viewport", {0, 0}, ImGuiChildFlags_Borders);
+            value.draw_viewport(frame);
+            ImGui::EndChild();
+            ImGui::EndDisabled();
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Assets")) {
+            ImGui::BeginChild("Asset workspace", {0, 0}, ImGuiChildFlags_Borders);
+            if (value.asset_widget.draw(blocked)) {
+                value.view.reset();
+                value.refresh_view = true;
+            }
+            ImGui::EndChild();
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("Console")) {
+            value.console.draw(value.session);
+            ImGui::EndTabItem();
+        }
+        ImGui::EndTabBar();
+    }
 }
 void WorkspacePanel::cancel_confirmation() noexcept {
     impl_->deleting.reset();
 }
-bool WorkspacePanel::has_inspector_draft() const noexcept {
-    return impl_->inspector_widget.has_changes();
+bool WorkspacePanel::has_unapplied_drafts() const noexcept {
+    return impl_->inspector_widget.has_changes() || impl_->asset_widget.has_changes();
 }
-void WorkspacePanel::discard_inspector_draft() noexcept {
+Result<void> WorkspacePanel::discard_drafts() {
+    auto result = impl_->asset_widget.discard_draft();
+    if (!result)
+        return result;
     impl_->inspector_widget.discard_draft();
+    return {};
 }
 const client::SceneViewportRequest* WorkspacePanel::viewport() const noexcept {
     return impl_->image_drawn && impl_->view ? &*impl_->view : nullptr;

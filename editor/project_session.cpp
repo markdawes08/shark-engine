@@ -133,6 +133,8 @@ struct ProjectSession::Impl {
     std::filesystem::path root;
     std::unique_ptr<tools::AuthoringProtocol> owner;
     ProjectState state;
+    bool state_current{false};
+    ConsoleLog console;
     std::uint64_t sequence{0};
 
     void check_thread() const {
@@ -162,17 +164,36 @@ struct ProjectSession::Impl {
         encoded += '}';
         if (encoded.size() > tools::authoring_protocol_maximum_request_bytes)
             fail(ErrorCode::invalid_argument, "Editor request exceeds authoring bounds");
-        return take(owner->handle(encoded));
+        auto result = owner->handle(encoded);
+        if (!result) {
+            console.record(method, result.error());
+            throw Failure{std::move(result).error()};
+        }
+        auto reply = std::move(result).value();
+        console.observe(method, reply);
+        return reply;
     }
 
     void refresh() {
+        check_thread();
+        state_current = false;
         auto candidate = decode_state(result_value(dispatch("project.status", "{}")));
         state = std::move(candidate);
+        state_current = true;
     }
 
     tools::AuthoringProtocolReply request(std::string_view method, std::string_view parameters) {
         auto reply = dispatch(method, parameters);
-        refresh();
+        try {
+            refresh();
+        } catch (const Failure& failure) {
+            // A failed display observation cannot erase a publication, retained
+            // mutation or taken job outcome already returned by the owner.
+            console.record("editor.project.refresh", failure.error);
+        } catch (...) {
+            // Keep the original reply even if no diagnostic can be allocated.
+            // state_current was cleared before observation began.
+        }
         return reply;
     }
 };
@@ -208,6 +229,22 @@ const ProjectState& ProjectSession::state() const noexcept {
     return impl_->state;
 }
 
+bool ProjectSession::state_current() const noexcept {
+    return impl_->state_current;
+}
+
+const ConsoleLog& ProjectSession::console() const noexcept {
+    return impl_->console;
+}
+
+Result<void> ProjectSession::clear_console() {
+    return boundary<void>([&] {
+        impl_->check_thread();
+        impl_->console.clear();
+        return Result<void>{};
+    });
+}
+
 Result<void> ProjectSession::refresh() {
     return boundary<void>([&] {
         impl_->refresh();
@@ -217,8 +254,13 @@ Result<void> ProjectSession::refresh() {
 
 Result<void> ProjectSession::open(std::string_view relative_project) {
     return boundary<void>([&] {
-        static_cast<void>(
-            result_value(impl_->request("project.open", Json{{"path", relative_project}}.dump())));
+        // Open already returns the complete authoritative project observation.
+        // Use it directly so a redundant status read cannot leave newly-created
+        // panels bound to the previous (possibly empty) scene incarnation.
+        auto candidate = decode_state(
+            result_value(impl_->dispatch("project.open", Json{{"path", relative_project}}.dump())));
+        impl_->state = std::move(candidate);
+        impl_->state_current = true;
         return Result<void>{};
     });
 }
@@ -256,6 +298,8 @@ Result<CloseReceipt> ProjectSession::close(CloseChoice choice, SceneRevision exp
             if (choice == CloseChoice::discard)
                 parameters["unsaved"] = "discard";
             static_cast<void>(result_value(impl_->request("project.close", parameters.dump())));
+            impl_->state = {};
+            impl_->state_current = true;
             result.closed = true;
         } catch (Failure& failure) {
             if (!result.saved)
@@ -281,7 +325,13 @@ Result<tools::AuthoringProtocolReply> ProjectSession::request(std::string_view m
 
 Result<RenderScene>
 ProjectSession::viewport_snapshot(const tools::AuthoringViewportRequest& request) {
-    return impl_->owner->viewport_snapshot(request);
+    return boundary<RenderScene>([&]() -> Result<RenderScene> {
+        impl_->check_thread();
+        auto result = impl_->owner->viewport_snapshot(request);
+        if (!result)
+            impl_->console.record("editor.viewport", result.error());
+        return result;
+    });
 }
 
 Result<void> ProjectSession::refresh_asset_inventory(std::span<const std::string_view> sidecars) {

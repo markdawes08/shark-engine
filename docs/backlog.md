@@ -86,6 +86,24 @@ all **NOT_RUN** until the user resumes desktop testing:
   scrolling/layout and save/discard/cancel with the final controls on both GPUs.
   Connected terminal continuation remains 16e.
 
+### BL-16A-UI-01: 16d acceptance additions
+
+The [asset/job/console panels](editor-assets-console.md) add these actual Editor
+checks, all **NOT_RUN** until desktop testing explicitly resumes:
+
+- Load an explicit metadata inventory, page/select assets, inspect cache state
+  and register/update a real sidecar through the metadata controls. Exercise
+  stale-file rejection, required provenance/license/audience, unapplied draft
+  close decisions, and save/undo remaining separate from metadata publication.
+- Submit imports, observe progress/ready states without publication, explicitly
+  publish, cancel, and acknowledge outcomes. Check failed/stale imports preserve
+  last-valid output and display the original error/publication receipt. Close
+  with active work and verify the owner is released after worker teardown.
+- Switch Scene/Assets/Console tabs, verify content changes refresh the explicit
+  viewport, and exercise console paging/detail/clear and retained diagnostics.
+  Check focus, text/modal routing, layout and stale project-status recovery on
+  both current GPUs. Connected terminal continuation remains 16e.
+
 This deferral does not authorize driver installation, host resource changes,
 foreign-handle cleanup or relaxed acceptance limits. The active implementation
 sequence for 05c's immediate successors is recorded in the

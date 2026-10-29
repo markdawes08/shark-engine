@@ -103,10 +103,17 @@ class Shell {
     void request_close(bool exit) {
         if (pending_close_ || pending_draft_close_)
             return;
+        if (session_) {
+            auto refreshed = session_->refresh();
+            if (!refreshed) {
+                show_error(std::move(refreshed).error());
+                return;
+            }
+        }
         if (workspace_)
             workspace_->cancel_confirmation();
         exit_after_close_ = exit;
-        if (workspace_ && workspace_->has_inspector_draft()) {
+        if (workspace_ && workspace_->has_unapplied_drafts()) {
             pending_draft_close_ = true;
             return;
         }
@@ -139,11 +146,14 @@ class Shell {
         ImGui::Begin("Shark editor", nullptr, flags);
         if (ImGui::BeginMenuBar()) {
             if (ImGui::BeginMenu("File")) {
-                if (ImGui::MenuItem("Open project", "Ctrl+O", false, !is_open()))
+                if (ImGui::MenuItem("Open project", "Ctrl+O", false,
+                                    !is_open() && (!session_ || session_->state_current())))
                     focus_open_ = true;
-                if (ImGui::MenuItem("Save scene", "Ctrl+S", false, is_open()))
+                if (ImGui::MenuItem("Save scene", "Ctrl+S", false,
+                                    is_open() && session_->state_current()))
                     save();
-                if (ImGui::MenuItem("Close project", "Ctrl+W", false, is_open()))
+                if (ImGui::MenuItem("Close project", "Ctrl+W", false,
+                                    is_open() && session_->state_current()))
                     request_close(false);
                 ImGui::Separator();
                 if (ImGui::MenuItem("Exit"))
@@ -162,10 +172,20 @@ class Shell {
             ImGui::TextDisabled("%s", dirty() ? "Unsaved changes" : "Saved");
         }
         ImGui::Spacing();
+        if (session_ && !session_->state_current()) {
+            ImGui::TextColored({1, .73F, .34F, 1}, "Project status needs refresh");
+            if (ImGui::Button("Refresh project status")) {
+                const auto refreshed = session_->refresh();
+                if (!refreshed)
+                    show_error(refreshed.error());
+                else
+                    error_.reset();
+            }
+        }
         if (!is_open() || ImGui::CollapsingHeader("Project")) {
             ImGui::TextUnformatted("PROJECT");
             ImGui::Separator();
-            ImGui::BeginDisabled(is_open());
+            ImGui::BeginDisabled(is_open() || (session_ && !session_->state_current()));
             ImGui::TextUnformatted("Project folder");
             ImGui::SetNextItemWidth(-1);
             if (focus_open_ && !is_open()) {
@@ -180,7 +200,7 @@ class Shell {
                 open();
             ImGui::EndDisabled();
             ImGui::SameLine();
-            ImGui::BeginDisabled(!is_open());
+            ImGui::BeginDisabled(!is_open() || !session_->state_current());
             if (ImGui::Button("Save scene"))
                 save();
             ImGui::SameLine();
@@ -220,25 +240,31 @@ class Shell {
             workspace_->draw(frame, pending_close_ || pending_draft_close_);
         ImGui::End();
         if (pending_draft_close_) {
-            ImGui::OpenPopup("Unapplied inspector edits");
+            ImGui::OpenPopup("Unapplied authoring drafts");
             ImGui::SetNextWindowSize({460 * scale_, 0}, ImGuiCond_Appearing);
-            if (ImGui::BeginPopupModal("Unapplied inspector edits", nullptr,
+            if (ImGui::BeginPopupModal("Unapplied authoring drafts", nullptr,
                                        ImGuiWindowFlags_AlwaysAutoResize)) {
-                ImGui::TextWrapped("The inspector contains unapplied edits. They are not part of "
-                                   "the scene and cannot be saved until you apply them.");
+                ImGui::TextWrapped("Inspector or asset metadata drafts contain unapplied edits. "
+                                   "Scene Save does not apply these drafts. Keep editing to apply "
+                                   "the inspector or explicitly write metadata.");
                 if (ImGui::Button("Keep editing")) {
                     pending_draft_close_ = false;
                     exit_after_close_ = false;
                     ImGui::CloseCurrentPopup();
                 }
                 ImGui::SameLine();
-                if (ImGui::Button("Discard draft and continue")) {
-                    if (workspace_)
-                        workspace_->discard_inspector_draft();
-                    pending_draft_close_ = false;
-                    ImGui::CloseCurrentPopup();
-                    request_close(exit_after_close_);
+                if (ImGui::Button("Discard drafts and continue")) {
+                    auto discarded = workspace_ ? workspace_->discard_drafts() : Result<void>{};
+                    if (!discarded)
+                        show_error(discarded.error());
+                    else {
+                        pending_draft_close_ = false;
+                        ImGui::CloseCurrentPopup();
+                        request_close(exit_after_close_);
+                    }
                 }
+                if (error_)
+                    ImGui::TextWrapped("%s", error_->message.c_str());
                 ImGui::EndPopup();
             }
         }
@@ -284,7 +310,7 @@ class Shell {
         notice_.clear();
     }
     void open() {
-        if (is_open())
+        if (is_open() || (session_ && !session_->state_current()))
             return;
         try {
             auto candidate = ProjectSession::create(native_path(root_.data()));
@@ -312,7 +338,7 @@ class Shell {
         }
     }
     void save() {
-        if (!is_open())
+        if (!is_open() || !session_->state_current())
             return;
         auto saved = session_->save(session_->state().revision);
         if (!saved) {
@@ -324,8 +350,8 @@ class Shell {
         notice_ = saved.value().durability == "directory_flush_failed"
                       ? "Scene published; directory durability could not be confirmed"
                       : "Scene saved";
-        if (workspace_ && workspace_->has_inspector_draft())
-            notice_ += "; inspector draft is still unapplied";
+        if (workspace_ && workspace_->has_unapplied_drafts())
+            notice_ += "; authoring drafts remain unapplied";
     }
     void close(CloseChoice choice, SceneRevision revision) {
         if (!is_open()) {

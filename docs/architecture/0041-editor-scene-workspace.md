@@ -44,8 +44,14 @@ Draft editing does not mutate the owner until explicit Apply; stale drafts need
 explicit reload, and history movement never rebinds recreated entities by ID.
 Original mutation success survives a later display-refresh failure.
 
-Navigation, picking and gizmos remain assignment 17. Asset/job/console panels
-retain 16d; connected human/terminal acceptance is
+16d adds [asset/job and console panels](../editor-assets-console.md) over the same
+ProjectSession. Catalog pages and metadata drafts retain owner/revision or exact
+file tokens; jobs use explicit publication and acknowledgement. A bounded
+diagnostic display consumes original structured replies without becoming a command
+executor or altering their outcomes. No additional catalog, worker, importer or
+public engine API is introduced.
+
+Navigation, picking and gizmos remain assignment 17; connected human/terminal acceptance is
 16e. The user's desktop pause defers native composition and actual UI acceptance,
 without qualifying this behavior or closing full REQ-16. See the
 [workspace contract](../editor-scene-workspace.md) and [backlog](../backlog.md).

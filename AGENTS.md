@@ -49,15 +49,16 @@ This user amendment permits later implementation to proceed before those checks;
 it does not qualify untested behavior or close full UI acceptance. Do not infer
 permission to resume from elapsed time or a new coding request.
 
-**Current handoff: [16c, inspector and history](docs/handoffs/16c-editor-inspector.md).**
-16c extends the retained scene workspace with schema-informed component drafts
-and shared undo/redo. Its handoff records implementation and selected headless
-status; remaining desktop acceptance is deferred under the user's amendment.
-Selected headless checks are complete; next coding work is 16d. Append its desktop
-checks to the same later session.
+**Current handoff: [16d, assets/jobs/console](docs/handoffs/16d-editor-assets-console.md).**
+16d adds bounded asset browsing, explicit metadata edits, import-job controls and
+a structured diagnostic console through the same ProjectSession. Selected
+headless checks are complete; actual desktop acceptance remains deferred.
+Next is 16e connected acceptance: only coding/headless preparation may proceed
+while paused, with actual UI/terminal interaction awaiting explicit resumption.
 Follow the [editor checkpoints](docs/roadmap/editor-plan.md),
 [shell contract](docs/editor-shell.md), [workspace contract](docs/editor-scene-workspace.md)
-and [inspector contract](docs/editor-inspector.md), following
+the [inspector contract](docs/editor-inspector.md) and
+[asset/console contract](docs/editor-assets-console.md), following
 [ADR 0041](docs/architecture/0041-editor-scene-workspace.md). The native shell adapts
 the existing retained authoring owner in process; display values are not another
 mutable Scene. Preserve revision-bound save/discard, original publication receipts,
@@ -74,7 +75,15 @@ and never silently rebase after a selection or history change. Hierarchy,
 component edits and ticket-bound undo/redo use one retained mutation path;
 preserve known success if a subsequent display refresh fails. Save preserves
 history and does not implicitly apply a draft.
-The later panels and actual UI/terminal parity retain 16d-16e; navigation, picking
+AssetPanel retains explicit catalog/cache observations and one exact metadata
+token. Drawing/listing never publishes imports or acknowledges job outcomes;
+drain publishes at most one ready result and take releases a terminal slot.
+Preserve last-valid output and original cancellation/publication/take receipts.
+Metadata edits are outside scene undo, and unapplied drafts require explicit
+close resolution. Bounded console logging cannot alter operation outcomes.
+Project status observation failure marks cached state unknown while preserving
+the original reply; scoped cleanup stays available. Actual UI/terminal parity
+retains 16e; navigation, picking
 and gizmos remain 17. Full REQ-16 remains NOT_RUN; current assignment is 16.
 
 15a-15d supply the CPU `SharkAuthor` host, retained project ownership, shared

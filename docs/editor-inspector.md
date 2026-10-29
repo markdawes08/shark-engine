@@ -38,6 +38,8 @@ Save uses the shared source persistence path and does not implicitly apply a
 draft; its notice identifies unapplied edits that remain. Closing a project with
 unapplied edits first offers **Keep editing** or **Discard draft and continue**,
 then resolves any unsaved scene through the existing save/discard/cancel flow.
+16d generalizes this to **Discard drafts and continue** for inspector and
+[asset metadata drafts](editor-assets-console.md), preserving their separate writes.
 Navigation, gizmos and continuous-drag grouping remain assignment 17.
 
 ## One history and retained outcome

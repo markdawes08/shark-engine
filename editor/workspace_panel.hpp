@@ -17,8 +17,8 @@ class WorkspacePanel final {
     WorkspacePanel& operator=(const WorkspacePanel&) = delete;
     void draw(const client::GraphicsWindowFrame&, bool blocked);
     void cancel_confirmation() noexcept;
-    [[nodiscard]] bool has_inspector_draft() const noexcept;
-    void discard_inspector_draft() noexcept;
+    [[nodiscard]] bool has_unapplied_drafts() const noexcept;
+    [[nodiscard]] Result<void> discard_drafts();
     [[nodiscard]] const client::SceneViewportRequest* viewport() const noexcept;
 
   private:

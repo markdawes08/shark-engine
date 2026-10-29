@@ -6,7 +6,7 @@ This five-checkpoint plan follows the completed
 [human/agent contract](human-agent-plan.md), [MMORPG plan](mmorpg-plan.md) and
 [testing policy](../testing-policy.md). Scope is the current Windows PC; portable
 shared-owner behavior retains WSL coverage. Full REQ-16 remains NOT_RUN;
-`current_assignment` is 16; 16c is the current implementation checkpoint.
+`current_assignment` is 16; 16d is the current implementation checkpoint.
 
 | Checkpoint | Deliverable and acceptance |
 | --- | --- |
@@ -24,9 +24,11 @@ the [shell handoff](../handoffs/16a-editor-shell.md). The current
 revision-scoped selection, shared lifecycle commands and native scene composition.
 16c adds [component drafts and shared history](../editor-inspector.md); its
 [handoff](../handoffs/16c-editor-inspector.md) records implementation and headless
-verification. Selected checks are complete; 16d is the next coding checkpoint. 16d-16e
-remain planned; neither current implementation nor deferred qualification closes
-the full requirement.
+verification. 16d adds [assets, jobs and console](../editor-assets-console.md);
+its [handoff](../handoffs/16d-editor-assets-console.md) records completed selected
+headless checks. Next is 16e; its coding/headless preparation can continue while
+actual UI/terminal interaction awaits explicit desktop resumption. Neither the
+implementation nor deferred qualification closes the full requirement.
 
 The user's 2026-10-29 [desktop-testing amendment](../backlog.md) permits coding
 16b and later checkpoints while desktop interaction is paused. Continue affected
