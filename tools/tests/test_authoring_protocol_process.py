@@ -26,6 +26,14 @@ METHODS = {"protocol.discover", "schema.components", "project.open", "project.st
            "project.close", "scene.query", "scene.inspect", "scene.continue", "project.create",
            "scene.preview", "scene.mutate", "scene.history", "scene.mutation_status",
            "scene.mutation_outcome", "scene.save", "scene.reload", "text.read", "text.write", "text.release"}
+METHODS |= {
+    "asset.importers", "asset.metadata.read", "asset.metadata.write", "asset.metadata.release",
+    "asset.catalog.status", "asset.catalog.refresh", "asset.catalog.query", "asset.catalog.resolve",
+    "asset.cache.status", "asset.cache.query", "asset.cache.inspect", "asset.cache.reload",
+    "asset.cache.prune", "asset.cache.clear", "asset.cache.recover",
+    "asset.jobs.submit", "asset.jobs.list", "asset.jobs.cancel", "asset.jobs.drain",
+    "asset.jobs.take", "asset.jobs.close",
+}
 
 
 def unique(pairs):
@@ -225,12 +233,13 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
         self.assertEqual(discovery["limits"]["response_bytes"], RESPONSE_BYTES)
         self.assertEqual(discovery["limits"]["retained_cursors"], 32)
         self.assertEqual(discovery["capabilities"], {"cpu_authoring": True, "device_capture": False,
-                                                    "mutations": True})
+                                                    "mutations": True, "imports": True,
+                                                    "background_jobs": True})
         self.assertEqual({method["name"] for method in discovery["methods"]}, METHODS)
         for method in discovery["methods"]:
             self.assertTrue(method["params"] and method["result"] and method["example"], method)
             self.assertEqual(method["execution_context"], "cpu_owner_thread")
-            self.assertIs(method["requires_open_project"], method["name"].startswith(("scene.", "text.")))
+            self.assertIs(method["requires_open_project"], method["name"].startswith(("scene.", "text.", "asset.")))
             self.assertIs(method["requires_project_root"], method["name"] in {"project.open", "project.create"})
         schema = self.finite("--request", encoded(request("schema.components")), root=False)["result"]
         self.assertEqual(schema["components"], discovery["components"])

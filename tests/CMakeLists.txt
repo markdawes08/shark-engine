@@ -831,6 +831,11 @@ if(TARGET SharkAuthor)
             --author "$<TARGET_FILE:SharkAuthor>" -v)
     set_tests_properties(shark.tools.authoring-editing-process PROPERTIES
         LABELS "cpu;tooling;integration" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+    add_test(NAME shark.tools.authoring-import-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_authoring_import_process.py"
+            --author "$<TARGET_FILE:SharkAuthor>" -v)
+    set_tests_properties(shark.tools.authoring-import-process PROPERTIES
+        LABELS "cpu;tooling;integration" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 endif()
 set_tests_properties(shark.tooling.runtime-package PROPERTIES LABELS "cpu;tooling;boundary")
 if(TARGET OffscreenSmoke)

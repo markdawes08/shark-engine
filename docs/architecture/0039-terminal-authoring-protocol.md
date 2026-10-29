@@ -1,7 +1,7 @@
 # ADR 0039: Bounded terminal authoring protocol
 
 Date: 2026-10-28. Status: accepted. The original 15a decision follows;
-the dated 15b extension below adds editing and persistence.
+the dated extensions below add editing/persistence and imports/jobs.
 
 Implement a CPU terminal adapter in EngineTools and a `SharkAuthor` executable.
 The adapter uses the existing ProjectFiles and AuthoredScene services and Core
@@ -127,3 +127,65 @@ a broken pipe nor a missing response proves rollback or exactly-once delivery.
 Retain the existing same-machine file race/durability limits. New acceptance
 extends actual subprocess workflows and native publication fault fixtures under
 the testing policy; unrelated GPU/Server matrices remain outside this CPU change.
+
+## 15c extension: imports and jobs, 2026-10-28
+
+Extend version-1 discovery to forty implemented methods with `imports:true` and
+`background_jobs:true`. Add native metadata read/write/release, explicit catalog
+refresh/query/resolve, importer discovery, cache inspection/maintenance and bounded
+job submit/list/cancel/drain/take/close. Keep one retained ProjectFiles/AuthoredScene
+owner; lazily attach its AssetCatalog/AssetImports services and exclusively owned
+byte/glTF importers. Reuse the native worker, capture/publication fences, completion
+queue and cache path. There is no second scheduler, independent writer, watcher,
+source decoder, durable job journal or change to Runtime/Server dependencies.
+
+Decode the full native `shark.asset` envelope through the existing metadata codec.
+Importer settings remain validated by the native import service. Keep 32 separate
+owner/path-bound metadata file tokens, with exact-content write conflicts, explicit
+release and truthful publication/durability receipts. Exclude active project and
+all declared scene paths from both the sidecar and derived source path, including
+case aliases and prefix overlap. Metadata must belong to the retained project.
+Metadata edits do not modify scene history or implicitly refresh the catalog.
+The complete caller-supplied sidecar inventory validates atomically; catalog paging
+uses bounded offsets and expected revisions, distinct from scene cursor tokens.
+
+Encode catalog/cache scopes as UUIDs and counters/job sequences as canonical uint64
+decimal strings. Preserve fresh/stale/missing cache state, nullable current-input
+diagnostics and last-valid keys. Artifact inspection returns validated descriptors,
+dependency keys, digests and payload byte count. It does not return binary payloads:
+native payloads can exceed the unchanged 1 MiB protocol response bound. A retained
+artifact descriptor is not proof of freshness. Transport request/string/node limits
+continue to constrain metadata operations and the native catalog bounds.
+
+Preserve the native four retained jobs and single worker. Submit captures immutable
+inputs and can deduplicate matching pending work; RPC correlation IDs are not job
+retry identities. List observes only. Drain processes at most one ready completion
+through the active owner and reports both its count and all retained statuses.
+Return state, completed/total nodes and complete nullable summary/commit/error
+fields. A successful outer RPC or drain is not a successful import. Preserve
+directory-flush warnings as published outcomes and failed/stale/cancelled imports
+as terminal states without replacing last-valid output.
+
+Take acknowledges a terminal outcome and releases its slot only after a bounded
+reply is prepared. Cancellation cannot undo a published success and dispatched
+work remains retained until drained or closed. Close permanently closes admission,
+requests stop and joins before releasing dependencies, retaining outcomes while
+the project session remains open. Project close/EOF/destruction use the same
+join-before-owner-release order; they never publish pending jobs or save scene
+edits. Native callbacks must return/cooperate; no preemption is promised. New
+sessions use fresh scopes and require cache/input reconciliation after lost work.
+
+Check the retained project file before asset file/catalog/cache work and job
+publication. Keep list/cancel/take/close and metadata token release available when
+an external project edit blocks publication, so users can reconcile and clean up.
+Metadata tokens, job take and release prepare their bounded response before
+consuming observations; writes retain the existing post-dispatch reconciliation
+error context. A missing response is not proof of rollback or a durable receipt.
+
+Qualify the adapter through real redirected subprocess workflows over scratch
+projects, native metadata/import/cache/jobs and licensed offline glTF fixtures.
+Check preservation of unsaved scene state/history, last-valid output, stale and
+foreign identities, cancellation/take/closure and owner handoff. Reuse native job
+fault and decoder coverage; the testing policy selects affected Debug, applicable
+sanitizer and portable WSL checks without repeating unrelated device matrices.
+Full REQ-15 remains open until connected 15e acceptance.

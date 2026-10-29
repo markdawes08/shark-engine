@@ -423,7 +423,7 @@
       "planned_fixture": "PublicAuthoringProcess scenario, ProtocolInvalidRequests, ProtocolVersionMismatch, CancellationRetry and ScopedTextAsset fixtures; FeatureWorld/AgentAuthoredScene provides saved scene equivalence. Add NoTTYProtocolStreams, BoundedDiscoveryQueries, CPUAuthoringClosure, ProjectOwnerExclusion, TextWriteConflict and JobPublicationInterruption fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "15a and 15b complete the CPU terminal foundation and editing/persistence adapters: bounded versioned pipes, discovery, one project owner, revisioned queries, retained edits/batches/history, preview, exact-content save/reload, explicit discard-close, project creation with partial-publication receipts, and bounded Lua source text. docs/handoffs/15b-terminal-editing.md records focused Windows/WSL Debug and Windows ASan qualification through real processes; WSL ASan/UBSan remains NOT_RUN after reproduced compiler crashes. Imports/jobs, run/export/capture and connected acceptance remain 15c-15e in docs/roadmap/terminal-authoring-plan.md; full REQ-15 remains NOT_RUN."
+        "reason": "15a-15c complete the CPU terminal foundation, editing/persistence and import/job adapters: bounded versioned pipes, discovery, one retained project owner, revisioned queries, edits/history/retries, project creation/save/reload, scoped script text, typed metadata with exact-file tokens, catalog/cache inspection and the native four-slot import service. Explicit drain publishes fenced candidates; cancellation, retained terminal outcomes, last-valid cache and EOF/process-death release preserve owner semantics and dirty history. docs/handoffs/15c-terminal-imports.md records selected Windows/WSL Debug and Windows ASan qualification and the runnable import example. Run/export/capture and connected acceptance remain 15d-15e in docs/roadmap/terminal-authoring-plan.md; full REQ-15 remains NOT_RUN."
       }
     },
     {
@@ -2864,6 +2864,32 @@
           "docs/authoring-protocol.md"
         ],
         "fixture_reason": "Real process calls exercise all seven typed commands, preview/batches, shared history, three-level retained outcomes, replay/mismatch/expiry/restart, source preservation, exact-byte external conflicts and explicit reload/discard. Native fault controls independently prove partial two-file creation receipts and script write rollback/committed durability limits. Script text is not a Lua binding or execution capability; imports/jobs/device adapters remain later checkpoints."
+      },
+      {
+        "id": "tools.authoring-imports",
+        "name": "Terminal asset catalog, cache and bounded import jobs",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process",
+          "shark.tools.asset-import-jobs",
+          "shark.tools.asset-import",
+          "shark.tools.asset-catalog",
+          "shark.tools.gltf-import"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py",
+          "tests/asset_import_jobs_tests.cpp",
+          "tests/asset_import_tests.cpp",
+          "tests/asset_catalog_tests.cpp",
+          "tests/gltf_import_tests.cpp"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "Real subprocesses adapt the same retained ProjectFiles/catalog/import owner, checking explicit publication, bounded pending/terminal jobs, cancellation, stale inputs, last-valid content, exact metadata revisions, dirty-scene preservation and owner cleanup. Existing native fixtures cover importer/publication failure boundaries independently. No GPU, run/export adapter, alternate scheduler or source decoder is introduced."
       }
     ],
     "components": [
@@ -5307,6 +5333,426 @@
         "fixture_reason": "Actual public subprocess method calls check independent state, rejection and persistence outcomes on the retained shared owner.",
         "featureworld_cases": [],
         "external_fixture_reason": "Terminal delivery, process ownership and file publication require separate real-process fixtures. Tests use a saved FeatureWorld copy and a freshly created project through public methods; existing in-process FeatureWorld command/history/retry cases remain unchanged. No human editor or GPU workflow is claimed."
+      },
+      {
+        "id": "terminal.asset.importers",
+        "name": "SharkAuthor JSON-RPC asset.importers",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.metadata.read",
+        "name": "SharkAuthor JSON-RPC asset.metadata.read",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.metadata.write",
+        "name": "SharkAuthor JSON-RPC asset.metadata.write",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.metadata.release",
+        "name": "SharkAuthor JSON-RPC asset.metadata.release",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.catalog.status",
+        "name": "SharkAuthor JSON-RPC asset.catalog.status",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.catalog.refresh",
+        "name": "SharkAuthor JSON-RPC asset.catalog.refresh",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.catalog.query",
+        "name": "SharkAuthor JSON-RPC asset.catalog.query",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.catalog.resolve",
+        "name": "SharkAuthor JSON-RPC asset.catalog.resolve",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.cache.status",
+        "name": "SharkAuthor JSON-RPC asset.cache.status",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.cache.query",
+        "name": "SharkAuthor JSON-RPC asset.cache.query",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.cache.inspect",
+        "name": "SharkAuthor JSON-RPC asset.cache.inspect",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.cache.reload",
+        "name": "SharkAuthor JSON-RPC asset.cache.reload",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.cache.prune",
+        "name": "SharkAuthor JSON-RPC asset.cache.prune",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.cache.clear",
+        "name": "SharkAuthor JSON-RPC asset.cache.clear",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.cache.recover",
+        "name": "SharkAuthor JSON-RPC asset.cache.recover",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.jobs.submit",
+        "name": "SharkAuthor JSON-RPC asset.jobs.submit",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.jobs.list",
+        "name": "SharkAuthor JSON-RPC asset.jobs.list",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.jobs.cancel",
+        "name": "SharkAuthor JSON-RPC asset.jobs.cancel",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.jobs.drain",
+        "name": "SharkAuthor JSON-RPC asset.jobs.drain",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.jobs.take",
+        "name": "SharkAuthor JSON-RPC asset.jobs.take",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
+      },
+      {
+        "id": "terminal.asset.jobs.close",
+        "name": "SharkAuthor JSON-RPC asset.jobs.close",
+        "requirement_ids": [
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-import-process"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_import_process.py"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/authoring-protocol.md"
+        ],
+        "fixture_reason": "The public terminal process invokes this implemented method and verifies independent state, failure and ownership outcomes.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Real terminal streams, native files and worker lifetimes require external process fixtures. Saved FeatureWorld copies and licensed offline assets exercise the shared services without changing the in-process FeatureWorld cases; no editor or GPU qualification is inferred."
       }
     ],
     "lua_api": []

@@ -5,8 +5,10 @@
 [component schemas and bounded queries](scene-inspection.md). 15a supplies discovery
 and inspection; 15b adds project creation, shared edits/preview/history, retained
 mutation outcomes, save/reload and scoped script text. These operations need no
-editor, display, GPU, network listener, model provider or MCP client. Imports/jobs,
-captures and export through this protocol remain later checkpoints.
+editor, display, GPU, network listener, model provider or MCP client. 15c adds
+typed asset metadata, explicit catalog inventory, cache inspection/maintenance
+and the existing bounded import jobs. Runs, captures and export through this
+protocol remain later checkpoints.
 
 [ADR 0039](architecture/0039-terminal-authoring-protocol.md) defines this bounded
 profile. The public C++ owner is
@@ -52,6 +54,9 @@ so byte limits and newline framing do not depend on text-mode translation.
 | Decoded JSON string | 32,768 bytes, with smaller field-specific limits below |
 | Outstanding query cursors | 32 per open project |
 | Retained text-revision tokens | 32 per open project |
+| Retained asset-metadata revision tokens | 32 per open project, separate from text tokens |
+| Catalog inventory / page | 4,096 sidecars / 1..128 records; complete requests and responses must still fit |
+| Retained import jobs / running jobs | 4 / 1; terminal outcomes occupy slots until taken |
 | Script text | 32,768 UTF-8 bytes; the full encoded request must also fit 65,536 bytes |
 
 The shared source JSON preflight rejects duplicate decoded keys, malformed UTF-8,
@@ -74,7 +79,7 @@ still returns 1. Typed operation failures inside a JSON-RPC `result` also return
 
 Discovery identifies each method's `execution_context: "cpu_owner_thread"`,
 `requires_open_project` and `requires_project_root` prerequisites, as well as its
-parameter/result schemas and example request. `scene.*` and `text.*` methods require
+parameter/result schemas and example request. `scene.*`, `text.*` and `asset.*` methods require
 the open owner; `project.open`/`project.create` require the root fixed at host creation.
 
 Shark uses the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification)
@@ -127,7 +132,7 @@ close another owner, or switch the active project.
 
 `protocol.discover` is the executable source of available method names, parameter
 and result descriptions, examples, component metadata, limits and capability
-flags. It advertises exactly these nineteen methods:
+flags. It advertises exactly these forty methods:
 
 | Method | Parameters | Result |
 | --- | --- | --- |
@@ -150,9 +155,30 @@ flags. It advertises exactly these nineteen methods:
 | `text.read` | `path` | Script text and opaque content-revision token |
 | `text.write` | `path`, `text`, `expected_revision` token or null | Publication and replacement content-revision token |
 | `text.release` | `revision` token | `{ "released": true }` after releasing a retained text observation |
+| `asset.importers` | `{}` | `{importers:[...]}` with actual native descriptors and settings schemas |
+| `asset.metadata.read` | `path` | `{path,metadata,revision}` with the complete native metadata envelope and opaque file token |
+| `asset.metadata.write` | `path`, `metadata`, `expected_revision` token or null | `{path,revision,publication}` |
+| `asset.metadata.release` | `revision` token | `{released:true}` |
+| `asset.catalog.status` | `{}` | `{revision}` |
+| `asset.catalog.refresh` | Complete `sidecars` inventory, `expected_revision` | `{revision}` after complete candidate validation |
+| `asset.catalog.query` | `expected_revision`; optional `offset`, `page_size` | `{revision,total,records,next_offset}` |
+| `asset.catalog.resolve` | `asset_id`, `expected_revision` | `{revision,asset_id,availability,record}` |
+| `asset.cache.status` | `{}` | Cache revision, counts, bytes and unpublished-stage observation |
+| `asset.cache.query` | `asset_id`, `target`, `expected_catalog`, `expected_cache` | Fresh/stale/missing state, required/last-valid keys and nullable input failure |
+| `asset.cache.inspect` | `key`, `expected_revision` | Validated artifact descriptor, digests and payload byte count |
+| `asset.cache.reload` | `expected_revision` | `{revision}` after adopting the validated disk cache |
+| `asset.cache.prune` / `asset.cache.clear` | `expected_revision` | `{revision,changed,publication}` |
+| `asset.cache.recover` | `{}` | `{removed}` for the reserved unpublished cache stage |
+| `asset.jobs.submit` | `asset_id`, `target`, `expected_catalog`, `expected_cache` | `{job_id,deduplicated}` |
+| `asset.jobs.list` | `{}` | `{jobs:[...]}`; observation does not publish |
+| `asset.jobs.cancel` | `job_id` | Current job status after requesting cancellation |
+| `asset.jobs.drain` | `{}` | `{drained,jobs:[...]}`; publishes at most one ready completion |
+| `asset.jobs.take` | `job_id` | Terminal status, acknowledging and releasing its retained slot |
+| `asset.jobs.close` | `{}` | `{closed:true,jobs:[...]}` after stopping and joining the worker |
 
-The capabilities are `cpu_authoring: true`, `device_capture: false` and
-`mutations: true`. There is no advertised editor, export or GPU
+The capabilities are `cpu_authoring: true`, `device_capture: false`,
+`mutations: true`, `imports: true` and `background_jobs: true`.
+There is no advertised editor, export or GPU
 operation whose implementation is deferred.
 
 `schema.components` returns all four native schemas and twelve properties in
@@ -193,7 +219,9 @@ Close defaults to `unsaved:"reject"` and rejects dirty state or pending mutation
 abandons unsaved state; pending work still rejects. An optional expected revision
 is checked even for a clean close. Bare `{}` is idempotent when already closed;
 a closed owner cannot satisfy a supplied revision. Successful close releases
-the scene, history, mutation ledger and cursor/text tokens before the project lock.
+the scene, history, mutation ledger and cursor/text/metadata tokens before the
+project lock. Asset jobs stop and their worker joins before their catalog/files
+owners are released; uncommitted imports are cancelled, never published on close.
 EOF, broken output and process destruction release ownership without saving;
 unsaved state and retained evidence are lost when the process exits. Keep one
 `--stdio` process alive for editing and explicitly save before close/EOF. A new
@@ -336,8 +364,9 @@ process RSS.
 If response preparation fails after dispatch, an internal error with context
 operation `authoring.protocol.reconcile` means the operation may have taken effect.
 A broken pipe is likewise not proof of rollback. Query retained outcomes for
-scene mutations and inspect files for file operations. Creation, save, reload and
-text writes are not covered by scene mutation deduplication.
+scene mutations and inspect files for file operations. Creation, save, reload,
+text/metadata writes and cache maintenance are not covered by scene mutation
+deduplication. For imports, inspect retained job outcomes and current cache state.
 
 ## Scoped text access
 
@@ -375,6 +404,145 @@ existing tokens remain usable for writes, while new reads/create-only writes
 reject until `text.release` frees a slot. Close releases all tokens. They cannot be replayed after consumption or
 reopen. After uncertain delivery, reread the actual file and compare intent before
 writing; a new token does not prove whether an earlier write ran.
+
+## Asset metadata, inventory and cache
+
+The adapter reuses [native metadata/catalog](asset-identity.md),
+[cache](asset-import-cache.md) and [job](asset-import-jobs.md) services under the
+retained project owner. It owns the registered byte, glTF resource and glTF mesh
+importers; `asset.importers` returns their actual `id`, integer `version`, `kind`,
+integer `payload_version` and `settings_schema`. Declaring an importer in metadata
+does not install it. These CPU operations do not modify the active scene, dirty
+state, undo history or mutation ledger. External changes to the retained project
+file reject asset file/catalog/cache operations instead of silently changing
+ownership. Job list/cancel/take/close and metadata token release remain available
+for reconciliation and cleanup; drain still checks the project fence.
+
+Metadata access uses contained adjacent `source.ext.sharkasset` paths and the
+complete `shark.asset` schema-1 object from the native contract. Required fields
+are `format`, integer `schema_version`, `project_id`, `asset_id`, `kind`, `origin`,
+`license`, `importer`, `audience`, `settings` and `dependencies`; `extras` is optional.
+The native codec validates it, including settings/extras object bounds, UUIDs,
+identifiers, dependency uniqueness and unknown fields. Importer-specific settings
+validation remains in the import service. Both sidecar and derived source paths
+must avoid the active project and all declared scenes, including case aliases
+and file/directory prefix overlap. Metadata must belong to the active project.
+
+Read returns the canonical metadata object and an opaque owner/path-bound token
+for the exact file bytes. A write requires that token, or explicit null for an
+absent destination. Successful replacement consumes the old token, returns its
+replacement and reports `{published:true,bytes,durability}`; the durability values
+are the same as scene/text publication. Rejection preserves the old token.
+These immediate file writes are outside scene undo and do not refresh the catalog
+automatically. There are 32 metadata tokens, separate from text tokens; release
+unused observations with `asset.metadata.release`. Never pass a text token as a
+metadata revision. Reopen expires both kinds of token. A lost write response
+requires reading and comparing the sidecar before another write.
+
+Catalog and cache revisions are distinct scoped values:
+`{scope:"UUIDv4",value:"uint64-decimal"}`. Canonical decimal strings follow the
+scene counter rules below; do not convert them through floating point. Each
+owner gets a fresh scope, so a revision from another project session rejects even
+when its counter matches. The catalog begins empty. Supply the complete explicit
+sidecar inventory to `asset.catalog.refresh`; there is no recursive scan or watcher.
+The full candidate must validate before replacement. A malformed, foreign or
+duplicate sidecar leaves the old snapshot intact. Omitting a sidecar removes its
+derived record without deleting files. A metadata write or outside source edit
+requires an explicit refresh to update that snapshot.
+
+Catalog query defaults to offset 0 and page size 64, bounded to 128 records per
+page. Every page requires the original catalog revision; `next_offset` is null
+when complete. This integer offset is separate from the single-use scene cursor
+tokens. Records are ordered by asset ID and contain `metadata`, `source`,
+`sidecar`, `metadata_bytes` and `source_present`. Resolve reports `availability`
+as `unknown_id`, `source_missing` or `source_present`, and a nullable `record`.
+Source presence does not establish import success. Large metadata pages can exceed
+the 1 MiB response bound; retry a smaller page at the same observed revision.
+The protocol's request/string/node bounds also apply to native metadata inputs;
+the native 64 KiB sidecar limit does not enlarge the transport envelope.
+
+An import target is `{id:"windows-client",side:"client"}` or another explicit
+lowercase target identifier and `client`/`server` side. The target ID is an import
+key input, not platform autodetection. `asset.cache.query` checks the current
+captured inputs without importing and returns `revision`, `asset_id`, `target`,
+`state`, nullable `required_key`, nullable `last_valid_key` and nullable `blocked_by`.
+The last field is a native `{code,message,context}` error. Failed/missing inputs
+can retain last-valid output while `state` is `stale`; it is not fresh content
+authorization. Callback-bearing queries/inspection can return a transient conflict
+while the one worker uses an importer. Job status/control remain available.
+
+`asset.cache.inspect` validates a specific retained key and returns `asset_id`,
+`key`, `kind`, `audience`, `target`, `importer`, integer `importer_version` and
+`payload_version`, `source_digest`, `settings_digest`, dependency `{asset_id,key}`
+pairs, `payload_digest` and `payload_bytes`. Digests/keys are 64 lowercase hex
+digits. It returns no inline binary payload, whose native 2 MiB bound exceeds
+the protocol response limit. Inspecting an old key does not certify freshness;
+use `cache.query` for that decision.
+
+Cache status reports `revision`, `artifacts`, `bindings`, `payload_bytes`,
+`file_bytes` and boolean `unpublished_stage`. Reload explicitly adopts the valid
+on-disk cache; prune retains all last-valid binding closures; clear discards the
+disposable cache. Prune/clear return `{revision,changed,publication}`, where
+`publication` is null for no file publication or the actual durability receipt.
+Recover removes only the reserved unpublished cache stage, never source-save
+stages, and does not revive a job. Cache maintenance preserves authored files;
+revision-changing maintenance can make admitted jobs stale. After an uncertain
+publication, inspect the cache/file state and reconcile instead of blind replay.
+
+## Import jobs and terminal outcomes
+
+`asset.jobs.submit` captures bounded immutable inputs through the current owner
+and requires both catalog/cache revisions. It returns a native scoped
+`job_id:{scope:"UUIDv4",sequence:"uint64-decimal"}` and `deduplicated`. This is
+separate from JSON-RPC correlation and scene mutation identity. Identical pending
+captures deduplicate; terminal or cancellation-requested jobs do not. The existing
+service has four retained slots, one lazy worker and 128 nodes per closure, with
+1 MiB/source, 2 MiB/payload and the native aggregate byte bounds. It introduces
+no second scheduler, cache owner, disk spool or durable job journal.
+
+Each status contains `job_id`, `state`, `completed_nodes`, `total_nodes`, and
+explicitly nullable `summary`, `commit` and `error`. States are `queued`, `running`,
+`ready`, `succeeded`, `failed` and `cancelled`. Progress counts completed dependency
+nodes, including reuse; it is not a percent or estimated duration. Ready means
+worker computation has ended, with owner publication still pending. List only
+observes. Drain never waits for computation and processes at most one ready
+completion, then dispatches the next queued job. `drained:0` means none was ready.
+
+A successful status includes:
+
+```text
+summary: {cache_revision,catalog_revision,root,target,root_key,nodes,imported,reused}
+commit:  {revision,changed,publication:null|{published:true,bytes,durability}}
+error:   null
+```
+
+The summary preserves original input revisions; the commit reports the actual
+result revision. A failed terminal status carries `{code,message,context}` even
+when the enclosing RPC/drain succeeded. Inspect state, summary, commit and
+durability; an admitted job or `result` object alone is not import success.
+A published directory-flush warning remains a successful publication. Publication
+rechecks native owner/catalog/cache scopes, exact source/sidecar bytes and payload
+validity. An edit, another commit, reload or clear can reject stale work without
+replacing last-valid output. Reconcile and submit new intent explicitly.
+
+Cancel requests cooperative stop. Queued work can become terminal immediately;
+dispatched/running/ready work remains retained until drain or close. The owner
+fences publication after cancellation even if a trusted callback ignores stop.
+Cancelling a succeeded job returns its original success and does not undo it.
+Take requires a terminal job, returns its outcome and releases its slot; it is
+acknowledgement, not rollback. Taken or foreign identities reject. Lost take
+delivery can lose the last retained status, so inspect current cache state before
+new work. Terminal jobs are never silently evicted.
+
+`asset.jobs.close` permanently closes admission for this project session, requests
+stop, joins the worker and returns retained terminal statuses. It is idempotent;
+cache inspection/maintenance remains available. Project close, EOF and destruction
+also stop/join before releasing project ownership, losing untaken statuses on
+exit. They do not drain/publish uncommitted jobs or save unsaved scenes. Trusted
+native callbacks must return/cooperate; no preemption or real-time shutdown
+latency is promised. Keep a stdio owner alive, explicitly drain/take outcomes and
+save intended scene changes before close. One-shot submit cannot retain a worker
+across process exit.
 
 ## Queries and durable identity
 
@@ -587,11 +755,123 @@ with tempfile.TemporaryDirectory(prefix="terminal-example-", dir="out") as tempo
 print("Created, previewed, edited, replayed, saved and reopened the project.")
 ```
 
-Use the relevant binary path on WSL. Production supervisors should retain stderr,
-bound their waits and terminate/drain a failed child. The executable processes
-requests synchronously; this initial contract introduces no asynchronous job API.
+This independent import example writes a new temporary byte source, registers its
+native metadata, explicitly refreshes the inventory, drains one job and inspects
+its validated cache descriptor. It leaves saved project assets untouched:
 
-Later 15 checkpoints adapt imports/jobs, runs, captures and export.
+```python
+import hashlib
+import json
+from pathlib import Path
+import subprocess
+import tempfile
+import time
+import uuid
+
+author = Path("build/windows-debug/bin/SharkAuthor.exe").resolve()
+Path("out").mkdir(exist_ok=True)
+with tempfile.TemporaryDirectory(prefix="terminal-import-", dir="out") as temporary:
+    root = Path(temporary).resolve()
+    (root / "scenes").mkdir()
+    (root / "assets").mkdir()
+    source = b"Shark terminal import example\n"
+    with (root / "assets/example.bin").open("xb") as output:
+        output.write(source)
+    project_id, asset_id = str(uuid.uuid4()), str(uuid.uuid4())
+    with subprocess.Popen(
+        [str(author), "--stdio", "--root", str(root)],
+        stdin=subprocess.PIPE, stdout=subprocess.PIPE,
+        text=True, encoding="utf-8",
+    ) as process:
+        sequence = 0
+
+        def call(method, params):
+            global sequence
+            sequence += 1
+            request = {"jsonrpc": "2.0", "protocol_version": 1,
+                       "id": sequence, "method": method, "params": params}
+            process.stdin.write(json.dumps(request) + "\n")
+            process.stdin.flush()
+            line = process.stdout.readline()
+            if not line:
+                raise RuntimeError("SharkAuthor exited before its response")
+            reply = json.loads(line)
+            assert reply["id"] == sequence
+            if "error" in reply:
+                raise RuntimeError(reply["error"])
+            return reply["result"]
+
+        created = call("project.create", {
+            "path": "Example.sharkproject", "scene_path": "scenes/Main.sharkscene",
+            "name": "Terminal import", "project_id": project_id,
+            "world_id": str(uuid.uuid4()), "scene_id": str(uuid.uuid4()),
+        })
+        assert created["success"], created
+        descriptors = call("asset.importers", {})["importers"]
+        assert any(item["id"] == "shark.bytes" for item in descriptors)
+        metadata = call("asset.metadata.write", {
+            "path": "assets/example.bin.sharkasset", "expected_revision": None,
+            "metadata": {
+                "format": "shark.asset", "schema_version": 1,
+                "project_id": project_id, "asset_id": asset_id, "kind": "bytes",
+                "origin": "Original temporary example bytes", "license": "MIT",
+                "importer": "shark.bytes", "audience": "shared",
+                "settings": {"transform": "identity"}, "dependencies": [],
+            },
+        })
+        assert metadata["publication"]["published"]
+        call("asset.metadata.release", {"revision": metadata["revision"]})
+        catalog = call("asset.catalog.status", {})["revision"]
+        catalog = call("asset.catalog.refresh", {
+            "sidecars": ["assets/example.bin.sharkasset"],
+            "expected_revision": catalog,
+        })["revision"]
+        cache = call("asset.cache.status", {})["revision"]
+        target = {"id": "example-client", "side": "client"}
+        admitted = call("asset.jobs.submit", {
+            "asset_id": asset_id, "target": target,
+            "expected_catalog": catalog, "expected_cache": cache,
+        })
+        deadline = time.monotonic() + 10
+        while True:
+            statuses = call("asset.jobs.drain", {})["jobs"]
+            job = next(item for item in statuses if item["job_id"] == admitted["job_id"])
+            if job["state"] in ("succeeded", "failed", "cancelled"):
+                break
+            if time.monotonic() >= deadline:
+                call("asset.jobs.cancel", {"job_id": admitted["job_id"]})
+                call("asset.jobs.close", {})
+                raise TimeoutError("Import did not reach a terminal outcome")
+        assert job["state"] == "succeeded", job
+        assert job["error"] is None and job["summary"]["root"] == asset_id
+        assert job["summary"]["imported"] == 1
+        assert job["commit"]["publication"]["published"]
+        cache = job["commit"]["revision"]
+        fresh = call("asset.cache.query", {
+            "asset_id": asset_id, "target": target,
+            "expected_catalog": catalog, "expected_cache": cache,
+        })
+        assert fresh["state"] == "fresh"
+        artifact = call("asset.cache.inspect", {
+            "key": fresh["last_valid_key"], "expected_revision": cache,
+        })
+        assert artifact["source_digest"] == hashlib.sha256(source).hexdigest()
+        assert artifact["payload_bytes"] == len(source) + 36
+        assert artifact["key"] == job["summary"]["root_key"]
+        assert call("asset.jobs.take", {"job_id": admitted["job_id"]}) == job
+        assert call("asset.jobs.close", {})["jobs"] == []
+        assert not call("project.status", {})["dirty"]
+        call("project.close", {})
+        process.stdin.close()
+        assert process.wait(timeout=10) == 0
+print("Imported temporary source, inspected its cache and acknowledged the job.")
+```
+
+Use the relevant binary path on WSL. Production supervisors should retain stderr,
+bound each pipe wait and terminate/drain a failed child. Requests dispatch serially
+on the owner thread while import computation uses the existing private worker.
+
+Later 15 checkpoints adapt runs, captures and export.
 An export adapter must use the active owner or reject a conflicting open project;
 it cannot launch an independent source-reloading export worker behind an active
 authoring session and claim to preserve unsaved changes.

@@ -20,10 +20,10 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**15b's terminal editing and persistence is complete under current-machine scope.**
-The [latest handoff](docs/handoffs/15b-terminal-editing.md) records retained edits,
-preview, shared history/retries, project creation, save/reload and scoped script
-text through `SharkAuthor`. Next is 15c's imports and jobs in the
+**15c's terminal imports and jobs are complete under current-machine scope.**
+The [latest handoff](docs/handoffs/15c-terminal-imports.md) records native asset
+metadata, catalog/cache inspection and bounded import jobs through `SharkAuthor`,
+preserving unsaved edits and shared history. Next is 15d's run, export and capture in the
 [terminal checkpoints](docs/roadmap/terminal-authoring-plan.md).
 Full assignment 15 remains open. Assignments 12, 13 and 14 remain complete,
 including Runtime scene presentation and safe reload on both GPUs. Completed
@@ -36,7 +36,8 @@ Current capabilities include:
 
 - [Terminal authoring](docs/authoring-protocol.md) through one-shot JSON or
   persistent stdio, with discovery, bounded queries, retained edits, preview,
-  undo/redo and conflict-aware persistence. Import jobs and GPU capture remain later work.
+  undo/redo, conflict-aware persistence and bounded asset import jobs. Terminal
+  run/export and GPU capture adapters remain later work.
 - [Core services](docs/core-contracts.md), [application ownership](docs/application-lifecycle.md)
   and [bounded timing/work](docs/time-and-work.md), with separate Core, Client,
   Tools and headless Server boundaries.

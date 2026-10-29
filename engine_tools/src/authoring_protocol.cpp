@@ -1,5 +1,7 @@
 #include "shark/tools/authoring_protocol.hpp"
 
+#include "authoring_asset_wire.hpp"
+#include "authoring_assets.hpp"
 #include "authoring_wire.hpp"
 #include "shark/tools/project_files.hpp"
 #include "source_json.hpp"
@@ -361,20 +363,28 @@ Json discovery() {
     add("text.release", object_schema({{"revision", id_schema()}}, {"revision"}),
         object_schema({{"released", {{"const", true}}}}, {"released"}),
         {{"revision", "00000000-0000-4000-8000-000000000008"}});
-    return {
-        {"protocol_version", authoring_protocol_version},
-        {"transport",
-         {{"framing", "newline-delimited-json"}, {"batch", false}, {"notifications", true}}},
-        {"limits",
-         {{"request_bytes", authoring_protocol_maximum_request_bytes},
-          {"response_bytes", authoring_protocol_maximum_response_bytes},
-          {"retained_cursors", authoring_protocol_maximum_cursors},
-          {"decoded_string_bytes", project_text_maximum_bytes},
-          {"script_text_bytes", project_text_maximum_bytes},
-          {"retained_text_revisions", maximum_text_revisions}}},
-        {"capabilities", {{"cpu_authoring", true}, {"device_capture", false}, {"mutations", true}}},
-        {"methods", std::move(methods)},
-        {"components", components}};
+    for (auto& method : authoring_asset_wire::methods_json())
+        methods.push_back(std::move(method));
+    return {{"protocol_version", authoring_protocol_version},
+            {"transport",
+             {{"framing", "newline-delimited-json"}, {"batch", false}, {"notifications", true}}},
+            {"limits",
+             {{"request_bytes", authoring_protocol_maximum_request_bytes},
+              {"response_bytes", authoring_protocol_maximum_response_bytes},
+              {"retained_cursors", authoring_protocol_maximum_cursors},
+              {"decoded_string_bytes", project_text_maximum_bytes},
+              {"script_text_bytes", project_text_maximum_bytes},
+              {"retained_text_revisions", maximum_text_revisions},
+              {"retained_metadata_revisions", authoring_asset_maximum_metadata_revisions},
+              {"retained_import_jobs", asset_import_maximum_jobs}}},
+            {"capabilities",
+             {{"cpu_authoring", true},
+              {"device_capture", false},
+              {"mutations", true},
+              {"imports", true},
+              {"background_jobs", true}}},
+            {"methods", std::move(methods)},
+            {"components", components}};
 }
 
 struct Cursor {
@@ -433,7 +443,8 @@ StableId parameter_id(const Json& parameters, const char* key) {
 }
 
 struct Session {
-    // Reverse destruction releases scene/cursors before the native project lock.
+    // Reverse destruction joins asset work and releases scene/cursors before the
+    // native project lock. Asset destruction never drains/publishes a job.
     std::unique_ptr<ProjectFiles> files;
     ProjectPath path;
     ProjectDocument project;
@@ -449,6 +460,7 @@ struct Session {
         std::optional<FileRevision> revision;
     };
     std::map<std::string, TextRevision> text_revisions;
+    std::unique_ptr<AuthoringAssets> assets{};
 };
 
 Json status(const Session* session) {
@@ -495,6 +507,7 @@ struct Dispatch {
     std::optional<TextPublication> text_revision{};
     std::optional<std::string> consumed_text_revision{};
     bool failed{false};
+    std::optional<AuthoringAssetReply> assets{};
 };
 
 } // namespace
@@ -559,6 +572,18 @@ struct AuthoringProtocol::Impl {
     }
 
     Dispatch dispatch(std::string_view method, const Json& parameters) {
+        if (AuthoringAssets::supports(method)) {
+            auto& current = require_session();
+            if (AuthoringAssets::requires_project_fence(method))
+                check_project_file(current);
+            if (!current.assets)
+                current.assets = std::make_unique<AuthoringAssets>(*current.files, current.project,
+                                                                   current.path);
+            auto reply = current.assets->dispatch(method, parameters, outcome_may_have_changed);
+            Dispatch prepared{std::move(reply.result)};
+            prepared.assets = std::move(reply);
+            return prepared;
+        }
         if (method == "protocol.discover") {
             empty_parameters(parameters);
             return {discovery()};
@@ -1045,6 +1070,11 @@ struct AuthoringProtocol::Impl {
             }
             if (prepared.consumed_text_revision)
                 require_session().text_revisions.erase(*prepared.consumed_text_revision);
+            if (prepared.assets) {
+                if (prepared.assets->taken_job || prepared.assets->released_token)
+                    outcome_may_have_changed = true;
+                require_session().assets->admit(*prepared.assets);
+            }
             if (prepared.opening)
                 session = std::move(prepared.opening);
             if (prepared.closing)
@@ -1052,6 +1082,8 @@ struct AuthoringProtocol::Impl {
             return AuthoringProtocolReply{notification ? std::string{} : std::move(encoded),
                                           prepared.failed};
         } catch (ProtocolFailure& rejected) {
+            return failure(rejected.code, std::move(rejected.error), id, notification);
+        } catch (AuthoringAssetFailure& rejected) {
             return failure(rejected.code, std::move(rejected.error), id, notification);
         } catch (...) {
             if (outcome_may_have_changed)

@@ -204,7 +204,9 @@ no second computer or specific provider integration is part of the requirement.
 The user-approved [five terminal checkpoints](terminal-authoring-plan.md) now
 refine the broad phases below. [15a](../handoffs/15a-terminal-protocol.md) completes
 discovery, retained ownership and read-only access; [15b](../handoffs/15b-terminal-editing.md)
-adds retained edits/history, creation, persistence and scoped script text. 15c is next. Full REQ-15
+adds retained edits/history, creation, persistence and scoped script text;
+[15c](../handoffs/15c-terminal-imports.md) adds metadata/catalog/cache and bounded
+import jobs through the retained owner. 15d is next. Full REQ-15
 remains open through 15e's connected acceptance.
 
 Keep 15 as one manifest owner and final gate, but implement it in these dependent

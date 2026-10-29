@@ -40,18 +40,23 @@ Linux graphics is outside scope. Mac support, CI, packages and hardware requirem
 are retired by [ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md).
 Hosted CI is supplemental; remote branch protection is unchanged.
 
-**Current handoff: [15b, terminal editing and persistence](docs/handoffs/15b-terminal-editing.md).**
-15a/15b supply the CPU `SharkAuthor` host, discovery, retained project ownership,
-queries, edits/history/retries, creation/save/reload and scoped script text.
+**Current handoff: [15c, terminal imports and jobs](docs/handoffs/15c-terminal-imports.md).**
+15a-15c supply the CPU `SharkAuthor` host, discovery, retained project ownership,
+queries, edits/history/retries, persistence, scoped script text and asset jobs.
 Follow [ADR 0039](docs/architecture/0039-terminal-authoring-protocol.md)
 and the [protocol contract](docs/authoring-protocol.md): bounded UTF-8 framing,
 truthful capabilities, one project writer and revision-bound single-use cursors.
-Native handles stay private. Next is **15c, imports and jobs**, in the
+Native handles stay private. Next is **15d, run, export and capture**, in the
 [terminal checkpoints](docs/roadmap/terminal-authoring-plan.md). Route new writes
 through the retained shared owner; request correlation is not mutation retry identity.
 Preserve all three mutation outcome levels and explicit file publication/durability
 receipts. Text access excludes typed catalog paths and retains exact file tokens;
-discard-close requires the current revision. Import jobs must preserve this owner.
+discard-close requires the current revision. Asset metadata has separate bounded
+exact-file tokens; catalog inventories are explicit. Imports use the existing
+four-slot job service and publish only on explicit drain. Preserve terminal
+outcomes until take, last-valid cache output, and cancel/join before owner release.
+Run/export must consume this same retained owner and preserve dirty state/history;
+device capture belongs in a separate capability-gated client adapter.
 Full REQ-15 remains NOT_RUN until connected acceptance in 15e.
 All [five rendering checkpoints](docs/roadmap/scene-rendering-plan.md) and full
 REQ-13 are complete under current-machine scope. Full REQ-14 is complete under
@@ -100,7 +105,7 @@ reload and actual presented capture. Preserve complete-candidate replacement,
 fresh incarnations, bounded drain and seven native lifetime phases. Runtime has
 no source importer or authoring UI. The existing Editor window/graphics/cube
 flags remain diagnostics; a game-authoring editor UI is not implemented yet.
-Shared CPU authoring services exist; later terminal operations and the editor remain 15c-15e/16.
+Shared CPU authoring services exist; later terminal operations and the editor remain 15d-15e/16.
 
 The user deferred remaining 05c work to the [nonblocking backlog](docs/backlog.md)
 and authorized later development. Full REQ-05 remains NOT_RUN. Preserve historical

@@ -51,6 +51,16 @@ TERMINAL_EDITING_SURFACES = {
     'terminal.text.release',
 }
 TERMINAL_SURFACES |= TERMINAL_EDITING_SURFACES
+TERMINAL_IMPORT_SURFACES = {
+    'terminal.asset.importers', 'terminal.asset.metadata.read', 'terminal.asset.metadata.write',
+    'terminal.asset.metadata.release', 'terminal.asset.catalog.status', 'terminal.asset.catalog.refresh',
+    'terminal.asset.catalog.query', 'terminal.asset.catalog.resolve', 'terminal.asset.cache.status',
+    'terminal.asset.cache.query', 'terminal.asset.cache.inspect', 'terminal.asset.cache.reload',
+    'terminal.asset.cache.prune', 'terminal.asset.cache.clear', 'terminal.asset.cache.recover',
+    'terminal.asset.jobs.submit', 'terminal.asset.jobs.list', 'terminal.asset.jobs.cancel',
+    'terminal.asset.jobs.drain', 'terminal.asset.jobs.take', 'terminal.asset.jobs.close',
+}
+TERMINAL_SURFACES |= TERMINAL_IMPORT_SURFACES
 FEATUREWORLD_CASES = [
     'featureworld.components', 'featureworld.commands', 'featureworld.batches-history',
     'featureworld.retries', 'featureworld.persistence', 'featureworld.asset-identity',
@@ -117,6 +127,8 @@ def audit(manifest, cpu, gpu, registered, declared):
                 editing = entry['id'] in TERMINAL_EDITING_SURFACES
                 terminal_test = 'authoring-editing-process' if editing else 'authoring-protocol-process'
                 terminal_source = 'authoring_editing_process' if editing else 'authoring_protocol_process'
+                if entry['id'] in TERMINAL_IMPORT_SURFACES:
+                    terminal_test, terminal_source = 'authoring-import-process', 'authoring_import_process'
                 check(not mapped and entry.get('external_fixture_reason', '').strip()
                       and 'shark.tools.' + terminal_test in tests
                       and 'tools/tests/test_' + terminal_source + '.py' in entry['test_sources'],

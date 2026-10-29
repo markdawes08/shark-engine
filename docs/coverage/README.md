@@ -8,19 +8,18 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**15b is complete; full REQ-15 remains NOT_RUN.** The latest
-[handoff](../handoffs/15b-terminal-editing.md) records CPU terminal editing,
-retained outcomes, shared history, project persistence and scoped script text.
-Windows/WSL Debug and Windows ASan qualify the affected selection; WSL sanitizer
-compilation remains blocked and is not passing evidence.
+**15c is complete; full REQ-15 remains NOT_RUN.** The latest
+[handoff](../handoffs/15c-terminal-imports.md) records CPU terminal metadata,
+catalog/cache inspection and import jobs through the retained project owner.
+Windows/WSL Debug and Windows ASan qualify the affected selection.
 [Terminal checkpoints](../roadmap/terminal-authoring-plan.md)
-15c-15e retain jobs, run/export/capture and connected acceptance. The editor
+15d-15e retain run/export/capture and connected acceptance. The editor
 remains 16. Full [REQ-14](../handoffs/14c-isolated-export-acceptance.md),
 [REQ-13](../handoffs/13e-runtime-scenes.md) and [REQ-12](../handoffs/12e-gltf-qualification.md)
 remain complete under current-machine scope and approved amendments.
 
 FeatureWorld has seventeen native cases, four saved entity IDs and 56 exercised
-CPU surfaces, plus twenty external CPU commands (export and nineteen terminal methods)
+CPU surfaces, plus 41 external CPU commands (export and forty terminal methods)
 and two GPU commands.
 Real source/geometry/texture/material/
 payload cases supplement owner/cache/job paths. The manifest and independent
@@ -120,3 +119,4 @@ remains authoritative for individual requirement status.
 | 14b/14c standalone export (full REQ-14) | [Standalone export](../standalone-export.md), [isolated acceptance handoff](../handoffs/14c-isolated-export-acceptance.md) |
 | 15a terminal foundation (partial REQ-15) | [Protocol](../authoring-protocol.md), [handoff](../handoffs/15a-terminal-protocol.md) |
 | 15b terminal editing (partial REQ-15) | [Protocol](../authoring-protocol.md), [handoff](../handoffs/15b-terminal-editing.md) |
+| 15c terminal imports/jobs (partial REQ-15) | [Protocol](../authoring-protocol.md), [handoff](../handoffs/15c-terminal-imports.md) |
