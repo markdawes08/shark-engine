@@ -440,7 +440,7 @@
       "planned_fixture": "EditorApiStateEquivalence, EditorLifecycle and EditorFocusRouting fixtures; FeatureWorld/EditorAuthoring is the representative saved project. Add HumanTerminalProjectHandoff and UnsavedHistoryConflict fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "16a-16c implement the retained project shell, hierarchy/viewport, component drafts and shared history. 16d adds bounded catalog browsing, explicit exact-token metadata writes, cache inspection, job submit/list/cancel/drain/take and a bounded structured console over the same ProjectSession. Selected results and limits belong to docs/handoffs/16d-editor-assets-console.md and earlier editor handoffs. Actual UI/graphics acceptance remains NOT_RUN in nonblocking backlog BL-16A-UI-01 under the user desktop pause; coding/headless work may continue. Full REQ-16 remains NOT_RUN pending connected human/terminal acceptance in 16e and the deferred desktop checks. CPU adapters and in-memory ImGui fixtures do not establish native UI or full semantic parity."
+        "reason": "16a-16d implement the retained editor shell, hierarchy/viewport, component drafts/history and asset/job/console panels. 16e adds connected CPU editor-adapter and real public-terminal process handoff preparation, independent saved scene/asset checks and reciprocal writer rejection; selected results and limits belong to docs/handoffs/16e-editor-terminal-acceptance.md. Actual UI/graphics acceptance remains NOT_RUN in BL-16A-UI-01 under the user desktop pause. The connected actual UI procedure is docs/editor-acceptance.md. Full REQ-16 remains NOT_RUN until that procedure and the deferred desktop checks pass; headless adapters and in-memory ImGui fixtures do not establish native UI or full semantic parity. Continued coding is authorized by the backlog amendment."
       }
     },
     {
@@ -3102,6 +3102,32 @@
         ],
         "fixture_reason": "CPU tests reject invalid atlas/frame bounds, incomplete triangles, out-of-range indices/scissors, nonfinite values, unsupported textures/callbacks, inconsistent draw totals and oversized emitted geometry. Actual ImGui draw data verifies independently specified sRGB-to-linear color, logical-to-framebuffer conversion, clipping and retained scene-image requests. Nested viewport validation rejects missing or invalid scene data; exact-value reuse checks distinguish camera, geometry, extent and incarnation changes even at one scene revision. The separate native GuiRenderSmoke fixture retains 16a atlas coverage and adds optional scene composition phases for same-revision camera/content changes, target and framebuffer resize, image removal/restoration and cancelled close, with independent depth, clipping/alpha and linear-to-sRGB pixel expectations. GraphicsDevice accepts engine-owned values and uses its existing completion/retirement path without exposing ImGui or native handles.",
         "external_fixture_reason": "GPU blending, scene-depth composition, swapchain resize, native close cancellation and retirement need the external required-validation fixture tools/gui_smoke.py. Registered CPU CTests establish value validation and adapter behavior only. Historical 16a results remain in docs/handoffs/16a-editor-shell.md; all 16b native fixture and actual UI runs are deferred/NOT_RUN in docs/handoffs/16b-editor-scene-workspace.md and BL-16A-UI-01, not inferred from a CPU pass.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "editor.terminal-handoff",
+        "name": "Connected CPU editor adapters and public terminal project continuation",
+        "requirement_ids": [
+          "REQ-16"
+        ],
+        "test_ids": [
+          "shark.editor.handoff-process"
+        ],
+        "test_sources": [
+          "tests/editor_handoff.cpp",
+          "tools/tests/test_editor_handoff_process.py"
+        ],
+        "fixtures": [
+          "examples/terminal_authoring.py",
+          "tools/tests/test_authoring_workflow_process.py",
+          "tests/fixtures/gltf_source/external.gltf",
+          "tests/fixtures/gltf_source/triangle.bin",
+          "tests/fixtures/gltf_source/LICENSE",
+          "docs/editor-acceptance.md",
+          "docs/handoffs/16e-editor-terminal-acceptance.md"
+        ],
+        "fixture_reason": "One connected real-process flow reuses the public terminal example and its independent oracle, then continues the same project through the CPU editor adapters and public SharkAuthor processes. Independent expected source/component/hierarchy and asset/cache values cover edit/import/save/reopen, reciprocal busy ownership, dirty close protection and shared history preservation/reset. The test-only fixed-action helper has no GUI, renderer or second authoring service.",
+        "external_fixture_reason": "Cross-process ProjectFiles ownership and terminal transport require an external fixture rather than a new FeatureWorld command. Headless adapter results are preparation only: actual human controls, focus/modal/layout, viewport rendering and connected UI state equivalence remain NOT_RUN in BL-16A-UI-01.",
         "featureworld_cases": []
       }
     ],

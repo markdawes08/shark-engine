@@ -28,9 +28,12 @@ account, external model service or hosted runner is needed to complete the plan.
 Current editor work follows the [five assignment-16 checkpoints](editor-plan.md).
 The [16a shell](../editor-shell.md) adapts the completed terminal authoring owner
 in process for project open/save/close and dirty decisions. It preserves one
-writer and explicit handoff. Remaining panels and actual bidirectional UI/terminal
-acceptance are still required; a passing CPU adapter does not prove human UI
-interaction. The historical foundation assessment below remains tied to its base.
+writer and explicit handoff. The hierarchy, inspector/history, assets and console
+panels are implemented. [16e](../handoffs/16e-editor-terminal-acceptance.md) connects
+CPU editor adapters and real terminal processes; actual bidirectional UI/terminal
+acceptance is still required under the [acceptance procedure](../editor-acceptance.md).
+A passing CPU adapter does not prove human UI interaction. The historical
+foundation assessment below remains tied to its base.
 
 11a adds [shared CPU asset metadata/catalog services](../asset-identity.md),
 qualified in the [identity handoff](../handoffs/11a-asset-identity.md). Both

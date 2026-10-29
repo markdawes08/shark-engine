@@ -49,12 +49,13 @@ This user amendment permits later implementation to proceed before those checks;
 it does not qualify untested behavior or close full UI acceptance. Do not infer
 permission to resume from elapsed time or a new coding request.
 
-**Current handoff: [16d, assets/jobs/console](docs/handoffs/16d-editor-assets-console.md).**
-16d adds bounded asset browsing, explicit metadata edits, import-job controls and
-a structured diagnostic console through the same ProjectSession. Selected
-headless checks are complete; actual desktop acceptance remains deferred.
-Next is 16e connected acceptance: only coding/headless preparation may proceed
-while paused, with actual UI/terminal interaction awaiting explicit resumption.
+**Current handoff: [16e, connected acceptance preparation](docs/handoffs/16e-editor-terminal-acceptance.md).**
+16e connects the CPU editor adapters to real terminal processes through one saved
+project, with independent semantic checks and reciprocal writer conflicts.
+This is headless preparation, not actual human UI acceptance. Follow the
+[connected acceptance procedure](docs/editor-acceptance.md) after desktop testing
+explicitly resumes. Full REQ-16 remains NOT_RUN; the desktop backlog authorizes
+later coding without qualifying the outstanding UI behavior.
 Follow the [editor checkpoints](docs/roadmap/editor-plan.md),
 [shell contract](docs/editor-shell.md), [workspace contract](docs/editor-scene-workspace.md)
 the [inspector contract](docs/editor-inspector.md) and
@@ -160,8 +161,8 @@ reload and actual presented capture. Preserve complete-candidate replacement,
 fresh incarnations, bounded drain and seven native lifetime phases. Runtime has
 no source importer or authoring UI. The existing Editor window/graphics/cube
 flags remain diagnostics; `--editor` explicitly starts the new project shell.
-Shared CPU services and terminal authoring are implemented; remaining human
-authoring panels and connected acceptance retain assignment 16.
+Shared CPU services, terminal authoring and human authoring panels are implemented;
+actual connected UI acceptance still retains assignment 16.
 
 The user deferred remaining 05c work to the [nonblocking backlog](docs/backlog.md)
 and authorized later development. Full REQ-05 remains NOT_RUN. Preserve historical

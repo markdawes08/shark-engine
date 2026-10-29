@@ -20,11 +20,11 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**Assignment 16d adds asset browsing, metadata editing, import-job controls and
-a diagnostic console** to the human editor. Selected headless verification is
-tracked in the [latest handoff](docs/handoffs/16d-editor-assets-console.md).
-Native rendering and
-actual UI acceptance for these changes remain deferred in the
+**Assignment 16e connects editor adapters and real terminal processes** through
+one saved project, extending the editor's scene, asset and console panels.
+Headless verification is tracked in the
+[latest handoff](docs/handoffs/16e-editor-terminal-acceptance.md).
+Native rendering and actual UI acceptance remain deferred in the
 [nonblocking backlog](docs/backlog.md): the user paused desktop interaction until
 explicitly resumed, while authorizing continued coding and headless checks.
 Full REQ-16 remains NOT_RUN. Assignment 15 is complete under current-machine scope;
@@ -49,7 +49,7 @@ Current capabilities include:
   The [inspector](docs/editor-inspector.md) adds explicit component drafts and
   shared undo/redo. [Asset and console panels](docs/editor-assets-console.md)
   expose explicit metadata and import-job workflows through the same owner.
-  Connected human/terminal UI acceptance remains 16e.
+  [Connected human/terminal UI acceptance](docs/editor-acceptance.md) remains deferred.
 - [Terminal authoring](docs/authoring-protocol.md) through one-shot JSON or
   persistent stdio, with discovery, bounded queries, retained edits, preview,
   undo/redo, conflict-aware persistence, bounded asset import jobs and static scene

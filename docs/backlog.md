@@ -104,6 +104,25 @@ checks, all **NOT_RUN** until desktop testing explicitly resumes:
   Check focus, text/modal routing, layout and stale project-status recovery on
   both current GPUs. Connected terminal continuation remains 16e.
 
+### BL-16A-UI-01: 16e connected acceptance
+
+The [connected acceptance procedure](editor-acceptance.md) prepares the final
+assignment-16 gate. Its CPU adapter/public-terminal process case is headless
+evidence only. These actual interactions remain **NOT_RUN** until the user
+explicitly resumes desktop testing:
+
+- Continue the public terminal example in the actual Editor: inspect the saved
+  hierarchy/components, apply scene and metadata edits, explicitly publish an
+  import, save and close. Confirm an independent terminal writer is rejected
+  while the Editor owns the project without disturbing unsaved state/history.
+- Reopen through the public terminal, independently compare semantic state and
+  import identity, edit/save/close, then continue in the actual Editor. Check
+  reverse busy rejection, preserved history across save, fresh history on reopen,
+  unapplied drafts and dirty close decisions through the actual controls.
+- Complete the applicable 16a-16d native/focus/layout/viewport checks on both
+  current-PC GPUs, reusing valid prior results. CPU snapshots and process handoff
+  do not establish GUI state equivalence or replace required rendering evidence.
+
 This deferral does not authorize driver installation, host resource changes,
 foreign-handle cleanup or relaxed acceptance limits. The active implementation
 sequence for 05c's immediate successors is recorded in the

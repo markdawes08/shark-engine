@@ -5,8 +5,10 @@ The [shell handoff](handoffs/16a-editor-shell.md) records its verification; the
 [checkpoint plan](roadmap/editor-plan.md) retains the remaining UI work.
 Full REQ-16 is NOT_RUN. The initial shell opens, saves and closes existing
 projects. [16b's scene workspace](editor-scene-workspace.md) now adds hierarchy,
-selection, entity edits and a scene viewport. Inspector/history and asset/console
-panels remain 16c-16d. Navigation, picking and gizmos remain 17.
+selection, entity edits and a scene viewport. The [inspector/history](editor-inspector.md)
+and [asset/console panels](editor-assets-console.md) are implemented; connected
+actual UI acceptance follows the [16e procedure](editor-acceptance.md).
+Navigation, picking and gizmos remain 17.
 
 Desktop testing is currently paused by user instruction. The launch instructions
 below remain available for later use; agents must follow the

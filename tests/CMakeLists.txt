@@ -53,6 +53,11 @@ if(TARGET EngineClient)
 endif()
 
 if(TARGET EngineTools)
+    add_executable(EditorHandoff editor_handoff.cpp ../editor/asset_panel.cpp ../editor/inspector_panel.cpp ../editor/scene_panel.cpp ../editor/project_session.cpp ../editor/console_log.cpp)
+    target_link_libraries(EditorHandoff PRIVATE EngineTools nlohmann_json::nlohmann_json)
+    target_include_directories(EditorHandoff PRIVATE "${PROJECT_SOURCE_DIR}/editor")
+    shark_configure_target(EditorHandoff)
+    shark_classify_target(EditorHandoff test)
     add_executable(EditorAssetPanelTests editor_asset_panel_tests.cpp ../editor/asset_panel.cpp ../editor/project_session.cpp ../editor/console_log.cpp)
     target_link_libraries(EditorAssetPanelTests PRIVATE EngineTools nlohmann_json::nlohmann_json Catch2::Catch2WithMain)
     target_include_directories(EditorAssetPanelTests PRIVATE "${PROJECT_SOURCE_DIR}/editor")
@@ -873,6 +878,14 @@ if(TARGET RuntimeScenePrepare)
         LABELS "cpu;integration;tooling" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 endif()
 if(TARGET SharkAuthor)
+    if(TARGET EditorHandoff)
+        add_test(NAME shark.editor.handoff-process
+            COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_editor_handoff_process.py"
+                --author "$<TARGET_FILE:SharkAuthor>" --editor-handoff "$<TARGET_FILE:EditorHandoff>"
+                --scratch-parent "${CMAKE_CURRENT_BINARY_DIR}/editor-handoff" -v)
+        set_tests_properties(shark.editor.handoff-process PROPERTIES
+            LABELS "cpu;editor;integration" TIMEOUT 120 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+    endif()
     add_executable(AuthoringProtocolTests authoring_protocol_tests.cpp authoring_protocol_file_tests.cpp)
     target_link_libraries(AuthoringProtocolTests PRIVATE EngineTools Catch2::Catch2WithMain)
     target_include_directories(AuthoringProtocolTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
