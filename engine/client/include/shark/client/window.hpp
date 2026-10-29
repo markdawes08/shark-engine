@@ -82,6 +82,8 @@ class Window final {
     [[nodiscard]] Result<void> show();
     [[nodiscard]] Result<void> focus();
     [[nodiscard]] Result<void> request_close();
+    // Explicit owner decision before teardown, for unsaved-work confirmation.
+    [[nodiscard]] Result<void> cancel_close_request();
     [[nodiscard]] Result<void> close();
 
   private:

@@ -878,6 +878,8 @@ TEST_CASE("window forwarding shares owned state input and diagnostic values", "[
     CHECK(state.command == WindowCommand::focus);
     REQUIRE(owner->request_close());
     CHECK(state.command == WindowCommand::request_close);
+    REQUIRE(owner->cancel_close_request());
+    CHECK(state.command == WindowCommand::cancel_close);
     no_gpu_work(state);
 }
 
@@ -885,7 +887,7 @@ TEST_CASE("presentation and window methods reject foreign thread and closed owne
           "[presentation]") {
     State state;
     auto owner = create(state);
-    std::array<bool, 12> rejected{};
+    std::array<bool, 13> rejected{};
     std::thread worker([&] {
         const auto record = [&](std::size_t index, const auto& result) {
             rejected[index] = !result && result.error().code == ErrorCode::conflict;
@@ -902,6 +904,7 @@ TEST_CASE("presentation and window methods reject foreign thread and closed owne
         record(9, owner->request_close());
         record(10, owner->drain());
         record(11, owner->close());
+        record(12, owner->cancel_close_request());
     });
     worker.join();
     CHECK(std::all_of(rejected.begin(), rejected.end(), [](bool value) { return value; }));
@@ -916,6 +919,7 @@ TEST_CASE("presentation and window methods reject foreign thread and closed owne
     REQUIRE_FALSE(owner->show());
     REQUIRE_FALSE(owner->focus());
     REQUIRE_FALSE(owner->request_close());
+    REQUIRE_FALSE(owner->cancel_close_request());
     error(owner->present(), ErrorCode::conflict);
     REQUIRE(owner->presentation_stats());
     CHECK(state.event_count == 0);

@@ -8,6 +8,19 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
+**16a adds the initial native editor shell; its qualification is tracked in the
+[handoff](../handoffs/16a-editor-shell.md). Full REQ-16 remains NOT_RUN.**
+Selected CPU/native-render/boundary checks pass, including the corrected keyboard
+adapter. Remaining desktop acceptance is deferred under the user's
+[coding-only amendment](../backlog.md); it is not a passing UI qualification.
+The [editor contract](../editor-shell.md) covers shared project open/save/close,
+dirty-state decisions, focus routing and bounded GUI presentation. New
+`editor.project-shell` and `client.gui-presentation` feature mappings refer to
+their actual session, input, dependency and native readback fixtures. Current
+assignment is 16; later panels and actual bidirectional UI/terminal acceptance
+remain in the [editor checkpoints](../roadmap/editor-plan.md). No new component,
+terminal command or FeatureWorld case is advertised by this shell.
+
 **15e and full REQ-15 are complete under current-machine scope.** The
 [public example](../../examples/terminal_authoring.py) creates a fresh project,
 imports and modifies licensed glTF content, authors a scene, saves/reopens and
@@ -18,8 +31,8 @@ and isolated package results separately. The tools-only host also exports withou
 GUI/device libraries. CPU checks do not qualify device execution or deployment.
 Existing focused rejection and
 lifetime cases retain their evidence under the
-[terminal checkpoints](../roadmap/terminal-authoring-plan.md). The editor
-remains 16. Full [REQ-14](../handoffs/14c-isolated-export-acceptance.md),
+[terminal checkpoints](../roadmap/terminal-authoring-plan.md). Full
+[REQ-14](../handoffs/14c-isolated-export-acceptance.md),
 [REQ-13](../handoffs/13e-runtime-scenes.md) and [REQ-12](../handoffs/12e-gltf-qualification.md)
 remain complete under current-machine scope and approved amendments.
 
@@ -127,3 +140,4 @@ remains authoritative for individual requirement status.
 | 15c terminal imports/jobs (partial REQ-15) | [Protocol](../authoring-protocol.md), [handoff](../handoffs/15c-terminal-imports.md) |
 | 15d terminal run/export/capture (partial REQ-15) | [Protocol](../authoring-protocol.md), [handoff](../handoffs/15d-terminal-execution.md) |
 | 15e connected terminal workflow (full REQ-15) | [Public example](../../examples/terminal_authoring.py), [handoff](../handoffs/15e-terminal-acceptance.md) |
+| 16a editor shell (partial REQ-16, remaining desktop acceptance deferred) | [Shell contract](../editor-shell.md), [handoff](../handoffs/16a-editor-shell.md) |

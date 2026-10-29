@@ -54,3 +54,53 @@ foreach(shark_mode IN ITEMS version help default invalid extra)
         endforeach()
     endif()
 endforeach()
+
+if(SHARK_APPLICATION STREQUAL "Editor" AND SHARK_EDITOR_GUI)
+    # These --editor cases fail parsing or explicit shader loading before the
+    # native window/device request. The existing CPU CLI test remains display-free.
+    function(shark_editor_rejected shark_case shark_expected_exit shark_expected_code shark_expected_operation)
+        execute_process(COMMAND "${SHARK_EXECUTABLE}" ${ARGN}
+            RESULT_VARIABLE shark_result OUTPUT_VARIABLE shark_output ERROR_VARIABLE shark_error
+            TIMEOUT 5)
+        if(NOT "${shark_result}" STREQUAL "${shark_expected_exit}" OR NOT shark_output STREQUAL "")
+            message(FATAL_ERROR "Editor ${shark_case}: expected bounded rejection without readiness output; ${shark_result}; ${shark_output}; ${shark_error}")
+        endif()
+        string(REPLACE "\r\n" "\n" shark_error "${shark_error}")
+        string(FIND "${shark_error}" "\n" shark_line_end)
+        if(shark_line_end LESS 0)
+            message(FATAL_ERROR "Editor ${shark_case} lacks a structured diagnostic: ${shark_error}")
+        endif()
+        string(SUBSTRING "${shark_error}" 0 ${shark_line_end} shark_diagnostic)
+        foreach(shark_field IN ITEMS level code operation message)
+            string(JSON shark_value ERROR_VARIABLE shark_json_error GET "${shark_diagnostic}" ${shark_field})
+            if(NOT shark_json_error STREQUAL "NOTFOUND" OR shark_value STREQUAL "")
+                message(FATAL_ERROR "Editor ${shark_case} lacks ${shark_field}: ${shark_error}")
+            endif()
+            if(shark_field STREQUAL "level" AND NOT shark_value STREQUAL "error" OR
+               shark_field STREQUAL "code" AND NOT shark_value STREQUAL "${shark_expected_code}" OR
+               shark_field STREQUAL "operation" AND NOT shark_value STREQUAL "${shark_expected_operation}")
+                message(FATAL_ERROR "Editor ${shark_case} unexpected ${shark_field}: ${shark_value}")
+            endif()
+        endforeach()
+    endfunction()
+    shark_editor_rejected(missing_value 2 invalid_argument editor.arguments --editor --root)
+    shark_editor_rejected(unknown_flag 2 invalid_argument editor.arguments --editor --unknown value)
+    shark_editor_rejected(invalid_device 2 invalid_argument editor.arguments --editor --device invalid)
+    shark_editor_rejected(invalid_validation 2 invalid_argument editor.arguments --editor --validation optional)
+    shark_editor_rejected(duplicate_root 2 invalid_argument editor.arguments --editor --root . --root .)
+    shark_editor_rejected(duplicate_project 2 invalid_argument editor.arguments --editor --project one --project two)
+    shark_editor_rejected(duplicate_shader 2 invalid_argument editor.arguments
+        --editor --gui-vertex one --gui-pixel two --gui-vertex three)
+    shark_editor_rejected(unpaired_vertex 2 invalid_argument editor.arguments --editor --gui-vertex one)
+    shark_editor_rejected(unpaired_pixel 2 invalid_argument editor.arguments --editor --gui-pixel one)
+    shark_editor_rejected(too_many_arguments 2 invalid_argument editor.arguments
+        --editor --root . --project one --device auto --validation off --gui-vertex one --gui-pixel two --help)
+
+    set(shark_missing_vertex "${SHARK_EXECUTABLE}.missing-editor-vertex.spv")
+    set(shark_missing_pixel "${SHARK_EXECUTABLE}.missing-editor-pixel.spv")
+    if(EXISTS "${shark_missing_vertex}" OR EXISTS "${shark_missing_pixel}")
+        message(FATAL_ERROR "Editor missing-shader fixture paths unexpectedly exist")
+    endif()
+    shark_editor_rejected(missing_shader 1 io_failure shader.load --editor
+        --gui-vertex "${shark_missing_vertex}" --gui-pixel "${shark_missing_pixel}")
+endif()

@@ -5,6 +5,10 @@
 #include <shark/log.hpp>
 #include <shark/tools/build_info.hpp>
 
+#ifdef SHARK_EDITOR_GUI
+#include "editor_shell.hpp"
+#endif
+
 #include <array>
 #include <iostream>
 #include <string_view>
@@ -15,12 +19,43 @@ int main(int argc, char* argv[]) {
         if (!logger.write(shark::LogLevel::error, error)) {
             return 1;
         }
-        std::cerr << "Usage: Editor [--help | --version | --window [--window-ms 1..60000] | "
-                     "--graphics | --cube [--graphics-ms 1..60000] [--device UUID|auto] "
-                     "[--validation required|off] [--shader-bundle PATH]]\n"
-                  << std::flush;
+        std::cerr
+            << "Usage: Editor [--help | --version | --editor [--root PATH] [--project RELATIVE] "
+               "[--device UUID|auto] [--validation required|off] [--gui-vertex SPV --gui-pixel "
+               "SPV] | "
+               "--window [--window-ms 1..60000] | "
+               "--graphics | --cube [--graphics-ms 1..60000] [--device UUID|auto] "
+               "[--validation required|off] [--shader-bundle PATH]]\n"
+            << std::flush;
         return std::cerr ? 2 : 1;
     };
+    if (argc >= 2 && std::string_view{argv[1]} == "--editor") {
+#ifdef SHARK_EDITOR_GUI
+        if (argc > 14)
+            return invalid_arguments({shark::ErrorCode::invalid_argument,
+                                      "Too many editor arguments",
+                                      {.operation = "editor.arguments"}});
+        std::array<std::string_view, 13> arguments;
+        for (int index = 1; index < argc; ++index)
+            arguments[static_cast<std::size_t>(index - 1)] = argv[index];
+        auto launch = shark::editor::parse_editor_arguments(
+            std::span{arguments}.first(static_cast<std::size_t>(argc - 1)));
+        if (!launch)
+            return invalid_arguments(launch.error());
+        const auto result = shark::editor::run_editor(launch.value());
+        if (!result) {
+            static_cast<void>(logger.write(shark::LogLevel::error, result.error()));
+            return 1;
+        }
+        return 0;
+#else
+        static_cast<void>(
+            logger.write(shark::LogLevel::error, {shark::ErrorCode::capability_unavailable,
+                                                  "This build has no native graphical editor",
+                                                  {.operation = "editor.run"}}));
+        return 1;
+#endif
+    }
     // Explicit opt-in: informational commands never initialize a display.
     if (argc >= 2 &&
         (std::string_view{argv[1]} == "--graphics" || std::string_view{argv[1]} == "--cube")) {
@@ -90,6 +125,11 @@ int main(int argc, char* argv[]) {
         break;
     case shark::BootstrapAction::help:
         std::cout << shark::client::editor_help();
+#ifdef SHARK_EDITOR_GUI
+        std::cout << "  --editor [--root PATH] [--project RELATIVE] [--device UUID|auto]\n"
+                     "           [--validation required|off] [--gui-vertex SPV --gui-pixel SPV]\n"
+                     "      Open the project editor shell (validation off by default).\n";
+#endif
         break;
     }
     std::cout << std::flush;

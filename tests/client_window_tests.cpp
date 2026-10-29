@@ -161,6 +161,9 @@ class TestBackend final : public WindowBackend {
         case WindowCommand::request_close:
             state_.queried.close_requested = true;
             break;
+        case WindowCommand::cancel_close:
+            state_.queried.close_requested = false;
+            break;
         }
         return true;
     }
@@ -644,6 +647,7 @@ TEST_CASE("closed window operations reject without reacquiring or touching backe
     check_error(window->show(), ErrorCode::conflict);
     check_error(window->focus(), ErrorCode::conflict);
     check_error(window->request_close(), ErrorCode::conflict);
+    check_error(window->cancel_close_request(), ErrorCode::conflict);
     CHECK(backend.recorded() == after_close);
 }
 
@@ -651,7 +655,7 @@ TEST_CASE("window methods reject the wrong thread without backend work", "[windo
     BackendState backend;
     auto window = open(backend);
     const auto before = backend.recorded();
-    std::array<bool, 11> rejected{};
+    std::array<bool, 12> rejected{};
     // Joining provides the handoff; neither thread accesses mutable owner state
     // concurrently, and Catch assertions stay on the controlling thread.
     std::thread worker{[&] {
@@ -668,6 +672,7 @@ TEST_CASE("window methods reject the wrong thread without backend work", "[windo
                     conflict(window->show()),
                     conflict(window->focus()),
                     conflict(window->request_close()),
+                    conflict(window->cancel_close_request()),
                     conflict(window->close())};
     }};
     worker.join();
@@ -900,6 +905,25 @@ TEST_CASE("window close observations stay latched across stale native state quer
     CHECK(state_of(*window).close_requested);
     REQUIRE(window->resize({900, 700}));
     CHECK(state_of(*window).close_requested);
+}
+
+TEST_CASE("window close confirmation can cancel both native and latched requests", "[window]") {
+    BackendState backend;
+    auto window = open(backend);
+    REQUIRE(window->request_close());
+    backend.fail_command = true;
+    REQUIRE_FALSE(window->cancel_close_request());
+    CHECK(state_of(*window).close_requested);
+    backend.fail_command = false;
+    REQUIRE(window->cancel_close_request());
+    CHECK(backend.last_command == WindowCommand::cancel_close);
+    CHECK_FALSE(state_of(*window).close_requested);
+    REQUIRE(window->poll_events());
+    CHECK_FALSE(state_of(*window).close_requested);
+    backend.sink->close_requested();
+    CHECK(state_of(*window).close_requested);
+    REQUIRE(window->cancel_close_request());
+    CHECK_FALSE(state_of(*window).close_requested);
 }
 
 TEST_CASE("window rejects invalid resize requests before calling native code", "[window]") {

@@ -1079,8 +1079,10 @@ process, adds an unsaved Unicode name edit, runs three static integrity ticks wi
 seed 1337, and optionally captures/exports that dirty state. It checks unchanged
 history, retry state and source bytes before explicitly saving the last edit.
 A third process reopens the clean saved project and releases ownership. A human
-or another terminal owner can continue that project; assignment 16 supplies the
-human editor UI.
+or another terminal owner can continue that project. The initial
+[human editor shell](editor-shell.md) can open/save/close it after terminal
+ownership ends; scene-editing panels and connected UI/terminal parity follow
+the remaining assignment-16 checkpoints.
 
 `summary.json` retains the import outcomes, source identities, save/reopen state,
 run report, optional artifact results and final handoff. Standard output contains

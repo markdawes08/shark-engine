@@ -13,7 +13,7 @@
 namespace shark::client {
 
 enum class ShaderStage { vertex, pixel };
-enum class ShaderInterface { textured_cube, scene_unlit };
+enum class ShaderInterface { textured_cube, scene_unlit, gui };
 
 // Owned precompiled SPIR-V. Callers explicitly select the bounded interface;
 // the default preserves the textured-cube contract. This reader is not a full

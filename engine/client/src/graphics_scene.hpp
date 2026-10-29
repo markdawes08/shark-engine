@@ -58,5 +58,7 @@ void record_window_scene_frame(SceneFrameResources&, const SceneViewportRequest&
                                const SceneTarget&, nvrhi::ICommandList&, bool upload);
 [[nodiscard]] OffscreenReadback read_scene_frame(nvrhi::IDevice&, const SceneFrameResources&,
                                                  const SceneTarget&);
+[[nodiscard]] OffscreenReadback read_scene_target(nvrhi::IDevice&, const SceneTarget&,
+                                                  std::uint64_t submitted, std::uint32_t created);
 
 } // namespace shark::client::detail

@@ -1,6 +1,80 @@
 {
   "schema_version": 1,
   "dependencies": {
+    "ImGui": {
+      "version": "1.91.9b",
+      "upstream": "https://github.com/ocornut/imgui",
+      "commit": "f5befd2d29e66809cd1110a152e375a7f1981f06",
+      "url": "https://codeload.github.com/ocornut/imgui/tar.gz/f5befd2d29e66809cd1110a152e375a7f1981f06",
+      "sha256": "85f4ce357df05bcc331b587f01976f47fb55f19fadf477a7907289686bc3f4c8",
+      "archive_bytes": 1846673,
+      "archive_prefix": "imgui-f5befd2d29e66809cd1110a152e375a7f1981f06",
+      "source_file_count": 243,
+      "source_bytes": 6967002,
+      "source_sha256": {
+        "imgui.cpp": "af1cc31255fbf58d57ecc9d727cbd39a84e44fa8f11be7fd419fa0100c5255d8",
+        "imgui_draw.cpp": "9d2d9ee6745d9b98d7f39a16da8ffcf783f90bb8c9e931038fc8e9a15cbe3d84",
+        "imgui_tables.cpp": "4ea380fa9d49cac6cbfbc8b969969f9b0705518ec9ca340681d8c70e3eefbc28",
+        "imgui_widgets.cpp": "54ac29dbcbe70091f5e5fc2cb4099e6d0b9d1c939e5158f2be983cb508714414",
+        "imgui.h": "2d0180859ff85e7fe66ed9999b0f05f2fc45176773046a8f86b3b6bd190b0765",
+        "imgui_internal.h": "1363c617a743957f367afe1c6c88345870b7aa25ee339809fb915466e4fb9575",
+        "imconfig.h": "0884061cc43e27e1d346fe18dcd1425792eb2532d3d16610a82eb5ac751f7594",
+        "imstb_rectpack.h": "2efa3d5f7d003c19743b15155dad9f46d9f9fc783a18893d703b431d3c990972",
+        "imstb_textedit.h": "77010e494caf72c178b573569612aec409d24380409676325a31d02de0ec64b7",
+        "imstb_truetype.h": "87f08919ae8e7223451d0e9d06b62829075d3e920c9e6ad436db9d7e7427ffce",
+        "LICENSE.txt": "c80c5789748d955c4a650562baa0d750494e2c7128c2ca66aaebe2e3c4e198bf"
+      },
+      "license": "MIT",
+      "license_files": [
+        "LICENSE.txt",
+        "imgui_draw.cpp",
+        "imstb_rectpack.h",
+        "imstb_textedit.h",
+        "imstb_truetype.h"
+      ],
+      "owner_target": "Editor (private SharkImGui); native graphics only",
+      "assignment": "16",
+      "patches": [],
+      "transitive_dependencies": [],
+      "compile_definitions": [
+        "IMGUI_DISABLE_FILE_FUNCTIONS=1",
+        "IMGUI_DISABLE_DEFAULT_SHELL_FUNCTIONS=1",
+        "IMGUI_DISABLE_WIN32_DEFAULT_IME_FUNCTIONS=1"
+      ],
+      "options": {
+        "core_sources": [
+          "imgui.cpp",
+          "imgui_draw.cpp",
+          "imgui_tables.cpp",
+          "imgui_widgets.cpp"
+        ],
+        "upstream_backends": false,
+        "demo": false,
+        "docking": false,
+        "multi_viewport": false,
+        "freetype": false
+      },
+      "vendored_inputs": [
+        {
+          "path": "imgui_draw.cpp",
+          "description": "Embedded ProggyClean font by Tristan Grimmer, copyright 2004-2005; MIT notice retained with full upstream MIT terms."
+        },
+        {
+          "path": "imstb_rectpack.h",
+          "description": "Bundled stb_rect_pack; MIT option selected from the embedded dual license."
+        },
+        {
+          "path": "imstb_textedit.h",
+          "description": "Bundled stb_textedit; MIT option selected from the embedded dual license."
+        },
+        {
+          "path": "imstb_truetype.h",
+          "description": "Bundled stb_truetype; MIT option selected from the embedded dual license."
+        }
+      ],
+      "verification": "Official v1.91.9b tag resolved to this exact commit; official immutable archive, full inventory and reviewed source hashes checked on 2026-10-29. Release https://github.com/ocornut/imgui/releases/tag/v1.91.9b. Native integration qualification is recorded separately.",
+      "notes": "Stable fixed font-atlas API for the initial Editor. Compile four core source files only; use Shark input/graphics adapters, with no upstream backend, examples, demo, downloads or build scripts. Keep stock imconfig.h and apply reviewed target definitions. Embedded font and stb helpers are included in license_files. No ImGuizmo until assignment 17. Runtime/Server/CPU Tools never populate or link this dependency."
+    },
     "SQLite": {
       "version": "3.54.1",
       "upstream": "https://www.sqlite.org/",

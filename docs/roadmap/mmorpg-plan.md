@@ -37,6 +37,12 @@ equal human/terminal authoring. A local development release is the current
 deliverable. Same-machine multiprocess tests exercise real boundaries; they do
 not establish production scale, real WAN behavior or independent failure recovery.
 
+Assignment 16 now follows the [human editor checkpoints](editor-plan.md). Its
+initial [project shell](../editor-shell.md) uses the existing authoring owner;
+it changes no live authority, global cell identity, persistence or LOCAL-MMO-1
+workload. Scene panels and actual human/terminal handoff acceptance retain later
+checkpoints, with navigation/picking/gizmos in assignment 17.
+
 11a completes [persistent asset identity and metadata](../handoffs/11a-asset-identity.md)
 under the current-machine scope. Its audience/dependency-ID fields preserve the
 client/server content distinction for later cook/streaming owners; they do not

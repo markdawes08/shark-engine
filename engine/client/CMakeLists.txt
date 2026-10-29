@@ -1,6 +1,6 @@
 add_library(EngineClient STATIC
     src/bootstrap.cpp src/input.cpp src/frame_loop.cpp src/window.cpp src/window_events.cpp src/window_launch.cpp
-    src/graphics.cpp src/gpu_resources.cpp src/shader_bundle.cpp src/cube_sample.cpp src/scene_viewport.cpp
+    src/graphics.cpp src/gpu_resources.cpp src/gui_draw.cpp src/shader_bundle.cpp src/cube_sample.cpp src/scene_viewport.cpp
     src/presentation.cpp src/presentation_launch.cpp src/scene_content.cpp src/scene_launch.cpp
     src/executable_path.cpp src/prepared_package.cpp)
 if(WIN32)
@@ -16,7 +16,7 @@ else()
     target_sources(EngineClient PRIVATE src/window_unavailable.cpp)
 endif()
 if(SHARK_NATIVE_GRAPHICS)
-    target_sources(EngineClient PRIVATE src/graphics_vulkan.cpp src/graphics_offscreen.cpp src/graphics_scene.cpp)
+    target_sources(EngineClient PRIVATE src/graphics_vulkan.cpp src/graphics_offscreen.cpp src/graphics_scene.cpp src/graphics_gui.cpp)
     target_link_libraries(EngineClient PRIVATE SharkGraphicsDependencies)
     target_compile_definitions(EngineClient PRIVATE VULKAN_HPP_DISPATCH_LOADER_DYNAMIC=1)
     if(SHARK_BUILD_TESTS)

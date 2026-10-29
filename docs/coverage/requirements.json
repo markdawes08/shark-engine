@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "15",
+  "current_assignment": "16",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -440,7 +440,7 @@
       "planned_fixture": "EditorApiStateEquivalence, EditorLifecycle and EditorFocusRouting fixtures; FeatureWorld/EditorAuthoring is the representative saved project. Add HumanTerminalProjectHandoff and UnsavedHistoryConflict fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "Editor shell is not implemented; owner assignment 16."
+        "reason": "16a implements the initial Windows project shell, Editor-private adapter over the retained authoring owner, bounded GUI presentation and input routing. Selected results and verification limits belong to docs/handoffs/16a-editor-shell.md. The user deferred remaining desktop acceptance to nonblocking backlog BL-16A-UI-01 and authorized continued coding/headless checks until desktop testing is explicitly resumed. Full REQ-16 remains NOT_RUN: scene viewport, hierarchy/selection, inspector, asset browser, console, UI undo/redo and connected human/terminal semantic parity retain checkpoints 16b-16e. CPU session and ImGui fixtures do not qualify native graphics or the complete editor workflow."
       }
     },
     {
@@ -2935,6 +2935,62 @@
           "tools/tests/test_authoring_workflow_process.py"
         ],
         "fixture_reason": "Real terminal pipes execute native scene-integrity runs from the current unsaved snapshot, independently bind its digest to explicitly saved bytes, and preserve source, history and retained mutations. Windows export controls exercise the supervised package helper and publication/reconciliation boundaries; portable export-process fixtures retain native content fences. The separate artifact fixture performs actual same-owner package publication and required-validation captures on both current-PC GPUs, with the existing independent readback oracle and packaged CPU inspection. The CPU CTests do not prove those GPU or deployment outcomes; actual results and omissions belong to docs/handoffs/15d-terminal-execution.md. No gameplay/Lua execution or editor UI is claimed. The connected public example creates a fresh project, imports and modifies licensed glTF content, authors its scene through shared mutations, saves/reopens and runs deterministic integrity assertions. The CPU workflow fixture checks independent persisted state and owner handoff; explicit connected artifact runs extend this same example through capture and export without changing the API surface."
+      },
+      {
+        "id": "editor.project-shell",
+        "name": "Human editor project shell over the retained authoring owner",
+        "requirement_ids": [
+          "REQ-16"
+        ],
+        "test_ids": [
+          "shark.editor.project-session",
+          "shark.editor.gui-adapter",
+          "shark.editor.cli",
+          "shark.editor.dependencies"
+        ],
+        "test_sources": [
+          "tests/editor_project_session_tests.cpp",
+          "tests/editor_gui_tests.cpp",
+          "tests/CheckCli.cmake",
+          "tools/tests/test_editor_dependencies.py"
+        ],
+        "fixtures": [
+          "tests/editor_project_session_tests.cpp",
+          "tests/editor_gui_tests.cpp",
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/editor-shell.md",
+          "docs/handoffs/16a-editor-shell.md"
+        ],
+        "fixture_reason": "Real temporary projects and the same public AuthoringProtocol owner exercise open/save/close, current-revision discard, cancel, dirty/history/retry preservation, competing writer rejection, exact external-file conflicts and fresh reopen. CPU ImGui contexts exercise Unicode InputText, coalesced mouse edges, focus-loss queue cancellation and shortcut capture. The native-only CLI branch rejects malformed arguments and missing explicit shaders before window/device creation; dependency fixtures qualify the private ImGui boundary. This is the 16a shell, not hierarchy/inspector editing or full UI/API equivalence; actual desktop observations and platform results are recorded separately in the handoff.",
+        "external_fixture_reason": "Native editor ownership, actual input contexts, local file contention and desktop interaction require external fixtures. No additional FeatureWorld command or second scene-mutation path is introduced. Connected graphical editing and terminal semantic handoff remain the later assignment-16 checkpoints.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "client.gui-presentation",
+        "name": "Bounded owned GUI atlas and frame presentation",
+        "requirement_ids": [
+          "REQ-16"
+        ],
+        "test_ids": [
+          "shark.client.gui-draw",
+          "shark.editor.gui-adapter"
+        ],
+        "test_sources": [
+          "tests/gui_draw_tests.cpp",
+          "tests/editor_gui_tests.cpp",
+          "tests/gui_render_smoke.cpp",
+          "tools/gui_smoke.py"
+        ],
+        "fixtures": [
+          "tests/gui_render_smoke.cpp",
+          "tools/gui_smoke.py",
+          "shaders/gui_recipe.json",
+          "docs/editor-shell.md",
+          "docs/handoffs/16a-editor-shell.md"
+        ],
+        "fixture_reason": "CPU tests reject invalid atlas/frame bounds, incomplete triangles, out-of-range indices/scissors, nonfinite values, unsupported textures/callbacks, inconsistent draw totals and oversized emitted geometry. Actual ImGui draw data verifies independently specified sRGB-to-linear color, logical-to-framebuffer conversion and clipping. The separate native GuiRenderSmoke fixture and existing process/graphics tooling capture presented blending, clipping, changed geometry, resize and close cancellation against fixed independent pixel expectations on an explicitly selected GPU. GraphicsDevice accepts engine-owned values and retains its existing per-image completion/retirement path; it does not expose or depend on ImGui types.",
+        "external_fixture_reason": "GPU blending, swapchain resize, native close cancellation and retirement need the external required-validation fixture tools/gui_smoke.py. Registered CPU CTests establish value validation and adapter behavior only; actual per-GPU results and omissions are recorded in docs/handoffs/16a-editor-shell.md, not inferred from a CPU pass.",
+        "featureworld_cases": []
       }
     ],
     "components": [

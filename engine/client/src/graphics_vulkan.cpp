@@ -1,4 +1,5 @@
 #include "graphics_backend.hpp"
+#include "graphics_gui.hpp"
 #include "graphics_offscreen.hpp"
 #include "graphics_queue_waiter.hpp"
 #include "graphics_scene.hpp"
@@ -597,6 +598,8 @@ class VulkanBackend final : public detail::GraphicsBackend {
             return window_->focus();
         case detail::WindowCommand::request_close:
             return window_->request_close();
+        case detail::WindowCommand::cancel_close:
+            return window_->cancel_close_request();
         }
         return failure(ErrorCode::invalid_argument, "graphics.window.command",
                        "Unknown window command");
@@ -604,7 +607,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
 
     Result<void> set_presentation_draw(const OffscreenRequest& request,
                                        bool enable_readback) override {
-        if (window_draw_ || window_scene_ || swapchain_ != VK_NULL_HANDLE) {
+        if (window_draw_ || window_scene_ || gui_atlas_ || swapchain_ != VK_NULL_HANDLE) {
             return failure(ErrorCode::conflict, "graphics.window_draw.configuration",
                            "Window draw is immutable after configuration");
         }
@@ -616,7 +619,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
     Result<void> set_presentation_scene(const SceneViewportRequest& request,
                                         bool enable_readback) override {
         return phase<void>([&]() -> Result<void> {
-            if (window_draw_ ||
+            if (window_draw_ || gui_atlas_ ||
                 (swapchain_ != VK_NULL_HANDLE && capture_enabled_ != enable_readback))
                 return failure(
                     ErrorCode::conflict, "graphics.window_scene.configuration",
@@ -661,6 +664,25 @@ class VulkanBackend final : public detail::GraphicsBackend {
         });
     }
 
+    Result<void> configure_gui(const GuiAtlas& atlas, bool enable_readback) override {
+        if (window_draw_ || window_scene_ || gui_atlas_ || swapchain_ != VK_NULL_HANDLE)
+            return failure(ErrorCode::conflict, "graphics.gui.configure",
+                           "GUI atlas must be configured once before presentation");
+        gui_atlas_ = atlas;
+        capture_enabled_ = enable_readback;
+        return {};
+    }
+    Result<void> set_presentation_gui(const GuiFrame& frame) override {
+        if (!gui_atlas_)
+            return failure(ErrorCode::conflict, "graphics.gui.frame",
+                           "GUI atlas is not configured");
+        // Allocate the complete candidate before adoption. GPU resources belong
+        // to image slots and are untouched by CPU frame replacement.
+        std::optional<GuiFrame> candidate{frame};
+        gui_frame_.swap(candidate);
+        return {};
+    }
+
     Result<OffscreenReadback> capture_presented() override {
         return phase<OffscreenReadback>([&]() -> Result<OffscreenReadback> {
             if (!capture_enabled_ || !captured_image_ || device_lost_) {
@@ -668,9 +690,10 @@ class VulkanBackend final : public detail::GraphicsBackend {
                                "There is no completed presentation candidate to capture");
             }
             const auto& image = images_.at(*captured_image_);
-            const auto serial = image.scene_frame ? image.scene_frame->submitted
-                                : image.draw      ? image.draw->submitted
-                                                  : 0;
+            const auto serial = image.gui           ? image.gui->submitted
+                                : image.scene_frame ? image.scene_frame->submitted
+                                : image.draw        ? image.draw->submitted
+                                                    : 0;
             if (serial == 0) {
                 return failure(ErrorCode::conflict, "graphics.capture.state",
                                "Presented draw has no capture submission");
@@ -683,10 +706,12 @@ class VulkanBackend final : public detail::GraphicsBackend {
                 return failure(ErrorCode::execution_failed, "graphics.capture.wait",
                                "Capture wait timed out; all presentation owners remain live");
             }
-            auto result = image.scene_frame
-                              ? detail::read_scene_frame(*validation_, *image.scene_frame,
-                                                         *image.scene_target)
-                              : detail::read_offscreen_resources(*validation_, *image.draw);
+            auto result =
+                image.gui           ? detail::read_scene_target(*validation_, *image.scene_target,
+                                                                image.gui->submitted, image.gui->created)
+                : image.scene_frame ? detail::read_scene_frame(*validation_, *image.scene_frame,
+                                                               *image.scene_target)
+                                    : detail::read_offscreen_resources(*validation_, *image.draw);
             if (image.scene_target)
                 result.created_resources += image.scene_target->created;
             result.color_encoding = ReadbackColorEncoding::srgb;
@@ -750,6 +775,9 @@ class VulkanBackend final : public detail::GraphicsBackend {
                 // the device; leave recreation pending until the owner repacks.
                 if (window_scene_ &&
                     window_scene_->extent != WindowExtent{extent.width, extent.height})
+                    return std::optional<detail::SwapchainInfo>{};
+                if (gui_atlas_ && (!gui_frame_ ||
+                                   gui_frame_->extent != WindowExtent{extent.width, extent.height}))
                     return std::optional<detail::SwapchainInfo>{};
                 if (window_draw_ && (extent.width > 4096 || extent.height > 4096)) {
                     return failure(ErrorCode::capability_unavailable, "graphics.window_draw.extent",
@@ -982,6 +1010,21 @@ class VulkanBackend final : public detail::GraphicsBackend {
                 image.scene_target = std::move(target);
                 image.scene_frame = std::move(draw);
             }
+            if (gui_frame_ && !image.gui) {
+                bool fail_partial = false;
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+                fail_partial = inject(detail::NativeGraphicsFault::window_draw_partial_creation);
+#endif
+                auto target = detail::create_window_scene_target(*validation_, image.texture,
+                                                                 {extent_.width, extent_.height},
+                                                                 capture_enabled_, fail_partial);
+                auto draw = detail::create_gui_resources(*validation_, *gui_atlas_, *target);
+                if (nvrhi_diagnostics_.sink->has_errors())
+                    return failure(ErrorCode::execution_failed, "graphics.gui.create",
+                                   "Validation reported an error while creating GUI resources");
+                image.scene_target = std::move(target);
+                image.gui = std::move(draw);
+            }
             captured_image_.reset();
             auto& commands = frame.commands;
             // NVRHI retains a self-reference from the opened command buffer
@@ -1041,7 +1084,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
             rendering.pColorAttachments = &attachment;
             vkCmdBeginRendering(native, &rendering);
             vkCmdEndRendering(native);
-            if (image.draw || image.scene_frame) {
+            if (image.draw || image.scene_frame || image.gui) {
                 // The native loadOp clear writes the same attachment that the
                 // shared NVRHI draw subsequently loads. Preserve that explicit
                 // write/load dependency without requiring TRANSFER_DST usage.
@@ -1057,7 +1100,10 @@ class VulkanBackend final : public detail::GraphicsBackend {
                 dependency.memoryBarrierCount = 1;
                 dependency.pMemoryBarriers = &barrier;
                 vkCmdPipelineBarrier2(native, &dependency);
-                if (image.scene_frame)
+                if (image.gui)
+                    detail::record_gui_frame(*image.gui, *gui_atlas_, *gui_frame_,
+                                             *image.scene_target, *commands, !image.uploaded);
+                else if (image.scene_frame)
                     detail::record_window_scene_frame(*image.scene_frame, *window_scene_,
                                                       *image.scene_target, *commands,
                                                       !image.uploaded);
@@ -1109,6 +1155,10 @@ class VulkanBackend final : public detail::GraphicsBackend {
             if (image.scene_frame) {
                 image.uploaded = true;
                 image.scene_frame->submitted = frame.submitted;
+            }
+            if (image.gui) {
+                image.uploaded = true;
+                image.gui->submitted = frame.submitted;
             }
             return {};
         });
@@ -1464,6 +1514,10 @@ class VulkanBackend final : public detail::GraphicsBackend {
                 result.window_draw_resources += image.scene_frame->created;
                 result.window_draw_submissions += image.scene_frame->submitted != 0 ? 1U : 0U;
             }
+            if (image.gui) {
+                result.window_draw_resources += image.gui->created;
+                result.window_draw_submissions += image.gui->submitted != 0 ? 1U : 0U;
+            }
             if (image.scene_target)
                 result.window_draw_resources += image.scene_target->created;
             result.image_wrappers += image.texture ? 1U : 0U;
@@ -1481,6 +1535,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
         }
         for (auto& image : images_) {
             image.draw.reset();
+            image.gui.reset();
             image.scene_frame.reset();
             image.scene_target.reset();
             image.texture = nullptr;
@@ -1522,6 +1577,8 @@ class VulkanBackend final : public detail::GraphicsBackend {
         }
         window_draw_.reset();
         window_scene_.reset();
+        gui_frame_.reset();
+        gui_atlas_.reset();
     }
 
     void destroy_nvrhi() noexcept override {
@@ -1534,6 +1591,8 @@ class VulkanBackend final : public detail::GraphicsBackend {
         // which case the presentation phase itself was never initialized.
         window_draw_.reset();
         window_scene_.reset();
+        gui_frame_.reset();
+        gui_atlas_.reset();
         // Presentation has already completed its bounded drain or reported
         // device loss, and any legacy queue-idle worker has joined. NVRHI's
         // unbounded waitForIdle is never called on the owning thread.
@@ -1696,6 +1755,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
         std::unique_ptr<detail::OffscreenResources> draw;
         std::unique_ptr<detail::SceneTarget> scene_target;
         std::unique_ptr<detail::SceneFrameResources> scene_frame;
+        std::unique_ptr<detail::GuiResources> gui;
         VkSemaphore rendered{VK_NULL_HANDLE};
         VkFence present_fence{VK_NULL_HANDLE};
         bool present_pending{false};
@@ -1709,6 +1769,8 @@ class VulkanBackend final : public detail::GraphicsBackend {
     SceneViewportStats scene_stats_;
     std::optional<OffscreenRequest> window_draw_;
     std::optional<SceneViewportRequest> window_scene_;
+    std::optional<GuiAtlas> gui_atlas_;
+    std::optional<GuiFrame> gui_frame_;
     std::optional<std::uint32_t> captured_image_;
     bool capture_enabled_{false};
     std::vector<Image> images_;

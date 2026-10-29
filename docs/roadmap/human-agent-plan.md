@@ -25,6 +25,13 @@ Windows/Linux platform matrix. Mac and native Linux graphics are outside active
 scope; human/terminal parity is unchanged. No additional hardware, provider
 account, external model service or hosted runner is needed to complete the plan.
 
+Current editor work follows the [five assignment-16 checkpoints](editor-plan.md).
+The [16a shell](../editor-shell.md) adapts the completed terminal authoring owner
+in process for project open/save/close and dirty decisions. It preserves one
+writer and explicit handoff. Remaining panels and actual bidirectional UI/terminal
+acceptance are still required; a passing CPU adapter does not prove human UI
+interaction. The historical foundation assessment below remains tied to its base.
+
 11a adds [shared CPU asset metadata/catalog services](../asset-identity.md),
 qualified in the [identity handoff](../handoffs/11a-asset-identity.md). Both
 audiences use the same typed validation, exact file revisions, bounded query

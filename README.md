@@ -20,12 +20,18 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**Assignment 15 is complete under current-machine scope.** The
-[latest handoff](docs/handoffs/15e-terminal-acceptance.md) records the connected
+**Assignment 16a adds the initial human editor shell.** Selected CPU and native
+GUI rendering checks pass. Remaining desktop acceptance is in the
+[nonblocking backlog](docs/backlog.md): the user paused desktop interaction until
+explicitly resumed, while authorizing continued coding and headless checks.
+The [latest handoff](docs/handoffs/16a-editor-shell.md) records its selected gates.
+Full REQ-16 remains NOT_RUN. Assignment 15 is complete under current-machine scope;
+its [handoff](docs/handoffs/15e-terminal-acceptance.md) records the connected
 create/import/edit/save/reopen/run/capture/export workflow. Try the
 [public terminal example](docs/authoring-protocol.md#complete-terminal-example),
-which leaves a saved project ready for another owner. Next is assignment 16's
-human editor UI using the same services. Assignments 12, 13 and 14 remain complete,
+which leaves a saved project ready for another owner. The
+[editor checkpoints](docs/roadmap/editor-plan.md) extend the same services into
+human-facing panels. Assignments 12, 13 and 14 remain complete,
 including Runtime scene presentation and safe reload on both GPUs. Completed
 checkpoints and their original results are indexed in
 [requirements and coverage](docs/coverage/README.md); historical counts are not
@@ -34,6 +40,10 @@ authorizes continued development under each increment's acceptance criteria.
 
 Current capabilities include:
 
+- An explicit [Windows editor shell](docs/editor-shell.md) for project open/save/
+  close, saved/dirty status and close decisions through the same retained authoring
+  owner. Hierarchy, viewport, inspector, asset and console panels remain later
+  assignment-16 checkpoints.
 - [Terminal authoring](docs/authoring-protocol.md) through one-shot JSON or
   persistent stdio, with discovery, bounded queries, retained edits, preview,
   undo/redo, conflict-aware persistence, bounded asset import jobs and static scene
@@ -64,7 +74,8 @@ Current capabilities include:
 - Shared [authoring commands](docs/authoring-commands.md),
   [atomic batches and preview](docs/authoring-transactions.md),
   [undo/redo](docs/authoring-history.md) and [retained retries](docs/authoring-retries.md)
-  through one owner. Terminal operations are implemented; the editor remains 16.
+  through one owner. Terminal operations are implemented; the initial Editor
+  project session consumes that same service.
 - Bounded [TLS/wire transport](docs/network-transport.md),
   [mutually authenticated owned sessions](docs/network-sessions.md),
   [authoritative replication](docs/network-replication.md) and
@@ -88,9 +99,9 @@ Current capabilities include:
 Runtime additionally exposes `--scene` with an explicit camera and precompiled
 shaders, F5 reload and terminal capture output. Editor/Runtime retain version/help,
 `--cube`, `--graphics` and `--window` diagnostics. Server exposes validated startup,
-timed execution and shutdown. There are no active player connections, world
-simulation or game-authoring UI yet; networking and live persistence remain C++
-services, while authoring also has the terminal protocol. See the
+timed execution and shutdown. There are no active player connections or world
+simulation yet; networking and live persistence remain C++ services. Human
+authoring begins with the explicit `--editor` project shell. See the
 [Runtime scene guide](docs/runtime-scenes.md) for launch syntax.
 
 - [Architecture decisions](docs/architecture/README.md) define target boundaries,
@@ -128,8 +139,8 @@ startup never compiles shaders. For a bounded run use
 `build/windows-debug/bin/Runtime.exe --cube --graphics-ms 1000`.
 The existing `--graphics` flag opens the clear-presentation sample.
 F6 toggles offline pause and F7 advances one empty tick while paused; presentation
-continues while visible. Diagnostic JSON is available in the terminal. No game
-world or authoring UI runs. See the [presentation guide](docs/presentation-lifecycle.md)
+continues while visible. Diagnostic JSON is available in the terminal. Cube mode
+runs no game world or authoring panels. See the [presentation guide](docs/presentation-lifecycle.md)
 for explicit device selection, validation and qualifying native fixtures.
 The existing `--window` option retains the empty-window diagnostic described in
 the [window guide](docs/window-lifecycle.md).

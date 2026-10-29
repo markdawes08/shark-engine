@@ -264,6 +264,7 @@ struct GraphicsDevice::Impl {
     const char* operation{"graphics.startup"};
     bool presentation_started{false};
     bool draw_configured{false};
+    bool gui_configured{false};
     std::optional<WindowExtent> scene_extent;
     bool capture_enabled{false};
 
@@ -563,6 +564,9 @@ Result<void> GraphicsDevice::focus() {
 Result<void> GraphicsDevice::request_close() {
     return impl_->command(detail::WindowCommand::request_close);
 }
+Result<void> GraphicsDevice::cancel_close_request() {
+    return impl_->command(detail::WindowCommand::cancel_close);
+}
 Result<PresentationReport> GraphicsDevice::present(ClearColor color) {
     if (auto value = impl_->check_live(); !value) {
         return value.error();
@@ -571,6 +575,9 @@ Result<PresentationReport> GraphicsDevice::present(ClearColor color) {
         return graphics_error(ErrorCode::conflict, "graphics.presentation.offscreen_pending",
                               "Offscreen resources require an explicit drain before presentation");
     }
+    if (impl_->gui_configured && !impl_->scene_extent)
+        return graphics_error(ErrorCode::conflict, "graphics.gui.frame",
+                              "GUI requires a complete frame before presentation");
     if (impl_->scene_extent && !impl_->presentation.stats().faulted) {
         if (auto checked = impl_->check_diagnostics(); !checked)
             return checked.error();
@@ -594,6 +601,57 @@ Result<void> detail::GraphicsBackend::set_presentation_scene(const SceneViewport
     return graphics_error(ErrorCode::capability_unavailable, "graphics.window_scene.backend",
                           "Window scene backend is unavailable");
 }
+Result<void> detail::GraphicsBackend::configure_gui(const GuiAtlas&, bool) {
+    return graphics_error(ErrorCode::capability_unavailable, "graphics.gui.backend",
+                          "GUI backend is unavailable");
+}
+Result<void> detail::GraphicsBackend::set_presentation_gui(const GuiFrame&) {
+    return graphics_error(ErrorCode::capability_unavailable, "graphics.gui.backend",
+                          "GUI backend is unavailable");
+}
+Result<void> GraphicsDevice::configure_gui(const GuiAtlas& atlas, bool enable_readback) {
+    if (auto checked = impl_->check_live(); !checked)
+        return checked.error();
+    if (impl_->presentation_started || impl_->draw_configured || impl_->scene_extent ||
+        impl_->gui_configured || impl_->backend->offscreen_pending())
+        return graphics_error(ErrorCode::conflict, "graphics.gui.configure",
+                              "Configure one GUI atlas before presentation and other draws");
+    if (auto checked = validate_gui_atlas(atlas); !checked)
+        return checked.error();
+    try {
+        if (auto checked = impl_->check_diagnostics(); !checked)
+            return checked.error();
+        if (auto configured = impl_->backend->configure_gui(atlas, enable_readback); !configured)
+            return configured.error();
+        impl_->gui_configured = true;
+        impl_->capture_enabled = enable_readback;
+        return impl_->check_diagnostics();
+    } catch (...) {
+        return graphics_error(ErrorCode::execution_failed, "graphics.gui.configure",
+                              "GUI atlas configuration failed before presentation");
+    }
+}
+Result<void> GraphicsDevice::set_presentation_gui(const GuiFrame& frame) {
+    if (auto checked = impl_->check_live(); !checked)
+        return checked.error();
+    if (!impl_->gui_configured || impl_->presentation.stats().faulted ||
+        impl_->backend->offscreen_pending())
+        return graphics_error(ErrorCode::conflict, "graphics.gui.frame",
+                              "GUI frame requires a configured healthy presentation owner");
+    if (auto checked = validate_gui_frame(frame); !checked)
+        return checked.error();
+    try {
+        if (auto checked = impl_->check_diagnostics(); !checked)
+            return checked.error();
+        if (auto configured = impl_->backend->set_presentation_gui(frame); !configured)
+            return configured.error();
+        impl_->scene_extent = frame.extent;
+        return {};
+    } catch (...) {
+        return graphics_error(ErrorCode::execution_failed, "graphics.gui.frame",
+                              "GUI frame copy failed; previous frame remains available");
+    }
+}
 Result<OffscreenReadback> detail::GraphicsBackend::capture_presented() {
     return graphics_error(ErrorCode::capability_unavailable, "graphics.capture.backend",
                           "Window readback backend is unavailable");
@@ -604,7 +662,7 @@ Result<void> GraphicsDevice::set_presentation_draw(const OffscreenRequest& reque
         return checked.error();
     }
     if (impl_->presentation_started || impl_->draw_configured || impl_->scene_extent ||
-        impl_->backend->offscreen_pending()) {
+        impl_->gui_configured || impl_->backend->offscreen_pending()) {
         return graphics_error(ErrorCode::conflict, "graphics.window_draw.configuration",
                               "Configure one draw before presentation, with no pending owners");
     }
@@ -633,7 +691,7 @@ Result<void> GraphicsDevice::set_presentation_scene(const SceneViewportRequest& 
         return checked.error();
     if (auto checked = validate_scene_viewport_request(request); !checked)
         return checked.error();
-    if (impl_->draw_configured || impl_->presentation.stats().faulted ||
+    if (impl_->draw_configured || impl_->gui_configured || impl_->presentation.stats().faulted ||
         impl_->backend->offscreen_pending() ||
         (impl_->presentation_started && enable_readback != impl_->capture_enabled))
         return graphics_error(ErrorCode::conflict, "graphics.window_scene.configuration",

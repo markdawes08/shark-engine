@@ -260,6 +260,10 @@ void record_window_scene_frame(SceneFrameResources& resources, const SceneViewpo
 
 OffscreenReadback read_scene_frame(nvrhi::IDevice& device, const SceneFrameResources& frame,
                                    const SceneTarget& target) {
+    return read_scene_target(device, target, frame.submitted, frame.created);
+}
+OffscreenReadback read_scene_target(nvrhi::IDevice& device, const SceneTarget& target,
+                                    std::uint64_t submitted, std::uint32_t created) {
     OffscreenReadback result;
     result.extent = target.extent;
     const auto pixels = static_cast<std::size_t>(target.extent.width) * target.extent.height;
@@ -267,9 +271,9 @@ OffscreenReadback read_scene_frame(nvrhi::IDevice& device, const SceneFrameResou
     result.depth.resize(pixels);
     read_rows(device, target.color_readback, target.extent, result.rgba8.data());
     read_rows(device, target.depth_readback, target.extent, result.depth.data());
-    result.submitted = frame.submitted;
-    result.completed = frame.submitted;
-    result.created_resources = frame.created;
+    result.submitted = submitted;
+    result.completed = submitted;
+    result.created_resources = created;
     return result;
 }
 } // namespace shark::client::detail

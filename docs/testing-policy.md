@@ -21,6 +21,25 @@ run, not what a selected test must prove. Current-machine scope and the user's
 ownership of staging, commits and pushing remain unchanged. Hosted CI and remote
 branch protection remain unchanged and do not become local prerequisites.
 
+## Desktop-interaction pause, 2026-10-29
+
+The user explicitly paused desktop/UI testing while using this PC for office
+work, until further notice, and authorized continued coding. Do not use desktop
+automation, move the mouse, send keyboard input, change focus, or launch/control
+application windows while this pause is active. This includes automated windowed
+GPU fixtures, even when no manual interaction is planned. Do not infer permission
+from the time, date, elapsed duration or a later ordinary coding request. Only
+the user's explicit instruction to resume desktop testing ends the pause.
+
+Headless builds, CPU tests and other noninteractive checks may continue when they
+do not open or interact with desktop windows. Required desktop checks remain
+NOT_RUN/deferred and are nonblocking for continued coding under this explicit
+user amendment. Record their exact remaining scope in the
+[backlog](backlog.md#desktop-ui-deferral) and extend it as later checkpoints add
+UI acceptance. Do not claim those checks passed or close full REQ-16 without
+their required evidence. Completed native GPU results remain valid for their
+tested inputs; the pause neither invalidates nor retroactively reruns them.
+
 ## Select checks before running them
 
 State a short selection and rationale in the work update or existing task plan:

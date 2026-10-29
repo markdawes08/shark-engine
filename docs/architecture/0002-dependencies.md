@@ -6,6 +6,15 @@ Scope: Assignment 00. Assignment 01 implements the build and lock mechanism; lat
 
 ## Decision
 
+16a integrates **Dear ImGui 1.91.9b** privately in native Editor, pinned to commit
+`f5befd2d29e66809cd1110a152e375a7f1981f06`. The
+[dependency review](../dependencies/imgui.md) records exact archive/source hashes,
+MIT and embedded notices, four compiled core sources and reviewed options.
+Shark supplies input/graphics adapters; upstream backends and build scripts never
+run. Only `SHARK_BUILD_EDITOR AND SHARK_NATIVE_GRAPHICS` creates `Shark::ImGui`.
+Runtime, Server and independent CPU Tools do not populate or link it. ImGuizmo
+remains assignment 17. The pin does not establish native qualification.
+
 12c integrates **stb_image 2.30** privately in EngineTools, from immutable
 upstream commit `003501f6d7a8668ce8b6d875e34dd97ad0d5d5b5`. The exact archive,
 complete regular-file inventory and MIT license selection are pinned in the

@@ -8,7 +8,7 @@
 namespace shark::client::detail {
 
 enum class BackendClaim { acquired, unavailable, conflict, failed };
-enum class WindowCommand { resize, iconify, restore, show, focus, request_close };
+enum class WindowCommand { resize, iconify, restore, show, focus, request_close, cancel_close };
 
 class WindowEventSink {
   public:

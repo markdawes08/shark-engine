@@ -1,0 +1,20 @@
+{
+  "schema_version": 1,
+  "convention": "shark-vulkan-1",
+  "shaders": [
+    {
+      "id": "gui-vs",
+      "source": "gui.hlsl",
+      "entry": "vsGui",
+      "stage": "vertex",
+      "bindings": [{"kind": "constant_buffer", "slot": 0}]
+    },
+    {
+      "id": "gui-ps",
+      "source": "gui.hlsl",
+      "entry": "psGui",
+      "stage": "pixel",
+      "bindings": [{"kind": "texture", "slot": 0}, {"kind": "sampler", "slot": 0}]
+    }
+  ]
+}

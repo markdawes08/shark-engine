@@ -92,6 +92,8 @@ class GraphicsBackend {
     }
     [[nodiscard]] virtual Result<void> set_presentation_draw(const OffscreenRequest&, bool);
     [[nodiscard]] virtual Result<void> set_presentation_scene(const SceneViewportRequest&, bool);
+    [[nodiscard]] virtual Result<void> configure_gui(const GuiAtlas&, bool);
+    [[nodiscard]] virtual Result<void> set_presentation_gui(const GuiFrame&);
     [[nodiscard]] virtual Result<OffscreenReadback> capture_presented();
     [[nodiscard]] virtual bool offscreen_pending() const noexcept {
         return false;

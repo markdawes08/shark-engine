@@ -166,6 +166,9 @@ class GlfwWindowBackend final : public detail::WindowBackend {
         case detail::WindowCommand::request_close:
             glfwSetWindowShouldClose(window_, GLFW_TRUE);
             break;
+        case detail::WindowCommand::cancel_close:
+            glfwSetWindowShouldClose(window_, GLFW_FALSE);
+            break;
         }
         return native_ok();
     }

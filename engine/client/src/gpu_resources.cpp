@@ -96,13 +96,14 @@ class InterfaceReader {
             return resource_error("Unsupported shader stage", "shader.layout");
         }
         if (interface_ != ShaderInterface::textured_cube &&
-            interface_ != ShaderInterface::scene_unlit) {
+            interface_ != ShaderInterface::scene_unlit && interface_ != ShaderInterface::gui) {
             return resource_error("Unsupported shader interface", "shader.layout");
         }
-        const auto expected =
-            interface_ == ShaderInterface::textured_cube
-                ? (artifact_.stage == ShaderStage::vertex ? "vsMain" : "psMain")
-                : (artifact_.stage == ShaderStage::vertex ? "vsScene" : "psScene");
+        const auto expected = interface_ == ShaderInterface::textured_cube
+                                  ? (artifact_.stage == ShaderStage::vertex ? "vsMain" : "psMain")
+                              : interface_ == ShaderInterface::scene_unlit
+                                  ? (artifact_.stage == ShaderStage::vertex ? "vsScene" : "psScene")
+                                  : (artifact_.stage == ShaderStage::vertex ? "vsGui" : "psGui");
         if (artifact_.entry_point != expected) {
             return resource_error("Shader entry point does not match the selected interface",
                                   "shader.layout");
@@ -265,6 +266,9 @@ class InterfaceReader {
             return false;
         }
         const auto& transform = structure->members[0];
+        if (interface_ == ShaderInterface::gui)
+            return !transform.unsupported && transform.offset == 0 && !transform.stride &&
+                   !transform.row_major && float_vector(structure->operands[0], 4);
         if (transform.unsupported || transform.offset != 0 || transform.stride != 16 ||
             !transform.row_major) {
             return false;
@@ -293,6 +297,7 @@ class InterfaceReader {
     Result<void> validate_variables() const {
         const bool vertex = artifact_.stage == ShaderStage::vertex;
         const bool scene = interface_ == ShaderInterface::scene_unlit;
+        const bool gui = interface_ == ShaderInterface::gui;
         std::set<std::uint32_t> inputs;
         std::set<std::uint32_t> outputs;
         std::set<std::uint32_t> bindings;
@@ -330,9 +335,12 @@ class InterfaceReader {
                     }
                     const auto location = *decoration.location;
                     auto& locations = storage == 1 ? inputs : outputs;
-                    const auto width = vertex && storage == 1
-                                           ? (location == 0 ? 3U : (scene ? 4U : 2U))
-                                           : (scene || (!vertex && storage == 3) ? 4U : 2U);
+                    const auto width =
+                        gui                      ? ((vertex && storage == 1)
+                                                        ? (location == 2 ? 4U : 2U)
+                                                        : ((!vertex && storage == 3) || location == 1 ? 4U : 2U))
+                        : vertex && storage == 1 ? (location == 0 ? 3U : (scene ? 4U : 2U))
+                                                 : (scene || (!vertex && storage == 3) ? 4U : 2U);
                     if (!locations.insert(location).second || !float_vector(type, width)) {
                         return resource_error("Shader input/output type or location mismatch",
                                               "shader.layout");
@@ -360,11 +368,14 @@ class InterfaceReader {
             }
         }
         const std::set<std::uint32_t> expected_inputs =
-            vertex ? std::set<std::uint32_t>{0, 1} : std::set<std::uint32_t>{0};
+            gui ? (vertex ? std::set<std::uint32_t>{0, 1, 2} : std::set<std::uint32_t>{0, 1})
+                : (vertex ? std::set<std::uint32_t>{0, 1} : std::set<std::uint32_t>{0});
+        const std::set<std::uint32_t> expected_outputs =
+            gui && vertex ? std::set<std::uint32_t>{0, 1} : std::set<std::uint32_t>{0};
         const std::set<std::uint32_t> expected_bindings =
             vertex ? std::set<std::uint32_t>{256}
                    : (scene ? std::set<std::uint32_t>{} : std::set<std::uint32_t>{0, 128});
-        if (inputs != expected_inputs || outputs != std::set<std::uint32_t>{0} ||
+        if (inputs != expected_inputs || outputs != expected_outputs ||
             bindings != expected_bindings || positions != (vertex ? 1U : 0U) ||
             globals_seen != entry_interfaces_) {
             return resource_error("Shader stage interface does not match the selected layout",
@@ -404,6 +415,8 @@ Result<ShaderArtifact> decode_shader_artifact(std::span<const std::byte> bytes, 
     }
     const auto entry = shader_interface == ShaderInterface::scene_unlit
                            ? (stage == ShaderStage::vertex ? "vsScene" : "psScene")
+                       : shader_interface == ShaderInterface::gui
+                           ? (stage == ShaderStage::vertex ? "vsGui" : "psGui")
                            : (stage == ShaderStage::vertex ? "vsMain" : "psMain");
     ShaderArtifact artifact{stage, entry, {}};
     artifact.words.reserve(bytes.size() / 4);

@@ -1,6 +1,7 @@
 #pragma once
 
 #include <shark/client/gpu_resources.hpp>
+#include <shark/client/gui_draw.hpp>
 #include <shark/client/scene_viewport.hpp>
 #include <shark/client/window.hpp>
 
@@ -139,6 +140,7 @@ class GraphicsDevice final {
     [[nodiscard]] Result<void> show();
     [[nodiscard]] Result<void> focus();
     [[nodiscard]] Result<void> request_close();
+    [[nodiscard]] Result<void> cancel_close_request();
     // Lazy presentation startup. One bounded attempt per call; waiting or
     // recreate_pending requires a later event-pump pass, never an internal spin.
     [[nodiscard]] Result<PresentationReport> present(ClearColor color = {});
@@ -150,6 +152,11 @@ class GraphicsDevice final {
     // requires surface TRANSFER_SRC support and retains capture staging.
     [[nodiscard]] Result<void> set_presentation_draw(const OffscreenRequest& request,
                                                      bool enable_readback = false);
+    // Configure one immutable GUI atlas before first present. Each frame is a
+    // copied bounded CPU value; existing per-image GPU owners retire through
+    // the shared presentation lifecycle. GUI, cube and scene modes are exclusive.
+    [[nodiscard]] Result<void> configure_gui(const GuiAtlas& atlas, bool enable_readback = false);
+    [[nodiscard]] Result<void> set_presentation_gui(const GuiFrame& frame);
     // Installs/replaces an owned scene snapshot after a bounded drain. Fixed
     // cube draws and scene draws are mutually exclusive. Capture mode is fixed
     // after presentation starts. The request must match the window framebuffer;

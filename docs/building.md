@@ -248,6 +248,15 @@ examples, discovery and bounded query semantics. The independent `tools-debug`
 profile has Client/Editor/native window/graphics OFF; CPU authoring does not start
 a renderer. Protected Runtime and Server targets exclude this host and its services.
 
+Assignment 16a adds explicit `Editor --editor` startup for the
+[human project shell](editor-shell.md). Build `Editor` in the native Windows
+preset, then prepare the GUI shader recipe and pass the verified stage paths as
+documented there. The Editor-only ImGui target uses the exact canonical archive
+under `.tools/dependency-archives/`, or `SHARK_IMGUI_ARCHIVE`; its
+[dependency review](dependencies/imgui.md) records options and notices.
+Editor-OFF and CPU Editor configurations never populate this dependency.
+Shared project-session behavior remains CPU-testable without ImGui or Client.
+
 Assignment 14b adds `package_runtime.py export` for a saved startup scene, fresh
 client mesh cache, offline scene shaders and full asset notices. It uses the
 same protected Release builder and adds the pinned Runtime-only

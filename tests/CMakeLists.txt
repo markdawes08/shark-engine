@@ -36,6 +36,7 @@ add_executable(Tests
 target_link_libraries(Tests PRIVATE EngineCore Catch2::Catch2WithMain)
 target_include_directories(Tests PRIVATE "${PROJECT_SOURCE_DIR}/engine/core/src")
 if(TARGET EngineClient)
+    target_sources(Tests PRIVATE gui_draw_tests.cpp)
     add_executable(RuntimeSceneLifecycle runtime_scene_lifecycle.cpp)
     target_link_libraries(RuntimeSceneLifecycle PRIVATE EngineClient)
     target_include_directories(RuntimeSceneLifecycle PRIVATE "${PROJECT_SOURCE_DIR}")
@@ -49,6 +50,37 @@ if(TARGET EngineClient)
     target_sources(Tests PRIVATE client_input_tests.cpp client_window_tests.cpp client_window_launch_tests.cpp client_frame_tests.cpp client_graphics_tests.cpp client_presentation_tests.cpp client_presentation_launch_tests.cpp client_queue_waiter_tests.cpp client_gpu_resources_tests.cpp client_offscreen_tests.cpp client_shader_bundle_tests.cpp client_scene_viewport_tests.cpp)
     target_include_directories(Tests PRIVATE "${PROJECT_SOURCE_DIR}/engine/client/src")
     target_link_libraries(Tests PRIVATE EngineClient)
+endif()
+
+if(TARGET EngineTools)
+    add_executable(EditorProjectSessionTests editor_project_session_tests.cpp ../editor/project_session.cpp)
+    target_link_libraries(EditorProjectSessionTests PRIVATE EngineTools nlohmann_json::nlohmann_json Catch2::Catch2WithMain)
+    target_include_directories(EditorProjectSessionTests PRIVATE "${PROJECT_SOURCE_DIR}/editor")
+    shark_configure_target(EditorProjectSessionTests)
+    shark_classify_target(EditorProjectSessionTests test)
+    add_test(NAME shark.editor.project-session COMMAND EditorProjectSessionTests "[editor-project-session]" --rng-seed 1337)
+    set_tests_properties(shark.editor.project-session PROPERTIES LABELS "cpu;editor;unit;integration" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+endif()
+if(TARGET Shark::ImGui)
+    add_executable(EditorGuiTests editor_gui_tests.cpp ../editor/gui_adapter.cpp)
+    target_link_libraries(EditorGuiTests PRIVATE EngineClient Shark::ImGui Catch2::Catch2WithMain)
+    target_include_directories(EditorGuiTests PRIVATE "${PROJECT_SOURCE_DIR}/editor")
+    shark_configure_target(EditorGuiTests)
+    shark_classify_target(EditorGuiTests test)
+    add_test(NAME shark.editor.gui-adapter COMMAND EditorGuiTests "[editor-gui]" --rng-seed 1337)
+    set_tests_properties(shark.editor.gui-adapter PROPERTIES LABELS "cpu;editor;unit" TIMEOUT 60)
+    add_test(NAME shark.editor.dependencies COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_editor_dependencies.py"
+        --archive "${SHARK_IMGUI_ARCHIVE_INPUT}" --cmake "${CMAKE_COMMAND}" --ninja "${CMAKE_MAKE_PROGRAM}")
+    set_tests_properties(shark.editor.dependencies PROPERTIES LABELS "cpu;editor;boundary" TIMEOUT 120 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+    add_executable(GuiRenderSmoke gui_render_smoke.cpp)
+    target_link_libraries(GuiRenderSmoke PRIVATE EngineClient)
+    target_include_directories(GuiRenderSmoke PRIVATE "${PROJECT_SOURCE_DIR}")
+    shark_configure_target(GuiRenderSmoke)
+    shark_classify_target(GuiRenderSmoke test)
+endif()
+if(TARGET EngineClient)
+    add_test(NAME shark.client.gui-draw COMMAND Tests "[gui]" --rng-seed 1337)
+    set_tests_properties(shark.client.gui-draw PROPERTIES LABELS "cpu;client;unit" TIMEOUT 60)
 endif()
 target_compile_definitions(Tests PRIVATE
     SHARK_NETWORK_FIXTURE_DIRECTORY="${PROJECT_SOURCE_DIR}/tests/fixtures/network"
@@ -606,6 +638,7 @@ foreach(shark_application IN ITEMS Runtime Editor)
                 "-DSHARK_EXECUTABLE=$<TARGET_FILE:${shark_application}>"
                 "-DSHARK_APPLICATION=${shark_application}"
                 "-DSHARK_VERSION=${PROJECT_VERSION}"
+                "-DSHARK_EDITOR_GUI=$<TARGET_EXISTS:Shark::ImGui>"
                 -P "${CMAKE_CURRENT_SOURCE_DIR}/CheckCli.cmake")
         set_tests_properties("shark.${shark_application_lower}.cli" PROPERTIES
             LABELS "cpu;integration" TIMEOUT 30)

@@ -20,7 +20,8 @@ three broad phases in the [human/agent plan](human-agent-plan.md), following
 [imports handoff](../handoffs/15c-terminal-imports.md) and
 [execution handoff](../handoffs/15d-terminal-execution.md) and
 [connected acceptance handoff](../handoffs/15e-terminal-acceptance.md).
-Assignment 16's human editor UI is next. The
+Assignment 16's [human editor checkpoints](editor-plan.md) now begin with the
+shared-owner project shell. The
 [public example](../../examples/terminal_authoring.py) is the connected fixture's
 actual authoring client; it uses no private services or engine Python binding. Advertise
 only implemented methods at each checkpoint; later work extends the same protocol

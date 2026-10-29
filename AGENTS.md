@@ -40,7 +40,30 @@ Linux graphics is outside scope. Mac support, CI, packages and hardware requirem
 are retired by [ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md).
 Hosted CI is supplemental; remote branch protection is unchanged.
 
-**Current handoff: [15e, connected terminal acceptance](docs/handoffs/15e-terminal-acceptance.md).**
+**Desktop interaction is paused by user instruction (2026-10-29) until the user
+explicitly resumes it.** Continue coding, builds and headless checks. Do not use
+desktop automation, take focus, inject input or launch windowed tests, including
+automated GPU fixtures. Record required desktop checks as deferred/NOT_RUN in
+the [nonblocking UI backlog](docs/backlog.md), preserving existing results.
+This user amendment permits later implementation to proceed before those checks;
+it does not qualify untested behavior or close full UI acceptance. Do not infer
+permission to resume from elapsed time or a new coding request.
+
+**Current handoff: [16a, editor shell](docs/handoffs/16a-editor-shell.md).**
+16a implementation and selected CPU/native-render/boundary checks are complete;
+remaining desktop acceptance is deferred under the user's amendment. Next coding
+work is 16b; record its desktop checks for the same later acceptance session.
+Follow the [editor checkpoints](docs/roadmap/editor-plan.md),
+[shell contract](docs/editor-shell.md) and
+[ADR 0040](docs/architecture/0040-human-editor-shell.md). The native shell adapts
+the existing retained authoring owner in process; display values are not another
+mutable Scene. Preserve revision-bound save/discard, original publication receipts,
+one writer and explicit save/close/reopen handoff. Native close cancellation lets
+the UI resolve dirty state before teardown. Input/text/modal focus gates shortcuts.
+ImGui belongs only to native Editor; Client GUI contracts remain engine-owned.
+The later panels and actual UI/terminal parity retain 16b-16e; navigation, picking
+and gizmos remain 17. Full REQ-16 remains NOT_RUN; current assignment is 16.
+
 15a-15d supply the CPU `SharkAuthor` host, retained project ownership, shared
 editing/persistence/imports, static deterministic runs and configured export.
 `SharkAuthorClient` adds optional native capture through the same transport.
@@ -49,7 +72,7 @@ and the [protocol contract](docs/authoring-protocol.md): bounded UTF-8 framing,
 truthful capabilities, one project writer and revision-bound single-use cursors.
 Native handles stay private. Full REQ-15 is complete under current-machine scope;
 the [terminal checkpoints](docs/roadmap/terminal-authoring-plan.md) record its gates.
-Next is **16, the human editor UI**, consuming the same services and ownership.
+**16, the human editor UI**, consumes the same services and ownership.
 The [public terminal example](examples/terminal_authoring.py) creates, imports,
 edits, saves/reopens, runs and optionally captures/exports a real project.
 Route new writes
@@ -114,8 +137,9 @@ prepared-file loading, selected camera, dynamic sRGB presentation, F5 candidate
 reload and actual presented capture. Preserve complete-candidate replacement,
 fresh incarnations, bounded drain and seven native lifetime phases. Runtime has
 no source importer or authoring UI. The existing Editor window/graphics/cube
-flags remain diagnostics; a game-authoring editor UI is not implemented yet.
-Shared CPU services and terminal authoring are implemented; the human editor remains 16.
+flags remain diagnostics; `--editor` explicitly starts the new project shell.
+Shared CPU services and terminal authoring are implemented; remaining human
+authoring panels and connected acceptance retain assignment 16.
 
 The user deferred remaining 05c work to the [nonblocking backlog](docs/backlog.md)
 and authorized later development. Full REQ-05 remains NOT_RUN. Preserve historical

@@ -171,7 +171,7 @@ struct Window::Impl final : detail::WindowEventSink {
             return failure(ErrorCode::execution_failed, "window.query",
                            "Native window state was invalid");
         }
-        // A close request is sticky until this owner is destroyed, even if a
+        // A close request is sticky until explicitly cancelled or destroyed, even if a
         // backend observation races the operating system's close notification.
         candidate.close_requested = candidate.close_requested || observed.close_requested;
         observed = candidate;
@@ -190,6 +190,8 @@ struct Window::Impl final : detail::WindowEventSink {
         }
         if (command == detail::WindowCommand::request_close) {
             observed.close_requested = true;
+        } else if (command == detail::WindowCommand::cancel_close) {
+            observed.close_requested = false;
         }
         return refresh();
     }
@@ -385,6 +387,9 @@ Result<void> Window::focus() {
 }
 Result<void> Window::request_close() {
     return impl_->issue(detail::WindowCommand::request_close, {}, "window.request_close");
+}
+Result<void> Window::cancel_close_request() {
+    return impl_->issue(detail::WindowCommand::cancel_close, {}, "window.cancel_close");
 }
 Result<void> Window::close() {
     auto valid = impl_->check("window.close", false);
