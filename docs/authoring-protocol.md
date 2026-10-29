@@ -669,6 +669,22 @@ retrying with another path. Request IDs cannot roll back or deduplicate file
 publication. Failed unpublished staging is cleaned when possible; process death
 can leave a reserved stage for deliberate inspection/cleanup.
 
+## Typed retained viewport read
+
+16b adds `AuthoringProtocol::viewport_snapshot(AuthoringViewportRequest)` for the
+in-process [editor scene workspace](editor-scene-workspace.md). This CPU API
+requires an explicit Camera, expected SceneRevision, bounded render extent/local
+origin and client target. It extracts the original retained Scene with fresh
+immutable mesh closures, preserving unsaved state, history and source identity.
+Imported content requires an explicit existing catalog inventory; the call does
+not scan files, import, save or render. Final candidate validation fences the
+returned snapshot. CPU Tools gains no Client dependency.
+
+This typed addition is not a JSON-RPC method, advertised terminal capability or
+format revision. Existing terminal queries/capture/export retain their contracts.
+The [workspace contract](editor-scene-workspace.md#read-only-viewport-preparation)
+defines its bounds and intended consumer.
+
 ## Queries and durable identity
 
 `scene.query` accepts only these keys:

@@ -48,6 +48,12 @@ class AuthoringAssets final {
     void admit(AuthoringAssetReply& reply);
     [[nodiscard]] PreparedClientExport prepare_export(const AuthoredScene& owner,
                                                       const ClientExportRequest& request);
+    // Observe current retained catalog/cache revisions for an in-process read.
+    // This does not discover sidecars, publish imports or mutate the scene.
+    [[nodiscard]] PreparedClientExport prepare_current_export(const AuthoredScene& owner,
+                                                              AuthoredEntityId camera,
+                                                              SceneRevision expected,
+                                                              const AssetTargetProfile& target);
     [[nodiscard]] Result<void> validate_export(const PreparedClientExport& candidate,
                                                const AuthoredScene& owner);
 

@@ -63,6 +63,10 @@ class ProjectSession final {
     [[nodiscard]] Result<void> open(std::string_view relative_project);
     [[nodiscard]] Result<SaveReceipt> save(SceneRevision expected_revision);
     [[nodiscard]] Result<CloseReceipt> close(CloseChoice choice, SceneRevision expected_revision);
+    [[nodiscard]] Result<RenderScene>
+    viewport_snapshot(const tools::AuthoringViewportRequest& request);
+    // Explicit complete metadata inventory; never walks directories or imports.
+    [[nodiscard]] Result<void> refresh_asset_inventory(std::span<const std::string_view> sidecars);
 
     // Panels use the same bounded public methods and retain all result levels.
     // Request correlation is generated locally; it is never mutation retry ID.

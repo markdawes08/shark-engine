@@ -20,11 +20,12 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**Assignment 16a adds the initial human editor shell.** Selected CPU and native
-GUI rendering checks pass. Remaining desktop acceptance is in the
+**Assignment 16b adds hierarchy, scene edits and an authored-scene viewport**
+to the human editor shell. Selected headless verification is tracked in the
+[latest handoff](docs/handoffs/16b-editor-scene-workspace.md). Native rendering and
+actual UI acceptance for these changes remain deferred in the
 [nonblocking backlog](docs/backlog.md): the user paused desktop interaction until
 explicitly resumed, while authorizing continued coding and headless checks.
-The [latest handoff](docs/handoffs/16a-editor-shell.md) records its selected gates.
 Full REQ-16 remains NOT_RUN. Assignment 15 is complete under current-machine scope;
 its [handoff](docs/handoffs/15e-terminal-acceptance.md) records the connected
 create/import/edit/save/reopen/run/capture/export workflow. Try the
@@ -42,8 +43,9 @@ Current capabilities include:
 
 - An explicit [Windows editor shell](docs/editor-shell.md) for project open/save/
   close, saved/dirty status and close decisions through the same retained authoring
-  owner. Hierarchy, viewport, inspector, asset and console panels remain later
-  assignment-16 checkpoints.
+  owner. The [scene workspace](docs/editor-scene-workspace.md) adds bounded
+  hierarchy/selection, create/delete/reparent and an explicit-camera viewport.
+  Inspector/history, asset and console panels remain later checkpoints.
 - [Terminal authoring](docs/authoring-protocol.md) through one-shot JSON or
   persistent stdio, with discovery, bounded queries, retained edits, preview,
   undo/redo, conflict-aware persistence, bounded asset import jobs and static scene

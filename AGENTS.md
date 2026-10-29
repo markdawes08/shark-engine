@@ -49,19 +49,25 @@ This user amendment permits later implementation to proceed before those checks;
 it does not qualify untested behavior or close full UI acceptance. Do not infer
 permission to resume from elapsed time or a new coding request.
 
-**Current handoff: [16a, editor shell](docs/handoffs/16a-editor-shell.md).**
-16a implementation and selected CPU/native-render/boundary checks are complete;
-remaining desktop acceptance is deferred under the user's amendment. Next coding
-work is 16b; record its desktop checks for the same later acceptance session.
+**Current handoff: [16b, scene workspace](docs/handoffs/16b-editor-scene-workspace.md).**
+16b adds bounded hierarchy/selection, shared lifecycle commands and scene viewport
+composition. Its handoff records selected headless results; remaining desktop
+acceptance is deferred under the user's amendment. Next coding work after those
+headless checks is 16c; append its desktop checks to the same later session.
 Follow the [editor checkpoints](docs/roadmap/editor-plan.md),
-[shell contract](docs/editor-shell.md) and
-[ADR 0040](docs/architecture/0040-human-editor-shell.md). The native shell adapts
+[shell contract](docs/editor-shell.md), [workspace contract](docs/editor-scene-workspace.md)
+and [ADR 0041](docs/architecture/0041-editor-scene-workspace.md). The native shell adapts
 the existing retained authoring owner in process; display values are not another
 mutable Scene. Preserve revision-bound save/discard, original publication receipts,
 one writer and explicit save/close/reopen handoff. Native close cancellation lets
 the UI resolve dirty state before teardown. Input/text/modal focus gates shortcuts.
 ImGui belongs only to native Editor; Client GUI contracts remain engine-owned.
-The later panels and actual UI/terminal parity retain 16b-16e; navigation, picking
+ScenePanel keeps bounded query observations, revision-scoped selection and original
+retained mutation outcomes. The typed CPU viewport read extracts the original
+retained scene with fresh client asset closures and explicit catalog inventory;
+it never imports or writes source implicitly. GUI composition retains scene GPU
+owners through completion and exposes only engine-owned texture choices.
+The later panels and actual UI/terminal parity retain 16c-16e; navigation, picking
 and gizmos remain 17. Full REQ-16 remains NOT_RUN; current assignment is 16.
 
 15a-15d supply the CPU `SharkAuthor` host, retained project ownership, shared

@@ -213,7 +213,8 @@ bool editor_shortcut(const InputSnapshot& input, Key key, bool text_editing, boo
            !active(Key::right_alt) && !active(Key::left_super) && !active(Key::right_super);
 }
 
-Result<GuiFrame> capture_gui_draw(const ImDrawData& data, WindowExtent extent) {
+Result<GuiFrame> capture_gui_draw(const ImDrawData& data, WindowExtent extent,
+                                  const SceneViewportRequest* viewport) {
     const auto failure = []() -> Result<GuiFrame> {
         return Error{ErrorCode::invalid_argument,
                      "Editor UI draw exceeds its bounded supported profile",
@@ -274,7 +275,9 @@ Result<GuiFrame> capture_gui_draw(const ImDrawData& data, WindowExtent extent) {
                 result.vertices.push_back(value);
             }
             for (const auto& command : list.CmdBuffer) {
-                if (command.UserCallback || command.GetTexID() != static_cast<ImTextureID>(1) ||
+                if (command.UserCallback ||
+                    (command.GetTexID() != static_cast<ImTextureID>(1) &&
+                     command.GetTexID() != static_cast<ImTextureID>(2)) ||
                     command.IdxOffset > static_cast<unsigned>(list.IdxBuffer.Size) ||
                     command.ElemCount >
                         static_cast<unsigned>(list.IdxBuffer.Size) - command.IdxOffset ||
@@ -288,6 +291,9 @@ Result<GuiFrame> capture_gui_draw(const ImDrawData& data, WindowExtent extent) {
                     !std::isfinite(y1))
                     return failure();
                 GuiDraw draw;
+                draw.texture = command.GetTexID() == static_cast<ImTextureID>(2)
+                                   ? GuiTexture::scene_viewport
+                                   : GuiTexture::atlas;
                 draw.clip = {static_cast<std::int32_t>(std::clamp(
                                  std::floor(x0), 0.0F, static_cast<float>(extent.width))),
                              static_cast<std::int32_t>(std::clamp(
@@ -315,6 +321,8 @@ Result<GuiFrame> capture_gui_draw(const ImDrawData& data, WindowExtent extent) {
                 result.draws.push_back(draw);
             }
         }
+        if (viewport)
+            result.viewport = *viewport;
         if (auto valid = validate_gui_frame(result); !valid)
             return valid.error();
         return result;

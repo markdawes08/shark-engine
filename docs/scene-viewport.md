@@ -124,3 +124,19 @@ draw implementation can target an sRGB swapchain through
 `GraphicsDevice::set_presentation_scene`, with complete replacement after bounded
 drain and actual presented capture. Offscreen RGBA8 remains linear; the window
 attachment encodes once. Existing offscreen limits and behavior are unchanged.
+
+## Embedded editor scene image
+
+16b reuses scene draw preparation and recording for an optional viewport image
+inside GuiFrame. A linear RGBA8 target and shared depth persist per presentation
+image; scene commands finish and transition the color target for GUI sampling
+before the same submission presents. This path has no staging readback texture
+or CPU image upload. Its complete candidates and submitted owners follow the
+existing presentation completion/retirement path, including removal/readdition,
+extent changes and failed recording. Exact-value invalidation handles camera or
+content changes at the same SceneRevision.
+
+The [workspace contract](editor-scene-workspace.md#gpu-composition-and-lifetime)
+and [ADR 0041](architecture/0041-editor-scene-workspace.md) describe this addition.
+It does not change synchronous offscreen capture/readback behavior above. Native
+GUI composition acceptance remains deferred/NOT_RUN under the desktop pause.

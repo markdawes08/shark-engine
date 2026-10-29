@@ -42,7 +42,30 @@ not be dismissed solely because it resembles a deferred issue.
 | BL-05C-03 | An original Intel ASan fault child exceeded its exit deadline after native cleanup. The fixed 64-child diagnostic sequence did not reproduce or explain it. The separate queue-worker deadline defect is already fixed. [Investigation](handoffs/05c-intel-asan-investigation.md), [receipt](coverage/evidence/05c-asan-exit-investigation.json). | Another equivalent timeout, actionable process/thread capture, or a relevant shutdown change. Use the existing bounded capture tools to identify the stalled process and demonstrate a targeted correction; successful retries alone do not close the original finding. |
 | BL-05C-04 | Remaining full Release/ASan stress qualification on both GPUs, including the sustained workload and repeated lifetimes. Earlier partial and failed runs remain intact. [Qualification contract](presentation-qualification.md), [original handoff](handoffs/05c-presentation-qualification.md), [latest handoff](handoffs/05c-intel-asan-investigation.md). | Resume when the underlying findings have an actionable resolution or when the user requests qualification. Execute the existing workloads and budgets, Windows/WSL regressions and applicable package checks. Only complete qualifying evidence can change full `REQ-05` to PASS. |
 | BL-14B-01 | Selected Client package/launch/shader-bundle and actual export-worker process sanitizer checks remain NOT_RUN after Clang and MSVC compiler crashes. A fixed-input Clang replay also crashed in code generation; no underlying cause was established. The Core startup ASan pass remains valid. [Investigation and original results](handoffs/14b-standalone-scene-export.md#failures-and-deferred-verification); retained logs and compiler repro inputs are under `out/14b-work/`, including `sanitizer-followup/fixed-input-codegen.log`. | A relevant compiler update, an independently authorized environment repair, materially new diagnostic evidence, or the user's request. Reproduce the compiler issue with retained inputs as applicable, then finish the selected Client and actual worker-process sanitizer checks. Keep historical failures and fixed workloads; successful compilation alone does not qualify behavior. |
-| BL-16A-UI-01 | Remaining actual Editor UI checks are NOT_RUN under the desktop pause: finish Intel restore/focus/clean-close after the interrupted interaction and run the RTX keyboard smoke against the final coalesced-chord correction. Retain the completed native GUI readbacks, earlier RTX project open/save/close and terminal busy/release evidence, plus the corrected adapter's CPU regression. See the [16a handoff](handoffs/16a-editor-shell.md); evidence remains under `out/16a-work/`. Append later checkpoints' desktop-dependent acceptance here as they arise. | Only the user's explicit instruction to resume desktop testing. Then run the focused outstanding checks on the final relevant inputs, retaining prior results and any interruption/failure evidence. Later scene-editing checkpoints and 16e still require actual UI-driven editing and bidirectional terminal handoff; neither CPU tests nor deferred status establish those passes or full REQ-16 closure. |
+| BL-16A-UI-01 | Remaining actual Editor UI checks are NOT_RUN under the desktop pause: finish Intel restore/focus/clean-close after the interrupted interaction and run the RTX keyboard smoke against the final coalesced-chord correction. Retain the completed native GUI readbacks, earlier RTX project open/save/close and terminal busy/release evidence, plus the corrected adapter's CPU regression. See the [16a handoff](handoffs/16a-editor-shell.md); evidence remains under `out/16a-work/`. **16b adds the native composition and actual scene-workspace acceptance listed below**, also NOT_RUN. | Only the user's explicit instruction to resume desktop testing. Then run the focused outstanding checks on the final relevant inputs, retaining prior results and any interruption/failure evidence. Later scene-editing checkpoints and 16e still require actual UI-driven editing and bidirectional terminal handoff; neither CPU tests nor deferred status establish those passes or full REQ-16 closure. |
+
+### BL-16A-UI-01: 16b acceptance additions
+
+The [16b workspace](editor-scene-workspace.md) and
+[handoff](handoffs/16b-editor-scene-workspace.md) add these deferred checks on the
+RTX 4070 Laptop and Intel GPUs. All are **NOT_RUN** while desktop testing is paused:
+
+- Run the existing GUI fixture's optional scene mode with required validation and
+  verified GUI/scene bundles. Its eight phases are baseline, same-revision camera
+  change, same-revision content change, viewport extent resize, framebuffer
+  resize, viewport removal, restoration and cancelled close. Check acquired-image
+  reuse, fixed shared-depth/overlay/clipping/sRGB pixels, expected generations and
+  clean teardown without validation diagnostics. Keep the original 16a mode.
+- In the actual Editor, open a project, page/select its parent-first hierarchy,
+  explicitly select a Camera and show the current retained scene. Exercise the
+  explicit target/metadata inventory controls with imported content and visible
+  failure for missing/stale inventory. Resize the viewport/window and verify
+  revision changes clear the old camera/selection rather than silently rebinding.
+- Create, reparent and delete through the hierarchy UI, including rejected/stale
+  decisions; verify displayed hierarchy and dirty state. Save/reopen the authored
+  result and exercise save/discard/cancel dirty dialogs and close cancellation.
+  Preserve focus/text/modal shortcut gates and complete the retained 16a lifecycle
+  checks. Actual bidirectional terminal continuation remains 16e.
 
 This deferral does not authorize driver installation, host resource changes,
 foreign-handle cleanup or relaxed acceptance limits. The active implementation

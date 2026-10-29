@@ -176,6 +176,16 @@ PreparedClientExport AuthoringAssets::prepare_export(const AuthoredScene& owner,
     return take(prepare_client_export(owner, *impl_->catalog, impl_->cache(), request));
 }
 
+PreparedClientExport AuthoringAssets::prepare_current_export(const AuthoredScene& owner,
+                                                             AuthoredEntityId camera,
+                                                             SceneRevision expected,
+                                                             const AssetTargetProfile& target) {
+    auto& cache = impl_->cache();
+    return take(prepare_client_export(
+        owner, *impl_->catalog, cache,
+        {camera, expected, take(impl_->catalog->revision()), take(cache.revision()), target}));
+}
+
 Result<void> AuthoringAssets::validate_export(const PreparedClientExport& candidate,
                                               const AuthoredScene& owner) {
     return validate_client_export(candidate, owner, *impl_->catalog, impl_->cache());

@@ -1,8 +1,14 @@
 #include <shark/client/gui_draw.hpp>
 
+#include "../engine/client/src/gui_viewport.hpp"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <limits>
+
+namespace shark::client::test {
+SceneViewportRequest scene_viewport_request_fixture();
+}
 
 namespace {
 using namespace shark::client;
@@ -76,6 +82,12 @@ TEST_CASE("GUI snapshots bound uploads and reject invalid geometry and scissors"
     SECTION("outside clip") {
         frame.draws[0].clip[3] = 61;
     }
+    SECTION("unknown texture") {
+        frame.draws[0].texture = static_cast<GuiTexture>(99);
+    }
+    SECTION("missing scene texture") {
+        frame.draws[0].texture = GuiTexture::scene_viewport;
+    }
     const auto result = validate_gui_frame(frame);
     REQUIRE_FALSE(result);
     CHECK(result.error().code == shark::ErrorCode::invalid_argument);
@@ -90,4 +102,53 @@ TEST_CASE("GUI atlas rejects malformed storage and foreign shader profiles", "[c
     REQUIRE_FALSE(validate_gui_atlas(atlas));
     atlas.extent.width = 2049;
     REQUIRE_FALSE(validate_gui_atlas(atlas));
+}
+
+TEST_CASE("GUI scene images carry a validated viewport in the same owned frame", "[client][gui]") {
+    auto frame = triangle();
+    frame.draws[0].texture = GuiTexture::scene_viewport;
+    frame.viewport = shark::client::test::scene_viewport_request_fixture();
+    REQUIRE(validate_gui_frame(frame));
+    SECTION("scene can be removed while atlas controls remain") {
+        frame.viewport.reset();
+        frame.draws[0].texture = GuiTexture::atlas;
+        REQUIRE(validate_gui_frame(frame));
+        return;
+    }
+    SECTION("target admission remains bounded") {
+        frame.viewport->extent.width = scene_viewport_maximum_extent + 1;
+    }
+    SECTION("nested invalid geometry rejects the complete GUI frame") {
+        frame.viewport->indices[0] = static_cast<std::uint32_t>(frame.viewport->vertices.size());
+    }
+    SECTION("nested shader must retain the scene profile") {
+        frame.viewport->vertex_shader.entry_point = "vsGui";
+    }
+    REQUIRE_FALSE(validate_gui_frame(frame));
+}
+
+TEST_CASE("GUI viewport reuse compares camera content and ownership beyond scene revision",
+          "[client][gui]") {
+    std::optional<SceneViewportRequest> original =
+        shark::client::test::scene_viewport_request_fixture();
+    auto changed = original;
+    REQUIRE(shark::client::detail::same_gui_viewport(original, changed));
+    SECTION("another camera in the same committed scene") {
+        changed->draws[0].transform[12] = 2;
+        REQUIRE(changed->scene_revision == original->scene_revision);
+    }
+    SECTION("changed prepared mesh with the same source revision") {
+        changed->vertices[0].position[0] = -0.5F;
+    }
+    SECTION("resized panel") {
+        ++changed->extent.width;
+    }
+    SECTION("new scene incarnation") {
+        ++changed->scene_revision.scene_instance;
+    }
+    SECTION("image removed") {
+        changed.reset();
+    }
+    REQUIRE_FALSE(shark::client::detail::same_gui_viewport(original, changed));
+    REQUIRE(shark::client::detail::same_gui_viewport(std::nullopt, std::nullopt));
 }

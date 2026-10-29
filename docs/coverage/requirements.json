@@ -440,7 +440,7 @@
       "planned_fixture": "EditorApiStateEquivalence, EditorLifecycle and EditorFocusRouting fixtures; FeatureWorld/EditorAuthoring is the representative saved project. Add HumanTerminalProjectHandoff and UnsavedHistoryConflict fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "16a implements the initial Windows project shell, Editor-private adapter over the retained authoring owner, bounded GUI presentation and input routing. Selected results and verification limits belong to docs/handoffs/16a-editor-shell.md. The user deferred remaining desktop acceptance to nonblocking backlog BL-16A-UI-01 and authorized continued coding/headless checks until desktop testing is explicitly resumed. Full REQ-16 remains NOT_RUN: scene viewport, hierarchy/selection, inspector, asset browser, console, UI undo/redo and connected human/terminal semantic parity retain checkpoints 16b-16e. CPU session and ImGui fixtures do not qualify native graphics or the complete editor workflow."
+        "reason": "16a implements the Windows project shell over the retained authoring owner; 16b adds bounded hierarchy and selection, retained entity create/delete/reparent, an explicit camera and metadata inventory, typed CPU viewport extraction and GUI scene composition. Selected results and limits belong to docs/handoffs/16a-editor-shell.md and docs/handoffs/16b-editor-scene-workspace.md. The user deferred desktop acceptance to nonblocking backlog BL-16A-UI-01 and authorized continued coding/headless checks until desktop testing is explicitly resumed. All 16b native composition and actual UI checks remain NOT_RUN. Full REQ-16 remains NOT_RUN: inspector, asset browser, console, UI undo/redo and connected human/terminal semantic parity retain checkpoints 16c-16e. CPU session, hierarchy, extraction and ImGui fixtures do not qualify native graphics or the complete editor workflow."
       }
     },
     {
@@ -2959,15 +2959,65 @@
           "tests/editor_gui_tests.cpp",
           "assets/FeatureWorld/FeatureWorld.sharkproject",
           "docs/editor-shell.md",
-          "docs/handoffs/16a-editor-shell.md"
+          "docs/handoffs/16a-editor-shell.md",
+          "docs/editor-scene-workspace.md",
+          "docs/handoffs/16b-editor-scene-workspace.md"
         ],
-        "fixture_reason": "Real temporary projects and the same public AuthoringProtocol owner exercise open/save/close, current-revision discard, cancel, dirty/history/retry preservation, competing writer rejection, exact external-file conflicts and fresh reopen. CPU ImGui contexts exercise Unicode InputText, coalesced mouse edges, focus-loss queue cancellation and shortcut capture. The native-only CLI branch rejects malformed arguments and missing explicit shaders before window/device creation; dependency fixtures qualify the private ImGui boundary. This is the 16a shell, not hierarchy/inspector editing or full UI/API equivalence; actual desktop observations and platform results are recorded separately in the handoff.",
+        "fixture_reason": "Real temporary projects and the same public AuthoringProtocol owner exercise open/save/close, current-revision discard, cancel, dirty/history/retry preservation, competing writer rejection, exact external-file conflicts and fresh reopen. Explicit viewport resource inventory uses that same owner, rejects escaping and oversized paths and preserves unsaved state/history. CPU ImGui contexts exercise Unicode InputText, coalesced mouse edges, focus-loss queue cancellation, shortcut capture and owned nested scene-image requests. The native-only CLI branch rejects malformed arguments and missing explicit shaders before window/device creation; dependency fixtures qualify the private ImGui boundary. Actual desktop observations and platform results are recorded separately in the handoffs; CPU adapters do not establish full UI/API equivalence.",
         "external_fixture_reason": "Native editor ownership, actual input contexts, local file contention and desktop interaction require external fixtures. No additional FeatureWorld command or second scene-mutation path is introduced. Connected graphical editing and terminal semantic handoff remain the later assignment-16 checkpoints.",
         "featureworld_cases": []
       },
       {
+        "id": "editor.scene-workspace",
+        "name": "Bounded hierarchy, revision-scoped selection and retained entity editing",
+        "requirement_ids": [
+          "REQ-16"
+        ],
+        "test_ids": [
+          "shark.editor.scene-panel",
+          "shark.editor.project-session"
+        ],
+        "test_sources": [
+          "tests/editor_scene_panel_tests.cpp",
+          "tests/editor_project_session_tests.cpp"
+        ],
+        "fixtures": [
+          "tests/editor_scene_panel_tests.cpp",
+          "tests/editor_project_session_tests.cpp",
+          "docs/editor-scene-workspace.md",
+          "docs/handoffs/16b-editor-scene-workspace.md"
+        ],
+        "fixture_reason": "Real temporary projects exercise complete bounded protocol queries, single-use continuations, parent-first hierarchy ordering, local display pages and explicit Camera/MeshRenderer observations. Selection and confirmations bind to an observed revision; external deletion, undo recreation and reopen cannot silently rebind a selected durable ID. Create, subtree delete and keep-local/keep-world reparent use the existing retained mutation sequence, inspect all three outcome levels and preserve dirty state, shared history and save behavior. Tests independently check cycle and stale-revision rejection, failed refresh and foreign-thread access. No mutable Scene, command schema or second persistence path is introduced.",
+        "external_fixture_reason": "The Editor-private ScenePanel and ProjectSession adapters require real ProjectFiles and retained protocol owners rather than another FeatureWorld command. CPU fixtures establish shared edits and observation fences; actual hierarchy selection, camera choice, confirmation dialogs, save interactions and bidirectional UI/terminal acceptance remain deferred/NOT_RUN in BL-16A-UI-01.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "tools.authoring-viewport",
+        "name": "Typed CPU viewport extraction from the original retained authoring owner",
+        "requirement_ids": [
+          "REQ-16"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-viewport",
+          "shark.editor.project-session"
+        ],
+        "test_sources": [
+          "tests/authoring_viewport_tests.cpp",
+          "tests/editor_project_session_tests.cpp"
+        ],
+        "fixtures": [
+          "tests/authoring_viewport_tests.cpp",
+          "tests/fixtures/gltf_geometry/embedded-strip.gltf",
+          "docs/editor-scene-workspace.md",
+          "docs/handoffs/16b-editor-scene-workspace.md"
+        ],
+        "fixture_reason": "AuthoringProtocol::viewport_snapshot accepts a typed explicit camera, expected revision, bounded viewport/local origin and client asset target. Real retained projects prove extraction includes unsaved geometry and original Scene identities, owns immutable results and preserves source bytes, dirty state, history and mutation ledger. Independent geometry checks use the existing licensed imported strip fixture. Explicit metadata inventory and fresh cached closures reject missing, stale and wrong-target assets; invalid camera, extent, origin, profile, external source changes and foreign-thread access reject without replacing the owner. This is a CPU-only read API, not a JSON-RPC method, import, save or reconstructed Scene.",
+        "external_fixture_reason": "Retained project locks, exact source-file conflicts, fresh imported cache closures and original Scene identity require isolated ProjectFiles fixtures. These CPU results establish viewport preparation only; native GUI scene composition and actual editor interactions remain deferred/NOT_RUN under the user's desktop pause.",
+        "featureworld_cases": []
+      },
+      {
         "id": "client.gui-presentation",
-        "name": "Bounded owned GUI atlas and frame presentation",
+        "name": "Bounded owned GUI atlas, scene image and frame presentation",
         "requirement_ids": [
           "REQ-16"
         ],
@@ -2985,11 +3035,14 @@
           "tests/gui_render_smoke.cpp",
           "tools/gui_smoke.py",
           "shaders/gui_recipe.json",
+          "shaders/scene_recipe.json",
           "docs/editor-shell.md",
-          "docs/handoffs/16a-editor-shell.md"
+          "docs/handoffs/16a-editor-shell.md",
+          "docs/editor-scene-workspace.md",
+          "docs/handoffs/16b-editor-scene-workspace.md"
         ],
-        "fixture_reason": "CPU tests reject invalid atlas/frame bounds, incomplete triangles, out-of-range indices/scissors, nonfinite values, unsupported textures/callbacks, inconsistent draw totals and oversized emitted geometry. Actual ImGui draw data verifies independently specified sRGB-to-linear color, logical-to-framebuffer conversion and clipping. The separate native GuiRenderSmoke fixture and existing process/graphics tooling capture presented blending, clipping, changed geometry, resize and close cancellation against fixed independent pixel expectations on an explicitly selected GPU. GraphicsDevice accepts engine-owned values and retains its existing per-image completion/retirement path; it does not expose or depend on ImGui types.",
-        "external_fixture_reason": "GPU blending, swapchain resize, native close cancellation and retirement need the external required-validation fixture tools/gui_smoke.py. Registered CPU CTests establish value validation and adapter behavior only; actual per-GPU results and omissions are recorded in docs/handoffs/16a-editor-shell.md, not inferred from a CPU pass.",
+        "fixture_reason": "CPU tests reject invalid atlas/frame bounds, incomplete triangles, out-of-range indices/scissors, nonfinite values, unsupported textures/callbacks, inconsistent draw totals and oversized emitted geometry. Actual ImGui draw data verifies independently specified sRGB-to-linear color, logical-to-framebuffer conversion, clipping and retained scene-image requests. Nested viewport validation rejects missing or invalid scene data; exact-value reuse checks distinguish camera, geometry, extent and incarnation changes even at one scene revision. The separate native GuiRenderSmoke fixture retains 16a atlas coverage and adds optional scene composition phases for same-revision camera/content changes, target and framebuffer resize, image removal/restoration and cancelled close, with independent depth, clipping/alpha and linear-to-sRGB pixel expectations. GraphicsDevice accepts engine-owned values and uses its existing completion/retirement path without exposing ImGui or native handles.",
+        "external_fixture_reason": "GPU blending, scene-depth composition, swapchain resize, native close cancellation and retirement need the external required-validation fixture tools/gui_smoke.py. Registered CPU CTests establish value validation and adapter behavior only. Historical 16a results remain in docs/handoffs/16a-editor-shell.md; all 16b native fixture and actual UI runs are deferred/NOT_RUN in docs/handoffs/16b-editor-scene-workspace.md and BL-16A-UI-01, not inferred from a CPU pass.",
         "featureworld_cases": []
       }
     ],

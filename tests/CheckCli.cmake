@@ -93,6 +93,10 @@ if(SHARK_APPLICATION STREQUAL "Editor" AND SHARK_EDITOR_GUI)
         --editor --gui-vertex one --gui-pixel two --gui-vertex three)
     shark_editor_rejected(unpaired_vertex 2 invalid_argument editor.arguments --editor --gui-vertex one)
     shark_editor_rejected(unpaired_pixel 2 invalid_argument editor.arguments --editor --gui-pixel one)
+    shark_editor_rejected(unpaired_scene_vertex 2 invalid_argument editor.arguments --editor --scene-vertex one)
+    shark_editor_rejected(unpaired_scene_pixel 2 invalid_argument editor.arguments --editor --scene-pixel one)
+    shark_editor_rejected(duplicate_scene_shader 2 invalid_argument editor.arguments
+        --editor --scene-vertex one --scene-pixel two --scene-vertex three)
     shark_editor_rejected(too_many_arguments 2 invalid_argument editor.arguments
         --editor --root . --project one --device auto --validation off --gui-vertex one --gui-pixel two --help)
 

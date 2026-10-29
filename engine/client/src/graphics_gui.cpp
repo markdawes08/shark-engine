@@ -117,8 +117,66 @@ std::unique_ptr<GuiResources> create_gui_resources(nvrhi::IDevice& device, const
     return owner;
 }
 
+GuiViewportUpdate prepare_gui_viewport(nvrhi::IDevice& device, const GuiResources& resources,
+                                       const std::optional<SceneViewportRequest>& request,
+                                       std::uint64_t revision, bool fail_partial) {
+    GuiViewportUpdate candidate;
+    candidate.revision = revision;
+    candidate.clear = !request;
+    if (!request)
+        return candidate;
+    if (!resources.viewport_target || resources.viewport_target->extent != request->extent)
+        candidate.target = create_sampled_scene_target(device, request->extent, fail_partial);
+    const auto& target = candidate.target ? *candidate.target : *resources.viewport_target;
+    candidate.frame =
+        create_scene_frame(device, *request, target, fail_partial && !candidate.target, false);
+    if (candidate.target) {
+        nvrhi::BindingSetDesc bindings;
+        bindings
+            .addItem(nvrhi::BindingSetItem::ConstantBuffer(0, resources.constants))
+            // The temporary scene profile is opaque even when source color
+            // carries alpha. GUI coverage must not reinterpret scene alpha.
+            .addItem(nvrhi::BindingSetItem::Texture_SRV(0, target.color)
+                         .setOverrideComponentMapping(
+                             nvrhi::ComponentMapping().setA(nvrhi::ComponentSwizzle::One)))
+            .addItem(nvrhi::BindingSetItem::Sampler(0, resources.sampler));
+        candidate.bindings = device.createBindingSet(bindings, resources.binding_layout);
+        if (!candidate.bindings)
+            throw Error{ErrorCode::execution_failed,
+                        "NVRHI scene viewport binding creation returned no handle",
+                        {.operation = "graphics.gui.viewport.create"}};
+    } else {
+        candidate.bindings = resources.viewport_bindings;
+    }
+    return candidate;
+}
+
+void adopt_gui_viewport(GuiResources& resources, GuiViewportUpdate candidate) noexcept {
+    // The caller proved prior image-slot completion before preparation. Move
+    // complete owners only after native validation accepted the whole candidate.
+    resources.viewport_bindings = std::move(candidate.bindings);
+    resources.viewport_frame = std::move(candidate.frame);
+    if (candidate.clear)
+        resources.viewport_target.reset();
+    else if (candidate.target)
+        resources.viewport_target = std::move(candidate.target);
+    resources.viewport_revision = candidate.revision;
+    resources.viewport_uploaded = false;
+}
+
+std::uint32_t gui_resource_count(const GuiResources& resources) noexcept {
+    return resources.created +
+           (resources.viewport_target ? resources.viewport_target->created : 0) +
+           (resources.viewport_frame ? resources.viewport_frame->created : 0) +
+           (resources.viewport_bindings ? 1U : 0U);
+}
+
 void record_gui_frame(GuiResources& resources, const GuiAtlas& atlas, const GuiFrame& frame,
                       const SceneTarget& target, nvrhi::ICommandList& commands, bool upload_atlas) {
+    if (frame.viewport)
+        record_sampled_scene_frame(*resources.viewport_frame, *frame.viewport,
+                                   *resources.viewport_target, commands,
+                                   !resources.viewport_uploaded);
     if (upload_atlas)
         commands.writeTexture(resources.atlas, 0, 0, atlas.rgba8.data(),
                               static_cast<std::size_t>(atlas.extent.width) * 4);
@@ -135,7 +193,6 @@ void record_gui_frame(GuiResources& resources, const GuiAtlas& atlas, const GuiF
     nvrhi::GraphicsState state;
     state.setPipeline(resources.pipeline)
         .setFramebuffer(target.framebuffer)
-        .addBindingSet(resources.bindings)
         .addVertexBuffer(
             nvrhi::VertexBufferBinding().setBuffer(resources.vertices).setSlot(0).setOffset(0))
         .setIndexBuffer(nvrhi::IndexBufferBinding()
@@ -147,6 +204,9 @@ void record_gui_frame(GuiResources& resources, const GuiAtlas& atlas, const GuiF
                                                static_cast<float>(frame.extent.height), 0.0F, 0.0F,
                                                1.0F));
     for (const auto& draw : frame.draws) {
+        state.bindings.resize(0);
+        state.addBindingSet(draw.texture == GuiTexture::scene_viewport ? resources.viewport_bindings
+                                                                       : resources.bindings);
         state.viewport.scissorRects.resize(0);
         state.viewport.addScissorRect(
             nvrhi::Rect(draw.clip[0], draw.clip[2], draw.clip[1], draw.clip[3]));

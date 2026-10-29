@@ -6,7 +6,7 @@ This five-checkpoint plan follows the completed
 [human/agent contract](human-agent-plan.md), [MMORPG plan](mmorpg-plan.md) and
 [testing policy](../testing-policy.md). Scope is the current Windows PC; portable
 shared-owner behavior retains WSL coverage. Full REQ-16 remains NOT_RUN;
-`current_assignment` is 16 because its first checkpoint is now active.
+`current_assignment` is 16; 16b is the current implementation checkpoint.
 
 | Checkpoint | Deliverable and acceptance |
 | --- | --- |
@@ -16,10 +16,15 @@ shared-owner behavior retains WSL coverage. Full REQ-16 remains NOT_RUN;
 | 16d: Assets, jobs and console | Adapt the existing catalog/import/job and diagnostic services into asset and console panels. Preserve bounded paging, cancellation, explicit completion drain/take, last-valid cache output and owner release. Advertise only implemented actions; no second scheduler/importer or gameplay console. |
 | 16e: Connected human/terminal acceptance | Use actual UI interaction and public terminal requests to continue the same saved project in both directions. Independently compare semantic state after edit/import/save/reopen, test busy ownership and unsaved/history conflicts, and finish affected subsystem coverage. Reuse valid earlier focused evidence. |
 
-16a implementation and its deferred desktop qualification are tracked in the
-[shell handoff](../handoffs/16a-editor-shell.md), [contract](../editor-shell.md)
-and [ADR 0040](../architecture/0040-human-editor-shell.md). Later rows remain
-planned. They do not advertise implemented panels or close the full requirement.
+16a implementation and its deferred desktop qualification remain recorded in
+the [shell handoff](../handoffs/16a-editor-shell.md). The current
+[16b handoff](../handoffs/16b-editor-scene-workspace.md),
+[workspace contract](../editor-scene-workspace.md) and
+[ADR 0041](../architecture/0041-editor-scene-workspace.md) cover hierarchy,
+revision-scoped selection, shared lifecycle commands and native scene composition.
+Selected headless verification is complete; 16c is the next coding checkpoint. 16c-16e
+remain planned; neither current implementation nor deferred qualification closes
+the full requirement.
 
 The user's 2026-10-29 [desktop-testing amendment](../backlog.md) permits coding
 16b and later checkpoints while desktop interaction is paused. Continue affected

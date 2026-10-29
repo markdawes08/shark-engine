@@ -1,6 +1,7 @@
 #include "editor_shell.hpp"
 #include "gui_adapter.hpp"
 #include "project_session.hpp"
+#include "workspace_panel.hpp"
 
 #include <shark/client/shader_bundle.hpp>
 #include <shark/time.hpp>
@@ -85,7 +86,9 @@ void style(float scale) {
 
 class Shell {
   public:
-    explicit Shell(const EditorLaunch& launch) {
+    Shell(const EditorLaunch& launch, const ShaderArtifact& scene_vertex,
+          const ShaderArtifact& scene_pixel)
+        : scene_vertex_(scene_vertex), scene_pixel_(scene_pixel) {
         buffer(root_, utf8(launch.root));
         buffer(project_, launch.project);
         if (!launch.project.empty())
@@ -100,6 +103,8 @@ class Shell {
     void request_close(bool exit) {
         if (pending_close_)
             return;
+        if (workspace_)
+            workspace_->cancel_confirmation();
         exit_after_close_ = exit;
         if (!session_ || !session_->state().open) {
             exiting_ = exit;
@@ -113,6 +118,7 @@ class Shell {
         }
     }
     void draw(const GraphicsWindowFrame& frame) {
+        frame_invalidated_ = false;
         const bool modal =
             pending_close_ || ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
         const bool text = ImGui::GetIO().WantTextInput;
@@ -147,48 +153,52 @@ class Shell {
         ImGui::TextDisabled("/  EDITOR");
         ImGui::Spacing();
         ImGui::TextUnformatted(is_open() ? session_->state().name.c_str() : "Open your project");
-        ImGui::TextDisabled(is_open() ? "One project. Shared authoring state."
-                                      : "Continue a project created with the terminal tools.");
-        ImGui::Spacing();
-        ImGui::BeginChild("Project controls", {0, 0}, ImGuiChildFlags_Borders);
-        ImGui::TextUnformatted("PROJECT");
-        ImGui::Separator();
-        ImGui::BeginDisabled(is_open());
-        ImGui::TextUnformatted("Project folder");
-        ImGui::SetNextItemWidth(-1);
-        if (focus_open_ && !is_open()) {
-            ImGui::SetKeyboardFocusHere();
-            focus_open_ = false;
-        }
-        ImGui::InputText("##project-root", root_.data(), root_.size());
-        ImGui::TextUnformatted("Project file (relative to folder)");
-        ImGui::SetNextItemWidth(-1);
-        ImGui::InputText("##project-file", project_.data(), project_.size());
-        if (ImGui::Button("Open project"))
-            open();
-        ImGui::EndDisabled();
-        ImGui::SameLine();
-        ImGui::BeginDisabled(!is_open());
-        if (ImGui::Button("Save scene"))
-            save();
-        ImGui::SameLine();
-        if (ImGui::Button("Close project"))
-            request_close(false);
-        ImGui::EndDisabled();
-        ImGui::Spacing();
-        ImGui::Separator();
         if (is_open()) {
-            const auto& state = session_->state();
-            ImGui::TextColored(state.dirty ? ImVec4{1, .73F, .34F, 1} : ImVec4{.35F, .82F, .77F, 1},
-                               "%s", state.dirty ? "Unsaved changes" : "Saved");
-            ImGui::TextDisabled("Scene %s", state.scene_id.c_str());
-            ImGui::TextDisabled("Revision %llu",
-                                static_cast<unsigned long long>(state.revision.revision));
+            ImGui::SameLine();
+            ImGui::TextDisabled("%s", dirty() ? "Unsaved changes" : "Saved");
+        }
+        ImGui::Spacing();
+        if (!is_open() || ImGui::CollapsingHeader("Project")) {
+            ImGui::TextUnformatted("PROJECT");
+            ImGui::Separator();
+            ImGui::BeginDisabled(is_open());
+            ImGui::TextUnformatted("Project folder");
+            ImGui::SetNextItemWidth(-1);
+            if (focus_open_ && !is_open()) {
+                ImGui::SetKeyboardFocusHere();
+                focus_open_ = false;
+            }
+            ImGui::InputText("##project-root", root_.data(), root_.size());
+            ImGui::TextUnformatted("Project file (relative to folder)");
+            ImGui::SetNextItemWidth(-1);
+            ImGui::InputText("##project-file", project_.data(), project_.size());
+            if (ImGui::Button("Open project"))
+                open();
+            ImGui::EndDisabled();
+            ImGui::SameLine();
+            ImGui::BeginDisabled(!is_open());
+            if (ImGui::Button("Save scene"))
+                save();
+            ImGui::SameLine();
+            if (ImGui::Button("Close project"))
+                request_close(false);
+            ImGui::EndDisabled();
             ImGui::Spacing();
-            ImGui::TextWrapped("This project is owned by the editor. Save and close it before "
-                               "opening it in a terminal host.");
-        } else {
-            ImGui::TextDisabled("No project is open");
+            ImGui::Separator();
+            if (is_open()) {
+                const auto& state = session_->state();
+                ImGui::TextColored(state.dirty ? ImVec4{1, .73F, .34F, 1}
+                                               : ImVec4{.35F, .82F, .77F, 1},
+                                   "%s", state.dirty ? "Unsaved changes" : "Saved");
+                ImGui::TextDisabled("Scene %s", state.scene_id.c_str());
+                ImGui::TextDisabled("Revision %llu",
+                                    static_cast<unsigned long long>(state.revision.revision));
+                ImGui::Spacing();
+                ImGui::TextWrapped("This project is owned by the editor. Save and close it before "
+                                   "opening it in a terminal host.");
+            } else {
+                ImGui::TextDisabled("No project is open");
+            }
         }
         if (!notice_.empty()) {
             ImGui::Spacing();
@@ -202,7 +212,8 @@ class Shell {
             if (!error_->context.path.empty())
                 ImGui::TextWrapped("%s", error_->context.path.c_str());
         }
-        ImGui::EndChild();
+        if (is_open() && workspace_)
+            workspace_->draw(frame, pending_close_);
         ImGui::End();
         if (pending_close_) {
             ImGui::OpenPopup("Unsaved changes");
@@ -230,6 +241,12 @@ class Shell {
     void scale(float value) noexcept {
         scale_ = value;
     }
+    bool frame_invalidated() const noexcept {
+        return frame_invalidated_;
+    }
+    const SceneViewportRequest* viewport() const noexcept {
+        return workspace_ ? workspace_->viewport() : nullptr;
+    }
 
   private:
     bool is_open() const noexcept {
@@ -253,8 +270,12 @@ class Shell {
                 show_error(std::move(opened).error());
                 return;
             }
+            auto candidate_workspace =
+                std::make_unique<WorkspacePanel>(*candidate.value(), scene_vertex_, scene_pixel_);
+            buffer(root_, utf8(candidate.value()->root()));
+            workspace_.reset();
             session_ = std::move(candidate).value();
-            buffer(root_, utf8(session_->root()));
+            workspace_ = std::move(candidate_workspace);
             error_.reset();
             notice_ = "Project opened";
         } catch (...) {
@@ -305,6 +326,8 @@ class Shell {
             exit_after_close_ = false;
             return;
         }
+        workspace_.reset();
+        frame_invalidated_ = true;
         exiting_ = exit_after_close_;
         exit_after_close_ = false;
         notice_ = "Project closed";
@@ -327,6 +350,9 @@ class Shell {
                   << std::flush;
     }
     std::unique_ptr<ProjectSession> session_;
+    std::unique_ptr<WorkspacePanel> workspace_;
+    ShaderArtifact scene_vertex_;
+    ShaderArtifact scene_pixel_;
     std::array<char, 4097> root_{};
     std::array<char, 4097> project_{};
     std::optional<Error> error_;
@@ -336,6 +362,7 @@ class Shell {
     bool pending_close_{false};
     bool exit_after_close_{false};
     bool exiting_{false};
+    bool frame_invalidated_{false};
     float scale_{1};
 };
 } // namespace
@@ -344,11 +371,12 @@ Result<EditorLaunch> parse_editor_arguments(std::span<const std::string_view> ar
     const auto invalid = []() -> Result<EditorLaunch> {
         return Error{ErrorCode::invalid_argument,
                      "Expected --editor [--root PATH] [--project RELATIVE] [--device UUID|auto] "
-                     "[--validation required|off] [--gui-vertex SPV --gui-pixel SPV]",
+                     "[--validation required|off] [--gui-vertex SPV --gui-pixel SPV] "
+                     "[--scene-vertex SPV --scene-pixel SPV]",
                      {.operation = "editor.arguments"}};
     };
     try {
-        if (arguments.empty() || arguments.front() != "--editor" || arguments.size() > 13)
+        if (arguments.empty() || arguments.front() != "--editor" || arguments.size() > 17)
             return invalid();
         EditorLaunch launch;
         launch.root = std::filesystem::current_path();
@@ -367,6 +395,10 @@ Result<EditorLaunch> parse_editor_arguments(std::span<const std::string_view> ar
                 launch.vertex_shader = native_path(value);
             else if (flag == "--gui-pixel")
                 launch.pixel_shader = native_path(value);
+            else if (flag == "--scene-vertex")
+                launch.scene_vertex_shader = native_path(value);
+            else if (flag == "--scene-pixel")
+                launch.scene_pixel_shader = native_path(value);
             else if (flag == "--device") {
                 if (value != "auto" && !valid_graphics_uuid(value))
                     return invalid();
@@ -384,12 +416,19 @@ Result<EditorLaunch> parse_editor_arguments(std::span<const std::string_view> ar
         }
         if (launch.vertex_shader.empty() != launch.pixel_shader.empty())
             return invalid();
+        if (launch.scene_vertex_shader.empty() != launch.scene_pixel_shader.empty())
+            return invalid();
         if (launch.vertex_shader.empty()) {
             // Reuse the existing executable-relative asset locator; only the
             // filenames differ from the diagnostic cube's bundle.
             auto assets = take(default_shader_bundle_path()).parent_path();
             launch.vertex_shader = assets / "gui-vs.spv";
             launch.pixel_shader = assets / "gui-ps.spv";
+        }
+        if (launch.scene_vertex_shader.empty()) {
+            auto assets = take(default_shader_bundle_path()).parent_path();
+            launch.scene_vertex_shader = assets / "scene-unlit-vs.spv";
+            launch.scene_pixel_shader = assets / "scene-unlit-ps.spv";
         }
         launch.root = std::filesystem::absolute(launch.root);
         return launch;
@@ -407,7 +446,11 @@ Result<void> run_editor(const EditorLaunch& launch) {
             load_shader_artifact(launch.vertex_shader, ShaderStage::vertex, ShaderInterface::gui));
         atlas.pixel_shader = take(
             load_shader_artifact(launch.pixel_shader, ShaderStage::pixel, ShaderInterface::gui));
-        Shell shell(launch);
+        const auto scene_vertex = take(load_shader_artifact(
+            launch.scene_vertex_shader, ShaderStage::vertex, ShaderInterface::scene_unlit));
+        const auto scene_pixel = take(load_shader_artifact(
+            launch.scene_pixel_shader, ShaderStage::pixel, ShaderInterface::scene_unlit));
+        Shell shell(launch, scene_vertex, scene_pixel);
         auto graphics = take(GraphicsDevice::create(
             {launch.adapter, launch.validation, {.title = "Shark Editor", .content = {900, 600}}}));
         GuiContext context;
@@ -461,10 +504,12 @@ Result<void> run_editor(const EditorLaunch& launch) {
             ImGui::Render();
             if (shell.exiting())
                 break;
+            if (shell.frame_invalidated())
+                continue;
             if (!frame.state.iconified && frame.state.framebuffer.width &&
                 frame.state.framebuffer.height) {
-                take(graphics->set_presentation_gui(
-                    take(capture_gui_draw(*ImGui::GetDrawData(), frame.state.framebuffer))));
+                take(graphics->set_presentation_gui(take(capture_gui_draw(
+                    *ImGui::GetDrawData(), frame.state.framebuffer, shell.viewport()))));
                 const auto presented = take(
                     graphics->present({.red = .006F, .green = .008F, .blue = .01F, .alpha = 1}));
                 if (presented.status == PresentationStatus::closed)

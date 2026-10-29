@@ -265,3 +265,22 @@ TEST_CASE("Editor session preserves strict protocol rejection and owner-thread a
     CHECK(editor->state() == before);
     CHECK(call(*editor, "scene.mutation_status").at("retained_entries") == 1);
 }
+
+TEST_CASE("Editor viewport resource inventory uses the same owner and rejects invalid input",
+          "[editor-project-session]") {
+    Fixture fixture;
+    auto editor = take(ProjectSession::create(fixture.root, "Project.sharkproject"));
+    rename(*editor, "Unsaved inventory observation");
+    const auto before = editor->state();
+    const auto history = call(*editor, "scene.history");
+    REQUIRE(editor->refresh_asset_inventory({}));
+    const std::array<std::string_view, 1> escaping{"../outside.sharkasset"};
+    REQUIRE_FALSE(editor->refresh_asset_inventory(escaping));
+    const std::string oversized(16385, 'x');
+    const std::array<std::string_view, 1> excessive{oversized};
+    rejected(editor->refresh_asset_inventory(excessive), ErrorCode::invalid_argument);
+    CHECK(editor->state() == before);
+    CHECK(call(*editor, "scene.history") == history);
+    auto competing = take(ProjectSession::create(fixture.root));
+    rejected(competing->open("Project.sharkproject"), ErrorCode::conflict);
+}

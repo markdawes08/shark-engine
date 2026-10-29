@@ -154,7 +154,9 @@ class GraphicsDevice final {
                                                      bool enable_readback = false);
     // Configure one immutable GUI atlas before first present. Each frame is a
     // copied bounded CPU value; existing per-image GPU owners retire through
-    // the shared presentation lifecycle. GUI, cube and scene modes are exclusive.
+    // the shared presentation lifecycle. The optional GUI viewport is a linear
+    // scene target sampled in that same submission; no readback is needed.
+    // Standalone GUI, cube and scene modes remain exclusive.
     [[nodiscard]] Result<void> configure_gui(const GuiAtlas& atlas, bool enable_readback = false);
     [[nodiscard]] Result<void> set_presentation_gui(const GuiFrame& frame);
     // Installs/replaces an owned scene snapshot after a bounded drain. Fixed

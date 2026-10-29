@@ -1,4 +1,5 @@
 #include "../editor/gui_adapter.hpp"
+#include "gpu_shader_fixture.hpp"
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -326,7 +327,7 @@ TEST_CASE("Editor draw capture rejects unsupported and oversized owned draw data
     auto& list = *data.CmdLists[0];
     auto& command = list.CmdBuffer[0];
     SECTION("unknown texture") {
-        command.TextureId = static_cast<ImTextureID>(2);
+        command.TextureId = static_cast<ImTextureID>(3);
     }
     SECTION("callbacks are never executed") {
         command.UserCallback = [](const ImDrawList*, const ImDrawCmd*) {
@@ -363,4 +364,26 @@ TEST_CASE("Editor draw capture rejects unsupported and oversized owned draw data
     CHECK(captured.error().code == ErrorCode::invalid_argument);
     CHECK_FALSE(captured.error().message.empty());
     CHECK_FALSE(captured.error().context.operation.empty());
+}
+
+TEST_CASE("Editor viewport images retain their scene request with the GUI frame", "[editor-gui]") {
+    Gui gui;
+    auto& data = gui.triangle();
+    data.CmdLists[0]->CmdBuffer[0].TextureId = static_cast<ImTextureID>(2);
+    REQUIRE_FALSE(capture_gui_draw(data, {160, 120}));
+    SceneViewportRequest request;
+    request.extent = {64, 48};
+    request.scene_revision = {7, 2};
+    const auto& vertex = shark::test::shaders::scene_vs_words;
+    const auto& pixel = shark::test::shaders::scene_ps_words;
+    request.vertex_shader = {ShaderStage::vertex, "vsScene", {vertex.begin(), vertex.end()}};
+    request.pixel_shader = {ShaderStage::pixel, "psScene", {pixel.begin(), pixel.end()}};
+    auto captured = take(capture_gui_draw(data, {160, 120}, &request));
+    REQUIRE(captured.viewport);
+    REQUIRE(captured.draws.size() == 1);
+    CHECK(captured.draws[0].texture == GuiTexture::scene_viewport);
+    CHECK(captured.viewport->scene_revision == SceneRevision{7, 2});
+    request.extent = {0, 48};
+    CHECK(captured.viewport->extent == WindowExtent{64, 48});
+    REQUIRE_FALSE(capture_gui_draw(data, {160, 120}, &request));
 }

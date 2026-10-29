@@ -46,6 +46,9 @@ struct SceneFrameResources final {
 // before opening the command list; only the backend may prove completion.
 [[nodiscard]] std::unique_ptr<SceneTarget> create_scene_target(nvrhi::IDevice&, WindowExtent,
                                                                bool fail_partial);
+// GUI composition retains linear color/depth attachments without CPU staging.
+[[nodiscard]] std::unique_ptr<SceneTarget>
+create_sampled_scene_target(nvrhi::IDevice&, WindowExtent, bool fail_partial);
 [[nodiscard]] std::unique_ptr<SceneTarget> create_window_scene_target(nvrhi::IDevice&,
                                                                       nvrhi::ITexture*,
                                                                       WindowExtent, bool capture,
@@ -56,6 +59,8 @@ create_scene_frame(nvrhi::IDevice&, const SceneViewportRequest&, const SceneTarg
 void record_scene_frame(SceneFrameResources&, const SceneViewportRequest&, const SceneTarget&);
 void record_window_scene_frame(SceneFrameResources&, const SceneViewportRequest&,
                                const SceneTarget&, nvrhi::ICommandList&, bool upload);
+void record_sampled_scene_frame(SceneFrameResources&, const SceneViewportRequest&,
+                                const SceneTarget&, nvrhi::ICommandList&, bool upload);
 [[nodiscard]] OffscreenReadback read_scene_frame(nvrhi::IDevice&, const SceneFrameResources&,
                                                  const SceneTarget&);
 [[nodiscard]] OffscreenReadback read_scene_target(nvrhi::IDevice&, const SceneTarget&,

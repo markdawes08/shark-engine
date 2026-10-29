@@ -11,6 +11,7 @@
 #include "utf8.hpp"
 
 #include <algorithm>
+#include <cmath>
 #include <initializer_list>
 #include <map>
 #include <optional>
@@ -1275,6 +1276,56 @@ Result<AuthoringProtocolReply> AuthoringProtocol::handle(std::string_view reques
         return Error{ErrorCode::execution_failed,
                      "Authoring protocol operation failed",
                      {.operation = "authoring.protocol.handle"}};
+    }
+}
+
+Result<RenderScene> AuthoringProtocol::viewport_snapshot(const AuthoringViewportRequest& request) {
+    if (impl_->thread != std::this_thread::get_id())
+        return Error{ErrorCode::conflict,
+                     "Authoring viewport requires its creating thread",
+                     {.operation = "authoring.viewport.snapshot"}};
+    try {
+        if (request.viewport.width == 0 || request.viewport.height == 0 ||
+            request.viewport.width > 2048 || request.viewport.height > 2048 ||
+            request.origin_generation == 0 || !std::isfinite(request.local_origin.x) ||
+            !std::isfinite(request.local_origin.y) || !std::isfinite(request.local_origin.z) ||
+            std::abs(request.local_origin.x) > render_coordinate_limit ||
+            std::abs(request.local_origin.y) > render_coordinate_limit ||
+            std::abs(request.local_origin.z) > render_coordinate_limit)
+            return Error{ErrorCode::invalid_argument,
+                         "Viewport dimensions or local origin exceed the supported bounds",
+                         {.operation = "authoring.viewport.snapshot"}};
+        auto& current = impl_->require_session();
+        impl_->check_source_files(current);
+        const auto captured = take(current.owner->capture(request.expected_revision));
+        auto& assets = impl_->assets(current);
+        const auto candidate = assets.prepare_current_export(
+            *current.owner, request.camera, request.expected_revision, request.target);
+        std::vector<PreparedAssetInput> inputs;
+        inputs.reserve(candidate.meshes().size());
+        for (const auto& mesh : candidate.meshes())
+            inputs.push_back({mesh.asset, mesh.payload});
+        const auto prepared = take(PreparedAssets::create(inputs));
+        const auto scene_borrow = take(current.owner->scene());
+        const auto& scene = scene_borrow.get();
+        const auto camera = take(scene.find(request.camera));
+        const RenderOrigin origin{request.local_origin, request.origin_generation,
+                                  captured.scene.world_origin};
+        auto result = take(extract_render_scene(
+            scene, *prepared, {camera, request.expected_revision, request.viewport, origin, true}));
+        // The extracted values own their immutable leases. Before returning the
+        // candidate, fence the same retained sources and asset owner once more.
+        impl_->check_source_files(current);
+        take(assets.validate_export(candidate, *current.owner));
+        return result;
+    } catch (ProtocolFailure& failure) {
+        return std::move(failure.error);
+    } catch (AuthoringAssetFailure& failure) {
+        return std::move(failure.error);
+    } catch (...) {
+        return Error{ErrorCode::execution_failed,
+                     "Cannot prepare the retained authoring viewport",
+                     {.operation = "authoring.viewport.snapshot"}};
     }
 }
 

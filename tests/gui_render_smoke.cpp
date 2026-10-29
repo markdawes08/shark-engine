@@ -57,17 +57,19 @@ Object stats_json(const PresentationStats& stats) {
 }
 
 void add_quad(GuiFrame& frame, std::array<float, 4> bounds, std::array<float, 4> color,
-              std::array<std::int32_t, 4> clip) {
+              std::array<std::int32_t, 4> clip, GuiTexture texture = GuiTexture::atlas) {
     const auto vertex = static_cast<std::uint32_t>(frame.vertices.size());
     const auto first = static_cast<std::uint32_t>(frame.indices.size());
     const auto [left, top, right, bottom] = bounds;
-    frame.vertices.push_back({{left, top}, {0.25F, 0.25F}, color});
-    frame.vertices.push_back({{right, top}, {0.75F, 0.25F}, color});
-    frame.vertices.push_back({{right, bottom}, {0.75F, 0.75F}, color});
-    frame.vertices.push_back({{left, bottom}, {0.25F, 0.75F}, color});
+    const auto low = texture == GuiTexture::atlas ? 0.25F : 0.0F;
+    const auto high = texture == GuiTexture::atlas ? 0.75F : 1.0F;
+    frame.vertices.push_back({{left, top}, {low, low}, color});
+    frame.vertices.push_back({{right, top}, {high, low}, color});
+    frame.vertices.push_back({{right, bottom}, {high, high}, color});
+    frame.vertices.push_back({{left, bottom}, {low, high}, color});
     for (const std::uint32_t index : {0U, 1U, 2U, 0U, 2U, 3U})
         frame.indices.push_back(vertex + index);
-    frame.draws.push_back({first, 6, clip});
+    frame.draws.push_back({first, 6, clip, texture});
 }
 
 GuiFrame fixture(WindowExtent extent, bool changed) {
@@ -79,6 +81,52 @@ GuiFrame fixture(WindowExtent extent, bool changed) {
              changed ? std::array{0.0F, 0.0F, 1.0F, 1.0F} : std::array{1.0F, 0.0F, 0.0F, 1.0F},
              {0, 0, width, height});
     add_quad(frame, {60.0F, 40.0F, 140.0F, 110.0F}, {0.0F, 1.0F, 0.0F, 0.5F}, {70, 50, 120, 100});
+    return frame;
+}
+
+GuiFrame viewport_fixture(WindowExtent extent, const ShaderArtifact& vertex_shader,
+                          const ShaderArtifact& pixel_shader, unsigned phase) {
+    GuiFrame frame;
+    frame.extent = extent;
+    if (phase != 5) {
+        SceneViewportRequest scene;
+        scene.extent = phase >= 3 ? WindowExtent{144, 96} : WindowExtent{96, 64};
+        // Every camera/content phase intentionally retains the same metadata.
+        // The GUI GPU cache must compare packed content, not revision alone.
+        scene.scene_revision = {600, 9};
+        scene.vertex_shader = vertex_shader;
+        scene.pixel_shader = pixel_shader;
+        const auto quad = [&](float left, float right, float depth, std::array<float, 4> color,
+                              float camera_offset) {
+            const auto first_vertex = static_cast<std::uint32_t>(scene.vertices.size());
+            const auto first_index = static_cast<std::uint32_t>(scene.indices.size());
+            scene.vertices.push_back({{left, -1, depth}, color});
+            scene.vertices.push_back({{right, -1, depth}, color});
+            scene.vertices.push_back({{right, 1, depth}, color});
+            scene.vertices.push_back({{left, 1, depth}, color});
+            for (const std::uint32_t index : {0U, 1U, 2U, 0U, 2U, 3U})
+                scene.indices.push_back(first_vertex + index);
+            SceneViewportDraw draw;
+            draw.first_index = first_index;
+            draw.index_count = 6;
+            draw.transform = {1, 0, 0, 0, 0, -1, 0, 0, 0, 0, 1, 0, camera_offset, 0, 0, 1};
+            draw.double_sided = true;
+            scene.draws.push_back(draw);
+        };
+        // Near red geometry is submitted before the full far blue/green quad.
+        // Retaining red therefore also checks shared-depth rendering in the target.
+        // Opaque scene profile ignores source alpha when composited into UI.
+        quad(-1, 0, 0.25F, {1, 0, 0, 0}, phase >= 1 ? 0.5F : 0.0F);
+        quad(-2, 2, 0.75F,
+             phase >= 2 ? std::array{0.0F, 1.0F, 0.0F, 1.0F} : std::array{0.0F, 0.0F, 1.0F, 1.0F},
+             phase >= 1 ? 0.5F : 0.0F);
+        frame.viewport = std::move(scene);
+        add_quad(frame, {20, 20, 140, 100}, {1, 1, 1, 1},
+                 {0, 0, static_cast<std::int32_t>(extent.width),
+                  static_cast<std::int32_t>(extent.height)},
+                 GuiTexture::scene_viewport);
+    }
+    add_quad(frame, {80, 10, 160, 70}, {1, 1, 1, 0.5F}, {90, 30, 130, 60});
     return frame;
 }
 
@@ -129,9 +177,11 @@ void write_bytes(const std::filesystem::path& path, const std::vector<T>& bytes)
 }
 
 Object run(int argc, char** argv) {
-    require(argc == 9, "Expected --device UUID --vertex FILE --pixel FILE --output DIRECTORY");
+    require(argc == 9 || argc == 13,
+            "Expected --device UUID --vertex FILE --pixel FILE --output DIRECTORY "
+            "[--scene-vertex FILE --scene-pixel FILE]");
     std::string device;
-    std::filesystem::path vertex, pixel, output;
+    std::filesystem::path vertex, pixel, output, scene_vertex, scene_pixel;
     std::set<std::string> seen;
     for (int index = 1; index < argc; index += 2) {
         const std::string option{argv[index]};
@@ -144,11 +194,25 @@ Object run(int argc, char** argv) {
             pixel = argv[index + 1];
         else if (option == "--output")
             output = argv[index + 1];
+        else if (option == "--scene-vertex")
+            scene_vertex = argv[index + 1];
+        else if (option == "--scene-pixel")
+            scene_pixel = argv[index + 1];
         else
             require(false, "Unknown GUI fixture option");
     }
     require(valid_graphics_uuid(device) && !vertex.empty() && !pixel.empty() && !output.empty(),
             "GUI fixture needs an explicit GPU and complete paths");
+    require(scene_vertex.empty() == scene_pixel.empty(),
+            "GUI viewport requires both scene shaders");
+    const bool viewport_mode = !scene_vertex.empty();
+    ShaderArtifact scene_vs, scene_ps;
+    if (viewport_mode) {
+        scene_vs = take(
+            load_shader_artifact(scene_vertex, ShaderStage::vertex, ShaderInterface::scene_unlit));
+        scene_ps = take(
+            load_shader_artifact(scene_pixel, ShaderStage::pixel, ShaderInterface::scene_unlit));
+    }
     GuiAtlas atlas;
     atlas.extent = {2, 2};
     atlas.rgba8.assign(16, 255);
@@ -169,31 +233,63 @@ Object run(int argc, char** argv) {
     require(adapter.uuid == device, "GUI fixture selected a different GPU");
     take(graphics->configure_gui(atlas, true));
     Array phases;
-    const auto capture = [&](const char* name, WindowExtent extent, bool changed) {
-        const auto pixels = present(*graphics, fixture(extent, changed));
+    const auto capture = [&](const char* name, const GuiFrame& request) {
+        auto pixels = present(*graphics, request);
+        const auto image_count = take(graphics->presentation_stats()).image_count;
+        require(image_count > 0 && image_count <= 16, "Unexpected GUI image count");
+        const auto iterations = viewport_mode ? 2 * image_count + 1 : 1U;
+        // Exercise acquired-slot reuse before the next camera/content change.
+        for (std::uint32_t repeat = 1; repeat < iterations; ++repeat)
+            pixels = present(*graphics, request);
         const auto color_file = std::string{name} + ".rgba8";
         const auto depth_file = std::string{name} + ".d32f";
         write_bytes(output / color_file, pixels.rgba8);
         write_bytes(output / depth_file, pixels.depth);
-        phases.emplace_back(
-            Object{{"name", name},
-                   {"width", extent.width},
-                   {"height", extent.height},
+        Object row{{"name", name},
+                   {"width", request.extent.width},
+                   {"height", request.extent.height},
                    {"color_file", color_file},
                    {"depth_file", depth_file},
-                   {"presentation", stats_json(take(graphics->presentation_stats()))}});
+                   {"presentation", stats_json(take(graphics->presentation_stats()))}};
+        if (viewport_mode) {
+            row.emplace("iterations", iterations);
+            row.emplace("image_count", image_count);
+            row.emplace("viewport",
+                        request.viewport
+                            ? Json{Object{{"width", request.viewport->extent.width},
+                                          {"height", request.viewport->extent.height},
+                                          {"scene_instance",
+                                           request.viewport->scene_revision.scene_instance},
+                                          {"revision", request.viewport->scene_revision.revision}}}
+                            : Json{});
+        }
+        phases.emplace_back(std::move(row));
     };
-    capture("baseline", original, false);
-    capture("changed", original, true);
-    take(graphics->resize(resized));
-    capture("resized", resized, true);
+    if (viewport_mode) {
+        for (unsigned phase = 0; phase < 4; ++phase) {
+            constexpr std::array names{"scene-baseline", "scene-camera", "scene-content",
+                                       "scene-target-resized"};
+            capture(names[phase], viewport_fixture(original, scene_vs, scene_ps, phase));
+        }
+        take(graphics->resize(resized));
+        for (unsigned phase = 4; phase < 7; ++phase) {
+            constexpr std::array names{"scene-window-resized", "scene-removed", "scene-restored"};
+            capture(names[phase - 4], viewport_fixture(resized, scene_vs, scene_ps, phase));
+        }
+    } else {
+        capture("baseline", fixture(original, false));
+        capture("changed", fixture(original, true));
+        take(graphics->resize(resized));
+        capture("resized", fixture(resized, true));
+    }
     take(graphics->request_close());
     require(take(graphics->window_state()).close_requested,
             "Native close request was not observed");
     take(graphics->cancel_close_request());
     require(!take(graphics->window_state()).close_requested,
             "Native close cancellation was not observed");
-    capture("close-cancelled", resized, true);
+    capture("close-cancelled", viewport_mode ? viewport_fixture(resized, scene_vs, scene_ps, 7)
+                                             : fixture(resized, true));
     take(graphics->drain());
     take(graphics->close());
     const auto stats = take(graphics->presentation_stats());
@@ -205,7 +301,7 @@ Object run(int argc, char** argv) {
     for (const auto& message : diagnostics.messages)
         messages.emplace_back(message);
     return {{"schema_version", std::uint32_t{1}},
-            {"event", "gui-render-complete"},
+            {"event", viewport_mode ? "gui-viewport-complete" : "gui-render-complete"},
             {"status", "PASS"},
             {"adapter_uuid", adapter.uuid},
             {"adapter_name", adapter.name},

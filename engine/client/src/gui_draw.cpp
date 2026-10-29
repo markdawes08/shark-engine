@@ -1,5 +1,7 @@
 #include <shark/client/gui_draw.hpp>
 
+#include "gui_viewport.hpp"
+
 #include <algorithm>
 #include <cmath>
 
@@ -47,6 +49,10 @@ Result<void> validate_gui_frame(const GuiFrame& frame) {
         if (index >= frame.vertices.size())
             return invalid("GUI index references a vertex outside the frame");
     for (const auto& draw : frame.draws) {
+        if (draw.texture != GuiTexture::atlas && draw.texture != GuiTexture::scene_viewport)
+            return invalid("GUI draw references an unsupported texture");
+        if (draw.texture == GuiTexture::scene_viewport && !frame.viewport)
+            return invalid("GUI scene texture requires an owned viewport in the same frame");
         if (draw.index_count == 0 || draw.index_count % 3 != 0 ||
             draw.first_index > frame.indices.size() ||
             draw.index_count > frame.indices.size() - draw.first_index)
@@ -57,6 +63,38 @@ Result<void> validate_gui_frame(const GuiFrame& frame) {
             draw.clip[3] > static_cast<std::int32_t>(frame.extent.height))
             return invalid("GUI scissor must be a nonempty framebuffer rectangle");
     }
+    if (frame.viewport)
+        return validate_scene_viewport_request(*frame.viewport);
     return {};
+}
+
+bool detail::same_gui_viewport(const std::optional<SceneViewportRequest>& a,
+                               const std::optional<SceneViewportRequest>& b) noexcept {
+    if (a.has_value() != b.has_value())
+        return false;
+    if (!a)
+        return true;
+    const auto same_shader = [](const ShaderArtifact& left, const ShaderArtifact& right) {
+        return left.stage == right.stage && left.entry_point == right.entry_point &&
+               left.words == right.words;
+    };
+    return a->extent == b->extent && a->scene_revision == b->scene_revision &&
+           a->origin == b->origin && a->indices == b->indices &&
+           same_shader(a->vertex_shader, b->vertex_shader) &&
+           same_shader(a->pixel_shader, b->pixel_shader) &&
+           std::equal(a->vertices.begin(), a->vertices.end(), b->vertices.begin(),
+                      b->vertices.end(),
+                      [](const SceneViewportVertex& left, const SceneViewportVertex& right) {
+                          return left.position == right.position && left.color == right.color;
+                      }) &&
+           std::equal(a->draws.begin(), a->draws.end(), b->draws.begin(), b->draws.end(),
+                      [](const SceneViewportDraw& left, const SceneViewportDraw& right) {
+                          return left.first_index == right.first_index &&
+                                 left.index_count == right.index_count &&
+                                 left.transform == right.transform &&
+                                 left.base_color == right.base_color &&
+                                 left.mirrored == right.mirrored &&
+                                 left.double_sided == right.double_sided;
+                      });
 }
 } // namespace shark::client

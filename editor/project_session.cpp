@@ -279,4 +279,32 @@ Result<tools::AuthoringProtocolReply> ProjectSession::request(std::string_view m
         [&] { return impl_->request(method, parameters_json); });
 }
 
+Result<RenderScene>
+ProjectSession::viewport_snapshot(const tools::AuthoringViewportRequest& request) {
+    return impl_->owner->viewport_snapshot(request);
+}
+
+Result<void> ProjectSession::refresh_asset_inventory(std::span<const std::string_view> sidecars) {
+    return boundary<void>([&] {
+        impl_->check_thread();
+        if (sidecars.size() > tools::asset_maximum_catalog_entries)
+            fail(ErrorCode::invalid_argument, "Asset inventory exceeds its entry bound");
+        std::size_t bytes = 0;
+        for (const auto path : sidecars) {
+            if (path.size() > 4096 || path.size() > 16384 - bytes)
+                fail(ErrorCode::invalid_argument, "Asset inventory exceeds its text bound");
+            bytes += path.size();
+        }
+        const auto observed = result_value(impl_->request("asset.catalog.status", "{}"));
+        Json paths = Json::array();
+        for (const auto path : sidecars)
+            paths.push_back(path);
+        static_cast<void>(result_value(impl_->request(
+            "asset.catalog.refresh",
+            Json{{"sidecars", std::move(paths)}, {"expected_revision", observed.at("revision")}}
+                .dump())));
+        return Result<void>{};
+    });
+}
+
 } // namespace shark::editor

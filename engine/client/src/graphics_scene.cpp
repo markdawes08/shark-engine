@@ -92,6 +92,10 @@ std::unique_ptr<SceneTarget> create_scene_target(nvrhi::IDevice& device, WindowE
                                                  bool fail_partial) {
     return create_target(device, extent, fail_partial, nullptr, true);
 }
+std::unique_ptr<SceneTarget> create_sampled_scene_target(nvrhi::IDevice& device,
+                                                         WindowExtent extent, bool fail_partial) {
+    return create_target(device, extent, fail_partial, nullptr, false);
+}
 std::unique_ptr<SceneTarget> create_window_scene_target(nvrhi::IDevice& device,
                                                         nvrhi::ITexture* color, WindowExtent extent,
                                                         bool capture, bool fail_partial) {
@@ -256,6 +260,16 @@ void record_window_scene_frame(SceneFrameResources& resources, const SceneViewpo
                                const SceneTarget& target, nvrhi::ICommandList& commands,
                                bool upload) {
     record_frame(resources, request, target, commands, upload, false);
+}
+void record_sampled_scene_frame(SceneFrameResources& resources, const SceneViewportRequest& request,
+                                const SceneTarget& target, nvrhi::ICommandList& commands,
+                                bool upload) {
+    record_frame(resources, request, target, commands, upload, true);
+    // The following GUI draw samples the completed linear color attachment in
+    // this same command list. Automatic tracking records the render-to-read edge.
+    commands.setTextureState(target.color, nvrhi::AllSubresources,
+                             nvrhi::ResourceStates::ShaderResource);
+    commands.commitBarriers();
 }
 
 OffscreenReadback read_scene_frame(nvrhi::IDevice& device, const SceneFrameResources& frame,

@@ -3,6 +3,7 @@
 #include "graphics_offscreen.hpp"
 #include "graphics_queue_waiter.hpp"
 #include "graphics_scene.hpp"
+#include "gui_viewport.hpp"
 #if defined(SHARK_GRAPHICS_TEST_HOOKS)
 #include "graphics_native_test.hpp"
 #endif
@@ -678,8 +679,15 @@ class VulkanBackend final : public detail::GraphicsBackend {
                            "GUI atlas is not configured");
         // Allocate the complete candidate before adoption. GPU resources belong
         // to image slots and are untouched by CPU frame replacement.
+        const bool viewport_changed =
+            !gui_frame_ || !detail::same_gui_viewport(gui_frame_->viewport, frame.viewport);
+        if (viewport_changed && gui_viewport_revision_ == std::numeric_limits<std::uint64_t>::max())
+            return failure(ErrorCode::conflict, "graphics.gui.frame",
+                           "GUI viewport revisions exhausted; recreate the device explicitly");
         std::optional<GuiFrame> candidate{frame};
         gui_frame_.swap(candidate);
+        if (viewport_changed)
+            ++gui_viewport_revision_;
         return {};
     }
 
@@ -708,7 +716,8 @@ class VulkanBackend final : public detail::GraphicsBackend {
             }
             auto result =
                 image.gui           ? detail::read_scene_target(*validation_, *image.scene_target,
-                                                                image.gui->submitted, image.gui->created)
+                                                                image.gui->submitted,
+                                                                detail::gui_resource_count(*image.gui))
                 : image.scene_frame ? detail::read_scene_frame(*validation_, *image.scene_frame,
                                                                *image.scene_target)
                                     : detail::read_offscreen_resources(*validation_, *image.draw);
@@ -1025,6 +1034,24 @@ class VulkanBackend final : public detail::GraphicsBackend {
                 image.scene_target = std::move(target);
                 image.gui = std::move(draw);
             }
+            if (image.gui && image.gui->viewport_revision != gui_viewport_revision_) {
+                // Viewport replacements retire only this reacquired image's
+                // completed prior use. Failed waits/candidates leave owners live.
+                if (image.gui->submitted && !wait_timeline(image.gui->submitted, 1'000'000'000ULL))
+                    return failure(ErrorCode::execution_failed, "graphics.gui.viewport.wait",
+                                   "Previous GUI viewport use did not retire within one second");
+                bool fail_partial = false;
+#if defined(SHARK_GRAPHICS_TEST_HOOKS)
+                fail_partial = inject(detail::NativeGraphicsFault::window_draw_partial_creation);
+#endif
+                auto candidate =
+                    detail::prepare_gui_viewport(*validation_, *image.gui, gui_frame_->viewport,
+                                                 gui_viewport_revision_, fail_partial);
+                if (nvrhi_diagnostics_.sink->has_errors())
+                    return failure(ErrorCode::execution_failed, "graphics.gui.viewport.create",
+                                   "Validation reported an error preparing the GUI scene viewport");
+                detail::adopt_gui_viewport(*image.gui, std::move(candidate));
+            }
             captured_image_.reset();
             auto& commands = frame.commands;
             // NVRHI retains a self-reference from the opened command buffer
@@ -1159,6 +1186,9 @@ class VulkanBackend final : public detail::GraphicsBackend {
             if (image.gui) {
                 image.uploaded = true;
                 image.gui->submitted = frame.submitted;
+                image.gui->viewport_uploaded = true;
+                if (image.gui->viewport_frame)
+                    image.gui->viewport_frame->submitted = frame.submitted;
             }
             return {};
         });
@@ -1515,7 +1545,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
                 result.window_draw_submissions += image.scene_frame->submitted != 0 ? 1U : 0U;
             }
             if (image.gui) {
-                result.window_draw_resources += image.gui->created;
+                result.window_draw_resources += detail::gui_resource_count(*image.gui);
                 result.window_draw_submissions += image.gui->submitted != 0 ? 1U : 0U;
             }
             if (image.scene_target)
@@ -1771,6 +1801,7 @@ class VulkanBackend final : public detail::GraphicsBackend {
     std::optional<SceneViewportRequest> window_scene_;
     std::optional<GuiAtlas> gui_atlas_;
     std::optional<GuiFrame> gui_frame_;
+    std::uint64_t gui_viewport_revision_{0};
     std::optional<std::uint32_t> captured_image_;
     bool capture_enabled_{false};
     std::vector<Image> images_;

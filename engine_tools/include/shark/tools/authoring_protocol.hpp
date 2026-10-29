@@ -1,6 +1,8 @@
 #pragma once
 
 #include "shark/error.hpp"
+#include "shark/scene_render.hpp"
+#include "shark/tools/asset_import.hpp"
 
 #include <cstddef>
 #include <cstdint>
@@ -35,6 +37,15 @@ struct AuthoringProtocolReply {
     bool failed;
 };
 
+struct AuthoringViewportRequest {
+    AuthoredEntityId camera;
+    SceneRevision expected_revision;
+    RenderViewport viewport{640, 360};
+    math::Vec3 local_origin{0.0};
+    std::uint64_t origin_generation{1};
+    AssetTargetProfile target;
+};
+
 // Creating-thread CPU adapter over ProjectFiles and one AuthoredScene. The root
 // is fixed at creation; project.open acquires its existing exclusive file lock
 // until project.close or destruction. No native handles or mutable scene borrow
@@ -58,6 +69,15 @@ class AuthoringProtocol final {
     // uncertain/lost output requires outcome lookup or file reconciliation,
     // never an assumption that a failed reply rolled back a dispatched write.
     [[nodiscard]] Result<AuthoringProtocolReply> handle(std::string_view request);
+
+    // CPU-only read of this retained owner, including unsaved edits. Extracts
+    // original scene identities with immutable fresh client asset leases; no
+    // mutable Scene borrow, source write, implicit catalog scan/import or GPU.
+    // The caller explicitly selects a camera, scene revision and content target.
+    // Dimensions are 1..2048, local origin is bounded by render_coordinate_limit,
+    // and the source world anchor is retained independently of that local offset.
+    // Imported content requires an explicitly populated retained asset catalog.
+    [[nodiscard]] Result<RenderScene> viewport_snapshot(const AuthoringViewportRequest& request);
 
   private:
     struct Impl;
