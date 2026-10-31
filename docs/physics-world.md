@@ -13,8 +13,10 @@ native update for exactly one configured tick, and `stats()` returns owned confi
 completed ticks, current body count and closed/faulted state. There is no body
 creation surface in 18a, so its observable body count was zero. 18b's
 [body contract](physics-bodies.md) adds real shape/body creation, read and removal,
-the shared RigidBody component and terminal authoring. Nonempty stepping rejects
-before native work until 18c; queries/triggers retain their assigned checkpoints.
+the shared RigidBody component and terminal authoring. 18c's
+[simulation contract](physics-simulation.md) adds explicit Scene leasing and
+populated updates with bounded arena admission; the parameterless step remains
+empty/detached. Queries/triggers retain their assigned checkpoints.
 
 All methods require the creating thread and return owned Result/Error values.
 Foreign calls reject without changing state. Close releases the native system,
@@ -64,8 +66,8 @@ The fixed native temporary allocator has no unbounded fallback. The pinned empty
 update path uses no temporary jobs/arena allocations; this qualifies the 18a
 surface only. Native allocation exhaustion and invariant aborts are not promised
 to be recoverable. 18b qualifies bounded body creation/removal and rejects all nonempty updates
-before arena use. Temporary simulation-work admission remains 18c; do not infer
-that guarantee from creation or empty updates.
+before arena use in that checkpoint. 18c now defines populated admission and
+meters actual arena usage; do not infer its guarantee from creation or empty updates.
 
 ## Authority and integration decisions
 

@@ -473,7 +473,7 @@
       "planned_fixture": "FeatureWorld/RigidBodies, FeatureWorld/CollisionLayers, FeatureWorld/Triggers, PhysicsRenderRateTolerance and PhysicsQueuedRemoval fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "18a-18b implement the private Jolt world, bounded native body/shape lifetimes, root/scale/authority validation, shared component schemas, source/commands/history/exact retries, terminal authoring and prepared v1/v2 persistence. Evidence: docs/handoffs/18b-bodies-and-colliders.md. Nonempty stepping, scene synchronization/gravity/interpolation retain 18c, filtering/triggers 18d and native editor/connected qualification 18e; full REQ-18 remains NOT_RUN."
+        "reason": "18a-18c implement the private Jolt world, native bodies/colliders and shared authored settings, plus conservative populated work admission, weak Scene writer leases, mode-specific fixed-step pose publication, existing offline/server scheduler adapters and presentation interpolation. Selected headless evidence is in docs/handoffs/18c-fixed-step-synchronization.md. Filtering/triggers/events retain 18d and native editor/connected qualification 18e; full REQ-18 remains NOT_RUN."
       }
     },
     {
@@ -3292,6 +3292,44 @@
         ],
         "id": "physics.body-lifetime",
         "name": "Bounded detached native rigid-body snapshots and incarnation-safe handles"
+      },
+      {
+        "id": "physics.fixed-step",
+        "name": "Leased fixed-step Scene simulation and read-only render interpolation",
+        "requirement_ids": [
+          "REQ-18",
+          "REQ-07",
+          "REQ-13",
+          "REQ-17"
+        ],
+        "test_ids": [
+          "shark.core.physics",
+          "shark.core.physics-public-example",
+          "shark.core.scene-render",
+          "shark.core.scene-query",
+          "shark.editor.viewport-navigation",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process"
+        ],
+        "test_sources": [
+          "tests/core_physics_simulation_tests.cpp",
+          "examples/physics_world.cpp",
+          "tests/scene_render_tests.cpp",
+          "tests/core_scene_query_tests.cpp",
+          "tests/editor_viewport_navigation_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py"
+        ],
+        "fixtures": [
+          "docs/physics-simulation.md",
+          "docs/architecture/0047-fixed-step-physics.md",
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene"
+        ],
+        "fixture_reason": "Real native gravity/contact cases cover all pose authorities, exact arena admission with 64 active bodies/16 substeps, Scene writer leases and teardown, atomic subtree publication and faulted post-native output. Existing offline/server schedules exercise independent fixed-step oracles at 30/60/144/240 Hz presentation and 20 Hz server ticks with three substeps. Interpolation crosses the quaternion sign boundary and recomposes mirrored child transforms without Scene writes; picking rejects physics provenance including tick zero. FeatureWorld loads prepared runtime content and independently verifies gravity and unchanged source/history.",
+        "featureworld_cases": [
+          "featureworld.rigid-bodies"
+        ]
       }
     ],
     "components": [

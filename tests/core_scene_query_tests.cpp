@@ -552,7 +552,8 @@ TEST_CASE("scene query continuations become stale after every committed mutation
              {shark::SceneMutationKind::create, shark::SceneMutationKind::destroy,
               shark::SceneMutationKind::set_name, shark::SceneMutationKind::set_transform,
               shark::SceneMutationKind::reparent, shark::SceneMutationKind::set_camera,
-              shark::SceneMutationKind::set_mesh_renderer}) {
+              shark::SceneMutationKind::set_mesh_renderer,
+              shark::SceneMutationKind::set_rigid_body}) {
             CAPTURE(deferred, static_cast<int>(kind));
             auto owner = scene();
             const auto first = create(*owner, seed(1, "first"));
@@ -613,6 +614,13 @@ TEST_CASE("scene query continuations become stale after every committed mutation
                 } else {
                     REQUIRE(owner->set_mesh_renderer(second,
                                                      shark::MeshRenderer{id<shark::AssetId>(30)}));
+                }
+                break;
+            case shark::SceneMutationKind::set_rigid_body:
+                if (deferred) {
+                    REQUIRE(owner->defer_set_rigid_body(second, shark::RigidBody{}));
+                } else {
+                    REQUIRE(owner->set_rigid_body(second, shark::RigidBody{}));
                 }
                 break;
             }

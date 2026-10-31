@@ -4,7 +4,7 @@ if(MSVC)
     add_link_options(/INCREMENTAL:NO)
 endif()
 
-add_executable(CorePhysicsTests core_physics_tests.cpp core_physics_body_tests.cpp)
+add_executable(CorePhysicsTests core_physics_tests.cpp core_physics_body_tests.cpp core_physics_simulation_tests.cpp)
 target_link_libraries(CorePhysicsTests PRIVATE EngineCore SharkPhysics_jolt Catch2::Catch2WithMain)
 shark_configure_target(CorePhysicsTests)
 shark_classify_target(CorePhysicsTests test)

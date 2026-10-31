@@ -8,9 +8,9 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**18b adds shared RigidBody settings and checked native collider lifetimes;
+**18c adds fixed-step Scene synchronization and presentation interpolation;
 selected headless qualification is tracked in the
-[handoff](../handoffs/18b-bodies-and-colliders.md).
+[handoff](../handoffs/18c-fixed-step-synchronization.md).
 Full REQ-16 and REQ-17 remain NOT_RUN.** Native composition and actual UI acceptance are
 deferred under the user's
 [coding-only amendment](../backlog.md); it is not a passing UI qualification.
@@ -49,7 +49,11 @@ native-registration/lifetime coverage. 18b's [body contract](../physics-bodies.m
 adds native shapes/lifetimes, one component and a shared command through source,
 history, exact retries, prepared compatibility and real terminal pipes. The
 eighteenth FeatureWorld case exercises independent source/native expectations.
-No new terminal RPC method is needed. Nonempty simulation remains 18c in the
+18c's [simulation contract](../physics-simulation.md) extends this same case with
+prepared runtime gravity and unchanged authored source/history. CPU fixtures cover
+admission/leases, all three pose modes, existing schedules, independent fixed-rate
+oracles and interpolated extraction/picking rejection. No new component, command,
+protocol format or terminal RPC method is added. Layers/events remain 18d in the
 [physics checkpoints](../roadmap/physics-plan.md).
 Full REQ-18 remains NOT_RUN.
 

@@ -1954,6 +1954,37 @@ void rigid_bodies(SceneRunContext& context) {
     require(context, take(owner->capture()).scene == snapshot, "Body undo lost fields");
     require(context, take(world->stats()).bodies == 0, "Native body teardown leaked capacity");
     take(world->step());
+    auto dynamic = RigidBody{};
+    dynamic.motion = BodyMotion::dynamic_body;
+    take(take(owner->execute(SetRigidBodyCommand{root(), dynamic}, revision(*owner))).outcome);
+    const auto source = take(owner->capture());
+    const auto source_history = take(owner->history());
+    auto loaded = take(
+        LoadedPreparedScene::load(take(prepare_scene(*owner)), take(PreparedAssets::create())));
+    auto& runtime = loaded->scene();
+    const auto runtime_root = take(runtime.find(root()));
+    auto simulation = take(PhysicsWorld::create());
+    take(simulation->create_body(runtime, runtime_root));
+    take(simulation->begin_simulation(runtime));
+    auto schedule = take(OfflineScheduler::create(MonotonicTime{0}));
+    for (std::int64_t tick = 1; tick <= 60; ++tick) {
+        const auto pass = take(simulation->poll_offline(
+            runtime, *schedule, MonotonicTime{(tick * 1'000'000'000LL + 59) / 60}));
+        require(context, pass.executed == 1 && pass.discarded == 0,
+                "Runtime physics lost a fixed tick");
+    }
+    const auto runtime_state = take(runtime.entity_state(runtime_root));
+    // Independent semi-implicit gravity reference, not a second native read.
+    require(context,
+            std::abs(runtime_state.local_transform.translation.y + 9.81 * 61 / 120) < 0.001 &&
+                take(simulation->stats()).completed_ticks == 60,
+            "Runtime physics differs from fixed-step gravity reference");
+    const auto display = take(simulation->render_poses(runtime, 0.5));
+    require(context,
+            display.poses.size() == 1 && take(owner->capture()).scene == source.scene &&
+                revision(*owner) == source.revision &&
+                take(owner->history()).undo_entries == source_history.undo_entries,
+            "Runtime simulation or interpolation changed the source owner");
     unchanged(context, before);
 }
 } // namespace

@@ -50,6 +50,11 @@ foundation adds no placeholder authoring methods. Each supported body/collider
 feature gains schemas, persistence, shared commands and terminal discovery with
 its implementation; editor fields reuse those same services.
 
+18c's [simulation contract](../physics-simulation.md) runs mutable Core instances
+with explicit Scene write ownership. The authored owner/history remains separate;
+the terminal static integrity runner gains no gameplay capability. Native play
+controls and connected human/terminal simulation acceptance retain 18e.
+
 11a adds [shared CPU asset metadata/catalog services](../asset-identity.md),
 qualified in the [identity handoff](../handoffs/11a-asset-identity.md). Both
 audiences use the same typed validation, exact file revisions, bounded query

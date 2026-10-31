@@ -289,5 +289,11 @@ TEST_CASE("Viewport picking rejects display previews at the committed revision",
     REQUIRE(preview.records().size() == 1);
     rejected(pick_viewport(preview, revision(*fixture.owner), image, 300, 250),
              ErrorCode::conflict);
+    options.transform_preview.reset();
+    options.physics_poses = PhysicsRenderSnapshot{1, revision(*fixture.owner), 0, 0.5, {}};
+    const auto interpolated = take(extract_render_scene(*fixture.owner, *fixture.assets, options));
+    REQUIRE(interpolated.physics_tick() == 0);
+    rejected(pick_viewport(interpolated, revision(*fixture.owner), image, 300, 250),
+             ErrorCode::conflict);
     REQUIRE(take(pick_viewport(fixture.snapshot(), revision(*fixture.owner), image, 300, 250)));
 }

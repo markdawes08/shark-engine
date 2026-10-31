@@ -52,6 +52,12 @@ An explicit display camera still takes precedence over affected authored camera
 transforms. Omitted previews retain the streaming committed extraction path.
 See [gizmos and previews](viewport-gizmos.md) for Tools validation and UI adoption.
 
+18c appends `physics_poses`, an owned revision-bound physics interpolation
+snapshot. It cannot overlap transform_preview. Extraction validates unique scoped
+rigid-body roots and recomposes their full subtrees before camera/culling work.
+RenderScene's optional `physics_tick` marks these poses as presentation only;
+picking rejects them, including tick zero. See [fixed-step physics](physics-simulation.md).
+
 ## Coordinates, camera and raster conventions
 
 `RenderOrigin.world_anchor`, when present, is the canonical global WorldPosition

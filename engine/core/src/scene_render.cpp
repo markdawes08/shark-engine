@@ -52,10 +52,12 @@ RenderBounds mesh_bounds(const PreparedMesh& mesh, std::size_t& visited_vertices
     return bounds;
 }
 
-std::vector<SceneInspectedEntity> preview_entities(const Scene& scene, SceneRevision revision,
-                                                   RenderTransformOverride& preview) {
+std::vector<SceneInspectedEntity>
+preview_entities(const Scene& scene, SceneRevision revision,
+                 std::optional<RenderTransformOverride>& preview,
+                 const std::optional<PhysicsRenderSnapshot>& physics) {
     SceneQueryOptions query;
-    query.fields = {false, true, true, false, true};
+    query.fields = {false, true, true, false, true, true};
     query.page_size = scene_query_maximum_page_size;
     query.scan_budget = scene_query_maximum_page_size;
     query.expected_revision = revision;
@@ -78,10 +80,33 @@ std::vector<SceneInspectedEntity> preview_entities(const Scene& scene, SceneRevi
     std::map<EntityHandle, std::size_t> indices;
     for (std::size_t index = 0; index < entities.size(); ++index)
         indices.emplace(entities[index].reference.handle, index);
-    const auto selected = indices.find(preview.entity);
-    require(selected != indices.end(), "Render preview entity is stale or foreign",
-            ErrorCode::conflict);
-    preview.local = take(canonicalize_transform(preview.local));
+    std::map<EntityHandle, Transform> overrides;
+    require(!(preview && physics), "Authoring preview and physics interpolation cannot overlap");
+    if (preview) {
+        require(indices.contains(preview->entity), "Render preview entity is stale or foreign",
+                ErrorCode::conflict);
+        preview->local = take(canonicalize_transform(preview->local));
+        overrides.emplace(preview->entity, preview->local);
+    }
+    if (physics) {
+        require(physics->world != 0 && physics->revision == revision,
+                "Physics render snapshot is stale or foreign", ErrorCode::conflict);
+        require(std::isfinite(physics->alpha) && physics->alpha >= 0 && physics->alpha <= 1 &&
+                    physics->poses.size() <= physics_maximum_bodies,
+                "Physics render snapshot exceeds its bounds");
+        for (const auto& pose : physics->poses) {
+            const auto found = indices.find(pose.entity.handle);
+            require(found != indices.end(), "Physics render entity is absent", ErrorCode::conflict);
+            const auto& entity = entities[found->second];
+            require(entity.reference == pose.entity && entity.rigid_body &&
+                        !entity.hierarchy->parent &&
+                        pose.local.scale == entity.transform->local.scale,
+                    "Physics render pose differs from its source", ErrorCode::conflict);
+            auto canonical = take(validate_rigid_body_pose(*entity.rigid_body, pose.local));
+            require(overrides.emplace(pose.entity.handle, canonical).second,
+                    "Duplicate physics render root");
+        }
+    }
     std::vector<std::vector<std::size_t>> children(entities.size());
     for (std::size_t index = 0; index < entities.size(); ++index) {
         const auto& parent = entities[index].hierarchy->parent;
@@ -92,11 +117,16 @@ std::vector<SceneInspectedEntity> preview_entities(const Scene& scene, SceneRevi
             children[found->second].push_back(index);
         }
     }
-    std::vector<std::size_t> pending{selected->second};
+    std::vector<std::size_t> pending;
+    for (const auto& [handle, local] : overrides) {
+        static_cast<void>(local);
+        pending.push_back(indices.at(handle));
+    }
     for (std::size_t cursor = 0; cursor < pending.size(); ++cursor) {
         auto& entity = entities[pending[cursor]];
+        const auto overridden = overrides.find(entity.reference.handle);
         const auto& local =
-            pending[cursor] == selected->second ? preview.local : entity.transform->local;
+            overridden != overrides.end() ? overridden->second : entity.transform->local;
         const auto local_matrix = take(transform_matrix(local));
         const auto& parent = entity.hierarchy->parent;
         const auto world =
@@ -133,13 +163,14 @@ Result<RenderScene> extract_render_scene(const Scene& scene, const PreparedAsset
         require(camera_entity.camera.has_value(), "Selected render entity has no Camera");
         auto preview = options.transform_preview;
         std::vector<SceneInspectedEntity> preview_values;
-        if (preview)
-            preview_values = preview_entities(scene, revision, *preview);
+        const bool overridden = preview.has_value() || options.physics_poses.has_value();
+        if (overridden)
+            preview_values = preview_entities(scene, revision, preview, options.physics_poses);
         const auto& selected_camera =
             options.view_camera ? options.view_camera->camera : *camera_entity.camera;
         auto camera_world = options.view_camera ? options.view_camera->scene_local_world
                                                 : camera_entity.transform->world_matrix;
-        if (preview && !options.view_camera) {
+        if (overridden && !options.view_camera) {
             const auto found =
                 std::find_if(preview_values.begin(), preview_values.end(), [&](const auto& value) {
                     return value.reference.handle == options.camera;
@@ -160,6 +191,8 @@ Result<RenderScene> extract_render_scene(const Scene& scene, const PreparedAsset
         RenderScene output{revision, camera_entity.reference, std::move(camera).value(),
                            options.viewport, options.origin};
         output.transform_preview_ = preview;
+        if (options.physics_poses)
+            output.physics_tick_ = options.physics_poses->completed_ticks;
         output.records_.reserve(scene_query_maximum_page_size);
         std::map<std::pair<AssetId, std::uint32_t>, RenderBounds> bounds_cache;
         const auto append = [&](const SceneInspectedEntity& entity) {
@@ -206,7 +239,7 @@ Result<RenderScene> extract_render_scene(const Scene& scene, const PreparedAsset
                 throw;
             }
         };
-        if (preview) {
+        if (overridden) {
             for (const auto& entity : preview_values)
                 append(entity);
         } else {

@@ -1,5 +1,10 @@
 # Saved FeatureWorld
 
+18c extends `featureworld.rigid-bodies` with fixed-step gravity in a separately
+loaded prepared Core Scene. Independent expected displacement and unchanged
+source/history checks retain authored/runtime separation. No new case or fixture
+IDs are added; see the [simulation contract](physics-simulation.md).
+
 18b adds the eighteenth case, `featureworld.rigid-bodies`, covering all native
 primitive shapes/modes, checked lifetime, shared body commands/source values,
 retained removal/replay and history with independent expected geometry/settings.

@@ -1,5 +1,12 @@
 # Scene ownership, identity and world coordinates
 
+18c adds a private weak physics writer lease under the
+[simulation contract](physics-simulation.md). Ordinary immediate/deferred and
+candidate writes reject while leased. The simulation port validates complete
+root/subtree pose candidates before one publication; native teardown releases
+ownership without retaining a Scene pointer. Source authoring retains its const
+borrow and does not become a runtime simulation destination.
+
 The assignment-07 EngineCore API is in [scene.hpp](../engine/core/include/shark/scene.hpp),
 [scene_identity.hpp](../engine/core/include/shark/scene_identity.hpp) and
 [world_position.hpp](../engine/core/include/shark/world_position.hpp). It is

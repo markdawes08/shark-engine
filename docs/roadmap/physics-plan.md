@@ -19,9 +19,11 @@ and [handoff](../handoffs/18a-physics-foundation.md) distinguish the real native
 foundation from later bodies/components. 18b's [body contract](../physics-bodies.md),
 [ADR 0046](../architecture/0046-rigid-bodies.md) and
 [handoff](../handoffs/18b-bodies-and-colliders.md) now qualify real native bodies,
-shared authoring and source/prepared persistence. Nonempty updates explicitly
-reject until 18c adds bounded work admission and mode-specific scene ownership
-together. **Next is 18c.** Full REQ-18 stays NOT_RUN until its connected behavior
+shared authoring and source/prepared persistence. 18c's
+[simulation contract](../physics-simulation.md), [ADR 0047](../architecture/0047-fixed-step-physics.md)
+and [handoff](../handoffs/18c-fixed-step-synchronization.md) add admitted populated
+updates, leased Scene ownership, existing scheduler adapters and CPU presentation
+interpolation. **Next is 18d.** Full REQ-18 stays NOT_RUN until its connected behavior
 and required acceptance are qualified. Every checkpoint
 uses the [testing policy](../testing-policy.md); preserve workloads/fixtures and
 reuse valid results rather than rerunning unrelated engine matrices.

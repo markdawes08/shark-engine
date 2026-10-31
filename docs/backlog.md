@@ -208,3 +208,12 @@ without changing committed state/history, retain valid uniform edits and visual
 children, and compare saved/reopened settings with terminal queries. Status:
 **NOT_RUN**. Native body-setting controls and connected simulation acceptance
 retain 18e in the [physics plan](roadmap/physics-plan.md).
+
+### BL-16A-UI-01: 18c simulation presentation
+
+18c supplies headless fixed-step simulation and CPU interpolation extraction.
+After 18e's native play adapters and explicit desktop resumption, verify both-GPU
+presentation of dynamic motion, static reposition, kinematic targets, pause and
+single step; verify interpolated descendants/cameras and picking rejection.
+Confirm stopping play restores authoring and leaves saved source/history intact.
+Status: **NOT_RUN**; current CPU results do not qualify native play or rendering.

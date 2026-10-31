@@ -3,7 +3,7 @@
 18b extends the [physics owner](physics-world.md) with real native body lifetime
 and one optional `RigidBody` component. [ADR 0046](architecture/0046-rigid-bodies.md)
 and the [checkpoint plan](roadmap/physics-plan.md) separate this surface from
-18c's nonempty simulation and scene synchronization.
+18c's [nonempty simulation and Scene synchronization](physics-simulation.md).
 
 ## Authored values and validation
 
@@ -110,8 +110,14 @@ creating-thread guard; closed owners cannot create/read/remove bodies.
 
 Body creation/removal does not use the temporary simulation arena. Nonempty
 `step()` rejects before native work and leaves the tick counter unchanged. This
-is the explicit 18c boundary for work admission, gravity, scene synchronization,
+was the explicit 18b boundary for work admission, gravity, scene synchronization,
 mode-specific pose writers and interpolation; empty stepping remains supported.
 Collision layers/triggers/events remain 18d, queries/Lua 20 and world rebasing M05.
 No collision, body-population performance or MMO capacity qualification is claimed
 by these creation/lifetime checks.
+
+18c adds explicit begin/end simulation and `step(scene)` through the same owner.
+Detached creation/read/removal retain the rules above; creation/removal require
+ending an active simulation lease. `step()` without a Scene still rejects bodies.
+The [simulation contract](physics-simulation.md) defines dynamic pose publication,
+explicit static/kinematic writes, populated arena admission and interpolation.

@@ -1,6 +1,8 @@
 #include "shark/physics.hpp"
 #include "shark/scene.hpp"
 
+#include "scene_physics_access.hpp"
+
 #include <Jolt/Jolt.h>
 
 // Jolt's base header defines the macros required by every other native header.
@@ -13,7 +15,9 @@
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
+#include <Jolt/Physics/Constraints/ContactConstraintManager.h>
 #include <Jolt/Physics/PhysicsSystem.h>
+#include <Jolt/Physics/PhysicsUpdateContext.h>
 #include <Jolt/RegisterTypes.h>
 
 #include <algorithm>
@@ -44,6 +48,48 @@ struct NativeDiagnostic {
     bool reported{false};
 };
 thread_local NativeDiagnostic native_diagnostic;
+
+class MeteredTemporary final : public JPH::TempAllocator {
+  public:
+    explicit MeteredTemporary(std::size_t capacity) : arena_(capacity) {}
+    void* Allocate(JPH::uint size) override {
+        auto* result = arena_.Allocate(size);
+        used_ += aligned(size);
+        peak_ = std::max(peak_, used_);
+        return result;
+    }
+    void Free(void* address, JPH::uint size) override {
+        arena_.Free(address, size);
+        used_ -= aligned(size);
+    }
+    bool IsEmpty() const {
+        return arena_.IsEmpty();
+    }
+    std::size_t peak() const {
+        return peak_;
+    }
+
+  private:
+    static std::size_t aligned(JPH::uint size) {
+        return (static_cast<std::size_t>(size) + JPH_RVECTOR_ALIGNMENT - 1) &
+               ~(static_cast<std::size_t>(JPH_RVECTOR_ALIGNMENT) - 1);
+    }
+    JPH::TempAllocatorImpl arena_;
+    std::size_t used_{0};
+    std::size_t peak_{0};
+};
+
+// Reviewed against the locked Update/IslandBuilder/ContactConstraintManager
+// allocation paths. Discrete rigid primitives only, no constraints/listeners/
+// soft bodies, one native job thread, large-island splitting disabled. Include
+// simultaneous buffers, Array growth, alignment and a 64 KiB fixed allowance.
+std::size_t temporary_requirement(const PhysicsWorldConfig& config) {
+    return 64 * 1024 + 2 * config.collision_substeps * sizeof(JPH::PhysicsUpdateContext::Step) +
+           config.max_body_pairs * sizeof(JPH::BodyPair) +
+           config.max_contact_constraints *
+               (static_cast<std::size_t>(JPH::ContactConstraintManager::cMaxConstraintSize) + 16) +
+           config.max_bodies * std::size_t{64};
+}
 
 // Publication owns no native body until the complete record can be retained.
 // A preparation failure removes a candidate without borrowing its Scene.
@@ -281,6 +327,8 @@ struct PhysicsWorld::Impl {
         RigidBody settings;
         Transform source_pose;
         JPH::BodyID native;
+        Transform previous_pose{};
+        std::optional<Transform> target{};
     };
     struct BodySlot {
         std::uint64_t generation{1};
@@ -301,13 +349,14 @@ struct PhysicsWorld::Impl {
     std::uint64_t completed_ticks{0};
     bool closed{false};
     bool faulted{false};
+    scene_detail::PhysicsLease simulation;
     SingleBroadPhaseLayer broad_phase;
     AllBroadPhaseLayers broad_phase_filter;
     AllLayerPairs pair_filter;
     // Declaration order preserves borrowed filters and global callbacks until
     // all native resources have been destroyed, including partial startup.
     std::unique_ptr<NativeLease> lease;
-    std::unique_ptr<JPH::TempAllocatorImpl> temporary;
+    std::unique_ptr<MeteredTemporary> temporary;
     std::unique_ptr<JPH::JobSystemSingleThreaded> jobs;
     std::unique_ptr<JPH::PhysicsSystem> system;
 
@@ -319,6 +368,13 @@ struct PhysicsWorld::Impl {
             return physics_error(ErrorCode::conflict,
                                  "Physics operations require the creating thread", operation);
         return {};
+    }
+    Result<void> check_simulation(const Scene& scene, const char* operation) const {
+        if (auto checked = check_owner(operation); !checked)
+            return checked;
+        if (closed || faulted || !simulation)
+            return physics_error(ErrorCode::conflict, "Physics simulation is not ready", operation);
+        return scene_detail::ScenePhysicsAccess::check(scene, simulation);
     }
     void release() noexcept {
         if (system) {
@@ -333,6 +389,7 @@ struct PhysicsWorld::Impl {
         system.reset();
         jobs.reset();
         temporary.reset();
+        simulation.reset();
         lease.reset();
         closed = true;
     }
@@ -362,12 +419,16 @@ Result<std::unique_ptr<PhysicsWorld>> PhysicsWorld::create(PhysicsWorldConfig co
         if (!lease)
             return std::move(lease).error();
         impl->lease = std::move(lease).value();
-        impl->temporary = std::make_unique<JPH::TempAllocatorImpl>(config.temporary_bytes);
+        impl->temporary = std::make_unique<MeteredTemporary>(config.temporary_bytes);
         impl->jobs = std::make_unique<JPH::JobSystemSingleThreaded>(JPH::cMaxPhysicsJobs);
         impl->system = std::make_unique<JPH::PhysicsSystem>();
         impl->system->Init(config.max_bodies, 1, config.max_body_pairs,
                            config.max_contact_constraints, impl->broad_phase,
                            impl->broad_phase_filter, impl->pair_filter);
+        auto settings = impl->system->GetPhysicsSettings();
+        settings.mMaxInFlightBodyPairs = static_cast<int>(config.max_body_pairs);
+        settings.mUseLargeIslandSplitter = false;
+        impl->system->SetPhysicsSettings(settings);
         impl->system->SetGravity(JPH::Vec3{static_cast<float>(config.gravity.x),
                                            static_cast<float>(config.gravity.y),
                                            static_cast<float>(config.gravity.z)});
@@ -391,7 +452,7 @@ Result<void> PhysicsWorld::step() {
                              "physics.world.step");
     // Nonempty stepping requires 18c's qualified temporary-work admission and
     // scene synchronization. Reject before native work, not after arena OOM.
-    if (impl_->system->GetNumBodies() != 0)
+    if (impl_->simulation || impl_->system->GetNumBodies() != 0)
         return physics_error(ErrorCode::conflict,
                              "Nonempty physics stepping requires scene simulation integration",
                              "physics.world.step");
@@ -426,7 +487,7 @@ Result<void> PhysicsWorld::step() {
 Result<PhysicsBodyHandle> PhysicsWorld::create_body(const Scene& scene, EntityHandle entity) {
     if (auto checked = impl_->check_owner("physics.body.create"); !checked)
         return checked.error();
-    if (impl_->closed || impl_->faulted)
+    if (impl_->closed || impl_->faulted || impl_->simulation)
         return physics_error(ErrorCode::conflict, "Physics owner is closed or faulted",
                              "physics.body.create");
     try {
@@ -498,6 +559,11 @@ Result<PhysicsBodyHandle> PhysicsWorld::create_body(const Scene& scene, EntityHa
         native_settings.mRestitution = static_cast<float>(settings.restitution);
         native_settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
         native_settings.mMassPropertiesOverride.mMass = static_cast<float>(settings.mass);
+        native_settings.mLinearDamping = 0;
+        native_settings.mAngularDamping = 0;
+        native_settings.mMaxLinearVelocity = static_cast<float>(physics_maximum_linear_speed);
+        native_settings.mMaxAngularVelocity = static_cast<float>(physics_maximum_angular_speed);
+        native_settings.mMotionQuality = JPH::EMotionQuality::Discrete;
         auto& interface = impl_->system->GetBodyInterface();
         auto* native = interface.CreateBody(native_settings);
         if (!native)
@@ -514,6 +580,7 @@ Result<PhysicsBodyHandle> PhysicsWorld::create_body(const Scene& scene, EntityHa
         // Fence the exact observed source, not a second quaternion
         // normalization's rounded value used to prepare the native pose.
         slot.value.emplace(value.reference, settings, value.local_transform, id);
+        slot.value->previous_pose = value.local_transform;
         candidate.retained = true;
         return PhysicsBodyHandle{impl_->instance, static_cast<std::uint32_t>(index),
                                  slot.generation};
@@ -521,6 +588,338 @@ Result<PhysicsBodyHandle> PhysicsWorld::create_body(const Scene& scene, EntityHa
         return physics_error(ErrorCode::execution_failed, "Cannot create native physics body",
                              "physics.body.create");
     }
+}
+
+Result<void> PhysicsWorld::begin_simulation(Scene& scene) {
+    if (auto checked = impl_->check_owner("physics.simulation.begin"); !checked)
+        return checked;
+    if (impl_->closed || impl_->faulted || impl_->simulation)
+        return physics_error(ErrorCode::conflict, "Physics owner cannot begin simulation",
+                             "physics.simulation.begin");
+    if (impl_->system->GetNumBodies() &&
+        temporary_requirement(impl_->config) > impl_->config.temporary_bytes)
+        return physics_error(ErrorCode::conflict,
+                             "Physics temporary arena cannot admit this configuration",
+                             "physics.simulation.begin");
+    try {
+        const auto stats = scene.stats();
+        if (!stats)
+            return stats.error();
+        if (stats.value().live_entities > physics_maximum_bodies || stats.value().pending_mutations)
+            return physics_error(ErrorCode::conflict, "Physics requires a bounded committed Scene",
+                                 "physics.simulation.begin");
+        std::size_t native_count = 0;
+        for (std::size_t index = 0; index < impl_->bodies.size(); ++index) {
+            const auto& slot = impl_->bodies[index];
+            if (slot.value) {
+                auto checked = body_state(
+                    scene, {impl_->instance, static_cast<std::uint32_t>(index), slot.generation});
+                if (!checked)
+                    return checked.error();
+                ++native_count;
+            }
+        }
+        SceneQueryOptions query;
+        query.fields = {false, false, false, false, false, true};
+        query.page_size = scene_query_maximum_page_size;
+        query.scan_budget = scene_query_maximum_page_size;
+        query.expected_revision = SceneRevision{stats.value().instance, stats.value().revision};
+        auto page = scene.query_entities(query);
+        std::size_t scanned = 0, components = 0;
+        while (page) {
+            scanned += page.value().scanned_slots();
+            for (const auto& entity : page.value().entities())
+                if (entity.rigid_body) {
+                    const auto found = std::find_if(
+                        impl_->bodies.begin(), impl_->bodies.end(), [&](const auto& slot) {
+                            return slot.value && slot.value->entity == entity.reference;
+                        });
+                    if (found == impl_->bodies.end())
+                        return physics_error(ErrorCode::conflict,
+                                             "RigidBody is missing its native snapshot",
+                                             "physics.simulation.begin");
+                    ++components;
+                }
+            if (!page.value().next_cursor())
+                break;
+            if (scanned + scene_query_maximum_page_size > 65536)
+                return physics_error(ErrorCode::conflict,
+                                     "Physics Scene exceeds its slot scan bound",
+                                     "physics.simulation.begin");
+            page = scene.continue_query(*page.value().next_cursor());
+        }
+        if (!page)
+            return page.error();
+        if (components != native_count)
+            return physics_error(ErrorCode::conflict, "Native body inventory differs from Scene",
+                                 "physics.simulation.begin");
+        auto lease = std::make_shared<const std::uint64_t>(impl_->instance);
+        if (auto checked = scene_detail::ScenePhysicsAccess::bind(scene, lease); !checked)
+            return checked;
+        impl_->simulation = std::move(lease);
+        native_diagnostic = {};
+        for (auto& slot : impl_->bodies)
+            if (slot.value) {
+                auto& record = *slot.value;
+                record.previous_pose = record.source_pose;
+                record.target.reset();
+                if (record.settings.motion != BodyMotion::static_body)
+                    impl_->system->GetBodyInterface().ActivateBody(record.native);
+            }
+        if (native_diagnostic.reported) {
+            impl_->faulted = true;
+            return reported_error("physics.simulation.begin");
+        }
+        return {};
+    } catch (...) {
+        if (impl_->simulation)
+            impl_->faulted = true;
+        return physics_error(ErrorCode::execution_failed, "Cannot begin physics simulation",
+                             "physics.simulation.begin");
+    }
+}
+
+Result<void> PhysicsWorld::end_simulation(Scene& scene) {
+    if (auto checked = impl_->check_simulation(scene, "physics.simulation.end"); !checked)
+        return checked;
+    native_diagnostic = {};
+    for (auto& slot : impl_->bodies)
+        if (slot.value) {
+            slot.value->target.reset();
+            slot.value->previous_pose = slot.value->source_pose;
+            if (slot.value->settings.motion == BodyMotion::kinematic_body)
+                impl_->system->GetBodyInterface().SetLinearAndAngularVelocity(
+                    slot.value->native, JPH::Vec3::sZero(), JPH::Vec3::sZero());
+        }
+    if (native_diagnostic.reported) {
+        impl_->faulted = true;
+        return reported_error("physics.simulation.end");
+    }
+    if (auto checked = scene_detail::ScenePhysicsAccess::unbind(scene, impl_->simulation); !checked)
+        return checked;
+    impl_->simulation.reset();
+    return {};
+}
+
+Result<void> PhysicsWorld::step(Scene& scene) {
+    if (auto checked = impl_->check_simulation(scene, "physics.simulation.step"); !checked)
+        return checked;
+    if (impl_->completed_ticks == std::numeric_limits<std::uint64_t>::max())
+        return physics_error(ErrorCode::conflict, "Physics tick identities exhausted",
+                             "physics.simulation.step");
+    try {
+        // Reserve the output before any native movement. Later Scene validation
+        // can still fail; that faults the world and retains the last Scene state.
+        std::vector<scene_detail::PhysicsPoseUpdate> output;
+        output.reserve(impl_->system->GetNumBodies());
+        native_diagnostic = {};
+        auto& interface = impl_->system->GetBodyInterface();
+        for (auto& slot : impl_->bodies)
+            if (slot.value && slot.value->settings.motion == BodyMotion::kinematic_body) {
+                auto& record = *slot.value;
+                const auto& t = record.target ? *record.target : record.source_pose;
+                interface.MoveKinematic(
+                    record.native,
+                    JPH::RVec3{static_cast<float>(t.translation.x),
+                               static_cast<float>(t.translation.y),
+                               static_cast<float>(t.translation.z)},
+                    JPH::Quat{static_cast<float>(t.rotation.x), static_cast<float>(t.rotation.y),
+                              static_cast<float>(t.rotation.z), static_cast<float>(t.rotation.w)},
+                    1.0F / static_cast<float>(impl_->config.tick_hz));
+            }
+        const auto outcome =
+            impl_->system->Update(1.0F / static_cast<float>(impl_->config.tick_hz),
+                                  static_cast<int>(impl_->config.collision_substeps),
+                                  impl_->temporary.get(), impl_->jobs.get());
+        if (outcome != JPH::EPhysicsUpdateError::None || native_diagnostic.reported ||
+            !impl_->temporary->IsEmpty() ||
+            impl_->temporary->peak() > temporary_requirement(impl_->config)) {
+            impl_->faulted = true;
+            if (native_diagnostic.reported)
+                return reported_error("physics.simulation.step");
+            return physics_error(ErrorCode::execution_failed,
+                                 "Native update failed; partial progress cannot be retried",
+                                 "physics.simulation.step");
+        }
+        for (const auto& slot : impl_->bodies)
+            if (slot.value) {
+                const auto& record = *slot.value;
+                JPH::RVec3 position;
+                JPH::Quat rotation;
+                interface.GetPositionAndRotation(record.native, position, rotation);
+                auto pose = record.source_pose;
+                pose.translation = {position.GetX(), position.GetY(), position.GetZ()};
+                pose.rotation =
+                    math::Quat{rotation.GetW(), rotation.GetX(), rotation.GetY(), rotation.GetZ()};
+                output.push_back({record.entity.handle, pose});
+            }
+        auto candidate =
+            scene_detail::ScenePhysicsAccess::prepare(scene, impl_->simulation, output);
+        if (!candidate) {
+            impl_->faulted = true;
+            return candidate.error();
+        }
+        auto committed =
+            scene_detail::ScenePhysicsAccess::commit(scene, impl_->simulation, candidate.value());
+        if (!committed) {
+            impl_->faulted = true;
+            return committed;
+        }
+        std::size_t index = 0;
+        for (auto& slot : impl_->bodies)
+            if (slot.value) {
+                slot.value->previous_pose = slot.value->source_pose;
+                slot.value->source_pose = candidate.value().poses[index++].local;
+                slot.value->target.reset();
+            }
+        ++impl_->completed_ticks;
+        return {};
+    } catch (...) {
+        impl_->faulted = true;
+        return physics_error(ErrorCode::execution_failed,
+                             "Physics synchronization failed; replace this world",
+                             "physics.simulation.step");
+    }
+}
+
+Result<void> PhysicsWorld::reset_pose(Scene& scene, PhysicsBodyHandle body, Transform pose,
+                                      BodyMotion mode) {
+    if (auto checked = impl_->check_simulation(scene, "physics.simulation.reset"); !checked)
+        return checked;
+    auto index = impl_->checked_body(body);
+    if (!index)
+        return index.error();
+    auto& record = *impl_->bodies[index.value()].value;
+    if (record.settings.motion != mode)
+        return physics_error(ErrorCode::invalid_argument,
+                             "Pose operation does not match body motion",
+                             "physics.simulation.reset");
+    const scene_detail::PhysicsPoseUpdate update{record.entity.handle, pose};
+    auto candidate =
+        scene_detail::ScenePhysicsAccess::prepare(scene, impl_->simulation, {&update, 1});
+    if (!candidate)
+        return candidate.error();
+    const auto& t = candidate.value().poses.front().local;
+    native_diagnostic = {};
+    auto& interface = impl_->system->GetBodyInterface();
+    interface.SetPositionAndRotation(
+        record.native,
+        JPH::RVec3{static_cast<float>(t.translation.x), static_cast<float>(t.translation.y),
+                   static_cast<float>(t.translation.z)},
+        JPH::Quat{static_cast<float>(t.rotation.x), static_cast<float>(t.rotation.y),
+                  static_cast<float>(t.rotation.z), static_cast<float>(t.rotation.w)},
+        JPH::EActivation::DontActivate);
+    if (mode == BodyMotion::dynamic_body)
+        interface.SetLinearAndAngularVelocity(record.native, JPH::Vec3::sZero(),
+                                              JPH::Vec3::sZero());
+    for (const auto& slot : impl_->bodies)
+        if (slot.value && slot.value->settings.motion != BodyMotion::static_body)
+            interface.ActivateBody(slot.value->native);
+    if (native_diagnostic.reported) {
+        impl_->faulted = true;
+        return reported_error("physics.simulation.reset");
+    }
+    auto committed =
+        scene_detail::ScenePhysicsAccess::commit(scene, impl_->simulation, candidate.value());
+    if (!committed) {
+        impl_->faulted = true;
+        return committed;
+    }
+    record.source_pose = t;
+    record.previous_pose = t;
+    record.target.reset();
+    return {};
+}
+Result<void> PhysicsWorld::set_static_pose(Scene& scene, PhysicsBodyHandle body, Transform pose) {
+    return reset_pose(scene, body, pose, BodyMotion::static_body);
+}
+Result<void> PhysicsWorld::teleport(Scene& scene, PhysicsBodyHandle body, Transform pose) {
+    return reset_pose(scene, body, pose, BodyMotion::dynamic_body);
+}
+Result<void> PhysicsWorld::set_kinematic_target(const Scene& scene, PhysicsBodyHandle body,
+                                                Transform target) {
+    if (auto checked = impl_->check_simulation(scene, "physics.simulation.target"); !checked)
+        return checked;
+    auto index = impl_->checked_body(body);
+    if (!index)
+        return index.error();
+    auto& record = *impl_->bodies[index.value()].value;
+    record.target.reset();
+    auto valid = validate_rigid_body_pose(record.settings, target);
+    if (!valid)
+        return valid.error();
+    target = valid.value();
+    const auto speed =
+        glm::length(target.translation - record.source_pose.translation) * impl_->config.tick_hz;
+    const auto angle =
+        2 * std::acos(std::clamp(std::abs(glm::dot(target.rotation, record.source_pose.rotation)),
+                                 0.0, 1.0));
+    if (record.settings.motion != BodyMotion::kinematic_body ||
+        target.scale != record.source_pose.scale || speed > physics_maximum_linear_speed ||
+        angle * impl_->config.tick_hz > physics_maximum_angular_speed) {
+        // A rejected newest request must not execute an older queued target.
+        record.target.reset();
+        return physics_error(ErrorCode::invalid_argument,
+                             "Kinematic target exceeds mode, scale or speed policy",
+                             "physics.simulation.target");
+    }
+    record.target = target;
+    return {};
+}
+Result<PhysicsRenderSnapshot> PhysicsWorld::render_poses(const Scene& scene, double alpha) const {
+    if (auto checked = impl_->check_simulation(scene, "physics.simulation.interpolate"); !checked)
+        return checked.error();
+    if (!std::isfinite(alpha) || alpha < 0 || alpha > 1)
+        return physics_error(ErrorCode::invalid_argument, "Interpolation alpha must be in [0,1]",
+                             "physics.simulation.interpolate");
+    try {
+        const auto stats = scene.stats();
+        if (!stats)
+            return stats.error();
+        PhysicsRenderSnapshot result{impl_->instance,
+                                     {stats.value().instance, stats.value().revision},
+                                     impl_->completed_ticks,
+                                     alpha,
+                                     {}};
+        result.poses.reserve(impl_->system->GetNumBodies());
+        for (const auto& slot : impl_->bodies)
+            if (slot.value) {
+                const auto& record = *slot.value;
+                auto pose = record.source_pose;
+                pose.translation =
+                    glm::mix(record.previous_pose.translation, pose.translation, alpha);
+                pose.rotation = glm::slerp(record.previous_pose.rotation, pose.rotation, alpha);
+                auto valid = canonicalize_transform(pose);
+                if (!valid)
+                    return valid.error();
+                result.poses.push_back({record.entity, valid.value()});
+            }
+        return result;
+    } catch (...) {
+        return physics_error(ErrorCode::execution_failed, "Cannot prepare physics render poses",
+                             "physics.simulation.interpolate");
+    }
+}
+Result<StepReport> PhysicsWorld::poll_offline(Scene& scene, OfflineScheduler& schedule,
+                                              MonotonicTime now, OfflineControl control) {
+    if (auto checked = impl_->check_simulation(scene, "physics.simulation.offline"); !checked)
+        return checked.error();
+    if (impl_->config.tick_hz != 60 || schedule.next_tick() != impl_->completed_ticks)
+        return physics_error(ErrorCode::conflict,
+                             "Offline physics rate or tick differs from scheduler",
+                             "physics.simulation.offline");
+    return schedule.poll(now, [&](std::uint64_t) { return step(scene); }, control);
+}
+Result<StepReport> PhysicsWorld::poll_server(Scene& scene, ServerScheduler& schedule,
+                                             MonotonicTime now) {
+    if (auto checked = impl_->check_simulation(scene, "physics.simulation.server"); !checked)
+        return checked.error();
+    if (impl_->config.tick_hz != schedule.config().tick_rate_hz ||
+        schedule.next_tick() != impl_->completed_ticks)
+        return physics_error(ErrorCode::conflict,
+                             "Server physics rate or tick differs from scheduler",
+                             "physics.simulation.server");
+    return schedule.poll(now, [&](std::uint64_t) { return step(scene); });
 }
 
 Result<PhysicsBodyState> PhysicsWorld::body_state(const Scene& scene,
@@ -573,6 +972,9 @@ Result<PhysicsBodyState> PhysicsWorld::body_state(const Scene& scene,
 Result<void> PhysicsWorld::remove_body(PhysicsBodyHandle body) {
     if (auto checked = impl_->check_owner("physics.body.remove"); !checked)
         return checked;
+    if (impl_->simulation)
+        return physics_error(ErrorCode::conflict, "End simulation before removing bodies",
+                             "physics.body.remove");
     auto checked = impl_->checked_body(body);
     if (!checked)
         return checked.error();
@@ -591,9 +993,14 @@ Result<void> PhysicsWorld::remove_body(PhysicsBodyHandle body) {
 Result<PhysicsWorldStats> PhysicsWorld::stats() const {
     if (auto checked = impl_->check_owner("physics.world.stats"); !checked)
         return checked.error();
-    return PhysicsWorldStats{impl_->config, impl_->completed_ticks,
-                             impl_->system ? impl_->system->GetNumBodies() : 0, impl_->closed,
-                             impl_->faulted};
+    return PhysicsWorldStats{impl_->config,
+                             impl_->completed_ticks,
+                             impl_->system ? impl_->system->GetNumBodies() : 0,
+                             impl_->closed,
+                             impl_->faulted,
+                             static_cast<bool>(impl_->simulation),
+                             temporary_requirement(impl_->config),
+                             impl_->temporary ? impl_->temporary->peak() : 0};
 }
 
 Result<void> PhysicsWorld::close() {

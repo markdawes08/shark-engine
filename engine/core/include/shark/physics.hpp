@@ -4,14 +4,32 @@
 #include "shark/math.hpp"
 #include "shark/physics_components.hpp"
 #include "shark/scene_identity.hpp"
+#include "shark/scene_query.hpp"
+#include "shark/time.hpp"
 
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <vector>
 
 namespace shark {
 
 class Scene;
+
+struct PhysicsRenderPose {
+    EntityReference entity;
+    Transform local;
+};
+struct PhysicsRenderSnapshot {
+    std::uint64_t world;
+    SceneRevision revision;
+    std::uint64_t completed_ticks;
+    double alpha;
+    std::vector<PhysicsRenderPose> poses;
+};
+
+inline constexpr double physics_maximum_linear_speed = 256;
+inline constexpr double physics_maximum_angular_speed = 64;
 
 struct PhysicsBodyHandle {
     std::uint64_t world{0};
@@ -60,11 +78,14 @@ struct PhysicsWorldStats {
     std::size_t bodies;
     bool closed;
     bool faulted;
+    bool simulating{false};
+    std::size_t temporary_required_bytes{0};
+    std::size_t temporary_high_water_bytes{0};
 };
 
 // CPU-only owner of a bounded native physics system and checked detached bodies.
-// Empty-world fixed-duration stepping is supported; nonempty simulation, scene
-// synchronization, contacts and queries remain later checkpoints.
+// Explicit simulation leases fence ordinary Scene writes. Layers/events and
+// queries remain later checkpoints; native details stay private.
 // Native types and process registrations remain private. Methods require the
 // creating thread; this is not a concurrent registry or another scheduler.
 class PhysicsWorld final {
@@ -79,9 +100,27 @@ class PhysicsWorld final {
 
     // Executes exactly one native update of 1/tick_hz seconds with the configured
     // collision substeps. No wall clock, render delta, pause or dropped ticks.
-    // Nonempty worlds reject before work until simulation admission lands in 18c.
+    // This overload is empty/detached only; populated simulation requires Scene.
     // A native update failure faults this owner instead of retrying unknown work.
     [[nodiscard]] Result<void> step();
+    // All authored body settings must have matching native snapshots. Acquires
+    // one Scene writer after complete inventory and conservative arena admission.
+    [[nodiscard]] Result<void> begin_simulation(Scene& scene);
+    [[nodiscard]] Result<void> end_simulation(Scene& scene);
+    [[nodiscard]] Result<void> step(Scene& scene);
+    [[nodiscard]] Result<void> set_static_pose(Scene& scene, PhysicsBodyHandle body,
+                                               Transform pose);
+    [[nodiscard]] Result<void> teleport(Scene& scene, PhysicsBodyHandle body, Transform pose);
+    [[nodiscard]] Result<void> set_kinematic_target(const Scene& scene, PhysicsBodyHandle body,
+                                                    Transform target);
+    [[nodiscard]] Result<PhysicsRenderSnapshot> render_poses(const Scene& scene,
+                                                             double alpha) const;
+    // Thin adapters for existing schedulers. Rate/index mismatch rejects before
+    // consuming elapsed time. No new accumulator, focus or server pause policy.
+    [[nodiscard]] Result<StepReport> poll_offline(Scene& scene, OfflineScheduler& schedule,
+                                                  MonotonicTime now, OfflineControl control = {});
+    [[nodiscard]] Result<StepReport> poll_server(Scene& scene, ServerScheduler& schedule,
+                                                 MonotonicTime now);
     // Explicit detached body snapshots. No Scene pointer is retained and these
     // methods never write authored state. Reads recheck the source incarnation,
     // settings and pose; changed/deleted sources require remove and recreate.
@@ -95,6 +134,8 @@ class PhysicsWorld final {
     [[nodiscard]] Result<void> close();
 
   private:
+    [[nodiscard]] Result<void> reset_pose(Scene& scene, PhysicsBodyHandle body, Transform pose,
+                                          BodyMotion mode);
     struct Impl;
     explicit PhysicsWorld(std::unique_ptr<Impl> impl) noexcept;
     std::unique_ptr<Impl> impl_;

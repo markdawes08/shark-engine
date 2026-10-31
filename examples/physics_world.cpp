@@ -31,11 +31,24 @@ int main() {
         return 1;
     shark::EntitySeed seed{shark::AuthoredEntityId{entity_id.value()}};
     seed.rigid_body = shark::RigidBody{};
+    seed.rigid_body->motion = shark::BodyMotion::dynamic_body;
     const auto entity = scene.value()->create_entity(seed);
     if (!entity)
         return 1;
     const auto body = world->create_body(*scene.value(), entity.value());
     if (!body || !world->body_state(*scene.value(), body.value()))
+        return 1;
+    if (!world->begin_simulation(*scene.value()))
+        return 1;
+    auto schedule = shark::OfflineScheduler::create(shark::MonotonicTime{0}, 3);
+    if (!schedule)
+        return 1;
+    auto pass =
+        world->poll_offline(*scene.value(), *schedule.value(), shark::MonotonicTime{16'666'667});
+    if (!pass || pass.value().executed != 1)
+        return 1;
+    auto rendered = world->render_poses(*scene.value(), pass.value().interpolation_alpha());
+    if (!rendered || rendered.value().poses.size() != 1 || !world->end_simulation(*scene.value()))
         return 1;
     if (!world->remove_body(body.value()))
         return 1;

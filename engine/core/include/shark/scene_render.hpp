@@ -1,5 +1,6 @@
 #pragma once
 
+#include "shark/physics.hpp"
 #include "shark/prepared_assets.hpp"
 #include "shark/scene.hpp"
 #include "shark/world_position.hpp"
@@ -101,6 +102,7 @@ struct RenderExtractionOptions {
     bool frustum_culling{true};
     std::optional<RenderViewCamera> view_camera{};
     std::optional<RenderTransformOverride> transform_preview{};
+    std::optional<PhysicsRenderSnapshot> physics_poses{};
 };
 
 class RenderScene final {
@@ -135,6 +137,9 @@ class RenderScene final {
         return transform_preview_;
     }
     const std::optional<RenderTransformOverride>& transform_preview() const&& = delete;
+    [[nodiscard]] std::optional<std::uint64_t> physics_tick() const noexcept {
+        return physics_tick_;
+    }
 
   private:
     friend Result<RenderScene> extract_render_scene(const Scene&, const PreparedAssets&,
@@ -151,6 +156,7 @@ class RenderScene final {
     std::vector<RenderRecord> records_;
     RenderExtractionStats stats_;
     std::optional<RenderTransformOverride> transform_preview_;
+    std::optional<std::uint64_t> physics_tick_;
 };
 
 // Reads one exact committed revision on the Scene owner thread; pending writes

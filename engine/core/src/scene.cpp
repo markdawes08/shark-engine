@@ -1,5 +1,7 @@
 #include "shark/scene.hpp"
 
+#include "scene_physics_access.hpp"
+
 #include "scene_generation.hpp"
 #include "utf8.hpp"
 
@@ -105,6 +107,7 @@ struct Scene::Impl {
     std::map<EntityIdentity, EntityHandle> identities;
     std::vector<Pending> pending;
     std::optional<SceneRevision> edit_origin;
+    std::weak_ptr<const std::uint64_t> physics_owner;
 
     Impl(SceneScope value, SceneLimits bounds, std::uint64_t token)
         : scope(std::move(value)), limits(bounds), instance(token) {}
@@ -128,6 +131,8 @@ struct Scene::Impl {
         if (auto result = check_live(); !result) {
             return result;
         }
+        if (!physics_owner.expired())
+            return scene_error(ErrorCode::conflict, "Scene writes belong to its physics owner");
         if (visiting || !pending.empty()) {
             return scene_error(ErrorCode::conflict,
                                "immediate mutation requires a boundary without pending work");
@@ -620,6 +625,8 @@ struct Scene::Impl {
         return change.handle;
     }
     Result<SceneMutationTicket> enqueue(Mutation mutation) {
+        if (!physics_owner.expired())
+            return scene_error(ErrorCode::conflict, "Scene writes belong to its physics owner");
         if (pending.size() >= limits.max_pending_mutations || next_ticket == 0) {
             return scene_error(ErrorCode::conflict,
                                "scene deferred queue or ticket capacity exhausted");
@@ -1122,6 +1129,8 @@ Result<SceneMutationReport> Scene::apply_deferred() {
     if (auto result = impl_->check_live(); !result) {
         return result.error();
     }
+    if (!impl_->physics_owner.expired())
+        return scene_error(ErrorCode::conflict, "Scene writes belong to its physics owner");
     if (impl_->visiting) {
         return scene_error(ErrorCode::conflict, "deferred mutations require an iteration boundary");
     }
@@ -1235,5 +1244,94 @@ Result<void> Scene::close() {
     }
     return {};
 }
+
+namespace scene_detail {
+Result<void> ScenePhysicsAccess::bind(Scene& scene, const PhysicsLease& lease) {
+    auto& owner = *scene.impl_;
+    if (auto checked = owner.check_immediate(); !checked)
+        return checked;
+    if (!lease || owner.edit_origin || std::holds_alternative<ReplicaSceneScope>(owner.scope))
+        return scene_error(ErrorCode::conflict, "Physics requires a live simulation owner");
+    owner.physics_owner = lease;
+    return {};
+}
+Result<void> ScenePhysicsAccess::check(const Scene& scene, const PhysicsLease& lease) {
+    const auto& owner = *scene.impl_;
+    if (auto checked = owner.check_live(); !checked)
+        return checked;
+    if (!lease || owner.physics_owner.lock() != lease || owner.visiting || !owner.pending.empty())
+        return scene_error(ErrorCode::conflict, "Physics requires its leased Scene boundary");
+    return {};
+}
+Result<void> ScenePhysicsAccess::unbind(Scene& scene, const PhysicsLease& lease) {
+    if (auto checked = check(scene, lease); !checked)
+        return checked;
+    scene.impl_->physics_owner.reset();
+    return {};
+}
+Result<PhysicsPoseCandidate> ScenePhysicsAccess::prepare(const Scene& scene,
+                                                         const PhysicsLease& lease,
+                                                         std::span<const PhysicsPoseUpdate> poses) {
+    if (auto checked = check(scene, lease); !checked)
+        return checked.error();
+    const auto& owner = *scene.impl_;
+    if (poses.size() > 4096)
+        return scene_error(ErrorCode::invalid_argument, "Physics pose batch exceeds capacity");
+    try {
+        PhysicsPoseCandidate result{{owner.instance, owner.revision}, {}, {}, false};
+        result.poses.reserve(poses.size());
+        std::vector<EntityHandle> handles;
+        handles.reserve(poses.size());
+        for (const auto& pose : poses) {
+            if (auto checked = owner.checked_slot(pose.entity); !checked)
+                return checked.error();
+            const auto& record = owner.record(pose.entity);
+            if (!record.rigid_body || record.parent)
+                return scene_error(ErrorCode::conflict, "Physics poses require rigid-body roots");
+            auto canonical = validate_rigid_body_pose(*record.rigid_body, pose.local);
+            if (!canonical)
+                return canonical.error();
+            if (canonical.value().scale != record.transform.scale)
+                return scene_error(ErrorCode::conflict, "Live collider scale requires rebuild");
+            result.poses.push_back({pose.entity, canonical.value()});
+            handles.push_back(pose.entity);
+            if (canonical.value() != record.transform) {
+                auto subtree = owner.prepare_subtree(pose.entity, canonical.value(), std::nullopt);
+                if (!subtree)
+                    return subtree.error();
+                for (const auto& update : subtree.value())
+                    result.worlds.push_back({update.handle, update.world});
+                result.changed = true;
+            }
+        }
+        std::sort(handles.begin(), handles.end());
+        if (std::adjacent_find(handles.begin(), handles.end()) != handles.end())
+            return scene_error(ErrorCode::invalid_argument, "Duplicate physics pose root");
+        if (result.changed) {
+            if (auto checked = owner.check_revision(); !checked)
+                return checked.error();
+        }
+        return result;
+    } catch (...) {
+        return scene_error(ErrorCode::execution_failed, "Physics pose preparation failed");
+    }
+}
+Result<void> ScenePhysicsAccess::commit(Scene& scene, const PhysicsLease& lease,
+                                        const PhysicsPoseCandidate& candidate) {
+    if (auto checked = check(scene, lease); !checked)
+        return checked;
+    auto& owner = *scene.impl_;
+    if (candidate.revision != SceneRevision{owner.instance, owner.revision})
+        return scene_error(ErrorCode::conflict, "Physics pose candidate is stale");
+    if (candidate.changed) {
+        for (const auto& pose : candidate.poses)
+            owner.record(pose.entity).transform = pose.local;
+        for (const auto& update : candidate.worlds)
+            owner.record(update.entity).world = update.world;
+        ++owner.revision;
+    }
+    return {};
+}
+} // namespace scene_detail
 
 } // namespace shark

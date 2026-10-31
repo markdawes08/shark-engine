@@ -47,7 +47,10 @@ navigation keeps bounded local origins separate from global cell authority.
 
 Assignment 18 follows the [physics checkpoints](physics-plan.md). Its private CPU
 world starts with bounded empty updates and explicit owner/authority contracts;
-body simulation and server scheduling integration land in later checkpoints.
+18c now connects admitted populated simulation to existing offline/server
+schedulers with one Scene writer and presentation-only interpolation. The
+[simulation contract](../physics-simulation.md) preserves authored/runtime
+separation; actual Server region loops retain their owning integration stages.
 Single-precision native positions remain separate from global cell identity.
 
 11a completes [persistent asset identity and metadata](../handoffs/11a-asset-identity.md)
