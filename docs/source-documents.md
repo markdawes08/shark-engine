@@ -13,6 +13,10 @@ the JSON implementation is private. No function opens a file or changes a Scene.
 capture and transactional active-scene replacement. 08c owns filesystem
 resolution, save/replace and external-edit conflicts.
 
+18b adds optional [RigidBody settings](physics-bodies.md) through the same owner,
+source/command/history/retry and terminal paths. Native body snapshots never
+write back to authored state; nonempty simulation retains 18c.
+
 ## Versions and identity
 
 `.sharkproject` and `.sharkscene` are readable UTF-8 JSON objects with exact

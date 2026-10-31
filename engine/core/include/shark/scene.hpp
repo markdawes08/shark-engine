@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shark/name.hpp"
+#include "shark/physics_components.hpp"
 #include "shark/render_components.hpp"
 #include "shark/scene_identity.hpp"
 #include "shark/scene_query.hpp"
@@ -26,6 +27,7 @@ struct EntitySeed {
     std::optional<EntityHandle> parent{};
     std::optional<Camera> camera{};
     std::optional<MeshRenderer> mesh_renderer{};
+    std::optional<RigidBody> rigid_body{};
 };
 
 struct SceneLimits {
@@ -50,7 +52,8 @@ enum class SceneMutationKind {
     set_transform,
     reparent,
     set_camera,
-    set_mesh_renderer
+    set_mesh_renderer,
+    set_rigid_body
 };
 
 // Owned per-entity copy. World matrix is scene-local, not a global MMO location.
@@ -65,6 +68,7 @@ struct SceneEntityState {
     std::size_t depth;
     std::optional<Camera> camera{};
     std::optional<MeshRenderer> mesh_renderer{};
+    std::optional<RigidBody> rigid_body{};
 };
 using SceneMutationTicket = std::uint64_t;
 struct SceneMutationOutcome {
@@ -99,6 +103,7 @@ class Scene final {
     [[nodiscard]] Result<void> set_camera(EntityHandle handle, std::optional<Camera> camera);
     [[nodiscard]] Result<void> set_mesh_renderer(EntityHandle handle,
                                                  std::optional<MeshRenderer> renderer);
+    [[nodiscard]] Result<void> set_rigid_body(EntityHandle handle, std::optional<RigidBody> body);
     [[nodiscard]] Result<void> reparent(EntityHandle handle, std::optional<EntityHandle> parent,
                                         ReparentMode mode);
     [[nodiscard]] Result<SceneEntityState> entity_state(EntityHandle handle) const;
@@ -124,6 +129,8 @@ class Scene final {
                                                                std::optional<Camera> camera);
     [[nodiscard]] Result<SceneMutationTicket>
     defer_set_mesh_renderer(EntityHandle handle, std::optional<MeshRenderer> renderer);
+    [[nodiscard]] Result<SceneMutationTicket> defer_set_rigid_body(EntityHandle handle,
+                                                                   std::optional<RigidBody> body);
     [[nodiscard]] Result<SceneMutationTicket>
     defer_reparent(EntityHandle handle, std::optional<EntityHandle> parent, ReparentMode mode);
     // FIFO, per-operation outcomes; this is not an atomic authoring transaction.

@@ -397,6 +397,54 @@ Camera read_camera(const Json& object, const std::string& path) {
     return checked(validate_camera(result), path);
 }
 
+RigidBody read_rigid_body(const Json& object, const std::string& path) {
+    members(object, {"schema_version"},
+            {"motion", "shape", "half_extents", "radius", "half_height", "mass", "friction",
+             "restitution"},
+            path);
+    static_cast<void>(version(object.at("schema_version"), path + "/schema_version", false));
+    RigidBody result;
+    if (object.contains("motion")) {
+        const auto mode = string_value(object.at("motion"), path + "/motion");
+        if (mode == "static")
+            result.motion = BodyMotion::static_body;
+        else if (mode == "dynamic")
+            result.motion = BodyMotion::dynamic_body;
+        else if (mode == "kinematic")
+            result.motion = BodyMotion::kinematic_body;
+        else
+            fail(path + "/motion", "Unknown rigid-body motion");
+    }
+    if (object.contains("shape")) {
+        const auto shape = string_value(object.at("shape"), path + "/shape");
+        if (shape == "box")
+            result.shape = ColliderShape::box;
+        else if (shape == "sphere")
+            result.shape = ColliderShape::sphere;
+        else if (shape == "capsule")
+            result.shape = ColliderShape::capsule;
+        else
+            fail(path + "/shape", "Unknown collider shape");
+    }
+    if (object.contains("half_extents")) {
+        const auto& values = object.at("half_extents");
+        if (!values.is_array() || values.size() != 3)
+            fail(path + "/half_extents", "Expected three numbers");
+        for (int axis = 0; axis < 3; ++axis)
+            result.half_extents[axis] =
+                number_value(values[static_cast<std::size_t>(axis)],
+                             path + "/half_extents/" + std::to_string(axis));
+    }
+    for (const auto& [key, target] : {std::pair{"radius", &result.radius},
+                                      {"half_height", &result.half_height},
+                                      {"mass", &result.mass},
+                                      {"friction", &result.friction},
+                                      {"restitution", &result.restitution}})
+        if (object.contains(key))
+            *target = number_value(object.at(key), path + "/" + key);
+    return checked(validate_rigid_body(result), path);
+}
+
 MeshRenderer read_mesh_renderer(const Json& object, const std::string& path) {
     members(object, {"schema_version", "asset_id"}, {"mesh_index", "visible"}, path);
     static_cast<void>(version(object.at("schema_version"), path + "/schema_version", false));
@@ -637,7 +685,7 @@ SourceEntity read_entity(const Json& object, const std::string& path, bool legac
             const auto& components = object.at("components");
             const auto components_path = path + "/components";
             members(components, {"shark.name", "shark.transform"},
-                    {"shark.camera", "shark.mesh_renderer"}, components_path);
+                    {"shark.camera", "shark.mesh_renderer", "shark.rigid_body"}, components_path);
             const auto name_path = components_path + "/shark.name";
             const auto& name = components.at("shark.name");
             members(name, {"schema_version"}, {"value"}, name_path);
@@ -650,6 +698,9 @@ SourceEntity read_entity(const Json& object, const std::string& path, bool legac
             }
             entity.transform = read_transform(components.at("shark.transform"),
                                               components_path + "/shark.transform", false);
+            if (components.contains("shark.rigid_body"))
+                entity.rigid_body = read_rigid_body(components.at("shark.rigid_body"),
+                                                    components_path + "/shark.rigid_body");
             if (components.contains("shark.camera")) {
                 entity.camera =
                     read_camera(components.at("shark.camera"), components_path + "/shark.camera");
@@ -658,6 +709,12 @@ SourceEntity read_entity(const Json& object, const std::string& path, bool legac
                 entity.mesh_renderer = read_mesh_renderer(components.at("shark.mesh_renderer"),
                                                           components_path + "/shark.mesh_renderer");
             }
+        }
+        if (entity.rigid_body) {
+            if (entity.parent)
+                fail(path + "/parent", "Rigid bodies must be roots");
+            checked(validate_rigid_body_pose(*entity.rigid_body, entity.transform),
+                    path + "/components/shark.rigid_body");
         }
         return entity;
     } catch (SourceFailure& failure) {
@@ -749,7 +806,14 @@ SceneDocument validate_scene(const SceneDocument& document) {
                  entity.mesh_renderer
                      ? std::optional{checked(validate_mesh_renderer(*entity.mesh_renderer),
                                              path + "/components/shark.mesh_renderer")}
-                     : std::nullopt});
+                     : std::nullopt,
+                 entity.rigid_body});
+            if (entity.rigid_body) {
+                if (entity.parent)
+                    fail(path + "/parent", "Rigid bodies must be roots");
+                checked(validate_rigid_body_pose(*entity.rigid_body, entity.transform),
+                        path + "/components/shark.rigid_body");
+            }
         } catch (SourceFailure& failure) {
             failure.error.context.entity_id = entity.id.value().to_string();
             throw;
@@ -807,6 +871,23 @@ Json scene_json(const SceneDocument& document) {
                      {"asset_id", renderer.asset.value().to_string()},
                      {"mesh_index", renderer.mesh_index},
                      {"visible", renderer.visible}};
+        }
+        if (entity.rigid_body) {
+            const auto& b = *entity.rigid_body;
+            components["shark.rigid_body"] = {
+                {"schema_version", component_schema_version},
+                {"motion", b.motion == BodyMotion::static_body    ? "static"
+                           : b.motion == BodyMotion::dynamic_body ? "dynamic"
+                                                                  : "kinematic"},
+                {"shape", b.shape == ColliderShape::box      ? "box"
+                          : b.shape == ColliderShape::sphere ? "sphere"
+                                                             : "capsule"},
+                {"half_extents", {b.half_extents.x, b.half_extents.y, b.half_extents.z}},
+                {"radius", b.radius},
+                {"half_height", b.half_height},
+                {"mass", b.mass},
+                {"friction", b.friction},
+                {"restitution", b.restitution}};
         }
         entities.push_back(
             Json{{"entity_id", entity.id.value().to_string()},

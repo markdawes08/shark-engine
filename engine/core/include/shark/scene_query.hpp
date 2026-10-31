@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shark/name.hpp"
+#include "shark/physics_components.hpp"
 #include "shark/render_components.hpp"
 #include "shark/scene_identity.hpp"
 #include "shark/transform.hpp"
@@ -33,6 +34,7 @@ struct SceneQueryFields {
     // Opt in explicitly; older {false,false,false} callers remain identity-only.
     bool camera{false};
     bool mesh_renderer{false};
+    bool rigid_body{false};
     bool operator==(const SceneQueryFields&) const = default;
 };
 
@@ -67,6 +69,7 @@ struct SceneInspectedEntity {
     std::optional<SceneInspectedHierarchy> hierarchy;
     std::optional<Camera> camera{};
     std::optional<MeshRenderer> mesh_renderer{};
+    std::optional<RigidBody> rigid_body{};
 };
 
 class Scene;

@@ -186,25 +186,27 @@ struct Reader {
         require(remaining() == 0, "Trailing bytes in prepared payload");
     }
 };
-inline std::vector<std::byte> wrap(std::string_view magic, Bytes body, std::size_t maximum) {
+inline std::vector<std::byte> wrap(std::string_view magic, Bytes body, std::size_t maximum,
+                                   std::uint32_t version = 1) {
     require(magic.size() == 8 && maximum >= envelope_bytes &&
                 body.size() <= maximum - envelope_bytes,
             "Invalid prepared envelope size");
     Writer writer{maximum};
     writer.raw(bytes(magic));
-    writer.u32(1);
+    writer.u32(version);
     writer.raw(take(sha256(body)).bytes);
     writer.raw(body);
     return std::move(writer.output);
 }
-inline Bytes unwrap(Bytes payload, std::string_view magic, std::size_t maximum) {
+inline Bytes unwrap(Bytes payload, std::string_view magic, std::size_t maximum,
+                    std::uint32_t version = 1) {
     require(magic.size() == 8 && payload.size() >= envelope_bytes && payload.size() <= maximum,
             "Invalid prepared envelope size");
     Reader reader{payload, 0};
     const auto actual_magic = reader.raw(8);
     require(std::equal(actual_magic.begin(), actual_magic.end(), bytes(magic).begin()),
             "Unknown prepared payload kind");
-    require(reader.u32() == 1, "Unsupported prepared payload version; expected 1");
+    require(reader.u32() == version, "Unsupported prepared payload version");
     const auto digest = reader.raw(32);
     const auto body = payload.subspan(envelope_bytes);
     const auto expected = take(sha256(body));

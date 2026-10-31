@@ -7,13 +7,14 @@
 namespace shark {
 namespace {
 
-const std::array<ComponentSchema, 4>& catalog() {
+const std::array<ComponentSchema, 5>& catalog() {
     constexpr auto minimum = std::numeric_limits<double>::lowest();
     constexpr auto maximum = std::numeric_limits<double>::max();
     constexpr auto writable = PropertyMutability::scene_owner_write;
     const Transform defaults;
     const Camera camera;
-    static const std::array<ComponentSchema, 4> schemas{
+    const RigidBody body;
+    static const std::array<ComponentSchema, 5> schemas{
         ComponentSchema{ComponentSchemaId::name,
                         "shark.name",
                         "Name",
@@ -80,7 +81,42 @@ const std::array<ComponentSchema, 4>& catalog() {
               PropertyType::uint32, PropertyUnit::none, writable, std::uint32_t{0},
               Uint32Constraints{0, std::numeric_limits<std::uint32_t>::max()}},
              {PropertyId::mesh_renderer_visible, "visible", "Visible", PropertyType::boolean,
-              PropertyUnit::none, writable, true, BooleanConstraints{}}}}};
+              PropertyUnit::none, writable, true, BooleanConstraints{}}}},
+        ComponentSchema{
+            ComponentSchemaId::rigid_body,
+            "shark.rigid_body",
+            "RigidBody",
+            component_schema_version,
+            false,
+            true,
+            {{PropertyId::rigid_body_motion, "motion", "Motion", PropertyType::enumeration,
+              PropertyUnit::none, writable, std::uint32_t{0},
+              EnumerationConstraints{{{0, "static"}, {1, "dynamic"}, {2, "kinematic"}}}},
+             {PropertyId::rigid_body_shape, "shape", "Shape", PropertyType::enumeration,
+              PropertyUnit::none, writable, std::uint32_t{0},
+              EnumerationConstraints{{{0, "box"}, {1, "sphere"}, {2, "capsule"}}}},
+             {PropertyId::rigid_body_half_extents, "half_extents", "Box half extents",
+              PropertyType::float64_vector3, PropertyUnit::meters, writable,
+              std::array{0.5, 0.5, 0.5},
+              Vector3Constraints{physics_minimum_dimension, physics_maximum_dimension, std::nullopt,
+                                 true}},
+             {PropertyId::rigid_body_radius, "radius", "Radius", PropertyType::float64,
+              PropertyUnit::meters, writable, body.radius,
+              ScalarConstraints{physics_minimum_dimension, physics_maximum_dimension, true, true,
+                                true}},
+             {PropertyId::rigid_body_half_height, "half_height", "Capsule half height",
+              PropertyType::float64, PropertyUnit::meters, writable, body.half_height,
+              ScalarConstraints{physics_minimum_dimension, physics_maximum_dimension, true, true,
+                                true}},
+             {PropertyId::rigid_body_mass, "mass", "Mass", PropertyType::float64,
+              PropertyUnit::kilograms, writable, body.mass,
+              ScalarConstraints{0.01, physics_maximum_mass, true, true, true}},
+             {PropertyId::rigid_body_friction, "friction", "Friction", PropertyType::float64,
+              PropertyUnit::dimensionless, writable, body.friction,
+              ScalarConstraints{0, 1, true, true, true}},
+             {PropertyId::rigid_body_restitution, "restitution", "Restitution",
+              PropertyType::float64, PropertyUnit::dimensionless, writable, body.restitution,
+              ScalarConstraints{0, 1, true, true, true}}}}};
     return schemas;
 }
 
@@ -103,6 +139,9 @@ Result<std::size_t> schema_index(const ComponentSchemaId id, const std::uint32_t
     case ComponentSchemaId::mesh_renderer:
         index = 3;
         break;
+    case ComponentSchemaId::rigid_body:
+        index = 4;
+        break;
     default:
         return schema_error(operation, "Unknown component schema ID");
     }
@@ -115,7 +154,7 @@ Result<std::size_t> schema_index(const ComponentSchemaId id, const std::uint32_t
 
 } // namespace
 
-std::array<ComponentSchema, 4> component_schemas() {
+std::array<ComponentSchema, 5> component_schemas() {
     return catalog();
 }
 
@@ -179,6 +218,15 @@ Result<ComponentValue> validate_component(const ComponentSchemaId id, const std:
         if (!valid) {
             return valid.error();
         }
+        return value;
+    }
+    if (id == ComponentSchemaId::rigid_body) {
+        const auto* body = std::get_if<RigidBody>(&value);
+        if (!body)
+            return schema_error("schema.validate", "RigidBody schema requires a RigidBody value");
+        auto valid = validate_rigid_body(*body);
+        if (!valid)
+            return valid.error();
         return value;
     }
     const auto* transform = std::get_if<Transform>(&value);

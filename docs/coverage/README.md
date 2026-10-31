@@ -8,9 +8,9 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**18a adds the private CPU Jolt world foundation;
+**18b adds shared RigidBody settings and checked native collider lifetimes;
 selected headless qualification is tracked in the
-[handoff](../handoffs/18a-physics-foundation.md).
+[handoff](../handoffs/18b-bodies-and-colliders.md).
 Full REQ-16 and REQ-17 remain NOT_RUN.** Native composition and actual UI acceptance are
 deferred under the user's
 [coding-only amendment](../backlog.md); it is not a passing UI qualification.
@@ -45,8 +45,12 @@ saved-source expectations. Actual input/rendering acceptance remains deferred
 under the [viewport procedure](../viewport-acceptance.md); full REQ-17 is not closed.
 
 18a's [physics owner](../physics-world.md) has bounded real empty updates and
-native-registration/lifetime coverage. No body component, terminal method or
-FeatureWorld body case is claimed; those follow the [physics checkpoints](../roadmap/physics-plan.md).
+native-registration/lifetime coverage. 18b's [body contract](../physics-bodies.md)
+adds native shapes/lifetimes, one component and a shared command through source,
+history, exact retries, prepared compatibility and real terminal pipes. The
+eighteenth FeatureWorld case exercises independent source/native expectations.
+No new terminal RPC method is needed. Nonempty simulation remains 18c in the
+[physics checkpoints](../roadmap/physics-plan.md).
 Full REQ-18 remains NOT_RUN.
 
 **15e and full REQ-15 are complete under current-machine scope.** The
@@ -64,7 +68,7 @@ lifetime cases retain their evidence under the
 [REQ-13](../handoffs/13e-runtime-scenes.md) and [REQ-12](../handoffs/12e-gltf-qualification.md)
 remain complete under current-machine scope and approved amendments.
 
-FeatureWorld has seventeen native cases, four saved entity IDs and 56 exercised
+FeatureWorld has eighteen native cases, four saved entity IDs and 58 exercised
 CPU surfaces, plus 43 external CPU commands (the exporter and 42 terminal methods,
 including configured export) and three GPU commands, including optional terminal capture.
 Real source/geometry/texture/material/

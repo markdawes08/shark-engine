@@ -98,6 +98,7 @@ not establish file or gameplay-wire formats.
 | [0043](0043-transform-manipulation.md) | Shared local/world transform math, cumulative snapping and pure drag previews with one retained history commit |
 | [0044](0044-viewport-gizmos.md) | Native axis/ring gizmos and immutable subtree previews through existing authoring and rendering owners |
 | [0045](0045-physics-foundation.md) | Private bounded CPU Jolt world, fixed-duration empty updates and transform-authority decisions |
+| [0046](0046-rigid-bodies.md) | Atomic authored body/collider settings, checked native snapshots and prepared compatibility |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

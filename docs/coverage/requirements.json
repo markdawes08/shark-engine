@@ -473,7 +473,7 @@
       "planned_fixture": "FeatureWorld/RigidBodies, FeatureWorld/CollisionLayers, FeatureWorld/Triggers, PhysicsRenderRateTolerance and PhysicsQueuedRemoval fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "18a implements the private CPU Jolt world foundation with bounded real empty updates, owner-thread access and native registration/teardown. Selected Windows/WSL, sanitizer and dependency/closure results are recorded in docs/handoffs/18a-physics-foundation.md. Bodies, colliders, scene synchronization, layers/triggers, component authoring and connected acceptance retain 18b-18e; full REQ-18 remains NOT_RUN."
+        "reason": "18a-18b implement the private Jolt world, bounded native body/shape lifetimes, root/scale/authority validation, shared component schemas, source/commands/history/exact retries, terminal authoring and prepared v1/v2 persistence. Evidence: docs/handoffs/18b-bodies-and-colliders.md. Nonempty stepping, scene synchronization/gravity/interpolation retain 18c, filtering/triggers 18d and native editor/connected qualification 18e; full REQ-18 remains NOT_RUN."
       }
     },
     {
@@ -3260,6 +3260,38 @@
         "fixture_reason": "Real empty native worlds exercise bounded configuration, fixed-duration updates, tick statistics, repeated/overlapping leases, exact callback restoration, foreign factory rejection and owner-thread guards. The public-header-only example links EngineCore without SDK includes; locked-archive and protected closure/package fixtures check private dependency and notice consumption.",
         "external_fixture_reason": "Process-global native registrations, empty-world lifetime and dependency/deployment boundaries require isolated native/tooling fixtures. No body component, terminal method, Lua API or FeatureWorld body case exists in 18a; real scene/body mappings follow their implementation in 18b-18e.",
         "featureworld_cases": []
+      },
+      {
+        "requirement_ids": [
+          "REQ-18",
+          "REQ-09",
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.core.physics",
+          "shark.tools.rigid-body",
+          "shark.tools.authoring-editing-process",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process"
+        ],
+        "test_sources": [
+          "tests/core_physics_body_tests.cpp",
+          "tests/rigid_body_tests.cpp",
+          "tools/tests/test_authoring_editing_process.py",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/physics-bodies.md"
+        ],
+        "fixture_reason": "Real native bodies cover all three motion modes and collider shapes, scaled geometry, inverse mass, capacity, stale/foreign world and entity generations, source changes and owner-thread teardown. Shared source/command fixtures cover schema validation, atomic rollback, snapshot history, exact retained input matching, native save/reopen and prepared v1/v2 compatibility. Real terminal pipes author, query, reject, retry, undo/redo, save and reopen all fields. FeatureWorld uses independent expected source and native geometry without changing its saved IDs or authored input.",
+        "featureworld_cases": [
+          "featureworld.rigid-bodies"
+        ],
+        "id": "physics.body-lifetime",
+        "name": "Bounded detached native rigid-body snapshots and incarnation-safe handles"
       }
     ],
     "components": [
@@ -3441,6 +3473,38 @@
           "featureworld.render-components",
           "featureworld.prepared-content"
         ]
+      },
+      {
+        "requirement_ids": [
+          "REQ-18",
+          "REQ-09",
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.core.physics",
+          "shark.tools.rigid-body",
+          "shark.tools.authoring-editing-process",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process"
+        ],
+        "test_sources": [
+          "tests/core_physics_body_tests.cpp",
+          "tests/rigid_body_tests.cpp",
+          "tools/tests/test_authoring_editing_process.py",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/physics-bodies.md"
+        ],
+        "fixture_reason": "Real native bodies cover all three motion modes and collider shapes, scaled geometry, inverse mass, capacity, stale/foreign world and entity generations, source changes and owner-thread teardown. Shared source/command fixtures cover schema validation, atomic rollback, snapshot history, exact retained input matching, native save/reopen and prepared v1/v2 compatibility. Real terminal pipes author, query, reject, retry, undo/redo, save and reopen all fields. FeatureWorld uses independent expected source and native geometry without changing its saved IDs or authored input.",
+        "featureworld_cases": [
+          "featureworld.rigid-bodies"
+        ],
+        "id": "component.rigid-body",
+        "name": "RigidBody"
       }
     ],
     "commands": [
@@ -6263,6 +6327,38 @@
           "REQ-15"
         ],
         "featureworld_cases": []
+      },
+      {
+        "requirement_ids": [
+          "REQ-18",
+          "REQ-09",
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.core.physics",
+          "shark.tools.rigid-body",
+          "shark.tools.authoring-editing-process",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process"
+        ],
+        "test_sources": [
+          "tests/core_physics_body_tests.cpp",
+          "tests/rigid_body_tests.cpp",
+          "tools/tests/test_authoring_editing_process.py",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "docs/physics-bodies.md"
+        ],
+        "fixture_reason": "Real native bodies cover all three motion modes and collider shapes, scaled geometry, inverse mass, capacity, stale/foreign world and entity generations, source changes and owner-thread teardown. Shared source/command fixtures cover schema validation, atomic rollback, snapshot history, exact retained input matching, native save/reopen and prepared v1/v2 compatibility. Real terminal pipes author, query, reject, retry, undo/redo, save and reopen all fields. FeatureWorld uses independent expected source and native geometry without changing its saved IDs or authored input.",
+        "featureworld_cases": [
+          "featureworld.rigid-bodies"
+        ],
+        "id": "command.set-rigid-body",
+        "name": "SetRigidBodyCommand / scene.mutate set_rigid_body"
       }
     ],
     "lua_api": []
@@ -6287,7 +6383,8 @@
       "featureworld.render-components",
       "featureworld.prepared-content",
       "featureworld.scene-extraction",
-      "featureworld.client-export"
+      "featureworld.client-export",
+      "featureworld.rigid-bodies"
     ],
     "case_source": "engine_tools/src/feature_world.cpp"
   }

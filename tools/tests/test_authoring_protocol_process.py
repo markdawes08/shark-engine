@@ -248,8 +248,8 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
         schema = self.finite("--request", encoded(request("schema.components")), root=False)["result"]
         self.assertEqual(schema["components"], discovery["components"])
         components = {value["stable_id"]: value for value in schema["components"]}
-        self.assertEqual(set(components), {"shark.name", "shark.transform", "shark.camera", "shark.mesh_renderer"})
-        self.assertEqual(sum(len(value["properties"]) for value in components.values()), 12)
+        self.assertEqual(set(components), {"shark.name", "shark.transform", "shark.camera", "shark.mesh_renderer", "shark.rigid_body"})
+        self.assertEqual(sum(len(value["properties"]) for value in components.values()), 20)
         for name, value in components.items():
             self.assertEqual(value["version"], 1)
             self.assertEqual(value["required"], name in {"shark.name", "shark.transform"})

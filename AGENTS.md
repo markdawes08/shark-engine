@@ -49,16 +49,20 @@ This user amendment permits later implementation to proceed before those checks;
 it does not qualify untested behavior or close full UI acceptance. Do not infer
 permission to resume from elapsed time or a new coding request.
 
-**Current handoff: [18a, CPU physics foundation](docs/handoffs/18a-physics-foundation.md).**
+**Current handoff: [18b, bodies and colliders](docs/handoffs/18b-bodies-and-colliders.md).**
 Follow [ADR 0045](docs/architecture/0045-physics-foundation.md) and the
 [physics-world contract](docs/physics-world.md): Jolt is a private locked Core
 dependency, with one creating-thread world owner and bounded explicit stepping.
 Preserve native registration leases, saved callbacks and reverse teardown.
-18a exposes real empty updates, not bodies or component/protocol capabilities.
-Next is 18b in the [physics checkpoints](docs/roadmap/physics-plan.md): enforce
-root/positive-uniform-scale and mode-specific transform authority while adding
-bodies, colliders, source/commands/history/retries and terminal authoring together.
+18b adds [RigidBody settings and checked native snapshots](docs/physics-bodies.md)
+under [ADR 0046](docs/architecture/0046-rigid-bodies.md). Preserve exact root/scale,
+local pose and replica rejection, shared capture/history/bit-exact retry matching,
+and prepared v1/v2 compatibility. Native bodies retain owned entity references,
+not Scene pointers; source changes require explicit remove/recreate. Nonempty
+stepping rejects until 18c qualifies work admission and mode-specific Scene
+synchronization together. Next is 18c in the [physics checkpoints](docs/roadmap/physics-plan.md).
 Tick frequency and collision substeps are distinct; reuse existing schedulers.
+Native inspector fields/connected acceptance remain 18e and desktop work is paused.
 17d connects portable gizmo/drag adapters and public terminal processes over saved
 projects. The [actual acceptance procedure](docs/viewport-acceptance.md) remains
 NOT_RUN until explicit desktop resumption; full REQ-17 stays open. Continue later

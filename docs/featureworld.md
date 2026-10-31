@@ -1,5 +1,11 @@
 # Saved FeatureWorld
 
+18b adds the eighteenth case, `featureworld.rigid-bodies`, covering all native
+primitive shapes/modes, checked lifetime, shared body commands/source values,
+retained removal/replay and history with independent expected geometry/settings.
+The saved four IDs and fixture bytes remain unchanged. Nonempty simulation is
+not claimed; follow the [body contract](physics-bodies.md).
+
 14a adds the seventeenth native case, `featureworld.client-export`, following
 [client export preparation](client-export.md). It checks the startup scene/camera,
 built-in content, independent saved hierarchy/global anchor, owned bytes/digest,
@@ -45,7 +51,7 @@ owner causes explicit failure. Copy the two source files to a writable project
 root when testing from a read-only checkout. Run from any current directory by
 passing explicit paths. There is no compiled-in checkout or fixture location.
 
-`--case featureworld` selects all seventeen cases in catalog order. Each concrete ID
+`--case featureworld` selects all eighteen cases in catalog order. Each concrete ID
 also selects one case. Supply `--workspace EXISTING_DIRECTORY` for the suite or
 persistence/asset-identity/asset-import/asset-jobs/asset-pipeline/render-components/client-export case. Each creates a unique child with its own
 project/scenes and remove their known files on exit. Input source bytes are

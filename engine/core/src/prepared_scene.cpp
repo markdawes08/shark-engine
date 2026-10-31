@@ -38,8 +38,12 @@ Candidate validate(const PreparedScene& input) {
                 take(validate_camera(*entity.camera));
             if (entity.mesh_renderer)
                 take(validate_mesh_renderer(*entity.mesh_renderer));
+            if (entity.rigid_body) {
+                require(!entity.parent, "Prepared rigid bodies must be roots");
+                take(validate_rigid_body_pose(*entity.rigid_body, transform));
+            }
             entities.push_back({entity.id, entity.parent, entity.name, transform, entity.camera,
-                                entity.mesh_renderer});
+                                entity.mesh_renderer, entity.rigid_body});
         } catch (Failure& failure) {
             failure.error.context.entity_id = entity.id.value().to_string();
             throw;
@@ -113,7 +117,13 @@ Transform read_transform(Reader& reader) {
 }
 
 Candidate read(std::span<const std::byte> payload) {
-    const auto body = unwrap(payload, scene_magic, prepared_scene_maximum_payload_bytes);
+    require(payload.size() >= envelope_bytes, "Truncated prepared scene");
+    Reader header{payload, 0};
+    static_cast<void>(header.raw(8));
+    const auto version = header.u32();
+    require(version == 1 || version == prepared_scene_version,
+            "Unsupported prepared scene version");
+    const auto body = unwrap(payload, scene_magic, prepared_scene_maximum_payload_bytes, version);
     Reader reader{body, prepared_scene_maximum_decoded_bytes};
     reader.charge(1, sizeof(PreparedScene));
     PreparedScene result{SceneId{reader.id()}, std::nullopt, {}};
@@ -150,6 +160,19 @@ Candidate read(std::span<const std::byte> payload) {
                 const auto mesh_index = reader.u32();
                 entity.mesh_renderer = MeshRenderer{asset, mesh_index, flag(reader)};
             }
+            if (version >= 2 && flag(reader)) {
+                RigidBody body_value;
+                body_value.motion = static_cast<BodyMotion>(reader.u32());
+                body_value.shape = static_cast<ColliderShape>(reader.u32());
+                for (int axis = 0; axis < 3; ++axis)
+                    body_value.half_extents[axis] = reader.f64();
+                body_value.radius = reader.f64();
+                body_value.half_height = reader.f64();
+                body_value.mass = reader.f64();
+                body_value.friction = reader.f64();
+                body_value.restitution = reader.f64();
+                entity.rigid_body = body_value;
+            }
             result.entities.push_back(std::move(entity));
         } catch (Failure& failure) {
             failure.error.context.entity_id = entity.id.value().to_string();
@@ -166,6 +189,10 @@ Result<std::vector<std::byte>> encode_prepared_scene(const PreparedScene& scene)
     return boundary<std::vector<std::byte>>("prepared.scene.encode", [&] {
         const auto candidate = validate(scene);
         const auto& value = candidate.value;
+        const auto version = std::any_of(value.entities.begin(), value.entities.end(),
+                                         [](const auto& e) { return e.rigid_body.has_value(); })
+                                 ? prepared_scene_version
+                                 : 1;
         Writer writer{prepared_scene_maximum_payload_bytes - envelope_bytes};
         writer.id(value.scene.value());
         writer.u8(value.world_origin ? 1 : 0);
@@ -201,8 +228,20 @@ Result<std::vector<std::byte>> encode_prepared_scene(const PreparedScene& scene)
                 writer.u32(entity.mesh_renderer->mesh_index);
                 writer.u8(entity.mesh_renderer->visible ? 1 : 0);
             }
+            if (version >= 2) {
+                writer.u8(entity.rigid_body ? 1 : 0);
+                if (entity.rigid_body) {
+                    const auto& b = *entity.rigid_body;
+                    writer.u32(static_cast<std::uint32_t>(b.motion));
+                    writer.u32(static_cast<std::uint32_t>(b.shape));
+                    for (const auto v :
+                         {b.half_extents.x, b.half_extents.y, b.half_extents.z, b.radius,
+                          b.half_height, b.mass, b.friction, b.restitution})
+                        writer.f64(v);
+                }
+            }
         }
-        return wrap(scene_magic, writer.output, prepared_scene_maximum_payload_bytes);
+        return wrap(scene_magic, writer.output, prepared_scene_maximum_payload_bytes, version);
     });
 }
 
@@ -234,9 +273,10 @@ LoadedPreparedScene::load(std::span<const std::byte> payload,
         for (const auto index : candidate.order) {
             const auto& entity = candidate.value.entities[index];
             const auto parent = candidate.parents[index];
-            handles[index] = take(scene->create_entity(
-                {entity.id, std::nullopt, entity.name, entity.transform,
-                 parent ? handles[*parent] : std::nullopt, entity.camera, entity.mesh_renderer}));
+            handles[index] =
+                take(scene->create_entity({entity.id, std::nullopt, entity.name, entity.transform,
+                                           parent ? handles[*parent] : std::nullopt, entity.camera,
+                                           entity.mesh_renderer, entity.rigid_body}));
         }
         return std::unique_ptr<LoadedPreparedScene>{new LoadedPreparedScene{
             std::move(scene), std::move(candidate.value.world_origin), std::move(assets)}};

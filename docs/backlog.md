@@ -198,3 +198,13 @@ comparison, stale requests, single-drag undo, save/reopen and reverse continuati
 along with the earlier native navigation/picking/gizmo/focus/layout checks and
 required-validation scene composition. Status: **NOT_RUN**; full REQ-17 stays open.
 The existing amendment authorizes later coding without relabeling these results.
+
+### BL-16A-UI-01: 18b constrained body transforms
+
+18b adds shared root/positive-uniform-scale validation for authored RigidBody
+entities. After desktop resumption, exercise existing inspector/gizmo transform
+edits on a terminal-authored body: reject parenting and signed/nonuniform scale
+without changing committed state/history, retain valid uniform edits and visual
+children, and compare saved/reopened settings with terminal queries. Status:
+**NOT_RUN**. Native body-setting controls and connected simulation acceptance
+retain 18e in the [physics plan](roadmap/physics-plan.md).

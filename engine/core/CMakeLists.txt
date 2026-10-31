@@ -7,6 +7,7 @@ add_library(EngineCore STATIC
     src/log.cpp
     src/name.cpp
     src/physics.cpp
+    src/physics_components.cpp
     src/prepared_assets.cpp
     src/prepared_scene.cpp
     src/prepared_startup.cpp

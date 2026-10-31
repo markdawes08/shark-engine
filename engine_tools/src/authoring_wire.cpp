@@ -109,8 +109,8 @@ SceneQueryFields fields(const Json& params) {
     if (found == params.end()) {
         return {};
     }
-    if (!found->is_array() || found->size() > 5) {
-        fail("/params/fields", "Expected at most five distinct field names");
+    if (!found->is_array() || found->size() > 6) {
+        fail("/params/fields", "Expected at most six distinct field names");
     }
     SceneQueryFields result{false, false, false, false, false};
     for (const auto& item : *found) {
@@ -126,6 +126,8 @@ SceneQueryFields fields(const Json& params) {
             selected = &result.camera;
         } else if (key == "mesh_renderer") {
             selected = &result.mesh_renderer;
+        } else if (key == "rigid_body") {
+            selected = &result.rigid_body;
         } else {
             fail("/params/fields", "Unknown scene field name");
         }
@@ -274,6 +276,58 @@ std::optional<MeshRenderer> mesh_renderer(const Json& value, std::string_view pa
     return MeshRenderer{asset, static_cast<std::uint32_t>(index), visible.get<bool>()};
 }
 
+std::optional<RigidBody> rigid_body(const Json& value, std::string_view path) {
+    if (value.is_null())
+        return std::nullopt;
+    object(value,
+           {"motion", "shape", "half_extents", "radius", "half_height", "mass", "friction",
+            "restitution"},
+           path);
+    RigidBody result;
+    const auto mode = text(required(value, "motion", path), std::string(path) + "/motion");
+    if (mode == "static")
+        result.motion = BodyMotion::static_body;
+    else if (mode == "dynamic")
+        result.motion = BodyMotion::dynamic_body;
+    else if (mode == "kinematic")
+        result.motion = BodyMotion::kinematic_body;
+    else
+        fail(std::string(path) + "/motion", "Unknown rigid-body motion");
+    const auto shape = text(required(value, "shape", path), std::string(path) + "/shape");
+    if (shape == "box")
+        result.shape = ColliderShape::box;
+    else if (shape == "sphere")
+        result.shape = ColliderShape::sphere;
+    else if (shape == "capsule")
+        result.shape = ColliderShape::capsule;
+    else
+        fail(std::string(path) + "/shape", "Unknown collider shape");
+    result.half_extents =
+        vector3(required(value, "half_extents", path), std::string(path) + "/half_extents");
+    for (const auto& [key, target] : {std::pair{"radius", &result.radius},
+                                      {"half_height", &result.half_height},
+                                      {"mass", &result.mass},
+                                      {"friction", &result.friction},
+                                      {"restitution", &result.restitution}})
+        *target = scalar(required(value, key, path), std::string(path) + "/" + key);
+    return result;
+}
+
+Json rigid_body_json(const RigidBody& body) {
+    return {{"motion", body.motion == BodyMotion::static_body    ? "static"
+                       : body.motion == BodyMotion::dynamic_body ? "dynamic"
+                                                                 : "kinematic"},
+            {"shape", body.shape == ColliderShape::box      ? "box"
+                      : body.shape == ColliderShape::sphere ? "sphere"
+                                                            : "capsule"},
+            {"half_extents", {body.half_extents.x, body.half_extents.y, body.half_extents.z}},
+            {"radius", body.radius},
+            {"half_height", body.half_height},
+            {"mass", body.mass},
+            {"friction", body.friction},
+            {"restitution", body.restitution}};
+}
+
 Name command_name(const Json& value, std::string_view path) {
     const auto& name = text(value, path);
     if (name.size() > authoring_maximum_mutation_name_bytes) {
@@ -290,7 +344,8 @@ AuthoringCommand command(const Json& value, std::string_view path) {
     const auto id = entity_id(required(value, "entity_id", path), std::string(path) + "/entity_id");
     if (type == "create_entity") {
         object(value,
-               {"type", "entity_id", "name", "transform", "parent_id", "camera", "mesh_renderer"},
+               {"type", "entity_id", "name", "transform", "parent_id", "camera", "mesh_renderer",
+                "rigid_body"},
                path);
         CreateEntityCommand result{id};
         if (value.contains("name")) {
@@ -309,6 +364,8 @@ AuthoringCommand command(const Json& value, std::string_view path) {
             result.mesh_renderer =
                 mesh_renderer(value["mesh_renderer"], std::string(path) + "/mesh_renderer");
         }
+        if (value.contains("rigid_body"))
+            result.rigid_body = rigid_body(value["rigid_body"], std::string(path) + "/rigid_body");
         return result;
     }
     if (type == "delete_entity") {
@@ -334,6 +391,11 @@ AuthoringCommand command(const Json& value, std::string_view path) {
         object(value, {"type", "entity_id", "mesh_renderer"}, path);
         return SetMeshRendererCommand{id, mesh_renderer(required(value, "mesh_renderer", path),
                                                         std::string(path) + "/mesh_renderer")};
+    }
+    if (type == "set_rigid_body") {
+        object(value, {"type", "entity_id", "rigid_body"}, path);
+        return SetRigidBodyCommand{
+            id, rigid_body(required(value, "rigid_body", path), std::string(path) + "/rigid_body")};
     }
     if (type == "reparent_entity") {
         object(value, {"type", "entity_id", "parent_id", "mode"}, path);
@@ -434,6 +496,8 @@ const char* property_unit(PropertyUnit value) {
         return "dimensionless";
     case PropertyUnit::radians:
         return "radians";
+    case PropertyUnit::kilograms:
+        return "kilograms";
     }
     fail("", "Unsupported Core property unit", ErrorCode::execution_failed);
 }
@@ -602,6 +666,9 @@ Json entity_json(const Scene& scene, const SceneInspectedEntity& entity,
                                        {"visible", mesh.visible}};
         }
     }
+    if (selected.rigid_body)
+        result["rigid_body"] =
+            entity.rigid_body ? rigid_body_json(*entity.rigid_body) : Json(nullptr);
     return result;
 }
 
@@ -708,6 +775,20 @@ Json mesh_schema() {
         {"asset_id", "mesh_index", "visible"}));
 }
 
+Json body_schema() {
+    return nullable_schema(
+        object_schema({{"motion", {{"enum", {"static", "dynamic", "kinematic"}}}},
+                       {"shape", {{"enum", {"box", "sphere", "capsule"}}}},
+                       {"half_extents", vector_schema(3)},
+                       {"radius", scalar_schema()},
+                       {"half_height", scalar_schema()},
+                       {"mass", scalar_schema()},
+                       {"friction", scalar_schema()},
+                       {"restitution", scalar_schema()}},
+                      {"motion", "shape", "half_extents", "radius", "half_height", "mass",
+                       "friction", "restitution"}));
+}
+
 Json command_schema() {
     const Json name{{"type", "string"},
                     {"maximum_utf8_bytes", authoring_maximum_mutation_name_bytes}};
@@ -723,7 +804,8 @@ Json command_schema() {
                                      {"transform", transform},
                                      {"parent_id", parent},
                                      {"camera", camera},
-                                     {"mesh_renderer", mesh}},
+                                     {"mesh_renderer", mesh},
+                                     {"rigid_body", body_schema()}},
                                     {"type", "entity_id"}));
     options.push_back(object_schema({{"type", {{"const", "delete_entity"}}}, {"entity_id", entity}},
                                     {"type", "entity_id"}));
@@ -740,6 +822,10 @@ Json command_schema() {
                                      {"entity_id", entity},
                                      {"mesh_renderer", mesh}},
                                     {"type", "entity_id", "mesh_renderer"}));
+    options.push_back(object_schema({{"type", {{"const", "set_rigid_body"}}},
+                                     {"entity_id", entity},
+                                     {"rigid_body", body_schema()}},
+                                    {"type", "entity_id", "rigid_body"}));
     options.push_back(object_schema({{"type", {{"const", "reparent_entity"}}},
                                      {"entity_id", entity},
                                      {"parent_id", parent},
@@ -1100,6 +1186,10 @@ Result<Json> page_json(const Scene& scene, const SceneQueryPage& page, SceneQuer
                     {"complete", !page.next_cursor().has_value()},
                     {"next_cursor", next_token ? Json(std::string(*next_token)) : Json(nullptr)}};
     });
+}
+
+Json rigid_body_value_schema() {
+    return body_schema();
 }
 
 } // namespace shark::tools::authoring_wire

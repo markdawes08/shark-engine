@@ -16,8 +16,13 @@ Actual UI/GPU acceptance remains deferred under the user's
 
 18a's [contract](../physics-world.md), [ADR 0045](../architecture/0045-physics-foundation.md)
 and [handoff](../handoffs/18a-physics-foundation.md) distinguish the real native
-foundation from unimplemented bodies/components. Full REQ-18 stays NOT_RUN until
-its connected behavior and required acceptance are qualified. Every checkpoint
+foundation from later bodies/components. 18b's [body contract](../physics-bodies.md),
+[ADR 0046](../architecture/0046-rigid-bodies.md) and
+[handoff](../handoffs/18b-bodies-and-colliders.md) now qualify real native bodies,
+shared authoring and source/prepared persistence. Nonempty updates explicitly
+reject until 18c adds bounded work admission and mode-specific scene ownership
+together. **Next is 18c.** Full REQ-18 stays NOT_RUN until its connected behavior
+and required acceptance are qualified. Every checkpoint
 uses the [testing policy](../testing-policy.md); preserve workloads/fixtures and
 reuse valid results rather than rerunning unrelated engine matrices.
 

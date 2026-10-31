@@ -16,7 +16,7 @@ replication policy.
 
 ## Schema discovery and validation
 
-`component_schemas()` returns the four supported component schemas in stable ID
+`component_schemas()` returns the five supported component schemas in stable ID
 order. `component_schema(id, version)` and
 `property_schema(component, property, version)` return checked owned copies.
 Changing a returned string, constraint or default cannot alter later discovery
@@ -30,6 +30,10 @@ or engine validation. Name and Transform are mandatory and not removable;
 | Transform | 2 | `shark.transform` | 1 |
 | Camera | 3 | `shark.camera` | 1 |
 | MeshRenderer | 4 | `shark.mesh_renderer` | 1 |
+| RigidBody | 5 | `shark.rigid_body` | 1 |
+
+RigidBody adds property IDs 13-20 and kilogram units under the
+[body contract](physics-bodies.md); root/scale feasibility remains Scene validation.
 
 Property IDs are stable across the catalog; each property also has its component
 key, display name, typed default, constraints, unit and mutability.

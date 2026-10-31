@@ -140,8 +140,9 @@ std::unique_ptr<ActiveScene> prepare(const ProjectDocument& project, const Scene
         const auto index = ordered[position];
         const auto& entity = document.entities[index];
         const auto parent = parents[index] ? handles[*parents[index]] : std::nullopt;
-        auto created = scene->create_entity({entity.id, std::nullopt, entity.name, entity.transform,
-                                             parent, entity.camera, entity.mesh_renderer});
+        auto created =
+            scene->create_entity({entity.id, std::nullopt, entity.name, entity.transform, parent,
+                                  entity.camera, entity.mesh_renderer, entity.rigid_body});
         if (!created) {
             auto error = std::move(created).error();
             error.context.path = "/entities/" + std::to_string(index);
@@ -222,7 +223,8 @@ AuthoringCommandReply apply_command(Scene& scene, SceneLimits limits,
                 if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
                               std::is_same_v<Command, SetNameCommand> ||
                               std::is_same_v<Command, SetCameraCommand> ||
-                              std::is_same_v<Command, SetMeshRendererCommand>) {
+                              std::is_same_v<Command, SetMeshRendererCommand> ||
+                              std::is_same_v<Command, SetRigidBodyCommand>) {
                     effect.affected_entities.push_back(request.id);
                 } else {
                     append_subtree(scene, *target, effect.affected_entities);
@@ -243,7 +245,7 @@ AuthoringCommandReply apply_command(Scene& scene, SceneLimits limits,
                 if constexpr (std::is_same_v<Command, CreateEntityCommand>) {
                     static_cast<void>(checked(scene.create_entity(
                         {request.id, std::nullopt, request.name, request.transform, parent,
-                         request.camera, request.mesh_renderer})));
+                         request.camera, request.mesh_renderer, request.rigid_body})));
                 } else if constexpr (std::is_same_v<Command, DeleteEntityCommand>) {
                     checked(scene.destroy_entity(*target));
                 } else if constexpr (std::is_same_v<Command, SetNameCommand>) {
@@ -254,6 +256,8 @@ AuthoringCommandReply apply_command(Scene& scene, SceneLimits limits,
                     checked(scene.set_camera(*target, request.camera));
                 } else if constexpr (std::is_same_v<Command, SetMeshRendererCommand>) {
                     checked(scene.set_mesh_renderer(*target, request.mesh_renderer));
+                } else if constexpr (std::is_same_v<Command, SetRigidBodyCommand>) {
+                    checked(scene.set_rigid_body(*target, request.rigid_body));
                 } else {
                     checked(scene.reparent(*target, parent, request.mode));
                 }
@@ -290,6 +294,7 @@ SceneDocument capture_document(const ProjectDocument& project, const ActiveScene
     options.expected_revision = revision;
     options.fields.camera = true;
     options.fields.mesh_renderer = true;
+    options.fields.rigid_body = true;
     auto page = checked(scene.query_entities(options));
     std::vector<SourceEntity> observed;
     std::vector<std::optional<EntityHandle>> parents;
@@ -311,7 +316,7 @@ SceneDocument capture_document(const ProjectDocument& project, const ActiveScene
             }
             indices.emplace(row.reference.handle, observed.size());
             observed.push_back({*id, std::nullopt, *row.name, row.transform->local, "{}",
-                                row.camera, row.mesh_renderer});
+                                row.camera, row.mesh_renderer, row.rigid_body});
             parents.push_back(row.hierarchy->parent);
         }
         if (!page.next_cursor()) {
@@ -437,6 +442,22 @@ bool same_camera_input(const std::optional<Camera>& left,
            same_number(left->far_clip, right->far_clip);
 }
 
+bool same_body_input(const std::optional<RigidBody>& left,
+                     const std::optional<RigidBody>& right) noexcept {
+    if (left.has_value() != right.has_value())
+        return false;
+    if (!left)
+        return true;
+    return left->motion == right->motion && left->shape == right->shape &&
+           same_number(left->half_extents.x, right->half_extents.x) &&
+           same_number(left->half_extents.y, right->half_extents.y) &&
+           same_number(left->half_extents.z, right->half_extents.z) &&
+           same_number(left->radius, right->radius) &&
+           same_number(left->half_height, right->half_height) &&
+           same_number(left->mass, right->mass) && same_number(left->friction, right->friction) &&
+           same_number(left->restitution, right->restitution);
+}
+
 bool same_command_input(const AuthoringCommand& left, const AuthoringCommand& right) {
     return std::visit(
         [&](const auto& value) {
@@ -448,7 +469,8 @@ bool same_command_input(const AuthoringCommand& left, const AuthoringCommand& ri
                 return value.name.value == other->name.value && value.parent == other->parent &&
                        same_transform_input(value.transform, other->transform) &&
                        same_camera_input(value.camera, other->camera) &&
-                       value.mesh_renderer == other->mesh_renderer;
+                       value.mesh_renderer == other->mesh_renderer &&
+                       same_body_input(value.rigid_body, other->rigid_body);
             } else if constexpr (std::is_same_v<T, SetNameCommand>) {
                 return value.name.value == other->name.value;
             } else if constexpr (std::is_same_v<T, SetTransformCommand>) {
@@ -457,6 +479,8 @@ bool same_command_input(const AuthoringCommand& left, const AuthoringCommand& ri
                 return same_camera_input(value.camera, other->camera);
             } else if constexpr (std::is_same_v<T, SetMeshRendererCommand>) {
                 return value.mesh_renderer == other->mesh_renderer;
+            } else if constexpr (std::is_same_v<T, SetRigidBodyCommand>) {
+                return same_body_input(value.rigid_body, other->rigid_body);
             } else if constexpr (std::is_same_v<T, ReparentEntityCommand>) {
                 return value.parent == other->parent && value.mode == other->mode;
             } else {
@@ -591,14 +615,17 @@ HistoryRestoration restore_document(Scene& candidate, const SceneDocument& targe
         auto found = candidate.find(entity.id);
         if (found) {
             checked(candidate.set_name(found.value(), entity.name));
+            checked(candidate.set_rigid_body(found.value(), std::nullopt));
             checked(candidate.set_transform(found.value(), entity.transform));
+            checked(candidate.set_rigid_body(found.value(), entity.rigid_body));
             checked(candidate.set_camera(found.value(), entity.camera));
             checked(candidate.set_mesh_renderer(found.value(), entity.mesh_renderer));
             handles.emplace(entity.id, found.value());
         } else {
             handles.emplace(entity.id, checked(candidate.create_entity(
                                            {entity.id, std::nullopt, entity.name, entity.transform,
-                                            std::nullopt, entity.camera, entity.mesh_renderer})));
+                                            std::nullopt, entity.camera, entity.mesh_renderer,
+                                            entity.rigid_body})));
         }
     }
     checkpoint();

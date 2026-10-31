@@ -21,6 +21,10 @@ revision-consistent capture and validated replacement. Core has no source reader
 or authoring dependency. Source metadata and the replacement baseline stay in
 Tools; ordinary Scene mutation and deferred-queue semantics remain unchanged.
 
+18b adds optional [RigidBody settings](physics-bodies.md) through the same owner,
+source/command/history/retry and terminal paths. Native body snapshots never
+write back to authored state; nonempty simulation retains 18c.
+
 ## Identity and scope
 
 Persistent UUIDv4 values use distinct domain types: SceneId/AuthoredEntityId for

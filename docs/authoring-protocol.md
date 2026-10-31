@@ -19,6 +19,10 @@ JSON parsing and wire conversion remain private to EngineTools. Runtime and Serv
 gain no Tools or JSON dependency. These are local development operations, separate
 from gameplay requests and live-world administration.
 
+18b adds optional [RigidBody settings](physics-bodies.md) through the same owner,
+source/command/history/retry and terminal paths. Native body snapshots never
+write back to authored state; nonempty simulation retains 18c.
+
 ## Launch and framing
 
 ```text

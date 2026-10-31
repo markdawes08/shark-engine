@@ -1,5 +1,6 @@
 #include "shark/tools/feature_world.hpp"
 
+#include "shark/physics.hpp"
 #include "shark/scene_render.hpp"
 #include "shark/schema.hpp"
 #include "shark/tools/asset_catalog.hpp"
@@ -28,7 +29,7 @@
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 17> case_ids{
+constexpr std::array<std::string_view, 18> case_ids{
     "featureworld.components",       "featureworld.commands",
     "featureworld.batches-history",  "featureworld.retries",
     "featureworld.persistence",      "featureworld.asset-identity",
@@ -37,7 +38,7 @@ constexpr std::array<std::string_view, 17> case_ids{
     "featureworld.gltf-geometry",    "featureworld.gltf-textures",
     "featureworld.gltf-assets",      "featureworld.render-components",
     "featureworld.prepared-content", "featureworld.scene-extraction",
-    "featureworld.client-export"};
+    "featureworld.client-export",    "featureworld.rigid-bodies"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -400,7 +401,7 @@ void render_components(SceneRunContext& context, const fs::path& parent) {
     const auto before = take(owner.capture());
     const auto schemas = component_schemas();
     require(context,
-            schemas.size() == 4 && schemas[2].stable_id == "shark.camera" &&
+            schemas.size() == 5 && schemas[2].stable_id == "shark.camera" &&
                 schemas[3].stable_id == "shark.mesh_renderer" && !schemas[2].required &&
                 schemas[2].removable && !schemas[3].required && schemas[3].removable,
             "Optional render component discovery differs from the authored catalog");
@@ -1889,6 +1890,72 @@ void client_export(SceneRunContext& context, const fs::path& parent) {
             "Read-only client export changed history or published an import");
     unchanged(context, before);
 }
+void rigid_bodies(SceneRunContext& context) {
+    const auto before = take(context.owner().capture());
+    auto owner = take(AuthoredScene::create(expected_project(), expected_scene()));
+    auto world = take(PhysicsWorld::create({.max_bodies = 2}));
+    const auto borrowed = take(owner->scene());
+    const auto& scene = borrowed.get();
+    const auto handle = take(scene.find(root()));
+    for (auto motion :
+         {BodyMotion::static_body, BodyMotion::dynamic_body, BodyMotion::kinematic_body}) {
+        for (auto shape : {ColliderShape::box, ColliderShape::sphere, ColliderShape::capsule}) {
+            const RigidBody body{motion, shape, {0.5, 0.75, 1}, 0.25, 0.75, 2, 0.5, 0.25};
+            require(context,
+                    take(take(owner->execute(SetRigidBodyCommand{root(), body}, revision(*owner)))
+                             .outcome)
+                        .changed,
+                    "Rigid-body command did not author settings");
+            const auto token = take(world->create_body(scene, handle));
+            const auto observed = take(world->body_state(scene, token));
+            require(context, observed.motion == motion && observed.settings == body,
+                    "Native motion or authored settings differ");
+            const auto extent = shape == ColliderShape::box      ? math::Vec3{0.5, 0.75, 1}
+                                : shape == ColliderShape::sphere ? math::Vec3{0.25}
+                                                                 : math::Vec3{0.25, 1, 0.25};
+            require(context,
+                    observed.collider_half_extents == extent &&
+                        observed.pose.translation == math::Vec3{10, 0, 0},
+                    "Native collider geometry or local pose differs from independent expectations");
+            auto expected = expected_scene();
+            expected.entities[0].rigid_body = body;
+            require(
+                context,
+                take(owner->capture()).scene == expected &&
+                    take(decode_scene_document(take(encode_scene_document(expected)))).document ==
+                        expected,
+                "Rigid-body source fields were lost");
+            require(context, !world->step(), "Unqualified nonempty stepping was admitted");
+            take(world->remove_body(token));
+            require(context, !world->body_state(scene, token), "Removed body handle revived");
+        }
+    }
+    const auto current = revision(*owner);
+    const auto snapshot = take(owner->capture()).scene;
+    auto invalid = RigidBody{};
+    invalid.radius = -1;
+    AuthoringBatch batch{
+        id<AuthoringBatchId>('8'),
+        {SetNameCommand{root(), Name{"Rejected"}}, SetRigidBodyCommand{root(), invalid}}};
+    require(context,
+            !take(owner->execute(batch, current)).outcome &&
+                take(owner->capture()).scene == snapshot,
+            "Invalid body batch published a partial change");
+    auto status = take(owner->mutation_status());
+    AuthoringMutationRequest request{*status.next, status.revision,
+                                     AuthoringCommand{SetRigidBodyCommand{root(), std::nullopt}}};
+    const auto first = take(owner->mutate(request));
+    require(context, take(take(first.outcome)->result).changed && !state(*owner, root()).rigid_body,
+            "Retained body removal failed");
+    require(context, take(owner->mutate(request)).state == AuthoringMutationState::replayed,
+            "Body removal retry was executed twice");
+    auto history = take(owner->history());
+    take(take(owner->undo(history.next_undo->ticket, revision(*owner))).outcome);
+    require(context, take(owner->capture()).scene == snapshot, "Body undo lost fields");
+    require(context, take(world->stats()).bodies == 0, "Native body teardown leaked capacity");
+    take(world->step());
+    unchanged(context, before);
+}
 } // namespace
 
 std::span<const std::string_view> feature_world_case_ids() noexcept {
@@ -1962,6 +2029,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 16:
                         client_export(context, scratch_parent);
+                        break;
+                    case 17:
+                        rigid_bodies(context);
                         break;
                     default:
                         break;

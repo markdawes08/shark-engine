@@ -62,8 +62,8 @@ as prepared assets. Scaling and placement belong to the entity Transform.
 
 `PreparedScene` contains SceneId, optional WorldPosition origin and up to 4096
 entities with explicit authored IDs, parent IDs, Name, Transform and optional
-Camera/MeshRenderer. Source extras/project paths, command history, runtime handles,
-network authority and credentials are absent. `SHKSCNE1` version 1 uses a 4 MiB
+Camera/MeshRenderer/RigidBody. Source extras/project paths, command history, runtime handles,
+network authority and credentials are absent. `SHKSCNE1` versions 1/2 use a 4 MiB
 encoded bound and 16 MiB logical decoded bound. Both codec directions validate
 complete values, canonicalize TRS and reject duplicate/dangling/cyclic identities,
 invalid components, excessive depth and unrepresentable world transforms.
@@ -79,6 +79,11 @@ modified on failure. Successful reload produces a different scene incarnation;
 entity handles/references remain scoped to their original owner. `scene()` exposes
 normal Core mutation for gameplay, not Tools authoring history. [CPU extraction](scene-rendering.md)
 resolves renderer references again after subsequent Core mutations.
+
+18b's [RigidBody contract](physics-bodies.md) adds version 2 body settings.
+The decoder accepts legacy version 1 without bodies; the encoder keeps identical
+version-1 output when no body is present and emits version 2 otherwise. Older
+readers reject version 2. Native physics handles/state are never serialized.
 
 ## Tools preparation
 

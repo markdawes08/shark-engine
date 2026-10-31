@@ -20,12 +20,12 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**Assignment 18a adds a private CPU physics foundation** with pinned Jolt,
-bounded world ownership, real empty fixed-duration updates and explicit teardown.
-Bodies and colliders follow in 18b. The existing editor/terminal transform workflow
+**Assignment 18b adds authored rigid bodies and native collider lifetimes** through
+shared validation, history, source/prepared persistence and terminal authoring.
+Nonempty stepping and Scene synchronization follow in 18c. The existing editor/terminal transform workflow
 preserves shared history and saved-project continuation.
 Headless verification is tracked in the
-[latest handoff](docs/handoffs/18a-physics-foundation.md).
+[latest handoff](docs/handoffs/18b-bodies-and-colliders.md).
 Native rendering and actual UI acceptance remain deferred in the
 [nonblocking backlog](docs/backlog.md): the user paused desktop interaction until
 explicitly resumed, while authorizing continued coding and headless checks.

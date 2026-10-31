@@ -4,7 +4,7 @@ if(MSVC)
     add_link_options(/INCREMENTAL:NO)
 endif()
 
-add_executable(CorePhysicsTests core_physics_tests.cpp)
+add_executable(CorePhysicsTests core_physics_tests.cpp core_physics_body_tests.cpp)
 target_link_libraries(CorePhysicsTests PRIVATE EngineCore SharkPhysics_jolt Catch2::Catch2WithMain)
 shark_configure_target(CorePhysicsTests)
 shark_classify_target(CorePhysicsTests test)
@@ -399,6 +399,14 @@ if(TARGET EngineTools)
     add_test(NAME shark.tools.asset-catalog COMMAND AssetCatalogTests "[assets]" --rng-seed 1337
         --reporter xml --out "${CMAKE_CURRENT_BINARY_DIR}/asset-catalog-cases.xml")
     set_tests_properties(shark.tools.asset-catalog PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
+
+    add_executable(RigidBodyTests rigid_body_tests.cpp)
+    target_link_libraries(RigidBodyTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_compile_definitions(RigidBodyTests PRIVATE SHARK_RIGID_BODY_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}/rigid-body-scratch")
+    shark_configure_target(RigidBodyTests)
+    shark_classify_target(RigidBodyTests test)
+    add_test(NAME shark.tools.rigid-body COMMAND RigidBodyTests "[rigid-body]" --rng-seed 1337)
+    set_tests_properties(shark.tools.rigid-body PROPERTIES LABELS "cpu;physics;unit;integration" TIMEOUT 60)
 
     add_executable(FeatureWorldTests feature_world_tests.cpp)
     target_link_libraries(FeatureWorldTests PRIVATE EngineTools Catch2::Catch2WithMain)

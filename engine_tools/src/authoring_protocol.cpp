@@ -173,7 +173,8 @@ Json page_schema() {
                          {"depth", count}},
                         {"parent_id", "child_count", "depth"})},
          {"camera", {{"oneOf", {camera, Json{{"type", "null"}}}}}},
-         {"mesh_renderer", {{"oneOf", {mesh, Json{{"type", "null"}}}}}}},
+         {"mesh_renderer", {{"oneOf", {mesh, Json{{"type", "null"}}}}}},
+         {"rigid_body", wire::rigid_body_value_schema()}},
         {"entity_id", "scope", "authority"});
     return object_schema(
         {{"revision", revision_schema()},
@@ -193,8 +194,9 @@ Json discovery(bool export_available, bool capture_available) {
     const Json selected{
         {"type", "array"},
         {"uniqueItems", true},
-        {"maxItems", 5},
-        {"items", {{"enum", {"name", "transform", "hierarchy", "camera", "mesh_renderer"}}}},
+        {"maxItems", 6},
+        {"items",
+         {{"enum", {"name", "transform", "hierarchy", "camera", "mesh_renderer", "rigid_body"}}}},
         {"default", {"name", "transform", "hierarchy"}}};
     auto query = object_schema(
         {{"selection", {{"enum", {"all", "roots", "children"}}, {"default", "all"}}},

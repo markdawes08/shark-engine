@@ -45,7 +45,7 @@ bool vector_field(math::Vec3& value) {
 struct InspectorWidget::Impl {
     InspectorPanel& panel;
     ScenePanel& scene;
-    const std::array<ComponentSchema, 4> schemas{component_schemas()};
+    const std::array<ComponentSchema, 5> schemas{component_schemas()};
     std::optional<tools::AuthoringHistoryStatus> history;
     std::optional<SceneRevision> history_observation;
     std::optional<Error> history_error;
@@ -212,6 +212,8 @@ struct InspectorWidget::Impl {
     void components() {
         auto& draft = *panel.draft();
         for (const auto& schema : schemas) {
+            if (schema.id == ComponentSchemaId::rigid_body)
+                continue; // Native fields follow 18e.
             ImGui::PushID(static_cast<int>(schema.id));
             if (ImGui::CollapsingHeader(schema.display_name.c_str(),
                                         ImGuiTreeNodeFlags_DefaultOpen)) {

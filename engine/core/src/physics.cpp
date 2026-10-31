@@ -1,4 +1,5 @@
 #include "shark/physics.hpp"
+#include "shark/scene.hpp"
 
 #include <Jolt/Jolt.h>
 
@@ -6,10 +7,18 @@
 #include <Jolt/Core/Factory.h>
 #include <Jolt/Core/JobSystemSingleThreaded.h>
 #include <Jolt/Core/TempAllocator.h>
+#include <Jolt/Physics/Body/BodyCreationSettings.h>
+#include <Jolt/Physics/Body/BodyLock.h>
+#include <Jolt/Physics/Body/MotionProperties.h>
+#include <Jolt/Physics/Collision/Shape/BoxShape.h>
+#include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/PhysicsSystem.h>
 #include <Jolt/RegisterTypes.h>
 
+#include <algorithm>
 #include <array>
+#include <atomic>
 #include <cmath>
 #include <cstdarg>
 #include <cstdio>
@@ -19,6 +28,7 @@
 #include <new>
 #include <thread>
 #include <utility>
+#include <vector>
 
 namespace shark {
 namespace {
@@ -27,11 +37,28 @@ Error physics_error(ErrorCode code, const char* message, const char* operation) 
     return {code, message, {.operation = operation}};
 }
 
+std::atomic<std::uint64_t> next_world{1};
+
 struct NativeDiagnostic {
     std::array<char, 512> message{};
     bool reported{false};
 };
 thread_local NativeDiagnostic native_diagnostic;
+
+// Publication owns no native body until the complete record can be retained.
+// A preparation failure removes a candidate without borrowing its Scene.
+struct NativeBodyCandidate {
+    JPH::BodyInterface& owner;
+    JPH::BodyID id;
+    bool retained{false};
+    ~NativeBodyCandidate() {
+        if (!retained) {
+            if (owner.IsAdded(id))
+                owner.RemoveBody(id);
+            owner.DestroyBody(id);
+        }
+    }
+};
 
 void native_trace(const char* format, ...) noexcept {
     if (native_diagnostic.reported)
@@ -248,7 +275,27 @@ Result<void> validate(const PhysicsWorldConfig& config) {
 } // namespace
 
 struct PhysicsWorld::Impl {
-    explicit Impl(PhysicsWorldConfig value) : config(value) {}
+    explicit Impl(PhysicsWorldConfig value, std::uint64_t token) : instance(token), config(value) {}
+    struct BodyRecord {
+        EntityReference entity;
+        RigidBody settings;
+        Transform source_pose;
+        JPH::BodyID native;
+    };
+    struct BodySlot {
+        std::uint64_t generation{1};
+        bool retired{false};
+        std::optional<BodyRecord> value;
+    };
+    const std::uint64_t instance;
+    std::vector<BodySlot> bodies;
+    Result<std::size_t> checked_body(PhysicsBodyHandle body) const {
+        if (body.world != instance || body.slot >= bodies.size() || !bodies[body.slot].value ||
+            body.generation != bodies[body.slot].generation)
+            return physics_error(ErrorCode::conflict, "Physics body is stale or foreign",
+                                 "physics.body");
+        return body.slot;
+    }
     PhysicsWorldConfig config;
     std::thread::id owner{std::this_thread::get_id()};
     std::uint64_t completed_ticks{0};
@@ -264,6 +311,9 @@ struct PhysicsWorld::Impl {
     std::unique_ptr<JPH::JobSystemSingleThreaded> jobs;
     std::unique_ptr<JPH::PhysicsSystem> system;
 
+    ~Impl() {
+        release();
+    }
     Result<void> check_owner(const char* operation) const {
         if (owner != std::this_thread::get_id())
             return physics_error(ErrorCode::conflict,
@@ -271,6 +321,15 @@ struct PhysicsWorld::Impl {
         return {};
     }
     void release() noexcept {
+        if (system) {
+            auto& interface = system->GetBodyInterface();
+            for (auto& slot : bodies)
+                if (slot.value) {
+                    interface.RemoveBody(slot.value->native);
+                    interface.DestroyBody(slot.value->native);
+                    slot.value.reset();
+                }
+        }
         system.reset();
         jobs.reset();
         temporary.reset();
@@ -290,7 +349,15 @@ Result<std::unique_ptr<PhysicsWorld>> PhysicsWorld::create(PhysicsWorldConfig co
         return checked.error();
     try {
         native_diagnostic = {};
-        auto impl = std::make_unique<Impl>(config);
+        auto token = next_world.load();
+        while (token != std::numeric_limits<std::uint64_t>::max() &&
+               !next_world.compare_exchange_weak(token, token + 1)) {
+        }
+        if (token == std::numeric_limits<std::uint64_t>::max())
+            return physics_error(ErrorCode::conflict, "Physics world identities exhausted",
+                                 "physics.world.create");
+        auto impl = std::make_unique<Impl>(config, token);
+        impl->bodies.reserve(config.max_bodies);
         auto lease = NativeLease::acquire();
         if (!lease)
             return std::move(lease).error();
@@ -322,6 +389,12 @@ Result<void> PhysicsWorld::step() {
     if (impl_->closed || impl_->faulted)
         return physics_error(ErrorCode::conflict, "Physics owner is closed or faulted",
                              "physics.world.step");
+    // Nonempty stepping requires 18c's qualified temporary-work admission and
+    // scene synchronization. Reject before native work, not after arena OOM.
+    if (impl_->system->GetNumBodies() != 0)
+        return physics_error(ErrorCode::conflict,
+                             "Nonempty physics stepping requires scene simulation integration",
+                             "physics.world.step");
     if (impl_->completed_ticks == std::numeric_limits<std::uint64_t>::max())
         return physics_error(ErrorCode::conflict, "Physics tick identities are exhausted",
                              "physics.world.step");
@@ -348,6 +421,171 @@ Result<void> PhysicsWorld::step() {
                              "Native physics update failed; partial progress cannot be retried",
                              "physics.world.step");
     }
+}
+
+Result<PhysicsBodyHandle> PhysicsWorld::create_body(const Scene& scene, EntityHandle entity) {
+    if (auto checked = impl_->check_owner("physics.body.create"); !checked)
+        return checked.error();
+    if (impl_->closed || impl_->faulted)
+        return physics_error(ErrorCode::conflict, "Physics owner is closed or faulted",
+                             "physics.body.create");
+    try {
+        native_diagnostic = {};
+        auto source = scene.entity_state(entity);
+        if (!source)
+            return source.error();
+        const auto& value = source.value();
+        const auto scene_stats = scene.stats();
+        if (!scene_stats)
+            return scene_stats.error();
+        if (scene_stats.value().pending_mutations != 0 || !value.rigid_body || value.parent ||
+            std::holds_alternative<ReplicaSceneScope>(value.reference.scope))
+            return physics_error(
+                ErrorCode::conflict,
+                "Body creation requires a committed authored or authoritative root with RigidBody",
+                "physics.body.create");
+        auto pose = validate_rigid_body_pose(*value.rigid_body, value.local_transform);
+        if (!pose)
+            return pose.error();
+        for (const auto& slot : impl_->bodies)
+            if (slot.value) {
+                if (slot.value->entity.handle.scene_instance != entity.scene_instance ||
+                    slot.value->entity.handle == entity)
+                    return physics_error(
+                        ErrorCode::conflict,
+                        "Physics world already contains this entity or another scene",
+                        "physics.body.create");
+            }
+        auto found = std::find_if(impl_->bodies.begin(), impl_->bodies.end(),
+                                  [](const auto& slot) { return !slot.retired && !slot.value; });
+        const auto index = static_cast<std::size_t>(found - impl_->bodies.begin());
+        if (index == impl_->bodies.size() && index >= impl_->config.max_bodies)
+            return physics_error(ErrorCode::conflict, "Physics body capacity exhausted",
+                                 "physics.body.create");
+        const auto& settings = *value.rigid_body;
+        const auto scale = static_cast<float>(pose.value().scale.x);
+        JPH::ShapeSettings::ShapeResult shape;
+        if (settings.shape == ColliderShape::box) {
+            const auto h = settings.half_extents * pose.value().scale.x;
+            shape = JPH::BoxShapeSettings(
+                        JPH::Vec3{static_cast<float>(h.x), static_cast<float>(h.y),
+                                  static_cast<float>(h.z)},
+                        static_cast<float>(std::min(0.05, std::min({h.x, h.y, h.z}) * 0.1)))
+                        .Create();
+        } else if (settings.shape == ColliderShape::sphere) {
+            shape = JPH::SphereShapeSettings(static_cast<float>(settings.radius) * scale).Create();
+        } else {
+            shape = JPH::CapsuleShapeSettings(static_cast<float>(settings.half_height) * scale,
+                                              static_cast<float>(settings.radius) * scale)
+                        .Create();
+        }
+        if (shape.HasError())
+            return physics_error(ErrorCode::invalid_argument, shape.GetError().c_str(),
+                                 "physics.body.create");
+        const auto& t = pose.value();
+        const auto motion = settings.motion == BodyMotion::static_body ? JPH::EMotionType::Static
+                            : settings.motion == BodyMotion::dynamic_body
+                                ? JPH::EMotionType::Dynamic
+                                : JPH::EMotionType::Kinematic;
+        JPH::BodyCreationSettings native_settings{
+            shape.Get(),
+            JPH::RVec3{static_cast<float>(t.translation.x), static_cast<float>(t.translation.y),
+                       static_cast<float>(t.translation.z)},
+            JPH::Quat{static_cast<float>(t.rotation.x), static_cast<float>(t.rotation.y),
+                      static_cast<float>(t.rotation.z), static_cast<float>(t.rotation.w)},
+            motion, 0};
+        native_settings.mFriction = static_cast<float>(settings.friction);
+        native_settings.mRestitution = static_cast<float>(settings.restitution);
+        native_settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
+        native_settings.mMassPropertiesOverride.mMass = static_cast<float>(settings.mass);
+        auto& interface = impl_->system->GetBodyInterface();
+        auto* native = interface.CreateBody(native_settings);
+        if (!native)
+            return physics_error(ErrorCode::conflict, "Native physics body capacity exhausted",
+                                 "physics.body.create");
+        const auto id = native->GetID();
+        NativeBodyCandidate candidate{interface, id};
+        interface.AddBody(id, JPH::EActivation::DontActivate);
+        if (native_diagnostic.reported)
+            return reported_error("physics.body.create");
+        if (index == impl_->bodies.size())
+            impl_->bodies.emplace_back();
+        auto& slot = impl_->bodies[index];
+        // Fence the exact observed source, not a second quaternion
+        // normalization's rounded value used to prepare the native pose.
+        slot.value.emplace(value.reference, settings, value.local_transform, id);
+        candidate.retained = true;
+        return PhysicsBodyHandle{impl_->instance, static_cast<std::uint32_t>(index),
+                                 slot.generation};
+    } catch (...) {
+        return physics_error(ErrorCode::execution_failed, "Cannot create native physics body",
+                             "physics.body.create");
+    }
+}
+
+Result<PhysicsBodyState> PhysicsWorld::body_state(const Scene& scene,
+                                                  PhysicsBodyHandle body) const {
+    if (auto checked = impl_->check_owner("physics.body.state"); !checked)
+        return checked.error();
+    if (impl_->closed || impl_->faulted)
+        return physics_error(ErrorCode::conflict, "Physics owner is closed or faulted",
+                             "physics.body.state");
+    auto checked = impl_->checked_body(body);
+    if (!checked)
+        return checked.error();
+    const auto& record = *impl_->bodies[checked.value()].value;
+    auto entity = scene.entity_state(record.entity.handle);
+    if (!entity)
+        return entity.error();
+    if (entity.value().reference != record.entity || entity.value().rigid_body != record.settings ||
+        entity.value().local_transform != record.source_pose || entity.value().parent)
+        return physics_error(ErrorCode::conflict,
+                             "Body source changed; remove and recreate explicitly",
+                             "physics.body.state");
+    const auto& interface = impl_->system->GetBodyInterface();
+    JPH::RVec3 position;
+    JPH::Quat rotation;
+    interface.GetPositionAndRotation(record.native, position, rotation);
+    auto pose = record.source_pose;
+    pose.translation = {position.GetX(), position.GetY(), position.GetZ()};
+    pose.rotation = math::Quat{rotation.GetW(), rotation.GetX(), rotation.GetY(), rotation.GetZ()};
+    const auto extent = interface.GetShape(record.native)->GetLocalBounds().GetExtent();
+    const auto motion = interface.GetMotionType(record.native);
+    JPH::BodyLockRead locked{impl_->system->GetBodyLockInterfaceNoLock(), record.native};
+    if (!locked.Succeeded())
+        return physics_error(ErrorCode::conflict, "Native body disappeared", "physics.body.state");
+    const auto inverse_mass =
+        motion == JPH::EMotionType::Dynamic
+            ? static_cast<double>(locked.GetBody().GetMotionProperties()->GetInverseMass())
+            : 0.0;
+    return PhysicsBodyState{record.entity,
+                            record.settings,
+                            pose,
+                            {extent.GetX(), extent.GetY(), extent.GetZ()},
+                            motion == JPH::EMotionType::Static    ? BodyMotion::static_body
+                            : motion == JPH::EMotionType::Dynamic ? BodyMotion::dynamic_body
+                                                                  : BodyMotion::kinematic_body,
+                            inverse_mass,
+                            interface.GetFriction(record.native),
+                            interface.GetRestitution(record.native)};
+}
+
+Result<void> PhysicsWorld::remove_body(PhysicsBodyHandle body) {
+    if (auto checked = impl_->check_owner("physics.body.remove"); !checked)
+        return checked;
+    auto checked = impl_->checked_body(body);
+    if (!checked)
+        return checked.error();
+    auto& slot = impl_->bodies[checked.value()];
+    auto& interface = impl_->system->GetBodyInterface();
+    interface.RemoveBody(slot.value->native);
+    interface.DestroyBody(slot.value->native);
+    slot.value.reset();
+    if (slot.generation == std::numeric_limits<std::uint64_t>::max())
+        slot.retired = true;
+    else
+        ++slot.generation;
+    return {};
 }
 
 Result<PhysicsWorldStats> PhysicsWorld::stats() const {

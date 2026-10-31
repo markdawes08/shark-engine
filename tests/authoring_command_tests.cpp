@@ -179,7 +179,7 @@ static_assert(std::is_same_v<decltype(std::declval<AuthoredScene&>().scene()),
                              Result<std::reference_wrapper<const Scene>>>);
 static_assert(std::is_same_v<decltype(std::declval<const AuthoredScene&>().scene()),
                              Result<std::reference_wrapper<const Scene>>>);
-static_assert(std::variant_size_v<AuthoringCommand> == 7);
+static_assert(std::variant_size_v<AuthoringCommand> == 8);
 
 } // namespace
 

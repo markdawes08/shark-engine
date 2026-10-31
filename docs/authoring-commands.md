@@ -22,6 +22,7 @@ Core's existing ID generation can supply it before constructing the command.
 | `ReparentEntityCommand` | Change parent using explicit keep-local or keep-world semantics |
 | `SetCameraCommand` | Validate and add/update Camera; an empty optional removes it |
 | `SetMeshRendererCommand` | Add/update the asset ID, mesh index and visibility; an empty optional removes the component |
+| `SetRigidBodyCommand` | Validate/add/update body and primitive collider settings atomically; empty removes it, following the [body contract](physics-bodies.md) |
 
 Name/Transform remain mandatory and cannot be removed; unknown component types
 reject. Optional [Camera/MeshRenderer](render-components.md) follow

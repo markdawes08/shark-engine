@@ -48,6 +48,7 @@ struct Scene::Impl {
         std::size_t depth;
         std::optional<Camera> camera;
         std::optional<MeshRenderer> mesh_renderer;
+        std::optional<RigidBody> rigid_body;
     };
     struct Slot {
         entt::entity entity{entt::null};
@@ -75,8 +76,12 @@ struct Scene::Impl {
         EntityHandle handle;
         std::optional<MeshRenderer> renderer;
     };
+    struct ChangeRigidBody {
+        EntityHandle handle;
+        std::optional<RigidBody> body;
+    };
     using Mutation = std::variant<EntitySeed, EntityHandle, Rename, ChangeTransform, ChangeParent,
-                                  ChangeCamera, ChangeMeshRenderer>;
+                                  ChangeCamera, ChangeMeshRenderer, ChangeRigidBody>;
     struct Pending {
         SceneMutationTicket ticket;
         Mutation mutation;
@@ -241,6 +246,14 @@ struct Scene::Impl {
             return canonical.error();
         }
         seed.transform = canonical.value();
+        if (seed.rigid_body) {
+            if (seed.parent || std::holds_alternative<ReplicaSceneScope>(scope))
+                return scene_error(
+                    ErrorCode::invalid_argument,
+                    "Rigid bodies require a root in an authored or authoritative scene");
+            if (auto valid = validate_rigid_body_pose(*seed.rigid_body, seed.transform); !valid)
+                return valid.error();
+        }
         if (auto checked = check_parent(seed.parent, seed_authority(seed)); !checked) {
             return checked.error();
         }
@@ -261,6 +274,12 @@ struct Scene::Impl {
     // Compute every affected descendant before publishing any component/link.
     Result<std::vector<WorldUpdate>> prepare_subtree(EntityHandle root, const Transform& local,
                                                      std::optional<EntityHandle> parent) const {
+        if (record(root).rigid_body) {
+            if (parent)
+                return scene_error(ErrorCode::invalid_argument, "Rigid bodies cannot be parented");
+            if (auto valid = validate_rigid_body_pose(*record(root).rigid_body, local); !valid)
+                return valid.error();
+        }
         auto root_matrix = transform_matrix(local);
         if (!root_matrix) {
             return root_matrix.error();
@@ -343,6 +362,8 @@ struct Scene::Impl {
         if (fields.mesh_renderer) {
             result.mesh_renderer = entity.mesh_renderer;
         }
+        if (fields.rigid_body)
+            result.rigid_body = entity.rigid_body;
         return result;
     }
     Result<EntityHandle> insert(EntitySeed seed) {
@@ -379,10 +400,10 @@ struct Scene::Impl {
                 appended = true;
             }
             native = registry.create();
-            registry.emplace<Record>(native, seed.identity, seed_authority(seed),
-                                     std::move(seed.name), seed.transform, seed.parent,
-                                     std::vector<EntityHandle>{}, prepared.value().world,
-                                     prepared.value().depth, seed.camera, seed.mesh_renderer);
+            registry.emplace<Record>(
+                native, seed.identity, seed_authority(seed), std::move(seed.name), seed.transform,
+                seed.parent, std::vector<EntityHandle>{}, prepared.value().world,
+                prepared.value().depth, seed.camera, seed.mesh_renderer, seed.rigid_body);
             const EntityHandle handle{instance, static_cast<std::uint32_t>(index),
                                       slots[index].generation};
             identities.emplace(seed.identity, handle);
@@ -516,6 +537,25 @@ struct Scene::Impl {
             return checked.error();
         }
         entity.mesh_renderer = change.renderer;
+        ++revision;
+        return change.handle;
+    }
+    Result<EntityHandle> rigid_body(ChangeRigidBody change) {
+        if (auto checked = checked_slot(change.handle); !checked)
+            return checked.error();
+        auto& entity = record(change.handle);
+        if (change.body) {
+            if (entity.parent || std::holds_alternative<ReplicaSceneScope>(scope))
+                return scene_error(ErrorCode::invalid_argument,
+                                   "Rigid bodies require an authored or authoritative root");
+            if (auto checked = validate_rigid_body_pose(*change.body, entity.transform); !checked)
+                return checked.error();
+        }
+        if (entity.rigid_body == change.body)
+            return change.handle;
+        if (auto checked = check_revision(); !checked)
+            return checked.error();
+        entity.rigid_body = change.body;
         ++revision;
         return change.handle;
     }
@@ -747,6 +787,12 @@ Result<void> Scene::set_mesh_renderer(EntityHandle handle, std::optional<MeshRen
                                 "scene.set-mesh-renderer");
 }
 
+Result<void> Scene::set_rigid_body(EntityHandle handle, std::optional<RigidBody> body) {
+    if (auto checked = impl_->check_immediate(); !checked)
+        return checked;
+    return impl_->finish_change(impl_->rigid_body({handle, body}), handle, "scene.set-rigid-body");
+}
+
 Result<void> Scene::reparent(EntityHandle handle, std::optional<EntityHandle> parent,
                              ReparentMode mode) {
     if (auto checked = impl_->check_immediate(); !checked) {
@@ -773,7 +819,8 @@ Result<SceneEntityState> Scene::entity_state(EntityHandle handle) const {
                                 entity.world,
                                 entity.depth,
                                 entity.camera,
-                                entity.mesh_renderer};
+                                entity.mesh_renderer,
+                                entity.rigid_body};
     } catch (...) {
         return impl_->contextualize(
             scene_error(ErrorCode::execution_failed, "entity state copy allocation failed"), handle,
@@ -1047,6 +1094,19 @@ Result<SceneMutationTicket> Scene::defer_set_mesh_renderer(EntityHandle handle,
     return impl_->enqueue(Impl::ChangeMeshRenderer{handle, renderer});
 }
 
+Result<SceneMutationTicket> Scene::defer_set_rigid_body(EntityHandle handle,
+                                                        std::optional<RigidBody> body) {
+    if (auto checked = impl_->check_live(); !checked)
+        return checked.error();
+    if (auto checked = impl_->checked_slot(handle); !checked)
+        return checked.error();
+    if (body) {
+        if (auto checked = validate_rigid_body(*body); !checked)
+            return impl_->contextualize(checked.error(), handle, "scene.defer-set-rigid-body");
+    }
+    return impl_->enqueue(Impl::ChangeRigidBody{handle, body});
+}
+
 Result<SceneMutationTicket>
 Scene::defer_reparent(EntityHandle handle, std::optional<EntityHandle> parent, ReparentMode mode) {
     if (auto checked = impl_->check_live(); !checked) {
@@ -1098,6 +1158,9 @@ Result<SceneMutationReport> Scene::apply_deferred() {
                         } else if constexpr (std::is_same_v<Type, Impl::ChangeMeshRenderer>) {
                             return {pending.ticket, SceneMutationKind::set_mesh_renderer,
                                     impl_->mesh_renderer(mutation)};
+                        } else if constexpr (std::is_same_v<Type, Impl::ChangeRigidBody>) {
+                            return {pending.ticket, SceneMutationKind::set_rigid_body,
+                                    impl_->rigid_body(mutation)};
                         } else {
                             return {pending.ticket, SceneMutationKind::reparent,
                                     impl_->reparent(mutation)};

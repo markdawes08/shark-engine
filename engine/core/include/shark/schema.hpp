@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shark/name.hpp"
+#include "shark/physics_components.hpp"
 #include "shark/render_components.hpp"
 #include "shark/transform.hpp"
 
@@ -19,7 +20,8 @@ enum class ComponentSchemaId : std::uint32_t {
     name = 1,
     transform = 2,
     camera = 3,
-    mesh_renderer = 4
+    mesh_renderer = 4,
+    rigid_body = 5
 };
 enum class PropertyId : std::uint32_t {
     name_value = 1,
@@ -34,6 +36,14 @@ enum class PropertyId : std::uint32_t {
     mesh_renderer_asset = 10,
     mesh_renderer_mesh_index = 11,
     mesh_renderer_visible = 12,
+    rigid_body_motion = 13,
+    rigid_body_shape = 14,
+    rigid_body_half_extents = 15,
+    rigid_body_radius = 16,
+    rigid_body_half_height = 17,
+    rigid_body_mass = 18,
+    rigid_body_friction = 19,
+    rigid_body_restitution = 20,
 };
 inline constexpr std::uint32_t component_schema_version = 1;
 
@@ -47,7 +57,13 @@ enum class PropertyType : std::uint32_t {
     uint32 = 7,
     boolean = 8,
 };
-enum class PropertyUnit : std::uint32_t { none = 0, meters = 1, dimensionless = 2, radians = 3 };
+enum class PropertyUnit : std::uint32_t {
+    none = 0,
+    meters = 1,
+    dimensionless = 2,
+    radians = 3,
+    kilograms = 4
+};
 // Describes existing Scene setters, not gameplay authority or a public adapter.
 enum class PropertyMutability : std::uint32_t { scene_owner_write = 1 };
 enum class QuaternionSignPolicy : std::uint32_t { positive_w_then_xyz = 1 };
@@ -149,14 +165,14 @@ struct ComponentSchema {
 
 // Fixed engine-owned catalog in stable ID/property order. Every result owns its
 // strings/defaults/metadata; editing a returned copy cannot alter the catalog.
-[[nodiscard]] std::array<ComponentSchema, 4> component_schemas();
+[[nodiscard]] std::array<ComponentSchema, 5> component_schemas();
 [[nodiscard]] Result<ComponentSchema>
 component_schema(ComponentSchemaId id, std::uint32_t version = component_schema_version);
 [[nodiscard]] Result<PropertySchema>
 property_schema(ComponentSchemaId component, PropertyId property,
                 std::uint32_t version = component_schema_version);
 
-using ComponentValue = std::variant<Name, Transform, Camera, MeshRenderer>;
+using ComponentValue = std::variant<Name, Transform, Camera, MeshRenderer, RigidBody>;
 
 // Pure local validation returns an owned, canonical value using the same Name
 // and Transform validators as Scene. It does not validate world-matrix/hierarchy

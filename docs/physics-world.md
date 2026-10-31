@@ -1,6 +1,6 @@
 # CPU physics world foundation
 
-18a adds [physics.hpp](../engine/core/include/shark/physics.hpp) to EngineCore.
+18a adds the foundation in [physics.hpp](../engine/core/include/shark/physics.hpp) to EngineCore.
 Follow [ADR 0045](architecture/0045-physics-foundation.md), the
 [physics checkpoints](roadmap/physics-plan.md) and the existing
 [time/work](time-and-work.md) and [transform](transforms.md) contracts.
@@ -11,9 +11,10 @@ Follow [ADR 0045](architecture/0045-physics-foundation.md), the
 fixed temporary arena and single-threaded native job system. `step()` calls the
 native update for exactly one configured tick, and `stats()` returns owned config,
 completed ticks, current body count and closed/faulted state. There is no body
-creation surface in 18a, so the observable body count is zero. Components,
-colliders, scene synchronization, queries, triggers and terminal physics commands
-land with their assigned checkpoints; no placeholder capability is advertised.
+creation surface in 18a, so its observable body count was zero. 18b's
+[body contract](physics-bodies.md) adds real shape/body creation, read and removal,
+the shared RigidBody component and terminal authoring. Nonempty stepping rejects
+before native work until 18c; queries/triggers retain their assigned checkpoints.
 
 All methods require the creating thread and return owned Result/Error values.
 Foreign calls reject without changing state. Close releases the native system,
@@ -62,8 +63,9 @@ wall clock, render delta, pause policy or second scheduler in this service.
 The fixed native temporary allocator has no unbounded fallback. The pinned empty
 update path uses no temporary jobs/arena allocations; this qualifies the 18a
 surface only. Native allocation exhaustion and invariant aborts are not promised
-to be recoverable. Body-capacity/temp-work admission must be qualified when 18b
-adds bodies; do not infer those guarantees from empty updates.
+to be recoverable. 18b qualifies bounded body creation/removal and rejects all nonempty updates
+before arena use. Temporary simulation-work admission remains 18c; do not infer
+that guarantee from creation or empty updates.
 
 ## Authority and integration decisions
 

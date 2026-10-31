@@ -99,7 +99,7 @@ TEST_CASE("Editor inspector commits canonical component drafts as one shared his
     CHECK_FALSE(work.session->state().dirty);
     const auto initial = work.scene.revision();
     auto schemas = component_schemas();
-    REQUIRE(schemas.size() == 4);
+    REQUIRE(schemas.size() == 5);
     CHECK_FALSE(schemas[0].removable);
     CHECK(schemas[2].removable);
     draft.name.value = "Renamed";

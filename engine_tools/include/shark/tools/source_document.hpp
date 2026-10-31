@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shark/name.hpp"
+#include "shark/physics_components.hpp"
 #include "shark/project_path.hpp"
 #include "shark/render_components.hpp"
 #include "shark/scene_identity.hpp"
@@ -57,6 +58,7 @@ struct SourceEntity {
     std::string extras_json{"{}"};
     std::optional<Camera> camera{};
     std::optional<MeshRenderer> mesh_renderer{};
+    std::optional<RigidBody> rigid_body{};
     bool operator==(const SourceEntity&) const = default;
 };
 

@@ -134,6 +134,55 @@ class AuthoringEditingProcessTests(unittest.TestCase):
         saved = json.loads(self.scene_path.read_text(encoding="utf-8"))
         self.assertIn("Harbor \u96ea", json.dumps(saved, ensure_ascii=False))
 
+    def test_rigid_body_discovery_retained_fields_constraints_and_reopen(self):
+        body = {"motion": "dynamic", "shape": "capsule", "half_extents": [0.5, 0.75, 1.0],
+                "radius": 0.25, "half_height": 0.75, "mass": 2.0, "friction": 0.5, "restitution": 0.25}
+        with self.client() as client:
+            discovery = client.result("protocol.discover")
+            self.assertIn("shark.rigid_body", json.dumps(discovery))
+            self.edit(client, {"type": "create_entity", "entity_id": ENTITY,
+                               "transform": TRANSFORM, "rigid_body": body})
+            def inspect():
+                return client.result("scene.inspect", {"entity_id": ENTITY,
+                    "fields": ["name", "transform", "hierarchy", "camera", "mesh_renderer", "rigid_body"]})["entities"][0]
+            self.assertEqual(inspect()["rigid_body"], body)
+            before = client.result("project.status")
+            bad = {"type": "set_transform", "entity_id": ENTITY,
+                   "transform": {**TRANSFORM, "scale": [1, 2, 1]}}
+            rejected = client.result("scene.mutate", self.mutation(client, {"type": "command", "command": bad}))
+            self.effect(rejected, ok=False)
+            self.assertEqual(client.result("project.status"), before)
+            command = {"type": "set_rigid_body", "entity_id": ENTITY, "rigid_body": {**body, "mass": 4.0}}
+            intent = self.mutation(client, {"type": "command", "command": command})
+            first = client.result("scene.mutate", intent)
+            self.effect(first)
+            replay = client.result("scene.mutate", intent)
+            self.assertEqual(replay["state"], "replayed")
+            self.assertEqual(replay["outcome"], first["outcome"])
+            for field in ("radius", "half_height", "mass", "friction", "restitution", "half_extents", "motion", "shape"):
+                mismatch = copy.deepcopy(intent)
+                value = mismatch["operation"]["command"]["rigid_body"]
+                if field == "half_extents": value[field][0] += 0.25
+                elif field == "motion": value[field] = "static"
+                elif field == "shape": value[field] = "sphere"
+                else: value[field] += 0.125
+                decision = client.result("scene.mutate", mismatch)
+                self.assertEqual(decision["state"], "payload_mismatch")
+            self.assertEqual(inspect()["rigid_body"], {**body, "mass": 4.0})
+            history = client.result("scene.history")
+            self.effect(client.result("scene.mutate", self.mutation(client, {"type": "undo", "ticket": history["next_undo"]["ticket"]})))
+            self.assertEqual(inspect()["rigid_body"], body)
+            history = client.result("scene.history")
+            self.effect(client.result("scene.mutate", self.mutation(client, {"type": "redo", "ticket": history["next_redo"]["ticket"]})))
+            self.save(client)
+            client.result("project.close")
+            client.result("project.open", {"path": "FeatureWorld.sharkproject"})
+            self.assertEqual(inspect()["rigid_body"], {**body, "mass": 4.0})
+            client.finish()
+        saved = json.loads(self.scene_path.read_text(encoding="utf-8"))
+        component = next(row for row in saved["entities"] if row["entity_id"] == ENTITY)["components"]["shark.rigid_body"]
+        self.assertEqual(component, {"schema_version": 1, **body, "mass": 4.0})
+
     def test_retained_replay_mismatch_rejection_expiry_and_restart(self):
         original_bytes = self.scene_path.read_bytes()
         with self.client() as client:
