@@ -18,7 +18,7 @@ sanitizer defects. The original amendment removed only that progression gate.
 On 2026-10-29, the user paused desktop/UI testing and authorized continued coding
 with the remaining checks in this nonblocking backlog. On 2026-10-31, the user
 explicitly requested finishing the current subchunk and then tackling the testing
-backlog. **Desktop testing resumes after 18e implementation.** The
+backlog. **Desktop testing resumed after 18e implementation.** The
 [testing policy](testing-policy.md#desktop-interaction-pause-2026-10-29) permits
 the required actual Editor input/focus/window interactions and automated windowed
 GPU fixtures. Deferred checks remain **NOT_RUN** until their required evidence
@@ -28,6 +28,11 @@ inputs; historical failures and interrupted runs remain intact.
 Later checkpoints append their required UI acceptance scope to BL-16A-UI-01
 without claiming it passed. This authorizes implementation progression, not full
 REQ-16 closure before its required connected UI/terminal evidence exists.
+
+The additions below retain the original deferred scope. Their pause/NOT_RUN
+wording describes the original deferral; the current table, progress and linked
+handoff record subsequently qualified families. Reuse those completed results
+under the testing policy. Unperformed required interactions remain NOT_RUN.
 
 ## Deferred items
 
@@ -44,8 +49,8 @@ not be dismissed solely because it resembles a deferred issue.
 | BL-05C-03 | **OPEN / UNRESOLVED, 2026-11-01:** the Intel `surface-error` child-55 timeout retained zero engine-owned resources, a worker dump/wait chain and native exit status 1 published before process signaling. The responsible rundown operation remains unidentified. The exit-code-only capture blind spot is fixed and CPU-qualified. One corrected 64-child invocation and one newly prearmed 128MiB ETW 64-child invocation completed expected exits without recurrence; the ETW circular tail has zero reported lost events/buffers but no causal timeout stack. These are not a fix. [Latest evidence](handoffs/18e-editor-physics-preview.md#05c-backlog-qualification-and-allocator-diagnosis-2026-11-01), [captured timeout](handoffs/18e-editor-physics-preview.md#asan-exit-observation), [original investigation](handoffs/05c-intel-asan-investigation.md), [original receipt](coverage/evidence/05c-asan-exit-investigation.json). | Capture native process signaling/rundown on a recurrence with the corrected bounded tools and identify an actionable cause. Preserve both failures; successful repetitions alone do not close this finding. |
 | BL-05C-04 | **OPEN / six strict selections FAIL, 2026-11-01:** unchanged Debug/Release/ASan workloads on both GPUs failed their resource limits. Release RTX completed sustained work before a closed-lifetime GDI failure; other selections stopped at their first failure. Both ASan profiles newly exceeded the fixed 256MiB private-byte allowance. Separate once-only allocator diagnostics demonstrate substantial quarantine/mapped growth, but inconsistent runtime live-byte totals prevent a leak-freedom claim and no engine ownership fix is established. Earlier partial/failed receipts remain intact. [Current results and accounting limits](handoffs/18e-editor-physics-preview.md#05c-backlog-qualification-and-allocator-diagnosis-2026-11-01), [qualification contract](presentation-qualification.md), [original handoff](handoffs/05c-presentation-qualification.md), [prior investigation](handoffs/05c-intel-asan-investigation.md). | Further memory diagnosis needs allocation-caller evidence, not another identical run or weaker quarantine/budgets. Resume qualification after an actionable resolution or explicit user request, preserving existing workloads and applicable regressions/packages. Only complete qualifying evidence can change full `REQ-05` to PASS. |
 | BL-14B-01 | **CLOSED / PASS, 2026-10-31:** the four deferred Client package/launch/shader-bundle and actual export-worker process sanitizer checks passed under the retained WSL Clang 18.1.3 ASan+UBSan profile. The once-only current build compiled the previously blocked exporter successfully, with no compiler/settings repair. [Closure addendum](handoffs/14b-standalone-scene-export.md#backlog-closure-2026-10-31), [18e handoff](handoffs/18e-editor-physics-preview.md). Logs/inventory/JUnit: `out/18e-work/backlog-14b/`. | No remaining selected sanitizer gate. Historical Clang/MSVC crashes and fixed-input repro evidence under `out/14b-work/` remain intact; their underlying cause is unestablished. This pass does not claim Windows ASan compiler repair or GPU qualification. |
-| BL-16A-UI-01 | **OPEN / PARTIAL, 2026-11-01:** both GPUs passed native GUI composition and eight fixed physics readbacks. Intel's imported-project editing/import/metadata/terminal round trip now has actual evidence alongside the earlier RTX path. Remaining hierarchy/component/focus and complete viewport/physics acceptance stay open. Preserve original results and failures; [current addendum](handoffs/18e-editor-physics-preview.md#additional-intel-editor-and-physics-rendering-evidence-2026-11-01). | Finish the outstanding actual interactions on both GPUs, retaining valid prior results. Continuous manual pointer input blocked the latest scale attempts; desktop input is stopped pending user availability. Native fixture and partial workflow passes do not close full REQ-16/17/18. |
-| BL-17-UI-DRAG-01 | **CAUSE IDENTIFIED / corrected, native RTX PASS; Intel pending, 2026-11-01:** motion before capture replaced the cursor used for press hit testing. Owned pointer-edge positions now preserve the start/release through input, frame merging, gizmos/picking and ImGui. The exact RTX World Y drag commits once, undoes once and saves the independently expected transform. [Correction and tests](handoffs/18e-editor-physics-preview.md#pointer-capture-correction-and-resumed-acceptance-2026-11-01). Original failed attempts remain intact. | Verify the correction on Intel and finish connected gesture/cancellation acceptance. RTX rotation/local translation also committed before manual-input guards paused testing; scale, held-button cases and final saved-matrix continuation remain unqualified. Full REQ-17 remains NOT_RUN. |
+| BL-16A-UI-01 | **OPEN / PARTIAL, 2026-11-01:** both GPUs passed composition, imported-project handoffs, full reference gestures/terminal returns and compact affine/reflected/sheared picking, culling, shear rejection and angle wrap. Selected common hierarchy/inspector and asset/job/console controls pass under complementary Windows Debug coverage. **Full REQ-18 PASS**, including both-GPU native physics/body-setting handoffs and required retained fixtures. Preserve original results and failures; [current handoff](handoffs/18e-editor-physics-preview.md). | Exact remaining native 16/17 gates are the unsupported post-request status-read failure trigger, held preview/cancel/freshness/intermediate-scale and physical right/middle navigation. The desktop drag API cannot hold across actions or select right/middle drag. Normal status refresh and viewport errors do not qualify status-failure recovery. Completed families, including 18, are reused rather than rerun merely because original deferral text below says NOT_RUN. |
+| BL-17-UI-DRAG-01 | **CLOSED / original press-position defect corrected and verified on both GPUs, 2026-11-01:** motion before capture replaced the cursor used for press hit testing. Owned pointer-edge positions now preserve start/release through input, frame merging, gizmos/picking and ImGui. The original World Y drag commits once and supports one-group Undo/Redo/save on RTX and Intel. Saved full reference TRS and literal world matrices also match after rotation and all three scale axes. [Correction and tests](handoffs/18e-editor-physics-preview.md#pointer-capture-correction-and-resumed-acceptance-2026-11-01). Original failed attempts remain intact. | No remaining reproduction of this defect. Other connected gesture/cancellation, navigation and focus/layout gates remain under BL-16A-UI-01; full REQ-17 remains NOT_RUN. |
 
 ### BL-16A-UI-01: progress, 2026-10-31
 
@@ -121,19 +126,26 @@ trace established the press-position defect; the
 records the additive bounded input API, correction, final Debug/WSL/ASan selections
 and actual RTX confirmation. World Y/Snap 1 reached local T `[3,0,0]` within the
 existing tolerance, one Undo restored `[1,0,0]`, and Redo/save retained history.
-World Z/Snap 15 rotation and Local X/Snap 1 translation each committed once with
-history advancing to three groups. Their final exact saved values and the
-remaining reference gestures have not yet been independently qualified.
+World Z/Snap 15 rotation and Local X/Snap 1 translation each committed once.
+The subsequent user request resumed work after three manual-input guard
+rejections; no scale edge or mutation occurred during those rejected attempts.
+The retained RTX edits were saved before the old supervisor deadline, and all
+completed sessions closed cleanly. Intel repeated the original drag/Undo/Redo.
+Both GPUs then rejected a zero-scale release without mutation and committed
+separate X=-2 and Y=1.5 factors. A temporary explicit Camera angle exposed the
+otherwise edge-on Z handle; its factor 0.5 committed as one group on each GPU.
+Public owners restored the exact original Camera and verified local
+T `[3,2,0]`, Rz90, S `[-2,1.5,0.5]`, world pivot `[-4,6,0]` and linear
+`diag(4,-3,1)` within the existing tolerance. The camera setup is not evidence
+of orbit/pan or continuous held-scale behavior.
 
-Scale attempts were blocked three times by Computer Use's manual-input guard,
-including after a fresh observation; the pointer also moved independently.
-No scale mouse edge or mutation occurred. All desktop input/refresh retries have
-stopped pending the user's availability reply. The current generated RTX test
-project remains open with unsaved rotation/translation edits; its inherited
-supervisor deadline is **2026-11-01 04:09:43 EST (09:09:43 UTC)**. Do not treat
-elapsed time as permission to resume or silently discard those edits. The Intel
-reference and 65-entity hierarchy/optional-component projects are prepared only;
-their unperformed native checks remain NOT_RUN.
+A distinct mixed-button cancellation defect was reproduced and corrected in the
+raw gizmo; final selected Debug and Windows ASan GUI checks pass. The
+[correction addendum](handoffs/18e-editor-physics-preview.md#mixed-button-cancellation-correction-2026-11-01)
+records the original failed control, final-input evidence and native rebuild.
+The selected common editor controls and compact viewport cases now also have
+native evidence in the linked handoff. The table above records exact remaining
+gates; prepared inputs alone never qualify them.
 
 Intel's imported-project workflow now covers actual Name/translation Apply,
 unapplied inspector and metadata close decisions, save/history, invalid license,
@@ -151,8 +163,19 @@ files byte-for-byte. It closed its writer; no additional UI run is claimed.
 Both GPUs also passed the separate eight-image physics renderer fixture for static
 reset, teleport, kinematic movement and interpolated child geometry/Camera, with
 literal pose/color/depth oracles and clean ownership/validation. This closes that
-rendering gap, not remaining actual physics controls/focus/filter acceptance.
-No full REQ-16/17/18 closure is claimed. Assignment 19 has not started.
+rendering gap. Subsequent both-GPU native physics and complete source/body-setting
+handoffs now close full REQ-18, as recorded in the
+[closure addendum](handoffs/18e-editor-physics-preview.md#intel-physics-and-full-req-18-closure-2026-11-01).
+The [compact viewport addendum](handoffs/18e-editor-physics-preview.md#compact-native-viewport-acceptance-2026-11-01)
+also records both-GPU picking/affine Camera, committed culling, shear rejection
+and angle wrap, plus RTX Delete/Undo/fresh picking. Full REQ-16/17 remain NOT_RUN
+for held preview/cancel/freshness/intermediate scale, right-orbit/middle-pan and
+the native post-request status-read failure without a supported external trigger.
+No additional binding tool-feasible family was identified in the final scope
+review. Existing fixed DPI/geometry fixtures remain applicable; no unavailable
+hardware/OS-DPI condition, multi-turn rotation or physical mixed-button test is
+added as a new gate. All test scenes were restored and all windows/writers closed.
+Assignment 19 has not started.
 
 ### BL-16A-UI-01: 16b acceptance additions
 

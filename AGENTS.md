@@ -85,6 +85,9 @@ remain one retained atomic history batch. Current work finishes the resumed
 testing backlog under the [physics checkpoints](docs/roadmap/physics-plan.md).
 Tick frequency and collision substeps are distinct; reuse existing schedulers.
 Connected acceptance follows [physics acceptance](docs/physics-acceptance.md).
+18e and full REQ-18 now pass under current-machine scope; the handoff records
+closure and exact native/reused coverage. Independent 16/17 UI omissions remain
+in the backlog. Reuse qualified results under the testing policy.
 17d connects portable gizmo/drag adapters and public terminal processes over saved
 projects. The [actual acceptance procedure](docs/viewport-acceptance.md) remains
 NOT_RUN until its required evidence passes; full REQ-17 stays open. Continue later

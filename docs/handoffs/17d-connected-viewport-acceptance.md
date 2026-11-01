@@ -117,3 +117,18 @@ planning/implementation, without treating deferred UI gates as passed. Preserve
 the current owner/history/preview contracts when physics adds transform authority.
 
 Suggested commit: `test(editor): connect viewport transforms and terminal handoffs`.
+
+## Native continuation, 2026-11-01
+
+Desktop testing resumed after 18e. The current
+[18e handoff](18e-editor-physics-preview.md) records the pointer-position
+correction, conservative mixed-button cancellation, selected regression results
+and actual both-GPU reference gestures. The
+[compact native addendum](18e-editor-physics-preview.md#compact-native-viewport-acceptance-2026-11-01)
+also records both-GPU affine/reflected/sheared picking, Camera/reset, committed
+culling, rejected shear and angle wrap, plus RTX recreated-entity freshness.
+Complete connected acceptance still requires held preview/cancellation/freshness/
+intermediate-scale and physical right/middle navigation in
+[the backlog](../backlog.md#desktop-ui-deferral).
+Earlier headless and completed native results remain valid for their stated
+scope; full REQ-17 remains NOT_RUN.

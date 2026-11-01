@@ -5,6 +5,19 @@ triggers and owned contact events`), `main`. Four inspector files already
 contained the interrupted 18e edits; this increment continues that work.
 The user owns staging, commits and pushing.
 
+## Current backlog status, 2026-11-01
+
+The later addenda below supersede the original deferral/interruption statuses.
+Backlog continuation started from clean `999b704`; assignment 19 is not started.
+
+| Owner | Current selected evidence and remaining work |
+| --- | --- |
+| REQ-16 | Hierarchy/inspector controls, asset registration/paging, stale publication/Ready close and connected saved-state checks have native evidence under complementary Windows Debug selection. A native post-request status-read failure still lacks a supported trigger; full acceptance remains NOT_RUN. |
+| REQ-17 | Both GPUs passed reference gestures/terminal returns and compact picking/affine/culling/shear-rejection/wrap cases; original press-position defect is closed. Held-pointer preview/cancel/freshness/scale and right/middle navigation remain; full acceptance is NOT_RUN. |
+| REQ-18 | **PASS under current-machine scope.** Both-GPU native physics, required readbacks, current-data public continuation and complete body-setting handoff qualify its own acceptance. Separate 16/17 omissions remain open. |
+
+The [backlog](../backlog.md) retains exact omissions and historical failures.
+
 ## Delivered behavior
 
 [ADR 0049](../architecture/0049-editor-physics-preview.md) and the
@@ -501,7 +514,12 @@ It qualifies these rendered physics paths, not actual UI parity or full REQ-18.
 
 Suggested commit: `fix(input): preserve pointer edges and advance native testing`.
 
-## Current desktop interruption and exact next work
+## Historical desktop interruption before the next continuation
+
+The following records the original interruption at base `1848352`; it is not a
+current desktop pause. The user's next request resumed the work, and the retained
+edits were saved before that launch's deadline and closed cleanly. Current
+continuation results follow below.
 
 RTX World Z/Snap 15 rotation and Local X/Snap 1 translation subsequently committed
 once each, with history advancing to three groups and no pick/navigation. Their
@@ -539,3 +557,261 @@ resource allowance, workload or source-control ownership changed. Full
 REQ-05/16/17/18 remain NOT_RUN; assignment 19 is not started.
 
 Suggested commit: `fix(input): retain pointer positions and record testing backlog results`.
+
+## Mixed-button cancellation correction, 2026-11-01
+
+Base: `999b704`, initially clean `main`. The raw gizmo checked only right/middle
+held state, allowing completed other-button cycles to publish a left drag. The
+existing fast-input fixture reproduced 16 failed assertions, including three
+unintended commits; retain `out/19-testing-work/mixed-pointer-windows-debug-red-test.log`.
+The widget now cancels on held/edge/ambiguous activity in all seven non-left
+pointer slots, consumes accompanying left input, and leaves a sole auxiliary
+click unconsumed. Tests require unchanged source/history/revision and cleared
+preview, while legal-left/navigation behavior remains covered. Core, Client,
+public formats, dependencies and FeatureWorld
+are unchanged; earlier native legal-left evidence remains applicable.
+
+Through `tools/windows_dev.ps1`, both `windows-debug` and `windows-asan` ran
+`ctest --preset <preset> --show-only=json-v1` and `cmake --build --preset <preset>
+--target EditorGuiTests --parallel 2`, then selected
+`ctest --preset <preset> -R '^shark\.editor\.gui-adapter$' --verbose
+--output-on-failure --no-tests=error --output-junit <report>`: **PASS 1/1**, 1.70s
+Debug and 6.86s ASan, seed 1337/60s timeout. Commands, logs and JUnit:
+`out/19-testing-work/mixed-pointer-windows-{debug,asan}-auxiliary-green*`.
+Intermediate results remain historical. No WSL implementation or unrelated
+matrix applies. After native close, `tools/windows_dev.ps1 cmake --build --preset
+windows-debug --target Editor --parallel 2` passed in 5.27s
+(`mixed-pointer-editor-debug-build.log`); later native launches use that binary.
+Coverage/gizmo contracts record the rule; `.gitignore` covers generated outputs.
+
+## Native viewport continuation, 2026-11-01
+
+The retained RTX edits were saved before the inherited deadline. On both GPUs,
+actual reference World Y/Snap 1, World Z/Snap 15 quarter-turn, Local X/Snap 1 and
+local X=-2/Y=1.5 scale gestures committed one group each. Zero-scale release
+rejected without history/source changes; Undo/Redo and Save/Undo/Redo/Save passed.
+An explicit temporary Camera +30 degrees X enabled each native local Z/Snap 0.5
+factor 0.5 drag. After close, exact Camera restoration and independent public
+saved/typed comparison matched local T `[3,2,0]`, Rz90, S `[-2,1.5,0.5]`, world
+pivot `[-4,6,0]` and linear `diag(4,-3,1)` within existing tolerances. This camera
+setup qualifies the Z handle, not orbit/pan or sampled scale crossing.
+
+Public continuations independently reproduced those literals from a baseline,
+then set local T `[4,2,0]`. A fresh admissible ID with an older revision retained
+conflict without changing newer status/history/fields. Actual fresh Editor
+reopens displayed Saved/history 0; one legal local drag followed by Undo/Save
+restored world pivot `[-4,8,0]`, the same linear matrix and original Camera.
+Competing writers rejected. All sessions closed normally with zero validation
+diagnostics, timeout or cleanup errors. BL-17-UI-DRAG-01's press defect is closed.
+
+Evidence under `out/19-testing-work/`: `viewport-native-final-summary.md`,
+`viewport-native-final-receipts.json`, `viewport-{rtx,intel}-full-terminal/summary.json`,
+`viewport-intel-worker/`, `viewport-{rtx,intel}-z-worker/` and
+`viewport-{rtx,intel}-z-camera.json`; earlier RTX XY is in `viewport-fixed-rtx-worker/`.
+A private helper's unsupported `discard:true` correctly rejected; preserve
+`viewport-rtx-terminal-continuation/summary.json`. Corrected `unsaved:'discard'`
+passed; successful literal-control scratch was removed, not the failure evidence.
+
+Full REQ-17 remains NOT_RUN: prepared picking/affine/mirrored/culling, rejected
+rotation/angle-wrap cases, held preview/cancellation, freshness and intermediate
+scale observations remain. Documented atomic desktop drag cannot hold across
+actions or select right/middle; CPU fixtures do not qualify those native gates.
+The [backlog](../backlog.md) retains their individual focus/layout/authority cases.
+
+## Native editor branch continuation, 2026-11-01
+
+Complementary Windows Debug selections cover common controls without claiming
+every field ran on each GPU; GPU-dependent views retain both-device evidence.
+RTX paged 65 entities; invalid asset ID and Camera far<=near retained drafts
+without mutation. One Apply added Camera/cube MeshRenderer with S `[-1,2,0.5]`
+and quaternion `[0,0,1,1]` normalized to Rz90. Remove/Undo restored both; stale
+draft Apply stayed disabled until reselect/Reload. A disposable child exercised
+create, keep-local reparent, rejected cycle, keep-world detach, Delete/Cancel and
+Delete. Its detached T `[2,0,-1]`, Rz30, S `[2,1,0.5]` matched the parent. Picking,
+empty deselection, wheel/reset, resize/maximize and dirty-close Discard passed.
+
+Normal zero-validation native close is recorded in
+`out/18e-work/ui-editor-paths-rtx-worker/` and its result. Independent
+`out/19-testing-work/ui16-rtx-public-check.json` matched all 65 source/typed IDs,
+empty fresh history, absent deleted/discarded children and the optional entity's
+world columns `[0,-1,0]`, `[-2,0,0]`, `[0,0,0.5]`, translation `[-2,0,-1]`.
+CPU reads preserved the saved Scene and original asset sources/metadata/cache;
+the cache stayed fresh and the writer closed.
+Only then were 14 additive licensed paging files/7,774 bytes copied, sharing the
+original 36-byte dependency. A private report-key separator error after copying
+was reconciled read-only without repeating copies; this was not an engine failure.
+
+## Additional RTX physics acceptance, 2026-11-01
+
+Actual radius 0/negative-uniform-scale rejection retained drafts and source/history;
+earlier nonuniform/parent rejection remains applicable. Uniform scale 2 committed
+once; actor/visual child landed near Y=0.5, child X=2. Stop/Undo restored Y=3/S=1.
+The thin volume T `[0,0,0]`, half extents `[2,0.25,2]` allowed floor support near
+Y=0 as a sensor, versus Y=0.75 when solid; Stop/Undo restored true. The panel showed
+floor enter tick 48/#2; sensor Enter was not observed natively. Removal at 1580
+showed both owned body_removed exits (#3 floor/#4 trigger), preserving geometry.
+Fresh rebuilds with floor mask 1/actor layer 2 mask 1, then floor mask 4/actor mask 0,
+fell through; restoring actor mask 1 restored support. Saved settings retain
+floor mask 4/actor mask 1 and the thin true sensor.
+
+Running close modal held tick 696; Cancel resumed to 817 over the normal capture
+interval without hidden catch-up. Pause 1373/Step 1374, runtime-pick exclusion,
+disabled source controls and paused tabs passed. Tabs/text alone add no pause
+rule. Save/fresh Play/live close passed. A public six-entity comparison then
+changed only friction 0.3->0.35 through retained set_rigid_body/save/close; actual
+reopen displayed Saved/history 0/friction 0.350000 and competing open rejected.
+Native Dynamic->Kinematic held actor/child Y=3 through Pause 1062; resize 900x630,
+minimize/restore/maximize held that tick. Stop/Undo/Save restored Dynamic and
+retained friction 0.35. Both native sessions closed cleanly with zero validation.
+
+Logs/results: `out/18e-work/physics-{remaining,return}-rtx-*`. Receipts under
+`out/19-testing-work/`: `physics-rtx-terminal-body-return/summary.json`,
+`physics-rtx-competing-writer.json`, `physics-rtx-final-source.json` and
+`physics-rtx-current-continuation/summary.json`. The latter's single current-data
+start/120 ticks/remove/Stop observed both enters/removal exits and child follow,
+rest Y=-0.01536744087934494 within unchanged +/-0.05 m, with exact source/status/
+history/ledger/files invariance and no Save. Unchanged retry/session tests are reused.
+
+## Intel asset publication and owner-close acceptance, 2026-11-01
+
+Intel reopened all 65 Saved/history 0, rendered/picked the signed-scale components,
+and preserved source through empty deselection/wheel/reset. Actual create-only
+metadata Write published the ninth sidecar, 633 bytes/file_flushed; Next displayed
+only that asset and Previous restored eight. ID/source/license/dependency matched.
+A stale Assets catalog observation rejected import before job admission; explicit
+refresh corrected it. This is separate from the following worker-publication control.
+
+Ready A 2/2 captured the old source. A coordinated generator-only external edit
+made Publish retain Failed/conflict `Source/metadata changed before import
+publication`, imported 0/reused 2 and old key K0. Refresh/Acknowledge preserved then
+released that original outcome. Ready B 2/2 captured the changed source/K1 != K0,
+remained untaken/unpublished, and normal close released it. Console showed 19
+entries over 16+3 pages and retained metadata receipt Details. Reversible Name
+Apply/Undo/Redo/Undo/Save preserved success despite stale-asset viewport failure;
+this is not a project-status-read failure. Native close had zero validation,
+timeout or cleanup errors: `out/18e-work/ui-editor-paths-intel-*`.
+
+Before restoring A, `out/19-testing-work/ui16d-ready-close-public.json` verified
+B stale/K1, retained K0, all 5,628 cache bytes unchanged, empty jobs/no stage, all 65
+source/typed literals and nine metadata records. Exact original A restoration
+made K0 fresh; other files/cache stayed unchanged and writer closed.
+`ui16d-stale-source-edit.json` retains the original source/cache baseline.
+These selected controls complement RTX and existing both-GPU imported-project
+handoffs. Full REQ-16 remains NOT_RUN: no supported external trigger exists for
+native post-request status-observation failure/recovery; normal Refresh and the
+observed viewport error do not qualify it. CPU recovery coverage remains valid.
+
+## Intel physics and full REQ-18 closure, 2026-11-01
+
+**18e and full REQ-18 PASS under current-machine scope.** Both-GPU native evidence
+below completes physics' own five [acceptance steps](../physics-acceptance.md).
+Unchanged 18a-18e CPU/server-profile/source-compatibility/sanitizer/protected-boundary
+results and protocol exact-retry/session controls are reused. Required both-GPU
+fixed readbacks separately qualify static reset, teleport, kinematic targets and
+interpolated descendants/child Camera. Generic 16/17 omissions are separate owners;
+this qualifies no Lua, live MMO regions, future static-world collision or
+production capacity.
+
+Intel's uniform scale 2/visual-child case matched Y=0.5/child X=2; Stop/Undo restored
+Y=3/S=1. The thin sensor with floor mask 4/actor layer 2 mask 1 allowed support near Y=0,
+runtime removal retained geometry and showed both owned exits. The solid
+(`trigger=false`) comparison supported near Y=0.75 before Undo restored true.
+Common field rejection/Motion/negative-mask controls reuse RTX/Core evidence,
+not fresh Intel passes.
+Modal tick 822 held; Cancel resumed to 1000 without blocked-time catch-up. Pause 1700/
+Step 1701, runtime-pick exclusion, disabled writes and paused tabs/resize 900x630/
+minimize/restore/maximize passed. Save/fresh Play/live close exited normally:
+**45,258 submitted/completed versus 45,257 presented**, one completed frame retired
+without presentation. Validation warnings/errors/dropped, timeout and cleanup
+errors were zero.
+
+A public owner matched all six source/typed entities/header, ran one 120-tick
+contact/removal/Stop with child follow, unchanged +/-0.05 m floor oracle and exact
+source/status/history/ledger/files invariance, then changed only friction 0.3->0.35
+and saved/closed. Actual reopen displayed Saved/history 0/friction 0.350000;
+competing open rejected. A temporary Name Apply/Play/live AltF4 modal at 1181 then
+Discard closed cleanly. Final independent complete source comparison matched the
+original Name, Dynamic/friction 0.35/T `[0,3,0]`/S=1, floor mask 4/thin sensor/children.
+Both endpoints match exactly 6,051 bytes, SHA256
+`fcb03ec7ec646199a69953db4e5fca31f60b820587448a9097a39f05723be4ff`.
+All windows/writers closed normally.
+
+Native logs/results: `out/18e-work/physics-{remaining,return}-intel-*`.
+Receipts under `out/19-testing-work/`: `physics-intel-terminal-body-return/summary.json`,
+`physics-intel-competing-writer.json`, `physics-intel-final-source.json` and the RTX
+receipts above. `native-backlog-outcomes.md` preserves exact per-GPU scope/counts.
+REQ-16's status-failure trigger and REQ-17's listed native gates remain open under
+the backlog amendment; they do not become physics gates. No workload/tolerance,
+driver/OS setting, source-control ownership or hosted protection changed.
+Assignment 19 has not started; the user's testing-backlog request remains active.
+
+## Compact native viewport acceptance, 2026-11-01
+
+Both GPUs passed actual nearest/empty-in-bounds picking, reflected/nonuniform
+hierarchy and sheared-geometry picks at original and relocated/resized image
+bounds. The fully affine perspective Camera also picked correctly through
+wheel dolly/Reset/re-pick, with source/history unchanged. A World Y=-2 parent
+drag revealed the previously culled child; Undo hid it, Redo revealed it and
+final Undo/Save restored baseline. Actual World Z=45/Snap15 rejected local shear
+without a commit or history change. These are committed-image observations,
+not held-preview/cancel evidence.
+
+The short 170-to-190-degree wrap used Snap7, independently expecting +21 degrees,
+quaternion `[0,0,0.1822355254921475,0.9832549075639545]`. Snapping distinguishes
+correct short wrapping from an incorrect raw -340-degree delta (+17 after snap),
+without loosening tolerances. Both actual releases committed once, saved that
+quaternion with unchanged T/S, and Undo/Save restored baseline. RTX additionally
+tested reversible Near Delete/Undo: deletion immediately removed old image,
+selection and Camera binding; fresh rebind/pick selected the recreated entity.
+
+Both sessions closed normally, no timeout/cleanup error, zero validation
+warnings/errors/dropped messages: RTX 96,843 and Intel 57,000 submitted/completed/
+presented frames. Native traces stayed within their 256-observation cap.
+Independent saved-source and fresh public inspection matched all 11 baseline
+entities, complete transforms/hierarchy/components, clean state and empty new
+history; writers closed. Logs/results under `out/19-testing-work/`:
+`viewport-cases-{rtx,intel}-worker/`, corresponding result JSON,
+`viewport-cases-{rtx,intel}-{reveal,wrap}-source.json`,
+`viewport-cases-{rtx,intel}-baseline.json` and `viewport-cases-native-summary.md`.
+The original licensed source/assets remain preserved.
+
+Two read-only audit-helper setup errors were corrected: an extra rigid_body
+field mismatched the prepared row shape, and requesting authority as a field
+correctly rejected. Queries were aligned to the prepared/public field list;
+expected state was unchanged, owners closed, and neither error mutated source
+or represented an engine failure. The native summary retains that diagnosis.
+
+This completes the planned atomic/control-feasible viewport selection. Full
+REQ-17 remains NOT_RUN for the original held-preview/cancellation/freshness/
+intermediate-scale and actual right/middle navigation cases. Native status-read
+failure remains REQ-16's separate capability omission. Reuse the completed
+families; do not restart their matrix merely to revisit those remaining inputs.
+
+## Final review and exact next work
+
+All selected runnable backlog checks above are complete; all test Editors and
+writers are closed and their final saved states were independently compared.
+No further engine test matrix applies to the documentation/coverage updates.
+The code correction remains covered by its final Debug/Windows ASan GUI runs;
+earlier portable input/frame, physics, renderer and process results are reused
+only for unchanged relevant inputs.
+
+Remaining required native work is a guided held-pointer pass (preview/source
+isolation, cancellation/focus/layout/close, freshness before release and sampled
+scale correction), physical right-orbit/middle-pan, and the separate native
+status-read-failure trigger/recovery case. Current documented desktop APIs cannot
+perform the first two; the last has no supported external trigger. Existing CPU
+fixtures remain valid without being relabeled native evidence. The earlier
+05c findings remain unchanged in the backlog; no identical rerun is warranted.
+No new hardware, host settings, driver repair or private invariant port was added.
+
+`.gitignore` was reviewed and already covers these outputs/caches/local roadmap;
+source, fixtures, skills and documentation remain eligible. The user owns
+staging, commits and pushing. Assignment 19 was not started.
+
+Final `tools/validate_contract.py`, `tools/check_repository.py`, pinned
+clang-format dry-run on the two changed C++ files and `git diff --check` pass.
+These validate documentation/repository/formatting, not additional engine or GPU
+behavior. No engine rerun follows the final prose/coverage updates.
+
+Suggested commit: `fix(editor): cancel mixed pointer gestures and qualify physics preview`.

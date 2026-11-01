@@ -8,11 +8,13 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**18e adds shared frozen physics preview and RigidBody editor controls;
-qualification and remaining acceptance are tracked in the
-[handoff](../handoffs/18e-editor-physics-preview.md).
-Full REQ-16, REQ-17 and REQ-18 remain NOT_RUN.** Native composition has passing
-evidence on both current-PC GPUs, while actual connected UI acceptance is partial.
+**18e and full REQ-18 PASS under current-machine scope.** The
+[handoff](../handoffs/18e-editor-physics-preview.md#intel-physics-and-full-req-18-closure-2026-11-01)
+records both-GPU physics acceptance and exact reused evidence.
+Full REQ-16 and REQ-17 remain NOT_RUN for their separate native omissions.
+Composition, imported-project handoffs and reference gestures have both-GPU
+evidence. Selected hierarchy/inspector and asset/job/console branches also pass;
+actual connected UI acceptance remains partial for the unperformed cases.
 Desktop testing has resumed; the [backlog](../backlog.md) records remaining work.
 The [shell contract](../editor-shell.md) and
 [workspace contract](../editor-scene-workspace.md) cover shared project ownership,
@@ -45,10 +47,17 @@ ambiguous-cycle rejection and focus/capture/pending-frame boundaries to the
 existing `shark.client.input` and `shark.client.frame` fixtures. Fast gizmo,
 picking and navigation consumers use `shark.editor.gui-adapter`; literal
 pre-capture motion and complete press/release cases retain one shared mutation
-and undo owner. These CPU mappings do not qualify actual native gestures.
+and undo owner. Mixed-button regressions also require raw gizmo cancellation
+without a source/history mutation. These CPU mappings do not qualify actual
+native gestures; the handoff records the separately executed native selection.
 17d extends the existing process handoff fixture with independent transform and
-saved-source expectations. Actual input/rendering acceptance remains deferred
-under the [viewport procedure](../viewport-acceptance.md); full REQ-17 is not closed.
+saved-source expectations. Both GPUs now have actual reference gestures and
+terminal/native saved-source returns. Both GPUs also passed compact affine/
+reflected/sheared picking, Camera/reset, committed culling, rejected shear and
+angle wrap; the recreated-entity freshness case ran once in primary Windows
+Debug. Remaining held-preview/cancel/freshness/intermediate-scale and right/middle
+navigation are tracked under the [viewport procedure](../viewport-acceptance.md);
+full REQ-17 is not closed.
 
 18a's [physics owner](../physics-world.md) has bounded real empty updates and
 native-registration/lifetime coverage. 18b's [body contract](../physics-bodies.md)
@@ -65,7 +74,12 @@ version 3, safe active removal and bounded post-tick enter/exit delivery. The sa
 FeatureWorld case verifies prepared filtering/triggers with unchanged authoring.
 Native editor/connected acceptance remains 18e in the
 [physics checkpoints](../roadmap/physics-plan.md).
-Full REQ-18 remains NOT_RUN.
+Full REQ-18 is PASS: native physics control/lifetime/body-setting handoffs and
+required readbacks on both GPUs complement retained Core, server-profile,
+source/history/retry, compatibility and sanitizer evidence. Common native
+validation controls use primary Windows Debug selection under the testing policy;
+they are not reported as fresh per-field/per-GPU repeats. Earlier 16/17 UI
+omissions remain independently open.
 
 **15e and full REQ-15 are complete under current-machine scope.** The
 [public example](../../examples/terminal_authoring.py) creates a fresh project,

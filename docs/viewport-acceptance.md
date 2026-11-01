@@ -1,9 +1,16 @@
 # Connected viewport and terminal acceptance
 
 17d connects the [viewport checkpoints](roadmap/viewport-interaction-plan.md).
-**Actual UI/GPU acceptance is NOT_RUN.** The user resumed desktop testing on
+**Full REQ-17 acceptance remains NOT_RUN.** The user resumed desktop testing on
 2026-10-31 after 18e implementation. Headless adapter/process results do not
 qualify native input, focus, layout, rendered previews or full REQ-17.
+
+Both-GPU reference gestures/terminal returns and the compact native
+picking/affine/culling/rejected-shear/wrap selection now pass; see the
+[current handoff](handoffs/18e-editor-physics-preview.md#compact-native-viewport-acceptance-2026-11-01).
+Remaining held-preview/cancellation/freshness/intermediate-scale and physical
+right/middle navigation stay explicit in the backlog. The procedure below
+preserves its behavioral requirements; reuse completed evidence under policy.
 
 ## Reference project and independent expectations
 

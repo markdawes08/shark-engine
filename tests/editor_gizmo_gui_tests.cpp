@@ -247,6 +247,8 @@ TEST_CASE("Gizmo fast input uses owned endpoints and never invents a press", "[e
     gui.warm(work, scene);
     bool complete = false, post_release_motion = false, ambiguous = false, missing = false,
          focus_lost = false;
+    std::optional<MouseButton> navigation_button;
+    bool navigation_release_only = false, navigation_held = false, auxiliary_only = false;
     SECTION("Motion before the first held capture still begins at the original handle") {}
     SECTION("A complete press motion release commits exactly once") {
         complete = true;
@@ -265,13 +267,43 @@ TEST_CASE("Gizmo fast input uses owned endpoints and never invents a press", "[e
         complete = true;
         focus_lost = true;
     }
+    SECTION("A complete right cycle cancels a complete left gesture") {
+        complete = true;
+        navigation_button = MouseButton::right;
+    }
+    SECTION("A complete middle cycle cancels a complete left gesture") {
+        complete = true;
+        navigation_button = MouseButton::middle;
+    }
+    SECTION("A complete auxiliary cycle cancels a complete left gesture") {
+        complete = true;
+        navigation_button = MouseButton::button_4;
+    }
+    SECTION("An auxiliary cycle alone is not consumed as a gizmo gesture") {
+        navigation_button = MouseButton::button_4;
+        auxiliary_only = true;
+    }
+    SECTION("An earlier right hold releasing with the left gesture cancels it") {
+        complete = true;
+        navigation_button = MouseButton::right;
+        navigation_release_only = true;
+    }
+    SECTION("A middle hold cancels and consumes a complete left gesture") {
+        complete = true;
+        navigation_button = MouseButton::middle;
+        navigation_held = true;
+    }
+    if (navigation_release_only) {
+        accepted(work.input.on_mouse_button(*navigation_button, ButtonAction::press));
+        static_cast<void>(work.input.capture());
+    }
     if (missing) {
         accepted(work.input.on_focus(false));
         static_cast<void>(work.input.capture());
         accepted(work.input.on_focus(true));
         static_cast<void>(work.input.capture());
         accepted(work.input.on_mouse_button(MouseButton::left, ButtonAction::press));
-    } else
+    } else if (!auxiliary_only)
         press(work, 380, 260);
     accepted(work.input.on_cursor(425, 260));
     if (complete || ambiguous)
@@ -285,8 +317,16 @@ TEST_CASE("Gizmo fast input uses owned endpoints and never invents a press", "[e
         accepted(work.input.on_focus(true));
         accepted(work.input.on_cursor(425, 260));
     }
+    if (navigation_button) {
+        if (!navigation_release_only)
+            accepted(work.input.on_mouse_button(*navigation_button, ButtonAction::press));
+        if (!navigation_held)
+            accepted(work.input.on_mouse_button(*navigation_button, ButtonAction::release));
+    }
     auto result = gui.draw(work, scene);
-    if (ambiguous || missing || focus_lost) {
+    if (ambiguous || missing || focus_lost || navigation_button) {
+        if (navigation_button)
+            CHECK(result.consumed == !auxiliary_only);
         CHECK_FALSE(result.receipt);
         CHECK_FALSE(work.widget.has_changes());
         CHECK_FALSE(work.widget.preview());

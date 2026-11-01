@@ -25,6 +25,10 @@ cursor motion arrived before capture. An unambiguous complete press/move/release
 can commit once within one capture. Missing positions, multiple cycles and
 release/repress cancel without inventing an origin or reviving held input.
 Current hover/blocking, image, revision and focus cancellation remain required.
+Activity on another mouse button cancels a left gesture, including a complete
+other-button cycle whose final held state is false. Captured button edges do not
+establish cross-button ordering; the raw gizmo must respect the same conservative
+cancellation as the GUI adapter and consume the accompanying left activity.
 
 Snap is optional: translation steps are meters, rotation steps display degrees and convert
 to radians, and scale steps are factor increments around one. The shared helper

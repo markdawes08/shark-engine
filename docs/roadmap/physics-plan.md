@@ -29,9 +29,11 @@ interpolation. 18d's [contact contract](../physics-contacts.md),
 settings, bounded native observations, owned event delivery and safe runtime
 detach with queued values. 18e adds the [shared preview](../physics-preview.md),
 native inspector/play controls and [connected acceptance](../physics-acceptance.md).
-Full REQ-18 stays NOT_RUN until its connected behavior
-and required acceptance are qualified. Every checkpoint
-uses the [testing policy](../testing-policy.md); preserve workloads/fixtures and
+**18e and full REQ-18 PASS under current-machine scope**, including the resumed
+native physics and public/Editor body-setting handoffs on both GPUs. The
+[18e handoff](../handoffs/18e-editor-physics-preview.md#intel-physics-and-full-req-18-closure-2026-11-01)
+records exact evidence, common-control reuse and independent 16/17 omissions.
+Every checkpoint uses the [testing policy](../testing-policy.md); preserve workloads/fixtures and
 reuse valid results rather than rerunning unrelated engine matrices.
 
 EngineCore owns CPU physics, with Jolt types hidden. Server authoritatively owns

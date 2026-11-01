@@ -235,6 +235,13 @@ GizmoFrameResult GizmoWidget::overlay(const client::InputSnapshot& input,
     }
     if (!left.held && !left.pressed)
         value.wait_for_release = false;
+    bool other_pointer = false;
+    for (std::size_t index = 1; index < client::mouse_button_count; ++index) {
+        const auto& state = input.mouse_buttons[index];
+        const auto& positions = input.mouse_pointer_edges[index];
+        other_pointer = other_pointer || state.held || state.pressed || state.released ||
+                        positions.press_seen || positions.release_seen || positions.ambiguous;
+    }
     const auto update_cursor = left.released && !left.held
                                    ? (edges.release_seen ? edges.release : client::CursorPosition{})
                                    : input.cursor;
@@ -243,16 +250,20 @@ GizmoFrameResult GizmoWidget::overlay(const client::InputSnapshot& input,
         input.focus_lost || input.key(client::Key::escape).pressed || !update_cursor.valid ||
         !point || !point.value() || !hovered || !value.panel.current() ||
         value.panel.needs_reconciliation() || !value.panel.selection() ||
-        scene.revision() != value.panel.revision() ||
-        input.mouse_button(client::MouseButton::right).held ||
-        input.mouse_button(client::MouseButton::middle).held) {
+        scene.revision() != value.panel.revision() || other_pointer) {
+        // Raw input also reaches this widget after ImGui cancels mixed mouse
+        // edges. Their cross-button order is unknown, even when both are up.
+        result.consumed =
+            result.consumed || (other_pointer && (left.held || left.pressed || left.released ||
+                                                  edges.press_seen || edges.release_seen));
         result.trace.reason = blocked                                            ? "blocked"
                               : !value.operation                                 ? "selection_tool"
                               : !input.focused || input.focus_lost               ? "focus_cancel"
                               : input.key(client::Key::escape).pressed           ? "escape_cancel"
                               : !update_cursor.valid || !point || !point.value() ? "outside_image"
                               : !hovered                                         ? "not_hovered"
-                              : !value.panel.selection()                         ? "no_selection"
+                              : other_pointer            ? "other_pointer_cancel"
+                              : !value.panel.selection() ? "no_selection"
                                                          : "state_unavailable";
         value.cancel();
         // Selection handles remain visible while the pointer is elsewhere.
