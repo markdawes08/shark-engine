@@ -204,6 +204,15 @@ Json component_commands(const InspectorValues& values, const InspectorValues& ba
     if (baseline.rigid_body || values.rigid_body)
         commands.push_back(
             {{"type", "set_rigid_body"}, {"entity_id", id}, {"rigid_body", std::move(body)}});
+    if (baseline.script || values.script) {
+        Json script = nullptr;
+        if (values.script) {
+            const auto validated = take(validate_script(*values.script));
+            script = {{"source", validated.source}, {"enabled", validated.enabled}};
+        }
+        commands.push_back(
+            {{"type", "set_script"}, {"entity_id", id}, {"script", std::move(script)}});
+    }
     return commands;
 }
 
@@ -266,6 +275,11 @@ InspectorValues inspector_value(const Json& value, SceneRevision revision) {
         body.collision_mask = b.at("collision_mask").get<std::uint32_t>();
         body.is_trigger = b.at("is_trigger").get<bool>();
         result.rigid_body = take(validate_rigid_body(body));
+    }
+    if (value.contains("script") && !value.at("script").is_null()) {
+        const auto& script = value.at("script");
+        result.script = take(validate_script(
+            Script{script.at("source").get<std::string>(), script.at("enabled").get<bool>()}));
     }
     return result;
 }
@@ -710,11 +724,11 @@ Result<InspectorValues> ScenePanel::inspect(AuthoredEntityId id, SceneRevision e
         if (!impl_->current() || expected != impl_->revision)
             fail(ErrorCode::conflict, "Inspector observation changed; refresh explicitly");
         impl_->require_entity(id);
-        const auto value =
-            impl_->call("scene.inspect",
-                        {{"entity_id", id.value().to_string()},
-                         {"fields", {"name", "transform", "camera", "mesh_renderer", "rigid_body"}},
-                         {"expected_revision", revision_json(expected)}});
+        const auto value = impl_->call(
+            "scene.inspect",
+            {{"entity_id", id.value().to_string()},
+             {"fields", {"name", "transform", "camera", "mesh_renderer", "rigid_body", "script"}},
+             {"expected_revision", revision_json(expected)}});
         if (revision_value(value.at("revision")) != expected || value.at("entities").size() != 1 ||
             !value.at("complete").get<bool>() || !value.at("next_cursor").is_null() ||
             value.at("scope").at("kind") != "authored" ||

@@ -109,8 +109,8 @@ SceneQueryFields fields(const Json& params) {
     if (found == params.end()) {
         return {};
     }
-    if (!found->is_array() || found->size() > 6) {
-        fail("/params/fields", "Expected at most six distinct field names");
+    if (!found->is_array() || found->size() > 7) {
+        fail("/params/fields", "Expected at most seven distinct field names");
     }
     SceneQueryFields result{false, false, false, false, false};
     for (const auto& item : *found) {
@@ -128,6 +128,8 @@ SceneQueryFields fields(const Json& params) {
             selected = &result.mesh_renderer;
         } else if (key == "rigid_body") {
             selected = &result.rigid_body;
+        } else if (key == "script") {
+            selected = &result.script;
         } else {
             fail("/params/fields", "Unknown scene field name");
         }
@@ -345,6 +347,28 @@ Json rigid_body_json(const RigidBody& body) {
             {"is_trigger", body.is_trigger}};
 }
 
+std::optional<Script> script(const Json& value, std::string_view path) {
+    if (value.is_null())
+        return std::nullopt;
+    object(value, {"source", "enabled"}, path);
+    const auto& source = text(required(value, "source", path), std::string(path) + "/source");
+    if (source.size() > script_maximum_source_path_bytes)
+        fail(std::string(path) + "/source",
+             "Script source path exceeds the retained input byte limit");
+    Script result;
+    result.source = source;
+    if (value.contains("enabled")) {
+        if (!value.at("enabled").is_boolean())
+            fail(std::string(path) + "/enabled", "Expected a boolean");
+        result.enabled = value.at("enabled").get<bool>();
+    }
+    return result;
+}
+
+Json script_json(const Script& value) {
+    return {{"source", value.source}, {"enabled", value.enabled}};
+}
+
 Name command_name(const Json& value, std::string_view path) {
     const auto& name = text(value, path);
     if (name.size() > authoring_maximum_mutation_name_bytes) {
@@ -362,7 +386,7 @@ AuthoringCommand command(const Json& value, std::string_view path) {
     if (type == "create_entity") {
         object(value,
                {"type", "entity_id", "name", "transform", "parent_id", "camera", "mesh_renderer",
-                "rigid_body"},
+                "rigid_body", "script"},
                path);
         CreateEntityCommand result{id};
         if (value.contains("name")) {
@@ -383,6 +407,8 @@ AuthoringCommand command(const Json& value, std::string_view path) {
         }
         if (value.contains("rigid_body"))
             result.rigid_body = rigid_body(value["rigid_body"], std::string(path) + "/rigid_body");
+        if (value.contains("script"))
+            result.script = script(value["script"], std::string(path) + "/script");
         return result;
     }
     if (type == "delete_entity") {
@@ -413,6 +439,11 @@ AuthoringCommand command(const Json& value, std::string_view path) {
         object(value, {"type", "entity_id", "rigid_body"}, path);
         return SetRigidBodyCommand{
             id, rigid_body(required(value, "rigid_body", path), std::string(path) + "/rigid_body")};
+    }
+    if (type == "set_script") {
+        object(value, {"type", "entity_id", "script"}, path);
+        return SetScriptCommand{
+            id, script(required(value, "script", path), std::string(path) + "/script")};
     }
     if (type == "reparent_entity") {
         object(value, {"type", "entity_id", "parent_id", "mode"}, path);
@@ -686,6 +717,8 @@ Json entity_json(const Scene& scene, const SceneInspectedEntity& entity,
     if (selected.rigid_body)
         result["rigid_body"] =
             entity.rigid_body ? rigid_body_json(*entity.rigid_body) : Json(nullptr);
+    if (selected.script)
+        result["script"] = entity.script ? script_json(*entity.script) : Json(nullptr);
     return result;
 }
 
@@ -809,6 +842,18 @@ Json body_schema() {
          "restitution"}));
 }
 
+Json script_schema() {
+    return nullable_schema(object_schema(
+        {{"source",
+          {{"type", "string"},
+           {"minimum_utf8_bytes", script_minimum_source_path_bytes},
+           {"maximum_utf8_bytes", script_maximum_source_path_bytes},
+           {"description",
+            "Project-relative scripts/*.lua path; shared component validation applies."}}},
+         {"enabled", {{"type", "boolean"}, {"default", true}}}},
+        {"source"}));
+}
+
 Json command_schema() {
     const Json name{{"type", "string"},
                     {"maximum_utf8_bytes", authoring_maximum_mutation_name_bytes}};
@@ -825,7 +870,8 @@ Json command_schema() {
                                      {"parent_id", parent},
                                      {"camera", camera},
                                      {"mesh_renderer", mesh},
-                                     {"rigid_body", body_schema()}},
+                                     {"rigid_body", body_schema()},
+                                     {"script", script_schema()}},
                                     {"type", "entity_id"}));
     options.push_back(object_schema({{"type", {{"const", "delete_entity"}}}, {"entity_id", entity}},
                                     {"type", "entity_id"}));
@@ -846,6 +892,9 @@ Json command_schema() {
                                      {"entity_id", entity},
                                      {"rigid_body", body_schema()}},
                                     {"type", "entity_id", "rigid_body"}));
+    options.push_back(object_schema(
+        {{"type", {{"const", "set_script"}}}, {"entity_id", entity}, {"script", script_schema()}},
+        {"type", "entity_id", "script"}));
     options.push_back(object_schema({{"type", {{"const", "reparent_entity"}}},
                                      {"entity_id", entity},
                                      {"parent_id", parent},
@@ -1210,6 +1259,10 @@ Result<Json> page_json(const Scene& scene, const SceneQueryPage& page, SceneQuer
 
 Json rigid_body_value_schema() {
     return body_schema();
+}
+
+Json script_value_schema() {
+    return script_schema();
 }
 
 } // namespace shark::tools::authoring_wire

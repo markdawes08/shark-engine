@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "18",
+  "current_assignment": "19",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -492,7 +492,7 @@
       "planned_fixture": "FeatureWorld/ScriptLifecycle, FeatureWorld/CoreLuaApi, LuaSyntaxRuntimeErrors, LuaRunawayRecovery and LuaStaleHandles fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "19a adds a private bounded Lua VM foundation; Script component, lifecycle, gameplay APIs and connected acceptance remain unimplemented. See docs/handoffs/19a-lua-foundation.md and docs/roadmap/lua-plan.md."
+        "reason": "19a adds a private bounded Lua VM; 19b adds shared inert Script component authoring. Lifecycle, gameplay APIs, script execution and connected acceptance remain open. See docs/handoffs/19b-script-components.md and docs/roadmap/lua-plan.md."
       }
     },
     {
@@ -3620,6 +3620,16 @@
         ],
         "id": "component.rigid-body",
         "name": "RigidBody"
+      },
+      {
+        "id": "component.script",
+        "name": "Script",
+        "requirement_ids": ["REQ-19", "REQ-09", "REQ-15"],
+        "test_ids": ["shark.core.schema", "shark.core.prepared-scene", "shark.tools.source-documents", "shark.tools.authoring-retries", "shark.tools.authoring-editing-process", "shark.editor.inspector", "shark.tools.featureworld"],
+        "test_sources": ["tests/core_schema_tests.cpp", "tests/prepared_scene_tests.cpp", "tests/source_document_tests.cpp", "tests/authoring_command_tests.cpp", "tools/tests/test_authoring_editing_process.py", "tests/editor_inspector_tests.cpp", "tests/feature_world_tests.cpp"],
+        "fixtures": ["engine_tools/src/feature_world.cpp", "assets/FeatureWorld/scenes/FeatureWorld.sharkscene", "docs/script-components.md"],
+        "fixture_reason": "Inert source references share Core validation, revisioned Scene queries, source and prepared compatibility, retained commands/history, Editor and terminal authoring. FeatureWorld independently exercises a script setting and source round trip on a separate owner. Script execution is not yet implemented.",
+        "featureworld_cases": ["featureworld.components"]
       }
     ],
     "commands": [
@@ -6478,6 +6488,16 @@
         ],
         "id": "command.set-rigid-body",
         "name": "SetRigidBodyCommand / scene.mutate set_rigid_body"
+      },
+      {
+        "id": "command.set-script",
+        "name": "SetScriptCommand / scene.mutate set_script",
+        "requirement_ids": ["REQ-19", "REQ-09", "REQ-15"],
+        "test_ids": ["shark.core.schema", "shark.tools.source-documents", "shark.tools.authoring-retries", "shark.tools.authoring-editing-process", "shark.editor.inspector", "shark.tools.featureworld"],
+        "test_sources": ["tests/core_schema_tests.cpp", "tests/source_document_tests.cpp", "tests/authoring_command_tests.cpp", "tools/tests/test_authoring_editing_process.py", "tests/editor_inspector_tests.cpp", "tests/feature_world_tests.cpp"],
+        "fixtures": ["engine_tools/src/feature_world.cpp", "assets/FeatureWorld/scenes/FeatureWorld.sharkscene", "docs/script-components.md"],
+        "fixture_reason": "The same retained command supports add/update/remove, rejection, exact retries, history, source persistence and shared Editor/terminal authoring. FeatureWorld validates an independent expected Script value and undo without changing its saved baseline.",
+        "featureworld_cases": ["featureworld.components"]
       },
       {
         "id": "terminal.scene.physics",

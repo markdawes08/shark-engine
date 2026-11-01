@@ -114,6 +114,28 @@ TEST_CASE("Package loader owns checked scene shader and identity snapshots witho
     CHECK(located.filename() == prepared_startup_filename);
 }
 
+TEST_CASE("Package inspection preserves Script metadata but Runtime refuses unsupported execution",
+          "[prepared-package]") {
+    Package package;
+    package.scene.entities[1].script = Script{"scripts/package.lua", true};
+    package.publish_scene();
+    package.publish_startup();
+    const auto inspected = take(load_prepared_package(package.path));
+    const auto entity = take(inspected.content->scene().find(id<AuthoredEntityId>('5')));
+    const Script expected{"scripts/package.lua", true};
+    CHECK(take(inspected.content->scene().entity_state(entity)).script == expected);
+#if defined(_WIN32) && (defined(_M_X64) || defined(__x86_64__))
+    SceneLaunchOptions options;
+    options.package = package.path;
+    const auto launched = run_scene("test", options);
+    REQUIRE_FALSE(launched);
+    CHECK(launched.error().code == ErrorCode::capability_unavailable);
+    CHECK(launched.error().context.operation == "client.scene.run");
+    CHECK(launched.error().context.path == expected.source);
+    CHECK(launched.error().context.entity_id == id<AuthoredEntityId>('5').value().to_string());
+#endif
+}
+
 TEST_CASE("Package loader validates external mesh identities and every hidden reference",
           "[prepared-package]") {
     Package package;

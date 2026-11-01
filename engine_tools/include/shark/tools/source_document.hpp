@@ -5,6 +5,7 @@
 #include "shark/project_path.hpp"
 #include "shark/render_components.hpp"
 #include "shark/scene_identity.hpp"
+#include "shark/script_components.hpp"
 #include "shark/transform.hpp"
 #include "shark/world_position.hpp"
 
@@ -59,6 +60,7 @@ struct SourceEntity {
     std::optional<Camera> camera{};
     std::optional<MeshRenderer> mesh_renderer{};
     std::optional<RigidBody> rigid_body{};
+    std::optional<Script> script{};
     bool operator==(const SourceEntity&) const = default;
 };
 

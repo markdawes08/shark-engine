@@ -99,7 +99,7 @@ TEST_CASE("Editor inspector commits canonical component drafts as one shared his
     CHECK_FALSE(work.session->state().dirty);
     const auto initial = work.scene.revision();
     auto schemas = component_schemas();
-    REQUIRE(schemas.size() == 5);
+    REQUIRE(schemas.size() == 6);
     CHECK_FALSE(schemas[0].removable);
     CHECK(schemas[2].removable);
     draft.name.value = "Renamed";
@@ -163,6 +163,43 @@ TEST_CASE("Editor inspector commits canonical component drafts as one shared his
     const auto absent = take(work.scene.inspect(entity(1), removed.revision));
     CHECK_FALSE(absent.camera);
     CHECK_FALSE(absent.mesh_renderer);
+}
+
+TEST_CASE("Editor Script draft shares atomic history and source persistence",
+          "[editor-inspector]") {
+    Workspace work;
+    const auto initial = work.scene.revision();
+    work.inspector.draft()->script = Script{"../escape.lua", true};
+    rejected(work.inspector.apply(), ErrorCode::invalid_path);
+    CHECK(work.scene.revision() == initial);
+    CHECK_FALSE(take(work.scene.inspect(entity(1), initial)).script);
+    CHECK(take(work.scene.history(initial)).undo_entries == 0);
+
+    work.inspector.draft()->script = Script{"scripts/npc/patrol.lua", false};
+    work.inspector.draft()->name.value = "Scripted";
+    CHECK(work.inspector.dirty());
+    const auto edit = take(work.inspector.apply());
+    CHECK(edit.changed);
+    CHECK_FALSE(edit.refresh_error);
+    CHECK(take(work.scene.inspect(entity(1), edit.revision)).script ==
+          Script{"scripts/npc/patrol.lua", false});
+    auto history = take(work.scene.history(edit.revision));
+    REQUIRE(history.next_undo);
+    const auto undo = take(work.scene.undo(history.next_undo->ticket, history.revision));
+    const auto restored = take(work.scene.inspect(entity(1), undo.revision));
+    CHECK_FALSE(restored.script);
+    CHECK(restored.name.value == "Original");
+    history = take(work.scene.history(undo.revision));
+    REQUIRE(history.next_redo);
+    const auto redo = take(work.scene.redo(history.next_redo->ticket, history.revision));
+    CHECK(take(work.scene.inspect(entity(1), redo.revision)).script ==
+          Script{"scripts/npc/patrol.lua", false});
+    take(work.session->save(redo.revision));
+    take(work.session->close(CloseChoice::reject, redo.revision));
+    accepted(work.session->open("Project.sharkproject"));
+    accepted(work.scene.refresh());
+    CHECK(take(work.scene.inspect(entity(1), work.scene.revision())).script ==
+          Script{"scripts/npc/patrol.lua", false});
 }
 
 TEST_CASE("Editor inspector rejection preserves original scene draft and shared history",

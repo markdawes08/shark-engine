@@ -17,6 +17,10 @@ resolution, save/replace and external-edit conflicts.
 source/command/history/retry and terminal paths. Native body snapshots never
 write back to authored state; nonempty simulation retains 18c.
 
+19b adds optional [Script settings](script-components.md) through the same
+validated source and shared authoring owner. A reference does not load or run
+the file. Old source remains readable; older readers reject the new component.
+
 ## Versions and identity
 
 `.sharkproject` and `.sharkscene` are readable UTF-8 JSON objects with exact
@@ -45,11 +49,12 @@ default. Arrays retain their input order; JSON object key order is not semantic.
 | Project scene entry | `scene_id`, `path` | None |
 | Scene | `format`, `schema_version`, `project_id`, `scene_id`, `entities` | `world_origin`, `extras` |
 | Scene entity | `entity_id`, `components` | `parent`, `extras` |
-| Components | `shark.name`, `shark.transform` | `shark.camera`, `shark.mesh_renderer` |
+| Components | `shark.name`, `shark.transform` | `shark.camera`, `shark.mesh_renderer`, `shark.rigid_body`, `shark.script` |
 | Name | `schema_version` (1) | `value` (default `Entity`) |
 | Transform | `schema_version` (1) | `translation`, `rotation`, `scale` (Core defaults) |
 | Camera | `schema_version` (1) | `projection`, `vertical_fov_radians`, `orthographic_height`, `near_clip`, `far_clip` |
 | MeshRenderer | `schema_version` (1), `asset_id` | `mesh_index` (default 0), `visible` (default true) |
+| Script | `schema_version` (1), `source` | `enabled` (default true) |
 | World origin | `world_id`, `cell`, `offset` | None |
 
 Project names use the same Name validator as entities. A project contains 1..256

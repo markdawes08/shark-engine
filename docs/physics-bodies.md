@@ -85,7 +85,7 @@ remain. Runtime gains no JSON/source parser, authoring service or SDK headers.
 
 Terminal schema discovery exposes the same component and units. `scene.query`
 and `scene.inspect` opt into `rigid_body`, selected null means absent, and omitting
-the field omits its output. Up to six distinct field names are supported. Through
+the field omits its output. Up to seven distinct field names are supported. Through
 `scene.mutate`, `create_entity` accepts optional `rigid_body`; `set_rigid_body`
 requires the complete value or null. Its value has the original eight required fields plus the three optional
 collision fields above, without a source `schema_version`. These are trusted local development operations,

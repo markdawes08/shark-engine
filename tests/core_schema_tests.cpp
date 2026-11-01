@@ -1,6 +1,8 @@
 #include <shark/scene.hpp>
 #include <shark/schema.hpp>
 
+#include "scene_edit_access.hpp"
+
 #include <catch2/catch_test_macros.hpp>
 
 #include <array>
@@ -86,9 +88,11 @@ shark::EntitySeed seed() {
 TEST_CASE("schema catalog publishes stable required component and typed property identities",
           "[schema]") {
     const auto catalog = shark::component_schemas();
-    REQUIRE(catalog.size() == 5);
+    REQUIRE(catalog.size() == 6);
     CHECK(catalog[4].stable_id == "shark.rigid_body");
     CHECK(catalog[4].properties.size() == 11);
+    CHECK(catalog[5].stable_id == "shark.script");
+    CHECK(catalog[5].properties.size() == 2);
     CHECK(catalog[0].id == ComponentSchemaId::name);
     CHECK(catalog[0].stable_id == "shark.name");
     CHECK(catalog[0].display_name == "Name");
@@ -201,7 +205,7 @@ TEST_CASE("schema metadata and defaults are owned copies isolated from later dis
 
 TEST_CASE("schema lookups and validation reject unknown identities versions and value types",
           "[schema]") {
-    for (const auto unknown : std::array{0U, 6U, std::numeric_limits<std::uint32_t>::max()}) {
+    for (const auto unknown : std::array{0U, 7U, std::numeric_limits<std::uint32_t>::max()}) {
         const auto id = static_cast<ComponentSchemaId>(unknown);
         schema_failure(shark::component_schema(id), "schema.lookup");
         schema_failure(shark::property_schema(id, PropertyId::name_value), "schema.property");
@@ -210,7 +214,7 @@ TEST_CASE("schema lookups and validation reject unknown identities versions and 
     for (const auto version : std::array{0U, 2U, std::numeric_limits<std::uint32_t>::max()}) {
         for (const auto id : std::array{ComponentSchemaId::name, ComponentSchemaId::transform,
                                         ComponentSchemaId::camera, ComponentSchemaId::mesh_renderer,
-                                        ComponentSchemaId::rigid_body}) {
+                                        ComponentSchemaId::rigid_body, ComponentSchemaId::script}) {
             const auto lookup = shark::component_schema(id, version);
             schema_failure(lookup, "schema.lookup");
             CHECK(lookup.error().message.find("supported version is 1") != std::string::npos);
@@ -454,4 +458,131 @@ TEST_CASE("local schema validity does not promise hierarchy world feasibility", 
     const auto state = owner->entity_state(child.value());
     REQUIRE(state);
     CHECK(state.value().local_transform == shark::Transform{});
+}
+
+TEST_CASE("script source validation and schema use bounded project-relative Lua paths",
+          "[schema]") {
+    const shark::Script initial{};
+    CHECK(initial.source == "scripts/main.lua");
+    CHECK(initial.enabled);
+    CHECK(shark::validate_script(initial));
+    CHECK(shark::validate_script({"scripts/npc/combat.lua", false}));
+    const auto schema = shark::component_schema(ComponentSchemaId::script);
+    REQUIRE(schema);
+    CHECK_FALSE(schema.value().required);
+    CHECK(schema.value().removable);
+    CHECK(std::get<std::string>(schema.value().properties[0].default_value) == initial.source);
+    CHECK(
+        std::get<shark::TextConstraints>(schema.value().properties[0].constraints).minimum_bytes ==
+        shark::script_minimum_source_path_bytes);
+    CHECK(std::get<bool>(schema.value().properties[1].default_value));
+    CHECK(shark::validate_component(ComponentSchemaId::script, 1, initial));
+    CHECK_FALSE(shark::validate_component(ComponentSchemaId::script, 1, shark::Name{}));
+
+    const std::array invalid{std::string{},
+                             std::string{"main.lua"},
+                             std::string{"Scripts/main.lua"},
+                             std::string{"scripts/.lua"},
+                             std::string{"scripts/main.LUA"},
+                             std::string{"scripts/../outside.lua"},
+                             std::string{"scripts//outside.lua"},
+                             std::string{"scripts/CON.lua"},
+                             std::string{"scripts/a\\b.lua"},
+                             std::string{"scripts/a"} + char{0x7f} + ".lua",
+                             std::string{"scripts/a"} + static_cast<char>(0xff) + ".lua"};
+    for (const auto& source : invalid) {
+        INFO(source);
+        const shark::Script value{source, true};
+        CHECK_FALSE(shark::validate_script(value));
+        CHECK_FALSE(shark::validate_component(ComponentSchemaId::script, 1, value));
+    }
+    std::string maximum{"scripts/"};
+    for (int i = 0; i < 15; ++i)
+        maximum += std::string(255, 'a') + '/';
+    maximum += std::string(244, 'b') + ".lua";
+    REQUIRE(maximum.size() == shark::script_maximum_source_path_bytes);
+    CHECK(shark::validate_script({maximum, true}));
+    maximum.insert(8, "a");
+    CHECK_FALSE(shark::validate_script({maximum, true}));
+}
+
+TEST_CASE("scene script writes are revisioned copied and preserve deferred boundaries",
+          "[schema]") {
+    auto owner = scene();
+    auto invalid_seed = seed();
+    invalid_seed.script = shark::Script{"outside.lua", true};
+    CHECK_FALSE(owner->create_entity(invalid_seed));
+    auto initial_seed = seed();
+    initial_seed.script = shark::Script{"scripts/first.lua", false};
+    auto entity = owner->create_entity(initial_seed);
+    REQUIRE(entity);
+    const auto original = owner->entity_state(entity.value());
+    REQUIRE(original);
+    CHECK(original.value().script == initial_seed.script);
+    const auto before = owner->stats();
+    REQUIRE(before);
+    CHECK(owner->set_script(entity.value(), initial_seed.script));
+    CHECK(owner->stats().value().revision == before.value().revision);
+    CHECK_FALSE(owner->set_script(entity.value(), shark::Script{"scripts/../bad.lua", true}));
+    CHECK(owner->stats().value().revision == before.value().revision);
+
+    const auto inspected =
+        owner->inspect_entity(entity.value(), {false, false, false, false, false, false, true});
+    REQUIRE(inspected);
+    REQUIRE(inspected.value().entities().size() == 1);
+    CHECK(inspected.value().entities()[0].script == initial_seed.script);
+    const auto base = shark::SceneRevision{before.value().instance, before.value().revision};
+    auto candidate = shark::scene_detail::SceneEditAccess::prepare(*owner, base);
+    REQUIRE(candidate);
+    CHECK(candidate.value()->entity_state(entity.value()).value().script == initial_seed.script);
+    CHECK(
+        candidate.value()->set_script(entity.value(), shark::Script{"scripts/changed.lua", true}));
+    CHECK(owner->entity_state(entity.value()).value().script == initial_seed.script);
+    CHECK(shark::scene_detail::SceneEditAccess::commit(*owner, *candidate.value(), base));
+    CHECK(owner->entity_state(entity.value()).value().script->source == "scripts/changed.lua");
+
+    auto pending =
+        owner->defer_set_script(entity.value(), shark::Script{"scripts/next.lua", false});
+    REQUIRE(pending);
+    CHECK_FALSE(owner->set_script(entity.value(), std::nullopt));
+    const auto applied = owner->apply_deferred();
+    REQUIRE(applied);
+    REQUIRE(applied.value().outcomes.size() == 1);
+    CHECK(applied.value().outcomes[0].kind == shark::SceneMutationKind::set_script);
+    CHECK(applied.value().outcomes[0].result);
+    CHECK(owner->entity_state(entity.value()).value().script->source == "scripts/next.lua");
+    CHECK_FALSE(
+        owner->defer_set_script(entity.value(), shark::Script{"scripts/../../bad.lua", true}));
+    CHECK(owner->set_script(entity.value(), std::nullopt));
+    CHECK_FALSE(owner->entity_state(entity.value()).value().script);
+    CHECK(owner->destroy_entity(entity.value()));
+    CHECK_FALSE(owner->set_script(entity.value(), shark::Script{}));
+}
+
+TEST_CASE("script deferred queue is bounded and replica metadata stays inert", "[schema]") {
+    auto created = shark::Scene::create(
+        shark::AuthoredSceneScope{shark::SceneId{fixed_id("00000000-0000-4000-8000-000000000001")}},
+        {.max_entities = 2, .max_pending_mutations = 1, .max_hierarchy_depth = 2});
+    REQUIRE(created);
+    auto owner = std::move(created).value();
+    auto entity = owner->create_entity(seed());
+    REQUIRE(entity);
+    REQUIRE(owner->defer_set_script(entity.value(), shark::Script{"scripts/first.lua", true}));
+    CHECK_FALSE(owner->defer_set_script(entity.value(), shark::Script{"scripts/second.lua", true}));
+    CHECK(owner->stats().value().pending_mutations == 1);
+    REQUIRE(owner->apply_deferred());
+    CHECK(owner->entity_state(entity.value()).value().script->source == "scripts/first.lua");
+
+    const auto id = fixed_id("00000000-0000-4000-8000-000000000003");
+    auto replica = shark::Scene::create(
+        shark::ReplicaSceneScope{shark::WorldId{id}, shark::ReplicaSessionId{id}});
+    REQUIRE(replica);
+    shark::EntitySeed replica_seed{
+        shark::WorldEntityId{id},
+        shark::AuthorityStamp{shark::RegionId{id}, shark::RegionInstanceId{id}, 1}};
+    replica_seed.script = shark::Script{"scripts/presentation.lua", false};
+    const auto replica_entity = replica.value()->create_entity(replica_seed);
+    REQUIRE(replica_entity);
+    CHECK(replica.value()->entity_state(replica_entity.value()).value().script ==
+          replica_seed.script);
 }

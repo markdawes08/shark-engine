@@ -7,14 +7,14 @@
 namespace shark {
 namespace {
 
-const std::array<ComponentSchema, 5>& catalog() {
+const std::array<ComponentSchema, 6>& catalog() {
     constexpr auto minimum = std::numeric_limits<double>::lowest();
     constexpr auto maximum = std::numeric_limits<double>::max();
     constexpr auto writable = PropertyMutability::scene_owner_write;
     const Transform defaults;
     const Camera camera;
     const RigidBody body;
-    static const std::array<ComponentSchema, 5> schemas{
+    static const std::array<ComponentSchema, 6> schemas{
         ComponentSchema{ComponentSchemaId::name,
                         "shark.name",
                         "Name",
@@ -124,7 +124,20 @@ const std::array<ComponentSchema, 5>& catalog() {
               PropertyType::uint32, PropertyUnit::none, writable, body.collision_mask,
               Uint32Constraints{0, 0xffff}},
              {PropertyId::rigid_body_is_trigger, "is_trigger", "Trigger", PropertyType::boolean,
-              PropertyUnit::none, writable, body.is_trigger, BooleanConstraints{}}}}};
+              PropertyUnit::none, writable, body.is_trigger, BooleanConstraints{}}}},
+        ComponentSchema{
+            ComponentSchemaId::script,
+            "shark.script",
+            "Script",
+            component_schema_version,
+            false,
+            true,
+            {{PropertyId::script_source, "source", "Source", PropertyType::utf8_text,
+              PropertyUnit::none, writable, Script{}.source,
+              TextConstraints{script_minimum_source_path_bytes, script_maximum_source_path_bytes,
+                              true, true, false, false}},
+             {PropertyId::script_enabled, "enabled", "Enabled", PropertyType::boolean,
+              PropertyUnit::none, writable, true, BooleanConstraints{}}}}};
     return schemas;
 }
 
@@ -150,6 +163,9 @@ Result<std::size_t> schema_index(const ComponentSchemaId id, const std::uint32_t
     case ComponentSchemaId::rigid_body:
         index = 4;
         break;
+    case ComponentSchemaId::script:
+        index = 5;
+        break;
     default:
         return schema_error(operation, "Unknown component schema ID");
     }
@@ -162,7 +178,7 @@ Result<std::size_t> schema_index(const ComponentSchemaId id, const std::uint32_t
 
 } // namespace
 
-std::array<ComponentSchema, 5> component_schemas() {
+std::array<ComponentSchema, 6> component_schemas() {
     return catalog();
 }
 
@@ -233,6 +249,15 @@ Result<ComponentValue> validate_component(const ComponentSchemaId id, const std:
         if (!body)
             return schema_error("schema.validate", "RigidBody schema requires a RigidBody value");
         auto valid = validate_rigid_body(*body);
+        if (!valid)
+            return valid.error();
+        return value;
+    }
+    if (id == ComponentSchemaId::script) {
+        const auto* script = std::get_if<Script>(&value);
+        if (!script)
+            return schema_error("schema.validate", "Script schema requires a Script value");
+        auto valid = validate_script(*script);
         if (!valid)
             return valid.error();
         return value;

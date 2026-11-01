@@ -16,6 +16,7 @@ struct CreateEntityCommand {
     std::optional<Camera> camera{};
     std::optional<MeshRenderer> mesh_renderer{};
     std::optional<RigidBody> rigid_body{};
+    std::optional<Script> script{};
 };
 
 struct DeleteEntityCommand {
@@ -49,6 +50,11 @@ struct SetRigidBodyCommand {
     std::optional<RigidBody> rigid_body;
 };
 
+struct SetScriptCommand {
+    AuthoredEntityId id;
+    std::optional<Script> script;
+};
+
 struct ReparentEntityCommand {
     AuthoredEntityId id;
     std::optional<AuthoredEntityId> parent{};
@@ -57,9 +63,10 @@ struct ReparentEntityCommand {
 
 // Typed local authoring values, not a player or serialized authoring protocol.
 // A command is one immediate edit; no batch, history or retry identity is implied.
-using AuthoringCommand = std::variant<CreateEntityCommand, DeleteEntityCommand, SetNameCommand,
-                                      SetTransformCommand, ReparentEntityCommand, SetCameraCommand,
-                                      SetMeshRendererCommand, SetRigidBodyCommand>;
+using AuthoringCommand =
+    std::variant<CreateEntityCommand, DeleteEntityCommand, SetNameCommand, SetTransformCommand,
+                 ReparentEntityCommand, SetCameraCommand, SetMeshRendererCommand,
+                 SetRigidBodyCommand, SetScriptCommand>;
 
 struct AuthoringCommandEffect {
     bool changed;

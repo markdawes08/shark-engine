@@ -48,11 +48,15 @@ serially and preserve existing results. Items in the [UI backlog](docs/backlog.m
 remain NOT_RUN until their required evidence passes; resumption alone does not
 qualify untested behavior or close full UI acceptance.
 
-**Current handoff: [19a, Lua foundation](docs/handoffs/19a-lua-foundation.md).**
-Follow the [Lua checkpoints](docs/roadmap/lua-plan.md) and [private VM contract](docs/lua-vm.md).
-Lua remains a private bounded Core dependency; no Script component, gameplay
-binding or user-facing execution API is claimed in 19a. Instruction limits do
-not bound work inside native library calls. The next checkpoint is 19b.
+**Current handoff: [19b, Script settings](docs/handoffs/19b-script-components.md).**
+Follow the [Lua checkpoints](docs/roadmap/lua-plan.md), [private VM contract](docs/lua-vm.md),
+[Script contract](docs/script-components.md) and [ADR 0050](docs/architecture/0050-script-components.md).
+Script source/enabled values share Core Scene, the retained authoring owner,
+source persistence, Editor and terminal paths. Prepared v4 preserves inert
+settings; standalone export and Runtime activation reject Script-bearing scenes
+until execution/cooking lands. Viewport and physics preview remain available.
+Lua instruction limits do not bound work inside native library calls. The next
+checkpoint is 19c: lifecycle and checked server/client-separated gameplay APIs.
 The completed physics work is recorded in [18e](docs/handoffs/18e-editor-physics-preview.md).
 Follow [ADR 0045](docs/architecture/0045-physics-foundation.md) and the
 [physics-world contract](docs/physics-world.md): Jolt is a private locked Core

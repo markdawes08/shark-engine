@@ -53,6 +53,7 @@ parse_optional_revision(const nlohmann::json& params);
 [[nodiscard]] nlohmann::json batch_reply_schema();
 
 [[nodiscard]] nlohmann::json rigid_body_value_schema();
+[[nodiscard]] nlohmann::json script_value_schema();
 
 // Returns the catalog array; the service owns the method-result envelope.
 [[nodiscard]] Result<nlohmann::json> component_schemas_json();

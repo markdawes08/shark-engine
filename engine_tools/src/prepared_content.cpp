@@ -118,7 +118,8 @@ Result<std::vector<std::byte>> prepare_scene(const AuthoredScene& owner,
         prepared.entities.reserve(source.entities.size());
         for (const auto& entity : source.entities) {
             prepared.entities.push_back({entity.id, entity.parent, entity.name, entity.transform,
-                                         entity.camera, entity.mesh_renderer, entity.rigid_body});
+                                         entity.camera, entity.mesh_renderer, entity.rigid_body,
+                                         entity.script});
         }
         auto encoded = encode_prepared_scene(prepared);
         if (!encoded)

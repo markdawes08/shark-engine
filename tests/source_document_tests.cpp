@@ -108,6 +108,37 @@ std::string extras_with_string(const std::size_t bytes) {
 
 } // namespace
 
+TEST_CASE("Script source component round trips and rejects invalid documents",
+          "[source-documents]") {
+    const auto input = render_scene_text(
+        R"("shark.script":{"schema_version":1,"source":"scripts/quests/arrival.lua","enabled":false})");
+    const auto document = decode_scene_document(input);
+    REQUIRE(document);
+    REQUIRE(document.value().document.entities[0].script);
+    CHECK(document.value().document.entities[0].script->source == "scripts/quests/arrival.lua");
+    CHECK_FALSE(document.value().document.entities[0].script->enabled);
+    const auto encoded = encode_scene_document(document.value().document);
+    REQUIRE(encoded);
+    const auto decoded = decode_scene_document(encoded.value());
+    REQUIRE(decoded);
+    CHECK(decoded.value().document == document.value().document);
+    const auto defaults = decode_scene_document(
+        render_scene_text(R"("shark.script":{"schema_version":1,"source":"scripts/start.lua"})"));
+    REQUIRE(defaults);
+    CHECK(defaults.value().document.entities[0].script->enabled);
+    for (const auto invalid :
+         {R"("shark.script":{"schema_version":2,"source":"scripts/start.lua"})",
+          R"("shark.script":{"schema_version":1})",
+          R"("shark.script":{"schema_version":1,"source":"../start.lua"})",
+          R"("shark.script":{"schema_version":1,"source":"scripts/start.lua","enabled":"yes"})",
+          R"("shark.script":{"schema_version":1,"source":"scripts/start.lua","extra":1})"}) {
+        rejected_scene(render_scene_text(invalid));
+    }
+    auto oversized = document.value().document;
+    oversized.entities[0].script->source = std::string(4097, 'x');
+    CHECK_FALSE(encode_scene_document(oversized));
+}
+
 TEST_CASE("source document identities remain distinct authored value types", "[source-documents]") {
     STATIC_REQUIRE_FALSE(std::is_same_v<ProjectId, shark::SceneId>);
     STATIC_REQUIRE_FALSE(std::is_same_v<ProjectId, shark::WorldId>);

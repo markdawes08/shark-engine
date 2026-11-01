@@ -105,6 +105,7 @@ TEST_CASE("Inspector widget preserves blocked and stale drafts without touching 
     REQUIRE(inspector.refresh());
     inspector.draft()->name.value = "Draft ## literal";
     inspector.draft()->transform.scale = {-2, 3, 4};
+    inspector.draft()->script = Script{"scripts/npc/patrol.lua", false};
     InspectorWidget widget{inspector, scene};
     const auto revision = scene.revision();
     const auto history = take(scene.history(revision));
@@ -112,6 +113,7 @@ TEST_CASE("Inspector widget preserves blocked and stale drafts without touching 
     gui.draw(widget, true);
     CHECK(widget.has_changes());
     CHECK(inspector.draft()->name.value == "Draft ## literal");
+    CHECK(inspector.draft()->script == Script{"scripts/npc/patrol.lua", false});
     CHECK_FALSE(session->state().dirty);
     CHECK(scene.revision() == revision);
     CHECK(take(scene.inspect(fixture.first, revision)).name.value == "Original");

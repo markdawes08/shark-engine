@@ -3,6 +3,7 @@
 #include "shark/name.hpp"
 #include "shark/physics_components.hpp"
 #include "shark/render_components.hpp"
+#include "shark/script_components.hpp"
 #include "shark/transform.hpp"
 
 #include <array>
@@ -21,7 +22,8 @@ enum class ComponentSchemaId : std::uint32_t {
     transform = 2,
     camera = 3,
     mesh_renderer = 4,
-    rigid_body = 5
+    rigid_body = 5,
+    script = 6
 };
 enum class PropertyId : std::uint32_t {
     name_value = 1,
@@ -47,6 +49,8 @@ enum class PropertyId : std::uint32_t {
     rigid_body_collision_layer = 21,
     rigid_body_collision_mask = 22,
     rigid_body_is_trigger = 23,
+    script_source = 24,
+    script_enabled = 25,
 };
 inline constexpr std::uint32_t component_schema_version = 1;
 
@@ -168,14 +172,14 @@ struct ComponentSchema {
 
 // Fixed engine-owned catalog in stable ID/property order. Every result owns its
 // strings/defaults/metadata; editing a returned copy cannot alter the catalog.
-[[nodiscard]] std::array<ComponentSchema, 5> component_schemas();
+[[nodiscard]] std::array<ComponentSchema, 6> component_schemas();
 [[nodiscard]] Result<ComponentSchema>
 component_schema(ComponentSchemaId id, std::uint32_t version = component_schema_version);
 [[nodiscard]] Result<PropertySchema>
 property_schema(ComponentSchemaId component, PropertyId property,
                 std::uint32_t version = component_schema_version);
 
-using ComponentValue = std::variant<Name, Transform, Camera, MeshRenderer, RigidBody>;
+using ComponentValue = std::variant<Name, Transform, Camera, MeshRenderer, RigidBody, Script>;
 
 // Pure local validation returns an owned, canonical value using the same Name
 // and Transform validators as Scene. It does not validate world-matrix/hierarchy

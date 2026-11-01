@@ -134,6 +134,57 @@ class AuthoringEditingProcessTests(unittest.TestCase):
         saved = json.loads(self.scene_path.read_text(encoding="utf-8"))
         self.assertIn("Harbor \u96ea", json.dumps(saved, ensure_ascii=False))
 
+    def test_script_discovery_retained_edits_and_reopen(self):
+        first = {"source": "scripts/demo.lua", "enabled": True}
+        second = {"source": "scripts/other.lua", "enabled": False}
+        with self.client() as client:
+            discovery = client.result("protocol.discover")
+            self.assertIn("shark.script", json.dumps(discovery))
+            self.assertIn("set_script", json.dumps(discovery))
+            created = client.result("text.write", {"path": first["source"], "text": "return 1\n",
+                                                    "expected_revision": None})
+            self.assertTrue(created["publication"]["published"])
+            self.edit(client, {"type": "create_entity", "entity_id": ENTITY,
+                               "script": {"source": first["source"]}})
+            def inspect(fields=("name", "transform", "hierarchy", "camera", "mesh_renderer", "rigid_body", "script")):
+                return client.result("scene.inspect", {"entity_id": ENTITY, "fields": list(fields)})["entities"][0]
+            self.assertEqual(inspect()["script"], first)
+            self.assertNotIn("script", inspect(("name",)))
+            before = client.result("project.status")
+            bad = {"type": "set_script", "entity_id": ENTITY,
+                   "script": {"source": "scripts/../escape.lua", "enabled": True}}
+            self.effect(client.result("scene.mutate", self.mutation(client, {"type": "command", "command": bad})), ok=False)
+            self.assertEqual(client.result("project.status"), before)
+            malformed = {"type": "set_script", "entity_id": ENTITY,
+                         "script": {"source": first["source"], "enabled": "yes"}}
+            self.rpc_error(client.call("scene.mutate", self.mutation(client, {"type": "command", "command": malformed})))
+            command = {"type": "set_script", "entity_id": ENTITY, "script": second}
+            intent = self.mutation(client, {"type": "command", "command": command})
+            result = client.result("scene.mutate", intent)
+            self.effect(result)
+            replay = client.result("scene.mutate", intent)
+            self.assertEqual(replay["state"], "replayed")
+            self.assertEqual(replay["outcome"], result["outcome"])
+            for field, value in (("source", first["source"]), ("enabled", True)):
+                mismatch = copy.deepcopy(intent)
+                mismatch["operation"]["command"]["script"][field] = value
+                self.assertEqual(client.result("scene.mutate", mismatch)["state"], "payload_mismatch")
+            history = client.result("scene.history")
+            self.effect(client.result("scene.mutate", self.mutation(client, {"type": "undo", "ticket": history["next_undo"]["ticket"]})))
+            self.assertEqual(inspect()["script"], first)
+            history = client.result("scene.history")
+            self.effect(client.result("scene.mutate", self.mutation(client, {"type": "redo", "ticket": history["next_redo"]["ticket"]})))
+            self.assertEqual(inspect()["script"], second)
+            self.save(client)
+            client.result("project.close")
+            client.result("project.open", {"path": "FeatureWorld.sharkproject"})
+            self.assertEqual(inspect()["script"], second)
+            self.assertEqual(client.result("text.read", {"path": first["source"]})["text"], "return 1\n")
+            client.finish()
+        saved = json.loads(self.scene_path.read_text(encoding="utf-8"))
+        component = next(row for row in saved["entities"] if row["entity_id"] == ENTITY)["components"]["shark.script"]
+        self.assertEqual(component, {"schema_version": 1, **second})
+
     def test_rigid_body_discovery_retained_fields_constraints_and_reopen(self):
         body = {"motion": "dynamic", "shape": "capsule", "half_extents": [0.5, 0.75, 1.0],
                 "radius": 0.25, "half_height": 0.75, "mass": 2.0, "friction": 0.5, "restitution": 0.25,

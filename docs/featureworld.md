@@ -1,5 +1,10 @@
 # Saved FeatureWorld
 
+19b extends `featureworld.components` with an independent Script setting,
+strict source round trip, invalid-path rejection, prepared snapshot and undo on
+a separate owner. The saved source and case IDs remain unchanged. The component
+is inert; this is not a Lua lifecycle or gameplay test.
+
 18d extends the same eighteenth case with prepared version-3 collision settings
 and a native sensor. Independent gravity and enter/exit checks prove filtering
 and nonresponse while source/history stay unchanged. The saved fixture and case

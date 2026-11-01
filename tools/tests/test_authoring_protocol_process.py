@@ -242,6 +242,12 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
                                                     "standalone_export": False,
                                                     "physics_preview": True})
         self.assertEqual({method["name"] for method in discovery["methods"]}, METHODS)
+        methods = {method["name"]: method for method in discovery["methods"]}
+        component_schema = methods["schema.components"]["result"]["properties"]["components"]
+        self.assertEqual((component_schema["minItems"], component_schema["maxItems"]), (6, 6))
+        fields = methods["scene.query"]["params"]["properties"]["fields"]
+        self.assertEqual(fields["maxItems"], 7)
+        self.assertIn("script", fields["items"]["enum"])
         for method in discovery["methods"]:
             self.assertTrue(method["params"] and method["result"] and method["example"], method)
             self.assertEqual(method["execution_context"], "cpu_owner_thread")
@@ -250,8 +256,8 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
         schema = self.finite("--request", encoded(request("schema.components")), root=False)["result"]
         self.assertEqual(schema["components"], discovery["components"])
         components = {value["stable_id"]: value for value in schema["components"]}
-        self.assertEqual(set(components), {"shark.name", "shark.transform", "shark.camera", "shark.mesh_renderer", "shark.rigid_body"})
-        self.assertEqual(sum(len(value["properties"]) for value in components.values()), 23)
+        self.assertEqual(set(components), {"shark.name", "shark.transform", "shark.camera", "shark.mesh_renderer", "shark.rigid_body", "shark.script"})
+        self.assertEqual(sum(len(value["properties"]) for value in components.values()), 25)
         for name, value in components.items():
             self.assertEqual(value["version"], 1)
             self.assertEqual(value["required"], name in {"shark.name", "shark.transform"})
@@ -267,6 +273,10 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
                 elif name == "shark.rigid_body" and prop["key"] == "is_trigger":
                     self.assertEqual(prop["type"], "boolean")
                     self.assertIs(prop["default"], False)
+                    self.assertEqual(prop["constraints"], {})
+                elif name == "shark.script" and prop["key"] == "enabled":
+                    self.assertEqual(prop["type"], "boolean")
+                    self.assertIs(prop["default"], True)
                     self.assertEqual(prop["constraints"], {})
                 else:
                     self.assertTrue(prop["constraints"])

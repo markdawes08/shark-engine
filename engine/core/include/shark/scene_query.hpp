@@ -4,6 +4,7 @@
 #include "shark/physics_components.hpp"
 #include "shark/render_components.hpp"
 #include "shark/scene_identity.hpp"
+#include "shark/script_components.hpp"
 #include "shark/transform.hpp"
 
 #include <cstddef>
@@ -35,6 +36,7 @@ struct SceneQueryFields {
     bool camera{false};
     bool mesh_renderer{false};
     bool rigid_body{false};
+    bool script{false};
     bool operator==(const SceneQueryFields&) const = default;
 };
 
@@ -70,6 +72,7 @@ struct SceneInspectedEntity {
     std::optional<Camera> camera{};
     std::optional<MeshRenderer> mesh_renderer{};
     std::optional<RigidBody> rigid_body{};
+    std::optional<Script> script{};
 };
 
 class Scene;

@@ -459,6 +459,19 @@ RigidBody read_rigid_body(const Json& object, const std::string& path) {
     return checked(validate_rigid_body(result), path);
 }
 
+Script read_script(const Json& object, const std::string& path) {
+    members(object, {"schema_version", "source"}, {"enabled"}, path);
+    static_cast<void>(version(object.at("schema_version"), path + "/schema_version", false));
+    Script result;
+    result.source = string_value(object.at("source"), path + "/source");
+    if (object.contains("enabled")) {
+        if (!object.at("enabled").is_boolean())
+            fail(path + "/enabled", "Expected a boolean");
+        result.enabled = object.at("enabled").get<bool>();
+    }
+    return checked(validate_script(std::move(result)), path);
+}
+
 MeshRenderer read_mesh_renderer(const Json& object, const std::string& path) {
     members(object, {"schema_version", "asset_id"}, {"mesh_index", "visible"}, path);
     static_cast<void>(version(object.at("schema_version"), path + "/schema_version", false));
@@ -699,7 +712,8 @@ SourceEntity read_entity(const Json& object, const std::string& path, bool legac
             const auto& components = object.at("components");
             const auto components_path = path + "/components";
             members(components, {"shark.name", "shark.transform"},
-                    {"shark.camera", "shark.mesh_renderer", "shark.rigid_body"}, components_path);
+                    {"shark.camera", "shark.mesh_renderer", "shark.rigid_body", "shark.script"},
+                    components_path);
             const auto name_path = components_path + "/shark.name";
             const auto& name = components.at("shark.name");
             members(name, {"schema_version"}, {"value"}, name_path);
@@ -715,6 +729,9 @@ SourceEntity read_entity(const Json& object, const std::string& path, bool legac
             if (components.contains("shark.rigid_body"))
                 entity.rigid_body = read_rigid_body(components.at("shark.rigid_body"),
                                                     components_path + "/shark.rigid_body");
+            if (components.contains("shark.script"))
+                entity.script =
+                    read_script(components.at("shark.script"), components_path + "/shark.script");
             if (components.contains("shark.camera")) {
                 entity.camera =
                     read_camera(components.at("shark.camera"), components_path + "/shark.camera");
@@ -794,6 +811,10 @@ SceneDocument validate_scene(const SceneDocument& document) {
     for (std::size_t index = 0; index < document.entities.size(); ++index) {
         extras.reserve_raw(document.entities[index].extras_json,
                            "/entities/" + std::to_string(index) + "/extras");
+        if (document.entities[index].script &&
+            document.entities[index].script->source.size() > script_maximum_source_path_bytes)
+            fail("/entities/" + std::to_string(index) + "/components/shark.script/source",
+                 "Script source path exceeds its byte bound");
     }
     if (document.world_origin) {
         checked(validate_world_position(*document.world_origin), "/world_origin");
@@ -821,7 +842,10 @@ SceneDocument validate_scene(const SceneDocument& document) {
                      ? std::optional{checked(validate_mesh_renderer(*entity.mesh_renderer),
                                              path + "/components/shark.mesh_renderer")}
                      : std::nullopt,
-                 entity.rigid_body});
+                 entity.rigid_body,
+                 entity.script ? std::optional{checked(validate_script(*entity.script),
+                                                       path + "/components/shark.script")}
+                               : std::nullopt});
             if (entity.rigid_body) {
                 if (entity.parent)
                     fail(path + "/parent", "Rigid bodies must be roots");
@@ -905,6 +929,11 @@ Json scene_json(const SceneDocument& document) {
                 {"collision_layer", b.collision_layer},
                 {"collision_mask", b.collision_mask},
                 {"is_trigger", b.is_trigger}};
+        }
+        if (entity.script) {
+            components["shark.script"] = Json{{"schema_version", component_schema_version},
+                                              {"source", entity.script->source},
+                                              {"enabled", entity.script->enabled}};
         }
         entities.push_back(
             Json{{"entity_id", entity.id.value().to_string()},

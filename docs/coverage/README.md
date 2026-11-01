@@ -9,7 +9,8 @@ evidence effort; historical full-profile counts are not recurring run lists.
 ## Current state
 
 Assignment 19 is in progress. Its [Lua foundation](../handoffs/19a-lua-foundation.md)
-adds private bounded VM execution; the Script component, lifecycle and public
+adds private bounded VM execution. The [Script settings handoff](../handoffs/19b-script-components.md)
+records shared inert component authoring; lifecycle and gameplay
 APIs remain open under the [checkpoints](../roadmap/lua-plan.md). REQ-19 remains
 NOT_RUN until connected acceptance.
 

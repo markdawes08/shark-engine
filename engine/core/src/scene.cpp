@@ -51,6 +51,7 @@ struct Scene::Impl {
         std::optional<Camera> camera;
         std::optional<MeshRenderer> mesh_renderer;
         std::optional<RigidBody> rigid_body;
+        std::optional<Script> script;
     };
     struct Slot {
         entt::entity entity{entt::null};
@@ -82,8 +83,12 @@ struct Scene::Impl {
         EntityHandle handle;
         std::optional<RigidBody> body;
     };
+    struct ChangeScript {
+        EntityHandle handle;
+        std::optional<Script> script;
+    };
     using Mutation = std::variant<EntitySeed, EntityHandle, Rename, ChangeTransform, ChangeParent,
-                                  ChangeCamera, ChangeMeshRenderer, ChangeRigidBody>;
+                                  ChangeCamera, ChangeMeshRenderer, ChangeRigidBody, ChangeScript>;
     struct Pending {
         SceneMutationTicket ticket;
         Mutation mutation;
@@ -246,6 +251,10 @@ struct Scene::Impl {
                 return checked.error();
             }
         }
+        if (seed.script) {
+            if (auto checked = validate_script(*seed.script); !checked)
+                return checked.error();
+        }
         auto canonical = canonicalize_transform(seed.transform);
         if (!canonical) {
             return canonical.error();
@@ -369,6 +378,8 @@ struct Scene::Impl {
         }
         if (fields.rigid_body)
             result.rigid_body = entity.rigid_body;
+        if (fields.script)
+            result.script = entity.script;
         return result;
     }
     Result<EntityHandle> insert(EntitySeed seed) {
@@ -405,10 +416,11 @@ struct Scene::Impl {
                 appended = true;
             }
             native = registry.create();
-            registry.emplace<Record>(
-                native, seed.identity, seed_authority(seed), std::move(seed.name), seed.transform,
-                seed.parent, std::vector<EntityHandle>{}, prepared.value().world,
-                prepared.value().depth, seed.camera, seed.mesh_renderer, seed.rigid_body);
+            registry.emplace<Record>(native, seed.identity, seed_authority(seed),
+                                     std::move(seed.name), seed.transform, seed.parent,
+                                     std::vector<EntityHandle>{}, prepared.value().world,
+                                     prepared.value().depth, seed.camera, seed.mesh_renderer,
+                                     seed.rigid_body, std::move(seed.script));
             const EntityHandle handle{instance, static_cast<std::uint32_t>(index),
                                       slots[index].generation};
             identities.emplace(seed.identity, handle);
@@ -561,6 +573,22 @@ struct Scene::Impl {
         if (auto checked = check_revision(); !checked)
             return checked.error();
         entity.rigid_body = change.body;
+        ++revision;
+        return change.handle;
+    }
+    Result<EntityHandle> script(ChangeScript change) {
+        if (auto checked = checked_slot(change.handle); !checked)
+            return checked.error();
+        if (change.script) {
+            if (auto checked = validate_script(*change.script); !checked)
+                return checked.error();
+        }
+        auto& entity = record(change.handle);
+        if (entity.script == change.script)
+            return change.handle;
+        if (auto checked = check_revision(); !checked)
+            return checked.error();
+        entity.script = std::move(change.script);
         ++revision;
         return change.handle;
     }
@@ -800,6 +828,13 @@ Result<void> Scene::set_rigid_body(EntityHandle handle, std::optional<RigidBody>
     return impl_->finish_change(impl_->rigid_body({handle, body}), handle, "scene.set-rigid-body");
 }
 
+Result<void> Scene::set_script(EntityHandle handle, std::optional<Script> script) {
+    if (auto checked = impl_->check_immediate(); !checked)
+        return checked;
+    return impl_->finish_change(impl_->script({handle, std::move(script)}), handle,
+                                "scene.set-script");
+}
+
 Result<void> Scene::reparent(EntityHandle handle, std::optional<EntityHandle> parent,
                              ReparentMode mode) {
     if (auto checked = impl_->check_immediate(); !checked) {
@@ -827,7 +862,8 @@ Result<SceneEntityState> Scene::entity_state(EntityHandle handle) const {
                                 entity.depth,
                                 entity.camera,
                                 entity.mesh_renderer,
-                                entity.rigid_body};
+                                entity.rigid_body,
+                                entity.script};
     } catch (...) {
         return impl_->contextualize(
             scene_error(ErrorCode::execution_failed, "entity state copy allocation failed"), handle,
@@ -1114,6 +1150,19 @@ Result<SceneMutationTicket> Scene::defer_set_rigid_body(EntityHandle handle,
     return impl_->enqueue(Impl::ChangeRigidBody{handle, body});
 }
 
+Result<SceneMutationTicket> Scene::defer_set_script(EntityHandle handle,
+                                                    std::optional<Script> script) {
+    if (auto checked = impl_->check_live(); !checked)
+        return checked.error();
+    if (auto checked = impl_->checked_slot(handle); !checked)
+        return checked.error();
+    if (script) {
+        if (auto checked = validate_script(*script); !checked)
+            return impl_->contextualize(checked.error(), handle, "scene.defer-set-script");
+    }
+    return impl_->enqueue(Impl::ChangeScript{handle, std::move(script)});
+}
+
 Result<SceneMutationTicket>
 Scene::defer_reparent(EntityHandle handle, std::optional<EntityHandle> parent, ReparentMode mode) {
     if (auto checked = impl_->check_live(); !checked) {
@@ -1170,6 +1219,9 @@ Result<SceneMutationReport> Scene::apply_deferred() {
                         } else if constexpr (std::is_same_v<Type, Impl::ChangeRigidBody>) {
                             return {pending.ticket, SceneMutationKind::set_rigid_body,
                                     impl_->rigid_body(mutation)};
+                        } else if constexpr (std::is_same_v<Type, Impl::ChangeScript>) {
+                            return {pending.ticket, SceneMutationKind::set_script,
+                                    impl_->script(mutation)};
                         } else {
                             return {pending.ticket, SceneMutationKind::reparent,
                                     impl_->reparent(mutation)};

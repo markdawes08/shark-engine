@@ -48,7 +48,7 @@ bool vector_field(math::Vec3& value) {
 struct InspectorWidget::Impl {
     InspectorPanel& panel;
     ScenePanel& scene;
-    const std::array<ComponentSchema, 5> schemas{component_schemas()};
+    const std::array<ComponentSchema, 6> schemas{component_schemas()};
     std::optional<tools::AuthoringHistoryStatus> history;
     std::optional<SceneRevision> history_observation;
     std::optional<Error> history_error;
@@ -56,6 +56,7 @@ struct InspectorWidget::Impl {
     std::string notice;
     std::optional<SceneSelection> loaded;
     std::array<char, maximum_name_bytes + 1> name{};
+    std::array<char, 4097> script_source{};
     std::array<char, 37> asset{};
     std::array<char, 37> baseline_asset{};
     std::optional<MeshRenderer> original_mesh;
@@ -84,6 +85,7 @@ struct InspectorWidget::Impl {
             original_mesh.reset();
             mesh_present = false;
             name.fill('\0');
+            script_source.fill('\0');
             asset.fill('\0');
             baseline_asset.fill('\0');
             return;
@@ -91,6 +93,7 @@ struct InspectorWidget::Impl {
         const auto& draft = *panel.draft();
         loaded = draft.selection;
         copy_text(name, draft.name.value);
+        copy_text(script_source, draft.script ? draft.script->source : "");
         original_mesh = draft.mesh_renderer;
         mesh_present = original_mesh.has_value();
         copy_text(asset, original_mesh ? original_mesh->asset.value().to_string() : "");
@@ -259,6 +262,13 @@ struct InspectorWidget::Impl {
         case PropertyId::mesh_renderer_visible:
             ImGui::Checkbox("##value", &mesh_visible);
             break;
+        case PropertyId::script_source:
+            if (ImGui::InputText("##value", script_source.data(), script_source.size()))
+                draft.script->source = script_source.data();
+            break;
+        case PropertyId::script_enabled:
+            ImGui::Checkbox("##value", &draft.script->enabled);
+            break;
         }
         ImGui::PopID();
     }
@@ -272,6 +282,7 @@ struct InspectorWidget::Impl {
                     schema.required ||
                     (schema.id == ComponentSchemaId::camera       ? draft.camera.has_value()
                      : schema.id == ComponentSchemaId::rigid_body ? draft.rigid_body.has_value()
+                     : schema.id == ComponentSchemaId::script     ? draft.script.has_value()
                                                                   : mesh_present);
                 if (!schema.required) {
                     if (present && ImGui::SmallButton("Remove component from draft")) {
@@ -279,6 +290,8 @@ struct InspectorWidget::Impl {
                             draft.camera.reset();
                         else if (schema.id == ComponentSchemaId::rigid_body)
                             draft.rigid_body.reset();
+                        else if (schema.id == ComponentSchemaId::script)
+                            draft.script.reset();
                         else
                             mesh_present = false;
                         present = false;
@@ -287,7 +300,10 @@ struct InspectorWidget::Impl {
                             draft.camera.emplace();
                         else if (schema.id == ComponentSchemaId::rigid_body)
                             draft.rigid_body.emplace();
-                        else
+                        else if (schema.id == ComponentSchemaId::script) {
+                            draft.script.emplace();
+                            copy_text(script_source, draft.script->source);
+                        } else
                             mesh_present = true;
                         present = true;
                     }
@@ -306,6 +322,9 @@ struct InspectorWidget::Impl {
                 if (present && schema.id == ComponentSchemaId::mesh_renderer)
                     ImGui::TextWrapped("Supply an existing asset UUID. This reference does not "
                                        "import or resolve content.");
+                if (present && schema.id == ComponentSchemaId::script)
+                    ImGui::TextWrapped(
+                        "Project script reference only; execution is not yet available.");
             }
             ImGui::PopID();
         }

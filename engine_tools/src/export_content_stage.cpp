@@ -1,4 +1,5 @@
 #include "export_content_stage.hpp"
+#include "shark/prepared_scene.hpp"
 #include "shark/prepared_startup.hpp"
 
 #include <algorithm>
@@ -157,6 +158,11 @@ Result<ExportContentStage> stage_client_export(const PreparedClientExport& candi
                                                const fs::path& pixel_shader,
                                                const fs::path& output_path) {
     return boundary<ExportContentStage>([&] {
+        const auto scene = take(decode_prepared_scene(candidate.scene_payload()));
+        if (std::any_of(scene.entities.begin(), scene.entities.end(),
+                        [](const auto& entity) { return entity.script.has_value(); }))
+            fail("Standalone export does not yet package or execute scripts",
+                 ErrorCode::capability_unavailable);
         const auto vertex_file = existing_regular(vertex_shader);
         const auto pixel_file = existing_regular(pixel_shader);
         auto vertex = read_shader(vertex_file);

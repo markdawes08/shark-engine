@@ -140,9 +140,9 @@ std::unique_ptr<ActiveScene> prepare(const ProjectDocument& project, const Scene
         const auto index = ordered[position];
         const auto& entity = document.entities[index];
         const auto parent = parents[index] ? handles[*parents[index]] : std::nullopt;
-        auto created =
-            scene->create_entity({entity.id, std::nullopt, entity.name, entity.transform, parent,
-                                  entity.camera, entity.mesh_renderer, entity.rigid_body});
+        auto created = scene->create_entity({entity.id, std::nullopt, entity.name, entity.transform,
+                                             parent, entity.camera, entity.mesh_renderer,
+                                             entity.rigid_body, entity.script});
         if (!created) {
             auto error = std::move(created).error();
             error.context.path = "/entities/" + std::to_string(index);
@@ -209,6 +209,15 @@ AuthoringCommandReply apply_command(Scene& scene, SceneLimits limits,
                     // into the Core mutation's owned input.
                     checked(validate_name(request.name));
                 }
+                if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
+                              std::is_same_v<Command, SetScriptCommand>) {
+                    if (request.script) {
+                        if (request.script->source.size() > script_maximum_source_path_bytes)
+                            fail(ErrorCode::invalid_argument,
+                                 "script source path exceeds its byte bound");
+                        checked(validate_script(*request.script));
+                    }
+                }
                 std::optional<EntityHandle> target;
                 std::optional<EntityHandle> parent;
                 if constexpr (!std::is_same_v<Command, CreateEntityCommand>) {
@@ -224,7 +233,8 @@ AuthoringCommandReply apply_command(Scene& scene, SceneLimits limits,
                               std::is_same_v<Command, SetNameCommand> ||
                               std::is_same_v<Command, SetCameraCommand> ||
                               std::is_same_v<Command, SetMeshRendererCommand> ||
-                              std::is_same_v<Command, SetRigidBodyCommand>) {
+                              std::is_same_v<Command, SetRigidBodyCommand> ||
+                              std::is_same_v<Command, SetScriptCommand>) {
                     effect.affected_entities.push_back(request.id);
                 } else {
                     append_subtree(scene, *target, effect.affected_entities);
@@ -245,7 +255,8 @@ AuthoringCommandReply apply_command(Scene& scene, SceneLimits limits,
                 if constexpr (std::is_same_v<Command, CreateEntityCommand>) {
                     static_cast<void>(checked(scene.create_entity(
                         {request.id, std::nullopt, request.name, request.transform, parent,
-                         request.camera, request.mesh_renderer, request.rigid_body})));
+                         request.camera, request.mesh_renderer, request.rigid_body,
+                         request.script})));
                 } else if constexpr (std::is_same_v<Command, DeleteEntityCommand>) {
                     checked(scene.destroy_entity(*target));
                 } else if constexpr (std::is_same_v<Command, SetNameCommand>) {
@@ -258,6 +269,8 @@ AuthoringCommandReply apply_command(Scene& scene, SceneLimits limits,
                     checked(scene.set_mesh_renderer(*target, request.mesh_renderer));
                 } else if constexpr (std::is_same_v<Command, SetRigidBodyCommand>) {
                     checked(scene.set_rigid_body(*target, request.rigid_body));
+                } else if constexpr (std::is_same_v<Command, SetScriptCommand>) {
+                    checked(scene.set_script(*target, request.script));
                 } else {
                     checked(scene.reparent(*target, parent, request.mode));
                 }
@@ -295,6 +308,7 @@ SceneDocument capture_document(const ProjectDocument& project, const ActiveScene
     options.fields.camera = true;
     options.fields.mesh_renderer = true;
     options.fields.rigid_body = true;
+    options.fields.script = true;
     auto page = checked(scene.query_entities(options));
     std::vector<SourceEntity> observed;
     std::vector<std::optional<EntityHandle>> parents;
@@ -316,7 +330,7 @@ SceneDocument capture_document(const ProjectDocument& project, const ActiveScene
             }
             indices.emplace(row.reference.handle, observed.size());
             observed.push_back({*id, std::nullopt, *row.name, row.transform->local, "{}",
-                                row.camera, row.mesh_renderer, row.rigid_body});
+                                row.camera, row.mesh_renderer, row.rigid_body, row.script});
             parents.push_back(row.hierarchy->parent);
         }
         if (!page.next_cursor()) {
@@ -392,6 +406,8 @@ std::size_t snapshot_charge(const SceneDocument& document) {
                   document.extras_json.capacity() + 1;
     for (const auto& entity : document.entities) {
         charge += entity.name.value.capacity() + 1 + entity.extras_json.capacity() + 1;
+        if (entity.script)
+            charge += entity.script->source.capacity() + 1;
     }
     return charge;
 }
@@ -472,7 +488,8 @@ bool same_command_input(const AuthoringCommand& left, const AuthoringCommand& ri
                        same_transform_input(value.transform, other->transform) &&
                        same_camera_input(value.camera, other->camera) &&
                        value.mesh_renderer == other->mesh_renderer &&
-                       same_body_input(value.rigid_body, other->rigid_body);
+                       same_body_input(value.rigid_body, other->rigid_body) &&
+                       value.script == other->script;
             } else if constexpr (std::is_same_v<T, SetNameCommand>) {
                 return value.name.value == other->name.value;
             } else if constexpr (std::is_same_v<T, SetTransformCommand>) {
@@ -483,6 +500,8 @@ bool same_command_input(const AuthoringCommand& left, const AuthoringCommand& ri
                 return value.mesh_renderer == other->mesh_renderer;
             } else if constexpr (std::is_same_v<T, SetRigidBodyCommand>) {
                 return same_body_input(value.rigid_body, other->rigid_body);
+            } else if constexpr (std::is_same_v<T, SetScriptCommand>) {
+                return value.script == other->script;
             } else if constexpr (std::is_same_v<T, ReparentEntityCommand>) {
                 return value.parent == other->parent && value.mode == other->mode;
             } else {
@@ -538,6 +557,21 @@ std::size_t mutation_payload_charge(const AuthoringMutation& mutation, bool capa
                 if constexpr (std::is_same_v<T, CreateEntityCommand> ||
                               std::is_same_v<T, SetNameCommand>) {
                     add_name(item.name);
+                }
+                if constexpr (std::is_same_v<T, CreateEntityCommand> ||
+                              std::is_same_v<T, SetScriptCommand>) {
+                    if (item.script) {
+                        if (item.script->source.size() > script_maximum_source_path_bytes)
+                            fail(ErrorCode::invalid_argument,
+                                 "mutation script path exceeds its byte bound");
+                        const auto bytes =
+                            capacity ? item.script->source.capacity() : item.script->source.size();
+                        if (bytes >= authoring_maximum_mutation_payload_bytes ||
+                            charge > authoring_maximum_mutation_payload_bytes - bytes - 1)
+                            fail(ErrorCode::invalid_argument,
+                                 "mutation payload exceeds its byte bound");
+                        charge += bytes + 1;
+                    }
                 }
             },
             value);
@@ -622,12 +656,13 @@ HistoryRestoration restore_document(Scene& candidate, const SceneDocument& targe
             checked(candidate.set_rigid_body(found.value(), entity.rigid_body));
             checked(candidate.set_camera(found.value(), entity.camera));
             checked(candidate.set_mesh_renderer(found.value(), entity.mesh_renderer));
+            checked(candidate.set_script(found.value(), entity.script));
             handles.emplace(entity.id, found.value());
         } else {
             handles.emplace(entity.id, checked(candidate.create_entity(
                                            {entity.id, std::nullopt, entity.name, entity.transform,
                                             std::nullopt, entity.camera, entity.mesh_renderer,
-                                            entity.rigid_body})));
+                                            entity.rigid_body, entity.script})));
         }
     }
     checkpoint();

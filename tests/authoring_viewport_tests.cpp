@@ -228,6 +228,49 @@ TEST_CASE("Retained viewport captures unsaved source identities and immutable ge
     rejected(reopened->viewport_snapshot(request), ErrorCode::conflict);
 }
 
+TEST_CASE("Retained viewport reads a scripted scene without executing or mutating source",
+          "[authoring-viewport]") {
+    Fixture fixture;
+    auto owner = fixture.open();
+    const auto saved = read(fixture.root / "scene.sharkscene");
+    const auto prior = take(owner->viewport_snapshot(fixture.request(*owner)));
+    REQUIRE(prior.records().size() == 1);
+    const auto mutation = call(*owner, "scene.mutation_status");
+    const auto result =
+        call(*owner, "scene.mutate",
+             {{"mutation_id", mutation.at("next")},
+              {"expected_revision", mutation.at("revision")},
+              {"operation",
+               {{"type", "command"},
+                {"command",
+                 {{"type", "set_script"},
+                  {"entity_id", mesh_text},
+                  {"script", {{"source", "scripts/not-present.lua"}, {"enabled", true}}}}}}}});
+    REQUIRE(result.at("outcome").at("ok").get<bool>());
+    REQUIRE(result.at("outcome").at("value").at("result").at("ok").get<bool>());
+    const auto state = call(*owner, "project.status");
+    const auto history = call(*owner, "scene.history");
+    const auto mutations = call(*owner, "scene.mutation_status");
+    REQUIRE(state.at("dirty").get<bool>());
+    const auto snapshot = take(owner->viewport_snapshot(fixture.request(*owner)));
+    REQUIRE(snapshot.records().size() == 1);
+    CHECK(snapshot.revision() == revision(*owner));
+    CHECK(snapshot.records()[0].entity == prior.records()[0].entity);
+    CHECK(snapshot.records()[0].world_matrix == prior.records()[0].world_matrix);
+    const auto script =
+        call(*owner, "scene.inspect", {{"entity_id", mesh_text}, {"fields", {"script"}}})
+            .at("entities")
+            .at(0)
+            .at("script");
+    CHECK(script.at("source") == "scripts/not-present.lua");
+    CHECK(script.at("enabled").get<bool>());
+    CHECK_FALSE(fs::exists(fixture.root / "scripts/not-present.lua"));
+    CHECK(call(*owner, "project.status") == state);
+    CHECK(call(*owner, "scene.history") == history);
+    CHECK(call(*owner, "scene.mutation_status") == mutations);
+    CHECK(read(fixture.root / "scene.sharkscene") == saved);
+}
+
 TEST_CASE("Retained viewport rejects invalid camera bounds profile and foreign thread",
           "[authoring-viewport]") {
     Fixture fixture;

@@ -42,8 +42,10 @@ Candidate validate(const PreparedScene& input) {
                 require(!entity.parent, "Prepared rigid bodies must be roots");
                 take(validate_rigid_body_pose(*entity.rigid_body, transform));
             }
+            if (entity.script)
+                take(validate_script(*entity.script));
             entities.push_back({entity.id, entity.parent, entity.name, transform, entity.camera,
-                                entity.mesh_renderer, entity.rigid_body});
+                                entity.mesh_renderer, entity.rigid_body, entity.script});
         } catch (Failure& failure) {
             failure.error.context.entity_id = entity.id.value().to_string();
             throw;
@@ -178,6 +180,11 @@ Candidate read(std::span<const std::byte> payload) {
                 }
                 entity.rigid_body = body_value;
             }
+            if (version >= 4 && flag(reader)) {
+                auto source = reader.text(script_maximum_source_path_bytes);
+                const auto enabled = flag(reader);
+                entity.script = Script{std::move(source), enabled};
+            }
             result.entities.push_back(std::move(entity));
         } catch (Failure& failure) {
             failure.error.context.entity_id = entity.id.value().to_string();
@@ -195,14 +202,17 @@ Result<std::vector<std::byte>> encode_prepared_scene(const PreparedScene& scene)
         const auto candidate = validate(scene);
         const auto& value = candidate.value;
         std::uint32_t version = 1;
-        for (const auto& e : value.entities)
+        for (const auto& e : value.entities) {
+            if (e.script)
+                version = 4;
             if (e.rigid_body) {
                 const auto& body = *e.rigid_body;
                 version = std::max(version, body.collision_layer != 0 ||
                                                     body.collision_mask != 0xffff || body.is_trigger
-                                                ? prepared_scene_version
+                                                ? 3U
                                                 : 2U);
             }
+        }
         Writer writer{prepared_scene_maximum_payload_bytes - envelope_bytes};
         writer.id(value.scene.value());
         writer.u8(value.world_origin ? 1 : 0);
@@ -255,6 +265,13 @@ Result<std::vector<std::byte>> encode_prepared_scene(const PreparedScene& scene)
                     }
                 }
             }
+            if (version >= 4) {
+                writer.u8(entity.script ? 1 : 0);
+                if (entity.script) {
+                    writer.text(entity.script->source, script_maximum_source_path_bytes);
+                    writer.u8(entity.script->enabled ? 1 : 0);
+                }
+            }
         }
         return wrap(scene_magic, writer.output, prepared_scene_maximum_payload_bytes, version);
     });
@@ -288,10 +305,10 @@ LoadedPreparedScene::load(std::span<const std::byte> payload,
         for (const auto index : candidate.order) {
             const auto& entity = candidate.value.entities[index];
             const auto parent = candidate.parents[index];
-            handles[index] =
-                take(scene->create_entity({entity.id, std::nullopt, entity.name, entity.transform,
-                                           parent ? handles[*parent] : std::nullopt, entity.camera,
-                                           entity.mesh_renderer, entity.rigid_body}));
+            handles[index] = take(
+                scene->create_entity({entity.id, std::nullopt, entity.name, entity.transform,
+                                      parent ? handles[*parent] : std::nullopt, entity.camera,
+                                      entity.mesh_renderer, entity.rigid_body, entity.script}));
         }
         return std::unique_ptr<LoadedPreparedScene>{new LoadedPreparedScene{
             std::move(scene), std::move(candidate.value.world_origin), std::move(assets)}};

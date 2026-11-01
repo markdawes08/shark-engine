@@ -15,7 +15,7 @@ Core's existing ID generation can supply it before constructing the command.
 
 | Command | Behavior |
 | --- | --- |
-| `CreateEntityCommand` | Create an ID with Name, local Transform, optional parent ID and optional Camera/MeshRenderer |
+| `CreateEntityCommand` | Create an ID with Name, local Transform, optional parent ID and optional Camera/MeshRenderer/RigidBody/Script |
 | `DeleteEntityCommand` | Delete the target and its complete subtree |
 | `SetNameCommand` | Validate and set the mandatory display Name |
 | `SetTransformCommand` | Validate/canonicalize local TRS and all affected world transforms |
@@ -23,6 +23,7 @@ Core's existing ID generation can supply it before constructing the command.
 | `SetCameraCommand` | Validate and add/update Camera; an empty optional removes it |
 | `SetMeshRendererCommand` | Add/update the asset ID, mesh index and visibility; an empty optional removes the component |
 | `SetRigidBodyCommand` | Validate/add/update body and primitive collider settings atomically; empty removes it, following the [body contract](physics-bodies.md) |
+| `SetScriptCommand` | Validate/add/update an inert script source reference and enabled flag; empty removes it, following the [Script contract](script-components.md) |
 
 Name/Transform remain mandatory and cannot be removed; unknown component types
 reject. Optional [Camera/MeshRenderer](render-components.md) follow

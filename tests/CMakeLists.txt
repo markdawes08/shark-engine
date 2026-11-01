@@ -301,7 +301,8 @@ set_tests_properties(shark.core.prepared-scene PROPERTIES LABELS "cpu;unit;integ
 
 if(TARGET EngineTools)
     add_executable(ClientExportTests client_export_tests.cpp)
-    target_link_libraries(ClientExportTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_link_libraries(ClientExportTests PRIVATE EngineTools nlohmann_json::nlohmann_json Catch2::Catch2WithMain)
+    target_include_directories(ClientExportTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
     shark_configure_target(ClientExportTests)
     shark_classify_target(ClientExportTests test)
     add_test(NAME shark.tools.client-export COMMAND ClientExportTests "[client-export]" --rng-seed 1337)

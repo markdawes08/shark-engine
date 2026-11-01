@@ -90,10 +90,85 @@ std::vector<std::byte> literal_payload() {
     repair_digest(output);
     return output;
 }
+// Independently extend the fixed v1 literal with exactly one default body.
+std::vector<std::byte> literal_body_payload(std::uint32_t version) {
+    auto output = literal_payload();
+    replace(output, 8, version, 4);
+    append(output, 1, 1);
+    append(output, 0, 4); // Static.
+    append(output, 0, 4); // Box.
+    for (const double value : {0.5, 0.5, 0.5, 0.5, 0.5, 1.0, 0.5, 0.0})
+        append(output, std::bit_cast<std::uint64_t>(value), 8);
+    if (version >= 3) {
+        append(output, 2, 4);
+        append(output, 7, 4);
+        append(output, 1, 1);
+    }
+    repair_digest(output);
+    return output;
+}
+std::vector<std::byte> literal_script_payload() {
+    auto output = literal_payload();
+    replace(output, 8, 4, 4);
+    append(output, 0, 1); // No body (version 2+).
+    append(output, 1, 1); // Script present (version 4+).
+    constexpr std::string_view source{"scripts/controller.lua"};
+    append(output, source.size(), 4);
+    for (const char value : source)
+        output.push_back(static_cast<std::byte>(value));
+    append(output, 0, 1); // Disabled.
+    repair_digest(output);
+    return output;
+}
 SceneEntityState state(LoadedPreparedScene& loaded, AuthoredEntityId entity) {
     return take(loaded.scene().entity_state(take(loaded.scene().find(entity))));
 }
 } // namespace
+
+TEST_CASE("prepared script v4 remains compatible with independent v1-v3 payloads",
+          "[prepared-scene]") {
+    const auto v1 = literal_payload();
+    CHECK(take(encode_prepared_scene(take(decode_prepared_scene(v1)))) == v1);
+    for (const std::uint32_t version : {2U, 3U}) {
+        const auto bytes = literal_body_payload(version);
+        const auto decoded = take(decode_prepared_scene(bytes));
+        REQUIRE(decoded.entities.size() == 1);
+        REQUIRE(decoded.entities[0].rigid_body);
+        CHECK_FALSE(decoded.entities[0].script);
+        CHECK(take(encode_prepared_scene(decoded)) == bytes);
+    }
+    const auto bytes = literal_script_payload();
+    const auto decoded = take(decode_prepared_scene(bytes));
+    REQUIRE(decoded.entities.size() == 1);
+    REQUIRE(decoded.entities[0].script);
+    CHECK(decoded.entities[0].script->source == "scripts/controller.lua");
+    CHECK_FALSE(decoded.entities[0].script->enabled);
+    CHECK(take(encode_prepared_scene(decoded)) == bytes);
+    const auto assets = take(PreparedAssets::create());
+    const auto loaded = take(LoadedPreparedScene::load(bytes, assets));
+    REQUIRE(state(*loaded, id<AuthoredEntityId>(1)).script);
+    CHECK(state(*loaded, id<AuthoredEntityId>(1)).script == decoded.entities[0].script);
+
+    auto invalid = bytes;
+    invalid[230] = std::byte{2}; // Script presence flag.
+    repair_digest(invalid);
+    CHECK_FALSE(decode_prepared_scene(invalid));
+    invalid = bytes;
+    invalid.back() = std::byte{2}; // Enabled must be a strict Boolean.
+    repair_digest(invalid);
+    CHECK_FALSE(decode_prepared_scene(invalid));
+    invalid = bytes;
+    invalid.resize(invalid.size() - 1);
+    repair_digest(invalid);
+    CHECK_FALSE(decode_prepared_scene(invalid));
+    invalid = bytes;
+    invalid[235] = std::byte{'X'}; // Source no longer starts with scripts/.
+    repair_digest(invalid);
+    CHECK_FALSE(decode_prepared_scene(invalid));
+    auto invalid_scene = decoded;
+    invalid_scene.entities[0].script->source = "scripts/../bad.lua";
+    CHECK_FALSE(encode_prepared_scene(invalid_scene));
+}
 
 TEST_CASE("prepared scene roundtrip preserves IDs hierarchy anchor and component values",
           "[prepared-scene]") {

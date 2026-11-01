@@ -175,7 +175,8 @@ Json page_schema() {
                         {"parent_id", "child_count", "depth"})},
          {"camera", {{"oneOf", {camera, Json{{"type", "null"}}}}}},
          {"mesh_renderer", {{"oneOf", {mesh, Json{{"type", "null"}}}}}},
-         {"rigid_body", wire::rigid_body_value_schema()}},
+         {"rigid_body", wire::rigid_body_value_schema()},
+         {"script", wire::script_value_schema()}},
         {"entity_id", "scope", "authority"});
     return object_schema(
         {{"revision", revision_schema()},
@@ -195,9 +196,10 @@ Json discovery(bool export_available, bool capture_available) {
     const Json selected{
         {"type", "array"},
         {"uniqueItems", true},
-        {"maxItems", 6},
+        {"maxItems", 7},
         {"items",
-         {{"enum", {"name", "transform", "hierarchy", "camera", "mesh_renderer", "rigid_body"}}}},
+         {{"enum",
+           {"name", "transform", "hierarchy", "camera", "mesh_renderer", "rigid_body", "script"}}}},
         {"default", {"name", "transform", "hierarchy"}}};
     auto query = object_schema(
         {{"selection", {{"enum", {"all", "roots", "children"}}, {"default", "all"}}},
@@ -240,7 +242,7 @@ Json discovery(bool export_available, bool capture_available) {
           {"protocol_version", "transport", "limits", "capabilities", "methods", "components"}}},
         Json::object());
     add("schema.components", empty,
-        object_schema({{"components", {{"type", "array"}, {"minItems", 5}, {"maxItems", 5}}}},
+        object_schema({{"components", {{"type", "array"}, {"minItems", 6}, {"maxItems", 6}}}},
                       {"components"}),
         Json::object());
     add("project.open",

@@ -6,14 +6,15 @@
 
 namespace shark {
 
-inline constexpr std::uint32_t prepared_scene_version = 3;
+inline constexpr std::uint32_t prepared_scene_version = 4;
 inline constexpr std::size_t prepared_scene_maximum_payload_bytes = 4 * 1024 * 1024;
 inline constexpr std::size_t prepared_scene_maximum_decoded_bytes = 16 * 1024 * 1024;
 inline constexpr std::size_t prepared_scene_maximum_entities = 4096;
 inline constexpr std::size_t prepared_scene_maximum_hierarchy_depth = 256;
 
-// Engine-owned development values. Source extras/project paths, authoring
-// history, handles and authority/session records are deliberately absent.
+// Engine-owned development values. Except the inert Script source reference,
+// source extras and project paths, authoring history, handles and
+// authority/session records are deliberately absent.
 struct PreparedEntity {
     AuthoredEntityId id;
     std::optional<AuthoredEntityId> parent{};
@@ -22,6 +23,7 @@ struct PreparedEntity {
     std::optional<Camera> camera{};
     std::optional<MeshRenderer> mesh_renderer{};
     std::optional<RigidBody> rigid_body{};
+    std::optional<Script> script{};
     bool operator==(const PreparedEntity&) const = default;
 };
 

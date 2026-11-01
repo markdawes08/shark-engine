@@ -1,4 +1,5 @@
 // Original Shark-authored offline source and geometry fixtures; project MIT license.
+#include "export_content_stage.hpp"
 #include "shark/tools/client_export.hpp"
 #include "shark/tools/gltf_asset.hpp"
 
@@ -262,6 +263,43 @@ TEST_CASE("client export captures builtin startup content without saving authori
     CHECK(fixture.revision() == cache);
     CHECK_FALSE(fs::exists(fixture.root / std::string{asset_cache_filename}));
     take(validate_client_export(candidate, *owner, *fixture.catalog, *fixture.imports));
+}
+
+TEST_CASE("scripted preview content retains its settings while standalone publication rejects",
+          "[client-export]") {
+    Fixture fixture;
+    auto owner = authored();
+    const Script script{"scripts/quests/arrival.lua", true};
+    edit(*owner, SetScriptCommand{id<AuthoredEntityId>(100), script});
+    const auto before = take(owner->capture());
+    auto candidate = fixture.prepare(*owner);
+    const auto decoded = take(decode_prepared_scene(candidate.scene_payload()));
+    const auto found =
+        std::find_if(decoded.entities.begin(), decoded.entities.end(),
+                     [](const auto& entity) { return entity.id == id<AuthoredEntityId>(100); });
+    REQUIRE(found != decoded.entities.end());
+    CHECK(found->script == script);
+    const auto loaded = load(candidate);
+    const auto handle = take(loaded->scene().find(id<AuthoredEntityId>(100)));
+    CHECK(take(loaded->scene().entity_state(handle)).script == script);
+    const auto output = fixture.root.parent_path() /
+                        ("shark-rejected-script-export-" + take(generate_stable_id()).to_string());
+    const auto staged =
+        stage_client_export(candidate, fixture.root, fixture.root / "missing.vert.spv",
+                            fixture.root / "missing.frag.spv", output);
+    REQUIRE_FALSE(staged);
+    CHECK(staged.error().code == ErrorCode::capability_unavailable);
+    CHECK_FALSE(fs::exists(output));
+    CHECK(take(owner->capture()).scene == before.scene);
+    CHECK(take(owner->status()).revision == before.revision);
+    edit(*owner, SetScriptCommand{id<AuthoredEntityId>(100), Script{script.source, false}});
+    const auto disabled = fixture.prepare(*owner);
+    const auto disabled_stage =
+        stage_client_export(disabled, fixture.root, fixture.root / "missing.vert.spv",
+                            fixture.root / "missing.frag.spv", output);
+    REQUIRE_FALSE(disabled_stage);
+    CHECK(disabled_stage.error().code == ErrorCode::capability_unavailable);
+    CHECK_FALSE(fs::exists(output));
 }
 
 TEST_CASE("client export requires startup camera and exact project context even for builtins",

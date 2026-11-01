@@ -99,6 +99,40 @@ struct SceneCandidate {
     ShaderArtifact pixel;
     std::optional<PreparedStartup> startup;
 };
+
+// Prepared metadata is useful to the Editor and inspection, but the Runtime
+// cannot execute Script components until its script lifecycle owner lands.
+// Read every bounded, revision-fenced page before activating a candidate.
+Result<void> require_runtime_script_support(const Scene& scene) {
+    auto stats = scene.stats();
+    if (!stats)
+        return stats.error();
+    SceneQueryOptions options;
+    options.fields = {false, false, false, false, false, false, true};
+    options.expected_revision = SceneRevision{stats.value().instance, stats.value().revision};
+    auto page = scene.query_entities(options);
+    while (page) {
+        for (const auto& entity : page.value().entities()) {
+            if (entity.script) {
+                std::string entity_id;
+                if (const auto* authored =
+                        std::get_if<AuthoredEntityId>(&entity.reference.identity))
+                    entity_id = authored->value().to_string();
+                return Error{ErrorCode::capability_unavailable,
+                             "Runtime script execution is not implemented for this scene",
+                             {.operation = "client.scene.run",
+                              .path = entity.script->source,
+                              .entity_id = std::move(entity_id)}};
+            }
+        }
+        if (!page.value().next_cursor())
+            return {};
+        const auto cursor = *page.value().next_cursor();
+        page = scene.continue_query(cursor);
+    }
+    return std::move(page).error();
+}
+
 Result<SceneCandidate> load_candidate(const SceneLaunchOptions& options,
                                       const SceneCandidate* current = nullptr) {
     if (!options.package.empty()) {
@@ -106,6 +140,8 @@ Result<SceneCandidate> load_candidate(const SceneLaunchOptions& options,
         if (!package)
             return package.error();
         auto value = std::move(package).value();
+        if (auto supported = require_runtime_script_support(value.content->scene()); !supported)
+            return std::move(supported).error();
         return SceneCandidate{std::move(value.content), value.startup.camera,
                               std::move(value.vertex_shader), std::move(value.pixel_shader),
                               std::move(value.startup)};
@@ -113,6 +149,8 @@ Result<SceneCandidate> load_candidate(const SceneLaunchOptions& options,
     auto loaded = load_scene_content(options.content);
     if (!loaded)
         return loaded.error();
+    if (auto supported = require_runtime_script_support(loaded.value()->scene()); !supported)
+        return std::move(supported).error();
     if (current)
         return SceneCandidate{
             std::move(loaded).value(), current->camera, current->vertex, current->pixel, {}};

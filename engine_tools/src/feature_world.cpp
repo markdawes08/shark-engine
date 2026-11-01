@@ -189,6 +189,36 @@ void components(SceneRunContext& context) {
                 inspected.entities().front().name == Name{"Waypoint 雪"} &&
                 inspected.entities().front().hierarchy->depth == 3,
             "Semantic inspection differs from the saved Name/hierarchy", leaf());
+    // Exercise the authored Script value on a separate owner so the saved
+    // FeatureWorld baseline and the case's observed revision remain unchanged.
+    auto scripted = take(AuthoredScene::create(expected_project(), expected_scene()));
+    const Script setting{"scripts/npc/patrol.lua", false};
+    auto changed = take(scripted->execute(SetScriptCommand{root(), setting}, revision(*scripted)));
+    require(context,
+            take(std::move(changed.outcome)).changed && state(*scripted, root()).script == setting,
+            "Script authoring failed to retain independently specified settings", root());
+    auto expected = expected_scene();
+    expected.entities[0].script = setting;
+    require(context,
+            take(scripted->capture()).scene == expected &&
+                take(decode_scene_document(take(encode_scene_document(expected)))).document ==
+                    expected,
+            "Script source document round trip changed settings", root());
+    const auto saved_revision = revision(*scripted);
+    auto invalid = take(
+        scripted->execute(SetScriptCommand{root(), Script{"../escape.lua", true}}, saved_revision));
+    require(context,
+            !invalid.outcome && revision(*scripted) == saved_revision &&
+                take(scripted->capture()).scene == expected,
+            "Invalid Script path changed authored state", root());
+    const auto prepared = take(decode_prepared_scene(take(prepare_scene(*scripted))));
+    require(context, prepared.entities[0].script == setting,
+            "Prepared snapshot lost Script settings", root());
+    auto history = take(scripted->history());
+    require(context, history.next_undo.has_value(), "Script edit did not create history");
+    take(take(scripted->undo(history.next_undo->ticket, revision(*scripted))).outcome);
+    require(context, !state(*scripted, root()).script, "Script undo did not restore absence",
+            root());
 }
 void commands(SceneRunContext& context) {
     auto& owner = context.owner();
@@ -401,7 +431,7 @@ void render_components(SceneRunContext& context, const fs::path& parent) {
     const auto before = take(owner.capture());
     const auto schemas = component_schemas();
     require(context,
-            schemas.size() == 5 && schemas[2].stable_id == "shark.camera" &&
+            schemas.size() == 6 && schemas[2].stable_id == "shark.camera" &&
                 schemas[3].stable_id == "shark.mesh_renderer" && !schemas[2].required &&
                 schemas[2].removable && !schemas[3].required && schemas[3].removable,
             "Optional render component discovery differs from the authored catalog");

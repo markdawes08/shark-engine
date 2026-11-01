@@ -179,7 +179,7 @@ static_assert(std::is_same_v<decltype(std::declval<AuthoredScene&>().scene()),
                              Result<std::reference_wrapper<const Scene>>>);
 static_assert(std::is_same_v<decltype(std::declval<const AuthoredScene&>().scene()),
                              Result<std::reference_wrapper<const Scene>>>);
-static_assert(std::variant_size_v<AuthoringCommand> == 8);
+static_assert(std::variant_size_v<AuthoringCommand> == 9);
 
 } // namespace
 
@@ -2531,4 +2531,85 @@ TEST_CASE("retained camera input preserves signed zero and invalid floating poin
     camera.vertical_fov_radians = std::bit_cast<double>(std::uint64_t{0x7ff8000000000002});
     invalid.mutation = AuthoringCommand{SetCameraCommand{id<AuthoredEntityId>(40), camera}};
     mutation_denied(*value, invalid, AuthoringMutationState::payload_mismatch);
+}
+
+TEST_CASE("Script authoring preserves history, exact retry identity and retained byte charges",
+          "[authoring-retries]") {
+    auto value = owner();
+    const Script script{"scripts/" + std::string(180, 'a') + ".lua", false};
+    auto input =
+        request(*value, AuthoringCommand{SetScriptCommand{id<AuthoredEntityId>(40), script}});
+    const auto original = recorded(*value, input);
+    REQUIRE(original->result);
+    CHECK(original->result.value().changed);
+    CHECK(state(*value, 40).script == script);
+    CHECK(captured_entity(capture(*value), 40).script == script);
+    CHECK(ledger(*value).retained_bytes > script.source.size());
+    const auto charged_history = history(*value).retained_bytes;
+    REQUIRE(charged_history > script.source.size());
+    auto shorter = owner();
+    auto short_input =
+        request(*shorter, AuthoringCommand{SetScriptCommand{id<AuthoredEntityId>(40),
+                                                            Script{"scripts/a.lua", false}}});
+    REQUIRE(recorded(*shorter, short_input)->result);
+    CHECK(ledger(*value).retained_bytes > ledger(*shorter).retained_bytes + 100);
+    CHECK(charged_history > history(*shorter).retained_bytes + 100);
+    const auto replay = take(value->mutate(input));
+    CHECK(replay.state == AuthoringMutationState::replayed);
+    CHECK(replay.outcome.value() == original);
+    auto mismatch = input;
+    mismatch.mutation = AuthoringCommand{
+        SetScriptCommand{id<AuthoredEntityId>(40), Script{"scripts/different.lua", false}}};
+    mutation_denied(*value, mismatch, AuthoringMutationState::payload_mismatch);
+    mismatch.mutation =
+        AuthoringCommand{SetScriptCommand{id<AuthoredEntityId>(40), Script{script.source, true}}};
+    mutation_denied(*value, mismatch, AuthoringMutationState::payload_mismatch);
+    move_history(*value);
+    CHECK_FALSE(state(*value, 40).script);
+    move_history(*value, true);
+    CHECK(state(*value, 40).script == script);
+    FileFixture fixture;
+    auto files = take(ProjectFiles::open(fixture.root));
+    const auto before_save = capture(*value);
+    const auto saved = take(files->save_scene(*value, before_save.revision, std::nullopt));
+    CHECK(saved.current_scene_clean);
+    auto reopened = take(files->load_scene(project(), id<SceneId>(3)));
+    CHECK(captured_entity(capture(*reopened.owner), 40).script == script);
+    CHECK(history(*value).retained_bytes == charged_history);
+    const auto before = capture(*value);
+    AuthoringBatch batch_input{
+        id<AuthoringBatchId>(99),
+        {SetNameCommand{id<AuthoredEntityId>(40), Name{"not published"}},
+         SetScriptCommand{id<AuthoredEntityId>(40), Script{"scripts/../bad.lua", true}}}};
+    const auto rejected = take(value->execute(batch_input, before.revision));
+    CHECK_FALSE(rejected.outcome);
+    same_capture(capture(*value), before);
+    auto huge =
+        request(*value, AuthoringCommand{SetScriptCommand{id<AuthoredEntityId>(40),
+                                                          Script{std::string(4097, 'x'), true}}});
+    CHECK(take(value->mutate(huge)).state == AuthoringMutationState::not_admitted);
+    same_capture(capture(*value), before);
+}
+
+TEST_CASE("created Script values retain exact retries and fresh entity generations",
+          "[authoring-retries]") {
+    auto value = owner();
+    CreateEntityCommand creation{id<AuthoredEntityId>(50), {"Scripted"}};
+    creation.script = Script{"scripts/create.lua", true};
+    auto input = request(*value, AuthoringCommand{creation});
+    const auto first = recorded(*value, input);
+    REQUIRE(first->result);
+    const auto old_handle = find(*value, 50);
+    CHECK(state(*value, 50).script == creation.script);
+    creation.script->enabled = false;
+    auto mismatch = input;
+    mismatch.mutation = AuthoringCommand{creation};
+    mutation_denied(*value, mismatch, AuthoringMutationState::payload_mismatch);
+    CHECK(take(value->mutate(input)).outcome.value() == first);
+    move_history(*value);
+    CHECK_FALSE(live(*value).entity_state(old_handle));
+    move_history(*value, true);
+    CHECK(find(*value, 50) != old_handle);
+    CHECK((state(*value, 50).script == Script{"scripts/create.lua", true}));
+    CHECK_FALSE(live(*value).entity_state(old_handle));
 }

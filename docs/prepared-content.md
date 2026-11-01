@@ -7,6 +7,12 @@ these values through [prepared_content.hpp](../engine_tools/include/shark/tools/
 See [ADR 0033](architecture/0033-prepared-runtime-content.md). No API here initializes
 graphics, imports a raw source file in Runtime, or provides an export command.
 
+19b adds prepared scene v4 for inert [Script settings](script-components.md).
+V1-v3 decoding and their existing no-Script encoding remain compatible. V4
+preserves references for editor and physics preview, not executable script bytes;
+actual standalone export/runtime activation rejects Script-bearing scenes until
+script execution and content closure are implemented.
+
 ## Meshes and immutable ownership
 
 `PreparedMeshAsset` contains its AssetId and dense ordered meshes. Each mesh owns
@@ -62,8 +68,9 @@ as prepared assets. Scaling and placement belong to the entity Transform.
 
 `PreparedScene` contains SceneId, optional WorldPosition origin and up to 4096
 entities with explicit authored IDs, parent IDs, Name, Transform and optional
-Camera/MeshRenderer/RigidBody. Source extras/project paths, command history, runtime handles,
-network authority and credentials are absent. `SHKSCNE1` versions 1/2/3 use a 4 MiB
+Camera/MeshRenderer/RigidBody/Script. Source extras, command history, runtime handles,
+network authority and credentials are absent; v4 Script retains its project-relative
+source reference as inert metadata. `SHKSCNE1` versions 1/2/3/4 use a 4 MiB
 encoded bound and 16 MiB logical decoded bound. Both codec directions validate
 complete values, canonicalize TRS and reject duplicate/dangling/cyclic identities,
 invalid components, excessive depth and unrepresentable world transforms.

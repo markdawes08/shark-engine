@@ -26,6 +26,12 @@ steps, runtime queries/removal, exact operation reconciliation and stop. It uses
 a frozen prepared runtime copy, preserving source/history and saved bytes.
 Discovery advertises `physics_preview`; native Jolt handles stay private.
 
+19b adds `script` as an explicit query/inspection field, optional create value
+and nullable `set_script` mutation. These use the same retained owner, history,
+validation and retry identity as the Editor. They store a bounded source path
+and enabled flag without executing it; scoped source editing continues through
+the existing text operations. See [Script settings](script-components.md).
+
 ## Launch and framing
 
 ```text
@@ -332,13 +338,15 @@ Every command has `type` and `entity_id`, a durable authored UUIDv4:
 
 | `command.type` | Additional fields |
 | --- | --- |
-| `create_entity` | Optional `name`, `transform`, `parent_id`, `camera`, `mesh_renderer`; native Name/Transform defaults and absent optional components apply |
+| `create_entity` | Optional `name`, `transform`, `parent_id`, `camera`, `mesh_renderer`, `rigid_body`, `script`; native Name/Transform defaults and absent optional components apply |
 | `delete_entity` | None; deletes the complete subtree |
 | `set_name` | Required `name` |
 | `set_transform` | Required `transform` |
 | `reparent_entity` | Required `parent_id` (UUIDv4 or null), `mode` (`keep_local` or `keep_world`) |
 | `set_camera` | Required `camera`, or null to remove |
 | `set_mesh_renderer` | Required `mesh_renderer`, or null to remove |
+| `set_rigid_body` | Required `rigid_body`, or null to remove |
+| `set_script` | Required `script`, or null to remove |
 
 Transform input is `{translation:[x,y,z],rotation:[x,y,z,w],scale:[x,y,z]}`;
 all three fields are required when supplied. Camera input requires `projection`,
@@ -707,7 +715,7 @@ defines its bounds and intended consumer.
 | `selection` | `all` (default), `roots`, or direct `children` |
 | `parent_id` | Authored entity UUIDv4; required for `children`, forbidden otherwise |
 | `name_prefix` | Exact UTF-8 byte prefix, default empty; at most 256 bytes, no C0/C1/DEL controls, no case folding |
-| `fields` | Unique array drawn from `name`, `transform`, `hierarchy`, `camera`, `mesh_renderer`; default first three; `[]` is identity-only |
+| `fields` | Unique array drawn from `name`, `transform`, `hierarchy`, `camera`, `mesh_renderer`, `rigid_body`, `script`; default first three; `[]` is identity-only |
 | `page_size` | Integer 1..256, default 64 |
 | `scan_budget` | Integer 1..4096, default 256 |
 | `expected_revision` | Optional `{ "scene_instance": "...", "revision": "..." }` |

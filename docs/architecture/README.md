@@ -102,6 +102,7 @@ not establish file or gameplay-wire formats.
 | [0047](0047-fixed-step-physics.md) | Leased Scene simulation, bounded populated updates, existing schedules and presentation interpolation |
 | [0048](0048-physics-contacts.md) | Bilateral body filters, native triggers, bounded fixed-tick observations and safe queued-event removal |
 | [0049](0049-editor-physics-preview.md) | Shared frozen physics preview, exact runtime operation reconciliation and editor controls |
+| [0050](0050-script-components.md) | Inert Script component, shared authoring, prepared compatibility and explicit execution boundaries |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

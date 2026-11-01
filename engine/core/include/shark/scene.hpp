@@ -29,6 +29,7 @@ struct EntitySeed {
     std::optional<Camera> camera{};
     std::optional<MeshRenderer> mesh_renderer{};
     std::optional<RigidBody> rigid_body{};
+    std::optional<Script> script{};
 };
 
 struct SceneLimits {
@@ -54,7 +55,8 @@ enum class SceneMutationKind {
     reparent,
     set_camera,
     set_mesh_renderer,
-    set_rigid_body
+    set_rigid_body,
+    set_script
 };
 
 // Owned per-entity copy. World matrix is scene-local, not a global MMO location.
@@ -70,6 +72,7 @@ struct SceneEntityState {
     std::optional<Camera> camera{};
     std::optional<MeshRenderer> mesh_renderer{};
     std::optional<RigidBody> rigid_body{};
+    std::optional<Script> script{};
 };
 using SceneMutationTicket = std::uint64_t;
 struct SceneMutationOutcome {
@@ -105,6 +108,7 @@ class Scene final {
     [[nodiscard]] Result<void> set_mesh_renderer(EntityHandle handle,
                                                  std::optional<MeshRenderer> renderer);
     [[nodiscard]] Result<void> set_rigid_body(EntityHandle handle, std::optional<RigidBody> body);
+    [[nodiscard]] Result<void> set_script(EntityHandle handle, std::optional<Script> script);
     [[nodiscard]] Result<void> reparent(EntityHandle handle, std::optional<EntityHandle> parent,
                                         ReparentMode mode);
     [[nodiscard]] Result<SceneEntityState> entity_state(EntityHandle handle) const;
@@ -132,6 +136,8 @@ class Scene final {
     defer_set_mesh_renderer(EntityHandle handle, std::optional<MeshRenderer> renderer);
     [[nodiscard]] Result<SceneMutationTicket> defer_set_rigid_body(EntityHandle handle,
                                                                    std::optional<RigidBody> body);
+    [[nodiscard]] Result<SceneMutationTicket> defer_set_script(EntityHandle handle,
+                                                               std::optional<Script> script);
     [[nodiscard]] Result<SceneMutationTicket>
     defer_reparent(EntityHandle handle, std::optional<EntityHandle> parent, ReparentMode mode);
     // FIFO, per-operation outcomes; this is not an atomic authoring transaction.

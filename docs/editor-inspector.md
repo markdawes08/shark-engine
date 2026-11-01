@@ -23,6 +23,11 @@ schema, including bilateral collision filters and trigger. Bodies require a
 root with positive uniform scale. The same Core component validators and retained authoring commands
 make the final decision; display metadata never becomes validation policy.
 
+19b adds Script source and enabled fields to this same draft and atomic Apply.
+The reference is validated but does not create, open or execute a Lua file; the
+current standalone runtime and export reject Script-bearing scenes until their
+execution/cooking owner lands. See [Script settings](script-components.md).
+
 Transform rotation uses quaternion `[x,y,z,w]`, translation is in meters, and
 scale permits negative values with the existing absolute magnitude floor.
 Camera values retain their projection-dependent near bound and far/near

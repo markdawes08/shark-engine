@@ -1,4 +1,5 @@
 #include <shark/client/scene_content.hpp>
+#include <shark/client/scene_launch.hpp>
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -92,6 +93,47 @@ TEST_CASE("prepared file loading owns builtins and preserves old scene across re
     CHECK_FALSE(load_scene_content(files.content));
     CHECK(take(loaded->scene().stats()).revision == revision.revision);
     CHECK(loaded->scene().entity_state(old));
+}
+
+TEST_CASE(
+    "Runtime rejects any prepared script before device creation while inspection remains available",
+    "[scene-content][scene-launch]") {
+    Files files;
+    auto candidate = scene();
+    // The Script is beyond the first 64-entity page, and disabled scripts also
+    // need an explicit Runtime capability decision rather than being ignored.
+    for (int index = 0; index < 70; ++index) {
+        auto suffix = std::to_string(index);
+        suffix.insert(0, 12 - suffix.size(), '0');
+        PreparedEntity extra{
+            AuthoredEntityId{take(StableId::parse("20000000-0000-4000-8000-" + suffix))}};
+        if (index == 69)
+            extra.script = Script{"scripts/later.lua", false};
+        candidate.entities.push_back(std::move(extra));
+    }
+    const auto scripted_id = candidate.entities.back().id;
+    write(files.content.scene, take(encode_prepared_scene(candidate)));
+    const auto inspected = take(load_scene_content(files.content));
+    const Script expected{"scripts/later.lua", false};
+    CHECK(
+        take(inspected->scene().entity_state(take(inspected->scene().find(scripted_id)))).script ==
+        expected);
+    SceneLaunchOptions options;
+    options.content = files.content;
+    options.camera = id<AuthoredEntityId>('1');
+    options.vertex_shader = files.root / "missing-vertex";
+    options.pixel_shader = files.root / "missing-pixel";
+    auto rejected = run_scene("test", options);
+    REQUIRE_FALSE(rejected);
+    CHECK(rejected.error().code == ErrorCode::capability_unavailable);
+    CHECK(rejected.error().context.operation == "client.scene.run");
+    CHECK(rejected.error().context.path == "scripts/later.lua");
+    CHECK(rejected.error().context.entity_id == scripted_id.value().to_string());
+    candidate.entities.back().script.reset();
+    write(files.content.scene, take(encode_prepared_scene(candidate)));
+    const auto without_script = run_scene("test", options);
+    REQUIRE_FALSE(without_script);
+    CHECK(without_script.error().code != ErrorCode::capability_unavailable);
 }
 
 TEST_CASE("prepared mesh files resolve references and leases outlive files and scene",

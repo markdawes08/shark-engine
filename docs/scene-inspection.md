@@ -16,7 +16,7 @@ replication policy.
 
 ## Schema discovery and validation
 
-`component_schemas()` returns the five supported component schemas in stable ID
+`component_schemas()` returns the six supported component schemas in stable ID
 order. `component_schema(id, version)` and
 `property_schema(component, property, version)` return checked owned copies.
 Changing a returned string, constraint or default cannot alter later discovery
@@ -31,9 +31,13 @@ or engine validation. Name and Transform are mandatory and not removable;
 | Camera | 3 | `shark.camera` | 1 |
 | MeshRenderer | 4 | `shark.mesh_renderer` | 1 |
 | RigidBody | 5 | `shark.rigid_body` | 1 |
+| Script | 6 | `shark.script` | 1 |
 
 RigidBody adds property IDs 13-23 and kilogram units under the
 [body contract](physics-bodies.md); root/scale feasibility remains Scene validation.
+Script adds property IDs 24-25: a bounded project-relative source path and an
+enabled boolean. Its lexical constraints and inert semantics are in the
+[Script contract](script-components.md).
 
 Property IDs are stable across the catalog; each property also has its component
 key, display name, typed default, constraints, unit and mutability.
@@ -66,7 +70,7 @@ method or permission to mutate another authority's state.
 
 `validate_component(id, version, ComponentValue)` delegates to the same component
 validation used by Scene and returns an owned canonical value. The fixed
-alternatives are Name, Transform, Camera and MeshRenderer. Unknown component or
+alternatives are Name, Transform, Camera, MeshRenderer, RigidBody and Script. Unknown component or
 property IDs, unsupported versions and mismatched value types reject explicitly.
 Local component validation does not test a candidate hierarchy, reserve a scene
 revision or change any scene. Scene mutation still validates all affected world
@@ -107,7 +111,7 @@ empty page with a continuation cursor. **An empty page does not mean the query
 is complete.** Only the absence of `next_cursor()` means the remaining slot range
 has been exhausted. `scanned_slots()` reports the actual bounded work.
 
-Identity, scene scope and authority metadata are always returned. Five field
+Identity, scene scope and authority metadata are always returned. Seven field
 groups select optional payloads:
 
 - `name`: the owned Name value.
@@ -115,10 +119,12 @@ groups select optional payloads:
 - `hierarchy`: checked parent, direct `child_count` and depth.
 - `camera`: the owned optional Camera value.
 - `mesh_renderer`: the owned optional MeshRenderer value.
+- `rigid_body`: the owned optional RigidBody value.
+- `script`: the owned optional Script value.
 
-Name, transform and hierarchy default true; the two new flags default false, so
+Name, transform and hierarchy default true; the four optional flags default false, so
 existing `{false, false, false}` selections still give identity-only rows. Select
-Camera/MeshRenderer explicitly: an empty optional means absent component when
+optional components explicitly: an empty optional means absent component when
 selected, or omitted data when unselected. No default component is fabricated.
 Queries do not copy complete child
 vectors. Use a separately paged direct-children selection to enumerate a large

@@ -11,6 +11,11 @@ connected assignment acceptance is complete. These checkpoints follow the
 | 19c | Connect ordered lifecycle callbacks and a small checked entity/log/math/time API, separating server gameplay from client presentation; maintain the Lua manifest and FeatureWorld coverage. |
 | 19d | Qualify diagnostics, runaway recovery, editing and execution through connected human and terminal workflows, with affected subsystem closure. |
 
+19b's [Script contract](../script-components.md) and
+[handoff](../handoffs/19b-script-components.md) record shared inert settings,
+prepared v4 compatibility and explicit Runtime/export rejection. Script execution
+and server/client capabilities remain 19c; full REQ-19 remains NOT_RUN.
+
 Physics-specific scripting, queries and contact callbacks belong to assignment 20.
 No player connection gains script upload or arbitrary server execution authority;
 render-frame code cannot grant authoritative gameplay outcomes. Source remains

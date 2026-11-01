@@ -192,7 +192,7 @@ TEST_CASE("Prepared v2 and native source save reopen retain rigid bodies without
     auto loaded = take(LoadedPreparedScene::load(bytes, take(PreparedAssets::create({}))));
     auto handle = take(loaded->scene().find(id<AuthoredEntityId>('4')));
     CHECK(take(loaded->scene().entity_state(handle)).rigid_body == body);
-    bytes[8] = std::byte{4};
+    bytes[8] = std::byte{5};
     CHECK_FALSE(decode_prepared_scene(bytes));
     Scratch scratch;
     auto files = take(ProjectFiles::open(scratch.path));
