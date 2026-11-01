@@ -42,6 +42,10 @@ also prepares/verifies Jolt. [Physics foundation](physics-world.md) documents it
 single-precision/SSE2 options and public-header-only example. Native physics
 sources and MIT notices stay in the existing build/package flow; Core/Server
 still require no window, GPU or authoring SDK.
+19a adds private Lua 5.5.1 in Core. `SHARK_LUA_ARCHIVE` selects the exact
+locked archive for offline builds; the canonical `out/dependency-cache/` copy
+is reused when available. The dependency helper checks source bytes and the
+complete MIT notice. See [Lua VM](lua-vm.md) for limits and current scope.
 Ordinary CTest does not open native windows or initialize graphics.
 04c adds the [offline frame loop](frame-loop.md). `shark.client.frame` uses seed
 1337 and a 20-second timeout for deterministic input/time, pause/step, overflow,

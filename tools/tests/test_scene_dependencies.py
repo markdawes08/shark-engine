@@ -27,6 +27,7 @@ class SceneDependencyTests(unittest.TestCase):
                        f"-DSHARK_GLM_ARCHIVE={OPTIONS.glm_archive}",
                        f"-DSHARK_MBEDTLS_ARCHIVE={OPTIONS.mbedtls_archive}",
                        f"-DSHARK_JOLT_ARCHIVE={OPTIONS.jolt_archive}",
+                       f"-DSHARK_LUA_ARCHIVE={OPTIONS.lua_archive}",
                        *([f"-DSHARK_SQLITE_ARCHIVE={OPTIONS.sqlite_archive}"] if OPTIONS.sqlite_archive else []), *extra]
             result = subprocess.run(command, text=True, capture_output=True, timeout=120)
             text = result.stdout + result.stderr
@@ -37,7 +38,7 @@ class SceneDependencyTests(unittest.TestCase):
             else:
                 self.assertEqual(result.returncode, 0, text)
                 self.assertEqual({p.name for p in (build / "_deps").iterdir()},
-                                 {"entt-src", "entt-build", "entt-subbuild", "glm-src", "glm-build", "glm-subbuild", "mbedtls-src", "mbedtls-build", "jolt-src", "jolt-build"} |
+                                 {"entt-src", "entt-build", "entt-subbuild", "glm-src", "glm-build", "glm-subbuild", "mbedtls-src", "mbedtls-build", "jolt-src", "jolt-build", "lua-src"} |
                                  ({"sqlite-src"} if OPTIONS.sqlite_archive else set()))
                 cache = (build / "CMakeCache.txt").read_text(encoding="utf-8")
                 self.assertIn("FETCHCONTENT_FULLY_DISCONNECTED:BOOL=ON", cache)
@@ -49,6 +50,7 @@ class SceneDependencyTests(unittest.TestCase):
                 self.assertIn("SHARK_DOMAIN_SharkMath [==[core]==]", graph)
                 self.assertIn("SHARK_DOMAIN_SharkTLS_mbedtls [==[core]==]", graph)
                 self.assertIn("SHARK_DOMAIN_Jolt [==[core]==]", graph)
+                self.assertIn("SHARK_DOMAIN_SharkLua [==[core]==]", graph)
                 self.assertIn("GEN_FILES:BOOL=OFF", cache)
                 self.assertIn("USE_SHARED_MBEDTLS_LIBRARY:BOOL=OFF", cache)
                 commands = json.loads((build / "compile_commands.json").read_text(encoding="utf-8"))
@@ -63,6 +65,7 @@ class SceneDependencyTests(unittest.TestCase):
                         self.assertIn("glm-src", item["command"])
                         self.assertNotIn("mbedtls-src", item["command"])
                         self.assertNotIn("jolt-src", item["command"])
+                        self.assertNotIn("lua-src", item["command"])
                         self.assertNotIn("MBEDTLS_USER_CONFIG_FILE", item["command"])
                 check = subprocess.run([OPTIONS.cmake, "-DSHARK_GRAPH=" + str(next(build.glob("shark-target-graph-*.cmake"))),
                                         "-DSHARK_BOUNDARY_MODE=server", "-P", str(ROOT / "cmake/CheckRuntimeBoundary.cmake")],
@@ -149,6 +152,15 @@ class SceneDependencyTests(unittest.TestCase):
             with self.subTest(arguments=arguments):
                 self.configure(arguments, diagnostic)
 
+    def test_lua_requires_verified_archive_and_rejects_source_override(self):
+        cases = [(["-DSHARK_LUA_ARCHIVE=missing-lua-archive"], "Offline Lua population requires SHARK_LUA_ARCHIVE"),
+                 ([f"-DSHARK_LUA_ARCHIVE={ROOT / 'dependencies.lock.json'}"], "Lua archive SHA-256 differs"),
+                 ([f"-DSHARK_LUA_ARCHIVE={ROOT}"], "must name a regular locked archive"),
+                 ([f"-DFETCHCONTENT_SOURCE_DIR_LUA={ROOT}"], "Unverified Lua source override")]
+        for arguments, diagnostic in cases:
+            with self.subTest(arguments=arguments):
+                self.configure(arguments, diagnostic)
+
     def test_wrong_archive_is_rejected_before_population(self):
         self.configure([f"-DSHARK_ENTT_ARCHIVE={ROOT / 'dependencies.lock.json'}"],
                        "SHARK_ENTT_ARCHIVE SHA-256 differs")
@@ -167,6 +179,7 @@ if __name__ == "__main__":
     parser.add_argument("--c-compiler", required=True)
     parser.add_argument("--mbedtls-archive", type=Path, required=True)
     parser.add_argument("--jolt-archive", type=Path, required=True)
+    parser.add_argument("--lua-archive", type=Path, required=True)
     parser.add_argument("--entt-archive", type=Path, required=True)
     parser.add_argument("--glm-archive", type=Path, required=True)
     parser.add_argument("--sqlite-archive", type=Path)

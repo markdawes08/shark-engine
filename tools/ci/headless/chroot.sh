@@ -60,6 +60,7 @@ cp "$task_output/server-only/package/bin/Server" "$task_runtime/package/bin/Serv
 cp "$task_output/server-only/package/licenses/EnTT/LICENSE" "$task_runtime/package/licenses/EnTT/LICENSE"
 cp "$task_output/server-only/package/licenses/GLM/copying.txt" "$task_runtime/package/licenses/GLM/copying.txt"
 cp -R "$task_output/server-only/package/licenses/Jolt" "$task_runtime/package/licenses/Jolt"
+cp -R "$task_output/server-only/package/licenses/Lua" "$task_runtime/package/licenses/Lua"
 cp -R "$task_output/server-only/package/licenses/MbedTLS" "$task_runtime/package/licenses/MbedTLS"
 cp -R "$task_output/server-only/package/licenses/SQLite" "$task_runtime/package/licenses/SQLite"
 chmod 755 "$task_runtime/package/bin/Server"

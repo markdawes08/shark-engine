@@ -8,6 +8,11 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
+Assignment 19 is in progress. Its [Lua foundation](../handoffs/19a-lua-foundation.md)
+adds private bounded VM execution; the Script component, lifecycle and public
+APIs remain open under the [checkpoints](../roadmap/lua-plan.md). REQ-19 remains
+NOT_RUN until connected acceptance.
+
 **18e and full REQ-18 PASS under current-machine scope.** The
 [handoff](../handoffs/18e-editor-physics-preview.md#intel-physics-and-full-req-18-closure-2026-11-01)
 records both-GPU physics acceptance and exact reused evidence.
@@ -21,8 +26,7 @@ The [shell contract](../editor-shell.md) and
 dirty-state decisions, bounded hierarchy and revision-scoped selection, retained
 entity edits, typed CPU viewport preparation and GUI scene composition. Their
 feature mappings refer to the owning session/panel/adapter, CPU and native
-fixtures; an unexecuted native fixture is not a GPU pass. Current assignment is
-18. The [inspector contract](../editor-inspector.md) adds entity/revision-bound
+fixtures; an unexecuted native fixture is not a GPU pass. The [inspector contract](../editor-inspector.md) adds entity/revision-bound
 drafts, atomic component Apply and ticket-bound history through the same owner.
 The [asset/console contract](../editor-assets-console.md) covers explicit inventory,
 metadata tokens, job publication/acknowledgement and bounded diagnostics. Actual

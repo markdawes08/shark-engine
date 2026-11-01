@@ -166,6 +166,7 @@ def main() -> int:
         glm_archive = prepare_core_dependency(ROOT, build_root / "dependency-cache", "GLM")
         mbedtls_archive = prepare_core_dependency(ROOT, build_root / "dependency-cache", "MbedTLS")
         jolt_archive = prepare_core_dependency(ROOT, build_root / "dependency-cache", "Jolt")
+        lua_archive = prepare_core_dependency(ROOT, build_root / "dependency-cache", "Lua")
         sqlite_archive = prepare_storage_dependency(ROOT, build_root / "dependency-cache")
         for preset in PRESETS:
             build = build_root / preset
@@ -190,6 +191,7 @@ def main() -> int:
                                f"-DSHARK_GLM_ARCHIVE={glm_archive}",
                                f"-DSHARK_MBEDTLS_ARCHIVE={mbedtls_archive}",
                                f"-DSHARK_JOLT_ARCHIVE={jolt_archive}",
+                               f"-DSHARK_LUA_ARCHIVE={lua_archive}",
                                f"-DSHARK_SQLITE_ARCHIVE={sqlite_archive}",
                                "-DSHARK_INJECT_TEST_FAILURE=" + (
                                    "ON" if args.inject_test_failure and preset != "server-only" else "OFF")]),

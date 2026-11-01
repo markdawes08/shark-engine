@@ -492,7 +492,7 @@
       "planned_fixture": "FeatureWorld/ScriptLifecycle, FeatureWorld/CoreLuaApi, LuaSyntaxRuntimeErrors, LuaRunawayRecovery and LuaStaleHandles fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "Lua VM/core gameplay API is not implemented; owner assignment 19."
+        "reason": "19a adds a private bounded Lua VM foundation; Script component, lifecycle, gameplay APIs and connected acceptance remain unimplemented. See docs/handoffs/19a-lua-foundation.md and docs/roadmap/lua-plan.md."
       }
     },
     {

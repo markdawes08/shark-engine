@@ -5,6 +5,7 @@ add_library(EngineCore STATIC
     src/crypto_runtime.cpp
     src/error.cpp
     src/log.cpp
+    src/lua_vm.cpp
     src/name.cpp
     src/physics.cpp
     src/physics_components.cpp
@@ -42,7 +43,7 @@ if(NOT shark_threads_global)
 endif()
 shark_classify_target(Threads::Threads core)
 target_link_libraries(EngineCore PUBLIC Threads::Threads SharkMath)
-target_link_libraries(EngineCore PRIVATE EnTT::EnTT SharkTLS_mbedtls SharkPhysics_jolt)
+target_link_libraries(EngineCore PRIVATE EnTT::EnTT SharkTLS_mbedtls SharkPhysics_jolt SharkLua)
 if(WIN32)
     # Windows OS entropy for persistent UUIDs; no third-party or presentation dependency.
     find_library(SHARK_WINDOWS_BCRYPT_LIBRARY NAMES bcrypt REQUIRED)

@@ -19,6 +19,7 @@ import shutil
 import sys
 
 from core_dependencies import DEPENDENCIES, MBEDTLS_LICENSE_FILES
+from lua_dependency import SOURCES as LUA_SOURCES
 from storage_dependency import DEFINITIONS as SQLITE_DEFINITIONS, verify_server_build
 from process_runner import run_process
 
@@ -38,12 +39,13 @@ TLS_DIRECTORIES = {"", "framework", "include", "library", "pkgconfig", "tf-psa-c
                    "tf-psa-crypto/core", "tf-psa-crypto/pkgconfig"}
 STORAGE_TARGETS = {"EngineStorage", "SharkSQLite"}
 PHYSICS_TARGETS = {"Jolt"}
+LUA_TARGETS = {"SharkLua"}
 JOLT_TARGET_METADATA = frozenset({
     "_deps/jolt-src/Jolt/Jolt.cmake",
     "_deps/jolt-src/Jolt/Physics/Collision/Shape/TaperedCapsuleShape.gliffy",
 })
-TARGETS = {"EngineCore", "Server", "shark_check_server_boundary"} | STORAGE_TARGETS | TLS_STATIC | TLS_OBJECT | TLS_UTILITIES | PHYSICS_TARGETS
-PACKAGE_FILES = {"bin/Server", "licenses/EnTT/LICENSE", "licenses/GLM/copying.txt", "licenses/Jolt/LICENSE", "licenses/SQLite/LICENSE.txt"} | {
+TARGETS = {"EngineCore", "Server", "shark_check_server_boundary"} | STORAGE_TARGETS | TLS_STATIC | TLS_OBJECT | TLS_UTILITIES | PHYSICS_TARGETS | LUA_TARGETS
+PACKAGE_FILES = {"bin/Server", "licenses/EnTT/LICENSE", "licenses/GLM/copying.txt", "licenses/Jolt/LICENSE", "licenses/Lua/doc/readme.html", "licenses/SQLite/LICENSE.txt"} | {
     "licenses/MbedTLS/" + item for item in MBEDTLS_LICENSE_FILES}
 # These private Core inputs own the existing TLS/content crypto lifetime, not
 # client Runtime code. Keep this review exact; the general dependency heuristic
@@ -111,8 +113,10 @@ def source_path(path: Path, source: Path, build: Path, *, generated=False, nonco
     storage_input = generated and relative in ("_deps/sqlite-src/sqlite3.c", "_deps/sqlite-src/sqlite3.h")
     physics_input = (generated and relative.startswith("_deps/jolt-src/Jolt/")
                      and path.suffix in (".cpp", ".h", ".inl"))
+    lua_input = (generated and relative.startswith("_deps/lua-src/src/")
+                 and path.suffix in (".c", ".h"))
     physics_metadata = generated and noncompiled_target == "Jolt" and relative in JOLT_TARGET_METADATA
-    require(relative.startswith(allowed) or dependency_header or network_input or network_config or storage_input or physics_input or physics_metadata,
+    require(relative.startswith(allowed) or dependency_header or network_input or network_config or storage_input or physics_input or physics_metadata or lua_input,
             f"Non-Core source/include path: {path}")
     reviewed_crypto = not generated and relative in CORE_CRYPTO_INPUTS
     require(reviewed_crypto or not FORBIDDEN.search(relative), f"Forbidden source/include path: {path}")
@@ -129,7 +133,7 @@ def include_path(path: Path, source: Path, build: Path) -> Path:
                                   "_deps/mbedtls-src/tf-psa-crypto/utilities",
                                   "_deps/mbedtls-src/tf-psa-crypto/dispatch", "_deps/mbedtls-src/tf-psa-crypto/drivers",
                                   "_deps/mbedtls-build/include", "_deps/mbedtls-build/library", "_deps/mbedtls-build/tf-psa-crypto/include",
-                                  "_deps/mbedtls-build/tf-psa-crypto/core", "_deps/sqlite-src")),
+                                  "_deps/mbedtls-build/tf-psa-crypto/core", "_deps/sqlite-src", "_deps/lua-src/src")),
                           (source, ("engine/include", "engine/core/include", "server"))):
         if path.is_relative_to(base):
             path = plain_path(path, base)
@@ -182,8 +186,8 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
     jolt_metadata_paths = {build / relative for relative in JOLT_TARGET_METADATA}
     for item in targets:
         require(item["name"] in TARGETS, "File-api target identity mismatch")
-        if item["name"] in TLS_STATIC | TLS_OBJECT | TLS_UTILITIES | STORAGE_TARGETS | PHYSICS_TARGETS:
-            expected_type = "STATIC_LIBRARY" if item["name"] in TLS_STATIC | STORAGE_TARGETS | PHYSICS_TARGETS else (
+        if item["name"] in TLS_STATIC | TLS_OBJECT | TLS_UTILITIES | STORAGE_TARGETS | PHYSICS_TARGETS | LUA_TARGETS:
+            expected_type = "STATIC_LIBRARY" if item["name"] in TLS_STATIC | STORAGE_TARGETS | PHYSICS_TARGETS | LUA_TARGETS else (
                 "OBJECT_LIBRARY" if item["name"] in TLS_OBJECT else "UTILITY")
             require(item.get("type") == expected_type, "Unexpected reviewed TLS target type")
         for dependency in item.get("dependencies", []):
@@ -192,7 +196,7 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
             require(item["name"] in {"Server", "EngineStorage"} or reached not in STORAGE_TARGETS,
                     "Storage dependency escaped its Server owner")
         for group in item.get("compileGroups", []):
-            language = "C" if item["name"] in TLS_STATIC | TLS_OBJECT | {"SharkSQLite"} else "CXX"
+            language = "C" if item["name"] in TLS_STATIC | TLS_OBJECT | {"SharkSQLite", "SharkLua"} else "CXX"
             require(group.get("language") == language, "Unexpected Core source language")
             for include in group.get("includes", []):
                 directory = include_path(Path(include["path"]), source, build)
@@ -202,6 +206,8 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
                         "Server storage include escaped into shared Core")
                 require(item["name"] in {"EngineCore", "Jolt"} or not directory.is_relative_to(build / "_deps/jolt-src"),
                         "Private Jolt include escaped the physics implementation")
+                require(item["name"] in {"EngineCore", "SharkLua"} or not directory.is_relative_to(build / "_deps/lua-src"),
+                        "Private Lua include escaped the Core implementation")
         for entry in item.get("sources", []):
             path = Path(entry["path"])
             full = path if path.is_absolute() else source / path
@@ -223,7 +229,7 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
                 # It is neither a compiler/include input nor another target's source.
                 source_path(full, source, build, noncompiled_target="Jolt")
             else:
-                suffixes = ((".c",) if item["name"] in TLS_STATIC | TLS_OBJECT | {"SharkSQLite"} else (".cpp", ".cc", ".cxx")) if "compileGroupIndex" in entry else (".h", ".hh", ".hpp", ".hxx", ".inl")
+                suffixes = ((".c",) if item["name"] in TLS_STATIC | TLS_OBJECT | {"SharkSQLite", "SharkLua"} else (".cpp", ".cc", ".cxx")) if "compileGroupIndex" in entry else (".h", ".hh", ".hpp", ".hxx", ".inl")
                 require(path.suffix in suffixes, f"Unreviewed prebuilt/noncompiled source input: {path}")
                 resolved = codemodel_source(entry, source, build)
                 require(item["name"] in STORAGE_TARGETS or not resolved.is_relative_to(build / "_deps/sqlite-src"),
@@ -232,6 +238,14 @@ def file_api(build: Path) -> tuple[Path, dict, list[dict], dict]:
                         "Server storage source escaped into shared Core")
                 if item["name"] == "SharkSQLite" and "compileGroupIndex" in entry:
                     require(resolved == build / "_deps/sqlite-src/sqlite3.c", "SQLite compiles only the reviewed amalgamation")
+                require(item["name"] == "SharkLua" or not resolved.is_relative_to(build / "_deps/lua-src"),
+                        "Private Lua source escaped its target")
+        if item["name"] == "SharkLua":
+            compiled = [codemodel_source(entry, source, build) for entry in item.get("sources", [])
+                        if "compileGroupIndex" in entry]
+            require(len(compiled) == len(LUA_SOURCES) and set(compiled) ==
+                    {build / "_deps/lua-src/src" / name for name in LUA_SOURCES},
+                    "Lua compiled sources differ from the reviewed list")
     for directory in configuration.get("directories", []):
         relative = directory["source"].replace("\\", "/")
         full = Path(os.path.abspath(source / relative))
@@ -323,6 +337,12 @@ def compile_inventory(build: Path, source: Path, targets: list[dict]) -> list[di
                 if sqlite_unit else not sqlite_definitions, "Private SQLite compile definitions escaped or changed")
         require(sqlite_unit or storage_unit or not any("sqlite-src" in arg for arg in args),
                 "Private SQLite header escaped storage implementation")
+        lua_unit = path.is_relative_to(build / "_deps/lua-src/src")
+        core_unit = path.is_relative_to(source / "engine/core")
+        require(lua_unit or core_unit or not any("lua-src" in arg for arg in args),
+                "Private Lua header escaped Core implementation")
+        require(not any(arg.startswith("-DLUA_") for arg in args),
+                "Unreviewed Lua compile definition")
         require(not path.is_relative_to(source / "engine/core") or not any("server/storage" in arg.replace("\\", "/") for arg in args),
                 "Storage header escaped into shared Core")
         index = 1
@@ -370,7 +390,7 @@ def link_inventory(targets: list[dict], build: Path) -> list[dict]:
     fragments = server.get("link", {}).get("commandFragments", [])
     require(bool(fragments), "Missing actual Server linker inputs")
     archives = []
-    for name in ("EngineStorage", "EngineCore", "SharkTLS_mbedtls", "SharkTLS_mbedx509", "SharkTLS_tfpsacrypto", "Jolt", "SharkSQLite"):
+    for name in ("EngineStorage", "EngineCore", "SharkTLS_mbedtls", "SharkTLS_mbedx509", "SharkTLS_tfpsacrypto", "Jolt", "SharkLua", "SharkSQLite"):
         core = next(item for item in targets if item["name"] == name)
         artifacts = core.get("artifacts", [])
         require(core.get("type") == "STATIC_LIBRARY" and len(artifacts) == 1, "Expected one static Core/TLS artifact")
@@ -426,6 +446,7 @@ def compiler_headers(output: str, compiled: list[dict], source: Path, build: Pat
         owner = Path(entry.get("path", source / "engine/core/unknown.cpp"))
         storage = owner.is_relative_to(source / "server/storage/src") or owner == build / "_deps/sqlite-src/sqlite3.c"
         physics = owner.is_relative_to(source / "engine/core") or owner.is_relative_to(build / "_deps/jolt-src/Jolt")
+        lua = owner.is_relative_to(source / "engine/core") or owner.is_relative_to(build / "_deps/lua-src/src")
         for value in groups[entry["object"]]:
             path = Path(os.path.abspath(value if Path(value).is_absolute() else build / value))
             require(storage or not path.is_relative_to(build / "_deps/sqlite-src"),
@@ -434,6 +455,8 @@ def compiler_headers(output: str, compiled: list[dict], source: Path, build: Pat
                     "Storage compiler-discovered input escaped into shared Core")
             require(physics or not path.is_relative_to(build / "_deps/jolt-src"),
                     "Private Jolt compiler-discovered input escaped the physics implementation")
+            require(lua or not path.is_relative_to(build / "_deps/lua-src"),
+                    "Private Lua compiler-discovered input escaped the Core implementation")
     headers, system = [], []
     for name in sorted({path for name, group in groups.items() if name in objects for path in group}):
         path = Path(name)

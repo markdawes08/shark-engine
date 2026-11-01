@@ -10,6 +10,7 @@ import os
 import sys
 import tempfile
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 from check_server_closure import (ClosureError, codemodel_source, compile_inventory, compiler_headers, dynamic_needed,
@@ -18,6 +19,7 @@ from check_server_closure import (ClosureError, codemodel_source, compile_invent
 from core_dependencies import MBEDTLS_LICENSE_FILES, DEPENDENCIES
 from storage_dependency import DEFINITIONS as SQLITE_DEFINITIONS
 from physics_dependency import entry as physics_entry, REVIEWED_SOURCES
+from lua_dependency import SOURCES as LUA_SOURCES, REVIEWED as LUA_REVIEWED
 
 JOLT_METADATA = ("Jolt/Jolt.cmake", "Jolt/Physics/Collision/Shape/TaperedCapsuleShape.gliffy")
 
@@ -76,9 +78,14 @@ class ServerClosureTests(unittest.TestCase):
                              "sources": [{"path": str(self.build / "_deps/jolt-src/Jolt/Physics/PhysicsSystem.cpp"), "compileGroupIndex": 0}]
                                         + [{"path": str(self.build / "_deps/jolt-src" / relative)} for relative in JOLT_METADATA],
                              "compileGroups": [{"language": "CXX", "includes": [{"path": str(self.build / "_deps/jolt-src"), "isSystem": True}]}]})
-        self.targets[0]["dependencies"] = [{"id": "physics"}]
+        self.targets.append({"name": "SharkLua", "id": "lua", "type": "STATIC_LIBRARY",
+                             "artifacts": [{"path": "libSharkLua.a"}],
+                             "sources": [{"path": str(self.build / "_deps/lua-src/src" / name), "compileGroupIndex": 0}
+                                         for name in LUA_SOURCES],
+                             "compileGroups": [{"language": "C", "includes": [{"path": str(self.build / "_deps/lua-src/src")}]}]})
+        self.targets[0]["dependencies"] = [{"id": "physics"}, {"id": "lua"}]
         self.targets[1]["link"]["commandFragments"][1]["fragment"] = self.targets[1]["link"]["commandFragments"][1]["fragment"].replace(
-            " libSharkSQLite.a", " _deps/jolt-build/libJolt.a libSharkSQLite.a")
+            " libSharkSQLite.a", " _deps/jolt-build/libJolt.a libSharkLua.a libSharkSQLite.a")
         self.targets[1]["dependencies"].append({"id": "storage"})
         self.configuration = {"name": "Release", "directories": [{"source": value} for value in (".", "engine", "engine/core", "server", str(self.build / "_deps/jolt-src/Build"))],
                               "targets": [{"name": item["name"], "id": item["id"], "jsonFile": item["id"] + ".json"}
@@ -100,6 +107,7 @@ class ServerClosureTests(unittest.TestCase):
         self.add_core_dependency_fixtures()
         self.add_physics_dependency_fixture()
         self.add_storage_dependency_fixture()
+        self.add_lua_dependency_fixture()
         self.commands.append({"directory": str(self.build), "file": str(self.build / "_deps/sqlite-src/sqlite3.c"),
                               "arguments": ["cc", *["-D" + item for item in SQLITE_DEFINITIONS], "-c",
                                             str(self.build / "_deps/sqlite-src/sqlite3.c"), "-o", "sqlite3.c.o"]})
@@ -110,6 +118,13 @@ class ServerClosureTests(unittest.TestCase):
         self.commands.append({"directory": str(self.build), "file": str(physics),
                               "arguments": ["c++", "-I" + str(physics.parents[2]), "-c", str(physics),
                                             "-o", str(output)]})
+        for name in LUA_SOURCES:
+            lua = self.build / "_deps/lua-src/src" / name
+            output = self.build / (name + ".o")
+            output.write_bytes(b"built Lua object")
+            self.commands.append({"directory": str(self.build), "file": str(lua),
+                                  "arguments": ["cc", "-I" + str(lua.parent), "-c", str(lua), "-o", str(output)]})
+        (self.build / "libSharkLua.a").write_bytes(b"built Lua library")
         for target in self.targets:
             if target["name"] in TLS_STATIC | TLS_OBJECT:
                 path = target["sources"][0]["path"]
@@ -126,6 +141,8 @@ class ServerClosureTests(unittest.TestCase):
         (self.package / "licenses/GLM/copying.txt").write_bytes(b"fixture license")
         (self.package / "licenses/Jolt").mkdir()
         (self.package / "licenses/Jolt/LICENSE").write_bytes(b"fixture physics license")
+        (self.package / "licenses/Lua/doc").mkdir(parents=True)
+        (self.package / "licenses/Lua/doc/readme.html").write_bytes(b"fixture Lua license")
         (self.package / "licenses/SQLite").mkdir()
         (self.package / "licenses/SQLite/LICENSE.txt").write_bytes(b"/* fixture notice */\n")
         for relative in MBEDTLS_LICENSE_FILES:
@@ -201,6 +218,36 @@ class ServerClosureTests(unittest.TestCase):
             (directory / name).write_bytes(content)
         self.cache["entries"].append({"name": "SHARK_SQLITE_ARCHIVE_INPUT", "value": str(archive)})
 
+    def add_lua_dependency_fixture(self):
+        # The production lock checks the exact upstream release; this fixture
+        # substitutes metadata only and exercises the real archive verifier.
+        contents = {name: b"/* fixture Lua source */\n" for name in LUA_REVIEWED}
+        for index in range(75 - len(contents)):
+            contents[f"doc/fixture-{index}.txt"] = b"fixture\n"
+        archive = self.root / "lua.tar.gz"
+        with tarfile.open(archive, "w:gz") as stream:
+            for name, data in contents.items():
+                item = tarfile.TarInfo("lua-fixture/" + name)
+                item.size = len(data)
+                stream.addfile(item, io.BytesIO(data))
+        locked = {"version": "fixture", "archive_prefix": "lua-fixture", "archive_bytes": archive.stat().st_size,
+                  "sha256": hashlib.sha256(archive.read_bytes()).hexdigest(),
+                  "source_file_count": len(contents), "source_bytes": sum(map(len, contents.values())),
+                  "source_sha256": {name: hashlib.sha256(contents[name]).hexdigest() for name in LUA_REVIEWED}}
+        for name, data in contents.items():
+            path = self.build / "_deps/lua-src" / name
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_bytes(data)
+        lock_path = self.source / "dependencies.lock.json"
+        record = json.loads(lock_path.read_text())
+        record["dependencies"]["Lua"] = locked
+        lock_path.write_text(json.dumps(record))
+        self.cache["entries"].append({"name": "SHARK_LUA_ARCHIVE_INPUT", "value": str(archive)})
+        patcher = patch("lua_dependency.entry", side_effect=lambda root: json.loads(
+            (root / "dependencies.lock.json").read_text())["dependencies"]["Lua"])
+        patcher.start()
+        self.addCleanup(patcher.stop)
+
     def add_physics_dependency_fixture(self):
         locked = physics_entry()
         contents = {path: b"// fixture physics input\n" for path in REVIEWED_SOURCES}
@@ -243,7 +290,7 @@ class ServerClosureTests(unittest.TestCase):
 
     def test_accepts_exact_core_server_graph_and_compile_inventory(self):
         source, _, targets, _ = file_api(self.build)
-        self.assertEqual(len(compile_inventory(self.build, source, targets)), 15)
+        self.assertEqual(len(compile_inventory(self.build, source, targets)), 15 + len(LUA_SOURCES))
 
     def add_reviewed_crypto_fixture(self):
         cpp = self.source / "engine/core/src/crypto_runtime.cpp"
@@ -264,7 +311,7 @@ class ServerClosureTests(unittest.TestCase):
         cpp, header, output, _ = self.add_reviewed_crypto_fixture()
         source, _, targets, _ = file_api(self.build)
         compiled = compile_inventory(self.build, source, targets)
-        self.assertEqual(len(compiled), 16)
+        self.assertEqual(len(compiled), 16 + len(LUA_SOURCES))
         relative = output.relative_to(self.build).as_posix()
         evidence = f"{relative}: #deps 2, deps mtime 1 (VALID)\n    {cpp}\n    {header}\n"
         rows, system = compiler_headers(evidence, [{"path": str(cpp), "object": relative}], self.source, self.build)
@@ -441,7 +488,7 @@ class ServerClosureTests(unittest.TestCase):
 
     def test_jolt_target_metadata_is_reviewed_and_not_a_compiler_input(self):
         source, _, targets, _ = file_api(self.build)
-        self.assertEqual(len(compile_inventory(self.build, source, targets)), 15)
+        self.assertEqual(len(compile_inventory(self.build, source, targets)), 15 + len(LUA_SOURCES))
         command = next(item for item in self.commands if "jolt-src" in item["file"])
         for relative in JOLT_METADATA:
             with self.subTest(relative=relative):
@@ -513,6 +560,64 @@ class ServerClosureTests(unittest.TestCase):
                 with self.assertRaisesRegex(ClosureError, "Unreviewed Jolt"):
                     compile_inventory(self.build, source, targets)
                 command["arguments"].pop()
+
+    def test_lua_source_list_rejects_shell_or_missing_vm_units(self):
+        target = next(item for item in self.targets if item["name"] == "SharkLua")
+        shell = self.build / "_deps/lua-src/src/lua.c"
+        shell.write_text("int main(void) { return 0; }\n", encoding="utf-8")
+        target["sources"].append({"path": str(shell), "compileGroupIndex": 0})
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "Lua compiled sources differ"):
+            file_api(self.build)
+        target["sources"].pop()
+        target["sources"].pop()
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "Lua compiled sources differ"):
+            file_api(self.build)
+
+    def test_lua_header_and_sources_cannot_escape_core(self):
+        header = self.build / "_deps/lua-src/src/lua.h"
+        server = self.targets[1]
+        server["compileGroups"] = [{"language": "CXX", "includes": [{"path": str(header.parent)}]}]
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "Private Lua include escaped"):
+            file_api(self.build)
+        server.pop("compileGroups")
+        server["sources"].append({"path": str(header)})
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "Private Lua source escaped"):
+            file_api(self.build)
+        server["sources"].pop()
+        self.commands[1]["arguments"].append("-I" + str(header.parent))
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "Private Lua header escaped"):
+            compile_inventory(self.build, self.source, self.targets)
+        evidence = f"server.o: #deps 1, deps mtime 1 (VALID)\n    {header}\n"
+        with self.assertRaisesRegex(ClosureError, "Private Lua compiler-discovered"):
+            compiler_headers(evidence, [{"path": str(self.source / "server/main.cpp"), "object": "server.o"}],
+                             self.source, self.build)
+
+    def test_lua_compile_definitions_and_dynamic_libraries_are_rejected(self):
+        command = next(item for item in self.commands if "lua-src" in item["file"])
+        command["arguments"].append("-DLUA_USE_LINUX")
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "Unreviewed Lua compile definition"):
+            compile_inventory(self.build, self.source, self.targets)
+        with self.assertRaises(ClosureError):
+            dynamic_needed("Dynamic section at offset 0x123 contains 1 entries:\n 0x1 (NEEDED) Shared library: [liblua.so.5.5]\n")
+
+    def test_lua_archive_population_and_notice_are_required(self):
+        header = self.build / "_deps/lua-src/src/lua.h"
+        header.write_bytes(header.read_bytes() + b"changed")
+        with self.assertRaisesRegex(ClosureError, "Lua"):
+            file_api(self.build)
+        self.cache["entries"] = [item for item in self.cache["entries"] if item["name"] != "SHARK_LUA_ARCHIVE_INPUT"]
+        self.write_evidence()
+        with self.assertRaisesRegex(ClosureError, "Missing locked Core"):
+            file_api(self.build)
+        (self.package / "licenses/Lua/doc/readme.html").unlink()
+        with self.assertRaisesRegex(ClosureError, "Incomplete Server package"):
+            package_inventory(self.package)
 
     def test_sqlite_source_header_notice_and_missing_archive_reject_drift(self):
         for name in ("sqlite3.c", "sqlite3.h", "LICENSE.txt"):

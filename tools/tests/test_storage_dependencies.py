@@ -60,6 +60,7 @@ class StorageDependencyTests(unittest.TestCase):
                        f"-DSHARK_ENTT_ARCHIVE={OPTIONS.entt_archive}", f"-DSHARK_GLM_ARCHIVE={OPTIONS.glm_archive}",
                        f"-DSHARK_MBEDTLS_ARCHIVE={OPTIONS.mbedtls_archive}",
                        f"-DSHARK_JOLT_ARCHIVE={OPTIONS.jolt_archive}",
+                       f"-DSHARK_LUA_ARCHIVE={OPTIONS.lua_archive}",
                        f"-DSHARK_SQLITE_ARCHIVE={OPTIONS.sqlite_archive}",
                        *([f"-DSHARK_JSON_ARCHIVE={OPTIONS.json_archive}",
                           f"-DSHARK_CGLTF_ARCHIVE={OPTIONS.cgltf_archive}",
@@ -73,7 +74,7 @@ class StorageDependencyTests(unittest.TestCase):
                 return
             self.assertEqual(result.returncode, 0, output)
             populations = {"entt-src", "entt-build", "entt-subbuild", "glm-src", "glm-build", "glm-subbuild",
-                           "mbedtls-src", "mbedtls-build", "jolt-src", "jolt-build"}
+                           "mbedtls-src", "mbedtls-build", "jolt-src", "jolt-build", "lua-src"}
             if server:
                 populations.add("sqlite-src")
             if authoring:
@@ -141,7 +142,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     for name in ("cmake", "ninja", "compiler", "c-compiler"):
         parser.add_argument("--" + name, required=True)
-    for name in ("entt-archive", "glm-archive", "mbedtls-archive", "jolt-archive", "sqlite-archive"):
+    for name in ("entt-archive", "glm-archive", "mbedtls-archive", "jolt-archive", "lua-archive", "sqlite-archive"):
         parser.add_argument("--" + name, type=Path, required=True)
     parser.add_argument("--json-archive", type=Path)
     parser.add_argument("--cgltf-archive", type=Path)

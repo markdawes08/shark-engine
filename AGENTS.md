@@ -48,7 +48,12 @@ serially and preserve existing results. Items in the [UI backlog](docs/backlog.m
 remain NOT_RUN until their required evidence passes; resumption alone does not
 qualify untested behavior or close full UI acceptance.
 
-**Current handoff: [18e, shared editor physics preview](docs/handoffs/18e-editor-physics-preview.md).**
+**Current handoff: [19a, Lua foundation](docs/handoffs/19a-lua-foundation.md).**
+Follow the [Lua checkpoints](docs/roadmap/lua-plan.md) and [private VM contract](docs/lua-vm.md).
+Lua remains a private bounded Core dependency; no Script component, gameplay
+binding or user-facing execution API is claimed in 19a. Instruction limits do
+not bound work inside native library calls. The next checkpoint is 19b.
+The completed physics work is recorded in [18e](docs/handoffs/18e-editor-physics-preview.md).
 Follow [ADR 0045](docs/architecture/0045-physics-foundation.md) and the
 [physics-world contract](docs/physics-world.md): Jolt is a private locked Core
 dependency, with one creating-thread world owner and bounded explicit stepping.
@@ -148,7 +153,7 @@ close resolution. Bounded console logging cannot alter operation outcomes.
 Project status observation failure marks cached state unknown while preserving
 the original reply; scoped cleanup stays available. Actual UI/terminal parity
 retains 16e; actual connected transform acceptance remains 17d's deferred gate.
-Full REQ-16 and REQ-17 remain NOT_RUN; current assignment is 18.
+Full REQ-16 and REQ-17 remain NOT_RUN; current assignment is 19.
 
 15a-15d supply the CPU `SharkAuthor` host, retained project ownership, shared
 editing/persistence/imports, static deterministic runs and configured export.

@@ -30,14 +30,16 @@ never enter protected packages. Core/Client/Tools/Runtime cannot acquire SQLite.
 Use existing `runtime-only` / `server-only` presets and the builders/inspectors in
 [building](../../../docs/building.md). Server installation uses the Server component;
 tests are disabled in these protected presets, so a build does not prove behavior.
-Core offline inputs are `SHARK_ENTT_ARCHIVE`, `SHARK_GLM_ARCHIVE` and
-`SHARK_MBEDTLS_ARCHIVE`; Server additionally uses `SHARK_SQLITE_ARCHIVE`. Reuse exact
+Core offline inputs are `SHARK_ENTT_ARCHIVE`, `SHARK_GLM_ARCHIVE`,
+`SHARK_MBEDTLS_ARCHIVE`, `SHARK_JOLT_ARCHIVE` and `SHARK_LUA_ARCHIVE`;
+Server additionally uses `SHARK_SQLITE_ARCHIVE`. Reuse exact
 cached archives. Source closure compares populated inputs with verified archives;
 missing, changed or extra dependency files must reject. Read-only source mounts
 need absolute inputs and a writable archive/build location.
 
 Retain all locked redistribution notices, including EnTT, GLM's complete MIT-selected
-`copying.txt`, complete Mbed TLS/TF-PSA nested notices and SQLite's upstream notice.
+`copying.txt`, complete Mbed TLS/TF-PSA nested notices, Jolt and Lua MIT notices,
+and SQLite's upstream notice.
 Private static dependencies do not authorize shipping shared TLS/SQLite libraries,
 upstream shells, test certificates, keys, database files/journals or source fixtures.
 Tools-OFF configurations must neither populate nor package JSON/cgltf/image decoders.

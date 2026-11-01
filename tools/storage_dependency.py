@@ -144,6 +144,8 @@ def verify_server_build(source: Path, build: Path, archives: dict[str, Path], sq
                 for suffix in ("-src", "-build", "-subbuild")}
     expected.remove("mbedtls-subbuild")
     expected.remove("jolt-subbuild")
+    expected.remove("lua-subbuild")
+    expected.remove("lua-build")
     expected.add("sqlite-src")
     root = build / "_deps"
     if (root.is_symlink() or not root.is_dir() or {p.name for p in root.iterdir()} != expected

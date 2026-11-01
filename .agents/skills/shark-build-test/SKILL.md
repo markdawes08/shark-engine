@@ -52,7 +52,7 @@ environment reconciliation. Missing prerequisites and empty selections are not P
 
 | Owner | Offline input/helper |
 | --- | --- |
-| Core | `SHARK_ENTT_ARCHIVE`, `SHARK_GLM_ARCHIVE`, `SHARK_MBEDTLS_ARCHIVE`, `SHARK_JOLT_ARCHIVE`; `tools/core_dependencies.py` (Jolt population uses `tools/physics_dependency.py`) |
+| Core | `SHARK_ENTT_ARCHIVE`, `SHARK_GLM_ARCHIVE`, `SHARK_MBEDTLS_ARCHIVE`, `SHARK_JOLT_ARCHIVE`, `SHARK_LUA_ARCHIVE`; `tools/core_dependencies.py` (Jolt and Lua use their focused population helpers) |
 | Server Storage | `SHARK_SQLITE_ARCHIVE`; `tools/storage_dependency.py` |
 | Tools source documents | `SHARK_JSON_ARCHIVE`; `tools/source_document_dependency.py` |
 | Tools glTF | `SHARK_CGLTF_ARCHIVE`; `tools/gltf_dependency.py` |

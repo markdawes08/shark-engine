@@ -34,6 +34,8 @@ DEPENDENCIES = {
                 "cache": "SHARK_MbedTLS_ARCHIVE_INPUT"},
     "Jolt": {"prefix": "jolt", "license": "LICENSE", "header": "Jolt/Jolt.h",
              "cache": "SHARK_JOLT_ARCHIVE_INPUT"},
+    "Lua": {"prefix": "lua", "license": "doc/readme.html", "header": "src/lua.h",
+            "cache": "SHARK_LUA_ARCHIVE_INPUT"},
 }
 
 
@@ -44,6 +46,9 @@ def specification(name: str) -> dict:
 
 
 def entry(source: Path, name: str = "EnTT") -> dict:
+    if name == "Lua":
+        from lua_dependency import entry as lua_entry
+        return lua_entry(source)
     if name == "Jolt":
         from physics_dependency import entry as physics_entry
         return physics_entry(source)
@@ -58,6 +63,9 @@ def entry(source: Path, name: str = "EnTT") -> dict:
 
 
 def archive_files(archive: Path, locked: dict, name: str = "EnTT") -> dict[str, bytes]:
+    if name == "Lua":
+        from lua_dependency import archive_files as lua_archive_files
+        return lua_archive_files(archive, locked)
     if name == "Jolt":
         from physics_dependency import archive_files as physics_archive_files
         return physics_archive_files(archive, locked)
@@ -106,6 +114,9 @@ def archive_files(archive: Path, locked: dict, name: str = "EnTT") -> dict[str, 
 
 def prepare(source: Path, destination: Path, name: str = "EnTT") -> Path:
     """Explicit preparation before a disconnected configure, outside its graph."""
+    if name == "Lua":
+        from lua_dependency import prepare as prepare_lua
+        return prepare_lua(source, destination)
     if name == "Jolt":
         from physics_dependency import prepare as prepare_physics
         return prepare_physics(source, destination)
@@ -129,6 +140,9 @@ def prepare(source: Path, destination: Path, name: str = "EnTT") -> Path:
 
 def verify_sources(source: Path, build: Path, archive: Path, name: str = "EnTT") -> dict:
     """Compare the complete extracted source inventory with its verified archive."""
+    if name == "Lua":
+        from lua_dependency import verify_sources as verify_lua_sources
+        return verify_lua_sources(source, build, archive)
     if name == "Jolt":
         from physics_dependency import verify_sources as verify_physics_sources
         return verify_physics_sources(source, build, archive)
@@ -208,6 +222,8 @@ def verify_build(source: Path, build: Path, archives: dict[str, Path]) -> dict:
                 for suffix in ("-src", "-build", "-subbuild")}
     expected.remove("mbedtls-subbuild")
     expected.remove("jolt-subbuild")
+    expected.remove("lua-subbuild")
+    expected.remove("lua-build")
     if (not dependencies.is_dir() or dependencies.is_symlink()
             or {item.name for item in dependencies.iterdir()} != expected
             or any(item.is_symlink() or not item.is_dir() for item in dependencies.iterdir())):

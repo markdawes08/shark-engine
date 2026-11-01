@@ -54,6 +54,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                        f"-DSHARK_GLM_ARCHIVE={OPTIONS.glm_archive}",
                        f"-DSHARK_MBEDTLS_ARCHIVE={OPTIONS.mbedtls_archive}",
                        f"-DSHARK_JOLT_ARCHIVE={OPTIONS.jolt_archive}",
+                       f"-DSHARK_LUA_ARCHIVE={OPTIONS.lua_archive}",
                        f"-DSHARK_JSON_ARCHIVE={OPTIONS.json_archive}",
                        f"-DSHARK_CGLTF_ARCHIVE={OPTIONS.cgltf_archive}",
                        f"-DSHARK_IMAGE_ARCHIVE={OPTIONS.image_archive}",
@@ -68,7 +69,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
             self.assertEqual(result.returncode, 0, output)
             dependencies = {path.name for path in (build / "_deps").iterdir()}
             expected_dependencies = {"entt-src", "entt-build", "entt-subbuild", "glm-src", "glm-build",
-                                     "glm-subbuild", "mbedtls-src", "mbedtls-build", "jolt-src", "jolt-build"}
+                                     "glm-subbuild", "mbedtls-src", "mbedtls-build", "jolt-src", "jolt-build", "lua-src"}
             if tools:
                 expected_dependencies.add("json-src")
                 expected_dependencies.add("cgltf-src")
@@ -218,7 +219,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description=__doc__)
     for option in ("cmake", "ninja", "compiler", "c-compiler"):
         parser.add_argument("--" + option, required=True)
-    for option in ("mbedtls-archive", "jolt-archive", "entt-archive", "glm-archive", "json-archive", "cgltf-archive", "image-archive"):
+    for option in ("mbedtls-archive", "jolt-archive", "lua-archive", "entt-archive", "glm-archive", "json-archive", "cgltf-archive", "image-archive"):
         parser.add_argument("--" + option, type=Path, required=True)
     parser.add_argument("--scratch-parent", type=Path, required=True)
     parser.add_argument("--sqlite-archive", type=Path)

@@ -4,6 +4,14 @@ if(MSVC)
     add_link_options(/INCREMENTAL:NO)
 endif()
 
+add_executable(CoreLuaTests lua_vm_tests.cpp)
+target_include_directories(CoreLuaTests PRIVATE "${PROJECT_SOURCE_DIR}/engine/core/src")
+target_link_libraries(CoreLuaTests PRIVATE EngineCore Catch2::Catch2WithMain)
+shark_configure_target(CoreLuaTests)
+shark_classify_target(CoreLuaTests test)
+add_test(NAME shark.core.lua COMMAND CoreLuaTests "[core-lua]" --rng-seed 1337)
+set_tests_properties(shark.core.lua PROPERTIES LABELS "cpu;lua;unit;server" TIMEOUT 60)
+
 add_executable(CorePhysicsTests core_physics_tests.cpp core_physics_body_tests.cpp core_physics_simulation_tests.cpp core_physics_contact_tests.cpp)
 target_link_libraries(CorePhysicsTests PRIVATE EngineCore SharkPhysics_jolt Catch2::Catch2WithMain)
 shark_configure_target(CorePhysicsTests)
@@ -1118,6 +1126,7 @@ if(TARGET EngineStorage)
             --entt-archive "${SHARK_EnTT_ARCHIVE}" --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}"
             --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}"
             --jolt-archive "${SHARK_JOLT_ARCHIVE_INPUT}"
+            --lua-archive "${SHARK_LUA_ARCHIVE_INPUT}"
             --sqlite-archive "${SHARK_SQLITE_ARCHIVE_INPUT}"
             ${shark_storage_json_fixture_args} -v)
     set_tests_properties(shark.tooling.storage-dependencies PROPERTIES
@@ -1130,7 +1139,7 @@ add_test(NAME shark.tooling.graphics-dependencies
         --compiler "${CMAKE_CXX_COMPILER}" --entt-archive "${SHARK_EnTT_ARCHIVE}"
         --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}" --c-compiler "${CMAKE_C_COMPILER}"
         --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}"
-        --jolt-archive "${SHARK_JOLT_ARCHIVE_INPUT}" ${shark_storage_fixture_args} -v)
+        --jolt-archive "${SHARK_JOLT_ARCHIVE_INPUT}" --lua-archive "${SHARK_LUA_ARCHIVE_INPUT}" ${shark_storage_fixture_args} -v)
 set_tests_properties(shark.tooling.graphics-dependencies PROPERTIES LABELS "cpu;tooling;boundary" TIMEOUT 240
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
@@ -1140,7 +1149,7 @@ add_test(NAME shark.tooling.scene-dependencies
         --compiler "${CMAKE_CXX_COMPILER}" --entt-archive "${SHARK_EnTT_ARCHIVE}"
         --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}" --c-compiler "${CMAKE_C_COMPILER}"
         --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}"
-        --jolt-archive "${SHARK_JOLT_ARCHIVE_INPUT}" ${shark_storage_fixture_args} -v)
+        --jolt-archive "${SHARK_JOLT_ARCHIVE_INPUT}" --lua-archive "${SHARK_LUA_ARCHIVE_INPUT}" ${shark_storage_fixture_args} -v)
 set_tests_properties(shark.tooling.scene-dependencies PROPERTIES LABELS "cpu;tooling;boundary;server" TIMEOUT 240
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
@@ -1148,6 +1157,12 @@ add_test(NAME shark.tooling.physics-dependencies
     COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_physics_dependencies.py"
         --archive "${SHARK_JOLT_ARCHIVE_INPUT}" -v)
 set_tests_properties(shark.tooling.physics-dependencies PROPERTIES LABELS "cpu;tooling;boundary;physics" TIMEOUT 60
+    WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+
+add_test(NAME shark.tooling.lua-dependencies
+    COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_lua_dependency.py"
+        --archive "${SHARK_LUA_ARCHIVE_INPUT}" -v)
+set_tests_properties(shark.tooling.lua-dependencies PROPERTIES LABELS "cpu;tooling;boundary;lua" TIMEOUT 60
     WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
 
 if(TARGET EngineTools)
@@ -1158,6 +1173,7 @@ if(TARGET EngineTools)
             --entt-archive "${SHARK_EnTT_ARCHIVE}" --glm-archive "${SHARK_GLM_ARCHIVE_INPUT}"
             --mbedtls-archive "${SHARK_MbedTLS_ARCHIVE_INPUT}" --json-archive "${SHARK_JSON_ARCHIVE_INPUT}"
             --jolt-archive "${SHARK_JOLT_ARCHIVE_INPUT}"
+            --lua-archive "${SHARK_LUA_ARCHIVE_INPUT}"
             --cgltf-archive "${SHARK_CGLTF_ARCHIVE_INPUT}"
             --image-archive "${SHARK_IMAGE_ARCHIVE_INPUT}"
             --scratch-parent "${CMAKE_BINARY_DIR}/tooling-scratch"

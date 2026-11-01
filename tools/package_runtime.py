@@ -343,7 +343,7 @@ def inspect_scene_package(directory: Path, manifest: dict) -> None:
 def scene_license_paths() -> set[str]:
     lock = read_json(ROOT / "dependencies.lock.json")
     paths = {f"licenses/{name}/{path}"
-             for name in ("EnTT", "GLM", "MbedTLS", "Jolt", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader")
+             for name in ("EnTT", "GLM", "MbedTLS", "Jolt", "Lua", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader")
              for path in lock["dependencies"][name]["license_files"]}
     paths.update("licenses/MicrosoftVC/" + row["destination"]
                  for row in lock["graphics_distribution"]["WindowsCRT"]["license_files"])
@@ -381,18 +381,18 @@ def cache_values(build: Path) -> dict[str, str]:
 def production_notices(build: Path, lock: dict) -> tuple[dict[str, bytes], dict]:
     payload, records = {}, {}
     cache = cache_values(build)
-    for name in ("EnTT", "GLM", "MbedTLS", "Jolt", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader"):
+    for name in ("EnTT", "GLM", "MbedTLS", "Jolt", "Lua", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader"):
         entry = lock["dependencies"][name]
         lower = name.lower()
         archive = build / f"_deps/{lower}-subbuild/{lower}-populate-prefix/src" / entry["url"].rsplit("/", 1)[-1]
-        if name in ("EnTT", "GLM", "MbedTLS", "Jolt"):
+        if name in ("EnTT", "GLM", "MbedTLS", "Jolt", "Lua"):
             cache_key = {"EnTT": "SHARK_EnTT_ARCHIVE", "GLM": "SHARK_GLM_ARCHIVE_INPUT",
-                         "MbedTLS": "SHARK_MbedTLS_ARCHIVE_INPUT", "Jolt": "SHARK_JOLT_ARCHIVE_INPUT"}[name]
+                         "MbedTLS": "SHARK_MbedTLS_ARCHIVE_INPUT", "Jolt": "SHARK_JOLT_ARCHIVE_INPUT",
+                         "Lua": "SHARK_LUA_ARCHIVE_INPUT"}[name]
             archive = Path(cache.get(cache_key, str(archive)))
-        if name == "MbedTLS":
-            # The official bz2 archive includes reviewed unused test symlinks;
-            # use the dependency owner's exact-file verifier, not the graphics
-            # tar.gz reader or the mutable populated build tree.
+        if name in ("MbedTLS", "Lua"):
+            # Use each Core dependency owner's exact-file verifier, not the
+            # graphics tar reader or the mutable populated build tree.
             verified = core_archive_files(archive, entry, name)
             notices = {path: verified[path] for path in entry["license_files"]}
         elif name == "Jolt":
@@ -409,7 +409,7 @@ def production_notices(build: Path, lock: dict) -> tuple[dict[str, bytes], dict]
 
 
 def required_core_notices() -> dict[str, tuple[str, ...]]:
-    return {"EnTT": ("LICENSE",), "GLM": ("copying.txt",), "Jolt": ("LICENSE",),
+    return {"EnTT": ("LICENSE",), "GLM": ("copying.txt",), "Jolt": ("LICENSE",), "Lua": ("doc/readme.html",),
             "MbedTLS": tuple(core_dependency_entry(ROOT, "MbedTLS")["license_files"])}
 
 
@@ -600,7 +600,7 @@ def inspect_package(directory: Path, expected_manifest: str) -> dict:
         expected = {f"licenses/{name}/{path}" for path in required}
         if not expected <= files.keys():
             raise ValueError(f"Package lacks {name} license notices: {sorted(expected - files.keys())}")
-        if name in {"MbedTLS", "Jolt"} and {path for path in files if path.startswith(f"licenses/{name}/")} != expected:
+        if name in {"MbedTLS", "Jolt", "Lua"} and {path for path in files if path.startswith(f"licenses/{name}/")} != expected:
             raise ValueError(f"Unexpected {name} notice or source payload")
     for name in ("EnTT", "GLM", "Jolt", "GLFW", "NVRHI", "VulkanHeaders", "VulkanLoader", "MicrosoftVC"):
         if not any(path.startswith(f"licenses/{name}/") for path in files):
@@ -837,7 +837,11 @@ def module_errors(modules: list[str], directory: Path, system: Path) -> list[str
             package_modules.add("bin/" + path.name.lower())
         elif not path.is_relative_to(system.resolve()):
             errors.append(f"Module loaded outside package/Windows driver closure: {path}")
-        if re.search(r"(?:editor|enginetools|imgui|imguizmo|cgltf|dxcompiler|dxil|glslang|shaderc)", path.name, re.I):
+        # Windows' System32 converter translates shader bytecode; it is not
+        # the separately prohibited DXC source compiler or DXIL validator.
+        windows_converter = path == (system / "System32" / "dxilconv.dll").resolve()
+        if (not windows_converter and
+                re.search(r"(?:editor|enginetools|imgui|imguizmo|cgltf|dxcompiler|dxil|glslang|shaderc)", path.name, re.I)):
             errors.append(f"Forbidden Runtime module: {path}")
     if package_modules != {name.lower() for name in BINARIES}:
         errors.append("Observed app-local modules differ from Runtime/loader/release CRT closure")
