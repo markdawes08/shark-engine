@@ -1,5 +1,6 @@
 #include "editor_shell.hpp"
 #include "gui_adapter.hpp"
+#include "input_trace.hpp"
 #include "project_session.hpp"
 #include "workspace_panel.hpp"
 
@@ -88,7 +89,8 @@ class Shell {
   public:
     Shell(const EditorLaunch& launch, const ShaderArtifact& scene_vertex,
           const ShaderArtifact& scene_pixel)
-        : scene_vertex_(scene_vertex), scene_pixel_(scene_pixel) {
+        : input_trace_(launch.input_trace, std::cout), scene_vertex_(scene_vertex),
+          scene_pixel_(scene_pixel) {
         buffer(root_, utf8(launch.root));
         buffer(project_, launch.project);
         if (!launch.project.empty())
@@ -323,8 +325,8 @@ class Shell {
                 show_error(std::move(opened).error());
                 return;
             }
-            auto candidate_workspace =
-                std::make_unique<WorkspacePanel>(*candidate.value(), scene_vertex_, scene_pixel_);
+            auto candidate_workspace = std::make_unique<WorkspacePanel>(
+                *candidate.value(), scene_vertex_, scene_pixel_, &input_trace_);
             buffer(root_, utf8(candidate.value()->root()));
             workspace_.reset();
             session_ = std::move(candidate).value();
@@ -404,6 +406,7 @@ class Shell {
                   << '\n'
                   << std::flush;
     }
+    EditorInputTrace input_trace_;
     std::unique_ptr<ProjectSession> session_;
     std::unique_ptr<WorkspacePanel> workspace_;
     ShaderArtifact scene_vertex_;
@@ -428,11 +431,11 @@ Result<EditorLaunch> parse_editor_arguments(std::span<const std::string_view> ar
         return Error{ErrorCode::invalid_argument,
                      "Expected --editor [--root PATH] [--project RELATIVE] [--device UUID|auto] "
                      "[--validation required|off] [--gui-vertex SPV --gui-pixel SPV] "
-                     "[--scene-vertex SPV --scene-pixel SPV]",
+                     "[--scene-vertex SPV --scene-pixel SPV] [--input-trace on|off]",
                      {.operation = "editor.arguments"}};
     };
     try {
-        if (arguments.empty() || arguments.front() != "--editor" || arguments.size() > 17)
+        if (arguments.empty() || arguments.front() != "--editor" || arguments.size() > 19)
             return invalid();
         EditorLaunch launch;
         launch.root = std::filesystem::current_path();
@@ -455,7 +458,11 @@ Result<EditorLaunch> parse_editor_arguments(std::span<const std::string_view> ar
                 launch.scene_vertex_shader = native_path(value);
             else if (flag == "--scene-pixel")
                 launch.scene_pixel_shader = native_path(value);
-            else if (flag == "--device") {
+            else if (flag == "--input-trace") {
+                if (value != "on" && value != "off")
+                    return invalid();
+                launch.input_trace = value == "on";
+            } else if (flag == "--device") {
                 if (value != "auto" && !valid_graphics_uuid(value))
                     return invalid();
                 if (value != "auto")

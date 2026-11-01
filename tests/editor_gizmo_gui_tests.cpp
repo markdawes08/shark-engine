@@ -201,6 +201,10 @@ TEST_CASE("Gizmo widget consumes image handles and commits one snapped undo grou
     auto result = gui.draw(work, scene, false, validate);
     REQUIRE(result.consumed);
     REQUIRE_FALSE(result.error);
+    CHECK(result.trace.reason == "gesture_started");
+    CHECK(result.trace.hit == 0);
+    CHECK(result.trace.pivot.has_value());
+    CHECK(result.trace.tips[0].has_value());
     REQUIRE(work.widget.preview());
     accepted(work.input.on_cursor(402.5, 260));
     result = gui.draw(work, scene, false, validate);
@@ -215,6 +219,7 @@ TEST_CASE("Gizmo widget consumes image handles and commits one snapped undo grou
     result = gui.draw(work, scene, false, validate);
     REQUIRE(result.consumed);
     REQUIRE(result.receipt);
+    CHECK(result.trace.reason == "gesture_released");
     CHECK(result.receipt->changed);
     CHECK(previews == 4);
     CHECK_FALSE(work.widget.preview());
@@ -226,6 +231,90 @@ TEST_CASE("Gizmo widget consumes image handles and commits one snapped undo grou
     const auto history = take(work.panel.history(work.panel.revision()));
     REQUIRE(history.next_undo);
     CHECK(history.undo_entries == 1);
+    CHECK(history.next_undo->command_count == 1);
+    static_cast<void>(take(work.panel.undo(history.next_undo->ticket, history.revision)));
+    CHECK(take(work.panel.inspect(work.fixture.entity, work.panel.revision()))
+              .transform.translation.x == 0);
+}
+
+TEST_CASE("Gizmo fast input uses owned endpoints and never invents a press", "[editor-gui]") {
+    Workspace work;
+    accepted(work.widget.configure(TransformOperation::translate, TransformSpace::world,
+                                   {.translation = 1}));
+    const auto revision = work.panel.revision();
+    const auto scene = work.snapshot();
+    HeadlessGui gui;
+    gui.warm(work, scene);
+    bool complete = false, post_release_motion = false, ambiguous = false, missing = false,
+         focus_lost = false;
+    SECTION("Motion before the first held capture still begins at the original handle") {}
+    SECTION("A complete press motion release commits exactly once") {
+        complete = true;
+    }
+    SECTION("Later cursor motion cannot replace the release endpoint") {
+        complete = true;
+        post_release_motion = true;
+    }
+    SECTION("Release repress cannot merge distinct gestures") {
+        ambiguous = true;
+    }
+    SECTION("A cursor observed after the press cannot invent its origin") {
+        missing = true;
+    }
+    SECTION("Focus cancellation dominates a complete quick gesture") {
+        complete = true;
+        focus_lost = true;
+    }
+    if (missing) {
+        accepted(work.input.on_focus(false));
+        static_cast<void>(work.input.capture());
+        accepted(work.input.on_focus(true));
+        static_cast<void>(work.input.capture());
+        accepted(work.input.on_mouse_button(MouseButton::left, ButtonAction::press));
+    } else
+        press(work, 380, 260);
+    accepted(work.input.on_cursor(425, 260));
+    if (complete || ambiguous)
+        accepted(work.input.on_mouse_button(MouseButton::left, ButtonAction::release));
+    if (post_release_motion)
+        accepted(work.input.on_cursor(480, 350));
+    if (ambiguous)
+        accepted(work.input.on_mouse_button(MouseButton::left, ButtonAction::press));
+    if (focus_lost) {
+        accepted(work.input.on_focus(false));
+        accepted(work.input.on_focus(true));
+        accepted(work.input.on_cursor(425, 260));
+    }
+    auto result = gui.draw(work, scene);
+    if (ambiguous || missing || focus_lost) {
+        CHECK_FALSE(result.receipt);
+        CHECK_FALSE(work.widget.has_changes());
+        CHECK_FALSE(work.widget.preview());
+        CHECK_FALSE(work.session->state().dirty);
+        CHECK(work.panel.revision() == revision);
+        CHECK(take(work.panel.history(revision)).undo_entries == 0);
+        accepted(work.input.on_cursor(430, 260));
+        CHECK_FALSE(gui.draw(work, scene).receipt);
+        CHECK_FALSE(work.widget.preview());
+        return;
+    }
+    REQUIRE(result.consumed);
+    REQUIRE_FALSE(result.error);
+    if (!complete) {
+        REQUIRE(work.widget.preview());
+        CHECK(work.widget.preview()->local.translation.x == 2);
+        CHECK_FALSE(work.session->state().dirty);
+        accepted(work.input.on_mouse_button(MouseButton::left, ButtonAction::release));
+        result = gui.draw(work, scene);
+    }
+    REQUIRE(result.receipt);
+    CHECK(result.receipt->changed);
+    CHECK_FALSE(work.widget.has_changes());
+    CHECK(take(work.panel.inspect(work.fixture.entity, work.panel.revision()))
+              .transform.translation.x == 2);
+    const auto history = take(work.panel.history(work.panel.revision()));
+    CHECK(history.undo_entries == 1);
+    REQUIRE(history.next_undo);
     CHECK(history.next_undo->command_count == 1);
     static_cast<void>(take(work.panel.undo(history.next_undo->ticket, history.revision)));
     CHECK(take(work.panel.inspect(work.fixture.entity, work.panel.revision()))

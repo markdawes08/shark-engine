@@ -570,3 +570,109 @@ TEST_CASE("seeded input traces agree with an independent set based transition mo
     }
     check_capture();
 }
+
+TEST_CASE("mouse edge positions retain the native press before same-capture motion", "[input]") {
+    InputState input;
+    focus(input);
+    REQUIRE(input.on_cursor(1673, 1126) == InputEventResult::accepted);
+    REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::press) ==
+            InputEventResult::accepted);
+    REQUIRE(input.on_cursor(1673, 1018) == InputEventResult::accepted);
+    REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::press) ==
+            InputEventResult::accepted);
+    const auto pressed = input.capture();
+    CHECK(pressed.mouse_edges(MouseButton::left).press ==
+          shark::client::CursorPosition{1673, 1126, true});
+    CHECK(pressed.cursor == shark::client::CursorPosition{1673, 1018, true});
+    CHECK_FALSE(pressed.mouse_edges(MouseButton::left).ambiguous);
+    CHECK_FALSE(pressed.mouse_edges(MouseButton::left).release.valid);
+    CHECK(input.capture().mouse_edges(MouseButton::left) == shark::client::MouseButtonEdges{});
+    REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::release) ==
+            InputEventResult::accepted);
+    REQUIRE(input.on_cursor(1673, 900) == InputEventResult::accepted);
+    REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::release) ==
+            InputEventResult::accepted);
+    const auto released = input.capture();
+    CHECK(released.mouse_edges(MouseButton::left).release ==
+          shark::client::CursorPosition{1673, 1018, true});
+    CHECK_FALSE(released.mouse_edges(MouseButton::left).ambiguous);
+    CHECK(pressed.mouse_edges(MouseButton::left).press.y == 1126);
+    CHECK(released.mouse_edges(MouseButton::unknown) == shark::client::MouseButtonEdges{});
+}
+
+TEST_CASE("mouse edge geometry cancels ambiguity focus and unknown press positions", "[input]") {
+    InputState input;
+    focus(input);
+    SECTION("One complete press and release retains both distinct endpoints") {
+        REQUIRE(input.on_cursor(10, 20) == InputEventResult::accepted);
+        REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::press) ==
+                InputEventResult::accepted);
+        REQUIRE(input.on_cursor(30, 40) == InputEventResult::accepted);
+        REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::release) ==
+                InputEventResult::accepted);
+        const auto snapshot = input.capture();
+        const auto edges = snapshot.mouse_edges(MouseButton::left);
+        CHECK(edges.press == shark::client::CursorPosition{10, 20, true});
+        CHECK(edges.release == shark::client::CursorPosition{30, 40, true});
+        CHECK_FALSE(edges.ambiguous);
+    }
+    SECTION("Release before a new press and repeated cycles are ambiguous") {
+        REQUIRE(input.on_cursor(10, 20) == InputEventResult::accepted);
+        REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::press) ==
+                InputEventResult::accepted);
+        static_cast<void>(input.capture());
+        REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::release) ==
+                InputEventResult::accepted);
+        REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::press) ==
+                InputEventResult::accepted);
+        CHECK(input.capture().mouse_edges(MouseButton::left).ambiguous);
+        REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::release) ==
+                InputEventResult::accepted);
+        static_cast<void>(input.capture());
+        for (unsigned cycle = 0; cycle < 2; ++cycle) {
+            REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::press) ==
+                    InputEventResult::accepted);
+            REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::release) ==
+                    InputEventResult::accepted);
+        }
+        CHECK(input.capture().mouse_edges(MouseButton::left).ambiguous);
+    }
+    SECTION("A missing cursor at the real press never borrows later motion") {
+        REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::press) ==
+                InputEventResult::accepted);
+        REQUIRE(input.on_cursor(30, 40) == InputEventResult::accepted);
+        const auto snapshot = input.capture();
+        CHECK(snapshot.cursor.valid);
+        CHECK(snapshot.mouse_edges(MouseButton::left).press_seen);
+        CHECK_FALSE(snapshot.mouse_edges(MouseButton::left).press.valid);
+    }
+    SECTION("Focus loss erases positive geometry and does not restore it") {
+        REQUIRE(input.on_cursor(10, 20) == InputEventResult::accepted);
+        REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::press) ==
+                InputEventResult::accepted);
+        REQUIRE(input.on_focus(false) == InputEventResult::accepted);
+        REQUIRE(input.on_focus(true) == InputEventResult::accepted);
+        const auto snapshot = input.capture();
+        CHECK(snapshot.focus_lost);
+        CHECK_FALSE(snapshot.mouse_button(MouseButton::left).held);
+        CHECK(snapshot.mouse_edges(MouseButton::left) == shark::client::MouseButtonEdges{});
+    }
+    SECTION("Post-regain press does not count the cancelled synthetic release") {
+        REQUIRE(input.on_cursor(10, 20) == InputEventResult::accepted);
+        REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::press) ==
+                InputEventResult::accepted);
+        static_cast<void>(input.capture());
+        REQUIRE(input.on_focus(false) == InputEventResult::accepted);
+        REQUIRE(input.on_focus(true) == InputEventResult::accepted);
+        REQUIRE(input.on_cursor(30, 40) == InputEventResult::accepted);
+        REQUIRE(input.on_mouse_button(MouseButton::left, ButtonAction::press) ==
+                InputEventResult::accepted);
+        const auto snapshot = input.capture();
+        const auto edges = snapshot.mouse_edges(MouseButton::left);
+        CHECK(snapshot.mouse_button(MouseButton::left).released);
+        CHECK(edges.press_seen);
+        CHECK_FALSE(edges.release_seen);
+        CHECK_FALSE(edges.ambiguous);
+        CHECK(edges.press == shark::client::CursorPosition{30, 40, true});
+    }
+}

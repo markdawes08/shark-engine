@@ -145,6 +145,23 @@ Tests include exact arena admission with 64 active bodies/16 substeps, one-updat
 Scene publication, full hierarchy recomposition, failed newest targets, quaternion
 sign crossing, teardown and post-native failure without partial Scene publication.
 
+The existing native `SceneRenderSmoke` fixture now has an opt-in `--physics`
+mode, supervised by `tools/scene_render_smoke.py --mode physics`. Its GPU
+qualification **passed on both current-PC adapters on 2026-11-01**. Eight fixed
+128x96 readbacks exercise static reposition, dynamic teleport, kinematic targets,
+and alpha 0/0.5/1 interpolation of visual descendants and a child Camera. One Core
+world executes seven 60 Hz updates with gravity `(0,-600,0)` and disabled collision
+masks; contact response remains covered separately. Independent literal poses,
+colored geometry and depth oracles check the native rendered results and complete
+GPU/native-owner retirement. Each GPU compared 96,576 color/depth pixel pairs
+across eight images with zero observed error and zero validation diagnostics;
+native physics closed and the sole viewport generation retired. Results are
+`out/19-testing-work/physics-render-{rtx,intel}/summary.json`, with the
+[current handoff](handoffs/18e-editor-physics-preview.md) recording their scope.
+The default five-case rendering mode is unchanged.
+CPU evidence-validator tests qualify no GPU; this fixture adds no public physics
+API, FeatureWorld case, actual UI parity claim or full REQ-18 completion.
+
 18d implements [layers/triggers/owned events](physics-contacts.md); actual editor/rendered play and human/
 terminal acceptance retain 18e and the [desktop backlog](backlog.md#desktop-ui-deferral).
 Queries/Lua retain 20, streaming/origin transfer M05. Full REQ-18 remains NOT_RUN.

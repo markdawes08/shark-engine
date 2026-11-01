@@ -56,6 +56,13 @@ Right and bottom edges are exclusive; outside points are misses. Nonfinite or
 invalid rectangles/coordinates reject. Projection already flips Y once: image
 top-left maps to NDC `(-1,-1)`, with Vulkan depth endpoints `0` and `1`.
 
+Picking uses the owned press position, and orbit/pan initialize from that same
+button-edge provenance before applying motion already received in the capture.
+A release uses its owned endpoint; a complete fast navigation gesture leaves no
+held capture. Missing/ambiguous edge geometry and mixed right/middle activity
+cancel instead of inventing order between independent buttons. These positions
+are bounded input summaries, not an ordered native event queue.
+
 Gestures start with a fresh press over the image. Native focus loss, minimize,
 text/modal capture, blocked state, leaving the image, tab/image removal, changed
 layout or revision, and Escape cancel the active gesture. A held button cannot

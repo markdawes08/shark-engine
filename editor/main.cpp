@@ -22,7 +22,7 @@ int main(int argc, char* argv[]) {
         std::cerr
             << "Usage: Editor [--help | --version | --editor [--root PATH] [--project RELATIVE] "
                "[--device UUID|auto] [--validation required|off] [--gui-vertex SPV --gui-pixel "
-               "SPV] [--scene-vertex SPV --scene-pixel SPV] | "
+               "SPV] [--scene-vertex SPV --scene-pixel SPV] [--input-trace on|off] | "
                "--window [--window-ms 1..60000] | "
                "--graphics | --cube [--graphics-ms 1..60000] [--device UUID|auto] "
                "[--validation required|off] [--shader-bundle PATH]]\n"
@@ -31,11 +31,11 @@ int main(int argc, char* argv[]) {
     };
     if (argc >= 2 && std::string_view{argv[1]} == "--editor") {
 #ifdef SHARK_EDITOR_GUI
-        if (argc > 18)
+        if (argc > 20)
             return invalid_arguments({shark::ErrorCode::invalid_argument,
                                       "Too many editor arguments",
                                       {.operation = "editor.arguments"}});
-        std::array<std::string_view, 17> arguments;
+        std::array<std::string_view, 19> arguments;
         for (int index = 1; index < argc; ++index)
             arguments[static_cast<std::size_t>(index - 1)] = argv[index];
         auto launch = shark::editor::parse_editor_arguments(
@@ -128,8 +128,9 @@ int main(int argc, char* argv[]) {
 #ifdef SHARK_EDITOR_GUI
         std::cout << "  --editor [--root PATH] [--project RELATIVE] [--device UUID|auto]\n"
                      "           [--validation required|off] [--gui-vertex SPV --gui-pixel SPV]\n"
-                     "           [--scene-vertex SPV --scene-pixel SPV]\n"
+                     "           [--scene-vertex SPV --scene-pixel SPV] [--input-trace on|off]\n"
                      "      Open the project editor workspace (validation off by default).\n";
+        std::cout << "      Input trace emits at most 256 diagnostic transitions to stdout.\n";
 #endif
         break;
     }

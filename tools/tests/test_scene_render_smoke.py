@@ -48,6 +48,26 @@ def rows(validation="required"):
     return result
 
 
+def physics_rows():
+    result = [identity("physics"), {"kind": "adapter", "adapter": adapter()}]
+    for case in range(8):
+        result.append({"kind": "physics-case", **smoke.physics_fixture(case),
+                       "submitted": case+1, "completed": case+1,
+                       "created_resources": 10, "retired_resources": 10,
+                       "subpixel_precision_bits": 8,
+                       "viewport": {"extent": {"width": 128, "height": 96},
+                                    "generation": 1, "retired_generations": 0,
+                                    "rendered_frames": case+1, "live_target_resources": 5,
+                                    "pending": False}})
+    result.append({"kind": "complete", "status": "PASS", "qualification": "PASS",
+                   "assignment_18": "NOT_RUN", "cases": 8, "completed_ticks": 7,
+                   "physics_closed": True, "diagnostics": diagnostics(),
+                   "viewport": {"extent": {"width": 0, "height": 0}, "generation": 1,
+                                "retired_generations": 1, "rendered_frames": 8,
+                                "live_target_resources": 0, "pending": False}})
+    return result
+
+
 def process(records, code=0, stderr=""):
     return ProcessResult(["cpu-fixture"],code,"\n".join(json.dumps(row) for row in records),stderr,False)
 
@@ -154,6 +174,76 @@ class SceneViewportEvidenceTests(unittest.TestCase):
         for changed in (replace(base,returncode=1),replace(base,timed_out=True),replace(base,stderr="unexpected"),
                         replace(base,cleanup_errors=("child alive",)),process(rows()[:-1]),replace(base,stdout="not json")):
             self.assertTrue(self.inspect(result=changed)[1])
+
+
+class PhysicsPresentationEvidenceTests(unittest.TestCase):
+    """Qualifies the evidence validator and literal oracle, never a GPU."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.temporary = tempfile.TemporaryDirectory()
+        cls.output = Path(cls.temporary.name)
+        for case in range(8):
+            expected, reference = smoke.physics_fixture(case), smoke.physics_reference(case)
+            (cls.output/expected["color_file"]).write_bytes(reference.color)
+            (cls.output/expected["depth_file"]).write_bytes(
+                struct.pack(f"<{len(reference.depth)}f", *reference.depth))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.temporary.cleanup()
+
+    def inspect(self, records=None):
+        return smoke.inspect_physics(process(records or physics_rows()), UUID, "required",
+                                     LOCK, SOURCE, self.output)
+
+    def test_literal_pose_camera_and_discontinuity_oracles(self):
+        self.assertFalse(self.inspect()[1])
+        # Alpha0 after the first step must retain the reset image, not final pose.
+        self.assertEqual(smoke.physics_reference(1).color, smoke.physics_reference(2).color)
+        self.assertNotEqual(smoke.physics_reference(2).color, smoke.physics_reference(3).color)
+        self.assertNotEqual(smoke.physics_reference(3).color, smoke.physics_reference(4).color)
+        self.assertNotEqual(smoke.physics_reference(5).color, smoke.physics_reference(6).color)
+        self.assertEqual(smoke.physics_fixture(5)["positions"]["dynamic_child"][1], -2.)
+        self.assertEqual(smoke.physics_fixture(6)["positions"]["dynamic_child"][1], 2.)
+        for case in range(8):
+            reference = smoke.physics_reference(case)
+            self.assertGreaterEqual(reference.foreground, 60)
+            self.assertGreaterEqual(reference.foreground + reference.background, 128*96*.95)
+
+    def test_native_pose_identity_ownership_and_completion_cannot_be_fabricated(self):
+        for index, key, value in ((0, "mode", "render"), (5, "camera_x", 0.),
+                                  (5, "alpha", 1.), (7, "tick", 5),
+                                  (2, "render_preserved_revision", False),
+                                  (4, "completed", 0), (10, "physics_closed", False),
+                                  (10, "assignment_18", "PASS")):
+            with self.subTest(index=index, key=key):
+                changed = physics_rows()
+                changed[index][key] = value
+                self.assertTrue(self.inspect(changed)[1])
+        changed = physics_rows()
+        changed[5]["positions"]["dynamic_child"][0] += .25
+        self.assertTrue(self.inspect(changed)[1])
+        changed = physics_rows()
+        changed[-1]["diagnostics"]["warnings"] = 1
+        self.assertTrue(self.inspect(changed)[1])
+        changed = physics_rows()
+        changed[2]["completed"] = True
+        self.assertTrue(self.inspect(changed)[1])
+        changed = physics_rows()
+        changed[2]["created_resources"], changed[2]["retired_resources"] = 1, True
+        self.assertTrue(self.inspect(changed)[1])
+
+    def test_wrong_interpolation_camera_image_and_depth_fail_independent_pixels(self):
+        expected, wrong = smoke.physics_reference(3), smoke.physics_reference(4)
+        packed = struct.pack(f"<{len(wrong.depth)}f", *wrong.depth)
+        self.assertEqual(smoke.raster.compare_readback(wrong.color, packed, expected)["status"], "FAIL")
+        depths = list(expected.depth)
+        pixel = next(index for index, ok in enumerate(expected.checked)
+                     if ok and expected.depth[index] < 1)
+        depths[pixel] = .5
+        self.assertEqual(smoke.raster.compare_readback(expected.color,
+                         struct.pack(f"<{len(depths)}f", *depths), expected)["status"], "FAIL")
 
 
 if __name__=="__main__": unittest.main()

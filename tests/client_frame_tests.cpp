@@ -75,6 +75,8 @@ void check_no_interval(const InputSnapshot& input) {
     CHECK_FALSE(input.focus_lost);
     CHECK_FALSE(input.text_overflow);
     CHECK_FALSE(input.scroll_overflow);
+    CHECK((input.mouse_pointer_edges ==
+           std::array<shark::client::MouseButtonEdges, shark::client::mouse_button_count>{}));
 }
 
 static_assert(!std::is_copy_constructible_v<OfflineFrameLoop>);
@@ -523,6 +525,80 @@ TEST_CASE("frame cancellation before entry never invokes the callback", "[frame]
     CHECK(result.value().timing.executed == 0);
     CHECK(fixture.ticks.empty());
     CHECK(fixture.loop->next_tick() == 0);
+}
+
+TEST_CASE("pending frame mouse geometry preserves first endpoints and bounds ambiguity",
+          "[frame]") {
+    FrameFixture fixture;
+    REQUIRE(fixture.input.on_cursor(1673, 1126) == InputEventResult::accepted);
+    REQUIRE(fixture.input.on_mouse_button(MouseButton::left, ButtonAction::press) ==
+            InputEventResult::accepted);
+    CHECK(fixture.advance(1ms).timing.executed == 0);
+    REQUIRE(fixture.input.on_cursor(1673, 1018) == InputEventResult::accepted);
+    REQUIRE(fixture.input.on_mouse_button(MouseButton::left, ButtonAction::release) ==
+            InputEventResult::accepted);
+    bool ambiguous = false;
+    SECTION("One gesture spans zero-tick captures") {}
+    SECTION("A later fresh press cannot join the earlier gesture") {
+        ambiguous = true;
+        REQUIRE(fixture.input.on_mouse_button(MouseButton::left, ButtonAction::press) ==
+                InputEventResult::accepted);
+    }
+    const auto report = fixture.advance(50ms);
+    CHECK(report.timing.executed == 3);
+    REQUIRE(fixture.ticks.size() == 3);
+    const auto edges = fixture.ticks[0].input.mouse_edges(MouseButton::left);
+    CHECK(edges.press == shark::client::CursorPosition{1673, 1126, true});
+    CHECK(edges.release == shark::client::CursorPosition{1673, 1018, true});
+    CHECK(edges.ambiguous == ambiguous);
+    check_no_interval(fixture.ticks[1].input);
+    check_no_interval(fixture.ticks[2].input);
+}
+
+TEST_CASE("frame rejects nonfinite owned pointer positions and clears them on cancellation",
+          "[frame]") {
+    FrameFixture fixture;
+    SECTION("Nonfinite press geometry rejects before any tick") {
+        auto snapshot = fixture.input.capture();
+        snapshot.mouse_pointer_edges[0].press = {std::numeric_limits<double>::infinity(), 0, true};
+        CHECK_FALSE(fixture.loop->advance(20ms, snapshot, {}, fixture.callback));
+        CHECK(fixture.ticks.empty());
+        CHECK(fixture.loop->next_tick() == 0);
+    }
+    SECTION("Nonfinite release geometry rejects before any tick") {
+        auto snapshot = fixture.input.capture();
+        snapshot.mouse_pointer_edges[0].release = {0, std::numeric_limits<double>::infinity(),
+                                                   true};
+        CHECK_FALSE(fixture.loop->advance(20ms, snapshot, {}, fixture.callback));
+        CHECK(fixture.ticks.empty());
+    }
+    SECTION("Focus loss discards old pending mouse geometry") {
+        REQUIRE(fixture.input.on_cursor(10, 20) == InputEventResult::accepted);
+        REQUIRE(fixture.input.on_mouse_button(MouseButton::left, ButtonAction::press) ==
+                InputEventResult::accepted);
+        CHECK(fixture.advance(1ms).timing.executed == 0);
+        REQUIRE(fixture.input.on_focus(false) == InputEventResult::accepted);
+        REQUIRE(fixture.input.on_focus(true) == InputEventResult::accepted);
+        REQUIRE(fixture.input.on_cursor(30, 40) == InputEventResult::accepted);
+        bool renewed = false;
+        SECTION("Only the cancellation release remains") {}
+        SECTION("A real post-regain press remains independently observable") {
+            renewed = true;
+            REQUIRE(fixture.input.on_mouse_button(MouseButton::left, ButtonAction::press) ==
+                    InputEventResult::accepted);
+        }
+        CHECK(fixture.advance(20ms).timing.executed == 1);
+        REQUIRE(fixture.ticks.size() == 1);
+        const auto edges = fixture.ticks[0].input.mouse_edges(MouseButton::left);
+        CHECK(fixture.ticks[0].input.mouse_button(MouseButton::left).pressed == renewed);
+        CHECK(edges.press_seen == renewed);
+        CHECK_FALSE(edges.release_seen);
+        CHECK_FALSE(edges.ambiguous);
+        if (renewed)
+            CHECK(edges.press == shark::client::CursorPosition{30, 40, true});
+        else
+            CHECK(edges == shark::client::MouseButtonEdges{});
+    }
 }
 
 TEST_CASE("frame origin and exhausted tick indices use existing scheduler errors", "[frame]") {

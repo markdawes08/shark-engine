@@ -47,6 +47,30 @@ Events apply in injection order, while snapshots coalesce multiple occurrences.
 A press/release within one interval preserves both edges even though held is false;
 a release/press can preserve both while held is true. A snapshot is not an ordered
 key-event log or a count of taps. Text order is retained separately.
+
+For each of the eight mouse buttons, `mouse_edges(button)` returns an owned
+`MouseButtonEdges` summary: the last accepted cursor at the first genuine press
+and release, plus an `ambiguous` flag. The positions are copied in ingestion order;
+later motion cannot overwrite them. A missing cursor at a press remains invalid
+even if a valid position arrives later. Duplicate button notifications do not
+create or replace edge positions. A single press followed by release is valid;
+release-before-press, another press or another release within the interval marks
+the summary ambiguous. This fixed inline data adds neither timestamps nor an
+ordered pointer-event queue. Invalid button queries return neutral geometry.
+No OS position polling or stronger native-callback ordering is implied.
+`press_seen` and `release_seen` distinguish actual edges, including those with
+unknown positions, from focus-generated release flags. Cancelled held state
+therefore cannot make a genuine post-regain press appear to be another cycle.
+
+Capture clears edge positions/ambiguity with the interval flags while retaining
+the current cursor and held state. Focus cancellation clears all edge geometry.
+The offline pending snapshot preserves first positions across zero-tick captures,
+marks merged cycles ambiguous and clears geometry after its first consumed tick
+or a positive-action cancellation. Finite valid edge positions are checked before
+frame admission. Pointer consumers must reject missing/ambiguous provenance,
+preserve their current image/revision/focus fences and require a fresh press after
+cancellation; held state does not authorize resuming an old gesture.
+
 04c's [offline frame loop](frame-loop.md) retains a bounded pending snapshot
 across frames with zero ticks and consumes interval data only on the first
 catch-up tick. Later ticks receive latest held/cursor state, while presentation

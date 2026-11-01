@@ -23,6 +23,10 @@ bool valid_snapshot(const InputSnapshot& input) noexcept {
             return false;
         }
     }
+    for (const auto& edges : input.mouse_pointer_edges)
+        for (const auto point : {edges.press, edges.release})
+            if (point.valid && (!std::isfinite(point.x) || !std::isfinite(point.y)))
+                return false;
     return true;
 }
 
@@ -33,6 +37,7 @@ void clear_interval(InputSnapshot& input) noexcept {
     for (auto& button : input.mouse_buttons) {
         button.pressed = button.released = button.repeated = false;
     }
+    input.mouse_pointer_edges = {};
     input.scroll = {};
     input.text = {};
     input.text_size = 0;
@@ -54,6 +59,7 @@ void cancel_positive(InputSnapshot& input, bool release_held) noexcept {
     for (auto& button : input.mouse_buttons) {
         cancel(button);
     }
+    input.mouse_pointer_edges = {};
     input.scroll = {};
     input.text = {};
     input.text_size = 0;
@@ -76,6 +82,17 @@ void merge(InputSnapshot& pending, const InputSnapshot& input) noexcept {
         merge_button(pending.keys[i], input.keys[i]);
     }
     for (std::size_t i = 0; i < mouse_button_count; ++i) {
+        auto& edges = pending.mouse_pointer_edges[i];
+        const auto& incoming = input.mouse_pointer_edges[i];
+        edges.ambiguous = edges.ambiguous || incoming.ambiguous ||
+                          (incoming.press_seen && (edges.press_seen || edges.release_seen)) ||
+                          (incoming.release_seen && edges.release_seen);
+        if (incoming.press_seen && !edges.press_seen)
+            edges.press = incoming.press;
+        if (incoming.release_seen && !edges.release_seen)
+            edges.release = incoming.release;
+        edges.press_seen = edges.press_seen || incoming.press_seen;
+        edges.release_seen = edges.release_seen || incoming.release_seen;
         merge_button(pending.mouse_buttons[i], input.mouse_buttons[i]);
     }
     pending.cursor = input.cursor;

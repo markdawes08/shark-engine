@@ -26,6 +26,9 @@ NAMES = ("ortho", "perspective", "resized", "restored", "empty")
 EXTENTS = ((96, 80), (96, 80), (128, 96), (96, 80), (96, 80))
 GENERATIONS = (1, 1, 2, 3, 3)
 FAULTS = ("partial-creation", "submission-timeout", "recording-error")
+PHYSICS_NAMES = ("initial", "reset", "previous", "interpolated", "current",
+                 "falling", "teleported", "retargeted")
+PHYSICS_EXTENT = (128, 96)
 TIMEOUT_SECONDS = 45
 require = raster.require
 integer = raster.integer
@@ -121,6 +124,66 @@ def rows_from(result: ProcessResult) -> list[dict]:
     return rows
 
 
+def physics_fixture(case: int) -> dict:
+    """Literal fixed-input poses; independent of the native scene and matrices."""
+    require(type(case) is int and 0 <= case < 8, "Unknown physics presentation case")
+    # 60 Hz, gravity -600: semi-implicit displacement at tick n is n*(n+1)/12.
+    # Reset starts at Y=1; tick6 endpoints -1.5/-2.5 interpolate to -2.
+    # Teleport resets velocity/endpoints to Y=2 before tick7.
+    dynamic_y = (2., 1., 1., 11/12, 5/6, -2., 2., 23/12)[case]
+    kinematic_y = (0., 0., 0., .5, 1., 1., 1., .5)[case]
+    camera_x = (0., 0., 0., .5, 1., 1., 1., .5)[case]
+    static_x, static_y = (0. if case == 0 else 1.), (-2. if case < 6 else 2.)
+    return {"name": PHYSICS_NAMES[case], "extent": {"width": 128, "height": 96},
+            "draw_count": 3, "tick": (0, 0, 1, 1, 1, 6, 6, 7)[case],
+            "alpha": (1., 0., 0., .5, 1., .5, 0., .5)[case],
+            "positions": {"dynamic_child": [-1.5, dynamic_y, -3.],
+                          "static_child": [static_x, static_y, -3.],
+                          "kinematic_child": [2., kinematic_y, -3.]},
+            "camera_x": camera_x, "render_preserved_revision": True,
+            "color_file": PHYSICS_NAMES[case] + ".rgba8",
+            "depth_file": PHYSICS_NAMES[case] + ".d32f"}
+
+
+@lru_cache(maxsize=8)
+def physics_reference(case: int) -> raster.Reference:
+    """Three literal .75x.5 colored quads, ortho height8, near1/far9.
+
+    All geometry is at Z=-3, giving depth .25. The rigid dynamic root's visual
+    child has local X=.5; the selected Camera is a child of the kinematic rig.
+    Fixed border exclusions match the existing one-pixel raster policy.
+    """
+    expected = physics_fixture(case)
+    width, height = PHYSICS_EXTENT
+    rgba = bytearray((0, 0, 0, 255) * width * height)
+    depth, checked = [1.] * (width * height), [True] * (width * height)
+    colors = (("dynamic_child", (255, 0, 0, 255)), ("static_child", (0, 255, 0, 255)),
+              ("kinematic_child", (0, 0, 255, 255)))
+    for key, color in colors:
+        x, y, z = expected["positions"][key]
+        require(z == -3., "Fixed physics reference depth changed")
+        cx, cy = 64 + 12 * (x - expected["camera_x"]), 48 - 12 * y
+        left, right, top, bottom = cx-4.5, cx+4.5, cy-3, cy+3
+        require(0 < left < right < width and 0 < top < bottom < height,
+                "Physics oracle requires unclipped fixed geometry")
+        for py in range(height):
+            for px in range(width):
+                sx, sy = px + .5, py + .5
+                index = py * width + px
+                if left-1 <= sx <= right+1 and top-1 <= sy <= bottom+1 and min(
+                        abs(sx-left), abs(sx-right), abs(sy-top), abs(sy-bottom)) <= 1:
+                    checked[index] = False
+                if left <= sx < right and top <= sy < bottom:
+                    rgba[index*4:index*4+4] = bytes(color)
+                    depth[index] = .25
+    foreground = sum(ok and z < 1 for ok, z in zip(checked, depth, strict=True))
+    background = sum(ok and z == 1 for ok, z in zip(checked, depth, strict=True))
+    require(foreground >= 60 and foreground+background >= width*height*.95,
+            "Physics reference lacks bounded known foreground/background")
+    return raster.Reference(width, height, bytes(rgba), tuple(depth), tuple(checked),
+                            foreground, background, 0)
+
+
 def check_identity(row: dict, mode: str, device: str, validation: str, lock: str, digest: str, fault: str="") -> None:
     expected = {"kind":"identity","schema_version":1,"assignment_13":"NOT_RUN","mode":mode,
                 "dependency_lock_sha256":lock,"source_sha256":digest,"selection":device,
@@ -134,6 +197,61 @@ def check_viewport(value: object, extent: tuple[int,int], generation: int, frame
                 "retired_generations":generation if closed else generation-1,"rendered_frames":frames,
                 "live_target_resources":0 if closed else 5,"pending":False}
     require(raster.close_values(value,expected), "Viewport generation, target ownership or completion differs")
+
+
+def inspect_physics(result: ProcessResult, device: str, validation: str, lock: str,
+                    digest: str, readbacks: Path) -> tuple[list[dict], list[str], list[dict]]:
+    rows, errors, comparisons = [], [], []
+    try:
+        require(result.returncode == 0 and not result.stderr,
+                "Physics scene fixture failed or emitted diagnostics")
+        rows = rows_from(result)
+        require(len(rows) == 11, "Physics scene fixture omitted a phase")
+        check_identity(rows[0], "physics", device, validation, lock, digest)
+        require(set(rows[1]) == {"kind", "adapter"} and rows[1]["kind"] == "adapter" and
+                not foundation.adapter_errors(rows[1]["adapter"], require_supported=True) and
+                rows[1]["adapter"]["uuid"] == device, "Wrong physics rendering adapter")
+        previous, files = 0, set()
+        for case, row in enumerate(rows[2:10]):
+            expected = physics_fixture(case)
+            extra = {"kind", "submitted", "completed", "created_resources", "retired_resources",
+                     "subpixel_precision_bits", "viewport"}
+            require(set(row) == {*expected, *extra} and row["kind"] == "physics-case" and
+                    raster.close_values({key: row[key] for key in expected}, expected),
+                    "Physics native poses, interpolation or descendant/camera extraction differ")
+            require(integer(row["submitted"]) and row["submitted"] > previous and
+                    integer(row["completed"]) and row["completed"] == row["submitted"] and
+                    integer(row["created_resources"]) and row["created_resources"] > 0 and
+                    integer(row["retired_resources"]) and row["retired_resources"] == row["created_resources"] and
+                    row["subpixel_precision_bits"] == 8, "Physics readback retained incomplete resources")
+            previous = row["submitted"]
+            check_viewport(row["viewport"], PHYSICS_EXTENT, 1, case+1)
+            paths = [shader_pipeline.contained(readbacks, expected[field])
+                     for field in ("color_file", "depth_file")]
+            for path in paths:
+                files.add(path.name)
+                require(path.is_file() and path.stat().st_size == 128*96*4,
+                        "Physics readback extent/format differs")
+            comparison = raster.compare_readback(paths[0].read_bytes(), paths[1].read_bytes(),
+                                                physics_reference(case))
+            comparison.update(name=expected["name"], color_sha256=sha256(paths[0]),
+                              depth_sha256=sha256(paths[1]))
+            comparisons.append(comparison)
+            if comparison["status"] != "PASS":
+                errors.append(expected["name"] + " failed fixed physics color/depth tolerances")
+        require({path.name for path in readbacks.iterdir()} == files, "Unexpected physics readback files")
+        status = "PASS" if validation == "required" else "NOT_RUN"
+        expected = {"kind": "complete", "status": status, "qualification": status,
+                    "assignment_18": "NOT_RUN", "cases": 8, "completed_ticks": 7,
+                    "physics_closed": True}
+        require(set(rows[-1]) == {*expected, "diagnostics", "viewport"} and
+                raster.close_values({key: rows[-1][key] for key in expected}, expected),
+                "Physics owner completion changed or claimed assignment acceptance")
+        clean(rows[-1]["diagnostics"])
+        check_viewport(rows[-1]["viewport"], PHYSICS_EXTENT, 1, 8, True)
+    except (OSError, ValueError, TypeError, KeyError, OverflowError, RecursionError) as error:
+        errors.append(str(error))
+    return rows, errors, comparisons
 
 
 def inspect_result(result: ProcessResult, mode: str, device: str, validation: str, lock: str,
@@ -251,7 +369,7 @@ def cli_checks(executable: Path) -> int:
     for flag in ("--describe","--help"):
         result=run_process([str(executable),flag],cwd=executable.parent,timeout=5)
         errors.extend(inspect_result(result,"describe","auto","required",lock,digest)[1])
-    for arguments in ([],["--render"],["--describe","extra"],["--native-fault","unknown","--device","0"*32,"--vertex","x","--pixel","y"]):
+    for arguments in ([],["--render"],["--physics"],["--describe","extra"],["--native-fault","unknown","--device","0"*32,"--vertex","x","--pixel","y"]):
         result=run_process([str(executable),*arguments],cwd=executable.parent,timeout=5)
         try:
             rows=rows_from(result)
@@ -264,7 +382,7 @@ def cli_checks(executable: Path) -> int:
 def main() -> int:
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--executable",type=Path,required=True)
-    parser.add_argument("--mode",choices=("describe","render","faults"),default="describe")
+    parser.add_argument("--mode",choices=("describe","render","physics","faults"),default="describe")
     parser.add_argument("--cli-only",action="store_true")
     parser.add_argument("--device",default="auto")
     parser.add_argument("--shaders",type=Path)
@@ -286,7 +404,7 @@ def main() -> int:
     try:
         shader_pipeline.no_links(output); output.mkdir(parents=True,exist_ok=False)
     except (OSError,ValueError) as error: parser.error(str(error))
-    summary={"schema_version":1,"checkpoint":"13d","assignment_13":"NOT_RUN","status":"FAIL","qualification":"NOT_RUN","mode":args.mode,
+    summary={"schema_version":1,"checkpoint":"18e" if args.mode=="physics" else "13d","assignment_13":"NOT_RUN","status":"FAIL","qualification":"NOT_RUN","mode":args.mode,
              "started_utc":datetime.now(timezone.utc).isoformat(),"timeout_seconds_per_child":TIMEOUT_SECONDS,"runs":[],"errors":[]}
     started=time.monotonic(); exit_code=1
     try:
@@ -311,19 +429,22 @@ def main() -> int:
         for mode in modes:
             command=[str(executable),"--native-fault",mode] if args.mode=="faults" else [str(executable),"--"+mode]
             if args.mode!="describe": command += ["--device",args.device,"--vertex",str(vertex),"--pixel",str(pixel)]
-            if args.mode=="render": command += ["--output",str(output/"readbacks"),"--validation",args.validation]
+            if args.mode in ("render", "physics"): command += ["--output",str(output/"readbacks"),"--validation",args.validation]
             result=run_process(command,cwd=executable.parent,timeout=TIMEOUT_SECONDS,env=environment)
             (output/(mode+".jsonl")).write_text(result.stdout,encoding="utf-8"); (output/(mode+".stderr.log")).write_text(result.stderr,encoding="utf-8")
             comparisons=[]
             if args.mode=="faults": rows,errors=inspect_fault(result,mode,args.device,lock,digest)
+            elif args.mode=="physics": rows,errors,comparisons=inspect_physics(result,args.device,args.validation,lock,digest,output/"readbacks")
             else: rows,errors,comparisons=inspect_result(result,mode,args.device,args.validation,lock,digest,output/"readbacks")
             summary["runs"].append({"mode":mode,"command":command,"process_exit_code":result.returncode,"timed_out":result.timed_out,"cleanup_errors":list(result.cleanup_errors),"records":rows,"comparisons":comparisons,"errors":errors})
             summary["errors"].extend(errors)
-            if args.mode=="render":
+            if args.mode in ("render", "physics"):
                 for case in range(len(comparisons)):
-                    raw=(output/"readbacks"/fixture(case)["color_file"]).read_bytes()
-                    raster.write_png(output/(NAMES[case]+".png"),*EXTENTS[case],raw)
-                    raster.write_png(output/(NAMES[case]+"-reference.png"),*EXTENTS[case],reference(case).color)
+                    expected = physics_fixture(case) if args.mode=="physics" else fixture(case)
+                    oracle = physics_reference(case) if args.mode=="physics" else reference(case)
+                    raw=(output/"readbacks"/expected["color_file"]).read_bytes()
+                    raster.write_png(output/(expected["name"]+".png"),oracle.width,oracle.height,raw)
+                    raster.write_png(output/(expected["name"]+"-reference.png"),oracle.width,oracle.height,oracle.color)
         require(source_inputs()==inputs and sha256(executable)==summary["executable_sha256"],"Compiled inputs changed during run")
         require({name:sha256(ROOT/"tools"/name) for name in tool_names}==summary["tool_inputs"],"Verification tools changed during run")
         if validation is not None: require(validation_tools(args.validation_manifest.resolve(),lock)==validation,"Validation tools changed during run")

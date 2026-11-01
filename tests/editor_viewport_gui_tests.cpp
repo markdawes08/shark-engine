@@ -166,3 +166,56 @@ TEST_CASE("Viewport image routing uses actual logical image bounds at nonuniform
     accepted(input.on_mouse_button(MouseButton::left, ButtonAction::press));
     CHECK_FALSE(gui.draw(router, input.capture()).pick);
 }
+
+TEST_CASE("Viewport fast navigation and picking use owned press and release positions",
+          "[editor-gui]") {
+    const ViewportRectangle image{100, 200, 400, 300};
+    ViewportPointerRouter router;
+    InputState input;
+    accepted(input.on_focus(true));
+    accepted(input.on_cursor(150, 250));
+    static_cast<void>(router.route(input.capture(), image, true, false));
+    accepted(input.on_mouse_button(MouseButton::right, ButtonAction::press));
+    accepted(input.on_cursor(170, 240));
+    auto result = router.route(input.capture(), image, true, false);
+    CHECK(result.motion.orbit_x == 20);
+    CHECK(result.motion.orbit_y == -10);
+    accepted(input.on_mouse_button(MouseButton::right, ButtonAction::release));
+    accepted(input.on_cursor(190, 260));
+    CHECK(stationary(router.route(input.capture(), image, true, false)));
+    accepted(input.on_mouse_button(MouseButton::right, ButtonAction::press));
+    accepted(input.on_cursor(210, 220));
+    accepted(input.on_mouse_button(MouseButton::right, ButtonAction::release));
+    result = router.route(input.capture(), image, true, false);
+    CHECK(result.motion.orbit_x == 20);
+    CHECK(result.motion.orbit_y == -40);
+    accepted(input.on_mouse_button(MouseButton::middle, ButtonAction::press));
+    accepted(input.on_cursor(215, 230));
+    result = router.route(input.capture(), image, true, false);
+    CHECK(result.motion.pan_x == 5);
+    CHECK(result.motion.pan_y == 10);
+    accepted(input.on_mouse_button(MouseButton::middle, ButtonAction::release));
+    static_cast<void>(router.route(input.capture(), image, true, false));
+    accepted(input.on_mouse_button(MouseButton::left, ButtonAction::press));
+    accepted(input.on_cursor(420, 350));
+    result = router.route(input.capture(), image, true, false);
+    CHECK(result.pick);
+    CHECK(result.x == 215);
+    CHECK(result.y == 230);
+}
+
+TEST_CASE("Viewport navigation rejects mixed complete button cycles without an ordering claim",
+          "[editor-gui]") {
+    const ViewportRectangle image{100, 200, 400, 300};
+    ViewportPointerRouter router;
+    InputState input;
+    accepted(input.on_focus(true));
+    accepted(input.on_cursor(150, 250));
+    accepted(input.on_mouse_button(MouseButton::right, ButtonAction::press));
+    accepted(input.on_mouse_button(MouseButton::right, ButtonAction::release));
+    accepted(input.on_mouse_button(MouseButton::middle, ButtonAction::press));
+    accepted(input.on_cursor(170, 240));
+    accepted(input.on_mouse_button(MouseButton::middle, ButtonAction::release));
+    CHECK(stationary(router.route(input.capture(), image, true, false)));
+    CHECK(stationary(router.route(input.capture(), image, true, false)));
+}

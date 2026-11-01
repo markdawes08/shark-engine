@@ -76,6 +76,13 @@ The larger ASan allowance accounts for instrumentation and allocator quarantine;
 it does not suppress sanitizer findings. Report sampled high-water marks and final deltas, not only
 the last sample. Retain raw values to expose trends. A failed limit requires an
 investigation; no automatic baseline replacement or widened allowance is allowed.
+The ASan-only `--diagnose-asan-allocator` option adds owned live-allocated, mapped
+and free allocator byte counters to existing samples, failure and close records.
+It prints accumulated runtime statistics at most once each for warmup, first
+failure and first close. These sequential observations do not change allocator
+settings or replace whole-process private bytes. This mode preserves strict
+first-budget failure and is explicitly nonqualifying, even with clean limits;
+it cannot combine with `--diagnose-resource-growth` continuation.
 Engine-owned resources have exact structural limits: one swapchain, two command
 slots, at most eight swapchain images and corresponding image views/wrappers,
 with synchronization objects bounded by that strategy. Every owned count must

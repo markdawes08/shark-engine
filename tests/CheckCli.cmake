@@ -87,6 +87,8 @@ if(SHARK_APPLICATION STREQUAL "Editor" AND SHARK_EDITOR_GUI)
     shark_editor_rejected(unknown_flag 2 invalid_argument editor.arguments --editor --unknown value)
     shark_editor_rejected(invalid_device 2 invalid_argument editor.arguments --editor --device invalid)
     shark_editor_rejected(invalid_validation 2 invalid_argument editor.arguments --editor --validation optional)
+    shark_editor_rejected(invalid_input_trace 2 invalid_argument editor.arguments --editor --input-trace verbose)
+    shark_editor_rejected(duplicate_input_trace 2 invalid_argument editor.arguments --editor --input-trace on --input-trace off)
     shark_editor_rejected(duplicate_root 2 invalid_argument editor.arguments --editor --root . --root .)
     shark_editor_rejected(duplicate_project 2 invalid_argument editor.arguments --editor --project one --project two)
     shark_editor_rejected(duplicate_shader 2 invalid_argument editor.arguments
@@ -106,5 +108,9 @@ if(SHARK_APPLICATION STREQUAL "Editor" AND SHARK_EDITOR_GUI)
         message(FATAL_ERROR "Editor missing-shader fixture paths unexpectedly exist")
     endif()
     shark_editor_rejected(missing_shader 1 io_failure shader.load --editor
+        --gui-vertex "${shark_missing_vertex}" --gui-pixel "${shark_missing_pixel}")
+    shark_editor_rejected(trace_on_missing_shader 1 io_failure shader.load --editor --input-trace on
+        --gui-vertex "${shark_missing_vertex}" --gui-pixel "${shark_missing_pixel}")
+    shark_editor_rejected(trace_off_missing_shader 1 io_failure shader.load --editor --input-trace off
         --gui-vertex "${shark_missing_vertex}" --gui-pixel "${shark_missing_pixel}")
 endif()

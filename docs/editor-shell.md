@@ -72,6 +72,29 @@ and `required` mode under the existing normal-user environment. `--help`,
 `--version`, `--window`, `--graphics` and `--cube` retain their earlier roles.
 CPU/WSL bootstrap builds reject `--editor` as unavailable and do not fetch ImGui.
 
+## Input diagnostics
+
+Append `--input-trace on` to an `--editor` launch to investigate native viewport
+input. It defaults to `off`. The existing stdout stream receives standalone
+`editor_input_trace` JSON rows after an explicit Camera becomes available.
+One application owner emits at most 256 changed observations across project
+close/reopen; identical captures are omitted. Each observation payload is
+limited to 16 KiB. The final permitted row sets `limit_reached: true`.
+
+Rows preserve captured mouse press/release/held state, owned first-edge positions
+and actual-edge/ambiguity flags, cursor and focus, the
+ImGui input observation, actual image bounds, hover/blocking gates, gizmo
+hit/gesture/consumption details, and any retained mutation receipt. These are
+coalesced capture intervals, **not ordered native callback events**; they cannot
+recover positions already lost within an interval. The diagnostic observes
+existing routing without injecting input or changing authoring semantics. A
+trace is investigation evidence and does not itself qualify native UI behavior.
+
+The ImGui adapter queues an unambiguous button's owned positions around its
+actual press/release edges before restoring the latest cursor. Missing positions
+stay invalid. Ambiguous or unordered multi-button edges cancel queued mouse
+positives while preserving queued keyboard, Unicode text and focus events.
+
 ## Shared ownership and outcomes
 
 The Editor-private [ProjectSession](../editor/project_session.hpp) dispatches

@@ -193,6 +193,22 @@ struct CursorPosition {
     friend bool operator==(const CursorPosition&, const CursorPosition&) = default;
 };
 
+// First real button-edge positions in one capture interval. Coordinates are
+// copied from the last accepted cursor when the edge is ingested, before later
+// motion can change cursor. No OS position query or callback ordering is added.
+// A missing cursor stays invalid. Multiple cycles or release-before-press are
+// ambiguous; these summaries never claim to be an ordered pointer event log.
+struct MouseButtonEdges {
+    CursorPosition press{};
+    CursorPosition release{};
+    // Actual ingested edges, distinct from focus-generated release flags.
+    // A seen edge may still have an invalid position.
+    bool press_seen{false};
+    bool release_seen{false};
+    bool ambiguous{false};
+    friend bool operator==(const MouseButtonEdges&, const MouseButtonEdges&) = default;
+};
+
 // Fractional native scroll units, independent of cursor/content coordinates.
 struct ScrollOffset {
     double x{0.0};
@@ -215,11 +231,13 @@ struct InputSnapshot {
     bool focus_lost{false};
     bool text_overflow{false};
     bool scroll_overflow{false};
+    std::array<MouseButtonEdges, mouse_button_count> mouse_pointer_edges{};
 
     // Invalid identifiers safely return neutral state; valid() distinguishes
     // an invalid query from a valid, inactive control.
     [[nodiscard]] ButtonState key(Key key) const noexcept;
     [[nodiscard]] ButtonState mouse_button(MouseButton button) const noexcept;
+    [[nodiscard]] MouseButtonEdges mouse_edges(MouseButton button) const noexcept;
     friend bool operator==(const InputSnapshot&, const InputSnapshot&) = default;
 };
 

@@ -295,11 +295,10 @@ connected editor/viewport/physics acceptance follows
 and [physics acceptance](../physics-acceptance.md). Full REQ-16/17/18 remain
 NOT_RUN until their required native/connected evidence exists.
 
-18e implementation and its selected headless checks are complete. Exact next work
-is to diagnose BL-17-UI-DRAG-01 using a bounded native input/event trace, establish
-why the intended press/drag did not reach the gesture owner, then finish the
-remaining connected UI acceptance on both GPUs. Actual outcomes are recorded
-above; no headless result substitutes for them. Full REQ-16/17/18 remain NOT_RUN.
+18e implementation and its selected headless checks are complete. The
+2026-11-01 addenda below record the pointer defect, correction and further
+backlog evidence. Remaining work is the unperformed connected UI acceptance on
+both GPUs; no headless result substitutes for it. Full REQ-16/17/18 remain NOT_RUN.
 Assignment 19 follows 18 in the manifest and is not started by this increment.
 
 `.gitignore` was reviewed: existing build/out/cache/local-roadmap patterns cover
@@ -307,3 +306,236 @@ all generated outputs while source, fixtures and documentation remain eligible
 for version control. No staging, commits or pushes occurred.
 
 Suggested commit: `feat(editor): add shared physics preview and rigid body controls`.
+
+## 05c backlog qualification and allocator diagnosis, 2026-11-01
+
+Base revision: `1848352`. The user's full-backlog request authorized one serial
+strict Debug/Release/ASan selection per GPU, preserving required validation and
+all workloads/limits. These executions preceded the input correction and new
+allocator diagnostic: they remain evidence for unchanged resource/lifetime code,
+not final-worktree identity or later input behavior. Exact identities/logs are in
+`out/19-testing-work/05c-qualification/` and its compact `summary.json`.
+
+| Strict selection | Outer duration | First failure; native elapsed where available |
+| --- | --- | --- |
+| Debug RTX, NVIDIA 616.56 | 21.790s | Restore 6 at 17.955s: USER 41 -> 42 |
+| Debug Intel, 101.6790 | 8.451s | Resize 8 at 4.917s: USER 48 -> 50 |
+| Release RTX, NVIDIA 616.56 | 606.100s | Closed lifetime 6: GDI 15 -> 16 |
+| Release Intel, 101.6790 | 33.680s | Restore 1 at 30.004s: USER 48 -> 49 |
+| ASan RTX, NVIDIA 616.56 | 7.527s | Resize 5 at 3.125s: private bytes +258.539MiB, above 256MiB |
+| ASan Intel, 101.6790 | 13.316s | Resize 15 at 9.102s: private bytes +278.887MiB, above 256MiB |
+
+All six are **FAIL / qualification NOT_RUN**. Release RTX completed the full
+600.001s sustained phase/100 resizes/20 restores; other selections stopped at
+their first failure. All explicit failure cleanups succeeded with zero tracked
+native resources and validation warnings/errors/dropped messages. USER growth
+does not establish a leak or the original NVIDIA DC mechanism; ASan memory growth
+is a separate finding. No blind retries were made.
+
+The exit investigation added a prearmed, owned ETW memory ring: 128MiB,
+ProcessThread/Loader/CSwitch/ReadyThread events with scheduling and exit stacks,
+without sampled CPU profiling or persistent settings. The controlled CPU-stall
+selfcheck passed with actual stacks/zero lost events or buffers. One unchanged
+64-child observer invocation then completed all expected exits without recurrence
+or observer/cleanup errors. The owned instance stopped and was verified inactive.
+The 144MiB merged ETL reports zero lost events/buffers, but retains a circular
+**tail**, not all 64 children. Evidence under `out/19-testing-work/` is
+`05c-etw/cpu-selfcheck-recording/` and `05c-etw-native/`. Original/child-55 exit
+timeouts remain **UNRESOLVED / NOT_RUN**, without a causal rundown stack or fix.
+
+To investigate the new memory failures, the existing stress fixture/runner gained
+ASan-only `--diagnose-asan-allocator`. It adds separate owned allocator counters
+at existing sample/failure/close points and at most three accumulated-stat dumps
+(warmup/failure/close). It preserves strict first-budget failure, rejects growth
+continuation and can never qualify. Public API headers/DLL exports were checked;
+the affected Python family passed **28/28** on final inputs. The ASan target built
+in 37.419s, then passed device-free description/three argument rejections
+(`05c-allocator-prepare/`); no unrelated build/full CPU matrix was repeated.
+The new non-ASan conditional branch also built in Debug (3.488s); device-free
+description and allocator-mode rejection passed before GPU access. Release reuses
+that branch coverage. Records are `05c-allocator-debug-*`.
+
+After the shared Core/Client inputs were held stable, one new diagnostic capture
+per GPU retained the unchanged strict memory failure:
+
+| Allocator diagnostic | Failure point | Private-byte growth | Allocator-mapped growth | Global-quarantine growth |
+| --- | --- | --- | --- | --- |
+| RTX, 7.584s outer | Resize 5, 3.118s | 256.813MiB | 222.664MiB | 167.980MiB |
+| Intel, 12.769s outer | Resize 14, 8.549s | 262.531MiB | 232.320MiB | 174.645MiB |
+
+Runtime statistics resolve the unmodified quarantine limits to global 256MiB and
+thread-local 1024KiB. Retained freed/quarantined storage is a demonstrated large
+contributor; mapped, free and quarantine values overlap and must not be added as
+independent totals. The public live-byte counter stays zero while accumulated
+freed bytes exceed malloced bytes, so zero cannot prove an empty live heap.
+[Upstream ASan](https://github.com/llvm/llvm-project/blob/main/compiler-rt/lib/asan/asan_stats.cpp)
+clamps inconsistent/racy totals to zero; this does not establish the installed
+MSVC fork's cause. Implausible raw RSS is excluded. Both captures exited 1 with
+zero tracked resources after cleanup and clean validation. Evidence is
+`05c-allocator-native/accounting-summary.json` and per-GPU records/stderr;
+`05c-asan-memory/` retains earlier runtime-help/strict-sample reductions.
+
+No engine ownership fix is established. Cause-level memory work needs caller
+evidence; exit work needs a captured recurrence. Further unchanged stress is not
+useful without new actionable evidence. Fixed limits, historical receipts and
+full **REQ-05 NOT_RUN** remain unchanged. No driver/OS, allocator option, budget
+or foreign-handle cleanup change was made. GPU/build/input holds were released.
+
+Suggested commit: `test(presentation): add bounded ASan allocator accounting`.
+
+## Pointer capture correction and resumed acceptance, 2026-11-01
+
+Base: `1848352`, initially clean `main`. All `out/19-testing-work/` paths below
+belong to testing-backlog work, not assignment 19. The user owns staging,
+commits and pushing. Existing `.gitignore` rules cover these generated artifacts;
+the new private Editor header remains eligible for version control.
+
+The bounded RTX trace reproduced BL-17-UI-DRAG-01: the neutral cursor was on the
+world-Y shaft at `[1673,1126]`, but the first pressed/held snapshot already had
+current cursor `[1673,1018]`. Hit testing used that endpoint and forwarded the
+miss to picking. This was motion before capture, rather than both button edges
+coalescing or an established wrong tool start. The failed session closed with
+23,715 completed presentations and zero validation diagnostics. Original evidence
+is `viewport-trace-rtx-worker/`; the earlier failed attempt remains unchanged.
+
+`InputSnapshot` now adds bounded, owned first press/release positions and actual
+edge-seen/ambiguity flags for eight mouse buttons. Positions use the last accepted
+cursor at ingestion, with no new OS polling or ordered event queue. Duplicate
+notifications cannot replace them; unknown origins stay invalid. Focus-generated
+release flags remain distinct from real edges. Capture, fixed-frame pending
+merging, validation and cancellation preserve that meaning. See the updated
+[input contract](../input-contracts.md).
+
+Gizmo hit/begin and picking use the owned press; gesture motion includes movement
+before capture and uses the owned release endpoint. One complete unambiguous
+gesture may commit once. Orbit/pan consumes the same endpoints. Mixed or ambiguous
+pointer activity cancels conservatively; the existing focus/image/revision fences
+and shared history owner remain. The ImGui adapter queues one button's owned
+positions around its edges, then restores the current cursor. Ambiguous/mixed
+input prunes only pending mouse events through pinned private Editor internals;
+keyboard, Unicode and focus events survive. No authoring protocol/source format,
+FeatureWorld case, mutable Scene owner or public native handle was added.
+
+Optional `--input-trace on|off` defaults off. One application owner emits at most
+256 changed observations across reopen, with at most 16KiB payload each, recording
+captured input, actual image bounds, routing gates and retained gizmo outcomes.
+It cannot inject input; output failures cannot alter authoring outcomes. It is
+explicitly a captured-interval diagnostic, not an ordered callback log.
+
+| Final input/consumer selection | Result; evidence under `out/19-testing-work/` |
+| --- | --- |
+| Windows Debug affected input/window/frame/GUI and scene-render CLI | PASS, 5/5 in 2.84s; `fast-pointer-debug-final-tests.log/.xml` |
+| Retained WSL Debug input/frame | PASS, 2/2; `fast-pointer-wsl-final/` |
+| Windows ASan GUI adapter | PASS, 1/1 in 4.48s; `fast-pointer-asan-tests.log/.xml` |
+| Windows ASan input/frame | PASS, 2/2 in 0.14s; `fast-pointer-asan-input-tests.log`, `fast-pointer-asan-input.xml` |
+| GUI regression against the immutable old adapter | Expected rejection of both new cases, seven failed assertions; `fast-pointer-gui-red-control.log`; managed scratch removed |
+
+Canonical builds and existing seeds/timeouts were retained. The first new frame
+test exposed synthetic focus releases being counted as physical cycles; actual
+edge-seen flags correct that cause. Failed Windows/WSL logs remain in
+`fast-pointer-debug-tests.log/.xml` and `fast-pointer-wsl/`. A later Debug build
+hit MSVC C1090/PDB RPC failure in unchanged Client files during cross-profile
+compiler activity. After coordinating compiler profiles, serial compilation
+passed without changing flags/settings; its external cause is unestablished.
+Both failure and reconciled build logs remain. The final Debug build includes
+Editor, EditorGuiTests, Tests and SceneRenderSmoke; the latter's metadata was
+refreshed after the input header changed. Renderer/physics behavior was unchanged,
+so the earlier native readbacks below are reused rather than reported as rerun.
+
+Actual RTX repeated the exact `(1116,774)` -> `(1116,702)` World Y/Snap 1 drag.
+The corrected trace retains press `[1673,1126]` while current cursor is the
+endpoint, starts at frame 6928/revision 3 and commits once at frame 6929/revision 4
+with no pick/navigation. The rendered triangle moved; history showed one group.
+Inspect/Undo/reload displayed local T `[1,0,0]`; Redo/save retained one group.
+Independent saved JSON is T `[2.9999999999999996,-4.440892098500624e-16,0]`,
+identity rotation/unit scale, within the existing tolerance for `[3,0,0]`.
+Evidence: `viewport-fixed-rtx-worker/` and `viewport-rtx-world-y-source.json`.
+Further actual outcomes and remaining native gates are recorded in the backlog.
+
+## Additional Intel editor and physics rendering evidence, 2026-11-01
+
+The actual Intel imported-project workflow exercised one-group Name/translation
+Apply, text-focus save suppression, unapplied inspector Save/Keep/discard,
+Undo/Redo across Save and explicit metadata publication. Empty license rejected
+without publication; an external sidecar LF invalidated the exact file token
+without replacing the original successful 580-byte receipt. An unapplied metadata
+close decision retained the draft on Keep editing; discarding it preserved the
+already written metadata. Dirty-close Cancel retained the project, then Save and
+close released it.
+
+A Ready import was cancelled, explicitly drained to Cancelled, refreshed and
+taken; a second Ready result published only on explicit request, importing one
+changed glTF node and reusing its unchanged binary. Terminal continuation checked
+saved state, MIT/provenance, the generator-only source change, original binary
+bytes and fresh root/dependency cache descriptors. It saved `Terminal return`;
+the actual Intel Editor reopened Saved with empty history and fresh imported
+geometry. Reciprocal competing writers were rejected. Final native close exited
+zero with 98,888 completed submissions/presentations and no validation diagnostics.
+Evidence is `ui-intel-terminal-return.json`, `ui-intel-busy.json` and
+`out/18e-work/backlog-intel16-worker/` plus its result. These are partial connected
+results; remaining hierarchy/component/focus and full native gates stay open.
+
+A final independent public-process control compared complete typed/source camera,
+actor, hierarchy, IDs, literal world matrices, metadata and fresh cache closures.
+A temporary Name edit made default dirty close reject without changing status,
+history, ledger or saved files. Retained-ticket Undo restored the actor; explicit
+Save preserved history and all seven source files were byte-identical to those
+already reopened in the actual Editor. The public owner closed cleanly.
+`ui-intel-final-cpu-control.json/.log` records this CPU continuation; it does not
+claim another native run.
+
+The existing SceneRenderSmoke now provides opt-in `--physics`, supervised by
+`tools/scene_render_smoke.py --mode physics`. Both GPUs passed eight fixed
+128x96 readbacks for static reset, dynamic teleport, kinematic targets and
+alpha 0/0.5/1 interpolated visual children/child Camera. One Core world executes
+seven 60 Hz updates with explicit gravity and disabled collision masks; contacts
+remain separate. Independent literal pose/color/depth oracles compared 96,576
+pixel pairs per GPU with zero observed error, using the unchanged one-byte/color
+and 1e-5/depth tolerances. All depth values were finite/in range, native physics
+closed and the sole GPU target generation retired with zero validation diagnostics.
+RTX completed in 2.426s, Intel in 2.232s under required validation and standard-user
+supervision: `physics-render-{rtx,intel}/summary.json` and token records.
+The existing Python family/CLI selection passed before native runs; coverage maps
+this separate fixture without adding public physics APIs or FeatureWorld cases.
+It qualifies these rendered physics paths, not actual UI parity or full REQ-18.
+
+Suggested commit: `fix(input): preserve pointer edges and advance native testing`.
+
+## Current desktop interruption and exact next work
+
+RTX World Z/Snap 15 rotation and Local X/Snap 1 translation subsequently committed
+once each, with history advancing to three groups and no pick/navigation. Their
+release receipts are revisions 7 and 8; rotation visibly quarter-turned and the
+local move shifted the pivot left. Final exact saved TRS/public-terminal comparison
+for those two edits is **NOT_RUN**: they remain unsaved in the live generated
+project. `viewport-native-partial-summary.md` and
+`viewport-native-retained-receipts.json` preserve the actual action/trace scope.
+
+Computer Use rejected three intended scale drags with its manual-input guard,
+including after fresh observations; independent pointer movement was observed.
+No scale press or history change occurred. All desktop inputs and refresh retries
+are stopped pending the user's availability reply. The live Editor is PID 38396,
+window 332404, exec session 13690; its original supervised launch has a deadline
+of **2026-11-01 04:09:43 EST / 09:09:43 UTC**. Preserve the current test edits
+before that deadline if the desktop becomes available. No post-interruption
+save/discard/close/termination has been attempted or claimed.
+
+After explicit resumption, first save/inspect the retained RTX edits, then finish
+the remaining scale/reference/terminal continuation and Intel correction check.
+Intel's fresh reference is prepared at
+`out/19-testing-work/viewport-intel-native/project/Terminal.sharkproject`.
+The separate 65-entity hierarchy/optional-component project is
+`ui-editor-paths/project/Terminal.sharkproject`; fresh per-GPU physics inputs and
+literal expectations are in `physics-ui-remaining/UI-guide.md`. Their unperformed
+native gates remain NOT_RUN. Held-button cancellation, right/middle navigation
+and multi-sample zero crossing also need an input method that can actually hold
+buttons across actions; the documented atomic desktop drag cannot establish them.
+
+Final contract/link/coverage, repository/ignore and changed-C++ formatting/diff
+checks pass. A final edited-file LF normalization changes no C++ tokens or input
+behavior and requires no engine rerun. Existing headless, rendering and connected
+results are reused only for their stated scope. No driver/OS, allocator setting,
+resource allowance, workload or source-control ownership changed. Full
+REQ-05/16/17/18 remain NOT_RUN; assignment 19 is not started.
+
+Suggested commit: `fix(input): retain pointer positions and record testing backlog results`.

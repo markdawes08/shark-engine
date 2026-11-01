@@ -1,6 +1,7 @@
 #include "engine/client/src/graphics_native_test.hpp"
 #include <shark/client/graphics.hpp>
 #include <shark/client/scene_viewport.hpp>
+#include <shark/physics.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -156,11 +157,12 @@ Options parse(int argc, char* argv[]) {
         return std::filesystem::path(std::u8string(value.begin(), value.end()));
     };
     const auto invalid = [] {
-        throw Failure({ErrorCode::invalid_argument,
-                       "Use --describe, --render --device UUID --vertex PATH --pixel PATH --output "
-                       "FRESH_DIRECTORY --validation required|off, or --native-fault NAME --device "
-                       "UUID --vertex PATH --pixel PATH",
-                       {.operation = "scene-render-smoke.arguments"}});
+        throw Failure(
+            {ErrorCode::invalid_argument,
+             "Use --describe, --render|--physics --device UUID --vertex PATH --pixel PATH --output "
+             "FRESH_DIRECTORY --validation required|off, or --native-fault NAME --device "
+             "UUID --vertex PATH --pixel PATH",
+             {.operation = "scene-render-smoke.arguments"}});
     };
     if (argc == 2 &&
         (std::string_view(argv[1]) == "--describe" || std::string_view(argv[1]) == "--help"))
@@ -180,9 +182,10 @@ Options parse(int argc, char* argv[]) {
             invalid();
         return options;
     }
-    if (argc != 12 || std::string_view(argv[1]) != "--render")
+    if (argc != 12 ||
+        (std::string_view(argv[1]) != "--render" && std::string_view(argv[1]) != "--physics"))
         invalid();
-    options.mode = "render";
+    options.mode = std::string_view(argv[1]) == "--physics" ? "physics" : "render";
     std::set<std::string_view> seen;
     for (int index = 2; index < argc; index += 2) {
         const std::string_view key{argv[index]}, value{argv[index + 1]};
@@ -345,6 +348,180 @@ Object resources_json(const GraphicsResourceSnapshot& value) {
             {"swapchains", value.live_swapchains},         {"offscreen", value.offscreen_resources},
             {"queue_workers", value.pending_queue_workers}};
 }
+
+struct PhysicsFixture {
+    std::shared_ptr<const PreparedAssets> assets;
+    std::unique_ptr<Scene> scene;
+    EntityHandle moving{}, fixed{}, kinematic{}, rig{}, camera{};
+    EntityHandle moving_visual{}, fixed_visual{}, kinematic_visual{};
+    PhysicsBodyHandle moving_body{}, fixed_body{}, kinematic_body{}, rig_body{};
+    std::unique_ptr<PhysicsWorld> world{}; // Native lease releases before Scene.
+};
+
+Transform translated(math::Vec3 position) {
+    Transform result;
+    result.translation = position;
+    return result;
+}
+
+PhysicsFixture physics_fixture() {
+    const auto asset_id = id<AssetId>(200);
+    PreparedMeshAsset asset{asset_id, {}};
+    for (const auto color :
+         std::array<std::array<float, 4>, 3>{{{1, 0, 0, 1}, {0, 1, 0, 1}, {0, 0, 1, 1}}})
+        asset.meshes.push_back({{quad(color)}});
+    const auto bytes = take(encode_prepared_mesh(asset));
+    const std::array inputs{PreparedAssetInput{asset_id, bytes}};
+    PhysicsFixture result{take(PreparedAssets::create(inputs)),
+                          take(Scene::create(AuthoredSceneScope{id<SceneId>(200)}))};
+    const auto root = [&](std::uint32_t identity, BodyMotion motion, math::Vec3 position) {
+        EntitySeed seed{id<AuthoredEntityId>(identity)};
+        seed.transform = translated(position);
+        seed.rigid_body = RigidBody{};
+        seed.rigid_body->motion = motion;
+        seed.rigid_body->half_extents = {.1, .1, .1};
+        seed.rigid_body->collision_mask = 0; // Qualify pose presentation, not response.
+        return take(result.scene->create_entity(seed));
+    };
+    result.moving = root(201, BodyMotion::dynamic_body, {-2, 2, -3});
+    result.fixed = root(202, BodyMotion::static_body, {0, -2, -3});
+    result.kinematic = root(203, BodyMotion::kinematic_body, {2, 0, -3});
+    result.rig = root(204, BodyMotion::kinematic_body, {0, 0, 0});
+    const auto child = [&](std::uint32_t identity, EntityHandle parent, std::uint32_t mesh,
+                           math::Vec3 position) {
+        EntitySeed seed{id<AuthoredEntityId>(identity)};
+        seed.parent = parent;
+        seed.transform = translated(position);
+        seed.transform.scale = {.75, .5, 1};
+        seed.mesh_renderer = MeshRenderer{asset_id, mesh, true};
+        return take(result.scene->create_entity(seed));
+    };
+    result.moving_visual = child(211, result.moving, 0, {.5, 0, 0});
+    result.fixed_visual = child(212, result.fixed, 1, {0, 0, 0});
+    result.kinematic_visual = child(213, result.kinematic, 2, {0, 0, 0});
+    EntitySeed camera{id<AuthoredEntityId>(214)};
+    camera.parent = result.rig;
+    camera.camera = Camera{CameraProjection::orthographic, 1.0, 8.0, 1.0, 9.0};
+    result.camera = take(result.scene->create_entity(camera));
+    result.world = take(PhysicsWorld::create({.max_bodies = 8,
+                                              .max_body_pairs = 16,
+                                              .max_contact_constraints = 16,
+                                              .gravity = {0, -600, 0}}));
+    result.moving_body = take(result.world->create_body(*result.scene, result.moving));
+    result.fixed_body = take(result.world->create_body(*result.scene, result.fixed));
+    result.kinematic_body = take(result.world->create_body(*result.scene, result.kinematic));
+    result.rig_body = take(result.world->create_body(*result.scene, result.rig));
+    take(result.world->begin_simulation(*result.scene));
+    return result;
+}
+
+int physics_run(const Options& options, const ShaderArtifact& vertex, const ShaderArtifact& pixel) {
+    auto source = physics_fixture();
+    require(!std::filesystem::exists(options.output), "Readback directory must be fresh");
+    std::filesystem::create_directories(options.output);
+    auto device = take(GraphicsDevice::create(options.config));
+    emit({{"kind", "adapter"}, {"adapter", adapter_json(take(device->adapter()))}});
+    constexpr std::array names{"initial", "reset",   "previous",   "interpolated",
+                               "current", "falling", "teleported", "retargeted"};
+    constexpr std::array alphas{1.0, 0.0, 0.0, .5, 1.0, .5, 0.0, .5};
+    std::uint64_t previous_submission = 0;
+    for (std::size_t ordinal = 0; ordinal < names.size(); ++ordinal) {
+        if (ordinal == 1) {
+            take(source.world->set_static_pose(*source.scene, source.fixed_body,
+                                               translated({1, -2, -3})));
+            take(
+                source.world->teleport(*source.scene, source.moving_body, translated({-2, 1, -3})));
+        } else if (ordinal == 2 || ordinal == 7) {
+            const auto y = ordinal == 2 ? 1.0 : 0.0;
+            const auto x = ordinal == 2 ? 1.0 : 0.0;
+            take(source.world->set_kinematic_target(*source.scene, source.kinematic_body,
+                                                    translated({2, y, -3})));
+            take(source.world->set_kinematic_target(*source.scene, source.rig_body,
+                                                    translated({x, 0, 0})));
+            take(source.world->step(*source.scene));
+        } else if (ordinal == 5) {
+            for (unsigned tick = 0; tick < 5; ++tick)
+                take(source.world->step(*source.scene));
+        } else if (ordinal == 6) {
+            take(source.world->set_static_pose(*source.scene, source.fixed_body,
+                                               translated({1, 2, -3})));
+            take(
+                source.world->teleport(*source.scene, source.moving_body, translated({-2, 2, -3})));
+        }
+        const auto before = take(source.scene->stats());
+        const auto state = take(source.world->stats());
+        RenderExtractionOptions extraction{source.camera, {before.instance, before.revision}};
+        extraction.viewport = {128, 96};
+        extraction.physics_poses = take(source.world->render_poses(*source.scene, alphas[ordinal]));
+        const auto rendered = take(extract_render_scene(*source.scene, *source.assets, extraction));
+        require(rendered.physics_tick() == state.completed_ticks && rendered.records().size() == 3,
+                "Physics extraction lost presentation provenance or descendants");
+        Object positions;
+        for (const auto& record : rendered.records()) {
+            const auto name = record.entity.handle == source.moving_visual  ? "dynamic_child"
+                              : record.entity.handle == source.fixed_visual ? "static_child"
+                                                                            : "kinematic_child";
+            const auto& position = record.world_matrix[3];
+            positions.emplace(name, Array{position.x, position.y, position.z});
+        }
+        const auto packed = take(make_scene_viewport_request(rendered, vertex, pixel));
+        const auto captured = take(device->render_scene_offscreen(packed));
+        const auto& pixels = captured.pixels;
+        require(pixels.extent == packed.extent && pixels.submitted > previous_submission &&
+                    pixels.completed == pixels.submitted &&
+                    pixels.created_resources == pixels.retired_resources &&
+                    captured.scene_revision == packed.scene_revision &&
+                    captured.origin == packed.origin,
+                "Physics readback lost identity or retained GPU work");
+        previous_submission = pixels.submitted;
+        const auto after = take(source.scene->stats());
+        require(after.instance == before.instance && after.revision == before.revision &&
+                    take(source.world->stats()).completed_ticks == state.completed_ticks,
+                "Physics render interpolation mutated the committed simulation");
+        const std::string name{names[ordinal]};
+        write_file(options.output / (name + ".rgba8"), pixels.rgba8.data(), pixels.rgba8.size());
+        write_file(options.output / (name + ".d32f"), pixels.depth.data(),
+                   pixels.depth.size() * sizeof(float));
+        emit({{"kind", "physics-case"},
+              {"name", name},
+              {"extent", extent_json(pixels.extent)},
+              {"draw_count", captured.draw_count},
+              {"tick", state.completed_ticks},
+              {"alpha", alphas[ordinal]},
+              {"positions", std::move(positions)},
+              {"camera_x", -rendered.camera().view[3].x},
+              {"render_preserved_revision", true},
+              {"submitted", pixels.submitted},
+              {"completed", pixels.completed},
+              {"created_resources", pixels.created_resources},
+              {"retired_resources", pixels.retired_resources},
+              {"subpixel_precision_bits", pixels.subpixel_precision_bits},
+              {"viewport", viewport_json(captured.viewport)},
+              {"color_file", name + ".rgba8"},
+              {"depth_file", name + ".d32f"}});
+    }
+    take(source.world->close());
+    require(take(source.world->stats()).closed && take(source.world->stats()).bodies == 0,
+            "Physics native owner did not close");
+    take(device->drain());
+    take(device->close());
+    const auto diagnostics = take(device->diagnostics());
+    require(clean(diagnostics), "Physics rendering emitted validation diagnostics");
+    const auto closed = take(device->scene_viewport_stats());
+    require(closed.live_target_resources == 0 && closed.retired_generations == 1 && !closed.pending,
+            "Physics viewport owner did not retire");
+    const bool validated = options.config.validation == GraphicsValidation::required;
+    emit({{"kind", "complete"},
+          {"status", validated ? "PASS" : "NOT_RUN"},
+          {"qualification", validated ? "PASS" : "NOT_RUN"},
+          {"assignment_18", "NOT_RUN"},
+          {"cases", 8U},
+          {"completed_ticks", 7U},
+          {"physics_closed", true},
+          {"diagnostics", diagnostics_json(diagnostics)},
+          {"viewport", viewport_json(closed)}});
+    return 0;
+}
 int fault_run(const Options& options, const SceneViewportRequest& request) {
     NativeGraphicsTestControl control;
     control.fault =
@@ -453,11 +630,13 @@ int run(const Options& options) {
               {"native_graphics_available", native_graphics_available()}});
         return 0;
     }
-    auto source = fixture();
     const auto vertex = take(
         load_shader_artifact(options.vertex, ShaderStage::vertex, ShaderInterface::scene_unlit));
     const auto pixel =
         take(load_shader_artifact(options.pixel, ShaderStage::pixel, ShaderInterface::scene_unlit));
+    if (options.mode == "physics")
+        return physics_run(options, vertex, pixel);
+    auto source = fixture();
     if (options.mode == "fault")
         return fault_run(options, request(source, 0, vertex, pixel));
     require(!std::filesystem::exists(options.output), "Readback directory must be fresh");

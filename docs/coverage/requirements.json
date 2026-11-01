@@ -440,7 +440,7 @@
       "planned_fixture": "EditorApiStateEquivalence, EditorLifecycle and EditorFocusRouting fixtures; FeatureWorld/EditorAuthoring is the representative saved project. Add HumanTerminalProjectHandoff and UnsavedHistoryConflict fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "16a-16d implement the retained editor shell, hierarchy/viewport, component drafts/history and asset/job/console panels. 16e adds connected CPU editor-adapter and real public-terminal process handoff preparation, independent saved scene/asset checks and reciprocal writer rejection; selected results and limits belong to docs/handoffs/16e-editor-terminal-acceptance.md. Desktop testing resumed on 2026-10-31. Partial actual RTX/Intel editor and physics checks plus both-GPU GUI scene composition belong to docs/handoffs/18e-editor-physics-preview.md; remaining UI/graphics acceptance stays NOT_RUN in BL-16A-UI-01. The connected actual UI procedure is docs/editor-acceptance.md. Full REQ-16 remains NOT_RUN until that procedure and the deferred desktop checks pass; headless adapters and in-memory ImGui fixtures do not establish native UI or full semantic parity. Continued coding is authorized by the backlog amendment."
+        "reason": "16a-16e implement the shared shell, hierarchy/viewport, drafts/history, assets/jobs/console and connected public-terminal handoff. Original headless results remain in docs/handoffs/16e-editor-terminal-acceptance.md. Desktop testing resumed on 2026-10-31. Both-GPU GUI composition, actual RTX/Intel imported-project continuation, complete Intel saved-state/dirty-close control and partial physics interactions belong to docs/handoffs/18e-editor-physics-preview.md. Pointer capture/ImGui consumer regressions add bounded owned mouse-edge positions with selected Debug, WSL and sanitizer qualification. Remaining hierarchy/component/focus and complete connected native gates stay NOT_RUN in BL-16A-UI-01; manual-input guards interrupted further desktop testing. Full REQ-16 remains NOT_RUN under docs/editor-acceptance.md. CPU adapters and fixtures do not establish unperformed native behavior; continued coding remains authorized by the backlog amendment."
       }
     },
     {
@@ -456,7 +456,7 @@
       "planned_fixture": "FeatureWorld/GizmoHierarchy, GizmoDragUndo, HighDpiViewportPicking and GizmoAgentEquivalence fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "17a-17c implement display navigation/picking, shared transform manipulation/drag transactions, native gizmo controls and immutable subtree previews. 17d extends the existing CPU editor-adapter and real public-terminal process handoff fixture with independent local/world transform expectations, retained stale-decision/history checks and saved-project continuation. Selected headless results and limits belong to docs/handoffs/17d-connected-viewport-acceptance.md; unchanged focused rendering/geometry results remain in their original handoffs. Desktop testing resumed on 2026-10-31. Partial actual picking/dolly checks and the incomplete native gizmo attempt belong to docs/handoffs/18e-editor-physics-preview.md. Remaining connected UI, input/layout and both-GPU gesture acceptance stays NOT_RUN in BL-16A-UI-01, following docs/viewport-acceptance.md. Full REQ-17 remains NOT_RUN; later coding is permitted by the explicit backlog amendment. 17d also corrects held invalid scale gestures so they can cross rejected snapped zero without committing stale candidates; the headless ImGui regression verifies correction, invalid release and single-group undo."
+        "reason": "17a-17d implement navigation/picking, shared transform transactions, native gizmos, immutable subtree previews and connected terminal/adapter preparation. Original headless evidence, independent matrices, zero-crossing/rejected release and saved-project cases remain in docs/handoffs/17d-connected-viewport-acceptance.md. The 2026-11-01 bounded native trace identified motion before capture replacing the press hit position. Owned edge positions correct input/frame/ImGui/gizmo consumers, with Debug/WSL/ASan regressions and actual RTX World Y drag/one-group Undo/Redo/save qualification. Further RTX rotation/local translation committed, but final exact saved matrices and scale/cancellation remain unqualified after manual-input guards; Intel native correction verification is pending. Current scope belongs to docs/handoffs/18e-editor-physics-preview.md and BL-17-UI-DRAG-01. Full REQ-17 remains NOT_RUN until docs/viewport-acceptance.md and remaining both-GPU native gates pass. Continued coding is permitted by the explicit backlog amendment."
       }
     },
     {
@@ -473,7 +473,7 @@
       "planned_fixture": "FeatureWorld/RigidBodies, FeatureWorld/CollisionLayers, FeatureWorld/Triggers, PhysicsRenderRateTolerance and PhysicsQueuedRemoval fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "18a-18e implement native bodies, fixed-step Scene ownership/interpolation, bilateral filters/triggers and bounded owned contacts. 18e adds all eleven inspector fields and one shared CPU scene.physics preview over a frozen prepared runtime Scene, exact start/operation/stop reconciliation, source/history isolation and native play controls. Selected headless evidence, partial native RTX/Intel physics checks and independent public-terminal continuation belong to docs/handoffs/18e-editor-physics-preview.md. Remaining actual connected UI/rendering acceptance follows docs/physics-acceptance.md; full REQ-18 remains NOT_RUN until those gates pass. Desktop testing was explicitly resumed on 2026-10-31."
+        "reason": "18a-18e implement native bodies, fixed-step Scene ownership/interpolation, bilateral filters/triggers, bounded owned contacts, all eleven inspector fields and one shared scene.physics preview over a frozen runtime Scene. Original selected headless evidence, partial RTX/Intel physics controls and independent terminal continuation remain in docs/handoffs/18e-editor-physics-preview.md. On 2026-11-01 both GPUs passed the separate eight-image required-validation fixture for static reset, teleport, kinematic movement and interpolated visual children/Camera with fixed independent pose/color/depth oracles and clean teardown. Remaining actual control/focus/filter and connected native acceptance follows docs/physics-acceptance.md; full REQ-18 remains NOT_RUN. Desktop testing resumed on 2026-10-31, but subsequent manual-input guards interrupted remaining checks. A renderer fixture does not qualify unperformed UI behavior."
       }
     },
     {
@@ -2038,7 +2038,7 @@
           "tests/window_smoke.cpp",
           "tools/window_smoke.py"
         ],
-        "fixture_reason": "Controllable observations and injected input prove first-tick-only edges across zero/multiple callbacks, bounded merged text/scroll, pause/step, resume without paused debt, long frames, faults/cancellation and independent Server scheduling. The actual Runtime/Editor pump is covered by injected-backend CPU cases and explicit native Windows smoke. FeatureWorld/FrameTiming connects in10; there is no renderer, local play world, authoring API or MMO simulation claim."
+        "fixture_reason": "Controllable observations and injected input prove first-tick-only edges across zero/multiple callbacks, bounded merged text/scroll, pause/step, resume without paused debt, long frames, faults/cancellation and independent Server scheduling. The actual Runtime/Editor pump is covered by injected-backend CPU cases and explicit native Windows smoke. FeatureWorld/FrameTiming connects in10; there is no renderer, local play world, authoring API or MMO simulation claim. Mouse-edge geometry survives zero-tick merging once, distinguishes real cycles from synthetic focus releases, rejects nonfinite points and clears on consumption/cancellation."
       },
       {
         "id": "client.native-window",
@@ -2080,7 +2080,7 @@
           "engine/client/src/input.cpp",
           "engine/client/include/shark/client/input.hpp"
         ],
-        "fixture_reason": "Deterministic device-free injection covers held/edge/repeat state, focus-loss releases and cancellation, bounded Unicode text, cursor/scroll validation, overflow and independent snapshots. The Client-only fixture never enters the headless Server build. Native GLFW mappings and separate window smoke are implemented; client.offline-frame-loop covers frame/tick consumption. FeatureWorld begins in10. No authoring command or gameplay protocol is claimed."
+        "fixture_reason": "Deterministic device-free injection covers held/edge/repeat state, focus-loss releases and cancellation, bounded Unicode text, cursor/scroll validation, overflow and independent snapshots. The Client-only fixture never enters the headless Server build. Native GLFW mappings and separate window smoke are implemented; client.offline-frame-loop covers frame/tick consumption. FeatureWorld begins in10. No authoring command or gameplay protocol is claimed. First actual mouse-edge positions/seen flags remain bounded and distinct from current motion and synthetic focus releases. Regressions cover duplicate notifications, missing origins, complete fast gestures, ambiguity and focus cancellation."
       },
       {
         "id": "core.time-policies",
@@ -2965,7 +2965,7 @@
           "docs/editor-scene-workspace.md",
           "docs/handoffs/16b-editor-scene-workspace.md"
         ],
-        "fixture_reason": "Real temporary projects and the same public AuthoringProtocol owner exercise open/save/close, current-revision discard, cancel, dirty/history/retry preservation, competing writer rejection, exact external-file conflicts and fresh reopen. Explicit viewport resource inventory uses that same owner, rejects escaping and oversized paths and preserves unsaved state/history. CPU ImGui contexts exercise Unicode InputText, coalesced mouse edges, focus-loss queue cancellation, shortcut capture and owned nested scene-image requests. The native-only CLI branch rejects malformed arguments and missing explicit shaders before window/device creation; dependency fixtures qualify the private ImGui boundary. Actual desktop observations and platform results are recorded separately in the handoffs; CPU adapters do not establish full UI/API equivalence.",
+        "fixture_reason": "Real temporary projects and the same public AuthoringProtocol owner exercise open/save/close, current-revision discard, cancel, dirty/history/retry preservation, competing writer rejection, exact external-file conflicts and fresh reopen. Explicit viewport resource inventory uses that same owner, rejects escaping and oversized paths and preserves unsaved state/history. CPU ImGui contexts exercise Unicode InputText, coalesced mouse edges, focus-loss queue cancellation, shortcut capture and owned nested scene-image requests. The native-only CLI branch rejects malformed arguments and missing explicit shaders before window/device creation; dependency fixtures qualify the private ImGui boundary. Actual desktop observations and platform results are recorded separately in the handoffs; CPU adapters do not establish full UI/API equivalence. New actual-control regressions preserve the press/release positions through ImGui trickling and prevent endpoint controls from activating; pointer-only cancellation preserves queued keyboard/Unicode/focus events.",
         "external_fixture_reason": "Native editor ownership, actual input contexts, local file contention and desktop interaction require external fixtures. No additional FeatureWorld command or second scene-mutation path is introduced. Connected graphical editing and terminal semantic handoff remain the later assignment-16 checkpoints.",
         "featureworld_cases": []
       },
@@ -3163,7 +3163,7 @@
           "docs/roadmap/viewport-interaction-plan.md",
           "docs/handoffs/17a-viewport-navigation.md"
         ],
-        "fixture_reason": "The existing Scene/PreparedAssets extraction supplies immutable geometry and validated display camera matrices for bounded orbit/pan/dolly and exact indexed triangle picking. Independent CPU cases cover actual image offsets and DPI mapping, near/far bounds, silhouettes, backfaces/double-sided geometry, nearest/tied hits, hidden instances, full affine hierarchy/reflection/origin, stale revisions, work limits and atomic navigation rejection. Headless routing cases use raw InputSnapshot and a real ImGui image rectangle without native windows; they cover fresh-press drag ownership and focus/modal/layout cancellation.",
+        "fixture_reason": "The existing Scene/PreparedAssets extraction supplies immutable geometry and validated display camera matrices for bounded orbit/pan/dolly and exact indexed triangle picking. Independent CPU cases cover actual image offsets and DPI mapping, near/far bounds, silhouettes, backfaces/double-sided geometry, nearest/tied hits, hidden instances, full affine hierarchy/reflection/origin, stale revisions, work limits and atomic navigation rejection. Headless routing cases use raw InputSnapshot and a real ImGui image rectangle without native windows; they cover fresh-press drag ownership and focus/modal/layout cancellation. Fast navigation and picking use owned first-edge positions and release endpoints; mixed button activity rejects without inventing an event order.",
         "external_fixture_reason": "Editor-private camera/pointer state and revisioned display selection are presentation concerns outside FeatureWorld commands. Native controls, focus/layout, rendered view changes and both-GPU selection remain NOT_RUN in the UI backlog. No new component or semantic authoring command is added; later gizmo writes retain the shared owner/history path.",
         "featureworld_cases": []
       },
@@ -3226,7 +3226,7 @@
           "docs/viewport-acceptance.md",
           "docs/handoffs/17d-connected-viewport-acceptance.md"
         ],
-        "fixture_reason": "Independent bounded CPU geometry expectations cover projected axes, affine ring planes, cumulative ray motion, snapping, reflection, clipping and origin/DPI coordinates. Actual headless ImGui input uses the retained project owner for preview/commit/undo, stale/cancel and render-rejection behavior. Core/Tools fixtures prove immutable complete-subtree recomposition before camera/bounds/normals/culling, newly visible descendants, hidden/nonrendered validation, source/asset fences and no live revision/history/ledger changes. Picking rejects marked previews. 17d adds sampled positive-to-zero-to-negative scale correction with no live mutation in the invalid interval, rejection on invalid release and one-group undo after a corrected commit.",
+        "fixture_reason": "Independent bounded CPU geometry expectations cover projected axes, affine ring planes, cumulative ray motion, snapping, reflection, clipping and origin/DPI coordinates. Actual headless ImGui input uses the retained project owner for preview/commit/undo, stale/cancel and render-rejection behavior. Core/Tools fixtures prove immutable complete-subtree recomposition before camera/bounds/normals/culling, newly visible descendants, hidden/nonrendered validation, source/asset fences and no live revision/history/ledger changes. Picking rejects marked previews. 17d adds sampled positive-to-zero-to-negative scale correction with no live mutation in the invalid interval, rejection on invalid release and one-group undo after a corrected commit. Fast-capture regressions begin at the owned press, include already received motion and commit once at the owned release, while missing/ambiguous origins and focus/repress cancellation cannot authorize an edit.",
         "external_fixture_reason": "Editor overlay/input state and immutable render preparation require external adapter/geometry fixtures rather than new FeatureWorld commands. Existing shared set_transform/AuthoringCommands remains the semantic owner. No new dependency, component, RPC or source version is introduced. Actual native input/focus/layout and both-GPU preview/rendering acceptance remain NOT_RUN under the desktop pause;17d owns connected acceptance.",
         "featureworld_cases": []
       },
@@ -3309,7 +3309,9 @@
           "shark.core.scene-query",
           "shark.editor.viewport-navigation",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process",
+          "shark.client.scene-render-cli",
+          "shark.tooling.scene-render-smoke"
         ],
         "test_sources": [
           "tests/core_physics_simulation_tests.cpp",
@@ -3318,15 +3320,19 @@
           "tests/core_scene_query_tests.cpp",
           "tests/editor_viewport_navigation_tests.cpp",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tests/scene_render_smoke.cpp",
+          "tools/tests/test_scene_render_smoke.py"
         ],
         "fixtures": [
           "docs/physics-simulation.md",
           "docs/architecture/0047-fixed-step-physics.md",
           "engine_tools/src/feature_world.cpp",
-          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene"
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
+          "tests/scene_render_smoke.cpp",
+          "tools/scene_render_smoke.py"
         ],
-        "fixture_reason": "Real native gravity/contact cases cover all pose authorities, exact arena admission with 64 active bodies/16 substeps, Scene writer leases and teardown, atomic subtree publication and faulted post-native output. Existing offline/server schedules exercise independent fixed-step oracles at 30/60/144/240 Hz presentation and 20 Hz server ticks with three substeps. Interpolation crosses the quaternion sign boundary and recomposes mirrored child transforms without Scene writes; picking rejects physics provenance including tick zero. FeatureWorld loads prepared runtime content and independently verifies gravity and unchanged source/history.",
+        "fixture_reason": "Real native gravity/contact cases cover all pose authorities, exact arena admission with 64 active bodies/16 substeps, Scene writer leases and teardown, atomic subtree publication and faulted post-native output. Existing offline/server schedules exercise independent fixed-step oracles at 30/60/144/240 Hz presentation and 20 Hz server ticks with three substeps. Interpolation crosses the quaternion sign boundary and recomposes mirrored child transforms without Scene writes; picking rejects physics provenance including tick zero. FeatureWorld loads prepared runtime content and independently verifies gravity and unchanged source/history. Existing SceneRenderSmoke --physics adds a separate actual GPU readback fixture for static reset, dynamic teleport, kinematic targets and interpolated visual descendants/child Camera, with eight fixed images and literal independent pose/color/depth expectations. RTX and Intel required-validation runs passed on 2026-11-01: 96576 compared color/depth pixel pairs per GPU, zero observed pixel error and validation diagnostics, closed native physics and retired viewport generation. Evidence: out/19-testing-work/physics-render-rtx/summary.json and physics-render-intel/summary.json; scope belongs to docs/handoffs/18e-editor-physics-preview.md. CPU validator and CLI checks alone qualify no GPU. It adds no public API or FeatureWorld case and does not close full REQ-18.",
         "featureworld_cases": [
           "featureworld.rigid-bodies"
         ]

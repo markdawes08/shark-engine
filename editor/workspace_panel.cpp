@@ -2,6 +2,7 @@
 #include "asset_widget.hpp"
 #include "console_widget.hpp"
 #include "gizmo_widget.hpp"
+#include "input_trace.hpp"
 #include "inspector_widget.hpp"
 #include "physics_panel.hpp"
 #include "scene_panel.hpp"
@@ -70,17 +71,45 @@ ViewportPointerActions ViewportPointerRouter::route(const client::InputSnapshot&
     const auto middle = input.mouse_button(client::MouseButton::middle);
     if (left.held || left.pressed || (right.held && middle.held))
         drag_ = Drag::none;
-    if (!left.held && !left.pressed && right.pressed && right.held && !middle.held)
-        drag_ = Drag::orbit;
-    else if (!left.held && !left.pressed && middle.pressed && middle.held && !right.held)
-        drag_ = Drag::pan;
-    const bool beginning =
-        (drag_ == Drag::orbit && right.pressed) || (drag_ == Drag::pan && middle.pressed);
-    if ((drag_ == Drag::orbit && !right.held) || (drag_ == Drag::pan && !middle.held))
+    const auto inside = [&](CursorPosition position) {
+        return position.valid && std::isfinite(position.x) && std::isfinite(position.y) &&
+               position.x >= rectangle.x && position.y >= rectangle.y &&
+               position.x - rectangle.x < rectangle.width &&
+               position.y - rectangle.y < rectangle.height;
+    };
+    const auto right_edges = input.mouse_edges(MouseButton::right);
+    const auto middle_edges = input.mouse_edges(MouseButton::middle);
+    const bool mixed_navigation = (right.held || right.pressed || right.released) &&
+                                  (middle.held || middle.pressed || middle.released);
+    if (right_edges.ambiguous || middle_edges.ambiguous || mixed_navigation) {
         drag_ = Drag::none;
-    if (drag_ != Drag::none && !beginning) {
-        const auto dx = cursor.x - previous_x_;
-        const auto dy = cursor.y - previous_y_;
+        return result;
+    }
+    const auto begin = [&](MouseButtonEdges edges, Drag drag) {
+        if (!edges.press_seen || !inside(edges.press)) {
+            drag_ = Drag::none;
+            return false;
+        }
+        drag_ = drag;
+        previous_x_ = edges.press.x;
+        previous_y_ = edges.press.y;
+        return true;
+    };
+    if (!left.held && !left.pressed && right.pressed && !middle.held)
+        static_cast<void>(begin(right_edges, Drag::orbit));
+    else if (!left.held && !left.pressed && middle.pressed && !right.held)
+        static_cast<void>(begin(middle_edges, Drag::pan));
+    const auto active_button = drag_ == Drag::orbit ? right : middle;
+    const auto active_edges = drag_ == Drag::orbit ? right_edges : middle_edges;
+    const bool finishing = drag_ != Drag::none && !active_button.held && active_button.released;
+    const auto motion_cursor =
+        finishing ? (active_edges.release_seen ? active_edges.release : CursorPosition{}) : cursor;
+    if (drag_ != Drag::none &&
+        (!inside(motion_cursor) || (!active_button.held && !active_button.released)))
+        drag_ = Drag::none;
+    if (drag_ != Drag::none) {
+        const auto dx = motion_cursor.x - previous_x_;
+        const auto dy = motion_cursor.y - previous_y_;
         if (drag_ == Drag::orbit) {
             result.motion.orbit_x = dx;
             result.motion.orbit_y = dy;
@@ -89,10 +118,18 @@ ViewportPointerActions ViewportPointerRouter::route(const client::InputSnapshot&
             result.motion.pan_y = dy;
         }
     }
-    previous_x_ = cursor.x;
-    previous_y_ = cursor.y;
-    if (drag_ == Drag::none && !right.held && !middle.held && !right.pressed && !middle.pressed) {
-        result.pick = left.pressed;
+    previous_x_ = motion_cursor.x;
+    previous_y_ = motion_cursor.y;
+    if (finishing)
+        drag_ = Drag::none;
+    if (drag_ == Drag::none && !right.held && !middle.held && !right.pressed && !middle.pressed &&
+        !right.released && !middle.released) {
+        const auto edges = input.mouse_edges(MouseButton::left);
+        result.pick = left.pressed && edges.press_seen && !edges.ambiguous && inside(edges.press);
+        if (result.pick) {
+            result.x = edges.press.x;
+            result.y = edges.press.y;
+        }
         if (!left.held && !left.pressed && std::isfinite(input.scroll.y))
             result.motion.dolly = input.scroll.y;
     }
@@ -105,6 +142,11 @@ void ViewportPointerRouter::cancel() noexcept {
 
 struct WorkspacePanel::Impl {
     ProjectSession& session;
+    EditorInputTrace* input_trace;
+    nlohmann::json trace_observation;
+    bool trace_recording{false};
+    bool trace_started{false};
+    std::uint64_t trace_frame{0};
     ScenePanel hierarchy;
     GizmoWidget gizmo;
     InspectorPanel inspector;
@@ -142,13 +184,141 @@ struct WorkspacePanel::Impl {
     std::optional<Error> physics_error;
     std::string notice;
 
-    Impl(ProjectSession& owner, const ShaderArtifact& vs, const ShaderArtifact& ps)
-        : session(owner), hierarchy(owner), gizmo(hierarchy), inspector(hierarchy),
-          inspector_widget(inspector, hierarchy), assets(owner), asset_widget(assets, owner),
-          physics(owner), vertex(vs), pixel(ps) {
+    Impl(ProjectSession& owner, const ShaderArtifact& vs, const ShaderArtifact& ps,
+         EditorInputTrace* trace)
+        : session(owner), input_trace(trace), hierarchy(owner), gizmo(hierarchy),
+          inspector(hierarchy), inspector_widget(inspector, hierarchy), assets(owner),
+          asset_widget(assets, owner), physics(owner), vertex(vs), pixel(ps) {
         text_buffer(create_name, "Entity");
         text_buffer(target, "windows-client");
         refresh();
+    }
+    void begin_input_trace(const GraphicsWindowFrame& frame, bool blocked) noexcept {
+        trace_recording = false;
+        if (!input_trace || !input_trace->enabled())
+            return;
+        trace_started = trace_started || camera.has_value();
+        if (!trace_started)
+            return;
+        try {
+            const auto button = [](ButtonState value) {
+                return nlohmann::json{
+                    {"held", value.held}, {"pressed", value.pressed}, {"released", value.released}};
+            };
+            const auto pointer_edges = [&](MouseButton value) {
+                const auto edges = frame.input.mouse_edges(value);
+                return nlohmann::json{
+                    {"press", {edges.press.x, edges.press.y, edges.press.valid}},
+                    {"release", {edges.release.x, edges.release.y, edges.release.valid}},
+                    {"press_seen", edges.press_seen},
+                    {"release_seen", edges.release_seen},
+                    {"ambiguous", edges.ambiguous}};
+            };
+            const auto& io = ImGui::GetIO();
+            trace_observation = {
+                {"input_kind", "captured_interval_not_ordered_events"},
+                {"cursor", {frame.input.cursor.x, frame.input.cursor.y, frame.input.cursor.valid}},
+                {"left", button(frame.input.mouse_button(MouseButton::left))},
+                {"right", button(frame.input.mouse_button(MouseButton::right))},
+                {"middle", button(frame.input.mouse_button(MouseButton::middle))},
+                {"left_edges", pointer_edges(MouseButton::left)},
+                {"right_edges", pointer_edges(MouseButton::right)},
+                {"middle_edges", pointer_edges(MouseButton::middle)},
+                {"focused", frame.input.focused},
+                {"focus_lost", frame.input.focus_lost},
+                {"escape_pressed", frame.input.key(Key::escape).pressed},
+                {"scroll", {frame.input.scroll.x, frame.input.scroll.y}},
+                {"blocked", blocked},
+                {"iconified", frame.state.iconified},
+                {"scene_instance", std::to_string(hierarchy.revision().scene_instance)},
+                {"scene_revision", std::to_string(hierarchy.revision().revision)},
+                {"selection", hierarchy.selection()
+                                  ? nlohmann::json(hierarchy.selection()->id.value().to_string())
+                                  : nlohmann::json(nullptr)},
+                {"camera",
+                 camera ? nlohmann::json(camera->id.value().to_string()) : nlohmann::json(nullptr)},
+                {"content", {frame.state.content.width, frame.state.content.height}},
+                {"framebuffer", {frame.state.framebuffer.width, frame.state.framebuffer.height}},
+                {"imgui",
+                 {{"cursor", {io.MousePos.x, io.MousePos.y}},
+                  {"left_down", io.MouseDown[0]},
+                  {"left_clicked", io.MouseClicked[0]},
+                  {"left_released", io.MouseReleased[0]},
+                  {"want_capture_mouse", io.WantCaptureMouse}}},
+                {"viewport", nullptr}};
+            trace_recording = true;
+        } catch (...) {
+            trace_recording = false;
+        }
+    }
+    void trace_viewport(const ViewportRectangle& rectangle, bool hovered, bool blocked,
+                        bool active_before, const GizmoFrameResult& result,
+                        const ViewportPointerActions& actions,
+                        std::optional<SceneSelection> selection_before) noexcept {
+        if (!trace_recording)
+            return;
+        try {
+            using Json = nlohmann::json;
+            const auto& io = ImGui::GetIO();
+            Json tips = Json::array();
+            for (const auto& point : result.trace.tips)
+                tips.push_back(point ? Json(*point) : Json(nullptr));
+            Json receipt = nullptr;
+            if (result.receipt)
+                receipt = {
+                    {"changed", result.receipt->changed},
+                    {"scene_instance", std::to_string(result.receipt->revision.scene_instance)},
+                    {"revision", std::to_string(result.receipt->revision.revision)},
+                    {"refresh_failed", result.receipt->refresh_error.has_value()}};
+            const auto selection = [](std::optional<SceneSelection> value) {
+                return value ? Json(value->id.value().to_string()) : Json(nullptr);
+            };
+            trace_observation["viewport"] = {
+                {"rectangle", {rectangle.x, rectangle.y, rectangle.width, rectangle.height}},
+                {"hovered", hovered},
+                {"blocked", blocked},
+                {"text_input", io.WantTextInput},
+                {"any_item_active", ImGui::IsAnyItemActive()},
+                {"popup", ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId)},
+                {"project_current", session.state_current()},
+                {"scene_current", hierarchy.current()},
+                {"reconciliation", hierarchy.needs_reconciliation()},
+                {"selection_before", selection(selection_before)},
+                {"selection_after", selection(hierarchy.selection())},
+                {"gizmo",
+                 {{"reason", result.trace.reason},
+                  {"consumed", result.consumed},
+                  {"active_before", active_before},
+                  {"active_after", gizmo.has_changes()},
+                  {"hit", result.trace.hit ? Json(*result.trace.hit) : Json(nullptr)},
+                  {"pivot", result.trace.pivot ? Json(*result.trace.pivot) : Json(nullptr)},
+                  {"axis_tips", std::move(tips)},
+                  {"operation", result.trace.operation
+                                    ? Json(static_cast<int>(*result.trace.operation))
+                                    : Json(nullptr)},
+                  {"space", result.trace.space == tools::TransformSpace::local ? "local" : "world"},
+                  {"receipt", std::move(receipt)},
+                  {"error", result.error ? Json{{"code", error_code_name(result.error->code)},
+                                                {"operation", result.error->context.operation}}
+                                         : Json(nullptr)}}},
+                {"pointer_pick", actions.pick},
+                {"navigation",
+                 {actions.motion.orbit_x, actions.motion.orbit_y, actions.motion.pan_x,
+                  actions.motion.pan_y, actions.motion.dolly}}};
+        } catch (...) {
+            trace_recording = false;
+        }
+    }
+    void finish_input_trace() noexcept {
+        if (!trace_recording)
+            return;
+        try {
+            trace_observation["image_drawn"] = image_drawn;
+            trace_observation["gesture_active_after_frame"] = gizmo.has_changes();
+            input_trace->record(++trace_frame, std::move(trace_observation));
+        } catch (...) {
+            trace_recording = false;
+        }
     }
     void refresh() {
         const auto result = hierarchy.refresh();
@@ -522,6 +692,9 @@ struct WorkspacePanel::Impl {
                                        ImGui::GetIO().WantTextInput || ImGui::IsAnyItemActive() ||
                                        ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
             GizmoFrameResult manipulated;
+            const bool gesture_before = gizmo.has_changes();
+            const auto selection_before = hierarchy.selection();
+            const bool image_hovered = ImGui::IsItemHovered();
             if (snapshot && !physics.state().active) {
                 manipulated = gizmo.overlay(frame.input, rectangle, *snapshot,
                                             ImGui::IsItemHovered(), input_blocked,
@@ -586,6 +759,8 @@ struct WorkspacePanel::Impl {
                     view_error.reset();
                 }
             }
+            trace_viewport(rectangle, image_hovered, input_blocked, gesture_before, manipulated,
+                           actions, selection_before);
         }
     }
     void confirmation() {
@@ -694,14 +869,15 @@ struct WorkspacePanel::Impl {
 };
 
 WorkspacePanel::WorkspacePanel(ProjectSession& session, const ShaderArtifact& vertex,
-                               const ShaderArtifact& pixel)
-    : impl_(std::make_unique<Impl>(session, vertex, pixel)) {}
+                               const ShaderArtifact& pixel, EditorInputTrace* input_trace)
+    : impl_(std::make_unique<Impl>(session, vertex, pixel, input_trace)) {}
 WorkspacePanel::~WorkspacePanel() = default;
 
 void WorkspacePanel::draw(const GraphicsWindowFrame& frame, bool blocked) {
     auto& value = *impl_;
     value.image_drawn = false;
     value.synchronize();
+    value.begin_input_trace(frame, blocked);
     value.draw_physics(frame, blocked);
     // Resolve last frame's confirmation before emitting this frame's scene image.
     if (!blocked && value.session.state_current())
@@ -749,6 +925,7 @@ void WorkspacePanel::draw(const GraphicsWindowFrame& frame, bool blocked) {
         value.pointer.cancel();
         value.cancel_gizmo();
     }
+    value.finish_input_trace();
 }
 void WorkspacePanel::cancel_confirmation() noexcept {
     impl_->deleting.reset();

@@ -8,12 +8,12 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**18d adds bilateral collision filters, native triggers and owned contact events;
-selected headless qualification is tracked in the
-[handoff](../handoffs/18d-collision-filters-and-events.md).
-Full REQ-16 and REQ-17 remain NOT_RUN.** Native composition and actual UI acceptance are
-deferred under the user's
-[coding-only amendment](../backlog.md); it is not a passing UI qualification.
+**18e adds shared frozen physics preview and RigidBody editor controls;
+qualification and remaining acceptance are tracked in the
+[handoff](../handoffs/18e-editor-physics-preview.md).
+Full REQ-16, REQ-17 and REQ-18 remain NOT_RUN.** Native composition has passing
+evidence on both current-PC GPUs, while actual connected UI acceptance is partial.
+Desktop testing has resumed; the [backlog](../backlog.md) records remaining work.
 The [shell contract](../editor-shell.md) and
 [workspace contract](../editor-scene-workspace.md) cover shared project ownership,
 dirty-state decisions, bounded hierarchy and revision-scoped selection, retained
@@ -40,6 +40,12 @@ nothing and one changed commit adds one undo group. 17c's
 [gizmo contract](../viewport-gizmos.md) maps actual headless ImGui controls and
 pointer gestures, Core subtree extraction and retained Tools preview validation
 to focused fixtures. No new semantic command or FeatureWorld case is introduced.
+The [input contract](../input-contracts.md) maps owned first mouse-edge positions,
+ambiguous-cycle rejection and focus/capture/pending-frame boundaries to the
+existing `shark.client.input` and `shark.client.frame` fixtures. Fast gizmo,
+picking and navigation consumers use `shark.editor.gui-adapter`; literal
+pre-capture motion and complete press/release cases retain one shared mutation
+and undo owner. These CPU mappings do not qualify actual native gestures.
 17d extends the existing process handoff fixture with independent transform and
 saved-source expectations. Actual input/rendering acceptance remains deferred
 under the [viewport procedure](../viewport-acceptance.md); full REQ-17 is not closed.

@@ -212,6 +212,37 @@ class StressEvidenceTests(unittest.TestCase):
             rows[-1][field] = value
             self.assertTrue(self.inspect(rows)[1])
 
+    def test_allocator_accounting_is_owned_typed_and_never_qualifying(self):
+        rows = records(profile="asan")
+        rows[0].update(diagnostic=True, allocator_accounting=True)
+        value = {"current_allocated_bytes": 123, "mapped_bytes": 4096, "free_bytes": 500}
+        for row in rows:
+            if row["kind"] in ("sample", "active_close", "lifetime_end"):
+                row["sanitizer_allocator"] = dict(value)
+        rows.extend({"kind": "sanitizer_allocator_stats", "phase": phase}
+                    for phase in ("warmup", "failure", "close"))
+        stress.allocator_observations(rows, "asan")
+        self.assertTrue(self.inspect(rows, profile="asan")[1])
+        for field in stress.ALLOCATOR_FIELDS:
+            for invalid in (True, -1, 1.5, 1 << 64):
+                changed = deepcopy(rows)
+                first(changed, "sample")["sanitizer_allocator"][field] = invalid
+                with self.subTest(field=field, invalid=invalid), self.assertRaises(ValueError):
+                    stress.allocator_observations(changed, "asan")
+        for change in ("missing", "duplicate", "unadmitted", "nonasan"):
+            changed = deepcopy(rows)
+            profile = "asan"
+            if change == "missing":
+                del first(changed, "sample")["sanitizer_allocator"]
+            elif change == "duplicate":
+                changed.append({"kind": "sanitizer_allocator_stats", "phase": "close"})
+            elif change == "unadmitted":
+                changed[0]["diagnostic"] = False
+            else:
+                profile = "debug"
+            with self.subTest(change=change), self.assertRaises(ValueError):
+                stress.allocator_observations(changed, profile)
+
     def test_process_timeout_failure_cleanup_and_stderr_reject_complete_output(self):
         value = result(records())
         for change in ({"returncode": 1}, {"timed_out": True}, {"stderr": "warning"},

@@ -6,15 +6,27 @@
 #include <shark/client/input.hpp>
 #include <shark/tools/transform_manipulation.hpp>
 
+#include <array>
 #include <functional>
 #include <memory>
+#include <string_view>
 
 namespace shark::editor {
+
+struct GizmoRoutingTrace {
+    std::string_view reason{"not_routed"};
+    std::optional<std::size_t> hit;
+    std::optional<std::array<double, 2>> pivot;
+    std::array<std::optional<std::array<double, 2>>, 3> tips{};
+    std::optional<tools::TransformOperation> operation;
+    tools::TransformSpace space{tools::TransformSpace::local};
+};
 
 struct GizmoFrameResult {
     bool consumed{false};
     std::optional<SceneEditReceipt> receipt;
     std::optional<Error> error;
+    GizmoRoutingTrace trace;
 };
 
 // Runs on the same owner thread, without mutation: prepare the candidate's

@@ -1,4 +1,5 @@
 #include "../editor/gui_adapter.hpp"
+#include "../editor/input_trace.hpp"
 #include "gpu_shader_fixture.hpp"
 
 #include <catch2/catch_approx.hpp>
@@ -8,10 +9,71 @@
 #include <algorithm>
 #include <array>
 #include <limits>
+#include <sstream>
 #include <string>
 #include <string_view>
 #include <utility>
 #include <vector>
+
+TEST_CASE("Opt-in viewport input trace keeps coalesced observations within a bounded owner",
+          "[editor-gui][input-trace]") {
+    using Json = nlohmann::json;
+    const Json captured{{"left", {{"pressed", true}, {"released", true}, {"held", false}}},
+                        {"cursor", {1116, 702, true}},
+                        {"viewport", {{"hovered", true}, {"blocked", false}}}};
+    std::ostringstream output;
+    shark::editor::EditorInputTrace disabled{false, output};
+    disabled.record(1, captured);
+    CHECK(output.str().empty());
+    shark::editor::EditorInputTrace trace{true, output};
+    trace.record(7, captured);
+    trace.record(8, captured);
+    CHECK(trace.emitted() == 1);
+    for (std::size_t index = 0; index < 300; ++index) {
+        auto changed = captured;
+        changed["cursor"][1] = index;
+        trace.record(9 + index, std::move(changed));
+    }
+    CHECK(trace.emitted() == 256);
+    CHECK_FALSE(trace.enabled());
+    CHECK_FALSE(trace.failed());
+    std::istringstream input{output.str()};
+    std::string line;
+    std::size_t count = 0;
+    Json first, last;
+    while (std::getline(input, line)) {
+        auto value = Json::parse(line);
+        ++count;
+        if (count == 1)
+            first = value;
+        last = std::move(value);
+    }
+    CHECK(count == 256);
+    CHECK(first.at("event") == "editor_input_trace");
+    CHECK(first.at("transition") == 1);
+    CHECK(first.at("frame") == "7");
+    CHECK(first.at("cursor") == captured.at("cursor"));
+    CHECK(first.at("left") == captured.at("left"));
+    CHECK_FALSE(first.at("limit_reached").get<bool>());
+    CHECK(last.at("transition") == 256);
+    CHECK(last.at("limit_reached").get<bool>());
+}
+
+TEST_CASE("Viewport input diagnostics contain output and payload failures",
+          "[editor-gui][input-trace]") {
+    std::ostringstream broken;
+    broken.setstate(std::ios::badbit);
+    shark::editor::EditorInputTrace failed{true, broken};
+    REQUIRE_NOTHROW(failed.record(1, {{"pressed", true}}));
+    CHECK(failed.failed());
+    CHECK(failed.emitted() == 0);
+    std::ostringstream output;
+    shark::editor::EditorInputTrace oversized{true, output};
+    REQUIRE_NOTHROW(oversized.record(1, {{"diagnostic", std::string(16 * 1024 + 1, 'x')}}));
+    CHECK(oversized.failed());
+    CHECK(oversized.emitted() == 0);
+    CHECK(output.str().empty());
+}
 
 namespace {
 using namespace shark;
@@ -171,8 +233,8 @@ TEST_CASE("Editor input edits Unicode text and cancels queued taps at focus loss
     CHECK(ImGui::IsMouseDown(ImGuiMouseButton_Left));
     ImGui::Render();
 
-    // Release/press coalesces to held=true. ImGui trickles the new press into
-    // its next frame; Shark focus loss must cancel that still-queued positive.
+    // Release/repress has no single gesture provenance. The adapter cancels
+    // pointer positives, and a later focus transition still neutralizes keys.
     accepted(input.on_mouse_button(MouseButton::left, ButtonAction::release));
     accepted(input.on_mouse_button(MouseButton::left, ButtonAction::press));
     gui.begin(input.capture());
@@ -299,6 +361,94 @@ TEST_CASE("Editor mouse focus permits replacing a field with a fast Ctrl A chord
     CHECK(std::string{value.data()} == "R\xe9\x9b\xaa");
     CHECK_FALSE(ImGui::GetIO().KeyCtrl);
     CHECK_FALSE(ImGui::IsKeyDown(ImGuiKey_A));
+}
+
+TEST_CASE("Editor button activation uses owned edge positions before final cursor motion",
+          "[editor-gui]") {
+    Gui gui;
+    InputState input;
+    accepted(input.on_focus(true));
+    struct Buttons {
+        ImVec2 first{}, second{};
+        bool first_clicked{false}, second_clicked{false};
+    };
+    const auto frame = [&] {
+        gui.begin(input.capture());
+        ImGui::SetNextWindowPos({10, 10});
+        ImGui::SetNextWindowSize({400, 180});
+        ImGui::Begin("Owned pointer buttons", nullptr,
+                     ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+        Buttons value;
+        const auto center = [] {
+            const auto a = ImGui::GetItemRectMin(), b = ImGui::GetItemRectMax();
+            return ImVec2{(a.x + b.x) * .5F, (a.y + b.y) * .5F};
+        };
+        value.first_clicked = ImGui::Button("First", {100, 40});
+        value.first = center();
+        ImGui::SameLine();
+        value.second_clicked = ImGui::Button("Second", {100, 40});
+        value.second = center();
+        ImGui::End();
+        ImGui::Render();
+        return value;
+    };
+    static_cast<void>(frame());
+    const auto controls = frame();
+    bool held_frame = false;
+    SECTION("Complete click then cursor motion still activates the first button") {}
+    SECTION("Press and motion before first held frame cannot activate the endpoint button") {
+        held_frame = true;
+    }
+    accepted(input.on_cursor(controls.first.x, controls.first.y));
+    accepted(input.on_mouse_button(MouseButton::left, ButtonAction::press));
+    if (!held_frame)
+        accepted(input.on_mouse_button(MouseButton::left, ButtonAction::release));
+    accepted(input.on_cursor(controls.second.x, controls.second.y));
+    unsigned first = 0, second = 0;
+    auto observed = frame();
+    first += observed.first_clicked ? 1U : 0U;
+    second += observed.second_clicked ? 1U : 0U;
+    if (held_frame)
+        accepted(input.on_mouse_button(MouseButton::left, ButtonAction::release));
+    for (unsigned pass = 0; pass < 5; ++pass) {
+        observed = frame();
+        first += observed.first_clicked ? 1U : 0U;
+        second += observed.second_clicked ? 1U : 0U;
+    }
+    CHECK(first == (held_frame ? 0U : 1U));
+    CHECK(second == 0);
+}
+
+TEST_CASE("Ambiguous GUI pointer cancellation preserves queued Unicode and keys", "[editor-gui]") {
+    Gui gui;
+    InputState input;
+    accepted(input.on_focus(true));
+    std::array<char, 64> value{};
+    gui.begin(input.capture());
+    gui.text(value, true);
+    gui.begin(input.capture());
+    gui.text(value);
+    accepted(input.on_text(U'\u96ea'));
+    accepted(input.on_key(Key::f1, ButtonAction::press));
+    accepted(input.on_cursor(400, 300));
+    accepted(input.on_mouse_button(MouseButton::left, ButtonAction::press));
+    GraphicsWindowFrame queued;
+    queued.state.content = {640, 480};
+    queued.state.framebuffer = {640, 480};
+    queued.input = input.capture();
+    feed_gui_input(queued, 1.0F / 60.0F);
+    accepted(input.on_mouse_button(MouseButton::left, ButtonAction::release));
+    accepted(input.on_mouse_button(MouseButton::left, ButtonAction::press));
+    bool key_seen = false;
+    for (unsigned pass = 0; pass < 6; ++pass) {
+        gui.begin(input.capture());
+        key_seen = key_seen || ImGui::IsKeyDown(ImGuiKey_F1);
+        CHECK_FALSE(ImGui::IsMouseClicked(ImGuiMouseButton_Left));
+        gui.text(value);
+    }
+    CHECK(key_seen);
+    CHECK(std::string{value.data()} == "\xe9\x9b\xaa");
+    CHECK_FALSE(ImGui::IsMouseDown(ImGuiMouseButton_Left));
 }
 
 TEST_CASE("Editor draw capture converts logical positions clips and sRGB colors", "[editor-gui]") {

@@ -17,8 +17,16 @@ Handles are clipped to the actual displayed image, including its offsets and
 nonuniform framebuffer scaling. No native cursor capture, warping or input
 injection is used. Handles overlay geometry; they are not depth-occluded.
 
-Drag with the left button and release inside the image to commit once. Snap is
-optional: translation steps are meters, rotation steps display degrees and convert
+Drag with the left button and release inside the image to commit once. Hit-test
+and begin use the owned first press position from the input capture, so motion
+received before the first held frame cannot replace the handle origin. The same
+frame then applies current motion; release uses its owned endpoint even if later
+cursor motion arrived before capture. An unambiguous complete press/move/release
+can commit once within one capture. Missing positions, multiple cycles and
+release/repress cancel without inventing an origin or reviving held input.
+Current hover/blocking, image, revision and focus cancellation remain required.
+
+Snap is optional: translation steps are meters, rotation steps display degrees and convert
 to radians, and scale steps are factor increments around one. The shared helper
 performs snapping and validation. Signed/nonuniform scale is supported; zero,
 unresolved bases and unrepresentable local shear reject explicitly. Since 17d,

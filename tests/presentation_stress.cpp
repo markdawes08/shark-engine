@@ -15,6 +15,11 @@
 #include <psapi.h>
 #include <tlhelp32.h>
 
+#if defined(__SANITIZE_ADDRESS__)
+#include <sanitizer/allocator_interface.h>
+#include <sanitizer/asan_interface.h>
+#endif
+
 #include <algorithm>
 #include <array>
 #include <exception>
@@ -477,6 +482,7 @@ struct Options {
     std::string_view mode{"describe"};
     std::string_view profile{SHARK_GRAPHICS_PROFILE};
     bool diagnose_resource_growth{false};
+    bool diagnose_asan_allocator{false};
     GraphicsConfig config;
     std::uint32_t seconds() const noexcept {
         return profile == "release" ? 600 : 60;
@@ -493,7 +499,7 @@ Options parse(int argc, char* argv[]) {
         throw Failure({shark::ErrorCode::invalid_argument,
                        "Use --help, --describe, or --stress [--profile debug|release|asan] "
                        "[--device auto|<32 lowercase hex UUID>] [--validation required|off] "
-                       "[--diagnose-resource-growth]",
+                       "[--diagnose-resource-growth | --diagnose-asan-allocator]",
                        {.operation = "presentation-stress.arguments"}});
     };
     if (argc > 9)
@@ -514,6 +520,11 @@ Options parse(int argc, char* argv[]) {
         const std::string_view option{argv[index]};
         if (option == "--diagnose-resource-growth" && !options.diagnose_resource_growth) {
             options.diagnose_resource_growth = true;
+            ++index;
+            continue;
+        }
+        if (option == "--diagnose-asan-allocator" && !options.diagnose_asan_allocator) {
+            options.diagnose_asan_allocator = true;
             ++index;
             continue;
         }
@@ -539,14 +550,61 @@ Options parse(int argc, char* argv[]) {
             invalid();
         index += 2;
     }
+    if (options.diagnose_asan_allocator &&
+        (options.profile != "asan" || options.diagnose_resource_growth))
+        invalid();
+#if !defined(__SANITIZE_ADDRESS__)
+    if (options.diagnose_asan_allocator)
+        invalid();
+#endif
     return options;
 }
+
+// Explicit test-only accounting, separate from whole-process qualification.
+// These observations do not trim/release memory or change sanitizer options.
+class AllocatorAccounting {
+  public:
+    explicit AllocatorAccounting(bool enabled) : enabled_(enabled) {}
+    void append(Object& record) const {
+#if defined(__SANITIZE_ADDRESS__)
+        if (enabled_) {
+            const auto live = __sanitizer_get_current_allocated_bytes();
+            const auto mapped = __sanitizer_get_heap_size();
+            const auto free = __sanitizer_get_free_bytes();
+            record.emplace("sanitizer_allocator",
+                           Object{{"current_allocated_bytes", static_cast<std::uint64_t>(live)},
+                                  {"mapped_bytes", static_cast<std::uint64_t>(mapped)},
+                                  {"free_bytes", static_cast<std::uint64_t>(free)}});
+        }
+#else
+        static_cast<void>(record);
+#endif
+    }
+    void print_stats(std::string_view phase) {
+        const auto slot = phase == "warmup" ? 0U : (phase == "failure" ? 1U : 2U);
+        if (!enabled_ || printed_[slot])
+            return;
+        printed_[slot] = true;
+#if defined(__SANITIZE_ADDRESS__)
+        // At most three runtime dumps per invocation, including failed runs.
+        emit({{"kind", "sanitizer_allocator_stats"}, {"phase", std::string(phase)}});
+        std::cerr << "SHARK_ASAN_ALLOCATOR_STATS_BEGIN " << phase << '\n' << std::flush;
+        __asan_print_accumulated_stats();
+        std::cerr << "SHARK_ASAN_ALLOCATOR_STATS_END " << phase << '\n' << std::flush;
+#endif
+    }
+
+  private:
+    bool enabled_;
+    std::array<bool, 3> printed_{};
+};
 
 struct Owner {
     std::unique_ptr<GraphicsDevice> device;
     detail::GraphicsBackend* observer{nullptr};
+    AllocatorAccounting* allocator{nullptr};
 };
-Owner create(const Options& options) {
+Owner create(const Options& options, AllocatorAccounting& allocator) {
     auto backend = detail::make_graphics_backend();
     auto* observer = backend.get();
     auto device = take(detail::create_graphics(options.config, std::move(backend)));
@@ -561,7 +619,7 @@ Owner create(const Options& options) {
     const auto adapter = take(device->adapter());
     require(options.config.adapter_uuid.empty() || adapter.uuid == options.config.adapter_uuid,
             "Explicit adapter selection must match");
-    return {std::move(device), observer};
+    return {std::move(device), observer, &allocator};
 }
 
 class ResourceBudget {
@@ -621,19 +679,23 @@ void sample(Owner& owner, ResourceBudget& budget, std::string_view phase, std::u
     if (start)
         budget.start(process);
     const bool within = budget.observe(process);
-    emit({{"kind", "sample"},
-          {"phase", std::string(phase)},
-          {"index", index},
-          {"elapsed_ms", elapsed_ms(elapsed)},
-          {"window", window_json(state)},
-          {"stats", stats_json(stats)},
-          {"resources", resources_json(resources)},
-          {"process", process_json(process)},
-          {"native_before_measurement", native_before},
-          {"native_after_measurement", native_after},
-          {"process_inventory", inventory},
-          {"baseline", process_json(budget.baseline())},
-          {"within_budget", within}});
+    Object record{{"kind", "sample"},
+                  {"phase", std::string(phase)},
+                  {"index", index},
+                  {"elapsed_ms", elapsed_ms(elapsed)},
+                  {"window", window_json(state)},
+                  {"stats", stats_json(stats)},
+                  {"resources", resources_json(resources)},
+                  {"process", process_json(process)},
+                  {"native_before_measurement", native_before},
+                  {"native_after_measurement", native_after},
+                  {"process_inventory", inventory},
+                  {"baseline", process_json(budget.baseline())},
+                  {"within_budget", within}};
+    owner.allocator->append(record);
+    emit(std::move(record));
+    if (start)
+        owner.allocator->print_stats("warmup");
     check_stats(stats);
     check_resources(resources, stats, false);
     require(stats.completed == stats.submitted && stats.in_flight == 0,
@@ -671,6 +733,8 @@ Object close(Owner& owner, bool validated) {
                   {"resources", resources_json(resources)}};
     owner.device.reset();
     owner.observer = nullptr;
+    owner.allocator->append(record);
+    owner.allocator->print_stats("close");
     return record;
 }
 
@@ -697,7 +761,9 @@ template <typename Function> void with_failure_report(Owner& owner, Function fun
                 record.emplace("resources",
                                resources_json(owner.observer->presentation_resources()));
             }
+            owner.allocator->append(record);
             emit(std::move(record));
+            owner.allocator->print_stats("failure");
             if (owner.device) {
                 const auto result = owner.device->close();
                 Object cleanup{
@@ -709,7 +775,9 @@ template <typename Function> void with_failure_report(Owner& owner, Function fun
                     {"resources", resources_json(owner.observer->presentation_resources())}};
                 if (!result)
                     cleanup.emplace("error", error_json(result.error()));
+                owner.allocator->append(cleanup);
                 emit(std::move(cleanup));
+                owner.allocator->print_stats("close");
             }
         } catch (...) { /* Preserve the primary failure if reporting fails. */
         }
@@ -723,7 +791,8 @@ void run(const Options& options) {
           {"schema_version", 1U},
           {"mode", std::string(options.mode)},
           {"profile", std::string(options.profile)},
-          {"diagnostic", options.diagnose_resource_growth},
+          {"diagnostic", options.diagnose_resource_growth || options.diagnose_asan_allocator},
+          {"allocator_accounting", options.diagnose_asan_allocator},
           {"dependency_lock_sha256", SHARK_GRAPHICS_LOCK_SHA256},
           {"source_sha256", SHARK_GRAPHICS_SOURCE_SHA256},
           {"compiler", SHARK_GRAPHICS_COMPILER},
@@ -752,14 +821,15 @@ void run(const Options& options) {
               {"qualification", "NOT_RUN"},
               {"native_graphics_available", native_graphics_available()},
               {"device_accessed", false},
-              {"usage",
-               "--help | --describe | --stress [--profile debug|release|asan] "
-               "[--device auto|UUID] [--validation required|off] [--diagnose-resource-growth]"}});
+              {"usage", "--help | --describe | --stress [--profile debug|release|asan] "
+                        "[--device auto|UUID] [--validation required|off] "
+                        "[--diagnose-resource-growth | --diagnose-asan-allocator]"}});
         return;
     }
     ResourceBudget active_budget(options.byte_allowance());
     ResourceBudget closed_budget(options.byte_allowance());
-    auto owner = create(options);
+    AllocatorAccounting allocator(options.diagnose_asan_allocator);
+    auto owner = create(options, allocator);
     std::uint64_t sustained_frames = 0;
     std::uint64_t sustained_duration = 0;
     std::uint32_t periodic_samples = 0;
@@ -947,7 +1017,7 @@ void run(const Options& options) {
         emit(std::move(closed));
     });
     for (std::uint32_t cycle = 1; cycle <= lifetime_count; ++cycle) {
-        auto short_owner = create(options);
+        auto short_owner = create(options, allocator);
         with_failure_report(short_owner, [&] {
             emit({{"kind", "lifetime_begin"},
                   {"cycle", cycle},
@@ -976,12 +1046,13 @@ void run(const Options& options) {
         });
     }
     const bool failed_budgets = active_budget.failures() != 0 || closed_budget.failures() != 0;
-    const bool qualifies = validated && !options.diagnose_resource_growth;
+    const bool diagnostic = options.diagnose_resource_growth || options.diagnose_asan_allocator;
+    const bool qualifies = validated && !diagnostic;
     emit({{"kind", "complete"},
           {"status", failed_budgets ? "FAIL" : (qualifies ? "PASS" : "NOT_RUN")},
           {"qualification", qualifies && !failed_budgets ? "PASS" : "NOT_RUN"},
           {"execution_status", failed_budgets ? "FAIL" : "PASS"},
-          {"diagnostic", options.diagnose_resource_growth},
+          {"diagnostic", diagnostic},
           {"active_budget_failures", active_budget.failures()},
           {"closed_budget_failures", closed_budget.failures()},
           {"sustained_duration_ms", sustained_duration},

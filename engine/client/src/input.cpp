@@ -63,6 +63,12 @@ ButtonState InputSnapshot::mouse_button(MouseButton button) const noexcept {
     return mouse_buttons[static_cast<std::size_t>(button) - 1];
 }
 
+MouseButtonEdges InputSnapshot::mouse_edges(MouseButton button) const noexcept {
+    if (!valid(button))
+        return {};
+    return mouse_pointer_edges[static_cast<std::size_t>(button) - 1];
+}
+
 InputEventResult InputState::on_key(Key key, ButtonAction action) noexcept {
     if (!valid(key)) {
         return InputEventResult::invalid_key;
@@ -86,7 +92,21 @@ InputEventResult InputState::on_mouse_button(MouseButton button, ButtonAction ac
     if (!state_.focused) {
         return InputEventResult::ignored_unfocused;
     }
-    return apply_button(state_.mouse_buttons[static_cast<std::size_t>(button) - 1], action);
+    const auto index = static_cast<std::size_t>(button) - 1;
+    auto& state = state_.mouse_buttons[index];
+    auto& edges = state_.mouse_pointer_edges[index];
+    if (action == ButtonAction::press && !state.held) {
+        edges.ambiguous = edges.ambiguous || edges.press_seen || edges.release_seen;
+        if (!edges.press_seen)
+            edges.press = state_.cursor;
+        edges.press_seen = true;
+    } else if (action == ButtonAction::release && state.held) {
+        edges.ambiguous = edges.ambiguous || edges.release_seen;
+        if (!edges.release_seen)
+            edges.release = state_.cursor;
+        edges.release_seen = true;
+    }
+    return apply_button(state, action);
 }
 
 InputEventResult InputState::on_cursor(double x, double y) noexcept {
@@ -149,6 +169,7 @@ InputEventResult InputState::on_focus(bool focused) noexcept {
     for (auto& button : state_.mouse_buttons) {
         cancel_button(button);
     }
+    state_.mouse_pointer_edges = {};
     state_.cursor = {};
     state_.scroll = {};
     state_.text = {};
@@ -164,6 +185,7 @@ InputSnapshot InputState::capture() noexcept {
     for (auto& button : state_.mouse_buttons) {
         clear_edges(button);
     }
+    state_.mouse_pointer_edges = {};
     state_.scroll = {};
     state_.text = {};
     state_.text_size = 0;

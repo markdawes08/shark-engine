@@ -19,6 +19,7 @@ struct EditorLaunch {
     std::filesystem::path scene_pixel_shader;
     std::string adapter;
     client::GraphicsValidation validation{client::GraphicsValidation::off};
+    bool input_trace{false};
 };
 
 [[nodiscard]] Result<EditorLaunch>

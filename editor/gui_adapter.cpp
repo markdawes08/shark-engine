@@ -1,6 +1,7 @@
 #include "gui_adapter.hpp"
 
 #include <imgui.h>
+#include <imgui_internal.h>
 
 #include <algorithm>
 #include <array>
@@ -134,6 +135,34 @@ template <class F> void button_events(ButtonState state, F&& emit) {
     }
 }
 
+void mouse_position(ImGuiIO& io, CursorPosition position) {
+    constexpr auto maximum = std::numeric_limits<float>::max();
+    if (position.valid && std::isfinite(position.x) && std::isfinite(position.y) &&
+        std::abs(position.x) <= maximum && std::abs(position.y) <= maximum)
+        io.AddMousePosEvent(static_cast<float>(position.x), static_cast<float>(position.y));
+    else
+        io.AddMousePosEvent(-maximum, -maximum);
+}
+
+void cancel_queued_pointer(ImGuiIO& io) {
+    // The pinned Editor-only ImGui queue has no public pointer-only clear.
+    // Retain key/text/focus events and remove only unresolved mouse events.
+    auto& events = ImGui::GetCurrentContext()->InputEventsQueue;
+    const auto kept =
+        std::remove_if(events.begin(), events.end(), [](const ImGuiInputEvent& event) {
+            return event.Type == ImGuiInputEventType_MousePos ||
+                   event.Type == ImGuiInputEventType_MouseButton ||
+                   event.Type == ImGuiInputEventType_MouseWheel;
+        });
+    if (kept != events.end())
+        events.erase(kept, events.end());
+    // An outside release cancels an already active mouse control. It cannot
+    // activate a button underneath the final cursor or create a fresh press.
+    mouse_position(io, {});
+    for (int button = 0; button < 5; ++button)
+        io.AddMouseButtonEvent(button, false);
+}
+
 float linear_channel(unsigned value) {
     const auto encoded = static_cast<float>(value) / 255.0F;
     return encoded <= 0.04045F ? encoded / 12.92F : std::pow((encoded + 0.055F) / 1.055F, 2.4F);
@@ -166,10 +195,23 @@ void feed_gui_input(const GraphicsWindowFrame& frame, float elapsed_seconds) {
     io.AddFocusEvent(input.focused);
     if (!input.focused)
         return;
-    if (input.cursor.valid)
-        io.AddMousePosEvent(static_cast<float>(input.cursor.x), static_cast<float>(input.cursor.y));
-    else
-        io.AddMousePosEvent(-std::numeric_limits<float>::max(), -std::numeric_limits<float>::max());
+    int pointer_button = -1;
+    bool cancel_pointer = false;
+    for (int index = 0; index < 5; ++index) {
+        const auto edges = input.mouse_edges(static_cast<MouseButton>(index + 1));
+        cancel_pointer = cancel_pointer || edges.ambiguous;
+        if (edges.press_seen || edges.release_seen) {
+            cancel_pointer = cancel_pointer || pointer_button != -1;
+            pointer_button = index;
+        }
+    }
+    if (cancel_pointer)
+        cancel_queued_pointer(io);
+    else if (pointer_button != -1) {
+        const auto edges = input.mouse_edges(static_cast<MouseButton>(pointer_button + 1));
+        mouse_position(io, edges.press_seen ? edges.press : edges.release);
+    } else
+        mouse_position(io, input.cursor);
     struct Modifier {
         ImGuiKey gui;
         Key left;
@@ -192,10 +234,21 @@ void feed_gui_input(const GraphicsWindowFrame& frame, float elapsed_seconds) {
         if (key != ImGuiKey_None)
             button_events(input.keys[index], [&](bool down) { io.AddKeyEvent(key, down); });
     }
-    for (int index = 0; index < 5; ++index)
-        button_events(input.mouse_buttons[static_cast<std::size_t>(index)],
-                      [&](bool down) { io.AddMouseButtonEvent(index, down); });
-    io.AddMouseWheelEvent(static_cast<float>(input.scroll.x), static_cast<float>(input.scroll.y));
+    if (!cancel_pointer && pointer_button != -1) {
+        const auto edges = input.mouse_edges(static_cast<MouseButton>(pointer_button + 1));
+        if (edges.press_seen) {
+            mouse_position(io, edges.press);
+            io.AddMouseButtonEvent(pointer_button, true);
+        }
+        if (edges.release_seen) {
+            mouse_position(io, edges.release);
+            io.AddMouseButtonEvent(pointer_button, false);
+        }
+    }
+    mouse_position(io, input.cursor);
+    if (!cancel_pointer)
+        io.AddMouseWheelEvent(static_cast<float>(input.scroll.x),
+                              static_cast<float>(input.scroll.y));
     for (const auto modifier : modifiers)
         io.AddKeyEvent(modifier.gui,
                        input.key(modifier.left).held || input.key(modifier.right).held);

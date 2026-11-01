@@ -22,6 +22,7 @@ PROCESS_FIELDS = {"private_bytes", "handles", "gdi_objects", "user_objects"}
 RESOURCE_FIELDS = {"live_swapchains", "image_wrappers", "image_views", "present_semaphores",
                    "present_fences", "command_lists", "acquire_semaphores", "acquire_fences",
                    "pending_queue_workers", "retained_recordings"}
+ALLOCATOR_FIELDS = {"current_allocated_bytes", "mapped_bytes", "free_bytes"}
 require = smoke.require
 source_digest = smoke.source_digest
 
@@ -40,6 +41,32 @@ def process_resources(value: object) -> dict:
             and value["private_bytes"] > 0 and value["handles"] > 0,
             "Process resource observation must contain valid integer measurements")
     return value
+
+
+def allocator_observations(records: list[dict], profile: str) -> None:
+    """Validate optional diagnostic counters without treating them as a budget."""
+    if records and "allocator_accounting" in records[0]:
+        require(type(records[0]["allocator_accounting"]) is bool, "Allocator admission must be boolean")
+    enabled = bool(records) and records[0].get("allocator_accounting") is True
+    if enabled:
+        require(profile == "asan" and records[0].get("diagnostic") is True,
+                "Allocator accounting requires explicitly nonqualifying ASan execution")
+    phases = set()
+    for row in records:
+        if "sanitizer_allocator" in row:
+            require(enabled, "Allocator counters lack explicit diagnostic admission")
+            value = row["sanitizer_allocator"]
+            require(isinstance(value, dict) and set(value) == ALLOCATOR_FIELDS
+                    and all(smoke.integer(count) for count in value.values()),
+                    "Sanitizer allocator observation has invalid fields or byte counters")
+        if enabled and row.get("kind") in ("sample", "owner_failure", "owner_failure_cleanup",
+                                             "active_close", "lifetime_end"):
+            require("sanitizer_allocator" in row, "Diagnostic allocator observation is missing")
+        if row.get("kind") == "sanitizer_allocator_stats":
+            phase = row.get("phase")
+            require(enabled and phase in ("warmup", "failure", "close") and phase not in phases,
+                    "Accumulated allocator stats exceed the three explicit phase dumps")
+            phases.add(phase)
 
 
 def resource_budget(value: object, baseline: object, profile: str) -> dict:
@@ -96,15 +123,16 @@ def inspect_result(result: ProcessResult, mode: str, device: str, validation: st
     records, errors = [], []
     try:
         require(profile in DURATIONS, "Unknown compiled workload profile")
-        require(result.returncode == 0 and not result.timed_out and not result.cleanup_errors,
-                "Stress process failed, timed out or left process-tree cleanup errors")
-        require(not result.stderr.strip(), "Stress process wrote unexpected stderr")
         require(0 < len(result.stdout.encode("utf-8")) <= 16 * 1024 * 1024, "Stress output is empty or oversized")
         for line in result.stdout.splitlines():
             row = json.loads(line, object_pairs_hook=unique_object, parse_constant=reject_constant,
                              parse_float=finite_float)
             require(isinstance(row, dict), "Every stress record must be an object")
             records.append(row)
+        allocator_observations(records, profile)
+        require(result.returncode == 0 and not result.timed_out and not result.cleanup_errors,
+                "Stress process failed, timed out or left process-tree cleanup errors")
+        require(not result.stderr.strip(), "Stress process wrote unexpected stderr")
         require(len(records) >= 3, "Stress identity/workload records are missing")
         identity = records[0]
         for key, expected in {"kind": "identity", "schema_version": 1, "mode": mode, "profile": profile,
@@ -336,11 +364,16 @@ def main() -> int:
     parser.add_argument("--build-dir", type=Path)
     parser.add_argument("--diagnose-resource-growth", action="store_true",
                         help="Retain an explicitly nonqualifying trace beyond process-budget failures")
+    parser.add_argument("--diagnose-asan-allocator", action="store_true",
+                        help="Nonqualifying allocator observations; preserves strict first-budget failure")
     parser.add_argument("--output", type=Path, required=True)
     args = parser.parse_args()
     if args.device != "auto" and not re.fullmatch(r"[0-9a-f]{32}", args.device):
         parser.error("--device must be auto or an exact lowercase 32-hex UUID")
-    if args.mode == "describe" and (args.device != "auto" or args.validation != "required" or args.diagnose_resource_growth):
+    if args.diagnose_asan_allocator and (args.profile != "asan" or args.diagnose_resource_growth):
+        parser.error("Allocator accounting requires ASan and cannot combine with resource-growth continuation")
+    if args.mode == "describe" and (args.device != "auto" or args.validation != "required"
+                                   or args.diagnose_resource_growth or args.diagnose_asan_allocator):
         parser.error("Description is device-free and does not accept device/validation overrides")
     executable = args.executable.resolve()
     if sys.platform != "win32" or not executable.is_file():
@@ -355,6 +388,8 @@ def main() -> int:
         command.extend(["--validation", args.validation, "--device", args.device])
     if args.diagnose_resource_growth:
         command.append("--diagnose-resource-growth")
+    if args.diagnose_asan_allocator:
+        command.append("--diagnose-asan-allocator")
     timeout = 780 if args.profile == "release" else 240
     summary = {"schema_version": 1, "checkpoint": "05c", "status": "FAIL", "qualification": "NOT_RUN",
                "assignment_05": "NOT_RUN", "started_utc": datetime.now(timezone.utc).isoformat(),
@@ -363,7 +398,8 @@ def main() -> int:
                "duration_seconds": DURATIONS[args.profile], "resizes": 100, "minimize_restore_pairs": 20,
                "short_lifetimes": 20, "private_bytes_allowance": MEMORY_LIMITS[args.profile],
                "handle_allowance": 8, "gdi_allowance": 0, "user_allowance": 0,
-               "diagnostic": args.diagnose_resource_growth}
+               "diagnostic": args.diagnose_resource_growth or args.diagnose_asan_allocator,
+               "allocator_accounting": args.diagnose_asan_allocator}
     started, exit_code = time.monotonic(), 1
     try:
         lock = sha256(ROOT / "dependencies.lock.json")

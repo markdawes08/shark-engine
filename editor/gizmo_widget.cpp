@@ -206,23 +206,54 @@ GizmoFrameResult GizmoWidget::overlay(const client::InputSnapshot& input,
                                       const GizmoPreviewValidator& validate_preview) {
     auto& value = *impl_;
     GizmoFrameResult result;
+    result.trace.operation = value.operation;
+    result.trace.space = value.space;
+    const auto observe_geometry = [&](const ViewportGizmoGeometry& geometry) {
+        result.trace.pivot = std::array{geometry.pivot().x, geometry.pivot().y};
+        for (std::size_t index = 0; index < geometry.axes().size(); ++index) {
+            const auto& axis = geometry.axes()[index];
+            if (axis.visible && axis.point_count) {
+                const auto& tip = axis.points[axis.point_count - 1];
+                result.trace.tips[index] = std::array{tip.x, tip.y};
+            }
+        }
+    };
     result.consumed = value.drag.active() || value.gesture.active();
     const auto fail = [&](Error error) {
+        result.trace.reason = "operation_rejected";
         value.error = error;
         result.error = std::move(error);
         value.cancel();
     };
     const auto left = input.mouse_button(client::MouseButton::left);
+    const auto edges = input.mouse_edges(client::MouseButton::left);
+    if (edges.ambiguous) {
+        result.trace.reason = "ambiguous_pointer_cancel";
+        result.consumed = result.consumed || left.pressed || left.released;
+        value.cancel();
+        return result;
+    }
     if (!left.held && !left.pressed)
         value.wait_for_release = false;
-    const auto point = viewport_coordinates(rectangle, input.cursor.x, input.cursor.y);
+    const auto update_cursor = left.released && !left.held
+                                   ? (edges.release_seen ? edges.release : client::CursorPosition{})
+                                   : input.cursor;
+    const auto point = viewport_coordinates(rectangle, update_cursor.x, update_cursor.y);
     if (blocked || value.invalid_configuration || !value.operation || !input.focused ||
-        input.focus_lost || input.key(client::Key::escape).pressed || !input.cursor.valid ||
+        input.focus_lost || input.key(client::Key::escape).pressed || !update_cursor.valid ||
         !point || !point.value() || !hovered || !value.panel.current() ||
         value.panel.needs_reconciliation() || !value.panel.selection() ||
         scene.revision() != value.panel.revision() ||
         input.mouse_button(client::MouseButton::right).held ||
         input.mouse_button(client::MouseButton::middle).held) {
+        result.trace.reason = blocked                                            ? "blocked"
+                              : !value.operation                                 ? "selection_tool"
+                              : !input.focused || input.focus_lost               ? "focus_cancel"
+                              : input.key(client::Key::escape).pressed           ? "escape_cancel"
+                              : !update_cursor.valid || !point || !point.value() ? "outside_image"
+                              : !hovered                                         ? "not_hovered"
+                              : !value.panel.selection()                         ? "no_selection"
+                                                         : "state_unavailable";
         value.cancel();
         // Selection handles remain visible while the pointer is elsewhere.
         // This read-only drawing does not grant capture through a blocked pane.
@@ -233,8 +264,10 @@ GizmoFrameResult GizmoWidget::overlay(const client::InputSnapshot& input,
             if (observed) {
                 const auto geometry = make_viewport_gizmo(scene, observed.value(), *value.operation,
                                                           value.space, rectangle);
-                if (geometry)
+                if (geometry) {
+                    observe_geometry(geometry.value());
                     draw_geometry(geometry.value(), {});
+                }
             }
         }
         return result;
@@ -245,10 +278,12 @@ GizmoFrameResult GizmoWidget::overlay(const client::InputSnapshot& input,
          value.gesture.geometry()->view_projection() != scene.camera().view_projection ||
          value.origin != scene.origin() || value.viewport != scene.viewport() ||
          value.camera != scene.camera_entity().handle)) {
+        result.trace.reason = "captured_view_changed";
         value.cancel();
         return result;
     }
     if (value.drag.active() && left.pressed) {
+        result.trace.reason = "release_repress_cancel";
         // Release/repress between captures loses the original release position.
         // Do not join two physical gestures or commit at the newer press.
         value.cancel();
@@ -257,7 +292,7 @@ GizmoFrameResult GizmoWidget::overlay(const client::InputSnapshot& input,
     // A real new press inside the current image starts a new intent, even if
     // the preceding up frame was outside. A held button has no press edge and
     // cannot revive capture. Cancellation branches above never restart here.
-    if (left.pressed && left.held)
+    if (left.pressed)
         value.wait_for_release = false;
     if (!value.drag.active()) {
         const auto observation = value.panel.observe_transform(*value.panel.selection());
@@ -277,25 +312,41 @@ GizmoFrameResult GizmoWidget::overlay(const client::InputSnapshot& input,
                   {.operation = "editor.gizmo"}});
             return result;
         }
-        auto hit = hit_viewport_gizmo(geometry.value(), input.cursor.x, input.cursor.y);
+        observe_geometry(geometry.value());
+        const auto hit_cursor = left.pressed ? edges.press : input.cursor;
+        if (left.pressed && (!edges.press_seen || !hit_cursor.valid)) {
+            result.trace.reason = "missing_press_position";
+            result.consumed = true;
+            value.cancel();
+            return result;
+        }
+        auto hit = hit_viewport_gizmo(geometry.value(), hit_cursor.x, hit_cursor.y);
         if (!hit) {
             fail(hit.error());
             return result;
         }
         draw_geometry(geometry.value(), hit.value());
-        // Even a complete press/release captured in one snapshot belongs to a
-        // handle, not to geometry picking underneath it. It creates no drag.
+        result.trace.hit = hit.value();
+        // Hit and begin at the owned press position, then apply motion already
+        // received before this capture. A complete unambiguous press/release
+        // uses its owned release endpoint and can commit exactly once.
         result.consumed = left.pressed && hit.value().has_value();
-        if (!left.pressed || !left.held || value.wait_for_release || !hit.value())
+        if (!left.pressed || (!left.held && !left.released) || value.wait_for_release ||
+            !hit.value()) {
+            result.trace.reason = !hit.value()                   ? "no_handle_hit"
+                                  : !left.pressed                ? "no_press"
+                                  : !left.held && !left.released ? "incomplete_press_state"
+                                                                 : "awaiting_fresh_press";
             return result;
+        }
         result.consumed = true;
         const auto began = value.drag.begin();
         if (!began) {
             fail(began.error());
             return result;
         }
-        const auto gesture = value.gesture.begin(geometry.value(), *hit.value(), input.cursor.x,
-                                                 input.cursor.y, value.snap);
+        const auto gesture = value.gesture.begin(geometry.value(), *hit.value(), hit_cursor.x,
+                                                 hit_cursor.y, value.snap);
         if (!gesture) {
             fail(gesture.error());
             return result;
@@ -304,15 +355,20 @@ GizmoFrameResult GizmoWidget::overlay(const client::InputSnapshot& input,
         value.origin = scene.origin();
         value.viewport = scene.viewport();
         value.camera = scene.camera_entity().handle;
+        result.trace.reason = "gesture_started";
     } else {
+        observe_geometry(*value.gesture.geometry());
+        result.trace.hit = value.gesture.axis();
+        result.trace.reason = "gesture_continued";
         draw_geometry(*value.gesture.geometry(), value.gesture.axis());
     }
     result.consumed = true;
     if (!left.held && !left.released) {
+        result.trace.reason = "button_state_cancel";
         value.cancel();
         return result;
     }
-    const auto motion = value.gesture.update(input.cursor.x, input.cursor.y);
+    const auto motion = value.gesture.update(update_cursor.x, update_cursor.y);
     if (!motion) {
         fail(motion.error());
         return result;
@@ -327,6 +383,7 @@ GizmoFrameResult GizmoWidget::overlay(const client::InputSnapshot& input,
             // releasing here still cancels rather than applying an older pose.
             value.error = updated.error();
             result.error = updated.error();
+            result.trace.reason = "candidate_rejected_while_held";
             return result;
         }
         fail(updated.error());
@@ -348,6 +405,7 @@ GizmoFrameResult GizmoWidget::overlay(const client::InputSnapshot& input,
     }
     value.error.reset();
     if (left.released && !left.held) {
+        result.trace.reason = "gesture_released";
         auto committed = value.drag.commit();
         value.gesture.cancel();
         value.selection.reset();

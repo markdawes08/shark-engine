@@ -7,6 +7,8 @@
 
 namespace shark::editor {
 
+class EditorInputTrace;
+
 struct ViewportPointerActions {
     NavigationMotion motion;
     bool pick{false};
@@ -37,7 +39,7 @@ class ViewportPointerRouter final {
 class WorkspacePanel final {
   public:
     WorkspacePanel(ProjectSession&, const client::ShaderArtifact& vertex,
-                   const client::ShaderArtifact& pixel);
+                   const client::ShaderArtifact& pixel, EditorInputTrace* input_trace = nullptr);
     ~WorkspacePanel();
     WorkspacePanel(const WorkspacePanel&) = delete;
     WorkspacePanel& operator=(const WorkspacePanel&) = delete;
