@@ -89,9 +89,12 @@ the field omits its output. Up to six distinct field names are supported. Throug
 `scene.mutate`, `create_entity` accepts optional `rigid_body`; `set_rigid_body`
 requires the complete value or null. Its value has the original eight required fields plus the three optional
 collision fields above, without a source `schema_version`. These are trusted local development operations,
-not player intents. The existing 42-method protocol inventory is unchanged.
-Native inspector controls retain 18e; the current widget does not misrepresent
-the new schema as its existing renderer editor. Actual desktop work remains paused.
+not player intents. [18e](physics-preview.md) adds `scene.physics`, bringing the
+complete terminal inventory to 43 methods, including configured export/capture.
+The native inspector now exposes all eleven body settings through the same
+retained atomic mutation path. Desktop testing resumed on 2026-10-31 after 18e
+implementation; actual connected acceptance remains NOT_RUN until its required
+evidence passes in the [backlog](backlog.md#desktop-ui-deferral).
 
 ## Native body ownership and limits
 

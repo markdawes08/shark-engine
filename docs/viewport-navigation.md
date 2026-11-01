@@ -4,7 +4,8 @@
 view and triangle selection. Follow [ADR 0042](architecture/0042-viewport-navigation-and-picking.md)
 and the [four checkpoints](roadmap/viewport-interaction-plan.md). The
 [handoff](handoffs/17a-viewport-navigation.md) distinguishes headless results from
-actual UI/GPU acceptance, which remains NOT_RUN under the desktop pause.
+actual UI/GPU acceptance, which remains NOT_RUN. Desktop testing resumed on
+2026-10-31 after 18e implementation; see the [backlog](backlog.md#desktop-ui-deferral).
 
 ## View ownership and controls
 

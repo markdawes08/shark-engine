@@ -125,7 +125,7 @@ Json transform_command(AuthoredEntityId id, const Transform& transform) {
               {"scale", vector_json(transform.scale)}}}};
 }
 
-Json component_commands(const InspectorValues& values) {
+Json component_commands(const InspectorValues& values, const InspectorValues& baseline) {
     const auto id = values.selection.id.value().to_string();
     const auto& transform = values.transform;
     // JSON cannot represent nonfinite doubles. Reject before serializing rather
@@ -163,7 +163,26 @@ Json component_commands(const InspectorValues& values) {
                 {"mesh_index", value.mesh_index},
                 {"visible", value.visible}};
     }
-    return Json::array(
+    Json body = nullptr;
+    if (values.rigid_body) {
+        const auto value = take(validate_rigid_body(*values.rigid_body));
+        body = {{"motion", value.motion == BodyMotion::static_body    ? "static"
+                           : value.motion == BodyMotion::dynamic_body ? "dynamic"
+                                                                      : "kinematic"},
+                {"shape", value.shape == ColliderShape::box      ? "box"
+                          : value.shape == ColliderShape::sphere ? "sphere"
+                                                                 : "capsule"},
+                {"half_extents", vector_json(value.half_extents)},
+                {"radius", value.radius},
+                {"half_height", value.half_height},
+                {"mass", value.mass},
+                {"friction", value.friction},
+                {"restitution", value.restitution},
+                {"collision_layer", value.collision_layer},
+                {"collision_mask", value.collision_mask},
+                {"is_trigger", value.is_trigger}};
+    }
+    auto commands = Json::array(
         {{{"type", "set_name"}, {"entity_id", id}, {"name", values.name.value}},
          {{"type", "set_transform"},
           {"entity_id", id},
@@ -174,6 +193,18 @@ Json component_commands(const InspectorValues& values) {
             {"scale", vector_json(transform.scale)}}}},
          {{"type", "set_camera"}, {"entity_id", id}, {"camera", std::move(camera)}},
          {{"type", "set_mesh_renderer"}, {"entity_id", id}, {"mesh_renderer", std::move(mesh)}}});
+    // Clear old constraints only for an effective body/pose change. The complete
+    // candidate restores the final body after TRS, with one retained history group.
+    if (baseline.rigid_body &&
+        (baseline.rigid_body != values.rigid_body ||
+         baseline.transform != take(canonicalize_transform(values.transform))))
+        commands.insert(
+            commands.begin() + 1,
+            Json{{"type", "set_rigid_body"}, {"entity_id", id}, {"rigid_body", nullptr}});
+    if (baseline.rigid_body || values.rigid_body)
+        commands.push_back(
+            {{"type", "set_rigid_body"}, {"entity_id", id}, {"rigid_body", std::move(body)}});
+    return commands;
 }
 
 math::Vec3 vector_value(const Json& value) {
@@ -209,6 +240,32 @@ InspectorValues inspector_value(const Json& value, SceneRevision revision) {
         result.mesh_renderer = MeshRenderer{
             AssetId{take(StableId::parse(mesh.at("asset_id").get<std::string>()))},
             mesh.at("mesh_index").get<std::uint32_t>(), mesh.at("visible").get<bool>()};
+    }
+    if (value.contains("rigid_body") && !value.at("rigid_body").is_null()) {
+        const auto& b = value.at("rigid_body");
+        RigidBody body;
+        const auto motion = b.at("motion").get<std::string>();
+        const auto shape = b.at("shape").get<std::string>();
+        if (motion != "static" && motion != "dynamic" && motion != "kinematic")
+            fail(ErrorCode::execution_failed, "Inspector received unknown body motion");
+        if (shape != "box" && shape != "sphere" && shape != "capsule")
+            fail(ErrorCode::execution_failed, "Inspector received unknown collider shape");
+        body.motion = motion == "static"    ? BodyMotion::static_body
+                      : motion == "dynamic" ? BodyMotion::dynamic_body
+                                            : BodyMotion::kinematic_body;
+        body.shape = shape == "box"      ? ColliderShape::box
+                     : shape == "sphere" ? ColliderShape::sphere
+                                         : ColliderShape::capsule;
+        body.half_extents = vector_value(b.at("half_extents"));
+        body.radius = b.at("radius").get<double>();
+        body.half_height = b.at("half_height").get<double>();
+        body.mass = b.at("mass").get<double>();
+        body.friction = b.at("friction").get<double>();
+        body.restitution = b.at("restitution").get<double>();
+        body.collision_layer = b.at("collision_layer").get<std::uint32_t>();
+        body.collision_mask = b.at("collision_mask").get<std::uint32_t>();
+        body.is_trigger = b.at("is_trigger").get<bool>();
+        result.rigid_body = take(validate_rigid_body(body));
     }
     return result;
 }
@@ -653,10 +710,11 @@ Result<InspectorValues> ScenePanel::inspect(AuthoredEntityId id, SceneRevision e
         if (!impl_->current() || expected != impl_->revision)
             fail(ErrorCode::conflict, "Inspector observation changed; refresh explicitly");
         impl_->require_entity(id);
-        const auto value = impl_->call(
-            "scene.inspect", {{"entity_id", id.value().to_string()},
-                              {"fields", {"name", "transform", "camera", "mesh_renderer"}},
-                              {"expected_revision", revision_json(expected)}});
+        const auto value =
+            impl_->call("scene.inspect",
+                        {{"entity_id", id.value().to_string()},
+                         {"fields", {"name", "transform", "camera", "mesh_renderer", "rigid_body"}},
+                         {"expected_revision", revision_json(expected)}});
         if (revision_value(value.at("revision")) != expected || value.at("entities").size() != 1 ||
             !value.at("complete").get<bool>() || !value.at("next_cursor").is_null() ||
             value.at("scope").at("kind") != "authored" ||
@@ -675,7 +733,8 @@ Result<SceneEditReceipt> ScenePanel::apply_components(const InspectorValues& val
         impl_->require_entity(values.selection.id);
         if (values.name.value.size() > 4096)
             fail(ErrorCode::invalid_argument, "Inspector Name exceeds the retained input bound");
-        auto commands = component_commands(values);
+        auto commands = component_commands(
+            values, take(inspect(values.selection.id, values.selection.revision)));
         return impl_->mutate_operation(
             values.selection.id,
             {{"type", "batch"},

@@ -18,12 +18,12 @@ import shader_pipeline
 from toolchain_report import ROOT, collect
 
 
-PHASES = (("baseline", 160, 120), ("changed", 160, 120),
-          ("resized", 200, 144), ("close-cancelled", 200, 144))
-VIEWPORT_PHASES = (("scene-baseline", 160, 120), ("scene-camera", 160, 120),
-                   ("scene-content", 160, 120), ("scene-target-resized", 160, 120),
-                   ("scene-window-resized", 200, 144), ("scene-removed", 200, 144),
-                   ("scene-restored", 200, 144), ("close-cancelled", 200, 144))
+PHASES = (("baseline", 240, 180), ("changed", 240, 180),
+          ("resized", 300, 216), ("close-cancelled", 300, 216))
+VIEWPORT_PHASES = (("scene-baseline", 240, 180), ("scene-camera", 240, 180),
+                   ("scene-content", 240, 180), ("scene-target-resized", 240, 180),
+                   ("scene-window-resized", 300, 216), ("scene-removed", 300, 216),
+                   ("scene-restored", 300, 216), ("close-cancelled", 300, 216))
 COLOR_TOLERANCE = 2
 
 
@@ -94,7 +94,7 @@ def compare_capture(path: Path, name: str, width: int, height: int, *, viewport:
             ("overlay-clip-right", 134, 38, under),
             ("overlay-clip-bottom", 118, 64, under),
         )
-    if width == 200:
+    if width == 300:
         regions += (("resized-background", 180, 130, black),)
     maximum = 0
     for label, left, top, expected in regions:

@@ -8,20 +8,22 @@ unchanged. This decision supersedes the earlier CPU-only 06a sequencing exceptio
 and the progression restrictions in historical handoffs.
 
 On 2026-10-28, the user also explicitly deferred the outstanding 14b Client and
-export-worker sanitizer checks and authorized 14c. Those checks remain
-**NOT_RUN**; compiler crashes are not passing evidence or reported engine
-sanitizer defects. This amendment removes that progression gate only.
+export-worker sanitizer checks and authorized 14c. Those checks were **NOT_RUN**
+at deferral; the selected sanitizer gate passed on 2026-10-31 as recorded below.
+Historical compiler crashes remain failure evidence, not reported engine
+sanitizer defects. The original amendment removed only that progression gate.
 
 ## Desktop UI deferral
 
-On 2026-10-29, the user explicitly paused desktop/UI testing until further notice
-and authorized continued coding with the remaining checks in this nonblocking
-backlog. The [testing policy](testing-policy.md#desktop-interaction-pause-2026-10-29)
-forbids desktop input/focus/window control and windowed automated GPU fixtures
-while paused. Headless work may continue. Resume desktop testing only when the
-user explicitly requests it; office hours, elapsed time and ordinary coding
-requests do not end the pause. Deferred UI checks remain **NOT_RUN**. Completed
-native GUI evidence on both GPUs remains valid for its tested inputs.
+On 2026-10-29, the user paused desktop/UI testing and authorized continued coding
+with the remaining checks in this nonblocking backlog. On 2026-10-31, the user
+explicitly requested finishing the current subchunk and then tackling the testing
+backlog. **Desktop testing resumes after 18e implementation.** The
+[testing policy](testing-policy.md#desktop-interaction-pause-2026-10-29) permits
+the required actual Editor input/focus/window interactions and automated windowed
+GPU fixtures. Deferred checks remain **NOT_RUN** until their required evidence
+passes. Completed native GUI evidence on both GPUs remains valid for its tested
+inputs; historical failures and interrupted runs remain intact.
 
 Later checkpoints append their required UI acceptance scope to BL-16A-UI-01
 without claiming it passed. This authorizes implementation progression, not full
@@ -37,20 +39,88 @@ not be dismissed solely because it resembles a deferred issue.
 
 | ID | Deferred work and retained evidence | Revisit trigger / completion evidence |
 | --- | --- | --- |
-| BL-05C-01 | NVIDIA 610.62 retains a desktop DC per swapchain lifetime, independently reproduced outside Shark. Driver acquisition is identified; no supported engine correction is established. [Investigation](handoffs/05c-failure-investigation.md), [receipt](coverage/evidence/05c-investigation.json). | An independently authorized driver/OS change, a supported ownership correction, or material impact during normal development. Rerun the independent reproducer and the unchanged qualifying workload; retain old failures. |
-| BL-05C-02 | Intel 101.6790 retains USER objects in raw Win32/Vulkan lifetimes. Tracing identifies failed driver-owned hook removal after target threads begin exit. [Investigation](handoffs/05c-intel-asan-investigation.md), [receipt](coverage/evidence/05c-intel-user-investigation.json). | An independently authorized driver/OS change, a supported driver-lifetime correction, or material impact during normal development. Repeat the independent reproduction and qualifying workload; require bounded resource behavior. |
-| BL-05C-03 | An original Intel ASan fault child exceeded its exit deadline after native cleanup. The fixed 64-child diagnostic sequence did not reproduce or explain it. The separate queue-worker deadline defect is already fixed. [Investigation](handoffs/05c-intel-asan-investigation.md), [receipt](coverage/evidence/05c-asan-exit-investigation.json). | Another equivalent timeout, actionable process/thread capture, or a relevant shutdown change. Use the existing bounded capture tools to identify the stalled process and demonstrate a targeted correction; successful retries alone do not close the original finding. |
+| BL-05C-01 | The original NVIDIA 610.62 investigation identified driver-owned desktop DC retention. The 2026-10-31 raw eight-lifetime repeat on 616.56 still grows closed GDI 3..10 and kernel handles 323..342; no supported correction is established. [Current diagnostic](handoffs/18e-editor-physics-preview.md#05c-diagnostic-revisit-2026-10-31). [Investigation](handoffs/05c-failure-investigation.md), [receipt](coverage/evidence/05c-investigation.json). | An independently authorized driver/OS change, a supported ownership correction, or material impact during normal development. Rerun the independent reproducer and the unchanged qualifying workload; retain old failures. |
+| BL-05C-02 | Intel 101.6790 retains USER objects in raw Win32/Vulkan lifetimes. Original tracing identifies failed driver-owned hook removal after target threads begin exit. The 2026-10-31 raw forty-lifetime repeat on 101.6790 has closed USER range 10..14, first 11/final 13, while GDI 3 and handles 316 stay flat; this is diagnostic only. [Current result](handoffs/18e-editor-physics-preview.md#05c-diagnostic-revisit-2026-10-31). [Investigation](handoffs/05c-intel-asan-investigation.md), [receipt](coverage/evidence/05c-intel-user-investigation.json). | An independently authorized driver/OS change, a supported driver-lifetime correction, or material impact during normal development. Repeat the independent reproduction and qualifying workload; require bounded resource behavior. |
+| BL-05C-03 | **OPEN / CAPTURED, 2026-10-31:** the current observer stopped at Intel `surface-error` child 55 after the unchanged 30-second deadline. Its engine-owned resources were released, but the Python worker still waited on the native process object after exit status 1 was published. A worker dump/wait chain is retained; the responsible native rundown operation remains unidentified. The observer's exit-code-only capture blind spot is fixed and CPU-qualified. One corrected fixed 64-child invocation completed expected exits without a slow capture; it does not explain the timeout. [Current evidence](handoffs/18e-editor-physics-preview.md#asan-exit-observation), [original investigation](handoffs/05c-intel-asan-investigation.md), [original receipt](coverage/evidence/05c-asan-exit-investigation.json). | Capture native process signaling/rundown on a recurrence with the corrected bounded tools and identify an actionable cause. Preserve the original and current failures; successful repetitions alone do not close this finding. |
 | BL-05C-04 | Remaining full Release/ASan stress qualification on both GPUs, including the sustained workload and repeated lifetimes. Earlier partial and failed runs remain intact. [Qualification contract](presentation-qualification.md), [original handoff](handoffs/05c-presentation-qualification.md), [latest handoff](handoffs/05c-intel-asan-investigation.md). | Resume when the underlying findings have an actionable resolution or when the user requests qualification. Execute the existing workloads and budgets, Windows/WSL regressions and applicable package checks. Only complete qualifying evidence can change full `REQ-05` to PASS. |
-| BL-14B-01 | Selected Client package/launch/shader-bundle and actual export-worker process sanitizer checks remain NOT_RUN after Clang and MSVC compiler crashes. A fixed-input Clang replay also crashed in code generation; no underlying cause was established. The Core startup ASan pass remains valid. [Investigation and original results](handoffs/14b-standalone-scene-export.md#failures-and-deferred-verification); retained logs and compiler repro inputs are under `out/14b-work/`, including `sanitizer-followup/fixed-input-codegen.log`. | A relevant compiler update, an independently authorized environment repair, materially new diagnostic evidence, or the user's request. Reproduce the compiler issue with retained inputs as applicable, then finish the selected Client and actual worker-process sanitizer checks. Keep historical failures and fixed workloads; successful compilation alone does not qualify behavior. |
-| BL-16A-UI-01 | Remaining actual Editor UI checks are NOT_RUN under the desktop pause: finish Intel restore/focus/clean-close after the interrupted interaction and run the RTX keyboard smoke against the final coalesced-chord correction. Retain the completed native GUI readbacks, earlier RTX project open/save/close and terminal busy/release evidence, plus the corrected adapter's CPU regression. See the [16a handoff](handoffs/16a-editor-shell.md); evidence remains under `out/16a-work/`. **16b adds the native composition and actual scene-workspace acceptance listed below**, also NOT_RUN. | Only the user's explicit instruction to resume desktop testing. Then run the focused outstanding checks on the final relevant inputs, retaining prior results and any interruption/failure evidence. Later scene-editing checkpoints and 16e still require actual UI-driven editing and bidirectional terminal handoff; neither CPU tests nor deferred status establish those passes or full REQ-16 closure. |
+| BL-14B-01 | **CLOSED / PASS, 2026-10-31:** the four deferred Client package/launch/shader-bundle and actual export-worker process sanitizer checks passed under the retained WSL Clang 18.1.3 ASan+UBSan profile. The once-only current build compiled the previously blocked exporter successfully, with no compiler/settings repair. [Closure addendum](handoffs/14b-standalone-scene-export.md#backlog-closure-2026-10-31), [18e handoff](handoffs/18e-editor-physics-preview.md). Logs/inventory/JUnit: `out/18e-work/backlog-14b/`. | No remaining selected sanitizer gate. Historical Clang/MSVC crashes and fixed-input repro evidence under `out/14b-work/` remain intact; their underlying cause is unestablished. This pass does not claim Windows ASan compiler repair or GPU qualification. |
+| BL-16A-UI-01 | **OPEN / PARTIAL, 2026-10-31:** both GPUs passed the corrected 16b required-validation scene-composition fixture; actual RTX editing and both-GPU physics/public-terminal continuation have partial evidence below, including Intel restore and clean close. Remaining focus, settings, hierarchy/gizmo and complete connected UI acceptance checks retain their open statuses. Preserve the completed 16a evidence and interrupted run under `out/16a-work/`; current progress is in the [18e handoff](handoffs/18e-editor-physics-preview.md#testing-backlog-progress-2026-10-31). | Resumption was explicitly authorized on 2026-10-31 after 18e implementation. Complete the outstanding actual interactions on final relevant inputs, retaining prior results and failures. Passing native composition and partial connected workflows do not close full REQ-16/17/18. |
+| BL-17-UI-DRAG-01 | **OPEN / failed native acceptance attempt, 2026-10-31:** the first actual RTX World Translate/Snap-1 drag on the exact saved 17d reference did not start a gesture. Selection cleared with `No visible mesh`; geometry stayed unchanged and source remained Saved/history zero. Cause is **UNDETERMINED** without a native event trace. [Current investigation](handoffs/18e-editor-physics-preview.md#native-viewport-gesture-investigation). | Next work: capture a bounded native input/event trace and identify why the intended press/drag did not reach the shared gesture owner, then verify the required connected drags/cancellation on both GPUs. This new result is not a pass or a finding dismissed under the older deferral. |
+
+### BL-16A-UI-01: progress, 2026-10-31
+
+The 18e coding/headless selection passed: Windows Debug 20/20 affected CTests,
+WSL Debug 4/4 and WSL ASan+UBSan 4/4. These results cover shared inspector/preview,
+retained protocol and process behavior; they do not qualify desktop input.
+
+The corrected 16b native GUI scene-composition fixture is **PASS on both GPUs**:
+`out/18e-work/gui-rtx-qualified/summary.json` and `gui-intel-qualified/summary.json`.
+Each completed eight phases, 56 presentations and clean teardown under required
+validation. Initial failures identified 150% DPI scaling and the Windows caption
+minimum; the fixture explicitly normalizes a larger physical capture host while
+preserving viewport workload, literal pixels and tolerances. Original failures
+remain intact. The [18e handoff](handoffs/18e-editor-physics-preview.md#testing-backlog-progress-2026-10-31)
+records exact devices, limits, logs and the correction.
+
+Actual RTX interaction exercised one-group Name/translation Apply, unapplied
+draft Save/Keep editing/discard, shared Undo/Redo across Save, metadata publication,
+explicit Ready/Publish/Take import control and console detail/clear without scene
+mutation. Both directions of actual Editor/public-terminal writer exclusion and
+saved semantic continuation passed, including terminal `Terminal return` displayed
+in the reopened Editor with empty history. The Editor exited cleanly with zero
+validation diagnostics. This is **partial 16e evidence**, not full acceptance:
+remaining component rejection, metadata draft/close, hierarchy/layout/focus
+decisions, Intel interaction and the full viewport/physics procedures remain open.
+
+Actual RTX 18e interaction also exercised all eleven capsule body fields, draft
+nonpublication versus Apply, one-group Undo/Redo, falling/landing, Pause and one Step,
+retained enter/exit observations, runtime body removal with visual geometry
+retained, Stop restoring authored state/history, independent saved-source checking,
+fresh Play, minimize/restore and clean close while live under required validation.
+The [18e handoff](handoffs/18e-editor-physics-preview.md#testing-backlog-progress-2026-10-31)
+records exact values/ticks and evidence under `out/18e-work/physics-rtx-worker/`.
+The actual native-saved project then passed public-terminal continuation: exact
+body/pose inspection, 120 ticks and owned trigger/floor/removal observations with
+source bytes/status/history/ledger unchanged, followed by a saved terminal rename.
+The actual Intel Editor reopened `Terminal physics return` with Saved state and
+empty history. Its inspector rejected nonuniform scale and parenting visibly,
+retaining the invalid draft without source/history changes until explicit Reload.
+Intel play showed falling/landing and blocked picking; Pause/Step held 1203 then
+1204, and tab/minimize/restore retained the paused state. Close while live/paused
+exited cleanly with 13,350 completed presentations and zero validation diagnostics.
+Evidence is `out/18e-work/ui-physics-terminal-return/summary.json` and
+`physics-intel-worker/` plus its result; exact scope is in the handoff above.
+This is **partial actual physics acceptance on both GPUs**; invalid dimensions,
+negative scale, remaining focus/settings and other required cases stay open.
+No REQ-16/17/18 closure is claimed.
+
+### BL-17-UI-DRAG-01: native drag investigation
+
+The exact 17d reference loaded through actual RTX controls, including both sidecars
+and its camera. Actual picking selected the parented triangle; wheel zoom and
+Reset changed display only with Saved state/history zero. World Translate/Snap 1
+was selected, but the first atomic Computer Use drag from `(1116,774)` to
+`(1116,702)` cleared selection instead of starting a gesture. Reselect worked.
+No event trace exists to attribute the failure; input coalescing is a hypothesis,
+not a demonstrated cause. The session closed cleanly with 28,444 completed
+presentations and zero validation diagnostics.
+
+The documented input API lacks held-button/duration/right-drag controls; the other
+continuous cases were not performed. Evidence and exact next work are in the
+[18e handoff](handoffs/18e-editor-physics-preview.md#native-viewport-gesture-investigation)
+and `out/18e-work/viewport-rtx-worker/`. Diagnose this new native gesture result
+with a bounded event trace before claiming transform acceptance, then finish the
+remaining connected UI checks on both GPUs. 18e implementation/headless work is
+complete; full REQ-16/17/18 remain NOT_RUN.
 
 ### BL-16A-UI-01: 16b acceptance additions
 
 The [16b workspace](editor-scene-workspace.md) and
 [handoff](handoffs/16b-editor-scene-workspace.md) add these deferred checks on the
-RTX 4070 Laptop and Intel GPUs. All are **NOT_RUN** while desktop testing is paused:
+RTX 4070 Laptop and Intel GPUs. The first native fixture is now **PASS on both**;
+remaining actual interactions are **NOT_RUN** except the partial progress above:
 
-- Run the existing GUI fixture's optional scene mode with required validation and
+- **PASS:** run the existing GUI fixture's optional scene mode with required validation and
   verified GUI/scene bundles. Its eight phases are baseline, same-revision camera
   change, same-revision content change, viewport extent resize, framebuffer
   resize, viewport removal, restoration and cancelled close. Check acquired-image

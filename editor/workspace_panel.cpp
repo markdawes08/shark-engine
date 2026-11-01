@@ -3,6 +3,7 @@
 #include "console_widget.hpp"
 #include "gizmo_widget.hpp"
 #include "inspector_widget.hpp"
+#include "physics_panel.hpp"
 #include "scene_panel.hpp"
 
 #include <algorithm>
@@ -111,6 +112,8 @@ struct WorkspacePanel::Impl {
     AssetPanel assets;
     AssetWidget asset_widget;
     ConsoleWidget console;
+    PhysicsPanel physics;
+    SteadyMonotonicClock clock;
     ShaderArtifact vertex;
     ShaderArtifact pixel;
     std::array<char, 257> create_name{};
@@ -136,12 +139,13 @@ struct WorkspacePanel::Impl {
     ViewportPointerRouter pointer;
     std::optional<Error> error;
     std::optional<Error> view_error;
+    std::optional<Error> physics_error;
     std::string notice;
 
     Impl(ProjectSession& owner, const ShaderArtifact& vs, const ShaderArtifact& ps)
         : session(owner), hierarchy(owner), gizmo(hierarchy), inspector(hierarchy),
           inspector_widget(inspector, hierarchy), assets(owner), asset_widget(assets, owner),
-          vertex(vs), pixel(ps) {
+          physics(owner), vertex(vs), pixel(ps) {
         text_buffer(create_name, "Entity");
         text_buffer(target, "windows-client");
         refresh();
@@ -280,6 +284,7 @@ struct WorkspacePanel::Impl {
                 edited(hierarchy.reconcile());
         }
         ImGui::BeginDisabled(!hierarchy.current() || hierarchy.needs_reconciliation());
+        ImGui::BeginDisabled(physics.state().active || physics.state().uncertain);
         ImGui::SetNextItemWidth(-1);
         ImGui::InputText("##entity-name", create_name.data(), create_name.size());
         ImGui::Checkbox("Parent to selection", &child_of_selection);
@@ -294,6 +299,7 @@ struct WorkspacePanel::Impl {
         ImGui::EndDisabled();
         if (missing_parent)
             ImGui::TextWrapped("Select a parent or clear Parent to selection.");
+        ImGui::EndDisabled();
         ImGui::Separator();
         ImGui::BeginDisabled(hierarchy.page_index() == 0);
         if (ImGui::SmallButton("Previous"))
@@ -342,6 +348,7 @@ struct WorkspacePanel::Impl {
         if (selected && hierarchy.selection()) {
             const auto selection = *hierarchy.selection();
             ImGui::TextWrapped("Selected: %s", selected->name.c_str());
+            ImGui::BeginDisabled(physics.state().active || physics.state().uncertain);
             if (selected->has_camera && ImGui::Button("View through camera")) {
                 camera = selection;
                 camera_name = selected->name;
@@ -355,6 +362,7 @@ struct WorkspacePanel::Impl {
             }
             ImGui::TextUnformatted("Parent");
             parents(*selected);
+            ImGui::EndDisabled();
         } else
             ImGui::TextDisabled("Select an entity");
         ImGui::EndDisabled();
@@ -390,6 +398,7 @@ struct WorkspacePanel::Impl {
         ImGui::TextUnformatted("SCENE VIEWPORT");
         ImGui::SameLine();
         ImGui::TextDisabled("%s", camera ? camera_name.c_str() : "No camera selected");
+        ImGui::BeginDisabled(physics.state().active);
         if (ImGui::CollapsingHeader("Viewport resources")) {
             ImGui::SetNextItemWidth(-1);
             if (ImGui::InputText("Import target", target.data(), target.size())) {
@@ -403,6 +412,7 @@ struct WorkspacePanel::Impl {
             if (ImGui::Button("Load asset inventory"))
                 load_inventory();
         }
+        ImGui::EndDisabled();
         ImGui::BeginDisabled(!camera);
         if (ImGui::Button("Refresh view")) {
             refresh_view = true;
@@ -414,7 +424,8 @@ struct WorkspacePanel::Impl {
             invalidate_view(true);
         }
         ImGui::EndDisabled();
-        gizmo.controls(blocked || !hierarchy.current() || hierarchy.needs_reconciliation());
+        gizmo.controls(blocked || physics.state().active || !hierarchy.current() ||
+                       hierarchy.needs_reconciliation());
         if (!gizmo.preview())
             restore_committed_view();
         if (view_error)
@@ -450,12 +461,16 @@ struct WorkspacePanel::Impl {
             pointer.cancel();
             cancel_gizmo();
         }
-        if (refresh_view || (view && view->extent != extent)) {
+        if (refresh_view || physics.state().active || (view && view->extent != extent)) {
             refresh_view = false;
             tools::AuthoringViewportRequest request{camera->id, camera->revision};
             request.viewport = {extent.width, extent.height};
             request.target = {target.data(), tools::AssetAudience::client};
             request.view_camera = navigation.view();
+            if (physics.state().active) {
+                request.physics_session = physics.state().session_id;
+                request.physics_alpha = physics.state().alpha;
+            }
             auto captured = session.viewport_snapshot(request);
             if (!captured) {
                 invalidate_view();
@@ -507,7 +522,7 @@ struct WorkspacePanel::Impl {
                                        ImGui::GetIO().WantTextInput || ImGui::IsAnyItemActive() ||
                                        ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
             GizmoFrameResult manipulated;
-            if (snapshot) {
+            if (snapshot && !physics.state().active) {
                 manipulated = gizmo.overlay(frame.input, rectangle, *snapshot,
                                             ImGui::IsItemHovered(), input_blocked,
                                             [&](const tools::AuthoringTransformPreview& preview) {
@@ -537,7 +552,7 @@ struct WorkspacePanel::Impl {
             }
             const auto actions = pointer.route(frame.input, rectangle, ImGui::IsItemHovered(),
                                                input_blocked || manipulated.consumed);
-            if (actions.pick && snapshot) {
+            if (actions.pick && snapshot && !physics.state().active) {
                 const auto hit =
                     pick_viewport(*snapshot, hierarchy.revision(), rectangle, actions.x, actions.y);
                 if (!hit)
@@ -595,6 +610,87 @@ struct WorkspacePanel::Impl {
             ImGui::EndPopup();
         }
     }
+    void draw_physics(const GraphicsWindowFrame& frame, bool blocked) {
+        const auto now = clock.now();
+        const bool paused_by_window = blocked || deleting || !frame.state.focused ||
+                                      !frame.input.focused || frame.input.focus_lost ||
+                                      frame.state.iconified || !session.state_current() ||
+                                      ImGui::IsPopupOpen(nullptr, ImGuiPopupFlags_AnyPopupId);
+        const bool was_active = physics.state().active;
+        const auto polled = physics.poll(now, paused_by_window);
+        if (!polled)
+            physics_error = polled.error();
+        if (was_active != physics.state().active) {
+            invalidate_view();
+            refresh_view = true;
+        }
+        const auto operation = [&](Result<void> result, bool changed_view) {
+            if (!result)
+                physics_error = result.error();
+            else
+                physics_error.reset();
+            if (changed_view) {
+                invalidate_view();
+                refresh_view = true;
+            }
+        };
+        ImGui::TextUnformatted("PHYSICS PREVIEW");
+        ImGui::SameLine();
+        ImGui::TextDisabled("Frozen runtime copy; source and history stay unchanged");
+        ImGui::BeginDisabled(blocked);
+        ImGui::BeginDisabled(physics.state().active || physics.state().uncertain || !camera ||
+                             !session.state_current() || inspector_widget.has_changes() ||
+                             asset_widget.has_changes() || gizmo.has_changes() ||
+                             hierarchy.needs_reconciliation());
+        if (ImGui::Button("Play physics")) {
+            cancel_gizmo();
+            operation(physics.start(camera->id, camera->revision, target.data(), now), true);
+        }
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        ImGui::BeginDisabled(!physics.state().active || physics.state().uncertain ||
+                             physics.state().faulted);
+        if (ImGui::Button(physics.state().running ? "Pause physics" : "Resume physics"))
+            physics.pause(physics.state().running);
+        ImGui::SameLine();
+        ImGui::BeginDisabled(physics.state().running);
+        if (ImGui::Button("Step physics"))
+            operation(physics.step(now), false);
+        ImGui::SameLine();
+        ImGui::BeginDisabled(!hierarchy.selection());
+        if (ImGui::Button("Remove selected runtime body"))
+            operation(physics.remove(hierarchy.selection()->id), false);
+        ImGui::EndDisabled();
+        ImGui::EndDisabled();
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        ImGui::BeginDisabled(!physics.state().active);
+        if (ImGui::Button("Stop physics"))
+            operation(physics.stop(), true);
+        ImGui::EndDisabled();
+        if (physics.state().uncertain) {
+            ImGui::SameLine();
+            if (ImGui::Button("Reconcile physics result"))
+                operation(physics.reconcile(now), true);
+        }
+        ImGui::EndDisabled();
+        if (physics.state().active)
+            ImGui::Text("Tick %llu; last operation events %zu%s",
+                        static_cast<unsigned long long>(physics.state().tick),
+                        physics.state().events, paused_by_window ? "; window/modal paused" : "");
+        if (!physics.contact_details().empty() &&
+            ImGui::CollapsingHeader("Last contact transitions")) {
+            ImGui::TextDisabled("Last nonempty operation; retained after stop");
+            ImGui::BeginChild("Physics contacts", {0, ImGui::GetTextLineHeightWithSpacing() * 4},
+                              ImGuiChildFlags_Borders);
+            for (const auto& contact : physics.contact_details())
+                ImGui::TextWrapped("%s", contact.c_str());
+            ImGui::EndChild();
+        }
+        if (physics_error)
+            error_text(*physics_error);
+        ImGui::Separator();
+    }
 };
 
 WorkspacePanel::WorkspacePanel(ProjectSession& session, const ShaderArtifact& vertex,
@@ -606,6 +702,7 @@ void WorkspacePanel::draw(const GraphicsWindowFrame& frame, bool blocked) {
     auto& value = *impl_;
     value.image_drawn = false;
     value.synchronize();
+    value.draw_physics(frame, blocked);
     // Resolve last frame's confirmation before emitting this frame's scene image.
     if (!blocked && value.session.state_current())
         value.confirmation();
@@ -620,7 +717,8 @@ void WorkspacePanel::draw(const GraphicsWindowFrame& frame, bool blocked) {
             ImGui::SameLine();
             const float inspector_width = std::clamp(width * .29F, 280.0F, 410.0F);
             ImGui::BeginChild("Inspector", {inspector_width, 0}, ImGuiChildFlags_Borders);
-            if (value.inspector_widget.draw(blocked))
+            if (value.inspector_widget.draw(blocked || value.physics.state().active ||
+                                            value.physics.state().uncertain))
                 value.synchronize();
             ImGui::EndChild();
             ImGui::SameLine();
@@ -633,7 +731,8 @@ void WorkspacePanel::draw(const GraphicsWindowFrame& frame, bool blocked) {
         }
         if (ImGui::BeginTabItem("Assets")) {
             ImGui::BeginChild("Asset workspace", {0, 0}, ImGuiChildFlags_Borders);
-            if (value.asset_widget.draw(blocked)) {
+            if (value.asset_widget.draw(blocked || value.physics.state().active ||
+                                        value.physics.state().uncertain)) {
                 value.invalidate_view();
                 value.refresh_view = true;
             }

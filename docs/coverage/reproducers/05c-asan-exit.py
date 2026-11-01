@@ -48,9 +48,11 @@ def process_identity(pid):
     kernel.OpenProcess.restype = w.HANDLE
     kernel.GetProcessTimes.argtypes = (w.HANDLE, ctypes.POINTER(w.FILETIME), ctypes.POINTER(w.FILETIME), ctypes.POINTER(w.FILETIME), ctypes.POINTER(w.FILETIME))
     kernel.GetExitCodeProcess.argtypes = (w.HANDLE, ctypes.POINTER(w.DWORD))
+    kernel.WaitForSingleObject.argtypes = (w.HANDLE, w.DWORD)
+    kernel.WaitForSingleObject.restype = w.DWORD
     kernel.QueryFullProcessImageNameW.argtypes = (w.HANDLE, w.DWORD, w.LPWSTR, ctypes.POINTER(w.DWORD))
     kernel.CloseHandle.argtypes = (w.HANDLE,)
-    handle = kernel.OpenProcess(0x1000, False, pid)
+    handle = kernel.OpenProcess(0x1000 | 0x00100000, False, pid)  # QUERY_LIMITED_INFORMATION | SYNCHRONIZE
     if not handle:
         return {"pid": pid, "error": ctypes.get_last_error()}
     try:
@@ -60,12 +62,20 @@ def process_identity(pid):
         code = w.DWORD()
         if not kernel.GetExitCodeProcess(handle, ctypes.byref(code)):
             raise ctypes.WinError(ctypes.get_last_error())
+        waited = kernel.WaitForSingleObject(handle, 0)
+        if waited not in (0, 258):  # WAIT_OBJECT_0 / WAIT_TIMEOUT
+            raise ctypes.WinError(ctypes.get_last_error())
         path = ctypes.create_unicode_buffer(32768)
         size = w.DWORD(len(path))
-        if not kernel.QueryFullProcessImageNameW(handle, 0, path, ctypes.byref(size)):
-            raise ctypes.WinError(ctypes.get_last_error())
-        return {"pid": pid, "creation_time": (created.dwHighDateTime << 32) | created.dwLowDateTime,
-                "image": path.value, "exit_code": code.value}
+        image_ok = kernel.QueryFullProcessImageNameW(handle, 0, path, ctypes.byref(size))
+        identity = {"pid": pid, "creation_time": (created.dwHighDateTime << 32) | created.dwLowDateTime,
+                    "image": path.value if image_ok else "", "exit_code": code.value,
+                    "wait_result": waited, "process_signaled": waited == 0}
+        if not image_ok:
+            # Late rundown may have removed the image while its process object
+            # is still nonsignaled. PID+creation authorize this owned capture.
+            identity["image_error"] = ctypes.get_last_error()
+        return identity
     finally:
         kernel.CloseHandle(handle)
 
@@ -262,6 +272,15 @@ def owned_identities(events):
     return identities
 
 
+def capture_pending(identity, observed):
+    """An exit status can be published before the process object is signaled."""
+    if observed.get("pid") != identity["pid"] or observed.get("creation_time") != identity["creation_time"]:
+        return False
+    waited = observed.get("wait_result")
+    require(type(waited) is int and waited in (0, 258), "Owned process has no valid zero-time wait observation")
+    return waited == 258
+
+
 def capture_slow(output, directory, done, threshold, captures, errors):
     try:
         if done.wait(threshold):
@@ -276,7 +295,7 @@ def capture_slow(output, directory, done, threshold, captures, errors):
             if done.is_set():
                 break
             identity, now = state["recorded"], state["observed"]
-            if now.get("creation_time") != identity["creation_time"] or now.get("exit_code") != 259:
+            if not capture_pending(identity, now):
                 continue
             dump = directory / f"{identity['pid']}.dmp"
             result = run_process([str(output / "CaptureExit.exe"), str(identity["pid"]), str(identity["creation_time"]), str(dump)], cwd=output, timeout=5)

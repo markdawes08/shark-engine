@@ -46,6 +46,7 @@ struct InspectorValues {
     Transform transform;
     std::optional<Camera> camera;
     std::optional<MeshRenderer> mesh_renderer;
+    std::optional<RigidBody> rigid_body{};
 };
 
 struct TransformObservation {

@@ -2,8 +2,9 @@
 
 16d adds Assets and Console tabs beside the existing Scene workspace. The
 [handoff](handoffs/16d-editor-assets-console.md) records selected verification;
-actual UI acceptance remains NOT_RUN under the
-[desktop pause](backlog.md#desktop-ui-deferral). Full REQ-16 stays NOT_RUN.
+actual UI acceptance remains NOT_RUN. Desktop testing resumed on 2026-10-31
+after 18e implementation; the [backlog](backlog.md#desktop-ui-deferral) retains
+the required checks and their outcomes. Full REQ-16 stays NOT_RUN.
 
 ## Asset observation and metadata
 

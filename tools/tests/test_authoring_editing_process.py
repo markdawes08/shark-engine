@@ -186,6 +186,133 @@ class AuthoringEditingProcessTests(unittest.TestCase):
         component = next(row for row in saved["entities"] if row["entity_id"] == ENTITY)["components"]["shark.rigid_body"]
         self.assertEqual(component, {"schema_version": 1, **body, "mass": 4.0})
 
+    def test_physics_preview_frozen_source_contacts_retries_and_owner_lifetime(self):
+        body = {"motion": "dynamic", "shape": "sphere", "half_extents": [0.5, 0.5, 0.5],
+                "radius": 0.5, "half_height": 0.5, "mass": 2.0, "friction": 0.5,
+                "restitution": 0.0, "collision_layer": 3, "collision_mask": 1 << 2,
+                "is_trigger": False}
+        sensor = {**body, "motion": "static", "shape": "box", "half_extents": [3, 3, 3],
+                  "collision_layer": 2, "collision_mask": 1 << 3, "is_trigger": True}
+        pose = {**TRANSFORM, "translation": [0, 2, 0]}
+        with self.client() as client:
+            self.assertTrue(client.result("protocol.discover")["capabilities"]["physics_preview"])
+            self.edit(client, {"type": "create_entity", "entity_id": ENTITY, "name": "Preview ball",
+                               "transform": pose, "rigid_body": body})
+            self.edit(client, {"type": "create_entity", "entity_id": CHILD, "name": "Preview sensor",
+                               "transform": {**pose, "translation": [0, 0, 0]}, "rigid_body": sensor})
+            self.save(client)
+            saved_bytes = self.scene_path.read_bytes()
+            # Preview includes unsaved settings without publishing them to the file.
+            self.edit(client, {"type": "set_rigid_body", "entity_id": ENTITY,
+                               "rigid_body": {**body, "mass": 3.0}})
+            source = client.result("project.status")
+            history = client.result("scene.history")
+            mutations = client.result("scene.mutation_status")
+            observed = client.result("scene.physics", {"op": "status"})
+            self.assertFalse(observed["active"])
+            start = {"op": "start", "owner_scope": observed["owner_scope"],
+                     "expected_generation": observed["generation"],
+                     "expected_revision": source["revision"], "camera": pipes.ENTITIES[0],
+                     "target": {"id": "physics-process", "side": "client"}}
+            started = client.result("scene.physics", start)
+            self.assertTrue(started["success"])
+            self.assertEqual(started["tick"], "0")
+            self.assertEqual(client.result("scene.physics", start), started)
+            session = started["session_id"]
+            self.assertEqual(client.result("scene.physics", {"op": "status"})["bodies"], 2)
+            pending_edit = self.mutation(client, {"type": "command", "command": {
+                "type": "set_name", "entity_id": ENTITY, "name": "Must remain frozen"}})
+            self.rpc_error(client.call("scene.mutate", pending_edit), "conflict")
+            self.rpc_error(client.call("scene.reload", {"expected_revision": source["revision"],
+                                                         "unsaved": "discard"}), "conflict")
+            self.assertEqual(client.result("scene.mutation_status"), mutations)
+
+            step = {"op": "step", "session_id": session, "sequence": "1",
+                    "expected_tick": "0", "ticks": 8}
+            # Ignore the first actual pipe response, then reconcile the same operation.
+            client.send(pipes.encoded(pipes.request("scene.physics", step, "ignored-step")) + b"\n")
+            ignored = client.row()["result"]
+            stepped = client.result("scene.physics", step)
+            self.assertEqual(stepped, ignored)
+            self.assertTrue(stepped["success"], stepped)
+            self.assertEqual(stepped["tick"], "8")
+            self.assertEqual(stepped["next_sequence"], "2")
+            enters = [event for event in stepped["events"] if event["phase"] == "enter"]
+            self.assertEqual(len(enters), 1, stepped)
+            self.assertEqual(enters[0]["cause"], "simulation")
+            participants = {enters[0][key]["entity_id"]: enters[0][key]["is_trigger"]
+                            for key in ("first", "second")}
+            self.assertEqual(participants, {ENTITY: False, CHILD: True})
+            self.rpc_error(client.call("scene.physics", {**step, "ticks": 7}), "conflict")
+            self.assertEqual(client.result("scene.physics", {"op": "status"})["last_operation"], stepped)
+
+            query = {"op": "query", "session_id": session, "expected_tick": "8", "limit": 1}
+            runtime_rows = []
+            while True:
+                page = client.result("scene.physics", query)
+                runtime_rows.extend(page["entities"])
+                if page["complete"]:
+                    self.assertIsNone(page["next_offset"])
+                    break
+                query["offset"] = page["next_offset"]
+            runtime = {row["entity_id"]: row for row in runtime_rows}
+            self.assertLess(runtime[ENTITY]["transform"]["local"]["translation"][1], 2)
+            self.assertEqual(runtime[ENTITY]["rigid_body"], {**body, "mass": 3.0})
+            self.assertEqual(self.inspect(client)["transform"]["local"], pose)
+            self.rpc_error(client.call("scene.physics", {**query, "expected_tick": "0"}), "conflict")
+
+            remove = {"op": "remove", "session_id": session, "sequence": "2",
+                      "expected_tick": "8", "entity_id": ENTITY}
+            removed = client.result("scene.physics", remove)
+            self.assertTrue(removed["success"], removed)
+            self.assertEqual(removed["tick"], "8")
+            self.assertEqual(client.result("scene.physics", remove), removed)
+            self.assertEqual(len(removed["events"]), 1, removed)
+            self.assertEqual(removed["events"][0]["phase"], "exit")
+            self.assertEqual(removed["events"][0]["cause"], "body_removed")
+            self.assertEqual(removed["events"][0]["first"], enters[0]["first"])
+            self.assertEqual(removed["events"][0]["second"], enters[0]["second"])
+            self.rpc_error(client.call("scene.physics", step), "conflict")
+            all_rows = client.result("scene.physics", {"op": "query", "session_id": session,
+                                                       "expected_tick": "8"})["entities"]
+            detached = next(row for row in all_rows if row["entity_id"] == ENTITY)
+            self.assertIsNone(detached["rigid_body"])
+            # Runtime removal, native stepping and contact delivery cannot write source/history/files.
+            self.assertEqual(client.result("project.status"), source)
+            self.assertEqual(client.result("scene.history"), history)
+            self.assertEqual(client.result("scene.mutation_status"), mutations)
+            self.assertEqual(self.scene_path.read_bytes(), saved_bytes)
+
+            stop = {"op": "stop", "session_id": session}
+            stopped = client.result("scene.physics", stop)
+            self.assertTrue(stopped["success"])
+            self.assertEqual(client.result("scene.physics", stop), stopped)
+            self.assertEqual(client.result("scene.physics", start), started)
+            self.assertFalse(client.result("scene.physics", {"op": "status"})["active"])
+            observed = client.result("scene.physics", {"op": "status"})
+            restarted = client.result("scene.physics", {**start, "expected_generation": observed["generation"]})
+            self.assertNotEqual(restarted["session_id"], session)
+            self.assertEqual(restarted["tick"], "0")
+            # An old stop cannot close a newer session.
+            self.rpc_error(client.call("scene.physics", stop), "conflict")
+            self.assertEqual(client.result("scene.physics", {"op": "status"})["session_id"], restarted["session_id"])
+            self.rpc_error(client.call("scene.physics", remove), "conflict")
+            # Dirty close destroys the live preview before releasing the project writer.
+            client.result("project.close", {"unsaved": "discard", "expected_revision": source["revision"]})
+            client.result("project.open", {"path": "FeatureWorld.sharkproject"})
+            reopened = client.result("scene.physics", {"op": "status"})
+            self.assertFalse(reopened["active"])
+            self.assertNotEqual(reopened["owner_scope"], start["owner_scope"])
+            self.rpc_error(client.call("scene.physics", start), "conflict")
+            self.assertEqual(self.scene_path.read_bytes(), saved_bytes)
+            self.assertFalse(client.result("project.status")["dirty"])
+            self.assertEqual(client.result("scene.history")["undo_entries"], 0)
+            restored = client.result("scene.inspect", {"entity_id": ENTITY,
+                "fields": ["rigid_body", "transform"]})["entities"][0]
+            self.assertEqual(restored["rigid_body"], body)
+            self.assertEqual(restored["transform"]["local"], pose)
+            client.finish()
+
     def test_retained_replay_mismatch_rejection_expiry_and_restart(self):
         original_bytes = self.scene_path.read_bytes()
         with self.client() as client:

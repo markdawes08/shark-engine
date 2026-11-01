@@ -40,16 +40,15 @@ Linux graphics is outside scope. Mac support, CI, packages and hardware requirem
 are retired by [ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md).
 Hosted CI is supplemental; remote branch protection is unchanged.
 
-**Desktop interaction is paused by user instruction (2026-10-29) until the user
-explicitly resumes it.** Continue coding, builds and headless checks. Do not use
-desktop automation, take focus, inject input or launch windowed tests, including
-automated GPU fixtures. Record required desktop checks as deferred/NOT_RUN in
-the [nonblocking UI backlog](docs/backlog.md), preserving existing results.
-This user amendment permits later implementation to proceed before those checks;
-it does not qualify untested behavior or close full UI acceptance. Do not infer
-permission to resume from elapsed time or a new coding request.
+**Desktop testing resumed by explicit user instruction on 2026-10-31:** finish
+18e, then tackle the testing backlog. This supersedes the 2026-10-29 desktop
+pause and permits the required actual Editor interactions and windowed GPU
+fixtures. Follow the [testing policy](docs/testing-policy.md), run GPU fixtures
+serially and preserve existing results. Items in the [UI backlog](docs/backlog.md)
+remain NOT_RUN until their required evidence passes; resumption alone does not
+qualify untested behavior or close full UI acceptance.
 
-**Current handoff: [18d, collision filters and events](docs/handoffs/18d-collision-filters-and-events.md).**
+**Current handoff: [18e, shared editor physics preview](docs/handoffs/18e-editor-physics-preview.md).**
 Follow [ADR 0045](docs/architecture/0045-physics-foundation.md) and the
 [physics-world contract](docs/physics-world.md): Jolt is a private locked Core
 dependency, with one creating-thread world owner and bounded explicit stepping.
@@ -75,12 +74,20 @@ Scene or Lua. Sleeping is disabled, and native contact evaluation precedes final
 movement. Preserve pre-native queue backpressure, faulted post-native overflow,
 queued participant generations and explicit close discard accounting. Active
 removal detaches through the leased Core owner; source authoring remains separate.
-Next is 18e in the [physics checkpoints](docs/roadmap/physics-plan.md).
+18e's [preview contract](docs/physics-preview.md) and
+[ADR 0049](docs/architecture/0049-editor-physics-preview.md) add a frozen prepared
+runtime Scene through the existing retained project owner. Human play controls
+and `scene.physics` share exact scoped start/operation/stop reconciliation;
+source/history/files remain separate. Preserve bounded receipts and reverse
+native teardown, block source mutation during play and never use interpolated
+runtime snapshots to authorize picking/gizmo commits. Inspector body/pose edits
+remain one retained atomic history batch. Current work finishes the resumed
+testing backlog under the [physics checkpoints](docs/roadmap/physics-plan.md).
 Tick frequency and collision substeps are distinct; reuse existing schedulers.
-Native inspector fields/connected acceptance remain 18e and desktop work is paused.
+Connected acceptance follows [physics acceptance](docs/physics-acceptance.md).
 17d connects portable gizmo/drag adapters and public terminal processes over saved
 projects. The [actual acceptance procedure](docs/viewport-acceptance.md) remains
-NOT_RUN until explicit desktop resumption; full REQ-17 stays open. Continue later
+NOT_RUN until its required evidence passes; full REQ-17 stays open. Continue later
 coding under the existing backlog amendment. Preserve one shared authoring owner
 and explicit runtime transform authority as physics lands.
 Follow [ADR 0044](docs/architecture/0044-viewport-gizmos.md) and the
@@ -107,7 +114,7 @@ transforms, use actual image bounds and preserve focus/modal cancellation.
 Navigation/selection must not change authored state or history.
 Full REQ-17 remains NOT_RUN. 16e's headless project handoff remains recorded in its
 [handoff](docs/handoffs/16e-editor-terminal-acceptance.md); actual connected UI
-acceptance follows the [procedure](docs/editor-acceptance.md) after explicit
+acceptance follows the [procedure](docs/editor-acceptance.md) under the recorded
 desktop resumption. Full REQ-16 remains NOT_RUN under the backlog amendment.
 Follow the [editor checkpoints](docs/roadmap/editor-plan.md),
 [shell contract](docs/editor-shell.md), [workspace contract](docs/editor-scene-workspace.md)

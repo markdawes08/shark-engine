@@ -3,8 +3,8 @@
 Assignment 16c extends the [scene workspace](editor-scene-workspace.md) with
 component drafts and the existing shared undo/redo. The
 [handoff](handoffs/16c-editor-inspector.md) records selected verification.
-Desktop interaction remains paused under the user's
-[amendment](backlog.md#desktop-ui-deferral); actual UI acceptance is NOT_RUN.
+The user resumed desktop testing on 2026-10-31 after 18e implementation;
+actual results remain recorded separately in the [backlog](backlog.md#desktop-ui-deferral).
 
 ## Drafts and validation
 
@@ -17,8 +17,10 @@ replace draft values with a fresh observation.
 
 The inspector uses the existing [component catalog](scene-inspection.md) for
 supported identities, field names, types, units, defaults and constraints.
-Name and Transform are mandatory. Camera and MeshRenderer can be added, edited
-or removed. The same Core component validators and retained authoring commands
+Name and Transform are mandatory. Camera, MeshRenderer and RigidBody can be
+added, edited or removed. RigidBody exposes all eleven fields from the shared
+schema, including bilateral collision filters and trigger. Bodies require a
+root with positive uniform scale. The same Core component validators and retained authoring commands
 make the final decision; display metadata never becomes validation policy.
 
 Transform rotation uses quaternion `[x,y,z,w]`, translation is in meters, and
@@ -30,8 +32,10 @@ this reference does not import an asset or prove that its mesh can be resolved.
 The viewport's existing fresh-asset checks remain separate.
 
 Apply is explicit; editing a widget does not mutate the scene on every keystroke.
-One retained four-command batch updates Name, Transform, Camera and MeshRenderer
-atomically and creates one history group when changed. No-op Apply adds no group.
+One retained batch updates all component values atomically and creates one
+history group when changed. The body-free case keeps its four commands; a body
+edit removes old constraints before an effective pose/settings change, then
+validates/restores the final body in that same atomic batch. No-op Apply adds no group.
 Rejected or stale edits preserve authoritative values and history. A successful
 mutation is reported even if refreshing display values subsequently fails.
 Save uses the shared source persistence path and does not implicitly apply a

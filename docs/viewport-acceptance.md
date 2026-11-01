@@ -1,8 +1,8 @@
 # Connected viewport and terminal acceptance
 
 17d connects the [viewport checkpoints](roadmap/viewport-interaction-plan.md).
-**Actual UI/GPU acceptance is NOT_RUN.** Execute this procedure only after the
-user explicitly resumes desktop testing. Headless adapter/process results do not
+**Actual UI/GPU acceptance is NOT_RUN.** The user resumed desktop testing on
+2026-10-31 after 18e implementation. Headless adapter/process results do not
 qualify native input, focus, layout, rendered previews or full REQ-17.
 
 ## Reference project and independent expectations

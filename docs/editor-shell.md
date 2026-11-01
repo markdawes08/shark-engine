@@ -11,10 +11,9 @@ actual UI acceptance follows the [16e procedure](editor-acceptance.md).
 [17a navigation/picking](viewport-navigation.md) extends the viewport; transform
 drag transactions and gizmos remain later assignment-17 checkpoints.
 
-Desktop testing is currently paused by user instruction. The launch instructions
-below remain available for later use; agents must follow the
-[coding-only amendment](backlog.md) and defer windowed checks until explicitly
-resumed. Builds and headless checks can continue.
+Desktop testing resumed by explicit user instruction on 2026-10-31 after 18e
+implementation. Follow the [backlog](backlog.md#desktop-ui-deferral) for the
+remaining actual interactions; resumption alone does not change NOT_RUN results.
 
 ## Launch and use
 
@@ -31,7 +30,7 @@ $guiPixel = Join-Path out/shaders/editor ($guiManifest.shaders | Where-Object id
 $sceneManifest = Get-Content out/shaders/editor-scene/shader-manifest.json -Raw | ConvertFrom-Json
 $sceneVertex = Join-Path out/shaders/editor-scene ($sceneManifest.shaders | Where-Object id -eq scene-unlit-vs).file
 $scenePixel = Join-Path out/shaders/editor-scene ($sceneManifest.shaders | Where-Object id -eq scene-unlit-ps).file
-# Launch only after desktop testing is explicitly resumed.
+# Desktop testing resumed on 2026-10-31; use current-lock shader/tool receipts.
 build/windows-debug/bin/Editor.exe --editor --gui-vertex $guiVertex --gui-pixel $guiPixel --scene-vertex $sceneVertex --scene-pixel $scenePixel
 ```
 

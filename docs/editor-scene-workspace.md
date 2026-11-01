@@ -4,8 +4,9 @@ Assignment 16b extends the [shell](editor-shell.md) with hierarchy, selection,
 entity creation/deletion/reparenting and an authored-scene viewport. The
 [handoff](handoffs/16b-editor-scene-workspace.md) records verification;
 [ADR 0041](architecture/0041-editor-scene-workspace.md) defines the ownership
-decision. Desktop testing remains paused: the native fixture and actual UI checks
-are deferred/NOT_RUN in [BL-16A-UI-01](backlog.md). Full REQ-16 stays NOT_RUN.
+decision. Desktop testing resumed on 2026-10-31 after 18e implementation; the
+native fixture and actual UI checks retain their recorded status in
+[BL-16A-UI-01](backlog.md). Full REQ-16 stays NOT_RUN until required acceptance.
 
 ## Hierarchy and shared edits
 
@@ -105,6 +106,7 @@ occlusion, clipping/alpha overlay and linear-to-sRGB conversion; generation and
 digest checks cover the changed/restored results.
 
 Both current-PC GPUs still need this required-validation run, followed by actual
-hierarchy/Camera/viewport, CRUD, save and dirty-dialog interactions. They must not
-be launched until the user explicitly resumes desktop testing. CPU checks and
-compilation do not qualify native rendering or actual human/terminal parity.
+hierarchy/Camera/viewport, CRUD, save and dirty-dialog interactions. The user
+authorized resumption on 2026-10-31; see the [backlog](backlog.md#desktop-ui-deferral)
+for current outcomes. CPU checks and compilation do not qualify native rendering
+or actual human/terminal parity.

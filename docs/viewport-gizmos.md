@@ -3,8 +3,9 @@
 17c connects the [17b transform services](transform-manipulation.md) to the
 existing editor viewport. [ADR 0044](architecture/0044-viewport-gizmos.md) records
 the native focused-tool choice. No additional dependency, source/protocol version
-or terminal command is introduced. Actual UI/GPU qualification remains deferred
-under the user's desktop pause; see the [handoff](handoffs/17c-viewport-gizmos.md).
+or terminal command is introduced. Actual UI/GPU qualification remains NOT_RUN;
+desktop testing resumed on 2026-10-31 after 18e implementation. See the
+[backlog](backlog.md#desktop-ui-deferral) and [handoff](handoffs/17c-viewport-gizmos.md).
 
 ## Controls and coordinates
 

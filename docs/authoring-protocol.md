@@ -20,8 +20,11 @@ gain no Tools or JSON dependency. These are local development operations, separa
 from gameplay requests and live-world administration.
 
 18b adds optional [RigidBody settings](physics-bodies.md) through the same owner,
-source/command/history/retry and terminal paths. Native body snapshots never
-write back to authored state; nonempty simulation retains 18c.
+source/command/history/retry and terminal paths. 18e adds the shared CPU
+[`scene.physics` preview](physics-preview.md): explicit start, bounded fixed
+steps, runtime queries/removal, exact operation reconciliation and stop. It uses
+a frozen prepared runtime copy, preserving source/history and saved bytes.
+Discovery advertises `physics_preview`; native Jolt handles stay private.
 
 ## Launch and framing
 

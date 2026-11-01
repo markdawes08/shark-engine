@@ -179,3 +179,22 @@ receipts are unchanged. Final `tools/validate_contract.py`,
 all pass. No staging, commits or pushes were performed.
 
 Suggested commit: `feat(export): publish standalone scene packages and load startup content`.
+
+## Backlog closure, 2026-10-31
+
+The user requested the testing backlog after 18e implementation. On the retained
+WSL Clang 18.1.3 ASan+UBSan build, one current-input build of `Tests`,
+`ExportContent`, `RuntimeScenePrepare` and `Runtime` completed successfully,
+including the previously blocked `client_export_main.cpp`. No compiler,
+instrumentation, host/WSL settings or workload changes and no blind retries were
+needed. Leak detection and undefined-behavior checks remained enabled.
+
+The selected `shark.client.prepared-package`, `shark.client.scene-launch`,
+`shark.client.shader-bundle` and `shark.tools.client-export-process` checks passed
+**4/4 in 4.05s**. The real process family includes exporter/preparer ownership,
+publication fences and Runtime CPU package inspection; no GPU was initialized.
+Commands, compiler identity, inventory, logs and JUnit are retained under
+`out/18e-work/backlog-14b/`, with the current increment in the
+[18e handoff](18e-editor-physics-preview.md). BL-14B-01's deferred sanitizer
+selection is closed. All historical failures and compiler repros above remain
+unchanged; their cause is unestablished, and no Windows compiler repair is claimed.

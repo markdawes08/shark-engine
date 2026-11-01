@@ -42,8 +42,9 @@ transform manipulation and whole-drag undo now use the same retained
 [17b contract](../transform-manipulation.md). [17c gizmos](../viewport-gizmos.md)
 connect those services with validated display previews. 17d adds connected
 headless process continuation and an [actual UI procedure](../viewport-acceptance.md),
-which remains deferred until desktop testing resumes. Visual camera controls need
-no redundant RPC surface.
+which remains NOT_RUN. Desktop testing resumed on 2026-10-31 after 18e
+implementation; see the [backlog](../backlog.md#desktop-ui-deferral). Visual camera
+controls need no redundant RPC surface.
 
 Assignment 18 follows the [physics checkpoints](physics-plan.md). The native CPU
 foundation adds no placeholder authoring methods. Each supported body/collider

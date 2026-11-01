@@ -132,9 +132,18 @@ GuiFrame viewport_fixture(WindowExtent extent, const ShaderArtifact& vertex_shad
 
 OffscreenReadback present(GraphicsDevice& graphics, const GuiFrame& request) {
     bool installed = false;
+    WindowState last_window{};
+    std::uint32_t matching_extent_passes = 0;
+    std::uint32_t iconified_passes = 0;
+    std::array<std::uint32_t, 5> presentation_statuses{};
     SteadyMonotonicClock clock;
     for (std::uint32_t attempt = 0; attempt < 120; ++attempt) {
         const auto window = take(graphics.poll_window());
+        last_window = window.state;
+        if (window.state.framebuffer == request.extent)
+            ++matching_extent_passes;
+        if (window.state.iconified)
+            ++iconified_passes;
         require(!window.state.close_requested && !window.diagnostics.window_error &&
                     !window.diagnostics.input_error &&
                     window.diagnostics.invalid_window_events == 0 &&
@@ -146,6 +155,7 @@ OffscreenReadback present(GraphicsDevice& graphics, const GuiFrame& request) {
                 installed = true;
             }
             const auto result = take(graphics.present({0, 0, 0, 1}));
+            ++presentation_statuses.at(static_cast<std::size_t>(result.status));
             require(result.status != PresentationStatus::closed,
                     "GUI presentation closed before its phase completed");
             if (result.status == PresentationStatus::presented) {
@@ -162,9 +172,27 @@ OffscreenReadback present(GraphicsDevice& graphics, const GuiFrame& request) {
         }
         take(clock.wait_for(std::chrono::milliseconds{10}));
     }
-    throw Failure{{ErrorCode::execution_failed,
-                   "GUI presentation exceeded 120 event passes",
-                   {"gui.smoke.present"}}};
+    const auto extent = [](WindowExtent value) {
+        return std::to_string(value.width) + "x" + std::to_string(value.height);
+    };
+    throw Failure{
+        {ErrorCode::execution_failed,
+         "GUI presentation exceeded 120 event passes; requested=" + extent(request.extent) +
+             "; last_content=" + extent(last_window.content) +
+             "; last_framebuffer=" + extent(last_window.framebuffer) + "; last_scale=" +
+             std::to_string(last_window.scale.x) + "," + std::to_string(last_window.scale.y) +
+             "; last_visible=" + std::to_string(last_window.visible) +
+             "; last_focused=" + std::to_string(last_window.focused) +
+             "; last_iconified=" + std::to_string(last_window.iconified) +
+             "; matching_extent_passes=" + std::to_string(matching_extent_passes) +
+             "; iconified_passes=" + std::to_string(iconified_passes) +
+             "; presentation_status_counts[presented,suspended,waiting,recreate_pending,closed]=" +
+             std::to_string(presentation_statuses[0]) + "," +
+             std::to_string(presentation_statuses[1]) + "," +
+             std::to_string(presentation_statuses[2]) + "," +
+             std::to_string(presentation_statuses[3]) + "," +
+             std::to_string(presentation_statuses[4]),
+         {"gui.smoke.present"}}};
 }
 
 template <typename T>
@@ -222,8 +250,8 @@ Object run(int argc, char** argv) {
         take(load_shader_artifact(pixel, ShaderStage::pixel, ShaderInterface::gui));
     require(std::filesystem::create_directory(output), "GUI capture directory must be fresh");
 
-    constexpr WindowExtent original{160, 120};
-    constexpr WindowExtent resized{200, 144};
+    constexpr WindowExtent original{240, 180};
+    constexpr WindowExtent resized{300, 216};
     GraphicsConfig config;
     config.adapter_uuid = device;
     config.validation = GraphicsValidation::required;
@@ -232,6 +260,10 @@ Object run(int argc, char** argv) {
     const auto adapter = take(graphics->adapter());
     require(adapter.uuid == device, "GUI fixture selected a different GPU");
     take(graphics->configure_gui(atlas, true));
+    // Initial creation follows monitor DPI scaling. These larger fixed-pixel
+    // captures exceed Windows' caption minimum at the current 150% scale;
+    // literal geometry/oracle coordinates and viewport workloads stay unchanged.
+    take(graphics->resize(original));
     Array phases;
     const auto capture = [&](const char* name, const GuiFrame& request) {
         auto pixels = present(*graphics, request);

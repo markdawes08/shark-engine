@@ -28,17 +28,15 @@ verification. 16d adds [assets, jobs and console](../editor-assets-console.md);
 its [handoff](../handoffs/16d-editor-assets-console.md) records completed selected
 headless checks. The [16e handoff](../handoffs/16e-editor-terminal-acceptance.md)
 records connected CPU adapter/public-terminal preparation. Actual UI/terminal
-interaction follows the [acceptance procedure](../editor-acceptance.md) after
-explicit desktop resumption. Neither the implementation nor deferred
-qualification closes the full requirement.
+interaction follows the [acceptance procedure](../editor-acceptance.md).
+Desktop testing resumed on 2026-10-31 after 18e implementation. Neither the
+implementation nor resumption closes the full requirement.
 
-The user's 2026-10-29 [desktop-testing amendment](../backlog.md) permits coding
-16b and later checkpoints while desktop interaction is paused. Continue affected
-headless checks and append each checkpoint's unexecuted desktop acceptance to
-that backlog. Do not launch the Editor or windowed GPU fixtures until the user
-explicitly resumes desktop testing. Existing passes remain evidence for their
-original inputs; later UI behavior and full REQ-16 remain unqualified until the
-deferred acceptance is completed.
+The user's 2026-10-29 [desktop-testing amendment](../backlog.md) permitted coding
+16b and later checkpoints during the pause. On 2026-10-31, the user authorized
+resumption after 18e implementation. Complete the outstanding checks recorded
+in that backlog, reusing valid earlier results. Later UI behavior and full REQ-16
+remain unqualified until their required acceptance passes.
 
 All authoring writes use the retained shared service from assignment 15.
 Closing releases the cooperating writer; reopen creates a new scene incarnation
@@ -51,7 +49,8 @@ belong here. Camera navigation, ray picking, translate/rotate/scale gizmos,
 snapping and continuous-drag undo transactions belong to assignment 17. ImGuizmo
 is not introduced before that owner.
 Its [four checkpoints](viewport-interaction-plan.md) now begin with 17a navigation
-and picking, under the same desktop deferral; this does not close REQ-16.
+and picking; its outstanding acceptance remains in the same backlog and does not
+close REQ-16.
 
 Select verification by the changed owners. Native GUI changes need the available
 GPUs and real window lifecycle evidence; CPU adapter checks do not replace those

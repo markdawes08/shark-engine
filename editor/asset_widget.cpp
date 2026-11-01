@@ -261,6 +261,8 @@ struct AssetWidget::Impl {
                 read_metadata(row->sidecar);
             ImGui::EndDisabled();
         }
+        if (!panel.cache())
+            ImGui::TextWrapped("Refresh cache to enable cache checks and imports.");
         ImGui::BeginDisabled(!panel.selection() || !panel.cache());
         if (ImGui::Button("Check selected cache")) {
             auto value = panel.query_selected_cache(profile());

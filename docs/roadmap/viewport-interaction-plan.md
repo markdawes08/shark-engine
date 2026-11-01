@@ -2,8 +2,9 @@
 
 Date: 2026-10-29. Base: `7a54cf2`, initially clean `main`. Owner: REQ-17.
 This four-checkpoint plan follows [16e's headless preparation](../handoffs/16e-editor-terminal-acceptance.md).
-The user's [desktop pause](../backlog.md#desktop-ui-deferral) permits continued
-coding, without closing full REQ-16 or qualifying actual UI interaction.
+The user's [desktop amendment](../backlog.md#desktop-ui-deferral) permitted
+continued coding during the pause. Desktop testing resumed on 2026-10-31 after
+18e implementation; resumption does not qualify actual UI interaction.
 
 | Checkpoint | Deliverable and acceptance |
 | --- | --- |
@@ -23,8 +24,9 @@ headless results in its [handoff](../handoffs/17c-viewport-gizmos.md).
 17d connects CPU adapter and public terminal processes through saved projects;
 its [handoff](../handoffs/17d-connected-viewport-acceptance.md) records the headless
 results. The [actual acceptance procedure](../viewport-acceptance.md) and required
-native checks remain deferred. Full REQ-17 stays NOT_RUN. Later coding may proceed
-to assignment 18 under the user's explicit nonblocking desktop amendment.
+native checks remain NOT_RUN until their evidence passes. Full REQ-17 stays
+NOT_RUN. The user's nonblocking amendment permitted assignment-18 implementation;
+desktop resumption now authorizes the outstanding actual checks.
 
 Editor camera navigation and selection are presentation state, not authored
 transform mutations or gameplay intents. Gizmo writes use the original
@@ -34,6 +36,6 @@ authority and physics remain with their existing owners.
 
 Use the [testing policy](../testing-policy.md): focused CPU math/adapter checks,
 affected renderer preparation and retained-owner regressions. Native windows,
-input and GPU qualification stay NOT_RUN until explicit desktop resumption.
+input and GPU qualification stay NOT_RUN until their required evidence passes.
 Record the required checks in the backlog; do not substitute synthetic input for
 actual UI acceptance or repeat unrelated engine matrices.

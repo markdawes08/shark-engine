@@ -196,6 +196,86 @@ TEST_CASE("Editor inspector rejection preserves original scene draft and shared 
     CHECK_FALSE(work.session->state().dirty);
 }
 
+TEST_CASE("Inspector body drafts preserve settings history and saved source across edits",
+          "[editor-inspector]") {
+    Workspace work;
+    auto& draft = *work.inspector.draft();
+    draft.rigid_body = RigidBody{};
+    draft.rigid_body->motion = BodyMotion::dynamic_body;
+    draft.rigid_body->shape = ColliderShape::capsule;
+    draft.rigid_body->half_extents = {2, 3, 4};
+    draft.rigid_body->radius = 0.75;
+    draft.rigid_body->half_height = 1.25;
+    draft.rigid_body->mass = 7;
+    draft.rigid_body->friction = 0.3;
+    draft.rigid_body->restitution = 0.6;
+    draft.rigid_body->collision_layer = 4;
+    draft.rigid_body->collision_mask = 9;
+    draft.rigid_body->is_trigger = true;
+    const auto expected = *draft.rigid_body;
+    const auto added = take(work.inspector.apply());
+    CHECK(added.changed);
+    CHECK(take(work.scene.inspect(entity(1), added.revision)).rigid_body == expected);
+    CHECK(take(work.scene.history(added.revision)).undo_entries == 1);
+    CHECK_FALSE(take(work.inspector.apply()).changed);
+    CHECK(take(work.scene.history(added.revision)).undo_entries == 1);
+
+    // Changing pose and dimensions together must not expose an invalid
+    // intermediate body/transform combination to the shared batch validator.
+    work.inspector.draft()->transform.translation = {1, 2, 3};
+    work.inspector.draft()->transform.scale = {2, 2, 2};
+    work.inspector.draft()->rigid_body->radius = 1;
+    const auto resized = take(work.inspector.apply());
+    CHECK(resized.changed);
+    const auto resized_body = work.inspector.draft()->rigid_body;
+    auto history = take(work.scene.history(resized.revision));
+    REQUIRE(history.next_undo);
+    const auto undone = take(work.scene.undo(history.next_undo->ticket, history.revision));
+    const auto original = take(work.scene.inspect(entity(1), undone.revision));
+    CHECK(original.transform == Transform{});
+    CHECK(original.rigid_body == expected);
+    history = take(work.scene.history(undone.revision));
+    REQUIRE(history.next_redo);
+    const auto redone = take(work.scene.redo(history.next_redo->ticket, history.revision));
+    work.select(entity(1));
+    CHECK(work.inspector.draft()->rigid_body == resized_body);
+    take(work.session->save(redone.revision));
+    CHECK_FALSE(work.session->state().dirty);
+
+    // Explicitly removing the body permits render-only signed/nonuniform TRS.
+    work.inspector.draft()->rigid_body.reset();
+    work.inspector.draft()->transform.scale = {-2, 3, 4};
+    const auto removed = take(work.inspector.apply());
+    CHECK_FALSE(take(work.scene.inspect(entity(1), removed.revision)).rigid_body);
+    take(work.session->close(CloseChoice::discard, removed.revision));
+    REQUIRE(work.session->open("Project.sharkproject"));
+    REQUIRE(work.scene.refresh());
+    work.select(entity(1));
+    CHECK(work.inspector.draft()->rigid_body == resized_body);
+    CHECK(work.inspector.draft()->transform.scale == math::Vec3{2, 2, 2});
+    CHECK(take(work.scene.history(work.scene.revision())).undo_entries == 0);
+}
+
+TEST_CASE("Invalid body drafts keep authored state and recover through explicit reload",
+          "[editor-inspector]") {
+    Workspace work;
+    const auto initial = work.scene.revision();
+    work.inspector.draft()->rigid_body = RigidBody{};
+    work.inspector.draft()->transform.scale = {1, 2, 1};
+    rejected(work.inspector.apply(), ErrorCode::invalid_argument);
+    CHECK(work.inspector.dirty());
+    CHECK(work.scene.revision() == initial);
+    CHECK_FALSE(work.session->state().dirty);
+    CHECK_FALSE(take(work.scene.inspect(entity(1), initial)).rigid_body);
+    CHECK(take(work.scene.history(initial)).undo_entries == 0);
+    accepted(work.inspector.refresh());
+    work.inspector.draft()->rigid_body = RigidBody{};
+    work.inspector.draft()->rigid_body->collision_layer = 16;
+    rejected(work.inspector.apply(), ErrorCode::invalid_argument);
+    CHECK(work.scene.revision() == initial);
+    CHECK_FALSE(work.session->state().dirty);
+}
+
 TEST_CASE("Editor inspector never retargets stale drafts or replaced entity identities",
           "[editor-inspector]") {
     Workspace work;

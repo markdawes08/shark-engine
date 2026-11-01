@@ -2,8 +2,8 @@
 
 Assignment 16e continues one saved project through the human Editor and public
 `SharkAuthor` requests in both directions. **Actual UI acceptance is NOT_RUN.**
-The [desktop pause](backlog.md#desktop-ui-deferral) must be explicitly lifted by
-the user before launching any Editor, native fixture or desktop automation.
+The user explicitly resumed desktop testing on 2026-10-31 after 18e
+implementation; the [backlog](backlog.md#desktop-ui-deferral) records outcomes.
 The connected headless adapter fixture is preparation; it does not establish UI
 parity, focus/layout behavior, GPU qualification or full REQ-16 completion.
 
@@ -64,8 +64,11 @@ durability. Do not equate request correlation with a mutation retry identity.
    scene save/undo must not undo that separate metadata publication.
 7. In the copied glTF source only, change `asset.generator` to `16e UI import`
    using ordinary filesystem editing. Record the change; leave geometry and the
-   binary untouched. Reload inventory, **Check selected cache**, then **Import
-   selected**. **Refresh jobs** must not publish a ready result. Use **Publish
+   binary untouched. Reload inventory, **Refresh catalog**, select the root asset,
+   and **Refresh cache** to enable its cache checks and imports. Choose **Check
+   selected cache**, then **Import selected**. Repeat **Refresh cache** after any
+   later inventory or metadata reload clears the cache observation. **Refresh
+   jobs** must not publish a ready result. Use **Publish
    ready result**, verify success/freshness/new root key and unchanged dependency
    identity, then **Acknowledge result**. Inspect the retained artifact and Console
    diagnostics. Refresh the explicit viewport; retain the unsaved scene/history.

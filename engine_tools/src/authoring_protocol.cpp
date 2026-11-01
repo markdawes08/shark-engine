@@ -4,6 +4,7 @@
 #include "authoring_assets.hpp"
 #include "authoring_execution_wire.hpp"
 #include "authoring_export.hpp"
+#include "authoring_physics.hpp"
 #include "authoring_run.hpp"
 #include "authoring_wire.hpp"
 #include "shark/tools/project_files.hpp"
@@ -239,7 +240,7 @@ Json discovery(bool export_available, bool capture_available) {
           {"protocol_version", "transport", "limits", "capabilities", "methods", "components"}}},
         Json::object());
     add("schema.components", empty,
-        object_schema({{"components", {{"type", "array"}, {"minItems", 4}, {"maxItems", 4}}}},
+        object_schema({{"components", {{"type", "array"}, {"minItems", 5}, {"maxItems", 5}}}},
                       {"components"}),
         Json::object());
     add("project.open",
@@ -369,6 +370,7 @@ Json discovery(bool export_available, bool capture_available) {
     add("text.release", object_schema({{"revision", id_schema()}}, {"revision"}),
         object_schema({{"released", {{"const", true}}}}, {"released"}),
         {{"revision", "00000000-0000-4000-8000-000000000008"}});
+    methods.push_back(AuthoringPhysics::method_schema());
     for (auto& method : authoring_asset_wire::methods_json())
         methods.push_back(std::move(method));
     for (auto& method : authoring_execution_wire::methods(export_available, capture_available))
@@ -392,6 +394,7 @@ Json discovery(bool export_available, bool capture_available) {
               {"imports", true},
               {"background_jobs", true},
               {"scene_runs", true},
+              {"physics_preview", true},
               {"standalone_export", export_available}}},
             {"methods", std::move(methods)},
             {"components", components}};
@@ -471,6 +474,7 @@ struct Session {
     };
     std::map<std::string, TextRevision> text_revisions;
     std::unique_ptr<AuthoringAssets> assets{};
+    std::unique_ptr<AuthoringPhysics> physics{};
 };
 
 Json status(const Session* session) {
@@ -638,6 +642,38 @@ struct AuthoringProtocol::Impl {
     }
 
     Dispatch dispatch(std::string_view method, const Json& parameters) {
+        if (method == "scene.physics") {
+            auto& current = require_session();
+            const auto validate_source = [&]() -> Result<void> {
+                try {
+                    check_source_files(current);
+                    return {};
+                } catch (ProtocolFailure& failure) {
+                    return std::move(failure.error);
+                }
+            };
+            if (parameters.is_object() && parameters.value("op", Json{}) == "start" &&
+                (!current.physics || !current.physics->replays_start(parameters)))
+                take(validate_source());
+            if (!current.physics)
+                current.physics = std::make_unique<AuthoringPhysics>();
+            auto reply = current.physics->dispatch(parameters, *current.owner, assets(current),
+                                                   outcome_may_have_changed, validate_source);
+            if (!reply) {
+                const auto code = reply.error().code;
+                const bool malformed =
+                    code == ErrorCode::invalid_argument || code == ErrorCode::invalid_id;
+                throw ProtocolFailure{malformed ? -32602 : -32000, std::move(reply).error()};
+            }
+            Dispatch result{std::move(reply).value()};
+            result.failed =
+                result.result.contains("success") && !result.result.at("success").get<bool>();
+            return result;
+        }
+        if ((method == "scene.mutate" || method == "scene.preview" || method == "scene.reload") &&
+            session && session->physics && session->physics->active())
+            fail(-32000, ErrorCode::conflict,
+                 "Stop the frozen physics preview before editing or reloading source");
         if (method == "scene.run") {
             auto& current = require_session();
             const auto request = take(authoring_execution_wire::parse_run(parameters), -32602);
@@ -1298,6 +1334,17 @@ Result<RenderScene> AuthoringProtocol::viewport_snapshot(const AuthoringViewport
                          "Viewport dimensions or local origin exceed the supported bounds",
                          {.operation = "authoring.viewport.snapshot"}};
         auto& current = impl_->require_session();
+        if (request.physics_session) {
+            if (!current.physics)
+                return Error{ErrorCode::conflict,
+                             "No physics preview is active",
+                             {.operation = "authoring.viewport.snapshot"}};
+            return current.physics->snapshot(request, *current.owner);
+        }
+        if (current.physics && current.physics->active())
+            return Error{ErrorCode::conflict,
+                         "Select the active physics session for the preview viewport",
+                         {.operation = "authoring.viewport.snapshot"}};
         impl_->check_source_files(current);
         if (request.transform_preview) {
             const auto& value = *request.transform_preview;

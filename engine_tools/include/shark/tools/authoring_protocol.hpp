@@ -55,6 +55,10 @@ struct AuthoringViewportRequest {
     // Pure shared-owner validation, then display-only subtree recomposition.
     // Neither source state nor history changes. Returned snapshot marks preview.
     std::optional<AuthoringTransformPreview> transform_preview{};
+    // Frozen runtime preview, scoped by scene.physics start. Interpolated values
+    // are presentation-only and cannot authorize source picking or mutations.
+    std::optional<StableId> physics_session{};
+    double physics_alpha{1.0};
 };
 
 // Creating-thread CPU adapter over ProjectFiles and one AuthoredScene. The root

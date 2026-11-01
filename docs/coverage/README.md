@@ -77,7 +77,7 @@ lifetime cases retain their evidence under the
 remain complete under current-machine scope and approved amendments.
 
 FeatureWorld has eighteen native cases, four saved entity IDs and 58 exercised
-CPU surfaces, plus 43 external CPU commands (the exporter and 42 terminal methods,
+CPU surfaces, plus 44 external CPU commands (the exporter and 43 terminal methods,
 including configured export) and three GPU commands, including optional terminal capture.
 Real source/geometry/texture/material/
 payload cases supplement owner/cache/job paths. The manifest and independent

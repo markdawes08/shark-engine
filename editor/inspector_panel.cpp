@@ -53,7 +53,9 @@ bool InspectorPanel::dirty() const noexcept {
         return draft_.has_value() != baseline_.has_value();
     return !same_selection(draft_->selection, baseline_->selection) ||
            draft_->name != baseline_->name || draft_->transform != baseline_->transform ||
-           draft_->camera != baseline_->camera || draft_->mesh_renderer != baseline_->mesh_renderer;
+           draft_->camera != baseline_->camera ||
+           draft_->mesh_renderer != baseline_->mesh_renderer ||
+           draft_->rigid_body != baseline_->rigid_body;
 }
 bool InspectorPanel::stale() const noexcept {
     return draft_ && (!baseline_ || !same_selection(draft_->selection, baseline_->selection) ||

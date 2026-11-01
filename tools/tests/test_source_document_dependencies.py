@@ -144,6 +144,7 @@ class SourceDocumentDependencyTests(unittest.TestCase):
                 ROOT / "engine_tools/src/prepared_content.cpp",
                 ROOT / "engine_tools/src/client_export.cpp",
                 ROOT / "engine_tools/src/authoring_protocol.cpp",
+                ROOT / "engine_tools/src/authoring_physics.cpp",
                 ROOT / "engine_tools/src/authoring_wire.cpp",
                 ROOT / "engine_tools/src/authoring_assets.cpp",
                 ROOT / "engine_tools/src/authoring_asset_wire.cpp",

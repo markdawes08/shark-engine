@@ -440,7 +440,7 @@
       "planned_fixture": "EditorApiStateEquivalence, EditorLifecycle and EditorFocusRouting fixtures; FeatureWorld/EditorAuthoring is the representative saved project. Add HumanTerminalProjectHandoff and UnsavedHistoryConflict fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "16a-16d implement the retained editor shell, hierarchy/viewport, component drafts/history and asset/job/console panels. 16e adds connected CPU editor-adapter and real public-terminal process handoff preparation, independent saved scene/asset checks and reciprocal writer rejection; selected results and limits belong to docs/handoffs/16e-editor-terminal-acceptance.md. Actual UI/graphics acceptance remains NOT_RUN in BL-16A-UI-01 under the user desktop pause. The connected actual UI procedure is docs/editor-acceptance.md. Full REQ-16 remains NOT_RUN until that procedure and the deferred desktop checks pass; headless adapters and in-memory ImGui fixtures do not establish native UI or full semantic parity. Continued coding is authorized by the backlog amendment."
+        "reason": "16a-16d implement the retained editor shell, hierarchy/viewport, component drafts/history and asset/job/console panels. 16e adds connected CPU editor-adapter and real public-terminal process handoff preparation, independent saved scene/asset checks and reciprocal writer rejection; selected results and limits belong to docs/handoffs/16e-editor-terminal-acceptance.md. Desktop testing resumed on 2026-10-31. Partial actual RTX/Intel editor and physics checks plus both-GPU GUI scene composition belong to docs/handoffs/18e-editor-physics-preview.md; remaining UI/graphics acceptance stays NOT_RUN in BL-16A-UI-01. The connected actual UI procedure is docs/editor-acceptance.md. Full REQ-16 remains NOT_RUN until that procedure and the deferred desktop checks pass; headless adapters and in-memory ImGui fixtures do not establish native UI or full semantic parity. Continued coding is authorized by the backlog amendment."
       }
     },
     {
@@ -456,7 +456,7 @@
       "planned_fixture": "FeatureWorld/GizmoHierarchy, GizmoDragUndo, HighDpiViewportPicking and GizmoAgentEquivalence fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "17a-17c implement display navigation/picking, shared transform manipulation/drag transactions, native gizmo controls and immutable subtree previews. 17d extends the existing CPU editor-adapter and real public-terminal process handoff fixture with independent local/world transform expectations, retained stale-decision/history checks and saved-project continuation. Selected headless results and limits belong to docs/handoffs/17d-connected-viewport-acceptance.md; unchanged focused rendering/geometry results remain in their original handoffs. Actual connected UI, input/layout and both-GPU rendering acceptance remains NOT_RUN in BL-16A-UI-01 under the user desktop pause, following docs/viewport-acceptance.md. Full REQ-17 remains NOT_RUN; later coding is permitted by the explicit backlog amendment. 17d also corrects held invalid scale gestures so they can cross rejected snapped zero without committing stale candidates; the headless ImGui regression verifies correction, invalid release and single-group undo."
+        "reason": "17a-17c implement display navigation/picking, shared transform manipulation/drag transactions, native gizmo controls and immutable subtree previews. 17d extends the existing CPU editor-adapter and real public-terminal process handoff fixture with independent local/world transform expectations, retained stale-decision/history checks and saved-project continuation. Selected headless results and limits belong to docs/handoffs/17d-connected-viewport-acceptance.md; unchanged focused rendering/geometry results remain in their original handoffs. Desktop testing resumed on 2026-10-31. Partial actual picking/dolly checks and the incomplete native gizmo attempt belong to docs/handoffs/18e-editor-physics-preview.md. Remaining connected UI, input/layout and both-GPU gesture acceptance stays NOT_RUN in BL-16A-UI-01, following docs/viewport-acceptance.md. Full REQ-17 remains NOT_RUN; later coding is permitted by the explicit backlog amendment. 17d also corrects held invalid scale gestures so they can cross rejected snapped zero without committing stale candidates; the headless ImGui regression verifies correction, invalid release and single-group undo."
       }
     },
     {
@@ -473,7 +473,7 @@
       "planned_fixture": "FeatureWorld/RigidBodies, FeatureWorld/CollisionLayers, FeatureWorld/Triggers, PhysicsRenderRateTolerance and PhysicsQueuedRemoval fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "18a-18d implement native bodies, shared authored settings, fixed-step Scene ownership/synchronization and presentation interpolation, plus bilateral filters, native triggers, bounded owned contact transitions and safe active removal with queued participant lifetimes. Selected Windows/WSL Debug, ASan+UBSan and protected Release evidence is in docs/handoffs/18d-collision-filters-and-events.md. Native editor/play and connected human/terminal qualification retain 18e; full REQ-18 remains NOT_RUN."
+        "reason": "18a-18e implement native bodies, fixed-step Scene ownership/interpolation, bilateral filters/triggers and bounded owned contacts. 18e adds all eleven inspector fields and one shared CPU scene.physics preview over a frozen prepared runtime Scene, exact start/operation/stop reconciliation, source/history isolation and native play controls. Selected headless evidence, partial native RTX/Intel physics checks and independent public-terminal continuation belong to docs/handoffs/18e-editor-physics-preview.md. Remaining actual connected UI/rendering acceptance follows docs/physics-acceptance.md; full REQ-18 remains NOT_RUN until those gates pass. Desktop testing was explicitly resumed on 2026-10-31."
       }
     },
     {
@@ -3366,6 +3366,37 @@
         "featureworld_cases": [
           "featureworld.rigid-bodies"
         ]
+      },
+      {
+        "id": "physics.authoring-preview",
+        "name": "Shared frozen physics preview and editor controls",
+        "requirement_ids": [
+          "REQ-18",
+          "REQ-16",
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.editor.physics",
+          "shark.editor.inspector",
+          "shark.editor.gui-adapter",
+          "shark.tools.authoring-editing-process",
+          "shark.tools.authoring-protocol-process"
+        ],
+        "test_sources": [
+          "tests/editor_physics_tests.cpp",
+          "tests/editor_inspector_tests.cpp",
+          "tests/editor_inspector_gui_tests.cpp",
+          "tools/tests/test_authoring_editing_process.py",
+          "tools/tests/test_authoring_protocol_process.py"
+        ],
+        "fixtures": [
+          "docs/physics-preview.md",
+          "docs/physics-acceptance.md",
+          "docs/architecture/0049-editor-physics-preview.md"
+        ],
+        "fixture_reason": "The retained project owner captures a fresh prepared runtime Scene with frozen client assets and bounded native physics. Portable editor adapters and real terminal pipes independently check gravity, trigger enter/removal exit, bounded queries, original operation replay, stale/expired scopes, source/history/file preservation, stop/restart and close/reopen cleanup. Inspector fixtures check all body fields, atomic pose/settings edits, validation, undo/redo and saved-state restoration.",
+        "external_fixture_reason": "Preview protocol, editor draft/scheduling and project writer lifetimes require shared-owner and real-process fixtures. The existing FeatureWorld rigid-body case continues to qualify Core physics and source/runtime separation without adding a duplicate case. Actual human input/rendering and bidirectional UI/terminal acceptance are recorded separately; CPU passes do not qualify GPUs.",
+        "featureworld_cases": []
       }
     ],
     "components": [
@@ -3559,21 +3590,25 @@
           "shark.tools.rigid-body",
           "shark.tools.authoring-editing-process",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process",
+          "shark.editor.inspector",
+          "shark.editor.physics"
         ],
         "test_sources": [
           "tests/core_physics_body_tests.cpp",
           "tests/rigid_body_tests.cpp",
           "tools/tests/test_authoring_editing_process.py",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tests/editor_inspector_tests.cpp",
+          "tests/editor_physics_tests.cpp"
         ],
         "fixtures": [
           "engine_tools/src/feature_world.cpp",
           "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
           "docs/physics-bodies.md"
         ],
-        "fixture_reason": "Real native bodies cover all three motion modes and collider shapes, scaled geometry, inverse mass, capacity, stale/foreign world and entity generations, source changes and owner-thread teardown. Shared source/command fixtures cover schema validation, atomic rollback, snapshot history, exact retained input matching, native save/reopen and prepared v1/v2 compatibility. Real terminal pipes author, query, reject, retry, undo/redo, save and reopen all fields. FeatureWorld uses independent expected source and native geometry without changing its saved IDs or authored input.",
+        "fixture_reason": "Real native bodies cover all three motion modes and collider shapes, scaled geometry, inverse mass, capacity, stale/foreign world and entity generations, source changes and owner-thread teardown. Shared source/command fixtures cover schema validation, atomic rollback, snapshot history, exact retained input matching, native save/reopen and prepared v1/v2 compatibility. Real terminal pipes author, query, reject, retry, undo/redo, save and reopen all fields. FeatureWorld uses independent expected source and native geometry without changing its saved IDs or authored input. Native inspector adapters preserve all eleven body fields through one retained atomic history group, validation and save/reopen; frozen play leaves those authored values unchanged.",
         "featureworld_cases": [
           "featureworld.rigid-bodies"
         ],
@@ -6413,26 +6448,55 @@
           "shark.tools.rigid-body",
           "shark.tools.authoring-editing-process",
           "shark.tools.featureworld",
-          "shark.tools.featureworld-process"
+          "shark.tools.featureworld-process",
+          "shark.editor.inspector",
+          "shark.editor.physics"
         ],
         "test_sources": [
           "tests/core_physics_body_tests.cpp",
           "tests/rigid_body_tests.cpp",
           "tools/tests/test_authoring_editing_process.py",
           "tests/feature_world_tests.cpp",
-          "tools/tests/test_feature_world_process.py"
+          "tools/tests/test_feature_world_process.py",
+          "tests/editor_inspector_tests.cpp",
+          "tests/editor_physics_tests.cpp"
         ],
         "fixtures": [
           "engine_tools/src/feature_world.cpp",
           "assets/FeatureWorld/scenes/FeatureWorld.sharkscene",
           "docs/physics-bodies.md"
         ],
-        "fixture_reason": "Real native bodies cover all three motion modes and collider shapes, scaled geometry, inverse mass, capacity, stale/foreign world and entity generations, source changes and owner-thread teardown. Shared source/command fixtures cover schema validation, atomic rollback, snapshot history, exact retained input matching, native save/reopen and prepared v1/v2 compatibility. Real terminal pipes author, query, reject, retry, undo/redo, save and reopen all fields. FeatureWorld uses independent expected source and native geometry without changing its saved IDs or authored input.",
+        "fixture_reason": "Real native bodies cover all three motion modes and collider shapes, scaled geometry, inverse mass, capacity, stale/foreign world and entity generations, source changes and owner-thread teardown. Shared source/command fixtures cover schema validation, atomic rollback, snapshot history, exact retained input matching, native save/reopen and prepared v1/v2 compatibility. Real terminal pipes author, query, reject, retry, undo/redo, save and reopen all fields. FeatureWorld uses independent expected source and native geometry without changing its saved IDs or authored input. Native inspector adapters preserve all eleven body fields through one retained atomic history group, validation and save/reopen; frozen play leaves those authored values unchanged.",
         "featureworld_cases": [
           "featureworld.rigid-bodies"
         ],
         "id": "command.set-rigid-body",
         "name": "SetRigidBodyCommand / scene.mutate set_rigid_body"
+      },
+      {
+        "id": "terminal.scene.physics",
+        "name": "SharkAuthor JSON-RPC scene.physics",
+        "requirement_ids": [
+          "REQ-18",
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.tools.authoring-editing-process",
+          "shark.tools.authoring-protocol-process",
+          "shark.editor.physics"
+        ],
+        "test_sources": [
+          "tools/tests/test_authoring_editing_process.py",
+          "tools/tests/test_authoring_protocol_process.py",
+          "tests/editor_physics_tests.cpp"
+        ],
+        "fixtures": [
+          "assets/FeatureWorld/FeatureWorld.sharkproject",
+          "docs/physics-preview.md"
+        ],
+        "fixture_reason": "Actual public terminal pipes discover and exercise status/start/step/remove/query/stop over saved project copies, independent expected gravity/contact values, original receipts and source/history/file isolation.",
+        "external_fixture_reason": "Real redirected terminal output, lost-reply reconciliation and project owner teardown require process fixtures. Existing FeatureWorld physics remains the Core semantic owner; this RPC is an additive local authoring preview, not a player protocol or Lua runner.",
+        "featureworld_cases": []
       }
     ],
     "lua_api": []

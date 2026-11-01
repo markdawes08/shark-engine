@@ -41,7 +41,9 @@ Assignment 16 now follows the [human editor checkpoints](editor-plan.md). Its
 initial [project shell](../editor-shell.md) uses the existing authoring owner;
 it changes no live authority, global cell identity, persistence or LOCAL-MMO-1
 workload. Scene panels and headless project handoff are implemented, while actual
-UI acceptance remains deferred under the user desktop pause. Assignment 17 follows
+UI acceptance remains NOT_RUN; the user resumed desktop testing on 2026-10-31
+after 18e implementation under the [backlog](../backlog.md#desktop-ui-deferral).
+Assignment 17 follows
 the [viewport interaction checkpoints](viewport-interaction-plan.md); display-only
 navigation keeps bounded local origins separate from global cell authority.
 

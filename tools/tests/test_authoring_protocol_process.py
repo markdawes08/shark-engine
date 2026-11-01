@@ -35,6 +35,7 @@ METHODS |= {
     "asset.jobs.take", "asset.jobs.close",
 }
 METHODS.add("scene.run")
+METHODS.add("scene.physics")
 
 
 def unique(pairs):
@@ -238,7 +239,8 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
         self.assertEqual(discovery["capabilities"], {"cpu_authoring": True, "device_capture": False,
                                                     "mutations": True, "imports": True,
                                                     "background_jobs": True, "scene_runs": True,
-                                                    "standalone_export": False})
+                                                    "standalone_export": False,
+                                                    "physics_preview": True})
         self.assertEqual({method["name"] for method in discovery["methods"]}, METHODS)
         for method in discovery["methods"]:
             self.assertTrue(method["params"] and method["result"] and method["example"], method)

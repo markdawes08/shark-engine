@@ -101,6 +101,7 @@ not establish file or gameplay-wire formats.
 | [0046](0046-rigid-bodies.md) | Atomic authored body/collider settings, checked native snapshots and prepared compatibility |
 | [0047](0047-fixed-step-physics.md) | Leased Scene simulation, bounded populated updates, existing schedules and presentation interpolation |
 | [0048](0048-physics-contacts.md) | Bilateral body filters, native triggers, bounded fixed-tick observations and safe queued-event removal |
+| [0049](0049-editor-physics-preview.md) | Shared frozen physics preview, exact runtime operation reconciliation and editor controls |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

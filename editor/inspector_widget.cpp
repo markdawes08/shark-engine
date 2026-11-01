@@ -29,6 +29,9 @@ void field_label(const PropertySchema& property) {
     } else if (property.unit == PropertyUnit::radians) {
         ImGui::SameLine();
         ImGui::TextDisabled("(radians)");
+    } else if (property.unit == PropertyUnit::kilograms) {
+        ImGui::SameLine();
+        ImGui::TextDisabled("(kg)");
     }
     ImGui::SetNextItemWidth(-1);
 }
@@ -197,6 +200,56 @@ struct InspectorWidget::Impl {
         case PropertyId::camera_far_clip:
             ImGui::InputDouble("##value", &draft.camera->far_clip, 0, 0, "%.9g");
             break;
+        case PropertyId::rigid_body_motion:
+        case PropertyId::rigid_body_shape: {
+            auto& body = *draft.rigid_body;
+            const auto value = field.id == PropertyId::rigid_body_motion
+                                   ? static_cast<std::uint32_t>(body.motion)
+                                   : static_cast<std::uint32_t>(body.shape);
+            const auto& options = std::get<EnumerationConstraints>(field.constraints).values;
+            const auto found =
+                std::find_if(options.begin(), options.end(),
+                             [&](const auto& option) { return option.value == value; });
+            if (ImGui::BeginCombo("##value",
+                                  found == options.end() ? "Unknown" : found->key.c_str())) {
+                for (const auto& option : options)
+                    if (ImGui::Selectable(option.key.c_str(), option.value == value)) {
+                        if (field.id == PropertyId::rigid_body_motion)
+                            body.motion = static_cast<BodyMotion>(option.value);
+                        else
+                            body.shape = static_cast<ColliderShape>(option.value);
+                    }
+                ImGui::EndCombo();
+            }
+            break;
+        }
+        case PropertyId::rigid_body_half_extents:
+            vector_field(draft.rigid_body->half_extents);
+            break;
+        case PropertyId::rigid_body_radius:
+            ImGui::InputDouble("##value", &draft.rigid_body->radius);
+            break;
+        case PropertyId::rigid_body_half_height:
+            ImGui::InputDouble("##value", &draft.rigid_body->half_height);
+            break;
+        case PropertyId::rigid_body_mass:
+            ImGui::InputDouble("##value", &draft.rigid_body->mass);
+            break;
+        case PropertyId::rigid_body_friction:
+            ImGui::InputDouble("##value", &draft.rigid_body->friction);
+            break;
+        case PropertyId::rigid_body_restitution:
+            ImGui::InputDouble("##value", &draft.rigid_body->restitution);
+            break;
+        case PropertyId::rigid_body_collision_layer:
+            ImGui::InputScalar("##value", ImGuiDataType_U32, &draft.rigid_body->collision_layer);
+            break;
+        case PropertyId::rigid_body_collision_mask:
+            ImGui::InputScalar("##value", ImGuiDataType_U32, &draft.rigid_body->collision_mask);
+            break;
+        case PropertyId::rigid_body_is_trigger:
+            ImGui::Checkbox("##value", &draft.rigid_body->is_trigger);
+            break;
         case PropertyId::mesh_renderer_asset:
             ImGui::InputText("##value", asset.data(), asset.size());
             break;
@@ -212,24 +265,28 @@ struct InspectorWidget::Impl {
     void components() {
         auto& draft = *panel.draft();
         for (const auto& schema : schemas) {
-            if (schema.id == ComponentSchemaId::rigid_body)
-                continue; // Native fields follow 18e.
             ImGui::PushID(static_cast<int>(schema.id));
             if (ImGui::CollapsingHeader(schema.display_name.c_str(),
                                         ImGuiTreeNodeFlags_DefaultOpen)) {
-                bool present = schema.required ||
-                               (schema.id == ComponentSchemaId::camera ? draft.camera.has_value()
-                                                                       : mesh_present);
+                bool present =
+                    schema.required ||
+                    (schema.id == ComponentSchemaId::camera       ? draft.camera.has_value()
+                     : schema.id == ComponentSchemaId::rigid_body ? draft.rigid_body.has_value()
+                                                                  : mesh_present);
                 if (!schema.required) {
                     if (present && ImGui::SmallButton("Remove component from draft")) {
                         if (schema.id == ComponentSchemaId::camera)
                             draft.camera.reset();
+                        else if (schema.id == ComponentSchemaId::rigid_body)
+                            draft.rigid_body.reset();
                         else
                             mesh_present = false;
                         present = false;
                     } else if (!present && ImGui::SmallButton("Add component to draft")) {
                         if (schema.id == ComponentSchemaId::camera)
                             draft.camera.emplace();
+                        else if (schema.id == ComponentSchemaId::rigid_body)
+                            draft.rigid_body.emplace();
                         else
                             mesh_present = true;
                         present = true;
@@ -241,6 +298,11 @@ struct InspectorWidget::Impl {
                 if (present && schema.id == ComponentSchemaId::camera)
                     ImGui::TextWrapped("Both projection modes' fields must be valid. Far clip must "
                                        "exceed near clip.");
+                if (present && schema.id == ComponentSchemaId::rigid_body)
+                    ImGui::TextWrapped(
+                        "Bodies require a root and positive uniform scale. Capsule half height "
+                        "excludes end caps. Both masks must include the other layer (0-15); "
+                        "triggers detect without response. Play uses a separate runtime copy.");
                 if (present && schema.id == ComponentSchemaId::mesh_renderer)
                     ImGui::TextWrapped("Supply an existing asset UUID. This reference does not "
                                        "import or resolve content.");

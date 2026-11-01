@@ -3,8 +3,8 @@
 Date: 2026-10-29. Base: `6fe897e`, initially clean `main`. Owner: REQ-18.
 The agreed five-checkpoint split follows
 [17d's headless preparation](../handoffs/17d-connected-viewport-acceptance.md).
-Actual UI/GPU acceptance remains deferred under the user's
-[desktop amendment](../backlog.md#desktop-ui-deferral); later coding is authorized.
+The user resumed desktop testing on 2026-10-31 after 18e implementation;
+the [backlog](../backlog.md#desktop-ui-deferral) retains actual evidence status.
 
 | Checkpoint | Deliverable and acceptance |
 | --- | --- |
@@ -27,7 +27,9 @@ interpolation. 18d's [contact contract](../physics-contacts.md),
 [ADR 0048](../architecture/0048-physics-contacts.md) and
 [handoff](../handoffs/18d-collision-filters-and-events.md) add shared filter/trigger
 settings, bounded native observations, owned event delivery and safe runtime
-detach with queued values. **Next is 18e.** Full REQ-18 stays NOT_RUN until its connected behavior
+detach with queued values. 18e adds the [shared preview](../physics-preview.md),
+native inspector/play controls and [connected acceptance](../physics-acceptance.md).
+Full REQ-18 stays NOT_RUN until its connected behavior
 and required acceptance are qualified. Every checkpoint
 uses the [testing policy](../testing-policy.md); preserve workloads/fixtures and
 reuse valid results rather than rerunning unrelated engine matrices.

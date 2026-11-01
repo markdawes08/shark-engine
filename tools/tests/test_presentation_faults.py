@@ -3,10 +3,14 @@ from __future__ import annotations
 
 from copy import deepcopy
 from dataclasses import replace
+import importlib.util
 import json
 from pathlib import Path
 import sys
+import tempfile
+import threading
 import unittest
+from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
 import presentation_faults as faults
@@ -15,6 +19,14 @@ from process_runner import ProcessResult
 UUID = "a" * 32
 LOCK = "b" * 64
 SOURCE = "c" * 64
+
+
+def observer():
+    path = Path(__file__).resolve().parents[2] / "docs/coverage/reproducers/05c-asan-exit.py"
+    specification = importlib.util.spec_from_file_location("shark_exit_observer", path)
+    module = importlib.util.module_from_spec(specification)
+    specification.loader.exec_module(module)
+    return module
 
 
 def clean() -> dict:
@@ -61,6 +73,28 @@ def process(rows: list[dict], fatal: bool = True) -> ProcessResult:
 
 
 class FaultEvidence(unittest.TestCase):
+    def test_exit_observer_uses_process_signal_after_status_publication(self) -> None:
+        observed = observer()
+        identity = {"pid": 17, "creation_time": 23}
+        # This models the captured native boundary: status is already 1, but
+        # its process object has not satisfied the worker's process wait.
+        for state, selected in (({"pid": 17, "creation_time": 23, "exit_code": 1, "wait_result": 258}, True),
+                                ({"pid": 17, "creation_time": 23, "exit_code": 1, "wait_result": 0}, False),
+                                ({"pid": 17, "creation_time": 24, "exit_code": 1, "wait_result": 258}, False)):
+            with self.subTest(state=state), tempfile.TemporaryDirectory() as temporary:
+                directory = Path(temporary)
+                (directory / "events.jsonl").write_text(json.dumps({"kind": "child_started", "identity": identity}) + "\n")
+                captured, errors = [], []
+                def capture(command, **_):
+                    Path(command[-1]).write_bytes(b"owned diagnostic fixture")
+                    return ProcessResult(command, 0, "", "", False)
+                with patch.object(observed, "process_identity", return_value=state), patch.object(observed, "run_process", side_effect=capture):
+                    observed.capture_slow(directory, directory, threading.Event(), 0, captured, errors)
+                self.assertEqual(len(captured), int(selected))
+                self.assertEqual(errors, [])
+        with self.assertRaises(ValueError):
+            observed.capture_pending(identity, {**identity, "wait_result": 0xffffffff})
+
     def check(self, rows: list[dict], fault: str = "recording-error", *, accepted: bool = False) -> None:
         _, errors = faults.inspect_result(process(rows, fault.startswith("recording-")), "native", fault, UUID, LOCK, SOURCE)
         self.assertEqual(bool(errors), not accepted, errors)
