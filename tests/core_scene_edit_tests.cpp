@@ -1,4 +1,5 @@
 #include <shark/scene.hpp>
+#include <shark/script_runtime.hpp>
 
 #include "scene_edit_access.hpp"
 
@@ -64,6 +65,21 @@ template <class T> T take(shark::Result<T> value) {
     return std::move(value).value();
 }
 } // namespace
+
+TEST_CASE("scene edit publication retains the active script owner lease", "[scene-edit]") {
+    auto live = scene();
+    const auto entity = create(*live, authored(10));
+    auto runtime = take(shark::ScriptRuntime::create(*live, {}));
+    const auto expected = revision(*live);
+    auto candidate = take(shark::scene_detail::SceneEditAccess::prepare(*live, expected));
+    REQUIRE(candidate->set_name(entity, {"staged"}));
+    take(shark::scene_detail::SceneEditAccess::commit(*live, *candidate, expected));
+    CHECK(take(live->entity_state(entity)).name.value == "staged");
+    CHECK_FALSE(shark::ScriptRuntime::create(*live, {}));
+    take(runtime->close());
+    auto replacement = take(shark::ScriptRuntime::create(*live, {}));
+    take(replacement->close());
+}
 
 TEST_CASE("scene edit candidate isolates writes and publishes once preserving surviving handles",
           "[scene-edit]") {

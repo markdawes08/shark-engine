@@ -3625,10 +3625,10 @@
         "id": "component.script",
         "name": "Script",
         "requirement_ids": ["REQ-19", "REQ-09", "REQ-15"],
-        "test_ids": ["shark.core.schema", "shark.core.prepared-scene", "shark.tools.source-documents", "shark.tools.authoring-retries", "shark.tools.authoring-editing-process", "shark.editor.inspector", "shark.tools.featureworld"],
-        "test_sources": ["tests/core_schema_tests.cpp", "tests/prepared_scene_tests.cpp", "tests/source_document_tests.cpp", "tests/authoring_command_tests.cpp", "tools/tests/test_authoring_editing_process.py", "tests/editor_inspector_tests.cpp", "tests/feature_world_tests.cpp"],
+        "test_ids": ["shark.core.schema", "shark.core.prepared-scene", "shark.tools.source-documents", "shark.tools.authoring-retries", "shark.tools.authoring-editing-process", "shark.editor.inspector", "shark.tools.featureworld", "shark.tools.featureworld-process"],
+        "test_sources": ["tests/core_schema_tests.cpp", "tests/prepared_scene_tests.cpp", "tests/source_document_tests.cpp", "tests/authoring_command_tests.cpp", "tools/tests/test_authoring_editing_process.py", "tests/editor_inspector_tests.cpp", "tests/feature_world_tests.cpp", "tools/tests/test_feature_world_process.py"],
         "fixtures": ["engine_tools/src/feature_world.cpp", "assets/FeatureWorld/scenes/FeatureWorld.sharkscene", "docs/script-components.md"],
-        "fixture_reason": "Inert source references share Core validation, revisioned Scene queries, source and prepared compatibility, retained commands/history, Editor and terminal authoring. FeatureWorld independently exercises a script setting and source round trip on a separate owner. Script execution is not yet implemented.",
+        "fixture_reason": "Inert source references share Core validation, revisioned Scene queries, source and prepared compatibility, retained commands/history, Editor and terminal authoring. FeatureWorld independently exercises a script setting and source round trip on a separate owner. Script settings alone do not execute source; the Core runtime is covered separately.",
         "featureworld_cases": ["featureworld.components"]
       }
     ],
@@ -6493,8 +6493,8 @@
         "id": "command.set-script",
         "name": "SetScriptCommand / scene.mutate set_script",
         "requirement_ids": ["REQ-19", "REQ-09", "REQ-15"],
-        "test_ids": ["shark.core.schema", "shark.tools.source-documents", "shark.tools.authoring-retries", "shark.tools.authoring-editing-process", "shark.editor.inspector", "shark.tools.featureworld"],
-        "test_sources": ["tests/core_schema_tests.cpp", "tests/source_document_tests.cpp", "tests/authoring_command_tests.cpp", "tools/tests/test_authoring_editing_process.py", "tests/editor_inspector_tests.cpp", "tests/feature_world_tests.cpp"],
+        "test_ids": ["shark.core.schema", "shark.tools.source-documents", "shark.tools.authoring-retries", "shark.tools.authoring-editing-process", "shark.editor.inspector", "shark.tools.featureworld", "shark.tools.featureworld-process"],
+        "test_sources": ["tests/core_schema_tests.cpp", "tests/source_document_tests.cpp", "tests/authoring_command_tests.cpp", "tools/tests/test_authoring_editing_process.py", "tests/editor_inspector_tests.cpp", "tests/feature_world_tests.cpp", "tools/tests/test_feature_world_process.py"],
         "fixtures": ["engine_tools/src/feature_world.cpp", "assets/FeatureWorld/scenes/FeatureWorld.sharkscene", "docs/script-components.md"],
         "fixture_reason": "The same retained command supports add/update/remove, rejection, exact retries, history, source persistence and shared Editor/terminal authoring. FeatureWorld validates an independent expected Script value and undo without changing its saved baseline.",
         "featureworld_cases": ["featureworld.components"]
@@ -6525,7 +6525,17 @@
         "featureworld_cases": []
       }
     ],
-    "lua_api": []
+    "lua_api": [
+      {"id":"lua.api-version", "name":"shark.api_version", "requirement_ids":["REQ-19"], "test_ids":["shark.core.script-runtime","shark.tools.featureworld-process"], "test_sources":["tests/script_runtime_tests.cpp","tools/tests/test_feature_world_process.py"], "fixtures":["engine_tools/src/feature_world.cpp","docs/script-runtime.md"], "fixture_reason":"The versioned API value is inspected by real FeatureWorld and runtime Lua scripts.", "featureworld_cases":["featureworld.components"]},
+      {"id":"lua.entity.name", "name":"shark.entity.name", "requirement_ids":["REQ-19"], "test_ids":["shark.core.script-runtime","shark.tools.featureworld-process"], "test_sources":["tests/script_runtime_tests.cpp","tools/tests/test_feature_world_process.py"], "fixtures":["engine_tools/src/feature_world.cpp","docs/script-runtime.md"], "fixture_reason":"Checked self-entity name read and invalid calls are exercised by the runtime fixture and real FeatureWorld Lua lifecycle.", "featureworld_cases":["featureworld.components"]},
+      {"id":"lua.entity.position", "name":"shark.entity.position", "requirement_ids":["REQ-19"], "test_ids":["shark.core.script-runtime","shark.tools.featureworld-process"], "test_sources":["tests/script_runtime_tests.cpp","tools/tests/test_feature_world_process.py"], "fixtures":["engine_tools/src/feature_world.cpp","docs/script-runtime.md"], "fixture_reason":"Checked local position read and invalid calls are exercised by the runtime fixture and real FeatureWorld Lua lifecycle.", "featureworld_cases":["featureworld.components"]},
+      {"id":"lua.entity.camera-near", "name":"shark.entity.camera_near", "requirement_ids":["REQ-19"], "test_ids":["shark.core.script-runtime","shark.tools.featureworld-process"], "test_sources":["tests/script_runtime_tests.cpp","tools/tests/test_feature_world_process.py"], "fixtures":["engine_tools/src/feature_world.cpp","docs/script-runtime.md"], "fixture_reason":"Checked optional Camera read and missing-component rejection are exercised by the runtime fixture and FeatureWorld.", "featureworld_cases":["featureworld.components"]},
+      {"id":"lua.entity.set-name", "name":"shark.entity.set_name", "requirement_ids":["REQ-19"], "test_ids":["shark.core.script-runtime","shark.tools.featureworld-process"], "test_sources":["tests/script_runtime_tests.cpp","tools/tests/test_feature_world_process.py"], "fixtures":["engine_tools/src/feature_world.cpp","docs/script-runtime.md"], "fixture_reason":"The server-only fixed-tick mutation and invalid/unauthorized calls are exercised by runtime fixtures and FeatureWorld.", "featureworld_cases":["featureworld.components"]},
+      {"id":"lua.time.tick", "name":"shark.time.tick", "requirement_ids":["REQ-19"], "test_ids":["shark.core.script-runtime","shark.tools.featureworld-process"], "test_sources":["tests/script_runtime_tests.cpp","tools/tests/test_feature_world_process.py"], "fixtures":["engine_tools/src/feature_world.cpp","docs/script-runtime.md"], "fixture_reason":"Host-controlled tick values and invalid calls are checked by the runtime fixture and FeatureWorld scheduler exercise.", "featureworld_cases":["featureworld.components"]},
+      {"id":"lua.time.delta", "name":"shark.time.delta", "requirement_ids":["REQ-19"], "test_ids":["shark.core.script-runtime","shark.tools.featureworld-process"], "test_sources":["tests/script_runtime_tests.cpp","tools/tests/test_feature_world_process.py"], "fixtures":["engine_tools/src/feature_world.cpp","docs/script-runtime.md"], "fixture_reason":"Host-controlled deltas and invalid calls are checked by the runtime fixture and FeatureWorld scheduler exercise.", "featureworld_cases":["featureworld.components"]},
+      {"id":"lua.log.info", "name":"shark.log.info", "requirement_ids":["REQ-19"], "test_ids":["shark.core.script-runtime","shark.tools.featureworld-process"], "test_sources":["tests/script_runtime_tests.cpp","tools/tests/test_feature_world_process.py"], "fixtures":["engine_tools/src/feature_world.cpp","docs/script-runtime.md"], "fixture_reason":"Bounded owned logs, invalid input and lifecycle ordering are exercised by runtime fixtures and FeatureWorld.", "featureworld_cases":["featureworld.components"]},
+      {"id":"lua.math.clamp", "name":"shark.math.clamp", "requirement_ids":["REQ-19"], "test_ids":["shark.core.script-runtime","shark.tools.featureworld-process"], "test_sources":["tests/script_runtime_tests.cpp","tools/tests/test_feature_world_process.py"], "fixtures":["engine_tools/src/feature_world.cpp","docs/script-runtime.md"], "fixture_reason":"Finite ordered clamp inputs and invalid ranges are covered by runtime fixtures and independently expected FeatureWorld values.", "featureworld_cases":["featureworld.components"]}
+    ]
   },
   "featureworld": {
     "project": "assets/FeatureWorld/FeatureWorld.sharkproject",

@@ -27,9 +27,8 @@ not a cooked script or a dependency closure: standalone export and runtime
 activation reject Script-bearing scenes until actual execution and cooking land.
 
 The component can be stored in authored, authoritative or replica scenes; the
-value itself grants no authority and is not replicated by this change. Future
-19c execution must explicitly define and enforce separate authoritative-server
-gameplay and client-presentation capabilities. No player gains script upload or
-arbitrary server execution, and rendering cannot grant gameplay outcomes. Lua
-lifecycle, execution, bindings, source resolution and runaway recovery remain
-later checkpoints; see the [Lua plan](roadmap/lua-plan.md).
+value itself grants no authority and is not replicated by this change. The [19c runtime](script-runtime.md) separates authoritative-server gameplay
+and client-presentation capabilities. No player gains script upload or arbitrary
+server execution, and rendering cannot grant gameplay outcomes. Source resolution
+and connected execution and recovery remain later checkpoints; see the
+[Lua plan](roadmap/lua-plan.md).

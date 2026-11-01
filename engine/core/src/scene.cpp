@@ -1,6 +1,7 @@
 #include "shark/scene.hpp"
 
 #include "scene_physics_access.hpp"
+#include "scene_script_access.hpp"
 
 #include "scene_generation.hpp"
 #include "utf8.hpp"
@@ -113,6 +114,7 @@ struct Scene::Impl {
     std::vector<Pending> pending;
     std::optional<SceneRevision> edit_origin;
     std::weak_ptr<const std::uint64_t> physics_owner;
+    std::weak_ptr<const std::uint64_t> script_owner;
 
     Impl(SceneScope value, SceneLimits bounds, std::uint64_t token)
         : scope(std::move(value)), limits(bounds), instance(token) {}
@@ -765,6 +767,9 @@ Result<SceneRevision> Scene::commit_edit(Scene& candidate, SceneRevision expecte
         // the Scene object, instance, generations and deferred ticket sequence.
         candidate.impl_->revision = expected.revision + 1;
         candidate.impl_->next_ticket = impl_->next_ticket;
+        // Script ownership follows the live Scene through authored candidate
+        // publication; the private staging copy never acquires its own lease.
+        candidate.impl_->script_owner = impl_->script_owner;
         candidate.impl_->edit_origin.reset();
         impl_.swap(candidate.impl_);
     }
@@ -1298,6 +1303,29 @@ Result<void> Scene::close() {
 }
 
 namespace scene_detail {
+Result<void> SceneScriptAccess::bind(Scene& scene, const ScriptLease& lease) {
+    auto& owner = *scene.impl_;
+    if (auto checked = owner.check_live(); !checked)
+        return checked;
+    if (!lease || !owner.script_owner.expired() || owner.edit_origin || owner.visiting ||
+        !owner.pending.empty())
+        return scene_error(ErrorCode::conflict,
+                           "Script runtime requires an unowned Scene mutation boundary");
+    owner.script_owner = lease;
+    return {};
+}
+
+Result<void> SceneScriptAccess::check(const Scene& scene, const ScriptLease& lease) {
+    const auto& owner = *scene.impl_;
+    if (auto checked = owner.check_live(); !checked)
+        return checked;
+    if (!lease || owner.script_owner.lock() != lease || owner.visiting || !owner.pending.empty())
+        return scene_error(
+            ErrorCode::conflict,
+            "Script runtime requires its Scene owner boundary and no pending mutations");
+    return {};
+}
+
 Result<void> ScenePhysicsAccess::bind(Scene& scene, const PhysicsLease& lease) {
     auto& owner = *scene.impl_;
     if (auto checked = owner.check_immediate(); !checked)

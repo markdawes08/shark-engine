@@ -12,6 +12,13 @@ shark_classify_target(CoreLuaTests test)
 add_test(NAME shark.core.lua COMMAND CoreLuaTests "[core-lua]" --rng-seed 1337)
 set_tests_properties(shark.core.lua PROPERTIES LABELS "cpu;lua;unit;server" TIMEOUT 60)
 
+add_executable(ScriptRuntimeTests script_runtime_tests.cpp)
+target_link_libraries(ScriptRuntimeTests PRIVATE EngineCore Catch2::Catch2WithMain)
+shark_configure_target(ScriptRuntimeTests)
+shark_classify_target(ScriptRuntimeTests test)
+add_test(NAME shark.core.script-runtime COMMAND ScriptRuntimeTests "[script-runtime]" --rng-seed 1337)
+set_tests_properties(shark.core.script-runtime PROPERTIES LABELS "cpu;script;unit;integration;server" TIMEOUT 60)
+
 add_executable(CorePhysicsTests core_physics_tests.cpp core_physics_body_tests.cpp core_physics_simulation_tests.cpp core_physics_contact_tests.cpp)
 target_link_libraries(CorePhysicsTests PRIVATE EngineCore SharkPhysics_jolt Catch2::Catch2WithMain)
 shark_configure_target(CorePhysicsTests)

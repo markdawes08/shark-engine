@@ -71,7 +71,7 @@ def main():
         assert len(set(case_ids)) == 18
         mapped = []
         external = []
-        for category in ('components', 'commands'):
+        for category in ('components', 'commands', 'lua_api'):
             for entry in manifest['implemented_surface'][category]:
                 if not entry.get('featureworld_cases'):
                     assert isinstance(entry.get('external_fixture_reason'), str) and entry['external_fixture_reason'].strip(), entry['id']
@@ -80,8 +80,15 @@ def main():
                     continue
                 assert entry['featureworld_cases'] and set(entry['featureworld_cases']) <= set(case_ids), entry['id']
                 assert 'shark.tools.featureworld-process' in entry['test_ids'], entry['id']
+                if category == 'lua_api':
+                    assert 'featureworld.components' in entry['featureworld_cases'], entry['id']
+                    assert 'shark.core.script-runtime' in entry['test_ids'], entry['id']
                 mapped.append(entry['id'])
-        assert manifest['implemented_surface']['lua_api'] == []
+        assert {entry['id'] for entry in manifest['implemented_surface']['lua_api']} == {
+            'lua.entity.name', 'lua.entity.position', 'lua.entity.camera-near',
+            'lua.entity.set-name', 'lua.time.tick', 'lua.time.delta',
+            'lua.log.info', 'lua.math.clamp', 'lua.api-version',
+        }
         summary['mapped_surfaces'] = mapped
         summary['external_surfaces'] = external
         source_paths = [Path('FeatureWorld.sharkproject'), Path('scenes/FeatureWorld.sharkscene')]

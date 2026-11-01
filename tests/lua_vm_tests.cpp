@@ -87,7 +87,7 @@ TEST_CASE("Lua VM rejects invalid bounds and invalid input", "[core-lua]") {
     fails(vm->execute(std::string("a\0b", 3), "test.lua"), ErrorCode::invalid_argument);
     fails(vm->execute(std::string(1, static_cast<char>(0xff)), "test.lua"),
           ErrorCode::invalid_argument);
-    fails(vm->execute("return 1", std::string(256, 'a')), ErrorCode::invalid_argument);
+    fails(vm->execute("return 1", std::string(4097, 'a')), ErrorCode::invalid_argument);
     fails(vm->execute("return 1", std::string("a\0b", 3)), ErrorCode::invalid_argument);
     fails(vm->execute("return 1", std::string(1, static_cast<char>(0xff))),
           ErrorCode::invalid_argument);
@@ -95,6 +95,7 @@ TEST_CASE("Lua VM rejects invalid bounds and invalid input", "[core-lua]") {
     // The bytecode signature is valid UTF-8 but must never be loaded as text.
     fails(vm->execute(std::string("\x1bLua", 4), "binary.lua"), ErrorCode::execution_failed);
     succeeds(*vm, "assert(1 + 1 == 2)");
+    REQUIRE(vm->execute("assert(true)", std::string(4096, 'a')));
 }
 
 TEST_CASE("Lua syntax and runtime failures have diagnostics and do not poison VM", "[core-lua]") {

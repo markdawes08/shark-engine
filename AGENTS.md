@@ -48,15 +48,20 @@ serially and preserve existing results. Items in the [UI backlog](docs/backlog.m
 remain NOT_RUN until their required evidence passes; resumption alone does not
 qualify untested behavior or close full UI acceptance.
 
-**Current handoff: [19b, Script settings](docs/handoffs/19b-script-components.md).**
+**Current handoff: [19c, checked Script runtime](docs/handoffs/19c-script-runtime.md).**
 Follow the [Lua checkpoints](docs/roadmap/lua-plan.md), [private VM contract](docs/lua-vm.md),
-[Script contract](docs/script-components.md) and [ADR 0050](docs/architecture/0050-script-components.md).
-Script source/enabled values share Core Scene, the retained authoring owner,
-source persistence, Editor and terminal paths. Prepared v4 preserves inert
-settings; standalone export and Runtime activation reject Script-bearing scenes
-until execution/cooking lands. Viewport and physics preview remain available.
-Lua instruction limits do not bound work inside native library calls. The next
-checkpoint is 19c: lifecycle and checked server/client-separated gameplay APIs.
+[Script contract](docs/script-components.md), [runtime contract](docs/script-runtime.md)
+and [ADR 0051](docs/architecture/0051-script-runtime.md). Script settings use the
+shared authoring owner. Core provides a bounded creating-thread lifecycle with
+an exclusive weak Scene lease, checked references and separate server gameplay
+and client presentation profiles. Only server fixed updates can mutate self Name;
+existing Scene/physics write leases still apply. Hosts supply trusted source
+snapshots and scheduler ticks. Preserve reverse teardown, stale-generation and
+pending-mutation fences, and explicit fault/no-rollback outcomes. Region scope
+alone does not grant authority. Lua instruction limits do not bound native library
+work. Runtime and export continue rejecting Script-bearing scenes until actual
+source/cooked closure and integrated execution exist. The next checkpoint is 19d:
+source closure and connected human/terminal execution and acceptance.
 The completed physics work is recorded in [18e](docs/handoffs/18e-editor-physics-preview.md).
 Follow [ADR 0045](docs/architecture/0045-physics-foundation.md) and the
 [physics-world contract](docs/physics-world.md): Jolt is a private locked Core

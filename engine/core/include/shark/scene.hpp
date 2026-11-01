@@ -17,6 +17,7 @@ namespace shark {
 namespace scene_detail {
 struct SceneEditAccess;
 struct ScenePhysicsAccess;
+struct SceneScriptAccess;
 } // namespace scene_detail
 
 struct EntitySeed {
@@ -152,6 +153,7 @@ class Scene final {
   private:
     friend struct scene_detail::SceneEditAccess;
     friend struct scene_detail::ScenePhysicsAccess;
+    friend struct scene_detail::SceneScriptAccess;
     [[nodiscard]] Result<void> check_edit(SceneRevision expected) const;
     // Authored-scene staging only. The private candidate retains checked handle
     // identity but is not live state. Both operations require an immediate owner

@@ -19,6 +19,7 @@ add_library(EngineCore STATIC
     src/scene_render.cpp
     src/schema.cpp
     src/script_components.cpp
+    src/script_runtime.cpp
     src/net_wire.cpp
     src/net_fault_link.cpp
     src/net_transport.cpp

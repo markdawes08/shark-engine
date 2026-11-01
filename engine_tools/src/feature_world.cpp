@@ -3,6 +3,7 @@
 #include "shark/physics.hpp"
 #include "shark/scene_render.hpp"
 #include "shark/schema.hpp"
+#include "shark/script_runtime.hpp"
 #include "shark/tools/asset_catalog.hpp"
 #include "shark/tools/asset_import.hpp"
 #include "shark/tools/client_export.hpp"
@@ -219,6 +220,63 @@ void components(SceneRunContext& context) {
     take(take(scripted->undo(history.next_undo->ticket, revision(*scripted))).outcome);
     require(context, !state(*scripted, root()).script, "Script undo did not restore absence",
             root());
+
+    // Exercise the actual Lua lifecycle and every 19c API on a separate
+    // authoritative Scene. Expected names, coordinates and event order are
+    // specified here independently of the scripting implementation.
+    const auto authoring_before = take(owner.capture());
+    auto runtime_scene = take(Scene::create(
+        RegionSceneScope{id<WorldId>('a'), {id<RegionId>('b'), id<RegionInstanceId>('c'), 1}}));
+    EntitySeed actor{id<WorldEntityId>('d')};
+    actor.name = Name{"Actor"};
+    actor.transform.translation = {2, 3, 4};
+    actor.camera = Camera{};
+    actor.script = Script{"scripts/featureworld.lua", true};
+    const auto actor_handle = take(runtime_scene->create_entity(actor));
+    const std::array sources{ScriptSourceSnapshot{"scripts/featureworld.lua", R"lua(
+function on_init()
+    assert(shark.api_version == 1)
+    assert(shark.entity.name() == 'Actor')
+    local x, y, z = shark.entity.position()
+    assert(x == 2 and y == 3 and z == 4)
+    assert(shark.entity.camera_near() == 0.1)
+    assert(shark.math.clamp(7, 1, 3) == 3)
+    shark.log.info('init')
+end
+function on_update()
+    assert(shark.time.delta() == 0.25)
+    shark.log.info('update')
+end
+function on_fixed_update()
+    assert(shark.time.tick() == 0 and shark.time.delta() == 0.05)
+    shark.entity.set_name('From Lua')
+    shark.log.info('fixed')
+end
+function on_destroy() shark.log.info('destroy') end
+)lua"}};
+    ScriptRuntimeConfig config;
+    config.profile = ScriptProfile::server_gameplay;
+    auto scripts = take(ScriptRuntime::create(*runtime_scene, sources, config));
+    take(scripts->start(*runtime_scene));
+    take(scripts->update(*runtime_scene, 0.25));
+    auto schedule = take(ServerScheduler::create({}, MonotonicTime{0}));
+    const auto pass = take(schedule->poll(MonotonicTime{50'000'000}, [&](std::uint64_t tick) {
+        return scripts->fixed_update(*runtime_scene, tick, 0.05);
+    }));
+    require(context,
+            pass.executed == 1 &&
+                take(runtime_scene->entity_state(actor_handle)).name == Name{"From Lua"},
+            "Lua fixed update did not use the authoritative scheduler boundary");
+    const auto stopped = take(scripts->stop(*runtime_scene));
+    require(context, stopped.attempted == 1 && stopped.discarded == 0 && stopped.errors.empty(),
+            "Lua destruction did not complete cleanly");
+    const auto logs = take(scripts->take_logs());
+    require(context,
+            logs.size() == 4 && logs[0].message == "init" && logs[1].message == "update" &&
+                logs[2].message == "fixed" && logs[3].message == "destroy" &&
+                logs[2].phase == ScriptPhase::fixed_update && logs[2].tick == 0,
+            "Lua lifecycle observations differ from the independent expected order");
+    unchanged(context, authoring_before);
 }
 void commands(SceneRunContext& context) {
     auto& owner = context.owner();

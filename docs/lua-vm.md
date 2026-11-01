@@ -1,7 +1,8 @@
 # Private Lua VM foundation
 
-19a provides a private EngineCore primitive for later scripting integration.
-It does not expose a gameplay API, Scene access, a terminal command or an Editor
+19a provides a private EngineCore primitive. Raw VM execution has no Scene
+context; 19c supplies checked contextual bindings through the separate
+[ScriptRuntime](script-runtime.md). It does not add a terminal command or Editor
 control. Lua 5.5.1 is compiled as C from the locked upstream archive; its native
 types and headers do not form part of Shark's public interfaces. See the
 [checkpoints](roadmap/lua-plan.md) and [handoff](handoffs/19a-lua-foundation.md).
@@ -29,6 +30,6 @@ inside native library calls**. Pattern matching and other library operations can
 consume disproportionate CPU before the hook resumes. The memory and source
 limits do not resolve that limitation. This is a foundation for trusted local
 project code, not a complete hostile-code sandbox, a real-time deadline or a
-production player-script admission mechanism. Project editing, callback ordering,
-checked handles, role-specific capabilities, gameplay and UI recovery remain
-with later checkpoints.
+production player-script admission mechanism. The [19c runtime](script-runtime.md) supplies callback ordering, checked handles
+and restricted role-specific capabilities. Connected gameplay and UI recovery
+remain with later checkpoints.
