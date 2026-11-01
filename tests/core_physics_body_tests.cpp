@@ -40,8 +40,16 @@ TEST_CASE("RigidBody validates all settings, root scale and bounded local poses"
           "[core-physics]") {
     RigidBody body;
     REQUIRE(validate_rigid_body(body));
-    CHECK(take(component_schema(ComponentSchemaId::rigid_body)).properties.size() == 8);
+    CHECK(take(component_schema(ComponentSchemaId::rigid_body)).properties.size() == 11);
     CHECK(validate_component(ComponentSchemaId::rigid_body, 1, body));
+    body.collision_layer = 16;
+    CHECK_FALSE(validate_rigid_body(body));
+    body.collision_layer = 15;
+    body.collision_mask = 65536;
+    CHECK_FALSE(validate_rigid_body(body));
+    body.collision_mask = 0;
+    CHECK(validate_rigid_body(body));
+    body = {};
     for (auto field : {&RigidBody::radius, &RigidBody::half_height, &RigidBody::mass,
                        &RigidBody::friction, &RigidBody::restitution}) {
         auto invalid = body;

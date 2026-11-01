@@ -136,7 +136,8 @@ class AuthoringEditingProcessTests(unittest.TestCase):
 
     def test_rigid_body_discovery_retained_fields_constraints_and_reopen(self):
         body = {"motion": "dynamic", "shape": "capsule", "half_extents": [0.5, 0.75, 1.0],
-                "radius": 0.25, "half_height": 0.75, "mass": 2.0, "friction": 0.5, "restitution": 0.25}
+                "radius": 0.25, "half_height": 0.75, "mass": 2.0, "friction": 0.5, "restitution": 0.25,
+                "collision_layer": 3, "collision_mask": 18, "is_trigger": True}
         with self.client() as client:
             discovery = client.result("protocol.discover")
             self.assertIn("shark.rigid_body", json.dumps(discovery))
@@ -159,12 +160,14 @@ class AuthoringEditingProcessTests(unittest.TestCase):
             replay = client.result("scene.mutate", intent)
             self.assertEqual(replay["state"], "replayed")
             self.assertEqual(replay["outcome"], first["outcome"])
-            for field in ("radius", "half_height", "mass", "friction", "restitution", "half_extents", "motion", "shape"):
+            for field in ("radius", "half_height", "mass", "friction", "restitution", "half_extents", "motion", "shape", "collision_layer", "collision_mask", "is_trigger"):
                 mismatch = copy.deepcopy(intent)
                 value = mismatch["operation"]["command"]["rigid_body"]
                 if field == "half_extents": value[field][0] += 0.25
                 elif field == "motion": value[field] = "static"
                 elif field == "shape": value[field] = "sphere"
+                elif field == "is_trigger": value[field] = False
+                elif field in ("collision_layer", "collision_mask"): value[field] += 1
                 else: value[field] += 0.125
                 decision = client.result("scene.mutate", mismatch)
                 self.assertEqual(decision["state"], "payload_mismatch")

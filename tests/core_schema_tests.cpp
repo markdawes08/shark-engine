@@ -88,7 +88,7 @@ TEST_CASE("schema catalog publishes stable required component and typed property
     const auto catalog = shark::component_schemas();
     REQUIRE(catalog.size() == 5);
     CHECK(catalog[4].stable_id == "shark.rigid_body");
-    CHECK(catalog[4].properties.size() == 8);
+    CHECK(catalog[4].properties.size() == 11);
     CHECK(catalog[0].id == ComponentSchemaId::name);
     CHECK(catalog[0].stable_id == "shark.name");
     CHECK(catalog[0].display_name == "Name");

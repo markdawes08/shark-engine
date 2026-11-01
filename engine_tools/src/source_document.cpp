@@ -400,7 +400,7 @@ Camera read_camera(const Json& object, const std::string& path) {
 RigidBody read_rigid_body(const Json& object, const std::string& path) {
     members(object, {"schema_version"},
             {"motion", "shape", "half_extents", "radius", "half_height", "mass", "friction",
-             "restitution"},
+             "restitution", "collision_layer", "collision_mask", "is_trigger"},
             path);
     static_cast<void>(version(object.at("schema_version"), path + "/schema_version", false));
     RigidBody result;
@@ -442,6 +442,20 @@ RigidBody read_rigid_body(const Json& object, const std::string& path) {
                                       {"restitution", &result.restitution}})
         if (object.contains(key))
             *target = number_value(object.at(key), path + "/" + key);
+    for (const auto& [key, target] : {std::pair{"collision_layer", &result.collision_layer},
+                                      {"collision_mask", &result.collision_mask}})
+        if (object.contains(key)) {
+            const auto& value = object.at(key);
+            if (!value.is_number_integer() || value < Json(0) ||
+                value > Json(std::numeric_limits<std::uint32_t>::max()))
+                fail(path + "/" + key, "Expected an unsigned 32-bit integer");
+            *target = value.get<std::uint32_t>();
+        }
+    if (object.contains("is_trigger")) {
+        if (!object.at("is_trigger").is_boolean())
+            fail(path + "/is_trigger", "Expected a boolean");
+        result.is_trigger = object.at("is_trigger").get<bool>();
+    }
     return checked(validate_rigid_body(result), path);
 }
 
@@ -887,7 +901,10 @@ Json scene_json(const SceneDocument& document) {
                 {"half_height", b.half_height},
                 {"mass", b.mass},
                 {"friction", b.friction},
-                {"restitution", b.restitution}};
+                {"restitution", b.restitution},
+                {"collision_layer", b.collision_layer},
+                {"collision_mask", b.collision_mask},
+                {"is_trigger", b.is_trigger}};
         }
         entities.push_back(
             Json{{"entity_id", entity.id.value().to_string()},

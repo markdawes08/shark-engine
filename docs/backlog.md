@@ -217,3 +217,12 @@ presentation of dynamic motion, static reposition, kinematic targets, pause and
 single step; verify interpolated descendants/cameras and picking rejection.
 Confirm stopping play restores authoring and leaves saved source/history intact.
 Status: **NOT_RUN**; current CPU results do not qualify native play or rendering.
+
+### BL-16A-UI-01: 18d collision settings and play observations
+
+After 18e exposes the shared body/filter controls and desktop testing explicitly
+resumes, exercise layer/mask/trigger authoring, Apply/undo/save/reopen and matching
+terminal continuation. In native play, verify sensor nonresponse, filter changes
+through explicit rebuild, owned enter/exit delivery and stop/removal with pending
+events. Status: **NOT_RUN**; CPU physics checks do not qualify actual editor input
+or rendered play. Full REQ-18 remains open.

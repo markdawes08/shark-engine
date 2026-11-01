@@ -1956,6 +1956,8 @@ void rigid_bodies(SceneRunContext& context) {
     take(world->step());
     auto dynamic = RigidBody{};
     dynamic.motion = BodyMotion::dynamic_body;
+    dynamic.collision_layer = 3;
+    dynamic.collision_mask = 1U << 2U;
     take(take(owner->execute(SetRigidBodyCommand{root(), dynamic}, revision(*owner))).outcome);
     const auto source = take(owner->capture());
     const auto source_history = take(owner->history());
@@ -1963,8 +1965,17 @@ void rigid_bodies(SceneRunContext& context) {
         LoadedPreparedScene::load(take(prepare_scene(*owner)), take(PreparedAssets::create())));
     auto& runtime = loaded->scene();
     const auto runtime_root = take(runtime.find(root()));
+    EntitySeed trigger_seed{id<AuthoredEntityId>('d')};
+    trigger_seed.transform.translation = {10, -1, 0};
+    trigger_seed.rigid_body = RigidBody{};
+    trigger_seed.rigid_body->half_extents = {2, 2, 2};
+    trigger_seed.rigid_body->collision_layer = 2;
+    trigger_seed.rigid_body->collision_mask = 1U << 3U;
+    trigger_seed.rigid_body->is_trigger = true;
+    const auto trigger_entity = take(runtime.create_entity(trigger_seed));
     auto simulation = take(PhysicsWorld::create());
     take(simulation->create_body(runtime, runtime_root));
+    take(simulation->create_body(runtime, trigger_entity));
     take(simulation->begin_simulation(runtime));
     auto schedule = take(OfflineScheduler::create(MonotonicTime{0}));
     for (std::int64_t tick = 1; tick <= 60; ++tick) {
@@ -1980,8 +1991,14 @@ void rigid_bodies(SceneRunContext& context) {
                 take(simulation->stats()).completed_ticks == 60,
             "Runtime physics differs from fixed-step gravity reference");
     const auto display = take(simulation->render_poses(runtime, 0.5));
+    const auto contacts = take(simulation->take_events());
     require(context,
-            display.poses.size() == 1 && take(owner->capture()).scene == source.scene &&
+            contacts.size() == 2 && contacts[0].phase == PhysicsContactPhase::enter &&
+                contacts[1].phase == PhysicsContactPhase::exit && contacts[0].second.is_trigger &&
+                contacts[0].first.entity.handle == runtime_root,
+            "Prepared collision settings or runtime trigger transitions were lost");
+    require(context,
+            display.poses.size() == 2 && take(owner->capture()).scene == source.scene &&
                 revision(*owner) == source.revision &&
                 take(owner->history()).undo_entries == source_history.undo_entries,
             "Runtime simulation or interpolation changed the source owner");

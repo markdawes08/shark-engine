@@ -1269,6 +1269,21 @@ Result<void> ScenePhysicsAccess::unbind(Scene& scene, const PhysicsLease& lease)
     scene.impl_->physics_owner.reset();
     return {};
 }
+Result<void> ScenePhysicsAccess::check_detach(const Scene& scene, const PhysicsLease& lease,
+                                              const EntityReference& entity) {
+    if (auto checked = check(scene, lease); !checked)
+        return checked;
+    auto resolved = scene.resolve(entity);
+    if (!resolved)
+        return resolved.error();
+    if (!scene.impl_->record(entity.handle).rigid_body)
+        return scene_error(ErrorCode::conflict, "Runtime body is already detached");
+    return scene.impl_->check_revision();
+}
+void ScenePhysicsAccess::detach(Scene& scene, EntityHandle entity) noexcept {
+    scene.impl_->record(entity).rigid_body.reset();
+    ++scene.impl_->revision;
+}
 Result<PhysicsPoseCandidate> ScenePhysicsAccess::prepare(const Scene& scene,
                                                          const PhysicsLease& lease,
                                                          std::span<const PhysicsPoseUpdate> poses) {

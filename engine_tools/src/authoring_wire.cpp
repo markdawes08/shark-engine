@@ -281,7 +281,7 @@ std::optional<RigidBody> rigid_body(const Json& value, std::string_view path) {
         return std::nullopt;
     object(value,
            {"motion", "shape", "half_extents", "radius", "half_height", "mass", "friction",
-            "restitution"},
+            "restitution", "collision_layer", "collision_mask", "is_trigger"},
            path);
     RigidBody result;
     const auto mode = text(required(value, "motion", path), std::string(path) + "/motion");
@@ -310,6 +310,20 @@ std::optional<RigidBody> rigid_body(const Json& value, std::string_view path) {
                                       {"friction", &result.friction},
                                       {"restitution", &result.restitution}})
         *target = scalar(required(value, key, path), std::string(path) + "/" + key);
+    for (const auto& [key, target] : {std::pair{"collision_layer", &result.collision_layer},
+                                      {"collision_mask", &result.collision_mask}})
+        if (value.contains(key)) {
+            const auto& number = value.at(key);
+            if (!number.is_number_integer() || number < Json(0) ||
+                number > Json(std::numeric_limits<std::uint32_t>::max()))
+                fail(std::string(path) + "/" + key, "Expected an unsigned 32-bit integer");
+            *target = number.get<std::uint32_t>();
+        }
+    if (value.contains("is_trigger")) {
+        if (!value.at("is_trigger").is_boolean())
+            fail(std::string(path) + "/is_trigger", "Expected a boolean");
+        result.is_trigger = value.at("is_trigger").get<bool>();
+    }
     return result;
 }
 
@@ -325,7 +339,10 @@ Json rigid_body_json(const RigidBody& body) {
             {"half_height", body.half_height},
             {"mass", body.mass},
             {"friction", body.friction},
-            {"restitution", body.restitution}};
+            {"restitution", body.restitution},
+            {"collision_layer", body.collision_layer},
+            {"collision_mask", body.collision_mask},
+            {"is_trigger", body.is_trigger}};
 }
 
 Name command_name(const Json& value, std::string_view path) {
@@ -776,17 +793,20 @@ Json mesh_schema() {
 }
 
 Json body_schema() {
-    return nullable_schema(
-        object_schema({{"motion", {{"enum", {"static", "dynamic", "kinematic"}}}},
-                       {"shape", {{"enum", {"box", "sphere", "capsule"}}}},
-                       {"half_extents", vector_schema(3)},
-                       {"radius", scalar_schema()},
-                       {"half_height", scalar_schema()},
-                       {"mass", scalar_schema()},
-                       {"friction", scalar_schema()},
-                       {"restitution", scalar_schema()}},
-                      {"motion", "shape", "half_extents", "radius", "half_height", "mass",
-                       "friction", "restitution"}));
+    return nullable_schema(object_schema(
+        {{"motion", {{"enum", {"static", "dynamic", "kinematic"}}}},
+         {"shape", {{"enum", {"box", "sphere", "capsule"}}}},
+         {"half_extents", vector_schema(3)},
+         {"radius", scalar_schema()},
+         {"half_height", scalar_schema()},
+         {"mass", scalar_schema()},
+         {"friction", scalar_schema()},
+         {"restitution", scalar_schema()},
+         {"collision_layer", {{"type", "integer"}, {"minimum", 0}, {"maximum", 15}}},
+         {"collision_mask", {{"type", "integer"}, {"minimum", 0}, {"maximum", 65535}}},
+         {"is_trigger", {{"type", "boolean"}}}},
+        {"motion", "shape", "half_extents", "radius", "half_height", "mass", "friction",
+         "restitution"}));
 }
 
 Json command_schema() {

@@ -20,13 +20,13 @@ and persistent-world work. The [human/agent plan](docs/roadmap/human-agent-plan.
 defines shared authoring, discoverable schemas, noninteractive results and safe
 project handoff without requiring a model or provider integration.
 
-**Assignment 18c adds fixed-step CPU physics and Scene synchronization** with
-mode-specific pose authority, existing offline/server schedules and read-only
-render interpolation. Body validation, history, persistence and terminal authoring
-retain 18b. The existing editor/terminal transform workflow
+**Assignment 18d adds collision filtering, triggers and bounded owned events** to
+fixed-step CPU physics. Shared body settings preserve source/history/retries and
+terminal authoring; runtime removal preserves queued participant lifetimes.
+The existing editor/terminal transform workflow
 preserves shared history and saved-project continuation.
 Headless verification is tracked in the
-[latest handoff](docs/handoffs/18c-fixed-step-synchronization.md).
+[latest handoff](docs/handoffs/18d-collision-filters-and-events.md).
 Native rendering and actual UI acceptance remain deferred in the
 [nonblocking backlog](docs/backlog.md): the user paused desktop interaction until
 explicitly resumed, while authorizing continued coding and headless checks.

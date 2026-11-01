@@ -63,7 +63,7 @@ as prepared assets. Scaling and placement belong to the entity Transform.
 `PreparedScene` contains SceneId, optional WorldPosition origin and up to 4096
 entities with explicit authored IDs, parent IDs, Name, Transform and optional
 Camera/MeshRenderer/RigidBody. Source extras/project paths, command history, runtime handles,
-network authority and credentials are absent. `SHKSCNE1` versions 1/2 use a 4 MiB
+network authority and credentials are absent. `SHKSCNE1` versions 1/2/3 use a 4 MiB
 encoded bound and 16 MiB logical decoded bound. Both codec directions validate
 complete values, canonicalize TRS and reject duplicate/dangling/cyclic identities,
 invalid components, excessive depth and unrepresentable world transforms.
@@ -84,6 +84,12 @@ resolves renderer references again after subsequent Core mutations.
 The decoder accepts legacy version 1 without bodies; the encoder keeps identical
 version-1 output when no body is present and emits version 2 otherwise. Older
 readers reject version 2. Native physics handles/state are never serialized.
+
+18d's [contact contract](physics-contacts.md) adds version 3 when collision_layer,
+collision_mask or is_trigger is nondefault. Its decoder retains version 1/2
+defaults; its encoder preserves the original version-1/2 representations when
+applicable. Version 3 adds two uint32 fields and one strict Boolean byte per body.
+Older readers reject the new envelope version. Runtime still loads through Core.
 
 ## Tools preparation
 

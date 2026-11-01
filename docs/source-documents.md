@@ -194,3 +194,9 @@ independent legacy/current documents through native file reads, Scene activation
 edits, explicit migration saves and reopen. It checks that reading old files
 leaves their original bytes unchanged and that saving one document does not
 silently migrate another.
+
+18d extends the optional version-1 RigidBody object with collision_layer,
+collision_mask and is_trigger. Missing fields use legacy defaults; typed bounds,
+strict unknown fields and duplicate-key rejection remain. Current saves write
+all fields, so older strict readers reject their unknown fields explicitly.
+See [filter/trigger compatibility](physics-contacts.md).

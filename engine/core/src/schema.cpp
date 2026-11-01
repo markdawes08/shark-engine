@@ -116,7 +116,15 @@ const std::array<ComponentSchema, 5>& catalog() {
               ScalarConstraints{0, 1, true, true, true}},
              {PropertyId::rigid_body_restitution, "restitution", "Restitution",
               PropertyType::float64, PropertyUnit::dimensionless, writable, body.restitution,
-              ScalarConstraints{0, 1, true, true, true}}}}};
+              ScalarConstraints{0, 1, true, true, true}},
+             {PropertyId::rigid_body_collision_layer, "collision_layer", "Collision layer",
+              PropertyType::uint32, PropertyUnit::none, writable, body.collision_layer,
+              Uint32Constraints{0, 15}},
+             {PropertyId::rigid_body_collision_mask, "collision_mask", "Collision mask",
+              PropertyType::uint32, PropertyUnit::none, writable, body.collision_mask,
+              Uint32Constraints{0, 0xffff}},
+             {PropertyId::rigid_body_is_trigger, "is_trigger", "Trigger", PropertyType::boolean,
+              PropertyUnit::none, writable, body.is_trigger, BooleanConstraints{}}}}};
     return schemas;
 }
 

@@ -46,6 +46,10 @@ integrity validation, not a gameplay or physics execution capability.
 | Presentation | `render_poses(alpha)` reads previous/current endpoints; it never writes simulation or source state. |
 
 The root/positive uniform scale and local bounds remain the body contract.
+18d adds [filtering, triggers and owned contact events](physics-contacts.md), with
+sleeping disabled to keep stable overlap from producing false exits. Active
+body removal now has an explicit leased Scene boundary; detached rebuild remains
+the settings/creation path.
 Live scale changes reject and require shape rebuild. Native bodies explicitly use
 discrete motion, zero linear/angular damping, a 256 m/s linear speed ceiling and
 64 rad/s angular ceiling. These are bounded initial runtime policies, not a combat
@@ -141,6 +145,6 @@ Tests include exact arena admission with 64 active bodies/16 substeps, one-updat
 Scene publication, full hierarchy recomposition, failed newest targets, quaternion
 sign crossing, teardown and post-native failure without partial Scene publication.
 
-Layers/triggers/queued events retain 18d; actual editor/rendered play and human/
+18d implements [layers/triggers/owned events](physics-contacts.md); actual editor/rendered play and human/
 terminal acceptance retain 18e and the [desktop backlog](backlog.md#desktop-ui-deferral).
 Queries/Lua retain 20, streaming/origin transfer M05. Full REQ-18 remains NOT_RUN.

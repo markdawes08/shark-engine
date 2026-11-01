@@ -27,6 +27,9 @@ struct ScenePhysicsAccess {
     static Result<void> bind(Scene& scene, const PhysicsLease& lease);
     static Result<void> check(const Scene& scene, const PhysicsLease& lease);
     static Result<void> unbind(Scene& scene, const PhysicsLease& lease);
+    static Result<void> check_detach(const Scene& scene, const PhysicsLease& lease,
+                                     const EntityReference& entity);
+    static void detach(Scene& scene, EntityHandle entity) noexcept;
     static Result<PhysicsPoseCandidate> prepare(const Scene& scene, const PhysicsLease& lease,
                                                 std::span<const PhysicsPoseUpdate> poses);
     static Result<void> commit(Scene& scene, const PhysicsLease& lease,

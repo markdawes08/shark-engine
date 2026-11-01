@@ -32,7 +32,7 @@ or engine validation. Name and Transform are mandatory and not removable;
 | MeshRenderer | 4 | `shark.mesh_renderer` | 1 |
 | RigidBody | 5 | `shark.rigid_body` | 1 |
 
-RigidBody adds property IDs 13-20 and kilogram units under the
+RigidBody adds property IDs 13-23 and kilogram units under the
 [body contract](physics-bodies.md); root/scale feasibility remains Scene validation.
 
 Property IDs are stable across the catalog; each property also has its component

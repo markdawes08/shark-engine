@@ -26,6 +26,9 @@ struct RigidBody {
     double mass{1.0};
     double friction{0.5};
     double restitution{0.0};
+    std::uint32_t collision_layer{0};
+    std::uint32_t collision_mask{0xffff};
+    bool is_trigger{false};
     bool operator==(const RigidBody&) const = default;
 };
 

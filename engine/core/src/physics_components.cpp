@@ -14,6 +14,8 @@ bool dimension(double value) {
 } // namespace
 
 Result<RigidBody> validate_rigid_body(RigidBody body) {
+    if (body.collision_layer >= 16 || body.collision_mask > 0xffff)
+        return invalid("Collision layer must be in [0,15] and mask in [0,65535]");
     if ((body.motion != BodyMotion::static_body && body.motion != BodyMotion::dynamic_body &&
          body.motion != BodyMotion::kinematic_body) ||
         (body.shape != ColliderShape::box && body.shape != ColliderShape::sphere &&

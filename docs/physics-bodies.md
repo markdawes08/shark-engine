@@ -22,6 +22,13 @@ silently reset the other fields. There is no native body ID in authored data.
 | `mass` / 18 | Finite kilograms in [0.01,1000000]; default 1 |
 | `friction` / 19 | Finite dimensionless [0,1]; default 0.5 |
 | `restitution` / 20 | Finite dimensionless [0,1]; default 0 |
+| `collision_layer` / 21 | uint32 [0,15]; default 0 |
+| `collision_mask` / 22 | uint32 [0,65535]; default 65535 |
+| `is_trigger` / 23 | Boolean; default false |
+
+18d's [contact contract](physics-contacts.md) defines bilateral masks, native
+triggers and bounded event delivery. The same optional fields flow through
+source, commands/history/retries, terminal queries and prepared version 3.
 
 Capsules align with local Y and their total half height is `half_height + radius`.
 Box sizes are half extents, not full lengths. Native shapes use single precision;
@@ -53,7 +60,8 @@ intermediate signed-scale change cannot invalidate a valid historical state.
 Nothing is published until that complete private candidate validates.
 
 Retained matching includes presence, both enums, all three half extents and all
-five scalar doubles on create and set/remove. Floating inputs compare raw bits,
+five scalar doubles plus both collision integers and the trigger flag on create
+and set/remove. Floating inputs compare raw bits,
 including signed zero and NaN payloads. Existing `sizeof`-based command/snapshot
 charges include these fixed-size fields; no independent mutable model is added.
 
@@ -70,7 +78,8 @@ Prepared scenes preserve these values through the Core-only codec and loader.
 then motion/shape uint32 and eight float64 values (half extents, radius, half
 height, mass, friction, restitution). Version 1 still decodes with no body values.
 Encoding a scene without bodies emits the original byte-identical version 1;
-encoding bodies emits version 2. Unsupported versions reject, and old version-1
+encoding bodies with default collision settings emits version 2. Version 3 adds
+nondefault filter/trigger settings under the contact contract. Unsupported versions reject, and old version-1
 readers explicitly reject version 2. Bounds/digests and full candidate validation
 remain. Runtime gains no JSON/source parser, authoring service or SDK headers.
 
@@ -78,8 +87,8 @@ Terminal schema discovery exposes the same component and units. `scene.query`
 and `scene.inspect` opt into `rigid_body`, selected null means absent, and omitting
 the field omits its output. Up to six distinct field names are supported. Through
 `scene.mutate`, `create_entity` accepts optional `rigid_body`; `set_rigid_body`
-requires the complete value or null. Its value has the eight named fields above
-without a source `schema_version`. These are trusted local development operations,
+requires the complete value or null. Its value has the original eight required fields plus the three optional
+collision fields above, without a source `schema_version`. These are trusted local development operations,
 not player intents. The existing 42-method protocol inventory is unchanged.
 Native inspector controls retain 18e; the current widget does not misrepresent
 the new schema as its existing renderer editor. Actual desktop work remains paused.

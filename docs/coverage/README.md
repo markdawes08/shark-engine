@@ -8,9 +8,9 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-**18c adds fixed-step Scene synchronization and presentation interpolation;
+**18d adds bilateral collision filters, native triggers and owned contact events;
 selected headless qualification is tracked in the
-[handoff](../handoffs/18c-fixed-step-synchronization.md).
+[handoff](../handoffs/18d-collision-filters-and-events.md).
 Full REQ-16 and REQ-17 remain NOT_RUN.** Native composition and actual UI acceptance are
 deferred under the user's
 [coding-only amendment](../backlog.md); it is not a passing UI qualification.
@@ -53,7 +53,11 @@ eighteenth FeatureWorld case exercises independent source/native expectations.
 prepared runtime gravity and unchanged authored source/history. CPU fixtures cover
 admission/leases, all three pose modes, existing schedules, independent fixed-rate
 oracles and interpolated extraction/picking rejection. No new component, command,
-protocol format or terminal RPC method is added. Layers/events remain 18d in the
+protocol format or terminal RPC method is added in 18c. 18d's
+[contact contract](../physics-contacts.md) extends shared settings and prepared
+version 3, safe active removal and bounded post-tick enter/exit delivery. The same
+FeatureWorld case verifies prepared filtering/triggers with unchanged authoring.
+Native editor/connected acceptance remains 18e in the
 [physics checkpoints](../roadmap/physics-plan.md).
 Full REQ-18 remains NOT_RUN.
 

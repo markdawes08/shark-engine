@@ -449,6 +449,8 @@ bool same_body_input(const std::optional<RigidBody>& left,
     if (!left)
         return true;
     return left->motion == right->motion && left->shape == right->shape &&
+           left->collision_layer == right->collision_layer &&
+           left->collision_mask == right->collision_mask && left->is_trigger == right->is_trigger &&
            same_number(left->half_extents.x, right->half_extents.x) &&
            same_number(left->half_extents.y, right->half_extents.y) &&
            same_number(left->half_extents.z, right->half_extents.z) &&

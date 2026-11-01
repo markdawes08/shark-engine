@@ -6,7 +6,7 @@
 
 namespace shark {
 
-inline constexpr std::uint32_t prepared_scene_version = 2;
+inline constexpr std::uint32_t prepared_scene_version = 3;
 inline constexpr std::size_t prepared_scene_maximum_payload_bytes = 4 * 1024 * 1024;
 inline constexpr std::size_t prepared_scene_maximum_decoded_bytes = 16 * 1024 * 1024;
 inline constexpr std::size_t prepared_scene_maximum_entities = 4096;

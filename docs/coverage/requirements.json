@@ -473,7 +473,7 @@
       "planned_fixture": "FeatureWorld/RigidBodies, FeatureWorld/CollisionLayers, FeatureWorld/Triggers, PhysicsRenderRateTolerance and PhysicsQueuedRemoval fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "18a-18c implement the private Jolt world, native bodies/colliders and shared authored settings, plus conservative populated work admission, weak Scene writer leases, mode-specific fixed-step pose publication, existing offline/server scheduler adapters and presentation interpolation. Selected headless evidence is in docs/handoffs/18c-fixed-step-synchronization.md. Filtering/triggers/events retain 18d and native editor/connected qualification 18e; full REQ-18 remains NOT_RUN."
+        "reason": "18a-18d implement native bodies, shared authored settings, fixed-step Scene ownership/synchronization and presentation interpolation, plus bilateral filters, native triggers, bounded owned contact transitions and safe active removal with queued participant lifetimes. Selected Windows/WSL Debug, ASan+UBSan and protected Release evidence is in docs/handoffs/18d-collision-filters-and-events.md. Native editor/play and connected human/terminal qualification retain 18e; full REQ-18 remains NOT_RUN."
       }
     },
     {
@@ -3327,6 +3327,42 @@
           "assets/FeatureWorld/scenes/FeatureWorld.sharkscene"
         ],
         "fixture_reason": "Real native gravity/contact cases cover all pose authorities, exact arena admission with 64 active bodies/16 substeps, Scene writer leases and teardown, atomic subtree publication and faulted post-native output. Existing offline/server schedules exercise independent fixed-step oracles at 30/60/144/240 Hz presentation and 20 Hz server ticks with three substeps. Interpolation crosses the quaternion sign boundary and recomposes mirrored child transforms without Scene writes; picking rejects physics provenance including tick zero. FeatureWorld loads prepared runtime content and independently verifies gravity and unchanged source/history.",
+        "featureworld_cases": [
+          "featureworld.rigid-bodies"
+        ]
+      },
+      {
+        "id": "physics.contacts",
+        "name": "Bilateral collision filters, trigger transitions and bounded owned delivery",
+        "requirement_ids": [
+          "REQ-18",
+          "REQ-09",
+          "REQ-15"
+        ],
+        "test_ids": [
+          "shark.core.physics",
+          "shark.tools.rigid-body",
+          "shark.tools.authoring-editing-process",
+          "shark.tools.authoring-protocol-process",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process"
+        ],
+        "test_sources": [
+          "tests/core_physics_contact_tests.cpp",
+          "tests/core_physics_body_tests.cpp",
+          "tests/rigid_body_tests.cpp",
+          "tools/tests/test_authoring_editing_process.py",
+          "tools/tests/test_authoring_protocol_process.py",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py"
+        ],
+        "fixtures": [
+          "docs/physics-contacts.md",
+          "docs/architecture/0048-physics-contacts.md",
+          "engine_tools/src/feature_world.cpp",
+          "assets/FeatureWorld/scenes/FeatureWorld.sharkscene"
+        ],
+        "fixture_reason": "Real native response differs for each side of a bilateral mask and for sensors. Fixed-step contacts cover stable overlap beyond the sleep interval, native preintegration timing, partial take, owner-thread rejection, pre-native backpressure, post-native collector overflow, active removal, entity/body generation reuse and close discard accounting. Shared authoring preserves all new fields through exact retries/history/source save/reopen and prepared v1/v2/v3 compatibility. Real terminal pipes discover/query/mutate all eleven fields. The existing FeatureWorld case uses prepared filters/sensors with independent gravity and enter/exit expectations while source/history remain unchanged. A 16-actor sensor case verifies canonical batch ordering, no duplicate persistence events and bulk active removal exits.",
         "featureworld_cases": [
           "featureworld.rigid-bodies"
         ]

@@ -49,7 +49,7 @@ This user amendment permits later implementation to proceed before those checks;
 it does not qualify untested behavior or close full UI acceptance. Do not infer
 permission to resume from elapsed time or a new coding request.
 
-**Current handoff: [18c, fixed-step synchronization](docs/handoffs/18c-fixed-step-synchronization.md).**
+**Current handoff: [18d, collision filters and events](docs/handoffs/18d-collision-filters-and-events.md).**
 Follow [ADR 0045](docs/architecture/0045-physics-foundation.md) and the
 [physics-world contract](docs/physics-world.md): Jolt is a private locked Core
 dependency, with one creating-thread world owner and bounded explicit stepping.
@@ -57,7 +57,7 @@ Preserve native registration leases, saved callbacks and reverse teardown.
 18b adds [RigidBody settings and checked native snapshots](docs/physics-bodies.md)
 under [ADR 0046](docs/architecture/0046-rigid-bodies.md). Preserve exact root/scale,
 local pose and replica rejection, shared capture/history/bit-exact retry matching,
-and prepared v1/v2 compatibility. Native bodies retain owned entity references,
+and prepared v1/v2/v3 compatibility. Native bodies retain owned entity references,
 not Scene pointers; detached source changes require explicit remove/recreate.
 18c's [simulation contract](docs/physics-simulation.md) and
 [ADR 0047](docs/architecture/0047-fixed-step-physics.md) add conservative populated
@@ -66,7 +66,16 @@ leased; static reset/dynamic teleport and bounded kinematic targets use the
 simulation owner. Fault after native work preserves the last complete Scene but
 is not native rollback. Owned interpolation snapshots recompose render subtrees
 before culling and cannot authorize picking. Native cleanup never borrows Scene.
-Next is 18d in the [physics checkpoints](docs/roadmap/physics-plan.md).
+18d's [contact contract](docs/physics-contacts.md) and
+[ADR 0048](docs/architecture/0048-physics-contacts.md) add bilateral layer/mask and
+trigger settings through source/history/exact retries and terminal discovery.
+Native callbacks only collect bounded pairs. After a successful fixed update,
+the owner publishes sorted owned enter/exit observations; no callback accesses
+Scene or Lua. Sleeping is disabled, and native contact evaluation precedes final
+movement. Preserve pre-native queue backpressure, faulted post-native overflow,
+queued participant generations and explicit close discard accounting. Active
+removal detaches through the leased Core owner; source authoring remains separate.
+Next is 18e in the [physics checkpoints](docs/roadmap/physics-plan.md).
 Tick frequency and collision substeps are distinct; reuse existing schedulers.
 Native inspector fields/connected acceptance remain 18e and desktop work is paused.
 17d connects portable gizmo/drag adapters and public terminal processes over saved

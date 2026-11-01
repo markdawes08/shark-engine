@@ -23,7 +23,11 @@ shared authoring and source/prepared persistence. 18c's
 [simulation contract](../physics-simulation.md), [ADR 0047](../architecture/0047-fixed-step-physics.md)
 and [handoff](../handoffs/18c-fixed-step-synchronization.md) add admitted populated
 updates, leased Scene ownership, existing scheduler adapters and CPU presentation
-interpolation. **Next is 18d.** Full REQ-18 stays NOT_RUN until its connected behavior
+interpolation. 18d's [contact contract](../physics-contacts.md),
+[ADR 0048](../architecture/0048-physics-contacts.md) and
+[handoff](../handoffs/18d-collision-filters-and-events.md) add shared filter/trigger
+settings, bounded native observations, owned event delivery and safe runtime
+detach with queued values. **Next is 18e.** Full REQ-18 stays NOT_RUN until its connected behavior
 and required acceptance are qualified. Every checkpoint
 uses the [testing policy](../testing-policy.md); preserve workloads/fixtures and
 reuse valid results rather than rerunning unrelated engine matrices.

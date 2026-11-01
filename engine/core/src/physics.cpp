@@ -12,6 +12,7 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyLock.h>
 #include <Jolt/Physics/Body/MotionProperties.h>
+#include <Jolt/Physics/Collision/ContactListener.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
@@ -31,11 +32,16 @@
 #include <mutex>
 #include <new>
 #include <thread>
+#include <tuple>
+#include <type_traits>
 #include <utility>
 #include <vector>
 
 namespace shark {
 namespace {
+
+static_assert(std::is_nothrow_move_constructible_v<PhysicsContactEvent> &&
+              std::is_nothrow_move_assignable_v<PhysicsContactEvent>);
 
 Error physics_error(ErrorCode code, const char* message, const char* operation) {
     return {code, message, {.operation = operation}};
@@ -80,7 +86,7 @@ class MeteredTemporary final : public JPH::TempAllocator {
 };
 
 // Reviewed against the locked Update/IslandBuilder/ContactConstraintManager
-// allocation paths. Discrete rigid primitives only, no constraints/listeners/
+// allocation paths. Discrete rigid primitives only, no external constraints/step-listeners/
 // soft bodies, one native job thread, large-island splitting disabled. Include
 // simultaneous buffers, Array growth, alignment and a 64 KiB fixed allowance.
 std::size_t temporary_requirement(const PhysicsWorldConfig& config) {
@@ -257,8 +263,8 @@ class NativeLease final {
     bool active_{false};
 };
 
-// One private broadphase layer is sufficient for the empty 18a world. There is
-// no public layer/filter API until its owning checkpoint supplies it.
+// Bodies use private slot indices as native object layers. Immutable-per-body
+// rules keep the full public mask out of the native 16-bit object-layer field.
 class SingleBroadPhaseLayer final : public JPH::BroadPhaseLayerInterface {
   public:
     JPH::uint GetNumBroadPhaseLayers() const override {
@@ -281,12 +287,93 @@ class AllBroadPhaseLayers final : public JPH::ObjectVsBroadPhaseLayerFilter {
         return true;
     }
 };
-class AllLayerPairs final : public JPH::ObjectLayerPairFilter {
+class BodyLayerPairs final : public JPH::ObjectLayerPairFilter {
   public:
-    bool ShouldCollide([[maybe_unused]] JPH::ObjectLayer first,
-                       [[maybe_unused]] JPH::ObjectLayer second) const override {
-        return true;
+    struct Rule {
+        std::uint32_t layer{0}, mask{0};
+    };
+    std::array<Rule, physics_maximum_bodies> rules{};
+    bool ShouldCollide(JPH::ObjectLayer first, JPH::ObjectLayer second) const override {
+        if (first >= rules.size() || second >= rules.size())
+            return false;
+        const auto& a = rules[first];
+        const auto& b = rules[second];
+        return (a.mask & (1U << b.layer)) != 0 && (b.mask & (1U << a.layer)) != 0;
     }
+};
+
+struct ObservedPair {
+    JPH::BodyID native_first, native_second;
+    std::uint32_t first, second;
+    std::uint64_t first_generation, second_generation;
+    bool operator==(const ObservedPair&) const = default;
+};
+bool pair_less(const ObservedPair& a, const ObservedPair& b) {
+    return std::tie(a.first, a.first_generation, a.second, a.second_generation) <
+           std::tie(b.first, b.first_generation, b.second, b.second_generation);
+}
+// Locked single-thread native jobs only. No allocation, Scene access, external
+// callbacks, body locks or exceptions in this collector. Removed callbacks need
+// no dead-body access: the owner compares completed-tick pair sets instead.
+class ContactCollector final : public JPH::ContactListener {
+  public:
+    explicit ContactCollector(std::uint32_t maximum) : maximum_(maximum) {
+        std::size_t capacity = 2;
+        while (capacity < 2 * maximum)
+            capacity *= 2;
+        table_.resize(capacity);
+        occupied_.reserve(maximum);
+    }
+    void clear() noexcept {
+        for (auto index : occupied_)
+            table_[index].reset();
+        occupied_.clear();
+        overflow = false;
+    }
+    void OnContactAdded(const JPH::Body& a, const JPH::Body& b, const JPH::ContactManifold&,
+                        JPH::ContactSettings&) noexcept override {
+        observe(a, b);
+    }
+    void OnContactPersisted(const JPH::Body& a, const JPH::Body& b, const JPH::ContactManifold&,
+                            JPH::ContactSettings&) noexcept override {
+        observe(a, b);
+    }
+    template <typename F> void visit(F&& visitor) const {
+        for (auto index : occupied_)
+            visitor(*table_[index]);
+    }
+    bool overflow{false};
+
+  private:
+    void observe(const JPH::Body& a, const JPH::Body& b) noexcept {
+        if (overflow)
+            return;
+        ObservedPair pair{a.GetID(),          b.GetID(),       a.GetObjectLayer(),
+                          b.GetObjectLayer(), a.GetUserData(), b.GetUserData()};
+        if (pair.second < pair.first) {
+            std::swap(pair.first, pair.second);
+            std::swap(pair.first_generation, pair.second_generation);
+            std::swap(pair.native_first, pair.native_second);
+        }
+        auto hash = (pair.first_generation * 1099511628211ULL) ^ pair.second_generation ^
+                    (static_cast<std::uint64_t>(pair.first) * 0x9e3779b185ebca87ULL) ^ pair.second;
+        hash ^= hash >> 32U;
+        auto index = static_cast<std::size_t>(hash) & (table_.size() - 1);
+        while (table_[index]) {
+            if (*table_[index] == pair)
+                return;
+            index = (index + 1) & (table_.size() - 1);
+        }
+        if (occupied_.size() == maximum_) {
+            overflow = true;
+            return;
+        }
+        table_[index] = pair;
+        occupied_.push_back(index); // Reserved; trivial value, no callback allocation.
+    }
+    std::size_t maximum_;
+    std::vector<std::optional<ObservedPair>> table_;
+    std::vector<std::size_t> occupied_;
 };
 
 Result<void> validate(const PhysicsWorldConfig& config) {
@@ -301,6 +388,11 @@ Result<void> validate(const PhysicsWorldConfig& config) {
         config.temporary_bytes > physics_maximum_temporary_bytes)
         return physics_error(ErrorCode::invalid_configuration,
                              "Physics configuration exceeds its bounded capacities or tick policy",
+                             "physics.world.create");
+    if (config.max_contact_pairs == 0 || config.max_contact_pairs > 16384 ||
+        config.max_queued_events < 2 * config.max_contact_pairs || config.max_queued_events > 65536)
+        return physics_error(ErrorCode::invalid_configuration,
+                             "Contact/event capacities exceed bounded policy",
                              "physics.world.create");
     for (int axis = 0; axis < 3; ++axis) {
         const auto component = config.gravity[axis];
@@ -321,7 +413,8 @@ Result<void> validate(const PhysicsWorldConfig& config) {
 } // namespace
 
 struct PhysicsWorld::Impl {
-    explicit Impl(PhysicsWorldConfig value, std::uint64_t token) : instance(token), config(value) {}
+    explicit Impl(PhysicsWorldConfig value, std::uint64_t token)
+        : instance(token), config(value), contacts(value.max_contact_pairs) {}
     struct BodyRecord {
         EntityReference entity;
         RigidBody settings;
@@ -352,7 +445,12 @@ struct PhysicsWorld::Impl {
     scene_detail::PhysicsLease simulation;
     SingleBroadPhaseLayer broad_phase;
     AllBroadPhaseLayers broad_phase_filter;
-    AllLayerPairs pair_filter;
+    BodyLayerPairs pair_filter;
+    ContactCollector contacts;
+    std::vector<ObservedPair> active_pairs;
+    std::vector<PhysicsContactEvent> events;
+    std::uint64_t next_event{1};
+    std::uint64_t discarded_events{0};
     // Declaration order preserves borrowed filters and global callbacks until
     // all native resources have been destroyed, including partial startup.
     std::unique_ptr<NativeLease> lease;
@@ -376,8 +474,43 @@ struct PhysicsWorld::Impl {
             return physics_error(ErrorCode::conflict, "Physics simulation is not ready", operation);
         return scene_detail::ScenePhysicsAccess::check(scene, simulation);
     }
+    Result<void> event_capacity(std::size_t count) const {
+        if (count > config.max_queued_events - events.size())
+            return physics_error(ErrorCode::conflict, "Take queued physics events before more work",
+                                 "physics.events.capacity");
+        if (count > std::numeric_limits<std::uint64_t>::max() - next_event)
+            return physics_error(ErrorCode::conflict, "Physics event sequences exhausted",
+                                 "physics.events.capacity");
+        return {};
+    }
+    bool current_pair(const ObservedPair& pair) const {
+        return pair.first < bodies.size() && pair.second < bodies.size() &&
+               bodies[pair.first].value && bodies[pair.second].value &&
+               bodies[pair.first].generation == pair.first_generation &&
+               bodies[pair.second].generation == pair.second_generation &&
+               bodies[pair.first].value->native == pair.native_first &&
+               bodies[pair.second].value->native == pair.native_second;
+    }
+    PhysicsContactEvent event(const ObservedPair& pair, PhysicsContactPhase phase,
+                              PhysicsContactCause cause, std::uint64_t tick) const {
+        const auto& a = *bodies[pair.first].value;
+        const auto& b = *bodies[pair.second].value;
+        return {0,
+                tick,
+                phase,
+                cause,
+                {{instance, pair.first, pair.first_generation}, a.entity, a.settings.is_trigger},
+                {{instance, pair.second, pair.second_generation}, b.entity, b.settings.is_trigger}};
+    }
+    void publish_events(std::vector<PhysicsContactEvent>& ready) {
+        for (auto& value : ready) {
+            value.sequence = next_event++;
+            events.push_back(std::move(value)); // Complete queue storage reserved at begin.
+        }
+    }
     void release() noexcept {
         if (system) {
+            system->SetContactListener(nullptr);
             auto& interface = system->GetBodyInterface();
             for (auto& slot : bodies)
                 if (slot.value) {
@@ -387,6 +520,10 @@ struct PhysicsWorld::Impl {
                 }
         }
         system.reset();
+        active_pairs.clear();
+        discarded_events += events.size();
+        events.clear();
+        contacts.clear();
         jobs.reset();
         temporary.reset();
         simulation.reset();
@@ -429,6 +566,7 @@ Result<std::unique_ptr<PhysicsWorld>> PhysicsWorld::create(PhysicsWorldConfig co
         settings.mMaxInFlightBodyPairs = static_cast<int>(config.max_body_pairs);
         settings.mUseLargeIslandSplitter = false;
         impl->system->SetPhysicsSettings(settings);
+        impl->system->SetContactListener(&impl->contacts);
         impl->system->SetGravity(JPH::Vec3{static_cast<float>(config.gravity.x),
                                            static_cast<float>(config.gravity.y),
                                            static_cast<float>(config.gravity.z)});
@@ -554,7 +692,7 @@ Result<PhysicsBodyHandle> PhysicsWorld::create_body(const Scene& scene, EntityHa
                        static_cast<float>(t.translation.z)},
             JPH::Quat{static_cast<float>(t.rotation.x), static_cast<float>(t.rotation.y),
                       static_cast<float>(t.rotation.z), static_cast<float>(t.rotation.w)},
-            motion, 0};
+            motion, static_cast<JPH::ObjectLayer>(index)};
         native_settings.mFriction = static_cast<float>(settings.friction);
         native_settings.mRestitution = static_cast<float>(settings.restitution);
         native_settings.mOverrideMassProperties = JPH::EOverrideMassProperties::CalculateInertia;
@@ -564,6 +702,12 @@ Result<PhysicsBodyHandle> PhysicsWorld::create_body(const Scene& scene, EntityHa
         native_settings.mMaxLinearVelocity = static_cast<float>(physics_maximum_linear_speed);
         native_settings.mMaxAngularVelocity = static_cast<float>(physics_maximum_angular_speed);
         native_settings.mMotionQuality = JPH::EMotionQuality::Discrete;
+        native_settings.mIsSensor = settings.is_trigger;
+        native_settings.mCollideKinematicVsNonDynamic = true;
+        native_settings.mAllowSleeping = false;
+        native_settings.mUserData =
+            index < impl_->bodies.size() ? impl_->bodies[index].generation : 1;
+        impl_->pair_filter.rules[index] = {settings.collision_layer, settings.collision_mask};
         auto& interface = impl_->system->GetBodyInterface();
         auto* native = interface.CreateBody(native_settings);
         if (!native)
@@ -654,6 +798,8 @@ Result<void> PhysicsWorld::begin_simulation(Scene& scene) {
             return physics_error(ErrorCode::conflict, "Native body inventory differs from Scene",
                                  "physics.simulation.begin");
         auto lease = std::make_shared<const std::uint64_t>(impl_->instance);
+        impl_->events.reserve(impl_->config.max_queued_events);
+        impl_->active_pairs.reserve(impl_->config.max_contact_pairs);
         if (auto checked = scene_detail::ScenePhysicsAccess::bind(scene, lease); !checked)
             return checked;
         impl_->simulation = std::move(lease);
@@ -707,11 +853,14 @@ Result<void> PhysicsWorld::step(Scene& scene) {
     if (impl_->completed_ticks == std::numeric_limits<std::uint64_t>::max())
         return physics_error(ErrorCode::conflict, "Physics tick identities exhausted",
                              "physics.simulation.step");
+    if (auto checked = impl_->event_capacity(2 * impl_->config.max_contact_pairs); !checked)
+        return checked;
     try {
         // Reserve the output before any native movement. Later Scene validation
         // can still fail; that faults the world and retains the last Scene state.
         std::vector<scene_detail::PhysicsPoseUpdate> output;
         output.reserve(impl_->system->GetNumBodies());
+        impl_->contacts.clear();
         native_diagnostic = {};
         auto& interface = impl_->system->GetBodyInterface();
         for (auto& slot : impl_->bodies)
@@ -732,7 +881,7 @@ Result<void> PhysicsWorld::step(Scene& scene) {
                                   static_cast<int>(impl_->config.collision_substeps),
                                   impl_->temporary.get(), impl_->jobs.get());
         if (outcome != JPH::EPhysicsUpdateError::None || native_diagnostic.reported ||
-            !impl_->temporary->IsEmpty() ||
+            impl_->contacts.overflow || !impl_->temporary->IsEmpty() ||
             impl_->temporary->peak() > temporary_requirement(impl_->config)) {
             impl_->faulted = true;
             if (native_diagnostic.reported)
@@ -759,6 +908,42 @@ Result<void> PhysicsWorld::step(Scene& scene) {
             impl_->faulted = true;
             return candidate.error();
         }
+        std::vector<ObservedPair> pairs;
+        pairs.reserve(impl_->config.max_contact_pairs);
+        bool invalid_pair = false;
+        impl_->contacts.visit([&](const ObservedPair& pair) {
+            if (!impl_->current_pair(pair))
+                invalid_pair = true;
+            else if (impl_->system->WereBodiesInContact(pair.native_first, pair.native_second))
+                pairs.push_back(pair);
+        });
+        if (invalid_pair) {
+            impl_->faulted = true;
+            return physics_error(ErrorCode::execution_failed,
+                                 "Contact observation has a stale native owner",
+                                 "physics.events.prepare");
+        }
+        std::sort(pairs.begin(), pairs.end(), pair_less);
+        std::vector<PhysicsContactEvent> ready;
+        ready.reserve(impl_->active_pairs.size() + pairs.size());
+        std::size_t old_index = 0, new_index = 0;
+        while (old_index < impl_->active_pairs.size() || new_index < pairs.size()) {
+            if (new_index == pairs.size() ||
+                (old_index < impl_->active_pairs.size() &&
+                 pair_less(impl_->active_pairs[old_index], pairs[new_index]))) {
+                ready.push_back(
+                    impl_->event(impl_->active_pairs[old_index++], PhysicsContactPhase::exit,
+                                 PhysicsContactCause::simulation, impl_->completed_ticks + 1));
+            } else if (old_index == impl_->active_pairs.size() ||
+                       pair_less(pairs[new_index], impl_->active_pairs[old_index])) {
+                ready.push_back(impl_->event(pairs[new_index++], PhysicsContactPhase::enter,
+                                             PhysicsContactCause::simulation,
+                                             impl_->completed_ticks + 1));
+            } else {
+                ++old_index;
+                ++new_index;
+            }
+        }
         auto committed =
             scene_detail::ScenePhysicsAccess::commit(scene, impl_->simulation, candidate.value());
         if (!committed) {
@@ -773,6 +958,8 @@ Result<void> PhysicsWorld::step(Scene& scene) {
                 slot.value->target.reset();
             }
         ++impl_->completed_ticks;
+        impl_->active_pairs.swap(pairs);
+        impl_->publish_events(ready);
         return {};
     } catch (...) {
         impl_->faulted = true;
@@ -970,24 +1157,92 @@ Result<PhysicsBodyState> PhysicsWorld::body_state(const Scene& scene,
 }
 
 Result<void> PhysicsWorld::remove_body(PhysicsBodyHandle body) {
+    return remove_body_impl(nullptr, body);
+}
+Result<void> PhysicsWorld::remove_body(Scene& scene, PhysicsBodyHandle body) {
+    return remove_body_impl(&scene, body);
+}
+Result<void> PhysicsWorld::remove_body_impl(Scene* scene, PhysicsBodyHandle body) {
     if (auto checked = impl_->check_owner("physics.body.remove"); !checked)
         return checked;
-    if (impl_->simulation)
-        return physics_error(ErrorCode::conflict, "End simulation before removing bodies",
+    if (impl_->closed || impl_->faulted)
+        return physics_error(ErrorCode::conflict, "Physics owner is closed or faulted",
                              "physics.body.remove");
+    if (scene) {
+        if (auto checked = impl_->check_simulation(*scene, "physics.body.remove"); !checked)
+            return checked;
+    } else if (impl_->simulation) {
+        return physics_error(ErrorCode::conflict, "Use the leased Scene to remove an active body",
+                             "physics.body.remove");
+    }
     auto checked = impl_->checked_body(body);
     if (!checked)
         return checked.error();
     auto& slot = impl_->bodies[checked.value()];
-    auto& interface = impl_->system->GetBodyInterface();
-    interface.RemoveBody(slot.value->native);
-    interface.DestroyBody(slot.value->native);
-    slot.value.reset();
-    if (slot.generation == std::numeric_limits<std::uint64_t>::max())
-        slot.retired = true;
-    else
-        ++slot.generation;
-    return {};
+    const auto entity = slot.value->entity.handle;
+    if (scene) {
+        if (auto ready = scene_detail::ScenePhysicsAccess::check_detach(*scene, impl_->simulation,
+                                                                        slot.value->entity);
+            !ready)
+            return ready;
+    }
+    bool native_work = false;
+    try {
+        std::vector<PhysicsContactEvent> exits;
+        for (const auto& pair : impl_->active_pairs)
+            if (pair.first == body.slot || pair.second == body.slot)
+                exits.push_back(impl_->event(pair, PhysicsContactPhase::exit,
+                                             PhysicsContactCause::body_removed,
+                                             impl_->completed_ticks));
+        if (auto ready = impl_->event_capacity(exits.size()); !ready)
+            return ready;
+        native_diagnostic = {};
+        auto& interface = impl_->system->GetBodyInterface();
+        native_work = true;
+        interface.RemoveBody(slot.value->native);
+        interface.DestroyBody(slot.value->native);
+        slot.value.reset();
+        impl_->pair_filter.rules[body.slot] = {};
+        if (slot.generation == std::numeric_limits<std::uint64_t>::max())
+            slot.retired = true;
+        else
+            ++slot.generation;
+        std::erase_if(impl_->active_pairs, [&](const auto& pair) {
+            return pair.first == body.slot || pair.second == body.slot;
+        });
+        if (native_diagnostic.reported) {
+            impl_->faulted = true;
+            return reported_error("physics.body.remove");
+        }
+        if (scene)
+            scene_detail::ScenePhysicsAccess::detach(*scene, entity);
+        impl_->publish_events(exits);
+        return {};
+    } catch (...) {
+        if (native_work)
+            impl_->faulted = true;
+        return physics_error(ErrorCode::execution_failed, "Cannot prepare body removal",
+                             "physics.body.remove");
+    }
+}
+Result<std::vector<PhysicsContactEvent>> PhysicsWorld::take_events(std::size_t maximum) {
+    if (auto checked = impl_->check_owner("physics.events.take"); !checked)
+        return checked.error();
+    if (impl_->closed || maximum == 0 || maximum > 65536)
+        return physics_error(ErrorCode::invalid_argument,
+                             "Event take requires an open owner and maximum in [1,65536]",
+                             "physics.events.take");
+    try {
+        const auto count = std::min(maximum, impl_->events.size());
+        std::vector<PhysicsContactEvent> result(
+            impl_->events.begin(), impl_->events.begin() + static_cast<std::ptrdiff_t>(count));
+        impl_->events.erase(impl_->events.begin(),
+                            impl_->events.begin() + static_cast<std::ptrdiff_t>(count));
+        return result;
+    } catch (...) {
+        return physics_error(ErrorCode::execution_failed, "Cannot take physics events",
+                             "physics.events.take");
+    }
 }
 
 Result<PhysicsWorldStats> PhysicsWorld::stats() const {
@@ -1000,7 +1255,10 @@ Result<PhysicsWorldStats> PhysicsWorld::stats() const {
                              impl_->faulted,
                              static_cast<bool>(impl_->simulation),
                              temporary_requirement(impl_->config),
-                             impl_->temporary ? impl_->temporary->peak() : 0};
+                             impl_->temporary ? impl_->temporary->peak() : 0,
+                             impl_->active_pairs.size(),
+                             impl_->events.size(),
+                             impl_->discarded_events};
 }
 
 Result<void> PhysicsWorld::close() {

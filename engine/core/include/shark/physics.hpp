@@ -38,6 +38,24 @@ struct PhysicsBodyHandle {
     bool operator==(const PhysicsBodyHandle&) const = default;
 };
 
+enum class PhysicsContactPhase { enter, exit };
+enum class PhysicsContactCause { simulation, body_removed };
+struct PhysicsContactParticipant {
+    PhysicsBodyHandle body;
+    EntityReference entity;
+    bool is_trigger;
+};
+// Historical owned observations. Resolving either participant for a new action
+// still requires its current Scene/authority and body generation.
+struct PhysicsContactEvent {
+    std::uint64_t sequence;
+    std::uint64_t completed_tick;
+    PhysicsContactPhase phase;
+    PhysicsContactCause cause;
+    PhysicsContactParticipant first;
+    PhysicsContactParticipant second;
+};
+
 struct PhysicsBodyState {
     EntityReference entity;
     RigidBody settings;
@@ -69,6 +87,8 @@ struct PhysicsWorldConfig {
     std::uint32_t max_contact_constraints{8192};
     std::size_t temporary_bytes{8 * 1024 * 1024};
     math::Vec3 gravity{0.0, -9.81, 0.0};
+    std::uint32_t max_contact_pairs{1024};
+    std::uint32_t max_queued_events{16384};
     bool operator==(const PhysicsWorldConfig&) const = default;
 };
 
@@ -81,11 +101,14 @@ struct PhysicsWorldStats {
     bool simulating{false};
     std::size_t temporary_required_bytes{0};
     std::size_t temporary_high_water_bytes{0};
+    std::size_t active_contact_pairs{0};
+    std::size_t pending_events{0};
+    std::uint64_t discarded_events{0};
 };
 
 // CPU-only owner of a bounded native physics system and checked detached bodies.
-// Explicit simulation leases fence ordinary Scene writes. Layers/events and
-// queries remain later checkpoints; native details stay private.
+// Explicit simulation leases fence ordinary Scene writes. Bounded contact
+// transitions are taken on the owner thread; queries remain assignment 20.
 // Native types and process registrations remain private. Methods require the
 // creating thread; this is not a concurrent registry or another scheduler.
 class PhysicsWorld final {
@@ -128,6 +151,10 @@ class PhysicsWorld final {
     [[nodiscard]] Result<PhysicsBodyState> body_state(const Scene& scene,
                                                       PhysicsBodyHandle body) const;
     [[nodiscard]] Result<void> remove_body(PhysicsBodyHandle body);
+    // Runtime detach through the existing leased owner; removes RigidBody from
+    // this Core Scene, keeps the visual entity and queues owned exit events.
+    [[nodiscard]] Result<void> remove_body(Scene& scene, PhysicsBodyHandle body);
+    [[nodiscard]] Result<std::vector<PhysicsContactEvent>> take_events(std::size_t maximum = 256);
     [[nodiscard]] Result<PhysicsWorldStats> stats() const;
     // Idempotent, permanently closed. Releases native owners before their last
     // process-global registration lease. Closed values retain config/tick stats.
@@ -136,6 +163,7 @@ class PhysicsWorld final {
   private:
     [[nodiscard]] Result<void> reset_pose(Scene& scene, PhysicsBodyHandle body, Transform pose,
                                           BodyMotion mode);
+    [[nodiscard]] Result<void> remove_body_impl(Scene* scene, PhysicsBodyHandle body);
     struct Impl;
     explicit PhysicsWorld(std::unique_ptr<Impl> impl) noexcept;
     std::unique_ptr<Impl> impl_;

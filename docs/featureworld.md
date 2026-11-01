@@ -1,5 +1,10 @@
 # Saved FeatureWorld
 
+18d extends the same eighteenth case with prepared version-3 collision settings
+and a native sensor. Independent gravity and enter/exit checks prove filtering
+and nonresponse while source/history stay unchanged. The saved fixture and case
+IDs remain stable; see [contacts](physics-contacts.md).
+
 18c extends `featureworld.rigid-bodies` with fixed-step gravity in a separately
 loaded prepared Core Scene. Independent expected displacement and unchanged
 source/history checks retain authored/runtime separation. No new case or fixture

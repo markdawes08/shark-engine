@@ -121,7 +121,7 @@ Candidate read(std::span<const std::byte> payload) {
     Reader header{payload, 0};
     static_cast<void>(header.raw(8));
     const auto version = header.u32();
-    require(version == 1 || version == prepared_scene_version,
+    require(version >= 1 && version <= prepared_scene_version,
             "Unsupported prepared scene version");
     const auto body = unwrap(payload, scene_magic, prepared_scene_maximum_payload_bytes, version);
     Reader reader{body, prepared_scene_maximum_decoded_bytes};
@@ -171,6 +171,11 @@ Candidate read(std::span<const std::byte> payload) {
                 body_value.mass = reader.f64();
                 body_value.friction = reader.f64();
                 body_value.restitution = reader.f64();
+                if (version >= 3) {
+                    body_value.collision_layer = reader.u32();
+                    body_value.collision_mask = reader.u32();
+                    body_value.is_trigger = flag(reader);
+                }
                 entity.rigid_body = body_value;
             }
             result.entities.push_back(std::move(entity));
@@ -189,10 +194,15 @@ Result<std::vector<std::byte>> encode_prepared_scene(const PreparedScene& scene)
     return boundary<std::vector<std::byte>>("prepared.scene.encode", [&] {
         const auto candidate = validate(scene);
         const auto& value = candidate.value;
-        const auto version = std::any_of(value.entities.begin(), value.entities.end(),
-                                         [](const auto& e) { return e.rigid_body.has_value(); })
-                                 ? prepared_scene_version
-                                 : 1;
+        std::uint32_t version = 1;
+        for (const auto& e : value.entities)
+            if (e.rigid_body) {
+                const auto& body = *e.rigid_body;
+                version = std::max(version, body.collision_layer != 0 ||
+                                                    body.collision_mask != 0xffff || body.is_trigger
+                                                ? prepared_scene_version
+                                                : 2U);
+            }
         Writer writer{prepared_scene_maximum_payload_bytes - envelope_bytes};
         writer.id(value.scene.value());
         writer.u8(value.world_origin ? 1 : 0);
@@ -238,6 +248,11 @@ Result<std::vector<std::byte>> encode_prepared_scene(const PreparedScene& scene)
                          {b.half_extents.x, b.half_extents.y, b.half_extents.z, b.radius,
                           b.half_height, b.mass, b.friction, b.restitution})
                         writer.f64(v);
+                    if (version >= 3) {
+                        writer.u32(b.collision_layer);
+                        writer.u32(b.collision_mask);
+                        writer.u8(b.is_trigger ? 1 : 0);
+                    }
                 }
             }
         }

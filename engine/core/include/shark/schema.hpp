@@ -44,6 +44,9 @@ enum class PropertyId : std::uint32_t {
     rigid_body_mass = 18,
     rigid_body_friction = 19,
     rigid_body_restitution = 20,
+    rigid_body_collision_layer = 21,
+    rigid_body_collision_mask = 22,
+    rigid_body_is_trigger = 23,
 };
 inline constexpr std::uint32_t component_schema_version = 1;
 

@@ -1144,3 +1144,9 @@ artifact report. The existing artifact fixture's `--connected` mode invokes this
 same example with the locked validation environment on both selected GPUs and
 compares against the independent imported-triangle reference. It does not replace
 the public example or introduce another editing API.
+
+18d extends the existing RigidBody value/discovery with collision_layer [0,15],
+collision_mask [0,65535] and Boolean is_trigger. Legacy eight-field requests use
+0/65535/false; selected body output contains all eleven fields. The same retained
+mutation, history and save/reopen owner preserves exact new input fields. No RPC
+or player capability is added; see the [contact contract](physics-contacts.md).

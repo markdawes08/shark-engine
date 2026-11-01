@@ -249,7 +249,7 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
         self.assertEqual(schema["components"], discovery["components"])
         components = {value["stable_id"]: value for value in schema["components"]}
         self.assertEqual(set(components), {"shark.name", "shark.transform", "shark.camera", "shark.mesh_renderer", "shark.rigid_body"})
-        self.assertEqual(sum(len(value["properties"]) for value in components.values()), 20)
+        self.assertEqual(sum(len(value["properties"]) for value in components.values()), 23)
         for name, value in components.items():
             self.assertEqual(value["version"], 1)
             self.assertEqual(value["required"], name in {"shark.name", "shark.transform"})
@@ -261,6 +261,10 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
                 if name == "shark.mesh_renderer" and prop["key"] == "visible":
                     self.assertEqual(prop["type"], "boolean")
                     self.assertIs(prop["default"], True)
+                    self.assertEqual(prop["constraints"], {})
+                elif name == "shark.rigid_body" and prop["key"] == "is_trigger":
+                    self.assertEqual(prop["type"], "boolean")
+                    self.assertIs(prop["default"], False)
                     self.assertEqual(prop["constraints"], {})
                 else:
                     self.assertTrue(prop["constraints"])
