@@ -108,6 +108,7 @@ not establish file or gameplay-wire formats.
 | [0053](0053-physics-body-controls.md) | Checked dynamic physics controls and fixed-tick force ownership |
 | [0054](0054-physics-queries.md) | Bounded filtered physics queries with checked owned observations |
 | [0055](0055-lua-physics-contacts.md) | Bounded Lua physics access and owner-thread contact delivery |
+| [0056](0056-physics-debug-inspection.md) | Shared physics inspection and opt-in Editor debug overlay |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

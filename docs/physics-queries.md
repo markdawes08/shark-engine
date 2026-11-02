@@ -6,7 +6,8 @@ sphere-overlap and axis-aligned box-overlap queries under
 active Scene writer lease and native bodies as fixed-step simulation. The caller
 must own the actual simulation/region authority; a Scene scope or returned hit
 is not itself authorization. Replica Scenes do not acquire a physics lease.
-These CPU observations add no player protocol, Lua binding or global cell query.
+These CPU observations add no player protocol or global cell query. The checked
+[Lua bindings](physics-lua.md) use the same owner and filters.
 
 ## Geometry and filters
 

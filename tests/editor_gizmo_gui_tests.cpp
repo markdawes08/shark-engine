@@ -1,6 +1,7 @@
 #include "../editor/gizmo_widget.hpp"
 #include "../editor/gui_adapter.hpp"
 #include "../editor/viewport_gizmo.hpp"
+#include "../editor/workspace_panel.hpp"
 #include "gpu_shader_fixture.hpp"
 
 #include <shark/tools/project_files.hpp>
@@ -8,11 +9,13 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 #include <imgui.h>
+#include <imgui_internal.h>
 
 #include <filesystem>
 #include <fstream>
 #include <iterator>
 #include <numbers>
+#include <string_view>
 
 namespace {
 using namespace shark;
@@ -627,4 +630,150 @@ TEST_CASE("Gizmo scale gestures cross rejected snapped zero without committing a
         CHECK(previews == 2);
     }
     CHECK(source_bytes() == saved_source);
+}
+
+TEST_CASE("Physics workspace controls submit bounded preview overlays and queries",
+          "[editor-gui]") {
+    using namespace shark;
+    using namespace shark::editor;
+    using namespace shark::tools;
+    using namespace shark::client;
+    // Exercise the actual WorkspacePanel and ImGui draw list, without a native window or GPU.
+    const auto root = std::filesystem::temp_directory_path() /
+                      ("shark-physics-gui-" + take(generate_stable_id()).to_string());
+    REQUIRE(std::filesystem::create_directory(root));
+    struct Cleanup {
+        std::filesystem::path root;
+        ~Cleanup() {
+            std::error_code ignored;
+            std::filesystem::remove_all(root, ignored);
+        }
+    } cleanup{root};
+    const AuthoredEntityId camera{stable("20d00000-0000-4000-8000-000000000001")};
+    const AuthoredEntityId actor{stable("20d00000-0000-4000-8000-000000000002")};
+    {
+        auto files = take(ProjectFiles::open(root));
+        ProjectDocument project{ProjectId{stable("20d00000-0000-4000-8000-000000000003")},
+                                WorldId{stable("20d00000-0000-4000-8000-000000000004")},
+                                {"Physics GUI"},
+                                SceneId{stable("20d00000-0000-4000-8000-000000000005")},
+                                {{SceneId{stable("20d00000-0000-4000-8000-000000000005")},
+                                  take(ProjectPath::parse("Scene.sharkscene"))}}};
+        SceneDocument scene{project.project, project.startup_scene, {}, {}};
+        SourceEntity view{camera, {}, {"View"}};
+        view.camera = Camera{CameraProjection::orthographic, 1, 8, 1, 20};
+        scene.entities.push_back(view);
+        SourceEntity body{actor, {}, {"Physics actor"}};
+        body.transform.translation = {0, 0, -4};
+        body.rigid_body = RigidBody{};
+        body.rigid_body->motion = BodyMotion::dynamic_body;
+        body.mesh_renderer = MeshRenderer{builtin_cube_asset_id()};
+        scene.entities.push_back(body);
+        static_cast<void>(take(files->write_scene(project, scene, {})));
+        static_cast<void>(take(
+            files->write_project(take(ProjectPath::parse("Project.sharkproject")), project, {})));
+    }
+    auto session = take(ProjectSession::create(root, "Project.sharkproject"));
+    const auto revision = session->state().revision;
+    const auto& vertex_words = shark::test::shaders::scene_vs_words;
+    const auto& pixel_words = shark::test::shaders::scene_ps_words;
+    const ShaderArtifact vertex{
+        ShaderStage::vertex, "vsScene", {vertex_words.begin(), vertex_words.end()}};
+    const ShaderArtifact pixel{
+        ShaderStage::pixel, "psScene", {pixel_words.begin(), pixel_words.end()}};
+    auto* previous = ImGui::GetCurrentContext();
+    auto* context = ImGui::CreateContext();
+    REQUIRE(context);
+    struct GuiCleanup {
+        ImGuiContext* previous;
+        ImGuiContext* current;
+        ~GuiCleanup() {
+            ImGui::DestroyContext(current);
+            ImGui::SetCurrentContext(previous);
+        }
+    } gui_cleanup{previous, context};
+    ImGui::SetCurrentContext(context);
+    auto& io = ImGui::GetIO();
+    io.IniFilename = nullptr;
+    io.LogFilename = nullptr;
+    unsigned char* pixels = nullptr;
+    int width = 0, height = 0;
+    io.Fonts->GetTexDataAsRGBA32(&pixels, &width, &height);
+    REQUIRE(pixels);
+    io.Fonts->SetTexID(static_cast<ImTextureID>(1));
+    InputState input;
+    accepted(input.on_focus(true));
+    WorkspacePanel workspace{*session, vertex, pixel};
+    auto draw = [&] {
+        GraphicsWindowFrame frame;
+        frame.state.content = {1800, 1200};
+        frame.state.framebuffer = {1800, 1200};
+        frame.input = input.capture();
+        feed_gui_input(frame, 1.0F / 60.0F);
+        ImGui::NewFrame();
+        ImGui::SetNextWindowPos({0, 0});
+        ImGui::SetNextWindowSize({1800, 1200});
+        ImGui::Begin("Physics workspace fixture", nullptr,
+                     ImGuiWindowFlags_NoDecoration | ImGuiWindowFlags_NoSavedSettings);
+        workspace.draw(frame, false);
+        ImGui::End();
+        ImGui::Render();
+        if (workspace.viewport()) {
+            const auto captured =
+                take(capture_gui_draw(*ImGui::GetDrawData(), {1800, 1200}, workspace.viewport()));
+            CHECK_FALSE(captured.draws.empty());
+        }
+    };
+    auto activate = [&](ImGuiID id) {
+        REQUIRE(id != 0);
+        ImGui::ActivateItemByID(id);
+        draw();
+    };
+    auto find_window = [](std::string_view needle, std::string_view exclude = {}) -> ImGuiWindow* {
+        for (auto* window : GImGui->Windows) {
+            const std::string_view name{window->Name};
+            if (name.find(needle) != std::string_view::npos &&
+                (exclude.empty() || name.find(exclude) == std::string_view::npos))
+                return window;
+        }
+        return nullptr;
+    };
+    auto color_count = [](ImU32 color) {
+        std::size_t count = 0;
+        const auto* data = ImGui::GetDrawData();
+        for (int i = 0; i < data->CmdListsCount; ++i)
+            for (const auto& vertex_value : data->CmdLists[i]->VtxBuffer)
+                if (vertex_value.col == color)
+                    ++count;
+        return count;
+    };
+    draw();
+    auto* root_window = ImGui::FindWindowByName("Physics workspace fixture");
+    auto* hierarchy = find_window("/Hierarchy_", "Hierarchy rows");
+    auto* rows = find_window("Hierarchy rows");
+    REQUIRE(root_window);
+    REQUIRE(hierarchy);
+    REQUIRE(rows);
+    const auto camera_id = rows->GetID(camera.value().to_string().c_str());
+    activate(ImHashStr("##entity", 0, camera_id));
+    activate(hierarchy->GetID("View through camera"));
+    draw();
+    REQUIRE(workspace.viewport());
+    activate(root_window->GetID("Play physics"));
+    activate(root_window->GetID("Pause physics"));
+    activate(root_window->GetID("Physics inspection"));
+    const auto cyan = IM_COL32(80, 230, 230, 255);
+    const auto yellow = IM_COL32(255, 240, 100, 255);
+    const auto pink = IM_COL32(255, 100, 220, 255);
+    CHECK(color_count(cyan) == 0);
+    activate(root_window->GetID("Show physics debug overlay"));
+    CHECK(color_count(cyan) > 0);
+    activate(root_window->GetID("Inspect physics query"));
+    CHECK(color_count(yellow) > 0);
+    CHECK(color_count(pink) > 0);
+    activate(root_window->GetID("Show physics debug overlay"));
+    CHECK(color_count(cyan) == 0);
+    CHECK(color_count(yellow) == 0);
+    CHECK(color_count(pink) == 0);
+    CHECK(session->state().revision == revision);
 }

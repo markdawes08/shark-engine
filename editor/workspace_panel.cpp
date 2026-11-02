@@ -158,6 +158,19 @@ struct WorkspacePanel::Impl {
     AssetWidget asset_widget;
     ConsoleWidget console;
     PhysicsPanel physics;
+    bool show_physics_debug{false};
+    int physics_query_kind{0};
+    std::array<double, 3> physics_query_first{0, 0, 0};
+    std::array<double, 3> physics_query_second{0, 0, -10};
+    double physics_query_radius{1};
+    int physics_query_layer{0};
+    int physics_query_mask{65535};
+    int physics_query_max_hits{64};
+    bool physics_query_triggers{true};
+    bool physics_query_ignore_selected{false};
+    bool physics_debug_truncated{false};
+    std::optional<Error> physics_debug_error;
+    std::optional<Error> physics_overlay_error;
     ScriptPanel script;
     SteadyMonotonicClock clock;
     ShaderArtifact vertex;
@@ -695,6 +708,68 @@ struct WorkspacePanel::Impl {
             const auto maximum = ImGui::GetItemRectMax();
             const ViewportRectangle rectangle{minimum.x, minimum.y, maximum.x - minimum.x,
                                               maximum.y - minimum.y};
+            if (show_physics_debug && snapshot && physics.state().active &&
+                !physics.state().uncertain && !physics.state().faulted) {
+                auto bodies = physics.debug_bodies();
+                if (!bodies) {
+                    physics_overlay_error = bodies.error();
+                } else {
+                    auto lines = make_physics_debug_lines(bodies.value(), physics.debug_query());
+                    if (!lines) {
+                        physics_overlay_error = lines.error();
+                    } else {
+                        auto projected = project_physics_debug_lines(
+                            lines.value(), snapshot->camera().view_projection,
+                            snapshot->origin().scene_local_offset, rectangle);
+                        if (!projected) {
+                            physics_overlay_error = projected.error();
+                        } else {
+                            auto* draw = ImGui::GetWindowDrawList();
+                            draw->PushClipRect(minimum, maximum, true);
+                            constexpr std::size_t maximum_visible_lines = 2048;
+                            physics_debug_truncated =
+                                projected.value().size() > maximum_visible_lines;
+                            std::size_t drawn = 0;
+                            for (int pass = 0; pass < 2 && drawn < maximum_visible_lines; ++pass)
+                                for (const auto& line : projected.value()) {
+                                    const bool is_query = line.kind == PhysicsDebugKind::query ||
+                                                          line.kind == PhysicsDebugKind::hit;
+                                    if ((pass == 0) != is_query)
+                                        continue;
+                                    if (drawn == maximum_visible_lines)
+                                        break;
+                                    ImU32 color = IM_COL32(200, 200, 200, 255);
+                                    switch (line.kind) {
+                                    case PhysicsDebugKind::static_body:
+                                        break;
+                                    case PhysicsDebugKind::dynamic_body:
+                                        color = IM_COL32(80, 230, 230, 255);
+                                        break;
+                                    case PhysicsDebugKind::kinematic_body:
+                                        color = IM_COL32(110, 160, 255, 255);
+                                        break;
+                                    case PhysicsDebugKind::trigger:
+                                        color = IM_COL32(255, 160, 80, 255);
+                                        break;
+                                    case PhysicsDebugKind::query:
+                                        color = IM_COL32(255, 240, 100, 255);
+                                        break;
+                                    case PhysicsDebugKind::hit:
+                                        color = IM_COL32(255, 100, 220, 255);
+                                        break;
+                                    }
+                                    draw->AddLine(
+                                        {static_cast<float>(line.x0), static_cast<float>(line.y0)},
+                                        {static_cast<float>(line.x1), static_cast<float>(line.y1)},
+                                        color, 1.5F);
+                                    ++drawn;
+                                }
+                            draw->PopClipRect();
+                            physics_overlay_error.reset();
+                        }
+                    }
+                }
+            }
             const bool input_blocked = blocked || deleting || !session.state_current() ||
                                        !hierarchy.current() || hierarchy.needs_reconciliation() ||
                                        ImGui::GetIO().WantTextInput || ImGui::IsAnyItemActive() ||
@@ -937,6 +1012,95 @@ struct WorkspacePanel::Impl {
             ImGui::Text("Tick %llu; last operation events %zu%s",
                         static_cast<unsigned long long>(physics.state().tick),
                         physics.state().events, paused_by_window ? "; window/modal paused" : "");
+        if (ImGui::CollapsingHeader("Physics inspection")) {
+            ImGui::Checkbox("Show physics debug overlay", &show_physics_debug);
+            ImGui::TextDisabled("Committed collider poses; viewport rendering may be interpolated");
+            ImGui::TextDisabled(
+                "Screen-space approximate wireframes; not depth-tested or selectable");
+            ImGui::TextDisabled("Static: gray, dynamic: cyan, kinematic: blue, trigger: orange; "
+                                "query: yellow, hit: pink");
+            if (show_physics_debug && physics_debug_truncated)
+                ImGui::TextWrapped("Overlay limited to 2048 visible lines; some colliders or query "
+                                   "lines are omitted.");
+            if (ImGui::TreeNode("Runtime bodies")) {
+                if (!physics.state().active) {
+                    ImGui::TextDisabled("Start a physics preview to inspect runtime bodies.");
+                } else {
+                    auto bodies = physics.debug_bodies();
+                    if (!bodies) {
+                        error_text(bodies.error());
+                    } else {
+                        ImGui::Text("Bodies: %zu", bodies.value().size());
+                        ImGui::BeginChild("Runtime body details",
+                                          {0, ImGui::GetTextLineHeightWithSpacing() * 5},
+                                          ImGuiChildFlags_Borders);
+                        for (const auto& body : physics.body_details())
+                            ImGui::TextWrapped("%s", body.c_str());
+                        ImGui::EndChild();
+                    }
+                }
+                ImGui::TreePop();
+            }
+            if (ImGui::Combo("Query shape", &physics_query_kind,
+                             "Ray\0Sphere overlap\0Box overlap\0"))
+                physics_query_second = physics_query_kind == 2 ? std::array<double, 3>{1, 1, 1}
+                                                               : std::array<double, 3>{0, 0, -10};
+            ImGui::InputScalarN(physics_query_kind == 0 ? "Ray start" : "Center",
+                                ImGuiDataType_Double, physics_query_first.data(), 3);
+            if (physics_query_kind == 1)
+                ImGui::InputDouble("Radius", &physics_query_radius);
+            else
+                ImGui::InputScalarN(physics_query_kind == 0 ? "Ray end" : "Half extents",
+                                    ImGuiDataType_Double, physics_query_second.data(), 3);
+            ImGui::InputInt("Query layer (0-15)", &physics_query_layer);
+            ImGui::InputInt("Query mask (0-65535)", &physics_query_mask);
+            ImGui::InputInt("Maximum query hits (1-128)", &physics_query_max_hits);
+            ImGui::Checkbox("Include triggers", &physics_query_triggers);
+            ImGui::Checkbox("Ignore selected runtime body", &physics_query_ignore_selected);
+            ImGui::BeginDisabled(!physics.state().active || physics.state().running ||
+                                 physics.state().uncertain || physics.state().faulted || blocked);
+            if (ImGui::Button("Inspect physics query")) {
+                if (physics_query_layer < 0 || physics_query_layer > 15 || physics_query_mask < 0 ||
+                    physics_query_mask > 65535 || physics_query_max_hits < 1 ||
+                    physics_query_max_hits > 128 ||
+                    (physics_query_ignore_selected && !hierarchy.selection())) {
+                    physics.clear_query();
+                    physics_debug_error =
+                        Error{ErrorCode::invalid_argument,
+                              "Check the query filter, hit limit and selected body",
+                              {.operation = "editor.physics.query"}};
+                } else {
+                    PhysicsDebugQuery query{};
+                    query.kind = static_cast<PhysicsDebugQueryKind>(physics_query_kind);
+                    query.first = {physics_query_first[0], physics_query_first[1],
+                                   physics_query_first[2]};
+                    query.second = {physics_query_second[0], physics_query_second[1],
+                                    physics_query_second[2]};
+                    query.radius = physics_query_radius;
+                    const auto ignore = physics_query_ignore_selected
+                                            ? std::optional{hierarchy.selection()->id}
+                                            : std::optional<AuthoredEntityId>{};
+                    auto result = physics.inspect_query(
+                        std::move(query), static_cast<std::uint32_t>(physics_query_layer),
+                        static_cast<std::uint32_t>(physics_query_mask), physics_query_triggers,
+                        ignore, static_cast<std::size_t>(physics_query_max_hits));
+                    if (!result)
+                        physics_debug_error = result.error();
+                    else
+                        physics_debug_error.reset();
+                }
+            }
+            ImGui::EndDisabled();
+            if (physics.debug_query()) {
+                ImGui::Text("Last successful query hits: %zu", physics.query_details().size());
+                for (const auto& hit : physics.query_details())
+                    ImGui::TextWrapped("%s", hit.c_str());
+            }
+            if (physics_debug_error)
+                error_text(*physics_debug_error);
+            if (physics_overlay_error && show_physics_debug)
+                error_text(*physics_overlay_error);
+        }
         if (!physics.contact_details().empty() &&
             ImGui::CollapsingHeader("Last contact transitions")) {
             ImGui::TextDisabled("Last nonempty operation; retained after stop");

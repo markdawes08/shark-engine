@@ -1,5 +1,7 @@
 # Shared physics preview
 
+[20d physics inspection and debug display](physics-debug-inspection.md) extends this same preview with fenced body and spatial observations.
+
 [ADR 0049](architecture/0049-editor-physics-preview.md) connects the native
 Editor and public terminal to one retained CPU preview inside the existing
 project owner. `scene.run` remains static integrity checking. Preview implements

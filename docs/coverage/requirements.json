@@ -6524,23 +6524,28 @@
         "name": "SharkAuthor JSON-RPC scene.physics",
         "requirement_ids": [
           "REQ-18",
-          "REQ-15"
+          "REQ-15",
+          "REQ-20"
         ],
         "test_ids": [
           "shark.tools.authoring-editing-process",
           "shark.tools.authoring-protocol-process",
-          "shark.editor.physics"
+          "shark.editor.physics",
+          "shark.editor.gui-adapter"
         ],
         "test_sources": [
           "tools/tests/test_authoring_editing_process.py",
           "tools/tests/test_authoring_protocol_process.py",
-          "tests/editor_physics_tests.cpp"
+          "tests/editor_physics_tests.cpp",
+          "tests/editor_physics_debug_tests.cpp",
+          "tests/editor_gizmo_gui_tests.cpp"
         ],
         "fixtures": [
           "assets/FeatureWorld/FeatureWorld.sharkproject",
-          "docs/physics-preview.md"
+          "docs/physics-preview.md",
+          "docs/physics-debug-inspection.md"
         ],
-        "fixture_reason": "Actual public terminal pipes discover and exercise status/start/step/remove/query/stop over saved project copies, independent expected gravity/contact values, original receipts and source/history/file isolation.",
+        "fixture_reason": "Actual public terminal pipes discover and exercise status/start/step/remove/query/stop and bounded physics body, ray and overlap inspection over saved project copies, independent expected geometry/filter and gravity/contact values, original receipts and source/history/file isolation. Editor adapter and pure projection tests cover shared observations, lifecycle fencing, collider/query wire geometry and clipping; an actual WorkspacePanel/ImGui fixture exercises the controls and produced draw data.",
         "external_fixture_reason": "Real redirected terminal output, lost-reply reconciliation and project owner teardown require process fixtures. Existing FeatureWorld physics remains the Core semantic owner; this RPC is an additive local authoring preview, not a player protocol or Lua runner.",
         "featureworld_cases": []
       }

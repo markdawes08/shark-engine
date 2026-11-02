@@ -279,6 +279,40 @@ end
             self.assertEqual(client.result("scene.physics", start), started)
             session = started["session_id"]
             self.assertEqual(client.result("scene.physics", {"op": "status"})["bodies"], 2)
+            bodies_request = {"op": "query", "session_id": session, "expected_tick": "0",
+                              "expected_sequence": "1", "bodies_only": True, "limit": 128}
+            body_page = client.result("scene.physics", bodies_request)
+            body_rows = {row["entity_id"]: row for row in body_page["entities"]}
+            self.assertTrue(body_page["complete"])
+            self.assertEqual(set(body_rows), {ENTITY, CHILD})
+            self.assertEqual(body_rows[ENTITY]["physics_body"]["pose"], pose)
+            self.assertEqual(body_rows[ENTITY]["physics_body"]["velocity"]["linear"], [0, 0, 0])
+            self.assertIsNone(body_rows[CHILD]["physics_body"]["velocity"])
+            self.assertEqual(body_rows[CHILD]["physics_body"]["collider_half_extents"], [3, 3, 3])
+            filt = {"session_id": session, "expected_tick": "0", "expected_sequence": "1",
+                    "layer": 3, "mask": 1 << 2, "include_triggers": True}
+            ray = {"op": "raycast", **filt, "from": [-5, 2, 0], "to": [5, 2, 0]}
+            hits = client.result("scene.physics", ray)["hits"]
+            self.assertEqual(len(hits), 1)
+            self.assertEqual((hits[0]["entity_id"], hits[0]["is_trigger"]), (CHILD, True))
+            self.assertAlmostEqual(hits[0]["fraction"], 0.2, places=5)
+            self.assertAlmostEqual(hits[0]["position"][0], -3, places=5)
+            self.assertAlmostEqual(hits[0]["normal"][0], -1, places=5)
+            sphere = {"op": "overlap_sphere", **filt, "center": [0, 0, 0], "radius": 0.5}
+            box = {"op": "overlap_box", **filt, "center": [0, 0, 0],
+                   "half_extents": [0.5, 0.5, 0.5]}
+            self.assertEqual(client.result("scene.physics", sphere)["hits"],
+                             [{"entity_id": CHILD, "is_trigger": True}])
+            self.assertEqual(client.result("scene.physics", box)["hits"],
+                             [{"entity_id": CHILD, "is_trigger": True}])
+            self.assertEqual(client.result("scene.physics", {**ray, "include_triggers": False})["hits"], [])
+            self.assertEqual(client.result("scene.physics", {**ray, "ignore_entity_id": CHILD})["hits"], [])
+            self.rpc_error(client.call("scene.physics", {**ray, "layer": 16}), "invalid_argument")
+            self.rpc_error(client.call("scene.physics", {**ray, "from": [1, 2]}), "invalid_argument")
+            self.rpc_error(client.call("scene.physics", {**ray, "mask": True}), "invalid_argument")
+            self.rpc_error(client.call("scene.physics", {**ray, "expected_sequence": "2"}), "conflict")
+            self.rpc_error(client.call("scene.physics", {**bodies_request, "expected_tick": "1"}), "conflict")
+            self.assertEqual(client.result("scene.physics", {"op": "status"})["next_sequence"], "1")
             pending_edit = self.mutation(client, {"type": "command", "command": {
                 "type": "set_name", "entity_id": ENTITY, "name": "Must remain frozen"}})
             self.rpc_error(client.call("scene.mutate", pending_edit), "conflict")
@@ -333,6 +367,11 @@ end
             self.assertEqual(removed["events"][0]["cause"], "body_removed")
             self.assertEqual(removed["events"][0]["first"], enters[0]["first"])
             self.assertEqual(removed["events"][0]["second"], enters[0]["second"])
+            self.rpc_error(client.call("scene.physics", {**bodies_request, "expected_tick": "8",
+                                                           "expected_sequence": "2"}), "conflict")
+            remaining = client.result("scene.physics", {**bodies_request, "expected_tick": "8",
+                                                         "expected_sequence": "3"})
+            self.assertEqual([row["entity_id"] for row in remaining["entities"]], [CHILD])
             self.rpc_error(client.call("scene.physics", step), "conflict")
             all_rows = client.result("scene.physics", {"op": "query", "session_id": session,
                                                        "expected_tick": "8"})["entities"]
@@ -372,6 +411,36 @@ end
                 "fields": ["rigid_body", "transform"]})["entities"][0]
             self.assertEqual(restored["rigid_body"], body)
             self.assertEqual(restored["transform"]["local"], pose)
+            client.finish()
+
+    def test_physics_query_overflow_has_no_partial_result(self):
+        body = {"motion": "static", "shape": "sphere", "half_extents": [0.5, 0.5, 0.5],
+                "radius": 0.5, "half_height": 0.5, "mass": 1.0, "friction": 0.5,
+                "restitution": 0.0, "collision_layer": 0, "collision_mask": 65535,
+                "is_trigger": False}
+        with self.client() as client:
+            for entity, x in ((ENTITY, 0), (CHILD, 2)):
+                self.edit(client, {"type": "create_entity", "entity_id": entity, "name": "Target",
+                                   "transform": {**TRANSFORM, "translation": [x, 0, 0]},
+                                   "rigid_body": body})
+            source = client.result("project.status")
+            history = client.result("scene.history")
+            status = client.result("scene.physics", {"op": "status"})
+            started = client.result("scene.physics", {"op": "start", "owner_scope": status["owner_scope"],
+                "expected_generation": status["generation"], "expected_revision": source["revision"],
+                "camera": pipes.ENTITIES[0], "target": {"id": "query-overflow", "side": "client"}})
+            request = {"op": "raycast", "session_id": started["session_id"], "expected_tick": "0",
+                       "expected_sequence": "1", "from": [-3, 0, 0], "to": [5, 0, 0],
+                       "layer": 0, "mask": 65535, "include_triggers": True, "max_hits": 1}
+            self.rpc_error(client.call("scene.physics", request), "conflict")
+            result = client.result("scene.physics", {**request, "max_hits": 2})
+            self.assertEqual([hit["entity_id"] for hit in result["hits"]], [ENTITY, CHILD])
+            self.assertAlmostEqual(result["hits"][0]["fraction"], 2.5 / 8, places=5)
+            self.assertAlmostEqual(result["hits"][1]["fraction"], 4.5 / 8, places=5)
+            self.assertEqual(client.result("project.status"), source)
+            self.assertEqual(client.result("scene.history"), history)
+            self.assertEqual(client.result("scene.physics", {"op": "status"})["next_sequence"], "1")
+            client.result("scene.physics", {"op": "stop", "session_id": started["session_id"]})
             client.finish()
 
     def test_script_preview_lifecycle_replay_and_source_isolation(self):

@@ -104,6 +104,62 @@ class Fixture final {
 };
 } // namespace
 
+TEST_CASE("Physics inspector uses the preview owner and invalidates query observations",
+          "[editor-physics]") {
+    Fixture fixture;
+    auto& session = *fixture.session;
+    PhysicsPanel preview{session};
+    accepted(preview.start(entity(1), session.state().revision, "physics-test", 0ns));
+    const auto source = session.state();
+    const auto bodies = take(preview.debug_bodies());
+    REQUIRE(bodies.size() == 2);
+    CHECK((bodies[0].pose.translation == math::Vec3{0, 2, 0}));
+    CHECK(bodies[0].settings.motion == BodyMotion::dynamic_body);
+    CHECK(bodies[1].settings.is_trigger);
+    REQUIRE(preview.body_details().size() == 2);
+    CHECK(preview.body_details()[0].find(entity(2).value().to_string()) != std::string::npos);
+    CHECK(preview.body_details()[0].find("dynamic box") != std::string::npos);
+    CHECK(preview.body_details()[0].find("rotation xyzw") != std::string::npos);
+    CHECK(preview.body_details()[0].find("linear velocity") != std::string::npos);
+    CHECK(preview.body_details()[1].find("[trigger]") != std::string::npos);
+    CHECK(preview.body_details()[1].find("velocity unavailable") != std::string::npos);
+    PhysicsDebugQuery query{};
+    query.kind = PhysicsDebugQueryKind::raycast;
+    query.first = {0, 2, 10};
+    query.second = {0, 2, -10};
+    CHECK_FALSE(preview.inspect_query(query, 0, 65535, true));
+    preview.pause(true);
+    accepted(preview.inspect_query(query, 0, 65535, true));
+    REQUIRE(preview.debug_query());
+    CHECK(preview.query_details().size() == 2);
+    CHECK(preview.debug_query()->hit_positions.size() == 2);
+    CHECK(preview.query_details()[0].find("fraction") != std::string::npos);
+    CHECK(preview.query_details()[0].find("position") != std::string::npos);
+    CHECK(preview.query_details()[0].find("normal") != std::string::npos);
+    accepted(preview.inspect_query(query, 0, 65535, true, entity(2), 1));
+    CHECK(preview.query_details().size() == 1);
+    CHECK(preview.query_details()[0].find(entity(3).value().to_string()) != std::string::npos);
+    CHECK_FALSE(preview.inspect_query(query, 0, 65535, true, {}, 1));
+    CHECK_FALSE(preview.debug_query());
+    accepted(preview.inspect_query(query, 0, 65535, true));
+    accepted(preview.step(1ns));
+    CHECK_FALSE(preview.debug_query());
+    CHECK(preview.query_details().empty());
+    CHECK(preview.body_details().empty());
+    query.kind = PhysicsDebugQueryKind::overlap_sphere;
+    query.first = {0, 2, 0};
+    query.radius = 1;
+    accepted(preview.inspect_query(query, 0, 65535, true));
+    CHECK(preview.query_details().size() == 2);
+    accepted(preview.remove(entity(2)));
+    CHECK_FALSE(preview.debug_query());
+    CHECK(take(preview.debug_bodies()).size() == 1);
+    CHECK(session.state().revision == source.revision);
+    accepted(preview.stop());
+    CHECK(preview.body_details().empty());
+    CHECK_FALSE(preview.debug_bodies());
+}
+
 TEST_CASE("Shared physics preview keeps source history and immutable views separate",
           "[editor-physics]") {
     Fixture fixture;

@@ -61,6 +61,28 @@ std::uint64_t decimal(const Json& value) {
 std::size_t index(const Json& value, std::size_t maximum) {
     return take(authoring_asset_wire::parse_index(value, maximum, "/params"));
 }
+double scalar(const Json& value) {
+    if (!value.is_number())
+        reject("Physics coordinates require finite numbers", ErrorCode::invalid_argument);
+    const auto result = value.get<double>();
+    if (!std::isfinite(result))
+        reject("Physics coordinates require finite numbers", ErrorCode::invalid_argument);
+    return result;
+}
+math::Vec3 vector3(const Json& value) {
+    if (!value.is_array() || value.size() != 3)
+        reject("Physics vectors require three finite numbers", ErrorCode::invalid_argument);
+    return {scalar(value[0]), scalar(value[1]), scalar(value[2])};
+}
+Json vector_json(math::Vec3 value) {
+    return Json::array({value.x, value.y, value.z});
+}
+Json transform_json(const Transform& value) {
+    return {{"translation", vector_json(value.translation)},
+            {"rotation",
+             Json::array({value.rotation.x, value.rotation.y, value.rotation.z, value.rotation.w})},
+            {"scale", vector_json(value.scale)}};
+}
 Json participant(const PhysicsContactParticipant& value) {
     return {{"entity_id", std::get<AuthoredEntityId>(value.entity.identity).value().to_string()},
             {"is_trigger", value.is_trigger}};
@@ -196,6 +218,7 @@ struct AuthoringPhysics::Impl {
                   {"events_per_operation", 1024},
                   {"ticks_per_operation", maximum_ticks},
                   {"query_entities", 128},
+                  {"query_hits", 128},
                   {"script_instances", 16},
                   {"script_sources", script_runtime_maximum_sources},
                   {"script_source_bytes", script_runtime_maximum_source_bytes},
@@ -385,31 +408,139 @@ struct AuthoringPhysics::Impl {
         return operation_json();
     }
     Json query(const Json& parameters) {
-        fields(parameters, {"op", "session_id", "expected_tick", "offset", "limit"});
+        fields(parameters, {"op", "session_id", "expected_tick", "expected_sequence", "offset",
+                            "limit", "bodies_only"});
         auto& value = current(parameters);
         if (decimal(required(parameters, "expected_tick")) != value.tick)
             reject("Physics query tick is stale");
+        bool bodies_only = false;
+        if (parameters.contains("bodies_only")) {
+            if (!parameters.at("bodies_only").is_boolean())
+                reject("bodies_only must be a boolean", ErrorCode::invalid_argument);
+            bodies_only = parameters.at("bodies_only").get<bool>();
+        }
+        if (bodies_only || parameters.contains("expected_sequence")) {
+            if (decimal(required(parameters, "expected_sequence")) != value.next_sequence)
+                reject("Physics query operation sequence is stale");
+        }
+        std::vector<AuthoredEntityId> bodies;
+        if (bodies_only) {
+            bodies.reserve(value.bodies.size());
+            for (const auto& [entity, unused] : value.bodies) {
+                (void)unused;
+                bodies.push_back(entity);
+            }
+        }
+        const auto& selected_entities = bodies_only ? bodies : value.entities;
         const auto offset = parameters.contains("offset")
-                                ? index(parameters.at("offset"), value.entities.size())
+                                ? index(parameters.at("offset"), selected_entities.size())
                                 : 0;
         const auto limit = parameters.contains("limit") ? index(parameters.at("limit"), 128) : 64;
         if (limit == 0)
             reject("Physics query limit must be 1..128", ErrorCode::invalid_argument);
-        const auto end = std::min(value.entities.size(), offset + limit);
+        const auto end = std::min(selected_entities.size(), offset + limit);
         Json entities = Json::array();
         auto& scene = value.loaded->scene();
         const SceneQueryFields selected{true, true, true, true, true, true};
         for (auto position = offset; position < end; ++position) {
-            const auto handle = take(scene.find(value.entities[position]));
+            const auto entity_id = selected_entities[position];
+            const auto handle = take(scene.find(entity_id));
             const auto page = take(scene.inspect_entity(handle, selected));
             auto encoded = take(authoring_wire::page_json(scene, page, selected));
-            entities.push_back(std::move(encoded.at("entities").at(0)));
+            auto row = std::move(encoded.at("entities").at(0));
+            if (bodies_only) {
+                const auto found = value.bodies.find(entity_id);
+                if (found == value.bodies.end())
+                    reject("Physics body inventory changed during observation");
+                const auto body = take(value.world->body_state(scene, found->second));
+                Json velocity = nullptr;
+                if (body.motion == BodyMotion::dynamic_body) {
+                    const auto observed = take(value.world->velocity(scene, found->second));
+                    velocity = {{"linear", vector_json(observed.linear)},
+                                {"angular", vector_json(observed.angular)}};
+                }
+                row["physics_body"] = {
+                    {"pose", transform_json(body.pose)},
+                    {"collider_half_extents", vector_json(body.collider_half_extents)},
+                    {"velocity", std::move(velocity)}};
+            }
+            entities.push_back(std::move(row));
         }
         return {{"session_id", value.session.to_string()},
                 {"tick", std::to_string(value.tick)},
+                {"next_sequence", std::to_string(value.next_sequence)},
                 {"entities", std::move(entities)},
-                {"next_offset", end < value.entities.size() ? Json(end) : Json(nullptr)},
-                {"complete", end == value.entities.size()}};
+                {"next_offset", end < selected_entities.size() ? Json(end) : Json(nullptr)},
+                {"complete", end == selected_entities.size()}};
+    }
+    Json spatial_query(const Json& parameters, std::string_view op) {
+        if (op == "raycast")
+            fields(parameters,
+                   {"op", "session_id", "expected_tick", "expected_sequence", "from", "to", "layer",
+                    "mask", "include_triggers", "ignore_entity_id", "max_hits"});
+        else if (op == "overlap_sphere")
+            fields(parameters,
+                   {"op", "session_id", "expected_tick", "expected_sequence", "center", "radius",
+                    "layer", "mask", "include_triggers", "ignore_entity_id", "max_hits"});
+        else
+            fields(parameters, {"op", "session_id", "expected_tick", "expected_sequence", "center",
+                                "half_extents", "layer", "mask", "include_triggers",
+                                "ignore_entity_id", "max_hits"});
+        auto& value = current(parameters);
+        if (decimal(required(parameters, "expected_tick")) != value.tick ||
+            decimal(required(parameters, "expected_sequence")) != value.next_sequence)
+            reject("Physics query tick or operation sequence is stale");
+        PhysicsQueryFilter filter;
+        filter.layer = static_cast<std::uint32_t>(index(required(parameters, "layer"), 15));
+        filter.mask = static_cast<std::uint32_t>(index(required(parameters, "mask"), 65535));
+        const auto& triggers = required(parameters, "include_triggers");
+        if (!triggers.is_boolean())
+            reject("include_triggers must be a boolean", ErrorCode::invalid_argument);
+        filter.include_triggers = triggers.get<bool>();
+        if (parameters.contains("ignore_entity_id")) {
+            const auto ignored =
+                value.bodies.find(AuthoredEntityId{id(parameters.at("ignore_entity_id"))});
+            if (ignored == value.bodies.end())
+                reject("Ignored entity has no active physics body", ErrorCode::invalid_id);
+            filter.ignore = ignored->second;
+        }
+        const auto maximum =
+            parameters.contains("max_hits") ? index(parameters.at("max_hits"), 128) : 64;
+        if (maximum == 0)
+            reject("Physics hit limit must be 1..128", ErrorCode::invalid_argument);
+        auto& scene = value.loaded->scene();
+        Json hits = Json::array();
+        if (op == "raycast") {
+            const auto result =
+                take(value.world->raycast(scene, vector3(required(parameters, "from")),
+                                          vector3(required(parameters, "to")), filter, maximum));
+            for (const auto& hit : result.hits)
+                hits.push_back(
+                    {{"entity_id",
+                      std::get<AuthoredEntityId>(hit.entity.identity).value().to_string()},
+                     {"is_trigger", hit.is_trigger},
+                     {"fraction", hit.fraction},
+                     {"position", vector_json(hit.position)},
+                     {"normal", hit.normal ? vector_json(*hit.normal) : Json(nullptr)}});
+        } else {
+            const auto center = vector3(required(parameters, "center"));
+            const auto result =
+                op == "overlap_sphere"
+                    ? take(value.world->overlap_sphere(
+                          scene, center, scalar(required(parameters, "radius")), filter, maximum))
+                    : take(value.world->overlap_box(scene, center,
+                                                    vector3(required(parameters, "half_extents")),
+                                                    filter, maximum));
+            for (const auto& hit : result.hits)
+                hits.push_back(
+                    {{"entity_id",
+                      std::get<AuthoredEntityId>(hit.entity.identity).value().to_string()},
+                     {"is_trigger", hit.is_trigger}});
+        }
+        return {{"session_id", value.session.to_string()},
+                {"tick", std::to_string(value.tick)},
+                {"next_sequence", std::to_string(value.next_sequence)},
+                {"hits", std::move(hits)}};
     }
 };
 
@@ -442,6 +573,8 @@ Result<Json> AuthoringPhysics::dispatch(
             return impl_->execute(parameters, op == "remove", changed);
         if (op == "query")
             return impl_->query(parameters);
+        if (op == "raycast" || op == "overlap_sphere" || op == "overlap_box")
+            return impl_->spatial_query(parameters, op);
         if (op == "stop") {
             fields(parameters, {"op", "session_id"});
             const auto session = id(required(parameters, "session_id"));
@@ -546,6 +679,8 @@ Json AuthoringPhysics::method_schema() {
     };
     const Json revision = object({{"scene_instance", decimal}, {"revision", decimal}},
                                  {"scene_instance", "revision"});
+    const Json vector3_schema{
+        {"type", "array"}, {"minItems", 3}, {"maxItems", 3}, {"items", {{"type", "number"}}}};
     Json variants = Json::array();
     variants.push_back(operation("status", Json::object(), Json::array()));
     variants.push_back(operation(
@@ -574,9 +709,34 @@ Json AuthoringPhysics::method_schema() {
         operation("query",
                   {{"session_id", uuid},
                    {"expected_tick", decimal},
+                   {"expected_sequence", decimal},
+                   {"bodies_only", {{"type", "boolean"}}},
                    {"offset", {{"type", "integer"}, {"minimum", 0}, {"maximum", 4096}}},
                    {"limit", {{"type", "integer"}, {"minimum", 1}, {"maximum", 128}}}},
                   {"session_id", "expected_tick"}));
+    variants.back()["allOf"] = Json::array(
+        {{{"if",
+           {{"properties", {{"bodies_only", {{"const", true}}}}}, {"required", {"bodies_only"}}}},
+          {"then", {{"required", {"expected_sequence"}}}}}});
+    const auto spatial = [&](const char* name, Json geometry, Json required_geometry) {
+        geometry["session_id"] = uuid;
+        geometry["expected_tick"] = decimal;
+        geometry["expected_sequence"] = decimal;
+        geometry["layer"] = {{"type", "integer"}, {"minimum", 0}, {"maximum", 15}};
+        geometry["mask"] = {{"type", "integer"}, {"minimum", 0}, {"maximum", 65535}};
+        geometry["include_triggers"] = {{"type", "boolean"}};
+        geometry["ignore_entity_id"] = uuid;
+        geometry["max_hits"] = {{"type", "integer"}, {"minimum", 1}, {"maximum", 128}};
+        for (const auto* field : {"session_id", "expected_tick", "expected_sequence", "layer",
+                                  "mask", "include_triggers"})
+            required_geometry.push_back(field);
+        variants.push_back(operation(name, std::move(geometry), std::move(required_geometry)));
+    };
+    spatial("raycast", {{"from", vector3_schema}, {"to", vector3_schema}}, {"from", "to"});
+    spatial("overlap_sphere", {{"center", vector3_schema}, {"radius", {{"type", "number"}}}},
+            {"center", "radius"});
+    spatial("overlap_box", {{"center", vector3_schema}, {"half_extents", vector3_schema}},
+            {"center", "half_extents"});
     variants.push_back(operation("stop", {{"session_id", uuid}}, {"session_id"}));
     return {{"name", "scene.physics"},
             {"execution_context", "cpu_owner_thread"},

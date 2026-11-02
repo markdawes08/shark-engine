@@ -1,5 +1,6 @@
 #pragma once
 
+#include "physics_debug.hpp"
 #include "project_session.hpp"
 #include <shark/time.hpp>
 #include <span>
@@ -33,6 +34,16 @@ class PhysicsPanel final {
     [[nodiscard]] std::span<const std::string> contact_details() const noexcept;
     // Bounded display-only script observations; retained across Stop.
     [[nodiscard]] std::span<const std::string> script_details() const noexcept;
+    // Inspection is session/tick/sequence fenced and never changes the world.
+    [[nodiscard]] Result<std::vector<PhysicsDebugBody>> debug_bodies();
+    [[nodiscard]] std::span<const std::string> body_details() const noexcept;
+    [[nodiscard]] Result<void> inspect_query(PhysicsDebugQuery query, std::uint32_t layer,
+                                             std::uint32_t mask, bool include_triggers,
+                                             std::optional<AuthoredEntityId> ignore = {},
+                                             std::size_t max_hits = 64);
+    [[nodiscard]] const std::optional<PhysicsDebugQuery>& debug_query() const noexcept;
+    [[nodiscard]] std::span<const std::string> query_details() const noexcept;
+    void clear_query() noexcept;
     [[nodiscard]] Result<void> start(AuthoredEntityId camera, SceneRevision expected,
                                      std::string_view target, MonotonicTime now);
     void pause(bool paused) noexcept;
