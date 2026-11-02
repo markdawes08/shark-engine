@@ -48,5 +48,4 @@ failure after native work faults the owner and preserves the last fully committe
 Scene; it does not promise native rollback or authorize blind replay. The
 [contact](physics-contacts.md) backpressure and event lifetime policies remain in
 force. [20b queries](physics-queries.md) read the same committed simulation.
-Lua callbacks/bindings and connected human/terminal inspection belong to the
-remaining [assignment 20 checkpoints](roadmap/physics-interaction-plan.md).
+The checked [Lua bindings and contact callbacks](physics-lua.md) share this owner; debug inspection and connected acceptance remain later [assignment 20 checkpoints](roadmap/physics-interaction-plan.md).

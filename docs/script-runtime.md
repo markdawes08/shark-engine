@@ -15,7 +15,7 @@ terminal authors from captured project source.
 
 Creation captures enabled Script references and compiles their source in stable
 entity-identity order, with one VM per entity. Each VM exposes optional globals
-`on_init`, `on_update`, `on_fixed_update` and `on_destroy`; a missing callback
+`on_init`, `on_update`, `on_fixed_update`, `on_contact_enter`, `on_contact_exit` and `on_destroy`; a missing callback
 is a no-op, and a non-function callback fails. The owner calls `start`, `update`,
 `fixed_update` and `stop` explicitly on the creating thread and supplies the
 same Scene each time. A weak Scene lease admits only one ScriptRuntime owner;
@@ -56,8 +56,7 @@ ownership: the trusted host must own the actual region and authority fence.
 Client scripts cannot write Scene state. Server scripts may change the checked
 self Name only in `on_fixed_update`; load, init, frame update and destroy cannot
 write it. Existing Scene write/physics leases remain authoritative and can
-reject the operation. No binding exposes native registry pointers, physics,
-networking, inventory, currency or arbitrary file access.
+reject the operation. The checked [Lua physics surface](physics-lua.md) requires an explicit host-supplied world and has its own server/contact authority rules. No binding exposes native registry pointers, networking, inventory, currency or arbitrary file access.
 
 Every script starts with `shark.api_version == 1`. This is ordinary mutable
 per-VM Lua data for discovery, not an authority token. The implemented functions

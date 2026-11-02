@@ -30,6 +30,9 @@ struct ScenePhysicsAccess {
     static Result<void> check_detach(const Scene& scene, const PhysicsLease& lease,
                                      const EntityReference& entity);
     static void detach(Scene& scene, EntityHandle entity) noexcept;
+    static Result<void> check_attach(const Scene& scene, const PhysicsLease& lease,
+                                     const EntityReference& entity, const RigidBody& body);
+    static void attach(Scene& scene, EntityHandle entity, const RigidBody& body) noexcept;
     static Result<PhysicsPoseCandidate> prepare(const Scene& scene, const PhysicsLease& lease,
                                                 std::span<const PhysicsPoseUpdate> poses);
     static Result<void> commit(Scene& scene, const PhysicsLease& lease,

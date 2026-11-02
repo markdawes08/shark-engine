@@ -8,6 +8,8 @@
 
 #include <algorithm>
 #include <cmath>
+#include <cstdio>
+#include <cstring>
 #include <exception>
 #include <limits>
 #include <map>
@@ -103,6 +105,8 @@ detail::LuaPhase lua_phase(ScriptPhase phase) {
         return detail::LuaPhase::update;
     case ScriptPhase::fixed_update:
         return detail::LuaPhase::fixed_update;
+    case ScriptPhase::contact:
+        return detail::LuaPhase::contact;
     case ScriptPhase::destroy:
         return detail::LuaPhase::destroy;
     }
@@ -218,12 +222,186 @@ struct ScriptRuntime::Impl {
         }
     };
 
+    struct Deferred {
+        detail::LuaPhysicsRequest request;
+        PhysicsContactParticipant self;
+        PhysicsContactParticipant other;
+        RigidBody settings;
+    };
+    struct Bridge {
+        Impl* runtime;
+        Scene* scene;
+        PhysicsWorld* world;
+        ScriptPhase phase;
+        const PhysicsContactEvent* event;
+    };
+    std::vector<Deferred> deferred;
+    bool deferred_overflow{false};
+
+    static void uuid(char* destination, const EntityReference& ref) {
+        const auto text =
+            std::visit([](const auto& id) { return id.value().to_string(); }, ref.identity);
+        std::memcpy(destination, text.c_str(), 37);
+    }
+    static math::Vec3 vector(const double* p) {
+        return {p[0], p[1], p[2]};
+    }
+    static bool same(const PhysicsBodyState& state, const PhysicsContactParticipant& p) {
+        return state.entity == p.entity && state.settings.is_trigger == p.is_trigger;
+    }
+    static Result<void> mutate(Scene& scene, PhysicsWorld& world, PhysicsBodyHandle body,
+                               const detail::LuaPhysicsRequest& request) {
+        using Op = detail::LuaPhysicsOperation;
+        switch (request.operation) {
+        case Op::set_velocity:
+            return world.set_velocity(scene, body,
+                                      {vector(request.arguments), vector(request.arguments + 3)});
+        case Op::force:
+            return world.apply_force(scene, body, vector(request.arguments));
+        case Op::impulse:
+            return world.apply_impulse(scene, body, vector(request.arguments));
+        case Op::teleport:
+        case Op::kinematic_target: {
+            auto state = world.body_state(scene, body);
+            if (!state)
+                return state.error();
+            auto pose = state.value().pose;
+            pose.translation = vector(request.arguments);
+            return request.operation == Op::teleport
+                       ? world.teleport(scene, body, pose)
+                       : world.set_kinematic_target(scene, body, pose);
+        }
+        default:
+            return runtime_error(ErrorCode::invalid_argument, "script.physics",
+                                 "Invalid physics mutation");
+        }
+    }
+    Result<void> physics(Bridge& b, const EntityReference& self,
+                         const detail::LuaPhysicsRequest& request, detail::LuaPhysicsReply& reply) {
+        using Op = detail::LuaPhysicsOperation;
+        if (!active || active->record.entity != self)
+            return runtime_error(ErrorCode::conflict, "script.physics",
+                                 "Physics call has no active Script owner");
+        const auto op = request.operation;
+        const PhysicsQueryFilter filter{request.layer, request.mask, request.include_triggers, {}};
+        if (op == Op::raycast || op == Op::overlap_sphere || op == Op::overlap_box) {
+            if (request.max_hits == 0 || request.max_hits > detail::lua_physics_maximum_hits)
+                return runtime_error(ErrorCode::invalid_argument, "script.physics",
+                                     "Invalid physics query limit");
+            if (op == Op::raycast) {
+                auto result =
+                    b.world->raycast(*b.scene, vector(request.arguments),
+                                     vector(request.arguments + 3), filter, request.max_hits);
+                if (!result)
+                    return result.error();
+                for (const auto& hit : result.value().hits) {
+                    auto& out = reply.hits[reply.count++];
+                    uuid(out.entity_id, hit.entity);
+                    out.is_trigger = hit.is_trigger;
+                    out.fraction = hit.fraction;
+                    out.position[0] = hit.position.x;
+                    out.position[1] = hit.position.y;
+                    out.position[2] = hit.position.z;
+                    if (hit.normal) {
+                        out.has_normal = true;
+                        out.normal[0] = hit.normal->x;
+                        out.normal[1] = hit.normal->y;
+                        out.normal[2] = hit.normal->z;
+                    }
+                }
+            } else {
+                auto result =
+                    op == Op::overlap_sphere
+                        ? b.world->overlap_sphere(*b.scene, vector(request.arguments),
+                                                  request.arguments[3], filter, request.max_hits)
+                        : b.world->overlap_box(*b.scene, vector(request.arguments),
+                                               vector(request.arguments + 3), filter,
+                                               request.max_hits);
+                if (!result)
+                    return result.error();
+                for (const auto& hit : result.value().hits) {
+                    auto& out = reply.hits[reply.count++];
+                    uuid(out.entity_id, hit.entity);
+                    out.is_trigger = hit.is_trigger;
+                }
+            }
+            return {};
+        }
+        auto body = b.world->find_body(*b.scene, self);
+        if (!body)
+            return body.error();
+        if (op == Op::velocity) {
+            auto v = b.world->velocity(*b.scene, body.value());
+            if (!v)
+                return v.error();
+            reply.values[0] = v.value().linear.x;
+            reply.values[1] = v.value().linear.y;
+            reply.values[2] = v.value().linear.z;
+            reply.values[3] = v.value().angular.x;
+            reply.values[4] = v.value().angular.y;
+            reply.values[5] = v.value().angular.z;
+            return {};
+        }
+        if (config.profile != ScriptProfile::server_gameplay ||
+            !std::holds_alternative<RegionSceneScope>(scope) ||
+            (b.phase != ScriptPhase::fixed_update && b.phase != ScriptPhase::contact))
+            return runtime_error(ErrorCode::conflict, "script.physics",
+                                 "Physics mutation requires server fixed or contact authority");
+        if (b.phase == ScriptPhase::contact) {
+            if (!b.event || deferred.size() >= script_runtime_maximum_deferred_physics) {
+                deferred_overflow = true;
+                return runtime_error(ErrorCode::conflict, "script.physics",
+                                     "Deferred physics queue is full or unavailable");
+            }
+            const auto& a = b.event->first.entity == self ? b.event->first : b.event->second;
+            const auto& other = b.event->first.entity == self ? b.event->second : b.event->first;
+            if (a.entity != self || a.body != body.value())
+                return runtime_error(ErrorCode::conflict, "script.physics",
+                                     "Contact participant changed");
+            auto state = b.world->body_state(*b.scene, a.body);
+            auto peer = b.world->body_state(*b.scene, other.body);
+            if (!state || !peer || !same(state.value(), a) || !same(peer.value(), other))
+                return runtime_error(ErrorCode::conflict, "script.physics",
+                                     "Contact body generation changed");
+            deferred.push_back({request, a, other, state.value().settings});
+            return {};
+        }
+        if (op == Op::remove_body || op == Op::create_body)
+            return runtime_error(ErrorCode::conflict, "script.physics",
+                                 "Body changes require a contact callback");
+        return mutate(*b.scene, *b.world, body.value(), request);
+    }
+    static void physics_call(void* user, const EntityReference& self,
+                             const detail::LuaPhysicsRequest& request,
+                             detail::LuaPhysicsReply& reply) noexcept {
+        try {
+            auto& bridge = *static_cast<Bridge*>(user);
+            auto result = bridge.runtime->physics(bridge, self, request, reply);
+            if (!result) {
+                const auto& message = result.error().message;
+                std::snprintf(reply.error, sizeof(reply.error), "%s",
+                              message.empty() ? "Physics request failed" : message.c_str());
+            }
+        } catch (...) {
+            std::snprintf(reply.error, sizeof(reply.error), "Physics host failed");
+        }
+    }
+
     Result<void> run(Entry& entry, Scene& scene, ScriptPhase phase, std::uint64_t tick,
-                     double delta, std::string_view callback, const char* operation) {
+                     double delta, std::string_view callback, const char* operation,
+                     PhysicsWorld* physics = nullptr,
+                     const detail::LuaContactInfo* contact = nullptr,
+                     const PhysicsContactEvent* event = nullptr) {
         Active active_guard{*this, entry, phase, tick};
         detail::LuaCallContext context{
             &scene, entry.record.entity, lua_phase(phase), lua_profile(config.profile), tick, delta,
             this,   &Impl::log};
+        Bridge bridge{this, &scene, physics, phase, event};
+        if (physics) {
+            context.physics_user = &bridge;
+            context.physics_call = &Impl::physics_call;
+        }
+        context.contact = contact;
         auto result = entry.vm->invoke(callback, context);
         if (!result)
             return contextualize(std::move(result).error(), entry.record, operation);
@@ -334,6 +512,12 @@ ScriptRuntime::create(Scene& scene, std::span<const ScriptSourceSnapshot> source
 }
 
 Result<void> ScriptRuntime::start(Scene& scene) {
+    return start_impl(scene, nullptr);
+}
+Result<void> ScriptRuntime::start(Scene& scene, PhysicsWorld& physics) {
+    return start_impl(scene, &physics);
+}
+Result<void> ScriptRuntime::start_impl(Scene& scene, PhysicsWorld* physics) {
     constexpr auto operation = "script.start";
     if (auto checked = impl_->thread(operation); !checked)
         return checked;
@@ -344,7 +528,8 @@ Result<void> ScriptRuntime::start(Scene& scene) {
             return checked;
         impl_->started = true;
         for (auto& entry : impl_->entries) {
-            auto result = impl_->run(entry, scene, ScriptPhase::init, 0, 0, "on_init", operation);
+            auto result =
+                impl_->run(entry, scene, ScriptPhase::init, 0, 0, "on_init", operation, physics);
             if (!result) {
                 impl_->faulted = true;
                 return result;
@@ -360,6 +545,12 @@ Result<void> ScriptRuntime::start(Scene& scene) {
 }
 
 Result<void> ScriptRuntime::update(Scene& scene, double delta_seconds) {
+    return update_impl(scene, nullptr, delta_seconds);
+}
+Result<void> ScriptRuntime::update(Scene& scene, PhysicsWorld& physics, double delta_seconds) {
+    return update_impl(scene, &physics, delta_seconds);
+}
+Result<void> ScriptRuntime::update_impl(Scene& scene, PhysicsWorld* physics, double delta_seconds) {
     constexpr auto operation = "script.update";
     if (auto checked = impl_->ready(operation); !checked)
         return checked;
@@ -373,7 +564,7 @@ Result<void> ScriptRuntime::update(Scene& scene, double delta_seconds) {
         for (auto& entry : impl_->entries) {
             auto result =
                 impl_->run(entry, scene, ScriptPhase::update, impl_->last_tick.value_or(0),
-                           delta_seconds, "on_update", operation);
+                           delta_seconds, "on_update", operation, physics);
             if (!result) {
                 impl_->faulted = true;
                 return result;
@@ -388,6 +579,14 @@ Result<void> ScriptRuntime::update(Scene& scene, double delta_seconds) {
 }
 
 Result<void> ScriptRuntime::fixed_update(Scene& scene, std::uint64_t tick, double delta_seconds) {
+    return fixed_update_impl(scene, nullptr, tick, delta_seconds);
+}
+Result<void> ScriptRuntime::fixed_update(Scene& scene, PhysicsWorld& physics, std::uint64_t tick,
+                                         double delta_seconds) {
+    return fixed_update_impl(scene, &physics, tick, delta_seconds);
+}
+Result<void> ScriptRuntime::fixed_update_impl(Scene& scene, PhysicsWorld* physics,
+                                              std::uint64_t tick, double delta_seconds) {
     constexpr auto operation = "script.fixed_update";
     if (auto checked = impl_->ready(operation); !checked)
         return checked;
@@ -403,7 +602,7 @@ Result<void> ScriptRuntime::fixed_update(Scene& scene, std::uint64_t tick, doubl
         }
         for (auto& entry : impl_->entries) {
             auto result = impl_->run(entry, scene, ScriptPhase::fixed_update, tick, delta_seconds,
-                                     "on_fixed_update", operation);
+                                     "on_fixed_update", operation, physics);
             if (!result) {
                 impl_->faulted = true;
                 return result;
@@ -418,7 +617,146 @@ Result<void> ScriptRuntime::fixed_update(Scene& scene, std::uint64_t tick, doubl
     }
 }
 
+Result<ScriptContactReport> ScriptRuntime::dispatch_contacts(Scene& scene, PhysicsWorld& physics,
+                                                             std::size_t maximum) {
+    constexpr auto operation = "script.contacts.dispatch";
+    if (auto checked = impl_->ready(operation); !checked)
+        return checked.error();
+    if (maximum == 0 || maximum > script_runtime_maximum_contact_events)
+        return runtime_error(ErrorCode::invalid_argument, operation, "Invalid contact batch limit");
+    if (auto checked = impl_->check_inventory(scene, operation); !checked)
+        return checked.error();
+    auto stats = physics.stats();
+    if (!stats)
+        return stats.error();
+    if (stats.value().closed || stats.value().faulted || !stats.value().simulating)
+        return runtime_error(ErrorCode::conflict, operation, "Physics world is not simulating");
+    try {
+        impl_->deferred.clear();
+        impl_->deferred_overflow = false;
+        impl_->deferred.reserve(script_runtime_maximum_deferred_physics);
+    } catch (...) {
+        return runtime_error(ErrorCode::execution_failed, operation,
+                             "Cannot allocate contact queue");
+    }
+    auto events = physics.take_events(scene, maximum);
+    if (!events)
+        return events.error();
+    ScriptContactReport report;
+    report.events = std::move(events).value();
+    std::size_t current = 0;
+    try {
+        for (; current < report.events.size(); ++current) {
+            const auto& event = report.events[current];
+            auto first = physics.body_state(scene, event.first.body);
+            auto second = physics.body_state(scene, event.second.body);
+            if (event.completed_tick > stats.value().completed_ticks || !first || !second ||
+                !Impl::same(first.value(), event.first) ||
+                !Impl::same(second.value(), event.second)) {
+                ++report.skipped_events;
+                continue;
+            }
+            for (int side = 0; side < 2; ++side) {
+                const auto& self = side == 0 ? event.first : event.second;
+                const auto& other = side == 0 ? event.second : event.first;
+                auto entry = std::find_if(
+                    impl_->entries.begin(), impl_->entries.end(), [&](const auto& candidate) {
+                        return candidate.initialized && candidate.record.entity == self.entity;
+                    });
+                if (entry == impl_->entries.end())
+                    continue;
+                detail::LuaContactInfo info{};
+                Impl::uuid(info.other_entity_id, other.entity);
+                info.self_trigger = self.is_trigger;
+                info.other_trigger = other.is_trigger;
+                info.completed_tick = event.completed_tick;
+                ++report.attempted_callbacks;
+                auto result =
+                    impl_->run(*entry, scene, ScriptPhase::contact, event.completed_tick, 0,
+                               event.phase == PhysicsContactPhase::enter ? "on_contact_enter"
+                                                                         : "on_contact_exit",
+                               operation, &physics, &info, &event);
+                if (!result || impl_->deferred_overflow) {
+                    impl_->faulted = true;
+                    report.error =
+                        !result ? std::move(result).error()
+                                : contextualize(runtime_error(ErrorCode::conflict, operation,
+                                                              "Deferred physics queue overflow"),
+                                                entry->record, operation);
+                    report.undelivered_events = report.events.size() - current - 1;
+                    report.discarded_commands = impl_->deferred.size();
+                    impl_->deferred.clear();
+                    return report;
+                }
+            }
+        }
+        std::vector<PhysicsBodyHandle> removed;
+        removed.reserve(impl_->deferred.size());
+        for (std::size_t i = 0; i < impl_->deferred.size(); ++i) {
+            const auto& command = impl_->deferred[i];
+            auto peer = physics.body_state(scene, command.other.body);
+            Result<void> result;
+            if (!peer || !Impl::same(peer.value(), command.other)) {
+                result = runtime_error(ErrorCode::conflict, operation,
+                                       "Deferred contact peer generation changed");
+            } else if (command.request.operation == detail::LuaPhysicsOperation::create_body) {
+                if (std::find(removed.begin(), removed.end(), command.self.body) == removed.end())
+                    result = runtime_error(ErrorCode::conflict, operation,
+                                           "Body recreation requires a prior queued removal");
+                else {
+                    auto created =
+                        physics.create_runtime_body(scene, command.self.entity, command.settings);
+                    if (!created)
+                        result = created.error();
+                }
+            } else {
+                auto self = physics.body_state(scene, command.self.body);
+                if (!self || !Impl::same(self.value(), command.self))
+                    result = runtime_error(ErrorCode::conflict, operation,
+                                           "Deferred contact body generation changed");
+                else if (command.request.operation == detail::LuaPhysicsOperation::remove_body) {
+                    result = physics.remove_body(scene, command.self.body);
+                    if (result)
+                        removed.push_back(command.self.body);
+                } else
+                    result = Impl::mutate(scene, physics, command.self.body, command.request);
+            }
+            if (!result) {
+                impl_->faulted = true;
+                auto error = std::move(result).error();
+                const auto entry = std::find_if(
+                    impl_->entries.begin(), impl_->entries.end(), [&](const auto& candidate) {
+                        return candidate.record.entity == command.self.entity;
+                    });
+                report.error = entry != impl_->entries.end()
+                                   ? contextualize(std::move(error), entry->record, operation)
+                                   : std::move(error);
+                report.discarded_commands = impl_->deferred.size() - i;
+                impl_->deferred.clear();
+                return report;
+            }
+            ++report.applied_commands;
+        }
+        impl_->deferred.clear();
+        return report;
+    } catch (...) {
+        impl_->faulted = true;
+        report.error = runtime_error(ErrorCode::execution_failed, operation,
+                                     "Contact dispatch failed after consuming observations");
+        report.undelivered_events = report.events.size() - current;
+        report.discarded_commands = impl_->deferred.size() - report.applied_commands;
+        impl_->deferred.clear();
+        return report;
+    }
+}
+
 Result<ScriptStopReport> ScriptRuntime::stop(Scene& scene) {
+    return stop_impl(scene, nullptr);
+}
+Result<ScriptStopReport> ScriptRuntime::stop(Scene& scene, PhysicsWorld& physics) {
+    return stop_impl(scene, &physics);
+}
+Result<ScriptStopReport> ScriptRuntime::stop_impl(Scene& scene, PhysicsWorld* physics) {
     constexpr auto operation = "script.stop";
     if (auto checked = impl_->thread(operation); !checked)
         return checked.error();
@@ -462,7 +800,7 @@ Result<ScriptStopReport> ScriptRuntime::stop(Scene& scene) {
             // it may already have produced effects.
             it->initialized = false;
             auto result = impl_->run(*it, scene, ScriptPhase::destroy, impl_->last_tick.value_or(0),
-                                     0, "on_destroy", operation);
+                                     0, "on_destroy", operation, physics);
             if (!result)
                 report.errors.push_back(std::move(result).error());
         }

@@ -247,8 +247,16 @@ class AuthoringEditingProcessTests(unittest.TestCase):
         pose = {**TRANSFORM, "translation": [0, 2, 0]}
         with self.client() as client:
             self.assertTrue(client.result("protocol.discover")["capabilities"]["physics_preview"])
+            script_path = "scripts/contact-preview.lua"
+            client.result("text.write", {"path": script_path, "expected_revision": None,
+                "text": """function on_contact_enter(other, self_trigger, other_trigger, tick)
+    assert(not self_trigger and other_trigger and tick == 1)
+    shark.log.info('contact:' .. other)
+end
+"""})
             self.edit(client, {"type": "create_entity", "entity_id": ENTITY, "name": "Preview ball",
-                               "transform": pose, "rigid_body": body})
+                               "transform": pose, "rigid_body": body,
+                               "script": {"source": script_path, "enabled": True}})
             self.edit(client, {"type": "create_entity", "entity_id": CHILD, "name": "Preview sensor",
                                "transform": {**pose, "translation": [0, 0, 0]}, "rigid_body": sensor})
             self.save(client)
@@ -294,6 +302,8 @@ class AuthoringEditingProcessTests(unittest.TestCase):
             participants = {enters[0][key]["entity_id"]: enters[0][key]["is_trigger"]
                             for key in ("first", "second")}
             self.assertEqual(participants, {ENTITY: False, CHILD: True})
+            self.assertEqual([row["message"] for row in stepped["script_logs"]],
+                             ["contact:" + CHILD])
             self.rpc_error(client.call("scene.physics", {**step, "ticks": 7}), "conflict")
             self.assertEqual(client.result("scene.physics", {"op": "status"})["last_operation"], stepped)
 

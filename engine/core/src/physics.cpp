@@ -940,11 +940,35 @@ Result<void> PhysicsWorld::step() {
 }
 
 Result<PhysicsBodyHandle> PhysicsWorld::create_body(const Scene& scene, EntityHandle entity) {
+    return create_body_impl(scene, entity, nullptr, nullptr);
+}
+Result<PhysicsBodyHandle> PhysicsWorld::create_runtime_body(Scene& scene,
+                                                            const EntityReference& entity,
+                                                            const RigidBody& body) {
+    if (auto checked = impl_->check_simulation(scene, "physics.body.create_runtime"); !checked)
+        return checked.error();
+    // Empty simulations may start with a smaller arena; live bodies require
+    // the same populated-world admission as begin_simulation.
+    if (temporary_requirement(impl_->config) > impl_->config.temporary_bytes)
+        return physics_error(ErrorCode::conflict,
+                             "Physics temporary arena cannot admit this configuration",
+                             "physics.body.create_runtime");
+    if (auto checked =
+            scene_detail::ScenePhysicsAccess::check_attach(scene, impl_->simulation, entity, body);
+        !checked)
+        return checked.error();
+    return create_body_impl(scene, entity.handle, &scene, &body);
+}
+Result<PhysicsBodyHandle> PhysicsWorld::create_body_impl(const Scene& scene, EntityHandle entity,
+                                                         Scene* runtime,
+                                                         const RigidBody* replacement) {
     if (auto checked = impl_->check_owner("physics.body.create"); !checked)
         return checked.error();
-    if (impl_->closed || impl_->faulted || impl_->simulation)
+    if (impl_->closed || impl_->faulted || (impl_->simulation && runtime == nullptr) ||
+        (runtime != nullptr && (!impl_->simulation || replacement == nullptr)))
         return physics_error(ErrorCode::conflict, "Physics owner is closed or faulted",
                              "physics.body.create");
+    bool native_work = false;
     try {
         native_diagnostic = {};
         auto source = scene.entity_state(entity);
@@ -954,13 +978,15 @@ Result<PhysicsBodyHandle> PhysicsWorld::create_body(const Scene& scene, EntityHa
         const auto scene_stats = scene.stats();
         if (!scene_stats)
             return scene_stats.error();
-        if (scene_stats.value().pending_mutations != 0 || !value.rigid_body || value.parent ||
-            std::holds_alternative<ReplicaSceneScope>(value.reference.scope))
+        if (scene_stats.value().pending_mutations != 0 ||
+            (runtime == nullptr && !value.rigid_body) || (runtime != nullptr && value.rigid_body) ||
+            value.parent || std::holds_alternative<ReplicaSceneScope>(value.reference.scope))
             return physics_error(
                 ErrorCode::conflict,
                 "Body creation requires a committed authored or authoritative root with RigidBody",
                 "physics.body.create");
-        auto pose = validate_rigid_body_pose(*value.rigid_body, value.local_transform);
+        const auto& settings = runtime ? *replacement : *value.rigid_body;
+        auto pose = validate_rigid_body_pose(settings, value.local_transform);
         if (!pose)
             return pose.error();
         for (const auto& slot : impl_->bodies)
@@ -978,7 +1004,6 @@ Result<PhysicsBodyHandle> PhysicsWorld::create_body(const Scene& scene, EntityHa
         if (index == impl_->bodies.size() && index >= impl_->config.max_bodies)
             return physics_error(ErrorCode::conflict, "Physics body capacity exhausted",
                                  "physics.body.create");
-        const auto& settings = *value.rigid_body;
         const auto scale = static_cast<float>(pose.value().scale.x);
         JPH::ShapeSettings::ShapeResult shape;
         if (settings.shape == ColliderShape::box) {
@@ -1030,11 +1055,17 @@ Result<PhysicsBodyHandle> PhysicsWorld::create_body(const Scene& scene, EntityHa
         if (!native)
             return physics_error(ErrorCode::conflict, "Native physics body capacity exhausted",
                                  "physics.body.create");
+        native_work = true;
         const auto id = native->GetID();
         NativeBodyCandidate candidate{interface, id};
-        interface.AddBody(id, JPH::EActivation::DontActivate);
-        if (native_diagnostic.reported)
+        interface.AddBody(id, runtime && settings.motion != BodyMotion::static_body
+                                  ? JPH::EActivation::Activate
+                                  : JPH::EActivation::DontActivate);
+        if (native_diagnostic.reported) {
+            if (runtime)
+                impl_->faulted = true;
             return reported_error("physics.body.create");
+        }
         if (index == impl_->bodies.size())
             impl_->bodies.emplace_back();
         auto& slot = impl_->bodies[index];
@@ -1042,10 +1073,14 @@ Result<PhysicsBodyHandle> PhysicsWorld::create_body(const Scene& scene, EntityHa
         // normalization's rounded value used to prepare the native pose.
         slot.value.emplace(value.reference, settings, value.local_transform, id);
         slot.value->previous_pose = value.local_transform;
+        if (runtime)
+            scene_detail::ScenePhysicsAccess::attach(*runtime, entity, settings);
         candidate.retained = true;
         return PhysicsBodyHandle{impl_->instance, static_cast<std::uint32_t>(index),
                                  slot.generation};
     } catch (...) {
+        if (runtime && native_work)
+            impl_->faulted = true;
         return physics_error(ErrorCode::execution_failed, "Cannot create native physics body",
                              "physics.body.create");
     }
@@ -1727,6 +1762,28 @@ Result<PhysicsBodyState> PhysicsWorld::body_state(const Scene& scene,
                             interface.GetRestitution(record.native)};
 }
 
+Result<PhysicsBodyHandle> PhysicsWorld::find_body(const Scene& scene,
+                                                  const EntityReference& entity) const {
+    constexpr auto operation = "physics.body.find";
+    if (auto checked = impl_->check_simulation(scene, operation); !checked)
+        return checked.error();
+    auto resolved = scene.resolve(entity);
+    if (!resolved)
+        return resolved.error();
+    for (std::size_t i = 0; i < impl_->bodies.size(); ++i) {
+        const auto& slot = impl_->bodies[i];
+        if (slot.value && slot.value->entity == entity) {
+            PhysicsBodyHandle handle{impl_->instance, static_cast<std::uint32_t>(i),
+                                     slot.generation};
+            auto state = body_state(scene, handle);
+            if (!state)
+                return state.error();
+            return handle;
+        }
+    }
+    return physics_error(ErrorCode::conflict, "Entity has no current physics body", operation);
+}
+
 Result<void> PhysicsWorld::remove_body(PhysicsBodyHandle body) {
     return remove_body_impl(nullptr, body);
 }
@@ -1796,6 +1853,13 @@ Result<void> PhysicsWorld::remove_body_impl(Scene* scene, PhysicsBodyHandle body
                              "physics.body.remove");
     }
 }
+Result<std::vector<PhysicsContactEvent>> PhysicsWorld::take_events(const Scene& scene,
+                                                                   std::size_t maximum) {
+    if (auto checked = impl_->check_simulation(scene, "physics.events.take"); !checked)
+        return checked.error();
+    return take_events(maximum);
+}
+
 Result<std::vector<PhysicsContactEvent>> PhysicsWorld::take_events(std::size_t maximum) {
     if (auto checked = impl_->check_owner("physics.events.take"); !checked)
         return checked.error();

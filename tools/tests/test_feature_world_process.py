@@ -81,13 +81,19 @@ def main():
                 assert entry['featureworld_cases'] and set(entry['featureworld_cases']) <= set(case_ids), entry['id']
                 assert 'shark.tools.featureworld-process' in entry['test_ids'], entry['id']
                 if category == 'lua_api':
-                    assert 'featureworld.components' in entry['featureworld_cases'], entry['id']
+                    expected_case = ('featureworld.rigid-bodies' if entry['id'].startswith('lua.physics.')
+                                     else 'featureworld.components')
+                    assert expected_case in entry['featureworld_cases'], entry['id']
                     assert 'shark.core.script-runtime' in entry['test_ids'], entry['id']
                 mapped.append(entry['id'])
         assert {entry['id'] for entry in manifest['implemented_surface']['lua_api']} == {
             'lua.entity.name', 'lua.entity.position', 'lua.entity.camera-near',
             'lua.entity.set-name', 'lua.time.tick', 'lua.time.delta',
             'lua.log.info', 'lua.math.clamp', 'lua.api-version',
+            'lua.physics.velocity', 'lua.physics.set-velocity', 'lua.physics.force',
+            'lua.physics.impulse', 'lua.physics.teleport', 'lua.physics.kinematic-target',
+            'lua.physics.raycast', 'lua.physics.overlap-sphere', 'lua.physics.overlap-box',
+            'lua.physics.remove-body', 'lua.physics.create-body',
         }
         summary['mapped_surfaces'] = mapped
         summary['external_surfaces'] = external

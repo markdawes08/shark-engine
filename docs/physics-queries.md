@@ -51,5 +51,4 @@ Queries do not advance the tick, apply pending forces or targets, consume contac
 events, change the Scene/history, or provide a render-interpolated picking
 authority. The observed physics Scene may be an isolated local development copy
 or a trusted authoritative region; neither implies production capacity or remote
-player access. Later [checkpoints](roadmap/physics-interaction-plan.md) add Lua
-bindings, contact callbacks, debug visualization and connected acceptance.
+player access. The [Lua physics surface](physics-lua.md) exposes bounded observations through the same owner. Later [checkpoints](roadmap/physics-interaction-plan.md) add debug visualization and connected acceptance.

@@ -217,6 +217,12 @@ class PhysicsWorld final {
     // methods never write authored state. Reads recheck the source incarnation,
     // settings and pose; changed/deleted sources require remove and recreate.
     [[nodiscard]] Result<PhysicsBodyHandle> create_body(const Scene& scene, EntityHandle entity);
+    // Attach a runtime body under the active Scene lease. The entity must be a
+    // committed root with no body; the complete body value is validated first.
+    [[nodiscard]] Result<PhysicsBodyHandle>
+    create_runtime_body(Scene& scene, const EntityReference& entity, const RigidBody& body);
+    [[nodiscard]] Result<PhysicsBodyHandle> find_body(const Scene& scene,
+                                                      const EntityReference& entity) const;
     [[nodiscard]] Result<PhysicsBodyState> body_state(const Scene& scene,
                                                       PhysicsBodyHandle body) const;
     [[nodiscard]] Result<void> remove_body(PhysicsBodyHandle body);
@@ -224,12 +230,17 @@ class PhysicsWorld final {
     // this Core Scene, keeps the visual entity and queues owned exit events.
     [[nodiscard]] Result<void> remove_body(Scene& scene, PhysicsBodyHandle body);
     [[nodiscard]] Result<std::vector<PhysicsContactEvent>> take_events(std::size_t maximum = 256);
+    [[nodiscard]] Result<std::vector<PhysicsContactEvent>> take_events(const Scene& scene,
+                                                                       std::size_t maximum = 256);
     [[nodiscard]] Result<PhysicsWorldStats> stats() const;
     // Idempotent, permanently closed. Releases native owners before their last
     // process-global registration lease. Closed values retain config/tick stats.
     [[nodiscard]] Result<void> close();
 
   private:
+    [[nodiscard]] Result<PhysicsBodyHandle> create_body_impl(const Scene& scene,
+                                                             EntityHandle entity, Scene* runtime,
+                                                             const RigidBody* replacement);
     [[nodiscard]] Result<void> reset_pose(Scene& scene, PhysicsBodyHandle body, Transform pose,
                                           BodyMotion mode);
     [[nodiscard]] Result<void> remove_body_impl(Scene* scene, PhysicsBodyHandle body);

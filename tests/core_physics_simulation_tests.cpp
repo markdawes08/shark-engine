@@ -101,6 +101,26 @@ TEST_CASE(
     take(final->close()); // No Scene pointer retained.
 }
 
+TEST_CASE("Runtime body creation respects arena admission after an empty simulation begins",
+          "[core-physics]") {
+    auto owner = scene();
+    const auto entity = take(owner->create_entity(EntitySeed{id<AuthoredEntityId>(2)}));
+    const auto reference = take(owner->reference(entity));
+    auto world = take(PhysicsWorld::create({.temporary_bytes = physics_minimum_temporary_bytes}));
+    REQUIRE(take(world->stats()).temporary_required_bytes > physics_minimum_temporary_bytes);
+    take(world->begin_simulation(*owner));
+    const auto before = revision(*owner);
+    CHECK_FALSE(world->create_runtime_body(*owner, reference, RigidBody{}));
+    CHECK(revision(*owner) == before);
+    CHECK_FALSE(take(owner->entity_state(entity)).rigid_body);
+    const auto stats = take(world->stats());
+    CHECK(stats.bodies == 0);
+    CHECK(stats.simulating);
+    CHECK_FALSE(stats.faulted);
+    take(world->step(*owner));
+    take(world->end_simulation(*owner));
+}
+
 TEST_CASE("Fixed boundaries give physics dynamic poses and explicit static and kinematic authority",
           "[core-physics]") {
     auto owner = scene();

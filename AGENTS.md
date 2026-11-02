@@ -48,7 +48,10 @@ serially and preserve existing results. Items in the [UI backlog](docs/backlog.m
 remain NOT_RUN until their required evidence passes; resumption alone does not
 qualify untested behavior or close full UI acceptance.
 
-**Current handoff: [20b, physics queries](docs/handoffs/20b-physics-queries.md).**
+**Current handoff: [20c, Lua physics contacts](docs/handoffs/20c-lua-physics-contacts.md).**
+Follow the [Lua physics contract](docs/physics-lua.md) and [ADR 0055](docs/architecture/0055-lua-physics-contacts.md). Trusted hosts supply the existing physics owner to ScriptRuntime calls; Region scope alone is not authority. Preserve bounded owned queries, server-only fixed/contact writes, and client read-only preview. Native callbacks never execute Lua. The creating thread drains contact observations and queues at most 64 callback writes until the batch ends, then rechecks participants and applies changes in order. Preserve captured settings for checked self-body removal/recreation, fresh generations, original event receipts and contextual partial-effect failures; drain removal exits before another step. Preview retries never redeliver callbacks. The next checkpoint is 20d, physics debug visualization and shared inspection. Full REQ-20 remains NOT_RUN.
+
+The [20b handoff](docs/handoffs/20b-physics-queries.md) records bounded physics queries.
 Follow the [query contract](docs/physics-queries.md) and [ADR 0054](docs/architecture/0054-physics-queries.md).
 PhysicsWorld provides bounded complete filtered ray, sphere-overlap and axis-aligned
 box-overlap observations under its creating-thread Scene lease. Preserve bilateral
@@ -56,7 +59,7 @@ layer/mask and trigger/checked-ignore filtering, finite packed-coordinate bounds
 explicit overflow rejection, deterministic sorting, provenance and checked owned
 body/entity generations. Fraction-zero ray hits have no normal. Results are
 historical observations and never authorize later mutation or cross-region/player
-access. Lua physics/contact callbacks and deferred mutations remain 20c.
+access.
 
 The [20a handoff](docs/handoffs/20a-physics-body-controls.md) records body controls.
 Follow the [interaction checkpoints](docs/roadmap/physics-interaction-plan.md),
@@ -84,8 +87,7 @@ write/reconciliation. Core's ScriptRuntime retains exclusive weak Scene ownershi
 checked generations, role/phase authority and existing Scene/physics write leases.
 Region metadata alone does not grant authority. Lua instruction limits do not bound
 native library work. Runtime and export still reject Script-bearing scenes until
-actual cooked source closure and integrated execution exist. Lua physics bindings
-and contact delivery remain assignment 20.
+actual cooked source closure and integrated execution exist.
 The completed physics work is recorded in [18e](docs/handoffs/18e-editor-physics-preview.md).
 Follow [ADR 0045](docs/architecture/0045-physics-foundation.md) and the
 [physics-world contract](docs/physics-world.md): Jolt is a private locked Core

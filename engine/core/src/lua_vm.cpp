@@ -278,6 +278,230 @@ struct LuaVm::Impl {
         return 1;
     }
 
+    // Physics results are fully copied into this fixed POD buffer before a Lua
+    // allocation or error can longjmp across the C boundary.
+    static_assert(std::is_trivially_destructible_v<LuaPhysicsRequest> &&
+                  std::is_trivially_destructible_v<LuaPhysicsReply>);
+
+    static void physics_error(LuaPhysicsReply& output, std::string_view message) noexcept {
+        if (message.empty())
+            message = "Physics operation failed";
+        const auto count = message.size() < max_binding_text ? message.size() : max_binding_text;
+        for (std::size_t index = 0; index < count; ++index) {
+            const auto byte = static_cast<unsigned char>(message[index]);
+            output.error[index] = byte >= 32U && byte < 127U ? static_cast<char>(byte) : '?';
+        }
+        output.error[count] = '\0';
+    }
+
+    static bool physics_is_query(LuaPhysicsOperation operation) noexcept {
+        return operation == LuaPhysicsOperation::raycast ||
+               operation == LuaPhysicsOperation::overlap_sphere ||
+               operation == LuaPhysicsOperation::overlap_box;
+    }
+
+    static LuaPhysicsReply physics(lua_State* state, LuaPhysicsOperation operation) noexcept {
+        LuaPhysicsReply output;
+        BindingResult context_error;
+        auto* self = current(state);
+        if (!valid_context(self, context_error)) {
+            physics_error(output, context_error.error);
+            return output;
+        }
+        auto& context = *self->active;
+        if (context.physics_call == nullptr) {
+            physics_error(output, "Physics capability is unavailable in this callback");
+            return output;
+        }
+        const bool query = physics_is_query(operation);
+        const bool velocity_read = operation == LuaPhysicsOperation::velocity;
+        const bool body_change = operation == LuaPhysicsOperation::remove_body ||
+                                 operation == LuaPhysicsOperation::create_body;
+        if (!query && !velocity_read &&
+            (context.profile != LuaProfile::server_gameplay ||
+             (context.phase != LuaPhase::fixed_update && context.phase != LuaPhase::contact) ||
+             !std::holds_alternative<RegionSceneScope>(context.entity.scope))) {
+            physics_error(output,
+                          "Physics mutation requires authoritative server fixed_update or contact");
+            return output;
+        }
+        if (body_change && context.phase != LuaPhase::contact) {
+            physics_error(output, "Body changes require a contact callback");
+            return output;
+        }
+        int numeric = 0;
+        switch (operation) {
+        case LuaPhysicsOperation::velocity:
+        case LuaPhysicsOperation::remove_body:
+        case LuaPhysicsOperation::create_body:
+            break;
+        case LuaPhysicsOperation::set_velocity:
+        case LuaPhysicsOperation::raycast:
+        case LuaPhysicsOperation::overlap_box:
+            numeric = 6;
+            break;
+        case LuaPhysicsOperation::overlap_sphere:
+            numeric = 4;
+            break;
+        case LuaPhysicsOperation::force:
+        case LuaPhysicsOperation::impulse:
+        case LuaPhysicsOperation::teleport:
+        case LuaPhysicsOperation::kinematic_target:
+            numeric = 3;
+            break;
+        }
+        if (lua_gettop(state) != numeric + (query ? 3 : 0)) {
+            physics_error(output, "Incorrect physics argument count");
+            return output;
+        }
+        LuaPhysicsRequest request;
+        request.operation = operation;
+        for (int i = 0; i < numeric; ++i) {
+            if (lua_type(state, i + 1) != LUA_TNUMBER) {
+                physics_error(output, "Physics vector arguments must be numbers");
+                return output;
+            }
+            request.arguments[i] = lua_tonumber(state, i + 1);
+            if (!std::isfinite(request.arguments[i])) {
+                physics_error(output, "Physics vector arguments must be finite");
+                return output;
+            }
+        }
+        if (query) {
+            if (!lua_isinteger(state, numeric + 1) || !lua_isinteger(state, numeric + 2) ||
+                lua_type(state, numeric + 3) != LUA_TBOOLEAN) {
+                physics_error(
+                    output,
+                    "Query filter requires integer layer, integer mask and boolean trigger flag");
+                return output;
+            }
+            const auto layer = lua_tointeger(state, numeric + 1);
+            const auto mask = lua_tointeger(state, numeric + 2);
+            if (layer < 0 || layer > 15 || mask < 0 || mask > 65535) {
+                physics_error(output, "Query layer or mask is out of range");
+                return output;
+            }
+            request.layer = static_cast<std::uint32_t>(layer);
+            request.mask = static_cast<std::uint32_t>(mask);
+            request.include_triggers = lua_toboolean(state, numeric + 3) != 0;
+        }
+        context.physics_call(context.physics_user, context.entity, request, output);
+        output.error[max_binding_text] = '\0';
+        if (output.error[0])
+            return output;
+        if (output.count > lua_physics_maximum_hits) {
+            physics_error(output, "Physics host exceeded its hit limit");
+            return output;
+        }
+        if (velocity_read) {
+            for (double value : output.values)
+                if (!std::isfinite(value)) {
+                    physics_error(output, "Physics host returned invalid velocity");
+                    return output;
+                }
+        }
+        if (query) {
+            for (std::size_t i = 0; i < output.count; ++i) {
+                auto& hit = output.hits[i];
+                hit.entity_id[36] = '\0';
+                if (std::strlen(hit.entity_id) != 36) {
+                    physics_error(output, "Physics host returned invalid entity identity");
+                    return output;
+                }
+                if (operation == LuaPhysicsOperation::raycast) {
+                    if (!std::isfinite(hit.fraction) || hit.fraction < 0 || hit.fraction > 1) {
+                        physics_error(output, "Physics host returned invalid ray fraction");
+                        return output;
+                    }
+                    for (int axis = 0; axis < 3; ++axis)
+                        if (!std::isfinite(hit.position[axis]) ||
+                            (hit.has_normal && !std::isfinite(hit.normal[axis]))) {
+                            physics_error(output, "Physics host returned invalid ray geometry");
+                            return output;
+                        }
+                }
+            }
+        }
+        return output;
+    }
+
+    static int physics_velocity(lua_State* state) {
+        const auto value = physics(state, LuaPhysicsOperation::velocity);
+        if (value.error[0])
+            return luaL_error(state, "%s", value.error);
+        for (double component : value.values)
+            lua_pushnumber(state, component);
+        return 6;
+    }
+    static int physics_mutation(lua_State* state, LuaPhysicsOperation operation) {
+        const auto value = physics(state, operation);
+        return value.error[0] ? luaL_error(state, "%s", value.error) : 0;
+    }
+    static int physics_set_velocity(lua_State* state) {
+        return physics_mutation(state, LuaPhysicsOperation::set_velocity);
+    }
+    static int physics_force(lua_State* state) {
+        return physics_mutation(state, LuaPhysicsOperation::force);
+    }
+    static int physics_impulse(lua_State* state) {
+        return physics_mutation(state, LuaPhysicsOperation::impulse);
+    }
+    static int physics_teleport(lua_State* state) {
+        return physics_mutation(state, LuaPhysicsOperation::teleport);
+    }
+    static int physics_kinematic_target(lua_State* state) {
+        return physics_mutation(state, LuaPhysicsOperation::kinematic_target);
+    }
+    static int physics_remove_body(lua_State* state) {
+        return physics_mutation(state, LuaPhysicsOperation::remove_body);
+    }
+    static int physics_create_body(lua_State* state) {
+        return physics_mutation(state, LuaPhysicsOperation::create_body);
+    }
+    static int physics_query(lua_State* state, LuaPhysicsOperation operation) {
+        const auto value = physics(state, operation);
+        if (value.error[0])
+            return luaL_error(state, "%s", value.error);
+        lua_createtable(state, static_cast<int>(value.count), 0);
+        for (std::size_t i = 0; i < value.count; ++i) {
+            const auto& hit = value.hits[i];
+            lua_createtable(state, 0, operation == LuaPhysicsOperation::raycast ? 9 : 2);
+            lua_pushlstring(state, hit.entity_id, 36);
+            lua_setfield(state, -2, "entity_id");
+            lua_pushboolean(state, hit.is_trigger);
+            lua_setfield(state, -2, "is_trigger");
+            if (operation == LuaPhysicsOperation::raycast) {
+                lua_pushnumber(state, hit.fraction);
+                lua_setfield(state, -2, "fraction");
+                lua_pushnumber(state, hit.position[0]);
+                lua_setfield(state, -2, "x");
+                lua_pushnumber(state, hit.position[1]);
+                lua_setfield(state, -2, "y");
+                lua_pushnumber(state, hit.position[2]);
+                lua_setfield(state, -2, "z");
+                if (hit.has_normal) {
+                    lua_pushnumber(state, hit.normal[0]);
+                    lua_setfield(state, -2, "normal_x");
+                    lua_pushnumber(state, hit.normal[1]);
+                    lua_setfield(state, -2, "normal_y");
+                    lua_pushnumber(state, hit.normal[2]);
+                    lua_setfield(state, -2, "normal_z");
+                }
+            }
+            lua_rawseti(state, -2, static_cast<lua_Integer>(i + 1));
+        }
+        return 1;
+    }
+    static int physics_raycast(lua_State* state) {
+        return physics_query(state, LuaPhysicsOperation::raycast);
+    }
+    static int physics_overlap_sphere(lua_State* state) {
+        return physics_query(state, LuaPhysicsOperation::overlap_sphere);
+    }
+    static int physics_overlap_box(lua_State* state) {
+        return physics_query(state, LuaPhysicsOperation::overlap_box);
+    }
+
     // Called only under lua_pcall. All frames between Lua and the host are
     // trivial; any Lua allocation failure unwinds only native Lua/C frames.
     static int initialize_bindings(lua_State* state) {
@@ -308,6 +532,30 @@ struct LuaVm::Impl {
         lua_pushcfunction(state, &Impl::log_info);
         lua_setfield(state, -2, "info");
         lua_setfield(state, -2, "log");
+        lua_newtable(state);
+        lua_pushcfunction(state, &Impl::physics_velocity);
+        lua_setfield(state, -2, "velocity");
+        lua_pushcfunction(state, &Impl::physics_set_velocity);
+        lua_setfield(state, -2, "set_velocity");
+        lua_pushcfunction(state, &Impl::physics_force);
+        lua_setfield(state, -2, "force");
+        lua_pushcfunction(state, &Impl::physics_impulse);
+        lua_setfield(state, -2, "impulse");
+        lua_pushcfunction(state, &Impl::physics_teleport);
+        lua_setfield(state, -2, "teleport");
+        lua_pushcfunction(state, &Impl::physics_kinematic_target);
+        lua_setfield(state, -2, "kinematic_target");
+        lua_pushcfunction(state, &Impl::physics_raycast);
+        lua_setfield(state, -2, "raycast");
+        lua_pushcfunction(state, &Impl::physics_overlap_sphere);
+        lua_setfield(state, -2, "overlap_sphere");
+        lua_pushcfunction(state, &Impl::physics_overlap_box);
+        lua_setfield(state, -2, "overlap_box");
+        lua_pushcfunction(state, &Impl::physics_remove_body);
+        lua_setfield(state, -2, "remove_body");
+        lua_pushcfunction(state, &Impl::physics_create_body);
+        lua_setfield(state, -2, "create_body");
+        lua_setfield(state, -2, "physics");
         lua_setglobal(state, "shark");
         return 0;
     }
@@ -321,7 +569,16 @@ struct LuaVm::Impl {
         }
         if (!lua_isfunction(state, -1))
             return luaL_error(state, "Lifecycle callback must be a function or nil");
-        lua_call(state, 0, 0);
+        if (self->active->phase == LuaPhase::contact) {
+            const auto* contact = self->active->contact;
+            lua_pushlstring(state, contact->other_entity_id, 36);
+            lua_pushboolean(state, contact->self_trigger);
+            lua_pushboolean(state, contact->other_trigger);
+            lua_pushinteger(state, static_cast<lua_Integer>(contact->completed_tick));
+            lua_call(state, 4, 0);
+        } else {
+            lua_call(state, 0, 0);
+        }
         return 0;
     }
 
@@ -529,7 +786,12 @@ bool valid_call_context(const LuaCallContext& context) noexcept {
             context.profile == LuaProfile::client_presentation) &&
            (context.phase == LuaPhase::load || context.phase == LuaPhase::init ||
             context.phase == LuaPhase::update || context.phase == LuaPhase::fixed_update ||
-            context.phase == LuaPhase::destroy) &&
+            context.phase == LuaPhase::contact || context.phase == LuaPhase::destroy) &&
+           (context.phase != LuaPhase::contact ||
+            (context.contact != nullptr && context.contact->other_entity_id[36] == '\0' &&
+             std::strlen(context.contact->other_entity_id) == 36 &&
+             context.contact->completed_tick <=
+                 static_cast<std::uint64_t>(std::numeric_limits<lua_Integer>::max()))) &&
            context.tick <= static_cast<std::uint64_t>(std::numeric_limits<lua_Integer>::max()) &&
            std::isfinite(context.delta_seconds) && context.delta_seconds >= 0 &&
            context.delta_seconds <= 1;
@@ -584,6 +846,10 @@ Result<void> LuaVm::invoke(std::string_view callback, LuaCallContext& context) {
         name = "on_update";
     else if (callback == "on_fixed_update" && context.phase == LuaPhase::fixed_update)
         name = "on_fixed_update";
+    else if (callback == "on_contact_enter" && context.phase == LuaPhase::contact)
+        name = "on_contact_enter";
+    else if (callback == "on_contact_exit" && context.phase == LuaPhase::contact)
+        name = "on_contact_exit";
     else if (callback == "on_destroy" && context.phase == LuaPhase::destroy)
         name = "on_destroy";
     else

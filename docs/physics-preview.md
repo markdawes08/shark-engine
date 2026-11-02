@@ -37,7 +37,7 @@ These are deterministic preview ticks, not render-frame callbacks.
 Existing conservative arena admission still applies; these individual
 limits do not promise every worst-case combination is admitted. Operations step
 1..8 ticks and retain at most 1024 owned contact observations. Each successful
-tick drains events on the owner thread. A fault is not native rollback; the
+tick drains events on the owner thread and delivers checked Lua contact callbacks. Callback failures retain consumed observations in the same receipt. A fault is not native rollback; the
 receipt preserves completed ticks, earlier events and the original error.
 
 ## Terminal operations

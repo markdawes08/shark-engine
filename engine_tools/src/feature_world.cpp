@@ -2142,6 +2142,97 @@ void rigid_bodies(SceneRunContext& context) {
     require(context,
             take(controls->raycast(*control_scene, {12, 0, 0}, {20, 0, 0}, filter)).hits.empty(),
             "Physics query included an excluded trigger");
+
+    // Run the public Lua surface through a separate trusted server-region owner.
+    // The expected geometry and velocities below are independent of Lua's results.
+    auto lua_scene = take(Scene::create(
+        RegionSceneScope{id<WorldId>('a'), {id<RegionId>('b'), id<RegionInstanceId>('c'), 1}}));
+    EntitySeed actor{id<WorldEntityId>('a')};
+    actor.script = Script{"scripts/physics.lua", true};
+    actor.rigid_body = RigidBody{};
+    actor.rigid_body->motion = BodyMotion::dynamic_body;
+    actor.rigid_body->mass = 2;
+    actor.rigid_body->collision_layer = 3;
+    actor.rigid_body->collision_mask = (1U << 2U) | (1U << 4U);
+    const auto actor_entity = take(lua_scene->create_entity(actor));
+    EntitySeed sensor{id<WorldEntityId>('b')};
+    sensor.rigid_body = RigidBody{};
+    sensor.rigid_body->is_trigger = true;
+    sensor.rigid_body->collision_layer = 2;
+    sensor.rigid_body->collision_mask = 1U << 3U;
+    const auto sensor_entity = take(lua_scene->create_entity(sensor));
+    EntitySeed target{id<WorldEntityId>('c')};
+    target.transform.translation = {5, 0, 0};
+    target.rigid_body = RigidBody{};
+    target.rigid_body->shape = ColliderShape::sphere;
+    target.rigid_body->radius = 1;
+    target.rigid_body->is_trigger = true;
+    target.rigid_body->collision_layer = 4;
+    target.rigid_body->collision_mask = 1U << 3U;
+    const auto target_entity = take(lua_scene->create_entity(target));
+    EntitySeed mover{id<WorldEntityId>('d')};
+    mover.transform.translation = {10, 0, 0};
+    mover.script = Script{"scripts/mover.lua", true};
+    mover.rigid_body = RigidBody{};
+    mover.rigid_body->motion = BodyMotion::kinematic_body;
+    const auto mover_entity = take(lua_scene->create_entity(mover));
+    PhysicsWorldConfig lua_config;
+    lua_config.gravity = {0, 0, 0};
+    auto lua_world = take(PhysicsWorld::create(lua_config));
+    const auto original_actor = take(lua_world->create_body(*lua_scene, actor_entity));
+    take(lua_world->create_body(*lua_scene, sensor_entity));
+    take(lua_world->create_body(*lua_scene, target_entity));
+    take(lua_world->create_body(*lua_scene, mover_entity));
+    take(lua_world->begin_simulation(*lua_scene));
+    const std::array physics_sources{ScriptSourceSnapshot{"scripts/physics.lua", R"lua(
+function on_fixed_update()
+    local v = {shark.physics.velocity()}
+    assert(#v == 6 and v[1] == 0)
+    local ray = shark.physics.raycast(2, 0, 0, 10, 0, 0, 3, 16, true)
+    local sphere = shark.physics.overlap_sphere(5, 0, 0, 0.25, 3, 16, true)
+    local box = shark.physics.overlap_box(5, 0, 0, 0.25, 0.25, 0.25, 3, 16, true)
+    assert(#ray == 1 and ray[1].is_trigger and math.abs(ray[1].fraction - 0.25) < 0.0001)
+    assert(#sphere == 1 and #box == 1 and sphere[1].entity_id == ray[1].entity_id
+           and box[1].entity_id == ray[1].entity_id)
+    shark.physics.teleport(0, 0, 0)
+    shark.physics.set_velocity(1, 0, 0, 0, 0, 0)
+    shark.physics.impulse(2, 0, 0)
+    assert(math.abs(shark.physics.velocity() - 2) < 0.0001)
+    shark.physics.force(120, 0, 0)
+end
+function on_contact_enter(other, self_trigger, other_trigger, tick)
+    assert(not self_trigger and other_trigger and tick == 1)
+    shark.physics.remove_body()
+    shark.physics.create_body()
+    shark.log.info('enter:' .. other)
+end
+)lua"},
+                                     ScriptSourceSnapshot{"scripts/mover.lua", R"lua(
+function on_fixed_update() shark.physics.kinematic_target(11, 0, 0) end
+)lua"}};
+    ScriptRuntimeConfig runtime_config;
+    runtime_config.profile = ScriptProfile::server_gameplay;
+    auto lua_scripts = take(ScriptRuntime::create(*lua_scene, physics_sources, runtime_config));
+    take(lua_scripts->start(*lua_scene, *lua_world));
+    take(lua_scripts->fixed_update(*lua_scene, *lua_world, 0, 1.0 / 60.0));
+    take(lua_world->step(*lua_scene));
+    require(context,
+            std::abs(take(lua_scene->entity_state(actor_entity)).local_transform.translation.x -
+                     0.05) < 0.0001 &&
+                std::abs(take(lua_scene->entity_state(mover_entity)).local_transform.translation.x -
+                         11) < 0.0001,
+            "Lua controls differ from independent mass, timing or kinematic expectations");
+    const auto delivered = take(lua_scripts->dispatch_contacts(*lua_scene, *lua_world));
+    require(context,
+            !delivered.error && delivered.events.size() == 1 && delivered.applied_commands == 2 &&
+                !lua_world->body_state(*lua_scene, original_actor),
+            "Lua contact delivery did not defer and recreate the original body");
+    const auto lua_logs = take(lua_scripts->take_logs());
+    require(context,
+            lua_logs.size() == 1 &&
+                lua_logs[0].message == "enter:" + id<WorldEntityId>('b').value().to_string(),
+            "Lua contact callback observed an unexpected participant or order");
+    take(lua_scripts->stop(*lua_scene, *lua_world));
     require(context,
             display.poses.size() == 2 && take(owner->capture()).scene == source.scene &&
                 revision(*owner) == source.revision &&

@@ -107,6 +107,7 @@ not establish file or gameplay-wire formats.
 | [0052](0052-editor-script-preview.md) | Shared Lua preview, source capture and connected authoring |
 | [0053](0053-physics-body-controls.md) | Checked dynamic physics controls and fixed-tick force ownership |
 | [0054](0054-physics-queries.md) | Bounded filtered physics queries with checked owned observations |
+| [0055](0055-lua-physics-contacts.md) | Bounded Lua physics access and owner-thread contact delivery |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

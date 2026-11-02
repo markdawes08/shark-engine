@@ -1364,6 +1364,25 @@ void ScenePhysicsAccess::detach(Scene& scene, EntityHandle entity) noexcept {
     scene.impl_->record(entity).rigid_body.reset();
     ++scene.impl_->revision;
 }
+Result<void> ScenePhysicsAccess::check_attach(const Scene& scene, const PhysicsLease& lease,
+                                              const EntityReference& entity,
+                                              const RigidBody& body) {
+    if (auto checked = check(scene, lease); !checked)
+        return checked;
+    auto resolved = scene.resolve(entity);
+    if (!resolved)
+        return resolved.error();
+    const auto& value = scene.impl_->record(entity.handle);
+    if (value.rigid_body || value.parent || std::holds_alternative<ReplicaSceneScope>(entity.scope))
+        return scene_error(ErrorCode::conflict, "Runtime body requires a root without a body");
+    if (auto checked = validate_rigid_body_pose(body, value.transform); !checked)
+        return checked.error();
+    return scene.impl_->check_revision();
+}
+void ScenePhysicsAccess::attach(Scene& scene, EntityHandle entity, const RigidBody& body) noexcept {
+    scene.impl_->record(entity).rigid_body = body;
+    ++scene.impl_->revision;
+}
 Result<PhysicsPoseCandidate> ScenePhysicsAccess::prepare(const Scene& scene,
                                                          const PhysicsLease& lease,
                                                          std::span<const PhysicsPoseUpdate> poses) {

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shark/error.hpp"
+#include "shark/physics.hpp"
 #include "shark/scene_identity.hpp"
 #include "shark/scene_query.hpp"
 
@@ -17,7 +18,7 @@ namespace shark {
 class Scene;
 
 enum class ScriptProfile { server_gameplay, client_presentation };
-enum class ScriptPhase { load, init, update, fixed_update, destroy };
+enum class ScriptPhase { load, init, update, fixed_update, contact, destroy };
 
 // Immutable trusted source captures. The caller owns file access, source
 // freshness, project containment and typed-file overlap checks.
@@ -58,6 +59,21 @@ struct ScriptStopReport {
     std::vector<Error> errors;
 };
 
+inline constexpr std::size_t script_runtime_maximum_contact_events = 256;
+inline constexpr std::size_t script_runtime_maximum_deferred_physics = 64;
+
+// Consumed observations and explicit partial effects are retained by value.
+// error means callbacks or deferred work failed; no result claims rollback.
+struct ScriptContactReport {
+    std::vector<PhysicsContactEvent> events;
+    std::size_t attempted_callbacks{0};
+    std::size_t skipped_events{0};
+    std::size_t undelivered_events{0};
+    std::size_t applied_commands{0};
+    std::size_t discarded_commands{0};
+    std::optional<Error> error;
+};
+
 struct ScriptRuntimeStats {
     ScriptProfile profile;
     SceneRevision initial_revision;
@@ -89,17 +105,32 @@ class ScriptRuntime final {
     ScriptRuntime& operator=(ScriptRuntime&&) = delete;
 
     [[nodiscard]] Result<void> start(Scene& scene);
+    [[nodiscard]] Result<void> start(Scene& scene, PhysicsWorld& physics);
     [[nodiscard]] Result<void> update(Scene& scene, double delta_seconds);
+    [[nodiscard]] Result<void> update(Scene& scene, PhysicsWorld& physics, double delta_seconds);
     // Tick may begin at zero, then must be consecutive and at most INT64_MAX.
     // Call from the existing offline/server scheduler; no clock is owned here.
     [[nodiscard]] Result<void> fixed_update(Scene& scene, std::uint64_t tick, double delta_seconds);
+    [[nodiscard]] Result<void> fixed_update(Scene& scene, PhysicsWorld& physics, std::uint64_t tick,
+                                            double delta_seconds);
+    // Drain a bounded native FIFO prefix after a completed update. Any exits
+    // produced by deferred removals stay queued for a later dispatch.
+    [[nodiscard]] Result<ScriptContactReport> dispatch_contacts(Scene& scene, PhysicsWorld& physics,
+                                                                std::size_t maximum = 256);
     [[nodiscard]] Result<ScriptStopReport> stop(Scene& scene);
+    [[nodiscard]] Result<ScriptStopReport> stop(Scene& scene, PhysicsWorld& physics);
     [[nodiscard]] Result<std::vector<ScriptLogEntry>> take_logs();
     [[nodiscard]] Result<ScriptRuntimeStats> stats() const;
     // Close without Scene access. Reports initialized callbacks not invoked.
     [[nodiscard]] Result<std::size_t> close();
 
   private:
+    [[nodiscard]] Result<void> start_impl(Scene& scene, PhysicsWorld* physics);
+    [[nodiscard]] Result<void> update_impl(Scene& scene, PhysicsWorld* physics,
+                                           double delta_seconds);
+    [[nodiscard]] Result<void> fixed_update_impl(Scene& scene, PhysicsWorld* physics,
+                                                 std::uint64_t tick, double delta_seconds);
+    [[nodiscard]] Result<ScriptStopReport> stop_impl(Scene& scene, PhysicsWorld* physics);
     struct Impl;
     explicit ScriptRuntime(std::unique_ptr<Impl> impl) noexcept;
     std::unique_ptr<Impl> impl_;

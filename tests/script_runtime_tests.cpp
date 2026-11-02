@@ -3,6 +3,7 @@
 #include <shark/script_runtime.hpp>
 #include <shark/time.hpp>
 
+#include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
 #include <array>
@@ -559,4 +560,301 @@ TEST_CASE("Lua logs and allocator exhaust within their bounds and remain drainab
     take(fresh->start(*scene));
     CHECK(messages(take(fresh->take_logs())) == std::vector<std::string>{"ok"});
     take(fresh->stop(*scene));
+}
+
+namespace {
+struct ScriptPhysicsFixture {
+    std::unique_ptr<Scene> scene = region_scene();
+    std::unique_ptr<PhysicsWorld> world;
+    EntityHandle actor;
+    EntityHandle trigger;
+    PhysicsBodyHandle actor_body;
+    PhysicsBodyHandle trigger_body;
+    std::unique_ptr<ScriptRuntime> runtime;
+
+    explicit ScriptPhysicsFixture(std::string source) {
+        EntitySeed actor_seed{id<WorldEntityId>(101)};
+        actor_seed.name = Name{"Actor"};
+        actor_seed.script = Script{"scripts/main.lua", true};
+        actor_seed.rigid_body = RigidBody{};
+        actor_seed.rigid_body->motion = BodyMotion::dynamic_body;
+        actor = take(scene->create_entity(actor_seed));
+        EntitySeed trigger_seed{id<WorldEntityId>(102)};
+        trigger_seed.name = Name{"Trigger"};
+        trigger_seed.script = Script{"scripts/main.lua", true};
+        trigger_seed.rigid_body = RigidBody{};
+        trigger_seed.rigid_body->is_trigger = true;
+        trigger = take(scene->create_entity(trigger_seed));
+        world = take(PhysicsWorld::create({.gravity = {0, 0, 0}}));
+        actor_body = take(world->create_body(*scene, actor));
+        trigger_body = take(world->create_body(*scene, trigger));
+        take(world->begin_simulation(*scene));
+        runtime = make_runtime(*scene, std::move(source));
+    }
+};
+} // namespace
+
+TEST_CASE("Lua contact callbacks defer body removal and recreation until the ordered batch ends",
+          "[script-runtime]") {
+    ScriptPhysicsFixture f{R"lua(
+        function on_contact_enter(other, self_trigger, other_trigger, tick)
+            assert(tick == 1)
+            if shark.entity.name() == 'Actor' then
+                assert(not self_trigger and other_trigger)
+                shark.physics.remove_body()
+                shark.physics.create_body()
+                local vx = shark.physics.velocity()
+                assert(vx == 0) -- Deferred commands have not changed this body yet.
+                shark.log.info('actor:' .. other)
+            else
+                assert(self_trigger and not other_trigger)
+                shark.log.info('trigger:' .. other)
+            end
+        end
+        function on_contact_exit(other, self_trigger, other_trigger, tick)
+            shark.log.info('unexpected stale exit')
+        end
+    )lua"};
+    take(f.runtime->start(*f.scene, *f.world));
+    take(f.world->step(*f.scene));
+    const auto delivered = take(f.runtime->dispatch_contacts(*f.scene, *f.world));
+    REQUIRE(delivered.events.size() == 1);
+    CHECK(delivered.events[0].phase == PhysicsContactPhase::enter);
+    CHECK(delivered.attempted_callbacks == 2);
+    CHECK(delivered.skipped_events == 0);
+    CHECK(delivered.applied_commands == 2);
+    CHECK(delivered.discarded_commands == 0);
+    CHECK_FALSE(delivered.error);
+    const auto logs = take(f.runtime->take_logs());
+    REQUIRE(logs.size() == 2);
+    CHECK(logs[0].entity.handle == f.actor);
+    CHECK(logs[0].message == "actor:" + id<WorldEntityId>(102).value().to_string());
+    CHECK(logs[1].entity.handle == f.trigger);
+    CHECK(logs[1].message == "trigger:" + id<WorldEntityId>(101).value().to_string());
+
+    CHECK_FALSE(f.world->body_state(*f.scene, f.actor_body));
+    CHECK(take(f.scene->entity_state(f.actor)).rigid_body.has_value());
+    PhysicsQueryFilter filter;
+    filter.include_triggers = false;
+    const auto current = take(f.world->overlap_sphere(*f.scene, {0, 0, 0}, 1, filter));
+    REQUIRE(current.hits.size() == 1);
+    CHECK(current.hits[0].entity.handle == f.actor);
+    CHECK(current.hits[0].body != f.actor_body);
+
+    // The removal exit still names the retired generation. It remains visible
+    // as an owned observation, but cannot retarget the recreated actor's script.
+    const auto stale = take(f.runtime->dispatch_contacts(*f.scene, *f.world));
+    REQUIRE(stale.events.size() == 1);
+    CHECK(stale.events[0].phase == PhysicsContactPhase::exit);
+    CHECK(stale.events[0].cause == PhysicsContactCause::body_removed);
+    CHECK(stale.skipped_events == 1);
+    CHECK(stale.attempted_callbacks == 0);
+    CHECK(take(f.runtime->take_logs()).empty());
+    take(f.runtime->stop(*f.scene, *f.world));
+}
+
+TEST_CASE("Lua contact queue overflow discards the batch without mutating bodies",
+          "[script-runtime]") {
+    ScriptPhysicsFixture f{R"lua(
+        function on_contact_enter(other, self_trigger, other_trigger, tick)
+            if shark.entity.name() == 'Actor' then
+                for i = 1, 65 do
+                    shark.physics.impulse(1, 0, 0) -- The last exceeds the queue.
+                end
+            end
+        end
+    )lua"};
+    take(f.runtime->start(*f.scene, *f.world));
+    take(f.world->step(*f.scene));
+    const auto delivered = take(f.runtime->dispatch_contacts(*f.scene, *f.world));
+    REQUIRE(delivered.events.size() == 1);
+    REQUIRE(delivered.error);
+    CHECK(delivered.error->context.path == "scripts/main.lua");
+    CHECK(delivered.error->context.entity_id == id<WorldEntityId>(101).value().to_string());
+    CHECK(delivered.applied_commands == 0);
+    CHECK(delivered.discarded_commands == 64);
+    CHECK(take(f.runtime->stats()).faulted);
+    CHECK(take(f.world->body_state(*f.scene, f.actor_body)).entity.handle == f.actor);
+    CHECK(take(f.world->velocity(*f.scene, f.actor_body)).linear == math::Vec3{0, 0, 0});
+    CHECK(take(f.scene->entity_state(f.actor)).rigid_body.has_value());
+    CHECK(take(f.world->stats()).pending_events == 0);
+    take(f.runtime->stop(*f.scene, *f.world));
+}
+
+TEST_CASE("Lua deferred physics application failure preserves partial effects and script context",
+          "[script-runtime]") {
+    ScriptPhysicsFixture f{R"lua(
+        function on_contact_enter(other, self_trigger, other_trigger, tick)
+            if shark.entity.name() == 'Actor' then
+                shark.physics.impulse(1, 0, 0)
+                shark.physics.create_body()
+            end
+        end
+    )lua"};
+    take(f.runtime->start(*f.scene, *f.world));
+    take(f.world->step(*f.scene));
+    const auto delivered = take(f.runtime->dispatch_contacts(*f.scene, *f.world));
+    REQUIRE(delivered.error);
+    CHECK(delivered.error->context.operation == "script.contacts.dispatch");
+    CHECK(delivered.error->context.path == "scripts/main.lua");
+    CHECK(delivered.error->context.entity_id == id<WorldEntityId>(101).value().to_string());
+    CHECK(delivered.applied_commands == 1);
+    CHECK(delivered.discarded_commands == 1);
+    CHECK(take(f.world->velocity(*f.scene, f.actor_body)).linear.x == Catch::Approx(1));
+    CHECK(take(f.runtime->stats()).faulted);
+    take(f.runtime->stop(*f.scene, *f.world));
+}
+
+TEST_CASE("Lua server physics bindings use the shared owner for controls and bounded queries",
+          "[script-runtime]") {
+    ScriptPhysicsFixture f{R"lua(
+        function on_fixed_update()
+            if shark.entity.name() ~= 'Actor' then return end
+            local vx, vy, vz, ax, ay, az = shark.physics.velocity()
+            assert(vx == 0 and vy == 0 and vz == 0 and ax == 0 and ay == 0 and az == 0)
+            shark.physics.set_velocity(1, 0, 0, 0, 0, 0)
+            shark.physics.impulse(2, 0, 0)
+            shark.physics.force(60, 0, 0)
+            local hits = shark.physics.raycast(-5, 0, 0, 5, 0, 0, 0, 65535, false)
+            assert(#hits == 1 and not hits[1].is_trigger)
+            assert(math.abs(hits[1].fraction - 0.45) < 0.0001)
+            assert(math.abs(hits[1].x + 0.5) < 0.0001)
+            assert(math.abs(hits[1].normal_x + 1) < 0.0001)
+            shark.log.info('ray:' .. hits[1].entity_id)
+            local spheres = shark.physics.overlap_sphere(0, 0, 0, 1, 0, 65535, false)
+            local boxes = shark.physics.overlap_box(0, 0, 0, 1, 1, 1, 0, 65535, true)
+            assert(#spheres == 1 and #boxes == 2)
+            assert(spheres[1].entity_id == hits[1].entity_id)
+        end
+    )lua"};
+    take(f.runtime->start(*f.scene, *f.world));
+    take(f.runtime->fixed_update(*f.scene, *f.world, 0, 1.0 / 60.0));
+    CHECK(take(f.world->velocity(*f.scene, f.actor_body)).linear.x == 3);
+    const auto logs = take(f.runtime->take_logs());
+    REQUIRE(logs.size() == 1);
+    CHECK(logs[0].message == "ray:" + id<WorldEntityId>(101).value().to_string());
+    take(f.world->step(*f.scene));
+    CHECK(take(f.world->velocity(*f.scene, f.actor_body)).linear.x ==
+          Catch::Approx(4).margin(1e-5));
+    take(f.runtime->stop(*f.scene, *f.world));
+}
+
+TEST_CASE("Lua physics bindings reject invalid input and protect client authority",
+          "[script-runtime]") {
+    const std::array invalid_sources{
+        "function on_fixed_update() shark.physics.velocity(1) end",
+        "function on_fixed_update() shark.physics.force('x', 0, 0) end",
+        "function on_fixed_update() shark.physics.impulse(0, 0, math.huge) end",
+        "function on_fixed_update() shark.physics.set_velocity(257, 0, 0, 0, 0, 0) end",
+        "function on_fixed_update() shark.physics.raycast(0, 0, 0, 0, 0, 0, 0, 65535, true) end",
+        "function on_fixed_update() shark.physics.raycast(-1, 0, 0, 1, 0, 0, 0.5, 65535, true) end",
+        "function on_fixed_update() shark.physics.raycast(-1, 0, 0, 1, 0, 0, 16, 65535, true) end",
+        "function on_fixed_update() shark.physics.raycast(-1, 0, 0, 1, 0, 0, 0, -1, true) end",
+        "function on_fixed_update() shark.physics.raycast(-1, 0, 0, 1, 0, 0, 0, 65535, 1) end",
+        "function on_fixed_update() shark.physics.overlap_sphere(0, 0, 0, 0, 0, 65535, true) end",
+        "function on_fixed_update() shark.physics.overlap_box(0, 0, 0, 1, -1, 1, 0, 65535, true) "
+        "end",
+        "function on_fixed_update() shark.physics.remove_body() end",
+        "function on_fixed_update() shark.physics.create_body() end",
+        "function on_fixed_update() shark.physics.teleport(100000, 0, 0) end",
+        "function on_fixed_update() shark.physics.kinematic_target(1, 0, 0) end"};
+    for (const auto* source : invalid_sources) {
+        INFO(source);
+        ScriptPhysicsFixture f{source};
+        take(f.runtime->start(*f.scene, *f.world));
+        const auto result = f.runtime->fixed_update(*f.scene, *f.world, 0, 1.0 / 60.0);
+        CHECK_FALSE(result);
+        CHECK(take(f.runtime->stats()).faulted);
+        CHECK(take(f.scene->entity_state(f.actor)).rigid_body.has_value());
+        take(f.runtime->stop(*f.scene, *f.world));
+    }
+    auto scene = authored_scene();
+    EntitySeed seed{id<AuthoredEntityId>(101)};
+    seed.script = Script{"scripts/main.lua", true};
+    seed.rigid_body = RigidBody{};
+    seed.rigid_body->motion = BodyMotion::dynamic_body;
+    const auto entity = take(scene->create_entity(seed));
+    auto world = take(PhysicsWorld::create({.gravity = {0, 0, 0}}));
+    const auto body = take(world->create_body(*scene, entity));
+    take(world->begin_simulation(*scene));
+    ScriptRuntimeConfig client;
+    auto runtime = make_runtime(*scene, R"lua(
+        function on_fixed_update()
+            local vx = shark.physics.velocity()
+            local hits = shark.physics.overlap_sphere(0, 0, 0, 1, 0, 65535, false)
+            assert(vx == 0 and #hits == 1)
+            shark.log.info('client reads succeeded')
+            shark.physics.impulse(1, 0, 0)
+        end
+    )lua",
+                                client);
+    take(runtime->start(*scene, *world));
+    CHECK_FALSE(runtime->fixed_update(*scene, *world, 0, 1.0 / 60.0));
+    CHECK(messages(take(runtime->take_logs())) ==
+          std::vector<std::string>{"client reads succeeded"});
+    CHECK(take(world->velocity(*scene, body)).linear == math::Vec3{0, 0, 0});
+    take(runtime->stop(*scene, *world));
+}
+
+TEST_CASE("Lua teleport and kinematic targets preserve mode and fixed-step rules",
+          "[script-runtime]") {
+    {
+        ScriptPhysicsFixture f{R"lua(
+            function on_fixed_update()
+                if shark.entity.name() == 'Actor' then shark.physics.teleport(2, 0, 0) end
+            end
+        )lua"};
+        take(f.world->set_velocity(*f.scene, f.actor_body, {{3, 0, 0}, {0, 1, 0}}));
+        take(f.runtime->start(*f.scene, *f.world));
+        take(f.runtime->fixed_update(*f.scene, *f.world, 0, 1.0 / 60.0));
+        CHECK(take(f.scene->entity_state(f.actor)).local_transform.translation.x == 2);
+        CHECK(take(f.world->velocity(*f.scene, f.actor_body)).linear == math::Vec3{0, 0, 0});
+        take(f.runtime->stop(*f.scene, *f.world));
+    }
+    {
+        auto scene = region_scene();
+        EntitySeed seed{id<WorldEntityId>(103)};
+        seed.script = Script{"scripts/main.lua", true};
+        seed.rigid_body = RigidBody{};
+        seed.rigid_body->motion = BodyMotion::kinematic_body;
+        const auto entity = take(scene->create_entity(seed));
+        auto world = take(PhysicsWorld::create({.gravity = {0, 0, 0}}));
+        take(world->create_body(*scene, entity));
+        take(world->begin_simulation(*scene));
+        auto runtime = make_runtime(
+            *scene, "function on_fixed_update() shark.physics.kinematic_target(2, 0, 0) end");
+        take(runtime->start(*scene, *world));
+        take(runtime->fixed_update(*scene, *world, 0, 1.0 / 60.0));
+        CHECK(take(scene->entity_state(entity)).local_transform.translation.x == 0);
+        take(world->step(*scene));
+        CHECK(take(scene->entity_state(entity)).local_transform.translation.x ==
+              Catch::Approx(2).margin(1e-5));
+        take(runtime->stop(*scene, *world));
+    }
+}
+
+TEST_CASE("Lua physics queries reject overflow rather than returning partial hits",
+          "[script-runtime]") {
+    auto scene = region_scene();
+    std::vector<EntityHandle> entities;
+    for (unsigned index = 0; index < 33; ++index) {
+        EntitySeed seed{id<WorldEntityId>(200 + index)};
+        seed.rigid_body = RigidBody{};
+        if (index == 0)
+            seed.script = Script{"scripts/main.lua", true};
+        entities.push_back(take(scene->create_entity(seed)));
+    }
+    auto world = take(PhysicsWorld::create({.gravity = {0, 0, 0}}));
+    for (const auto entity : entities)
+        take(world->create_body(*scene, entity));
+    take(world->begin_simulation(*scene));
+    auto runtime = make_runtime(*scene, R"lua(
+        function on_fixed_update()
+            shark.physics.overlap_sphere(0, 0, 0, 1, 0, 65535, true)
+        end
+    )lua");
+    take(runtime->start(*scene, *world));
+    CHECK_FALSE(runtime->fixed_update(*scene, *world, 0, 1.0 / 60.0));
+    CHECK(take(runtime->stats()).faulted);
+    take(runtime->stop(*scene, *world));
 }

@@ -18,8 +18,54 @@ struct LuaVmConfig {
     std::size_t instruction_limit{100000};
 };
 
-enum class LuaPhase { load, init, update, fixed_update, destroy };
+enum class LuaPhase { load, init, update, fixed_update, contact, destroy };
 enum class LuaProfile { server_gameplay, client_presentation };
+
+// Private POD bridge: the host owns physics and catches all exceptions. The
+// VM may retain these values only across a single protected call. Hit identities
+// are immutable UUID strings, never native pointers or actionable body handles.
+inline constexpr std::size_t lua_physics_maximum_hits = 32;
+enum class LuaPhysicsOperation {
+    velocity,
+    set_velocity,
+    force,
+    impulse,
+    teleport,
+    kinematic_target,
+    raycast,
+    overlap_sphere,
+    overlap_box,
+    remove_body,
+    create_body
+};
+struct LuaPhysicsRequest {
+    LuaPhysicsOperation operation{};
+    double arguments[9]{};
+    std::uint32_t layer{0};
+    std::uint32_t mask{0xffff};
+    bool include_triggers{true};
+    std::uint32_t max_hits{static_cast<std::uint32_t>(lua_physics_maximum_hits)};
+};
+struct LuaPhysicsHit {
+    char entity_id[37]{};
+    bool is_trigger{false};
+    double fraction{0};
+    double position[3]{};
+    double normal[3]{};
+    bool has_normal{false};
+};
+struct LuaPhysicsReply {
+    char error[257]{};
+    double values[6]{};
+    std::size_t count{0};
+    LuaPhysicsHit hits[lua_physics_maximum_hits]{};
+};
+struct LuaContactInfo {
+    char other_entity_id[37]{};
+    bool self_trigger{false};
+    bool other_trigger{false};
+    std::uint64_t completed_tick{0};
+};
 
 // Borrowed only during a synchronous protected call; never retained by Lua.
 // The host owns the bounded log sink and must catch all of its exceptions.
@@ -32,6 +78,10 @@ struct LuaCallContext {
     double delta_seconds;
     void* log_user;
     bool (*log)(void*, std::string_view) noexcept;
+    void* physics_user{nullptr};
+    void (*physics_call)(void*, const EntityReference&, const LuaPhysicsRequest&,
+                         LuaPhysicsReply&) noexcept {nullptr};
+    const LuaContactInfo* contact{nullptr};
 };
 
 class LuaVm final {
