@@ -509,7 +509,7 @@
       "planned_fixture": "FeatureWorld/PhysicsQueries, FeatureWorld/ContactScripts, PhysicsCallbackMutation, PhysicsWorkerEventBoundary and PhysicsQueryInvalidInput fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "20a adds checked dynamic body controls; queries, script bindings, debug visualization and connected acceptance remain assignment 20. See docs/roadmap/physics-interaction-plan.md."
+        "reason": "20a adds checked dynamic body controls and 20b adds bounded filtered physics queries. Script bindings, debug visualization and connected acceptance remain assignment 20. See docs/roadmap/physics-interaction-plan.md."
       }
     },
     {
@@ -3345,6 +3345,16 @@
         "test_sources": ["tests/core_physics_simulation_tests.cpp", "tests/core_physics_contact_tests.cpp", "tests/feature_world_tests.cpp", "tools/tests/test_feature_world_process.py"],
         "fixtures": ["docs/physics-controls.md", "engine_tools/src/feature_world.cpp"],
         "fixture_reason": "Native dynamic-body controls cover finite bounded inputs, checked Scene/handle ownership, force accumulation and teardown; FeatureWorld independently verifies velocity, mass, impulse and fixed-step force without changing the authored Scene.",
+        "featureworld_cases": ["featureworld.rigid-bodies"]
+      },
+      {
+        "id": "physics.queries",
+        "name": "Bounded filtered ray and overlap queries with checked owned identities",
+        "requirement_ids": ["REQ-20"],
+        "test_ids": ["shark.core.physics", "shark.tools.featureworld", "shark.tools.featureworld-process"],
+        "test_sources": ["tests/core_physics_query_tests.cpp", "tests/feature_world_tests.cpp", "tools/tests/test_feature_world_process.py"],
+        "fixtures": ["docs/physics-queries.md", "engine_tools/src/feature_world.cpp"],
+        "fixture_reason": "Native filtered ray, sphere and box queries cover geometry, bounds, identities, ordering, overflow and owner fences. The existing FeatureWorld rigid-body case independently checks a trigger sphere's ray fraction, position, normal and overlap results without changing saved authored content.",
         "featureworld_cases": ["featureworld.rigid-bodies"]
       },
       {

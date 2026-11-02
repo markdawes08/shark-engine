@@ -164,4 +164,5 @@ API, FeatureWorld case, actual UI parity claim or full REQ-18 completion.
 
 18d implements [layers/triggers/owned events](physics-contacts.md); actual editor/rendered play and human/
 terminal acceptance retain 18e and the [desktop backlog](backlog.md#desktop-ui-deferral).
-Queries/Lua retain 20, streaming/origin transfer M05. Full REQ-18 remains NOT_RUN.
+[20b queries](physics-queries.md) observe committed native bodies; Lua integration
+retains 20 and streaming/origin transfer M05. Full REQ-18 remains NOT_RUN.

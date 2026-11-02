@@ -46,7 +46,8 @@ Native sensors detect contacts without applying collision response. Static,
 dynamic and kinematic sensors use the same body constraints. Kinematic/non-dynamic
 contact detection is enabled. A static/static pair has no moving participant and
 produces no contact observation. Discrete motion remains the profile; a fast body
-can miss a thin trigger between collision evaluations. Queries/CCD are not added.
+can miss a thin trigger between collision evaluations. 18d added no queries or CCD; [20b queries](physics-queries.md) observe current
+shapes, while CCD remains outside that scope.
 
 Sleeping is disabled for this initial profile. This avoids native sleep removal
 callbacks becoming false exits while a body remains inside a trigger. This is a
@@ -136,4 +137,4 @@ requiring the final observations must explicitly take them first.
 
 Native inspector fields and connected acceptance retain 18e and the
 [desktop backlog](backlog.md#desktop-ui-deferral). Full REQ-18 remains NOT_RUN;
-queries/Lua retain assignment 20 and streaming/rebasing retains M05.
+Lua contact delivery retains assignment 20 and streaming/rebasing retains M05.

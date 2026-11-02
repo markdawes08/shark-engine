@@ -10,6 +10,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <memory>
+#include <optional>
 #include <vector>
 
 namespace shark {
@@ -45,6 +46,39 @@ struct PhysicsBodyHandle {
     std::uint32_t slot{0};
     std::uint64_t generation{0};
     bool operator==(const PhysicsBodyHandle&) const = default;
+};
+
+inline constexpr std::size_t physics_maximum_query_hits = 256;
+struct PhysicsQueryFilter {
+    std::uint32_t layer{0};
+    std::uint32_t mask{0xffff};
+    bool include_triggers{true};
+    std::optional<PhysicsBodyHandle> ignore{};
+};
+struct PhysicsQueryHit {
+    PhysicsBodyHandle body;
+    EntityReference entity;
+    bool is_trigger;
+};
+struct PhysicsRayHit {
+    PhysicsBodyHandle body;
+    EntityReference entity;
+    bool is_trigger;
+    double fraction;
+    math::Vec3 position;
+    std::optional<math::Vec3> normal;
+};
+struct PhysicsRaycastResult {
+    std::uint64_t world;
+    SceneRevision revision;
+    std::uint64_t completed_ticks;
+    std::vector<PhysicsRayHit> hits;
+};
+struct PhysicsOverlapResult {
+    std::uint64_t world;
+    SceneRevision revision;
+    std::uint64_t completed_ticks;
+    std::vector<PhysicsQueryHit> hits;
 };
 
 enum class PhysicsContactPhase { enter, exit };
@@ -117,7 +151,7 @@ struct PhysicsWorldStats {
 
 // CPU-only owner of a bounded native physics system and checked detached bodies.
 // Explicit simulation leases fence ordinary Scene writes. Bounded contact
-// transitions are taken on the owner thread; queries remain assignment 20.
+// transitions and filtered queries are observed on the owner thread.
 // Native types and process registrations remain private. Methods require the
 // creating thread; this is not a concurrent registry or another scheduler.
 class PhysicsWorld final {
@@ -156,6 +190,21 @@ class PhysicsWorld final {
                                            math::Vec3 force);
     [[nodiscard]] Result<void> apply_impulse(const Scene& scene, PhysicsBodyHandle body,
                                              math::Vec3 impulse);
+    // Bounded complete queries of committed native poses under the Scene lease.
+    // More distinct bodies than max_hits rejects without a partial result.
+    [[nodiscard]] Result<PhysicsRaycastResult> raycast(const Scene& scene, math::Vec3 from,
+                                                       math::Vec3 to,
+                                                       PhysicsQueryFilter filter = {},
+                                                       std::size_t max_hits = 64) const;
+    [[nodiscard]] Result<PhysicsOverlapResult> overlap_sphere(const Scene& scene, math::Vec3 center,
+                                                              double radius,
+                                                              PhysicsQueryFilter filter = {},
+                                                              std::size_t max_hits = 64) const;
+    // The query box is axis-aligned in bounded Scene coordinates.
+    [[nodiscard]] Result<PhysicsOverlapResult> overlap_box(const Scene& scene, math::Vec3 center,
+                                                           math::Vec3 half_extents,
+                                                           PhysicsQueryFilter filter = {},
+                                                           std::size_t max_hits = 64) const;
     [[nodiscard]] Result<PhysicsRenderSnapshot> render_poses(const Scene& scene,
                                                              double alpha) const;
     // Thin adapters for existing schedulers. Rate/index mismatch rejects before

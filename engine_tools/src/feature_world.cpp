@@ -2092,10 +2092,20 @@ void rigid_bodies(SceneRunContext& context) {
     controlled_seed.rigid_body->motion = BodyMotion::dynamic_body;
     controlled_seed.rigid_body->mass = 2;
     const auto controlled_entity = take(control_scene->create_entity(controlled_seed));
+    EntitySeed query_seed{id<AuthoredEntityId>('f')};
+    query_seed.transform.translation = {15, 0, 0};
+    query_seed.rigid_body = RigidBody{};
+    query_seed.rigid_body->shape = ColliderShape::sphere;
+    query_seed.rigid_body->radius = 1;
+    query_seed.rigid_body->collision_layer = 4;
+    query_seed.rigid_body->collision_mask = 1U << 3U;
+    query_seed.rigid_body->is_trigger = true;
+    const auto query_entity = take(control_scene->create_entity(query_seed));
     PhysicsWorldConfig control_config;
     control_config.gravity = {0, 0, 0};
     auto controls = take(PhysicsWorld::create(control_config));
     const auto controlled_body = take(controls->create_body(*control_scene, controlled_entity));
+    const auto query_body = take(controls->create_body(*control_scene, query_entity));
     take(controls->begin_simulation(*control_scene));
     take(controls->set_velocity(*control_scene, controlled_body, {{1, 0, 0}, {0, 0, 0}}));
     take(controls->apply_impulse(*control_scene, controlled_body, {2, 0, 0}));
@@ -2112,6 +2122,26 @@ void rigid_bodies(SceneRunContext& context) {
                     0.0001 &&
                 std::abs(controlled.local_transform.translation.x - 10.05) < 0.0001,
             "Velocity, impulse and one-tick force differ from independent mass/timing values");
+    PhysicsQueryFilter filter;
+    filter.layer = 3;
+    filter.mask = 1U << 4U;
+    const auto ray = take(controls->raycast(*control_scene, {12, 0, 0}, {20, 0, 0}, filter));
+    const auto sphere = take(controls->overlap_sphere(*control_scene, {15, 0, 0}, 0.25, filter));
+    const auto box =
+        take(controls->overlap_box(*control_scene, {15, 0, 0}, {0.25, 0.25, 0.25}, filter));
+    require(context,
+            ray.completed_ticks == 1 && ray.hits.size() == 1 && ray.hits[0].body == query_body &&
+                ray.hits[0].entity.handle == query_entity && ray.hits[0].is_trigger &&
+                std::abs(ray.hits[0].fraction - 0.25) < 0.0001 &&
+                std::abs(ray.hits[0].position.x - 14) < 0.0001 && ray.hits[0].normal &&
+                std::abs(ray.hits[0].normal->x + 1) < 0.0001 && sphere.hits.size() == 1 &&
+                sphere.hits[0].body == query_body && box.hits.size() == 1 &&
+                box.hits[0].body == query_body,
+            "Filtered physics query results differ from the independent sphere geometry");
+    filter.include_triggers = false;
+    require(context,
+            take(controls->raycast(*control_scene, {12, 0, 0}, {20, 0, 0}, filter)).hits.empty(),
+            "Physics query included an excluded trigger");
     require(context,
             display.poses.size() == 2 && take(owner->capture()).scene == source.scene &&
                 revision(*owner) == source.revision &&

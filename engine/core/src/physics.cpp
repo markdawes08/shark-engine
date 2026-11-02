@@ -12,7 +12,11 @@
 #include <Jolt/Physics/Body/BodyCreationSettings.h>
 #include <Jolt/Physics/Body/BodyLock.h>
 #include <Jolt/Physics/Body/MotionProperties.h>
+#include <Jolt/Physics/Collision/CastResult.h>
+#include <Jolt/Physics/Collision/CollideShape.h>
 #include <Jolt/Physics/Collision/ContactListener.h>
+#include <Jolt/Physics/Collision/NarrowPhaseQuery.h>
+#include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
@@ -376,6 +380,146 @@ class ContactCollector final : public JPH::ContactListener {
     std::vector<std::size_t> occupied_;
 };
 
+// Query callbacks run only within the synchronous owner-thread query. They
+// retain bounded value copies; no Scene access, allocation or exceptions cross
+// the native collision callback boundary.
+struct QueryBody {
+    JPH::BodyID native;
+    std::uint32_t slot;
+    std::uint64_t generation;
+};
+struct QueryRayBody {
+    QueryBody body;
+    float fraction;
+    JPH::SubShapeID subshape;
+};
+
+class QueryLayerFilter final : public JPH::ObjectLayerFilter {
+  public:
+    explicit QueryLayerFilter(const std::array<bool, physics_maximum_bodies>& allowed)
+        : allowed_(allowed) {}
+    bool ShouldCollide(JPH::ObjectLayer layer) const override {
+        return layer < allowed_.size() && allowed_[layer];
+    }
+
+  private:
+    const std::array<bool, physics_maximum_bodies>& allowed_;
+};
+
+class QueryRayCollector final : public JPH::CastRayCollector {
+  public:
+    explicit QueryRayCollector(std::size_t maximum) : maximum_(maximum) {}
+    void OnBody(const JPH::Body& body) noexcept override {
+        current_ = {body.GetID(), body.GetObjectLayer(), body.GetUserData()};
+    }
+    void AddHit(const JPH::RayCastResult& hit) noexcept override {
+        if (hit.mBodyID != current_.native || !std::isfinite(hit.mFraction) ||
+            hit.mFraction < 0.0F || hit.mFraction > 1.0F) {
+            invalid = true;
+            ForceEarlyOut();
+            return;
+        }
+        for (std::size_t i = 0; i < size; ++i) {
+            if (values[i].body.native == hit.mBodyID) {
+                if (hit.mFraction < values[i].fraction)
+                    values[i] = {current_, hit.mFraction, hit.mSubShapeID2};
+                return;
+            }
+        }
+        if (size == maximum_) {
+            overflow = true;
+            ForceEarlyOut();
+            return;
+        }
+        values[size++] = {current_, hit.mFraction, hit.mSubShapeID2};
+    }
+    std::array<QueryRayBody, physics_maximum_query_hits> values{};
+    std::size_t size{0};
+    bool overflow{false};
+    bool invalid{false};
+
+  private:
+    std::size_t maximum_;
+    QueryBody current_{};
+};
+
+class QueryOverlapCollector final : public JPH::CollideShapeCollector {
+  public:
+    explicit QueryOverlapCollector(std::size_t maximum) : maximum_(maximum) {}
+    void OnBody(const JPH::Body& body) noexcept override {
+        current_ = {body.GetID(), body.GetObjectLayer(), body.GetUserData()};
+    }
+    void AddHit(const JPH::CollideShapeResult& hit) noexcept override {
+        if (hit.mBodyID2 != current_.native) {
+            invalid = true;
+            ForceEarlyOut();
+            return;
+        }
+        for (std::size_t i = 0; i < size; ++i)
+            if (values[i].native == hit.mBodyID2)
+                return;
+        if (size == maximum_) {
+            overflow = true;
+            ForceEarlyOut();
+            return;
+        }
+        values[size++] = current_;
+    }
+    std::array<QueryBody, physics_maximum_query_hits> values{};
+    std::size_t size{0};
+    bool overflow{false};
+    bool invalid{false};
+
+  private:
+    std::size_t maximum_;
+    QueryBody current_{};
+};
+
+struct QueryAdmission {
+    SceneRevision revision;
+    std::array<bool, physics_maximum_bodies> allowed{};
+};
+
+Result<void> validate_query_position(const math::Vec3& value, const char* operation) {
+    for (int axis = 0; axis < 3; ++axis) {
+        const double component = value[axis];
+        if (!std::isfinite(component) || std::abs(component) > physics_local_position_limit)
+            return physics_error(ErrorCode::invalid_argument,
+                                 "Query position must fit bounded normal Scene coordinates",
+                                 operation);
+        const auto packed = static_cast<float>(component);
+        if (!std::isfinite(packed) || (component != 0 && packed == 0) ||
+            std::fpclassify(packed) == FP_SUBNORMAL)
+            return physics_error(ErrorCode::invalid_argument,
+                                 "Query position must fit bounded normal Scene coordinates",
+                                 operation);
+    }
+    return {};
+}
+
+Result<void> validate_query_extent(const math::Vec3& center, const math::Vec3& extent,
+                                   const char* operation) {
+    if (auto checked = validate_query_position(center, operation); !checked)
+        return checked;
+    for (int axis = 0; axis < 3; ++axis) {
+        const auto value = extent[axis];
+        if (!std::isfinite(value) || value < physics_minimum_dimension ||
+            value > physics_maximum_dimension ||
+            std::abs(center[axis]) + value > physics_local_position_limit)
+            return physics_error(ErrorCode::invalid_argument,
+                                 "Query shape exceeds bounded Scene coordinates or dimensions",
+                                 operation);
+        const auto packed_center = static_cast<float>(center[axis]);
+        const auto packed_extent = static_cast<float>(value);
+        if (!std::isfinite(packed_extent) ||
+            std::abs(packed_center) + packed_extent > physics_local_position_limit)
+            return physics_error(ErrorCode::invalid_argument,
+                                 "Query shape exceeds bounded Scene coordinates or dimensions",
+                                 operation);
+    }
+    return {};
+}
+
 Result<void> validate_control_vector(const math::Vec3& value, double maximum,
                                      const char* operation) {
     for (int axis = 0; axis < 3; ++axis) {
@@ -529,6 +673,123 @@ struct PhysicsWorld::Impl {
             return physics_error(ErrorCode::conflict,
                                  "Body source changed; remove and recreate explicitly", operation);
         return checked.value();
+    }
+
+    Result<PhysicsQueryHit> query_hit(const Scene& scene, const QueryBody& body,
+                                      const char* operation) {
+        if (body.slot >= bodies.size()) {
+            faulted = true;
+            return physics_error(ErrorCode::execution_failed,
+                                 "Native query returned an unknown body slot", operation);
+        }
+        const auto& slot = bodies[body.slot];
+        if (!slot.value || slot.generation != body.generation ||
+            slot.value->native != body.native) {
+            faulted = true;
+            return physics_error(ErrorCode::execution_failed,
+                                 "Native query returned a stale body generation", operation);
+        }
+        const auto& record = *slot.value;
+        auto entity = scene.entity_state(record.entity.handle);
+        if (!entity) {
+            auto error = std::move(entity).error();
+            error.context.operation = operation;
+            return error;
+        }
+        if (entity.value().reference != record.entity ||
+            entity.value().rigid_body != record.settings ||
+            entity.value().local_transform != record.source_pose || entity.value().parent)
+            return physics_error(ErrorCode::conflict,
+                                 "Query body source changed; remove and recreate explicitly",
+                                 operation);
+        return PhysicsQueryHit{
+            {instance, body.slot, body.generation}, record.entity, record.settings.is_trigger};
+    }
+
+    Result<QueryAdmission> admit_query(const Scene& scene, const PhysicsQueryFilter& filter,
+                                       std::size_t maximum, const char* operation) {
+        if (auto checked = check_simulation(scene, operation); !checked) {
+            auto error = std::move(checked).error();
+            error.context.operation = operation;
+            return error;
+        }
+        if (maximum == 0 || maximum > physics_maximum_query_hits || filter.layer > 15 ||
+            filter.mask > 0xffff)
+            return physics_error(ErrorCode::invalid_argument, "Invalid query filter or hit limit",
+                                 operation);
+        std::optional<std::size_t> ignored;
+        if (filter.ignore) {
+            auto checked = checked_body(*filter.ignore);
+            if (!checked) {
+                auto error = std::move(checked).error();
+                error.context.operation = operation;
+                return error;
+            }
+            ignored = checked.value();
+            const auto& slot = bodies[*ignored];
+            auto valid = query_hit(
+                scene, {slot.value->native, static_cast<std::uint32_t>(*ignored), slot.generation},
+                operation);
+            if (!valid)
+                return valid.error();
+        }
+        auto stats = scene.stats();
+        if (!stats)
+            return stats.error();
+        QueryAdmission admission{{stats.value().instance, stats.value().revision}, {}};
+        for (std::size_t i = 0; i < bodies.size(); ++i) {
+            const auto& slot = bodies[i];
+            if (!slot.value || (ignored && *ignored == i))
+                continue;
+            const auto& settings = slot.value->settings;
+            admission.allowed[i] = (filter.include_triggers || !settings.is_trigger) &&
+                                   ((filter.mask & (1U << settings.collision_layer)) != 0) &&
+                                   ((settings.collision_mask & (1U << filter.layer)) != 0);
+        }
+        return admission;
+    }
+
+    Result<PhysicsOverlapResult> overlap(const Scene& scene, const JPH::Shape& shape,
+                                         math::Vec3 center, const QueryAdmission& admission,
+                                         std::size_t maximum, const char* operation) {
+        try {
+            QueryLayerFilter layer_filter{admission.allowed};
+            QueryOverlapCollector collector{maximum};
+            const auto packed = pack_control_vector(center);
+            const auto origin = JPH::RVec3{packed.GetX(), packed.GetY(), packed.GetZ()};
+            JPH::CollideShapeSettings settings;
+            native_diagnostic = {};
+            system->GetNarrowPhaseQuery().CollideShape(&shape, JPH::Vec3::sReplicate(1),
+                                                       JPH::RMat44::sTranslation(origin), settings,
+                                                       origin, collector, {}, layer_filter);
+            if (native_diagnostic.reported || collector.invalid) {
+                faulted = true;
+                if (native_diagnostic.reported)
+                    return reported_error(operation);
+                return physics_error(ErrorCode::execution_failed,
+                                     "Native overlap returned an inconsistent body", operation);
+            }
+            if (collector.overflow)
+                return physics_error(ErrorCode::conflict,
+                                     "Query hit limit exceeded; no partial result is returned",
+                                     operation);
+            PhysicsOverlapResult result{instance, admission.revision, completed_ticks, {}};
+            result.hits.reserve(collector.size);
+            for (std::size_t i = 0; i < collector.size; ++i) {
+                auto hit = query_hit(scene, collector.values[i], operation);
+                if (!hit)
+                    return hit.error();
+                result.hits.push_back(std::move(hit).value());
+            }
+            std::sort(result.hits.begin(), result.hits.end(),
+                      [](const auto& first, const auto& second) {
+                          return first.entity.identity < second.entity.identity;
+                      });
+            return result;
+        } catch (...) {
+            return physics_error(ErrorCode::execution_failed,
+                                 "Cannot complete bounded physics overlap", operation);
+        }
     }
     Result<void> event_capacity(std::size_t count) const {
         if (count > config.max_queued_events - events.size())
@@ -1249,6 +1510,118 @@ Result<void> PhysicsWorld::apply_impulse(const Scene& scene, PhysicsBodyHandle b
         return reported_error(operation);
     }
     return {};
+}
+
+Result<PhysicsRaycastResult> PhysicsWorld::raycast(const Scene& scene, math::Vec3 from,
+                                                   math::Vec3 to, PhysicsQueryFilter filter,
+                                                   std::size_t max_hits) const {
+    constexpr auto operation = "physics.query.raycast";
+    auto admission = impl_->admit_query(scene, filter, max_hits, operation);
+    if (!admission)
+        return admission.error();
+    if (auto checked = validate_query_position(from, operation); !checked)
+        return checked.error();
+    if (auto checked = validate_query_position(to, operation); !checked)
+        return checked.error();
+    const auto start = pack_control_vector(from);
+    const auto direction = pack_control_vector(to) - start;
+    const auto length_squared = direction.LengthSq();
+    if (!std::isfinite(length_squared) || length_squared < std::numeric_limits<float>::min())
+        return physics_error(ErrorCode::invalid_argument,
+                             "Ray endpoints collapse or are too close in native coordinates",
+                             operation);
+    try {
+        QueryLayerFilter layer_filter{admission.value().allowed};
+        QueryRayCollector collector{max_hits};
+        const JPH::RRayCast ray{JPH::RVec3{start.GetX(), start.GetY(), start.GetZ()}, direction};
+        const JPH::RayCastSettings settings;
+        native_diagnostic = {};
+        impl_->system->GetNarrowPhaseQuery().CastRay(ray, settings, collector, {}, layer_filter);
+        if (native_diagnostic.reported || collector.invalid) {
+            impl_->faulted = true;
+            if (native_diagnostic.reported)
+                return reported_error(operation);
+            return physics_error(ErrorCode::execution_failed,
+                                 "Native ray returned an inconsistent body or fraction", operation);
+        }
+        if (collector.overflow)
+            return physics_error(ErrorCode::conflict,
+                                 "Query hit limit exceeded; no partial result is returned",
+                                 operation);
+        PhysicsRaycastResult result{
+            impl_->instance, admission.value().revision, impl_->completed_ticks, {}};
+        result.hits.reserve(collector.size);
+        for (std::size_t i = 0; i < collector.size; ++i) {
+            const auto& value = collector.values[i];
+            auto hit = impl_->query_hit(scene, value.body, operation);
+            if (!hit)
+                return hit.error();
+            const auto point = ray.GetPointOnRay(value.fraction);
+            std::optional<math::Vec3> normal;
+            if (value.fraction > 0) {
+                JPH::BodyLockRead locked{impl_->system->GetBodyLockInterface(), value.body.native};
+                if (!locked.Succeeded())
+                    return physics_error(ErrorCode::conflict, "Native query body disappeared",
+                                         operation);
+                const auto surface =
+                    locked.GetBody().GetWorldSpaceSurfaceNormal(value.subshape, point);
+                if (!std::isfinite(surface.GetX()) || !std::isfinite(surface.GetY()) ||
+                    !std::isfinite(surface.GetZ()) || surface.LengthSq() < 0.5F ||
+                    surface.LengthSq() > 1.5F || native_diagnostic.reported) {
+                    impl_->faulted = true;
+                    if (native_diagnostic.reported)
+                        return reported_error(operation);
+                    return physics_error(ErrorCode::execution_failed,
+                                         "Native ray surface normal is invalid", operation);
+                }
+                normal = math::Vec3{surface.GetX(), surface.GetY(), surface.GetZ()};
+            }
+            const auto& participant = hit.value();
+            result.hits.push_back({participant.body,
+                                   participant.entity,
+                                   participant.is_trigger,
+                                   value.fraction,
+                                   {point.GetX(), point.GetY(), point.GetZ()},
+                                   normal});
+        }
+        std::sort(result.hits.begin(), result.hits.end(),
+                  [](const auto& first, const auto& second) {
+                      if (first.fraction != second.fraction)
+                          return first.fraction < second.fraction;
+                      return first.entity.identity < second.entity.identity;
+                  });
+        return result;
+    } catch (...) {
+        return physics_error(ErrorCode::execution_failed, "Cannot complete bounded physics ray",
+                             operation);
+    }
+}
+
+Result<PhysicsOverlapResult> PhysicsWorld::overlap_sphere(const Scene& scene, math::Vec3 center,
+                                                          double radius, PhysicsQueryFilter filter,
+                                                          std::size_t max_hits) const {
+    constexpr auto operation = "physics.query.overlap_sphere";
+    auto admission = impl_->admit_query(scene, filter, max_hits, operation);
+    if (!admission)
+        return admission.error();
+    if (auto checked = validate_query_extent(center, math::Vec3{radius}, operation); !checked)
+        return checked.error();
+    const JPH::SphereShape shape{static_cast<float>(radius)};
+    return impl_->overlap(scene, shape, center, admission.value(), max_hits, operation);
+}
+
+Result<PhysicsOverlapResult> PhysicsWorld::overlap_box(const Scene& scene, math::Vec3 center,
+                                                       math::Vec3 half_extents,
+                                                       PhysicsQueryFilter filter,
+                                                       std::size_t max_hits) const {
+    constexpr auto operation = "physics.query.overlap_box";
+    auto admission = impl_->admit_query(scene, filter, max_hits, operation);
+    if (!admission)
+        return admission.error();
+    if (auto checked = validate_query_extent(center, half_extents, operation); !checked)
+        return checked.error();
+    const JPH::BoxShape shape{pack_control_vector(half_extents), 0.0F};
+    return impl_->overlap(scene, shape, center, admission.value(), max_hits, operation);
 }
 
 Result<PhysicsRenderSnapshot> PhysicsWorld::render_poses(const Scene& scene, double alpha) const {

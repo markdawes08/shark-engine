@@ -106,6 +106,7 @@ not establish file or gameplay-wire formats.
 | [0051](0051-script-runtime.md) | Bounded Lua lifecycle, checked entity APIs and server/client capability separation |
 | [0052](0052-editor-script-preview.md) | Shared Lua preview, source capture and connected authoring |
 | [0053](0053-physics-body-controls.md) | Checked dynamic physics controls and fixed-tick force ownership |
+| [0054](0054-physics-queries.md) | Bounded filtered physics queries with checked owned observations |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

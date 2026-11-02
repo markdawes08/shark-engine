@@ -9,8 +9,9 @@ evidence effort; historical full-profile counts are not recurring run lists.
 ## Current state
 
 Assignment 20 is in progress. The [20a handoff](../handoffs/20a-physics-body-controls.md)
-records checked dynamic velocity, force and impulse controls. Queries, Lua
-callbacks/bindings, debug visualization and connected acceptance remain in the
+records checked dynamic velocity, force and impulse controls; the
+[20b handoff](../handoffs/20b-physics-queries.md) records bounded filtered queries.
+Lua callbacks/bindings, debug visualization and connected acceptance remain in the
 [physics interaction checkpoints](../roadmap/physics-interaction-plan.md);
 REQ-20 remains NOT_RUN.
 
