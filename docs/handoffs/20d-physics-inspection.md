@@ -2,6 +2,17 @@
 
 Date: 2026-11-01. Base: `7a2631f`, initially clean `main`. The user owns staging, commits and pushing. The [inspection contract](../physics-debug-inspection.md) and [ADR 0056](../architecture/0056-physics-debug-inspection.md) describe the public behavior. **20d implementation and focused CPU checks are complete; native interactive overlay evidence remains NOT_RUN.** Full REQ-20 stays NOT_RUN. Do not advance the 20d native acceptance gate or claim a GPU overlay pass until the missing check is completed or the user explicitly defers it.
 
+## User deferral, 2026-11-01
+
+The user directed agents to pause manual UI testing, put the outstanding 20d
+native RTX and Intel checks in the [backlog](../backlog.md#deferred-items), and
+proceed with 20e. This is the explicit deferral anticipated above: it removes the
+20d native interaction as a progression blocker while leaving that evidence
+**NOT_RUN** and full REQ-20 **NOT_RUN**. Automated and headless checks continue
+under the [current testing policy](../testing-policy.md#manual-ui-testing-pause-2026-11-01).
+The historical launch, activation failure and interrupted receipts below remain
+unchanged; only a later actual qualifying session can establish the native result.
+
 The existing retained `scene.physics` service now provides checked, bounded ray, sphere-overlap and box-overlap observations, plus paginated active-body snapshots with committed pose, native extents and dynamic velocity. New reads fence the preview session, tick and next operation sequence, including same-tick body removal. Filters, triggers, optional checked ignored body, complete-or-error hit limits and scoped UUIDs use the existing PhysicsWorld; no native handles, player authority or second Scene/world are introduced. The original query remains compatible; discovery is additive protocol version 1. Source, prepared and gameplay wire formats are unchanged.
 
 The native Editor uses those same observations for a runtime body list, paused filtered query controls, and an opt-in screen-space wire overlay. It draws committed shapes and last query/hit geometry through the displayed camera and actual image rectangle, with homogeneous frustum clipping. Box edges and 24-segment rings approximate shapes; the overlay is not depth-tested, cannot authorize picking and can differ from interpolated render poses. It emits at most 2,048 clipped lines and explicitly warns when it truncates collider outlines. Query observations clear on operation/session changes. Existing pause, source isolation and retained exact-operation outcomes remain intact.
@@ -19,4 +30,4 @@ The terminal process fixture tests filter/geometry, ignored bodies, invalid inpu
 
 An initial elevated launch rejected the local Vulkan validation layer because the loader ignores its search path at high integrity (`out/20d-work/native-rtx.log`, `loader-diagnostic.log`). The normal-user launch above resolved that cause. A supplementary generic GUI readback attempt rejected stale shader/toolchain provenance before launching (`out/20d-work/gui-rtx/summary.json`); refreshing its current-lock validation receipt required rebuilding hundreds of validation-tool targets and was deliberately stopped because that generic fixture would not exercise the new overlay. The cancelled preparation report is retained under `out/20d-work/validation-tools/`. It is not GPU evidence and no old receipt or tolerance was altered.
 
-Next: run the actual Editor on the RTX and Intel serially with required validation, open a saved copy, Play/Pause, inspect runtime bodies and exercise ray/overlap controls, then confirm overlay toggle, shape/query/hit display and source isolation. Resolve the `failed to activate captured window` helper/foreground issue or use a user-assisted native session. Record per-device results and normal cleanup; do not infer them from the CPU GUI fixture or `editor_ready`. Then proceed to 20e's connected FeatureWorld and affected-subsystem acceptance. No production MMO capacity, live region integration or new platform is claimed.
+Next: run the actual Editor on the RTX and Intel serially with required validation, open a saved copy, Play/Pause, inspect runtime bodies and exercise ray/overlap controls, then confirm overlay toggle, shape/query/hit display and source isolation. Resolve the `failed to activate captured window` helper/foreground issue or use a user-assisted native session. Record per-device results and normal cleanup; do not infer them from the CPU GUI fixture or `editor_ready`. The user has authorized 20e's connected FeatureWorld and affected-subsystem work while this manual check is deferred. No production MMO capacity, live region integration or new platform is claimed.

@@ -2156,6 +2156,7 @@ void rigid_bodies(SceneRunContext& context) {
     actor.rigid_body->collision_mask = (1U << 2U) | (1U << 4U);
     const auto actor_entity = take(lua_scene->create_entity(actor));
     EntitySeed sensor{id<WorldEntityId>('b')};
+    sensor.script = Script{"scripts/sensor.lua", true};
     sensor.rigid_body = RigidBody{};
     sensor.rigid_body->is_trigger = true;
     sensor.rigid_body->collision_layer = 2;
@@ -2206,9 +2207,19 @@ function on_contact_enter(other, self_trigger, other_trigger, tick)
     shark.physics.create_body()
     shark.log.info('enter:' .. other)
 end
+function on_destroy() shark.log.info('destroy:actor') end
+)lua"},
+                                     ScriptSourceSnapshot{"scripts/sensor.lua", R"lua(
+function on_contact_enter(other, self_trigger, other_trigger, tick)
+    assert(self_trigger and not other_trigger and tick == 1)
+    shark.log.info('sensor:' .. other)
+end
+function on_contact_exit() shark.log.info('unexpected stale exit') end
+function on_destroy() shark.log.info('destroy:sensor') end
 )lua"},
                                      ScriptSourceSnapshot{"scripts/mover.lua", R"lua(
 function on_fixed_update() shark.physics.kinematic_target(11, 0, 0) end
+function on_destroy() shark.log.info('destroy:mover') end
 )lua"}};
     ScriptRuntimeConfig runtime_config;
     runtime_config.profile = ScriptProfile::server_gameplay;
@@ -2216,6 +2227,23 @@ function on_fixed_update() shark.physics.kinematic_target(11, 0, 0) end
     take(lua_scripts->start(*lua_scene, *lua_world));
     take(lua_scripts->fixed_update(*lua_scene, *lua_world, 0, 1.0 / 60.0));
     take(lua_world->step(*lua_scene));
+    // The native collector has published one pending owned event, but Lua has
+    // not observed it until the host explicitly dispatches on its owner thread.
+    require(context,
+            take(lua_world->stats()).pending_events == 1 && take(lua_scripts->take_logs()).empty(),
+            "Native contact collection invoked Lua before owner-thread dispatch");
+    auto paused_schedule = take(OfflineScheduler::create(MonotonicTime{0}, 1));
+    const auto paused = take(paused_schedule->poll(
+        MonotonicTime{5'000'000'000LL},
+        [&](std::uint64_t tick) {
+            return lua_scripts->fixed_update(*lua_scene, *lua_world, tick, 1.0 / 60.0);
+        },
+        OfflineControl{true, false}));
+    require(context,
+            paused.executed == 0 && take(lua_world->stats()).completed_ticks == 1 &&
+                take(lua_world->stats()).pending_events == 1 &&
+                take(lua_scripts->take_logs()).empty(),
+            "Paused simulation delivered a tick or contact callback");
     require(context,
             std::abs(take(lua_scene->entity_state(actor_entity)).local_transform.translation.x -
                      0.05) < 0.0001 &&
@@ -2224,15 +2252,40 @@ function on_fixed_update() shark.physics.kinematic_target(11, 0, 0) end
             "Lua controls differ from independent mass, timing or kinematic expectations");
     const auto delivered = take(lua_scripts->dispatch_contacts(*lua_scene, *lua_world));
     require(context,
-            !delivered.error && delivered.events.size() == 1 && delivered.applied_commands == 2 &&
+            !delivered.error && delivered.events.size() == 1 &&
+                delivered.attempted_callbacks == 2 && delivered.applied_commands == 2 &&
                 !lua_world->body_state(*lua_scene, original_actor),
             "Lua contact delivery did not defer and recreate the original body");
     const auto lua_logs = take(lua_scripts->take_logs());
     require(context,
-            lua_logs.size() == 1 &&
-                lua_logs[0].message == "enter:" + id<WorldEntityId>('b').value().to_string(),
+            lua_logs.size() == 2 &&
+                lua_logs[0].message == "enter:" + id<WorldEntityId>('b').value().to_string() &&
+                lua_logs[1].message == "sensor:" + id<WorldEntityId>('a').value().to_string(),
             "Lua contact callback observed an unexpected participant or order");
-    take(lua_scripts->stop(*lua_scene, *lua_world));
+    const auto stale_exit = take(lua_scripts->dispatch_contacts(*lua_scene, *lua_world));
+    const auto actor_reference = take(lua_scene->entity_state(actor_entity)).reference;
+    require(context,
+            !stale_exit.error && stale_exit.events.size() == 1 &&
+                stale_exit.events[0].phase == PhysicsContactPhase::exit &&
+                stale_exit.events[0].cause == PhysicsContactCause::body_removed &&
+                stale_exit.skipped_events == 1 && stale_exit.attempted_callbacks == 0 &&
+                take(lua_world->find_body(*lua_scene, actor_reference)) != original_actor &&
+                take(lua_scripts->take_logs()).empty(),
+            "A retired body exit was lost or retargeted to the recreated body");
+    const auto lua_stopped = take(lua_scripts->stop(*lua_scene, *lua_world));
+    const auto stop_logs = take(lua_scripts->take_logs());
+    require(context,
+            lua_stopped.attempted == 3 && lua_stopped.discarded == 0 &&
+                lua_stopped.errors.empty() && stop_logs.size() == 3 &&
+                stop_logs[0].message == "destroy:mover" &&
+                stop_logs[1].message == "destroy:sensor" && stop_logs[2].message == "destroy:actor",
+            "Lua teardown failed or did not run in reverse ownership order");
+    take(lua_world->close());
+    const auto closed_physics = take(lua_world->stats());
+    require(context,
+            closed_physics.closed && closed_physics.bodies == 0 &&
+                closed_physics.pending_events == 0 && !closed_physics.faulted,
+            "Lua physics teardown left native bodies or contact events live");
     require(context,
             display.poses.size() == 2 && take(owner->capture()).scene == source.scene &&
                 revision(*owner) == source.revision &&

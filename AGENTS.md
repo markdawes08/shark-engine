@@ -40,16 +40,36 @@ Linux graphics is outside scope. Mac support, CI, packages and hardware requirem
 are retired by [ADR 0009](docs/architecture/0009-windows-linux-platform-scope.md).
 Hosted CI is supplemental; remote branch protection is unchanged.
 
-**Desktop testing resumed by explicit user instruction on 2026-10-31:** finish
-18e, then tackle the testing backlog. This supersedes the 2026-10-29 desktop
-pause and permits the required actual Editor interactions and windowed GPU
-fixtures. Follow the [testing policy](docs/testing-policy.md), run GPU fixtures
-serially and preserve existing results. Items in the [UI backlog](docs/backlog.md)
-remain NOT_RUN until their required evidence passes; resumption alone does not
-qualify untested behavior or close full UI acceptance.
+**Manual UI testing is paused by explicit user instruction on 2026-11-01.**
+Do not interact manually with actual Editor/desktop UI, including through computer
+use, until the user explicitly resumes it. Continue coding and appropriate
+headless or automated checks under the [testing policy](docs/testing-policy.md).
+Automated windowed GPU fixtures that require no manual UI remain eligible under
+the policy and run serially. The user explicitly deferred 20d's outstanding
+native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
+authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
+Preserve prior evidence and failures.
 
-**Current handoff: [20d, physics inspection](docs/handoffs/20d-physics-inspection.md).**
-Implementation and focused CPU checks are complete. Actual native interactive overlay evidence is NOT_RUN because Computer Use returned `failed to activate captured window`; the handoff records the attempt and exact next work. Do not advance this required gate or claim GPU overlay qualification without passing it or an explicit user deferral. Follow the [inspection contract](docs/physics-debug-inspection.md) and [ADR 0056](docs/architecture/0056-physics-debug-inspection.md). Body and spatial observations share the retained preview owner and fence session/tick/operation sequence; preserve complete-or-error queries, checked filters and source isolation. The opt-in screen-space Editor overlay approximates committed collider/query geometry, uses the displayed camera and image clipping, cannot authorize picking and explicitly warns if its 2,048-line display budget truncates. Full REQ-20 remains NOT_RUN; 20e is connected acceptance after the 20d gate.
+**Current handoff: [20e, connected physics acceptance](docs/handoffs/20e-physics-acceptance.md).**
+The connected CPU checks pass, including private native-contact scope instrumentation,
+no Lua entry during contact collection, paused scheduling, ordered owner dispatch,
+deferred recreation, stale exits and reverse teardown. The locked Jolt job profile is
+single-threaded; do not infer multiworker or live-server qualification. Full REQ-20
+remains NOT_RUN for the explicitly deferred native 20d UI checks. The next assignment
+in the manifest order is 21: prefabs, spawning and safe entity mutation. Preserve the
+shared Scene/physics owners, checked generations and bounded contact mutation queue.
+
+The [20d handoff](docs/handoffs/20d-physics-inspection.md) records physics inspection.
+Implementation and focused CPU checks are complete. Native interactive overlay
+evidence is deferred as above; do not claim GPU overlay qualification. Follow
+the [inspection contract](docs/physics-debug-inspection.md) and
+[ADR 0056](docs/architecture/0056-physics-debug-inspection.md). Body and spatial
+observations share the retained preview owner and fence session/tick/operation
+sequence; preserve complete-or-error queries, checked filters and source isolation.
+The opt-in screen-space Editor overlay approximates committed collider/query
+geometry, uses the displayed camera and image clipping, cannot authorize picking
+and warns if its 2,048-line display budget truncates. The connected CPU acceptance
+for 20e is recorded in its handoff; native UI remains deferred.
 
 The [20c handoff](docs/handoffs/20c-lua-physics-contacts.md) records Lua physics contacts.
 Follow the [Lua physics contract](docs/physics-lua.md) and [ADR 0055](docs/architecture/0055-lua-physics-contacts.md). Trusted hosts supply the existing physics owner to ScriptRuntime calls; Region scope alone is not authority. Preserve bounded owned queries, server-only fixed/contact writes, and client read-only preview. Native callbacks never execute Lua. The creating thread drains contact observations and queues at most 64 callback writes until the batch ends, then rechecks participants and applies changes in order. Preserve captured settings for checked self-body removal/recreation, fresh generations, original event receipts and contextual partial-effect failures; drain removal exits before another step. Preview retries never redeliver callbacks. Full REQ-20 remains NOT_RUN.
@@ -124,8 +144,9 @@ and `scene.physics` share exact scoped start/operation/stop reconciliation;
 source/history/files remain separate. Preserve bounded receipts and reverse
 native teardown, block source mutation during play and never use interpolated
 runtime snapshots to authorize picking/gizmo commits. Inspector body/pose edits
-remain one retained atomic history batch. Current work finishes the resumed
-testing backlog under the [physics checkpoints](docs/roadmap/physics-plan.md).
+remain one retained atomic history batch. Completed desktop evidence and remaining
+manual checks are tracked under the [physics checkpoints](docs/roadmap/physics-plan.md)
+and the [backlog](docs/backlog.md).
 Tick frequency and collision substeps are distinct; reuse existing schedulers.
 Connected acceptance follows [physics acceptance](docs/physics-acceptance.md).
 18e and full REQ-18 now pass under current-machine scope; the handoff records
@@ -159,9 +180,9 @@ view camera before culling, retain authored-camera provenance and full affine
 transforms, use actual image bounds and preserve focus/modal cancellation.
 Navigation/selection must not change authored state or history.
 Full REQ-17 remains NOT_RUN. 16e's headless project handoff remains recorded in its
-[handoff](docs/handoffs/16e-editor-terminal-acceptance.md); actual connected UI
-acceptance follows the [procedure](docs/editor-acceptance.md) under the recorded
-desktop resumption. Full REQ-16 remains NOT_RUN under the backlog amendment.
+[handoff](docs/handoffs/16e-editor-terminal-acceptance.md); remaining actual UI
+acceptance follows the [procedure](docs/editor-acceptance.md) after the user
+resumes manual UI testing. Full REQ-16 remains NOT_RUN under the backlog amendment.
 Follow the [editor checkpoints](docs/roadmap/editor-plan.md),
 [shell contract](docs/editor-shell.md), [workspace contract](docs/editor-scene-workspace.md)
 the [inspector contract](docs/editor-inspector.md) and
@@ -191,7 +212,7 @@ close resolution. Bounded console logging cannot alter operation outcomes.
 Project status observation failure marks cached state unknown while preserving
 the original reply; scoped cleanup stays available. Actual UI/terminal parity
 retains 16e; actual connected transform acceptance remains 17d's deferred gate.
-Full REQ-16 and REQ-17 remain NOT_RUN; the current assignment is 20.
+Full REQ-16 and REQ-17 remain NOT_RUN; assignment 21 is next under the backlog amendment.
 
 15a-15d supply the CPU `SharkAuthor` host, retained project ownership, shared
 editing/persistence/imports, static deterministic runs and configured export.

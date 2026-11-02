@@ -1,5 +1,6 @@
 #include "lua_vm.hpp"
 
+#include "physics_contact_scope.hpp"
 #include "utf8.hpp"
 
 extern "C" {
@@ -751,6 +752,9 @@ LuaVm::LuaVm(std::unique_ptr<Impl> impl) noexcept : impl_(std::move(impl)) {}
 LuaVm::~LuaVm() = default;
 
 Result<std::unique_ptr<LuaVm>> LuaVm::create(LuaVmConfig config) {
+    if (NativeContactScope::active())
+        return failure(ErrorCode::conflict,
+                       "Lua cannot run inside a native physics contact callback", "lua.create");
     if (config.memory_limit_bytes < min_memory || config.memory_limit_bytes > max_memory ||
         config.instruction_limit == 0 || config.instruction_limit > max_instructions) {
         return failure(ErrorCode::invalid_argument, "Invalid Lua VM resource limits", "lua.create");
@@ -800,6 +804,9 @@ bool valid_call_context(const LuaCallContext& context) noexcept {
 
 Result<void> LuaVm::execute_impl(std::string_view source, std::string_view chunk_name,
                                  LuaCallContext* context) {
+    if (NativeContactScope::active())
+        return failure(ErrorCode::conflict,
+                       "Lua cannot run inside a native physics contact callback", "lua.execute");
     if (impl_->owner != std::this_thread::get_id()) {
         return failure(ErrorCode::conflict, "Lua VM called from a different thread", "lua.execute");
     }
@@ -833,6 +840,9 @@ Result<void> LuaVm::execute_impl(std::string_view source, std::string_view chunk
 }
 
 Result<void> LuaVm::invoke(std::string_view callback, LuaCallContext& context) {
+    if (NativeContactScope::active())
+        return failure(ErrorCode::conflict,
+                       "Lua cannot run inside a native physics contact callback", "lua.invoke");
     if (impl_->owner != std::this_thread::get_id())
         return failure(ErrorCode::conflict, "Lua VM called from a different thread", "lua.invoke");
     if (impl_->active != nullptr)

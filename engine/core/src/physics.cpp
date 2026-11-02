@@ -1,6 +1,7 @@
 #include "shark/physics.hpp"
 #include "shark/scene.hpp"
 
+#include "physics_contact_scope.hpp"
 #include "scene_physics_access.hpp"
 
 #include <Jolt/Jolt.h>
@@ -42,6 +43,25 @@
 #include <vector>
 
 namespace shark {
+
+thread_local bool detail::NativeContactScope::active_ = false;
+thread_local std::uint64_t detail::NativeContactScope::entered_ = 0;
+
+detail::NativeContactScope::NativeContactScope() noexcept : previous_(active_) {
+    active_ = true;
+    if (entered_ != std::numeric_limits<std::uint64_t>::max())
+        ++entered_;
+}
+detail::NativeContactScope::~NativeContactScope() noexcept {
+    active_ = previous_;
+}
+bool detail::NativeContactScope::active() noexcept {
+    return active_;
+}
+std::uint64_t detail::NativeContactScope::entered() noexcept {
+    return entered_;
+}
+
 namespace {
 
 static_assert(std::is_nothrow_move_constructible_v<PhysicsContactEvent> &&
@@ -336,10 +356,12 @@ class ContactCollector final : public JPH::ContactListener {
     }
     void OnContactAdded(const JPH::Body& a, const JPH::Body& b, const JPH::ContactManifold&,
                         JPH::ContactSettings&) noexcept override {
+        const detail::NativeContactScope callback;
         observe(a, b);
     }
     void OnContactPersisted(const JPH::Body& a, const JPH::Body& b, const JPH::ContactManifold&,
                             JPH::ContactSettings&) noexcept override {
+        const detail::NativeContactScope callback;
         observe(a, b);
     }
     template <typename F> void visit(F&& visitor) const {

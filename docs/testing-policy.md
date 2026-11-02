@@ -21,19 +21,40 @@ run, not what a selected test must prove. Current-machine scope and the user's
 ownership of staging, commits and pushing remain unchanged. Hosted CI and remote
 branch protection remain unchanged and do not become local prerequisites.
 
+## Manual UI testing pause, 2026-11-01
+
+The user directed agents to hold off on manual UI testing for now, record the
+outstanding checks in the [backlog](backlog.md#desktop-ui-deferral), and proceed
+with the next subchunk. Do not perform manual interaction with actual Editor or
+other desktop UI, including computer-controlled interaction, until the user
+explicitly resumes it. Continue implementation and appropriate automated and
+headless checks under this policy. An automated windowed GPU fixture that does
+not require manual UI interaction remains eligible when selected by the policy;
+run GPU fixtures serially. Preserve actual results and failures, and report
+unperformed manual UI checks as NOT_RUN rather than substituting synthetic tests.
+
+The user explicitly deferred 20d's required actual RTX and Intel overlay
+interaction and authorized continued work on 20e. The deferred UI evidence is
+nonblocking for implementation progression, not a GPU pass or a waiver of the
+original acceptance criteria; full REQ-20 remains NOT_RUN until its applicable
+acceptance evidence passes. This instruction supersedes the 2026-10-31 manual
+desktop resumption below while preserving its historical results.
+
 ## Desktop-interaction pause, 2026-10-29
 
 The user paused desktop/UI testing on 2026-10-29 while using this PC for office
 work and authorized continued coding. On 2026-10-31, the user explicitly requested
 finishing the current subchunk and then tackling the testing backlog. **Desktop
-testing is resumed after 18e implementation.** Actual Editor input, focus/window
-interaction and automated windowed GPU fixtures are authorized for that work.
+testing resumed after 18e implementation.** Actual Editor input, focus/window
+interaction and automated windowed GPU fixtures were authorized for that work;
+the newer manual UI pause above now applies.
 Run GPU fixtures serially and select the outstanding checks under this policy.
 
 Required checks in the [backlog](backlog.md#desktop-ui-deferral) remain
-NOT_RUN/deferred until their evidence passes. Resumption alone does not close
-full REQ-16, REQ-17 or REQ-18. Preserve historical results, failures and partial
-runs, and reuse completed native GPU evidence for unchanged tested inputs.
+NOT_RUN/deferred until their evidence passes. Resumption alone did not close
+full REQ-16 or REQ-17; REQ-18 later passed under current-machine scope. Preserve
+historical results, failures and partial runs, and reuse completed native GPU
+evidence for unchanged tested inputs.
 The existing amendment permits continued implementation while outstanding
 acceptance is completed; it does not qualify untested behavior.
 

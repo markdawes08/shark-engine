@@ -1,0 +1,20 @@
+# 20e: connected physics acceptance, with manual UI deferred
+
+Date: 2026-11-01. Base: `c6d34fd`, initially clean `main`. The user owns staging, commits and pushing. This increment follows the [physics interaction plan](../roadmap/physics-interaction-plan.md) and [testing policy](../testing-policy.md). The user paused manual UI testing, explicitly deferred 20d's native RTX/Intel overlay checks to [BL-20D-UI-01](../backlog.md#deferred-items), and authorized this work. **20e's connected CPU implementation and selected checks pass; full REQ-20 remains NOT_RUN until the deferred native UI evidence is completed.** The deferral permits continued development; it is not a native or GPU pass.
+
+The existing FeatureWorld rigid-body case retains its saved project/scene, case ID and earlier workloads. Its real trusted-region Lua/PhysicsWorld scenario now checks that native contact collection publishes a pending observation without invoking Lua, a paused scheduler pass advances neither tick nor callbacks, and explicit owner-thread dispatch invokes the two participants in order. Callback-requested body removal and recreation apply after the batch; the old generation's removal exit stays observable but cannot retarget the recreated body. Reverse Lua teardown and PhysicsWorld close leave no pending events or live bodies. Existing query/filter/control and source/history checks remain in the same case.
+
+Private per-thread native-contact scope instrumentation records actual collector entries without allocating or exposing a mutable public fixture port. The private Lua VM rejects creation, source execution and callback invocation while that scope is active. Core tests verify an actual contact entered the scope, no Lua contact logs appear before owner dispatch, and guard rejection leaves script effects absent. This proves the currently locked single-thread Jolt collector; it does not qualify future multiworker operation or an actual deployed MMO region loop. There is no public API, protocol, source, cooked or gameplay-wire format change. The [Lua physics contract](../physics-lua.md) records this boundary.
+
+## Selected verification
+
+| Selection | Result |
+| --- | --- |
+| Windows Debug affected subsystem and connected process checks | PASS 10/10 in 15.21 s: Core Lua, ScriptRuntime, physics and public example; Editor physics/GUI adapter; rigid-body, FeatureWorld, real FeatureWorld process and authoring-editing process. `out/20e-work/windows-final.xml`. |
+| WSL Ubuntu Clang ASan+UBSan | PASS 7/7 in 5.42 s: Core Lua, ScriptRuntime and physics; Editor physics; rigid-body, FeatureWorld and authoring-editing process. `out/20e-work/wsl-final/tests.log` and `tests.xml`. |
+| Repository checks | Requirement/link, skill/ignore boundaries, pinned formatting and diff whitespace verified in the final work. `.gitignore` already covers generated output and the optional local roadmap. |
+| Actual 20d interactive overlay, RTX / Intel | NOT_RUN and deferred by user instruction; see BL-20D-UI-01. Manual desktop testing was not performed. |
+
+The Windows build used `tools/windows_dev.ps1` and the canonical `windows-debug` preset; CTest inventory was listed before the selection. WSL uses the retained canonical sanitizer build; exact commands and inventory are in `out/20e-work/wsl-final-commands.sh` and `wsl-final/inventory.log`. No unrelated full-project suite, GPU run, package, or new Release matrix was required for this partial assignment closure; earlier unchanged evidence remains historical. Do not interpret CPU GUI data or a native startup as native overlay qualification.
+
+The next assignment in the manifest order is **21: prefabs, spawning and safe entity mutation**, which may proceed under the user's nonblocking deferral. Resume manual UI checks only on explicit user instruction; preserve existing callback ownership, bounded deferred commands, Scene leases and source isolation as spawning is designed. No production capacity, cross-region authority, networking corrections or durable gameplay is claimed.

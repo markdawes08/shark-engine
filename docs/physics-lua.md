@@ -17,6 +17,13 @@ All physics calls fail if a host did not provide the world or checked ownership 
 
 Native contact callbacks collect data only. After a successful fixed step the creating-thread host calls `dispatch_contacts(scene, world, maximum)`, which drains a bounded FIFO prefix and delivers `on_contact_enter(other_uuid, self_trigger, other_trigger, completed_tick)` and `on_contact_exit(...)` in event order. The report owns the original consumed observations, callback counts, applied/discarded command counts and any error. Participants and body generations are checked at delivery. Stale observations remain in the report and are not a grant of authority. Native physics workers never invoke Lua.
 
+The private collector marks its active native callback scope on the current thread;
+the private Lua VM rejects creation, source execution and callback invocation in
+that scope. Focused instrumentation observes a real native contact, verifies no Lua
+contact log before explicit owner dispatch, and exercises the guard. The locked
+Jolt job profile is single-threaded; this evidence is not a qualification of a
+future multiworker collector.
+
 Contact-phase writes are queued in callback order, bounded to 64, and applied only after the callback batch. Each command rechecks its ownership and generations. Queue overflow, a failed callback or failed application faults the script owner; previously completed callbacks, native steps and applied commands are not rolled back. Removed-body exits remain in the world FIFO and the host must drain them before admitting the next native step. No consumed callback is blindly replayed.
 
 Editor and terminal preview use the same owner and dispatch path. Their client presentation profile cannot author authoritative gameplay physics. The retained operation receipt includes completed events and script logs even if a callback later faults; exact retries return the original receipt without invoking callbacks again. Source edits and history remain isolated. Connected assignment acceptance and debug presentation remain later [checkpoints](roadmap/physics-interaction-plan.md).

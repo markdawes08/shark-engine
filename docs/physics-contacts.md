@@ -125,9 +125,10 @@ faults the world rather than authorizing retry. This cannot mutate AuthoredScene
 const borrow, source history or saved files.
 
 The original `remove_body(token)` remains detached-only and works after source
-Scene destruction. It uses the same exit/lifetime path. End/rebuild still governs
-native creation and settings changes. Safe removal does not add an entity-destroy,
-spawn, callback mutation or Lua API.
+Scene destruction. It uses the same exit/lifetime path. The later
+[Lua contact contract](physics-lua.md) adds bounded owner-applied callback
+mutations and checked self-body recreation; it does not add entity spawning or
+authorize arbitrary changes to the original authored Scene.
 
 Close detaches the native listener before body/system teardown and invokes no
 application callbacks. It clears contacts, accounts for unconsumed queued events
@@ -135,6 +136,6 @@ in discarded_events, and releases the weak Scene write lease. Previously taken
 values survive entity/Scene/world destruction. Close is not delivery; callers
 requiring the final observations must explicitly take them first.
 
-Native inspector fields and connected acceptance retain 18e and the
-[desktop backlog](backlog.md#desktop-ui-deferral). Full REQ-18 remains NOT_RUN;
-Lua contact delivery retains assignment 20 and streaming/rebasing retains M05.
+Native inspector fields and connected acceptance were completed in 18e under the
+current-machine scope. [Lua contact delivery](physics-lua.md) uses the owner after
+native updates; streaming/rebasing retains M05.

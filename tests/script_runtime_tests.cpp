@@ -3,6 +3,8 @@
 #include <shark/script_runtime.hpp>
 #include <shark/time.hpp>
 
+#include "../engine/core/src/physics_contact_scope.hpp"
+
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
@@ -616,7 +618,14 @@ TEST_CASE("Lua contact callbacks defer body removal and recreation until the ord
         end
     )lua"};
     take(f.runtime->start(*f.scene, *f.world));
+    const auto native_before = detail::NativeContactScope::entered();
     take(f.world->step(*f.scene));
+    // The real native callback ran, but its collector did not invoke Lua.
+    // The current Jolt profile is single-threaded, so compare actual callback
+    // scope observations rather than treating the thread ID as evidence.
+    CHECK(detail::NativeContactScope::entered() > native_before);
+    CHECK_FALSE(detail::NativeContactScope::active());
+    CHECK(take(f.runtime->take_logs()).empty());
     const auto delivered = take(f.runtime->dispatch_contacts(*f.scene, *f.world));
     REQUIRE(delivered.events.size() == 1);
     CHECK(delivered.events[0].phase == PhysicsContactPhase::enter);
@@ -650,6 +659,24 @@ TEST_CASE("Lua contact callbacks defer body removal and recreation until the ord
     CHECK(stale.skipped_events == 1);
     CHECK(stale.attempted_callbacks == 0);
     CHECK(take(f.runtime->take_logs()).empty());
+    take(f.runtime->stop(*f.scene, *f.world));
+}
+
+TEST_CASE("Lua lifecycle callbacks reject native contact scope without executing script",
+          "[script-runtime]") {
+    ScriptPhysicsFixture f{R"lua(
+        function on_fixed_update() shark.log.info('must not run') end
+    )lua"};
+    take(f.runtime->start(*f.scene, *f.world));
+    {
+        const detail::NativeContactScope callback;
+        const auto result = f.runtime->fixed_update(*f.scene, *f.world, 0, 1.0 / 60.0);
+        REQUIRE_FALSE(result);
+        CHECK(result.error().code == ErrorCode::conflict);
+        CHECK(result.error().context.path == "scripts/main.lua");
+    }
+    CHECK(take(f.runtime->take_logs()).empty());
+    CHECK(take(f.runtime->stats()).faulted);
     take(f.runtime->stop(*f.scene, *f.world));
 }
 

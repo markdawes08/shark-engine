@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "19",
+  "current_assignment": "20",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -509,7 +509,7 @@
       "planned_fixture": "FeatureWorld/PhysicsQueries, FeatureWorld/ContactScripts, PhysicsCallbackMutation, PhysicsWorkerEventBoundary and PhysicsQueryInvalidInput fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "20a adds checked dynamic body controls and 20b adds bounded filtered physics queries. Script bindings, debug visualization and connected acceptance remain assignment 20. See docs/roadmap/physics-interaction-plan.md."
+        "reason": "20a-20e implement checked controls, queries, Lua/contact delivery, debug inspection and connected CPU acceptance. Windows Debug and WSL ASan+UBSan validate the affected owners, including instrumented native-contact isolation and the FeatureWorld pause, callback, stale-body and teardown lifecycle. The user explicitly deferred actual RTX/Intel interactive overlay checks in BL-20D-UI-01, so full REQ-20 remains NOT_RUN. See docs/handoffs/20e-physics-acceptance.md."
       }
     },
     {
@@ -3363,10 +3363,13 @@
         "requirement_ids": [
           "REQ-18",
           "REQ-09",
-          "REQ-15"
+          "REQ-15",
+          "REQ-20"
         ],
         "test_ids": [
           "shark.core.physics",
+          "shark.core.lua",
+          "shark.core.script-runtime",
           "shark.tools.rigid-body",
           "shark.tools.authoring-editing-process",
           "shark.tools.authoring-protocol-process",
@@ -3375,6 +3378,8 @@
         ],
         "test_sources": [
           "tests/core_physics_contact_tests.cpp",
+          "tests/lua_vm_tests.cpp",
+          "tests/script_runtime_tests.cpp",
           "tests/core_physics_body_tests.cpp",
           "tests/rigid_body_tests.cpp",
           "tools/tests/test_authoring_editing_process.py",
@@ -3384,11 +3389,12 @@
         ],
         "fixtures": [
           "docs/physics-contacts.md",
+          "docs/physics-lua.md",
           "docs/architecture/0048-physics-contacts.md",
           "engine_tools/src/feature_world.cpp",
           "assets/FeatureWorld/scenes/FeatureWorld.sharkscene"
         ],
-        "fixture_reason": "Real native response differs for each side of a bilateral mask and for sensors. Fixed-step contacts cover stable overlap beyond the sleep interval, native preintegration timing, partial take, owner-thread rejection, pre-native backpressure, post-native collector overflow, active removal, entity/body generation reuse and close discard accounting. Shared authoring preserves all new fields through exact retries/history/source save/reopen and prepared v1/v2/v3 compatibility. Real terminal pipes discover/query/mutate all eleven fields. The existing FeatureWorld case uses prepared filters/sensors with independent gravity and enter/exit expectations while source/history remain unchanged. A 16-actor sensor case verifies canonical batch ordering, no duplicate persistence events and bulk active removal exits.",
+        "fixture_reason": "Real native response differs for each side of a bilateral mask and for sensors. Fixed-step contacts cover stable overlap beyond the sleep interval, native preintegration timing, partial take, owner-thread rejection, pre-native backpressure, post-native collector overflow, active removal, entity/body generation reuse and close discard accounting. Shared authoring preserves all new fields through exact retries/history/source save/reopen and prepared v1/v2/v3 compatibility. Real terminal pipes discover/query/mutate all eleven fields. The existing FeatureWorld case uses prepared filters/sensors with independent gravity and enter/exit expectations while source/history remain unchanged. A 16-actor sensor case verifies canonical batch ordering, no duplicate persistence events and bulk active removal exits. The connected FeatureWorld Lua case checks no pre-dispatch callback, pause, two-participant order, deferred recreation, stale exit and reverse teardown. Private scope instrumentation confirms the locked single-thread native collector ran and rejects Lua entry while it is active.",
         "featureworld_cases": [
           "featureworld.rigid-bodies"
         ]

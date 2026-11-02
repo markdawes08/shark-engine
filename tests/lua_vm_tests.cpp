@@ -1,4 +1,5 @@
 #include "lua_vm.hpp"
+#include "physics_contact_scope.hpp"
 
 #include <catch2/catch_test_macros.hpp>
 
@@ -65,6 +66,29 @@ TEST_CASE("Lua VM excludes host access and budget escape helpers", "[core-lua]")
         -- No unbounded Lua finalizer can be installed and run during teardown.
         assert(setmetatable == nil and getmetatable == nil)
     )lua");
+}
+
+TEST_CASE("Lua VM rejects creation and source execution inside a native contact callback",
+          "[core-lua]") {
+    auto vm = create_vm();
+    CHECK_FALSE(shark::detail::NativeContactScope::active());
+    {
+        const shark::detail::NativeContactScope contact;
+        CHECK(shark::detail::NativeContactScope::active());
+        const auto created = LuaVm::create({});
+        REQUIRE_FALSE(created);
+        CHECK(created.error().code == ErrorCode::conflict);
+        const auto loaded = vm->execute("native_callback_ran = true", "contact.lua");
+        REQUIRE_FALSE(loaded);
+        CHECK(loaded.error().code == ErrorCode::conflict);
+        {
+            const shark::detail::NativeContactScope nested;
+            CHECK(shark::detail::NativeContactScope::active());
+        }
+        CHECK(shark::detail::NativeContactScope::active());
+    }
+    CHECK_FALSE(shark::detail::NativeContactScope::active());
+    succeeds(*vm, "assert(native_callback_ran == nil)");
 }
 
 TEST_CASE("Lua VM rejects invalid bounds and invalid input", "[core-lua]") {
