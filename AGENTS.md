@@ -48,7 +48,19 @@ serially and preserve existing results. Items in the [UI backlog](docs/backlog.m
 remain NOT_RUN until their required evidence passes; resumption alone does not
 qualify untested behavior or close full UI acceptance.
 
-**Current handoff: [19d, connected Lua preview](docs/handoffs/19d-script-preview.md).**
+**Current handoff: [20a, physics body controls](docs/handoffs/20a-physics-body-controls.md).**
+Follow the [interaction checkpoints](docs/roadmap/physics-interaction-plan.md),
+[body-control contract](docs/physics-controls.md) and [ADR 0053](docs/architecture/0053-physics-body-controls.md).
+The existing owner-thread PhysicsWorld exposes checked dynamic velocity, impulse
+and accumulated next-tick force under the live Scene lease. Validate finite bounded
+native values and body/Scene generations. Rejected pre-native steps preserve pending
+force; successful step, teleport, end and teardown clear it. Immediate impulses and
+velocity writes retain queued force; native integration still has existing speed
+ceilings. Physics Scene axes are distinct from global cell identity. No player,
+client presentation or replica gains authoritative gameplay control. 20b adds
+bounded filtered physics queries; full REQ-20 remains NOT_RUN.
+
+The [19d handoff](docs/handoffs/19d-script-preview.md) records connected Lua preview.
 REQ-19 passes under current-machine scope; follow the [Lua checkpoints](docs/roadmap/lua-plan.md),
 [Script contract](docs/script-components.md), [runtime contract](docs/script-runtime.md),
 [preview contract](docs/physics-preview.md) and [ADR 0052](docs/architecture/0052-editor-script-preview.md).
@@ -62,8 +74,7 @@ write/reconciliation. Core's ScriptRuntime retains exclusive weak Scene ownershi
 checked generations, role/phase authority and existing Scene/physics write leases.
 Region metadata alone does not grant authority. Lua instruction limits do not bound
 native library work. Runtime and export still reject Script-bearing scenes until
-actual cooked source closure and integrated execution exist. The next assignment
-in the manifest order is 20: physics queries, contacts and Lua bindings.
+actual cooked source closure and integrated execution exist. Physics queries, contacts and Lua bindings remain assignment 20.
 The completed physics work is recorded in [18e](docs/handoffs/18e-editor-physics-preview.md).
 Follow [ADR 0045](docs/architecture/0045-physics-foundation.md) and the
 [physics-world contract](docs/physics-world.md): Jolt is a private locked Core
@@ -164,7 +175,7 @@ close resolution. Bounded console logging cannot alter operation outcomes.
 Project status observation failure marks cached state unknown while preserving
 the original reply; scoped cleanup stays available. Actual UI/terminal parity
 retains 16e; actual connected transform acceptance remains 17d's deferred gate.
-Full REQ-16 and REQ-17 remain NOT_RUN; the next assignment is 20.
+Full REQ-16 and REQ-17 remain NOT_RUN; the current assignment is 20.
 
 15a-15d supply the CPU `SharkAuthor` host, retained project ownership, shared
 editing/persistence/imports, static deterministic runs and configured export.

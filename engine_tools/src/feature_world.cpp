@@ -2063,7 +2063,7 @@ void rigid_bodies(SceneRunContext& context) {
     const auto trigger_entity = take(runtime.create_entity(trigger_seed));
     auto simulation = take(PhysicsWorld::create());
     take(simulation->create_body(runtime, runtime_root));
-    take(simulation->create_body(runtime, trigger_entity));
+    const auto trigger_body = take(simulation->create_body(runtime, trigger_entity));
     take(simulation->begin_simulation(runtime));
     auto schedule = take(OfflineScheduler::create(MonotonicTime{0}));
     for (std::int64_t tick = 1; tick <= 60; ++tick) {
@@ -2085,6 +2085,33 @@ void rigid_bodies(SceneRunContext& context) {
                 contacts[1].phase == PhysicsContactPhase::exit && contacts[0].second.is_trigger &&
                 contacts[0].first.entity.handle == runtime_root,
             "Prepared collision settings or runtime trigger transitions were lost");
+    auto control_scene = take(Scene::create(AuthoredSceneScope{id<SceneId>('e')}));
+    EntitySeed controlled_seed{id<AuthoredEntityId>('e')};
+    controlled_seed.transform.translation = {10, 0, 0};
+    controlled_seed.rigid_body = RigidBody{};
+    controlled_seed.rigid_body->motion = BodyMotion::dynamic_body;
+    controlled_seed.rigid_body->mass = 2;
+    const auto controlled_entity = take(control_scene->create_entity(controlled_seed));
+    PhysicsWorldConfig control_config;
+    control_config.gravity = {0, 0, 0};
+    auto controls = take(PhysicsWorld::create(control_config));
+    const auto controlled_body = take(controls->create_body(*control_scene, controlled_entity));
+    take(controls->begin_simulation(*control_scene));
+    take(controls->set_velocity(*control_scene, controlled_body, {{1, 0, 0}, {0, 0, 0}}));
+    take(controls->apply_impulse(*control_scene, controlled_body, {2, 0, 0}));
+    take(controls->apply_force(*control_scene, controlled_body, {120, 0, 0}));
+    require(context,
+            !simulation->apply_impulse(runtime, trigger_body, {1, 0, 0}) &&
+                std::abs(take(controls->velocity(*control_scene, controlled_body)).linear.x - 2) <
+                    0.0001,
+            "Physics controls admitted a static body or changed velocity before the force tick");
+    take(controls->step(*control_scene));
+    const auto controlled = take(control_scene->entity_state(controlled_entity));
+    require(context,
+            std::abs(take(controls->velocity(*control_scene, controlled_body)).linear.x - 3) <
+                    0.0001 &&
+                std::abs(controlled.local_transform.translation.x - 10.05) < 0.0001,
+            "Velocity, impulse and one-tick force differ from independent mass/timing values");
     require(context,
             display.poses.size() == 2 && take(owner->capture()).scene == source.scene &&
                 revision(*owner) == source.revision &&

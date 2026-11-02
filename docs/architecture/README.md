@@ -105,6 +105,7 @@ not establish file or gameplay-wire formats.
 | [0050](0050-script-components.md) | Inert Script component, shared authoring, prepared compatibility and explicit execution boundaries |
 | [0051](0051-script-runtime.md) | Bounded Lua lifecycle, checked entity APIs and server/client capability separation |
 | [0052](0052-editor-script-preview.md) | Shared Lua preview, source capture and connected authoring |
+| [0053](0053-physics-body-controls.md) | Checked dynamic physics controls and fixed-tick force ownership |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

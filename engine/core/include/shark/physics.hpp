@@ -30,6 +30,15 @@ struct PhysicsRenderSnapshot {
 
 inline constexpr double physics_maximum_linear_speed = 256;
 inline constexpr double physics_maximum_angular_speed = 64;
+// Magnitude bounds in N and kg*m/s, respectively, for one body/next tick.
+inline constexpr double physics_maximum_force = 1'000'000;
+inline constexpr double physics_maximum_impulse = 1'000'000;
+
+struct PhysicsBodyVelocity {
+    math::Vec3 linear{};
+    math::Vec3 angular{};
+    bool operator==(const PhysicsBodyVelocity&) const = default;
+};
 
 struct PhysicsBodyHandle {
     std::uint64_t world{0};
@@ -136,6 +145,17 @@ class PhysicsWorld final {
     [[nodiscard]] Result<void> teleport(Scene& scene, PhysicsBodyHandle body, Transform pose);
     [[nodiscard]] Result<void> set_kinematic_target(const Scene& scene, PhysicsBodyHandle body,
                                                     Transform target);
+    // Dynamic bodies only; require the active Scene lease and creating thread.
+    // Force accumulates for the next successful fixed update; end/teleport
+    // discard queued force. Impulse and velocity change immediately in call order.
+    [[nodiscard]] Result<PhysicsBodyVelocity> velocity(const Scene& scene,
+                                                       PhysicsBodyHandle body) const;
+    [[nodiscard]] Result<void> set_velocity(const Scene& scene, PhysicsBodyHandle body,
+                                            PhysicsBodyVelocity velocity);
+    [[nodiscard]] Result<void> apply_force(const Scene& scene, PhysicsBodyHandle body,
+                                           math::Vec3 force);
+    [[nodiscard]] Result<void> apply_impulse(const Scene& scene, PhysicsBodyHandle body,
+                                             math::Vec3 impulse);
     [[nodiscard]] Result<PhysicsRenderSnapshot> render_poses(const Scene& scene,
                                                              double alpha) const;
     // Thin adapters for existing schedulers. Rate/index mismatch rejects before

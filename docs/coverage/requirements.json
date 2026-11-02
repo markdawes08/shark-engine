@@ -509,7 +509,7 @@
       "planned_fixture": "FeatureWorld/PhysicsQueries, FeatureWorld/ContactScripts, PhysicsCallbackMutation, PhysicsWorkerEventBoundary and PhysicsQueryInvalidInput fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "Physics queries/events/Lua control are not implemented; owner assignment 20."
+        "reason": "20a adds checked dynamic body controls; queries, script bindings, debug visualization and connected acceptance remain assignment 20. See docs/roadmap/physics-interaction-plan.md."
       }
     },
     {
@@ -3336,6 +3336,16 @@
         "featureworld_cases": [
           "featureworld.rigid-bodies"
         ]
+      },
+      {
+        "id": "physics.body-controls",
+        "name": "Checked dynamic velocity, impulse and fixed-tick force controls",
+        "requirement_ids": ["REQ-20"],
+        "test_ids": ["shark.core.physics", "shark.tools.featureworld", "shark.tools.featureworld-process"],
+        "test_sources": ["tests/core_physics_simulation_tests.cpp", "tests/core_physics_contact_tests.cpp", "tests/feature_world_tests.cpp", "tools/tests/test_feature_world_process.py"],
+        "fixtures": ["docs/physics-controls.md", "engine_tools/src/feature_world.cpp"],
+        "fixture_reason": "Native dynamic-body controls cover finite bounded inputs, checked Scene/handle ownership, force accumulation and teardown; FeatureWorld independently verifies velocity, mass, impulse and fixed-step force without changing the authored Scene.",
+        "featureworld_cases": ["featureworld.rigid-bodies"]
       },
       {
         "id": "physics.contacts",

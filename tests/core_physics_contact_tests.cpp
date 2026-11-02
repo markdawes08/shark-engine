@@ -204,6 +204,36 @@ TEST_CASE("Event backpressure rejects before movement and drains without losing 
     CHECK(exited[0].phase == PhysicsContactPhase::exit);
 }
 
+TEST_CASE("Queued force survives pre-native contact backpressure and executes exactly once",
+          "[core-physics]") {
+    Fixture f({.gravity = {0, 0, 0}, .max_contact_pairs = 1, .max_queued_events = 2});
+    f.add(2, sensor());
+    f.add(3, mover());
+    RigidBody dynamic;
+    dynamic.motion = BodyMotion::dynamic_body;
+    const auto driven = f.add(4, dynamic, {10, 0, 0});
+    take(f.world->begin_simulation(*f.scene));
+    f.step(); // Retain one enter; the next step needs both free event slots.
+    take(f.world->apply_force(*f.scene, driven.second, {60, 0, 0}));
+    const auto before = take(f.scene->stats());
+    const auto blocked = f.world->step(*f.scene);
+    REQUIRE_FALSE(blocked);
+    CHECK(blocked.error().context.operation == "physics.events.capacity");
+    CHECK_FALSE(take(f.world->stats()).faulted);
+    CHECK(take(f.world->stats()).completed_ticks == 1);
+    CHECK(take(f.scene->stats()).revision == before.revision);
+    CHECK(take(f.world->velocity(*f.scene, driven.second)).linear.x == 0);
+    REQUIRE(take(f.world->take_events()).size() == 1);
+    f.step();
+    CHECK(take(f.world->velocity(*f.scene, driven.second)).linear.x ==
+          Catch::Approx(1).margin(1e-5));
+    f.step();
+    CHECK(take(f.world->velocity(*f.scene, driven.second)).linear.x ==
+          Catch::Approx(1).margin(1e-5));
+    CHECK(take(f.scene->entity_state(driven.first)).local_transform.translation.x ==
+          Catch::Approx(10 + 2.0 / 60.0).margin(1e-5));
+}
+
 TEST_CASE("Contact collector overflow faults without publishing a partial tick or events",
           "[core-physics]") {
     CHECK_FALSE(PhysicsWorld::create({.max_contact_pairs = 0}));

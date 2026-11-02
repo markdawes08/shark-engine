@@ -5,6 +5,7 @@
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <cmath>
 #include <limits>
 #include <numbers>
 #include <thread>
@@ -369,4 +370,164 @@ TEST_CASE("Interpolated roots recompose render subtrees without writing Scene an
     take(owner->set_name(root, Name{"Later"}));
     options.expected_revision = revision(*owner);
     CHECK_FALSE(extract_render_scene(*owner, *assets, options));
+}
+
+TEST_CASE("Body controls apply impulses immediately and forces once at the next fixed tick",
+          "[core-physics]") {
+    // Both substep settings integrate the same acceleration over one tick. The
+    // expected positions below independently use semi-implicit substep integration.
+    for (const std::uint32_t substeps : {1U, 3U}) {
+        INFO("collision substeps: " << substeps);
+        auto owner = scene();
+        const auto entity = body(*owner, 2, BodyMotion::dynamic_body, {0, 0, 0});
+        auto settings = *take(owner->entity_state(entity)).rigid_body;
+        settings.mass = 2;
+        take(owner->set_rigid_body(entity, settings));
+        auto world =
+            take(PhysicsWorld::create({.collision_substeps = substeps, .gravity = {0, 0, 0}}));
+        const auto token = take(world->create_body(*owner, entity));
+        CHECK_FALSE(world->set_velocity(*owner, token, {{1, 0, 0}, {0, 0, 2}}));
+        take(world->begin_simulation(*owner));
+        const auto before = revision(*owner);
+        take(world->set_velocity(*owner, token, {{1, 0, 0}, {0, 0, 2}}));
+        take(world->apply_impulse(*owner, token, {2, 0, 0})); // J / mass = 1 m/s.
+        take(world->apply_force(*owner, token, {60, 0, 0}));
+        take(world->apply_force(*owner, token, {60, 0, 0}));
+        const auto immediate = take(world->velocity(*owner, token));
+        CHECK(immediate.linear.x == Catch::Approx(2).margin(1e-5));
+        CHECK(immediate.angular.z == Catch::Approx(2).margin(1e-5));
+        CHECK(revision(*owner) == before);
+        CHECK(pose(*owner, entity).translation.x == 0);
+
+        auto schedule = take(OfflineScheduler::create(MonotonicTime{0}));
+        CHECK(take(world->poll_offline(*owner, *schedule, time_at(1, 1), {.paused = true}))
+                  .executed == 0);
+        CHECK(take(world->velocity(*owner, token)).linear.x == Catch::Approx(2).margin(1e-5));
+        CHECK(take(world->poll_offline(*owner, *schedule, time_at(2, 1),
+                                       {.paused = true, .single_step = true}))
+                  .executed == 1);
+        // 120 N / 2 kg for 1/60 second changes velocity by 1 m/s.
+        CHECK(take(world->velocity(*owner, token)).linear.x == Catch::Approx(3).margin(1e-5));
+        const double expected_first =
+            (2.0 + (static_cast<double>(substeps) + 1.0) / (2.0 * substeps)) / 60.0;
+        CHECK(pose(*owner, entity).translation.x == Catch::Approx(expected_first).margin(1e-5));
+        CHECK(take(world->poll_offline(*owner, *schedule, time_at(3, 1),
+                                       {.paused = true, .single_step = true}))
+                  .executed == 1);
+        CHECK(take(world->velocity(*owner, token)).linear.x == Catch::Approx(3).margin(1e-5));
+        CHECK(pose(*owner, entity).translation.x ==
+              Catch::Approx(expected_first + 3.0 / 60.0).margin(1e-5));
+        take(world->end_simulation(*owner));
+    }
+}
+
+TEST_CASE("Body controls reject invalid input and foreign authority without partial changes",
+          "[core-physics]") {
+    auto owner = scene();
+    const auto dynamic = body(*owner, 2, BodyMotion::dynamic_body, {0, 0, 0});
+    const auto fixed = body(*owner, 3, BodyMotion::static_body, {20, 0, 0});
+    const auto kinematic = body(*owner, 4, BodyMotion::kinematic_body, {40, 0, 0});
+    auto world = take(PhysicsWorld::create({.gravity = {0, 0, 0}}));
+    auto other_world = take(PhysicsWorld::create());
+    auto other_scene = scene();
+    const auto d = take(world->create_body(*owner, dynamic));
+    const auto s = take(world->create_body(*owner, fixed));
+    const auto k = take(world->create_body(*owner, kinematic));
+    take(world->begin_simulation(*owner));
+    take(world->set_velocity(*owner, d, {{1, 0, 0}, {0, 0, 0}}));
+    const auto before = revision(*owner);
+    const auto initial = take(world->velocity(*owner, d));
+    for (const auto token : {s, k}) {
+        CHECK_FALSE(world->velocity(*owner, token));
+        CHECK_FALSE(world->set_velocity(*owner, token, {{1, 0, 0}, {0, 0, 0}}));
+        CHECK_FALSE(world->apply_force(*owner, token, {1, 0, 0}));
+        CHECK_FALSE(world->apply_impulse(*owner, token, {1, 0, 0}));
+    }
+    const auto nan = std::numeric_limits<double>::quiet_NaN();
+    const auto inf = std::numeric_limits<double>::infinity();
+    for (const auto invalid : {math::Vec3{nan, 0, 0}, math::Vec3{0, inf, 0},
+                               math::Vec3{std::numeric_limits<double>::max(), 0, 0}}) {
+        CHECK_FALSE(world->set_velocity(*owner, d, {invalid, {0, 0, 0}}));
+        CHECK_FALSE(world->set_velocity(*owner, d, {{0, 0, 0}, invalid}));
+        CHECK_FALSE(world->apply_force(*owner, d, invalid));
+        CHECK_FALSE(world->apply_impulse(*owner, d, invalid));
+    }
+    // Diagonal values have individually plausible components but exceed the
+    // vector magnitude caps; the native API must not silently clamp them.
+    CHECK_FALSE(world->set_velocity(*owner, d, {{200, 200, 0}, {0, 0, 0}}));
+    CHECK_FALSE(world->set_velocity(*owner, d, {{0, 0, 0}, {50, 50, 0}}));
+    CHECK_FALSE(world->apply_impulse(*owner, d, {256, 0, 0}));
+    // These doubles lie at the limit. Their packed floats have a squared
+    // magnitude greater than 256^2 even though float sqrt rounds to 256.
+    const double boundary_x = 4.7574072;
+    const double boundary_y =
+        std::nextafter(std::sqrt(256.0 * 256.0 - boundary_x * boundary_x), 0.0);
+    const double packed_x = static_cast<float>(boundary_x);
+    const double packed_y = static_cast<float>(boundary_y);
+    REQUIRE(packed_x * packed_x + packed_y * packed_y > 256.0 * 256.0);
+    take(world->set_velocity(*owner, d, {}));
+    CHECK_FALSE(world->set_velocity(*owner, d, {{boundary_x, boundary_y, 0}, {0, 0, 0}}));
+    CHECK_FALSE(world->set_velocity(*owner, d, {{0, 0, 0}, {boundary_x / 4, boundary_y / 4, 0}}));
+    CHECK_FALSE(world->apply_impulse(*owner, d, {boundary_x, boundary_y, 0}));
+    CHECK(take(world->velocity(*owner, d)).linear == math::Vec3{0, 0, 0});
+    take(world->set_velocity(*owner, d, initial));
+    const auto foreign_scene = world->apply_force(*other_scene, d, {1, 0, 0});
+    REQUIRE_FALSE(foreign_scene);
+    CHECK(foreign_scene.error().context.operation == "physics.body.apply_force");
+    CHECK_FALSE(other_world->apply_impulse(*owner, d, {1, 0, 0}));
+    bool rejected = false;
+    std::thread foreign([&] { rejected = !world->set_velocity(*owner, d, {}); });
+    foreign.join();
+    CHECK(rejected);
+    CHECK(take(world->velocity(*owner, d)).linear == initial.linear);
+    CHECK(take(world->velocity(*owner, d)).angular == initial.angular);
+    CHECK(revision(*owner) == before);
+    CHECK_FALSE(take(world->stats()).faulted);
+
+    // A rejected newest additive force does not erase a previously accepted one.
+    take(world->set_velocity(*owner, d, {}));
+    take(world->apply_force(*owner, d, {60, 0, 0}));
+    CHECK_FALSE(world->apply_force(*owner, d, {1'000'000, 0, 0}));
+    take(world->step(*owner));
+    CHECK(take(world->velocity(*owner, d)).linear.x == Catch::Approx(1).margin(1e-5));
+    take(world->end_simulation(*owner));
+    CHECK_FALSE(world->apply_force(*owner, d, {1, 0, 0}));
+    take(world->remove_body(d));
+    const auto replacement = take(world->create_body(*owner, dynamic));
+    CHECK(replacement.generation != d.generation);
+    take(world->begin_simulation(*owner));
+    CHECK_FALSE(world->set_velocity(*owner, d, {}));
+    CHECK_FALSE(world->apply_impulse(*owner, d, {1, 0, 0}));
+    take(world->close());
+    CHECK_FALSE(world->apply_force(*owner, replacement, {1, 0, 0}));
+}
+
+TEST_CASE("Teleport and end discard pending force and preserve explicit velocity policy",
+          "[core-physics]") {
+    auto owner = take(Scene::create(
+        RegionSceneScope{id<WorldId>(1), {id<RegionId>(2), id<RegionInstanceId>(3), 1}}));
+    EntitySeed seed{id<WorldEntityId>(4)};
+    seed.rigid_body = RigidBody{};
+    seed.rigid_body->motion = BodyMotion::dynamic_body;
+    const auto entity = take(owner->create_entity(seed));
+    auto world = take(PhysicsWorld::create({.gravity = {0, 0, 0}}));
+    const auto token = take(world->create_body(*owner, entity));
+    take(world->begin_simulation(*owner));
+    take(world->set_velocity(*owner, token, {{3, 0, 0}, {0, 2, 0}}));
+    take(world->apply_force(*owner, token, {60, 0, 0}));
+    auto reset = pose(*owner, entity);
+    reset.translation.x = 4;
+    take(world->teleport(*owner, token, reset));
+    CHECK(take(world->velocity(*owner, token)).linear == math::Vec3{0, 0, 0});
+    CHECK(take(world->velocity(*owner, token)).angular == math::Vec3{0, 0, 0});
+    take(world->step(*owner));
+    CHECK(pose(*owner, entity).translation.x == Catch::Approx(4).margin(1e-6));
+
+    take(world->set_velocity(*owner, token, {{2, 0, 0}, {0, 0, 0}}));
+    take(world->apply_force(*owner, token, {60, 0, 0}));
+    take(world->end_simulation(*owner));
+    take(world->begin_simulation(*owner));
+    CHECK(take(world->velocity(*owner, token)).linear.x == Catch::Approx(2).margin(1e-5));
+    take(world->step(*owner));
+    CHECK(take(world->velocity(*owner, token)).linear.x == Catch::Approx(2).margin(1e-5));
 }

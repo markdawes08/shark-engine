@@ -376,6 +376,31 @@ class ContactCollector final : public JPH::ContactListener {
     std::vector<std::size_t> occupied_;
 };
 
+Result<void> validate_control_vector(const math::Vec3& value, double maximum,
+                                     const char* operation) {
+    for (int axis = 0; axis < 3; ++axis) {
+        const auto component = value[axis];
+        if (!std::isfinite(component) || std::abs(component) > maximum)
+            return physics_error(ErrorCode::invalid_argument,
+                                 "Physics control vector exceeds its finite magnitude limit",
+                                 operation);
+        const auto packed = static_cast<float>(component);
+        if (!std::isfinite(packed) || (component != 0.0 && packed == 0.0F) ||
+            std::fpclassify(packed) == FP_SUBNORMAL)
+            return physics_error(ErrorCode::invalid_argument,
+                                 "Physics control vector must fit normal native floats", operation);
+    }
+    if (glm::length(value) > maximum)
+        return physics_error(ErrorCode::invalid_argument,
+                             "Physics control vector exceeds its finite magnitude limit",
+                             operation);
+    return {};
+}
+
+JPH::Vec3 pack_control_vector(const math::Vec3& value) {
+    return {static_cast<float>(value.x), static_cast<float>(value.y), static_cast<float>(value.z)};
+}
+
 Result<void> validate(const PhysicsWorldConfig& config) {
     if (config.tick_hz == 0 || config.tick_hz > 1000 || config.collision_substeps == 0 ||
         config.collision_substeps > physics_maximum_collision_substeps || config.max_bodies == 0 ||
@@ -422,6 +447,7 @@ struct PhysicsWorld::Impl {
         JPH::BodyID native;
         Transform previous_pose{};
         std::optional<Transform> target{};
+        math::Vec3 pending_force{};
     };
     struct BodySlot {
         std::uint64_t generation{1};
@@ -473,6 +499,36 @@ struct PhysicsWorld::Impl {
         if (closed || faulted || !simulation)
             return physics_error(ErrorCode::conflict, "Physics simulation is not ready", operation);
         return scene_detail::ScenePhysicsAccess::check(scene, simulation);
+    }
+    Result<std::size_t> checked_dynamic(const Scene& scene, PhysicsBodyHandle body,
+                                        const char* operation) const {
+        if (auto checked = check_simulation(scene, operation); !checked) {
+            auto error = std::move(checked).error();
+            error.context.operation = operation;
+            return error;
+        }
+        auto checked = checked_body(body);
+        if (!checked) {
+            auto error = std::move(checked).error();
+            error.context.operation = operation;
+            return error;
+        }
+        const auto& record = *bodies[checked.value()].value;
+        if (record.settings.motion != BodyMotion::dynamic_body)
+            return physics_error(ErrorCode::invalid_argument,
+                                 "Physics control requires a dynamic body", operation);
+        auto entity = scene.entity_state(record.entity.handle);
+        if (!entity) {
+            auto error = std::move(entity).error();
+            error.context.operation = operation;
+            return error;
+        }
+        if (entity.value().reference != record.entity ||
+            entity.value().rigid_body != record.settings ||
+            entity.value().local_transform != record.source_pose || entity.value().parent)
+            return physics_error(ErrorCode::conflict,
+                                 "Body source changed; remove and recreate explicitly", operation);
+        return checked.value();
     }
     Result<void> event_capacity(std::size_t count) const {
         if (count > config.max_queued_events - events.size())
@@ -832,6 +888,7 @@ Result<void> PhysicsWorld::end_simulation(Scene& scene) {
     for (auto& slot : impl_->bodies)
         if (slot.value) {
             slot.value->target.reset();
+            slot.value->pending_force = {};
             slot.value->previous_pose = slot.value->source_pose;
             if (slot.value->settings.motion == BodyMotion::kinematic_body)
                 impl_->system->GetBodyInterface().SetLinearAndAngularVelocity(
@@ -863,6 +920,15 @@ Result<void> PhysicsWorld::step(Scene& scene) {
         impl_->contacts.clear();
         native_diagnostic = {};
         auto& interface = impl_->system->GetBodyInterface();
+        for (auto& slot : impl_->bodies)
+            if (slot.value && slot.value->settings.motion == BodyMotion::dynamic_body &&
+                slot.value->pending_force != math::Vec3{})
+                interface.AddForce(slot.value->native,
+                                   pack_control_vector(slot.value->pending_force));
+        if (native_diagnostic.reported) {
+            impl_->faulted = true;
+            return reported_error("physics.simulation.step");
+        }
         for (auto& slot : impl_->bodies)
             if (slot.value && slot.value->settings.motion == BodyMotion::kinematic_body) {
                 auto& record = *slot.value;
@@ -956,6 +1022,7 @@ Result<void> PhysicsWorld::step(Scene& scene) {
                 slot.value->previous_pose = slot.value->source_pose;
                 slot.value->source_pose = candidate.value().poses[index++].local;
                 slot.value->target.reset();
+                slot.value->pending_force = {};
             }
         ++impl_->completed_ticks;
         impl_->active_pairs.swap(pairs);
@@ -1015,6 +1082,7 @@ Result<void> PhysicsWorld::reset_pose(Scene& scene, PhysicsBodyHandle body, Tran
     record.source_pose = t;
     record.previous_pose = t;
     record.target.reset();
+    record.pending_force = {};
     return {};
 }
 Result<void> PhysicsWorld::set_static_pose(Scene& scene, PhysicsBodyHandle body, Transform pose) {
@@ -1053,6 +1121,136 @@ Result<void> PhysicsWorld::set_kinematic_target(const Scene& scene, PhysicsBodyH
     record.target = target;
     return {};
 }
+Result<PhysicsBodyVelocity> PhysicsWorld::velocity(const Scene& scene,
+                                                   PhysicsBodyHandle body) const {
+    constexpr auto operation = "physics.body.velocity";
+    auto index = impl_->checked_dynamic(scene, body, operation);
+    if (!index)
+        return index.error();
+    const auto& record = *impl_->bodies[index.value()].value;
+    native_diagnostic = {};
+    JPH::Vec3 linear, angular;
+    impl_->system->GetBodyInterface().GetLinearAndAngularVelocity(record.native, linear, angular);
+    if (native_diagnostic.reported) {
+        impl_->faulted = true;
+        return reported_error(operation);
+    }
+    if (!std::isfinite(linear.GetX()) || !std::isfinite(linear.GetY()) ||
+        !std::isfinite(linear.GetZ()) || !std::isfinite(angular.GetX()) ||
+        !std::isfinite(angular.GetY()) || !std::isfinite(angular.GetZ())) {
+        impl_->faulted = true;
+        return physics_error(ErrorCode::execution_failed,
+                             "Native body returned nonfinite velocity; replace this world",
+                             operation);
+    }
+    return PhysicsBodyVelocity{{linear.GetX(), linear.GetY(), linear.GetZ()},
+                               {angular.GetX(), angular.GetY(), angular.GetZ()}};
+}
+
+Result<void> PhysicsWorld::set_velocity(const Scene& scene, PhysicsBodyHandle body,
+                                        PhysicsBodyVelocity value) {
+    constexpr auto operation = "physics.body.set_velocity";
+    auto index = impl_->checked_dynamic(scene, body, operation);
+    if (!index)
+        return index.error();
+    if (auto checked =
+            validate_control_vector(value.linear, physics_maximum_linear_speed, operation);
+        !checked)
+        return checked;
+    if (auto checked =
+            validate_control_vector(value.angular, physics_maximum_angular_speed, operation);
+        !checked)
+        return checked;
+    const auto linear = pack_control_vector(value.linear);
+    const auto angular = pack_control_vector(value.angular);
+    // Reject native float rounding across the ceilings rather than silently clamp.
+    constexpr auto max_linear = static_cast<float>(physics_maximum_linear_speed);
+    constexpr auto max_angular = static_cast<float>(physics_maximum_angular_speed);
+    if (linear.LengthSq() > max_linear * max_linear ||
+        angular.LengthSq() > max_angular * max_angular)
+        return physics_error(ErrorCode::invalid_argument,
+                             "Packed velocity exceeds native speed limits", operation);
+    native_diagnostic = {};
+    impl_->system->GetBodyInterface().SetLinearAndAngularVelocity(
+        impl_->bodies[index.value()].value->native, linear, angular);
+    if (native_diagnostic.reported) {
+        impl_->faulted = true;
+        return reported_error(operation);
+    }
+    return {};
+}
+
+Result<void> PhysicsWorld::apply_force(const Scene& scene, PhysicsBodyHandle body,
+                                       math::Vec3 force) {
+    constexpr auto operation = "physics.body.apply_force";
+    auto index = impl_->checked_dynamic(scene, body, operation);
+    if (!index)
+        return index.error();
+    if (auto checked = validate_control_vector(force, physics_maximum_force, operation); !checked)
+        return checked;
+    auto& record = *impl_->bodies[index.value()].value;
+    const auto candidate = record.pending_force + force;
+    if (auto checked = validate_control_vector(candidate, physics_maximum_force, operation);
+        !checked)
+        return checked;
+    record.pending_force = candidate;
+    return {};
+}
+
+Result<void> PhysicsWorld::apply_impulse(const Scene& scene, PhysicsBodyHandle body,
+                                         math::Vec3 impulse) {
+    constexpr auto operation = "physics.body.apply_impulse";
+    auto index = impl_->checked_dynamic(scene, body, operation);
+    if (!index)
+        return index.error();
+    if (auto checked = validate_control_vector(impulse, physics_maximum_impulse, operation);
+        !checked)
+        return checked;
+    const auto& record = *impl_->bodies[index.value()].value;
+    auto& interface = impl_->system->GetBodyInterface();
+    native_diagnostic = {};
+    const auto linear = interface.GetLinearVelocity(record.native);
+    float inverse_mass = 0.0F;
+    {
+        JPH::BodyLockRead locked{impl_->system->GetBodyLockInterfaceNoLock(), record.native};
+        if (!locked.Succeeded())
+            return physics_error(ErrorCode::conflict, "Native body disappeared", operation);
+        inverse_mass = locked.GetBody().GetMotionProperties()->GetInverseMass();
+    }
+    if (native_diagnostic.reported) {
+        impl_->faulted = true;
+        return reported_error(operation);
+    }
+    const auto expected_inverse_mass = 1.0F / static_cast<float>(record.settings.mass);
+    if (!std::isfinite(linear.GetX()) || !std::isfinite(linear.GetY()) ||
+        !std::isfinite(linear.GetZ()) || !std::isfinite(inverse_mass) || inverse_mass <= 0.0F ||
+        std::abs(inverse_mass - expected_inverse_mass) > expected_inverse_mass * 0.00001F) {
+        impl_->faulted = true;
+        return physics_error(ErrorCode::execution_failed,
+                             "Native velocity or inverse mass is invalid; replace this world",
+                             operation);
+    }
+    const auto packed = pack_control_vector(impulse);
+    const auto candidate = linear + packed * inverse_mass;
+    if (!std::isfinite(candidate.GetX()) || !std::isfinite(candidate.GetY()) ||
+        !std::isfinite(candidate.GetZ())) {
+        impl_->faulted = true;
+        return physics_error(ErrorCode::execution_failed,
+                             "Native impulse calculation is nonfinite; replace this world",
+                             operation);
+    }
+    constexpr auto max_linear = static_cast<float>(physics_maximum_linear_speed);
+    if (candidate.LengthSq() > max_linear * max_linear)
+        return physics_error(ErrorCode::invalid_argument,
+                             "Impulse would exceed the native linear speed limit", operation);
+    interface.AddImpulse(record.native, packed);
+    if (native_diagnostic.reported) {
+        impl_->faulted = true;
+        return reported_error(operation);
+    }
+    return {};
+}
+
 Result<PhysicsRenderSnapshot> PhysicsWorld::render_poses(const Scene& scene, double alpha) const {
     if (auto checked = impl_->check_simulation(scene, "physics.simulation.interpolate"); !checked)
         return checked.error();
