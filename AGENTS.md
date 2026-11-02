@@ -2,6 +2,10 @@
 
 ## Scope and source control
 
+Only update [README.md](README.md) when the user explicitly requests it.
+Keep it a short, plain summary of implemented features. Record routine progress,
+verification details and scope limitations in the relevant docs and handoffs.
+
 Read the assigned roadmap increment, [architecture decisions](docs/architecture/README.md),
 the affected domain contracts below and latest relevant [handoff](docs/handoffs/)
 before changing code. Extend existing systems and work on the requested increment.
