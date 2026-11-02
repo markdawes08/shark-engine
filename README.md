@@ -11,5 +11,3 @@ Built so far:
 - Lua scripting and editor play preview.
 - Terminal tools for creating, editing and saving projects.
 - Networking and persistent storage foundations.
-
-See the [build instructions](docs/building.md) to get started.
