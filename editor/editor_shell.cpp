@@ -246,9 +246,10 @@ class Shell {
             ImGui::SetNextWindowSize({460 * scale_, 0}, ImGuiCond_Appearing);
             if (ImGui::BeginPopupModal("Unapplied authoring drafts", nullptr,
                                        ImGuiWindowFlags_AlwaysAutoResize)) {
-                ImGui::TextWrapped("Inspector or asset metadata drafts contain unapplied edits. "
-                                   "Scene Save does not apply these drafts. Keep editing to apply "
-                                   "the inspector or explicitly write metadata.");
+                ImGui::TextWrapped(
+                    "Inspector, asset metadata or script drafts contain unapplied edits. "
+                    "Scene Save does not apply these drafts. Keep editing to apply "
+                    "the inspector or explicitly write metadata or script source.");
                 if (ImGui::Button("Keep editing")) {
                     pending_draft_close_ = false;
                     exit_after_close_ = false;

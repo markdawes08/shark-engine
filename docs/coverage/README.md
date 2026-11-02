@@ -8,12 +8,10 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-Assignment 19 is in progress. Its [Lua foundation](../handoffs/19a-lua-foundation.md)
-adds private bounded VM execution. The [Script settings handoff](../handoffs/19b-script-components.md)
-records shared component authoring. The [19c handoff](../handoffs/19c-script-runtime.md)
-records the checked Core lifecycle and Lua API. Connected product execution and
-source closure remain under the [checkpoints](../roadmap/lua-plan.md); REQ-19
-remains NOT_RUN until connected acceptance.
+**19d and REQ-19 PASS under current-machine scope.** The
+[handoff](../handoffs/19d-script-preview.md) records the shared client-presentation
+preview, source editing, diagnostics and exact selected evidence. Packaged script
+execution and server/physics gameplay integration remain later work.
 
 **18e and full REQ-18 PASS under current-machine scope.** The
 [handoff](../handoffs/18e-editor-physics-preview.md#intel-physics-and-full-req-18-closure-2026-11-01)

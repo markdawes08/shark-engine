@@ -240,7 +240,7 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
                                                     "mutations": True, "imports": True,
                                                     "background_jobs": True, "scene_runs": True,
                                                     "standalone_export": False,
-                                                    "physics_preview": True})
+                                                    "physics_preview": True, "script_preview": True})
         self.assertEqual({method["name"] for method in discovery["methods"]}, METHODS)
         methods = {method["name"]: method for method in discovery["methods"]}
         component_schema = methods["schema.components"]["result"]["properties"]["components"]

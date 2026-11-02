@@ -31,6 +31,8 @@ class PhysicsPanel final {
     // Bounded owned details from the last nonempty operation, retained after
     // stop for inspection and cleared by the next successful start.
     [[nodiscard]] std::span<const std::string> contact_details() const noexcept;
+    // Bounded display-only script observations; retained across Stop.
+    [[nodiscard]] std::span<const std::string> script_details() const noexcept;
     [[nodiscard]] Result<void> start(AuthoredEntityId camera, SceneRevision expected,
                                      std::string_view target, MonotonicTime now);
     void pause(bool paused) noexcept;

@@ -13,7 +13,8 @@ Starting captures a complete prepared runtime Scene with immutable client mesh
 assets, then creates its native bodies and acquires the existing simulation
 lease. No authored Scene, history entry, dirty baseline or saved file is changed
 by play, stepping, runtime body removal or stop. There is no apply-play-changes
-operation. Lua and gameplay execution remain future assignments.
+operation. [ADR 0052](0052-editor-script-preview.md) extends this preview with
+client-presentation Lua; server gameplay remains a separate authority.
 
 Preview requires the project's declared startup Scene, an explicit Camera, current
 source revision and client content target, using the existing export

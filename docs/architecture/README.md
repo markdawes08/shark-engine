@@ -104,6 +104,7 @@ not establish file or gameplay-wire formats.
 | [0049](0049-editor-physics-preview.md) | Shared frozen physics preview, exact runtime operation reconciliation and editor controls |
 | [0050](0050-script-components.md) | Inert Script component, shared authoring, prepared compatibility and explicit execution boundaries |
 | [0051](0051-script-runtime.md) | Bounded Lua lifecycle, checked entity APIs and server/client capability separation |
+| [0052](0052-editor-script-preview.md) | Shared Lua preview, source capture and connected authoring |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

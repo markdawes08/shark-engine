@@ -4,6 +4,7 @@
 #include "authoring_wire.hpp"
 #include "shark/physics.hpp"
 #include "shark/prepared_scene.hpp"
+#include "shark/script_runtime.hpp"
 
 #include <algorithm>
 #include <charconv>
@@ -73,6 +74,36 @@ Json event_json(const PhysicsContactEvent& value) {
         {"first", participant(value.first)},
         {"second", participant(value.second)}};
 }
+Json script_logs_json(const std::vector<ScriptLogEntry>& logs) {
+    Json result = Json::array();
+    for (const auto& entry : logs) {
+        const char* phase = "load";
+        switch (entry.phase) {
+        case ScriptPhase::load:
+            phase = "load";
+            break;
+        case ScriptPhase::init:
+            phase = "init";
+            break;
+        case ScriptPhase::update:
+            phase = "update";
+            break;
+        case ScriptPhase::fixed_update:
+            phase = "fixed_update";
+            break;
+        case ScriptPhase::destroy:
+            phase = "destroy";
+            break;
+        }
+        result.push_back(
+            {{"entity_id", std::get<AuthoredEntityId>(entry.entity.identity).value().to_string()},
+             {"phase", phase},
+             {"tick", std::to_string(entry.tick)},
+             {"message", entry.message}});
+    }
+    return result;
+}
+constexpr double script_delta = 1.0 / 60.0;
 constexpr std::size_t maximum_ticks = 8;
 constexpr std::size_t maximum_events_per_tick = 128;
 } // namespace
@@ -87,6 +118,22 @@ struct AuthoringPhysics::Impl {
         std::vector<AuthoredEntityId> entities;
         std::map<AuthoredEntityId, PhysicsBodyHandle> bodies;
         std::unique_ptr<PhysicsWorld> world; // Destroy native lease before Core Scene.
+        std::unique_ptr<ScriptRuntime> scripts;
+        Runtime(StableId session_id, SceneRevision source_revision, AuthoredEntityId camera_id,
+                AssetTargetProfile target_profile, std::unique_ptr<LoadedPreparedScene> scene,
+                std::unique_ptr<PhysicsWorld> physics)
+            : session(session_id), source(source_revision), camera(camera_id),
+              target(std::move(target_profile)), loaded(std::move(scene)),
+              world(std::move(physics)) {}
+        ~Runtime() {
+            if (scripts) {
+                auto stopped = scripts->stop(loaded->scene());
+                if (!stopped)
+                    (void)scripts->close();
+                scripts.reset();
+            }
+            world.reset();
+        }
         std::uint64_t tick{0};
         std::uint64_t next_sequence{1};
         bool faulted{false};
@@ -97,6 +144,7 @@ struct AuthoringPhysics::Impl {
         Json input;
         std::uint64_t tick;
         std::vector<PhysicsContactEvent> events;
+        std::vector<ScriptLogEntry> script_logs;
         std::optional<Error> error;
         bool faulted{false};
     };
@@ -121,6 +169,7 @@ struct AuthoringPhysics::Impl {
                 {"tick", std::to_string(value.tick)},
                 {"next_sequence", std::to_string(value.sequence + 1)},
                 {"events", std::move(events)},
+                {"script_logs", script_logs_json(value.script_logs)},
                 {"error",
                  value.error ? authoring_asset_wire::error_json(*value.error) : Json(nullptr)}};
     }
@@ -143,7 +192,14 @@ struct AuthoringPhysics::Impl {
                   {"contact_pairs", 64},
                   {"events_per_operation", 1024},
                   {"ticks_per_operation", maximum_ticks},
-                  {"query_entities", 128}}},
+                  {"query_entities", 128},
+                  {"script_instances", 16},
+                  {"script_sources", script_runtime_maximum_sources},
+                  {"script_source_bytes", script_runtime_maximum_source_bytes},
+                  {"script_total_source_bytes", script_runtime_maximum_total_source_bytes},
+                  {"script_logs_per_operation", script_runtime_maximum_logs},
+                  {"script_log_bytes_per_operation", script_runtime_maximum_log_bytes},
+                  {"script_log_message_bytes", script_runtime_maximum_log_message_bytes}}},
                 {"last_start", last_start ? *last_start : Json(nullptr)},
                 {"last_operation", operation_json()}};
     }
@@ -153,8 +209,11 @@ struct AuthoringPhysics::Impl {
             reject("Physics preview session is no longer active");
         return *runtime;
     }
-    Json start(const Json& parameters, const AuthoredScene& owner, AuthoringAssets& assets,
-               bool& changed, const std::function<Result<void>()>& validate_source) {
+    Json
+    start(const Json& parameters, const AuthoredScene& owner, AuthoringAssets& assets,
+          bool& changed, const std::function<Result<void>()>& validate_source,
+          const std::function<Result<std::vector<ScriptSourceSnapshot>>(Scene&)>& capture_scripts,
+          const std::function<Result<void>()>& validate_scripts) {
         fields(parameters, {"op", "owner_scope", "expected_generation", "expected_revision",
                             "camera", "target"});
         const auto scope = id(required(parameters, "owner_scope"));
@@ -184,14 +243,9 @@ struct AuthoringPhysics::Impl {
         config.max_contact_constraints = 256;
         config.max_contact_pairs = 64;
         config.max_queued_events = 128;
-        auto next = std::make_unique<Runtime>(Runtime{take(generate_stable_id()),
-                                                      expected,
-                                                      camera,
-                                                      target,
-                                                      std::move(loaded),
-                                                      {},
-                                                      {},
-                                                      take(PhysicsWorld::create(config))});
+        auto next =
+            std::make_unique<Runtime>(take(generate_stable_id()), expected, camera, target,
+                                      std::move(loaded), take(PhysicsWorld::create(config)));
         auto& scene = next->loaded->scene();
         next->entities.reserve(take(scene.stats()).live_entities);
         take(scene.visit_entities([&](const EntityReference& entity) -> Result<void> {
@@ -209,14 +263,20 @@ struct AuthoringPhysics::Impl {
             return {};
         }));
         take(next->world->begin_simulation(scene));
+        const auto sources = take(capture_scripts(scene));
+        next->scripts = take(ScriptRuntime::create(scene, sources));
+        take(next->scripts->start(scene));
+        const auto logs = take(next->scripts->take_logs());
         take(assets.validate_export(candidate, owner));
         take(validate_source());
+        take(validate_scripts());
         Json receipt{{"success", true},
                      {"session_id", next->session.to_string()},
                      {"generation", std::to_string(generation + 1)},
                      {"source_revision", authoring_wire::revision_json(expected)},
                      {"tick", "0"},
-                     {"next_sequence", "1"}};
+                     {"next_sequence", "1"},
+                     {"script_logs", script_logs_json(logs)}};
         auto input = parameters;
         // All receipt/input allocations precede publication. A lost output is reconciled by status
         // or exact start replay.
@@ -259,6 +319,7 @@ struct AuthoringPhysics::Impl {
             parameters,
             value.tick,
             {},
+            {},
             Error{ErrorCode::execution_failed,
                   "Physics operation completion was interrupted; stop and reconcile",
                   {.operation = "authoring.physics"}}};
@@ -267,6 +328,7 @@ struct AuthoringPhysics::Impl {
         ++value.next_sequence;
         changed = true;
         bool native_changed = false;
+        bool scripts_changed = false;
         try {
             if (removing) {
                 const auto found = value.bodies.find(*entity);
@@ -280,6 +342,10 @@ struct AuthoringPhysics::Impl {
                                               events.end());
             } else {
                 for (std::size_t tick = 0; tick < ticks; ++tick) {
+                    scripts_changed = true;
+                    take(value.scripts->update(value.loaded->scene(), script_delta));
+                    take(value.scripts->fixed_update(value.loaded->scene(), value.tick,
+                                                     script_delta));
                     take(value.world->step(value.loaded->scene()));
                     native_changed = true;
                     ++value.tick;
@@ -294,10 +360,17 @@ struct AuthoringPhysics::Impl {
             last_operation->error = std::move(failure.error);
             const auto state = value.world->stats();
             value.faulted =
-                native_changed || !state || state.value().faulted ||
+                native_changed || scripts_changed || !state || state.value().faulted ||
                 (!removing && last_operation->error->code == ErrorCode::execution_failed);
         } catch (...) {
             value.faulted = true;
+        }
+        auto logs = value.scripts->take_logs();
+        if (!logs) {
+            value.faulted = true;
+            last_operation->error = std::move(logs).error();
+        } else {
+            last_operation->script_logs = std::move(logs).value();
         }
         last_operation->faulted = value.faulted;
         return operation_json();
@@ -339,9 +412,11 @@ bool AuthoringPhysics::active() const noexcept {
 bool AuthoringPhysics::replays_start(const Json& parameters) const {
     return impl_->last_start_input && *impl_->last_start_input == parameters;
 }
-Result<Json> AuthoringPhysics::dispatch(const Json& parameters, const AuthoredScene& owner,
-                                        AuthoringAssets& assets, bool& changed,
-                                        const std::function<Result<void>()>& validate_source) {
+Result<Json> AuthoringPhysics::dispatch(
+    const Json& parameters, const AuthoredScene& owner, AuthoringAssets& assets, bool& changed,
+    const std::function<Result<void>()>& validate_source,
+    const std::function<Result<std::vector<ScriptSourceSnapshot>>(Scene&)>& capture_scripts,
+    const std::function<Result<void>()>& validate_scripts) {
     try {
         if (!parameters.is_object() || !parameters.contains("op") ||
             !parameters.at("op").is_string())
@@ -352,7 +427,8 @@ Result<Json> AuthoringPhysics::dispatch(const Json& parameters, const AuthoredSc
             return impl_->status(owner);
         }
         if (op == "start")
-            return impl_->start(parameters, owner, assets, changed, validate_source);
+            return impl_->start(parameters, owner, assets, changed, validate_source,
+                                capture_scripts, validate_scripts);
         if (op == "step" || op == "remove")
             return impl_->execute(parameters, op == "remove", changed);
         if (op == "query")
@@ -364,13 +440,36 @@ Result<Json> AuthoringPhysics::dispatch(const Json& parameters, const AuthoredSc
                 impl_->last_stop->at("session_id") == session.to_string())
                 return *impl_->last_stop;
             auto& current = impl_->current(parameters);
-            Json receipt{{"success", true},
+            Json receipt{{"success", false},
                          {"active", false},
                          {"session_id", current.session.to_string()},
-                         {"tick", std::to_string(current.tick)}};
+                         {"tick", std::to_string(current.tick)},
+                         {"script_logs", Json::array()},
+                         {"script_errors", Json::array()},
+                         {"script_discarded", 0}};
             impl_->last_stop.emplace(std::move(receipt));
-            impl_->runtime.reset();
             changed = true;
+            try {
+                auto stopped = current.scripts->stop(current.loaded->scene());
+                if (!stopped) {
+                    auto discarded = take(current.scripts->close());
+                    (*impl_->last_stop)["script_discarded"] = discarded;
+                    (*impl_->last_stop)["script_errors"].push_back(
+                        authoring_asset_wire::error_json(stopped.error()));
+                } else {
+                    (*impl_->last_stop)["script_discarded"] = stopped.value().discarded;
+                    for (const auto& error : stopped.value().errors)
+                        (*impl_->last_stop)["script_errors"].push_back(
+                            authoring_asset_wire::error_json(error));
+                }
+                (*impl_->last_stop)["script_logs"] =
+                    script_logs_json(take(current.scripts->take_logs()));
+                (*impl_->last_stop)["success"] = true;
+                impl_->runtime.reset();
+            } catch (...) {
+                impl_->runtime.reset();
+                throw;
+            }
             return *impl_->last_stop;
         }
         reject("Unknown scene.physics operation", ErrorCode::invalid_argument);
@@ -470,17 +569,36 @@ Json AuthoringPhysics::method_schema() {
                    {"limit", {{"type", "integer"}, {"minimum", 1}, {"maximum", 128}}}},
                   {"session_id", "expected_tick"}));
     variants.push_back(operation("stop", {{"session_id", uuid}}, {"session_id"}));
-    return {{"name", "scene.physics"},
-            {"execution_context", "cpu_owner_thread"},
-            {"requires_open_project", true},
-            {"requires_project_root", false},
-            {"params", {{"oneOf", std::move(variants)}}},
-            {"result", {{"type", "object"}}},
-            {"example",
-             {{"jsonrpc", "2.0"},
-              {"protocol_version", 1},
-              {"id", "example"},
-              {"method", "scene.physics"},
-              {"params", {{"op", "status"}}}}}};
+    return {
+        {"name", "scene.physics"},
+        {"execution_context", "cpu_owner_thread"},
+        {"requires_open_project", true},
+        {"requires_project_root", false},
+        {"params", {{"oneOf", std::move(variants)}}},
+        {"result",
+         {{"type", "object"},
+          {"properties",
+           {{"script_logs",
+             {{"type", "array"},
+              {"maxItems", script_runtime_maximum_logs},
+              {"items",
+               object({{"entity_id", uuid},
+                       {"phase", {{"enum", {"load", "init", "update", "fixed_update", "destroy"}}}},
+                       {"tick", decimal},
+                       {"message",
+                        {{"type", "string"},
+                         {"maximum_utf8_bytes", script_runtime_maximum_log_message_bytes}}}},
+                      {"entity_id", "phase", "tick", "message"})}}},
+            {"script_errors", {{"type", "array"}, {"items", {{"type", "object"}}}}},
+            {"script_discarded",
+             {{"type", "integer"},
+              {"minimum", 0},
+              {"maximum", script_runtime_maximum_scripts}}}}}}},
+        {"example",
+         {{"jsonrpc", "2.0"},
+          {"protocol_version", 1},
+          {"id", "example"},
+          {"method", "scene.physics"},
+          {"params", {{"op", "status"}}}}}};
 }
 } // namespace shark::tools

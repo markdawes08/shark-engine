@@ -16,6 +16,7 @@
 #include <initializer_list>
 #include <map>
 #include <optional>
+#include <set>
 #include <thread>
 #include <utility>
 
@@ -397,6 +398,7 @@ Json discovery(bool export_available, bool capture_available) {
               {"background_jobs", true},
               {"scene_runs", true},
               {"physics_preview", true},
+              {"script_preview", true},
               {"standalone_export", export_available}}},
             {"methods", std::move(methods)},
             {"components", components}};
@@ -654,13 +656,66 @@ struct AuthoringProtocol::Impl {
                     return std::move(failure.error);
                 }
             };
+            std::vector<std::pair<ProjectPath, FileRevision>> script_revisions;
+            const auto capture_scripts =
+                [&](Scene& scene) -> Result<std::vector<ScriptSourceSnapshot>> {
+                try {
+                    std::set<std::string> paths;
+                    take(
+                        scene.visit_entities([&](const EntityReference& reference) -> Result<void> {
+                            auto state = scene.entity_state(reference.handle);
+                            if (!state)
+                                return state.error();
+                            if (state.value().script && state.value().script->enabled)
+                                paths.insert(state.value().script->source);
+                            if (paths.size() > script_runtime_maximum_sources)
+                                return Error{ErrorCode::invalid_argument,
+                                             "Too many distinct script sources",
+                                             {.operation = "authoring.physics.scripts"}};
+                            return {};
+                        }));
+                    std::vector<ScriptSourceSnapshot> captured;
+                    captured.reserve(paths.size());
+                    script_revisions.reserve(paths.size());
+                    std::size_t total = 0;
+                    for (const auto& value : paths) {
+                        auto path = take(ProjectPath::parse(value));
+                        check_text_path(current, path);
+                        auto source = take(current.files->read_text(path));
+                        if (source.text.size() > script_runtime_maximum_total_source_bytes - total)
+                            fail(-32000, ErrorCode::invalid_argument,
+                                 "Script source limit exceeded", value);
+                        total += source.text.size();
+                        captured.push_back({value, std::move(source.text)});
+                        script_revisions.emplace_back(std::move(path), std::move(source.revision));
+                    }
+                    return captured;
+                } catch (ProtocolFailure& failure) {
+                    return std::move(failure.error);
+                }
+            };
+            const auto validate_scripts = [&]() -> Result<void> {
+                try {
+                    for (const auto& [path, revision] : script_revisions) {
+                        check_text_path(current, path);
+                        auto observed = take(current.files->read_text(path));
+                        if (observed.revision != revision)
+                            fail(-32000, ErrorCode::conflict,
+                                 "Script source changed during preview start", path.text());
+                    }
+                    return {};
+                } catch (ProtocolFailure& failure) {
+                    return std::move(failure.error);
+                }
+            };
             if (parameters.is_object() && parameters.value("op", Json{}) == "start" &&
                 (!current.physics || !current.physics->replays_start(parameters)))
                 take(validate_source());
             if (!current.physics)
                 current.physics = std::make_unique<AuthoringPhysics>();
             auto reply = current.physics->dispatch(parameters, *current.owner, assets(current),
-                                                   outcome_may_have_changed, validate_source);
+                                                   outcome_may_have_changed, validate_source,
+                                                   capture_scripts, validate_scripts);
             if (!reply) {
                 const auto code = reply.error().code;
                 const bool malformed =
@@ -672,7 +727,8 @@ struct AuthoringProtocol::Impl {
                 result.result.contains("success") && !result.result.at("success").get<bool>();
             return result;
         }
-        if ((method == "scene.mutate" || method == "scene.preview" || method == "scene.reload") &&
+        if ((method == "scene.mutate" || method == "scene.preview" || method == "scene.reload" ||
+             method == "text.write") &&
             session && session->physics && session->physics->active())
             fail(-32000, ErrorCode::conflict,
                  "Stop the frozen physics preview before editing or reloading source");

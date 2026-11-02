@@ -48,8 +48,16 @@ Error decode_error(const Json& value) {
         ErrorCode::execution_failed};
     const auto code = value.at("code").get<std::string>();
     for (const auto item : codes)
-        if (error_code_name(item) == code)
-            return {item, value.at("message").get<std::string>(), {.operation = "editor.physics"}};
+        if (error_code_name(item) == code) {
+            const auto& context = value.at("context");
+            return {item,
+                    value.at("message").get<std::string>(),
+                    {context.value("operation", std::string{}),
+                     context.value("request_id", std::string{}),
+                     context.value("path", std::string{}),
+                     context.value("entity_id", std::string{}),
+                     context.value("asset_id", std::string{})}};
+        }
     fail("Unknown physics error code");
 }
 Json revision_json(SceneRevision value) {
@@ -70,6 +78,7 @@ struct PhysicsPanel::Impl {
     std::optional<std::string> pending;
     std::string pending_op;
     std::vector<std::string> contacts;
+    std::vector<std::string> scripts;
 
     explicit Impl(ProjectSession& value) : session(value) {}
     Json call(const Json& parameters) {
@@ -79,16 +88,72 @@ struct PhysicsPanel::Impl {
             auto error = envelope.at("error").at("data");
             error["message"] = envelope.at("error").at("message");
             auto decoded = decode_error(error);
-            const bool certain = decoded.code != ErrorCode::execution_failed &&
-                                 decoded.code != ErrorCode::io_failure;
+            const bool script_prepublication = parameters.value("op", std::string{}) == "start" &&
+                                               (decoded.context.operation == "script.create" ||
+                                                decoded.context.operation == "script.start");
+            const bool certain =
+                script_prepublication || (decoded.code != ErrorCode::execution_failed &&
+                                          decoded.code != ErrorCode::io_failure);
             throw Failure{std::move(decoded), certain};
         }
         return envelope.at("result");
     }
+    void observe_scripts(const Json& value, std::string_view operation) noexcept {
+        // Diagnostics are observational and must never change a known receipt.
+        try {
+            if (operation == "start")
+                scripts.clear();
+            const auto append = [&](std::string text) {
+                constexpr std::size_t limit = 256;
+                if (scripts.size() == limit)
+                    scripts.erase(scripts.begin());
+                scripts.push_back(std::move(text));
+            };
+            if (value.contains("script_logs")) {
+                const auto& logs = value.at("script_logs");
+                if (!logs.is_array() || logs.size() > 256)
+                    return;
+                for (const auto& log : logs) {
+                    const auto phase = log.at("phase").get<std::string>();
+                    const auto tick = log.at("tick").get<std::string>();
+                    const auto entity = log.at("entity_id").get<std::string>();
+                    const auto message = log.at("message").get<std::string>();
+                    if (phase.size() > 32 || tick.size() > 20 || entity.size() > 36 ||
+                        message.size() > 256)
+                        continue;
+                    append("Tick " + tick + " " + phase + " / " + entity + ": " + message);
+                }
+            }
+            if (value.contains("script_errors")) {
+                const auto& errors = value.at("script_errors");
+                if (errors.is_array() && errors.size() <= 64)
+                    for (const auto& error : errors) {
+                        const auto decoded = decode_error(error);
+                        append("Script teardown: " + decoded.message + " " + decoded.context.path +
+                               " " + decoded.context.entity_id);
+                    }
+            }
+            if (value.value("script_discarded", std::size_t{0}) > 0)
+                append("Script teardown discarded " +
+                       std::to_string(value.at("script_discarded").get<std::size_t>()) +
+                       " callbacks.");
+        } catch (...) {
+            // Preserve the original play/stop result even on display allocation failure.
+        }
+    }
     void observe(const Json& value, std::string_view operation) {
+        observe_scripts(value, operation);
         if (operation == "stop") {
+            const bool succeeded = value.at("success").get<bool>();
             state = {};
             scheduler.reset();
+            pending.reset();
+            if (!succeeded)
+                throw Failure{{ErrorCode::execution_failed,
+                               "Preview stopped, but script teardown did not complete; inspect its "
+                               "retained details",
+                               {.operation = "editor.physics"}},
+                              true};
             return;
         }
         const auto id = take(StableId::parse(value.at("session_id").get<std::string>()));
@@ -192,6 +257,9 @@ const PhysicsPreviewState& PhysicsPanel::state() const noexcept {
 std::span<const std::string> PhysicsPanel::contact_details() const noexcept {
     return impl_->contacts;
 }
+std::span<const std::string> PhysicsPanel::script_details() const noexcept {
+    return impl_->scripts;
+}
 Result<void> PhysicsPanel::start(AuthoredEntityId camera, SceneRevision expected,
                                  std::string_view target, MonotonicTime now) {
     auto& value = *impl_;
@@ -230,7 +298,12 @@ Result<void> PhysicsPanel::poll(MonotonicTime now, bool blocked) {
         }
         if (!value.state.active)
             return;
-        if (!value.scheduler || value.state.uncertain || value.state.faulted)
+        // A known fault already reached the caller with its original context.
+        // Stay quiescent until Stop instead of replacing that diagnostic on
+        // every subsequent display frame.
+        if (value.state.faulted)
+            return;
+        if (!value.scheduler || value.state.uncertain)
             fail("Reconcile or stop the physics preview before continuing");
         TickCallback callback = [&](std::uint64_t tick) {
             return boundary([&] {

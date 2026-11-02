@@ -101,9 +101,9 @@ parent directories or silently overwrite external changes.
 Paths must start with exact lowercase `scripts/` and end with exact lowercase
 `.lua`; nested directories are allowed. Content is at most 32,768 UTF-8 bytes,
 permits empty text and line breaks, and rejects NUL or malformed UTF-8. Reads and
-writes preserve exact bytes, including line endings. These are raw source-file
-operations, not Lua parsing, validation, execution or a claim of an implemented
-Lua API. The scripting subsystem remains assignment 19.
+writes preserve exact bytes, including line endings. These operations read and publish raw source; they do not parse or execute Lua.
+The shared [script preview](physics-preview.md) separately captures these bytes
+under the retained project owner and rechecks exact revisions before starting.
 
 This path domain does not infer document kind from extension. A caller that owns
 an active project must also exclude that project file and every declared scene

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "authoring_assets.hpp"
+#include "shark/script_runtime.hpp"
 #include "shark/tools/authoring_protocol.hpp"
 
 #include <functional>
@@ -16,9 +17,11 @@ class AuthoringPhysics final {
     AuthoringPhysics& operator=(const AuthoringPhysics&) = delete;
     [[nodiscard]] bool active() const noexcept;
     [[nodiscard]] bool replays_start(const nlohmann::json& parameters) const;
-    [[nodiscard]] Result<nlohmann::json>
-    dispatch(const nlohmann::json& parameters, const AuthoredScene& owner, AuthoringAssets& assets,
-             bool& outcome_may_have_changed, const std::function<Result<void>()>& validate_source);
+    [[nodiscard]] Result<nlohmann::json> dispatch(
+        const nlohmann::json& parameters, const AuthoredScene& owner, AuthoringAssets& assets,
+        bool& outcome_may_have_changed, const std::function<Result<void>()>& validate_source,
+        const std::function<Result<std::vector<ScriptSourceSnapshot>>(Scene&)>& capture_scripts,
+        const std::function<Result<void>()>& validate_scripts);
     [[nodiscard]] Result<RenderScene> snapshot(const AuthoringViewportRequest& request,
                                                const AuthoredScene& owner) const;
     [[nodiscard]] static nlohmann::json method_schema();

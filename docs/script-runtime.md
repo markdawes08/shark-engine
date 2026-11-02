@@ -7,7 +7,9 @@ Core does no file I/O: the caller must establish ProjectFiles containment,
 typed-path exclusion and source freshness before constructing snapshots. There
 is no player script-upload endpoint or new scheduler. Runtime/export still
 reject Script-bearing scenes until cooked source closure and product integration
-are implemented. The terminal `scene.run` remains a static integrity runner.
+are implemented. The terminal `scene.run` remains a static integrity runner. The shared
+[preview](physics-preview.md) runs client-presentation scripts for Editor and
+terminal authors from captured project source.
 
 ## Lifecycle and limits
 

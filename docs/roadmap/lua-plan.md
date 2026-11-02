@@ -1,7 +1,7 @@
 # Assignment 19: Lua scripting checkpoints
 
-Base: `16a0f63`, initially clean `main`. REQ-19 remains open until the
-connected assignment acceptance is complete. These checkpoints follow the
+Base: `16a0f63`, initially clean `main`. REQ-19 passes under current-machine
+scope; see the [19d handoff](../handoffs/19d-script-preview.md). These checkpoints follow the
 [testing policy](../testing-policy.md), not repeated full-project matrices.
 
 | Checkpoint | Scope |
@@ -13,9 +13,9 @@ connected assignment acceptance is complete. These checkpoints follow the
 
 19b records shared Script settings, prepared v4 compatibility and explicit
 Runtime/export rejection. The [19c handoff](../handoffs/19c-script-runtime.md)
-records the Core lifecycle and checked server/client API. Source acquisition,
-cooked closure and connected product execution remain 19d or later; full REQ-19
-remains NOT_RUN.
+records the Core lifecycle and checked server/client API. The [19d handoff](../handoffs/19d-script-preview.md) records scoped source
+capture, connected preview and recovery. Cooked closure, packaged Runtime and
+real server gameplay integration remain later work.
 
 Physics-specific scripting, queries and contact callbacks belong to assignment 20.
 No player connection gains script upload or arbitrary server execution authority;

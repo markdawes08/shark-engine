@@ -491,8 +491,8 @@
       ],
       "planned_fixture": "FeatureWorld/ScriptLifecycle, FeatureWorld/CoreLuaApi, LuaSyntaxRuntimeErrors, LuaRunawayRecovery and LuaStaleHandles fixtures.",
       "verification": {
-        "status": "NOT_RUN",
-        "reason": "19a adds a private bounded Lua VM; 19b adds shared inert Script component authoring. Lifecycle, gameplay APIs, script execution and connected acceptance remain open. See docs/handoffs/19b-script-components.md and docs/roadmap/lua-plan.md."
+        "status": "PASS",
+        "reason": "19a-19d implement and qualify the private bounded Lua VM, shared Script settings, checked lifecycle/API and connected client-presentation preview. docs/handoffs/19d-script-preview.md records public terminal source/edit/replay/recovery, native Editor source editing and runaway recovery, Windows Debug and WSL sanitizer coverage, and reuse of the unchanged 19c Core and FeatureWorld results. The native UI check used validation off and does not claim GPU qualification. Standalone cooked execution, real server integration and physics Lua bindings remain separate later work."
       }
     },
     {

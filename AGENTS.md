@@ -48,20 +48,22 @@ serially and preserve existing results. Items in the [UI backlog](docs/backlog.m
 remain NOT_RUN until their required evidence passes; resumption alone does not
 qualify untested behavior or close full UI acceptance.
 
-**Current handoff: [19c, checked Script runtime](docs/handoffs/19c-script-runtime.md).**
-Follow the [Lua checkpoints](docs/roadmap/lua-plan.md), [private VM contract](docs/lua-vm.md),
-[Script contract](docs/script-components.md), [runtime contract](docs/script-runtime.md)
-and [ADR 0051](docs/architecture/0051-script-runtime.md). Script settings use the
-shared authoring owner. Core provides a bounded creating-thread lifecycle with
-an exclusive weak Scene lease, checked references and separate server gameplay
-and client presentation profiles. Only server fixed updates can mutate self Name;
-existing Scene/physics write leases still apply. Hosts supply trusted source
-snapshots and scheduler ticks. Preserve reverse teardown, stale-generation and
-pending-mutation fences, and explicit fault/no-rollback outcomes. Region scope
-alone does not grant authority. Lua instruction limits do not bound native library
-work. Runtime and export continue rejecting Script-bearing scenes until actual
-source/cooked closure and integrated execution exist. The next checkpoint is 19d:
-source closure and connected human/terminal execution and acceptance.
+**Current handoff: [19d, connected Lua preview](docs/handoffs/19d-script-preview.md).**
+REQ-19 passes under current-machine scope; follow the [Lua checkpoints](docs/roadmap/lua-plan.md),
+[Script contract](docs/script-components.md), [runtime contract](docs/script-runtime.md),
+[preview contract](docs/physics-preview.md) and [ADR 0052](docs/architecture/0052-editor-script-preview.md).
+The retained project owner captures bounded script source with typed-path and exact
+revision checks and runs client-presentation scripts in the same frozen physics
+preview for Editor and terminal. Script text publication and Scene edits reject
+while play is active. Preserve exact start/operation/stop replay, bounded logs,
+partial-tick faults, original contextual diagnostics and reverse teardown. The
+Editor Scripts tab uses exact text tokens, separate source drafts and explicit
+write/reconciliation. Core's ScriptRuntime retains exclusive weak Scene ownership,
+checked generations, role/phase authority and existing Scene/physics write leases.
+Region metadata alone does not grant authority. Lua instruction limits do not bound
+native library work. Runtime and export still reject Script-bearing scenes until
+actual cooked source closure and integrated execution exist. The next assignment
+in the manifest order is 20: physics queries, contacts and Lua bindings.
 The completed physics work is recorded in [18e](docs/handoffs/18e-editor-physics-preview.md).
 Follow [ADR 0045](docs/architecture/0045-physics-foundation.md) and the
 [physics-world contract](docs/physics-world.md): Jolt is a private locked Core
@@ -162,7 +164,7 @@ close resolution. Bounded console logging cannot alter operation outcomes.
 Project status observation failure marks cached state unknown while preserving
 the original reply; scoped cleanup stays available. Actual UI/terminal parity
 retains 16e; actual connected transform acceptance remains 17d's deferred gate.
-Full REQ-16 and REQ-17 remain NOT_RUN; current assignment is 19.
+Full REQ-16 and REQ-17 remain NOT_RUN; the next assignment is 20.
 
 15a-15d supply the CPU `SharkAuthor` host, retained project ownership, shared
 editing/persistence/imports, static deterministic runs and configured export.

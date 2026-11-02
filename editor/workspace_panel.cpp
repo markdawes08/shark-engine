@@ -6,6 +6,7 @@
 #include "inspector_widget.hpp"
 #include "physics_panel.hpp"
 #include "scene_panel.hpp"
+#include "script_panel.hpp"
 
 #include <algorithm>
 #include <array>
@@ -29,6 +30,8 @@ void error_text(const Error& error) {
     ImGui::PopStyleColor();
     if (!error.context.path.empty())
         ImGui::TextWrapped("%s", error.context.path.c_str());
+    if (!error.context.entity_id.empty())
+        ImGui::TextWrapped("Entity: %s", error.context.entity_id.c_str());
 }
 bool selectable_literal(const std::string& text, bool selected) {
     const auto position = ImGui::GetCursorScreenPos();
@@ -155,9 +158,13 @@ struct WorkspacePanel::Impl {
     AssetWidget asset_widget;
     ConsoleWidget console;
     PhysicsPanel physics;
+    ScriptPanel script;
     SteadyMonotonicClock clock;
     ShaderArtifact vertex;
     ShaderArtifact pixel;
+    std::array<char, 4097> script_path{};
+    std::array<char, 32769> script_text{};
+    std::optional<Error> script_error;
     std::array<char, 257> create_name{};
     std::array<char, 65> target{};
     std::array<char, 16385> sidecars{};
@@ -188,7 +195,8 @@ struct WorkspacePanel::Impl {
          EditorInputTrace* trace)
         : session(owner), input_trace(trace), hierarchy(owner), gizmo(hierarchy),
           inspector(hierarchy), inspector_widget(inspector, hierarchy), assets(owner),
-          asset_widget(assets, owner), physics(owner), vertex(vs), pixel(ps) {
+          asset_widget(assets, owner), physics(owner), script(owner), vertex(vs), pixel(ps) {
+        text_buffer(script_path, "scripts/main.lua");
         text_buffer(create_name, "Entity");
         text_buffer(target, "windows-client");
         refresh();
@@ -785,6 +793,82 @@ struct WorkspacePanel::Impl {
             ImGui::EndPopup();
         }
     }
+    void draw_script(bool blocked) {
+        ImGui::TextUnformatted("SCRIPT SOURCE");
+        ImGui::TextWrapped("Source is written separately from the scene and its undo history. "
+                           "The scripts directory must already exist.");
+        ImGui::BeginDisabled(blocked);
+        ImGui::SetNextItemWidth(-1);
+        ImGui::InputText("##script-path", script_path.data(), script_path.size());
+        ImGui::BeginDisabled(script.has_changes());
+        if (ImGui::Button("Open script")) {
+            const auto opened = script.open(script_path.data());
+            if (opened) {
+                text_buffer(script_text, script.text());
+                script_error.reset();
+            } else
+                script_error = opened.error();
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("New script")) {
+            const auto created = script.create(script_path.data());
+            if (created) {
+                text_buffer(script_text, script.text());
+                script_error.reset();
+            } else
+                script_error = created.error();
+        }
+        ImGui::EndDisabled();
+        if (script.loaded()) {
+            ImGui::TextWrapped("Editing: %s%s", script.path().c_str(),
+                               script.has_changes() ? " (draft)" : "");
+            ImGui::BeginDisabled(script.uncertain());
+            if (ImGui::InputTextMultiline("##script-source", script_text.data(), script_text.size(),
+                                          {-1, ImGui::GetTextLineHeightWithSpacing() * 14})) {
+                const auto edited = script.edit(script_text.data());
+                if (!edited)
+                    script_error = edited.error();
+            }
+            ImGui::EndDisabled();
+            ImGui::BeginDisabled(!script.has_changes() || script.uncertain() ||
+                                 physics.state().active || physics.state().uncertain);
+            if (ImGui::Button("Write script")) {
+                const auto written = script.write();
+                if (!written)
+                    script_error = written.error();
+                else
+                    script_error.reset();
+            }
+            ImGui::EndDisabled();
+            ImGui::SameLine();
+            if (ImGui::Button("Discard script draft")) {
+                const auto discarded = script.discard();
+                if (!discarded)
+                    script_error = discarded.error();
+                else {
+                    script_text.fill('\0');
+                    script_error.reset();
+                }
+            }
+            if (script.uncertain()) {
+                ImGui::SameLine();
+                if (ImGui::Button("Reconcile script write")) {
+                    const auto observed = script.reconcile();
+                    if (!observed)
+                        script_error = observed.error();
+                    else
+                        script_error.reset();
+                }
+            }
+            if (physics.state().active)
+                ImGui::TextDisabled("Stop preview before writing source.");
+            if (!script.notice().empty())
+                ImGui::TextWrapped("%s", script.notice().c_str());
+        }
+        ImGui::EndDisabled();
+        if (script_error)
+            error_text(*script_error);
+    }
     void draw_physics(const GraphicsWindowFrame& frame, bool blocked) {
         const auto now = clock.now();
         const bool paused_by_window = blocked || deleting || !frame.state.focused ||
@@ -815,8 +899,8 @@ struct WorkspacePanel::Impl {
         ImGui::BeginDisabled(blocked);
         ImGui::BeginDisabled(physics.state().active || physics.state().uncertain || !camera ||
                              !session.state_current() || inspector_widget.has_changes() ||
-                             asset_widget.has_changes() || gizmo.has_changes() ||
-                             hierarchy.needs_reconciliation());
+                             asset_widget.has_changes() || script.has_changes() ||
+                             gizmo.has_changes() || hierarchy.needs_reconciliation());
         if (ImGui::Button("Play physics")) {
             cancel_gizmo();
             operation(physics.start(camera->id, camera->revision, target.data(), now), true);
@@ -860,6 +944,15 @@ struct WorkspacePanel::Impl {
                               ImGuiChildFlags_Borders);
             for (const auto& contact : physics.contact_details())
                 ImGui::TextWrapped("%s", contact.c_str());
+            ImGui::EndChild();
+        }
+        if (!physics.script_details().empty() && ImGui::CollapsingHeader("Script output")) {
+            ImGui::TextDisabled("Bounded preview output; retained after stop");
+            ImGui::BeginChild("Script output details",
+                              {0, ImGui::GetTextLineHeightWithSpacing() * 5},
+                              ImGuiChildFlags_Borders);
+            for (const auto& message : physics.script_details())
+                ImGui::TextWrapped("%s", message.c_str());
             ImGui::EndChild();
         }
         if (physics_error)
@@ -915,6 +1008,10 @@ void WorkspacePanel::draw(const GraphicsWindowFrame& frame, bool blocked) {
             ImGui::EndChild();
             ImGui::EndTabItem();
         }
+        if (ImGui::BeginTabItem("Scripts")) {
+            value.draw_script(blocked);
+            ImGui::EndTabItem();
+        }
         if (ImGui::BeginTabItem("Console")) {
             value.console.draw(value.session);
             ImGui::EndTabItem();
@@ -934,7 +1031,7 @@ void WorkspacePanel::cancel_confirmation() noexcept {
 }
 bool WorkspacePanel::has_unapplied_drafts() const noexcept {
     return impl_->gizmo.has_changes() || impl_->inspector_widget.has_changes() ||
-           impl_->asset_widget.has_changes();
+           impl_->asset_widget.has_changes() || impl_->script.has_changes();
 }
 Result<void> WorkspacePanel::discard_drafts() {
     impl_->cancel_gizmo();
@@ -942,7 +1039,7 @@ Result<void> WorkspacePanel::discard_drafts() {
     if (!result)
         return result;
     impl_->inspector_widget.discard_draft();
-    return {};
+    return impl_->script.discard();
 }
 const client::SceneViewportRequest* WorkspacePanel::viewport() const noexcept {
     return impl_->image_drawn && impl_->view ? &*impl_->view : nullptr;

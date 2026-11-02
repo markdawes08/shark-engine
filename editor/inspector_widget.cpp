@@ -323,8 +323,8 @@ struct InspectorWidget::Impl {
                     ImGui::TextWrapped("Supply an existing asset UUID. This reference does not "
                                        "import or resolve content.");
                 if (present && schema.id == ComponentSchemaId::script)
-                    ImGui::TextWrapped(
-                        "Project script reference only; execution is not yet available.");
+                    ImGui::TextWrapped("Project script reference. Play runs the saved source on a "
+                                       "frozen preview copy.");
             }
             ImGui::PopID();
         }

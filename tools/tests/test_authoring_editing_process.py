@@ -364,6 +364,164 @@ class AuthoringEditingProcessTests(unittest.TestCase):
             self.assertEqual(restored["transform"]["local"], pose)
             client.finish()
 
+    def test_script_preview_lifecycle_replay_and_source_isolation(self):
+        path = "scripts/preview.lua"
+        first_source = """shark.log.info('loaded')
+function on_init() shark.log.info('init:' .. shark.entity.name()) end
+function on_update() shark.log.info('update') end
+function on_fixed_update() shark.log.info('fixed:' .. shark.time.tick()) end
+function on_destroy() shark.log.info('destroy') end
+"""
+        replacement_source = "function on_init() shark.log.info('replacement') end\n"
+        with self.client() as client:
+            self.assertTrue(client.result("protocol.discover")["capabilities"]["script_preview"])
+            created = client.result("text.write", {"path": path, "text": first_source,
+                                                    "expected_revision": None})
+            stale = client.result("text.read", {"path": path})["revision"]
+            updated = client.result("text.write", {"path": path, "text": first_source + "-- first\n",
+                                                    "expected_revision": created["revision"]})
+            self.rpc_error(client.call("text.write", {"path": path, "text": "stale",
+                                                       "expected_revision": stale}), "conflict")
+            self.edit(client, {"type": "create_entity", "entity_id": ENTITY, "name": "Script actor",
+                               "script": {"source": path, "enabled": True}})
+            self.save(client)
+            saved_bytes = self.scene_path.read_bytes()
+            self.edit(client, {"type": "set_name", "entity_id": ENTITY, "name": "Unsaved actor"})
+            source = client.result("project.status")
+            self.assertTrue(source["dirty"])
+            history = client.result("scene.history")
+            mutations = client.result("scene.mutation_status")
+            observed = client.result("scene.physics", {"op": "status"})
+            start = {"op": "start", "owner_scope": observed["owner_scope"],
+                     "expected_generation": observed["generation"],
+                     "expected_revision": source["revision"], "camera": pipes.ENTITIES[0],
+                     "target": {"id": "script-process", "side": "client"}}
+            started = client.result("scene.physics", start)
+            self.assertTrue(started["success"], started)
+            self.assertEqual(client.result("scene.physics", start), started)
+            self.assertEqual([(row["entity_id"], row["phase"], row["message"])
+                              for row in started["script_logs"]],
+                             [(ENTITY, "load", "loaded"), (ENTITY, "init", "init:Unsaved actor")])
+            session = started["session_id"]
+            # Active play blocks source publication without consuming the token.
+            self.rpc_error(client.call("text.write", {"path": path, "text": replacement_source,
+                                                       "expected_revision": updated["revision"]}), "conflict")
+            step = {"op": "step", "session_id": session, "sequence": "1",
+                    "expected_tick": "0", "ticks": 2}
+            stepped = client.result("scene.physics", step)
+            self.assertTrue(stepped["success"], stepped)
+            self.assertEqual(stepped["tick"], "2")
+            self.assertEqual([(row["phase"], row["message"]) for row in stepped["script_logs"]],
+                             [("update", "update"), ("fixed_update", "fixed:0"),
+                              ("update", "update"), ("fixed_update", "fixed:1")])
+            self.assertEqual(client.result("scene.physics", step), stepped)
+            self.assertEqual(client.result("scene.physics", {"op": "status"})["last_operation"], stepped)
+            stop = {"op": "stop", "session_id": session}
+            stopped = client.result("scene.physics", stop)
+            self.assertEqual([row["message"] for row in stopped["script_logs"]], ["destroy"])
+            self.assertEqual(stopped["script_errors"], [])
+            self.assertEqual(stopped["script_discarded"], 0)
+            self.assertEqual(client.result("scene.physics", stop), stopped)
+            self.assertEqual(client.result("project.status"), source)
+            self.assertEqual(client.result("scene.history"), history)
+            self.assertEqual(client.result("scene.mutation_status"), mutations)
+            self.assertEqual(self.scene_path.read_bytes(), saved_bytes)
+            client.result("text.write", {"path": path, "text": replacement_source,
+                                         "expected_revision": updated["revision"]})
+            observed = client.result("scene.physics", {"op": "status"})
+            restarted = client.result("scene.physics", {**start, "expected_generation": observed["generation"]})
+            self.assertEqual([row["message"] for row in restarted["script_logs"]], ["replacement"])
+            client.result("scene.physics", {"op": "stop", "session_id": restarted["session_id"]})
+            client.result("project.close", {"unsaved": "discard", "expected_revision": source["revision"]})
+            client.result("project.open", {"path": "FeatureWorld.sharkproject"})
+            self.assertEqual(self.inspect(client)["name"], "Script actor")
+            self.assertEqual(client.result("text.read", {"path": path})["text"], replacement_source)
+            client.finish()
+
+    def test_script_preview_diagnostics_runaway_and_recovery(self):
+        path = "scripts/fault.lua"
+        with self.client() as client:
+            token = client.result("text.write", {"path": path, "text": "function on_init(\n",
+                                                  "expected_revision": None})["revision"]
+            self.edit(client, {"type": "create_entity", "entity_id": ENTITY, "name": "Fault actor",
+                               "script": {"source": path, "enabled": True}})
+            self.edit(client, {"type": "create_entity", "entity_id": CHILD, "name": "Fault child",
+                               "script": {"source": path, "enabled": True}})
+            self.save(client)
+            source = client.result("project.status")
+            saved_bytes = self.scene_path.read_bytes()
+            history = client.result("scene.history")
+
+            def start_request():
+                observed = client.result("scene.physics", {"op": "status"})
+                return {"op": "start", "owner_scope": observed["owner_scope"],
+                        "expected_generation": observed["generation"],
+                        "expected_revision": source["revision"], "camera": pipes.ENTITIES[0],
+                        "target": {"id": "script-failure", "side": "client"}}
+
+            failed = client.call("scene.physics", start_request())
+            self.rpc_error(failed)
+            context = failed["error"]["data"]["context"]
+            self.assertEqual((context["path"], context["entity_id"]), (path, ENTITY))
+            self.assertFalse(client.result("scene.physics", {"op": "status"})["active"])
+            partial_init = ("function on_init() if shark.entity.name() == 'Fault child' then "
+                            "error('init failure') end end\n"
+                            "function on_destroy() shark.log.info('destroy') end\n")
+            token = client.result("text.write", {"path": path, "text": partial_init,
+                                                 "expected_revision": token})["revision"]
+            failed = client.call("scene.physics", start_request())
+            self.rpc_error(failed)
+            context = failed["error"]["data"]["context"]
+            self.assertEqual((context["path"], context["entity_id"]), (path, CHILD))
+            self.assertFalse(client.result("scene.physics", {"op": "status"})["active"])
+            # The next start must acquire ownership even after earlier init succeeded.
+            for program in ("function on_fixed_update() error('script failure') end\n",
+                            "function on_fixed_update() while true do end end\n"):
+                token = client.result("text.write", {"path": path, "text": program,
+                                                     "expected_revision": token})["revision"]
+                started = client.result("scene.physics", start_request())
+                step = {"op": "step", "session_id": started["session_id"],
+                        "sequence": "1", "expected_tick": "0", "ticks": 1}
+                failed_step = client.result("scene.physics", step)
+                self.assertFalse(failed_step["success"], failed_step)
+                self.assertTrue(failed_step["faulted"], failed_step)
+                context = failed_step["error"]["context"]
+                self.assertEqual((context["path"], context["entity_id"]), (path, ENTITY))
+                self.assertEqual(client.result("scene.physics", step), failed_step)
+                self.assertEqual(client.result("scene.physics", {"op": "status"})["last_operation"], failed_step)
+                client.result("scene.physics", {"op": "stop", "session_id": started["session_id"]})
+
+            # One full tick completes before the operation-wide log queue fills.
+            token = client.result("text.write", {"path": path,
+                "text": "function on_fixed_update() for i=1,65 do shark.log.info('line') end end\n",
+                "expected_revision": token})["revision"]
+            started = client.result("scene.physics", start_request())
+            step = {"op": "step", "session_id": started["session_id"],
+                    "sequence": "1", "expected_tick": "0", "ticks": 2}
+            overflow = client.result("scene.physics", step)
+            self.assertFalse(overflow["success"], overflow)
+            self.assertTrue(overflow["faulted"], overflow)
+            self.assertEqual(overflow["tick"], "1")
+            self.assertEqual(len(overflow["script_logs"]), 256)
+            self.assertEqual(overflow["error"]["context"]["path"], path)
+            self.assertEqual(client.result("scene.physics", step), overflow)
+            client.result("scene.physics", {"op": "stop", "session_id": started["session_id"]})
+
+            token = client.result("text.write", {"path": path,
+                "text": "function on_fixed_update() shark.log.info('recovered') end\n",
+                "expected_revision": token})["revision"]
+            recovered = client.result("scene.physics", start_request())
+            step = {"op": "step", "session_id": recovered["session_id"],
+                    "sequence": "1", "expected_tick": "0", "ticks": 1}
+            result = client.result("scene.physics", step)
+            self.assertTrue(result["success"], result)
+            self.assertEqual([row["message"] for row in result["script_logs"]], ["recovered", "recovered"])
+            client.result("scene.physics", {"op": "stop", "session_id": recovered["session_id"]})
+            self.assertEqual(client.result("project.status"), source)
+            self.assertEqual(client.result("scene.history"), history)
+            self.assertEqual(self.scene_path.read_bytes(), saved_bytes)
+            client.finish()
+
     def test_retained_replay_mismatch_rejection_expiry_and_restart(self):
         original_bytes = self.scene_path.read_bytes()
         with self.client() as client:

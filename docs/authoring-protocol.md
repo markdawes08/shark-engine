@@ -29,8 +29,11 @@ Discovery advertises `physics_preview`; native Jolt handles stay private.
 19b adds `script` as an explicit query/inspection field, optional create value
 and nullable `set_script` mutation. These use the same retained owner, history,
 validation and retry identity as the Editor. They store a bounded source path
-and enabled flag without executing it; scoped source editing continues through
-the existing text operations. See [Script settings](script-components.md).
+and enabled flag without executing it. 19d adds `script_preview` to discovery:
+the existing `scene.physics` preview executes captured client-presentation Lua
+for both terminal and Editor users. Source editing uses the existing text
+operations. See [Script settings](script-components.md) and the
+[preview contract](physics-preview.md).
 
 ## Launch and framing
 
@@ -217,7 +220,8 @@ than assuming a method count or device capability:
 | `scene.capture` (configured Client host) | Common content fields below; optional `width`, `height`, `local_origin` | Capture artifact report with source identity, raw-file digests and actual GPU diagnostics |
 
 The fixed capabilities are `cpu_authoring:true`, `mutations:true`, `imports:true`,
-`background_jobs:true` and `scene_runs:true`. `standalone_export` reflects the
+`background_jobs:true`, `scene_runs:true`, `physics_preview:true` and
+`script_preview:true`. `standalone_export` reflects the
 configured Windows helper, and `device_capture` reflects the installed Client
 adapter. These flags advertise supported paths, not a claim that arbitrary inputs
 or hardware will succeed. Unavailable export/capture requests fail explicitly even
@@ -416,7 +420,7 @@ deduplication. For imports, inspect retained job outcomes and current cache stat
 
 `text.read` and `text.write` access UTF-8 files only under exact lowercase
 `scripts/` with a lowercase `.lua` suffix, including nested paths. They store
-text; they do not parse or execute Lua or advertise a scripting runtime. Root and
+text; these methods themselves do not parse or execute Lua. Root and
 parent directories must exist. Empty text, tabs and newlines are valid; malformed
 UTF-8, embedded NUL, paths outside the scope and more than 32,768 bytes reject.
 JSON escaping still counts toward the 65,536-byte complete request limit.
