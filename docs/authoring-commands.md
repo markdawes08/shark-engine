@@ -1,5 +1,9 @@
 # Shared authoring command foundation
 
+21b adds [InstantiatePrefabCommand](prefab-instances.md) through the same candidate,
+history and retry owner, including complete local-reference remapping and source
+metadata. Its C++ API precedes the Editor/terminal prefab adapters in 21d.
+
 09a extends the existing [AuthoredScene](authored-scenes.md) owner with local
 CPU C++ editing in EngineTools. See [ADR 0020](architecture/0020-shared-authoring-commands.md)
 and the [checkpoint plan](roadmap/authoring-plan.md). The public headers are

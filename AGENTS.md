@@ -54,15 +54,17 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [21a, prefab source assets](docs/handoffs/21a-prefab-assets.md).**
+**Current handoff: [21b, authored prefab instances](docs/handoffs/21b-prefab-instances.md).**
 Follow the [prefab checkpoints](docs/roadmap/prefab-plan.md),
 [source contract](docs/prefab-assets.md) and [ADR 0057](docs/architecture/0057-prefab-source-assets.md).
 The CPU Tools codec shares bounded SourceEntity validation and preserves one rooted
-prefab-local hierarchy. Nesting rejects. Instantiation, overrides, runtime/Lua
-spawning and Editor/terminal workflows are not implemented yet; full REQ-21 stays
-NOT_RUN. The next checkpoint is 21b, fresh instance IDs and reference remapping
-through the shared authoring/history owner. Preserve root-only bodies and source,
-runtime, authority and durable identity boundaries.
+prefab-local hierarchy. Nesting rejects. [Instance commands](docs/prefab-instances.md)
+retain explicit fresh entity IDs, local reference remapping, Name/Transform overrides
+and source extras through shared atomic authoring/history/retries. Keep the exact
+prepared command for uncertain retries; preparing again is a new intent. Runtime/Lua
+spawning and Editor/terminal prefab workflows are not implemented yet; full REQ-21
+stays NOT_RUN. The next checkpoint is 21c, runtime and Lua spawn/destroy. Preserve
+root-only bodies and source, runtime, authority and durable identity boundaries.
 
 The [20e physics handoff](docs/handoffs/20e-physics-acceptance.md) remains applicable.
 The connected CPU checks pass, including private native-contact scope instrumentation,

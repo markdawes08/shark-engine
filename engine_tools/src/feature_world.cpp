@@ -11,6 +11,7 @@
 #include "shark/tools/gltf_geometry.hpp"
 #include "shark/tools/gltf_source.hpp"
 #include "shark/tools/gltf_textures.hpp"
+#include "shark/tools/prefab_instance.hpp"
 #include "shark/tools/prepared_content.hpp"
 #include "shark/tools/project_files.hpp"
 
@@ -30,7 +31,7 @@
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 18> case_ids{
+constexpr std::array<std::string_view, 19> case_ids{
     "featureworld.components",       "featureworld.commands",
     "featureworld.batches-history",  "featureworld.retries",
     "featureworld.persistence",      "featureworld.asset-identity",
@@ -39,7 +40,8 @@ constexpr std::array<std::string_view, 18> case_ids{
     "featureworld.gltf-geometry",    "featureworld.gltf-textures",
     "featureworld.gltf-assets",      "featureworld.render-components",
     "featureworld.prepared-content", "featureworld.scene-extraction",
-    "featureworld.client-export",    "featureworld.rigid-bodies"};
+    "featureworld.client-export",    "featureworld.rigid-bodies",
+    "featureworld.prefab-instances"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -2293,6 +2295,127 @@ function on_destroy() shark.log.info('destroy:mover') end
             "Runtime simulation or interpolation changed the source owner");
     unchanged(context, before);
 }
+class PrefabCaseEntropy final : public IdEntropy {
+  public:
+    Result<void> fill(std::span<std::byte, 16> bytes) override {
+        std::fill(bytes.begin(), bytes.end(), std::byte{0});
+        bytes[0] = std::byte{0x21};
+        bytes[14] = static_cast<std::byte>(sequence_ >> 8U);
+        bytes[15] = static_cast<std::byte>(sequence_ & 255U);
+        ++sequence_;
+        return {};
+    }
+
+  private:
+    std::uint32_t sequence_{1};
+};
+
+void prefab_instances(SceneRunContext& context) {
+    const auto before = take(context.owner().capture());
+    auto owner = take(AuthoredScene::create(before.project, before.scene));
+    const PrefabDocument prefab{
+        before.project.project,
+        id<AssetId>('d'),
+        root(),
+        {{leaf(),
+          root(),
+          Name{"Prefab child"},
+          translated(2),
+          "{\"keep\":true}",
+          {},
+          MeshRenderer{builtin_cube_asset_id()},
+          {},
+          Script{"scripts/prefab.lua", false}},
+         {root(), {}, Name{"Prefab root"}, {}, "{\"role\":\"prefab\"}", {}, {}, RigidBody{}}}};
+    PrefabCaseEntropy entropy;
+    const auto first = take(prepare_prefab_instance(
+        prefab, PrefabInstanceOptions{{}, {{root(), Name{"First instance"}, translated(20)}}},
+        entropy));
+    const auto second = take(prepare_prefab_instance(
+        prefab, PrefabInstanceOptions{{}, {{root(), Name{"Second instance"}, translated(-20)}}},
+        entropy));
+    const auto remapped = [&](const InstantiatePrefabCommand& command, AuthoredEntityId source) {
+        const auto found = std::find_if(command.remap.begin(), command.remap.end(),
+                                        [&](const auto& entry) { return entry.source == source; });
+        require(context, found != command.remap.end(), "Prefab lost its local ID mapping");
+        return found->instance;
+    };
+    require(context, first.id != second.id && first.id != root() && second.id != root(),
+            "Prefab preparation reused a source or instance root ID");
+    const auto original_status = take(owner->mutation_status());
+    require(context, original_status.next.has_value(), "Missing authoring mutation identity");
+    const AuthoringMutationRequest request{*original_status.next, original_status.revision,
+                                           AuthoringCommand{first}};
+    auto recorded = take(owner->mutate(request));
+    const auto receipt = take(std::move(recorded.outcome));
+    require(context, take(receipt->result).changed, "Prefab command did not publish");
+    const auto first_revision = revision(*owner);
+    const auto first_history = take(owner->history());
+    require(context,
+            first_revision.revision == original_status.revision.revision + 1 &&
+                first_history.undo_entries == 1 && first_history.next_undo &&
+                first_history.next_undo->command_count == 1,
+            "Prefab did not publish one revision and one history command");
+    require(context, take(take(owner->execute(second, first_revision)).outcome).changed,
+            "Second prefab instance did not publish");
+    const auto first_child = remapped(first, leaf());
+    const auto second_child = remapped(second, leaf());
+    require(context,
+            state(*owner, first_child).world_matrix[3][0] == 22 &&
+                state(*owner, second_child).world_matrix[3][0] == -18 &&
+                state(*owner, first.id).name.value == "First instance" &&
+                state(*owner, second.id).name.value == "Second instance",
+            "Prefab overrides or instance-local transforms differ from expected values");
+    require(context,
+            state(*owner, first_child).parent == state(*owner, first.id).reference.handle &&
+                state(*owner, second_child).parent == state(*owner, second.id).reference.handle &&
+                state(*owner, first_child).script == Script{"scripts/prefab.lua", false},
+            "Prefab references escaped their instance or changed script source");
+    require(context,
+            take(take(owner->execute(SetNameCommand{first_child, Name{"Edited child"}},
+                                     revision(*owner)))
+                     .outcome)
+                    .changed &&
+                state(*owner, second_child).name.value == "Prefab child" &&
+                prefab.entities.front().name.value == "Prefab child",
+            "Editing one prefab changed another instance or the source asset");
+    auto history = take(owner->history());
+    take(take(owner->undo(history.next_undo->ticket, history.revision)).outcome);
+    const auto old_second = state(*owner, second.id).reference;
+    history = take(owner->history());
+    take(take(owner->undo(history.next_undo->ticket, history.revision)).outcome);
+    require(context,
+            !take(owner->scene()).get().find(second.id) &&
+                state(*owner, first_child).name.value == "Prefab child",
+            "Undo did not remove exactly the second complete instance");
+    history = take(owner->history());
+    take(take(owner->redo(history.next_redo->ticket, history.revision)).outcome);
+    require(context,
+            state(*owner, second.id).reference.handle != old_second.handle &&
+                !take(owner->scene()).get().resolve(old_second),
+            "Redo revived a stale prefab entity handle");
+    const auto capture = take(owner->capture());
+    const auto replay = take(owner->mutate(request));
+    require(context,
+            replay.state == AuthoringMutationState::replayed && take(replay.outcome) == receipt &&
+                take(owner->capture()).scene == capture.scene,
+            "Retried prefab publication created another instance or changed its receipt");
+    const auto encoded = take(encode_scene_document(capture.scene));
+    const auto decoded = take(decode_scene_document(encoded));
+    auto reopened = take(AuthoredScene::create(before.project, decoded.document));
+    const auto reopened_source = take(reopened->capture()).scene;
+    require(context, reopened_source == capture.scene && reopened_source.entities.size() == 8,
+            "Prefab metadata, component values or references changed across reopen");
+    const auto saved_child =
+        std::find_if(reopened_source.entities.begin(), reopened_source.entities.end(),
+                     [&](const auto& entity) { return entity.id == first_child; });
+    require(context,
+            saved_child != reopened_source.entities.end() &&
+                saved_child->extras_json == "{\"keep\":true}" &&
+                saved_child->mesh_renderer->asset == builtin_cube_asset_id(),
+            "Prefab source metadata or mesh asset identity was lost");
+    unchanged(context, before);
+}
 } // namespace
 
 std::span<const std::string_view> feature_world_case_ids() noexcept {
@@ -2369,6 +2492,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 17:
                         rigid_bodies(context);
+                        break;
+                    case 18:
+                        prefab_instances(context);
                         break;
                     default:
                         break;

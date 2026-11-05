@@ -1,6 +1,7 @@
 #include "shark/tools/authored_scene.hpp"
 
 #include "authored_scene_test_access.hpp"
+#include "prefab_instance_internal.hpp"
 #include "scene_edit_access.hpp"
 
 #include <algorithm>
@@ -203,76 +204,81 @@ AuthoringCommandReply apply_command(Scene& scene, SceneLimits limits,
         std::visit(
             [&](const auto& request) {
                 using Command = std::decay_t<decltype(request)>;
-                if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
-                              std::is_same_v<Command, SetNameCommand>) {
-                    // Reject oversized caller-owned text before copying it
-                    // into the Core mutation's owned input.
-                    checked(validate_name(request.name));
-                }
-                if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
-                              std::is_same_v<Command, SetScriptCommand>) {
-                    if (request.script) {
-                        if (request.script->source.size() > script_maximum_source_path_bytes)
-                            fail(ErrorCode::invalid_argument,
-                                 "script source path exceeds its byte bound");
-                        checked(validate_script(*request.script));
-                    }
-                }
-                std::optional<EntityHandle> target;
-                std::optional<EntityHandle> parent;
-                if constexpr (!std::is_same_v<Command, CreateEntityCommand>) {
-                    target = checked(scene.find(request.id));
-                }
-                if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
-                              std::is_same_v<Command, ReparentEntityCommand>) {
-                    if (request.parent) {
-                        parent = checked(scene.find(*request.parent));
-                    }
-                }
-                if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
-                              std::is_same_v<Command, SetNameCommand> ||
-                              std::is_same_v<Command, SetCameraCommand> ||
-                              std::is_same_v<Command, SetMeshRendererCommand> ||
-                              std::is_same_v<Command, SetRigidBodyCommand> ||
-                              std::is_same_v<Command, SetScriptCommand>) {
-                    effect.affected_entities.push_back(request.id);
+                if constexpr (std::is_same_v<Command, InstantiatePrefabCommand>) {
+                    fail(ErrorCode::invalid_argument,
+                         "prefab instantiation requires its authoring candidate");
                 } else {
-                    append_subtree(scene, *target, effect.affected_entities);
-                }
-                if constexpr (std::is_same_v<Command, DeleteEntityCommand> ||
-                              std::is_same_v<Command, ReparentEntityCommand>) {
-                    if (const auto old_parent = checked(scene.entity_state(*target)).parent) {
-                        append_identity(scene, *old_parent, effect.affected_entities);
+                    if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
+                                  std::is_same_v<Command, SetNameCommand>) {
+                        // Reject oversized caller-owned text before copying it
+                        // into the Core mutation's owned input.
+                        checked(validate_name(request.name));
                     }
-                }
-                if (parent) {
-                    append_identity(scene, *parent, effect.affected_entities);
-                }
-                std::sort(effect.affected_entities.begin(), effect.affected_entities.end());
-                effect.affected_entities.erase(
-                    std::unique(effect.affected_entities.begin(), effect.affected_entities.end()),
-                    effect.affected_entities.end());
-                if constexpr (std::is_same_v<Command, CreateEntityCommand>) {
-                    static_cast<void>(checked(scene.create_entity(
-                        {request.id, std::nullopt, request.name, request.transform, parent,
-                         request.camera, request.mesh_renderer, request.rigid_body,
-                         request.script})));
-                } else if constexpr (std::is_same_v<Command, DeleteEntityCommand>) {
-                    checked(scene.destroy_entity(*target));
-                } else if constexpr (std::is_same_v<Command, SetNameCommand>) {
-                    checked(scene.set_name(*target, request.name));
-                } else if constexpr (std::is_same_v<Command, SetTransformCommand>) {
-                    checked(scene.set_transform(*target, request.transform));
-                } else if constexpr (std::is_same_v<Command, SetCameraCommand>) {
-                    checked(scene.set_camera(*target, request.camera));
-                } else if constexpr (std::is_same_v<Command, SetMeshRendererCommand>) {
-                    checked(scene.set_mesh_renderer(*target, request.mesh_renderer));
-                } else if constexpr (std::is_same_v<Command, SetRigidBodyCommand>) {
-                    checked(scene.set_rigid_body(*target, request.rigid_body));
-                } else if constexpr (std::is_same_v<Command, SetScriptCommand>) {
-                    checked(scene.set_script(*target, request.script));
-                } else {
-                    checked(scene.reparent(*target, parent, request.mode));
+                    if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
+                                  std::is_same_v<Command, SetScriptCommand>) {
+                        if (request.script) {
+                            if (request.script->source.size() > script_maximum_source_path_bytes)
+                                fail(ErrorCode::invalid_argument,
+                                     "script source path exceeds its byte bound");
+                            checked(validate_script(*request.script));
+                        }
+                    }
+                    std::optional<EntityHandle> target;
+                    std::optional<EntityHandle> parent;
+                    if constexpr (!std::is_same_v<Command, CreateEntityCommand>) {
+                        target = checked(scene.find(request.id));
+                    }
+                    if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
+                                  std::is_same_v<Command, ReparentEntityCommand>) {
+                        if (request.parent) {
+                            parent = checked(scene.find(*request.parent));
+                        }
+                    }
+                    if constexpr (std::is_same_v<Command, CreateEntityCommand> ||
+                                  std::is_same_v<Command, SetNameCommand> ||
+                                  std::is_same_v<Command, SetCameraCommand> ||
+                                  std::is_same_v<Command, SetMeshRendererCommand> ||
+                                  std::is_same_v<Command, SetRigidBodyCommand> ||
+                                  std::is_same_v<Command, SetScriptCommand>) {
+                        effect.affected_entities.push_back(request.id);
+                    } else {
+                        append_subtree(scene, *target, effect.affected_entities);
+                    }
+                    if constexpr (std::is_same_v<Command, DeleteEntityCommand> ||
+                                  std::is_same_v<Command, ReparentEntityCommand>) {
+                        if (const auto old_parent = checked(scene.entity_state(*target)).parent) {
+                            append_identity(scene, *old_parent, effect.affected_entities);
+                        }
+                    }
+                    if (parent) {
+                        append_identity(scene, *parent, effect.affected_entities);
+                    }
+                    std::sort(effect.affected_entities.begin(), effect.affected_entities.end());
+                    effect.affected_entities.erase(std::unique(effect.affected_entities.begin(),
+                                                               effect.affected_entities.end()),
+                                                   effect.affected_entities.end());
+                    if constexpr (std::is_same_v<Command, CreateEntityCommand>) {
+                        static_cast<void>(checked(scene.create_entity(
+                            {request.id, std::nullopt, request.name, request.transform, parent,
+                             request.camera, request.mesh_renderer, request.rigid_body,
+                             request.script})));
+                    } else if constexpr (std::is_same_v<Command, DeleteEntityCommand>) {
+                        checked(scene.destroy_entity(*target));
+                    } else if constexpr (std::is_same_v<Command, SetNameCommand>) {
+                        checked(scene.set_name(*target, request.name));
+                    } else if constexpr (std::is_same_v<Command, SetTransformCommand>) {
+                        checked(scene.set_transform(*target, request.transform));
+                    } else if constexpr (std::is_same_v<Command, SetCameraCommand>) {
+                        checked(scene.set_camera(*target, request.camera));
+                    } else if constexpr (std::is_same_v<Command, SetMeshRendererCommand>) {
+                        checked(scene.set_mesh_renderer(*target, request.mesh_renderer));
+                    } else if constexpr (std::is_same_v<Command, SetRigidBodyCommand>) {
+                        checked(scene.set_rigid_body(*target, request.rigid_body));
+                    } else if constexpr (std::is_same_v<Command, SetScriptCommand>) {
+                        checked(scene.set_script(*target, request.script));
+                    } else {
+                        checked(scene.reparent(*target, parent, request.mode));
+                    }
                 }
             },
             command);
@@ -293,8 +299,82 @@ AuthoringCommandReply apply_command(Scene& scene, SceneLimits limits,
     return AuthoringCommandReply{{stats.instance, stats.revision}, std::move(outcome)};
 }
 
+AuthoringCommandReply apply_prefab(Scene& scene, ProjectId project,
+                                   const InstantiatePrefabCommand& command,
+                                   SceneRevision expected_revision,
+                                   std::vector<RetainedEntity>& metadata) {
+    auto outcome = boundary<AuthoringCommandEffect>("authoring.execute", [&] {
+        const auto stats = checked(scene.stats());
+        if (expected_revision != SceneRevision{stats.instance, stats.revision})
+            fail(ErrorCode::conflict, "authored scene revision has changed");
+        if (command.prefab.project != project)
+            fail(ErrorCode::invalid_configuration, "prefab belongs to another project",
+                 "/prefab/project_id");
+        auto expanded = checked(detail::expand_prefab_instance(command));
+        for (const auto& entity : expanded.entities) {
+            const auto found = scene.find(entity.id);
+            if (found)
+                fail(ErrorCode::conflict, "prefab destination entity already exists", "/remap",
+                     entity.id.value().to_string());
+            if (found.error().code != ErrorCode::invalid_id)
+                throw ActivationFailure{found.error()};
+        }
+        AuthoringCommandEffect effect{true, {}};
+        effect.affected_entities.reserve(expanded.entities.size() + 1);
+        for (const auto& entity : expanded.entities)
+            effect.affected_entities.push_back(entity.id);
+        if (command.parent)
+            effect.affected_entities.push_back(*command.parent);
+        std::sort(effect.affected_entities.begin(), effect.affected_entities.end());
+        std::erase_if(metadata, [&](const RetainedEntity& value) {
+            const auto found = scene.find(value.id);
+            return !found || found.value() != value.handle;
+        });
+        // Earlier ordinary creates in this batch have the standard empty extras.
+        // Retain them before this prefab so source ordering follows the edits.
+        std::set<EntityHandle> known;
+        for (const auto& value : metadata)
+            known.insert(value.handle);
+        checked(scene.visit_entities([&](const EntityReference& reference) -> Result<void> {
+            if (!known.contains(reference.handle))
+                metadata.push_back(
+                    {reference.handle, std::get<AuthoredEntityId>(reference.identity), "{}"});
+            return {};
+        }));
+        metadata.reserve(metadata.size() + expanded.entities.size());
+        std::map<AuthoredEntityId, EntityHandle> handles;
+        for (const auto index : expanded.ordered) {
+            const auto& entity = expanded.entities[index];
+            std::optional<EntityHandle> parent;
+            if (entity.parent)
+                parent = checked(scene.find(*entity.parent));
+            auto created = scene.create_entity(
+                {entity.id, std::nullopt, entity.name, entity.transform, parent, entity.camera,
+                 entity.mesh_renderer, entity.rigid_body, entity.script});
+            if (!created) {
+                auto error = std::move(created).error();
+                error.context.path = "/prefab/entities/" + std::to_string(index);
+                error.context.entity_id = entity.id.value().to_string();
+                throw ActivationFailure{std::move(error)};
+            }
+            handles.emplace(entity.id, created.value());
+        }
+        for (auto& entity : expanded.entities)
+            metadata.push_back({handles.at(entity.id), entity.id, std::move(entity.extras_json)});
+        return effect;
+    });
+    if (!outcome) {
+        if (outcome.error().context.entity_id.empty())
+            outcome.error().context.entity_id = command.id.value().to_string();
+        outcome.error().context.asset_id = command.prefab.asset.value().to_string();
+    }
+    const auto stats = scene.stats().value();
+    return {{stats.instance, stats.revision}, std::move(outcome)};
+}
+
 SceneDocument capture_document(const ProjectDocument& project, const ActiveScene& active,
-                               const Scene& scene, bool revalidate_source = true) {
+                               const Scene& scene, bool revalidate_source = true,
+                               const std::vector<RetainedEntity>* retained_metadata = nullptr) {
     const auto stats = checked(scene.stats());
     if (stats.closed || stats.pending_mutations != 0) {
         fail(ErrorCode::conflict, "capture requires a live committed scene");
@@ -352,7 +432,7 @@ SceneDocument capture_document(const ProjectDocument& project, const ActiveScene
     std::vector<SourceEntity> ordered;
     ordered.reserve(observed.size());
     std::vector<bool> retained(observed.size(), false);
-    for (const auto& metadata : active.entities) {
+    for (const auto& metadata : retained_metadata ? *retained_metadata : active.entities) {
         const auto found = indices.find(metadata.handle);
         if (found == indices.end()) {
             continue;
@@ -476,6 +556,34 @@ bool same_body_input(const std::optional<RigidBody>& left,
            same_number(left->restitution, right->restitution);
 }
 
+bool same_prefab_input(const InstantiatePrefabCommand& left,
+                       const InstantiatePrefabCommand& right) {
+    if (left.prefab.project != right.prefab.project || left.prefab.asset != right.prefab.asset ||
+        left.prefab.root != right.prefab.root ||
+        left.prefab.extras_json != right.prefab.extras_json || left.parent != right.parent ||
+        left.remap != right.remap || left.prefab.entities.size() != right.prefab.entities.size() ||
+        left.overrides.size() != right.overrides.size())
+        return false;
+    for (std::size_t index = 0; index < left.prefab.entities.size(); ++index) {
+        const auto& a = left.prefab.entities[index];
+        const auto& b = right.prefab.entities[index];
+        if (a.id != b.id || a.parent != b.parent || a.name.value != b.name.value ||
+            a.extras_json != b.extras_json || !same_transform_input(a.transform, b.transform) ||
+            !same_camera_input(a.camera, b.camera) || a.mesh_renderer != b.mesh_renderer ||
+            !same_body_input(a.rigid_body, b.rigid_body) || a.script != b.script)
+            return false;
+    }
+    for (std::size_t index = 0; index < left.overrides.size(); ++index) {
+        const auto& a = left.overrides[index];
+        const auto& b = right.overrides[index];
+        if (a.entity != b.entity || a.name != b.name ||
+            a.transform.has_value() != b.transform.has_value() ||
+            (a.transform && !same_transform_input(*a.transform, *b.transform)))
+            return false;
+    }
+    return true;
+}
+
 bool same_command_input(const AuthoringCommand& left, const AuthoringCommand& right) {
     return std::visit(
         [&](const auto& value) {
@@ -483,7 +591,9 @@ bool same_command_input(const AuthoringCommand& left, const AuthoringCommand& ri
             const auto* other = std::get_if<T>(&right);
             if (!other || value.id != other->id)
                 return false;
-            if constexpr (std::is_same_v<T, CreateEntityCommand>) {
+            if constexpr (std::is_same_v<T, InstantiatePrefabCommand>) {
+                return same_prefab_input(value, *other);
+            } else if constexpr (std::is_same_v<T, CreateEntityCommand>) {
                 return value.name.value == other->name.value && value.parent == other->parent &&
                        same_transform_input(value.transform, other->transform) &&
                        same_camera_input(value.camera, other->camera) &&
@@ -544,19 +654,71 @@ bool same_mutation_input(const AuthoringMutationRequest& left,
 
 std::size_t mutation_payload_charge(const AuthoringMutation& mutation, bool capacity) {
     std::size_t charge = sizeof(AuthoringMutationRequest);
+    const auto add_bytes = [&](std::size_t bytes) {
+        if (bytes > authoring_maximum_mutation_payload_bytes ||
+            charge > authoring_maximum_mutation_payload_bytes - bytes)
+            fail(ErrorCode::invalid_argument, "mutation payload exceeds its byte bound");
+        charge += bytes;
+    };
     const auto add_name = [&](const Name& name) {
         if (name.value.size() > authoring_maximum_mutation_name_bytes) {
             fail(ErrorCode::invalid_argument, "mutation Name input exceeds its byte bound");
         }
-        charge += (capacity ? name.value.capacity() : name.value.size()) + 1;
+        add_bytes((capacity ? name.value.capacity() : name.value.size()) + 1);
     };
+    const auto add_source_string = [&](const std::string& value, std::size_t maximum) {
+        if (value.size() > maximum)
+            fail(ErrorCode::invalid_argument, "mutation source text exceeds its byte bound");
+        const auto bytes = capacity ? value.capacity() : value.size();
+        if (bytes >= authoring_maximum_mutation_payload_bytes)
+            fail(ErrorCode::invalid_argument,
+                 "mutation source text capacity exceeds its byte bound");
+        add_bytes(bytes + 1);
+    };
+    const auto add_vector = [&](std::size_t count, std::size_t element_size) {
+        if (count > authoring_maximum_mutation_payload_bytes / element_size)
+            fail(ErrorCode::invalid_argument, "mutation vector capacity exceeds its byte bound");
+        add_bytes(count * element_size);
+    };
+    std::size_t expanded_count = 0;
     const auto command = [&](const AuthoringCommand& value) {
         std::visit(
             [&](const auto& item) {
                 using T = std::decay_t<decltype(item)>;
+                if constexpr (std::is_same_v<T, InstantiatePrefabCommand>) {
+                    if (item.prefab.entities.size() > source_maximum_entities - expanded_count ||
+                        item.remap.size() > source_maximum_entities ||
+                        item.overrides.size() > source_maximum_entities)
+                        fail(ErrorCode::invalid_argument, "mutation prefab entity bound exceeded");
+                    expanded_count += item.prefab.entities.size();
+                    add_source_string(item.prefab.extras_json, source_maximum_extras_bytes);
+                    add_vector(capacity ? item.prefab.entities.capacity()
+                                        : item.prefab.entities.size(),
+                               sizeof(SourceEntity));
+                    add_vector(capacity ? item.remap.capacity() : item.remap.size(),
+                               sizeof(PrefabEntityRemap));
+                    add_vector(capacity ? item.overrides.capacity() : item.overrides.size(),
+                               sizeof(PrefabEntityOverride));
+                    for (const auto& entity : item.prefab.entities) {
+                        add_name(entity.name);
+                        add_source_string(entity.extras_json, source_maximum_extras_bytes);
+                        if (entity.script)
+                            add_source_string(entity.script->source,
+                                              script_maximum_source_path_bytes);
+                    }
+                    for (const auto& override_value : item.overrides) {
+                        if (override_value.name)
+                            add_name(*override_value.name);
+                    }
+                }
                 if constexpr (std::is_same_v<T, CreateEntityCommand> ||
                               std::is_same_v<T, SetNameCommand>) {
                     add_name(item.name);
+                }
+                if constexpr (std::is_same_v<T, CreateEntityCommand>) {
+                    if (expanded_count == source_maximum_entities)
+                        fail(ErrorCode::invalid_argument, "mutation creation bound exceeded");
+                    ++expanded_count;
                 }
                 if constexpr (std::is_same_v<T, CreateEntityCommand> ||
                               std::is_same_v<T, SetScriptCommand>) {
@@ -808,11 +970,12 @@ struct AuthoredScene::Impl {
                                                            charge});
     }
 
-    std::unique_ptr<HistoryEntry> prepare_history(const Scene& candidate,
-                                                  std::size_t command_count) const {
+    std::unique_ptr<HistoryEntry>
+    prepare_history(const Scene& candidate, std::size_t command_count,
+                    const std::vector<RetainedEntity>* metadata = nullptr) const {
         auto before = before_snapshot();
         auto after = std::make_shared<const SceneDocument>(
-            capture_document(project, *active, candidate, false));
+            capture_document(project, *active, candidate, false, metadata));
         std::vector<AuthoredEntityId> replaced;
         for (const auto& entity : after->entities) {
             const auto old = active->scene->find(entity.id);
@@ -1019,6 +1182,21 @@ AuthoredScene::evaluate_commands(std::span<const AuthoringCommand> commands,
             if (commands.size() > authoring_maximum_batch_commands) {
                 fail(ErrorCode::invalid_argument, "authoring batch command bound exceeded");
             }
+            std::size_t expanded_count = 0;
+            bool has_prefab = false;
+            for (const auto& command : commands) {
+                if (const auto* prefab = std::get_if<InstantiatePrefabCommand>(&command)) {
+                    has_prefab = true;
+                    if (prefab->prefab.entities.size() > source_maximum_entities - expanded_count)
+                        fail(ErrorCode::invalid_argument,
+                             "prefab expansion exceeds the batch entity bound");
+                    expanded_count += prefab->prefab.entities.size();
+                } else if (std::holds_alternative<CreateEntityCommand>(command)) {
+                    if (expanded_count == source_maximum_entities)
+                        fail(ErrorCode::invalid_argument, "batch creation bound exceeded");
+                    ++expanded_count;
+                }
+            }
             const auto failure_after = std::exchange(impl_->batch_failure_after, std::nullopt);
             std::size_t step = 0;
             const auto allocation_boundary = [&] {
@@ -1029,13 +1207,35 @@ AuthoredScene::evaluate_commands(std::span<const AuthoringCommand> commands,
             allocation_boundary();
             auto candidate =
                 checked(shark::scene_detail::SceneEditAccess::prepare(live, expected_revision));
+            std::optional<std::vector<RetainedEntity>> metadata;
+            const auto stage_metadata = [&] {
+                const auto snapshot = impl_->before_snapshot();
+                std::vector<RetainedEntity> result;
+                result.reserve(snapshot->entities.size());
+                for (const auto& entity : snapshot->entities)
+                    result.push_back(
+                        {checked(candidate->find(entity.id)), entity.id, entity.extras_json});
+                return result;
+            };
+            if (has_prefab)
+                metadata = stage_metadata();
             allocation_boundary();
             std::set<AuthoredEntityId> affected;
             bool changed = false;
             for (std::size_t index = 0; index < commands.size(); ++index) {
                 const auto stats = checked(candidate->stats());
-                auto reply = apply_command(*candidate, impl_->limits, commands[index],
-                                           {stats.instance, stats.revision});
+                auto reply = [&] {
+                    if (const auto* prefab =
+                            std::get_if<InstantiatePrefabCommand>(&commands[index])) {
+                        // Even an invalid empty prefab takes the checked dedicated path.
+                        if (!metadata)
+                            metadata = stage_metadata();
+                        return apply_prefab(*candidate, impl_->project.project, *prefab,
+                                            {stats.instance, stats.revision}, *metadata);
+                    }
+                    return apply_command(*candidate, impl_->limits, commands[index],
+                                         {stats.instance, stats.revision});
+                }();
                 if (!reply.outcome) {
                     auto error = std::move(reply.outcome).error();
                     if (commands.size() != 1 ||
@@ -1053,13 +1253,16 @@ AuthoredScene::evaluate_commands(std::span<const AuthoringCommand> commands,
             allocation_boundary();
             std::unique_ptr<HistoryEntry> entry;
             if (changed) {
-                entry = impl_->prepare_history(*candidate, commands.size());
+                entry = impl_->prepare_history(*candidate, commands.size(),
+                                               metadata ? &*metadata : nullptr);
                 allocation_boundary();
             }
             if (publish) {
                 allocation_boundary();
                 const auto revision = checked(shark::scene_detail::SceneEditAccess::commit(
                     live, *candidate, expected_revision));
+                if (metadata)
+                    impl_->active->entities.swap(*metadata);
                 if (entry) {
                     impl_->record_history(std::move(entry), revision);
                 }

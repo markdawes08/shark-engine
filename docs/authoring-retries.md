@@ -1,5 +1,10 @@
 # Retained authoring mutations
 
+21b's [prefab instance command](prefab-instances.md) retains its explicit fresh-ID
+mapping, complete source values, overrides and metadata. Matching and capacity
+charges include those fields. Keep the prepared command for an uncertain retry;
+preparing again creates a different intent. The 512 KiB input bound still applies.
+
 09d adds CPU retry handling to the same AuthoredScene command/history owner.
 Use `mutation_status`, `mutate` and `mutation_outcome` from public
 `shark/tools/authored_scene.hpp`; values live in `authoring_retries.hpp`.

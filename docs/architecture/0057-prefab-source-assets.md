@@ -1,6 +1,6 @@
 # ADR 0057: prefab source assets
 
-Status: accepted, 21a. Date: 2026-11-05.
+Status: accepted, 21a; extended by 21b. Date: 2026-11-05.
 
 ## Decision
 
@@ -31,3 +31,14 @@ authoring/history, scoped files, runtime initialization, Lua mutation queues and
 Editor/terminal parity in subsequent increments. No importer or authoring method
 is advertised before that implementation exists. Final cooking retains its own
 dependency-closure and dynamically selected prefab requirements.
+
+## 21b: authored instance commands
+
+[Instance preparation](../prefab-instances.md) assigns fresh authored entity IDs
+once and retains an explicit local-to-instance map in one InstantiatePrefabCommand.
+Name/local Transform overrides are bounded complete replacements. The existing
+authoring candidate, history and retained retry owner validates and publishes the
+whole hierarchy, including source extras, in one revision. Preparation is not a
+commit token; execution revalidates the complete mutable input. Redo preserves
+authored identities and creates fresh handle generations. Existing scene/source
+schemas and the source nesting rejection remain unchanged.

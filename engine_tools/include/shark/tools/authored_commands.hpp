@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shark/scene.hpp"
+#include "shark/tools/prefab_instance.hpp"
 
 #include <optional>
 #include <variant>
@@ -66,14 +67,15 @@ struct ReparentEntityCommand {
 using AuthoringCommand =
     std::variant<CreateEntityCommand, DeleteEntityCommand, SetNameCommand, SetTransformCommand,
                  ReparentEntityCommand, SetCameraCommand, SetMeshRendererCommand,
-                 SetRigidBodyCommand, SetScriptCommand>;
+                 SetRigidBodyCommand, SetScriptCommand, InstantiatePrefabCommand>;
 
 struct AuthoringCommandEffect {
     bool changed;
     // Sorted unique stable IDs to refresh, including deleted descendants and
     // parents whose child links changed. Empty for a Core no-op. At most the
-    // authored scene entity bound for one command. Batch unions add at most the
-    // command bound in new identities. History conservatively includes the union
+    // authored scene entity bound plus an external parent for one command.
+    // Batch unions add at most the source entity bound in new identities,
+    // including expanded prefabs. History conservatively includes the union
     // of both complete snapshots (at most twice the source entity bound).
     // This is not a list of new/current entities.
     std::vector<AuthoredEntityId> affected_entities;

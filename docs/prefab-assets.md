@@ -27,8 +27,8 @@ array and must resolve within this document. Duplicate IDs, missing roots,
 additional roots, dangling parents, cycles and excessive hierarchy depth reject.
 The entity array keeps its input order; the root need not be first.
 
-Instance creation in 21b will allocate fresh IDs for every entity and remap every
-typed internal reference. Asset IDs and project-relative script source paths are
+21b's [instance command](prefab-instances.md) allocates fresh IDs for every entity
+and remaps every typed internal reference. Asset IDs and project-relative script source paths are
 external content references, not prefab-local entity references. Arbitrary strings
 inside extras are preserved and never interpreted or remapped. The current
 component set has no general script entity-reference property.
@@ -65,12 +65,13 @@ the later Scene owner before publication.
 Nested prefab references, prefab components, inherited variants and stored
 instance overrides have no fields in this format and reject as unknown input.
 An extras key is inert metadata and cannot enable any of those features.
-21b will define the simple override request and instance semantics; source files
-are not silently rewritten when an instance changes.
+21b defines simple Name/local Transform overrides in the separate instance
+request; source files are not silently rewritten when an instance changes.
 
-21a supplies no instantiation, source-file publication, cache importer, terminal
-or Editor prefab operation, Lua spawn/destroy or prepared runtime prefab payload.
-Those owners follow the checkpoint plan. Runtime and Server retain their source
+The source codec itself performs no instantiation. 21b adds instance preparation
+and shared authoring commands. Source-file publication, cache import, terminal
+and Editor prefab operations, Lua spawn/destroy and prepared runtime prefab
+payloads retain their subsequent owners. Runtime and Server retain their source
 parser exclusion; this addition changes no existing scene, cooked, wire or
 database format. Prefab identity does not confer authority or create durable
 gameplay entities or rewards.

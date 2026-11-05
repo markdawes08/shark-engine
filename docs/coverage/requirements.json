@@ -526,7 +526,7 @@
       "planned_fixture": "FeatureWorld/PrefabInstances, FeatureWorld/ScriptSpawning, PrefabReferenceRemap, PrefabNestingPolicy and SpawnDestroyLifetime fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "21a adds the bounded schema-1 prefab source codec with stable local hierarchy references, shared component validation and explicit nesting rejection. Instantiation/overrides, runtime/Lua spawn/destroy, Editor/terminal workflows and connected lifetime acceptance remain 21b-21e. Full REQ-21 remains NOT_RUN. See docs/roadmap/prefab-plan.md and docs/handoffs/21a-prefab-assets.md."
+        "reason": "21a-21b add bounded schema-1 prefab source values and atomic authored instantiation with fresh entity IDs, internal reference remapping, Name/local Transform overrides, source metadata, shared history and exact retained retries. Runtime/Lua spawn/destroy, Editor/terminal prefab workflows and connected runtime lifetime acceptance remain 21c-21e. Full REQ-21 remains NOT_RUN. See docs/roadmap/prefab-plan.md and docs/handoffs/21b-prefab-instances.md."
       }
     },
     {
@@ -3681,6 +3681,37 @@
     ],
     "commands": [
       {
+        "id": "authoring.instantiate-prefab",
+        "name": "Atomic authored prefab instantiation with explicit fresh-ID remapping",
+        "requirement_ids": [
+          "REQ-21",
+          "REQ-09"
+        ],
+        "test_ids": [
+          "shark.tools.prefab-instances",
+          "shark.tools.authoring-batches",
+          "shark.tools.authoring-history",
+          "shark.tools.authoring-retries",
+          "shark.tools.featureworld",
+          "shark.tools.featureworld-process"
+        ],
+        "test_sources": [
+          "tests/prefab_instance_tests.cpp",
+          "tests/authoring_command_tests.cpp",
+          "tests/feature_world_tests.cpp",
+          "tools/tests/test_feature_world_process.py"
+        ],
+        "fixtures": [
+          "engine_tools/src/feature_world.cpp",
+          "engine_tools/src/prefab_instance.cpp",
+          "engine_tools/src/authored_scene.cpp"
+        ],
+        "fixture_reason": "The C++ authoring command shares private candidates, source metadata, history and retained retries. Independent instance, override, mapping, rollback, handle and replay checks connect to the saved FeatureWorld without changing its source. Editor/terminal prefab adapters retain 21d; this is not a live gameplay or Lua spawn API.",
+        "featureworld_cases": [
+          "featureworld.prefab-instances"
+        ]
+      },
+      {
         "id": "tools.scene-runner.gpu",
         "name": "Supervise explicit validated native GPU cube fixtures",
         "requirement_ids": [
@@ -6621,7 +6652,8 @@
       "featureworld.prepared-content",
       "featureworld.scene-extraction",
       "featureworld.client-export",
-      "featureworld.rigid-bodies"
+      "featureworld.rigid-bodies",
+      "featureworld.prefab-instances"
     ],
     "case_source": "engine_tools/src/feature_world.cpp"
   }
