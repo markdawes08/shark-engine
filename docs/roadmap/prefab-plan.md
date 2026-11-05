@@ -10,7 +10,7 @@ unperformed interactive checks in the existing [backlog](../backlog.md).
 | 21a | Versioned prefab source values, bounded shared component validation, stable internal references and explicit rejection of nesting. |
 | 21b | Instance creation through the shared authoring owner, fresh entity IDs, reference remapping, simple overrides and one undo/redo group. Complete; selected affected checks pass in the [handoff](../handoffs/21b-prefab-instances.md). |
 | 21c | Runtime and Lua spawn/self-destroy with bounded deferred requests, transform/physics/script initialization and reverse teardown, checked grants, replica rejection, ownership epochs and replay outcomes. Complete; selected CPU checks pass in the [handoff](../handoffs/21c-runtime-spawning.md). Actors are ephemeral; no durable reward operation is exposed. |
-| 21d | Shared Editor and terminal prefab file, creation and instantiation workflows, discovery, exact revision/retry reconciliation and saved-project handoff. |
+| 21d | Shared Editor and terminal prefab file, creation and instantiation workflows, discovery, exact revision/retry reconciliation and saved-project handoff. Implementation and selected headless checks complete in the [handoff](../handoffs/21d-prefab-authoring.md); native interaction is deferred under BL-21D-UI-01. |
 | 21e | Connected instance independence, callback mutation, reload and repeated lifetime acceptance, including script, physics and render resource cleanup. |
 
 21a is a pure CPU source codec. It creates no Scene or runtime entity, reads no

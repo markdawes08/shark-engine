@@ -36,6 +36,8 @@ METHODS |= {
 }
 METHODS.add("scene.run")
 METHODS.add("scene.physics")
+METHODS |= {"prefab.read", "prefab.write", "prefab.capture", "prefab.prepare",
+            "prefab.instantiate", "prefab.release", "prefab.release_preparation"}
 
 
 def unique(pairs):
@@ -236,11 +238,14 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
         self.assertEqual(discovery["limits"]["request_bytes"], REQUEST_BYTES)
         self.assertEqual(discovery["limits"]["response_bytes"], RESPONSE_BYTES)
         self.assertEqual(discovery["limits"]["retained_cursors"], 32)
+        self.assertEqual(discovery["limits"]["decoded_string_bytes"], 65536)
+        self.assertEqual(discovery["limits"]["script_text_bytes"], 32768)
         self.assertEqual(discovery["capabilities"], {"cpu_authoring": True, "device_capture": False,
                                                     "mutations": True, "imports": True,
                                                     "background_jobs": True, "scene_runs": True,
                                                     "standalone_export": False,
-                                                    "physics_preview": True, "script_preview": True})
+                                                    "physics_preview": True, "script_preview": True,
+                                                    "prefabs": True})
         self.assertEqual({method["name"] for method in discovery["methods"]}, METHODS)
         methods = {method["name"]: method for method in discovery["methods"]}
         component_schema = methods["schema.components"]["result"]["properties"]["components"]
@@ -251,7 +256,7 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
         for method in discovery["methods"]:
             self.assertTrue(method["params"] and method["result"] and method["example"], method)
             self.assertEqual(method["execution_context"], "cpu_owner_thread")
-            self.assertIs(method["requires_open_project"], method["name"].startswith(("scene.", "text.", "asset.")))
+            self.assertIs(method["requires_open_project"], method["name"].startswith(("scene.", "text.", "asset.", "prefab.")))
             self.assertIs(method["requires_project_root"], method["name"] in {"project.open", "project.create"})
         schema = self.finite("--request", encoded(request("schema.components")), root=False)["result"]
         self.assertEqual(schema["components"], discovery["components"])

@@ -2,6 +2,7 @@
 
 #include "shark/tools/asset_metadata.hpp"
 #include "shark/tools/authored_scene.hpp"
+#include "shark/tools/prefab_document.hpp"
 
 #include <filesystem>
 #include <memory>
@@ -93,6 +94,13 @@ class ProjectFiles final {
     [[nodiscard]] Result<FileCommit> write_asset_metadata(const ProjectPath& sidecar,
                                                           const AssetMetadata& metadata,
                                                           std::optional<FileRevision> expected);
+    // Prefab source uses .sharkprefab and requires an existing adjacent sidecar
+    // whose project/asset identities match. The sidecar is a separate explicit
+    // publication; no multi-file transaction or importer is implied.
+    [[nodiscard]] Result<ReadSource<PrefabDocument>> read_prefab(const ProjectPath& path);
+    [[nodiscard]] Result<FileCommit> write_prefab(const ProjectPath& path,
+                                                  const PrefabDocument& prefab,
+                                                  std::optional<FileRevision> expected);
     // Checks a regular source file without decoding or reading its contents.
     // Missing ancestors/files return false; unsafe paths and I/O faults fail.
     [[nodiscard]] Result<bool> asset_source_exists(const ProjectPath& source);

@@ -54,7 +54,7 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [21c, runtime and Lua prefab mutation](docs/handoffs/21c-runtime-spawning.md).**
+**Current handoff: [21d, shared prefab authoring](docs/handoffs/21d-prefab-authoring.md).**
 Follow the [prefab checkpoints](docs/roadmap/prefab-plan.md),
 [source contract](docs/prefab-assets.md) and [ADR 0057](docs/architecture/0057-prefab-source-assets.md).
 The CPU Tools codec shares bounded SourceEntity validation and preserves one rooted
@@ -66,8 +66,13 @@ prepared command for uncertain retries; preparing again is a new intent.
 revocable trusted-host grant and one ordered deferred queue with contact writes.
 Preserve dual script/physics leases, complete transform/body/script initialization,
 reverse teardown and original partial-effect receipts. Runtime actors are ephemeral;
-no durable entity/reward operation is exposed. Editor/terminal prefab workflows
-retain 21d, the next checkpoint; full REQ-21 stays NOT_RUN. Preserve root-only
+no durable entity/reward operation is exposed. [Editor/terminal prefab workflows](docs/prefab-authoring.md)
+now share exact source tokens, separate metadata/source publication and immutable
+prepared commands through the retained project owner. Instantiation uses existing
+mutation outcomes and one history group; preserve the original ID map for retries.
+Source write uncertainty and instance mutation uncertainty remain separate.
+Play and close/discard gates include prefab drafts. Actual native interaction is
+deferred under BL-21D-UI-01. 21e is next; full REQ-21 stays NOT_RUN. Preserve root-only
 bodies and source, runtime, authority and durable identity boundaries.
 
 The [20e physics handoff](docs/handoffs/20e-physics-acceptance.md) remains applicable.

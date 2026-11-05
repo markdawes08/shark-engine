@@ -26,6 +26,11 @@ steps, runtime queries/removal, exact operation reconciliation and stop. It uses
 a frozen prepared runtime copy, preserving source/history and saved bytes.
 Discovery advertises `physics_preview`; native Jolt handles stay private.
 
+21d adds [prefab authoring](prefab-authoring.md): typed source read/write, subtree
+capture, immutable preparation and shared retained instantiation. Discovery
+advertises `prefabs`. Source files and Scene edits have separate publication
+receipts; exact prepared commands preserve ID remapping across retries.
+
 19b adds `script` as an explicit query/inspection field, optional create value
 and nullable `set_script` mutation. These use the same retained owner, history,
 validation and retry identity as the Editor. They store a bounded source path

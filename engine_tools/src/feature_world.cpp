@@ -7,6 +7,7 @@
 #include "shark/script_runtime.hpp"
 #include "shark/tools/asset_catalog.hpp"
 #include "shark/tools/asset_import.hpp"
+#include "shark/tools/authoring_protocol.hpp"
 #include "shark/tools/client_export.hpp"
 #include "shark/tools/gltf_asset.hpp"
 #include "shark/tools/gltf_geometry.hpp"
@@ -25,6 +26,7 @@
 #include <fstream>
 #include <iterator>
 #include <mutex>
+#include <nlohmann/json.hpp>
 #include <numbers>
 #include <thread>
 #include <utility>
@@ -32,7 +34,7 @@
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 20> case_ids{
+constexpr std::array<std::string_view, 21> case_ids{
     "featureworld.components",       "featureworld.commands",
     "featureworld.batches-history",  "featureworld.retries",
     "featureworld.persistence",      "featureworld.asset-identity",
@@ -42,7 +44,8 @@ constexpr std::array<std::string_view, 20> case_ids{
     "featureworld.gltf-assets",      "featureworld.render-components",
     "featureworld.prepared-content", "featureworld.scene-extraction",
     "featureworld.client-export",    "featureworld.rigid-bodies",
-    "featureworld.prefab-instances", "featureworld.script-spawning"};
+    "featureworld.prefab-instances", "featureworld.script-spawning",
+    "featureworld.prefab-workflows"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -428,7 +431,7 @@ struct Scratch {
              {"scenes/FeatureWorld.sharkscene", "FeatureWorld.sharkproject", "one.txt",
               "one.txt.sharkasset", "moved/renamed.txt", "moved/renamed.txt.sharkasset", "moved",
               "dependency.txt", "dependency.txt.sharkasset", ".shark-development-cache",
-              ".shark-write.lock", "scenes"})
+              ".shark-write.lock", "beacon.sharkprefab", "beacon.sharkprefab.sharkasset", "scenes"})
             fs::remove(path / name, ignored);
         fs::remove(path, ignored);
     }
@@ -2542,6 +2545,110 @@ void prefab_instances(SceneRunContext& context) {
             "Prefab source metadata or mesh asset identity was lost");
     unchanged(context, before);
 }
+
+void prefab_workflows(SceneRunContext& context, const fs::path& parent) {
+    using Json = nlohmann::json;
+    const auto before = take(context.owner().capture());
+    const auto path =
+        fs::canonical(parent) / ("shark-featureworld-" + take(generate_stable_id()).to_string());
+    require(context, fs::create_directory(path), "Cannot create prefab workflow scratch");
+    Scratch scratch{path};
+    require(context, fs::create_directory(path / "scenes"), "Cannot create scene directory");
+    {
+        auto files = take(ProjectFiles::open(path));
+        take(files->write_project(take(ProjectPath::parse("FeatureWorld.sharkproject")),
+                                  before.project, {}));
+        take(files->write_scene(before.project, before.scene, {}));
+        take(files->write_asset_metadata(take(ProjectPath::parse("beacon.sharkprefab.sharkasset")),
+                                         {before.project.project, id<AssetId>('d'), "prefab",
+                                          "FeatureWorld", "CC0-1.0", "shark.prefab"},
+                                         {}));
+    }
+    auto host = take(AuthoringProtocol::create(path));
+    std::uint64_t correlation = 0;
+    const auto call = [&](std::string_view method, const Json& parameters) {
+        const auto reply = take(host->handle(Json{
+            {"jsonrpc", "2.0"},
+            {"protocol_version", 1},
+            {"id", ++correlation},
+            {"method", method},
+            {"params", parameters}}.dump()));
+        const auto envelope = Json::parse(reply.json);
+        require(context, !reply.failed && envelope.contains("result"),
+                "Shared prefab protocol operation failed");
+        return envelope.at("result");
+    };
+    call("project.open", {{"path", "FeatureWorld.sharkproject"}});
+    const auto status = call("project.status", Json::object());
+    const auto capture = call("prefab.capture", {{"entity_id", branch().value().to_string()},
+                                                 {"asset_id", id<AssetId>('d').value().to_string()},
+                                                 {"expected_revision", status.at("revision")}});
+    const auto document = take(decode_prefab_document(capture.at("document").get<std::string>()));
+    require(context,
+            document.document.entities.size() == 2 && document.document.root == branch() &&
+                !document.document.entities.front().parent &&
+                document.document.entities.front().transform.translation.x == 2 &&
+                document.document.entities.back().extras_json == "{\"keep\":true}",
+            "Prefab capture lost the rooted local hierarchy or metadata");
+    const auto written = call("prefab.write", {{"path", "beacon.sharkprefab"},
+                                               {"document", capture.at("document")},
+                                               {"expected_revision", nullptr}});
+    require(context,
+            written.at("publication").at("published") == true &&
+                call("project.status", Json::object()) == status,
+            "Prefab source publication changed scene state");
+    const auto preparation = call("prefab.prepare", {{"revision", written.at("revision")},
+                                                     {"expected_revision", status.at("revision")},
+                                                     {"parent_id", nullptr},
+                                                     {"overrides", Json::array()}});
+    require(context,
+            preparation.at("root_entity_id") != branch().value().to_string() &&
+                preparation.at("remap").size() == 2,
+            "Prepared prefab did not reserve an independent complete identity map");
+    const auto mutation = call("scene.mutation_status", Json::object()).at("next");
+    const Json intent{{"preparation", preparation.at("preparation")}, {"mutation_id", mutation}};
+    const auto first = call("prefab.instantiate", intent);
+    require(context,
+            first.at("state") == "recorded" &&
+                first.at("outcome").at("value").at("result").at("ok") == true,
+            "Prefab instance did not retain its shared authoring outcome");
+    const auto history = call("scene.history", Json::object());
+    require(context,
+            history.at("undo_entries") == 1 && history.at("next_undo").at("command_count") == 1,
+            "Prefab workflow did not create exactly one undo group");
+    const auto replay = call("prefab.instantiate", intent);
+    require(context,
+            replay.at("state") == "replayed" && replay.at("outcome") == first.at("outcome") &&
+                call("scene.history", Json::object()) == history,
+            "Exact prefab retry duplicated effects or changed the original receipt");
+    const auto current = call("project.status", Json::object());
+    call("scene.save", {{"expected_revision", current.at("revision")}});
+    call("prefab.release", {{"revision", written.at("revision")}});
+    call("prefab.release_preparation", {{"preparation", preparation.at("preparation")}});
+    call("project.close", Json::object());
+    host.reset();
+    {
+        auto files = take(ProjectFiles::open(path));
+        const auto saved = take(files->read_scene(before.project, before.scene.scene));
+        require(context, saved.source.document.entities.size() == 6,
+                "Saved prefab workflow lost or duplicated instance entities");
+        const auto instance = AuthoredEntityId{
+            take(StableId::parse(preparation.at("root_entity_id").get<std::string>()))};
+        const auto root_entity = std::find_if(
+            saved.source.document.entities.begin(), saved.source.document.entities.end(),
+            [&](const auto& value) { return value.id == instance; });
+        require(context,
+                root_entity != saved.source.document.entities.end() &&
+                    root_entity->name == Name{"Branch"} && !root_entity->parent &&
+                    root_entity->transform.translation.x == 2,
+                "Reopened instance changed local transforms or identity");
+        require(context,
+                take(files->read_prefab(take(ProjectPath::parse("beacon.sharkprefab"))))
+                        .source.document == document.document,
+                "Scene persistence changed the independent prefab source");
+    }
+    unchanged(context, before);
+}
 } // namespace
 
 std::span<const std::string_view> feature_world_case_ids() noexcept {
@@ -2624,6 +2731,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 19:
                         script_spawning(context);
+                        break;
+                    case 20:
+                        prefab_workflows(context, scratch_parent);
                         break;
                     default:
                         break;

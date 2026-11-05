@@ -1,5 +1,10 @@
 # Saved FeatureWorld
 
+21d adds the twenty-first case, `featureworld.prefab-workflows`: rooted subtree
+capture and exact source publication through the retained protocol owner,
+prepared instantiation and replay, one history group, and saved source reopen.
+It uses an isolated copy and leaves the saved FeatureWorld unchanged.
+
 21c adds the twentieth case, `featureworld.script-spawning`: a trusted Region
 runtime queues a spawn and exact replay, initializes a complete hierarchy/body,
 then destroys the self subtree at the next callback boundary. Owned receipts,
@@ -106,6 +111,7 @@ caller-selected parent. Generated results belong under ignored `out/` or `build/
 | `featureworld.client-export` | Startup scene/camera preparation, exact project identity, independently expected saved entities/hierarchy/global anchor, owned bytes/digest, complete built-in loading, repeatability, wrong-project/camera and stale-revision rejection with unchanged source/history/cache |
 | `featureworld.prefab-instances` | Independent instance IDs and local references, simple overrides, source metadata, shared history, fresh handle generations, exact retained replay and source reopen on a separate authored owner |
 | `featureworld.script-spawning` | Explicit trusted grant, queued Lua spawn/replay, complete transform/body initialization, deferred self destruction and owned native/script lifecycle receipts |
+| `featureworld.prefab-workflows` | Shared source capture/publication, frozen ID preparation, retained instantiation/replay, one history group and independent source/Scene persistence |
 
 Every case receives a fresh owner from the same saved baseline. Functional work
 occurs at tick zero; subsequent fixed ticks check stable identity/entity counts.

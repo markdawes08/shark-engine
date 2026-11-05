@@ -69,9 +69,10 @@ An extras key is inert metadata and cannot enable any of those features.
 request; source files are not silently rewritten when an instance changes.
 
 The source codec itself performs no instantiation. 21b adds instance preparation
-and shared authoring commands. Source-file publication, cache import, terminal
-and Editor prefab operations, Lua spawn/destroy and prepared runtime prefab
-payloads retain their subsequent owners. Runtime and Server retain their source
+and shared authoring commands; 21c adds [runtime spawning](runtime-spawning.md).
+21d connects [typed file publication and Editor/terminal workflows](prefab-authoring.md).
+Cache import and cooked prefab payloads retain their subsequent owners.
+Runtime and Server retain their source
 parser exclusion; this addition changes no existing scene, cooked, wire or
 database format. Prefab identity does not confer authority or create durable
 gameplay entities or rewards.

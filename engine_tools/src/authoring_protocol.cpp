@@ -5,6 +5,7 @@
 #include "authoring_execution_wire.hpp"
 #include "authoring_export.hpp"
 #include "authoring_physics.hpp"
+#include "authoring_prefabs.hpp"
 #include "authoring_run.hpp"
 #include "authoring_wire.hpp"
 #include "shark/tools/project_files.hpp"
@@ -374,6 +375,8 @@ Json discovery(bool export_available, bool capture_available) {
         object_schema({{"released", {{"const", true}}}}, {"released"}),
         {{"revision", "00000000-0000-4000-8000-000000000008"}});
     methods.push_back(AuthoringPhysics::method_schema());
+    for (auto& method : AuthoringPrefabs::methods())
+        methods.push_back(std::move(method));
     for (auto& method : authoring_asset_wire::methods_json())
         methods.push_back(std::move(method));
     for (auto& method : authoring_execution_wire::methods(export_available, capture_available))
@@ -385,7 +388,7 @@ Json discovery(bool export_available, bool capture_available) {
              {{"request_bytes", authoring_protocol_maximum_request_bytes},
               {"response_bytes", authoring_protocol_maximum_response_bytes},
               {"retained_cursors", authoring_protocol_maximum_cursors},
-              {"decoded_string_bytes", project_text_maximum_bytes},
+              {"decoded_string_bytes", authoring_protocol_maximum_request_bytes},
               {"script_text_bytes", project_text_maximum_bytes},
               {"retained_text_revisions", maximum_text_revisions},
               {"retained_metadata_revisions", authoring_asset_maximum_metadata_revisions},
@@ -399,6 +402,7 @@ Json discovery(bool export_available, bool capture_available) {
               {"scene_runs", true},
               {"physics_preview", true},
               {"script_preview", true},
+              {"prefabs", true},
               {"standalone_export", export_available}}},
             {"methods", std::move(methods)},
             {"components", components}};
@@ -478,6 +482,7 @@ struct Session {
     };
     std::map<std::string, TextRevision> text_revisions;
     std::unique_ptr<AuthoringAssets> assets{};
+    std::unique_ptr<AuthoringPrefabs> prefabs{};
     std::unique_ptr<AuthoringPhysics> physics{};
 };
 
@@ -526,6 +531,7 @@ struct Dispatch {
     std::optional<std::string> consumed_text_revision{};
     bool failed{false};
     std::optional<AuthoringAssetReply> assets{};
+    std::optional<AuthoringPrefabReply> prefabs{};
 };
 
 } // namespace
@@ -728,7 +734,8 @@ struct AuthoringProtocol::Impl {
             return result;
         }
         if ((method == "scene.mutate" || method == "scene.preview" || method == "scene.reload" ||
-             method == "text.write") &&
+             method == "text.write" || method == "prefab.write" || method == "prefab.prepare" ||
+             method == "prefab.instantiate") &&
             session && session->physics && session->physics->active())
             fail(-32000, ErrorCode::conflict,
                  "Stop the frozen physics preview before editing or reloading source");
@@ -805,6 +812,24 @@ struct AuthoringProtocol::Impl {
             auto reply = assets(current).dispatch(method, parameters, outcome_may_have_changed);
             Dispatch prepared{std::move(reply.result)};
             prepared.assets = std::move(reply);
+            return prepared;
+        }
+        if (AuthoringPrefabs::supports(method)) {
+            auto& current = require_session();
+            // Retained instance replay remains available after external file
+            // changes; it must preserve the original frozen command and result.
+            if (method != "prefab.instantiate" && method != "prefab.release" &&
+                method != "prefab.release_preparation")
+                check_project_file(current);
+            if (!current.prefabs)
+                current.prefabs = std::make_unique<AuthoringPrefabs>(
+                    *current.files, current.project, current.path, *current.owner);
+            auto reply = current.prefabs->dispatch(method, parameters, outcome_may_have_changed);
+            if (reply.scene_changed)
+                current.cursors.clear();
+            Dispatch prepared{std::move(reply.result)};
+            prepared.failed = reply.failed;
+            prepared.prefabs = std::move(reply);
             return prepared;
         }
         if (method == "protocol.discover") {
@@ -1236,8 +1261,8 @@ struct AuthoringProtocol::Impl {
         try {
             if (request.size() > authoring_protocol_maximum_request_bytes)
                 fail(-32600, ErrorCode::invalid_argument, "Authoring request exceeds 64 KiB");
-            auto parsed =
-                detail::parse_source_json(request, project_text_maximum_bytes, maximum_json_nodes);
+            auto parsed = detail::parse_source_json(
+                request, authoring_protocol_maximum_request_bytes, maximum_json_nodes);
             if (!parsed)
                 return failure(-32700, std::move(parsed).error(), id, false);
             auto envelope = std::move(parsed).value();
@@ -1298,6 +1323,8 @@ struct AuthoringProtocol::Impl {
                     outcome_may_have_changed = true;
                 require_session().assets->admit(*prepared.assets);
             }
+            if (prepared.prefabs)
+                require_session().prefabs->admit(*prepared.prefabs);
             if (prepared.opening)
                 session = std::move(prepared.opening);
             if (prepared.closing)
@@ -1307,6 +1334,8 @@ struct AuthoringProtocol::Impl {
         } catch (ProtocolFailure& rejected) {
             return failure(rejected.code, std::move(rejected.error), id, notification);
         } catch (AuthoringAssetFailure& rejected) {
+            return failure(rejected.code, std::move(rejected.error), id, notification);
+        } catch (AuthoringPrefabFailure& rejected) {
             return failure(rejected.code, std::move(rejected.error), id, notification);
         } catch (...) {
             if (outcome_may_have_changed)

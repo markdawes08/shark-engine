@@ -68,7 +68,7 @@ def main():
         case_ids = manifest['featureworld']['case_ids']
         assert catalog['suites'] == {'featureworld': case_ids}
         assert catalog['cases'] == ['foundation', 'intentional-failure', *case_ids]
-        assert len(set(case_ids)) == 20
+        assert len(set(case_ids)) == 21
         mapped = []
         external = []
         for category in ('components', 'commands', 'lua_api'):
@@ -123,7 +123,7 @@ def main():
             assert first['project_id'] == '20000000-0000-4000-8000-000000000001'
             assert first['scene_id'] == '20000000-0000-4000-8000-000000000003'
             assert [case['id'] for case in first['cases']] == case_ids
-            assert [case['final_revision']['value'] for case in first['cases']] == [4, 11, 7, 6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+            assert [case['final_revision']['value'] for case in first['cases']] == [4, 11, 7, 6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
             for case in first['cases']:
                 assert case['status'] == 'PASS' and case['failure'] is None
                 assert case['ticks_completed'] == 3 and case['assertions'] >= 10
@@ -157,7 +157,7 @@ def main():
             for case_id in ('featureworld.persistence', 'featureworld.asset-identity',
                             'featureworld.asset-import', 'featureworld.asset-jobs',
                             'featureworld.asset-pipeline', 'featureworld.render-components',
-                            'featureworld.client-export'):
+                            'featureworld.client-export', 'featureworld.prefab-workflows'):
                 assert failures[case_id]['failure']['phase'] == 'tick'
             assert failures['featureworld.gltf-source']['status'] == 'PASS'
             assert failures['featureworld.gltf-source']['failure'] is None

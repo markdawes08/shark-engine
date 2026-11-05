@@ -5,6 +5,7 @@
 #include "input_trace.hpp"
 #include "inspector_widget.hpp"
 #include "physics_panel.hpp"
+#include "prefab_panel.hpp"
 #include "scene_panel.hpp"
 #include "script_panel.hpp"
 
@@ -172,12 +173,18 @@ struct WorkspacePanel::Impl {
     std::optional<Error> physics_debug_error;
     std::optional<Error> physics_overlay_error;
     ScriptPanel script;
+    PrefabPanel prefab;
     SteadyMonotonicClock clock;
     ShaderArtifact vertex;
     ShaderArtifact pixel;
     std::array<char, 4097> script_path{};
     std::array<char, 32769> script_text{};
     std::optional<Error> script_error;
+    std::array<char, 4097> prefab_path{};
+    std::array<char, 37> prefab_asset{};
+    std::vector<char> prefab_text =
+        std::vector<char>(tools::authoring_protocol_maximum_request_bytes + 1, '\0');
+    std::optional<Error> prefab_error;
     std::array<char, 257> create_name{};
     std::array<char, 65> target{};
     std::array<char, 16385> sidecars{};
@@ -208,8 +215,10 @@ struct WorkspacePanel::Impl {
          EditorInputTrace* trace)
         : session(owner), input_trace(trace), hierarchy(owner), gizmo(hierarchy),
           inspector(hierarchy), inspector_widget(inspector, hierarchy), assets(owner),
-          asset_widget(assets, owner), physics(owner), script(owner), vertex(vs), pixel(ps) {
+          asset_widget(assets, owner), physics(owner), script(owner), prefab(owner), vertex(vs),
+          pixel(ps) {
         text_buffer(script_path, "scripts/main.lua");
+        text_buffer(prefab_path, "assets/object.sharkprefab");
         text_buffer(create_name, "Entity");
         text_buffer(target, "windows-client");
         refresh();
@@ -944,6 +953,177 @@ struct WorkspacePanel::Impl {
         if (script_error)
             error_text(*script_error);
     }
+    void sync_prefab_text() {
+        std::fill(prefab_text.begin(), prefab_text.end(), '\0');
+        if (prefab.text().size() < prefab_text.size())
+            std::copy(prefab.text().begin(), prefab.text().end(), prefab_text.begin());
+    }
+    void prefab_edited(Result<SceneEditReceipt> outcome) {
+        if (!outcome) {
+            prefab_error = outcome.error();
+            return;
+        }
+        prefab_error = outcome.value().refresh_error;
+        const auto refreshed = hierarchy.refresh();
+        if (!refreshed)
+            prefab_error = refreshed.error();
+        else if (outcome.value().entity && hierarchy.revision() == outcome.value().revision) {
+            const auto selected = hierarchy.select(*outcome.value().entity);
+            if (!selected)
+                prefab_error = selected.error();
+        }
+        synchronize();
+    }
+    void draw_prefab(bool blocked) {
+        ImGui::TextUnformatted("PREFABS");
+        ImGui::TextWrapped(
+            "Write the matching asset sidecar in Assets first. Prefab source and "
+            "sidecar are separate publications; scene Save and undo do not write them.");
+        ImGui::PushID("prefab-panel");
+        ImGui::BeginDisabled(blocked);
+        ImGui::SetNextItemWidth(-1);
+        ImGui::InputText("Source path", prefab_path.data(), prefab_path.size());
+        ImGui::SetNextItemWidth(-1);
+        ImGui::InputText("Asset ID for capture", prefab_asset.data(), prefab_asset.size());
+        const bool playing = physics.state().active || physics.state().uncertain;
+        ImGui::BeginDisabled(playing || !session.state_current() || prefab.has_changes());
+        if (ImGui::Button("Open prefab")) {
+            const auto opened = prefab.open(prefab_path.data());
+            if (!opened)
+                prefab_error = opened.error();
+            else {
+                sync_prefab_text();
+                prefab_error.reset();
+            }
+        }
+        ImGui::SameLine();
+        if (ImGui::Button("New asset ID")) {
+            const auto generated = generate_stable_id();
+            if (!generated)
+                prefab_error = generated.error();
+            else {
+                text_buffer(prefab_asset, generated.value().to_string());
+                prefab_error.reset();
+            }
+        }
+        ImGui::BeginDisabled(!hierarchy.current() || !hierarchy.selection());
+        if (ImGui::Button("Capture selected subtree")) {
+            const auto parsed = StableId::parse(prefab_asset.data());
+            if (!parsed)
+                prefab_error = parsed.error();
+            else {
+                const auto selection = *hierarchy.selection();
+                const auto captured = prefab.capture(prefab_path.data(), selection.id,
+                                                     AssetId{parsed.value()}, selection.revision);
+                if (!captured)
+                    prefab_error = captured.error();
+                else {
+                    sync_prefab_text();
+                    prefab_error.reset();
+                }
+            }
+        }
+        ImGui::EndDisabled();
+        ImGui::EndDisabled();
+        if (prefab.loaded()) {
+            ImGui::TextWrapped("Source: %s%s", prefab.path().c_str(),
+                               prefab.has_changes() ? " (draft)" : "");
+            const bool editable = prefab.text().size() < prefab_text.size();
+            ImGui::BeginDisabled(prefab.uncertain() || prefab.instantiation_uncertain() ||
+                                 !editable);
+            if (editable &&
+                ImGui::InputTextMultiline("##prefab-source", prefab_text.data(), prefab_text.size(),
+                                          {-1, ImGui::GetTextLineHeightWithSpacing() * 14})) {
+                const auto edited = prefab.edit(prefab_text.data());
+                if (!edited)
+                    prefab_error = edited.error();
+                else
+                    prefab_error.reset();
+            }
+            ImGui::EndDisabled();
+            if (!editable)
+                ImGui::TextWrapped("This source is too large for the Editor text field. Its full "
+                                   "contents are retained; use the typed project-file workflow.");
+            ImGui::BeginDisabled(playing || !session.state_current() || !prefab.has_changes() ||
+                                 prefab.uncertain() || prefab.instantiation_uncertain() ||
+                                 prefab.prepared());
+            if (ImGui::Button("Write prefab source")) {
+                const auto written = prefab.write();
+                if (!written)
+                    prefab_error = written.error();
+                else {
+                    sync_prefab_text();
+                    prefab_error.reset();
+                }
+            }
+            ImGui::EndDisabled();
+            ImGui::SameLine();
+            ImGui::BeginDisabled(playing || !session.state_current() || prefab.has_changes());
+            if (ImGui::Button("Prepare instance")) {
+                const auto prepared = prefab.prepare();
+                if (!prepared)
+                    prefab_error = prepared.error();
+                else
+                    prefab_error.reset();
+            }
+            ImGui::EndDisabled();
+            if (prefab.prepared_root())
+                ImGui::TextWrapped("Prepared root: %s",
+                                   prefab.prepared_root()->value().to_string().c_str());
+            ImGui::BeginDisabled(playing || !session.state_current() || !prefab.prepared() ||
+                                 prefab.instantiation_uncertain());
+            if (ImGui::Button("Instantiate prefab"))
+                prefab_edited(prefab.instantiate());
+            ImGui::EndDisabled();
+            ImGui::SameLine();
+            ImGui::BeginDisabled(!prefab.prepared() || prefab.instantiation_uncertain());
+            if (ImGui::Button("Release instance draft")) {
+                const auto released = prefab.release_preparation();
+                if (!released)
+                    prefab_error = released.error();
+                else
+                    prefab_error.reset();
+            }
+            ImGui::EndDisabled();
+            if (prefab.uncertain()) {
+                if (ImGui::Button("Reconcile prefab write")) {
+                    const auto observed = prefab.reconcile();
+                    if (!observed)
+                        prefab_error = observed.error();
+                    else {
+                        sync_prefab_text();
+                        prefab_error.reset();
+                    }
+                }
+            }
+            if (prefab.instantiation_uncertain()) {
+                if (ImGui::Button("Reconcile original instance"))
+                    prefab_edited(prefab.reconcile_instantiation());
+                ImGui::TextWrapped("The original instance outcome is unresolved. Reconcile it "
+                                   "before preparing another intent or discarding this draft.");
+            }
+            ImGui::BeginDisabled(prefab.instantiation_uncertain());
+            if (ImGui::Button("Discard prefab draft")) {
+                const auto discarded = prefab.discard();
+                if (!discarded)
+                    prefab_error = discarded.error();
+                else {
+                    sync_prefab_text();
+                    prefab_error.reset();
+                }
+            }
+            ImGui::EndDisabled();
+            ImGui::TextDisabled("The complete authoring request must fit 64 KiB.");
+            if (playing)
+                ImGui::TextDisabled("Stop preview before publishing or instantiating prefabs.");
+            if (!prefab.notice().empty())
+                ImGui::TextWrapped("%s", prefab.notice().c_str());
+        }
+        ImGui::EndDisabled();
+        ImGui::PopID();
+        if (prefab_error)
+            error_text(*prefab_error);
+    }
     void draw_physics(const GraphicsWindowFrame& frame, bool blocked) {
         const auto now = clock.now();
         const bool paused_by_window = blocked || deleting || !frame.state.focused ||
@@ -975,7 +1155,8 @@ struct WorkspacePanel::Impl {
         ImGui::BeginDisabled(physics.state().active || physics.state().uncertain || !camera ||
                              !session.state_current() || inspector_widget.has_changes() ||
                              asset_widget.has_changes() || script.has_changes() ||
-                             gizmo.has_changes() || hierarchy.needs_reconciliation());
+                             prefab.has_changes() || gizmo.has_changes() ||
+                             hierarchy.needs_reconciliation());
         if (ImGui::Button("Play physics")) {
             cancel_gizmo();
             operation(physics.start(camera->id, camera->revision, target.data(), now), true);
@@ -1176,6 +1357,10 @@ void WorkspacePanel::draw(const GraphicsWindowFrame& frame, bool blocked) {
             value.draw_script(blocked);
             ImGui::EndTabItem();
         }
+        if (ImGui::BeginTabItem("Prefabs")) {
+            value.draw_prefab(blocked);
+            ImGui::EndTabItem();
+        }
         if (ImGui::BeginTabItem("Console")) {
             value.console.draw(value.session);
             ImGui::EndTabItem();
@@ -1195,10 +1380,14 @@ void WorkspacePanel::cancel_confirmation() noexcept {
 }
 bool WorkspacePanel::has_unapplied_drafts() const noexcept {
     return impl_->gizmo.has_changes() || impl_->inspector_widget.has_changes() ||
-           impl_->asset_widget.has_changes() || impl_->script.has_changes();
+           impl_->asset_widget.has_changes() || impl_->script.has_changes() ||
+           impl_->prefab.has_changes();
 }
 Result<void> WorkspacePanel::discard_drafts() {
     impl_->cancel_gizmo();
+    const auto prefab = impl_->prefab.discard();
+    if (!prefab)
+        return prefab;
     auto result = impl_->asset_widget.discard_draft();
     if (!result)
         return result;

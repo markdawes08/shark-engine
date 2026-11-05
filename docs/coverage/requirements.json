@@ -526,7 +526,7 @@
       "planned_fixture": "FeatureWorld/PrefabInstances, FeatureWorld/ScriptSpawning, PrefabReferenceRemap, PrefabNestingPolicy and SpawnDestroyLifetime fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "21a-21c add source prefab assets, atomic authored instantiation and Core runtime/Lua spawn/self-destroy with explicit trusted-host grants, deferred mutations and owned lifecycle receipts. Runtime actors are ephemeral; no durable-record or reward operation is exposed. Editor/terminal prefab workflows and connected lifetime acceptance remain 21d-21e, with actual network/handoff/durable integration retaining its owning gates. Full REQ-21 remains NOT_RUN. See docs/roadmap/prefab-plan.md and docs/handoffs/21c-runtime-spawning.md."
+          "reason": "21a-21d implement source prefab assets, atomic authored instantiation, Core runtime/Lua spawn/self-destroy and shared Editor/terminal file/capture/prepare/instantiate workflows. Runtime actors are ephemeral; no durable-record or reward operation is exposed. Connected lifetime acceptance retains 21e and actual interactive 21d evidence is deferred under the manual UI pause. Network/handoff/durable integration retains its owning gates. Full REQ-21 remains NOT_RUN. See docs/roadmap/prefab-plan.md and docs/handoffs/21d-prefab-authoring.md."
       }
     },
     {
@@ -3691,6 +3691,16 @@
     ],
     "commands": [
       {
+        "id": "tools.prefab-authoring",
+        "name": "Shared prefab files, subtree capture and retained prepared instantiation",
+        "requirement_ids": ["REQ-21", "REQ-15", "REQ-16"],
+        "test_ids": ["shark.tools.authoring-prefabs", "shark.tools.authoring-prefab-process", "shark.editor.prefabs", "shark.tools.featureworld", "shark.tools.featureworld-process"],
+        "test_sources": ["tests/authoring_prefab_tests.cpp", "tests/authoring_prefab_process.py", "tests/editor_prefab_tests.cpp", "tests/feature_world_tests.cpp", "tools/tests/test_feature_world_process.py"],
+        "fixtures": ["engine_tools/src/authoring_prefabs.cpp", "engine_tools/src/project_files.cpp", "editor/prefab_panel.cpp", "engine_tools/src/feature_world.cpp", "docs/prefab-authoring.md"],
+        "fixture_reason": "Exact source/sidecar identity checks and immutable prepared maps share the retained Scene mutation/history owner. Protocol, portable Editor adapters, actual terminal save/reopen and FeatureWorld independently cover source isolation and original retry outcomes. Native interactive UI checks remain deferred under the current manual testing pause.",
+        "featureworld_cases": ["featureworld.prefab-workflows"]
+      },
+      {
         "id": "authoring.instantiate-prefab",
         "name": "Atomic authored prefab instantiation with explicit fresh-ID remapping",
         "requirement_ids": [
@@ -3716,7 +3726,7 @@
           "engine_tools/src/prefab_instance.cpp",
           "engine_tools/src/authored_scene.cpp"
         ],
-        "fixture_reason": "The C++ authoring command shares private candidates, source metadata, history and retained retries. Independent instance, override, mapping, rollback, handle and replay checks connect to the saved FeatureWorld without changing its source. Editor/terminal prefab adapters retain 21d; this is not a live gameplay or Lua spawn API.",
+        "fixture_reason": "The C++ authoring command shares private candidates, source metadata, history and retained retries. Independent instance, override, mapping, rollback, handle and replay checks connect to the saved FeatureWorld without changing its source. Editor/terminal adapters are covered by tools.prefab-authoring; this command is not a live gameplay API.",
         "featureworld_cases": [
           "featureworld.prefab-instances"
         ]
@@ -6682,7 +6692,8 @@
       "featureworld.client-export",
       "featureworld.rigid-bodies",
       "featureworld.prefab-instances",
-      "featureworld.script-spawning"
+      "featureworld.script-spawning",
+      "featureworld.prefab-workflows"
     ],
     "case_source": "engine_tools/src/feature_world.cpp"
   }

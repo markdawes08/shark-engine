@@ -103,6 +103,18 @@ void validate_text(std::string_view text, const ProjectPath& path) {
     }
 }
 
+void validate_prefab_path(const ProjectPath& path) {
+    if (!path.text().ends_with(".sharkprefab"))
+        fail(ErrorCode::invalid_path, "Prefab source requires a .sharkprefab path", path.text());
+}
+
+void validate_prefab_identity(const PrefabDocument& prefab, const AssetMetadata& metadata,
+                              const ProjectPath& path) {
+    if (prefab.project != metadata.project || prefab.asset != metadata.asset)
+        fail(ErrorCode::conflict, "Prefab identity differs from its adjacent asset metadata",
+             path.text());
+}
+
 } // namespace
 
 struct FileRevision::Data {
@@ -270,6 +282,35 @@ Result<FileCommit> ProjectFiles::write_asset_metadata(const ProjectPath& sidecar
         auto revision = make_revision(sidecar, std::move(bytes));
         const auto durability = checked(impl_->native->replace(
             sidecar, revision.data_->bytes, prior, asset_metadata_maximum_bytes));
+        return FileCommit{std::move(revision), durability};
+    });
+}
+
+Result<ReadSource<PrefabDocument>> ProjectFiles::read_prefab(const ProjectPath& path) {
+    return boundary<ReadSource<PrefabDocument>>("prefab.file.read", [&] {
+        impl_->check_owner();
+        validate_prefab_path(path);
+        const auto sidecar = checked(asset_sidecar_path(path));
+        const auto metadata = checked(read_asset_metadata(sidecar));
+        auto bytes = checked(impl_->native->read(path));
+        auto source = checked(decode_prefab_document(bytes));
+        validate_prefab_identity(source.document, metadata.source.document, path);
+        return ReadSource<PrefabDocument>{std::move(source), make_revision(path, std::move(bytes))};
+    });
+}
+
+Result<FileCommit> ProjectFiles::write_prefab(const ProjectPath& path, const PrefabDocument& prefab,
+                                              std::optional<FileRevision> expected) {
+    return boundary<FileCommit>("prefab.file.write", [&] {
+        impl_->check_owner();
+        validate_prefab_path(path);
+        const auto sidecar = checked(asset_sidecar_path(path));
+        const auto metadata = checked(read_asset_metadata(sidecar));
+        validate_prefab_identity(prefab, metadata.source.document, path);
+        auto bytes = checked(encode_prefab_document(prefab));
+        const auto prior = expected_bytes(path, expected);
+        auto revision = make_revision(path, std::move(bytes));
+        const auto durability = checked(impl_->native->replace(path, revision.data_->bytes, prior));
         return FileCommit{std::move(revision), durability};
     });
 }

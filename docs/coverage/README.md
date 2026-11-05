@@ -8,12 +8,11 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-Assignment 20 is in progress. The [20a handoff](../handoffs/20a-physics-body-controls.md)
-records checked dynamic velocity, force and impulse controls; the
-[20b handoff](../handoffs/20b-physics-queries.md) records bounded filtered queries.
-Lua callbacks/bindings, debug visualization and connected acceptance remain in the
-[physics interaction checkpoints](../roadmap/physics-interaction-plan.md);
-REQ-20 remains NOT_RUN.
+Assignment 21 is in progress. The [prefab checkpoints](../roadmap/prefab-plan.md)
+record source values, shared instance commands, deferred runtime/Lua mutation and
+Editor/terminal workflows. Connected lifetime acceptance retains 21e. REQ-21
+remains NOT_RUN. [20e](../handoffs/20e-physics-acceptance.md) records connected CPU
+physics acceptance; REQ-20 retains its deferred native interactive evidence.
 
 **19d and REQ-19 PASS under current-machine scope.** The
 [handoff](../handoffs/19d-script-preview.md) records the shared client-presentation
@@ -27,7 +26,7 @@ Full REQ-16 and REQ-17 remain NOT_RUN for their separate native omissions.
 Composition, imported-project handoffs and reference gestures have both-GPU
 evidence. Selected hierarchy/inspector and asset/job/console branches also pass;
 actual connected UI acceptance remains partial for the unperformed cases.
-Desktop testing has resumed; the [backlog](../backlog.md) records remaining work.
+Manual desktop testing is paused; the [backlog](../backlog.md) records remaining work.
 The [shell contract](../editor-shell.md) and
 [workspace contract](../editor-scene-workspace.md) cover shared project ownership,
 dirty-state decisions, bounded hierarchy and revision-scoped selection, retained

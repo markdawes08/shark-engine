@@ -1,6 +1,6 @@
 # ADR 0057: prefab source assets
 
-Status: accepted, 21a; extended by 21b. Date: 2026-11-05.
+Status: accepted, 21a; extended by 21b and 21d. Date: 2026-11-05.
 
 ## Decision
 
@@ -42,3 +42,14 @@ whole hierarchy, including source extras, in one revision. Preparation is not a
 commit token; execution revalidates the complete mutable input. Redo preserves
 authored identities and creates fresh handle generations. Existing scene/source
 schemas and the source nesting rejection remain unchanged.
+
+## 21d: shared file and adapter workflow
+
+[Prefab authoring](../prefab-authoring.md) connects typed ProjectFiles IO and the
+retained project session to both adapters. Source publication requires matching
+adjacent metadata; the two files have independent truthful publication receipts.
+Opaque exact source tokens and immutable prepared commands preserve file conflicts
+and the original ID map across uncertain completion. Instantiation uses the
+existing mutation ledger and one history group. Capture is revision-bound and
+observational. No new importer, cache format, cooked package or gameplay authority
+is implied; source and protocol versions remain unchanged.

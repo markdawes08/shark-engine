@@ -137,6 +137,13 @@ if(TARGET EngineTools)
     add_test(NAME shark.editor.inspector COMMAND EditorInspectorTests "[editor-inspector]" --rng-seed 1337)
     set_tests_properties(shark.editor.inspector PROPERTIES LABELS "cpu;editor;unit;integration" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
     add_executable(EditorPhysicsTests editor_physics_tests.cpp editor_physics_debug_tests.cpp ../editor/script_panel.cpp ../editor/physics_panel.cpp ../editor/physics_debug.cpp ../editor/scene_panel.cpp ../editor/project_session.cpp ../editor/console_log.cpp)
+    add_executable(EditorPrefabTests editor_prefab_tests.cpp ../editor/prefab_panel.cpp ../editor/script_panel.cpp ../editor/physics_panel.cpp ../editor/physics_debug.cpp ../editor/scene_panel.cpp ../editor/project_session.cpp ../editor/console_log.cpp)
+    target_link_libraries(EditorPrefabTests PRIVATE EngineTools nlohmann_json::nlohmann_json Catch2::Catch2WithMain)
+    target_include_directories(EditorPrefabTests PRIVATE "${PROJECT_SOURCE_DIR}/editor")
+    shark_configure_target(EditorPrefabTests)
+    shark_classify_target(EditorPrefabTests test)
+    add_test(NAME shark.editor.prefabs COMMAND EditorPrefabTests "[editor-prefabs]" --rng-seed 1337)
+    set_tests_properties(shark.editor.prefabs PROPERTIES LABELS "cpu;editor;unit;integration" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
     target_link_libraries(EditorPhysicsTests PRIVATE EngineTools nlohmann_json::nlohmann_json Catch2::Catch2WithMain)
     target_include_directories(EditorPhysicsTests PRIVATE "${PROJECT_SOURCE_DIR}/editor")
     shark_configure_target(EditorPhysicsTests)
@@ -166,6 +173,7 @@ if(TARGET EngineTools)
 endif()
 if(TARGET Shark::ImGui)
     add_executable(EditorGuiTests editor_gui_tests.cpp editor_inspector_gui_tests.cpp editor_asset_gui_tests.cpp editor_viewport_gui_tests.cpp editor_gizmo_gui_tests.cpp ../editor/gui_adapter.cpp ../editor/inspector_widget.cpp ../editor/inspector_panel.cpp ../editor/scene_panel.cpp ../editor/project_session.cpp ../editor/console_log.cpp ../editor/asset_widget.cpp ../editor/asset_panel.cpp ../editor/console_widget.cpp ../editor/workspace_panel.cpp ../editor/script_panel.cpp ../editor/viewport_navigation.cpp ../editor/viewport_gizmo.cpp ../editor/gizmo_widget.cpp ../editor/transform_drag.cpp ../editor/physics_panel.cpp ../editor/physics_debug.cpp)
+    target_sources(EditorGuiTests PRIVATE ../editor/prefab_panel.cpp)
     target_link_libraries(EditorGuiTests PRIVATE EngineClient EngineTools nlohmann_json::nlohmann_json Shark::ImGui Catch2::Catch2WithMain)
     target_include_directories(EditorGuiTests PRIVATE "${PROJECT_SOURCE_DIR}/editor")
     shark_configure_target(EditorGuiTests)
@@ -984,6 +992,14 @@ if(TARGET SharkAuthor)
             LABELS "cpu;editor;integration" TIMEOUT 120 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
     endif()
     add_executable(AuthoringProtocolTests authoring_protocol_tests.cpp authoring_protocol_file_tests.cpp)
+    add_executable(AuthoringPrefabTests authoring_prefab_tests.cpp)
+    target_link_libraries(AuthoringPrefabTests PRIVATE EngineTools nlohmann_json::nlohmann_json Catch2::Catch2WithMain)
+    shark_configure_target(AuthoringPrefabTests)
+    shark_classify_target(AuthoringPrefabTests test)
+    add_test(NAME shark.tools.authoring-prefabs
+        COMMAND AuthoringPrefabTests "[authoring-prefabs]" --rng-seed 1337)
+    set_tests_properties(shark.tools.authoring-prefabs PROPERTIES
+        LABELS "cpu;tooling;unit;integration" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
     target_link_libraries(AuthoringProtocolTests PRIVATE EngineTools Catch2::Catch2WithMain)
     target_include_directories(AuthoringProtocolTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
     shark_configure_target(AuthoringProtocolTests)
@@ -995,6 +1011,11 @@ if(TARGET SharkAuthor)
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_authoring_protocol_process.py"
             --author "$<TARGET_FILE:SharkAuthor>" -v)
     set_tests_properties(shark.tools.authoring-protocol-process PROPERTIES
+        LABELS "cpu;tooling;integration" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+    add_test(NAME shark.tools.authoring-prefab-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tests/authoring_prefab_process.py"
+            --author "$<TARGET_FILE:SharkAuthor>")
+    set_tests_properties(shark.tools.authoring-prefab-process PROPERTIES
         LABELS "cpu;tooling;integration" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
     add_test(NAME shark.tools.authoring-editing-process
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_authoring_editing_process.py"
