@@ -54,13 +54,23 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [20e, connected physics acceptance](docs/handoffs/20e-physics-acceptance.md).**
+**Current handoff: [21a, prefab source assets](docs/handoffs/21a-prefab-assets.md).**
+Follow the [prefab checkpoints](docs/roadmap/prefab-plan.md),
+[source contract](docs/prefab-assets.md) and [ADR 0057](docs/architecture/0057-prefab-source-assets.md).
+The CPU Tools codec shares bounded SourceEntity validation and preserves one rooted
+prefab-local hierarchy. Nesting rejects. Instantiation, overrides, runtime/Lua
+spawning and Editor/terminal workflows are not implemented yet; full REQ-21 stays
+NOT_RUN. The next checkpoint is 21b, fresh instance IDs and reference remapping
+through the shared authoring/history owner. Preserve root-only bodies and source,
+runtime, authority and durable identity boundaries.
+
+The [20e physics handoff](docs/handoffs/20e-physics-acceptance.md) remains applicable.
 The connected CPU checks pass, including private native-contact scope instrumentation,
 no Lua entry during contact collection, paused scheduling, ordered owner dispatch,
 deferred recreation, stale exits and reverse teardown. The locked Jolt job profile is
 single-threaded; do not infer multiworker or live-server qualification. Full REQ-20
-remains NOT_RUN for the explicitly deferred native 20d UI checks. The next assignment
-in the manifest order is 21: prefabs, spawning and safe entity mutation. Preserve the
+remains NOT_RUN for the explicitly deferred native 20d UI checks. Assignment 21
+follows in manifest order: prefabs, spawning and safe entity mutation. Preserve the
 shared Scene/physics owners, checked generations and bounded contact mutation queue.
 
 The [20d handoff](docs/handoffs/20d-physics-inspection.md) records physics inspection.

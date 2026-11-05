@@ -459,6 +459,15 @@ if(TARGET EngineTools)
     add_test(NAME shark.tools.source-documents COMMAND SourceDocumentTests "[source-documents]" --rng-seed 1337)
     set_tests_properties(shark.tools.source-documents PROPERTIES LABELS "cpu;unit;tooling" TIMEOUT 60)
 
+    add_executable(PrefabDocumentTests prefab_document_tests.cpp)
+    target_link_libraries(PrefabDocumentTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_compile_definitions(PrefabDocumentTests PRIVATE
+        SHARK_PREFAB_FIXTURE_DIRECTORY="${PROJECT_SOURCE_DIR}/tests/fixtures/prefabs")
+    shark_configure_target(PrefabDocumentTests)
+    shark_classify_target(PrefabDocumentTests test)
+    add_test(NAME shark.tools.prefab-documents COMMAND PrefabDocumentTests "[prefab-documents]" --rng-seed 1337)
+    set_tests_properties(shark.tools.prefab-documents PROPERTIES LABELS "cpu;unit;tooling" TIMEOUT 60)
+
     add_executable(AuthoredSceneTests authored_scene_tests.cpp)
     target_link_libraries(AuthoredSceneTests PRIVATE EngineTools Catch2::Catch2WithMain)
     target_include_directories(AuthoredSceneTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")

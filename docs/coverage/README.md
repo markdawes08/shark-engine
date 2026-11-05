@@ -183,6 +183,7 @@ remains authoritative for individual requirement status.
 
 | Owner | Contract / final handoff |
 | --- | --- |
+| 21a prefab source assets (partial REQ-21) | [Prefab contract](../prefab-assets.md), [checkpoints](../roadmap/prefab-plan.md), [handoff](../handoffs/21a-prefab-assets.md) |
 | 00 architecture | [Decisions](../architecture/README.md), [handoff](../handoffs/00-architecture-contract.md) |
 | 01 build foundation | [CI](../ci.md), [hosted gate](../handoffs/01-ci-verification.md) |
 | M01 headless split | [Target boundaries](../architecture/0001-targets-and-boundaries.md), [hosted gate](../handoffs/M01-ci-verification.md) |

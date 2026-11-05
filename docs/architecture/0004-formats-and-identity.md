@@ -76,6 +76,10 @@ promised between CPU architectures or Lua releases.
 
 ## Stable identity and references
 
+21a implements the independently versioned [prefab source format](../prefab-assets.md)
+under [ADR 0057](0057-prefab-source-assets.md). It preserves prefab-local parent
+references, rejects nesting and does not create live instances.
+
 Persistent project, scene, entity, asset and prefab-local IDs are randomly generated
 128-bit UUIDv4 values from OS entropy, serialized as lowercase hyphenated strings.
 Tests use an injectable seeded ID generator and fixed imported IDs so creation

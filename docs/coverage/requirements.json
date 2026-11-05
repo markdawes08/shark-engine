@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "20",
+  "current_assignment": "21",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -526,7 +526,7 @@
       "planned_fixture": "FeatureWorld/PrefabInstances, FeatureWorld/ScriptSpawning, PrefabReferenceRemap, PrefabNestingPolicy and SpawnDestroyLifetime fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "Prefabs/spawning are not implemented; owner assignment 21."
+        "reason": "21a adds the bounded schema-1 prefab source codec with stable local hierarchy references, shared component validation and explicit nesting rejection. Instantiation/overrides, runtime/Lua spawn/destroy, Editor/terminal workflows and connected lifetime acceptance remain 21b-21e. Full REQ-21 remains NOT_RUN. See docs/roadmap/prefab-plan.md and docs/handoffs/21a-prefab-assets.md."
       }
     },
     {
@@ -1012,6 +1012,27 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "tools.prefab-source",
+        "name": "Bounded versioned prefab source values and stable local hierarchy references",
+        "requirement_ids": [
+          "REQ-21"
+        ],
+        "test_ids": [
+          "shark.tools.prefab-documents",
+          "shark.tools.source-documents"
+        ],
+        "test_sources": [
+          "tests/prefab_document_tests.cpp",
+          "tests/source_document_tests.cpp"
+        ],
+        "fixtures": [
+          "tests/fixtures/prefabs/beacon-v1.sharkprefab",
+          "engine_tools/include/shark/tools/prefab_document.hpp",
+          "engine_tools/src/source_document.cpp"
+        ],
+        "fixture_reason": "Independent prefab source fixtures and CPU codec tests exercise exact schema/version rejection, local references/root policy, inherited source component constraints, bounded JSON/extras and deterministic round trips. This is a pure value codec with no active Scene, importer, authoring method or Lua entry; connected FeatureWorld instantiation/spawning follows 21b-21e."
+      },
       {
         "id": "tools.asset-import-cache",
         "name": "Bounded deterministic dependency imports, jobs and atomic development cache",

@@ -1,5 +1,8 @@
 # Project and scene source documents
 
+21a's [prefab source codec](prefab-assets.md) reuses the entity component schema,
+bounded parser and validators below in its independently versioned envelope.
+
 08c's [ProjectFiles service](project-files.md) wraps this pure codec with bounded
 native reads, exact-content conflicts and atomic sibling publication. The codec
 itself remains free of filesystem and active Scene ownership.

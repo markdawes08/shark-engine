@@ -1,0 +1,36 @@
+{
+  "format": "shark.prefab",
+  "schema_version": 1,
+  "project_id": "21000000-0000-4000-8000-000000000001",
+  "asset_id": "21000000-0000-4000-8000-000000000002",
+  "root_entity": "21000000-0000-4000-8000-000000000010",
+  "entities": [
+    {
+      "entity_id": "21000000-0000-4000-8000-000000000011",
+      "parent": "21000000-0000-4000-8000-000000000010",
+      "components": {
+        "shark.name": {"schema_version": 1, "value": "Beacon lens"},
+        "shark.transform": {"schema_version": 1, "translation": [0, 2, 0]},
+        "shark.mesh_renderer": {
+          "schema_version": 1,
+          "asset_id": "21000000-0000-4000-8000-000000000020",
+          "mesh_index": 2,
+          "visible": true
+        },
+        "shark.camera": {"schema_version": 1}
+      },
+      "extras": {"label": "lens"}
+    },
+    {
+      "entity_id": "21000000-0000-4000-8000-000000000010",
+      "parent": null,
+      "components": {
+        "shark.name": {"schema_version": 1, "value": "Beacon"},
+        "shark.transform": {"schema_version": 1},
+        "shark.rigid_body": {"schema_version": 1, "motion": "dynamic", "mass": 12},
+        "shark.script": {"schema_version": 1, "source": "scripts/beacon.lua", "enabled": false}
+      }
+    }
+  ],
+  "extras": {"purpose": "independent prefab codec fixture", "prefab": "opaque annotation"}
+}

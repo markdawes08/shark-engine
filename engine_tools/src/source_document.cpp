@@ -1,6 +1,7 @@
 #include "shark/tools/source_document.hpp"
 #include "asset_cache_format.hpp"
 #include "shark/tools/asset_metadata.hpp"
+#include "shark/tools/prefab_document.hpp"
 #include "source_json.hpp"
 
 #include "shark/schema.hpp"
@@ -592,23 +593,23 @@ void project_references(const ProjectDocument& document, bool legacy = false) {
                .entity_id = id.value().to_string()}}};
 }
 
-void scene_references(const SceneDocument& document, bool legacy = false) {
-    const auto count = document.entities.size();
+void entity_references(const std::vector<SourceEntity>& entities, bool legacy = false) {
+    const auto count = entities.size();
     std::map<AuthoredEntityId, std::size_t> indices;
     for (std::size_t index = 0; index < count; ++index) {
-        if (!indices.emplace(document.entities[index].id, index).second) {
+        if (!indices.emplace(entities[index].id, index).second) {
             fail_entity(index, legacy ? "id" : "entity_id", "Duplicate entity ID",
-                        document.entities[index].id);
+                        entities[index].id);
         }
     }
     constexpr auto no_parent = std::numeric_limits<std::size_t>::max();
     std::vector<std::size_t> parents(count, no_parent);
     for (std::size_t index = 0; index < count; ++index) {
-        const auto& entity = document.entities[index];
+        const auto& entity = entities[index];
         if (entity.parent) {
             const auto parent = indices.find(*entity.parent);
             if (parent == indices.end()) {
-                fail_entity(index, "parent", "Parent does not resolve within this scene",
+                fail_entity(index, "parent", "Parent does not resolve within this document",
                             entity.id);
             }
             parents[index] = parent->second;
@@ -628,14 +629,14 @@ void scene_references(const SceneDocument& document, bool legacy = false) {
         auto cursor = index;
         while (cursor != no_parent && depths[cursor] == 0) {
             if (visiting[cursor]) {
-                fail_entity(cursor, "parent", "Scene parent hierarchy contains a cycle",
-                            document.entities[cursor].id);
+                fail_entity(cursor, "parent", "Entity parent hierarchy contains a cycle",
+                            entities[cursor].id);
             }
             visiting[cursor] = true;
             chain.push_back(cursor);
             if (chain.size() > source_maximum_hierarchy_depth) {
-                fail_entity(cursor, "parent", "Scene parent hierarchy exceeds depth 256",
-                            document.entities[cursor].id);
+                fail_entity(cursor, "parent", "Entity parent hierarchy exceeds depth 256",
+                            entities[cursor].id);
             }
             cursor = parents[cursor];
         }
@@ -643,8 +644,8 @@ void scene_references(const SceneDocument& document, bool legacy = false) {
         for (auto iterator = chain.rbegin(); iterator != chain.rend(); ++iterator) {
             ++depth;
             if (depth > source_maximum_hierarchy_depth) {
-                fail_entity(*iterator, "parent", "Scene parent hierarchy exceeds depth 256",
-                            document.entities[*iterator].id);
+                fail_entity(*iterator, "parent", "Entity parent hierarchy exceeds depth 256",
+                            entities[*iterator].id);
             }
             depths[*iterator] = depth;
             visiting[*iterator] = false;
@@ -778,7 +779,7 @@ SceneDocument read_scene(const Json& root, std::uint32_t input_version) {
         result.entities.push_back(
             read_entity(entities[index], "/entities/" + std::to_string(index), legacy, extras));
     }
-    scene_references(result, legacy);
+    entity_references(result.entities, legacy);
     return result;
 }
 
@@ -799,38 +800,29 @@ ProjectDocument validate_project(const ProjectDocument& document) {
     return result;
 }
 
-SceneDocument validate_scene(const SceneDocument& document) {
-    if (document.entities.size() > source_maximum_entities) {
-        fail("/entities", "Scene exceeds 4096 entities");
-    }
+void reserve_entity_inputs(const std::vector<SourceEntity>& entities, ExtrasBudget& extras) {
     // Bound all caller-owned raw extras before parsing or copying any candidate
     // data. Independent whitespace padding must not multiply parser work by the
     // entity count while remaining small after compact serialization.
-    ExtrasBudget extras;
-    extras.reserve_raw(document.extras_json, "/extras");
-    for (std::size_t index = 0; index < document.entities.size(); ++index) {
-        extras.reserve_raw(document.entities[index].extras_json,
+    for (std::size_t index = 0; index < entities.size(); ++index) {
+        extras.reserve_raw(entities[index].extras_json,
                            "/entities/" + std::to_string(index) + "/extras");
-        if (document.entities[index].script &&
-            document.entities[index].script->source.size() > script_maximum_source_path_bytes)
+        if (entities[index].script &&
+            entities[index].script->source.size() > script_maximum_source_path_bytes)
             fail("/entities/" + std::to_string(index) + "/components/shark.script/source",
                  "Script source path exceeds its byte bound");
     }
-    if (document.world_origin) {
-        checked(validate_world_position(*document.world_origin), "/world_origin");
-    }
-    scene_references(document);
-    SceneDocument result{document.project,
-                         document.scene,
-                         document.world_origin,
-                         {},
-                         extras.parse(document.extras_json, "/extras", 1)};
-    result.entities.reserve(document.entities.size());
-    for (std::size_t index = 0; index < document.entities.size(); ++index) {
-        const auto& entity = document.entities[index];
+}
+
+std::vector<SourceEntity> validate_entities(const std::vector<SourceEntity>& entities,
+                                            ExtrasBudget& extras) {
+    std::vector<SourceEntity> result;
+    result.reserve(entities.size());
+    for (std::size_t index = 0; index < entities.size(); ++index) {
+        const auto& entity = entities[index];
         const auto path = "/entities/" + std::to_string(index);
         try {
-            result.entities.push_back(
+            result.push_back(
                 {entity.id, entity.parent,
                  validated_name(entity.name, path + "/components/shark.name/value"),
                  validated_transform(entity.transform, path + "/components/shark.transform"),
@@ -860,6 +852,85 @@ SceneDocument validate_scene(const SceneDocument& document) {
     return result;
 }
 
+SceneDocument validate_scene(const SceneDocument& document) {
+    if (document.entities.size() > source_maximum_entities) {
+        fail("/entities", "Scene exceeds 4096 entities");
+    }
+    ExtrasBudget extras;
+    extras.reserve_raw(document.extras_json, "/extras");
+    reserve_entity_inputs(document.entities, extras);
+    if (document.world_origin) {
+        checked(validate_world_position(*document.world_origin), "/world_origin");
+    }
+    entity_references(document.entities);
+    SceneDocument result{document.project,
+                         document.scene,
+                         document.world_origin,
+                         {},
+                         extras.parse(document.extras_json, "/extras", 1)};
+    result.entities = validate_entities(document.entities, extras);
+    return result;
+}
+
+void prefab_root(const PrefabDocument& document) {
+    if (std::none_of(document.entities.begin(), document.entities.end(),
+                     [&](const SourceEntity& entity) { return entity.id == document.root; })) {
+        fail("/root_entity", "Prefab root does not resolve within this asset");
+    }
+    for (std::size_t index = 0; index < document.entities.size(); ++index) {
+        const auto& entity = document.entities[index];
+        if (entity.id == document.root) {
+            if (entity.parent) {
+                fail_entity(index, "parent", "The prefab root must be parentless", entity.id);
+            }
+        } else if (!entity.parent) {
+            fail_entity(index, "parent", "Only the declared prefab root may be parentless",
+                        entity.id);
+        }
+    }
+}
+
+PrefabDocument read_prefab(const Json& root) {
+    members(root, {"format", "schema_version", "project_id", "asset_id", "root_entity", "entities"},
+            {"extras"}, {});
+    const auto& entities = root.at("entities");
+    if (!entities.is_array() || entities.empty() || entities.size() > source_maximum_entities) {
+        fail("/entities", "Prefab requires between 1 and 4096 entities");
+    }
+    ExtrasBudget extras;
+    PrefabDocument result{id_value<ProjectId>(root.at("project_id"), "/project_id"),
+                          id_value<AssetId>(root.at("asset_id"), "/asset_id"),
+                          id_value<AuthoredEntityId>(root.at("root_entity"), "/root_entity"),
+                          {},
+                          extras.read(root, {})};
+    result.entities.reserve(entities.size());
+    for (std::size_t index = 0; index < entities.size(); ++index) {
+        result.entities.push_back(
+            read_entity(entities[index], "/entities/" + std::to_string(index), false, extras));
+    }
+    entity_references(result.entities);
+    prefab_root(result);
+    return result;
+}
+
+PrefabDocument validate_prefab(const PrefabDocument& document) {
+    if (document.entities.empty() || document.entities.size() > source_maximum_entities) {
+        fail("/entities", "Prefab requires between 1 and 4096 entities");
+    }
+    ExtrasBudget extras;
+    extras.reserve_raw(document.extras_json, "/extras");
+    reserve_entity_inputs(document.entities, extras);
+    entity_references(document.entities);
+    prefab_root(document);
+    PrefabDocument result{document.project,
+                          document.asset,
+                          document.root,
+                          {},
+                          extras.parse(document.extras_json, "/extras", 1)};
+    result.entities = validate_entities(document.entities, extras);
+    return result;
+}
+
 Json project_json(const ProjectDocument& document) {
     Json scenes = Json::array();
     for (const auto& scene : document.scenes) {
@@ -876,9 +947,9 @@ Json project_json(const ProjectDocument& document) {
                 {"extras", Json::parse(document.extras_json)}};
 }
 
-Json scene_json(const SceneDocument& document) {
+Json entities_json(const std::vector<SourceEntity>& source) {
     Json entities = Json::array();
-    for (const auto& entity : document.entities) {
+    for (const auto& entity : source) {
         const auto& transform = entity.transform;
         Json components{
             {"shark.name",
@@ -941,6 +1012,10 @@ Json scene_json(const SceneDocument& document) {
                  {"components", std::move(components)},
                  {"extras", Json::parse(entity.extras_json)}});
     }
+    return entities;
+}
+
+Json scene_json(const SceneDocument& document) {
     Json origin = nullptr;
     if (document.world_origin) {
         const auto& position = *document.world_origin;
@@ -953,7 +1028,17 @@ Json scene_json(const SceneDocument& document) {
                 {"project_id", document.project.value().to_string()},
                 {"scene_id", document.scene.value().to_string()},
                 {"world_origin", std::move(origin)},
-                {"entities", std::move(entities)},
+                {"entities", entities_json(document.entities)},
+                {"extras", Json::parse(document.extras_json)}};
+}
+
+Json prefab_json(const PrefabDocument& document) {
+    return Json{{"format", "shark.prefab"},
+                {"schema_version", prefab_document_version},
+                {"project_id", document.project.value().to_string()},
+                {"asset_id", document.asset.value().to_string()},
+                {"root_entity", document.root.value().to_string()},
+                {"entities", entities_json(document.entities)},
                 {"extras", Json::parse(document.extras_json)}};
 }
 
@@ -1143,6 +1228,20 @@ Result<DecodedSource<SceneDocument>> decode_scene_document(std::string_view text
     });
 }
 
+Result<DecodedSource<PrefabDocument>> decode_prefab_document(std::string_view text) {
+    return boundary<DecodedSource<PrefabDocument>>("source.prefab.decode", [&] {
+        const auto root = parse_json(text);
+        if (string_value(required(root, "format", {}), "/format") != "shark.prefab") {
+            fail("/format", "Source format discriminator does not match the document kind");
+        }
+        const auto& input_version = required(root, "schema_version", {});
+        if (!input_version.is_number_integer() || input_version != Json(prefab_document_version)) {
+            fail("/schema_version", "Unsupported prefab schema; supported version is 1");
+        }
+        return DecodedSource<PrefabDocument>{read_prefab(root), prefab_document_version};
+    });
+}
+
 Result<ProjectDocument> validate_project_document(const ProjectDocument& document) {
     return boundary<ProjectDocument>("source.project.validate",
                                      [&] { return validate_project(document); });
@@ -1151,6 +1250,11 @@ Result<ProjectDocument> validate_project_document(const ProjectDocument& documen
 Result<SceneDocument> validate_scene_document(const SceneDocument& document) {
     return boundary<SceneDocument>("source.scene.validate",
                                    [&] { return validate_scene(document); });
+}
+
+Result<PrefabDocument> validate_prefab_document(const PrefabDocument& document) {
+    return boundary<PrefabDocument>("source.prefab.validate",
+                                    [&] { return validate_prefab(document); });
 }
 
 Result<std::string> encode_project_document(const ProjectDocument& document) {
@@ -1162,6 +1266,12 @@ Result<std::string> encode_project_document(const ProjectDocument& document) {
 Result<std::string> encode_scene_document(const SceneDocument& document) {
     return boundary<std::string>("source.scene.encode",
                                  [&] { return encode_json(scene_json(validate_scene(document))); });
+}
+
+Result<std::string> encode_prefab_document(const PrefabDocument& document) {
+    return boundary<std::string>("source.prefab.encode", [&] {
+        return encode_json(prefab_json(validate_prefab(document)));
+    });
 }
 
 Result<AssetMetadata> decode_asset_metadata(std::string_view text) {
