@@ -1,5 +1,9 @@
 # Lua physics and contact delivery
 
+21c's [runtime entity requests](runtime-spawning.md) share the ordered deferred
+queue with contact physics writes and add explicit trusted-host authority.
+The existing body/contact operations and native callback isolation remain binding.
+
 20c connects the existing [physics controls](physics-controls.md), [queries](physics-queries.md), [contact queue](physics-contacts.md) and [script runtime](script-runtime.md). A trusted host supplies the same Scene and PhysicsWorld to each protected lifecycle call; neither is retained across calls. Client presentation can read a supplied world, but only a trusted server gameplay host can mutate physics during fixed update or contact delivery. A Region scope is a necessary check, not proof of network authority. No player command or server gameplay loop is added.
 
 ## Lua surface

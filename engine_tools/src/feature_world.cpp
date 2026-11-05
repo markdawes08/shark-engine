@@ -1,6 +1,7 @@
 #include "shark/tools/feature_world.hpp"
 
 #include "shark/physics.hpp"
+#include "shark/runtime_prefab.hpp"
 #include "shark/scene_render.hpp"
 #include "shark/schema.hpp"
 #include "shark/script_runtime.hpp"
@@ -31,7 +32,7 @@
 namespace shark::tools {
 namespace {
 namespace fs = std::filesystem;
-constexpr std::array<std::string_view, 19> case_ids{
+constexpr std::array<std::string_view, 20> case_ids{
     "featureworld.components",       "featureworld.commands",
     "featureworld.batches-history",  "featureworld.retries",
     "featureworld.persistence",      "featureworld.asset-identity",
@@ -41,7 +42,7 @@ constexpr std::array<std::string_view, 19> case_ids{
     "featureworld.gltf-assets",      "featureworld.render-components",
     "featureworld.prepared-content", "featureworld.scene-extraction",
     "featureworld.client-export",    "featureworld.rigid-bodies",
-    "featureworld.prefab-instances"};
+    "featureworld.prefab-instances", "featureworld.script-spawning"};
 
 // Short circuit only inside trusted native cases. Public failures remain Results
 // with their original operation/entity/path context, including sticky assertions.
@@ -2295,6 +2296,131 @@ function on_destroy() shark.log.info('destroy:mover') end
             "Runtime simulation or interpolation changed the source owner");
     unchanged(context, before);
 }
+void script_spawning(SceneRunContext& context) {
+    const auto before = take(context.owner().capture());
+    const RegionSceneScope scope{id<WorldId>('1'),
+                                 {id<RegionId>('2'), id<RegionInstanceId>('3'), 5}};
+    auto scene = take(Scene::create(scope));
+    EntitySeed controller{id<WorldEntityId>('4')};
+    controller.script = Script{"scripts/spawner.lua", true};
+    const auto controller_handle = take(scene->create_entity(std::move(controller)));
+    PhysicsWorldConfig physics_config;
+    physics_config.max_bodies = 8;
+    physics_config.max_body_pairs = 32;
+    physics_config.max_contact_constraints = 16;
+    physics_config.max_contact_pairs = 32;
+    physics_config.max_queued_events = 64;
+    auto physics = take(PhysicsWorld::create(physics_config));
+    take(physics->begin_simulation(*scene));
+    const auto asset = id<AssetId>('e');
+    const std::array sources{
+        ScriptSourceSnapshot{
+            "scripts/spawner.lua",
+            "local done=false\nfunction on_update() if not done then "
+            "local first=shark.prefab.spawn(1,'" +
+                asset.value().to_string() + "',10,3,0) local again=shark.prefab.spawn(1,'" +
+                asset.value().to_string() +
+                "',10,3,0) assert(first==again) shark.log.info('reserved:'..first) "
+                "done=true end end"},
+        ScriptSourceSnapshot{
+            "scripts/actor.lua",
+            "function on_init() local x,y,z=shark.entity.position() "
+            "assert(x==10 and y==3 and z==0) "
+            "local vx,vy,vz=shark.physics.velocity() assert(vx==0 and vy==0 and vz==0) "
+            "shark.log.info('spawn-init') end\n"
+            "function on_update() shark.entity.destroy(1) "
+            "shark.log.info('destroy-queued') end\n"
+            "function on_destroy() shark.log.info('spawn-destroy') end"}};
+    ScriptRuntimeConfig config;
+    config.profile = ScriptProfile::server_gameplay;
+    config.max_scripts = 4;
+    config.memory_bytes_per_script = 1024 * 1024;
+    auto scripts = take(ScriptRuntime::create(*scene, sources, config));
+    auto authority = take(RuntimeSpawnAuthority::create(*scene, scope));
+    Transform child_transform;
+    child_transform.translation.y = 2;
+    RigidBody actor_body;
+    actor_body.motion = BodyMotion::dynamic_body;
+    const RuntimePrefab prefab{asset,
+                               id<AuthoredEntityId>('5'),
+                               {{id<AuthoredEntityId>('6'),
+                                 id<AuthoredEntityId>('5'),
+                                 Name{"Runtime child"},
+                                 child_transform,
+                                 {},
+                                 MeshRenderer{builtin_cube_asset_id()}},
+                                {id<AuthoredEntityId>('5'),
+                                 {},
+                                 Name{"Runtime root"},
+                                 {},
+                                 {},
+                                 {},
+                                 actor_body,
+                                 Script{"scripts/actor.lua", true}}}};
+    const std::array catalog{prefab};
+    take(scripts->enable_spawning(*scene, *physics, *authority, catalog));
+    take(scripts->start(*scene, *physics));
+    require(context, take(scene->stats()).live_entities == 1 && take(physics->stats()).bodies == 0,
+            "Configuring runtime prefabs changed the live Scene");
+    take(scripts->update(*scene, *physics, 0.01));
+    const auto spawned = take(scripts->take_entity_mutations());
+    require(context, spawned.outcomes.size() == 1, "Spawn replay created a second receipt");
+    const auto& receipt = *spawned.outcomes.front();
+    require(context,
+            receipt.kind == ScriptEntityMutationKind::spawn &&
+                receipt.state == ScriptEntityMutationState::applied && receipt.root &&
+                receipt.created_entities.size() == 2 && receipt.created_bodies == 1 &&
+                receipt.initialized_scripts == 1 && !receipt.error,
+            "Runtime prefab initialization did not record its complete owned effects");
+    const auto root_handle = take(scene->find(*receipt.root));
+    const auto root_reference = take(scene->reference(root_handle));
+    const auto root_state = take(scene->entity_state(root_handle));
+    require(context,
+            root_reference.authority == scope.authority && root_state.children.size() == 1 &&
+                root_state.rigid_body.has_value() && root_state.script.has_value(),
+            "Runtime prefab lost its authority, body, script or child links");
+    const auto child = take(scene->entity_state(root_state.children.front()));
+    require(context,
+            child.reference.identity != root_reference.identity && child.parent == root_handle &&
+                child.world_matrix[3][0] == 10 && child.world_matrix[3][1] == 5 &&
+                child.mesh_renderer && child.mesh_renderer->asset == builtin_cube_asset_id(),
+            "Runtime prefab remapping, complete transforms or asset identity differ");
+    const auto init_logs = take(scripts->take_logs());
+    require(context,
+            init_logs.size() == 2 && init_logs[0].message.starts_with("reserved:") &&
+                init_logs[1].message == "spawn-init" && take(scene->stats()).live_entities == 3 &&
+                take(physics->stats()).bodies == 1,
+            "Spawned callbacks ran in the old pass or native initialization ran too late");
+    take(scripts->update(*scene, *physics, 0.01));
+    const auto destroyed = take(scripts->take_entity_mutations());
+    require(context,
+            destroyed.outcomes.size() == 1 &&
+                destroyed.outcomes.front()->state == ScriptEntityMutationState::applied &&
+                destroyed.outcomes.front()->removed_entities.size() == 2 &&
+                destroyed.outcomes.front()->removed_bodies == 1 &&
+                destroyed.outcomes.front()->destroyed_scripts == 1 &&
+                !destroyed.outcomes.front()->error,
+            "Deferred self destruction lost its complete teardown receipt");
+    const auto destroy_logs = take(scripts->take_logs());
+    require(context,
+            destroy_logs.size() == 2 && destroy_logs[0].message == "destroy-queued" &&
+                destroy_logs[1].message == "spawn-destroy" && !scene->resolve(root_reference) &&
+                !scene->resolve(child.reference) && take(scene->stats()).live_entities == 1 &&
+                take(physics->stats()).bodies == 0,
+            "Runtime destruction ran during traversal or retained bodies/entities");
+    require(context,
+            take(scene->entity_state(controller_handle)).reference.authority == scope.authority &&
+                take(scripts->stats()).initialized == 1,
+            "Runtime teardown changed the controller or retained its spawned VM");
+    const auto stopped = take(scripts->stop(*scene, *physics));
+    require(context, stopped.errors.empty() && stopped.attempted == 1,
+            "Runtime spawning prevented reverse script teardown");
+    take(physics->close());
+    require(context, take(physics->stats()).closed && take(physics->stats()).bodies == 0,
+            "Runtime spawning retained native physics ownership");
+    unchanged(context, before);
+}
+
 class PrefabCaseEntropy final : public IdEntropy {
   public:
     Result<void> fill(std::span<std::byte, 16> bytes) override {
@@ -2495,6 +2621,9 @@ std::vector<SceneRunCase> feature_world_cases(const fs::path& scratch_parent) {
                         break;
                     case 18:
                         prefab_instances(context);
+                        break;
+                    case 19:
+                        script_spawning(context);
                         break;
                     default:
                         break;

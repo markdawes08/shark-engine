@@ -526,7 +526,7 @@
       "planned_fixture": "FeatureWorld/PrefabInstances, FeatureWorld/ScriptSpawning, PrefabReferenceRemap, PrefabNestingPolicy and SpawnDestroyLifetime fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "21a-21b add bounded schema-1 prefab source values and atomic authored instantiation with fresh entity IDs, internal reference remapping, Name/local Transform overrides, source metadata, shared history and exact retained retries. Runtime/Lua spawn/destroy, Editor/terminal prefab workflows and connected runtime lifetime acceptance remain 21c-21e. Full REQ-21 remains NOT_RUN. See docs/roadmap/prefab-plan.md and docs/handoffs/21b-prefab-instances.md."
+        "reason": "21a-21c add source prefab assets, atomic authored instantiation and Core runtime/Lua spawn/self-destroy with explicit trusted-host grants, deferred mutations and owned lifecycle receipts. Runtime actors are ephemeral; no durable-record or reward operation is exposed. Editor/terminal prefab workflows and connected lifetime acceptance remain 21d-21e, with actual network/handoff/durable integration retaining its owning gates. Full REQ-21 remains NOT_RUN. See docs/roadmap/prefab-plan.md and docs/handoffs/21c-runtime-spawning.md."
       }
     },
     {
@@ -1012,6 +1012,16 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "core.runtime-prefabs",
+        "name": "Bounded Core runtime prefab values and revocable trusted-host spawning authority",
+        "requirement_ids": ["REQ-21"],
+        "test_ids": ["shark.core.runtime-spawning", "shark.tools.featureworld", "shark.tools.featureworld-process"],
+        "test_sources": ["tests/runtime_spawn_tests.cpp", "tests/feature_world_tests.cpp", "tools/tests/test_feature_world_process.py"],
+        "fixtures": ["engine/core/src/runtime_prefab.cpp", "engine/core/src/script_runtime.cpp", "engine_tools/src/feature_world.cpp"],
+        "fixture_reason": "Core value validation, exact Region/Scene/revocation fences and deferred Lua lifecycle checks connect to an independently specified runtime Scene in FeatureWorld. No JSON importer or live durable actor/reward operation enters Core.",
+        "featureworld_cases": ["featureworld.script-spawning"]
+      },
       {
         "id": "tools.prefab-source",
         "name": "Bounded versioned prefab source values and stable local hierarchy references",
@@ -6609,6 +6619,24 @@
       }
     ],
     "lua_api": [
+      {
+        "id": "lua.prefab.spawn", "name": "shark.prefab.spawn",
+        "requirement_ids": ["REQ-21"],
+        "test_ids": ["shark.core.runtime-spawning", "shark.core.lua", "shark.tools.featureworld-process"],
+        "test_sources": ["tests/runtime_spawn_tests.cpp", "tests/lua_vm_tests.cpp", "tools/tests/test_feature_world_process.py"],
+        "fixtures": ["engine_tools/src/feature_world.cpp", "docs/runtime-spawning.md"],
+        "fixture_reason": "A granted server script queues a fresh ephemeral instance and exact replay; Core tests cover denied phases/profiles, bounded sequencing, dynamic initialization and partial effects.",
+        "featureworld_cases": ["featureworld.script-spawning"]
+      },
+      {
+        "id": "lua.entity.destroy", "name": "shark.entity.destroy",
+        "requirement_ids": ["REQ-21"],
+        "test_ids": ["shark.core.runtime-spawning", "shark.core.lua", "shark.tools.featureworld-process"],
+        "test_sources": ["tests/runtime_spawn_tests.cpp", "tests/lua_vm_tests.cpp", "tools/tests/test_feature_world_process.py"],
+        "fixtures": ["engine_tools/src/feature_world.cpp", "docs/runtime-spawning.md"],
+        "fixture_reason": "Checked self-subtree destruction is deferred after the callback batch, with reverse teardown and original owned effects. Core tests cover authority, phase, contact generations and repeated resource reuse.",
+        "featureworld_cases": ["featureworld.script-spawning"]
+      },
       {"id":"lua.api-version", "name":"shark.api_version", "requirement_ids":["REQ-19"], "test_ids":["shark.core.script-runtime","shark.tools.featureworld-process"], "test_sources":["tests/script_runtime_tests.cpp","tools/tests/test_feature_world_process.py"], "fixtures":["engine_tools/src/feature_world.cpp","docs/script-runtime.md"], "fixture_reason":"The versioned API value is inspected by real FeatureWorld and runtime Lua scripts.", "featureworld_cases":["featureworld.components"]},
       {"id":"lua.entity.name", "name":"shark.entity.name", "requirement_ids":["REQ-19"], "test_ids":["shark.core.script-runtime","shark.tools.featureworld-process"], "test_sources":["tests/script_runtime_tests.cpp","tools/tests/test_feature_world_process.py"], "fixtures":["engine_tools/src/feature_world.cpp","docs/script-runtime.md"], "fixture_reason":"Checked self-entity name read and invalid calls are exercised by the runtime fixture and real FeatureWorld Lua lifecycle.", "featureworld_cases":["featureworld.components"]},
       {"id":"lua.entity.position", "name":"shark.entity.position", "requirement_ids":["REQ-19"], "test_ids":["shark.core.script-runtime","shark.tools.featureworld-process"], "test_sources":["tests/script_runtime_tests.cpp","tools/tests/test_feature_world_process.py"], "fixtures":["engine_tools/src/feature_world.cpp","docs/script-runtime.md"], "fixture_reason":"Checked local position read and invalid calls are exercised by the runtime fixture and real FeatureWorld Lua lifecycle.", "featureworld_cases":["featureworld.components"]},
@@ -6653,7 +6681,8 @@
       "featureworld.scene-extraction",
       "featureworld.client-export",
       "featureworld.rigid-bodies",
-      "featureworld.prefab-instances"
+      "featureworld.prefab-instances",
+      "featureworld.script-spawning"
     ],
     "case_source": "engine_tools/src/feature_world.cpp"
   }

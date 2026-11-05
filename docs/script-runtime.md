@@ -1,5 +1,9 @@
 # Script runtime and Lua API v1
 
+21c adds [deferred runtime spawning](runtime-spawning.md) through an explicit
+trusted-host grant. Owned template/source captures permit checked dynamic script
+admission and removal; unrelated out-of-band inventory changes still reject.
+
 19c adds [ScriptRuntime](../engine/core/include/shark/script_runtime.hpp), a
 creating-thread Core owner over private Lua VMs. The caller supplies owned,
 bounded source snapshots for enabled Script references in an existing Scene.
@@ -21,9 +25,10 @@ is a no-op, and a non-function callback fails. The owner calls `start`, `update`
 same Scene each time. A weak Scene lease admits only one ScriptRuntime owner;
 it expires on stop, close, destruction or failed creation without retaining a
 Scene pointer. The lease is separate from the physics write lease. Enabled Script
-identity, generation, scope and settings are rechecked at each pass; changes
-require a new owner. Start and update run in stable identity order; stop attempts
-initialized callbacks in reverse order. A stale or changed entity is not called
+identity, generation, scope and settings are rechecked at each pass; out-of-band
+changes require a new owner. Only checked runtime spawning adopts dynamic entries.
+Start and update run in stable identity order; teardown follows reverse actual
+initialization order. A stale or changed entity is not called
 at teardown: it is counted as discarded with an owned contextual error. Explicit
 `stop` rejects while deferred Scene mutations are pending, without consuming
 callbacks; the host can drain and retry, or use `close` to discard remaining
@@ -35,7 +40,8 @@ Host-supplied deltas must be finite, between zero and one second inclusive. A
 callback failure faults the owner and stops the pass. Earlier effects and Lua
 state are not rolled back; explicit stop still attempts eligible teardown and
 reports failures. A failed load does not publish a runtime. New Script components
-or changed source/settings are not silently adopted into a live owner.
+or changed source/settings are not silently adopted into a live owner outside
+the explicit runtime spawning path.
 
 At most 64 source snapshots of 32 KiB each and 2 MiB total are admitted. Configured
 instance count is at most 64; total possible VM memory is at most 64 MiB and the

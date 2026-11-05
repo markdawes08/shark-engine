@@ -9,7 +9,7 @@ unperformed interactive checks in the existing [backlog](../backlog.md).
 | --- | --- |
 | 21a | Versioned prefab source values, bounded shared component validation, stable internal references and explicit rejection of nesting. |
 | 21b | Instance creation through the shared authoring owner, fresh entity IDs, reference remapping, simple overrides and one undo/redo group. Complete; selected affected checks pass in the [handoff](../handoffs/21b-prefab-instances.md). |
-| 21c | Runtime and Lua spawn/destroy with bounded deferred requests, transform/physics/script initialization and reverse teardown, checked authority, replicas, ownership epochs and replay outcomes. |
+| 21c | Runtime and Lua spawn/self-destroy with bounded deferred requests, transform/physics/script initialization and reverse teardown, checked grants, replica rejection, ownership epochs and replay outcomes. Complete; selected CPU checks pass in the [handoff](../handoffs/21c-runtime-spawning.md). Actors are ephemeral; no durable reward operation is exposed. |
 | 21d | Shared Editor and terminal prefab file, creation and instantiation workflows, discovery, exact revision/retry reconciliation and saved-project handoff. |
 | 21e | Connected instance independence, callback mutation, reload and repeated lifetime acceptance, including script, physics and render resource cleanup. |
 

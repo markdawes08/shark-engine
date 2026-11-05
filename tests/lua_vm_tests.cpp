@@ -68,6 +68,48 @@ TEST_CASE("Lua VM excludes host access and budget escape helpers", "[core-lua]")
     )lua");
 }
 
+TEST_CASE("Lua VM structural mutations require a protected host callback", "[core-lua]") {
+    auto vm = create_vm();
+    succeeds(*vm, "assert(shark == nil)");
+    const auto identity = shark::StableId::parse("21c00000-0000-4000-8000-000000000001");
+    REQUIRE(identity);
+    auto created_scene =
+        shark::Scene::create(shark::AuthoredSceneScope{shark::SceneId{identity.value()}});
+    REQUIRE(created_scene);
+    auto scene = std::move(created_scene).value();
+    auto created_entity = scene->create_entity({shark::AuthoredEntityId{identity.value()}});
+    REQUIRE(created_entity);
+    auto reference = scene->reference(created_entity.value());
+    REQUIRE(reference);
+    // A contextual VM has bindings, but no runtime mutation host was supplied.
+    shark::detail::LuaCallContext context{scene.get(),
+                                          reference.value(),
+                                          shark::detail::LuaPhase::load,
+                                          shark::detail::LuaProfile::client_presentation,
+                                          0,
+                                          0.01,
+                                          nullptr,
+                                          nullptr};
+    const auto exposed = vm->execute("assert(type(shark.prefab.spawn)=='function'); "
+                                     "assert(type(shark.entity.destroy)=='function'); "
+                                     "function on_update() shark.prefab.spawn(1,"
+                                     "'21c00000-0000-4000-8000-000000000014',0,0,0) end; "
+                                     "function on_fixed_update() shark.entity.destroy(1) end",
+                                     "bindings.lua", context);
+    INFO((exposed ? std::string{} : exposed.error().message));
+    REQUIRE(exposed);
+    context.phase = shark::detail::LuaPhase::update;
+    const auto spawn = vm->invoke("on_update", context);
+    REQUIRE_FALSE(spawn);
+    CHECK(spawn.error().code == ErrorCode::execution_failed);
+    CHECK(spawn.error().context.operation == "lua.invoke");
+    context.phase = shark::detail::LuaPhase::fixed_update;
+    const auto destroy = vm->invoke("on_fixed_update", context);
+    REQUIRE_FALSE(destroy);
+    CHECK(destroy.error().code == ErrorCode::execution_failed);
+    CHECK(destroy.error().context.operation == "lua.invoke");
+}
+
 TEST_CASE("Lua VM rejects creation and source execution inside a native contact callback",
           "[core-lua]") {
     auto vm = create_vm();

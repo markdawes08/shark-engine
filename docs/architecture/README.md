@@ -110,6 +110,7 @@ not establish file or gameplay-wire formats.
 | [0055](0055-lua-physics-contacts.md) | Bounded Lua physics access and owner-thread contact delivery |
 | [0056](0056-physics-debug-inspection.md) | Shared physics inspection and opt-in Editor debug overlay |
 | [0057](0057-prefab-source-assets.md) | Bounded prefab source assets, stable local references and explicit nesting rejection |
+| [0058](0058-runtime-prefab-mutation.md) | Core runtime prefab values, revocable authority and deferred Lua spawn/destroy |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

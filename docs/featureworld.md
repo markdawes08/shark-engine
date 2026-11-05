@@ -1,5 +1,11 @@
 # Saved FeatureWorld
 
+21c adds the twentieth case, `featureworld.script-spawning`: a trusted Region
+runtime queues a spawn and exact replay, initializes a complete hierarchy/body,
+then destroys the self subtree at the next callback boundary. Owned receipts,
+fresh references, script/native teardown and the unchanged authored baseline are
+checked independently. This CPU fixture does not qualify graphics or a live MMO.
+
 21b adds the nineteenth case, `featureworld.prefab-instances`, using a separate
 authored owner from the saved baseline. It checks independent IDs and hierarchy,
 Name/Transform overrides, source extras and script/mesh references, one-command
@@ -72,7 +78,7 @@ owner causes explicit failure. Copy the two source files to a writable project
 root when testing from a read-only checkout. Run from any current directory by
 passing explicit paths. There is no compiled-in checkout or fixture location.
 
-`--case featureworld` selects all nineteen cases in catalog order. Each concrete ID
+`--case featureworld` selects all twenty cases in catalog order. Each concrete ID
 also selects one case. Supply `--workspace EXISTING_DIRECTORY` for the suite or
 persistence/asset-identity/asset-import/asset-jobs/asset-pipeline/render-components/client-export case. Each creates a unique child with its own
 project/scenes and remove their known files on exit. Input source bytes are
@@ -99,6 +105,7 @@ caller-selected parent. Generated results belong under ignored `out/` or `build/
 | `featureworld.scene-extraction` | Revisioned prepared-scene extraction, camera projection/view, independent reflected cube bounds/normals, local origin and global anchor, perspective/orthographic culling, hidden invalid references and retained snapshots through reload |
 | `featureworld.client-export` | Startup scene/camera preparation, exact project identity, independently expected saved entities/hierarchy/global anchor, owned bytes/digest, complete built-in loading, repeatability, wrong-project/camera and stale-revision rejection with unchanged source/history/cache |
 | `featureworld.prefab-instances` | Independent instance IDs and local references, simple overrides, source metadata, shared history, fresh handle generations, exact retained replay and source reopen on a separate authored owner |
+| `featureworld.script-spawning` | Explicit trusted grant, queued Lua spawn/replay, complete transform/body initialization, deferred self destruction and owned native/script lifecycle receipts |
 
 Every case receives a fresh owner from the same saved baseline. Functional work
 occurs at tick zero; subsequent fixed ticks check stable identity/entity counts.

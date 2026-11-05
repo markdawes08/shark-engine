@@ -15,6 +15,7 @@ add_library(EngineCore STATIC
     src/project_path.cpp
     src/render_components.cpp
     src/render_math.cpp
+    src/runtime_prefab.cpp
     src/scene.cpp
     src/scene_render.cpp
     src/schema.cpp

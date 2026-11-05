@@ -68,7 +68,7 @@ def main():
         case_ids = manifest['featureworld']['case_ids']
         assert catalog['suites'] == {'featureworld': case_ids}
         assert catalog['cases'] == ['foundation', 'intentional-failure', *case_ids]
-        assert len(set(case_ids)) == 19
+        assert len(set(case_ids)) == 20
         mapped = []
         external = []
         for category in ('components', 'commands', 'lua_api'):
@@ -82,9 +82,13 @@ def main():
                 assert 'shark.tools.featureworld-process' in entry['test_ids'], entry['id']
                 if category == 'lua_api':
                     expected_case = ('featureworld.rigid-bodies' if entry['id'].startswith('lua.physics.')
+                                     else 'featureworld.script-spawning' if entry['id'] in {
+                                         'lua.prefab.spawn', 'lua.entity.destroy'}
                                      else 'featureworld.components')
                     assert expected_case in entry['featureworld_cases'], entry['id']
-                    assert 'shark.core.script-runtime' in entry['test_ids'], entry['id']
+                    owning_test = ('shark.core.runtime-spawning' if expected_case == 'featureworld.script-spawning'
+                                   else 'shark.core.script-runtime')
+                    assert owning_test in entry['test_ids'], entry['id']
                 mapped.append(entry['id'])
         assert {entry['id'] for entry in manifest['implemented_surface']['lua_api']} == {
             'lua.entity.name', 'lua.entity.position', 'lua.entity.camera-near',
@@ -94,6 +98,7 @@ def main():
             'lua.physics.impulse', 'lua.physics.teleport', 'lua.physics.kinematic-target',
             'lua.physics.raycast', 'lua.physics.overlap-sphere', 'lua.physics.overlap-box',
             'lua.physics.remove-body', 'lua.physics.create-body',
+            'lua.prefab.spawn', 'lua.entity.destroy',
         }
         summary['mapped_surfaces'] = mapped
         summary['external_surfaces'] = external
@@ -118,7 +123,7 @@ def main():
             assert first['project_id'] == '20000000-0000-4000-8000-000000000001'
             assert first['scene_id'] == '20000000-0000-4000-8000-000000000003'
             assert [case['id'] for case in first['cases']] == case_ids
-            assert [case['final_revision']['value'] for case in first['cases']] == [4, 11, 7, 6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
+            assert [case['final_revision']['value'] for case in first['cases']] == [4, 11, 7, 6, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4, 4]
             for case in first['cases']:
                 assert case['status'] == 'PASS' and case['failure'] is None
                 assert case['ticks_completed'] == 3 and case['assertions'] >= 10

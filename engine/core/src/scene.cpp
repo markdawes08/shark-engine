@@ -1326,6 +1326,67 @@ Result<void> SceneScriptAccess::check(const Scene& scene, const ScriptLease& lea
     return {};
 }
 
+Result<EntityHandle> SceneScriptAccess::create_entity(Scene& scene, const ScriptLease& script,
+                                                      const PhysicsLease& physics,
+                                                      EntitySeed seed) {
+    constexpr auto operation = "scene.runtime.create-entity";
+    if (auto checked = check(scene, script); !checked)
+        return entity_error(std::move(checked).error(), operation, seed.identity);
+    if (auto checked = ScenePhysicsAccess::check(scene, physics); !checked)
+        return entity_error(std::move(checked).error(), operation, seed.identity);
+    if (!std::holds_alternative<RegionSceneScope>(scene.impl_->scope) || scene.impl_->edit_origin)
+        return entity_error(scene_error(ErrorCode::conflict,
+                                        "Runtime creation requires an authoritative live Scene"),
+                            operation, seed.identity);
+    // Native attachment follows complete transform creation through the physics
+    // owner. Never publish a component before its native body exists.
+    if (seed.rigid_body)
+        return entity_error(
+            scene_error(ErrorCode::conflict, "Runtime creation must attach bodies through physics"),
+            operation, seed.identity);
+    const auto identity = seed.identity;
+    auto result = scene.impl_->insert(std::move(seed));
+    if (!result)
+        return entity_error(std::move(result).error(), operation, identity);
+    return result;
+}
+
+Result<void> SceneScriptAccess::destroy_entity(Scene& scene, const ScriptLease& script,
+                                               const PhysicsLease& physics,
+                                               const EntityReference& entity) {
+    constexpr auto operation = "scene.runtime.destroy-entity";
+    if (auto checked = check(scene, script); !checked)
+        return entity_error(std::move(checked).error(), operation, entity.identity);
+    if (auto checked = ScenePhysicsAccess::check(scene, physics); !checked)
+        return entity_error(std::move(checked).error(), operation, entity.identity);
+    if (!std::holds_alternative<RegionSceneScope>(scene.impl_->scope) || scene.impl_->edit_origin)
+        return entity_error(scene_error(ErrorCode::conflict,
+                                        "Runtime destruction requires an authoritative live Scene"),
+                            operation, entity.identity);
+    auto resolved = scene.resolve(entity);
+    if (!resolved)
+        return entity_error(std::move(resolved).error(), operation, entity.identity);
+    try {
+        std::vector<EntityHandle> subtree{resolved.value()};
+        for (std::size_t index = 0; index < subtree.size(); ++index) {
+            const auto& record = scene.impl_->record(subtree[index]);
+            if (record.rigid_body)
+                return entity_error(scene_error(ErrorCode::conflict,
+                                                "Runtime destruction must detach every body first"),
+                                    operation, entity.identity);
+            subtree.insert(subtree.end(), record.children.begin(), record.children.end());
+        }
+        auto erased = scene.impl_->erase(resolved.value());
+        if (!erased)
+            return entity_error(std::move(erased).error(), operation, entity.identity);
+        return {};
+    } catch (...) {
+        return entity_error(
+            scene_error(ErrorCode::execution_failed, "Cannot validate runtime subtree destruction"),
+            operation, entity.identity);
+    }
+}
+
 Result<void> ScenePhysicsAccess::bind(Scene& scene, const PhysicsLease& lease) {
     auto& owner = *scene.impl_;
     if (auto checked = owner.check_immediate(); !checked)

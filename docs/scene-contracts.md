@@ -1,5 +1,9 @@
 # Scene ownership, identity and world coordinates
 
+21c's [runtime spawning](runtime-spawning.md) adds private Region structural
+writes checked against both current script and physics leases. Public writes
+retain their guards; bodies must detach before checked subtree destruction.
+
 18c adds a private weak physics writer lease under the
 [simulation contract](physics-simulation.md). Ordinary immediate/deferred and
 candidate writes reject while leased. The simulation port validates complete

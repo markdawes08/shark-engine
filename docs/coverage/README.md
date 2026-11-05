@@ -183,6 +183,7 @@ remains authoritative for individual requirement status.
 
 | Owner | Contract / final handoff |
 | --- | --- |
+| 21c runtime/Lua prefab mutation (partial REQ-21) | [Runtime contract](../runtime-spawning.md), [handoff](../handoffs/21c-runtime-spawning.md) |
 | 21b authored prefab instances (partial REQ-21) | [Instance contract](../prefab-instances.md), [handoff](../handoffs/21b-prefab-instances.md) |
 | 21a prefab source assets (partial REQ-21) | [Prefab contract](../prefab-assets.md), [checkpoints](../roadmap/prefab-plan.md), [handoff](../handoffs/21a-prefab-assets.md) |
 | 00 architecture | [Decisions](../architecture/README.md), [handoff](../handoffs/00-architecture-contract.md) |

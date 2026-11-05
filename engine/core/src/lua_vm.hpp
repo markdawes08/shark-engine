@@ -67,6 +67,18 @@ struct LuaContactInfo {
     std::uint64_t completed_tick{0};
 };
 
+enum class LuaEntityOperation { spawn, destroy };
+struct LuaEntityRequest {
+    LuaEntityOperation operation{};
+    std::uint64_t sequence{0};
+    char asset_id[37]{};
+    double position[3]{};
+};
+struct LuaEntityReply {
+    char error[257]{};
+    char root_id[37]{};
+};
+
 // Borrowed only during a synchronous protected call; never retained by Lua.
 // The host owns the bounded log sink and must catch all of its exceptions.
 struct LuaCallContext {
@@ -82,6 +94,9 @@ struct LuaCallContext {
     void (*physics_call)(void*, const EntityReference&, const LuaPhysicsRequest&,
                          LuaPhysicsReply&) noexcept {nullptr};
     const LuaContactInfo* contact{nullptr};
+    void* entity_user{nullptr};
+    void (*entity_call)(void*, const EntityReference&, const LuaEntityRequest&,
+                        LuaEntityReply&) noexcept {nullptr};
 };
 
 class LuaVm final {

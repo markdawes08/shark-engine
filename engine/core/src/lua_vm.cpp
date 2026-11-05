@@ -503,6 +503,93 @@ struct LuaVm::Impl {
         return physics_query(state, LuaPhysicsOperation::overlap_box);
     }
 
+    static_assert(std::is_trivially_destructible_v<LuaEntityRequest> &&
+                  std::is_trivially_destructible_v<LuaEntityReply>);
+
+    static void entity_error(LuaEntityReply& reply, const char* message) noexcept {
+        std::size_t length = 0;
+        while (message[length] != '\0' && length < max_binding_text) {
+            const auto value = static_cast<unsigned char>(message[length]);
+            reply.error[length] = value >= 32U && value < 127U ? message[length] : '?';
+            ++length;
+        }
+        reply.error[length] = '\0';
+    }
+
+    static LuaEntityReply entity_mutation(lua_State* state, LuaEntityOperation operation) noexcept {
+        LuaEntityReply reply;
+        BindingResult context_error;
+        auto* self = current(state);
+        if (!valid_context(self, context_error)) {
+            entity_error(reply, context_error.error);
+            return reply;
+        }
+        auto& context = *self->active;
+        if (context.profile != LuaProfile::server_gameplay ||
+            !std::holds_alternative<RegionSceneScope>(context.entity.scope) ||
+            (context.phase != LuaPhase::update && context.phase != LuaPhase::fixed_update &&
+             context.phase != LuaPhase::contact)) {
+            entity_error(reply, "Entity creation/destruction requires a server update callback");
+            return reply;
+        }
+        if (context.entity_call == nullptr) {
+            entity_error(reply, "Runtime entity mutation capability is unavailable");
+            return reply;
+        }
+        const bool spawn = operation == LuaEntityOperation::spawn;
+        if (lua_gettop(state) != (spawn ? 5 : 1) || !lua_isinteger(state, 1) ||
+            lua_tointeger(state, 1) <= 0) {
+            entity_error(reply, "Expected a positive integer sequence and exact argument count");
+            return reply;
+        }
+        LuaEntityRequest request;
+        request.operation = operation;
+        request.sequence = static_cast<std::uint64_t>(lua_tointeger(state, 1));
+        if (spawn) {
+            if (lua_type(state, 2) != LUA_TSTRING) {
+                entity_error(reply, "Expected an asset UUID string");
+                return reply;
+            }
+            std::size_t length = 0;
+            const char* asset = lua_tolstring(state, 2, &length);
+            if (length != 36 || std::memchr(asset, '\0', length) != nullptr) {
+                entity_error(reply, "Expected an asset UUID string of 36 bytes");
+                return reply;
+            }
+            std::memcpy(request.asset_id, asset, 36);
+            for (int axis = 0; axis < 3; ++axis) {
+                if (lua_type(state, axis + 3) != LUA_TNUMBER) {
+                    entity_error(reply, "Spawn position must contain finite numbers");
+                    return reply;
+                }
+                request.position[axis] = lua_tonumber(state, axis + 3);
+                if (!std::isfinite(request.position[axis])) {
+                    entity_error(reply, "Spawn position must contain finite numbers");
+                    return reply;
+                }
+            }
+        }
+        context.entity_call(context.entity_user, context.entity, request, reply);
+        reply.error[max_binding_text] = '\0';
+        reply.root_id[36] = '\0';
+        if (!reply.error[0] && spawn && std::strlen(reply.root_id) != 36)
+            entity_error(reply, "Runtime host returned an invalid reserved entity ID");
+        return reply;
+    }
+
+    static int prefab_spawn(lua_State* state) {
+        const auto reply = entity_mutation(state, LuaEntityOperation::spawn);
+        if (reply.error[0])
+            return luaL_error(state, "%s", reply.error);
+        lua_pushlstring(state, reply.root_id, 36);
+        return 1;
+    }
+
+    static int entity_destroy(lua_State* state) {
+        const auto reply = entity_mutation(state, LuaEntityOperation::destroy);
+        return reply.error[0] ? luaL_error(state, "%s", reply.error) : 0;
+    }
+
     // Called only under lua_pcall. All frames between Lua and the host are
     // trivial; any Lua allocation failure unwinds only native Lua/C frames.
     static int initialize_bindings(lua_State* state) {
@@ -518,7 +605,13 @@ struct LuaVm::Impl {
         lua_setfield(state, -2, "camera_near");
         lua_pushcfunction(state, &Impl::set_name);
         lua_setfield(state, -2, "set_name");
+        lua_pushcfunction(state, &Impl::entity_destroy);
+        lua_setfield(state, -2, "destroy");
         lua_setfield(state, -2, "entity");
+        lua_newtable(state);
+        lua_pushcfunction(state, &Impl::prefab_spawn);
+        lua_setfield(state, -2, "spawn");
+        lua_setfield(state, -2, "prefab");
         lua_newtable(state);
         lua_pushcfunction(state, &Impl::tick);
         lua_setfield(state, -2, "tick");

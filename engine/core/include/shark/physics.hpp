@@ -16,6 +16,9 @@
 namespace shark {
 
 class Scene;
+namespace scene_detail {
+struct PhysicsRuntimeAccess;
+}
 
 struct PhysicsRenderPose {
     EntityReference entity;
@@ -238,6 +241,7 @@ class PhysicsWorld final {
     [[nodiscard]] Result<void> close();
 
   private:
+    friend struct scene_detail::PhysicsRuntimeAccess;
     [[nodiscard]] Result<PhysicsBodyHandle> create_body_impl(const Scene& scene,
                                                              EntityHandle entity, Scene* runtime,
                                                              const RigidBody* replacement);

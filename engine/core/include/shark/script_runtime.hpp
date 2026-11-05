@@ -2,6 +2,7 @@
 
 #include "shark/error.hpp"
 #include "shark/physics.hpp"
+#include "shark/runtime_prefab.hpp"
 #include "shark/scene_identity.hpp"
 #include "shark/scene_query.hpp"
 
@@ -57,6 +58,9 @@ struct ScriptStopReport {
     // Errors are owned in reverse order. Stale/changed instances are discarded
     // with an error; every other destroy callback is attempted after failures.
     std::vector<Error> errors;
+    std::size_t removed_spawned_entities{0};
+    std::size_t removed_spawned_bodies{0};
+    std::size_t remaining_spawned_roots{0};
 };
 
 inline constexpr std::size_t script_runtime_maximum_contact_events = 256;
@@ -73,6 +77,34 @@ struct ScriptContactReport {
     std::size_t discarded_commands{0};
     std::optional<Error> error;
 };
+
+enum class ScriptEntityMutationKind { spawn, destroy };
+enum class ScriptEntityMutationState { queued, applied, failed, discarded };
+
+// Owned historical effects, not live authority or a rollback promise. Failed
+// operations retain the exact prefix of entity/native/script effects completed.
+struct ScriptEntityMutationReceipt {
+    EntityReference requester;
+    std::uint64_t sequence;
+    ScriptEntityMutationKind kind;
+    ScriptEntityMutationState state{ScriptEntityMutationState::queued};
+    std::optional<WorldEntityId> root{};
+    std::vector<EntityReference> created_entities{};
+    std::vector<EntityReference> removed_entities{};
+    std::size_t created_bodies{0};
+    std::size_t removed_bodies{0};
+    std::size_t initialized_scripts{0};
+    std::size_t destroyed_scripts{0};
+    std::size_t attempted_destroy_callbacks{0};
+    bool native_progress_uncertain{false};
+    std::optional<Error> error{};
+};
+
+struct ScriptEntityMutationReport {
+    std::vector<std::shared_ptr<const ScriptEntityMutationReceipt>> outcomes;
+};
+
+inline constexpr std::size_t script_runtime_maximum_entity_mutations = 64;
 
 struct ScriptRuntimeStats {
     ScriptProfile profile;
@@ -104,6 +136,12 @@ class ScriptRuntime final {
     ScriptRuntime(ScriptRuntime&&) = delete;
     ScriptRuntime& operator=(ScriptRuntime&&) = delete;
 
+    // Trusted host opt-in before start. Owns validated value snapshots; no
+    // source parser, file access or gameplay admission is inferred from scope.
+    [[nodiscard]] Result<void> enable_spawning(Scene& scene, PhysicsWorld& physics,
+                                               RuntimeSpawnAuthority& authority,
+                                               std::span<const RuntimePrefab> prefabs);
+
     [[nodiscard]] Result<void> start(Scene& scene);
     [[nodiscard]] Result<void> start(Scene& scene, PhysicsWorld& physics);
     [[nodiscard]] Result<void> update(Scene& scene, double delta_seconds);
@@ -120,6 +158,7 @@ class ScriptRuntime final {
     [[nodiscard]] Result<ScriptStopReport> stop(Scene& scene);
     [[nodiscard]] Result<ScriptStopReport> stop(Scene& scene, PhysicsWorld& physics);
     [[nodiscard]] Result<std::vector<ScriptLogEntry>> take_logs();
+    [[nodiscard]] Result<ScriptEntityMutationReport> take_entity_mutations();
     [[nodiscard]] Result<ScriptRuntimeStats> stats() const;
     // Close without Scene access. Reports initialized callbacks not invoked.
     [[nodiscard]] Result<std::size_t> close();

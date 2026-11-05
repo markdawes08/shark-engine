@@ -2,6 +2,7 @@
 #include "shark/scene.hpp"
 
 #include "physics_contact_scope.hpp"
+#include "physics_runtime_access.hpp"
 #include "scene_physics_access.hpp"
 
 #include <Jolt/Jolt.h>
@@ -1930,6 +1931,17 @@ Result<void> PhysicsWorld::close() {
         return reported_error("physics.world.close");
     }
     return {};
+}
+
+Result<scene_detail::PhysicsLease> scene_detail::PhysicsRuntimeAccess::lease(PhysicsWorld& world,
+                                                                             const Scene& scene) {
+    constexpr auto operation = "physics.runtime.lease";
+    if (auto checked = world.impl_->check_simulation(scene, operation); !checked) {
+        auto error = std::move(checked).error();
+        error.context.operation = operation;
+        return error;
+    }
+    return world.impl_->simulation;
 }
 
 } // namespace shark
