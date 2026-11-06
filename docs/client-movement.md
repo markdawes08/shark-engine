@@ -112,5 +112,6 @@ native collision correction, seeded decoded-message faults and a second actual
 authenticated client receiving/interpolating published movement. Separate-process
 replication also exercises timed ingestion and endpoint parity. CPU interpolation
 does not qualify rendered smoothing or native UI, and decoded-message faults do
-not simulate loss of encrypted TCP bytes. Full M04 combat/effect/adversity gates
-remain open under the [checkpoint plan](roadmap/authoritative-gameplay-plan.md).
+not simulate loss of encrypted TCP bytes. [M04e](handoffs/M04e-gameplay-acceptance.md)
+closes full M04's connected combat/effect/adversity gate under the declared headless
+functional profile. Graphical qualification retains its later owners.

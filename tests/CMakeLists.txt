@@ -220,6 +220,10 @@ if(TARGET EngineStorage)
     set_tests_properties(shark.server.combat PROPERTIES LABELS "cpu;server;physics;integration" TIMEOUT 60)
     add_test(NAME shark.server.gameplay-lifecycle COMMAND ServerMovementTests "[gameplay-lifecycle]" --rng-seed 1337)
     set_tests_properties(shark.server.gameplay-lifecycle PROPERTIES LABELS "cpu;server;physics;script;integration" TIMEOUT 60)
+    add_executable(GameplayProbe gameplay_probe.cpp)
+    target_link_libraries(GameplayProbe PRIVATE EngineStorage)
+    shark_configure_target(GameplayProbe)
+    shark_classify_target(GameplayProbe test)
     add_executable(StorageTests storage_tests.cpp storage_records_tests.cpp)
     target_link_libraries(StorageTests PRIVATE EngineStorage SharkSQLite Catch2::Catch2WithMain)
     target_include_directories(StorageTests PRIVATE "${PROJECT_SOURCE_DIR}/server/storage/src")
@@ -880,6 +884,12 @@ if(TARGET SceneRunner)
     set_tests_properties(shark.tools.scene-runner-process PROPERTIES LABELS "cpu;tooling;integration" TIMEOUT 60)
 endif()
 if(TARGET EngineStorage)
+    add_test(NAME shark.server.gameplay-process
+        COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/test_gameplay.py"
+            --probe "$<TARGET_FILE:GameplayProbe>"
+            --fixtures "${PROJECT_SOURCE_DIR}/tests/fixtures/network"
+            --output "${CMAKE_CURRENT_BINARY_DIR}/gameplay-process.json")
+    set_tests_properties(shark.server.gameplay-process PROPERTIES LABELS "cpu;server;physics;integration" TIMEOUT 240)
     add_test(NAME shark.storage.process
         COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tools/tests/test_storage_process.py"
             --probe "$<TARGET_FILE:StorageProcess>"

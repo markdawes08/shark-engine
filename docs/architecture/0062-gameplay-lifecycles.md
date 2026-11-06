@@ -47,4 +47,5 @@ the relevant owner rather than claiming rollback. Combat-managed body generation
 are not silently rebound after arbitrary Lua remove/recreate. Dormant records count
 toward the 32-actor limit and permanent retirement requires owner teardown.
 Reconnect state is retained-realm state, not durable health across process restart.
-The final adversity/continuity acceptance remains M04e, with full REQ-M04 NOT_RUN.
+The [M04e handoff](../handoffs/M04e-gameplay-acceptance.md) records passing final
+adversity/continuity acceptance and full REQ-M04 under the declared functional scope.

@@ -125,5 +125,6 @@ and verifies one committed transfer, exact replay and altered-payload rejection.
 It adds no loot/reward endpoint.
 
 The [M04d handoff](handoffs/M04d-gameplay-lifecycle.md) records selected CPU/native
-physics and real mTLS evidence. M04e retains connected two-client adversity,
-pause/disconnect and headless continuity acceptance; full REQ-M04 stays NOT_RUN.
+physics and real mTLS evidence. [M04e](handoffs/M04e-gameplay-acceptance.md) records
+passing connected two-client adversity, pause/disconnect and headless continuity
+acceptance; full REQ-M04 PASS under that functional scope.

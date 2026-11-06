@@ -54,7 +54,15 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [M04d, connected gameplay lifecycles](docs/handoffs/M04d-gameplay-lifecycle.md).**
+**Current handoff: [M04e, connected gameplay acceptance](docs/handoffs/M04e-gameplay-acceptance.md).**
+M04 and full REQ-M04 PASS under the declared current-machine functional profile.
+Follow [gameplay acceptance](docs/gameplay-acceptance.md); preserve the distinction
+between shaped verified observations, reliable player/replica traffic and native
+physics. M05 is next in manifest order: seamless streaming and authority transfer.
+Its scope is in the [MMORPG plan](docs/roadmap/mmorpg-plan.md). The manual UI pause
+and independent backlog statuses remain unchanged.
+
+The [M04d handoff](docs/handoffs/M04d-gameplay-lifecycle.md) remains applicable.
 Follow the [lifecycle contract](docs/gameplay-lifecycle.md) and
 [ADR 0062](docs/architecture/0062-gameplay-lifecycles.md). The same retained owners
 now order session detach, entity fixed callbacks, native movement, owned contacts
@@ -69,8 +77,6 @@ must not silently rebind stale generations. CombatClient emits owned presentatio
 outcomes once, freezes effects on gaps and requires explicit same-binding resync;
 new lives construct new owners. Publish one canonical recipient state per tick.
 Durable uncertainty retains the original request/OperationId across reconnect.
-M04e is next: connected two-client adversity and headless continuity acceptance.
-Full REQ-M04 remains NOT_RUN.
 
 The [M04c handoff](docs/handoffs/M04c-authoritative-combat.md) remains applicable.
 Follow the [combat contract](docs/authoritative-combat.md) and

@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "M04",
+  "current_assignment": "M05",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -835,8 +835,8 @@
       ],
       "planned_fixture": "AuthoritativeCharacterMovement, PredictionCorrection, CombatAuthorityReject and ClientPauseWorldContinuity fixtures.",
       "verification": {
-        "status": "NOT_RUN",
-        "reason": "M04a-M04d implement authenticated movement, bounded prediction/interpolation, current-pose targeted combat and connected gameplay lifecycles. M04d adds checked detached/reconnect state preserving health, cooldown and death deadline; owned contact delivery and subtree script suspend/resume; bounded client outcome delivery with explicit gap/resync handling; and reconciliation of an original committed durable operation after session replacement without a second effect. The selected profile remains 20 Hz/three substeps with zero historical rewind. Selected evidence is recorded in docs/handoffs/M04d-gameplay-lifecycle.md. Full two-client network-adversity and continuity acceptance retains M04e. Full REQ-M04 remains NOT_RUN."
+        "status": "PASS",
+        "reason": "M04a-M04e and full REQ-M04 pass under the declared current-machine functional scope. Existing authenticated movement, native collision, bounded prediction/interpolation, current-pose server Lua combat and checked script/contact/reconnect lifecycles are connected in three separate-process two-client baseline and nominal 100/200 ms semantic fault profiles. Both clients accept all health stages, death and fresh respawn; four strikes, cooldown, interaction, replica lifetimes and final poses/health agree. Replay and unsupported grant requests reject, outcomes deliver once, and client pause/disconnect do not stop the headless world. Twenty selected Windows Debug tests cover the mapped subsystem and seven WSL ASan+UBSan tests include the complete process case. Original durable-operation and native minimize evidence are reused for unchanged owners. Evidence: docs/handoffs/M04e-gameplay-acceptance.md; scope: docs/gameplay-acceptance.md. This does not qualify graphical smoothing, full LOCAL-MMO-1 load, seamless transfer, WAN or production capacity. M05 is next."
       }
     },
     {
@@ -1012,6 +1012,16 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "server.connected-gameplay",
+        "name": "Two-client authoritative gameplay under bounded semantic network faults",
+        "requirement_ids": ["REQ-M04"],
+        "test_ids": ["shark.server.gameplay-process"],
+        "test_sources": ["tests/gameplay_probe.cpp", "tools/test_gameplay.py"],
+        "fixtures": ["tests/fixtures/network/README.md", "docs/gameplay-acceptance.md"],
+        "fixture_reason": "Three serial profiles each connect two headless client processes to one real mTLS, Store and native-physics server using existing gameplay/prediction/replication owners. Verified combat/movement observations experience seeded delay, jitter, loss, duplicates and reorder; reliable shared-sequence intents retain FIFO admission with semantic request delay. Independent accepted health stages, wall prediction correction, literal damage/cooldown/interaction, death/respawn, replica lifetimes, original effect identities, client pause/reconnect and final health/poses qualify the connected M04 gate. The supervisor checks actual summaries and retains unexpected failed scratch. These authenticated server/CPU-client fixtures do not add a public command, Lua binding, serialized component or FeatureWorld case.",
+        "featureworld_cases": []
+      },
       {
         "id": "server.gameplay-lifecycle",
         "name": "Checked detached character state and fresh-session gameplay reconnect",

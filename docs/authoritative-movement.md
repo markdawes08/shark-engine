@@ -120,5 +120,6 @@ actual mTLS and native collision verification. M04b's
 timed remote interpolation and publication through this existing character owner.
 M04c now supplies [authoritative combat](authoritative-combat.md), including a
 trusted checked movement release that discards pending input on death and requires
-a fresh stream on respawn. M04d-M04e retain full lifetime/effect and adversity
-integration; full REQ-M04 remains NOT_RUN.
+a fresh stream on respawn. [M04d](gameplay-lifecycle.md) connects lifetimes/effects;
+[M04e](handoffs/M04e-gameplay-acceptance.md) records passing connected adversity
+and continuity acceptance. Full REQ-M04 PASS under the declared functional scope.

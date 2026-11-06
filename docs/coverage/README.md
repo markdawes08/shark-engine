@@ -8,7 +8,8 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-M04 is in progress under the [gameplay checkpoints](../roadmap/authoritative-gameplay-plan.md).
+M04 and full REQ-M04 PASS under the [gameplay checkpoints](../roadmap/authoritative-gameplay-plan.md)
+and declared current-machine functional profile. M05 is next in manifest order.
 [M04a](../handoffs/M04a-authoritative-movement.md) records authenticated sequenced
 movement, native collision and committed corrections.
 [M04b](../handoffs/M04b-client-movement.md) adds bounded prediction/reconciliation,
@@ -17,8 +18,9 @@ timed remote interpolation and authenticated second-client publication.
 bounded server Lua rules, cooldowns and checked death/respawn.
 [M04d](../handoffs/M04d-gameplay-lifecycle.md) connects owned contacts/entity-script
 lifetimes, state-preserving reconnect, presentation deduplication and original
-durable-operation replay. M04e retains connected adversity/continuity acceptance;
-full REQ-M04 remains NOT_RUN.
+durable-operation replay. [M04e](../handoffs/M04e-gameplay-acceptance.md) records
+three separate-process semantic fault profiles, both clients' accepted health and
+life observations, once-only effects and independent headless world continuity.
 
 The [prefab checkpoints](../roadmap/prefab-plan.md)
 record completed source values, shared instance commands, deferred runtime/Lua

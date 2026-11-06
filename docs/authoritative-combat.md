@@ -147,5 +147,6 @@ ordered outcomes fit the 2,048-byte codec bound (current maximum 1,253 bytes).
 State kind 2 is a four-byte generic rejection without internal diagnostics.
 
 The [handoff](handoffs/M04c-authoritative-combat.md) records actual two-client TLS,
-native death/respawn, rule and codec evidence. Full REQ-M04 remains NOT_RUN until
-its full connected network-adversity and continuity gates pass.
+native death/respawn, rule and codec evidence. [M04e](handoffs/M04e-gameplay-acceptance.md)
+records passing connected network-adversity and continuity gates; full REQ-M04
+PASS under its declared current-machine functional scope.
