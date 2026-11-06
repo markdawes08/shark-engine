@@ -43,8 +43,10 @@ spends the same exact-next sequence/rate budget used by movement and replication
 The combat action ID, movement input ID and shared session sequence are distinct.
 No client field chooses damage, elapsed time, cooldown, collider or target pose.
 
-One `step` calls the retained CharacterMovement exactly once, then rechecks live
-connections/sessions and source/target generations. It resolves pending actions
+One `step` fences live connections/sessions before fixed callbacks, calls the
+retained CharacterMovement exactly once, then rechecks source/target generations.
+Optional entity-script/contact ordering follows the
+[lifecycle contract](gameplay-lifecycle.md). It resolves pending actions
 in admission order using committed current poses. Cooldown, current 3D range and
 complete bounded ray checks precede Lua. Overflow or an unavailable ray rejects
 line of sight; no partial result authorizes a hit. Triggers are ignored and body
@@ -55,7 +57,7 @@ Range/cooldown denials are owned fixed-tick outcomes for the admitted action, no
 another request. Exact or altered replay of an accepted action ID rejects without
 another effect or shared sequence admission. Retained outcomes support observation;
 they do not implement authoring-style exact original-request retry. Full uncertain
-network/effect reconciliation remains M04d. A typed interaction outcome confirms
+network/effect reconciliation follows [M04d](gameplay-lifecycle.md). A typed interaction outcome confirms
 the admitted interaction only and grants no item, currency, quest or durable effect.
 
 ## Server Lua rules
@@ -114,12 +116,11 @@ rollback from outer Result failure or repeat an uncertain tick. Scoped teardown
 remains available through the owning services.
 
 Movement's contact batch is followed by body-removal exits in the returned owned
-observations; the native FIFO is drained before another movement tick. This adapter
-does not invoke entity ScriptRuntime contact/death/spawn callbacks. Existing
-`ScriptRuntime::dispatch_contacts` drains PhysicsWorld itself, so calling it later
-does not deliver an already-owned `CombatTick` batch. Preserve those observations
-for explicit host processing; combined entity-script lifecycle dispatch remains
-M04d integration. Combat rule Lua runs outside native collection regardless.
+observations; the native FIFO is drained before another movement tick. M04d adds
+optional same-owner entity-script dispatch of these owned batches, suspension on
+death/disconnect and fresh initialization after body/movement restoration. Its
+[lifecycle contract](gameplay-lifecycle.md) defines original reports, replay fences
+and reconnect preservation. Combat rule Lua stays outside native collection.
 
 The movement prefix precedes combat resolution: a character may have moved and
 then died in that tick. Use the final combat view for life state. A view returns
@@ -147,4 +148,4 @@ State kind 2 is a four-byte generic rejection without internal diagnostics.
 
 The [handoff](handoffs/M04c-authoritative-combat.md) records actual two-client TLS,
 native death/respawn, rule and codec evidence. Full REQ-M04 remains NOT_RUN until
-its connected effect, reconnect and network-adversity gates pass.
+its full connected network-adversity and continuity gates pass.

@@ -55,11 +55,11 @@ Respawn recreates the body, teleports through the physics owner, rebinds movemen
 and rotates the combat stream/life token. Durable and Scene entity identity stay
 separate from these ephemeral generations. Return ordered native contact values
 and removal exits without invoking Lua inside native callbacks. Entity
-ScriptRuntime contact/death/spawn orchestration remains explicit host integration;
-this value-rule adapter does not deliver those callbacks automatically.
+ScriptRuntime contact/death/spawn orchestration follows the optional same-owner
+host integration in [ADR 0062](0062-gameplay-lifecycles.md); rule Lua stays value-only.
 
 Outer wire version 1 gains authenticated combat action/state kinds 11/12. Their
 independent combat protocol 1 has exact bounded fields and generic rejection.
 Older peers reject unknown kinds. Source, database, prepared-content and authoring
-versions do not change; no Lua/native type enters a public header. M04d retains
-full reconnect/spawn/effect integration and M04e retains connected acceptance.
+versions do not change; no Lua/native type enters a public header. M04d adds
+reconnect/spawn/effect integration and M04e retains connected acceptance.

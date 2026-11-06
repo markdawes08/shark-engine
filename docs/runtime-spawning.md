@@ -96,6 +96,12 @@ under the original leases, including after grant revocation; its report records
 removed entities/bodies and any remaining roots. Initial host entities stay
 owned by the host. A cleanup error preserves its explicit failure/remaining-root
 outcome. Releasing scripts alone cannot claim deletion of entities/bodies.
+
+M04d's [subtree suspension](gameplay-lifecycle.md) also cleans requester-owned
+runtime roots. Bounded ownership records retain the ultimate issuer independently
+of drainable receipts, including after an intermediate spawned requester retires.
+Destroying or restarting its VM cannot replay a consumed mutation ID.
+
 Private structural writes check both live Script and Physics leases. Ordinary
 Scene writes and authoring retain their guards. Core gains no source decoder,
 Tools service, native handle exposure or scheduler. Runtime/export still reject

@@ -836,7 +836,7 @@
       "planned_fixture": "AuthoritativeCharacterMovement, PredictionCorrection, CombatAuthorityReject and ClientPauseWorldContinuity fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "M04a-M04c implement authenticated bounded movement, client prediction/reconciliation, timed remote interpolation and server-owned current-pose combat/interactions with bounded Lua rules, tick cooldowns and checked death/respawn. Selected Windows Debug and WSL ASan+UBSan checks pass, including actual two-client TLS actions/state, native range/LOS, movement discard on death, fresh body/life/stream identities, revoked targets and partial rule/native failure receipts. The selected profile is targeted melee at 20 Hz/three substeps with zero historical rewind. See docs/handoffs/M04c-authoritative-combat.md. Full connected owned-contact/entity-script lifecycle, reconnect/effect/durable deduplication and complete two-client network-adversity/continuity acceptance retain M04d-M04e. Full REQ-M04 remains NOT_RUN."
+        "reason": "M04a-M04d implement authenticated movement, bounded prediction/interpolation, current-pose targeted combat and connected gameplay lifecycles. M04d adds checked detached/reconnect state preserving health, cooldown and death deadline; owned contact delivery and subtree script suspend/resume; bounded client outcome delivery with explicit gap/resync handling; and reconciliation of an original committed durable operation after session replacement without a second effect. The selected profile remains 20 Hz/three substeps with zero historical rewind. Selected evidence is recorded in docs/handoffs/M04d-gameplay-lifecycle.md. Full two-client network-adversity and continuity acceptance retains M04e. Full REQ-M04 remains NOT_RUN."
       }
     },
     {
@@ -1012,6 +1012,94 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "server.gameplay-lifecycle",
+        "name": "Checked detached character state and fresh-session gameplay reconnect",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.server.gameplay-lifecycle",
+          "shark.server.combat",
+          "shark.server.movement"
+        ],
+        "test_sources": [
+          "tests/server_movement_tests.cpp"
+        ],
+        "fixtures": [
+          "server/storage/src/combat.cpp",
+          "server/storage/src/movement.cpp",
+          "server/storage/include/shark/server/combat.hpp"
+        ],
+        "fixture_reason": "Actual ready mTLS sessions, native bodies and retained gameplay owners connect detach/reconnect to authoritative combat. Dormant records retain health, cooldown and original death deadline while counting toward capacity. Fresh sessions retain the same checked entity and rotate combat identities. Living records recreate fresh body/movement generations; dead records remain bodyless until their original respawn deadline. Explicit active-entity selection excludes detached/dead actors. Owned contact and script lifecycle reports retain original ordered partial effects; no automatic repeated tick or new player state/reward grant is introduced.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "core.combat-client",
+        "name": "Bounded combat presentation cache with single-delivery outcomes and explicit history gaps",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.core.combat-client",
+          "shark.server.gameplay-lifecycle"
+        ],
+        "test_sources": [
+          "tests/core_combat_client_tests.cpp",
+          "tests/server_movement_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/core/src/net_combat_client.cpp",
+          "engine/core/include/shark/net/combat_client.hpp"
+        ],
+        "fixture_reason": "Verified-server combat values enter one creating-thread presentation cache with session, stream, life, increasing-tick and bounded monotonic movement-acknowledgement fences. Exact repeats emit no effects, conflicting or stale data cannot rebase state, and missing retained outcomes freeze effect delivery with the original gap. Explicit resynchronization skips historical effects rather than replaying them; a fresh binding requires a fresh owner. Returned historical presentation values execute no Scene, Lua, prediction or durable operation.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "core.script-host-lifecycle",
+        "name": "Owned contact batch delivery and checked server subtree script suspension/resumption",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.core.script-runtime",
+          "shark.core.runtime-spawning",
+          "shark.server.gameplay-lifecycle"
+        ],
+        "test_sources": [
+          "tests/script_runtime_tests.cpp",
+          "tests/runtime_spawn_tests.cpp",
+          "tests/server_movement_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/core/src/script_runtime.cpp",
+          "engine/core/include/shark/script_runtime.hpp"
+        ],
+        "fixture_reason": "The existing ScriptRuntime accepts complete owned contact batches under original world, sequence, Scene and body-generation fences shared with native FIFO delivery. It consumes a batch before callbacks and preserves original reports on partial failure, preventing overlap/redelivery. Checked subtree suspension destroys callbacks once in reverse order and cleans issuer-owned spawned roots; resumption loads fresh VMs from captured source in forward hierarchy order. Dual Scene/physics leases and the existing deferred mutation queue remain authoritative. A stable runtime incarnation fixes the optional combat script owner; later omission, replacement or opt-in rejects before callbacks. Existing FeatureWorld script-spawning remains shared-service regression; the new host lifecycle APIs are exercised by dedicated owner/native fixtures, without adding a Lua binding or FeatureWorld case.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "server.gameplay-durable-reconciliation",
+        "name": "Original durable operation identity across interaction and authenticated session replacement",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.storage.recovery",
+          "shark.server.gameplay-lifecycle"
+        ],
+        "test_sources": [
+          "tests/storage_recovery_tests.cpp",
+          "tests/server_movement_tests.cpp"
+        ],
+        "fixtures": [
+          "server/storage/src/characters.cpp",
+          "server/storage/src/durable_worker.cpp",
+          "server/storage/src/store.cpp"
+        ],
+        "fixture_reason": "An actual admitted native-world combat interaction grants no economy change by itself. The trusted host retains one explicit original conservation TransferRequest, then real SQL commits behind the existing publication barrier. The authoritative world advances and the same gameplay entity reconnects while SQL publication remains held. The replacement ready session then receives a fenced settled completion with its original request/outcome. Retrying that identical durable ID/payload resolves the same committed receipt, while changed payload under that ID rejects and currency/items remain conserved. This connects existing submit_transfer/take/retry services; it adds no reward endpoint, transaction identity allocator or claim of exactly-once network delivery.",
+        "featureworld_cases": []
+      },
       {
         "id": "server.authoritative-combat",
         "name": "Authenticated fixed-tick combat interactions and checked death/respawn",
@@ -3818,6 +3906,122 @@
       }
     ],
     "commands": [
+      {
+        "id": "server.combat.reconnect",
+        "name": "CharacterCombat::reconnect after explicit server detach",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.server.gameplay-lifecycle",
+          "shark.server.combat",
+          "shark.server.movement"
+        ],
+        "test_sources": [
+          "tests/server_movement_tests.cpp"
+        ],
+        "fixtures": [
+          "server/storage/src/combat.cpp",
+          "server/storage/src/movement.cpp",
+          "server/storage/include/shark/server/combat.hpp"
+        ],
+        "fixture_reason": "Actual ready mTLS sessions, native bodies and retained gameplay owners connect detach/reconnect to authoritative combat. Dormant records retain health, cooldown and original death deadline while counting toward capacity. Fresh sessions retain the same checked entity and rotate combat identities. Living records recreate fresh body/movement generations; dead records remain bodyless until their original respawn deadline. Explicit active-entity selection excludes detached/dead actors. Owned contact and script lifecycle reports retain original ordered partial effects; no automatic repeated tick or new player state/reward grant is introduced.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "These are trusted player-connection or authoritative host lifecycle services, not source-authoring operations. Dedicated actual mTLS, durable Store, native physics and retained ScriptRuntime fixtures establish their supported context. The Tools FeatureWorld authoring host cannot substitute for authenticated ownership or acquire server-only Storage dependencies. Existing shared script-spawning coverage remains applicable regression, but no new FeatureWorld case, Lua API or serialized component is advertised."
+      },
+      {
+        "id": "server.combat.active-entities",
+        "name": "CharacterCombat::active_entities for explicit replication selection",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.server.gameplay-lifecycle",
+          "shark.server.combat",
+          "shark.server.movement"
+        ],
+        "test_sources": [
+          "tests/server_movement_tests.cpp"
+        ],
+        "fixtures": [
+          "server/storage/src/combat.cpp",
+          "server/storage/src/movement.cpp",
+          "server/storage/include/shark/server/combat.hpp"
+        ],
+        "fixture_reason": "Actual ready mTLS sessions, native bodies and retained gameplay owners connect detach/reconnect to authoritative combat. Dormant records retain health, cooldown and original death deadline while counting toward capacity. Fresh sessions retain the same checked entity and rotate combat identities. Living records recreate fresh body/movement generations; dead records remain bodyless until their original respawn deadline. Explicit active-entity selection excludes detached/dead actors. Owned contact and script lifecycle reports retain original ordered partial effects; no automatic repeated tick or new player state/reward grant is introduced.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "These are trusted player-connection or authoritative host lifecycle services, not source-authoring operations. Dedicated actual mTLS, durable Store, native physics and retained ScriptRuntime fixtures establish their supported context. The Tools FeatureWorld authoring host cannot substitute for authenticated ownership or acquire server-only Storage dependencies. Existing shared script-spawning coverage remains applicable regression, but no new FeatureWorld case, Lua API or serialized component is advertised."
+      },
+      {
+        "id": "net.combat.client",
+        "name": "CombatClient::apply/resynchronize with bounded presentation effects",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.core.combat-client",
+          "shark.server.gameplay-lifecycle"
+        ],
+        "test_sources": [
+          "tests/core_combat_client_tests.cpp",
+          "tests/server_movement_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/core/src/net_combat_client.cpp",
+          "engine/core/include/shark/net/combat_client.hpp"
+        ],
+        "fixture_reason": "Verified-server combat values enter one creating-thread presentation cache with session, stream, life, increasing-tick and bounded monotonic movement-acknowledgement fences. Exact repeats emit no effects, conflicting or stale data cannot rebase state, and missing retained outcomes freeze effect delivery with the original gap. Explicit resynchronization skips historical effects rather than replaying them; a fresh binding requires a fresh owner. Returned historical presentation values execute no Scene, Lua, prediction or durable operation.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "These are trusted player-connection or authoritative host lifecycle services, not source-authoring operations. Dedicated actual mTLS, durable Store, native physics and retained ScriptRuntime fixtures establish their supported context. The Tools FeatureWorld authoring host cannot substitute for authenticated ownership or acquire server-only Storage dependencies. Existing shared script-spawning coverage remains applicable regression, but no new FeatureWorld case, Lua API or serialized component is advertised."
+      },
+      {
+        "id": "script.contacts.owned-dispatch",
+        "name": "ScriptRuntime::dispatch_contact_events for already-owned native observations",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.core.script-runtime",
+          "shark.core.runtime-spawning",
+          "shark.server.gameplay-lifecycle"
+        ],
+        "test_sources": [
+          "tests/script_runtime_tests.cpp",
+          "tests/runtime_spawn_tests.cpp",
+          "tests/server_movement_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/core/src/script_runtime.cpp",
+          "engine/core/include/shark/script_runtime.hpp"
+        ],
+        "fixture_reason": "The existing ScriptRuntime accepts complete owned contact batches under original world, sequence, Scene and body-generation fences shared with native FIFO delivery. It consumes a batch before callbacks and preserves original reports on partial failure, preventing overlap/redelivery. Checked subtree suspension destroys callbacks once in reverse order and cleans issuer-owned spawned roots; resumption loads fresh VMs from captured source in forward hierarchy order. Dual Scene/physics leases and the existing deferred mutation queue remain authoritative. A stable runtime incarnation fixes the optional combat script owner; later omission, replacement or opt-in rejects before callbacks. Existing FeatureWorld script-spawning remains shared-service regression; the new host lifecycle APIs are exercised by dedicated owner/native fixtures, without adding a Lua binding or FeatureWorld case.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "These are trusted player-connection or authoritative host lifecycle services, not source-authoring operations. Dedicated actual mTLS, durable Store, native physics and retained ScriptRuntime fixtures establish their supported context. The Tools FeatureWorld authoring host cannot substitute for authenticated ownership or acquire server-only Storage dependencies. Existing shared script-spawning coverage remains applicable regression, but no new FeatureWorld case, Lua API or serialized component is advertised."
+      },
+      {
+        "id": "script.entity.host-lifecycle",
+        "name": "ScriptRuntime::suspend_entity/resume_entity for checked server subtrees",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.core.script-runtime",
+          "shark.core.runtime-spawning",
+          "shark.server.gameplay-lifecycle"
+        ],
+        "test_sources": [
+          "tests/script_runtime_tests.cpp",
+          "tests/runtime_spawn_tests.cpp",
+          "tests/server_movement_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/core/src/script_runtime.cpp",
+          "engine/core/include/shark/script_runtime.hpp"
+        ],
+        "fixture_reason": "The existing ScriptRuntime accepts complete owned contact batches under original world, sequence, Scene and body-generation fences shared with native FIFO delivery. It consumes a batch before callbacks and preserves original reports on partial failure, preventing overlap/redelivery. Checked subtree suspension destroys callbacks once in reverse order and cleans issuer-owned spawned roots; resumption loads fresh VMs from captured source in forward hierarchy order. Dual Scene/physics leases and the existing deferred mutation queue remain authoritative. A stable runtime incarnation fixes the optional combat script owner; later omission, replacement or opt-in rejects before callbacks. Existing FeatureWorld script-spawning remains shared-service regression; the new host lifecycle APIs are exercised by dedicated owner/native fixtures, without adding a Lua binding or FeatureWorld case.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "These are trusted player-connection or authoritative host lifecycle services, not source-authoring operations. Dedicated actual mTLS, durable Store, native physics and retained ScriptRuntime fixtures establish their supported context. The Tools FeatureWorld authoring host cannot substitute for authenticated ownership or acquire server-only Storage dependencies. Existing shared script-spawning coverage remains applicable regression, but no new FeatureWorld case, Lua API or serialized component is advertised."
+      },
       {
         "id": "server.combat.submit",
         "name": "Admit authenticated actions and resolve fixed-tick combat/life outcomes",

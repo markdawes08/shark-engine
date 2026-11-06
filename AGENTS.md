@@ -54,7 +54,25 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [M04c, authoritative combat](docs/handoffs/M04c-authoritative-combat.md).**
+**Current handoff: [M04d, connected gameplay lifecycles](docs/handoffs/M04d-gameplay-lifecycle.md).**
+Follow the [lifecycle contract](docs/gameplay-lifecycle.md) and
+[ADR 0062](docs/architecture/0062-gameplay-lifecycles.md). The same retained owners
+now order session detach, entity fixed callbacks, native movement, owned contacts
+and combat/life transitions. Preserve contact watermarks, subtree/transitive-spawn
+teardown, original mutation receipts and partial-effect reports. The first admitted
+step fixes its optional script owner; omission/replacement cannot bypass lifecycle.
+Reconnect needs a fresh actual ready session/transport for the exact retained
+entity; preserve health,
+cooldown, death deadline and last living pose while rotating ephemeral bindings.
+Attached and detached records share the 32-actor limit. Combat-managed body changes
+must not silently rebind stale generations. CombatClient emits owned presentation
+outcomes once, freezes effects on gaps and requires explicit same-binding resync;
+new lives construct new owners. Publish one canonical recipient state per tick.
+Durable uncertainty retains the original request/OperationId across reconnect.
+M04e is next: connected two-client adversity and headless continuity acceptance.
+Full REQ-M04 remains NOT_RUN.
+
+The [M04c handoff](docs/handoffs/M04c-authoritative-combat.md) remains applicable.
 Follow the [combat contract](docs/authoritative-combat.md) and
 [ADR 0061](docs/architecture/0061-authoritative-combat.md).
 The initial targeted-melee profile resolves after committed movement with current
@@ -62,10 +80,8 @@ range/LOS, tick cooldowns, bounded value-only server Lua and no historical rewin
 Preserve actual session/shared-sequence admission, fresh checked life/body/stream
 identities, movement release on death, explicit respawn and partial-effect reports.
 Combat outcomes are ephemeral and grant no durable reward. Replayed action IDs
-reject; retained outcomes are not original-request retry receipts. Returned contact
-batches are owned observations; the adapter does not automatically deliver entity
-ScriptRuntime callbacks, whose existing dispatch API drains PhysicsWorld itself.
-M04d connects those lifetimes, reconnect and effects. Full REQ-M04 remains NOT_RUN.
+reject; retained outcomes are not original-request retry receipts. Owned contact
+delivery through the optional server ScriptRuntime follows M04d's host ordering.
 
 The [M04b handoff](docs/handoffs/M04b-client-movement.md) remains applicable.
 Follow the [client movement contract](docs/client-movement.md) and

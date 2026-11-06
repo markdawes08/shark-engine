@@ -21,6 +21,14 @@ All physics calls fail if a host did not provide the world or checked ownership 
 
 Native contact callbacks collect data only. After a successful fixed step the creating-thread host calls `dispatch_contacts(scene, world, maximum)`, which drains a bounded FIFO prefix and delivers `on_contact_enter(other_uuid, self_trigger, other_trigger, completed_tick)` and `on_contact_exit(...)` in event order. The report owns the original consumed observations, callback counts, applied/discarded command counts and any error. Participants and body generations are checked at delivery. Stale observations remain in the report and are not a grant of authority. Native physics workers never invoke Lua.
 
+M04d adds `dispatch_contact_events(scene, world, events)` for trusted hosts that
+already own a native batch. It admits at most 256 structurally validated ordered
+observations, shares the native path's weak world lease and sequence watermark,
+and consumes the batch before callbacks. Exact/overlapping replay rejects;
+current participant generations are still checked at delivery. It does not grant
+authority to caller-synthesized observations. See the
+[gameplay host order](gameplay-lifecycle.md) for connected dispatch and lifecycle.
+
 The private collector marks its active native callback scope on the current thread;
 the private Lua VM rejects creation, source execution and callback invocation in
 that scope. Focused instrumentation observes a real native contact, verifies no Lua

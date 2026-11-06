@@ -114,6 +114,7 @@ not establish file or gameplay-wire formats.
 | [0059](0059-authoritative-character-movement.md) | Authenticated sequenced directions, fixed authoritative movement and committed corrections |
 | [0060](0060-client-movement-presentation.md) | Bounded client prediction/reconciliation and timed remote replica interpolation |
 | [0061](0061-authoritative-combat.md) | Current-pose combat, bounded server Lua rules, death/respawn and checked action/life identities |
+| [0062](0062-gameplay-lifecycles.md) | Owned contact/script lifetimes, preserved reconnect state and once-only presentation outcomes |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

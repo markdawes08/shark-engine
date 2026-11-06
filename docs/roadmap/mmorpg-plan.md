@@ -335,7 +335,10 @@ M04b's [handoff](../handoffs/M04b-client-movement.md) records bounded prediction
 reconciliation and remote interpolation through actual native corrections and
 authenticated replica publication. M04c's [handoff](../handoffs/M04c-authoritative-combat.md)
 records current-pose targeted combat, bounded server Lua, death and respawn.
-Connected lifetime/effects and full acceptance retain M04d-M04e.
+M04d's [handoff](../handoffs/M04d-gameplay-lifecycle.md) records connected entity
+scripts/contacts, state-preserving reconnect, once-only presentation effects and
+original durable-operation replay. M04e retains full connected adversity and
+headless continuity acceptance; full REQ-M04 remains NOT_RUN.
 
 After 18-21 and M02/M03. Add server-owned character movement/collision, input
 sequencing, prediction/reconciliation, remote interpolation, bounded history and

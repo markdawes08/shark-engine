@@ -61,6 +61,7 @@ add_executable(Tests
     core_net_movement_wire_tests.cpp
     core_movement_prediction_tests.cpp
     core_combat_wire_tests.cpp
+    core_combat_client_tests.cpp
     combat_rule_tests.cpp
     core_net_interpolation_tests.cpp
     core_net_replication_tests.cpp
@@ -217,6 +218,8 @@ if(TARGET EngineStorage)
     set_tests_properties(shark.server.movement PROPERTIES LABELS "cpu;server;physics;integration" TIMEOUT 60)
     add_test(NAME shark.server.combat COMMAND ServerMovementTests "[server-combat]" --rng-seed 1337)
     set_tests_properties(shark.server.combat PROPERTIES LABELS "cpu;server;physics;integration" TIMEOUT 60)
+    add_test(NAME shark.server.gameplay-lifecycle COMMAND ServerMovementTests "[gameplay-lifecycle]" --rng-seed 1337)
+    set_tests_properties(shark.server.gameplay-lifecycle PROPERTIES LABELS "cpu;server;physics;script;integration" TIMEOUT 60)
     add_executable(StorageTests storage_tests.cpp storage_records_tests.cpp)
     target_link_libraries(StorageTests PRIVATE EngineStorage SharkSQLite Catch2::Catch2WithMain)
     target_include_directories(StorageTests PRIVATE "${PROJECT_SOURCE_DIR}/server/storage/src")
@@ -628,6 +631,8 @@ add_test(NAME shark.core.combat-rules COMMAND Tests "[combat-rules]" --rng-seed 
 set_tests_properties(shark.core.combat-rules PROPERTIES LABELS "cpu;lua;unit;server" TIMEOUT 30)
 add_test(NAME shark.core.combat-wire COMMAND Tests "[combat-wire]" --rng-seed 1337)
 set_tests_properties(shark.core.combat-wire PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
+add_test(NAME shark.core.combat-client COMMAND Tests "[combat-client]" --rng-seed 1337)
+set_tests_properties(shark.core.combat-client PROPERTIES LABELS "cpu;unit" TIMEOUT 30)
 add_test(NAME shark.core.net-interpolation COMMAND Tests "[net-interpolation]" --rng-seed 1337)
 set_tests_properties(shark.core.net-interpolation PROPERTIES LABELS "cpu;unit" TIMEOUT 20)
 set_tests_properties(shark.core.net-session PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)

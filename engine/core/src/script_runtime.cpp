@@ -1,6 +1,7 @@
 #include "shark/script_runtime.hpp"
 
 #include "lua_vm.hpp"
+#include "physics_contact_scope.hpp"
 #include "physics_runtime_access.hpp"
 #include "runtime_prefab_internal.hpp"
 #include "scene_script_access.hpp"
@@ -9,6 +10,7 @@
 #include "utf8.hpp"
 
 #include <algorithm>
+#include <atomic>
 #include <bit>
 #include <cmath>
 #include <cstdio>
@@ -24,6 +26,8 @@
 
 namespace shark {
 namespace {
+
+std::atomic<std::uint64_t> next_runtime{1};
 
 Error runtime_error(ErrorCode code, const char* operation, const char* message) {
     return {code, message, {.operation = operation}};
@@ -134,11 +138,12 @@ struct ScriptRuntime::Impl {
         std::unique_ptr<detail::LuaVm> vm;
         bool initialized{false};
         std::uint64_t mutation_watermark{0};
+        bool suspended{false};
     };
 
     Impl(ScriptRuntimeConfig configured, SceneScope owner_scope, SceneRevision initial,
-         scene_detail::ScriptLease owner_lease)
-        : config(configured), scope(std::move(owner_scope)), revision(initial),
+         scene_detail::ScriptLease owner_lease, std::uint64_t token)
+        : config(configured), scope(std::move(owner_scope)), revision(initial), instance(token),
           owner(std::this_thread::get_id()), lease(std::move(owner_lease)) {}
 
     ~Impl() {
@@ -199,6 +204,26 @@ struct ScriptRuntime::Impl {
             return runtime_error(ErrorCode::conflict, operation,
                                  "Script runtime is closed, not started or faulted");
         return {};
+    }
+
+    Result<std::vector<EntityReference>> subtree(const Scene& scene, const EntityReference& root,
+                                                 const char* operation) const {
+        if (auto resolved = scene.resolve(root); !resolved)
+            return resolved.error();
+        std::vector<EntityReference> references;
+        std::vector<EntityHandle> pending{root.handle};
+        for (std::size_t index = 0; index < pending.size(); ++index) {
+            auto state = scene.entity_state(pending[index]);
+            if (!state)
+                return state.error();
+            if (state.value().children.size() > runtime_prefab_maximum_entities - pending.size())
+                return runtime_error(ErrorCode::conflict, operation,
+                                     "Entity lifecycle subtree exceeds its bounded inventory");
+            references.push_back(state.value().reference);
+            pending.insert(pending.end(), state.value().children.begin(),
+                           state.value().children.end());
+        }
+        return references;
     }
 
     static bool log(void* user, std::string_view message) noexcept {
@@ -262,13 +287,21 @@ struct ScriptRuntime::Impl {
     };
     std::vector<Deferred> deferred;
     bool deferred_overflow{false};
+    std::weak_ptr<const std::uint64_t> host_physics;
+    bool host_physics_bound{false};
+    std::uint64_t contact_watermark{0};
     std::weak_ptr<detail::RuntimeSpawnAuthorityState> spawn_authority;
     std::weak_ptr<const std::uint64_t> spawn_physics;
     std::vector<RuntimePrefab> prefabs;
     std::vector<ScriptSourceSnapshot> source_snapshots;
     std::vector<EntityLedgerEntry> entity_ledger;
     std::vector<std::shared_ptr<const ScriptEntityMutationReceipt>> entity_reports;
-    std::vector<EntityReference> owned_roots;
+    struct OwnedRoot {
+        EntityReference root;
+        EntityReference requester;
+        EntityReference issuer;
+    };
+    std::vector<OwnedRoot> owned_roots;
     std::size_t queued_entities{0};
     std::size_t queued_scripts{0};
     bool spawning_enabled{false};
@@ -310,6 +343,16 @@ struct ScriptRuntime::Impl {
         if (spawning_enabled && spawn_physics.lock() != current.value())
             return runtime_error(ErrorCode::conflict, "script.entities.physics",
                                  "Runtime entity operations require their original Physics owner");
+        return current;
+    }
+    Result<scene_detail::PhysicsLease>
+    host_physics_identity(PhysicsWorld& physics, const Scene& scene, const char* operation) {
+        auto current = physics_identity(physics, scene);
+        if (!current)
+            return current.error();
+        if (host_physics_bound && host_physics.lock() != current.value())
+            return runtime_error(ErrorCode::conflict, operation,
+                                 "Script host operations require their original Physics owner");
         return current;
     }
     static void terminal_receipt(PendingEntity& pending, ScriptEntityMutationState state,
@@ -562,7 +605,8 @@ struct ScriptRuntime::Impl {
         std::vector<Entry*> ordered;
         ordered.reserve(entries.size());
         for (auto& entry : entries)
-            ordered.push_back(&entry);
+            if (entry.initialized)
+                ordered.push_back(&entry);
         std::sort(ordered.begin(), ordered.end(), [](const auto* a, const auto* b) {
             return a->record.entity.identity < b->record.entity.identity;
         });
@@ -591,6 +635,23 @@ struct ScriptRuntime::Impl {
     }
     Result<void> spawn(Scene& scene, PhysicsWorld& physics,
                        const scene_detail::PhysicsLease& physics_lease, PendingEntity& pending) {
+        auto requester = scene.entity_state(pending.requester.handle);
+        if (!requester)
+            return requester.error();
+        auto root = requester.value().reference;
+        auto ancestor_handle = requester.value().parent;
+        while (ancestor_handle) {
+            auto ancestor = scene.entity_state(*ancestor_handle);
+            if (!ancestor)
+                return ancestor.error();
+            root = ancestor.value().reference;
+            ancestor_handle = ancestor.value().parent;
+        }
+        auto issuer = pending.requester;
+        const auto owning = std::find_if(owned_roots.begin(), owned_roots.end(),
+                                         [&](const auto& value) { return value.root == root; });
+        if (owning != owned_roots.end())
+            issuer = owning->issuer;
         const auto& prefab = prefabs[pending.prefab_index];
         std::map<AuthoredEntityId, std::size_t> indices;
         std::vector<std::vector<std::size_t>> children(prefab.entities.size());
@@ -652,7 +713,7 @@ struct ScriptRuntime::Impl {
             references[index] = reference.value();
             pending.receipt->created_entities.push_back(reference.value());
             if (entity.id == prefab.root)
-                owned_roots.push_back(reference.value());
+                owned_roots.push_back({reference.value(), pending.requester, issuer});
         }
         for (const auto index : ordered) {
             if (!prefab.entities[index].rigid_body)
@@ -743,7 +804,8 @@ struct ScriptRuntime::Impl {
             return erased;
         for (const auto& target : targets)
             receipt.removed_entities.push_back(target);
-        std::erase_if(owned_roots, [&](const auto& root) { return handles.contains(root.handle); });
+        std::erase_if(owned_roots,
+                      [&](const auto& root) { return handles.contains(root.root.handle); });
         if (first_error)
             return std::move(*first_error);
         return {};
@@ -1023,6 +1085,7 @@ struct ScriptRuntime::Impl {
     ScriptRuntimeConfig config;
     SceneScope scope;
     SceneRevision revision;
+    const std::uint64_t instance;
     std::thread::id owner;
     scene_detail::ScriptLease lease;
     std::vector<Entry> entries;
@@ -1083,14 +1146,21 @@ ScriptRuntime::create(Scene& scene, std::span<const ScriptSourceSnapshot> source
         if (!admitted_scope(config.profile, current.value().scope))
             return runtime_error(ErrorCode::conflict, operation,
                                  "Script profile is not permitted for this Scene scope");
+        auto token = next_runtime.load();
+        while (token != std::numeric_limits<std::uint64_t>::max() &&
+               !next_runtime.compare_exchange_weak(token, token + 1)) {
+        }
+        if (token == std::numeric_limits<std::uint64_t>::max())
+            return runtime_error(ErrorCode::conflict, operation,
+                                 "Script runtime identities exhausted");
         auto lease = std::make_shared<const std::uint64_t>(current.value().revision.scene_instance);
         if (auto bound = scene_detail::SceneScriptAccess::bind(scene, lease); !bound) {
             auto error = std::move(bound).error();
             error.context.operation = operation;
             return error;
         }
-        auto impl =
-            std::make_unique<Impl>(config, current.value().scope, current.value().revision, lease);
+        auto impl = std::make_unique<Impl>(config, current.value().scope, current.value().revision,
+                                           lease, token);
         impl->entries.reserve(config.max_scripts);
         impl->source_snapshots.assign(sources.begin(), sources.end());
         impl->original_count = current.value().scripts.size();
@@ -1378,9 +1448,9 @@ Result<ScriptContactReport> ScriptRuntime::dispatch_contacts(Scene& scene, Physi
     if (impl_->spawning_enabled) {
         if (auto checked = impl_->authority(scene, operation); !checked)
             return checked.error();
-        if (auto checked = impl_->physics_identity(physics, scene); !checked)
-            return checked.error();
     }
+    if (auto checked = impl_->host_physics_identity(physics, scene, operation); !checked)
+        return checked.error();
     auto stats = physics.stats();
     if (!stats)
         return stats.error();
@@ -1395,8 +1465,83 @@ Result<ScriptContactReport> ScriptRuntime::dispatch_contacts(Scene& scene, Physi
     auto events = physics.take_events(scene, maximum);
     if (!events)
         return events.error();
+    return dispatch_contact_events_impl(scene, physics, std::move(events).value());
+}
+
+Result<ScriptContactReport>
+ScriptRuntime::dispatch_contact_events(Scene& scene, PhysicsWorld& physics,
+                                       std::span<const PhysicsContactEvent> events) {
+    constexpr auto operation = "script.contacts.dispatch";
+    if (detail::NativeContactScope::active())
+        return runtime_error(ErrorCode::conflict, operation,
+                             "Owned contact delivery cannot enter a native contact callback");
+    if (auto checked = impl_->ready(operation); !checked)
+        return checked.error();
+    if (events.size() > script_runtime_maximum_contact_events)
+        return runtime_error(ErrorCode::invalid_argument, operation,
+                             "Invalid owned contact batch limit");
+    try {
+        return dispatch_contact_events_impl(scene, physics, {events.begin(), events.end()});
+    } catch (...) {
+        return runtime_error(ErrorCode::execution_failed, operation,
+                             "Cannot capture owned contact observations");
+    }
+}
+
+Result<ScriptContactReport>
+ScriptRuntime::dispatch_contact_events_impl(Scene& scene, PhysicsWorld& physics,
+                                            std::vector<PhysicsContactEvent> events) {
+    constexpr auto operation = "script.contacts.dispatch";
+    if (auto checked = impl_->ready(operation); !checked)
+        return checked.error();
+    if (auto checked = impl_->check_inventory(scene, operation); !checked)
+        return checked.error();
+    if (impl_->spawning_enabled)
+        if (auto checked = impl_->authority(scene, operation); !checked)
+            return checked.error();
+    auto identity = impl_->host_physics_identity(physics, scene, operation);
+    if (!identity)
+        return identity.error();
+    auto stats = physics.stats();
+    if (!stats)
+        return stats.error();
+    if (stats.value().closed || stats.value().faulted || !stats.value().simulating)
+        return runtime_error(ErrorCode::conflict, operation, "Physics world is not simulating");
+    auto previous = impl_->contact_watermark;
+    std::uint64_t previous_tick = 0;
+    for (const auto& event : events) {
+        if (event.sequence <= previous || event.completed_tick == 0 ||
+            event.completed_tick > stats.value().completed_ticks ||
+            event.completed_tick < previous_tick ||
+            (event.phase != PhysicsContactPhase::enter &&
+             event.phase != PhysicsContactPhase::exit) ||
+            (event.cause != PhysicsContactCause::simulation &&
+             event.cause != PhysicsContactCause::body_removed) ||
+            event.first.body.world != *identity.value() ||
+            event.second.body.world != *identity.value() || event.first.body == event.second.body ||
+            (event.cause == PhysicsContactCause::body_removed &&
+             event.phase != PhysicsContactPhase::exit) ||
+            event.first.entity.handle.scene_instance != impl_->revision.scene_instance ||
+            event.second.entity.handle.scene_instance != impl_->revision.scene_instance ||
+            event.first.entity.scope != impl_->scope || event.second.entity.scope != impl_->scope)
+            return runtime_error(ErrorCode::conflict, operation,
+                                 "Contact batch is stale, unordered or belongs to another owner");
+        previous = event.sequence;
+        previous_tick = event.completed_tick;
+    }
+    try {
+        impl_->begin_deferred();
+    } catch (...) {
+        return runtime_error(ErrorCode::execution_failed, operation,
+                             "Cannot allocate contact queue");
+    }
+    impl_->host_physics = identity.value();
+    impl_->host_physics_bound = true;
+    // The whole batch becomes consumed before any callback or native write.
+    // A partial callback failure cannot turn the remaining suffix into a retry.
+    impl_->contact_watermark = previous;
     ScriptContactReport report;
-    report.events = std::move(events).value();
+    report.events = std::move(events);
     std::size_t current = 0;
     try {
         for (; current < report.events.size(); ++current) {
@@ -1455,6 +1600,202 @@ Result<ScriptContactReport> ScriptRuntime::dispatch_contacts(Scene& scene, Physi
         report.undelivered_events = report.events.size() - current;
         report.discarded_commands = impl_->deferred.size() - report.applied_commands;
         impl_->discard_deferred(&*report.error);
+        return report;
+    }
+}
+
+Result<ScriptEntityLifecycleReport>
+ScriptRuntime::suspend_entity(Scene& scene, PhysicsWorld& physics, const EntityReference& entity) {
+    return entity_lifecycle(scene, physics, entity, false);
+}
+
+Result<ScriptEntityLifecycleReport>
+ScriptRuntime::resume_entity(Scene& scene, PhysicsWorld& physics, const EntityReference& entity) {
+    return entity_lifecycle(scene, physics, entity, true);
+}
+
+Result<ScriptEntityLifecycleReport> ScriptRuntime::entity_lifecycle(Scene& scene,
+                                                                    PhysicsWorld& physics,
+                                                                    const EntityReference& entity,
+                                                                    bool resume) {
+    const auto* operation = resume ? "script.entity.resume" : "script.entity.suspend";
+    if (detail::NativeContactScope::active())
+        return runtime_error(ErrorCode::conflict, operation,
+                             "Entity lifecycle cannot enter a native contact callback");
+    if (auto checked = impl_->ready(operation); !checked)
+        return checked.error();
+    if (impl_->config.profile != ScriptProfile::server_gameplay || impl_->active ||
+        !impl_->deferred.empty())
+        return runtime_error(ErrorCode::conflict, operation,
+                             "Entity lifecycle requires an idle server gameplay host");
+    if (auto checked = impl_->check_inventory(scene, operation); !checked)
+        return checked.error();
+    auto identity = impl_->host_physics_identity(physics, scene, operation);
+    if (!identity)
+        return identity.error();
+    if (resume && impl_->spawning_enabled)
+        if (auto checked = impl_->authority(scene, operation); !checked)
+            return checked.error();
+    auto resolved = scene.resolve(entity);
+    if (!resolved)
+        return resolved.error();
+    auto native = physics.stats();
+    if (!native)
+        return native.error();
+    if (native.value().completed_ticks >
+        static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()))
+        return runtime_error(ErrorCode::conflict, operation,
+                             "Entity lifecycle tick exceeds the Lua integer domain");
+    ScriptEntityLifecycleReport report{entity};
+    try {
+        auto base = impl_->subtree(scene, entity, operation);
+        if (!base)
+            return base.error();
+        std::vector<EntityReference> scripts;
+        for (const auto& reference : base.value()) {
+            const auto found =
+                std::find_if(impl_->entries.begin(), impl_->entries.end(),
+                             [&](const auto& entry) { return entry.record.entity == reference; });
+            if (found == impl_->entries.end() || (resume ? !found->suspended : found->suspended))
+                continue;
+            scripts.push_back(reference);
+            if (resume) {
+                const auto source = std::find_if(
+                    impl_->source_snapshots.begin(), impl_->source_snapshots.end(),
+                    [&](const auto& value) { return value.path == found->record.script.source; });
+                if (source == impl_->source_snapshots.end())
+                    return runtime_error(ErrorCode::conflict, operation,
+                                         "Resumed entity lacks its retained captured source");
+                auto state = scene.entity_state(reference.handle);
+                if (!state)
+                    return state.error();
+                if (state.value().rigid_body) {
+                    auto body = physics.find_body(scene, reference);
+                    if (!body)
+                        return body.error();
+                    if (auto checked = physics.body_state(scene, body.value()); !checked)
+                        return checked.error();
+                }
+            }
+        }
+        struct Cleanup {
+            EntityReference root;
+            std::vector<EntityReference> targets;
+        };
+        std::vector<Cleanup> cleanup;
+        if (!resume) {
+            std::set<EntityHandle> requesters;
+            for (const auto& reference : base.value())
+                requesters.insert(reference.handle);
+            // Creation order gives a forward ownership DAG. Retain this mapping
+            // independently of the bounded outcome ledger, which may evict.
+            for (const auto& owned : impl_->owned_roots) {
+                if (!requesters.contains(owned.requester.handle) &&
+                    !requesters.contains(owned.issuer.handle))
+                    continue;
+                auto targets = impl_->subtree(scene, owned.root, operation);
+                if (!targets)
+                    return targets.error();
+                for (const auto& reference : targets.value())
+                    requesters.insert(reference.handle);
+                cleanup.push_back({owned.root, std::move(targets).value()});
+            }
+        }
+        if (scripts.empty() && cleanup.empty())
+            return report;
+        impl_->host_physics = identity.value();
+        impl_->host_physics_bound = true;
+        for (auto root = cleanup.rbegin(); root != cleanup.rend(); ++root) {
+            ScriptEntityMutationReceipt receipt{entity, 0, ScriptEntityMutationKind::destroy};
+            receipt.removed_entities.reserve(root->targets.size());
+            report.changed = true;
+            auto removed = impl_->destroy_targets(scene, physics, identity.value(), root->targets,
+                                                  receipt, true, native.value().completed_ticks);
+            report.attempted_destroy_callbacks += receipt.attempted_destroy_callbacks;
+            report.destroyed = report.destroyed || receipt.attempted_destroy_callbacks != 0;
+            report.removed_spawned_entities += receipt.removed_entities.size();
+            report.removed_spawned_bodies += receipt.removed_bodies;
+            if (receipt.removed_entities.size() == root->targets.size())
+                ++report.removed_spawned_roots;
+            if (!removed) {
+                impl_->faulted = true;
+                report.error = removed.error();
+                return report;
+            }
+        }
+        // Owned-root cleanup may erase entries; re-find every retained reference.
+        // Source hierarchy order remains stable and is not an ECS storage order.
+        if (!resume)
+            std::reverse(scripts.begin(), scripts.end());
+        for (const auto& reference : scripts) {
+            auto found =
+                std::find_if(impl_->entries.begin(), impl_->entries.end(),
+                             [&](const auto& entry) { return entry.record.entity == reference; });
+            if (found == impl_->entries.end()) {
+                impl_->faulted = true;
+                report.error = runtime_error(ErrorCode::conflict, operation,
+                                             "Lifecycle Script changed during owned-root cleanup");
+                return report;
+            }
+            if (resume) {
+                const auto source = std::find_if(
+                    impl_->source_snapshots.begin(), impl_->source_snapshots.end(),
+                    [&](const auto& value) { return value.path == found->record.script.source; });
+                auto vm = detail::LuaVm::create(
+                    {impl_->config.memory_bytes_per_script, impl_->config.instruction_limit});
+                if (!vm) {
+                    if (!report.changed)
+                        return contextualize(vm.error(), found->record, operation);
+                    impl_->faulted = true;
+                    report.error = contextualize(vm.error(), found->record, operation);
+                    return report;
+                }
+                report.changed = true;
+                found->vm = std::move(vm).value();
+                if (auto loaded = impl_->load_entry(*found, scene, physics, source->text,
+                                                    native.value().completed_ticks);
+                    !loaded) {
+                    impl_->faulted = true;
+                    report.error = contextualize(loaded.error(), found->record, operation);
+                    return report;
+                }
+                report.loaded = true;
+                ++report.loaded_scripts;
+                auto initialized =
+                    impl_->run(*found, scene, ScriptPhase::init, native.value().completed_ticks, 0,
+                               "on_init", operation, &physics);
+                if (!initialized) {
+                    impl_->faulted = true;
+                    report.error = initialized.error();
+                    return report;
+                }
+                found->initialized = true;
+                found->suspended = false;
+                report.initialized = true;
+                ++report.initialized_scripts;
+            } else {
+                report.changed = true;
+                found->initialized = false;
+                found->suspended = true;
+                report.destroyed = true;
+                ++report.attempted_destroy_callbacks;
+                auto destroyed =
+                    impl_->run(*found, scene, ScriptPhase::destroy, native.value().completed_ticks,
+                               0, "on_destroy", operation, &physics);
+                found->vm.reset();
+                if (!destroyed && !report.error)
+                    report.error = destroyed.error();
+            }
+        }
+        if (report.error)
+            impl_->faulted = true;
+        return report;
+    } catch (...) {
+        impl_->faulted = true;
+        report.error = runtime_error(ErrorCode::execution_failed, operation,
+                                     "Entity lifecycle failed after possible callback/VM progress");
+        report.error->context.entity_id = std::visit(
+            [](const auto& value) { return value.value().to_string(); }, entity.identity);
         return report;
     }
 }
@@ -1523,7 +1864,7 @@ Result<ScriptStopReport> ScriptRuntime::stop_impl(Scene& scene, PhysicsWorld* ph
         // Revoking gameplay admission does not revoke cleanup of this runtime's
         // own ephemeral roots. Matching Scene/Physics leases remain mandatory.
         while (!impl_->owned_roots.empty()) {
-            const auto root = impl_->owned_roots.back();
+            const auto root = impl_->owned_roots.back().root;
             std::vector<EntityReference> targets;
             std::vector<EntityHandle> pending{root.handle};
             for (std::size_t index = 0; index < pending.size(); ++index) {
@@ -1605,7 +1946,8 @@ Result<ScriptRuntimeStats> ScriptRuntime::stats() const {
                       [](const auto& entry) { return entry.initialized; }));
     return ScriptRuntimeStats{impl_->config.profile, impl_->revision,    impl_->original_count,
                               initialized,           impl_->logs.size(), impl_->last_tick,
-                              impl_->started,        impl_->faulted,     impl_->closed};
+                              impl_->started,        impl_->faulted,     impl_->closed,
+                              impl_->instance};
 }
 
 Result<std::size_t> ScriptRuntime::close() {

@@ -1,3 +1,4 @@
+#include <shark/server/combat.hpp>
 #include <shark/storage/characters.hpp>
 
 #include "durable_test_hooks.hpp"
@@ -5,6 +6,7 @@
 
 #include <catch2/catch_test_macros.hpp>
 
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <condition_variable>
@@ -22,6 +24,7 @@ namespace {
 using namespace shark;
 using namespace shark::net;
 using namespace shark::storage;
+namespace storage_detail = shark::storage::detail;
 using namespace std::chrono_literals;
 namespace fs = std::filesystem;
 
@@ -182,17 +185,17 @@ struct Fixture {
 // before Fixture joins it, including when a Catch requirement unwinds the test.
 class Gate final {
   public:
-    explicit Gate(Fixture& fixture, detail::RuntimeWorkerPhase phase,
-                  std::optional<detail::WritePhase> fault = {})
+    explicit Gate(Fixture& fixture, storage_detail::RuntimeWorkerPhase phase,
+                  std::optional<storage_detail::WritePhase> fault = {})
         : fixture_(fixture), phase_(phase), fault_(fault) {
         REQUIRE(active_.load() == nullptr);
         active_.store(this);
-        detail::set_runtime_worker_hook(callback);
+        storage_detail::set_runtime_worker_hook(callback);
     }
     ~Gate() {
         release();
         fixture_.owner.reset();
-        detail::set_runtime_worker_hook(nullptr);
+        storage_detail::set_runtime_worker_hook(nullptr);
         active_.store(nullptr);
     }
     void entered() {
@@ -221,24 +224,26 @@ class Gate final {
     }
 
   private:
-    static void callback(detail::RuntimeWorkerPhase phase, std::uint64_t sequence) noexcept {
+    static void callback(storage_detail::RuntimeWorkerPhase phase,
+                         std::uint64_t sequence) noexcept {
         auto* gate = active_.load();
         if (gate == nullptr)
             return;
-        if (phase == detail::RuntimeWorkerPhase::closed && gate->hide_store_) {
+        if (phase == storage_detail::RuntimeWorkerPhase::closed && gate->hide_store_) {
             fs::rename(gate->fixture_.path, gate->fixture_.root / "temporarily-offline.db",
                        gate->move_error_);
             return;
         }
-        if (phase == detail::RuntimeWorkerPhase::shutdown_requested && gate->release_on_shutdown_) {
+        if (phase == storage_detail::RuntimeWorkerPhase::shutdown_requested &&
+            gate->release_on_shutdown_) {
             gate->release();
             return;
         }
         if (sequence != 1)
             return;
-        if (phase == detail::RuntimeWorkerPhase::before_execute && gate->fault_) {
+        if (phase == storage_detail::RuntimeWorkerPhase::before_execute && gate->fault_) {
             selected_fault_ = *gate->fault_;
-            detail::set_write_fault_hook([](detail::WritePhase point) noexcept {
+            storage_detail::set_write_fault_hook([](storage_detail::WritePhase point) noexcept {
                 return selected_fault_ && point == *selected_fault_;
             });
         }
@@ -250,10 +255,10 @@ class Gate final {
         gate->ready_.wait(lock, [gate] { return gate->released_; });
     }
     inline static std::atomic<Gate*> active_{nullptr};
-    inline static thread_local std::optional<detail::WritePhase> selected_fault_;
+    inline static thread_local std::optional<storage_detail::WritePhase> selected_fault_;
     Fixture& fixture_;
-    detail::RuntimeWorkerPhase phase_;
-    std::optional<detail::WritePhase> fault_;
+    storage_detail::RuntimeWorkerPhase phase_;
+    std::optional<storage_detail::WritePhase> fault_;
     std::mutex mutex_;
     std::condition_variable ready_;
     bool entered_{false};
@@ -274,7 +279,7 @@ TransferResult transfer_outcome(const RuntimeCompletion& completion) {
 TEST_CASE("runtime shutdown joins dispatched writes and cancels queued writes",
           "[storage-recovery]") {
     Fixture f;
-    Gate gate{f, detail::RuntimeWorkerPhase::before_execute};
+    Gate gate{f, storage_detail::RuntimeWorkerPhase::before_execute};
     gate.release_on_shutdown();
     f.start({2});
     Pair first;
@@ -298,7 +303,7 @@ TEST_CASE("runtime shutdown joins dispatched writes and cancels queued writes",
 TEST_CASE("new runtime submissions observe expired retained work before admission",
           "[storage-recovery]") {
     Fixture f;
-    Gate gate{f, detail::RuntimeWorkerPhase::before_execute};
+    Gate gate{f, storage_detail::RuntimeWorkerPhase::before_execute};
     f.start({2});
     Pair first;
     Pair second{true};
@@ -344,7 +349,7 @@ TEST_CASE("runtime startup validates capacity identity world and creating thread
 TEST_CASE("failed live recovery keeps admission closed until explicit successful reopen",
           "[storage-recovery]") {
     Fixture f;
-    Gate gate{f, detail::RuntimeWorkerPhase::opened};
+    Gate gate{f, storage_detail::RuntimeWorkerPhase::opened};
     f.start();
     Pair peer;
     const auto session = f.login(peer);
@@ -364,9 +369,10 @@ TEST_CASE("failed live recovery keeps admission closed until explicit successful
 
 TEST_CASE("worker storage faults settle queued operations without executing later writes",
           "[storage-recovery]") {
-    for (const auto fault : {detail::WritePhase::before_commit, detail::WritePhase::after_commit}) {
+    for (const auto fault :
+         {storage_detail::WritePhase::before_commit, storage_detail::WritePhase::after_commit}) {
         Fixture f;
-        Gate gate{f, detail::RuntimeWorkerPhase::before_execute, fault};
+        Gate gate{f, storage_detail::RuntimeWorkerPhase::before_execute, fault};
         f.start({2});
         Pair first;
         Pair second{true};
@@ -392,8 +398,8 @@ TEST_CASE("worker storage faults settle queued operations without executing late
         const auto fresh_a = f.login(first);
         const auto fresh_b = f.login(second, true);
         const auto saved = value(f.owner->load(*first.server, envelope(fresh_a, 2), 0ns));
-        CHECK(saved.revision == (fault == detail::WritePhase::after_commit ? 2 : 1));
-        CHECK(saved.state == state(fault == detail::WritePhase::after_commit));
+        CHECK(saved.revision == (fault == storage_detail::WritePhase::after_commit ? 2 : 1));
+        CHECK(saved.state == state(fault == storage_detail::WritePhase::after_commit));
         CHECK(value(f.owner->load(*second.server, envelope(fresh_b, 2), 0ns)) == f.second);
     }
 }
@@ -449,10 +455,130 @@ TEST_CASE("runtime transfers reconcile exact economic retries without duplicate 
           EconomyState{93, 18});
 }
 
+TEST_CASE("an admitted interaction preserves its original durable operation through replacement",
+          "[storage-recovery][m04d-durable]") {
+    Fixture f;
+    Gate gate{f, storage_detail::RuntimeWorkerPhase::before_publish};
+    f.start();
+    Pair original;
+    Pair observer{true};
+    const auto first_session = f.login(original);
+    const auto second_session = f.login(observer, true);
+    RigidBody settings;
+    settings.motion = BodyMotion::dynamic_body;
+    settings.shape = ColliderShape::sphere;
+    settings.friction = 0;
+    value(f.scene->set_rigid_body(f.entity, settings));
+    value(f.scene->set_rigid_body(f.other_entity, settings));
+    Transform second_pose;
+    second_pose.translation.x = 2;
+    value(f.scene->set_transform(f.other_entity, second_pose));
+    PhysicsWorldConfig physics_config;
+    physics_config.tick_hz = server::movement_tick_hz;
+    physics_config.collision_substeps = server::movement_collision_substeps;
+    physics_config.gravity = {};
+    auto physics = value(PhysicsWorld::create(physics_config));
+    value(physics->create_body(*f.scene, f.entity));
+    value(physics->create_body(*f.scene, f.other_entity));
+    value(physics->begin_simulation(*f.scene));
+    auto movement =
+        value(server::CharacterMovement::create(*f.scene, *physics, f.first.state.position));
+    auto combat = value(server::CharacterCombat::create(
+        *f.scene, *physics,
+        value(CombatRules::create({"scripts/interaction.lua",
+                                   "function on_combat(kind,tick,actor,target,distance) "
+                                   "return true,0,5 end"}))));
+    const auto actor = value(
+        combat->bind(*f.owner, *original.server, *movement, *f.scene, *physics, f.entity, 0ns));
+    const auto target = value(combat->bind(*f.owner, *observer.server, *movement, *f.scene,
+                                           *physics, f.other_entity, 0ns));
+    const net::CombatAction interaction{envelope(first_session, 2), actor.stream, 1, target.target,
+                                        CombatActionKind::interact};
+    value(combat->submit(*f.owner, *original.server, *f.scene, *physics, interaction, 0ns));
+    const std::array<net::TlsTransport*, 2> connections{original.server.get(),
+                                                        observer.server.get()};
+    const auto tick =
+        value(combat->step(*f.owner, *movement, *f.scene, *physics, connections, 50ms));
+    REQUIRE_FALSE(tick.error);
+    REQUIRE(tick.outcomes.size() == 1);
+    CHECK(tick.outcomes.front().actor == actor.stream);
+    CHECK(tick.outcomes.front().outcome.outcome == CombatOutcome::interacted);
+    CHECK(tick.outcomes.front().outcome.amount == 0);
+    // Interaction confirmation itself is not a durable grant. The trusted host
+    // retains one exact conservation operation before submitting any SQL work.
+    CHECK(value(f.owner->economy(*original.server, envelope(first_session, 3), 50ms)).state ==
+          EconomyState{100, 20});
+    const auto request = f.transfer();
+    const auto ticket = value(f.owner->submit_transfer(*original.server, envelope(first_session, 4),
+                                                       *f.scene, f.entity, request, 10s, 50ms));
+    gate.entered(); // Real SQL committed; only publication is held by this barrier.
+    Pair replacement;
+    const auto renewed = f.login(replacement, false, 50ms);
+    REQUIRE(renewed.session != first_session.session);
+    REQUIRE(renewed.ownership_epoch > first_session.ownership_epoch);
+    // The authoritative world continues while committed SQL is still held.
+    // Restore the same gameplay entity before consuming the old completion.
+    const std::array<net::TlsTransport*, 2> current_connections{replacement.server.get(),
+                                                                observer.server.get()};
+    const auto detached =
+        value(combat->step(*f.owner, *movement, *f.scene, *physics, current_connections, 100ms));
+    REQUIRE_FALSE(detached.error);
+    CHECK(detached.fenced == 1);
+    CHECK(value(physics->stats()).completed_ticks == 2);
+    const auto restored = value(combat->reconnect(*f.owner, *replacement.server, *movement,
+                                                  *f.scene, *physics, f.entity, 100ms));
+    REQUIRE_FALSE(restored.error);
+    REQUIRE(restored.state);
+    CHECK(restored.state->health == combat_maximum_health);
+    CHECK(restored.state->ready_tick == 6);
+    CHECK(restored.state->stream != actor.stream);
+    CHECK(value(f.scene->stats()).live_entities == 2);
+    gate.release();
+    f.settled(100ms);
+    const auto original_result = value(f.owner->take(ticket, *replacement.server, *f.scene, 100ms));
+    REQUIRE(original_result.delivery == RuntimeDelivery::fenced);
+    REQUIRE(original_result.transfer == request);
+    const auto committed = transfer_outcome(original_result);
+    REQUIRE(committed.receipt.status == TransferStatus::committed);
+    CHECK_FALSE(committed.replayed);
+    CHECK(committed.receipt.request == request);
+    CHECK(committed.receipt.source->state == EconomyState{93, 18});
+    CHECK(committed.receipt.target->state == EconomyState{107, 22});
+    const auto retry =
+        value(f.owner->submit_transfer(*replacement.server, envelope(renewed, 2), *f.scene,
+                                       f.entity, *original_result.transfer, 10s, 100ms));
+    f.settled(100ms);
+    const auto retried = value(f.owner->take(retry, *replacement.server, *f.scene, 100ms));
+    REQUIRE(retried.delivery == RuntimeDelivery::ready);
+    const auto replayed = transfer_outcome(retried);
+    CHECK(replayed.replayed);
+    CHECK(replayed.receipt == committed.receipt);
+    auto altered = request;
+    ++altered.quantity.currency;
+    const auto mismatch = value(f.owner->submit_transfer(*replacement.server, envelope(renewed, 3),
+                                                         *f.scene, f.entity, altered, 10s, 100ms));
+    f.settled(100ms);
+    const auto rejected_outcome =
+        value(f.owner->take(mismatch, *replacement.server, *f.scene, 100ms));
+    REQUIRE(rejected_outcome.delivery == RuntimeDelivery::ready);
+    REQUIRE(rejected_outcome.outcome);
+    rejected(*rejected_outcome.outcome);
+    CHECK(rejected_outcome.outcome->error().context.operation == "storage.transfer.mismatch");
+    const auto source = value(f.owner->economy(*replacement.server, envelope(renewed, 4), 100ms));
+    const auto destination =
+        value(f.owner->economy(*observer.server, envelope(second_session, 2), 100ms));
+    CHECK(source.state == EconomyState{93, 18});
+    CHECK(destination.state == EconomyState{107, 22});
+    CHECK(source.state.currency + destination.state.currency == 200);
+    CHECK(source.state.item_units + destination.state.item_units == 40);
+    CHECK(value(f.owner->runtime_stats()).retained == 0);
+    CHECK_FALSE(value(f.owner->runtime_stats()).reconciliation_required);
+}
+
 TEST_CASE("runtime capacity includes unsettled and untaken work without spending rejected commands",
           "[storage-recovery]") {
     Fixture f;
-    Gate gate{f, detail::RuntimeWorkerPhase::before_execute};
+    Gate gate{f, storage_detail::RuntimeWorkerPhase::before_execute};
     f.start({1});
     Pair a;
     Pair b{true};
@@ -484,8 +610,8 @@ TEST_CASE("runtime capacity includes unsettled and untaken work without spending
 
 TEST_CASE("runtime deadlines retain unsettled work and never acknowledge a late commit",
           "[storage-recovery]") {
-    for (const auto phase :
-         {detail::RuntimeWorkerPhase::before_execute, detail::RuntimeWorkerPhase::before_publish}) {
+    for (const auto phase : {storage_detail::RuntimeWorkerPhase::before_execute,
+                             storage_detail::RuntimeWorkerPhase::before_publish}) {
         Fixture f;
         Gate gate{f, phase};
         f.start({1});
@@ -520,7 +646,7 @@ TEST_CASE("runtime deadlines retain unsettled work and never acknowledge a late 
 
 TEST_CASE("runtime late results cannot cross replacement sessions", "[storage-recovery]") {
     Fixture f;
-    Gate gate{f, detail::RuntimeWorkerPhase::before_publish};
+    Gate gate{f, storage_detail::RuntimeWorkerPhase::before_publish};
     f.start();
     Pair old;
     const auto first = f.login(old);
@@ -542,7 +668,7 @@ TEST_CASE("runtime late results reject ended leases logout revocation and discon
           "[storage-recovery]") {
     for (const int mode : {0, 1, 2, 3, 4}) {
         Fixture f;
-        Gate gate{f, detail::RuntimeWorkerPhase::before_publish};
+        Gate gate{f, storage_detail::RuntimeWorkerPhase::before_publish};
         auto limits = session_limits();
         limits.session_idle_timeout = 1s;
         f.start({}, limits);
@@ -570,7 +696,7 @@ TEST_CASE("runtime late results reject ended leases logout revocation and discon
 TEST_CASE("runtime entity and region incarnations fence completed values", "[storage-recovery]") {
     for (const int mode : {0, 1, 2}) {
         Fixture f;
-        Gate gate{f, detail::RuntimeWorkerPhase::before_publish};
+        Gate gate{f, storage_detail::RuntimeWorkerPhase::before_publish};
         f.start();
         Pair peer;
         const auto session = f.login(peer);
@@ -625,9 +751,10 @@ TEST_CASE("runtime rejects invalid scene ownership deadlines and tickets before 
 
 TEST_CASE("runtime uncertain commits quiesce admission until explicit settled recovery",
           "[storage-recovery]") {
-    for (const auto fault : {detail::WritePhase::before_commit, detail::WritePhase::after_commit}) {
+    for (const auto fault :
+         {storage_detail::WritePhase::before_commit, storage_detail::WritePhase::after_commit}) {
         Fixture f;
-        Gate gate{f, detail::RuntimeWorkerPhase::before_publish, fault};
+        Gate gate{f, storage_detail::RuntimeWorkerPhase::before_publish, fault};
         f.start();
         Pair peer;
         const auto session = f.login(peer);
@@ -652,7 +779,7 @@ TEST_CASE("runtime uncertain commits quiesce admission until explicit settled re
         const auto recovered = f.login(fresh);
         const auto outcome =
             value(f.owner->transfer(*fresh.server, envelope(recovered, 2), request, 0ns));
-        CHECK(outcome.replayed == (fault == detail::WritePhase::after_commit));
+        CHECK(outcome.replayed == (fault == storage_detail::WritePhase::after_commit));
         CHECK(outcome.receipt.source->state == EconomyState{93, 18});
         CHECK(outcome.receipt.target->state == EconomyState{107, 22});
     }
@@ -682,7 +809,7 @@ TEST_CASE("runtime stale save errors retain admission sequencing without poisoni
 TEST_CASE("runtime admits two accounts but retains one operation per account",
           "[storage-recovery]") {
     Fixture f;
-    Gate gate{f, detail::RuntimeWorkerPhase::before_execute};
+    Gate gate{f, storage_detail::RuntimeWorkerPhase::before_execute};
     f.start({2});
     Pair a;
     Pair b{true};
@@ -711,7 +838,7 @@ TEST_CASE("runtime admits two accounts but retains one operation per account",
 TEST_CASE("runtime completion admission permits later heartbeats from the same live session",
           "[storage-recovery]") {
     Fixture f;
-    Gate gate{f, detail::RuntimeWorkerPhase::before_publish};
+    Gate gate{f, storage_detail::RuntimeWorkerPhase::before_publish};
     f.start();
     Pair peer;
     const auto session = f.login(peer);
@@ -728,7 +855,7 @@ TEST_CASE("runtime completion admission permits later heartbeats from the same l
 TEST_CASE("runtime monotonic observations reject regression without releasing pending capacity",
           "[storage-recovery]") {
     Fixture f;
-    Gate gate{f, detail::RuntimeWorkerPhase::before_execute};
+    Gate gate{f, storage_detail::RuntimeWorkerPhase::before_execute};
     f.start();
     Pair peer;
     const auto session = f.login(peer);
@@ -776,10 +903,10 @@ TEST_CASE("runtime worker exceptions settle bounded outcomes and require reopen"
           "[storage-recovery]") {
     struct InjectException {
         InjectException() {
-            detail::set_runtime_worker_exception(true);
+            storage_detail::set_runtime_worker_exception(true);
         }
         ~InjectException() {
-            detail::set_runtime_worker_exception(false);
+            storage_detail::set_runtime_worker_exception(false);
         }
     } injection;
     Fixture f;
@@ -795,7 +922,7 @@ TEST_CASE("runtime worker exceptions settle bounded outcomes and require reopen"
     REQUIRE(result.outcome);
     rejected(*result.outcome);
     CHECK(result.transfer == request);
-    detail::set_runtime_worker_exception(false);
+    storage_detail::set_runtime_worker_exception(false);
     value(f.owner->recover());
     Pair fresh;
     const auto recovered = f.login(fresh);

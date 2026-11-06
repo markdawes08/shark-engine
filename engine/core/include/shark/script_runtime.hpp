@@ -78,6 +78,22 @@ struct ScriptContactReport {
     std::optional<Error> error;
 };
 
+struct ScriptEntityLifecycleReport {
+    EntityReference entity;
+    bool changed{false};
+    bool loaded{false};
+    bool initialized{false};
+    bool destroyed{false};
+    std::size_t attempted_destroy_callbacks{0};
+    std::size_t loaded_scripts{0};
+    std::size_t initialized_scripts{0};
+    std::size_t removed_spawned_roots{0};
+    std::size_t removed_spawned_entities{0};
+    std::size_t removed_spawned_bodies{0};
+    // Callback/VM progress is retained; error faults the runtime, not rollback.
+    std::optional<Error> error{};
+};
+
 enum class ScriptEntityMutationKind { spawn, destroy };
 enum class ScriptEntityMutationState { queued, applied, failed, discarded };
 
@@ -116,6 +132,8 @@ struct ScriptRuntimeStats {
     bool started; // Initialization began; remains true after stop/close.
     bool faulted;
     bool closed;
+    // Process-local owner identity, never reused or changed by VM lifecycle.
+    std::uint64_t instance{0};
 };
 
 // Single creating-thread owner. No Scene pointer survives a public call.
@@ -155,6 +173,22 @@ class ScriptRuntime final {
     // produced by deferred removals stay queued for a later dispatch.
     [[nodiscard]] Result<ScriptContactReport> dispatch_contacts(Scene& scene, PhysicsWorld& physics,
                                                                 std::size_t maximum = 256);
+    // Trusted host delivery of an already-owned native batch. Complete ordered
+    // validation precedes consumption; a shared world/sequence fence prevents
+    // overlap with either this path or the native FIFO dispatcher. Stale body
+    // generations remain skipped observations, never mutation authority.
+    [[nodiscard]] Result<ScriptContactReport>
+    dispatch_contact_events(Scene& scene, PhysicsWorld& physics,
+                            std::span<const PhysicsContactEvent> events);
+    // Checked server host subtree lifecycle. Missing Script entries are no-ops.
+    // Suspend cleans issuer-owned runtime roots and invokes destroy in reverse
+    // order at most once; resume loads fresh VMs from captured source in forward
+    // hierarchy order after the new body is ready. Destroyed marks consumption
+    // even if a callback fails; loaded/initialized mark successful milestones.
+    [[nodiscard]] Result<ScriptEntityLifecycleReport>
+    suspend_entity(Scene& scene, PhysicsWorld& physics, const EntityReference& entity);
+    [[nodiscard]] Result<ScriptEntityLifecycleReport>
+    resume_entity(Scene& scene, PhysicsWorld& physics, const EntityReference& entity);
     [[nodiscard]] Result<ScriptStopReport> stop(Scene& scene);
     [[nodiscard]] Result<ScriptStopReport> stop(Scene& scene, PhysicsWorld& physics);
     [[nodiscard]] Result<std::vector<ScriptLogEntry>> take_logs();
@@ -170,6 +204,12 @@ class ScriptRuntime final {
     [[nodiscard]] Result<void> fixed_update_impl(Scene& scene, PhysicsWorld* physics,
                                                  std::uint64_t tick, double delta_seconds);
     [[nodiscard]] Result<ScriptStopReport> stop_impl(Scene& scene, PhysicsWorld* physics);
+    [[nodiscard]] Result<ScriptContactReport>
+    dispatch_contact_events_impl(Scene& scene, PhysicsWorld& physics,
+                                 std::vector<PhysicsContactEvent> events);
+    [[nodiscard]] Result<ScriptEntityLifecycleReport>
+    entity_lifecycle(Scene& scene, PhysicsWorld& physics, const EntityReference& entity,
+                     bool resume);
     struct Impl;
     explicit ScriptRuntime(std::unique_ptr<Impl> impl) noexcept;
     std::unique_ptr<Impl> impl_;

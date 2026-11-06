@@ -30,6 +30,7 @@ add_library(EngineCore STATIC
     src/net_movement_wire.cpp
     src/net_movement_prediction.cpp
     src/net_combat_wire.cpp
+    src/net_combat_client.cpp
     src/net_replication.cpp
     src/net_replication_wire.cpp
     src/net_interest.cpp

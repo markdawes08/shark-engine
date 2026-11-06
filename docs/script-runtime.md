@@ -34,6 +34,19 @@ at teardown: it is counted as discarded with an owned contextual error. Explicit
 callbacks; the host can drain and retry, or use `close` to discard remaining
 callbacks and report their count. Logs remain drainable after stop or close.
 
+M04d adds checked server-host `suspend_entity`/`resume_entity` subtree lifecycle.
+Suspend destroys in reverse order, releases VMs and cleans transitive
+requester-owned runtime roots while preserving source records and mutation-ID
+watermarks. Resume creates fresh VMs from the original captured sources after
+body initialization. Suspended entries receive no update/contact callbacks.
+Cleanup remains possible after spawn-grant revocation; resume of spawned entries
+still requires the active grant. Owned lifecycle reports retain partial effects.
+The [gameplay lifecycle contract](gameplay-lifecycle.md) connects these operations
+to authoritative disconnect, death, reconnect and respawn.
+`ScriptRuntimeStats::instance` is a nonzero process-local incarnation, stable
+through VM suspension/resume and stop. A replacement owner gets a fresh identity;
+this observation is not gameplay authority.
+
 The host calls fixed updates from an existing scheduler. The first tick may be
 zero; subsequent ticks must be consecutive and fit a signed 64-bit Lua integer.
 Host-supplied deltas must be finite, between zero and one second inclusive. A

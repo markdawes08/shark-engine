@@ -46,6 +46,8 @@ struct CharacterCombat::Impl {
         std::array<std::optional<net::CombatActionResult>, net::combat_maximum_outcomes> outcomes{};
         std::size_t outcome_count{0};
         bool fenced{false};
+        bool detached{false};
+        Transform detached_pose{};
     };
     std::thread::id owner{std::this_thread::get_id()};
     std::uint64_t scene_instance;
@@ -56,6 +58,8 @@ struct CharacterCombat::Impl {
     std::vector<Actor> actors;
     std::uint64_t admission{0};
     bool faulted{false};
+    bool script_mode_bound{false};
+    std::optional<std::uint64_t> script_instance{};
 
     Impl(std::uint64_t scene, std::uint64_t native, std::uint64_t completed,
          std::unique_ptr<CombatRules> configured)
@@ -116,6 +120,110 @@ struct CharacterCombat::Impl {
             --actor.outcome_count;
         }
         actor.outcomes[actor.outcome_count++] = outcome;
+    }
+    Result<void> mutations(ScriptRuntime* scripts, CombatTick& report) {
+        if (!scripts)
+            return {};
+        auto results = scripts->take_entity_mutations();
+        if (!results)
+            return results.error();
+        report.script_mutations.outcomes.insert(report.script_mutations.outcomes.end(),
+                                                results.value().outcomes.begin(),
+                                                results.value().outcomes.end());
+        return {};
+    }
+    Result<std::optional<std::uint64_t>> script_owner(ScriptRuntime* scripts) const {
+        if (!scripts) {
+            if (script_mode_bound && script_instance)
+                return rejected("server.combat.scripts",
+                                "Gameplay cannot omit its retained ScriptRuntime owner");
+            return std::optional<std::uint64_t>{};
+        }
+        auto state = scripts->stats();
+        if (!state)
+            return state.error();
+        if (state.value().profile != ScriptProfile::server_gameplay ||
+            state.value().initial_revision.scene_instance != scene_instance ||
+            !state.value().started || state.value().faulted || state.value().closed ||
+            state.value().instance == 0 ||
+            (script_mode_bound && script_instance != state.value().instance))
+            return rejected("server.combat.scripts",
+                            "Gameplay requires its live server ScriptRuntime owner");
+        return std::optional<std::uint64_t>{state.value().instance};
+    }
+    Result<void> contacts(Scene& scene, PhysicsWorld& physics, ScriptRuntime* scripts,
+                          std::vector<PhysicsContactEvent> events, CombatTick& report,
+                          bool keep_movement) {
+        std::size_t observed = 0;
+        while (!events.empty()) {
+            observed += events.size();
+            if (keep_movement)
+                report.movement.contacts.insert(report.movement.contacts.end(), events.begin(),
+                                                events.end());
+            if (observed > 2 * 65536)
+                return rejected("server.combat.contacts",
+                                "Contact drain exceeded bounded native storage");
+            if (!scripts)
+                return {};
+            for (std::size_t offset = 0; offset < events.size();
+                 offset += script_runtime_maximum_contact_events) {
+                const auto count =
+                    std::min(script_runtime_maximum_contact_events, events.size() - offset);
+                auto delivery = scripts->dispatch_contact_events(
+                    scene, physics,
+                    std::span<const PhysicsContactEvent>{events}.subspan(offset, count));
+                if (!delivery)
+                    return delivery.error();
+                report.script_contacts.push_back(std::move(delivery).value());
+                if (auto retained = mutations(scripts, report); !retained)
+                    return retained;
+                if (report.script_contacts.back().error)
+                    return *report.script_contacts.back().error;
+            }
+            auto next = physics.take_events(scene, 65536);
+            if (!next)
+                return next.error();
+            events = std::move(next).value();
+        }
+        return {};
+    }
+    Result<void> suspend(Actor& actor, Scene& scene, PhysicsWorld& physics, ScriptRuntime* scripts,
+                         CombatTick& report) {
+        if (!scripts)
+            return {};
+        auto stopped = scripts->suspend_entity(scene, physics, actor.entity);
+        if (!stopped)
+            return stopped.error();
+        report.script_lifecycles.push_back(std::move(stopped).value());
+        if (auto retained = mutations(scripts, report); !retained)
+            return retained;
+        if (report.script_lifecycles.back().error)
+            return *report.script_lifecycles.back().error;
+        return {};
+    }
+    Result<void> detach(Actor& actor, CharacterMovement& movement, Scene& scene,
+                        PhysicsWorld& physics, ScriptRuntime* scripts, CombatTick& report) {
+        if (actor.detached)
+            return {};
+        if (auto stopped = suspend(actor, scene, physics, scripts, report); !stopped)
+            return stopped;
+        if (actor.health != 0) {
+            auto current = live_body(actor, scene, physics);
+            if (!current)
+                return current.error();
+            actor.detached_pose = current.value().pose;
+            if (auto released = movement.release(scene, physics, actor.movement.stream); !released)
+                return released;
+            ++report.released_movements;
+            if (auto removed = physics.remove_body(scene, *actor.body); !removed)
+                return removed;
+            ++report.removed_bodies;
+            actor.body.reset();
+        }
+        actor.detached = true;
+        actor.fenced = false;
+        ++report.fenced;
+        return {};
     }
 };
 
@@ -212,8 +320,8 @@ Result<void> CharacterCombat::submit(storage::CharacterAuthority& authority,
         return valid;
     auto actor = std::find_if(impl_->actors.begin(), impl_->actors.end(),
                               [&](const auto& value) { return value.stream == action.stream; });
-    if (actor == impl_->actors.end() || actor->health == 0 || actor->fenced || actor->pending ||
-        actor->accepted == std::numeric_limits<std::uint64_t>::max() ||
+    if (actor == impl_->actors.end() || actor->health == 0 || actor->fenced || actor->detached ||
+        actor->pending || actor->accepted == std::numeric_limits<std::uint64_t>::max() ||
         action.action_sequence != actor->accepted + 1 ||
         impl_->admission == std::numeric_limits<std::uint64_t>::max())
         return rejected(operation,
@@ -229,7 +337,8 @@ Result<void> CharacterCombat::submit(storage::CharacterAuthority& authority,
         return rejected(operation, "Combat action belongs to a different session");
     auto target = std::find_if(impl_->actors.begin(), impl_->actors.end(),
                                [&](const auto& value) { return value.target == action.target; });
-    if (target == impl_->actors.end() || target == actor || target->health == 0 || target->fenced)
+    if (target == impl_->actors.end() || target == actor || target->health == 0 || target->fenced ||
+        target->detached)
         return rejected(operation, "Combat target is stale or unavailable");
     if (auto body = impl_->live_body(*actor, scene, physics); !body)
         return body.error();
@@ -249,16 +358,74 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
                                          CharacterMovement& movement, Scene& scene,
                                          PhysicsWorld& physics,
                                          std::span<net::TlsTransport* const> transports,
-                                         MonotonicTime now) {
+                                         MonotonicTime now, ScriptRuntime* scripts) {
     constexpr auto operation = "server.combat.step";
     if (auto valid = impl_->context(scene, physics, now, operation); !valid)
         return valid.error();
     if (impl_->ticks >= static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) -
                             combat_maximum_cooldown)
         return rejected(operation, "Combat tick domain is exhausted");
-    CombatTick report{{impl_->ticks + 1, 0, {}, {}}, {}, {}};
+    CombatTick report{{impl_->ticks, 0, {}, {}}, {}, {}};
     report.outcomes.reserve(impl_->actors.size());
     report.rebindings.reserve(impl_->actors.size());
+    const auto fail = [&](Error error) -> Result<CombatTick> {
+        impl_->faulted = true;
+        report.error = std::move(error);
+        return std::move(report);
+    };
+    if (transports.size() > movement_maximum_characters ||
+        std::any_of(transports.begin(), transports.end(),
+                    [](auto* transport) { return transport == nullptr; }))
+        return rejected(operation, "Invalid bounded live transport inventory");
+    auto checked_scripts = impl_->script_owner(scripts);
+    if (!checked_scripts)
+        return checked_scripts.error();
+    std::array<std::uint64_t, movement_maximum_characters> connection_ids{};
+    for (std::size_t index = 0; index < transports.size(); ++index) {
+        auto peer = transports[index]->authenticated_peer();
+        if (!peer)
+            continue;
+        const auto end = connection_ids.begin() + static_cast<std::ptrdiff_t>(index);
+        if (std::find(connection_ids.begin(), end, peer.value().connection_id) != end)
+            return rejected(operation, "Duplicate transport in gameplay tick");
+        connection_ids[index] = peer.value().connection_id;
+    }
+    impl_->script_instance = checked_scripts.value();
+    impl_->script_mode_bound = true;
+    // Revoke old callbacks and movement before another fixed/native tick.
+    for (auto& actor : impl_->actors) {
+        if (actor.detached)
+            continue;
+        auto* transport = connection(transports, actor.connection);
+        const auto session =
+            transport ? authority.authorize_entity(*transport, scene, actor.entity.handle, now)
+                      : Result<net::SessionSnapshot>{rejected(operation, "Connection ended")};
+        if (!session || !same_session(actor.session, session.value())) {
+            if (auto detached = impl_->detach(actor, movement, scene, physics, scripts, report);
+                !detached)
+                return fail(detached.error());
+        }
+    }
+    if (scripts) {
+        auto updated = scripts->fixed_update(scene, physics, impl_->ticks, 1.0 / movement_tick_hz);
+        if (auto retained = impl_->mutations(scripts, report); !retained)
+            return fail(retained.error());
+        if (!updated)
+            return fail(updated.error());
+        auto prior = physics.take_events(scene, 65536);
+        if (!prior)
+            return fail(prior.error());
+        if (auto dispatched =
+                impl_->contacts(scene, physics, scripts, std::move(prior).value(), report, false);
+            !dispatched)
+            return fail(dispatched.error());
+    } else {
+        auto prior = physics.take_events(scene, 65536);
+        if (!prior)
+            return fail(prior.error());
+        report.movement.contacts = std::move(prior).value();
+    }
+    auto before_contacts = std::move(report.movement.contacts);
     auto moved = movement.step(authority, scene, physics, transports, now);
     if (!moved) {
         impl_->faulted = true;
@@ -267,20 +434,34 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
         // an absent movement receipt or replaying the uncertain work.
         if (auto completed = movement.stats(); completed)
             impl_->ticks = completed.value().completed_ticks;
+        if (scripts || report.fenced != 0 || !before_contacts.empty()) {
+            report.movement_completed = impl_->ticks > report.movement.completed_tick;
+            report.movement.completed_tick = impl_->ticks;
+            report.movement.contacts = std::move(before_contacts);
+            return fail(moved.error());
+        }
         return moved.error();
     }
     report.movement = std::move(moved).value();
+    report.movement_completed = true;
     impl_->ticks = report.movement.completed_tick;
     impl_->last_time = now;
     // All later errors report the original committed movement and effect prefix.
     impl_->faulted = true;
-    const auto fail = [&](Error error) -> Result<CombatTick> {
-        report.error = std::move(error);
-        return std::move(report);
-    };
+    auto native_contacts = std::move(report.movement.contacts);
+    report.movement.contacts = std::move(before_contacts);
+    if (auto dispatched =
+            impl_->contacts(scene, physics, scripts, std::move(native_contacts), report, true);
+        !dispatched)
+        return fail(dispatched.error());
     std::array<Impl::Actor*, movement_maximum_characters> pending{};
     std::size_t pending_count = 0;
     for (auto& actor : impl_->actors) {
+        if (actor.detached) {
+            if (actor.pending)
+                pending[pending_count++] = &actor;
+            continue;
+        }
         auto* transport = connection(transports, actor.connection);
         const auto session =
             transport ? authority.authorize_entity(*transport, scene, actor.entity.handle, now)
@@ -296,8 +477,12 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
             if (found == report.movement.deliveries.end() ||
                 !impl_->live_body(actor, scene, physics))
                 actor.fenced = true;
-            else
-                actor.movement = found->state;
+            else {
+                auto current = movement.observe(scene, physics, actor.movement.stream);
+                if (!current)
+                    return fail(current.error());
+                actor.movement = current.value();
+            }
         } else {
             auto state = scene.entity_state(actor.entity.handle);
             if (!state || state.value().reference != actor.entity || state.value().rigid_body)
@@ -305,8 +490,6 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
         }
         if (actor.pending)
             pending[pending_count++] = &actor;
-        if (actor.fenced)
-            ++report.fenced;
     }
     std::sort(pending.begin(), pending.begin() + static_cast<std::ptrdiff_t>(pending_count),
               [](const auto* a, const auto* b) { return a->pending_order < b->pending_order; });
@@ -319,8 +502,9 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
         auto target =
             std::find_if(impl_->actors.begin(), impl_->actors.end(),
                          [&](const auto& value) { return value.target == request.target; });
-        if (!actor.fenced && actor.health != 0) {
-            if (target == impl_->actors.end() || target->fenced || target->health == 0) {
+        if (!actor.fenced && !actor.detached && actor.health != 0) {
+            if (target == impl_->actors.end() || target->fenced || target->detached ||
+                target->health == 0) {
                 outcome.outcome = CombatOutcome::target_unavailable;
             } else if (actor.ready_tick > impl_->ticks) {
                 outcome.outcome = CombatOutcome::cooldown;
@@ -375,6 +559,10 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
                                     report.outcomes.push_back({actor.stream, outcome});
                                     actor.pending.reset();
                                     recorded = true;
+                                    if (auto stopped = impl_->suspend(*target, scene, physics,
+                                                                      scripts, report);
+                                        !stopped)
+                                        return fail(stopped.error());
                                     if (auto released = movement.release(scene, physics,
                                                                          target->movement.stream);
                                         !released)
@@ -398,8 +586,15 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
             actor.pending.reset();
         }
     }
+    for (auto& actor : impl_->actors)
+        if (actor.fenced) {
+            if (auto detached = impl_->detach(actor, movement, scene, physics, scripts, report);
+                !detached)
+                return fail(detached.error());
+        }
     for (auto& actor : impl_->actors) {
-        if (actor.fenced || actor.health != 0 || actor.respawn_tick > impl_->ticks)
+        if (actor.fenced || actor.detached || actor.health != 0 ||
+            actor.respawn_tick > impl_->ticks)
             continue;
         auto* transport = connection(transports, actor.connection);
         if (!transport)
@@ -433,15 +628,131 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
             retained.reset();
         report.rebindings.push_back({previous, {actor.stream, actor.target, actor.movement}});
         ++report.respawns;
+        if (scripts) {
+            auto resumed = scripts->resume_entity(scene, physics, actor.entity);
+            if (!resumed)
+                return fail(resumed.error());
+            report.script_lifecycles.push_back(std::move(resumed).value());
+            if (auto retained = impl_->mutations(scripts, report); !retained)
+                return fail(retained.error());
+            if (report.script_lifecycles.back().error)
+                return fail(*report.script_lifecycles.back().error);
+        }
     }
     // Preserve body-removal exits after the already-owned native tick contacts.
     auto exits = physics.take_events(scene, 65536);
     if (!exits)
         return fail(exits.error());
-    report.movement.contacts.insert(report.movement.contacts.end(), exits.value().begin(),
-                                    exits.value().end());
-    std::erase_if(impl_->actors, [](const auto& actor) { return actor.fenced; });
+    if (auto dispatched =
+            impl_->contacts(scene, physics, scripts, std::move(exits).value(), report, true);
+        !dispatched)
+        return fail(dispatched.error());
     impl_->faulted = false;
+    return report;
+}
+
+Result<std::vector<EntityReference>>
+CharacterCombat::active_entities(const Scene& scene, const PhysicsWorld& physics) const {
+    if (auto valid = impl_->context(scene, physics, impl_->last_time, "server.combat.active");
+        !valid)
+        return valid.error();
+    std::vector<EntityReference> result;
+    result.reserve(impl_->actors.size());
+    for (const auto& actor : impl_->actors) {
+        if (actor.detached || actor.fenced || actor.health == 0)
+            continue;
+        if (auto body = impl_->live_body(actor, scene, physics); !body)
+            return body.error();
+        result.push_back(actor.entity);
+    }
+    return result;
+}
+
+Result<CombatReconnectReport>
+CharacterCombat::reconnect(storage::CharacterAuthority& authority, net::TlsTransport& transport,
+                           CharacterMovement& movement, Scene& scene, PhysicsWorld& physics,
+                           EntityHandle entity, MonotonicTime now, ScriptRuntime* scripts) {
+    constexpr auto operation = "server.combat.reconnect";
+    if (auto valid = impl_->context(scene, physics, now, operation); !valid)
+        return valid.error();
+    auto checked_scripts = impl_->script_owner(scripts);
+    if (!checked_scripts)
+        return checked_scripts.error();
+    auto current = authority.authorize_entity(transport, scene, entity, now);
+    if (!current)
+        return current.error();
+    auto reference = scene.reference(entity);
+    if (!reference)
+        return reference.error();
+    auto peer = transport.authenticated_peer();
+    if (!peer)
+        return peer.error();
+    auto actor = std::find_if(impl_->actors.begin(), impl_->actors.end(), [&](const auto& value) {
+        return value.entity == reference.value() &&
+               value.session.account == current.value().account &&
+               value.session.character == current.value().character;
+    });
+    if (actor == impl_->actors.end() || !actor->detached ||
+        actor->session.session == current.value().session ||
+        actor->connection == peer.value().connection_id)
+        return rejected(
+            operation,
+            "Reconnect requires one detached entity and a fresh ready connection/session");
+    auto entity_state = scene.entity_state(entity);
+    if (!entity_state)
+        return entity_state.error();
+    if (entity_state.value().rigid_body)
+        return rejected(operation, "Detached combat entity unexpectedly owns a body");
+    auto stream = generate_stable_id();
+    auto target = generate_stable_id();
+    if (!stream || !target)
+        return !stream ? stream.error() : target.error();
+    impl_->script_instance = checked_scripts.value();
+    impl_->script_mode_bound = true;
+    CombatReconnectReport report{};
+    report.scripts.reserve(1);
+    const auto fail = [&](Error error) -> Result<CombatReconnectReport> {
+        impl_->faulted = true;
+        report.error = std::move(error);
+        return std::move(report);
+    };
+    if (actor->health != 0) {
+        auto body = physics.create_runtime_body(scene, actor->entity, actor->settings);
+        if (!body)
+            return fail(body.error());
+        actor->body = body.value();
+        ++report.created_bodies;
+        if (auto placed = physics.teleport(scene, *actor->body, actor->detached_pose); !placed)
+            return fail(placed.error());
+        ++report.teleported_bodies;
+        auto bound = movement.bind(authority, transport, scene, physics, entity, now);
+        if (!bound)
+            return fail(bound.error());
+        actor->movement = bound.value();
+    }
+    actor->connection = peer.value().connection_id;
+    actor->session = current.value();
+    actor->stream = net::CombatStreamId{stream.value()};
+    actor->target = net::CombatTargetId{target.value()};
+    actor->accepted = 0;
+    actor->pending.reset();
+    actor->outcome_count = 0;
+    for (auto& receipt : actor->outcomes)
+        receipt.reset();
+    actor->detached = false;
+    actor->fenced = false;
+    if (scripts && actor->health != 0) {
+        auto resumed = scripts->resume_entity(scene, physics, actor->entity);
+        if (!resumed)
+            return fail(resumed.error());
+        report.scripts.push_back(std::move(resumed).value());
+        if (report.scripts.back().error)
+            return fail(*report.scripts.back().error);
+    }
+    auto state = view(authority, transport, scene, physics, {}, now);
+    if (!state)
+        return fail(state.error());
+    report.state = std::move(state).value();
     return report;
 }
 
@@ -462,7 +773,7 @@ Result<net::CombatState> CharacterCombat::view(storage::CharacterAuthority& auth
         std::find_if(impl_->actors.begin(), impl_->actors.end(), [&](const auto& value) {
             return value.connection == peer.value().connection_id;
         });
-    if (actor == impl_->actors.end())
+    if (actor == impl_->actors.end() || actor->detached)
         return rejected(operation, "Combat observer has no live binding");
     auto session = authority.authorize_entity(transport, scene, actor->entity.handle, now);
     if (!session)
@@ -490,7 +801,7 @@ Result<net::CombatState> CharacterCombat::view(storage::CharacterAuthority& auth
     for (const auto id : visible) {
         const auto target = std::find_if(impl_->actors.begin(), impl_->actors.end(),
                                          [&](const auto& value) { return value.target == id; });
-        if (target == impl_->actors.end() || target == actor || target->fenced)
+        if (target == impl_->actors.end() || target == actor || target->fenced || target->detached)
             return rejected(operation, "Combat visibility selection is stale or invalid");
         result.targets.push_back({target->target, target->health, target->respawn_tick});
     }
@@ -507,10 +818,14 @@ Result<CombatStats> CharacterCombat::stats() const {
     if (impl_->owner != std::this_thread::get_id())
         return rejected("server.combat.stats", "Combat requires its creating thread");
     std::size_t pending = 0;
+    std::size_t detached = 0;
     for (const auto& actor : impl_->actors)
-        if (actor.pending)
+        if (actor.detached)
+            ++detached;
+        else if (actor.pending)
             ++pending;
-    return CombatStats{impl_->ticks, impl_->actors.size(), pending, impl_->faulted};
+    return CombatStats{impl_->ticks, impl_->actors.size() - detached, pending, impl_->faulted,
+                       detached};
 }
 
 } // namespace shark::server

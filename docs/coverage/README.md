@@ -14,8 +14,11 @@ movement, native collision and committed corrections.
 [M04b](../handoffs/M04b-client-movement.md) adds bounded prediction/reconciliation,
 timed remote interpolation and authenticated second-client publication.
 [M04c](../handoffs/M04c-authoritative-combat.md) adds current-pose combat,
-bounded server Lua rules, cooldowns and checked death/respawn. Connected
-lifetime/effects and full acceptance remain open; full REQ-M04 remains NOT_RUN.
+bounded server Lua rules, cooldowns and checked death/respawn.
+[M04d](../handoffs/M04d-gameplay-lifecycle.md) connects owned contacts/entity-script
+lifetimes, state-preserving reconnect, presentation deduplication and original
+durable-operation replay. M04e retains connected adversity/continuity acceptance;
+full REQ-M04 remains NOT_RUN.
 
 The [prefab checkpoints](../roadmap/prefab-plan.md)
 record completed source values, shared instance commands, deferred runtime/Lua
@@ -27,7 +30,7 @@ physics acceptance; REQ-20 retains its deferred native interactive evidence.
 **19d and REQ-19 PASS under current-machine scope.** The
 [handoff](../handoffs/19d-script-preview.md) records the shared client-presentation
 preview, source editing, diagnostics and exact selected evidence. Packaged script
-execution and server/physics gameplay integration remain later work.
+execution remains later work; server/physics gameplay integration follows M04.
 
 **18e and full REQ-18 PASS under current-machine scope.** The
 [handoff](../handoffs/18e-editor-physics-preview.md#intel-physics-and-full-req-18-closure-2026-11-01)

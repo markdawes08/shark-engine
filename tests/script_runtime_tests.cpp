@@ -885,3 +885,315 @@ TEST_CASE("Lua physics queries reject overflow rather than returning partial hit
     CHECK(take(runtime->stats()).faulted);
     take(runtime->stop(*scene, *world));
 }
+
+TEST_CASE("Owned contact delivery shares checked sequence fences with the native FIFO path",
+          "[script-runtime]") {
+    ScriptPhysicsFixture f{R"lua(
+        function on_contact_enter(other, self_trigger, other_trigger, tick)
+            if shark.entity.name()=='Actor' then shark.physics.impulse(1,0,0) end
+            shark.log.info('enter:'..shark.entity.name())
+        end
+        function on_contact_exit() shark.log.info('exit:'..shark.entity.name()) end
+    )lua"};
+    take(f.runtime->start(*f.scene, *f.world));
+    take(f.world->step(*f.scene));
+    const auto owned = take(f.world->take_events(*f.scene));
+    REQUIRE(owned.size() == 1);
+    SECTION("complete invalid batches preserve the first valid event for retry") {
+        auto invalid = owned;
+        invalid.push_back(owned.front());
+        CHECK_FALSE(f.runtime->dispatch_contact_events(*f.scene, *f.world, invalid));
+        invalid = owned;
+        ++invalid.front().first.body.world;
+        CHECK_FALSE(f.runtime->dispatch_contact_events(*f.scene, *f.world, invalid));
+        invalid = owned;
+        ++invalid.front().completed_tick;
+        CHECK_FALSE(f.runtime->dispatch_contact_events(*f.scene, *f.world, invalid));
+        CHECK(take(f.runtime->take_logs()).empty());
+        CHECK(take(f.world->velocity(*f.scene, f.actor_body)).linear.x == 0);
+    }
+    SECTION("owned empty batches are observations without callbacks") {
+        const auto empty = take(f.runtime->dispatch_contact_events(*f.scene, *f.world, {}));
+        CHECK(empty.events.empty());
+        CHECK(empty.attempted_callbacks == 0);
+    }
+    const auto delivered = take(f.runtime->dispatch_contact_events(*f.scene, *f.world, owned));
+    CHECK_FALSE(delivered.error);
+    CHECK(delivered.attempted_callbacks == 2);
+    CHECK(delivered.applied_commands == 1);
+    CHECK(take(f.world->velocity(*f.scene, f.actor_body)).linear.x == Catch::Approx(1));
+    CHECK(messages(take(f.runtime->take_logs())) ==
+          std::vector<std::string>{"enter:Actor", "enter:Trigger"});
+    CHECK_FALSE(f.runtime->dispatch_contact_events(*f.scene, *f.world, owned));
+    CHECK(take(f.runtime->take_logs()).empty());
+    auto pose = take(f.world->body_state(*f.scene, f.actor_body)).pose;
+    pose.translation.x = 4;
+    take(f.world->teleport(*f.scene, f.actor_body, pose));
+    take(f.world->step(*f.scene));
+    const auto native = take(f.runtime->dispatch_contacts(*f.scene, *f.world));
+    REQUIRE(native.events.size() == 1);
+    CHECK(native.events.front().phase == PhysicsContactPhase::exit);
+    CHECK(native.attempted_callbacks == 2);
+    CHECK_FALSE(f.runtime->dispatch_contact_events(*f.scene, *f.world, native.events));
+    CHECK(messages(take(f.runtime->take_logs())) ==
+          std::vector<std::string>{"exit:Actor", "exit:Trigger"});
+    take(f.runtime->stop(*f.scene, *f.world));
+}
+
+TEST_CASE("Owned stale removals stay historical while callback failures preserve their prefix",
+          "[script-runtime]") {
+    SECTION("a removed body cannot authorize an old event") {
+        ScriptPhysicsFixture f{"function on_contact_enter() error('stale event') end"};
+        take(f.runtime->start(*f.scene, *f.world));
+        take(f.world->step(*f.scene));
+        auto events = take(f.world->take_events(*f.scene));
+        take(f.world->remove_body(*f.scene, f.actor_body));
+        const auto exits = take(f.world->take_events(*f.scene));
+        events.insert(events.end(), exits.begin(), exits.end());
+        const auto report = take(f.runtime->dispatch_contact_events(*f.scene, *f.world, events));
+        CHECK_FALSE(report.error);
+        CHECK(report.skipped_events == events.size());
+        CHECK(report.attempted_callbacks == 0);
+        CHECK_FALSE(f.runtime->dispatch_contact_events(*f.scene, *f.world, events));
+        take(f.runtime->stop(*f.scene, *f.world));
+    }
+    SECTION("a failed callback consumes the owned batch before further effects") {
+        ScriptPhysicsFixture f{R"lua(
+            function on_contact_enter()
+                shark.log.info('attempt:'..shark.entity.name())
+                if shark.entity.name()=='Trigger' then error('later contact') end
+                shark.physics.impulse(1,0,0)
+            end
+        )lua"};
+        take(f.runtime->start(*f.scene, *f.world));
+        take(f.world->step(*f.scene));
+        const auto events = take(f.world->take_events(*f.scene));
+        const auto report = take(f.runtime->dispatch_contact_events(*f.scene, *f.world, events));
+        REQUIRE(report.error);
+        CHECK(report.attempted_callbacks == 2);
+        CHECK(report.discarded_commands == 1);
+        CHECK(report.applied_commands == 0);
+        CHECK(take(f.world->velocity(*f.scene, f.actor_body)).linear.x == 0);
+        CHECK_FALSE(f.runtime->dispatch_contact_events(*f.scene, *f.world, events));
+        CHECK(messages(take(f.runtime->take_logs())) ==
+              std::vector<std::string>{"attempt:Actor", "attempt:Trigger"});
+        take(f.runtime->stop(*f.scene, *f.world));
+    }
+}
+
+TEST_CASE("Server entity script suspension releases its VM and resumes fresh captured state",
+          "[script-runtime]") {
+    ScriptPhysicsFixture f{R"lua(
+        state=0
+        function on_init()
+            state=state+1
+            assert(state==1)
+            shark.log.info('init:'..shark.entity.name())
+        end
+        function on_fixed_update()
+            state=state+1
+            shark.log.info(shark.entity.name()..':'..state)
+        end
+        function on_destroy() shark.log.info('destroy:'..shark.entity.name()..':'..state) end
+    )lua"};
+    const auto incarnation = take(f.runtime->stats()).instance;
+    REQUIRE(incarnation != 0);
+    const auto reference = take(f.scene->reference(f.actor));
+    take(f.runtime->start(*f.scene, *f.world));
+    take(f.runtime->take_logs());
+    take(f.runtime->fixed_update(*f.scene, *f.world, 0, 0.05));
+    take(f.world->step(*f.scene));
+    take(f.runtime->dispatch_contacts(*f.scene, *f.world));
+    take(f.runtime->take_logs());
+    const auto suspended = take(f.runtime->suspend_entity(*f.scene, *f.world, reference));
+    CHECK(suspended.changed);
+    CHECK(suspended.destroyed);
+    CHECK(suspended.attempted_destroy_callbacks == 1);
+    CHECK_FALSE(suspended.error);
+    CHECK_FALSE(take(f.runtime->suspend_entity(*f.scene, *f.world, reference)).changed);
+    CHECK(messages(take(f.runtime->take_logs())) == std::vector<std::string>{"destroy:Actor:2"});
+    CHECK(take(f.runtime->stats()).initialized == 1);
+    CHECK(take(f.runtime->stats()).instance == incarnation);
+    take(f.runtime->fixed_update(*f.scene, *f.world, 1, 0.05));
+    CHECK(messages(take(f.runtime->take_logs())) == std::vector<std::string>{"Trigger:3"});
+    const auto resumed = take(f.runtime->resume_entity(*f.scene, *f.world, reference));
+    CHECK(resumed.changed);
+    CHECK(resumed.loaded_scripts == 1);
+    CHECK(resumed.initialized_scripts == 1);
+    CHECK_FALSE(resumed.error);
+    CHECK_FALSE(take(f.runtime->resume_entity(*f.scene, *f.world, reference)).changed);
+    CHECK(messages(take(f.runtime->take_logs())) == std::vector<std::string>{"init:Actor"});
+    take(f.runtime->fixed_update(*f.scene, *f.world, 2, 0.05));
+    CHECK(messages(take(f.runtime->take_logs())) ==
+          std::vector<std::string>{"Actor:2", "Trigger:4"});
+    CHECK(take(f.scene->reference(f.actor)) == reference);
+    CHECK(take(f.runtime->stats()).instance == incarnation);
+    take(f.runtime->stop(*f.scene, *f.world));
+    CHECK(take(f.runtime->stats()).instance == incarnation);
+    f.runtime.reset();
+    auto replacement = make_runtime(*f.scene, "");
+    CHECK(take(replacement->stats()).instance != incarnation);
+    CHECK(take(replacement->stats()).instance != 0);
+    take(replacement->close());
+}
+
+TEST_CASE(
+    "Entity lifecycle faults retain consumed callbacks and cannot repeat partial initialization",
+    "[script-runtime]") {
+    SECTION("destroy failure cannot invoke that entity again during stop") {
+        ScriptPhysicsFixture f{R"lua(
+            function on_destroy()
+                shark.log.info('destroy:'..shark.entity.name())
+                if shark.entity.name()=='Actor' then error('destroy failure') end
+            end
+        )lua"};
+        take(f.runtime->start(*f.scene, *f.world));
+        const auto report =
+            take(f.runtime->suspend_entity(*f.scene, *f.world, take(f.scene->reference(f.actor))));
+        REQUIRE(report.error);
+        CHECK(report.destroyed);
+        CHECK(report.attempted_destroy_callbacks == 1);
+        CHECK(report.error->context.entity_id == id<WorldEntityId>(101).value().to_string());
+        CHECK_FALSE(
+            f.runtime->suspend_entity(*f.scene, *f.world, take(f.scene->reference(f.actor))));
+        const auto stopped = take(f.runtime->stop(*f.scene, *f.world));
+        CHECK(stopped.attempted == 1);
+        CHECK(messages(take(f.runtime->take_logs())) ==
+              std::vector<std::string>{"destroy:Actor", "destroy:Trigger"});
+    }
+    SECTION("resume initialization failure preserves load progress and faults the owner") {
+        ScriptPhysicsFixture f{R"lua(
+            function on_init() if shark.time.tick()>0 then error('resume failure') end end
+        )lua"};
+        take(f.runtime->start(*f.scene, *f.world));
+        take(f.world->step(*f.scene));
+        const auto reference = take(f.scene->reference(f.actor));
+        take(f.runtime->suspend_entity(*f.scene, *f.world, reference));
+        const auto report = take(f.runtime->resume_entity(*f.scene, *f.world, reference));
+        REQUIRE(report.error);
+        CHECK(report.loaded);
+        CHECK(report.loaded_scripts == 1);
+        CHECK_FALSE(report.initialized);
+        CHECK(take(f.runtime->stats()).faulted);
+        CHECK_FALSE(f.runtime->resume_entity(*f.scene, *f.world, reference));
+        CHECK(take(f.runtime->stop(*f.scene, *f.world)).attempted == 1);
+    }
+}
+
+TEST_CASE("Entity script lifecycle follows the complete checked source subtree",
+          "[script-runtime]") {
+    auto scene = region_scene();
+    EntitySeed root{id<WorldEntityId>(100)};
+    root.rigid_body = RigidBody{};
+    const auto parent = take(scene->create_entity(root));
+    EntitySeed child{id<WorldEntityId>(101)};
+    child.name = {"Child"};
+    child.parent = parent;
+    child.script = Script{"scripts/main.lua", true};
+    const auto first = take(scene->create_entity(child));
+    child.identity = id<WorldEntityId>(102);
+    child.name = {"Grandchild"};
+    child.parent = first;
+    take(scene->create_entity(child));
+    const auto unrelated = take(scene->create_entity(EntitySeed{id<WorldEntityId>(103)}));
+    auto world = take(PhysicsWorld::create({.gravity = {0, 0, 0}}));
+    take(world->create_body(*scene, parent));
+    take(world->begin_simulation(*scene));
+    auto runtime = make_runtime(*scene, R"lua(
+        function on_init() shark.log.info('init:'..shark.entity.name()) end
+        function on_destroy() shark.log.info('destroy:'..shark.entity.name()) end
+    )lua");
+    take(runtime->start(*scene, *world));
+    take(runtime->take_logs());
+    CHECK_FALSE(
+        take(runtime->suspend_entity(*scene, *world, take(scene->reference(unrelated)))).changed);
+    const auto reference = take(scene->reference(parent));
+    const auto suspended = take(runtime->suspend_entity(*scene, *world, reference));
+    CHECK(suspended.attempted_destroy_callbacks == 2);
+    CHECK(take(runtime->stats()).initialized == 0);
+    CHECK(messages(take(runtime->take_logs())) ==
+          std::vector<std::string>{"destroy:Grandchild", "destroy:Child"});
+    const auto resumed = take(runtime->resume_entity(*scene, *world, reference));
+    CHECK(resumed.loaded_scripts == 2);
+    CHECK(resumed.initialized_scripts == 2);
+    CHECK(messages(take(runtime->take_logs())) ==
+          std::vector<std::string>{"init:Child", "init:Grandchild"});
+    bool rejected = false;
+    std::thread foreign{[&] { rejected = !runtime->suspend_entity(*scene, *world, reference); }};
+    foreign.join();
+    CHECK(rejected);
+    CHECK(take(runtime->stats()).initialized == 2);
+    CHECK_FALSE(scene->set_name(first, Name{"Lease bypass"}));
+    take(runtime->stop(*scene, *world));
+}
+
+TEST_CASE("Suspension cleans transitive spawned roots after their immediate issuer retired",
+          "[script-runtime]") {
+    const auto first_asset = id<AssetId>(201);
+    const auto child_asset = id<AssetId>(202);
+    const auto first_text = first_asset.value().to_string();
+    const auto child_text = child_asset.value().to_string();
+    const auto issuer =
+        "function on_fixed_update() if shark.entity.name()=='Actor' and "
+        "(shark.time.tick()==0 or shark.time.tick()==2) then shark.prefab.spawn(1,'" +
+        first_text + "',4,0,0) end end";
+    ScriptPhysicsFixture f{issuer};
+    // Recreate the not-started runtime with the complete immutable source capture.
+    take(f.runtime->close());
+    const std::array sources{
+        ScriptSourceSnapshot{"scripts/main.lua", issuer},
+        ScriptSourceSnapshot{
+            "scripts/nested.lua",
+            "function on_fixed_update() if shark.time.tick()==1 then shark.prefab.spawn(1,'" +
+                child_text + "',8,0,0); shark.entity.destroy(2) end end"}};
+    f.runtime = take(ScriptRuntime::create(*f.scene, sources, server_config()));
+    PreparedEntity first{id<AuthoredEntityId>(10)};
+    first.rigid_body = RigidBody{};
+    first.script = Script{"scripts/nested.lua", true};
+    PreparedEntity second{id<AuthoredEntityId>(11)};
+    second.rigid_body = RigidBody{};
+    const std::array catalog{RuntimePrefab{first_asset, first.id, {first}},
+                             RuntimePrefab{child_asset, second.id, {second}}};
+    auto page = take(f.scene->query_entities());
+    auto grant =
+        take(RuntimeSpawnAuthority::create(*f.scene, std::get<RegionSceneScope>(page.scope())));
+    take(f.runtime->enable_spawning(*f.scene, *f.world, *grant, catalog));
+    take(f.runtime->start(*f.scene, *f.world));
+    take(f.runtime->fixed_update(*f.scene, *f.world, 0, 0.05));
+    const auto original = take(f.runtime->take_entity_mutations());
+    REQUIRE(original.outcomes.size() == 1);
+    const auto old_root = *original.outcomes.front()->root;
+    take(f.runtime->fixed_update(*f.scene, *f.world, 1, 0.05));
+    const auto nested = take(f.runtime->take_entity_mutations());
+    REQUIRE(nested.outcomes.size() == 2);
+    CHECK_FALSE(f.scene->find(old_root));
+    CHECK(take(f.scene->stats()).live_entities == 3);
+    CHECK(take(f.world->stats()).bodies == 3);
+    const auto actor = take(f.scene->reference(f.actor));
+    bool revoked = false;
+    SECTION("cleanup stays available after authority revocation") {
+        take(grant->revoke());
+        revoked = true;
+    }
+    SECTION("fresh VM cannot repeat an old spawn identity as a new effect") {}
+    const auto removed = take(f.runtime->suspend_entity(*f.scene, *f.world, actor));
+    CHECK_FALSE(removed.error);
+    CHECK(removed.removed_spawned_roots == 1);
+    CHECK(removed.removed_spawned_entities == 1);
+    CHECK(removed.removed_spawned_bodies == 1);
+    CHECK(take(f.scene->stats()).live_entities == 2);
+    CHECK(take(f.world->stats()).bodies == 2);
+    CHECK(original.outcomes.front()->state == ScriptEntityMutationState::applied);
+    CHECK(nested.outcomes.front()->state == ScriptEntityMutationState::applied);
+    if (revoked) {
+        CHECK_FALSE(f.runtime->resume_entity(*f.scene, *f.world, actor));
+    } else {
+        const auto resumed = take(f.runtime->resume_entity(*f.scene, *f.world, actor));
+        CHECK_FALSE(resumed.error);
+        take(f.runtime->fixed_update(*f.scene, *f.world, 2, 0.05));
+        CHECK(take(f.scene->stats()).live_entities == 2);
+        CHECK(take(f.world->stats()).bodies == 2);
+        CHECK(take(f.runtime->take_entity_mutations()).outcomes.empty());
+    }
+    take(f.runtime->stop(*f.scene, *f.world));
+}
