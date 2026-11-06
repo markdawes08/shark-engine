@@ -32,6 +32,15 @@ is not a second authoritative registry or a serialization of the authoring
 schema. Reject invalid, stale, foreign or ambiguous bindings before publishing.
 Names and other nonreplicated fields never determine policy implicitly.
 
+M05d adds `present` (default true) to a catalog entry. Runtime absence excludes
+that row from spatial selection and uses normal despawn, without removing its
+disclosure policy. Privacy maintenance still checks absent rows: making an
+already disclosed actor hidden while absent closes the stream as before. Keep
+the complete policy catalog when a character dies or detaches; do not represent
+absence as permission revocation. The [regional owner](region-world.md) routes
+publication through CharacterAuthority's private actual session owner and keeps
+replica identities across co-located region crossings.
+
 The local profile admits at most 128 candidates and 32 visible replicas per
 recipient. Entry radius defaults to 100 scene-local meters and exit radius to
 110 meters. Previously selected authorized entities use the exit threshold;

@@ -214,6 +214,37 @@ std::vector<double> positions(const ReplicationUpdate& update) {
 }
 } // namespace
 
+TEST_CASE("Runtime absence despawns public actors without weakening disclosure revocation",
+          "[net-interest]") {
+    Harness h;
+    h.public_entity(10);
+    REQUIRE(h.publish().status == InterestPublishStatus::sent);
+    const auto first = h.pair.update();
+    REQUIRE(first.changes.size() == 1);
+    const auto original = first.changes.front().id;
+    h.ack(first, 2);
+    h.catalog.back().present = false;
+    REQUIRE(h.publish(100ms).status == InterestPublishStatus::sent);
+    const auto absent = h.pair.update(100ms);
+    REQUIRE(absent.changes.size() == 1);
+    CHECK(absent.changes.front().kind == ReplicationChange::despawn);
+    CHECK(absent.changes.front().id == original);
+    CHECK(h.sessions->current(*h.pair.server, 100ms));
+    h.ack(absent, 3, 100ms);
+    h.catalog.back().present = true;
+    REQUIRE(h.publish(200ms).status == InterestPublishStatus::sent);
+    const auto restored = h.pair.update(200ms);
+    REQUIRE(restored.changes.size() == 1);
+    CHECK(restored.changes.front().kind == ReplicationChange::spawn);
+    CHECK(restored.changes.front().id != original);
+    h.ack(restored, 4, 200ms);
+    // Absence is not permission to suppress privacy maintenance of old frames.
+    h.catalog.back().present = false;
+    h.catalog.back().visibility = InterestVisibility::hidden;
+    CHECK(h.publish(300ms).status == InterestPublishStatus::privacy_closed);
+    CHECK_FALSE(h.sessions->current(*h.pair.server, 300ms));
+}
+
 TEST_CASE("Interest limits bound selection traffic and time", "[net-interest]") {
     REQUIRE(InterestServer::create());
     for (const auto count :

@@ -8,9 +8,11 @@
 #include "prefab_panel.hpp"
 #include "scene_panel.hpp"
 #include "script_panel.hpp"
+#include "world_cell_panel.hpp"
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <cmath>
 #include <imgui.h>
 #include <optional>
@@ -174,6 +176,18 @@ struct WorkspacePanel::Impl {
     std::optional<Error> physics_overlay_error;
     ScriptPanel script;
     PrefabPanel prefab;
+    WorldCellPanel world_cell;
+    std::array<char, 4097> cell_path{};
+    std::array<char, 21> cell_version{};
+    std::array<char, 65> cell_target{};
+    std::array<std::int64_t, 3> cell_axes{};
+    std::vector<AuthoredEntityId> cell_collision;
+    std::vector<AuthoredEntityId> cell_navigation;
+    std::optional<SceneRevision> cell_selection_revision;
+    bool cell_walkable{true};
+    bool cell_server{true};
+    std::optional<Error> cell_error;
+    std::optional<WorldCellArtifact> cell_artifact;
     SteadyMonotonicClock clock;
     ShaderArtifact vertex;
     ShaderArtifact pixel;
@@ -215,12 +229,15 @@ struct WorkspacePanel::Impl {
          EditorInputTrace* trace)
         : session(owner), input_trace(trace), hierarchy(owner), gizmo(hierarchy),
           inspector(hierarchy), inspector_widget(inspector, hierarchy), assets(owner),
-          asset_widget(assets, owner), physics(owner), script(owner), prefab(owner), vertex(vs),
-          pixel(ps) {
+          asset_widget(assets, owner), physics(owner), script(owner), prefab(owner),
+          world_cell(owner), vertex(vs), pixel(ps) {
         text_buffer(script_path, "scripts/main.lua");
         text_buffer(prefab_path, "assets/object.sharkprefab");
         text_buffer(create_name, "Entity");
         text_buffer(target, "windows-client");
+        text_buffer(cell_path, "World.sharkcell");
+        text_buffer(cell_version, "1");
+        text_buffer(cell_target, "local-server");
         refresh();
     }
     void begin_input_trace(const GraphicsWindowFrame& frame, bool blocked) noexcept {
@@ -974,6 +991,123 @@ struct WorkspacePanel::Impl {
         }
         synchronize();
     }
+    void draw_world_cell(bool blocked) {
+        ImGui::TextUnformatted("WORLD CELLS");
+        ImGui::TextWrapped("Export committed static meshes as cell collision and walk surfaces. "
+                           "Cameras, scripts and moving bodies must be removed from the cell "
+                           "scene. Source edits and history stay unchanged.");
+        ImGui::PushID("world-cell-panel");
+        ImGui::BeginDisabled(blocked);
+        ImGui::InputText("New cell file", cell_path.data(), cell_path.size());
+        ImGui::InputText("Content revision", cell_version.data(), cell_version.size());
+        ImGui::InputText("Import target", cell_target.data(), cell_target.size());
+        ImGui::Checkbox("Server content", &cell_server);
+        ImGui::InputScalar("Cell X", ImGuiDataType_S64, &cell_axes[0]);
+        ImGui::InputScalar("Cell Y", ImGuiDataType_S64, &cell_axes[1]);
+        ImGui::InputScalar("Cell Z", ImGuiDataType_S64, &cell_axes[2]);
+        if (session.state_current() && session.state().open)
+            ImGui::TextWrapped("World: %s", session.state().world_id.c_str());
+        const bool stale =
+            cell_selection_revision && *cell_selection_revision != session.state().revision;
+        if (stale)
+            ImGui::TextWrapped("The scene changed. Clear and select the collision meshes again.");
+        ImGui::Checkbox("Selected mesh is walkable", &cell_walkable);
+        bool selected_mesh = false;
+        if (hierarchy.current() && hierarchy.selection())
+            for (const auto& row : hierarchy.rows())
+                if (row.id == hierarchy.selection()->id)
+                    selected_mesh = row.has_mesh_renderer;
+        ImGui::BeginDisabled(!selected_mesh || stale || cell_collision.size() >= 256);
+        if (ImGui::Button("Add selected mesh")) {
+            const auto selected = *hierarchy.selection();
+            if (!cell_selection_revision)
+                cell_selection_revision = selected.revision;
+            if (std::find(cell_collision.begin(), cell_collision.end(), selected.id) ==
+                cell_collision.end())
+                cell_collision.push_back(selected.id);
+            auto walk = std::find(cell_navigation.begin(), cell_navigation.end(), selected.id);
+            if (cell_walkable && walk == cell_navigation.end())
+                cell_navigation.push_back(selected.id);
+            else if (!cell_walkable && walk != cell_navigation.end())
+                cell_navigation.erase(walk);
+        }
+        ImGui::EndDisabled();
+        ImGui::SameLine();
+        if (ImGui::Button("Clear mesh selection")) {
+            cell_collision.clear();
+            cell_navigation.clear();
+            cell_selection_revision.reset();
+        }
+        ImGui::Text("Collision meshes: %zu / walkable meshes: %zu", cell_collision.size(),
+                    cell_navigation.size());
+        for (const auto entity : cell_collision)
+            ImGui::TextUnformatted(entity.value().to_string().c_str());
+        const bool playing = physics.state().active || physics.state().uncertain;
+        ImGui::BeginDisabled(playing || !session.state_current() || !session.state().open ||
+                             stale || !cell_selection_revision || cell_collision.empty());
+        if (ImGui::Button("Export new cell")) {
+            std::uint64_t revision{};
+            const std::string_view text{cell_version.data()};
+            const auto parsed = std::from_chars(text.data(), text.data() + text.size(), revision);
+            const auto world = StableId::parse(session.state().world_id);
+            if (parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size() ||
+                revision == 0 || !world)
+                cell_error = Error{ErrorCode::invalid_argument,
+                                   "Enter a positive content revision and valid world",
+                                   {"editor.world-cell"}};
+            else {
+                const WorldCellExportOptions options{
+                    {WorldId{world.value()}, {cell_axes[0], cell_axes[1], cell_axes[2]}},
+                    revision,
+                    {cell_target.data(),
+                     cell_server ? tools::AssetAudience::server : tools::AssetAudience::client},
+                    cell_collision,
+                    cell_navigation,
+                    cell_path.data()};
+                const auto exported = world_cell.export_cell(options, *cell_selection_revision);
+                if (!exported)
+                    cell_error = exported.error();
+                else {
+                    cell_artifact = exported.value();
+                    cell_error.reset();
+                }
+            }
+        }
+        ImGui::EndDisabled();
+        if (ImGui::Button("Inspect cell file")) {
+            const auto inspected = world_cell.inspect(cell_path.data());
+            if (!inspected)
+                cell_error = inspected.error();
+            else {
+                cell_artifact = inspected.value();
+                cell_error.reset();
+            }
+        }
+        if (cell_artifact) {
+            const auto& artifact = *cell_artifact;
+            ImGui::TextWrapped("%s: %s (%zu bytes)", artifact.published ? "Published" : "Observed",
+                               artifact.path.c_str(), artifact.bytes);
+            ImGui::Text("Collision triangles: %zu / navigation triangles: %zu",
+                        artifact.collision_triangles, artifact.navigation_triangles);
+            ImGui::TextWrapped("Digest: %s", artifact.digest.c_str());
+            if (artifact.durability == tools::FileDurability::directory_flush_failed)
+                ImGui::TextWrapped(
+                    "The cell was published, but directory durability was not confirmed.");
+            if (artifact.matches_prepared)
+                ImGui::TextWrapped(*artifact.matches_prepared
+                                       ? "Current bytes match the prepared intent. Inspection does "
+                                         "not recover its publication receipt."
+                                       : "Current bytes differ from the prepared intent.");
+        }
+        if (cell_error && world_cell.prepared())
+            ImGui::TextWrapped(
+                "Prepared intent digest: %s. Inspect the destination before retrying.",
+                world_cell.prepared()->digest.c_str());
+        ImGui::EndDisabled();
+        if (cell_error)
+            error_text(*cell_error);
+        ImGui::PopID();
+    }
     void draw_prefab(bool blocked) {
         ImGui::TextUnformatted("PREFABS");
         ImGui::TextWrapped(
@@ -1359,6 +1493,10 @@ void WorkspacePanel::draw(const GraphicsWindowFrame& frame, bool blocked) {
         }
         if (ImGui::BeginTabItem("Prefabs")) {
             value.draw_prefab(blocked);
+            ImGui::EndTabItem();
+        }
+        if (ImGui::BeginTabItem("World cells")) {
+            value.draw_world_cell(blocked);
             ImGui::EndTabItem();
         }
         if (ImGui::BeginTabItem("Console")) {

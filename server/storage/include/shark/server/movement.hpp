@@ -40,6 +40,17 @@ struct MovementStats {
     bool faulted;
 };
 
+// Optional trusted-host coverage in the same Scene-local frame. The immutable
+// union uses half-open XZ rectangles; it grants no regional/session authority.
+struct MovementDomain {
+    double min_x{0};
+    double max_x{0};
+    double min_z{0};
+    double max_z{0};
+};
+[[nodiscard]] Result<bool> movement_coverage(std::span<const MovementDomain> domains,
+                                             math::Vec3 from, math::Vec3 to);
+
 // Trusted creating-thread host adapter. Owns bounded input values and checked
 // identities, never a borrowed Scene/physics/transport or a second session owner.
 // A scheduler calls step exactly once per authoritative tick. Source authoring,
@@ -50,7 +61,8 @@ class CharacterMovement final {
     // Every tick must supply that same owner and exact local origin.
     [[nodiscard]] static Result<std::unique_ptr<CharacterMovement>>
     create(const Scene& scene, const PhysicsWorld& physics, WorldPosition origin,
-           std::optional<std::uint64_t> traversal_instance = std::nullopt);
+           std::optional<std::uint64_t> traversal_instance = std::nullopt,
+           std::span<const MovementDomain> domains = {});
     ~CharacterMovement();
     CharacterMovement(const CharacterMovement&) = delete;
     CharacterMovement& operator=(const CharacterMovement&) = delete;

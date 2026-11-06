@@ -1,11 +1,14 @@
 #include "authoring_assets.hpp"
 
+#include "asset_cache_format.hpp"
 #include "authoring_asset_wire.hpp"
 #include "shark/tools/gltf_asset.hpp"
+#include "shark/tools/prepared_content.hpp"
 
 #include <algorithm>
 #include <array>
 #include <map>
+#include <set>
 #include <utility>
 
 namespace shark::tools {
@@ -189,6 +192,168 @@ PreparedClientExport AuthoringAssets::prepare_current_export(const AuthoredScene
 Result<void> AuthoringAssets::validate_export(const PreparedClientExport& candidate,
                                               const AuthoredScene& owner) {
     return validate_client_export(candidate, owner, *impl_->catalog, impl_->cache());
+}
+
+AuthoringPreparedCell AuthoringAssets::prepare_cell(const AuthoredScene& owner,
+                                                    const AuthoringCellRequest& request) {
+    accept(detail::validate_target(request.target));
+    const auto captured = take(owner.capture(request.scene_revision));
+    auto& cache = impl_->cache();
+    accept(cache.check_context(captured.project.project, request.catalog_revision,
+                               request.cache_revision));
+    const auto permitted = [&](AssetAudience audience) {
+        return audience == request.target.side || audience == AssetAudience::shared;
+    };
+    std::set<AssetId> roots;
+    for (const auto& entity : captured.scene.entities) {
+        if (entity.mesh_renderer && entity.mesh_renderer->asset != builtin_cube_asset_id() &&
+            entity.mesh_renderer->asset != builtin_plane_asset_id())
+            roots.insert(entity.mesh_renderer->asset);
+    }
+    if (roots.size() > client_export_maximum_meshes)
+        fail(-32000, ErrorCode::invalid_configuration, "Cell exceeds its prepared mesh bound");
+    std::map<AssetId, AssetRecord> records;
+    std::size_t visits{};
+    for (const auto root : roots) {
+        std::set<AssetId> seen;
+        std::vector<AssetId> pending{root};
+        while (!pending.empty()) {
+            const auto asset = pending.back();
+            pending.pop_back();
+            if (!seen.insert(asset).second)
+                continue;
+            if (++visits > client_export_maximum_dependency_visits)
+                fail(-32000, ErrorCode::invalid_configuration,
+                     "Cell dependency work exceeds 512 visits");
+            auto found = records.find(asset);
+            if (found == records.end()) {
+                if (records.size() >= client_export_maximum_sources)
+                    fail(-32000, ErrorCode::invalid_configuration,
+                         "Cell exceeds 128 source records");
+                auto resolved = take(impl_->catalog->resolve(asset, request.catalog_revision));
+                if (!resolved.record ||
+                    resolved.record->metadata.project != captured.project.project)
+                    fail(-32000, ErrorCode::invalid_id,
+                         "Cell asset is absent from this project catalog");
+                if (!permitted(resolved.record->metadata.audience))
+                    fail(-32000, ErrorCode::invalid_configuration,
+                         "Cell target forbids this content audience");
+                found = records.emplace(asset, std::move(*resolved.record)).first;
+            }
+            const auto& dependencies = found->second.metadata.dependencies;
+            pending.insert(pending.end(), dependencies.begin(), dependencies.end());
+        }
+    }
+    AuthoringPreparedCell result{request, captured.dirty, {}, {}, {}};
+    struct Mesh {
+        AssetId asset;
+        std::vector<std::byte> payload;
+    };
+    std::vector<Mesh> meshes;
+    std::map<AssetId, AssetCacheKey> selected;
+    std::size_t imported_bytes{}, prepared_bytes{};
+    const auto check_artifact = [&](const AssetArtifact& artifact, AssetId expected,
+                                    AssetCacheKey key) {
+        if (artifact.asset != expected || artifact.key != key ||
+            artifact.target != request.target || !permitted(artifact.audience) ||
+            !records.contains(expected))
+            fail(-32000, ErrorCode::conflict,
+                 "Cell cache identity, audience or metadata closure differs");
+    };
+    const auto charge = [&](const AssetArtifact& artifact) {
+        const auto known = selected.find(artifact.asset);
+        if (known != selected.end()) {
+            if (known->second != artifact.key)
+                fail(-32000, ErrorCode::conflict, "Cell roots disagree on a dependency generation");
+            return false;
+        }
+        if (artifact.payload.size() > asset_import_maximum_total_bytes - imported_bytes)
+            fail(-32000, ErrorCode::invalid_configuration, "Cell cache closure exceeds 16 MiB");
+        imported_bytes += artifact.payload.size();
+        selected.emplace(artifact.asset, artifact.key);
+        return true;
+    };
+    for (const auto root : roots) {
+        const auto status = take(
+            cache.query(root, request.target, request.catalog_revision, request.cache_revision));
+        if (status.blocked_by)
+            throw AuthoringAssetFailure{-32000, *status.blocked_by};
+        if (status.state != AssetCacheState::fresh || !status.required_key ||
+            status.required_key != status.last_valid_key)
+            fail(-32000, ErrorCode::conflict, "Cell requires a fresh explicit import");
+        const auto key = *status.required_key;
+        auto artifact = take(cache.read(key, request.cache_revision));
+        check_artifact(artifact, root, key);
+        if (artifact.kind != "gltf" || artifact.importer != "shark.gltf" ||
+            artifact.importer_version != 1 || artifact.payload_version != 1)
+            fail(-32000, ErrorCode::capability_unavailable,
+                 "Cell mesh requires a typed glTF cache artifact");
+        auto payload = take(prepare_mesh_asset(root, artifact.payload));
+        if (payload.size() > prepared_assets_maximum_bytes - prepared_bytes)
+            fail(-32000, ErrorCode::invalid_configuration, "Cell prepared assets exceed 32 MiB");
+        prepared_bytes += payload.size();
+        meshes.push_back({root, std::move(payload)});
+        result.roots.emplace_back(root, key);
+        std::vector<AssetArtifactDependency> pending;
+        if (charge(artifact))
+            pending = artifact.dependencies;
+        while (!pending.empty()) {
+            const auto dependency = pending.back();
+            pending.pop_back();
+            const auto known = selected.find(dependency.asset);
+            if (known != selected.end()) {
+                if (known->second != dependency.key)
+                    fail(-32000, ErrorCode::conflict, "Cell dependency generation differs");
+                continue;
+            }
+            auto child = take(cache.read(dependency.key, request.cache_revision));
+            check_artifact(child, dependency.asset, dependency.key);
+            if (charge(child))
+                pending.insert(pending.end(), child.dependencies.begin(), child.dependencies.end());
+        }
+    }
+    if (selected.size() != records.size())
+        fail(-32000, ErrorCode::conflict, "Cell cache and metadata closures differ");
+    std::vector<PreparedAssetInput> inputs;
+    for (const auto& mesh : meshes)
+        inputs.push_back({mesh.asset, mesh.payload});
+    auto assets = take(PreparedAssets::create(inputs));
+    result.payload = take(prepare_world_cell_geometry(owner, request.scene_revision, request.key,
+                                                      request.content_revision, std::move(assets),
+                                                      request.collision, request.navigation));
+    result.digest = take(sha256(result.payload));
+    accept(validate_cell(result, owner));
+    return result;
+}
+
+Result<void> AuthoringAssets::validate_cell(const AuthoringPreparedCell& candidate,
+                                            const AuthoredScene& owner) {
+    try {
+        const auto& request = candidate.request;
+        const auto captured = take(owner.capture(request.scene_revision));
+        if (captured.dirty != candidate.dirty || candidate.payload.empty())
+            fail(-32000, ErrorCode::conflict, "Cell preparation owner changed or is empty");
+        auto& cache = impl_->cache();
+        accept(cache.check_context(captured.project.project, request.catalog_revision,
+                                   request.cache_revision));
+        for (const auto& [asset, key] : candidate.roots) {
+            const auto status = take(cache.query(asset, request.target, request.catalog_revision,
+                                                 request.cache_revision));
+            if (status.blocked_by)
+                return *status.blocked_by;
+            if (status.state != AssetCacheState::fresh || status.required_key != key ||
+                status.last_valid_key != key)
+                fail(-32000, ErrorCode::conflict,
+                     "Cell source freshness changed before publication");
+        }
+        return {};
+    } catch (AuthoringAssetFailure& failure) {
+        return std::move(failure.error);
+    } catch (...) {
+        return Error{ErrorCode::execution_failed,
+                     "Cannot validate retained cell preparation",
+                     {"authoring.cell.validate"}};
+    }
 }
 
 bool AuthoringAssets::supports(std::string_view method) noexcept {

@@ -8,6 +8,7 @@
 #include "authoring_prefabs.hpp"
 #include "authoring_run.hpp"
 #include "authoring_wire.hpp"
+#include "authoring_world_cells.hpp"
 #include "shark/tools/project_files.hpp"
 #include "source_json.hpp"
 #include "utf8.hpp"
@@ -381,6 +382,8 @@ Json discovery(bool export_available, bool capture_available) {
         methods.push_back(std::move(method));
     for (auto& method : authoring_execution_wire::methods(export_available, capture_available))
         methods.push_back(std::move(method));
+    for (auto& method : authoring_cell_wire::methods())
+        methods.push_back(std::move(method));
     return {{"protocol_version", authoring_protocol_version},
             {"transport",
              {{"framing", "newline-delimited-json"}, {"batch", false}, {"notifications", true}}},
@@ -403,6 +406,7 @@ Json discovery(bool export_available, bool capture_available) {
               {"physics_preview", true},
               {"script_preview", true},
               {"prefabs", true},
+              {"world_cells", true},
               {"standalone_export", export_available}}},
             {"methods", std::move(methods)},
             {"components", components}};
@@ -739,6 +743,59 @@ struct AuthoringProtocol::Impl {
             session && session->physics && session->physics->active())
             fail(-32000, ErrorCode::conflict,
                  "Stop the frozen physics preview before editing or reloading source");
+        if (method == "cell.inspect") {
+            if (!fields(parameters, {"path"}) || !parameters.contains("path") ||
+                !text(parameters.at("path"), 4096))
+                fail(-32602, ErrorCode::invalid_argument,
+                     "Cell inspection requires one bounded path");
+            auto& current = require_session();
+            const auto path = take(
+                ProjectPath::parse(parameters.at("path").get_ref<const std::string&>()), -32602);
+            auto observed = take(current.files->read_world_cell(path));
+            auto result = authoring_cell_wire::summary(observed.cell, observed.digest,
+                                                       observed.revision.byte_count());
+            result["path"] = path.text();
+            result["mesh_closure_checked"] = false;
+            return {std::move(result)};
+        }
+        if (method == "scene.cell.prepare" || method == "scene.cell.export") {
+            const bool publishing = method == "scene.cell.export";
+            auto& current = require_session();
+            const auto request = take(authoring_cell_wire::parse(parameters, publishing), -32602);
+            if (publishing && (!parameters.contains("path") || !text(parameters.at("path"), 4096)))
+                fail(-32602, ErrorCode::invalid_path,
+                     "Cell export requires one bounded relative path");
+            if (publishing && (!parameters.contains("expected_digest") ||
+                               !text(parameters.at("expected_digest"), 64)))
+                fail(-32602, ErrorCode::invalid_argument,
+                     "Cell export requires its prepared digest");
+            check_source_files(current);
+            auto& asset_owner = assets(current);
+            const auto candidate = asset_owner.prepare_cell(*current.owner, request);
+            const auto decoded = take(decode_world_cell(candidate.payload));
+            auto result =
+                authoring_cell_wire::summary(decoded, candidate.digest, candidate.payload.size());
+            result["source_revision"] = wire::revision_json(request.scene_revision);
+            result["dirty"] = candidate.dirty;
+            result["mesh_closure_checked"] = true;
+            check_source_files(current);
+            take(asset_owner.validate_cell(candidate, *current.owner));
+            if (!publishing)
+                return {std::move(result)};
+            const auto expected =
+                take(ContentDigest::parse(
+                         parameters.at("expected_digest").get_ref<const std::string&>()),
+                     -32602);
+            if (expected != candidate.digest)
+                fail(-32000, ErrorCode::conflict, "Cell content differs from the prepared digest");
+            const auto path = take(
+                ProjectPath::parse(parameters.at("path").get_ref<const std::string&>()), -32602);
+            result["path"] = path.text();
+            outcome_may_have_changed = true;
+            const auto committed = take(current.files->write_world_cell(path, candidate.payload));
+            result["publication"] = authoring_asset_wire::publication_json(committed);
+            return {std::move(result)};
+        }
         if (method == "scene.run") {
             auto& current = require_session();
             const auto request = take(authoring_execution_wire::parse_run(parameters), -32602);

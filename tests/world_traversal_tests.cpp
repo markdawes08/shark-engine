@@ -154,6 +154,14 @@ TEST_CASE("streamed collision and navigation gate a native NPC crossing at a dis
         take(f.physics->step(*f.scene));
     const auto route = take(f.traversal->path(start, goal));
     auto cursor = take(f.traversal->begin(route));
+    REQUIRE(route.waypoints().size() > 2);
+    // A published position can already equal a portal while retaining the old
+    // segment index after coordinate rounding. Positive steering must progress.
+    auto at_portal = cursor;
+    at_portal.position = route.waypoints()[at_portal.next_waypoint];
+    const auto past_portal = take(f.traversal->advance(route, at_portal, .1));
+    CHECK(past_portal.next_waypoint > at_portal.next_waypoint);
+    CHECK(past_portal.position != at_portal.position);
     for (int tick = 0; tick < 80; ++tick) {
         const auto candidate = take(f.traversal->advance(route, cursor, .1));
         const auto target = take(world_position_relative_to(candidate.position, origin(), 8192));

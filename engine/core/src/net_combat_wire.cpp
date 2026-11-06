@@ -1,5 +1,6 @@
 #include "shark/net/combat.hpp"
 
+#include <algorithm>
 #include <array>
 #include <limits>
 #include <string_view>
@@ -35,20 +36,24 @@ Result<StableId> read_id(std::span<const std::byte> bytes, std::size_t offset) {
     }
     return StableId::parse(std::string_view{text.data(), text.size()});
 }
-std::vector<std::byte> prefix(std::uint8_t kind, std::size_t capacity = 4) {
+std::vector<std::byte> prefix(std::uint8_t kind, std::size_t capacity = 4,
+                              std::uint16_t version = combat_legacy_protocol_version) {
     std::vector<std::byte> bytes;
     bytes.reserve(capacity);
-    append(bytes, combat_protocol_version, 2);
+    append(bytes, version, 2);
     append(bytes, kind, 1);
     append(bytes, 0, 1);
     return bytes;
 }
 bool header(std::span<const std::byte> bytes, std::byte kind) {
-    return bytes.size() >= 4 && bytes[0] == std::byte{0} && bytes[1] == std::byte{1} &&
+    return bytes.size() >= 4 && bytes[0] == std::byte{0} &&
+           (bytes[1] == std::byte{combat_legacy_protocol_version} ||
+            bytes[1] == std::byte{combat_protocol_version}) &&
            bytes[2] == kind && bytes[3] == std::byte{0};
 }
 bool action_kind(CombatActionKind kind) {
-    return kind == CombatActionKind::strike || kind == CombatActionKind::interact;
+    return kind == CombatActionKind::strike || kind == CombatActionKind::interact ||
+           kind == CombatActionKind::projectile;
 }
 bool health(std::uint16_t amount, std::uint64_t respawn_tick) {
     return amount <= combat_maximum_health && (amount == 0 ? respawn_tick != 0 : respawn_tick == 0);
@@ -58,7 +63,7 @@ bool result(const CombatActionResult& outcome) {
     if (outcome.action_sequence == 0 || !action_kind(outcome.kind) || code < 1 || code > 8)
         return false;
     if (outcome.outcome == CombatOutcome::hit)
-        return outcome.kind == CombatActionKind::strike && outcome.amount != 0 &&
+        return outcome.kind != CombatActionKind::interact && outcome.amount != 0 &&
                outcome.amount <= combat_maximum_damage;
     if (outcome.outcome == CombatOutcome::interacted)
         return outcome.kind == CombatActionKind::interact && outcome.amount == 0;
@@ -106,7 +111,10 @@ Result<void> validate_combat_state(const CombatState& state) {
 Result<std::vector<std::byte>> encode_combat_action(const CombatAction& action) {
     if (auto valid = validate_combat_action(action); !valid)
         return valid.error();
-    auto bytes = prefix(1, combat_action_bytes);
+    auto bytes =
+        prefix(1, combat_action_bytes,
+               action.kind == CombatActionKind::projectile ? combat_protocol_version
+                                                           : combat_legacy_protocol_version);
     append_id(bytes, action.authority.session.value());
     append(bytes, action.authority.ownership_epoch);
     append(bytes, action.authority.sequence);
@@ -136,6 +144,8 @@ Result<CombatAction> decode_combat_action(std::span<const std::byte> bytes) {
                         static_cast<CombatActionKind>(read(bytes, 92, 1))};
     if (auto valid = validate_combat_action(action); !valid)
         return valid.error();
+    if (action.kind == CombatActionKind::projectile && read(bytes, 0, 2) != combat_protocol_version)
+        return invalid(operation);
     return action;
 }
 
@@ -147,8 +157,16 @@ Result<std::vector<std::byte>> encode_combat_reply(const CombatReply& reply) {
         return invalid("net.combat.encode-reply");
     if (auto valid = validate_combat_state(*state); !valid)
         return valid.error();
-    auto bytes = prefix(1, 89 + (state->movement ? movement_state_bytes : 0) +
-                               state->targets.size() * 26 + state->outcomes.size() * 28);
+    const auto version = std::any_of(state->outcomes.begin(), state->outcomes.end(),
+                                     [](const auto& outcome) {
+                                         return outcome.kind == CombatActionKind::projectile;
+                                     })
+                             ? combat_protocol_version
+                             : combat_legacy_protocol_version;
+    auto bytes = prefix(1,
+                        89 + (state->movement ? movement_state_bytes : 0) +
+                            state->targets.size() * 26 + state->outcomes.size() * 28,
+                        version);
     append_id(bytes, state->session.value());
     append(bytes, state->ownership_epoch);
     append_id(bytes, state->stream.value());
@@ -247,6 +265,11 @@ Result<CombatReply> decode_combat_reply(std::span<const std::byte> bytes) {
                       std::move(outcomes)};
     if (auto valid = validate_combat_state(state); !valid)
         return valid.error();
+    if (read(bytes, 0, 2) == combat_legacy_protocol_version &&
+        std::any_of(state.outcomes.begin(), state.outcomes.end(), [](const auto& outcome) {
+            return outcome.kind == CombatActionKind::projectile;
+        }))
+        return invalid(operation);
     return CombatReply{std::move(state)};
 }
 

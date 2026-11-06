@@ -103,6 +103,16 @@ cell readiness stops horizontal movement while consuming the admitted input;
 it never queues an input to gain authority when content later arrives. Legacy
 primitive fixtures retain their explicit mode without a traversal binding.
 
+M05d optionally supplies up to eight immutable half-open XZ ownership rectangles
+at construction. Before a native velocity write, the complete intended segment
+must stay within their union; checking only its endpoints is insufficient for a
+concave layout. A denied segment consumes the input as a horizontal stop. Empty
+coverage retains the earlier profile. The [regional owner](region-world.md)
+validates an edge-connected nonoverlapping layout and gates ingress with its
+current grant before actual session command admission. One shared native world
+still commits movement; post-native escape faults the regional owner rather than
+inventing a rollback. This process-local grant is not a persistence fencing token.
+
 Outer authenticated client-to-server kind 9 is `movement_input`; server-to-client
 kind 10 is `movement_state`. Diagnostic TLS and reversed directions reject.
 Each payload starts with version u16 BE, kind u8, reserved-zero u8. All UUIDs use

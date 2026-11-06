@@ -31,6 +31,12 @@ capture, immutable preparation and shared retained instantiation. Discovery
 advertises `prefabs`. Source files and Scene edits have separate publication
 receipts; exact prepared commands preserve ID remapping across retries.
 
+M05d adds [world-cell authoring](world-cell-authoring.md). Discovery advertises
+`world_cells`: exact-revision preparation returns a digest, digest-bound export
+publishes a new typed cell file, and bounded inspection observes current bytes.
+Human controls use these same retained CPU services; actual native interaction
+remains NOT_RUN under the manual UI pause.
+
 19b adds `script` as an explicit query/inspection field, optional create value
 and nullable `set_script` mutation. These use the same retained owner, history,
 validation and retry identity as the Editor. They store a bounded source path
@@ -122,7 +128,8 @@ still returns 1. Typed operation failures inside a JSON-RPC `result` also return
 
 Discovery identifies each method's `execution_context: "cpu_owner_thread"`,
 `requires_open_project` and `requires_project_root` prerequisites, as well as its
-parameter/result schemas and example request. `scene.*`, `text.*` and `asset.*` methods require
+parameter/result schemas and example request. `scene.*`, `text.*`, `asset.*`,
+`prefab.*` and `cell.*` methods require
 the open owner; `project.open`/`project.create` require the root fixed at host creation.
 
 Shark uses the [JSON-RPC 2.0 specification](https://www.jsonrpc.org/specification)
@@ -175,9 +182,8 @@ close another owner, or switch the active project.
 
 `protocol.discover` is the executable source of available method names, parameter
 and result descriptions, examples, component metadata, limits and capability
-flags. The CPU base advertises 41 methods. Configured Windows export adds one;
-configured Client capture adds one, for at most 43. Query the actual host rather
-than assuming a method count or device capability:
+flags. Configured Windows export and Client capture add their respective methods.
+Query the actual host rather than assuming a method count or device capability:
 
 | Method | Parameters | Result |
 | --- | --- | --- |
@@ -221,18 +227,21 @@ than assuming a method count or device capability:
 | `asset.jobs.take` | `job_id` | Terminal status, acknowledging and releasing its retained slot |
 | `asset.jobs.close` | `{}` | `{closed:true,jobs:[...]}` after stopping and joining the worker |
 | `scene.run` | `expected_revision`; optional `seed`, `ticks`, `hz`, `run_id`, `revision`, `expected_entities` | Captured revision/dirty state, entity count, source digest and native scene-run report |
+| `scene.cell.prepare` | Exact Scene/catalog/cache revisions, world/cell key, content revision, target and explicit collision/navigation entity IDs | Prepared payload digest/counts and source revision/dirty state; no publication |
+| `scene.cell.export` | Preparation fields plus relative `.sharkcell` `path` and required `expected_digest` | Create-only publication receipt and prepared payload report |
+| `cell.inspect` | Relative `.sharkcell` `path` | Validated current payload digest/key/revision/count observation; no original publication receipt |
 | `scene.export` (configured Windows host) | Common content fields below plus `build_dir`, `crt_dir`, `shaders`; optional `notices` | Existing standalone export report with status and publication outcome |
 | `scene.capture` (configured Client host) | Common content fields below; optional `width`, `height`, `local_origin` | Capture artifact report with source identity, raw-file digests and actual GPU diagnostics |
 
 The fixed capabilities are `cpu_authoring:true`, `mutations:true`, `imports:true`,
 `background_jobs:true`, `scene_runs:true`, `physics_preview:true` and
-`script_preview:true`. `standalone_export` reflects the
+`script_preview:true`, `prefabs:true` and `world_cells:true`. `standalone_export` reflects the
 configured Windows helper, and `device_capture` reflects the installed Client
 adapter. These flags advertise supported paths, not a claim that arbitrary inputs
 or hardware will succeed. Unavailable export/capture requests fail explicitly even
 though their names are absent from the current method inventory.
 
-`schema.components` returns all four native schemas and twelve properties in
+`schema.components` returns all six native schemas and twenty-five properties in
 stable catalog order. Components include numeric `id`, `stable_id`, `display_name`,
 `version`, `required`, `removable` and `properties`. Properties include numeric
 `id`, `key`, `display_name`, stable-text `type`, `unit`, `mutability`, native JSON
@@ -596,6 +605,26 @@ native callbacks must return/cooperate; no preemption or real-time shutdown
 latency is promised. Keep a stdio owner alive, explicitly drain/take outcomes and
 save intended scene changes before close. One-shot submit cannot retain a worker
 across process exit.
+
+## World-cell artifacts
+
+The [cell authoring contract](world-cell-authoring.md) specifies the complete
+parameter and static-content profile. `scene.cell.prepare` captures the retained
+Scene at its exact revision and requires explicit current catalog/cache revisions,
+fresh permitted imported mesh closures and collision/navigation selections.
+It returns a known intent digest without publishing. Export repeats validation
+under those same fences and compares required `expected_digest` before a
+create-only ProjectFiles write. Neither operation edits source or history, imports
+assets implicitly, or strips unsupported Camera/Script components.
+
+Reports contain no inline binary. External meshes remain references, with
+`runtime_assets_embedded:false`; a runtime host must supply matching PreparedAssets.
+Inspect validates a bounded complete file and marks `mesh_closure_checked:false`.
+Its digest can be compared to a retained prepared digest after a lost reply, but
+matching current bytes do not recover the original publication/durability receipt.
+Matching only key/content revision does not establish the original intent.
+An existing destination rejects even when bytes match. File publication and
+Scene save/history remain separate.
 
 ## Deterministic runs and generated artifacts
 

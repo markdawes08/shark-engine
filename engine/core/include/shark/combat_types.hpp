@@ -4,7 +4,7 @@
 
 namespace shark {
 
-enum class CombatActionKind : std::uint8_t { strike = 1, interact = 2 };
+enum class CombatActionKind : std::uint8_t { strike = 1, interact = 2, projectile = 3 };
 inline constexpr std::uint16_t combat_maximum_health = 100;
 inline constexpr std::uint16_t combat_maximum_damage = 25;
 inline constexpr std::uint32_t combat_strike_cooldown = 10;
@@ -13,6 +13,11 @@ inline constexpr std::uint32_t combat_maximum_cooldown = 200;
 inline constexpr std::uint32_t combat_respawn_ticks = 60;
 inline constexpr double combat_strike_range = 2.5;
 inline constexpr double combat_interaction_range = 3.0;
+// Server-owned straight point projectile. It advances only on authoritative
+// ticks and queries current native geometry; it is not a client trajectory.
+inline constexpr double combat_projectile_range = 10.0;
+inline constexpr double combat_projectile_speed = 10.0;
+inline constexpr std::uint32_t combat_projectile_lifetime_ticks = 20;
 
 enum class CombatOutcome : std::uint8_t {
     hit = 1,

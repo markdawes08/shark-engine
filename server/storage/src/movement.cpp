@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <limits>
 #include <thread>
 
@@ -31,6 +32,56 @@ bool character_body(const PhysicsBodyState& body) {
 }
 } // namespace
 
+Result<bool> movement_coverage(std::span<const MovementDomain> domains, math::Vec3 from,
+                               math::Vec3 to) {
+    constexpr auto operation = "server.movement.coverage";
+    if (domains.size() > 8)
+        return rejected(operation, "Movement coverage exceeds eight domains");
+    for (const auto& domain : domains) {
+        for (const auto value : {domain.min_x, domain.max_x, domain.min_z, domain.max_z})
+            if (!std::isfinite(value) || std::abs(value) > physics_local_position_limit)
+                return rejected(operation, "Invalid movement coverage bounds");
+        if (domain.min_x >= domain.max_x || domain.min_z >= domain.max_z)
+            return rejected(operation, "Empty movement coverage domain");
+    }
+    for (int axis = 0; axis < 3; ++axis)
+        if (!std::isfinite(from[axis]) || !std::isfinite(to[axis]) ||
+            std::abs(from[axis]) > physics_local_position_limit ||
+            std::abs(to[axis]) > physics_local_position_limit)
+            return rejected(operation, "Movement coverage requires bounded local positions");
+    const auto inside = [&](const math::Vec3& point) {
+        return domains.empty() || std::any_of(domains.begin(), domains.end(), [&](const auto& d) {
+                   return point.x >= d.min_x && point.x < d.max_x && point.z >= d.min_z &&
+                          point.z < d.max_z;
+               });
+    };
+    if (!inside(from) || !inside(to))
+        return false;
+    std::array<double, 34> cuts{};
+    std::size_t count = 2;
+    cuts[1] = 1;
+    const auto delta = to - from;
+    for (const auto& domain : domains)
+        for (const auto& axis : {std::array{from.x, delta.x, domain.min_x, domain.max_x},
+                                 std::array{from.z, delta.z, domain.min_z, domain.max_z}}) {
+            if (axis[1] == 0)
+                continue;
+            for (const auto edge : {axis[2], axis[3]}) {
+                const auto at = (edge - axis[0]) / axis[1];
+                if (at > 0 && at < 1)
+                    cuts[count++] = at;
+            }
+        }
+    std::sort(cuts.begin(), cuts.begin() + static_cast<std::ptrdiff_t>(count));
+    for (std::size_t i = 1; i < count; ++i) {
+        if (!inside(from + delta * cuts[i]))
+            return false;
+        if (cuts[i] > cuts[i - 1] && !inside(from + delta * ((cuts[i] + cuts[i - 1]) * .5)))
+            return false;
+    }
+    return true;
+}
+
 struct CharacterMovement::Impl {
     struct Actor {
         std::uint64_t connection;
@@ -49,16 +100,20 @@ struct CharacterMovement::Impl {
     std::uint64_t physics_world;
     WorldPosition origin;
     std::optional<std::uint64_t> traversal_instance;
+    std::array<MovementDomain, 8> domains{};
+    std::size_t domain_count{0};
     std::uint64_t ticks;
     MonotonicTime last_time{};
     bool faulted{false};
     std::vector<Actor> actors;
 
     Impl(std::uint64_t scene, std::uint64_t world, WorldPosition anchor, std::uint64_t completed,
-         std::optional<std::uint64_t> traversal)
+         std::optional<std::uint64_t> traversal, std::span<const MovementDomain> coverage)
         : scene_instance(scene), physics_world(world), origin(anchor),
           traversal_instance(traversal), ticks(completed) {
         actors.reserve(movement_maximum_characters);
+        domain_count = coverage.size();
+        std::copy(coverage.begin(), coverage.end(), domains.begin());
     }
     Result<void> check(const char* operation) const {
         if (owner != std::this_thread::get_id())
@@ -137,13 +192,27 @@ CharacterMovement::~CharacterMovement() = default;
 
 Result<std::unique_ptr<CharacterMovement>>
 CharacterMovement::create(const Scene& scene, const PhysicsWorld& physics, WorldPosition origin,
-                          std::optional<std::uint64_t> traversal_instance) {
+                          std::optional<std::uint64_t> traversal_instance,
+                          std::span<const MovementDomain> domains) {
     constexpr auto operation = "server.movement.create";
     if (auto valid = validate_world_position(origin); !valid)
         return valid.error();
     if (traversal_instance && *traversal_instance == 0)
         return rejected(operation, "Movement traversal instance must be nonzero",
                         ErrorCode::invalid_configuration);
+    if (domains.size() > 8)
+        return rejected(operation, "Movement coverage exceeds its bounded region profile",
+                        ErrorCode::invalid_configuration);
+    for (const auto& domain : domains)
+        if (!std::isfinite(domain.min_x) || !std::isfinite(domain.max_x) ||
+            !std::isfinite(domain.min_z) || !std::isfinite(domain.max_z) ||
+            domain.min_x >= domain.max_x || domain.min_z >= domain.max_z ||
+            domain.min_x < -physics_local_position_limit ||
+            domain.max_x > physics_local_position_limit ||
+            domain.min_z < -physics_local_position_limit ||
+            domain.max_z > physics_local_position_limit)
+            return rejected(operation, "Movement coverage is invalid in this local frame",
+                            ErrorCode::invalid_configuration);
     auto scene_state = scene.stats();
     if (!scene_state)
         return scene_state.error();
@@ -167,7 +236,7 @@ CharacterMovement::create(const Scene& scene, const PhysicsWorld& physics, World
                         ErrorCode::invalid_configuration);
     return std::unique_ptr<CharacterMovement>{new CharacterMovement{
         std::make_unique<Impl>(scene_state.value().instance, poses.value().world, origin,
-                               stats.value().completed_ticks, traversal_instance)}};
+                               stats.value().completed_ticks, traversal_instance, domains)}};
 }
 
 Result<void> CharacterMovement::check_traversal(const WorldTraversal* traversal) const {
@@ -331,6 +400,19 @@ Result<MovementTick> CharacterMovement::step(storage::CharacterAuthority& author
                 const auto& input = *actor.queue[actor.head];
                 plan.velocity.linear.x = movement_speed * input.x / net::movement_axis_scale;
                 plan.velocity.linear.z = movement_speed * input.z / net::movement_axis_scale;
+            }
+            if (plan.live && impl_->domain_count != 0) {
+                const auto intended = body.value().pose.translation +
+                                      plan.velocity.linear / static_cast<double>(movement_tick_hz);
+                const auto covered = movement_coverage(
+                    std::span<const MovementDomain>{impl_->domains}.first(impl_->domain_count),
+                    body.value().pose.translation, intended);
+                if (!covered)
+                    return covered.error();
+                if (!covered.value()) {
+                    plan.velocity.linear.x = 0;
+                    plan.velocity.linear.z = 0;
+                }
             }
             if (plan.live && traversal) {
                 const auto from =

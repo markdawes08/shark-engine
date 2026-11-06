@@ -16,10 +16,12 @@ Error rejected(const char* operation, const char* message,
     return {code, message, {.operation = operation}};
 }
 bool valid_input(const CombatRuleInput& input) {
-    if (input.kind != CombatActionKind::strike && input.kind != CombatActionKind::interact)
+    if (input.kind != CombatActionKind::strike && input.kind != CombatActionKind::interact &&
+        input.kind != CombatActionKind::projectile)
         return false;
-    const double range =
-        input.kind == CombatActionKind::strike ? combat_strike_range : combat_interaction_range;
+    const double range = input.kind == CombatActionKind::strike       ? combat_strike_range
+                         : input.kind == CombatActionKind::projectile ? combat_projectile_range
+                                                                      : combat_interaction_range;
     return input.tick <= static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) &&
            input.actor_health > 0 && input.actor_health <= combat_maximum_health &&
            input.target_health > 0 && input.target_health <= combat_maximum_health &&

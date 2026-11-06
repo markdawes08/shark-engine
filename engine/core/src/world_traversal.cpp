@@ -276,16 +276,28 @@ Result<WorldNavigationCursor> WorldTraversal::advance(const WorldNavigationPath&
                                                       double maximum_distance) const {
     return boundary<WorldNavigationCursor>("world.traversal.advance", [&] {
         impl_->check_ready();
-        if (std::isfinite(maximum_distance) && maximum_distance >= 0 &&
+        if (std::isfinite(maximum_distance) && maximum_distance > 0 &&
+            maximum_distance <= world_local_coordinate_limit &&
             cursor.next_waypoint < path.waypoints().size()) {
-            const auto delta =
-                checked(world_position_relative_to(path.waypoints()[cursor.next_waypoint],
-                                                   cursor.position, world_local_coordinate_limit));
-            const auto distance =
-                std::sqrt(delta[0] * delta[0] + delta[1] * delta[1] + delta[2] * delta[2]);
-            // One native steering step targets only its current straight
-            // segment. A chord across later portals could leave the corridor.
-            maximum_distance = std::min(maximum_distance, distance);
+            const auto current = checked(world_position_relative_to(
+                cursor.position, impl_->frame.origin, world_local_coordinate_limit));
+            for (auto next = cursor.next_waypoint; next < path.waypoints().size(); ++next) {
+                const auto target = checked(world_position_relative_to(
+                    path.waypoints()[next], impl_->frame.origin, world_local_coordinate_limit));
+                // Match navigation's local-frame arithmetic. Cursor-relative
+                // conversion can round shorter at a fractional frame origin.
+                const auto distance = glm::length(math::Vec3{target[0], target[1], target[2]} -
+                                                  math::Vec3{current[0], current[1], current[2]});
+                // Global publication can round a partial step exactly onto a
+                // portal while retaining its previous index. Skip only those
+                // zero-length segments so a positive budget cannot get stuck.
+                if (distance == 0)
+                    continue;
+                // Offer at most one nonzero straight segment to native motion;
+                // a chord across a later portal could leave the corridor.
+                maximum_distance = std::min(maximum_distance, distance);
+                break;
+            }
         }
         return checked(impl_->navigation->advance(path, cursor, maximum_distance));
     });

@@ -8,15 +8,21 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-M05c passes the selected CPU gate under the
-[M05 checkpoints](../roadmap/seamless-world-plan.md). Its
-[handoff](../handoffs/M05c-world-traversal.md) records actual static terrain
+M05d passes its selected CPU gate. Its [handoff](../handoffs/M05d-colocated-regions.md) connects co-located regional
+ownership, overlapping interest, native player/NPC travel, targeted projectiles
+and pending durable identity. [Cell authoring](../world-cell-authoring.md) adds
+three shared human/terminal methods with digest-bound publication and typed
+inspection. Native panel interaction remains deferred. The
+[M05 checkpoints](../roadmap/seamless-world-plan.md) retain consistent transfer
+cuts/persistence fencing in M05e and separate-process recovery in M05f;
+full REQ-M05 remains NOT_RUN.
+
+[M05c](../handoffs/M05c-world-traversal.md) records actual static terrain
 collision, authored triangle navigation, resident pins and exact owner-bound
 movement readiness. [M05b](../handoffs/M05b-world-cell-residency.md) retains
 asynchronous input, original outcomes and bounded owner-thread residency.
 [M05a](../handoffs/M05a-world-cell-foundation.md) retains local frames, static cell
-content and exact authored preparation. Full REQ-M05 remains NOT_RUN; M05d's
-adjacent regions and cross-boundary gameplay are next.
+content and exact authored preparation.
 
 M04 and full REQ-M04 PASS under the [gameplay checkpoints](../roadmap/authoritative-gameplay-plan.md)
 and declared current-machine functional profile.

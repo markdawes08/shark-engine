@@ -106,6 +106,11 @@ old routes through the traversal owner. Pure `WorldNavigation::advance` may
 consume several route segments; it offers an owned progress value and never moves
 a Scene. `WorldTraversal::advance` limits its steering offer to the current
 segment/first portal so one native movement cannot cut across several corners.
+The offer uses the graph's same local-frame subtraction and length calculation.
+With positive budget, exactly reached zero-length endpoints are consumed before
+offering the next nonzero segment; fractional frame origins cannot trap a cursor
+at a portal through inconsistent rounding. A zero budget remains stationary and
+invalid over-limit budgets reject. This changes no surface or native tolerance.
 A host adopts progress only after checking committed native movement; a blocked
 body does not earn planner progress.
 

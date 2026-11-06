@@ -705,12 +705,12 @@ struct LuaVm::Impl {
         const bool allowed = lua_toboolean(state, 1) != 0;
         const auto damage = lua_tointeger(state, 2);
         const auto cooldown = lua_tointeger(state, 3);
-        const auto minimum_cooldown = input->kind == CombatActionKind::strike
-                                          ? combat_strike_cooldown
-                                          : combat_interaction_cooldown;
+        const auto minimum_cooldown = input->kind == CombatActionKind::interact
+                                          ? combat_interaction_cooldown
+                                          : combat_strike_cooldown;
         if ((!allowed && (damage != 0 || cooldown != 0)) ||
             (allowed && (damage < 0 || damage > combat_maximum_damage ||
-                         (input->kind == CombatActionKind::strike && damage == 0) ||
+                         (input->kind != CombatActionKind::interact && damage == 0) ||
                          (input->kind == CombatActionKind::interact && damage != 0) ||
                          cooldown < minimum_cooldown || cooldown > combat_maximum_cooldown)))
             return luaL_error(state, "Combat rule decision exceeds the authoritative profile");

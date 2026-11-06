@@ -2,10 +2,12 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 import queue
 import subprocess
+import struct
 import sys
 import tempfile
 import threading
@@ -36,6 +38,7 @@ METHODS |= {
 }
 METHODS.add("scene.run")
 METHODS.add("scene.physics")
+METHODS |= {"scene.cell.prepare", "scene.cell.export", "cell.inspect"}
 METHODS |= {"prefab.read", "prefab.write", "prefab.capture", "prefab.prepare",
             "prefab.instantiate", "prefab.release", "prefab.release_preparation"}
 
@@ -245,7 +248,7 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
                                                     "background_jobs": True, "scene_runs": True,
                                                     "standalone_export": False,
                                                     "physics_preview": True, "script_preview": True,
-                                                    "prefabs": True})
+                                                    "prefabs": True, "world_cells": True})
         self.assertEqual({method["name"] for method in discovery["methods"]}, METHODS)
         methods = {method["name"]: method for method in discovery["methods"]}
         component_schema = methods["schema.components"]["result"]["properties"]["components"]
@@ -256,7 +259,7 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
         for method in discovery["methods"]:
             self.assertTrue(method["params"] and method["result"] and method["example"], method)
             self.assertEqual(method["execution_context"], "cpu_owner_thread")
-            self.assertIs(method["requires_open_project"], method["name"].startswith(("scene.", "text.", "asset.", "prefab.")))
+            self.assertIs(method["requires_open_project"], method["name"].startswith(("scene.", "text.", "asset.", "prefab.", "cell.")))
             self.assertIs(method["requires_project_root"], method["name"] in {"project.open", "project.create"})
         schema = self.finite("--request", encoded(request("schema.components")), root=False)["result"]
         self.assertEqual(schema["components"], discovery["components"])
@@ -296,6 +299,80 @@ class AuthoringProtocolProcessTests(unittest.TestCase):
         self.assertIsNone(inspection["next_cursor"])
         self.assertEqual(len(inspection["entities"]), 1)
         self.assertEqual(inspection["entities"][0]["name"], "Waypoint \u96ea")
+
+    def test_cell_prepare_export_and_independent_owned_binary_inspection(self):
+        # Separate static source; FeatureWorld intentionally retains its camera.
+        root = self.root / "cell"
+        root.mkdir()
+        world = "20000000-0000-4000-8000-000000000002"
+        project = {"format": "shark.project", "schema_version": 1,
+                   "project_id": PROJECT, "world_id": world, "name": "Cell",
+                   "startup_scene": SCENE,
+                   "scenes": [{"scene_id": SCENE, "path": "Cell.sharkscene"}], "extras": {}}
+        scene = {"format": "shark.scene", "schema_version": 1,
+                 "project_id": PROJECT, "scene_id": SCENE,
+                 "world_origin": {"world_id": world, "cell": [1000000000, 0, 0],
+                                  "offset": [0, 0, 0]},
+                 "entities": [{"entity_id": ENTITIES[0], "parent": None,
+                               "components": {
+                                   "shark.name": {"schema_version": 1, "value": "Ground"},
+                                   "shark.transform": {"schema_version": 1,
+                                                       "translation": [2, 0, 2],
+                                                       "rotation": [0, 0, 0, 1],
+                                                       "scale": [4, 4, 4]},
+                                   "shark.mesh_renderer": {"schema_version": 1,
+                                                           "asset_id": "00000000-0000-4000-8000-000000000014",
+                                                           "mesh_index": 0, "visible": False}},
+                               "extras": {"private_source": True}}], "extras": {}}
+        originals = {"Cell.sharkproject": encoded(project), "Cell.sharkscene": encoded(scene)}
+        for name, contents in originals.items():
+            (root / name).write_bytes(contents)
+        with PipeClient(self.root, root, "Cell.sharkproject") as client:
+            before = client.result("project.status")
+            parameters = {"expected_revision": before["revision"],
+                          "expected_catalog": client.result("asset.catalog.status")["revision"],
+                          "expected_cache": client.result("asset.cache.status")["revision"],
+                          "world_id": world, "cell": {"x": 1000000000, "y": 0, "z": 0},
+                          "content_revision": "17", "target": {"id": "local-server", "side": "server"},
+                          "collision_entities": [ENTITIES[0]], "navigation_entities": [ENTITIES[0]]}
+            prepared = client.result("scene.cell.prepare", parameters)
+            self.assertFalse((root / "World.sharkcell").exists())
+            self.assertNotIn("publication", prepared)
+            export = dict(parameters, path="World.sharkcell", expected_digest="0" * 64)
+            self.assertIn("error", client.call("scene.cell.export", export))
+            self.assertFalse((root / "World.sharkcell").exists())
+            export["expected_digest"] = prepared["payload_digest"]
+            receipt = client.result("scene.cell.export", export)
+            self.assertTrue(receipt["publication"]["published"])
+            payload = (root / "World.sharkcell").read_bytes()
+            self.assertEqual(hashlib.sha256(payload).hexdigest(), prepared["payload_digest"])
+            self.assertEqual(payload[:8], b"SHKCELL1")
+            self.assertEqual(struct.unpack_from("<I", payload, 8)[0], 2)
+            self.assertEqual(payload[12:44], hashlib.sha256(payload[44:]).digest())
+            scene_bytes = struct.unpack_from("<I", payload, 80)[0]
+            cursor = 84 + scene_bytes
+            self.assertEqual(struct.unpack_from("<I", payload, cursor)[0], 4)
+            cursor += 4
+            self.assertEqual(struct.unpack_from("<12d", payload, cursor),
+                             (0, 0, 4, 4, 0, 4, 4, 0, 0, 0, 0, 0))
+            cursor += 96
+            for _ in range(2):
+                self.assertEqual(struct.unpack_from("<I", payload, cursor)[0], 2)
+                cursor += 4
+                self.assertEqual(struct.unpack_from("<6I", payload, cursor), (0, 1, 2, 0, 2, 3))
+                cursor += 24
+            self.assertEqual(cursor, len(payload))
+            self.assertNotIn(b"private_source", payload)
+            observed = client.result("cell.inspect", {"path": "World.sharkcell"})
+            self.assertEqual(observed["payload_digest"], prepared["payload_digest"])
+            self.assertFalse(observed["mesh_closure_checked"])
+            self.assertFalse(observed["runtime_assets_embedded"])
+            self.assertNotIn("publication", observed)  # Current bytes are not an original receipt.
+            self.assertIn("error", client.call("scene.cell.export", export))
+            self.assertEqual(client.result("project.status"), before)
+            client.finish()
+        for name, contents in originals.items():
+            self.assertEqual((root / name).read_bytes(), contents)
 
     def test_cli_failures_stay_off_protocol_stdout(self):
         for options in (["--stdio", "--request"],

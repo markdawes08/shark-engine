@@ -54,12 +54,30 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [M05c, world traversal](docs/handoffs/M05c-world-traversal.md).**
-Follow the [M05 checkpoints](docs/roadmap/seamless-world-plan.md),
-[traversal contract](docs/world-traversal.md) and
-[ADR 0065](docs/architecture/0065-world-traversal.md). M05c passes its selected CPU
-gate. M05d is next: adjacent regions in one process, overlapping interest and
-continuous cross-boundary gameplay. Keep cells separate from region authority.
+**Current handoff: [M05d, co-located regions](docs/handoffs/M05d-colocated-regions.md).**
+M05d passes its selected CPU gate. Follow the [M05 checkpoints](docs/roadmap/seamless-world-plan.md),
+[regional contract](docs/region-world.md) and
+[ADR 0066](docs/architecture/0066-colocated-regions.md). RegionWorld privately owns
+movement/combat/interest over one shared Scene/native/traversal island. Current
+grants gate ingress before session sequencing and rotate after committed movement;
+crossing preserves actors, streams, replicas, cooldowns and original durable
+requests/tickets. NPCs use checked native bodies and the same fixed tick. Preserve
+full-segment coverage, availability versus privacy and partial-effect faults.
+M05e is next: consistent transfer cuts and mutation/persistence fencing. Co-located
+grants are not distributed leases or persisted writer tokens.
+Follow the [projectile contract](docs/authoritative-projectiles.md): kind 3 uses
+bounded current-native straight flight and one original final outcome; legacy v1
+bytes remain stable alongside v2. Preserve full original flight state for later
+cuts. [Cell authoring](docs/world-cell-authoring.md) shares retained human/terminal
+commands, exact revisions, fresh target asset closure and digest-bound create-only
+publication. Inspection observes current bytes, not lost durability receipts.
+Native World cells interaction is deferred under BL-M05D-UI-01.
+
+The [M05c traversal contract](docs/world-traversal.md) and
+[ADR 0065](docs/architecture/0065-world-traversal.md) remain applicable.
+Keep cells separate from region authority. Portal offers use the graph's exact
+frame arithmetic and skip only exactly reached endpoints before one nonzero
+segment; never widen tolerances or teleport pursuit progress.
 Cell v2 adds explicit terrain/walk geometry; v1 remains compatible. Native mesh
 proxies have no authored RigidBody; check optional PhysicsBodyState settings.
 Traversal pins exact resident generations until native detach, prepares whole

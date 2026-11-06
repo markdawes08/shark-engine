@@ -1,5 +1,6 @@
 #pragma once
 
+#include "shark/net/interest.hpp"
 #include "shark/net/replication.hpp"
 #include "shark/scene.hpp"
 #include "shark/storage/store.hpp"
@@ -102,6 +103,16 @@ class CharacterAuthority final {
     [[nodiscard]] Result<net::ReplicationControlResult>
     control_replication(net::ReplicationServer& publisher, net::TlsTransport& transport,
                         const net::ReplicationControl& control, MonotonicTime now);
+    // Shared-island spatial selection through the same private session owner.
+    // Catalog policy/availability stays server-owned; no mutable session borrow.
+    [[nodiscard]] Result<net::InterestPublishResult>
+    publish_interest(net::InterestServer& publisher, Scene& scene,
+                     std::span<const net::InterestEntry> catalog, net::TlsTransport& transport,
+                     MonotonicTime now);
+    [[nodiscard]] Result<net::ReplicationControlResult>
+    control_interest(net::InterestServer& publisher, Scene& scene,
+                     std::span<const net::InterestEntry> catalog, net::TlsTransport& transport,
+                     const net::ReplicationControl& control, MonotonicTime now);
     // Both operations require a current ready session and spend the exact next
     // command sequence/rate admission. Rejected revision/state never changes the
     // database; admitted stale-revision/storage failures consume their sequence.

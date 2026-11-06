@@ -1,8 +1,10 @@
 #pragma once
 
+#include "shark/content_digest.hpp"
 #include "shark/tools/asset_metadata.hpp"
 #include "shark/tools/authored_scene.hpp"
 #include "shark/tools/prefab_document.hpp"
+#include "shark/world_cell.hpp"
 
 #include <filesystem>
 #include <memory>
@@ -49,6 +51,12 @@ struct ReadText {
     FileRevision revision;
 };
 
+struct ReadWorldCell {
+    PreparedWorldCell cell;
+    ContentDigest digest;
+    FileRevision revision;
+};
+
 struct LoadedAuthoredScene {
     std::unique_ptr<AuthoredScene> owner;
     FileRevision file_revision;
@@ -90,6 +98,11 @@ class ProjectFiles final {
     [[nodiscard]] Result<ReadText> read_text(const ProjectPath& path);
     [[nodiscard]] Result<FileCommit> write_text(const ProjectPath& path, std::string_view text,
                                                 std::optional<FileRevision> expected);
+    // Development artifacts use a separate typed binary boundary. Publication
+    // is create-only and never overwrites source or acknowledges a scene save.
+    [[nodiscard]] Result<ReadWorldCell> read_world_cell(const ProjectPath& path);
+    [[nodiscard]] Result<FileCommit> write_world_cell(const ProjectPath& path,
+                                                      std::span<const std::byte> bytes);
     [[nodiscard]] Result<ReadSource<AssetMetadata>> read_asset_metadata(const ProjectPath& sidecar);
     [[nodiscard]] Result<FileCommit> write_asset_metadata(const ProjectPath& sidecar,
                                                           const AssetMetadata& metadata,

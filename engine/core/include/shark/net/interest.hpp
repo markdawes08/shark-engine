@@ -17,6 +17,10 @@ struct InterestEntry {
     // Exactly one live observer row must match the current session's character.
     // Other rows may share that owner. A hidden observer supplies only the focus.
     bool observer{false};
+    // Runtime presence, separate from disclosure permission. A legitimately
+    // absent actor may despawn while its prior public pose remains public.
+    // Privacy validation still checks absent rows and queued prior disclosures.
+    bool present{true};
 };
 
 struct InterestLimits {

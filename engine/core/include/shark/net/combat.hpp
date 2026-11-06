@@ -9,7 +9,8 @@ namespace shark::net {
 
 using CombatStreamId = TypedId<struct CombatStreamIdDomain>;
 using CombatTargetId = TypedId<struct CombatTargetIdDomain>;
-inline constexpr std::uint16_t combat_protocol_version = 1;
+inline constexpr std::uint16_t combat_protocol_version = 2;
+inline constexpr std::uint16_t combat_legacy_protocol_version = 1;
 inline constexpr std::size_t combat_action_bytes = 93;
 inline constexpr std::size_t combat_maximum_reply_bytes = 2048;
 inline constexpr std::size_t combat_maximum_targets = 32;

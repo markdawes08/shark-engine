@@ -139,10 +139,12 @@ struct Fixture {
     std::optional<SessionSnapshot> peer_session;
     EntityHandle peer_entity;
     PhysicsBodyHandle peer_body;
+    EntityHandle npc_entity{};
+    PhysicsBodyHandle npc_body{};
 
     explicit Fixture(bool bind = true, bool wall = false,
                      const RigidBody& settings = character_body(), bool duel = false,
-                     bool scripted = false) {
+                     bool scripted = false, bool npc = false) {
         const fs::path parent{SHARK_MOVEMENT_SCRATCH};
         REQUIRE(parent.is_absolute());
         fs::create_directories(parent);
@@ -166,7 +168,10 @@ struct Fixture {
         if (scripted)
             seed.script = Script{"scripts/actor.lua"};
         entity = take(scene->create_entity(seed));
-        physics = take(PhysicsWorld::create(profile()));
+        auto native_profile = profile();
+        if (npc)
+            native_profile.gravity = {0, -9.81, 0};
+        physics = take(PhysicsWorld::create(native_profile));
         body = take(physics->create_body(*scene, entity));
         if (duel) {
             peer = std::make_unique<Pair>(true);
@@ -195,6 +200,14 @@ struct Fixture {
             fixed.rigid_body = RigidBody{};
             fixed.rigid_body->half_extents = {0.1, 10, 10};
             take(physics->create_body(*scene, take(scene->create_entity(fixed))));
+        }
+        if (npc) {
+            EntitySeed npc_seed{id<WorldEntityId>(40)};
+            npc_seed.name = Name{"Regional NPC"};
+            npc_seed.transform.translation = {-2, -origin.offset[1] + .5, 4};
+            npc_seed.rigid_body = character_body();
+            npc_entity = take(scene->create_entity(npc_seed));
+            npc_body = take(physics->create_body(*scene, npc_entity));
         }
         take(physics->begin_simulation(*scene));
         movement = take(CharacterMovement::create(*scene, *physics, origin));
@@ -1435,3 +1448,198 @@ TEST_CASE("Gameplay retains its first optional script owner before later callbac
     REQUIRE(take(duel.scripts->stop(*f.scene, *f.physics)).errors.empty());
     f.complete = true;
 }
+
+TEST_CASE("Authoritative projectiles retain admission while current native segments resolve once",
+          "[server-combat]") {
+    constexpr const char* rules = R"(
+function on_combat(kind,tick,actor,target,distance)
+    if kind == 1 or kind == 3 then return true,25,10 end
+    return true,0,5
+end
+)";
+    Duel duel(false, rules);
+    auto target_pose =
+        take(duel.fixture.physics->body_state(*duel.fixture.scene, duel.fixture.peer_body)).pose;
+    target_pose.translation.x = 6;
+    take(duel.fixture.physics->teleport(*duel.fixture.scene, duel.fixture.peer_body, target_pose));
+    const auto presentation = take(CombatClient::create(duel.fixture.session, duel.state()));
+    const auto request = duel.send(CombatActionKind::projectile);
+    const auto launched = duel.step();
+    REQUIRE_FALSE(launched.error);
+    CHECK(launched.projectile_launches == 1);
+    CHECK(launched.projectile_impacts == 0);
+    CHECK(launched.outcomes.empty());
+    CHECK(duel.state(true).health == 100);
+    CHECK(duel.state().ready_tick == 11);
+    CHECK(take(duel.combat->stats()).pending_projectiles == 1);
+    const auto before = take(duel.fixture.authority->authorize_entity(
+        *duel.fixture.pair.server, *duel.fixture.scene, duel.fixture.entity, duel.fixture.now));
+    const CombatAction another{envelope(duel.fixture.session, duel.command_a), duel.a->stream,
+                               duel.action_a, duel.b->target, CombatActionKind::interact};
+    CHECK_FALSE(duel.combat->submit(*duel.fixture.authority, *duel.fixture.pair.server,
+                                    *duel.fixture.scene, *duel.fixture.physics, another,
+                                    duel.fixture.now));
+    CHECK_FALSE(duel.combat->submit(*duel.fixture.authority, *duel.fixture.pair.server,
+                                    *duel.fixture.scene, *duel.fixture.physics, request,
+                                    duel.fixture.now));
+    CHECK(take(duel.fixture.authority->authorize_entity(*duel.fixture.pair.server,
+                                                        *duel.fixture.scene, duel.fixture.entity,
+                                                        duel.fixture.now))
+              .last_sequence == before.last_sequence);
+    std::size_t impacts = 0;
+    std::size_t outcomes = 0;
+    for (unsigned tick = 0; tick < combat_projectile_lifetime_ticks; ++tick) {
+        const auto report = duel.step();
+        REQUIRE_FALSE(report.error);
+        impacts += report.projectile_impacts;
+        outcomes += report.outcomes.size();
+    }
+    CHECK(impacts == 1);
+    CHECK(outcomes == 1);
+    CHECK(take(duel.combat->stats()).pending_projectiles == 0);
+    CHECK(duel.state(true).health == 75);
+    const auto state = duel.state();
+    REQUIRE(state.outcomes.size() == 1);
+    CHECK(state.outcomes.front().kind == CombatActionKind::projectile);
+    CHECK(state.outcomes.front().outcome == CombatOutcome::hit);
+    const auto payload = take(encode_combat_reply(state));
+    CHECK(payload[1] == std::byte{2});
+    take(duel.fixture.pair.server->send(MessageKind::combat_state, payload));
+    const auto frame = duel.fixture.pair.receive(false, duel.fixture.now);
+    CHECK(frame.kind == MessageKind::combat_state);
+    const auto accepted = take(presentation->apply(take(decode_combat_reply(frame.payload))));
+    REQUIRE(accepted.effects.size() == 1);
+    CHECK(accepted.effects.front().amount == 25);
+    CHECK(take(presentation->apply(state)).effects.empty());
+    duel.fixture.complete = true;
+}
+
+TEST_CASE("Projectile segments hit intervening native geometry and expire without homing",
+          "[server-combat]") {
+    constexpr const char* rules = R"(
+function on_combat(kind,tick,actor,target,distance) return true,25,10 end
+)";
+    SECTION("the first native surface blocks damage") {
+        Duel duel(true, rules);
+        duel.send(CombatActionKind::projectile);
+        REQUIRE(duel.step().projectile_launches == 1);
+        std::optional<CombatActionResult> outcome;
+        for (unsigned tick = 0; tick < combat_projectile_lifetime_ticks; ++tick) {
+            const auto report = duel.step();
+            REQUIRE_FALSE(report.error);
+            if (!report.outcomes.empty())
+                outcome = report.outcomes.front().outcome;
+        }
+        REQUIRE(outcome);
+        CHECK(outcome->outcome == CombatOutcome::blocked);
+        CHECK(outcome->amount == 0);
+        CHECK(duel.state(true).health == 100);
+        CHECK(take(duel.combat->stats()).pending_projectiles == 0);
+        duel.fixture.complete = true;
+    }
+    SECTION("a moved target is not followed or hit through historical coordinates") {
+        Duel duel(false, rules);
+        auto target_pose =
+            take(duel.fixture.physics->body_state(*duel.fixture.scene, duel.fixture.peer_body))
+                .pose;
+        target_pose.translation.x = 6;
+        take(duel.fixture.physics->teleport(*duel.fixture.scene, duel.fixture.peer_body,
+                                            target_pose));
+        duel.send(CombatActionKind::projectile);
+        REQUIRE(duel.step().projectile_launches == 1);
+        target_pose.translation.z = 2;
+        take(duel.fixture.physics->teleport(*duel.fixture.scene, duel.fixture.peer_body,
+                                            target_pose));
+        std::optional<CombatActionResult> outcome;
+        std::size_t impacts = 0;
+        for (unsigned tick = 0; tick < combat_projectile_lifetime_ticks; ++tick) {
+            const auto report = duel.step();
+            REQUIRE_FALSE(report.error);
+            impacts += report.projectile_impacts;
+            if (!report.outcomes.empty())
+                outcome = report.outcomes.front().outcome;
+        }
+        REQUIRE(outcome);
+        CHECK(outcome->outcome == CombatOutcome::out_of_range);
+        CHECK(outcome->amount == 0);
+        CHECK(impacts == 0);
+        CHECK(duel.state(true).health == 100);
+        CHECK(take(duel.combat->stats()).pending_projectiles == 0);
+        duel.fixture.complete = true;
+    }
+}
+
+TEST_CASE("Projectile ownership and target session loss fence the retained original flight",
+          "[server-combat]") {
+    constexpr const char* rules = R"(
+function on_combat(kind,tick,actor,target,distance) return true,25,10 end
+)";
+    for (const bool source : {false, true}) {
+        Duel duel(false, rules);
+        auto pose =
+            take(duel.fixture.physics->body_state(*duel.fixture.scene, duel.fixture.peer_body))
+                .pose;
+        pose.translation.x = 6;
+        take(duel.fixture.physics->teleport(*duel.fixture.scene, duel.fixture.peer_body, pose));
+        duel.send(CombatActionKind::projectile);
+        REQUIRE(duel.step().projectile_launches == 1);
+        take(duel.fixture.authority->revoke_session(source ? duel.fixture.session.session
+                                                           : duel.fixture.peer_session->session));
+        const auto stopped = duel.step();
+        REQUIRE_FALSE(stopped.error);
+        REQUIRE(stopped.outcomes.size() == 1);
+        CHECK(stopped.outcomes.front().outcome.outcome ==
+              (source ? CombatOutcome::actor_unavailable : CombatOutcome::target_unavailable));
+        CHECK(stopped.outcomes.front().outcome.amount == 0);
+        CHECK(stopped.projectile_impacts == 0);
+        CHECK(take(duel.combat->stats()).pending_projectiles == 0);
+        if (source)
+            // Observe the survivor's own health without selecting the revoked
+            // source as a visible combat target.
+            CHECK(duel.state(true, false).health == 100);
+        for (unsigned tick = 0; tick < 3; ++tick)
+            CHECK(duel.step().outcomes.empty());
+        duel.fixture.complete = true;
+    }
+}
+
+TEST_CASE("Death prevents an old-life projectile from damaging a surviving target",
+          "[server-combat]") {
+    constexpr const char* rules = R"(
+function on_combat(kind,tick,actor,target,distance) return true,25,10 end
+)";
+    Duel duel(false, rules);
+    for (unsigned strike = 0; strike < 3; ++strike) {
+        while (take(duel.combat->stats()).completed_ticks < strike * 10)
+            REQUIRE_FALSE(duel.step().error);
+        duel.send(CombatActionKind::strike, true);
+        REQUIRE_FALSE(duel.step().error);
+    }
+    REQUIRE(duel.state().health == 25);
+    while (take(duel.combat->stats()).completed_ticks < 31)
+        REQUIRE_FALSE(duel.step().error);
+    const auto original = duel.send(CombatActionKind::projectile);
+    duel.send(CombatActionKind::strike, true);
+    const auto death = duel.step();
+    REQUIRE_FALSE(death.error);
+    CHECK(death.projectile_launches == 1);
+    CHECK(death.deaths == 1);
+    REQUIRE(duel.state().health == 0);
+    const auto cancelled = duel.step();
+    REQUIRE_FALSE(cancelled.error);
+    REQUIRE(cancelled.outcomes.size() == 1);
+    CHECK(cancelled.outcomes.front().outcome.outcome == CombatOutcome::actor_unavailable);
+    CHECK(cancelled.outcomes.front().outcome.amount == 0);
+    CHECK(duel.state(true).health == 100);
+    const auto respawn = death.movement.completed_tick + combat_respawn_ticks;
+    while (take(duel.combat->stats()).completed_ticks < respawn)
+        REQUIRE_FALSE(duel.step().error);
+    CHECK(duel.a->stream != original.stream);
+    CHECK(take(duel.combat->stats()).pending_projectiles == 0);
+    CHECK_FALSE(duel.combat->submit(*duel.fixture.authority, *duel.fixture.pair.server,
+                                    *duel.fixture.scene, *duel.fixture.physics, original,
+                                    duel.fixture.now));
+    duel.fixture.complete = true;
+}
+
+#include "server_region_cases.hpp"

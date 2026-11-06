@@ -854,7 +854,7 @@
       "planned_fixture": "MMOWorld/ContinuousTraversal, RegionAuthorityTransferFaultMatrix, CrossBoundaryCombatAI, OriginShiftPrecision and CellStreamingBudget fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "M05a-c supply local frames, asynchronous bounded residency, prepared static terrain collision, authored triangle-surface navigation, pinned readiness and an exact owner-bound authoritative movement gate. See docs/handoffs/M05c-world-traversal.md. Same-process regions, authoring adapters, cross-boundary gameplay and fenced multi-process transfer/recovery remain with later M05 checkpoints; full REQ-M05 stays NOT_RUN."
+        "reason": "M05a-d supply local frames, bounded residency, static terrain/navigation readiness, co-located regional ownership, overlapping interest, native player/NPC travel, targeted projectile continuity and original durable-operation identity. Retained human/terminal adapters prepare and publish digest-bound development cell files. See docs/handoffs/M05d-colocated-regions.md. Consistent transfer cuts, persistence fencing, actual separate-process recovery and connected acceptance remain M05e-g; full REQ-M05 stays NOT_RUN. Native World cells UI interaction remains deferred under the manual UI pause."
       }
     },
     {
@@ -1012,6 +1012,83 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "server.colocated-regions",
+        "name": "Co-located regional gameplay ownership with continuous native actors and interest",
+        "requirement_ids": [
+          "REQ-M05"
+        ],
+        "test_ids": [
+          "shark.server.regions",
+          "shark.server.movement",
+          "shark.server.combat",
+          "shark.core.net-interest"
+        ],
+        "test_sources": [
+          "tests/server_region_cases.hpp",
+          "tests/server_movement_tests.cpp",
+          "tests/net_interest_tests.cpp"
+        ],
+        "fixtures": [
+          "docs/region-world.md",
+          "server/storage/src/regions.cpp"
+        ],
+        "fixture_reason": "Actual mTLS, native physics, pinned terrain/navigation, InterestServer/ReplicaClient and a real Store worker connect player and NPC crossings. Independent identities, poses, health, cooldown, replica IDs and economy balances check continuity. Stale grants reject before command admission; concave-gap motion stops; another actor cannot take the original durable ticket.",
+        "external_fixture_reason": "Regional session and durable authority require the Server owner and real transports/Store, unavailable to Tools FeatureWorld. This co-located shared Scene/native profile does not qualify distributed cuts, persistence fencing, separate processes or capacity.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "server.targeted-projectiles",
+        "name": "Bounded native-query targeted projectiles and versioned combat outcomes",
+        "requirement_ids": [
+          "REQ-M05",
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.server.combat",
+          "shark.server.regions",
+          "shark.core.combat-wire",
+          "shark.core.combat-rules",
+          "shark.core.combat-client"
+        ],
+        "test_sources": [
+          "tests/server_movement_tests.cpp",
+          "tests/server_region_cases.hpp",
+          "tests/core_projectile_wire_tests.cpp"
+        ],
+        "fixtures": [
+          "docs/authoritative-projectiles.md",
+          "server/storage/src/combat.cpp"
+        ],
+        "fixture_reason": "Independent v1/v2 bytes and actual-session/native ray fixtures verify straight flight, delayed impact, blocking, expiry, life/body/session fences, launch cooldown, movement continuity, once-only client effects and co-located boundary crossing.",
+        "external_fixture_reason": "Authenticated native combat is a player/server surface rather than a source-authoring command or entity Lua API. Tools FeatureWorld cannot replace the actual session/private Storage and PhysicsWorld boundary.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "tools.world-cell-authoring",
+        "name": "Retained human and terminal development cell preparation, publication and inspection",
+        "requirement_ids": [
+          "REQ-M05",
+          "REQ-15",
+          "REQ-16"
+        ],
+        "test_ids": [
+          "shark.tools.world-cell-authoring",
+          "shark.tools.authoring-protocol-process"
+        ],
+        "test_sources": [
+          "tests/authoring_world_cell_tests.cpp",
+          "tools/tests/test_authoring_protocol_process.py"
+        ],
+        "fixtures": [
+          "docs/world-cell-authoring.md",
+          "editor/world_cell_panel.cpp",
+          "engine_tools/src/authoring_world_cells.cpp"
+        ],
+        "fixture_reason": "Real ProjectFiles, retained protocol and public process pipes verify exact revisions, asset audience/cache closure, explicit transformed geometry, independent cell bytes/digest, typed paths, create-only publication, durability faults and source/history isolation. The human adapter uses the same commands.",
+        "external_fixture_reason": "Publication receipts, process ownership and typed file inspection require dedicated real-file/process fixtures; existing Core cell tests retain content semantics without a duplicate FeatureWorld case. Native World cells interaction is NOT_RUN under BL-M05D-UI-01.",
+        "featureworld_cases": []
+      },
       {
         "id": "core.world-traversal",
         "name": "Pinned static terrain collision, authored navigation and authoritative readiness",
@@ -3946,6 +4023,81 @@
       }
     ],
     "commands": [
+      {
+        "id": "terminal.scene.cell.prepare",
+        "name": "SharkAuthor JSON-RPC scene.cell.prepare",
+        "requirement_ids": [
+          "REQ-M05",
+          "REQ-15",
+          "REQ-16"
+        ],
+        "test_ids": [
+          "shark.tools.world-cell-authoring",
+          "shark.tools.authoring-protocol-process"
+        ],
+        "test_sources": [
+          "tests/authoring_world_cell_tests.cpp",
+          "tools/tests/test_authoring_protocol_process.py"
+        ],
+        "fixtures": [
+          "docs/world-cell-authoring.md",
+          "editor/world_cell_panel.cpp",
+          "engine_tools/src/authoring_world_cells.cpp"
+        ],
+        "fixture_reason": "Real ProjectFiles, retained protocol and public process pipes verify exact revisions, asset audience/cache closure, explicit transformed geometry, independent cell bytes/digest, typed paths, create-only publication, durability faults and source/history isolation. The human adapter uses the same commands.",
+        "external_fixture_reason": "Publication receipts, process ownership and typed file inspection require dedicated real-file/process fixtures; existing Core cell tests retain content semantics without a duplicate FeatureWorld case. Native World cells interaction is NOT_RUN under BL-M05D-UI-01.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "terminal.scene.cell.export",
+        "name": "SharkAuthor JSON-RPC scene.cell.export",
+        "requirement_ids": [
+          "REQ-M05",
+          "REQ-15",
+          "REQ-16"
+        ],
+        "test_ids": [
+          "shark.tools.world-cell-authoring",
+          "shark.tools.authoring-protocol-process"
+        ],
+        "test_sources": [
+          "tests/authoring_world_cell_tests.cpp",
+          "tools/tests/test_authoring_protocol_process.py"
+        ],
+        "fixtures": [
+          "docs/world-cell-authoring.md",
+          "editor/world_cell_panel.cpp",
+          "engine_tools/src/authoring_world_cells.cpp"
+        ],
+        "fixture_reason": "Real ProjectFiles, retained protocol and public process pipes verify exact revisions, asset audience/cache closure, explicit transformed geometry, independent cell bytes/digest, typed paths, create-only publication, durability faults and source/history isolation. The human adapter uses the same commands.",
+        "external_fixture_reason": "Publication receipts, process ownership and typed file inspection require dedicated real-file/process fixtures; existing Core cell tests retain content semantics without a duplicate FeatureWorld case. Native World cells interaction is NOT_RUN under BL-M05D-UI-01.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "terminal.cell.inspect",
+        "name": "SharkAuthor JSON-RPC cell.inspect",
+        "requirement_ids": [
+          "REQ-M05",
+          "REQ-15",
+          "REQ-16"
+        ],
+        "test_ids": [
+          "shark.tools.world-cell-authoring",
+          "shark.tools.authoring-protocol-process"
+        ],
+        "test_sources": [
+          "tests/authoring_world_cell_tests.cpp",
+          "tools/tests/test_authoring_protocol_process.py"
+        ],
+        "fixtures": [
+          "docs/world-cell-authoring.md",
+          "editor/world_cell_panel.cpp",
+          "engine_tools/src/authoring_world_cells.cpp"
+        ],
+        "fixture_reason": "Real ProjectFiles, retained protocol and public process pipes verify exact revisions, asset audience/cache closure, explicit transformed geometry, independent cell bytes/digest, typed paths, create-only publication, durability faults and source/history isolation. The human adapter uses the same commands.",
+        "external_fixture_reason": "Publication receipts, process ownership and typed file inspection require dedicated real-file/process fixtures; existing Core cell tests retain content semantics without a duplicate FeatureWorld case. Native World cells interaction is NOT_RUN under BL-M05D-UI-01.",
+        "featureworld_cases": []
+      },
       {
         "id": "server.combat.reconnect",
         "name": "CharacterCombat::reconnect after explicit server detach",

@@ -260,6 +260,36 @@ Result<FileCommit> ProjectFiles::write_text(const ProjectPath& path, std::string
     });
 }
 
+Result<ReadWorldCell> ProjectFiles::read_world_cell(const ProjectPath& path) {
+    return boundary<ReadWorldCell>("world-cell.file.read", [&] {
+        impl_->check_owner();
+        if (!path.text().ends_with(".sharkcell"))
+            fail(ErrorCode::invalid_path, "World cell artifacts require a .sharkcell path",
+                 path.text());
+        auto bytes = checked(impl_->native->read(path, world_cell_maximum_payload_bytes));
+        const auto view = std::as_bytes(std::span{bytes.data(), bytes.size()});
+        auto cell = checked(decode_world_cell(view));
+        const auto digest = checked(sha256(view));
+        return ReadWorldCell{std::move(cell), digest, make_revision(path, std::move(bytes))};
+    });
+}
+
+Result<FileCommit> ProjectFiles::write_world_cell(const ProjectPath& path,
+                                                  std::span<const std::byte> bytes) {
+    return boundary<FileCommit>("world-cell.file.write", [&] {
+        impl_->check_owner();
+        if (!path.text().ends_with(".sharkcell"))
+            fail(ErrorCode::invalid_path, "World cell artifacts require a .sharkcell path",
+                 path.text());
+        static_cast<void>(checked(decode_world_cell(bytes)));
+        std::string owned(reinterpret_cast<const char*>(bytes.data()), bytes.size());
+        auto revision = make_revision(path, std::move(owned));
+        const auto durability = checked(impl_->native->replace(path, revision.data_->bytes, {},
+                                                               world_cell_maximum_payload_bytes));
+        return FileCommit{std::move(revision), durability};
+    });
+}
+
 Result<ReadSource<AssetMetadata>> ProjectFiles::read_asset_metadata(const ProjectPath& sidecar) {
     return boundary<ReadSource<AssetMetadata>>("asset.file.read_metadata", [&] {
         impl_->check_owner();

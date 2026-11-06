@@ -365,7 +365,12 @@ checks for explicit owner publication, retained outcomes, cooperative cancellati
 and resident/IO budgets under the [residency contract](../world-cell-residency.md).
 M05c's [handoff](../handoffs/M05c-world-traversal.md) records actual static triangle
 collision, authored walk-surface navigation, resident pins and owner-bound movement
-readiness. M05d is next; these local cell results do not close the full gate.
+readiness. M05d's [handoff](../handoffs/M05d-colocated-regions.md) connects
+co-located regional grants, overlapping interest, player/NPC travel, projectiles
+and original pending durable operations. The [authoring contract](../world-cell-authoring.md)
+adds retained human/terminal cell preparation and export. M05e next supplies
+consistent transfer cuts and persistence fencing; these local results do not
+close the full gate or establish separate-process authority transfer.
 
 After 11-13, 18/20 and M04. Implement in reviewable internal steps: (1) global
 cell/local coordinates and origin-safe content/collision/navigation streaming,

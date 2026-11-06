@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <limits>
 #include <thread>
 
@@ -28,6 +29,18 @@ net::TlsTransport* connection(std::span<net::TlsTransport* const> transports, st
 } // namespace
 
 struct CharacterCombat::Impl {
+    struct Projectile {
+        net::CombatAction request;
+        CombatRuleDecision decision;
+        net::CombatTargetId owner_life;
+        PhysicsBodyHandle owner_body;
+        PhysicsBodyHandle target_body;
+        EntityReference target_entity;
+        math::Vec3 position;
+        math::Vec3 direction;
+        std::uint32_t remaining_ticks{combat_projectile_lifetime_ticks};
+        std::uint64_t order;
+    };
     struct Actor {
         std::uint64_t connection;
         net::SessionSnapshot session;
@@ -49,6 +62,7 @@ struct CharacterCombat::Impl {
         bool fenced{false};
         bool detached{false};
         Transform detached_pose{};
+        std::optional<Projectile> projectile{};
     };
     std::thread::id owner{std::this_thread::get_id()};
     std::uint64_t scene_instance;
@@ -226,6 +240,35 @@ struct CharacterCombat::Impl {
         ++report.fenced;
         return {};
     }
+    Result<void> damage(Actor& actor, Actor& target, std::uint16_t amount,
+                        net::CombatActionResult& outcome, CharacterMovement& movement, Scene& scene,
+                        PhysicsWorld& physics, ScriptRuntime* scripts, CombatTick& report,
+                        bool& recorded) {
+        outcome.outcome = CombatOutcome::hit;
+        outcome.amount = std::min(target.health, amount);
+        target.health = static_cast<std::uint16_t>(target.health - outcome.amount);
+        if (target.health != 0)
+            return {};
+        target.respawn_tick = ticks + combat_respawn_ticks;
+        // Damage and the original receipt precede fallible native/script
+        // teardown. A failed cleanup retains this exact effect prefix.
+        ++report.deaths;
+        remember(actor, outcome);
+        report.outcomes.push_back({actor.stream, outcome});
+        actor.pending.reset();
+        actor.projectile.reset();
+        recorded = true;
+        if (auto stopped = suspend(target, scene, physics, scripts, report); !stopped)
+            return stopped;
+        if (auto released = movement.release(scene, physics, target.movement.stream); !released)
+            return released;
+        ++report.released_movements;
+        if (auto removed = physics.remove_body(scene, *target.body); !removed)
+            return removed;
+        ++report.removed_bodies;
+        target.body.reset();
+        return {};
+    }
 };
 
 CharacterCombat::CharacterCombat(std::unique_ptr<Impl> impl) noexcept : impl_(std::move(impl)) {}
@@ -324,7 +367,8 @@ Result<void> CharacterCombat::submit(storage::CharacterAuthority& authority,
     auto actor = std::find_if(impl_->actors.begin(), impl_->actors.end(),
                               [&](const auto& value) { return value.stream == action.stream; });
     if (actor == impl_->actors.end() || actor->health == 0 || actor->fenced || actor->detached ||
-        actor->pending || actor->accepted == std::numeric_limits<std::uint64_t>::max() ||
+        actor->pending || actor->projectile ||
+        actor->accepted == std::numeric_limits<std::uint64_t>::max() ||
         action.action_sequence != actor->accepted + 1 ||
         impl_->admission == std::numeric_limits<std::uint64_t>::max())
         return rejected(operation,
@@ -501,6 +545,70 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
         if (actor.pending)
             pending[pending_count++] = &actor;
     }
+    // Flights were admitted in earlier ticks, so their current native segment
+    // resolves before new launches. One retained flight blocks another action
+    // for that actor, preserving consecutive once-only presentation outcomes.
+    std::array<Impl::Actor*, movement_maximum_characters> flights{};
+    std::size_t flight_count = 0;
+    for (auto& actor : impl_->actors)
+        if (actor.projectile)
+            flights[flight_count++] = &actor;
+    std::sort(
+        flights.begin(), flights.begin() + static_cast<std::ptrdiff_t>(flight_count),
+        [](const auto* a, const auto* b) { return a->projectile->order < b->projectile->order; });
+    for (std::size_t index = 0; index < flight_count; ++index) {
+        auto& actor = *flights[index];
+        const auto flight = *actor.projectile;
+        net::CombatActionResult outcome{flight.request.action_sequence, flight.request.target,
+                                        CombatActionKind::projectile,
+                                        CombatOutcome::actor_unavailable, 0};
+        bool finished = true;
+        bool recorded = false;
+        const auto target =
+            std::find_if(impl_->actors.begin(), impl_->actors.end(),
+                         [&](const auto& value) { return value.target == flight.request.target; });
+        if (!actor.fenced && !actor.detached && actor.health != 0 &&
+            actor.target == flight.owner_life && actor.stream == flight.request.stream &&
+            actor.body == flight.owner_body && impl_->live_body(actor, scene, physics)) {
+            if (target == impl_->actors.end() || target->fenced || target->detached ||
+                target->health == 0 || target->entity != flight.target_entity ||
+                target->body != flight.target_body || !impl_->live_body(*target, scene, physics)) {
+                outcome.outcome = CombatOutcome::target_unavailable;
+            } else {
+                constexpr double distance = combat_projectile_speed / movement_tick_hz;
+                const auto to = flight.position + flight.direction * distance;
+                const PhysicsQueryFilter filter{actor.settings.collision_layer,
+                                                actor.settings.collision_mask, false,
+                                                flight.owner_body};
+                const auto ray = physics.raycast(scene, flight.position, to, filter, 32);
+                if (!ray) {
+                    // An unavailable/overflowed observation grants no hit.
+                    outcome.outcome = CombatOutcome::blocked;
+                } else if (!ray.value().hits.empty()) {
+                    ++report.projectile_impacts;
+                    if (ray.value().hits.front().body != flight.target_body) {
+                        outcome.outcome = CombatOutcome::blocked;
+                    } else if (auto hit = impl_->damage(actor, *target, flight.decision.damage,
+                                                        outcome, movement, scene, physics, scripts,
+                                                        report, recorded);
+                               !hit) {
+                        return fail(hit.error());
+                    }
+                } else if (flight.remaining_ticks == 1) {
+                    outcome.outcome = CombatOutcome::out_of_range;
+                } else {
+                    actor.projectile->position = to;
+                    --actor.projectile->remaining_ticks;
+                    finished = false;
+                }
+            }
+        }
+        if (finished && !recorded) {
+            impl_->remember(actor, outcome);
+            report.outcomes.push_back({actor.stream, outcome});
+            actor.projectile.reset();
+        }
+    }
     std::sort(pending.begin(), pending.begin() + static_cast<std::ptrdiff_t>(pending_count),
               [](const auto* a, const auto* b) { return a->pending_order < b->pending_order; });
     for (std::size_t index = 0; index < pending_count; ++index) {
@@ -526,11 +634,35 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
                 const auto from = source_body.value().pose.translation;
                 const auto to = target_body.value().pose.translation;
                 const auto distance = glm::length(to - from);
-                const auto range = request.kind == CombatActionKind::strike
-                                       ? combat_strike_range
+                const auto range = request.kind == CombatActionKind::strike ? combat_strike_range
+                                   : request.kind == CombatActionKind::projectile
+                                       ? combat_projectile_range
                                        : combat_interaction_range;
                 if (distance > range || distance == 0) {
                     outcome.outcome = CombatOutcome::out_of_range;
+                } else if (request.kind == CombatActionKind::projectile) {
+                    auto decision = impl_->rules->evaluate(
+                        {request.kind, impl_->ticks, actor.health, target->health, distance});
+                    if (!decision) {
+                        auto error = decision.error();
+                        error.context.request_id = std::to_string(request.action_sequence);
+                        error.context.entity_id =
+                            std::visit([](const auto& id) { return id.value().to_string(); },
+                                       actor.entity.identity);
+                        return fail(std::move(error));
+                    }
+                    if (!decision.value().allowed) {
+                        outcome.outcome = CombatOutcome::denied;
+                    } else {
+                        actor.ready_tick = impl_->ticks + decision.value().cooldown_ticks;
+                        actor.projectile.emplace(Impl::Projectile{
+                            request, decision.value(), actor.target, *actor.body, *target->body,
+                            target->entity, from, (to - from) / distance,
+                            combat_projectile_lifetime_ticks, actor.pending_order});
+                        ++report.projectile_launches;
+                        actor.pending.reset();
+                        continue;
+                    }
                 } else {
                     PhysicsQueryFilter filter{actor.settings.collision_layer,
                                               actor.settings.collision_mask, false, *actor.body};
@@ -556,34 +688,11 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
                             if (request.kind == CombatActionKind::interact) {
                                 outcome.outcome = CombatOutcome::interacted;
                             } else {
-                                outcome.outcome = CombatOutcome::hit;
-                                outcome.amount = std::min(target->health, decision.value().damage);
-                                target->health =
-                                    static_cast<std::uint16_t>(target->health - outcome.amount);
-                                if (target->health == 0) {
-                                    target->respawn_tick = impl_->ticks + combat_respawn_ticks;
-                                    // Damage/death are already committed even if subsequent
-                                    // native teardown fails. Preserve that exact prefix.
-                                    ++report.deaths;
-                                    impl_->remember(actor, outcome);
-                                    report.outcomes.push_back({actor.stream, outcome});
-                                    actor.pending.reset();
-                                    recorded = true;
-                                    if (auto stopped = impl_->suspend(*target, scene, physics,
-                                                                      scripts, report);
-                                        !stopped)
-                                        return fail(stopped.error());
-                                    if (auto released = movement.release(scene, physics,
-                                                                         target->movement.stream);
-                                        !released)
-                                        return fail(released.error());
-                                    ++report.released_movements;
-                                    if (auto removed = physics.remove_body(scene, *target->body);
-                                        !removed)
-                                        return fail(removed.error());
-                                    ++report.removed_bodies;
-                                    target->body.reset();
-                                }
+                                if (auto hit = impl_->damage(
+                                        actor, *target, decision.value().damage, outcome, movement,
+                                        scene, physics, scripts, report, recorded);
+                                    !hit)
+                                    return fail(hit.error());
                             }
                         }
                     }
@@ -633,6 +742,7 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
         actor.respawn_tick = 0;
         actor.accepted = 0;
         actor.pending.reset();
+        actor.projectile.reset();
         actor.outcome_count = 0;
         for (auto& retained : actor.outcomes)
             retained.reset();
@@ -746,6 +856,7 @@ CharacterCombat::reconnect(storage::CharacterAuthority& authority, net::TlsTrans
     actor->target = net::CombatTargetId{target.value()};
     actor->accepted = 0;
     actor->pending.reset();
+    actor->projectile.reset();
     actor->outcome_count = 0;
     for (auto& receipt : actor->outcomes)
         receipt.reset();
@@ -829,13 +940,18 @@ Result<CombatStats> CharacterCombat::stats() const {
         return rejected("server.combat.stats", "Combat requires its creating thread");
     std::size_t pending = 0;
     std::size_t detached = 0;
+    std::size_t projectiles = 0;
+    for (const auto& actor : impl_->actors)
+        if (actor.projectile)
+            ++projectiles;
     for (const auto& actor : impl_->actors)
         if (actor.detached)
             ++detached;
         else if (actor.pending)
             ++pending;
-    return CombatStats{impl_->ticks, impl_->actors.size() - detached, pending, impl_->faulted,
-                       detached};
+    return CombatStats{impl_->ticks, impl_->actors.size() - detached,
+                       pending,      impl_->faulted,
+                       detached,     projectiles};
 }
 
 } // namespace shark::server

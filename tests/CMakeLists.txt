@@ -61,6 +61,7 @@ add_executable(Tests
     core_net_movement_wire_tests.cpp
     core_movement_prediction_tests.cpp
     core_combat_wire_tests.cpp
+    core_projectile_wire_tests.cpp
     core_combat_client_tests.cpp
     combat_rule_tests.cpp
     core_net_interpolation_tests.cpp
@@ -179,7 +180,7 @@ if(TARGET EngineTools)
 endif()
 if(TARGET Shark::ImGui)
     add_executable(EditorGuiTests editor_gui_tests.cpp editor_inspector_gui_tests.cpp editor_asset_gui_tests.cpp editor_viewport_gui_tests.cpp editor_gizmo_gui_tests.cpp ../editor/gui_adapter.cpp ../editor/inspector_widget.cpp ../editor/inspector_panel.cpp ../editor/scene_panel.cpp ../editor/project_session.cpp ../editor/console_log.cpp ../editor/asset_widget.cpp ../editor/asset_panel.cpp ../editor/console_widget.cpp ../editor/workspace_panel.cpp ../editor/script_panel.cpp ../editor/viewport_navigation.cpp ../editor/viewport_gizmo.cpp ../editor/gizmo_widget.cpp ../editor/transform_drag.cpp ../editor/physics_panel.cpp ../editor/physics_debug.cpp)
-    target_sources(EditorGuiTests PRIVATE ../editor/prefab_panel.cpp)
+    target_sources(EditorGuiTests PRIVATE ../editor/prefab_panel.cpp ../editor/world_cell_panel.cpp)
     target_link_libraries(EditorGuiTests PRIVATE EngineClient EngineTools nlohmann_json::nlohmann_json Shark::ImGui Catch2::Catch2WithMain)
     target_include_directories(EditorGuiTests PRIVATE "${PROJECT_SOURCE_DIR}/editor")
     shark_configure_target(EditorGuiTests)
@@ -220,6 +221,8 @@ if(TARGET EngineStorage)
     set_tests_properties(shark.server.combat PROPERTIES LABELS "cpu;server;physics;integration" TIMEOUT 60)
     add_test(NAME shark.server.gameplay-lifecycle COMMAND ServerMovementTests "[gameplay-lifecycle]" --rng-seed 1337)
     set_tests_properties(shark.server.gameplay-lifecycle PROPERTIES LABELS "cpu;server;physics;script;integration" TIMEOUT 60)
+    add_test(NAME shark.server.regions COMMAND ServerMovementTests "[server-regions]" --rng-seed 1337)
+    set_tests_properties(shark.server.regions PROPERTIES LABELS "cpu;server;physics;integration" TIMEOUT 60)
     add_executable(GameplayProbe gameplay_probe.cpp)
     target_link_libraries(GameplayProbe PRIVATE EngineStorage)
     shark_configure_target(GameplayProbe)
@@ -661,7 +664,7 @@ add_test(NAME shark.core.movement-prediction COMMAND Tests "[movement-prediction
 set_tests_properties(shark.core.movement-prediction PROPERTIES LABELS "cpu;unit;integration" TIMEOUT 30)
 add_test(NAME shark.core.combat-rules COMMAND Tests "[combat-rules]" --rng-seed 1337)
 set_tests_properties(shark.core.combat-rules PROPERTIES LABELS "cpu;lua;unit;server" TIMEOUT 30)
-add_test(NAME shark.core.combat-wire COMMAND Tests "[combat-wire]" --rng-seed 1337)
+add_test(NAME shark.core.combat-wire COMMAND Tests "[combat-wire],[projectile-wire]" --rng-seed 1337)
 set_tests_properties(shark.core.combat-wire PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
 add_test(NAME shark.core.combat-client COMMAND Tests "[combat-client]" --rng-seed 1337)
 set_tests_properties(shark.core.combat-client PROPERTIES LABELS "cpu;unit" TIMEOUT 30)
@@ -1070,6 +1073,13 @@ if(TARGET SharkAuthor)
             LABELS "cpu;editor;integration" TIMEOUT 120 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
     endif()
     add_executable(AuthoringProtocolTests authoring_protocol_tests.cpp authoring_protocol_file_tests.cpp)
+    add_executable(AuthoringWorldCellTests authoring_world_cell_tests.cpp ../editor/project_session.cpp ../editor/console_log.cpp ../editor/world_cell_panel.cpp)
+    target_link_libraries(AuthoringWorldCellTests PRIVATE EngineTools nlohmann_json::nlohmann_json Catch2::Catch2WithMain)
+    target_include_directories(AuthoringWorldCellTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")
+    shark_configure_target(AuthoringWorldCellTests)
+    shark_classify_target(AuthoringWorldCellTests test)
+    add_test(NAME shark.tools.world-cell-authoring COMMAND AuthoringWorldCellTests "[world-cell-authoring]" --rng-seed 1337)
+    set_tests_properties(shark.tools.world-cell-authoring PROPERTIES LABELS "cpu;tooling;editor;integration" TIMEOUT 60 WORKING_DIRECTORY "${CMAKE_CURRENT_BINARY_DIR}")
     add_executable(AuthoringPrefabTests authoring_prefab_tests.cpp)
     target_link_libraries(AuthoringPrefabTests PRIVATE EngineTools nlohmann_json::nlohmann_json Catch2::Catch2WithMain)
     shark_configure_target(AuthoringPrefabTests)

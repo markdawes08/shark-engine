@@ -73,7 +73,8 @@ the existing exact committed scene capture. Existing owner-thread/revision/pendi
 guards apply. Dirty source remains dirty; history, source extras and files are
 untouched. Runtime bytes exclude authoring metadata, project paths, credentials,
 session state and region authority. Both human and terminal authoring consumers
-can use this shared service; no new editor panel or terminal method is advertised.
+use this shared service. M05d's [retained authoring adapters](world-cell-authoring.md)
+add terminal preparation/export/inspection and an Editor World cells tab.
 
 `LoadedWorldCell::load(bytes, assets)` validates the complete cell and uses
 LoadedPreparedScene to check every mesh reference, including hidden meshes,

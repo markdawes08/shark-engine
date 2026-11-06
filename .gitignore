@@ -62,6 +62,9 @@
 /CMakeFiles/
 /Testing/
 
+# Default development-cell export. Keep source/fixture cell formats eligible.
+/World.sharkcell
+
 # Reserved ProjectFiles coordination, disposable development cache and unpublished stages.
 .shark-write.lock
 .shark-development-cache

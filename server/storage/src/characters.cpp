@@ -517,6 +517,45 @@ CharacterAuthority::control_replication(net::ReplicationServer& publisher,
     return publisher.control(*impl_->sessions, transport, control, now);
 }
 
+Result<net::InterestPublishResult>
+CharacterAuthority::publish_interest(net::InterestServer& publisher, Scene& scene,
+                                     std::span<const net::InterestEntry> catalog,
+                                     net::TlsTransport& transport, MonotonicTime now) {
+    constexpr auto operation = "storage.characters.interest.publish";
+    if (auto checked = impl_->check(operation); !checked)
+        return checked.error();
+    SceneQueryOptions options;
+    options.fields = {false, false, false};
+    options.page_size = 1;
+    options.scan_budget = 1;
+    auto page = scene.query_entities(options);
+    if (!page)
+        return page.error();
+    const auto* scope = std::get_if<RegionSceneScope>(&page.value().scope());
+    if (!scope || scope->world != impl_->world)
+        return rejected(operation, "Interest requires the durable authoritative world");
+    return publisher.publish(scene, catalog, *impl_->sessions, transport, now);
+}
+
+Result<net::ReplicationControlResult> CharacterAuthority::control_interest(
+    net::InterestServer& publisher, Scene& scene, std::span<const net::InterestEntry> catalog,
+    net::TlsTransport& transport, const net::ReplicationControl& control, MonotonicTime now) {
+    constexpr auto operation = "storage.characters.interest.control";
+    if (auto checked = impl_->check(operation); !checked)
+        return checked.error();
+    SceneQueryOptions options;
+    options.fields = {false, false, false};
+    options.page_size = 1;
+    options.scan_budget = 1;
+    auto page = scene.query_entities(options);
+    if (!page)
+        return page.error();
+    const auto* scope = std::get_if<RegionSceneScope>(&page.value().scope());
+    if (!scope || scope->world != impl_->world)
+        return rejected(operation, "Interest requires the durable authoritative world");
+    return publisher.control(scene, catalog, *impl_->sessions, transport, control, now);
+}
+
 Result<CharacterRecord> CharacterAuthority::load(net::TlsTransport& transport,
                                                  const net::SessionEnvelope& authority,
                                                  MonotonicTime now) {

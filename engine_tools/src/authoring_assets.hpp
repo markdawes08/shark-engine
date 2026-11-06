@@ -1,5 +1,6 @@
 #pragma once
 
+#include "authoring_world_cells.hpp"
 #include "shark/tools/client_export.hpp"
 
 #include <nlohmann/json.hpp>
@@ -56,6 +57,10 @@ class AuthoringAssets final {
                                                               const AssetTargetProfile& target);
     [[nodiscard]] Result<void> validate_export(const PreparedClientExport& candidate,
                                                const AuthoredScene& owner);
+    [[nodiscard]] AuthoringPreparedCell prepare_cell(const AuthoredScene& owner,
+                                                     const AuthoringCellRequest& request);
+    [[nodiscard]] Result<void> validate_cell(const AuthoringPreparedCell& candidate,
+                                             const AuthoredScene& owner);
 
   private:
     struct Impl;

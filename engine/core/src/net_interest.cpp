@@ -252,7 +252,7 @@ Result<Selection> select(Scene& scene, std::span<const InterestEntry> catalog,
     std::size_t eligible_count = 0;
     for (std::size_t index = 0; index < catalog.size(); ++index) {
         const auto& row = *rows[index];
-        if (!authorized(row, session.character)) {
+        if (!row.present || !authorized(row, session.character)) {
             continue;
         }
         std::size_t first = 0;

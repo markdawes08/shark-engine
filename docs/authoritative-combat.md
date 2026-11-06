@@ -6,23 +6,30 @@ under [ADR 0061](architecture/0061-authoritative-combat.md). Follow the
 and [testing policy](testing-policy.md). The host supplies trusted captured Lua
 source; players cannot submit scripts, component writes, damage, poses or rewards.
 
+M05d adds [bounded authoritative point projectiles](authoritative-projectiles.md)
+through this same owner and lifecycle. The original melee/interaction behavior
+and version-1 bytes remain compatible; projectile actions/outcomes use combat
+payload version 2.
+
 ## Initial combat profile
 
 | Setting | Selected behavior |
 | --- | --- |
 | Time | 20 Hz, three physics substeps; combat resolves after committed movement |
 | Participants | At most 32 explicitly registered, combat-enabled player characters in one authoritative Region Scene |
-| Health | 100 per life; strike damage chosen by server Lua in 1..25 |
+| Health | 100 per life; strike/projectile damage chosen by server Lua in 1..25 |
 | Strike | Current 3D center distance at most 2.5 m; first compatible non-trigger ray hit must be the target |
 | Interaction | Current range at most 3 m and the same line-of-sight rule; confirmed non-economic interaction outcome, zero damage |
-| Cooldown | Shared per actor; strike 10..200 ticks, interaction 5..200, chosen by bounded server rules |
+| Projectile (M05d) | Launch range 10 m; straight point flight at 10 m/s for at most 20 ticks, current native segment collision |
+| Cooldown | Shared per actor; strike/projectile 10..200 ticks, interaction 5..200, chosen by bounded server rules |
 | Respawn | 60 ticks after death, at the captured trusted spawn transform |
 | Lag compensation | No rewind, client timestamp or historical target pose; window zero |
-| Admission/history | One pending action per actor; global admission order; eight retained outcomes per actor/life |
+| Admission/history | One pending action or retained flight per actor; global admission order; eight retained outcomes per actor/life |
 
 The reference rules return strike damage 25/cooldown 10 and interaction cooldown
-5. Registered actors are attackable under this initial profile. Factions, ability
-content, projectiles and wider combat models are not inferred from these values.
+5. Registered actors are attackable under this profile. M05d's explicit projectile
+extension has its own bounds; factions, wider ability content and other combat
+models are not inferred from these values.
 LOCAL-MMO-1 load and network correction/latency distributions retain the full
 connected acceptance owners. Revisit this explicit profile using those measurements.
 
@@ -36,7 +43,7 @@ bind. Combat/life target fields carry no Scene/native handle or durable entity
 ID; the existing SessionEnvelope retains the caller's own CharacterId.
 
 `submit` requires its live stream, a consecutive nonwrapping action ID, one free
-pending slot, actual ready mTLS/session ownership and checked actor/target body
+pending/flight slot, actual ready mTLS/session ownership and checked actor/target body
 generations. Stale, self, dead or unknown targets reject before shared session
 admission. Existing Heartbeat admission then validates the SessionEnvelope and
 spends the same exact-next sequence/rate budget used by movement and replication.
@@ -47,10 +54,15 @@ One `step` fences live connections/sessions before fixed callbacks, calls the
 retained CharacterMovement exactly once, then rechecks source/target generations.
 Optional entity-script/contact ordering follows the
 [lifecycle contract](gameplay-lifecycle.md). It resolves pending actions
-in admission order using committed current poses. Cooldown, current 3D range and
-complete bounded ray checks precede Lua. Overflow or an unavailable ray rejects
-line of sight; no partial result authorizes a hit. Triggers are ignored and body
-layer/mask compatibility remains bilateral. An earlier death prevents a later
+in admission order using committed current poses. For strike/interaction,
+cooldown, current 3D range and complete bounded ray checks precede Lua. Overflow
+or an unavailable ray rejects line of sight; no partial result authorizes a hit.
+Triggers are ignored and body
+layer/mask compatibility remains bilateral. Previously launched projectiles
+advance before new pending actions, using current native segments and their
+captured participant fences; launch evaluates Lua once and its final outcome
+arrives later. The [projectile contract](authoritative-projectiles.md) defines that
+ordering and backpressure. An earlier death prevents a later
 queued action from that actor; the profile does not implement simultaneous trades.
 
 Range/cooldown denials are owned fixed-tick outcomes for the admitted action, not
@@ -72,15 +84,16 @@ Required entry:
 
 ```lua
 function on_combat(kind, tick, actor_health, target_health, distance)
-  if kind == 1 then return true, 25, 10 end
+  if kind == 1 or kind == 3 then return true, 25, 10 end
   return true, 0, 5
 end
 ```
 
-Kinds are strike 1 and interaction 2. Inputs are bounded owned server observations;
+Kinds are strike 1, interaction 2 and projectile 3. Inputs are bounded owned server observations;
 tick fits a signed Lua integer and both participants are alive. Exactly three
 returns are required: boolean allowed, integer damage and integer cooldown ticks.
-Allowed strike damage is 1..25; interaction damage is zero. Cooldowns use the
+Allowed strike/projectile damage is 1..25; interaction damage is zero. Projectile
+rules evaluate at launch and charge cooldown then. Cooldowns use the
 profile table. Denial requires zero damage/cooldown. Wrong types/counts or bounds
 fault the rule owner; a failed evaluation can retain prior Lua global changes.
 
@@ -129,7 +142,7 @@ retained action outcomes. Views may expire sessions and advance the monotonic
 clock fence; a regressed subsequent tick rejects before native work. Views and
 prediction never authorize later mutations or persist health/rewards.
 
-## Combat wire protocol 1
+## Combat wire protocols 1 and 2
 
 Authenticated clients send outer kind 11 (`combat_action`); servers send kind 12
 (`combat_state`). Diagnostic TLS and reversed roles reject. The independent
@@ -145,6 +158,14 @@ dead state has a respawn tick and no movement. Targets are sorted unique nonself
 tokens with health/respawn observations. Up to 32 targets and eight consecutive
 ordered outcomes fit the 2,048-byte codec bound (current maximum 1,253 bytes).
 State kind 2 is a four-byte generic rejection without internal diagnostics.
+
+Version 2 uses these same field layouts for projectile action kind 3 and its
+final outcomes. Decoders accept versions 1/2 but reject projectile values under
+version 1. Encoders keep exact version-1 bytes when no projectile value is
+present, and emit version 2 for a projectile action or a state whose retained
+outcomes include one. The original generic rejection stays version 1. Unknown
+versions/kinds remain errors; this does not add capability negotiation. See the
+[projectile compatibility contract](authoritative-projectiles.md#combat-wire-compatibility).
 
 The [handoff](handoffs/M04c-authoritative-combat.md) records actual two-client TLS,
 native death/respawn, rule and codec evidence. [M04e](handoffs/M04e-gameplay-acceptance.md)

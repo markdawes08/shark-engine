@@ -57,7 +57,7 @@ these file guarantees to migrated documents and the existing authored owner.
 Native fault cases preserve complete dirty snapshots; process interruptions are
 followed by exact scene activation, an authored recovery save and another reopen.
 
-Reads are bounded to 4 MiB before decoding and return owned documents, the
+Source-document reads are bounded to 4 MiB before decoding and return owned documents, the
 original source schema version and an opaque `FileRevision`. This token binds
 the canonical root, relative path and exact original bytes. Copies share
 immutable bytes. It is not a timestamp, file size, raw native identity or a
@@ -117,6 +117,30 @@ Text file publication is separate from Scene undo/redo and mutation retries.
 `source.file.read_text` and `source.file.write_text` with path context.
 Before-publication failures preserve old bytes; a returned `FileCommit` always
 means publication occurred, even when its durability confirmation is limited.
+
+## Typed world-cell artifacts
+
+`read_world_cell(path)` and `write_world_cell(path, bytes)` use a separate typed
+binary boundary for project-relative lowercase `.sharkcell` paths. The complete
+payload must satisfy the existing [world-cell codec](world-cells.md), including
+its encoded byte bound, digest, static-content profile and geometry validation.
+Reads return `ReadWorldCell { cell, digest, revision }`: owned decoded values,
+SHA-256 of the complete encoded payload and an exact FileRevision. Decoding alone
+does not validate external runtime asset availability or freshness.
+
+Writes are always create-only; there is no replacement-token overload. The
+existing destination remains unchanged on rejection. Root ownership, owner-thread
+checks, contained paths, existing parent directories and reserved sibling stages
+are shared with source publication. A successful write returns the original
+`FileCommit`, including any post-publication durability limitation. It does not
+acknowledge a Scene save, change authored history or publish external mesh assets.
+No parent directories are created and no binary data passes through script text.
+
+The retained [authoring adapter](world-cell-authoring.md) adds exact Scene and
+catalog/cache fences, permitted fresh asset closure and a required prepared digest
+before calling this file API. Its readonly prepare/inspect reports expose no
+binary or additional file-token service. Inspecting matching current bytes after
+a lost reply does not recover the original publication/durability receipt.
 
 ## Publication and durability
 

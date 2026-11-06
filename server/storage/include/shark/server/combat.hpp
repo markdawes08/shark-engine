@@ -39,6 +39,8 @@ struct CombatTick {
     // Native movement and earlier effects are owned observations, not rollback.
     // On error the owner is permanently faulted; never repeat this tick.
     std::optional<Error> error{};
+    std::size_t projectile_launches{0};
+    std::size_t projectile_impacts{0};
 };
 struct CombatStats {
     std::uint64_t completed_ticks;
@@ -46,6 +48,7 @@ struct CombatStats {
     std::size_t pending_actions;
     bool faulted;
     std::size_t detached_actors{0};
+    std::size_t pending_projectiles{0};
 };
 struct CombatReconnectReport {
     std::optional<net::CombatState> state;
