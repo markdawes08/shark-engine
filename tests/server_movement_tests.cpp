@@ -28,14 +28,14 @@ namespace fs = std::filesystem;
 
 template <typename T> T take(Result<T> result) {
     if (!result) {
-        INFO(result.error().context.operation << ": " << result.error().message);
+        UNSCOPED_INFO(result.error().context.operation << ": " << result.error().message);
     }
     REQUIRE(result);
     return std::move(result).value();
 }
 void take(Result<void> result) {
     if (!result) {
-        INFO(result.error().context.operation << ": " << result.error().message);
+        UNSCOPED_INFO(result.error().context.operation << ": " << result.error().message);
     }
     REQUIRE(result);
 }
@@ -1644,3 +1644,5 @@ function on_combat(kind,tick,actor,target,distance) return true,25,10 end
 
 #include "server_region_cases.hpp"
 #include "server_transfer_cases.hpp"
+
+#include "server_region_process_cases.hpp"

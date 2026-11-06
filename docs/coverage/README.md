@@ -8,13 +8,19 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
+M05f's [handoff](../handoffs/M05f-process-region-execution.md) records real owned
+Server children, native reconstruction, portable Lua value state, atomic island
+writer batches, bounded actual-session routing and source/destination recovery.
+The [process contract](../region-process-execution.md) keeps actual gateway owners
+and original durable requests alive while moving the complete interacting island.
+M05g retains connected authored-world acceptance. Full REQ-M05 remains NOT_RUN.
+
 M05e passes its selected current-machine gate. Its
 [handoff](../handoffs/M05e-fenced-region-handoffs.md) records latest-tick cuts,
 original queues/flights/worker context, retained native/Lua/session owners and
 schema-4 transactional writer fencing. The [cut](../gameplay-transfer-cuts.md)
-and [ownership](../regional-ownership.md) contracts keep portable reconstruction,
-actual separate-process routing/recovery and connected qualification with M05f-g.
-Full REQ-M05 remains NOT_RUN.
+and [ownership](../regional-ownership.md) contracts remain applicable to M05f's
+separate portable reconstruction and process routing/recovery.
 
 M05d's [handoff](../handoffs/M05d-colocated-regions.md) connects co-located regional
 ownership, overlapping interest, native player/NPC travel, targeted projectiles

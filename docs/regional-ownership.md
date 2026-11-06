@@ -96,8 +96,11 @@ worker and reopens the exact actual Store, hydrating its ownership rows. It rota
 runtime/session identities as before. A post-COMMIT error can therefore resolve to
 the already advanced writer; the old ticket/session never becomes valid again.
 RegionWorld may adopt only an exact persisted last-transfer match to its original
-cut. Recovery from a lost simulation process still needs M05f's native/script
-state and routing work; a SQL digest is not a restartable gameplay image.
+cut. [Process execution](region-process-execution.md) adds the separately validated
+portable image, staged native owners, complete writer batches and child recovery.
+A SQL digest alone is not a restartable gameplay image. Whole-island batch commits
+retain common image/tick/destination context and reject partial retries or later
+attempts to split that retained source group, without changing schema 4.
 
 Store schema 4 adds validated ownership rows and last-cut fields. Ordinary open
 accepts only current schema. Explicit offline migration supports exact historical

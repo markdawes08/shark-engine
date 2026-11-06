@@ -371,8 +371,10 @@ and original pending durable operations. The [authoring contract](../world-cell-
 adds retained human/terminal cell preparation and export. M05e's
 [handoff](../handoffs/M05e-fenced-region-handoffs.md) records consistent final
 cuts, retained queues/flights/Lua/native owners and schema-4 transactional writer
-fencing. M05f next supplies portable state and actual separate-process transfer
-and recovery; these local results do not close the full gate.
+fencing. M05f's [handoff](../handoffs/M05f-process-region-execution.md) adds actual
+Server child execution, portable native/rule state, complete island writer CAS,
+bounded routing and child loss/partition recovery. M05g retains connected authored
+acceptance, precision and budgets; these functional results do not close the full gate.
 
 After 11-13, 18/20 and M04. Implement in reviewable internal steps: (1) global
 cell/local coordinates and origin-safe content/collision/navigation streaming,

@@ -106,6 +106,11 @@ void encode(CutEncoder& out, const storage::RegionTransferResult& value) {
     encode(out, value.writer);
     out.value(value.replayed);
 }
+void encode(CutEncoder& out, const std::vector<storage::RegionTransferResult>& values) {
+    out.value(static_cast<std::uint64_t>(values.size()));
+    for (const auto& value : values)
+        encode(out, value);
+}
 void encode(CutEncoder& out, const storage::EconomyState& value) {
     out.value(value.currency);
     out.value(value.item_units);
@@ -162,6 +167,9 @@ void encode(CutEncoder& out, const storage::RuntimePendingCut& value) {
     optional(out, value.transfer, [&](const auto& request) { encode(out, request); });
     optional(out, value.writer, [&](const auto& writer) { encode(out, writer); });
     optional(out, value.region_transfer, [&](const auto& request) { encode(out, request); });
+    out.value(static_cast<std::uint64_t>(value.region_transfers.size()));
+    for (const auto& request : value.region_transfers)
+        encode(out, request);
     out.value(value.control);
     out.value(value.timed_out);
     optional(out, value.outcome, [&](const auto& outcome) {

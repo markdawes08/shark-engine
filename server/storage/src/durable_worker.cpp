@@ -74,6 +74,8 @@ StoreResult execute_store(Store& store, const StoreCommand& command) {
                 return boxed(store.region_ownership(value.character));
             else if constexpr (std::is_same_v<T, RegionTransferRequest>)
                 return boxed(store.commit_region(value));
+            else if constexpr (std::is_same_v<T, CommitRegions>)
+                return boxed(store.commit_regions(value.requests));
             else
                 return boxed(store.transfer(value));
         },

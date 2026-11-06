@@ -11,6 +11,7 @@
 #include <filesystem>
 #include <memory>
 #include <optional>
+#include <span>
 #include <vector>
 
 namespace shark::storage {
@@ -280,6 +281,10 @@ class Store final {
     [[nodiscard]] Result<std::optional<RegionOwnership>>
     region_ownership(net::CharacterId character) const;
     [[nodiscard]] Result<RegionTransferResult> commit_region(const RegionTransferRequest& request);
+    // One interacting island advances all captured writers atomically. An exact
+    // complete retained replay is read-only; mixed old/new batches reject.
+    [[nodiscard]] Result<std::vector<RegionTransferResult>>
+    commit_regions(std::span<const RegionTransferRequest> requests);
 
     // Trusted provisioning only, once per character. No arbitrary later grants.
     [[nodiscard]] Result<EconomyRecord> initialize_economy(net::AccountId account,

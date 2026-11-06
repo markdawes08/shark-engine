@@ -17,15 +17,8 @@ bool same_session(const net::SessionSnapshot& a, const net::SessionSnapshot& b) 
     return b.active && b.ready && a.session == b.session && a.account == b.account &&
            a.character == b.character && a.ownership_epoch == b.ownership_epoch;
 }
-net::TlsTransport* connection(std::span<net::TlsTransport* const> transports, std::uint64_t id) {
-    for (auto* transport : transports) {
-        if (!transport)
-            continue;
-        const auto peer = transport->authenticated_peer();
-        if (peer && peer.value().connection_id == id)
-            return transport;
-    }
-    return nullptr;
+bool connection(std::span<const std::uint64_t> connections, std::uint64_t id) {
+    return id != 0 && std::find(connections.begin(), connections.end(), id) != connections.end();
 }
 } // namespace
 
@@ -346,18 +339,26 @@ Result<CombatBinding> CharacterCombat::bind(storage::CharacterAuthority& authori
                                             CharacterMovement& movement, const Scene& scene,
                                             const PhysicsWorld& physics, EntityHandle entity,
                                             MonotonicTime now) {
+    net::TlsTransport* peer = &transport;
+    LocalGameplayAccess access{authority, std::span{&peer, 1}};
+    return bind_host(access, LocalGameplayAccess::connection_id(transport), movement, scene,
+                     physics, entity, now);
+}
+
+Result<CombatBinding> CharacterCombat::bind_host(GameplayAccess& access,
+                                                 std::uint64_t connection_id,
+                                                 CharacterMovement& movement, const Scene& scene,
+                                                 const PhysicsWorld& physics, EntityHandle entity,
+                                                 MonotonicTime now) {
     constexpr auto operation = "server.combat.bind";
     if (auto valid = impl_->context(scene, physics, now, operation); !valid)
         return valid.error();
-    auto session = authority.authorize_entity(transport, scene, entity, now);
+    auto session = access.authorize(connection_id, scene, entity, now);
     if (!session)
         return session.error();
-    auto peer = transport.authenticated_peer();
-    if (!peer)
-        return peer.error();
     if (impl_->actors.size() == movement_maximum_characters ||
         std::any_of(impl_->actors.begin(), impl_->actors.end(), [&](const auto& actor) {
-            return actor.connection == peer.value().connection_id ||
+            return actor.connection == connection_id ||
                    actor.session.account == session.value().account ||
                    actor.entity.handle == entity;
         }))
@@ -379,11 +380,10 @@ Result<CombatBinding> CharacterCombat::bind(storage::CharacterAuthority& authori
         return stream.error();
     if (!target)
         return target.error();
-    auto bound = movement.bind(authority, transport, scene, physics, entity, now);
+    auto bound = movement.bind_host(access, connection_id, scene, physics, entity, now);
     if (!bound)
         return bound.error();
-    impl_->actors.push_back({peer.value().connection_id, session.value(),
-                             net::CombatStreamId{stream.value()},
+    impl_->actors.push_back({connection_id, session.value(), net::CombatStreamId{stream.value()},
                              net::CombatTargetId{target.value()}, reference.value(), body.value(),
                              *state.value().settings, state.value().pose, bound.value()});
     impl_->last_time = now;
@@ -395,6 +395,15 @@ Result<void> CharacterCombat::submit(storage::CharacterAuthority& authority,
                                      net::TlsTransport& transport, const Scene& scene,
                                      const PhysicsWorld& physics, const net::CombatAction& action,
                                      MonotonicTime now) {
+    net::TlsTransport* peer = &transport;
+    LocalGameplayAccess access{authority, std::span{&peer, 1}};
+    return submit_host(access, LocalGameplayAccess::connection_id(transport), scene, physics,
+                       action, now);
+}
+
+Result<void> CharacterCombat::submit_host(GameplayAccess& access, std::uint64_t connection_id,
+                                          const Scene& scene, const PhysicsWorld& physics,
+                                          const net::CombatAction& action, MonotonicTime now) {
     constexpr auto operation = "server.combat.submit";
     if (auto valid = impl_->context(scene, physics, now, operation); !valid)
         return valid;
@@ -409,14 +418,10 @@ Result<void> CharacterCombat::submit(storage::CharacterAuthority& authority,
         impl_->admission == std::numeric_limits<std::uint64_t>::max())
         return rejected(operation,
                         "Combat action requires its live stream, next identity and capacity");
-    auto session = authority.authorize_entity(transport, scene, actor->entity.handle, now);
+    auto session = access.authorize(connection_id, scene, actor->entity.handle, now);
     if (!session)
         return session.error();
-    auto peer = transport.authenticated_peer();
-    if (!peer)
-        return peer.error();
-    if (peer.value().connection_id != actor->connection ||
-        !same_session(actor->session, session.value()))
+    if (connection_id != actor->connection || !same_session(actor->session, session.value()))
         return rejected(operation, "Combat action belongs to a different session");
     auto target = std::find_if(impl_->actors.begin(), impl_->actors.end(),
                                [&](const auto& value) { return value.target == action.target; });
@@ -429,8 +434,7 @@ Result<void> CharacterCombat::submit(storage::CharacterAuthority& authority,
         return body.error();
     if (auto valid = impl_->executing(); !valid)
         return valid;
-    if (auto admitted = authority.apply(transport, net::HeartbeatRequest{action.authority}, now);
-        !admitted)
+    if (auto admitted = access.admit(connection_id, action.authority, now); !admitted)
         return admitted.error();
     actor->pending = action;
     actor->accepted = action.action_sequence;
@@ -445,6 +449,33 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
                                          std::span<net::TlsTransport* const> transports,
                                          MonotonicTime now, ScriptRuntime* scripts,
                                          const WorldTraversal* traversal) {
+    if (auto valid = movement.check_traversal(traversal); !valid)
+        return valid.error();
+    if (traversal) {
+        if (auto valid = traversal->check_context(scene, physics); !valid)
+            return valid.error();
+    }
+    if (auto valid = impl_->context(scene, physics, now, "server.combat.step"); !valid)
+        return valid.error();
+    if (transports.size() > movement_maximum_characters)
+        return rejected("server.combat.step", "Invalid bounded live transport inventory");
+    std::array<std::uint64_t, movement_maximum_characters> connections{};
+    for (std::size_t i = 0; i < transports.size(); ++i) {
+        if (!transports[i])
+            return rejected("server.combat.step", "Null transport in gameplay tick");
+        connections[i] = LocalGameplayAccess::connection_id(*transports[i]);
+    }
+    LocalGameplayAccess access{authority, transports};
+    return step_host(access, movement, scene, physics,
+                     std::span<const std::uint64_t>{connections}.first(transports.size()), now,
+                     scripts, traversal);
+}
+
+Result<CombatTick> CharacterCombat::step_host(GameplayAccess& access, CharacterMovement& movement,
+                                              Scene& scene, PhysicsWorld& physics,
+                                              std::span<const std::uint64_t> live_connections,
+                                              MonotonicTime now, ScriptRuntime* scripts,
+                                              const WorldTraversal* traversal) {
     constexpr auto operation = "server.combat.step";
     if (auto checked = movement.check_traversal(traversal); !checked)
         return checked.error();
@@ -465,22 +496,16 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
         report.error = std::move(error);
         return std::move(report);
     };
-    if (transports.size() > movement_maximum_characters ||
-        std::any_of(transports.begin(), transports.end(),
-                    [](auto* transport) { return transport == nullptr; }))
-        return rejected(operation, "Invalid bounded live transport inventory");
+    if (live_connections.size() > movement_maximum_characters)
+        return rejected(operation, "Invalid bounded live connection inventory");
     auto checked_scripts = impl_->script_owner(scripts);
     if (!checked_scripts)
         return checked_scripts.error();
-    std::array<std::uint64_t, movement_maximum_characters> connection_ids{};
-    for (std::size_t index = 0; index < transports.size(); ++index) {
-        auto peer = transports[index]->authenticated_peer();
-        if (!peer)
-            continue;
-        const auto end = connection_ids.begin() + static_cast<std::ptrdiff_t>(index);
-        if (std::find(connection_ids.begin(), end, peer.value().connection_id) != end)
-            return rejected(operation, "Duplicate transport in gameplay tick");
-        connection_ids[index] = peer.value().connection_id;
+    for (std::size_t i = 0; i < live_connections.size(); ++i) {
+        const auto end = live_connections.begin() + static_cast<std::ptrdiff_t>(i);
+        if (live_connections[i] != 0 &&
+            std::find(live_connections.begin(), end, live_connections[i]) != end)
+            return rejected(operation, "Duplicate connection in gameplay tick");
     }
     impl_->script_instance = checked_scripts.value();
     impl_->script_mode_bound = true;
@@ -488,10 +513,10 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
     for (auto& actor : impl_->actors) {
         if (actor.detached)
             continue;
-        auto* transport = connection(transports, actor.connection);
+        const bool present = connection(live_connections, actor.connection);
         const auto session =
-            transport ? authority.authorize_entity(*transport, scene, actor.entity.handle, now)
-                      : Result<net::SessionSnapshot>{rejected(operation, "Connection ended")};
+            present ? access.authorize(actor.connection, scene, actor.entity.handle, now)
+                    : Result<net::SessionSnapshot>{rejected(operation, "Connection ended")};
         if (!session || !same_session(actor.session, session.value())) {
             if (auto detached = impl_->detach(actor, movement, scene, physics, scripts, report);
                 !detached)
@@ -520,7 +545,7 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
         report.movement.contacts = std::move(prior).value();
     }
     auto before_contacts = std::move(report.movement.contacts);
-    auto moved = movement.step(authority, scene, physics, transports, now, traversal);
+    auto moved = movement.step_host(access, scene, physics, live_connections, now, traversal);
     if (!moved) {
         impl_->faulted = true;
         // Movement can fail while publishing an already completed native tick.
@@ -556,10 +581,10 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
                 pending[pending_count++] = &actor;
             continue;
         }
-        auto* transport = connection(transports, actor.connection);
+        const bool present = connection(live_connections, actor.connection);
         const auto session =
-            transport ? authority.authorize_entity(*transport, scene, actor.entity.handle, now)
-                      : Result<net::SessionSnapshot>{rejected(operation, "Connection ended")};
+            present ? access.authorize(actor.connection, scene, actor.entity.handle, now)
+                    : Result<net::SessionSnapshot>{rejected(operation, "Connection ended")};
         actor.fenced = !session || !same_session(actor.session, session.value());
         if (actor.health != 0) {
             const auto found =
@@ -759,8 +784,8 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
         if (actor.fenced || actor.detached || actor.health != 0 ||
             actor.respawn_tick > impl_->ticks)
             continue;
-        auto* transport = connection(transports, actor.connection);
-        if (!transport)
+        const bool present = connection(live_connections, actor.connection);
+        if (!present)
             continue;
         auto stream = generate_stable_id();
         auto target = generate_stable_id();
@@ -778,7 +803,8 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
         if (auto placed = physics.teleport(scene, *actor.body, actor.spawn); !placed)
             return fail(placed.error());
         ++report.teleported_bodies;
-        auto bound = movement.bind(authority, *transport, scene, physics, actor.entity.handle, now);
+        auto bound =
+            movement.bind_host(access, actor.connection, scene, physics, actor.entity.handle, now);
         if (!bound)
             return fail(bound.error());
         const auto previous = actor.target;
@@ -938,21 +964,28 @@ Result<net::CombatState> CharacterCombat::view(storage::CharacterAuthority& auth
                                                const PhysicsWorld& physics,
                                                std::span<const net::CombatTargetId> visible,
                                                MonotonicTime now) const {
+    net::TlsTransport* peer = &transport;
+    LocalGameplayAccess access{authority, std::span{&peer, 1}};
+    return view_host(access, LocalGameplayAccess::connection_id(transport), scene, physics, visible,
+                     now);
+}
+
+Result<net::CombatState> CharacterCombat::view_host(GameplayAccess& access,
+                                                    std::uint64_t connection_id, const Scene& scene,
+                                                    const PhysicsWorld& physics,
+                                                    std::span<const net::CombatTargetId> visible,
+                                                    MonotonicTime now) const {
     constexpr auto operation = "server.combat.view";
     if (auto valid = impl_->context(scene, physics, now, operation); !valid)
         return valid.error();
     if (visible.size() > net::combat_maximum_targets)
         return rejected(operation, "Combat visibility selection exceeds its bound");
-    auto peer = transport.authenticated_peer();
-    if (!peer)
-        return peer.error();
     const auto actor =
-        std::find_if(impl_->actors.begin(), impl_->actors.end(), [&](const auto& value) {
-            return value.connection == peer.value().connection_id;
-        });
+        std::find_if(impl_->actors.begin(), impl_->actors.end(),
+                     [&](const auto& value) { return value.connection == connection_id; });
     if (actor == impl_->actors.end() || actor->detached)
         return rejected(operation, "Combat observer has no live binding");
-    auto session = authority.authorize_entity(transport, scene, actor->entity.handle, now);
+    auto session = access.authorize(connection_id, scene, actor->entity.handle, now);
     if (!session)
         return session.error();
     if (!same_session(actor->session, session.value()))
@@ -1108,6 +1141,137 @@ Result<CombatCut> CharacterCombat::capture_cut(const Scene& scene,
         return cut;
     } catch (...) {
         return rejected(operation, "Cannot allocate bounded combat cut",
+                        ErrorCode::execution_failed);
+    }
+}
+
+Result<CombatRulesPortableState> CharacterCombat::capture_portable_rules() const {
+    if (auto valid = impl_->check("server.combat.rules.capture", true); !valid)
+        return valid.error();
+    return impl_->rules->capture_portable();
+}
+
+Result<std::unique_ptr<CharacterCombat>> CharacterCombat::stage_transfer(
+    const Scene& scene, const PhysicsWorld& physics, const CombatCut& source,
+    std::span<const GameplayTransferBinding> bindings, MonotonicTime now,
+    std::unique_ptr<CombatRules> rules, std::shared_ptr<ExecutionFence> fence) {
+    constexpr auto operation = "server.combat.transfer.stage";
+    if (auto valid = validate_gameplay_transfer_bindings(scene, physics, bindings); !valid)
+        return valid.error();
+    if (!fence || !rules || now < MonotonicTime::zero() ||
+        source.actors.size() > movement_maximum_characters ||
+        bindings.size() > physics_maximum_bodies || source.script_instance || source.rules.faulted)
+        return rejected(operation, "Unsupported or invalid staged combat context");
+    auto portable = rules->capture_portable();
+    if (!portable)
+        return portable.error();
+    if (portable.value().evaluations != source.rules.evaluations)
+        return rejected(operation, "Restored rules evaluation watermark differs from cut");
+    const auto permit = fence->permit();
+    if (!permit)
+        return permit.error();
+    if (auto valid = fence->check(permit.value(), true); !valid)
+        return valid.error();
+    if (fence->check(permit.value()))
+        return rejected(operation, "Staged combat requires a frozen execution fence");
+    auto staged = create(scene, physics, std::move(rules));
+    if (!staged)
+        return staged.error();
+    auto& owner = *staged.value();
+    if (owner.impl_->ticks != source.completed_tick)
+        return rejected(operation, "Restored native tick differs from combat cut");
+    const auto body_map = [&](PhysicsBodyHandle saved) {
+        for (const auto& map : bindings)
+            if (map.source_body && *map.source_body == saved && map.destination_body)
+                return *map.destination_body;
+        return PhysicsBodyHandle{}; // Never rebind stale flight bodies by entity.
+    };
+    const auto entity_map = [&](const EntityReference& saved) {
+        for (const auto& map : bindings)
+            if (map.source == saved)
+                return map.destination;
+        auto unavailable = saved;
+        unavailable.handle = {};
+        return unavailable;
+    };
+    try {
+        for (const auto& saved : source.actors) {
+            if (saved.connection == 0 || saved.health > combat_maximum_health ||
+                saved.outcomes.size() > net::combat_maximum_outcomes ||
+                saved.pending_order > source.admission || (saved.pending && saved.projectile))
+                return rejected(operation, "Invalid staged combat values");
+            const auto map =
+                std::find_if(bindings.begin(), bindings.end(),
+                             [&](const auto& binding) { return binding.source == saved.entity; });
+            if (map == bindings.end() || map->destination.identity != saved.entity.identity ||
+                saved.body != map->source_body ||
+                map->source_body.has_value() != map->destination_body.has_value())
+                return rejected(operation, "Combat transfer lacks its exact entity/body map");
+            if (auto resolved = scene.resolve(map->destination); !resolved)
+                return resolved.error();
+            auto entity = scene.entity_state(map->destination.handle);
+            if (!entity)
+                return entity.error();
+            if (entity.value().script)
+                return rejected(operation, "Entity ScriptRuntime transfer is unsupported");
+            if (std::any_of(
+                    owner.impl_->actors.begin(), owner.impl_->actors.end(), [&](const auto& a) {
+                        return a.entity == map->destination || a.stream == saved.stream ||
+                               a.target == saved.target || a.connection == saved.connection ||
+                               a.session.account == saved.session.account;
+                    }))
+                return rejected(operation, "Duplicate staged combat identity");
+            Impl::Actor actor{saved.connection, saved.session,    saved.stream,
+                              saved.target,     map->destination, map->destination_body,
+                              saved.settings,   saved.spawn,      saved.movement};
+            actor.health = saved.health;
+            actor.ready_tick = saved.ready_tick;
+            actor.respawn_tick = saved.respawn_tick;
+            actor.accepted = saved.accepted;
+            actor.pending_order = saved.pending_order;
+            actor.pending = saved.pending;
+            actor.fenced = saved.fenced;
+            actor.detached = saved.detached;
+            actor.detached_pose = saved.detached_pose;
+            for (const auto& outcome : saved.outcomes)
+                actor.outcomes[actor.outcome_count++] = outcome;
+            if (actor.body) {
+                if (actor.detached || actor.health == 0)
+                    return rejected(operation, "Dead or detached combat cut retained a body");
+                if (!saved.native || !saved.velocity)
+                    return rejected(operation, "Incomplete living combat native cut");
+                auto body = owner.impl_->live_body(actor, scene, physics);
+                if (!body)
+                    return body.error();
+                auto velocity = physics.velocity(scene, *actor.body);
+                if (!velocity)
+                    return velocity.error();
+                if (body.value().pose != saved.native->pose || velocity.value() != *saved.velocity)
+                    return rejected(operation, "Staged combat native state differs from cut");
+            } else if (entity.value().rigid_body || (!actor.detached && actor.health != 0))
+                return rejected(operation, "Bodyless combat cut is not a dead or detached life");
+            if (saved.projectile) {
+                const auto& flight = *saved.projectile;
+                if (flight.remaining_ticks == 0 ||
+                    flight.remaining_ticks > combat_projectile_lifetime_ticks ||
+                    flight.order > source.admission)
+                    return rejected(operation, "Invalid staged original projectile");
+                actor.projectile.emplace(Impl::Projectile{
+                    flight.request, flight.decision, flight.owner_life, body_map(flight.owner_body),
+                    body_map(flight.target_body), entity_map(flight.target_entity), flight.position,
+                    flight.direction, flight.remaining_ticks, flight.order});
+            }
+            owner.impl_->actors.push_back(std::move(actor));
+        }
+        owner.impl_->admission = source.admission;
+        owner.impl_->last_time = now;
+        owner.impl_->script_mode_bound = source.script_mode_bound;
+        owner.impl_->script_instance.reset();
+        owner.impl_->fence = std::move(fence);
+        owner.impl_->execution = permit.value();
+        return std::move(staged).value();
+    } catch (...) {
+        return rejected(operation, "Cannot allocate bounded staged combat",
                         ErrorCode::execution_failed);
     }
 }

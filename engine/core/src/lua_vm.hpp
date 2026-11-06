@@ -123,6 +123,8 @@ class LuaVm final {
     // callbacks are installed; execution retains the existing VM limits.
     [[nodiscard]] Result<void> validate_combat();
     [[nodiscard]] Result<CombatRuleDecision> evaluate_combat(const CombatRuleInput& input);
+    [[nodiscard]] Result<CombatRuleDecision> evaluate_combat(const CombatRuleInput& input,
+                                                             CombatRuleValueState& state);
     [[nodiscard]] std::size_t memory_used() const noexcept;
 
   private:
@@ -130,6 +132,8 @@ class LuaVm final {
     explicit LuaVm(std::unique_ptr<Impl> impl) noexcept;
     [[nodiscard]] Result<void> execute_impl(std::string_view source, std::string_view chunk_name,
                                             LuaCallContext* context);
+    [[nodiscard]] Result<CombatRuleDecision> evaluate_combat_impl(const CombatRuleInput& input,
+                                                                  CombatRuleValueState* state);
     std::unique_ptr<Impl> impl_;
 };
 

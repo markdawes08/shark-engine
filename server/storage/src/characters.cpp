@@ -82,6 +82,7 @@ struct CharacterAuthority::Impl {
         std::optional<RegionTransferRequest> region_transfer{};
         std::optional<detail::ClaimRegion> claim{};
         std::optional<RuntimeSaveRequest> save{};
+        std::vector<RegionTransferRequest> region_transfers{};
     };
     std::unique_ptr<detail::RuntimeWorker> worker;
     std::filesystem::path runtime_path;
@@ -303,7 +304,8 @@ struct CharacterAuthority::Impl {
     Result<RuntimeTicket> submit_control(net::CharacterId character, detail::StoreCommand command,
                                          std::optional<detail::ClaimRegion> claim,
                                          std::optional<RegionTransferRequest> transfer,
-                                         MonotonicTime deadline, MonotonicTime now);
+                                         MonotonicTime deadline, MonotonicTime now,
+                                         std::vector<RegionTransferRequest> transfers = {});
 };
 
 CharacterAuthority::CharacterAuthority(std::unique_ptr<Impl> impl) noexcept
@@ -398,15 +400,14 @@ Result<std::vector<RuntimePendingCut>> CharacterAuthority::runtime_pending() con
         if (slot)
             result.push_back({slot->ticket, slot->session, slot->entity, slot->deadline,
                               slot->transfer, slot->writer, slot->region_transfer, slot->control,
-                              slot->timed_out, slot->outcome, slot->save});
+                              slot->timed_out, slot->outcome, slot->save, slot->region_transfers});
     return result;
 }
 
-Result<RuntimeTicket>
-CharacterAuthority::Impl::submit_control(net::CharacterId character, detail::StoreCommand command,
-                                         std::optional<detail::ClaimRegion> claim,
-                                         std::optional<RegionTransferRequest> transfer,
-                                         MonotonicTime deadline, MonotonicTime now) {
+Result<RuntimeTicket> CharacterAuthority::Impl::submit_control(
+    net::CharacterId character, detail::StoreCommand command,
+    std::optional<detail::ClaimRegion> claim, std::optional<RegionTransferRequest> transfer,
+    MonotonicTime deadline, MonotonicTime now, std::vector<RegionTransferRequest> transfers) {
     constexpr auto operation = "storage.runtime.region_control";
     if (auto checked = check(operation); !checked)
         return checked.error();
@@ -416,15 +417,30 @@ CharacterAuthority::Impl::submit_control(net::CharacterId character, detail::Sto
                                     [&](const auto& row) { return row.character == character; });
     if (found == bindings.end())
         return rejected(operation, "Regional control requires a durable character binding");
-    for (const auto& slot : pending) {
-        if (!slot || !slot->control)
-            continue;
-        const auto controlled =
-            slot->claim ? slot->claim->character : slot->region_transfer->source.character;
+    std::vector<net::AccountId> accounts{found->account};
+    for (const auto& request : transfers) {
+        const auto binding = std::find_if(bindings.begin(), bindings.end(), [&](const auto& row) {
+            return row.character == request.source.character && row.entity == request.source.entity;
+        });
+        if (binding == bindings.end())
+            return rejected(operation, "Regional batch has a foreign character/entity");
+        if (std::find(accounts.begin(), accounts.end(), binding->account) == accounts.end())
+            accounts.push_back(binding->account);
+    }
+    const auto overlaps = [&](net::CharacterId controlled) {
         const auto binding = std::find_if(bindings.begin(), bindings.end(), [&](const auto& row) {
             return row.character == controlled;
         });
-        if (binding != bindings.end() && binding->account == found->account)
+        return binding != bindings.end() &&
+               std::find(accounts.begin(), accounts.end(), binding->account) != accounts.end();
+    };
+    for (const auto& slot : pending) {
+        if (!slot || !slot->control)
+            continue;
+        if ((slot->claim && overlaps(slot->claim->character)) ||
+            (slot->region_transfer && overlaps(slot->region_transfer->source.character)) ||
+            std::any_of(slot->region_transfers.begin(), slot->region_transfers.end(),
+                        [&](const auto& request) { return overlaps(request.source.character); }))
             return rejected(operation, "Account already has a retained regional control");
     }
     const auto position =
@@ -435,6 +451,7 @@ CharacterAuthority::Impl::submit_control(net::CharacterId character, detail::Sto
     candidate.control = true;
     candidate.claim = claim;
     candidate.region_transfer = transfer;
+    candidate.region_transfers = std::move(transfers);
     last_time = now;
     last_ticket = ticket.sequence;
     position->emplace(std::move(candidate));
@@ -473,6 +490,36 @@ Result<RuntimeTicket> CharacterAuthority::submit_region_commit(const RegionTrans
                                  now);
 }
 
+Result<RuntimeTicket>
+CharacterAuthority::submit_region_commits(std::span<const RegionTransferRequest> requests,
+                                          MonotonicTime deadline, MonotonicTime now) {
+    constexpr auto operation = "storage.runtime.region_commits";
+    if (auto checked = impl_->check(operation); !checked)
+        return checked.error();
+    if (requests.empty() || requests.size() > 32)
+        return rejected(operation, "Regional batch requires one through 32 writers");
+    const auto& first = requests.front();
+    for (std::size_t index = 0; index < requests.size(); ++index) {
+        const auto& request = requests[index];
+        const auto* current = impl_->region_owner(request.source.character);
+        if (!current || (current->writer != request.source && current->last_transfer != request) ||
+            request.cut_digest != first.cut_digest || request.cut_tick != first.cut_tick ||
+            request.destination_instance != first.destination_instance ||
+            request.applied_input > request.accepted_input ||
+            (request.source.region == request.destination &&
+             request.source.instance == request.destination_instance))
+            return rejected(operation, "Regional batch has stale or inconsistent source context");
+        for (std::size_t previous = 0; previous < index; ++previous)
+            if (requests[previous].source.character == request.source.character ||
+                requests[previous].transfer == request.transfer)
+                return rejected(operation, "Regional batch repeats a character or transfer ID");
+    }
+    std::vector<RegionTransferRequest> original{requests.begin(), requests.end()};
+    detail::StoreCommand command{detail::CommitRegions{original}};
+    return impl_->submit_control(first.source.character, std::move(command), std::nullopt,
+                                 std::nullopt, deadline, now, std::move(original));
+}
+
 Result<RuntimeCompletion> CharacterAuthority::take_region(RuntimeTicket ticket, MonotonicTime now) {
     constexpr auto operation = "storage.runtime.region_take";
     if (auto checked = impl_->owner(operation); !checked)
@@ -491,6 +538,7 @@ Result<RuntimeCompletion> CharacterAuthority::take_region(RuntimeTicket ticket, 
         ticket,       slot.timed_out ? RuntimeDelivery::timed_out : RuntimeDelivery::pending,
         std::nullopt, std::nullopt,
         std::nullopt, slot.region_transfer};
+    completion.region_transfers = slot.region_transfers;
     if (!slot.outcome)
         return completion;
     if (!slot.timed_out)
@@ -978,6 +1026,49 @@ Result<RuntimeStats> CharacterAuthority::poll(MonotonicTime now) {
                        committed && slot.control && slot.region_transfer) {
                 impl_->publish_owner({committed->writer, committed->request});
                 slot.outcome.emplace(RuntimeValue{std::move(*committed)});
+            } else if (auto* batch_committed =
+                           std::get_if<std::vector<RegionTransferResult>>(&result.value());
+                       batch_committed && slot.control && !slot.region_transfers.empty()) {
+                std::array<std::size_t, 32> indices{};
+                bool valid = batch_committed->size() == slot.region_transfers.size() &&
+                             batch_committed->size() <= indices.size();
+                for (std::size_t index = 0; valid && index < batch_committed->size(); ++index) {
+                    const auto& value = (*batch_committed)[index];
+                    auto expected = value.request.source;
+                    expected.region = value.request.destination;
+                    expected.instance = value.request.destination_instance;
+                    if (expected.epoch == maximum_durable_revision) {
+                        valid = false;
+                        break;
+                    }
+                    ++expected.epoch;
+                    const auto found =
+                        std::find_if(impl_->region_owners.begin(), impl_->region_owners.end(),
+                                     [&](const auto& row) {
+                                         return row.writer.character == value.writer.character;
+                                     });
+                    valid = value.request == slot.region_transfers[index] &&
+                            value.writer == expected && found != impl_->region_owners.end();
+                    if (valid)
+                        indices[index] =
+                            static_cast<std::size_t>(found - impl_->region_owners.begin());
+                }
+                if (!valid) {
+                    impl_->faulted = true;
+                    slot.outcome.emplace(
+                        rejected(operation, "Committed regional batch has unexpected identities",
+                                 ErrorCode::execution_failed));
+                } else {
+                    // All results are validated before any cache publication.
+                    // Owned fixed-size row assignments and vector move cannot fail.
+                    static_assert(std::is_nothrow_copy_assignable_v<RegionOwnership>);
+                    slot.outcome.emplace(RuntimeValue{std::move(*batch_committed)});
+                    const auto& values =
+                        std::get<std::vector<RegionTransferResult>>(slot.outcome->value());
+                    for (std::size_t index = 0; index < values.size(); ++index)
+                        impl_->region_owners[indices[index]] = {values[index].writer,
+                                                                values[index].request};
+                }
             } else {
                 impl_->faulted = true;
                 slot.outcome.emplace(rejected(operation,

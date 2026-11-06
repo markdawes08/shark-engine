@@ -1,5 +1,6 @@
 #include <shark/bootstrap.hpp>
 #include <shark/log.hpp>
+#include <shark/server/region_process.hpp>
 #include <shark/server_application.hpp>
 #include <shark/server_config.hpp>
 #include <shark/time.hpp>
@@ -66,6 +67,8 @@ int run_server(shark::Logger& logger, const shark::ServerConfig& config) {
 } // namespace
 
 int main(int argc, char* argv[]) {
+    if (argc == 2 && std::string_view{argv[1]} == "--region-worker")
+        return shark::server::run_region_worker();
     shark::Logger logger{std::cerr};
     // Bound argument storage before constructing views or parsing token text.
     if (argc < 1) {

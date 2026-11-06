@@ -6,6 +6,7 @@
 
 #include <cmath>
 #include <limits>
+#include <optional>
 #include <thread>
 #include <utility>
 
@@ -40,6 +41,7 @@ struct CombatRules::Impl {
     std::string path;
     std::uint64_t evaluations{0};
     bool faulted{false};
+    std::optional<CombatRulesPortableState> portable{};
 
     Impl(std::unique_ptr<detail::LuaVm> value, std::string source)
         : vm(std::move(value)), path(std::move(source)) {}
@@ -98,12 +100,70 @@ Result<CombatRuleDecision> CombatRules::evaluate(const CombatRuleInput& input) {
         return rejected(operation, "Combat rule evaluation counter is exhausted",
                         ErrorCode::conflict);
     ++impl_->evaluations;
-    auto decision = impl_->vm->evaluate_combat(input);
+    auto decision = [&]() -> Result<CombatRuleDecision> {
+        if (!impl_->portable)
+            return impl_->vm->evaluate_combat(input);
+        const auto& configured = *impl_->portable;
+        auto vm = detail::LuaVm::create(
+            {configured.config.memory_bytes, configured.config.instruction_limit});
+        if (!vm)
+            return vm.error();
+        if (auto loaded = vm.value()->execute(configured.source.text, configured.source.path);
+            !loaded)
+            return loaded.error();
+        auto candidate = configured.state;
+        auto value = vm.value()->evaluate_combat(input, candidate);
+        if (value)
+            impl_->portable->state = candidate;
+        return value;
+    }();
     if (!decision) {
         impl_->faulted = true;
         return contextualize(decision.error(), impl_->path, operation);
     }
     return decision;
+}
+
+Result<std::unique_ptr<CombatRules>>
+CombatRules::create_portable(const ScriptSourceSnapshot& source, CombatRulesConfig config,
+                             CombatRuleValueState initial) {
+    auto owner = create(source, ScriptProfile::server_gameplay, config);
+    if (!owner)
+        return owner.error();
+    try {
+        owner.value()->impl_->portable = CombatRulesPortableState{source, config, initial, 0};
+        owner.value()->impl_->vm.reset();
+        return std::move(owner).value();
+    } catch (...) {
+        return rejected("combat.rules.portable.create", "Cannot capture portable combat rules",
+                        ErrorCode::execution_failed);
+    }
+}
+
+Result<CombatRulesPortableState> CombatRules::capture_portable() const {
+    constexpr auto operation = "combat.rules.portable.capture";
+    if (auto valid = impl_->check(operation); !valid)
+        return valid.error();
+    if (impl_->faulted || !impl_->portable)
+        return rejected(operation, "Rules require a healthy explicit portable value-state profile",
+                        ErrorCode::conflict);
+    try {
+        auto snapshot = *impl_->portable;
+        snapshot.evaluations = impl_->evaluations;
+        return snapshot;
+    } catch (...) {
+        return rejected(operation, "Cannot capture bounded portable combat rules",
+                        ErrorCode::execution_failed);
+    }
+}
+
+Result<std::unique_ptr<CombatRules>>
+CombatRules::restore_portable(const CombatRulesPortableState& snapshot) {
+    auto owner = create_portable(snapshot.source, snapshot.config, snapshot.state);
+    if (!owner)
+        return owner.error();
+    owner.value()->impl_->evaluations = snapshot.evaluations;
+    return std::move(owner).value();
 }
 
 Result<CombatRulesStats> CombatRules::stats() const {

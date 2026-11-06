@@ -28,6 +28,62 @@ std::unique_ptr<CombatRules> rules(const std::string& body) {
 }
 } // namespace
 
+TEST_CASE("Portable combat rules retain only explicit value slots across fresh VMs and restore",
+          "[combat-rules][portable-combat-rules]") {
+    const ScriptSourceSnapshot source{"scripts/portable-combat.lua", R"lua(
+        local_boots = (local_boots or 0) + 1
+        function on_combat(kind,tick,actor,target,distance,state)
+            assert(local_boots == 1)
+            state[1] = state[1] + 1
+            return true, 10 + state[1], 10
+        end
+    )lua"};
+    CombatRuleValueState initial{};
+    initial[1] = std::numeric_limits<std::int64_t>::min();
+    initial[7] = std::numeric_limits<std::int64_t>::max();
+    auto owner = take(CombatRules::create_portable(source, {}, initial));
+    CHECK(take(owner->evaluate(input())).damage == 11);
+    CHECK(take(owner->evaluate(input(CombatActionKind::projectile))).damage == 12);
+    const auto snapshot = take(owner->capture_portable());
+    CHECK(snapshot.source.path == source.path);
+    CHECK(snapshot.source.text == source.text);
+    CHECK(snapshot.state[0] == 2);
+    CHECK(snapshot.state[1] == std::numeric_limits<std::int64_t>::min());
+    CHECK(snapshot.state[7] == std::numeric_limits<std::int64_t>::max());
+    CHECK(snapshot.evaluations == 2);
+    auto restored = take(CombatRules::restore_portable(snapshot));
+    CHECK(take(restored->stats()).evaluations == 2);
+    CHECK(take(restored->capture_portable()).state == snapshot.state);
+    CHECK(take(restored->evaluate(input())).damage == 13);
+    CHECK(take(owner->evaluate(input())).damage == 13);
+    CHECK(take(restored->capture_portable()).state == take(owner->capture_portable()).state);
+    CHECK(take(restored->stats()).evaluations == 3);
+}
+
+TEST_CASE("Portable combat state rejects missing extra noninteger and metatable values",
+          "[combat-rules][portable-combat-rules]") {
+    for (const auto* mutation :
+         {"state[0] = 1", "state[9] = 1", "state.extra = 1", "state[1] = nil", "state[2] = '3'",
+          "state[2] = 3.0", "setmetatable(state,{})"}) {
+        INFO(mutation);
+        auto owner =
+            take(CombatRules::create_portable({"scripts/bad-portable-combat.lua",
+                                               std::string{"function on_combat(k,t,a,b,d,state) "} +
+                                                   mutation + " return true,1,10 end"}));
+        CHECK_FALSE(owner->evaluate(input()));
+        CHECK(take(owner->stats()).faulted);
+        CHECK(take(owner->stats()).evaluations == 1);
+        CHECK_FALSE(owner->capture_portable());
+        CHECK_FALSE(owner->evaluate(input()));
+        CHECK(take(owner->stats()).evaluations == 1);
+    }
+    auto mutable_owner = rules("return true,25,10");
+    CHECK_FALSE(mutable_owner->capture_portable());
+    CHECK(take(mutable_owner->stats()).evaluations == 0);
+    CHECK(take(mutable_owner->evaluate(input())).damage == 25);
+    CHECK_FALSE(mutable_owner->capture_portable());
+}
+
 TEST_CASE(
     "Server Lua combat decisions consume bounded authoritative values without engine services",
     "[combat-rules]") {

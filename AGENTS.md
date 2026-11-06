@@ -54,8 +54,28 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [M05e, fenced region handoffs](docs/handoffs/M05e-fenced-region-handoffs.md).**
-M05e passes its selected current-machine gate. Follow the
+**Current handoff: [M05f, process region execution](docs/handoffs/M05f-process-region-execution.md).**
+Follow the [process contract](docs/region-process-execution.md) and
+[ADR 0068](docs/architecture/0068-process-region-execution.md). RegionGateway keeps
+actual player/session, original durable-operation and recipient publication owners;
+live TLS transports are borrowed only per call. Real Server children reconstruct
+the complete interacting native island in one fixed frame/content set. Transfer
+every player writer atomically, including stationary players; never split a retained
+source group. Source handles are relocation keys, not imported authority. Preserve
+forces/targets, contact pairs/watermarks, FIFO/life/history and original flights.
+Jolt solver caches are rebuilt. Portable rules use fresh VMs with eight explicit
+int64 slots from first evaluation; ordinary mutable VMs and entity scripts reject.
+Persist actual image bytes before SQL and bind their SHA256 to every cut request.
+Checkpoint complete input/tick state before publishing it. Buffered post-cut intents
+remain unadmitted; uncertain admitted routes retain original immutable receipts and
+replay without spending the session sequence again. Timeout grants no authority;
+recovery confirms old child exit and settles original SQL before a fresh instance
+and all-writer CAS. Normal close must observe clean worker exit. Child recovery
+does not restore gateway sessions or automatically resolve storage uncertainty.
+M05g is next: connected authored-world acceptance, faults, precision, readiness and
+resident budgets. Full REQ-M05 remains NOT_RUN; manual UI remains paused.
+
+The [M05e handoff](docs/handoffs/M05e-fenced-region-handoffs.md) remains applicable. Follow the
 [M05 checkpoints](docs/roadmap/seamless-world-plan.md),
 [ADR 0067](docs/architecture/0067-fenced-region-handoffs.md),
 [cut contract](docs/gameplay-transfer-cuts.md) and
@@ -73,8 +93,7 @@ wire formats are unchanged. Unknown commits stay frozen; only exact persisted
 receipt reconciliation can activate the successor. Preserve readiness fences,
 500ms clock-budget reporting and bounded terminal receipt release. Never
 timeout-abort unknown ownership or rewrite original worker requests.
-M05f is next: actual separate-process routing, supported portable state/import,
-staged native reconstruction and source/destination loss/partition recovery.
+M05f extends these retained local owners through the explicit portable profile above.
 
 The [M05d handoff](docs/handoffs/M05d-colocated-regions.md),
 [regional contract](docs/region-world.md) and

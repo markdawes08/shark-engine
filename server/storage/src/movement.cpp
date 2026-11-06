@@ -278,19 +278,26 @@ Result<net::MovementState> CharacterMovement::bind(storage::CharacterAuthority& 
                                                    net::TlsTransport& transport, const Scene& scene,
                                                    const PhysicsWorld& physics, EntityHandle entity,
                                                    MonotonicTime now) {
+    net::TlsTransport* peer = &transport;
+    LocalGameplayAccess access{authority, std::span{&peer, 1}};
+    return bind_host(access, LocalGameplayAccess::connection_id(transport), scene, physics, entity,
+                     now);
+}
+
+Result<net::MovementState> CharacterMovement::bind_host(GameplayAccess& access,
+                                                        std::uint64_t connection_id,
+                                                        const Scene& scene,
+                                                        const PhysicsWorld& physics,
+                                                        EntityHandle entity, MonotonicTime now) {
     constexpr auto operation = "server.movement.bind";
     if (auto valid = impl_->context(scene, physics, now, operation); !valid)
         return valid.error();
-    auto session = authority.authorize_entity(transport, scene, entity, now);
+    auto session = access.authorize(connection_id, scene, entity, now);
     if (!session)
         return session.error();
-    auto peer = transport.authenticated_peer();
-    if (!peer)
-        return peer.error();
     if (impl_->actors.size() == movement_maximum_characters ||
         std::any_of(impl_->actors.begin(), impl_->actors.end(), [&](const auto& actor) {
-            return actor.entity.handle == entity ||
-                   actor.connection == peer.value().connection_id ||
+            return actor.entity.handle == entity || actor.connection == connection_id ||
                    actor.session.account == session.value().account;
         }))
         return rejected(operation, "Character is already bound or movement capacity is full");
@@ -303,8 +310,8 @@ Result<net::MovementState> CharacterMovement::bind(storage::CharacterAuthority& 
     auto stream = generate_stable_id();
     if (!stream)
         return stream.error();
-    Impl::Actor candidate{peer.value().connection_id, session.value(),
-                          net::MovementStreamId{stream.value()}, reference.value(), body.value()};
+    Impl::Actor candidate{connection_id, session.value(), net::MovementStreamId{stream.value()},
+                          reference.value(), body.value()};
     auto state = impl_->snapshot(candidate, scene, physics);
     if (!state)
         return state.error();
@@ -317,6 +324,15 @@ Result<void> CharacterMovement::submit(storage::CharacterAuthority& authority,
                                        net::TlsTransport& transport, const Scene& scene,
                                        const PhysicsWorld& physics, const net::MovementInput& input,
                                        MonotonicTime now) {
+    net::TlsTransport* peer = &transport;
+    LocalGameplayAccess access{authority, std::span{&peer, 1}};
+    return submit_host(access, LocalGameplayAccess::connection_id(transport), scene, physics, input,
+                       now);
+}
+
+Result<void> CharacterMovement::submit_host(GameplayAccess& access, std::uint64_t connection_id,
+                                            const Scene& scene, const PhysicsWorld& physics,
+                                            const net::MovementInput& input, MonotonicTime now) {
     constexpr auto operation = "server.movement.submit";
     if (auto checked = impl_->context(scene, physics, now, operation); !checked)
         return checked;
@@ -329,14 +345,10 @@ Result<void> CharacterMovement::submit(storage::CharacterAuthority& authority,
         found->accepted == std::numeric_limits<std::uint64_t>::max() ||
         input.input_sequence != found->accepted + 1)
         return rejected(operation, "Unknown stream, nonconsecutive input or full movement queue");
-    auto session = authority.authorize_entity(transport, scene, found->entity.handle, now);
+    auto session = access.authorize(connection_id, scene, found->entity.handle, now);
     if (!session)
         return session.error();
-    auto peer = transport.authenticated_peer();
-    if (!peer)
-        return peer.error();
-    if (peer.value().connection_id != found->connection ||
-        !same_session(found->session, session.value()))
+    if (connection_id != found->connection || !same_session(found->session, session.value()))
         return rejected(operation, "Movement belongs to a different live character session");
     if (auto valid = impl_->body(*found, scene, physics); !valid)
         return valid.error();
@@ -344,7 +356,7 @@ Result<void> CharacterMovement::submit(storage::CharacterAuthority& authority,
     // budget with readiness, replication and durable operations. No storage IO.
     if (auto valid = impl_->executing(); !valid)
         return valid;
-    auto admitted = authority.apply(transport, net::HeartbeatRequest{input.authority}, now);
+    auto admitted = access.admit(connection_id, input.authority, now);
     if (!admitted)
         return admitted.error();
     found->queue[(found->head + found->count) % movement_pending_inputs] = input;
@@ -358,6 +370,29 @@ Result<MovementTick> CharacterMovement::step(storage::CharacterAuthority& author
                                              PhysicsWorld& physics,
                                              std::span<net::TlsTransport* const> transports,
                                              MonotonicTime now, const WorldTraversal* traversal) {
+    if (auto valid = check_traversal(traversal); !valid)
+        return valid.error();
+    if (auto valid = impl_->context(scene, physics, now, "server.movement.step"); !valid)
+        return valid.error();
+    if (transports.size() > movement_maximum_characters)
+        return rejected("server.movement.step", "Movement connection bound exceeded");
+    std::array<std::uint64_t, movement_maximum_characters> connections{};
+    for (std::size_t i = 0; i < transports.size(); ++i) {
+        if (!transports[i])
+            return rejected("server.movement.step", "Null transport in movement tick");
+        connections[i] = LocalGameplayAccess::connection_id(*transports[i]);
+    }
+    LocalGameplayAccess access{authority, transports};
+    return step_host(access, scene, physics,
+                     std::span<const std::uint64_t>{connections}.first(transports.size()), now,
+                     traversal);
+}
+
+Result<MovementTick> CharacterMovement::step_host(GameplayAccess& access, Scene& scene,
+                                                  PhysicsWorld& physics,
+                                                  std::span<const std::uint64_t> live_connections,
+                                                  MonotonicTime now,
+                                                  const WorldTraversal* traversal) {
     constexpr auto operation = "server.movement.step";
     if (auto valid = check_traversal(traversal); !valid)
         return valid.error();
@@ -367,7 +402,7 @@ Result<MovementTick> CharacterMovement::step(storage::CharacterAuthority& author
     }
     if (auto valid = impl_->context(scene, physics, now, operation); !valid)
         return valid.error();
-    if (transports.size() > movement_maximum_characters ||
+    if (live_connections.size() > movement_maximum_characters ||
         impl_->ticks == std::numeric_limits<std::uint64_t>::max())
         return rejected(operation, "Movement connection or tick bound exceeded");
     const auto native = physics.stats();
@@ -375,19 +410,13 @@ Result<MovementTick> CharacterMovement::step(storage::CharacterAuthority& author
         return native.error();
     if (native.value().pending_events != 0)
         return rejected(operation, "Dispatch existing contact events before another movement tick");
-    // Borrowing is scoped to this call; connection identities are never reused.
     std::array<std::uint64_t, movement_maximum_characters> connections{};
-    for (std::size_t index = 0; index < transports.size(); ++index) {
-        if (!transports[index])
-            return rejected(operation, "Null transport in movement tick");
-        auto peer = transports[index]->authenticated_peer();
-        if (peer)
-            connections[index] = peer.value().connection_id;
+    std::copy(live_connections.begin(), live_connections.end(), connections.begin());
+    for (std::size_t index = 0; index < live_connections.size(); ++index) {
+        const auto end = connections.begin() + static_cast<std::ptrdiff_t>(index);
         if (connections[index] != 0 &&
-            std::find(connections.begin(), connections.begin() + static_cast<std::ptrdiff_t>(index),
-                      connections[index]) !=
-                connections.begin() + static_cast<std::ptrdiff_t>(index))
-            return rejected(operation, "Duplicate transport in movement tick");
+            std::find(connections.begin(), end, connections[index]) != end)
+            return rejected(operation, "Duplicate connection in movement tick");
     }
     struct Plan {
         bool live;
@@ -402,14 +431,13 @@ Result<MovementTick> CharacterMovement::step(storage::CharacterAuthority& author
         auto body = impl_->body(actor, scene, physics);
         auto& plan = plans[index];
         plan.body_valid = static_cast<bool>(body);
-        const auto connection = std::find(
-            connections.begin(),
-            connections.begin() + static_cast<std::ptrdiff_t>(transports.size()), actor.connection);
-        if (body &&
-            connection != connections.begin() + static_cast<std::ptrdiff_t>(transports.size())) {
-            const auto offset = static_cast<std::size_t>(connection - connections.begin());
-            auto session =
-                authority.authorize_entity(*transports[offset], scene, actor.entity.handle, now);
+        const auto connection =
+            std::find(connections.begin(),
+                      connections.begin() + static_cast<std::ptrdiff_t>(live_connections.size()),
+                      actor.connection);
+        if (body && connection != connections.begin() +
+                                      static_cast<std::ptrdiff_t>(live_connections.size())) {
+            auto session = access.authorize(actor.connection, scene, actor.entity.handle, now);
             plan.live = session && same_session(actor.session, session.value());
         }
         if (body) {
@@ -671,6 +699,95 @@ Result<MovementCut> CharacterMovement::capture_cut(const Scene& scene,
         return cut;
     } catch (...) {
         return rejected(operation, "Cannot allocate bounded movement cut",
+                        ErrorCode::execution_failed);
+    }
+}
+
+Result<std::unique_ptr<CharacterMovement>> CharacterMovement::stage_transfer(
+    const Scene& scene, const PhysicsWorld& physics, const MovementCut& source,
+    std::span<const GameplayTransferBinding> bindings, MonotonicTime now,
+    std::optional<std::uint64_t> traversal_instance, std::shared_ptr<ExecutionFence> fence) {
+    constexpr auto operation = "server.movement.transfer.stage";
+    if (auto valid = validate_gameplay_transfer_bindings(scene, physics, bindings); !valid)
+        return valid.error();
+    if (!fence || now < MonotonicTime::zero() ||
+        source.actors.size() > movement_maximum_characters ||
+        bindings.size() > physics_maximum_bodies)
+        return rejected(operation, "Invalid bounded staged movement context");
+    const auto permit = fence->permit();
+    if (!permit)
+        return permit.error();
+    if (auto valid = fence->check(permit.value(), true); !valid)
+        return valid.error();
+    if (fence->check(permit.value()))
+        return rejected(operation, "Staged movement requires a frozen execution fence");
+    auto staged = create(scene, physics, source.origin, traversal_instance, source.domains);
+    if (!staged)
+        return staged.error();
+    auto& owner = *staged.value();
+    if (owner.impl_->ticks != source.completed_tick)
+        return rejected(operation, "Restored native tick differs from movement cut");
+    try {
+        for (const auto& saved : source.actors) {
+            if (saved.connection == 0 || saved.pending.size() > movement_pending_inputs ||
+                saved.applied > saved.accepted ||
+                saved.accepted - saved.applied != saved.pending.size())
+                return rejected(operation, "Invalid movement cut watermarks or FIFO");
+            const auto map =
+                std::find_if(bindings.begin(), bindings.end(),
+                             [&](const auto& binding) { return binding.source == saved.entity; });
+            if (map == bindings.end() || !map->source_body || *map->source_body != saved.body ||
+                !map->destination_body || map->destination.identity != saved.entity.identity)
+                return rejected(operation, "Movement transfer lacks its exact entity/body map");
+            if (auto resolved = scene.resolve(map->destination); !resolved)
+                return resolved.error();
+            if (std::any_of(
+                    owner.impl_->actors.begin(), owner.impl_->actors.end(), [&](const auto& a) {
+                        return a.entity == map->destination || a.body == *map->destination_body ||
+                               a.stream == saved.stream || a.connection == saved.connection ||
+                               a.session.account == saved.session.account;
+                    }))
+                return rejected(operation, "Duplicate staged movement identity");
+            Impl::Actor actor{saved.connection, saved.session, saved.stream, map->destination,
+                              *map->destination_body};
+            actor.accepted = saved.accepted;
+            actor.applied = saved.applied;
+            actor.domain = saved.domain;
+            if (actor.domain) {
+                auto valid =
+                    movement_coverage(std::span<const MovementDomain>{&*actor.domain, 1}, {}, {});
+                if (!valid)
+                    return valid.error();
+            }
+            for (std::size_t i = 0; i < saved.pending.size(); ++i) {
+                const auto& input = saved.pending[i];
+                if (auto valid = net::validate_movement_input(input); !valid)
+                    return valid.error();
+                if (input.input_sequence != saved.applied + i + 1 || input.stream != saved.stream ||
+                    input.authority.session != saved.session.session ||
+                    input.authority.character != saved.session.character ||
+                    input.authority.ownership_epoch != saved.session.ownership_epoch)
+                    return rejected(operation, "Movement transfer FIFO changed original binding");
+                actor.queue[i] = input;
+            }
+            actor.count = saved.pending.size();
+            auto body = owner.impl_->body(actor, scene, physics);
+            if (!body)
+                return body.error();
+            auto velocity = physics.velocity(scene, actor.body);
+            if (!velocity)
+                return velocity.error();
+            if (body.value().settings != saved.native.settings ||
+                body.value().pose != saved.native.pose || velocity.value() != saved.velocity)
+                return rejected(operation, "Staged native movement differs from its cut");
+            owner.impl_->actors.push_back(std::move(actor));
+        }
+        owner.impl_->last_time = now;
+        owner.impl_->fence = std::move(fence);
+        owner.impl_->execution = permit.value();
+        return std::move(staged).value();
+    } catch (...) {
+        return rejected(operation, "Cannot allocate bounded staged movement",
                         ErrorCode::execution_failed);
     }
 }

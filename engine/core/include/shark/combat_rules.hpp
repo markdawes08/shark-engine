@@ -3,6 +3,7 @@
 #include "shark/combat_types.hpp"
 #include "shark/script_runtime.hpp"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -32,6 +33,14 @@ struct CombatRulesStats {
     std::uint64_t evaluations;
     bool faulted;
 };
+inline constexpr std::size_t combat_rules_portable_slots = 8;
+using CombatRuleValueState = std::array<std::int64_t, combat_rules_portable_slots>;
+struct CombatRulesPortableState {
+    ScriptSourceSnapshot source;
+    CombatRulesConfig config;
+    CombatRuleValueState state;
+    std::uint64_t evaluations;
+};
 
 // Creating-thread value rules over a captured trusted Lua source. The caller
 // owns source freshness and actual gameplay admission. No Scene, networking,
@@ -41,6 +50,14 @@ class CombatRules final {
     [[nodiscard]] static Result<std::unique_ptr<CombatRules>>
     create(const ScriptSourceSnapshot& source,
            ScriptProfile profile = ScriptProfile::server_gameplay, CombatRulesConfig config = {});
+    // Fresh value-only VM per evaluation from the first call. The sixth Lua
+    // argument is the only retained mutable state: exactly eight int64 slots.
+    [[nodiscard]] static Result<std::unique_ptr<CombatRules>>
+    create_portable(const ScriptSourceSnapshot& source, CombatRulesConfig config = {},
+                    CombatRuleValueState initial = {});
+    [[nodiscard]] Result<CombatRulesPortableState> capture_portable() const;
+    [[nodiscard]] static Result<std::unique_ptr<CombatRules>>
+    restore_portable(const CombatRulesPortableState& state);
     ~CombatRules();
     CombatRules(const CombatRules&) = delete;
     CombatRules& operator=(const CombatRules&) = delete;

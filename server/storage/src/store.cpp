@@ -2422,77 +2422,155 @@ Result<RegionOwnership> Store::claim_region(net::CharacterId character, WorldEnt
 Result<RegionTransferResult> Store::commit_region(const RegionTransferRequest& request) {
     if (auto checked = impl_->guard("storage.commit_region"); !checked)
         return checked.error();
-    if (request.source.store != impl_->metadata.id || request.source.epoch == 0 ||
-        request.source.epoch > maximum_durable_revision ||
-        request.applied_input > request.accepted_input ||
-        (request.source.region == request.destination &&
-         request.source.instance == request.destination_instance))
-        return impl_->reject("regional cut has invalid ownership or input watermarks");
-    const auto known =
-        std::find_if(impl_->regions.begin(), impl_->regions.end(), [&](const auto& value) {
-            return value.writer.character == request.source.character;
-        });
-    if (known == impl_->regions.end())
-        return impl_->reject("regional transfer requires a claimed character");
-    // The transfer ID is distinct from economic identity. Only the last exact
-    // committed cut is retained; older epochs can never execute again.
-    for (const auto& value : impl_->regions)
-        if (value.last_transfer && value.last_transfer->transfer == request.transfer) {
-            if (*value.last_transfer != request)
-                return impl_->reject("regional transfer ID was committed with a different cut");
-            return RegionTransferResult{request, value.writer, true};
-        }
-    if (known->writer != request.source || request.source.epoch == maximum_durable_revision)
-        return impl_->reject("regional source writer is stale or exhausted");
-    RegionWriter destination = request.source;
-    destination.region = request.destination;
-    destination.instance = request.destination_instance;
-    ++destination.epoch;
-    const RegionTransferResult result{request, destination, false};
+    auto result = commit_regions(std::span{&request, std::size_t{1}});
+    if (!result) {
+        auto error = std::move(result).error();
+        error.context.operation = "storage.commit_region";
+        return error;
+    }
+    return std::move(result).value().front();
+}
+
+Result<std::vector<RegionTransferResult>>
+Store::commit_regions(std::span<const RegionTransferRequest> requests) {
+    if (auto checked = impl_->guard("storage.commit_regions"); !checked)
+        return checked.error();
+    if (requests.empty() || requests.size() > 32)
+        return impl_->reject("regional batch requires one through 32 writers");
+    std::vector<RegionTransferResult> results;
+    results.reserve(requests.size());
     auto candidate = impl_->regions;
-    candidate[static_cast<std::size_t>(known - impl_->regions.begin())] = {destination, request};
-    auto written = impl_->write(candidate, [&]() -> Result<void> {
-        if (auto fenced = impl_->check_writer_sql(request.source.character, request.source);
-            !fenced)
-            return fenced.error();
-        return change(
-            *impl_->connection,
-            "UPDATE shark_region_ownership SET region_id=?2,instance_id=?3,epoch=?4,transfer_id=?5,"
-            "source_region=?6,source_instance=?7,source_epoch=?8,cut_tick=?9,accepted_input=?10,"
-            "applied_input=?11,command_sequence=?12,cut_digest=?13 WHERE character_id=?1 AND "
-            "epoch=?14",
-            [&](Statement& statement) -> Result<void> {
-                for (const auto& [index, id] : std::array<std::pair<int, StableId>, 6>{
-                         {{1, destination.character.value()},
-                          {2, destination.region.value()},
-                          {3, destination.instance.value()},
-                          {5, request.transfer.value()},
-                          {6, request.source.region.value()},
-                          {7, request.source.instance.value()}}})
-                    if (auto bound =
-                            bind_text(*impl_->connection, statement, index, id.to_string());
-                        !bound)
-                        return bound.error();
-                for (const auto& [index, value] :
-                     std::array<std::pair<int, std::uint64_t>, 3>{{{4, destination.epoch},
-                                                                   {8, request.source.epoch},
-                                                                   {14, request.source.epoch}}})
-                    if (auto bound = bind_integer(*impl_->connection, statement, index, value);
-                        !bound)
-                        return bound.error();
-                int column = 9;
-                for (const auto value : {request.cut_tick, request.accepted_input,
-                                         request.applied_input, request.command_sequence})
-                    if (auto bound = bind_text(*impl_->connection, statement, column++,
-                                               std::to_string(value));
-                        !bound)
-                        return bound.error();
-                return bind_text(*impl_->connection, statement, 13, request.cut_digest.to_hex());
+    bool replayed = false, fresh = false;
+    const auto& first = requests.front();
+    const auto same_group = [&](const RegionTransferRequest& value) {
+        return value.cut_digest == first.cut_digest && value.cut_tick == first.cut_tick &&
+               value.destination_instance == first.destination_instance;
+    };
+    for (std::size_t index = 0; index < requests.size(); ++index) {
+        const auto& request = requests[index];
+        if (!same_group(request) || request.source.store != impl_->metadata.id ||
+            request.source.epoch == 0 || request.source.epoch > maximum_durable_revision ||
+            request.applied_input > request.accepted_input ||
+            (request.source.region == request.destination &&
+             request.source.instance == request.destination_instance))
+            return impl_->reject("regional batch has inconsistent image, ownership or watermarks");
+        for (std::size_t previous = 0; previous < index; ++previous)
+            if (requests[previous].source.character == request.source.character ||
+                requests[previous].transfer == request.transfer)
+                return impl_->reject("regional batch repeats a character or transfer identity");
+        const auto known =
+            std::find_if(impl_->regions.begin(), impl_->regions.end(), [&](const auto& value) {
+                return value.writer.character == request.source.character;
             });
+        if (known == impl_->regions.end())
+            return impl_->reject("regional transfer requires a claimed character");
+        const auto retained =
+            std::find_if(impl_->regions.begin(), impl_->regions.end(), [&](const auto& value) {
+                return value.last_transfer && value.last_transfer->transfer == request.transfer;
+            });
+        if (retained != impl_->regions.end()) {
+            if (*retained->last_transfer != request)
+                return impl_->reject("regional transfer ID was committed with a different cut");
+            replayed = true;
+            results.push_back({request, retained->writer, true});
+        } else {
+            if (known->writer != request.source || request.source.epoch == maximum_durable_revision)
+                return impl_->reject("regional source writer is stale or exhausted");
+            fresh = true;
+            auto destination = request.source;
+            destination.region = request.destination;
+            destination.instance = request.destination_instance;
+            ++destination.epoch;
+            results.push_back({request, destination, false});
+            candidate[static_cast<std::size_t>(known - impl_->regions.begin())] = {destination,
+                                                                                   request};
+        }
+    }
+    if (fresh && replayed)
+        return impl_->reject("regional batch cannot mix retained and new cuts");
+    if (replayed) {
+        const auto retained_count = static_cast<std::size_t>(
+            std::count_if(impl_->regions.begin(), impl_->regions.end(), [&](const auto& value) {
+                return value.last_transfer && same_group(*value.last_transfer);
+            }));
+        if (retained_count != requests.size())
+            return impl_->reject("regional retry omits members of its retained batch");
+        return results;
+    }
+    // A later handoff cannot split a previously atomic interacting island.
+    // Otherwise overwriting one last receipt could make a surviving subset
+    // appear to be an independently replayable batch. Current retained groups
+    // remain complete until all their writers advance together.
+    for (const auto& request : requests) {
+        const auto source =
+            std::find_if(impl_->regions.begin(), impl_->regions.end(),
+                         [&](const auto& value) { return value.writer == request.source; });
+        if (source == impl_->regions.end() || !source->last_transfer)
+            continue;
+        const auto& group = *source->last_transfer;
+        for (const auto& member : impl_->regions) {
+            if (!member.last_transfer || member.last_transfer->cut_digest != group.cut_digest ||
+                member.last_transfer->cut_tick != group.cut_tick ||
+                member.last_transfer->destination_instance != group.destination_instance)
+                continue;
+            if (std::none_of(requests.begin(), requests.end(),
+                             [&](const auto& value) { return value.source == member.writer; }))
+                return impl_->reject("regional batch cannot split its retained source island");
+        }
+    }
+    auto written = impl_->write(candidate, [&]() -> Result<void> {
+        for (const auto& request : requests)
+            if (auto fenced = impl_->check_writer_sql(request.source.character, request.source);
+                !fenced)
+                return fenced.error();
+        for (const auto& result : results) {
+            const auto& request = result.request;
+            const auto& destination = result.writer;
+            auto changed = change(
+                *impl_->connection,
+                "UPDATE shark_region_ownership SET "
+                "region_id=?2,instance_id=?3,epoch=?4,transfer_id=?5,"
+                "source_region=?6,source_instance=?7,source_epoch=?8,cut_tick=?9,accepted_input=?"
+                "10,"
+                "applied_input=?11,command_sequence=?12,cut_digest=?13 WHERE character_id=?1 AND "
+                "epoch=?14",
+                [&](Statement& statement) -> Result<void> {
+                    for (const auto& [index, id] : std::array<std::pair<int, StableId>, 6>{
+                             {{1, destination.character.value()},
+                              {2, destination.region.value()},
+                              {3, destination.instance.value()},
+                              {5, request.transfer.value()},
+                              {6, request.source.region.value()},
+                              {7, request.source.instance.value()}}})
+                        if (auto bound =
+                                bind_text(*impl_->connection, statement, index, id.to_string());
+                            !bound)
+                            return bound.error();
+                    for (const auto& [index, value] :
+                         std::array<std::pair<int, std::uint64_t>, 3>{{{4, destination.epoch},
+                                                                       {8, request.source.epoch},
+                                                                       {14, request.source.epoch}}})
+                        if (auto bound = bind_integer(*impl_->connection, statement, index, value);
+                            !bound)
+                            return bound.error();
+                    int column = 9;
+                    for (const auto value : {request.cut_tick, request.accepted_input,
+                                             request.applied_input, request.command_sequence})
+                        if (auto bound = bind_text(*impl_->connection, statement, column++,
+                                                   std::to_string(value));
+                            !bound)
+                            return bound.error();
+                    return bind_text(*impl_->connection, statement, 13,
+                                     request.cut_digest.to_hex());
+                });
+            if (!changed)
+                return changed.error();
+        }
+        return {};
     });
     if (!written)
         return written.error();
-    return result;
+    return results;
 }
 
 Result<void> validate_economy_state(const EconomyState& state) {

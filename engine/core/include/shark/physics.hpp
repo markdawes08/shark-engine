@@ -13,6 +13,7 @@
 #include <cstdint>
 #include <memory>
 #include <optional>
+#include <span>
 #include <vector>
 
 namespace shark {
@@ -108,6 +109,7 @@ enum class PhysicsBodyGeometry { primitive, static_mesh };
 struct PhysicsStaticMesh {
     std::vector<math::Vec3> vertices;
     std::vector<std::array<std::uint32_t, 3>> triangles;
+    bool operator==(const PhysicsStaticMesh&) const = default;
 };
 struct PhysicsStaticMeshSettings {
     double friction{0.5};
@@ -118,6 +120,8 @@ struct PhysicsStaticMeshSettings {
 inline constexpr std::size_t physics_static_mesh_maximum_vertices = 4096;
 inline constexpr std::size_t physics_static_mesh_maximum_triangles = 4096;
 inline constexpr std::size_t physics_static_mesh_maximum_world_triangles = 16384;
+inline constexpr std::size_t physics_transfer_maximum_geometry_vertices =
+    3 * physics_static_mesh_maximum_world_triangles;
 
 struct PhysicsBodyState {
     EntityReference entity;
@@ -175,6 +179,39 @@ struct PhysicsWorldStats {
     std::uint64_t discarded_events{0};
 };
 
+// Source handles/references are relocation keys only. They never authorize
+// access in another process; restore requires a complete checked destination map.
+struct PhysicsTransferBody {
+    PhysicsBodyHandle source;
+    PhysicsBodyState native;
+    RigidBody settings;
+    Transform source_pose;
+    Transform previous_pose;
+    PhysicsBodyVelocity velocity;
+    math::Vec3 pending_force;
+    std::optional<Transform> target;
+    std::optional<PhysicsStaticMesh> mesh;
+};
+struct PhysicsTransferPair {
+    PhysicsContactParticipant first;
+    PhysicsContactParticipant second;
+};
+struct PhysicsTransferState {
+    std::uint64_t world;
+    SceneRevision revision;
+    RegionSceneScope scope;
+    PhysicsWorldConfig config;
+    std::uint64_t completed_tick;
+    std::uint64_t next_contact_sequence;
+    std::uint64_t discarded_events;
+    std::vector<PhysicsTransferBody> bodies;
+    std::vector<PhysicsTransferPair> active_pairs;
+};
+struct PhysicsTransferBinding {
+    PhysicsBodyHandle source;
+    PhysicsBodyHandle destination;
+};
+
 // CPU-only owner of a bounded native physics system and checked detached bodies.
 // Explicit simulation leases fence ordinary Scene writes. Bounded contact
 // transitions and filtered queries are observed on the owner thread.
@@ -216,6 +253,11 @@ class PhysicsWorld final {
                                            math::Vec3 force);
     [[nodiscard]] Result<void> apply_impulse(const Scene& scene, PhysicsBodyHandle body,
                                              math::Vec3 impulse);
+    [[nodiscard]] Result<PhysicsTransferState> capture_transfer(const Scene& scene) const;
+    // Only a pristine leased staged owner, after complete normal body/geometry
+    // construction. Native solver caches are reconstructed, not serialized.
+    [[nodiscard]] Result<void> restore_transfer(Scene& scene, const PhysicsTransferState& state,
+                                                std::span<const PhysicsTransferBinding> bindings);
     // Bounded complete queries of committed native poses under the Scene lease.
     // More distinct bodies than max_hits rejects without a partial result.
     [[nodiscard]] Result<PhysicsRaycastResult> raycast(const Scene& scene, math::Vec3 from,

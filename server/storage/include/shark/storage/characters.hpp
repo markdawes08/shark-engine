@@ -18,8 +18,8 @@ struct RuntimeTicket {
     bool operator==(const RuntimeTicket&) const = default;
 };
 enum class RuntimeDelivery { pending, ready, timed_out, fenced, reconciliation_required };
-using RuntimeValue =
-    std::variant<CharacterRecord, TransferResult, RegionOwnership, RegionTransferResult>;
+using RuntimeValue = std::variant<CharacterRecord, TransferResult, RegionOwnership,
+                                  RegionTransferResult, std::vector<RegionTransferResult>>;
 struct RuntimeSaveRequest {
     std::uint64_t expected_revision;
     CharacterState state;
@@ -38,6 +38,7 @@ struct RuntimeCompletion {
     std::optional<RegionWriter> writer{};
     std::optional<RegionTransferRequest> region_transfer{};
     std::optional<RuntimeSaveRequest> save{};
+    std::vector<RegionTransferRequest> region_transfers{};
 };
 struct RuntimePendingCut {
     RuntimeTicket ticket;
@@ -51,6 +52,7 @@ struct RuntimePendingCut {
     bool timed_out;
     std::optional<Result<RuntimeValue>> outcome;
     std::optional<RuntimeSaveRequest> save{};
+    std::vector<RegionTransferRequest> region_transfers{};
 };
 struct RuntimeStats {
     std::size_t capacity;
@@ -96,6 +98,9 @@ class CharacterAuthority final {
     [[nodiscard]] Result<RuntimeTicket> submit_region_commit(const RegionTransferRequest& request,
                                                              MonotonicTime deadline,
                                                              MonotonicTime now);
+    [[nodiscard]] Result<RuntimeTicket>
+    submit_region_commits(std::span<const RegionTransferRequest> requests, MonotonicTime deadline,
+                          MonotonicTime now);
     [[nodiscard]] Result<RuntimeCompletion> take_region(RuntimeTicket ticket, MonotonicTime now);
     // Trusted owner administration; never a player or authoring endpoint.
     [[nodiscard]] Result<void> provision_account(net::AccountId account);

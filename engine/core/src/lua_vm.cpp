@@ -9,6 +9,7 @@ extern "C" {
 #include <lualib.h>
 }
 
+#include <algorithm>
 #include <cmath>
 #include <cstddef>
 #include <cstdlib>
@@ -689,6 +690,14 @@ struct LuaVm::Impl {
         auto* decision = self->combat_decision;
         if (input == nullptr || decision == nullptr)
             return luaL_error(state, "No active combat rule request");
+        const bool portable = self->combat_values != nullptr;
+        if (portable) {
+            lua_createtable(state, static_cast<int>(combat_rules_portable_slots), 0);
+            for (std::size_t index = 0; index < combat_rules_portable_slots; ++index) {
+                lua_pushinteger(state, static_cast<lua_Integer>((*self->combat_values)[index]));
+                lua_rawseti(state, 1, static_cast<lua_Integer>(index + 1));
+            }
+        }
         lua_getglobal(state, "on_combat");
         if (!lua_isfunction(state, -1))
             return luaL_error(state, "on_combat must be a function");
@@ -697,14 +706,17 @@ struct LuaVm::Impl {
         lua_pushinteger(state, input->actor_health);
         lua_pushinteger(state, input->target_health);
         lua_pushnumber(state, input->distance);
-        lua_call(state, 5, LUA_MULTRET);
-        if (lua_gettop(state) != 3 || lua_type(state, 1) != LUA_TBOOLEAN ||
-            !lua_isinteger(state, 2) || !lua_isinteger(state, 3))
+        if (portable)
+            lua_pushvalue(state, 1);
+        lua_call(state, portable ? 6 : 5, LUA_MULTRET);
+        const int first = portable ? 2 : 1;
+        if (lua_gettop(state) != first + 2 || lua_type(state, first) != LUA_TBOOLEAN ||
+            !lua_isinteger(state, first + 1) || !lua_isinteger(state, first + 2))
             return luaL_error(
                 state, "Combat rule must return boolean, integer damage and integer cooldown");
-        const bool allowed = lua_toboolean(state, 1) != 0;
-        const auto damage = lua_tointeger(state, 2);
-        const auto cooldown = lua_tointeger(state, 3);
+        const bool allowed = lua_toboolean(state, first) != 0;
+        const auto damage = lua_tointeger(state, first + 1);
+        const auto cooldown = lua_tointeger(state, first + 2);
         const auto minimum_cooldown = input->kind == CombatActionKind::interact
                                           ? combat_interaction_cooldown
                                           : combat_strike_cooldown;
@@ -717,6 +729,30 @@ struct LuaVm::Impl {
         decision->allowed = allowed;
         decision->damage = static_cast<std::uint16_t>(damage);
         decision->cooldown_ticks = static_cast<std::uint32_t>(cooldown);
+        if (portable) {
+            if (lua_getmetatable(state, 1))
+                return luaL_error(state, "Portable combat state cannot have a metatable");
+            CombatRuleValueState captured{};
+            std::array<bool, combat_rules_portable_slots> seen{};
+            std::size_t count = 0;
+            lua_pushnil(state);
+            while (lua_next(state, 1) != 0) {
+                if (!lua_isinteger(state, -2) || !lua_isinteger(state, -1))
+                    return luaL_error(state, "Portable combat state needs integer keys and values");
+                const auto key = lua_tointeger(state, -2);
+                if (key < 1 || key > static_cast<lua_Integer>(combat_rules_portable_slots))
+                    return luaL_error(state, "Portable combat state contains an extra key");
+                const auto index = static_cast<std::size_t>(key - 1);
+                captured[index] = static_cast<std::int64_t>(lua_tointeger(state, -1));
+                seen[index] = true;
+                ++count;
+                lua_pop(state, 1);
+            }
+            if (count != combat_rules_portable_slots ||
+                std::find(seen.begin(), seen.end(), false) != seen.end())
+                return luaL_error(state, "Portable combat state requires exactly eight slots");
+            *self->combat_values = captured;
+        }
         return 0;
     }
 
@@ -749,6 +785,7 @@ struct LuaVm::Impl {
         active = nullptr;
         combat_input = nullptr;
         combat_decision = nullptr;
+        combat_values = nullptr;
         callback_name = nullptr;
         if (status != LUA_OK) {
             std::string message;
@@ -886,6 +923,7 @@ struct LuaVm::Impl {
     LuaCallContext* active{nullptr};
     const CombatRuleInput* combat_input{nullptr};
     CombatRuleDecision* combat_decision{nullptr};
+    CombatRuleValueState* combat_values{nullptr};
     const char* callback_name{nullptr};
 };
 
@@ -1029,6 +1067,14 @@ Result<void> LuaVm::validate_combat() {
 }
 
 Result<CombatRuleDecision> LuaVm::evaluate_combat(const CombatRuleInput& input) {
+    return evaluate_combat_impl(input, nullptr);
+}
+Result<CombatRuleDecision> LuaVm::evaluate_combat(const CombatRuleInput& input,
+                                                  CombatRuleValueState& state) {
+    return evaluate_combat_impl(input, &state);
+}
+Result<CombatRuleDecision> LuaVm::evaluate_combat_impl(const CombatRuleInput& input,
+                                                       CombatRuleValueState* state) {
     constexpr auto operation = "lua.combat.evaluate";
     if (NativeContactScope::active())
         return failure(ErrorCode::conflict,
@@ -1039,10 +1085,13 @@ Result<CombatRuleDecision> LuaVm::evaluate_combat(const CombatRuleInput& input) 
                        operation);
     static_assert(std::is_trivially_destructible_v<CombatRuleInput>);
     static_assert(std::is_trivially_destructible_v<CombatRuleDecision>);
+    static_assert(sizeof(lua_Integer) == sizeof(std::int64_t) &&
+                  std::numeric_limits<lua_Integer>::is_signed);
     CombatRuleDecision decision{};
     const int baseline = lua_gettop(impl_->state);
     impl_->combat_input = &input;
     impl_->combat_decision = &decision;
+    impl_->combat_values = state;
     lua_pushcfunction(impl_->state, &Impl::evaluate_combat_global);
     if (auto result = impl_->call(nullptr, baseline, operation); !result)
         return result.error();

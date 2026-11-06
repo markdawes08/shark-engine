@@ -160,9 +160,32 @@ class CharacterCombat final {
     [[nodiscard]] Result<CombatStats> stats() const;
     [[nodiscard]] Result<CombatCut> capture_cut(const Scene& scene,
                                                 const PhysicsWorld& physics) const;
+    [[nodiscard]] Result<CombatRulesPortableState> capture_portable_rules() const;
+    [[nodiscard]] Result<CombatBinding> bind_host(GameplayAccess& access, std::uint64_t connection,
+                                                  CharacterMovement& movement, const Scene& scene,
+                                                  const PhysicsWorld& physics, EntityHandle entity,
+                                                  MonotonicTime now);
+    [[nodiscard]] Result<void> submit_host(GameplayAccess& access, std::uint64_t connection,
+                                           const Scene& scene, const PhysicsWorld& physics,
+                                           const net::CombatAction& action, MonotonicTime now);
+    [[nodiscard]] Result<CombatTick> step_host(GameplayAccess& access, CharacterMovement& movement,
+                                               Scene& scene, PhysicsWorld& physics,
+                                               std::span<const std::uint64_t> connections,
+                                               MonotonicTime now, ScriptRuntime* scripts = nullptr,
+                                               const WorldTraversal* traversal = nullptr);
+    [[nodiscard]] Result<net::CombatState> view_host(GameplayAccess& access,
+                                                     std::uint64_t connection, const Scene& scene,
+                                                     const PhysicsWorld& physics,
+                                                     std::span<const net::CombatTargetId> visible,
+                                                     MonotonicTime now) const;
+    [[nodiscard]] static Result<std::unique_ptr<CharacterCombat>>
+    stage_transfer(const Scene& scene, const PhysicsWorld& physics, const CombatCut& source,
+                   std::span<const GameplayTransferBinding> bindings, MonotonicTime now,
+                   std::unique_ptr<CombatRules> rules, std::shared_ptr<ExecutionFence> fence);
 
   private:
     friend class RegionWorld;
+    friend class RegionExecutor;
     [[nodiscard]] Result<void> adopt_execution(ExecutionPermit permit);
     struct Impl;
     explicit CharacterCombat(std::unique_ptr<Impl> impl) noexcept;

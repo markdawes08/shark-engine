@@ -620,6 +620,7 @@ struct PhysicsWorld::Impl {
         std::optional<Transform> target{};
         math::Vec3 pending_force{};
         std::size_t mesh_triangles{0};
+        std::optional<PhysicsStaticMesh> mesh{};
         [[nodiscard]] bool matches(const SceneEntityState& source) const {
             const auto expected =
                 mesh_triangles == 0 ? std::optional<RigidBody>{settings} : std::nullopt;
@@ -657,6 +658,7 @@ struct PhysicsWorld::Impl {
     std::vector<PhysicsContactEvent> events;
     std::uint64_t next_event{1};
     std::uint64_t discarded_events{0};
+    bool transfer_restored{false};
     // Declaration order preserves borrowed filters and global callbacks until
     // all native resources have been destroyed, including partial startup.
     std::unique_ptr<NativeLease> lease;
@@ -1084,6 +1086,9 @@ PhysicsWorld::create_static_mesh_body(Scene& scene, WorldEntityId identity, Name
                                      "Static mesh has duplicate triangle geometry", operation);
             native_mesh.mIndexedTriangles.emplace_back(triangle[0], triangle[1], triangle[2], 0);
         }
+        // Allocate the exact portable geometry before publishing any native or
+        // Scene owner. Jolt's packed/sanitized internals are not a source codec.
+        auto retained_mesh = mesh;
         // Deliberately bypass MeshShapeSettings' sanitizing constructors. The
         // exact authored topology must validate or reject, never lose triangles.
         native_diagnostic = {};
@@ -1121,10 +1126,11 @@ PhysicsWorld::create_static_mesh_body(Scene& scene, WorldEntityId identity, Name
             scene, impl_->simulation, identity, std::move(name));
         if (!proxy)
             return proxy.error();
-        // Every value below is fixed-size: there is no fallible allocation after
-        // the owned proxy becomes visible. Native candidate rollback precedes it.
+        // Owned vector moves below cannot allocate after proxy publication.
+        static_assert(std::is_nothrow_move_constructible_v<PhysicsStaticMesh>);
         slot.value.emplace(proxy.value(), properties, Transform{}, id);
         slot.value->mesh_triangles = mesh.triangles.size();
+        slot.value->mesh.emplace(std::move(retained_mesh));
         candidate.retained = true;
         return PhysicsBodyHandle{impl_->instance, static_cast<std::uint32_t>(index),
                                  slot.generation};
@@ -1978,6 +1984,376 @@ Result<PhysicsBodyHandle> PhysicsWorld::find_body(const Scene& scene,
         }
     }
     return physics_error(ErrorCode::conflict, "Entity has no current physics body", operation);
+}
+
+Result<PhysicsTransferState> PhysicsWorld::capture_transfer(const Scene& scene) const {
+    constexpr auto operation = "physics.transfer.capture";
+    if (auto valid = impl_->check_simulation(scene, operation); !valid)
+        return valid.error();
+    auto stats = scene.stats();
+    if (!stats)
+        return stats.error();
+    auto page = scene.query_entities();
+    if (!page)
+        return page.error();
+    const auto* scope = std::get_if<RegionSceneScope>(&page.value().scope());
+    if (!scope || stats.value().pending_mutations != 0 || !impl_->events.empty())
+        return physics_error(ErrorCode::conflict,
+                             "Transfer requires a committed Region Scene and drained contacts",
+                             operation);
+    try {
+        PhysicsTransferState snapshot{impl_->instance,
+                                      {stats.value().instance, stats.value().revision},
+                                      *scope,
+                                      impl_->config,
+                                      impl_->completed_ticks,
+                                      impl_->next_event,
+                                      impl_->discarded_events,
+                                      {},
+                                      {}};
+        snapshot.bodies.reserve(impl_->system->GetNumBodies());
+        std::size_t triangles = 0;
+        std::size_t vertices = 0;
+        for (const auto& slot : impl_->bodies)
+            if (slot.value && slot.value->mesh) {
+                vertices += slot.value->mesh->vertices.size();
+                if (vertices > physics_transfer_maximum_geometry_vertices)
+                    return physics_error(ErrorCode::conflict,
+                                         "Transfer geometry vertex budget exceeded", operation);
+            }
+        native_diagnostic = {};
+        for (std::size_t index = 0; index < impl_->bodies.size(); ++index) {
+            const auto& slot = impl_->bodies[index];
+            if (!slot.value)
+                continue;
+            const auto& record = *slot.value;
+            if (record.entity.scope != SceneScope{*scope} ||
+                record.entity.handle.scene_instance != snapshot.revision.scene_instance ||
+                !std::holds_alternative<WorldEntityId>(record.entity.identity))
+                return physics_error(ErrorCode::conflict,
+                                     "Transfer contains a foreign body/Scene identity", operation);
+            const PhysicsBodyHandle handle{impl_->instance, static_cast<std::uint32_t>(index),
+                                           slot.generation};
+            auto native = body_state(scene, handle);
+            if (!native)
+                return native.error();
+            JPH::Vec3 linear, angular;
+            impl_->system->GetBodyInterface().GetLinearAndAngularVelocity(record.native, linear,
+                                                                          angular);
+            if (native_diagnostic.reported) {
+                impl_->faulted = true;
+                return reported_error(operation);
+            }
+            PhysicsBodyVelocity velocity{{linear.GetX(), linear.GetY(), linear.GetZ()},
+                                         {angular.GetX(), angular.GetY(), angular.GetZ()}};
+            if (auto valid = validate_control_vector(velocity.linear, physics_maximum_linear_speed,
+                                                     operation);
+                !valid)
+                return valid.error();
+            if (auto valid = validate_control_vector(velocity.angular,
+                                                     physics_maximum_angular_speed, operation);
+                !valid)
+                return valid.error();
+            if ((record.mesh_triangles != 0) != record.mesh.has_value())
+                return physics_error(ErrorCode::conflict,
+                                     "Transfer mesh is missing its original geometry", operation);
+            triangles += record.mesh_triangles;
+            snapshot.bodies.push_back({handle, native.value(), record.settings, record.source_pose,
+                                       record.previous_pose, velocity, record.pending_force,
+                                       record.target, record.mesh});
+        }
+        if (snapshot.bodies.size() > impl_->config.max_bodies ||
+            triangles > physics_static_mesh_maximum_world_triangles ||
+            impl_->active_pairs.size() > impl_->config.max_contact_pairs)
+            return physics_error(ErrorCode::conflict, "Transfer exceeds native structural bounds",
+                                 operation);
+        snapshot.active_pairs.reserve(impl_->active_pairs.size());
+        for (const auto& pair : impl_->active_pairs) {
+            if (!impl_->current_pair(pair))
+                return physics_error(ErrorCode::conflict,
+                                     "Transfer contact has a stale participant", operation);
+            const auto event =
+                impl_->event(pair, PhysicsContactPhase::enter, PhysicsContactCause::simulation,
+                             impl_->completed_ticks);
+            snapshot.active_pairs.push_back({event.first, event.second});
+        }
+        return snapshot;
+    } catch (...) {
+        return physics_error(ErrorCode::execution_failed, "Cannot capture bounded native transfer",
+                             operation);
+    }
+}
+
+Result<void> PhysicsWorld::restore_transfer(Scene& scene, const PhysicsTransferState& state,
+                                            std::span<const PhysicsTransferBinding> bindings) {
+    constexpr auto operation = "physics.transfer.restore";
+    if (auto valid = impl_->check_simulation(scene, operation); !valid)
+        return valid;
+    auto stats = scene.stats();
+    if (!stats)
+        return stats.error();
+    auto page = scene.query_entities();
+    if (!page)
+        return page.error();
+    const auto* scope = std::get_if<RegionSceneScope>(&page.value().scope());
+    if (!scope || scope->world != state.scope.world || stats.value().pending_mutations != 0 ||
+        impl_->completed_ticks != 0 || impl_->transfer_restored || impl_->next_event != 1 ||
+        impl_->discarded_events != 0 || !impl_->events.empty() || !impl_->active_pairs.empty())
+        return physics_error(ErrorCode::conflict,
+                             "Transfer restore requires its pristine staged Region owner",
+                             operation);
+    if (auto valid = validate(state.config); !valid)
+        return valid;
+    if (state.config != impl_->config || state.world == 0 || state.revision.scene_instance == 0 ||
+        state.next_contact_sequence == 0 || state.bodies.size() > state.config.max_bodies ||
+        state.active_pairs.size() > state.config.max_contact_pairs ||
+        bindings.size() != state.bodies.size() ||
+        state.bodies.size() != impl_->system->GetNumBodies())
+        return physics_error(ErrorCode::invalid_argument,
+                             "Transfer configuration, inventory or sequence bounds differ",
+                             operation);
+    try {
+        std::array<const PhysicsTransferBody*, physics_maximum_bodies> source{};
+        std::array<std::size_t, physics_maximum_bodies> destination{};
+        std::array<bool, physics_maximum_bodies> seen{};
+        std::array<bool, physics_maximum_bodies> mapped{};
+        std::size_t triangles = 0;
+        std::size_t vertices = 0;
+        for (const auto& body : state.bodies) {
+            if (body.source.world != state.world || body.source.slot >= state.config.max_bodies ||
+                body.source.generation == 0 || source[body.source.slot] ||
+                body.native.entity.handle.scene_instance != state.revision.scene_instance ||
+                body.native.entity.scope != SceneScope{state.scope} ||
+                body.native.entity.authority != state.scope.authority ||
+                !std::holds_alternative<WorldEntityId>(body.native.entity.identity))
+                return physics_error(ErrorCode::invalid_argument,
+                                     "Transfer source body identity is inconsistent", operation);
+            if (auto valid = validate_rigid_body(body.settings); !valid)
+                return valid.error();
+            for (const auto* pose : {&body.source_pose, &body.previous_pose, &body.native.pose}) {
+                if (auto valid = validate_rigid_body_pose(body.settings, *pose); !valid)
+                    return valid.error();
+                if (pose->scale != body.source_pose.scale)
+                    return physics_error(ErrorCode::invalid_argument,
+                                         "Transfer collider scale changed", operation);
+            }
+            for (const auto* pose : {&body.source_pose, &body.previous_pose}) {
+                auto canonical = canonicalize_transform(*pose);
+                if (!canonical || canonical.value() != *pose)
+                    return physics_error(ErrorCode::invalid_argument,
+                                         "Transfer Scene/interpolation pose is not canonical",
+                                         operation);
+            }
+            const auto& rotation = body.native.pose.rotation;
+            const JPH::Quat packed_rotation{
+                static_cast<float>(rotation.x), static_cast<float>(rotation.y),
+                static_cast<float>(rotation.z), static_cast<float>(rotation.w)};
+            if (!packed_rotation.IsNormalized())
+                return physics_error(ErrorCode::invalid_argument,
+                                     "Transfer native rotation is not a unit quaternion",
+                                     operation);
+            if (auto valid = validate_query_position(body.native.pose.translation, operation);
+                !valid)
+                return valid;
+            if (auto valid = validate_control_vector(body.velocity.linear,
+                                                     physics_maximum_linear_speed, operation);
+                !valid)
+                return valid;
+            if (auto valid = validate_control_vector(body.velocity.angular,
+                                                     physics_maximum_angular_speed, operation);
+                !valid)
+                return valid;
+            if (auto valid =
+                    validate_control_vector(body.pending_force, physics_maximum_force, operation);
+                !valid)
+                return valid;
+            if (pack_control_vector(body.velocity.linear).LengthSq() >
+                    static_cast<float>(physics_maximum_linear_speed *
+                                       physics_maximum_linear_speed) ||
+                pack_control_vector(body.velocity.angular).LengthSq() >
+                    static_cast<float>(physics_maximum_angular_speed *
+                                       physics_maximum_angular_speed))
+                return physics_error(ErrorCode::invalid_argument,
+                                     "Transfer packed velocity exceeds native speed limits",
+                                     operation);
+            if ((body.settings.motion != BodyMotion::dynamic_body &&
+                 body.pending_force != math::Vec3{}) ||
+                (body.settings.motion == BodyMotion::static_body &&
+                 body.velocity != PhysicsBodyVelocity{}))
+                return physics_error(ErrorCode::invalid_argument,
+                                     "Transfer controls do not match body motion", operation);
+            if (body.target) {
+                auto valid = validate_rigid_body_pose(body.settings, *body.target);
+                if (!valid)
+                    return valid.error();
+                if (valid.value() != *body.target)
+                    return physics_error(ErrorCode::invalid_argument,
+                                         "Transfer target pose is not canonical", operation);
+                const auto speed =
+                    glm::length(body.target->translation - body.source_pose.translation) *
+                    state.config.tick_hz;
+                const auto angle =
+                    2 * std::acos(std::clamp(
+                            std::abs(glm::dot(body.target->rotation, body.source_pose.rotation)),
+                            0.0, 1.0));
+                if (body.settings.motion != BodyMotion::kinematic_body ||
+                    body.target->scale != body.source_pose.scale ||
+                    speed > physics_maximum_linear_speed ||
+                    angle * state.config.tick_hz > physics_maximum_angular_speed)
+                    return physics_error(ErrorCode::invalid_argument,
+                                         "Transfer kinematic target exceeds its profile",
+                                         operation);
+            }
+            if (body.mesh) {
+                if (body.mesh->vertices.empty() ||
+                    body.mesh->vertices.size() > physics_static_mesh_maximum_vertices ||
+                    body.mesh->triangles.empty() ||
+                    body.mesh->triangles.size() > physics_static_mesh_maximum_triangles ||
+                    body.native.geometry != PhysicsBodyGeometry::static_mesh ||
+                    body.native.settings || body.settings.motion != BodyMotion::static_body ||
+                    body.source_pose != Transform{} || body.previous_pose != Transform{} ||
+                    body.native.pose != Transform{})
+                    return physics_error(ErrorCode::invalid_argument,
+                                         "Transfer static mesh profile is inconsistent", operation);
+                triangles += body.mesh->triangles.size();
+                vertices += body.mesh->vertices.size();
+            } else if (body.native.geometry != PhysicsBodyGeometry::primitive ||
+                       body.native.settings != body.settings || body.native.triangle_count != 0) {
+                return physics_error(ErrorCode::invalid_argument,
+                                     "Transfer primitive settings are inconsistent", operation);
+            }
+            source[body.source.slot] = &body;
+        }
+        if (triangles > physics_static_mesh_maximum_world_triangles ||
+            vertices > physics_transfer_maximum_geometry_vertices)
+            return physics_error(ErrorCode::invalid_argument,
+                                 "Transfer world triangle bound exceeded", operation);
+        native_diagnostic = {};
+        for (const auto& binding : bindings) {
+            if (binding.source.world != state.world ||
+                binding.source.slot >= state.config.max_bodies || !source[binding.source.slot] ||
+                source[binding.source.slot]->source != binding.source ||
+                mapped[binding.source.slot])
+                return physics_error(ErrorCode::invalid_argument,
+                                     "Transfer mapping has an unknown or repeated source",
+                                     operation);
+            auto checked = impl_->checked_body(binding.destination);
+            if (!checked)
+                return checked.error();
+            if (seen[checked.value()])
+                return physics_error(ErrorCode::invalid_argument,
+                                     "Transfer mapping repeats a destination", operation);
+            const auto& from = *source[binding.source.slot];
+            const auto& to = *impl_->bodies[checked.value()].value;
+            auto native = body_state(scene, binding.destination);
+            if (!native)
+                return native.error();
+            const auto& value = native.value();
+            if (to.entity.identity != from.native.entity.identity || to.settings != from.settings ||
+                to.source_pose != from.source_pose || to.mesh != from.mesh ||
+                to.mesh_triangles != from.native.triangle_count ||
+                to.previous_pose != to.source_pose || to.pending_force != math::Vec3{} ||
+                to.target || value.settings != from.native.settings ||
+                value.motion != from.native.motion ||
+                value.collider_half_extents != from.native.collider_half_extents ||
+                value.inverse_mass != from.native.inverse_mass ||
+                value.friction != from.native.friction ||
+                value.restitution != from.native.restitution ||
+                value.geometry != from.native.geometry ||
+                value.collision_layer != from.native.collision_layer ||
+                value.collision_mask != from.native.collision_mask ||
+                value.is_trigger != from.native.is_trigger)
+                return physics_error(ErrorCode::conflict,
+                                     "Transfer destination body/configuration/geometry differs",
+                                     operation);
+            JPH::Vec3 linear, angular;
+            impl_->system->GetBodyInterface().GetLinearAndAngularVelocity(to.native, linear,
+                                                                          angular);
+            if (!linear.IsNearZero(0) || !angular.IsNearZero(0))
+                return physics_error(ErrorCode::conflict,
+                                     "Transfer destination already has native velocity", operation);
+            destination[binding.source.slot] = checked.value();
+            mapped[binding.source.slot] = true;
+            seen[checked.value()] = true;
+        }
+        if (native_diagnostic.reported)
+            return reported_error(operation);
+        std::vector<ObservedPair> pairs;
+        pairs.reserve(state.active_pairs.size());
+        const PhysicsTransferPair* prior = nullptr;
+        for (const auto& pair : state.active_pairs) {
+            const auto& a = pair.first;
+            const auto& b = pair.second;
+            if (a.body.world != state.world || b.body.world != state.world ||
+                a.body.slot >= state.config.max_bodies || b.body.slot >= state.config.max_bodies ||
+                a.body.slot >= b.body.slot || !source[a.body.slot] || !source[b.body.slot] ||
+                source[a.body.slot]->source != a.body || source[b.body.slot]->source != b.body ||
+                source[a.body.slot]->native.entity != a.entity ||
+                source[b.body.slot]->native.entity != b.entity ||
+                source[a.body.slot]->settings.is_trigger != a.is_trigger ||
+                source[b.body.slot]->settings.is_trigger != b.is_trigger ||
+                (prior && std::tie(prior->first.body.slot, prior->second.body.slot) >=
+                              std::tie(a.body.slot, b.body.slot)))
+                return physics_error(ErrorCode::invalid_argument,
+                                     "Transfer active contact identity/order is inconsistent",
+                                     operation);
+            const auto& first = source[a.body.slot]->settings;
+            const auto& second = source[b.body.slot]->settings;
+            if ((first.collision_mask & (1U << second.collision_layer)) == 0 ||
+                (second.collision_mask & (1U << first.collision_layer)) == 0 ||
+                (first.motion == BodyMotion::static_body &&
+                 second.motion == BodyMotion::static_body))
+                return physics_error(ErrorCode::invalid_argument,
+                                     "Transfer active contact violates body filters", operation);
+            auto ai = destination[a.body.slot];
+            auto bi = destination[b.body.slot];
+            if (bi < ai)
+                std::swap(ai, bi);
+            const auto& as = impl_->bodies[ai];
+            const auto& bs = impl_->bodies[bi];
+            pairs.push_back({as.value->native, bs.value->native, static_cast<std::uint32_t>(ai),
+                             static_cast<std::uint32_t>(bi), as.generation, bs.generation});
+            prior = &pair;
+        }
+        std::sort(pairs.begin(), pairs.end(), pair_less);
+        // All validation/allocation precedes the first immediate native write.
+        // The staged owner faults on any subsequent error and is never replayed.
+        impl_->faulted = true;
+        native_diagnostic = {};
+        auto& interface = impl_->system->GetBodyInterface();
+        for (const auto& from : state.bodies) {
+            auto& to = *impl_->bodies[destination[from.source.slot]].value;
+            const auto& pose = from.native.pose;
+            interface.SetPositionAndRotation(
+                to.native,
+                JPH::RVec3{static_cast<float>(pose.translation.x),
+                           static_cast<float>(pose.translation.y),
+                           static_cast<float>(pose.translation.z)},
+                JPH::Quat{static_cast<float>(pose.rotation.x), static_cast<float>(pose.rotation.y),
+                          static_cast<float>(pose.rotation.z), static_cast<float>(pose.rotation.w)},
+                to.settings.motion == BodyMotion::static_body ? JPH::EActivation::DontActivate
+                                                              : JPH::EActivation::Activate);
+            if (to.settings.motion != BodyMotion::static_body)
+                interface.SetLinearAndAngularVelocity(to.native,
+                                                      pack_control_vector(from.velocity.linear),
+                                                      pack_control_vector(from.velocity.angular));
+            if (native_diagnostic.reported)
+                return reported_error(operation);
+            to.previous_pose = from.previous_pose;
+            to.target = from.target;
+            to.pending_force = from.pending_force;
+        }
+        impl_->active_pairs = std::move(pairs);
+        impl_->completed_ticks = state.completed_tick;
+        impl_->next_event = state.next_contact_sequence;
+        impl_->discarded_events = state.discarded_events;
+        impl_->transfer_restored = true;
+        impl_->faulted = false;
+        return {};
+    } catch (...) {
+        return physics_error(ErrorCode::execution_failed, "Cannot restore bounded native transfer",
+                             operation);
+    }
 }
 
 Result<void> PhysicsWorld::remove_body(PhysicsBodyHandle body) {

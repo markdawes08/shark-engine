@@ -3,6 +3,7 @@
 #include "shark/net/movement.hpp"
 #include "shark/physics.hpp"
 #include "shark/server/execution_fence.hpp"
+#include "shark/server/gameplay_access.hpp"
 #include "shark/storage/characters.hpp"
 #include "shark/world_position.hpp"
 
@@ -137,9 +138,27 @@ class CharacterMovement final {
                                                  net::MovementStreamId stream) const;
     [[nodiscard]] Result<MovementCut> capture_cut(const Scene& scene,
                                                   const PhysicsWorld& physics) const;
+    [[nodiscard]] Result<net::MovementState> bind_host(GameplayAccess& access,
+                                                       std::uint64_t connection, const Scene& scene,
+                                                       const PhysicsWorld& physics,
+                                                       EntityHandle entity, MonotonicTime now);
+    [[nodiscard]] Result<void> submit_host(GameplayAccess& access, std::uint64_t connection,
+                                           const Scene& scene, const PhysicsWorld& physics,
+                                           const net::MovementInput& input, MonotonicTime now);
+    [[nodiscard]] Result<MovementTick> step_host(GameplayAccess& access, Scene& scene,
+                                                 PhysicsWorld& physics,
+                                                 std::span<const std::uint64_t> connections,
+                                                 MonotonicTime now,
+                                                 const WorldTraversal* traversal = nullptr);
+    [[nodiscard]] static Result<std::unique_ptr<CharacterMovement>>
+    stage_transfer(const Scene& scene, const PhysicsWorld& physics, const MovementCut& source,
+                   std::span<const GameplayTransferBinding> bindings, MonotonicTime now,
+                   std::optional<std::uint64_t> traversal_instance,
+                   std::shared_ptr<ExecutionFence> fence);
 
   private:
     friend class RegionWorld;
+    friend class RegionExecutor;
     friend class CharacterCombat;
     [[nodiscard]] Result<void> adopt_execution(ExecutionPermit permit);
     [[nodiscard]] Result<void> set_actor_domain(net::MovementStreamId stream,

@@ -56,6 +56,9 @@ struct ClaimRegion {
 struct ReadRegionOwnership {
     net::CharacterId character;
 };
+struct CommitRegions {
+    std::vector<RegionTransferRequest> requests;
+};
 struct InitializeEconomy {
     net::AccountId account;
     net::CharacterId character;
@@ -68,15 +71,15 @@ struct ReadEconomy {
 struct ReadOperationStream {
     net::AccountId account;
 };
-using StoreCommand =
-    std::variant<ReadMetadata, ReadRegistry, ProvisionAccount, EnrollCertificate, RevokeAccount,
-                 RevokeCertificate, ReadRoster, ReadCharacter, CreateCharacter, SaveCharacter,
-                 InitializeEconomy, ReadEconomy, ReadOperationStream, TransferRequest,
-                 FencedTransfer, ClaimRegion, ReadRegionOwnership, RegionTransferRequest>;
-using StoreValue =
-    std::variant<std::monostate, StoreMetadata, DurableRegistry, AccountRecord, CharacterRoster,
-                 CharacterRecord, EconomyRecord, OperationStream, TransferResult, RegionOwnership,
-                 std::optional<RegionOwnership>, RegionTransferResult>;
+using StoreCommand = std::variant<ReadMetadata, ReadRegistry, ProvisionAccount, EnrollCertificate,
+                                  RevokeAccount, RevokeCertificate, ReadRoster, ReadCharacter,
+                                  CreateCharacter, SaveCharacter, InitializeEconomy, ReadEconomy,
+                                  ReadOperationStream, TransferRequest, FencedTransfer, ClaimRegion,
+                                  ReadRegionOwnership, RegionTransferRequest, CommitRegions>;
+using StoreValue = std::variant<std::monostate, StoreMetadata, DurableRegistry, AccountRecord,
+                                CharacterRoster, CharacterRecord, EconomyRecord, OperationStream,
+                                TransferResult, RegionOwnership, std::optional<RegionOwnership>,
+                                RegionTransferResult, std::vector<RegionTransferResult>>;
 using StoreResult = Result<StoreValue>;
 [[nodiscard]] StoreResult execute_store(Store& store, const StoreCommand& command);
 
