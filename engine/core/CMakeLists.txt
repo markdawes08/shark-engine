@@ -2,6 +2,7 @@ configure_file(../version_config.hpp.in "${CMAKE_CURRENT_BINARY_DIR}/generated/v
 add_library(EngineCore STATIC
     src/bootstrap.cpp
     src/content_digest.cpp
+    src/combat_rules.cpp
     src/crypto_runtime.cpp
     src/error.cpp
     src/log.cpp
@@ -28,6 +29,7 @@ add_library(EngineCore STATIC
     src/net_session_wire.cpp
     src/net_movement_wire.cpp
     src/net_movement_prediction.cpp
+    src/net_combat_wire.cpp
     src/net_replication.cpp
     src/net_replication_wire.cpp
     src/net_interest.cpp

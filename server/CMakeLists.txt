@@ -1,5 +1,5 @@
 add_library(EngineStorage STATIC storage/src/store.cpp storage/src/characters.cpp storage/src/movement.cpp
-    storage/src/durable_worker.cpp)
+    storage/src/durable_worker.cpp storage/src/combat.cpp)
 target_include_directories(EngineStorage PUBLIC storage/include)
 target_link_libraries(EngineStorage PUBLIC EngineCore PRIVATE SharkSQLite)
 shark_configure_target(EngineStorage)

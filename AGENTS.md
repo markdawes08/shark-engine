@@ -54,7 +54,20 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [M04b, client movement](docs/handoffs/M04b-client-movement.md).**
+**Current handoff: [M04c, authoritative combat](docs/handoffs/M04c-authoritative-combat.md).**
+Follow the [combat contract](docs/authoritative-combat.md) and
+[ADR 0061](docs/architecture/0061-authoritative-combat.md).
+The initial targeted-melee profile resolves after committed movement with current
+range/LOS, tick cooldowns, bounded value-only server Lua and no historical rewind.
+Preserve actual session/shared-sequence admission, fresh checked life/body/stream
+identities, movement release on death, explicit respawn and partial-effect reports.
+Combat outcomes are ephemeral and grant no durable reward. Replayed action IDs
+reject; retained outcomes are not original-request retry receipts. Returned contact
+batches are owned observations; the adapter does not automatically deliver entity
+ScriptRuntime callbacks, whose existing dispatch API drains PhysicsWorld itself.
+M04d connects those lifetimes, reconnect and effects. Full REQ-M04 remains NOT_RUN.
+
+The [M04b handoff](docs/handoffs/M04b-client-movement.md) remains applicable.
 Follow the [client movement contract](docs/client-movement.md) and
 [ADR 0060](docs/architecture/0060-client-movement-presentation.md).
 Prediction owns at most eight unacknowledged inputs and uses immutable prepared
@@ -65,8 +78,7 @@ server correction or emit gameplay/durable/presentation effects. Timed ReplicaCl
 history publishes atomically with its existing cache; duplicates never retime,
 samples keep current live topology and affine fallback preserves a full committed
 pose. CharacterAuthority's narrow publication/control adapters retain its private
-session owner and durable-world boundary. M04c combat/interaction rules are next;
-choose their explicit profile before implementation. Full REQ-M04 remains NOT_RUN.
+session owner and durable-world boundary. Preserve the explicit movement model.
 
 The [M04a handoff](docs/handoffs/M04a-authoritative-movement.md) remains applicable.
 Follow the [M04 checkpoints](docs/roadmap/authoritative-gameplay-plan.md),

@@ -27,11 +27,13 @@ enum class MessageKind : std::uint8_t {
     replication_control = 7,
     replication_state = 8,
     movement_input = 9,
-    movement_state = 10
+    movement_state = 10,
+    combat_action = 11,
+    combat_state = 12
 };
 
 // Hello/hello_ack are empty. Diagnostic and independently versioned session
-// payloads are bounded to 4096 bytes; session/replication/movement validation is separate.
+// payloads are bounded to 4096 bytes; their individual protocol validation is separate.
 struct Frame {
     MessageKind kind{MessageKind::hello};
     std::uint64_t sequence{0};

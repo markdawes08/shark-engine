@@ -118,7 +118,7 @@ TEST_CASE("wire diagnostic and session kinds preserve bounded owned payloads", "
 
 TEST_CASE("wire encoder rejects unknown kinds zero sequence and illegal body lengths",
           "[net-wire]") {
-    for (const auto kind : std::array{0U, 11U, 255U}) {
+    for (const auto kind : std::array{0U, 13U, 255U}) {
         invalid(shark::net::encode_frame({static_cast<MessageKind>(kind), 1, {}}),
                 "net.wire.encode");
     }
@@ -152,7 +152,7 @@ TEST_CASE("wire parser fails closed on magic version kind flags and zero sequenc
         bytes[5] = static_cast<std::byte>(version & 0xffU);
         rejects_header(bytes);
     }
-    for (const auto kind : std::array{0U, 11U, 255U}) {
+    for (const auto kind : std::array{0U, 13U, 255U}) {
         auto bytes = valid;
         bytes[6] = static_cast<std::byte>(kind);
         rejects_header(bytes);

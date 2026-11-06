@@ -479,8 +479,11 @@ struct TlsTransport::Impl {
                 config->server ? MessageKind::replication_control : MessageKind::replication_state;
             const auto movement =
                 config->server ? MessageKind::movement_input : MessageKind::movement_state;
+            const auto combat =
+                config->server ? MessageKind::combat_action : MessageKind::combat_state;
             if (frame.kind != expected &&
-                !(config->authenticated && (frame.kind == replication || frame.kind == movement))) {
+                !(config->authenticated &&
+                  (frame.kind == replication || frame.kind == movement || frame.kind == combat))) {
                 return net_error(ErrorCode::invalid_argument, "net.transport.receive",
                                  "Message kind is unavailable for this connection role");
             }
@@ -777,8 +780,10 @@ Result<void> TlsTransport::send(MessageKind kind, std::span<const std::byte> pay
         self.config->server ? MessageKind::replication_state : MessageKind::replication_control;
     const auto movement =
         self.config->server ? MessageKind::movement_state : MessageKind::movement_input;
-    if (kind != expected &&
-        !(self.config->authenticated && (kind == replication || kind == movement))) {
+    const auto combat =
+        self.config->server ? MessageKind::combat_state : MessageKind::combat_action;
+    if (kind != expected && !(self.config->authenticated &&
+                              (kind == replication || kind == movement || kind == combat))) {
         return net_error(ErrorCode::invalid_argument, "net.transport.send",
                          "Message kind is unavailable for this connection role");
     }

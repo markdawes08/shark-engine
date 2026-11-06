@@ -12,8 +12,10 @@ M04 is in progress under the [gameplay checkpoints](../roadmap/authoritative-gam
 [M04a](../handoffs/M04a-authoritative-movement.md) records authenticated sequenced
 movement, native collision and committed corrections.
 [M04b](../handoffs/M04b-client-movement.md) adds bounded prediction/reconciliation,
-timed remote interpolation and authenticated second-client publication. Combat
-and full connected acceptance remain open; full REQ-M04 remains NOT_RUN.
+timed remote interpolation and authenticated second-client publication.
+[M04c](../handoffs/M04c-authoritative-combat.md) adds current-pose combat,
+bounded server Lua rules, cooldowns and checked death/respawn. Connected
+lifetime/effects and full acceptance remain open; full REQ-M04 remains NOT_RUN.
 
 The [prefab checkpoints](../roadmap/prefab-plan.md)
 record completed source values, shared instance commands, deferred runtime/Lua

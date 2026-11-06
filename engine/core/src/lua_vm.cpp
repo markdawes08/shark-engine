@@ -676,6 +676,50 @@ struct LuaVm::Impl {
         return 0;
     }
 
+    static int validate_combat_global(lua_State* state) {
+        lua_getglobal(state, "on_combat");
+        if (!lua_isfunction(state, -1))
+            return luaL_error(state, "on_combat must be a function");
+        return 0;
+    }
+
+    static int evaluate_combat_global(lua_State* state) {
+        auto* self = current(state);
+        const auto* input = self->combat_input;
+        auto* decision = self->combat_decision;
+        if (input == nullptr || decision == nullptr)
+            return luaL_error(state, "No active combat rule request");
+        lua_getglobal(state, "on_combat");
+        if (!lua_isfunction(state, -1))
+            return luaL_error(state, "on_combat must be a function");
+        lua_pushinteger(state, static_cast<lua_Integer>(input->kind));
+        lua_pushinteger(state, static_cast<lua_Integer>(input->tick));
+        lua_pushinteger(state, input->actor_health);
+        lua_pushinteger(state, input->target_health);
+        lua_pushnumber(state, input->distance);
+        lua_call(state, 5, LUA_MULTRET);
+        if (lua_gettop(state) != 3 || lua_type(state, 1) != LUA_TBOOLEAN ||
+            !lua_isinteger(state, 2) || !lua_isinteger(state, 3))
+            return luaL_error(
+                state, "Combat rule must return boolean, integer damage and integer cooldown");
+        const bool allowed = lua_toboolean(state, 1) != 0;
+        const auto damage = lua_tointeger(state, 2);
+        const auto cooldown = lua_tointeger(state, 3);
+        const auto minimum_cooldown = input->kind == CombatActionKind::strike
+                                          ? combat_strike_cooldown
+                                          : combat_interaction_cooldown;
+        if ((!allowed && (damage != 0 || cooldown != 0)) ||
+            (allowed && (damage < 0 || damage > combat_maximum_damage ||
+                         (input->kind == CombatActionKind::strike && damage == 0) ||
+                         (input->kind == CombatActionKind::interact && damage != 0) ||
+                         cooldown < minimum_cooldown || cooldown > combat_maximum_cooldown)))
+            return luaL_error(state, "Combat rule decision exceeds the authoritative profile");
+        decision->allowed = allowed;
+        decision->damage = static_cast<std::uint16_t>(damage);
+        decision->cooldown_ticks = static_cast<std::uint32_t>(cooldown);
+        return 0;
+    }
+
     Result<void> ensure_bindings() {
         if (bindings_ready)
             return {};
@@ -703,6 +747,8 @@ struct LuaVm::Impl {
         const int status = lua_pcall(state, 0, 0, handler);
         lua_sethook(state, nullptr, 0, 0);
         active = nullptr;
+        combat_input = nullptr;
+        combat_decision = nullptr;
         callback_name = nullptr;
         if (status != LUA_OK) {
             std::string message;
@@ -838,6 +884,8 @@ struct LuaVm::Impl {
     bool budget_exhausted{false};
     bool bindings_ready{false};
     LuaCallContext* active{nullptr};
+    const CombatRuleInput* combat_input{nullptr};
+    CombatRuleDecision* combat_decision{nullptr};
     const char* callback_name{nullptr};
 };
 
@@ -903,7 +951,7 @@ Result<void> LuaVm::execute_impl(std::string_view source, std::string_view chunk
     if (impl_->owner != std::this_thread::get_id()) {
         return failure(ErrorCode::conflict, "Lua VM called from a different thread", "lua.execute");
     }
-    if (impl_->active != nullptr)
+    if (impl_->active != nullptr || impl_->combat_input != nullptr)
         return failure(ErrorCode::conflict, "Lua VM cannot be entered recursively", "lua.execute");
     if (context != nullptr && (!valid_call_context(*context) || context->phase != LuaPhase::load))
         return failure(ErrorCode::invalid_argument, "Invalid Lua load context", "lua.execute");
@@ -938,7 +986,7 @@ Result<void> LuaVm::invoke(std::string_view callback, LuaCallContext& context) {
                        "Lua cannot run inside a native physics contact callback", "lua.invoke");
     if (impl_->owner != std::this_thread::get_id())
         return failure(ErrorCode::conflict, "Lua VM called from a different thread", "lua.invoke");
-    if (impl_->active != nullptr)
+    if (impl_->active != nullptr || impl_->combat_input != nullptr)
         return failure(ErrorCode::conflict, "Lua VM cannot be entered recursively", "lua.invoke");
     if (!valid_call_context(context))
         return failure(ErrorCode::invalid_argument, "Invalid Lua callback context", "lua.invoke");
@@ -964,6 +1012,41 @@ Result<void> LuaVm::invoke(std::string_view callback, LuaCallContext& context) {
     impl_->callback_name = name;
     lua_pushcfunction(impl_->state, &Impl::invoke_global);
     return impl_->call(&context, baseline, "lua.invoke");
+}
+
+Result<void> LuaVm::validate_combat() {
+    constexpr auto operation = "lua.combat.validate";
+    if (NativeContactScope::active())
+        return failure(ErrorCode::conflict,
+                       "Lua cannot run inside a native physics contact callback", operation);
+    if (impl_->owner != std::this_thread::get_id() || impl_->active != nullptr ||
+        impl_->combat_input != nullptr || impl_->bindings_ready)
+        return failure(ErrorCode::conflict, "Combat rule requires its idle value-only VM owner",
+                       operation);
+    const int baseline = lua_gettop(impl_->state);
+    lua_pushcfunction(impl_->state, &Impl::validate_combat_global);
+    return impl_->call(nullptr, baseline, operation);
+}
+
+Result<CombatRuleDecision> LuaVm::evaluate_combat(const CombatRuleInput& input) {
+    constexpr auto operation = "lua.combat.evaluate";
+    if (NativeContactScope::active())
+        return failure(ErrorCode::conflict,
+                       "Lua cannot run inside a native physics contact callback", operation);
+    if (impl_->owner != std::this_thread::get_id() || impl_->active != nullptr ||
+        impl_->combat_input != nullptr || impl_->bindings_ready)
+        return failure(ErrorCode::conflict, "Combat rule requires its idle value-only VM owner",
+                       operation);
+    static_assert(std::is_trivially_destructible_v<CombatRuleInput>);
+    static_assert(std::is_trivially_destructible_v<CombatRuleDecision>);
+    CombatRuleDecision decision{};
+    const int baseline = lua_gettop(impl_->state);
+    impl_->combat_input = &input;
+    impl_->combat_decision = &decision;
+    lua_pushcfunction(impl_->state, &Impl::evaluate_combat_global);
+    if (auto result = impl_->call(nullptr, baseline, operation); !result)
+        return result.error();
+    return decision;
 }
 
 std::size_t LuaVm::memory_used() const noexcept {

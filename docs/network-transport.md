@@ -19,7 +19,7 @@ authoring protocol and database versions.
 | --- | --- | --- |
 | 0 | 4 | ASCII `SHRK` magic |
 | 4 | 2 | Exact version `1` |
-| 6 | 1 | Kind: hello=1, hello_ack=2, probe=3, probe_reply=4, session_request=5, session_reply=6, replication_control=7, replication_state=8, movement_input=9, movement_state=10 |
+| 6 | 1 | Kind: hello=1, hello_ack=2, probe=3, probe_reply=4, session_request=5, session_reply=6, replication_control=7, replication_state=8, movement_input=9, movement_state=10, combat_action=11, combat_state=12 |
 | 7 | 1 | Reserved flags, must be zero |
 | 8 | 8 | Nonzero sequence |
 | 16 | 4 | Payload size, at most 4096 bytes |
@@ -31,6 +31,8 @@ M02c adds client replication controls (7) and server replication state (8),
 with their own [versioned public-field schema](network-replication.md).
 M04a adds authenticated client movement input (9) and server movement state (10)
 under the independent [movement protocol](authoritative-movement.md).
+M04c adds authenticated client combat action (11) and server combat state (12)
+under the independent [combat protocol](authoritative-combat.md).
 Unknown kinds, versions, flags, zero sequences and oversized
 claims fail before reading/allocating a body. `decode_frame` requires exactly one
 complete frame. `FrameDecoder::consume` returns one owned frame at most, a consumed
@@ -90,6 +92,7 @@ probe_reply. Ready session clients can send session_request, and servers
 session_reply. Session clients also send replication_control; session servers
 send replication_state. Session clients also send movement_input; session servers
 send movement_state. Negotiation still admits only hello/hello_ack.
+Session clients additionally send combat_action; session servers send combat_state.
 Unsupported direction or mode/kind rejects. Player authorization
 uses the separate [session authority](network-sessions.md). Incoming queue
 pressure stops reads until the owner drains frames, preserving order and bounds.

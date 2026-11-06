@@ -60,6 +60,8 @@ add_executable(Tests
     core_net_session_tests.cpp
     core_net_movement_wire_tests.cpp
     core_movement_prediction_tests.cpp
+    core_combat_wire_tests.cpp
+    combat_rule_tests.cpp
     core_net_interpolation_tests.cpp
     core_net_replication_tests.cpp
     core_net_replication_wire_tests.cpp
@@ -213,6 +215,8 @@ if(TARGET EngineStorage)
     shark_classify_target(ServerMovementTests test)
     add_test(NAME shark.server.movement COMMAND ServerMovementTests "[server-movement]" --rng-seed 1337)
     set_tests_properties(shark.server.movement PROPERTIES LABELS "cpu;server;physics;integration" TIMEOUT 60)
+    add_test(NAME shark.server.combat COMMAND ServerMovementTests "[server-combat]" --rng-seed 1337)
+    set_tests_properties(shark.server.combat PROPERTIES LABELS "cpu;server;physics;integration" TIMEOUT 60)
     add_executable(StorageTests storage_tests.cpp storage_records_tests.cpp)
     target_link_libraries(StorageTests PRIVATE EngineStorage SharkSQLite Catch2::Catch2WithMain)
     target_include_directories(StorageTests PRIVATE "${PROJECT_SOURCE_DIR}/server/storage/src")
@@ -620,6 +624,10 @@ add_test(NAME shark.core.net-movement-wire COMMAND Tests "[net-movement-wire]" -
 set_tests_properties(shark.core.net-movement-wire PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
 add_test(NAME shark.core.movement-prediction COMMAND Tests "[movement-prediction]" --rng-seed 1337)
 set_tests_properties(shark.core.movement-prediction PROPERTIES LABELS "cpu;unit;integration" TIMEOUT 30)
+add_test(NAME shark.core.combat-rules COMMAND Tests "[combat-rules]" --rng-seed 1337)
+set_tests_properties(shark.core.combat-rules PROPERTIES LABELS "cpu;lua;unit;server" TIMEOUT 30)
+add_test(NAME shark.core.combat-wire COMMAND Tests "[combat-wire]" --rng-seed 1337)
+set_tests_properties(shark.core.combat-wire PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
 add_test(NAME shark.core.net-interpolation COMMAND Tests "[net-interpolation]" --rng-seed 1337)
 set_tests_properties(shark.core.net-interpolation PROPERTIES LABELS "cpu;unit" TIMEOUT 20)
 set_tests_properties(shark.core.net-session PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)

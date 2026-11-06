@@ -45,6 +45,8 @@ Result<void> validate_fields(const MessageKind kind, const std::uint64_t sequenc
     case MessageKind::replication_state:
     case MessageKind::movement_input:
     case MessageKind::movement_state:
+    case MessageKind::combat_action:
+    case MessageKind::combat_state:
         break;
     default:
         return wire_error(operation, "Unknown wire message kind");

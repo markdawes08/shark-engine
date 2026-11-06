@@ -1,10 +1,12 @@
 #include <shark/net/fault_link.hpp>
 #include <shark/net/movement_prediction.hpp>
+#include <shark/server/combat.hpp>
 #include <shark/server/movement.hpp>
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
 
+#include <algorithm>
 #include <array>
 #include <chrono>
 #include <filesystem>
@@ -131,9 +133,13 @@ struct Fixture {
     MonotonicTime now{0};
     std::uint64_t next_command{2};
     std::uint64_t next_input{1};
+    std::unique_ptr<Pair> peer;
+    std::optional<SessionSnapshot> peer_session;
+    EntityHandle peer_entity;
+    PhysicsBodyHandle peer_body;
 
     explicit Fixture(bool bind = true, bool wall = false,
-                     const RigidBody& settings = character_body()) {
+                     const RigidBody& settings = character_body(), bool duel = false) {
         const fs::path parent{SHARK_MOVEMENT_SCRATCH};
         REQUIRE(parent.is_absolute());
         fs::create_directories(parent);
@@ -157,9 +163,28 @@ struct Fixture {
         entity = take(scene->create_entity(seed));
         physics = take(PhysicsWorld::create(profile()));
         body = take(physics->create_body(*scene, entity));
+        if (duel) {
+            peer = std::make_unique<Pair>(true);
+            const auto account = id<AccountId>(20);
+            take(authority->provision_account(account));
+            take(authority->enroll_certificate(
+                account, take(certificate_fingerprint(pem("session/client-b.pem")))));
+            const auto list = take(authority->roster(*peer->server, account, now));
+            const auto other = take(authority->create_character(
+                *peer->server, account, list.revision, {Name{"Opponent"}, origin}, now));
+            const auto logged =
+                take(authority->apply(*peer->server, LoginRequest{account, other.character}, now));
+            peer_session = take(
+                authority->apply(*peer->server, SetReadyRequest{envelope(logged, 1), true}, now));
+            EntitySeed opponent{other.entity};
+            opponent.rigid_body = settings;
+            opponent.transform.translation.x = 2;
+            peer_entity = take(scene->create_entity(opponent));
+            peer_body = take(physics->create_body(*scene, peer_entity));
+        }
         if (wall) {
             EntitySeed fixed{id<WorldEntityId>(5)};
-            fixed.transform.translation.x = 2;
+            fixed.transform.translation.x = duel ? 1 : 2;
             fixed.rigid_body = RigidBody{};
             fixed.rigid_body->half_extents = {0.1, 10, 10};
             take(physics->create_body(*scene, take(scene->create_entity(fixed))));
@@ -205,6 +230,69 @@ struct Fixture {
     }
     double x() const {
         return take(scene->entity_state(entity)).local_transform.translation.x;
+    }
+};
+
+constexpr const char* combat_source = R"(
+function on_combat(kind, tick, actor, target, distance)
+  if kind == 1 then return true, 25, 10 end
+  return true, 0, 5
+end
+)";
+struct Duel {
+    Fixture fixture;
+    std::unique_ptr<CharacterCombat> combat;
+    std::optional<CombatBinding> a;
+    std::optional<CombatBinding> b;
+    std::uint64_t command_a{2}, command_b{2}, action_a{1}, action_b{1};
+    explicit Duel(bool wall = false, const char* source = combat_source)
+        : fixture(false, wall, character_body(), true) {
+        combat = take(
+            CharacterCombat::create(*fixture.scene, *fixture.physics,
+                                    take(CombatRules::create({"scripts/combat.lua", source}))));
+        a = take(combat->bind(*fixture.authority, *fixture.pair.server, *fixture.movement,
+                              *fixture.scene, *fixture.physics, fixture.entity, fixture.now));
+        b = take(combat->bind(*fixture.authority, *fixture.peer->server, *fixture.movement,
+                              *fixture.scene, *fixture.physics, fixture.peer_entity, fixture.now));
+    }
+    CombatAction send(CombatActionKind kind = CombatActionKind::strike, bool second = false) {
+        auto& pair = second ? *fixture.peer : fixture.pair;
+        const auto& session = second ? *fixture.peer_session : fixture.session;
+        auto& command = second ? command_b : command_a;
+        auto& sequence = second ? action_b : action_a;
+        const auto& self = second ? *b : *a;
+        const auto& target = second ? *a : *b;
+        CombatAction action{envelope(session, command), self.stream, sequence, target.target, kind};
+        take(pair.client->send(MessageKind::combat_action, take(encode_combat_action(action))));
+        const auto frame = pair.receive(true, fixture.now);
+        REQUIRE(frame.kind == MessageKind::combat_action);
+        take(combat->submit(*fixture.authority, *pair.server, *fixture.scene, *fixture.physics,
+                            take(decode_combat_action(frame.payload)), fixture.now));
+        ++command;
+        ++sequence;
+        return action;
+    }
+    CombatTick step() {
+        fixture.now += 50ms;
+        const std::array<TlsTransport*, 2> transports{fixture.pair.server.get(),
+                                                      fixture.peer->server.get()};
+        auto report = take(combat->step(*fixture.authority, *fixture.movement, *fixture.scene,
+                                        *fixture.physics, transports, fixture.now));
+        for (const auto& rebound : report.rebindings) {
+            if (rebound.previous == a->target)
+                a = rebound.binding;
+            if (rebound.previous == b->target)
+                b = rebound.binding;
+        }
+        return report;
+    }
+    CombatState state(bool second = false, bool selected = true) {
+        const std::array<CombatTargetId, 1> targets{second ? a->target : b->target};
+        auto& pair = second ? *fixture.peer : fixture.pair;
+        return take(combat->view(*fixture.authority, *pair.server, *fixture.scene, *fixture.physics,
+                                 selected ? std::span<const CombatTargetId>{targets}
+                                          : std::span<const CombatTargetId>{},
+                                 fixture.now));
     }
 };
 } // namespace
@@ -628,5 +716,256 @@ TEST_CASE("A second authenticated client interpolates published native character
     }
     REQUIRE(take(replica->stats()).presentation_frames == 6);
     REQUIRE(take(fixture.movement->stats()).completed_ticks == 6);
+    fixture.complete = true;
+}
+
+TEST_CASE("Authenticated combat uses server Lua damage cooldowns and bounded interaction outcomes",
+          "[server-combat]") {
+    Duel duel;
+    const auto original = duel.send();
+    auto queued = original;
+    ++queued.action_sequence;
+    ++queued.authority.sequence;
+    REQUIRE_FALSE(duel.combat->submit(*duel.fixture.authority, *duel.fixture.pair.server,
+                                      *duel.fixture.scene, *duel.fixture.physics, queued,
+                                      duel.fixture.now));
+    const auto hit = duel.step();
+    REQUIRE_FALSE(hit.error);
+    REQUIRE(hit.outcomes.size() == 1);
+    REQUIRE(hit.outcomes.front().outcome.outcome == CombatOutcome::hit);
+    REQUIRE(hit.outcomes.front().outcome.amount == 25);
+    REQUIRE(duel.state(true).health == 75);
+    REQUIRE(duel.state().ready_tick == 11);
+    REQUIRE_FALSE(duel.combat->submit(*duel.fixture.authority, *duel.fixture.pair.server,
+                                      *duel.fixture.scene, *duel.fixture.physics, original,
+                                      duel.fixture.now));
+    const auto state = duel.state();
+    take(duel.fixture.pair.server->send(MessageKind::combat_state,
+                                        take(encode_combat_reply(CombatReply{state}))));
+    const auto received = duel.fixture.pair.receive(false, duel.fixture.now);
+    REQUIRE(received.kind == MessageKind::combat_state);
+    REQUIRE(std::get<CombatState>(take(decode_combat_reply(received.payload))) == state);
+    REQUIRE_FALSE(duel.fixture.pair.client->send(MessageKind::combat_state, received.payload));
+    REQUIRE_FALSE(duel.fixture.pair.server->send(MessageKind::combat_action,
+                                                 take(encode_combat_action(original))));
+    duel.send();
+    REQUIRE(duel.step().outcomes.front().outcome.outcome == CombatOutcome::cooldown);
+    REQUIRE(duel.state(true).health == 75);
+    while (take(duel.combat->stats()).completed_ticks < 10)
+        REQUIRE_FALSE(duel.step().error);
+    duel.send(CombatActionKind::interact);
+    const auto interaction = duel.step();
+    REQUIRE_FALSE(interaction.error);
+    REQUIRE(interaction.outcomes.front().outcome.outcome == CombatOutcome::interacted);
+    REQUIRE(interaction.outcomes.front().outcome.amount == 0);
+    REQUIRE(duel.state().ready_tick == 16);
+    REQUIRE(duel.state(true).health == 75);
+    duel.fixture.complete = true;
+}
+
+TEST_CASE("Combat range visibility and checked target generations reject before Lua execution",
+          "[server-combat]") {
+    constexpr const char* never = "function on_combat(...) error('must not run') end";
+    SECTION("current three-dimensional range") {
+        Duel duel{false, never};
+        auto pose =
+            take(duel.fixture.physics->body_state(*duel.fixture.scene, duel.fixture.peer_body))
+                .pose;
+        pose.translation.y = 4;
+        take(duel.fixture.physics->teleport(*duel.fixture.scene, duel.fixture.peer_body, pose));
+        duel.send();
+        const auto report = duel.step();
+        REQUIRE_FALSE(report.error);
+        REQUIRE(report.outcomes.front().outcome.outcome == CombatOutcome::out_of_range);
+        REQUIRE(duel.state(true).health == 100);
+        duel.fixture.complete = true;
+    }
+    SECTION("a committed native wall blocks the target ray") {
+        Duel duel{true, never};
+        duel.send();
+        const auto report = duel.step();
+        REQUIRE_FALSE(report.error);
+        REQUIRE(report.outcomes.front().outcome.outcome == CombatOutcome::blocked);
+        REQUIRE(duel.state(true).health == 100);
+        duel.fixture.complete = true;
+    }
+    SECTION("unknown life token and foreign authenticated actor cannot admit an action") {
+        Duel duel;
+        CombatAction action{envelope(duel.fixture.session, 2), duel.a->stream, 1,
+                            id<CombatTargetId>(99), CombatActionKind::strike};
+        REQUIRE_FALSE(duel.combat->submit(*duel.fixture.authority, *duel.fixture.pair.server,
+                                          *duel.fixture.scene, *duel.fixture.physics, action,
+                                          duel.fixture.now));
+        action.target = duel.b->target;
+        REQUIRE_FALSE(duel.combat->submit(*duel.fixture.authority, *duel.fixture.peer->server,
+                                          *duel.fixture.scene, *duel.fixture.physics, action,
+                                          duel.fixture.now));
+        duel.send();
+        REQUIRE(duel.step().outcomes.front().outcome.amount == 25);
+        duel.fixture.complete = true;
+    }
+}
+
+TEST_CASE("Death discards queued movement and respawn rotates checked body and action identities",
+          "[server-combat]") {
+    Duel duel;
+    auto near =
+        take(duel.fixture.physics->body_state(*duel.fixture.scene, duel.fixture.peer_body)).pose;
+    near.translation.x = 1;
+    take(duel.fixture.physics->teleport(*duel.fixture.scene, duel.fixture.peer_body, near));
+    const auto old = *duel.b;
+    const auto old_body = duel.fixture.peer_body;
+    const auto entity = take(duel.fixture.scene->reference(duel.fixture.peer_entity));
+    for (unsigned strike = 0; strike < 3; ++strike) {
+        while (take(duel.combat->stats()).completed_ticks < strike * 10)
+            REQUIRE_FALSE(duel.step().error);
+        duel.send();
+        REQUIRE(duel.step().outcomes.front().outcome.amount == 25);
+    }
+    while (take(duel.combat->stats()).completed_ticks < 30)
+        REQUIRE_FALSE(duel.step().error);
+    for (std::uint64_t input = 1; input <= 8; ++input) {
+        take(duel.fixture.movement->submit(*duel.fixture.authority, *duel.fixture.peer->server,
+                                           *duel.fixture.scene, *duel.fixture.physics,
+                                           {envelope(*duel.fixture.peer_session, duel.command_b),
+                                            old.movement.stream, input,
+                                            static_cast<std::int16_t>(input == 1 ? 0 : 1000), 0},
+                                           duel.fixture.now));
+        ++duel.command_b;
+    }
+    duel.send();
+    const auto death = duel.step();
+    REQUIRE_FALSE(death.error);
+    REQUIRE(death.deaths == 1);
+    REQUIRE(death.released_movements == 1);
+    REQUIRE(death.removed_bodies == 1);
+    REQUIRE(duel.state(true).health == 0);
+    REQUIRE(duel.state(true).respawn_tick == 91);
+    REQUIRE_FALSE(duel.state(true).movement);
+    REQUIRE(take(duel.fixture.movement->stats()).pending_inputs == 0);
+    REQUIRE(take(duel.fixture.physics->stats()).bodies == 1);
+    REQUIRE_FALSE(duel.fixture.physics->body_state(*duel.fixture.scene, old_body));
+    REQUIRE_FALSE(take(duel.fixture.scene->entity_state(duel.fixture.peer_entity)).rigid_body);
+    REQUIRE_FALSE(duel.fixture.scene->set_name(duel.fixture.peer_entity, Name{"Bypass"}));
+    REQUIRE(std::any_of(death.movement.contacts.begin(), death.movement.contacts.end(),
+                        [](const auto& event) {
+                            return event.phase == PhysicsContactPhase::exit &&
+                                   event.cause == PhysicsContactCause::body_removed;
+                        }));
+    REQUIRE(take(duel.fixture.physics->stats()).pending_events == 0);
+    while (take(duel.combat->stats()).completed_ticks < 90) {
+        REQUIRE_FALSE(duel.step().error);
+        REQUIRE(duel.state(true).health == 0);
+    }
+    const auto respawn = duel.step();
+    REQUIRE_FALSE(respawn.error);
+    REQUIRE(respawn.respawns == 1);
+    REQUIRE(respawn.created_bodies == 1);
+    REQUIRE(respawn.teleported_bodies == 1);
+    REQUIRE(duel.b->stream != old.stream);
+    REQUIRE(duel.b->target != old.target);
+    REQUIRE(duel.b->movement.stream != old.movement.stream);
+    REQUIRE(duel.b->movement.last_input == 0);
+    REQUIRE(duel.state(true).health == 100);
+    REQUIRE(take(duel.fixture.scene->reference(duel.fixture.peer_entity)) == entity);
+    REQUIRE(take(duel.fixture.scene->entity_state(duel.fixture.peer_entity))
+                .local_transform.translation.x == 2);
+    REQUIRE_FALSE(duel.fixture.movement->submit(
+        *duel.fixture.authority, *duel.fixture.peer->server, *duel.fixture.scene,
+        *duel.fixture.physics,
+        {envelope(*duel.fixture.peer_session, duel.command_b), old.movement.stream, 9, 1000, 0},
+        duel.fixture.now));
+    auto stale = CombatAction{envelope(duel.fixture.session, duel.command_a), duel.a->stream,
+                              duel.action_a, old.target, CombatActionKind::strike};
+    REQUIRE_FALSE(duel.combat->submit(*duel.fixture.authority, *duel.fixture.pair.server,
+                                      *duel.fixture.scene, *duel.fixture.physics, stale,
+                                      duel.fixture.now));
+    duel.send(CombatActionKind::strike, true);
+    REQUIRE(duel.step().outcomes.front().outcome.amount == 25);
+    duel.fixture.complete = true;
+}
+
+TEST_CASE("Combat retains fixed-tick effects across session fencing and a failing server rule",
+          "[server-combat]") {
+    SECTION("a later observation fences regressed tick time before native work") {
+        Duel duel;
+        const std::array<CombatTargetId, 1> targets{duel.b->target};
+        take(duel.combat->view(*duel.fixture.authority, *duel.fixture.pair.server,
+                               *duel.fixture.scene, *duel.fixture.physics, targets, 100ms));
+        const std::array<TlsTransport*, 2> transports{duel.fixture.pair.server.get(),
+                                                      duel.fixture.peer->server.get()};
+        REQUIRE_FALSE(duel.combat->step(*duel.fixture.authority, *duel.fixture.movement,
+                                        *duel.fixture.scene, *duel.fixture.physics, transports,
+                                        50ms));
+        REQUIRE(take(duel.fixture.physics->stats()).completed_ticks == 0);
+        REQUIRE_FALSE(take(duel.combat->stats()).faulted);
+        REQUIRE(take(duel.combat->stats()).actors == 2);
+        duel.fixture.complete = true;
+    }
+    SECTION("revoked target cannot be hit by an already admitted attack") {
+        Duel duel;
+        duel.send();
+        REQUIRE(take(duel.fixture.authority->revoke_session(duel.fixture.peer_session->session)));
+        const auto report = duel.step();
+        REQUIRE_FALSE(report.error);
+        REQUIRE(report.fenced == 1);
+        REQUIRE(report.outcomes.front().outcome.outcome == CombatOutcome::target_unavailable);
+        REQUIRE(report.outcomes.front().outcome.amount == 0);
+        REQUIRE(take(duel.combat->stats()).actors == 1);
+        REQUIRE(duel.state(false, false).health == 100);
+        duel.fixture.complete = true;
+    }
+    SECTION("a later Lua failure preserves the earlier hit and completed native tick") {
+        Duel duel{false, R"(calls=0
+function on_combat(kind,tick,actor,target,distance)
+  calls=calls+1
+  if calls==2 then error('later combat failure') end
+  return true,25,10
+end)"};
+        duel.send();
+        duel.send(CombatActionKind::strike, true);
+        const auto report = duel.step();
+        REQUIRE(report.error);
+        REQUIRE(report.error->context.path == "scripts/combat.lua");
+        REQUIRE(report.error->context.request_id == "1");
+        REQUIRE(report.outcomes.size() == 1);
+        REQUIRE(report.outcomes.front().outcome.amount == 25);
+        REQUIRE(report.movement.completed_tick == 1);
+        REQUIRE(take(duel.combat->stats()).faulted);
+        REQUIRE(take(duel.combat->stats()).completed_ticks == 1);
+        const std::array<TlsTransport*, 2> transports{duel.fixture.pair.server.get(),
+                                                      duel.fixture.peer->server.get()};
+        REQUIRE_FALSE(duel.combat->step(*duel.fixture.authority, *duel.fixture.movement,
+                                        *duel.fixture.scene, *duel.fixture.physics, transports,
+                                        duel.fixture.now + 50ms));
+        REQUIRE(take(duel.fixture.physics->stats()).completed_ticks == 1);
+        duel.fixture.complete = true;
+    }
+}
+
+TEST_CASE("Combat preserves completed movement counters when its correction publication fails",
+          "[server-combat]") {
+    Fixture fixture{false};
+    auto edge = fixture.origin;
+    edge.cell.x = world_cell_max;
+    edge.offset[0] = 1023.9;
+    auto movement = take(CharacterMovement::create(*fixture.scene, *fixture.physics, edge));
+    auto combat = take(
+        CharacterCombat::create(*fixture.scene, *fixture.physics,
+                                take(CombatRules::create({"scripts/combat.lua", combat_source}))));
+    const auto bound = take(combat->bind(*fixture.authority, *fixture.pair.server, *movement,
+                                         *fixture.scene, *fixture.physics, fixture.entity, 0ns));
+    take(movement->submit(*fixture.authority, *fixture.pair.server, *fixture.scene,
+                          *fixture.physics,
+                          {envelope(fixture.session, 2), bound.movement.stream, 1, 1000, 0}, 0ns));
+    const std::array<TlsTransport*, 1> transports{fixture.pair.server.get()};
+    REQUIRE_FALSE(combat->step(*fixture.authority, *movement, *fixture.scene, *fixture.physics,
+                               transports, 50ms));
+    REQUIRE(take(combat->stats()).faulted);
+    REQUIRE(take(combat->stats()).completed_ticks == 1);
+    REQUIRE(take(fixture.physics->stats()).completed_ticks == 1);
+    REQUIRE_FALSE(combat->step(*fixture.authority, *movement, *fixture.scene, *fixture.physics,
+                               transports, 100ms));
+    REQUIRE(take(fixture.physics->stats()).completed_ticks == 1);
     fixture.complete = true;
 }

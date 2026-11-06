@@ -1,5 +1,6 @@
 #pragma once
 
+#include "shark/combat_rules.hpp"
 #include "shark/error.hpp"
 #include "shark/scene.hpp"
 
@@ -118,6 +119,10 @@ class LuaVm final {
                                        LuaCallContext& context);
     // Only the four named lifecycle callbacks are admitted. Nil is a no-op.
     [[nodiscard]] Result<void> invoke(std::string_view callback, LuaCallContext& context);
+    // Dedicated value-only rule entry. No contextual bindings or engine
+    // callbacks are installed; execution retains the existing VM limits.
+    [[nodiscard]] Result<void> validate_combat();
+    [[nodiscard]] Result<CombatRuleDecision> evaluate_combat(const CombatRuleInput& input);
     [[nodiscard]] std::size_t memory_used() const noexcept;
 
   private:

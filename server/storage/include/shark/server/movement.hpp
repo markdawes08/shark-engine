@@ -70,6 +70,13 @@ class CharacterMovement final {
                                             std::span<net::TlsTransport* const> transports,
                                             MonotonicTime now);
     [[nodiscard]] Result<MovementStats> stats() const;
+    // Trusted fixed-phase lifecycle controls. Release stops the exact old body
+    // and discards queued input without acknowledging it as applied. Respawn
+    // must bind again and issue a fresh stream; these are not player setters.
+    [[nodiscard]] Result<void> release(const Scene& scene, PhysicsWorld& physics,
+                                       net::MovementStreamId stream);
+    [[nodiscard]] Result<net::MovementState>
+    observe(const Scene& scene, const PhysicsWorld& physics, net::MovementStreamId stream) const;
     // Trusted owned observation using the explicit local origin. Not a durable
     // save or a client-proposed checkpoint; only committed poses are converted.
     [[nodiscard]] Result<WorldPosition> position(const Scene& scene, const PhysicsWorld& physics,

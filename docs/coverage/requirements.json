@@ -836,7 +836,7 @@
       "planned_fixture": "AuthoritativeCharacterMovement, PredictionCorrection, CombatAuthorityReject and ClientPauseWorldContinuity fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "M04a-M04b implement authenticated bounded movement with native collision and committed corrections, bounded client prediction/reconciliation, timed remote interpolation and narrow publication/control through the durable character owner. Selected Windows Debug and WSL ASan+UBSan checks pass, including actual TLS/native correction, seeded decoded-message faults and a second authenticated client receiving/interpolating published movement. See docs/handoffs/M04b-client-movement.md. Combat, full connected durable/presentation effect deduplication, reconnect lifecycle and complete two-client adversity/continuity acceptance remain M04c-M04e. Full REQ-M04 remains NOT_RUN."
+        "reason": "M04a-M04c implement authenticated bounded movement, client prediction/reconciliation, timed remote interpolation and server-owned current-pose combat/interactions with bounded Lua rules, tick cooldowns and checked death/respawn. Selected Windows Debug and WSL ASan+UBSan checks pass, including actual two-client TLS actions/state, native range/LOS, movement discard on death, fresh body/life/stream identities, revoked targets and partial rule/native failure receipts. The selected profile is targeted melee at 20 Hz/three substeps with zero historical rewind. See docs/handoffs/M04c-authoritative-combat.md. Full connected owned-contact/entity-script lifecycle, reconnect/effect/durable deduplication and complete two-client network-adversity/continuity acceptance retain M04d-M04e. Full REQ-M04 remains NOT_RUN."
       }
     },
     {
@@ -1012,6 +1012,58 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "server.authoritative-combat",
+        "name": "Authenticated fixed-tick combat interactions and checked death/respawn",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.server.combat",
+          "shark.server.movement",
+          "shark.core.combat-wire",
+          "shark.core.net-mtls"
+        ],
+        "test_sources": [
+          "tests/server_movement_tests.cpp",
+          "tests/core_combat_wire_tests.cpp",
+          "tests/core_net_mtls_tests.cpp"
+        ],
+        "fixtures": [
+          "server/storage/src/combat.cpp",
+          "server/storage/src/movement.cpp",
+          "engine/core/src/net_combat_wire.cpp",
+          "engine/core/src/net_transport.cpp"
+        ],
+        "fixture_reason": "Two actual mTLS accounts/clients and a real local durable owner connect admitted fixed-tick combat to native bodies. Literal damage/cooldown/interaction values, current 3D range and blocked rays, stale/replayed/foreign actions, dead movement discard, owned removal exits, exact respawn timing, fresh checked identities, revocation and partial effects qualify the initial targeted-melee profile. Combat state has explicit trusted visibility and no client state/reward grant. Full network adversity, durable effects and connected entity-script lifecycles remain later checkpoints.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "core.combat-rules",
+        "name": "Bounded server-only Lua value rules over the existing private VM",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.core.combat-rules",
+          "shark.server.combat",
+          "shark.core.lua",
+          "shark.core.script-runtime"
+        ],
+        "test_sources": [
+          "tests/combat_rule_tests.cpp",
+          "tests/server_movement_tests.cpp",
+          "tests/lua_vm_tests.cpp",
+          "tests/script_runtime_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/core/src/combat_rules.cpp",
+          "engine/core/src/lua_vm.cpp",
+          "docs/authoritative-combat.md"
+        ],
+        "fixture_reason": "A purpose-specific value owner reuses LuaVm allocator, instruction, native-contact and thread guards without binding Scene/physics/network/durable services. Independent input/return/resource/profile expectations connect to actual fixed-tick server outcomes and a later-rule partial failure. This is not a new entity ScriptRuntime phase or a client gameplay grant.",
+        "featureworld_cases": []
+      },
       {
         "id": "core.movement-prediction",
         "name": "Bounded client input prediction and authoritative reconciliation",
@@ -3766,6 +3818,60 @@
       }
     ],
     "commands": [
+      {
+        "id": "server.combat.submit",
+        "name": "Admit authenticated actions and resolve fixed-tick combat/life outcomes",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.server.combat",
+          "shark.server.movement",
+          "shark.core.combat-wire",
+          "shark.core.net-mtls"
+        ],
+        "test_sources": [
+          "tests/server_movement_tests.cpp",
+          "tests/core_combat_wire_tests.cpp",
+          "tests/core_net_mtls_tests.cpp"
+        ],
+        "fixtures": [
+          "server/storage/src/combat.cpp",
+          "server/storage/src/movement.cpp",
+          "engine/core/src/net_combat_wire.cpp",
+          "engine/core/src/net_transport.cpp"
+        ],
+        "fixture_reason": "Two actual mTLS accounts/clients and a real local durable owner connect admitted fixed-tick combat to native bodies. Literal damage/cooldown/interaction values, current 3D range and blocked rays, stale/replayed/foreign actions, dead movement discard, owned removal exits, exact respawn timing, fresh checked identities, revocation and partial effects qualify the initial targeted-melee profile. Combat state has explicit trusted visibility and no client state/reward grant. Full network adversity, durable effects and connected entity-script lifecycles remain later checkpoints.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "This is an authenticated player/authoritative-server surface, not a semantic source-authoring command. Real durable ownership, mTLS admission and native fixed-tick lifecycle fixtures establish the boundary. Tools FeatureWorld cannot stand in for those authorities or acquire a server-only Storage dependency. The pure rule callback is a value-only trusted-host entry, separate from entity ScriptRuntime bindings; dedicated VM and connected server fixtures exercise its actual supported context."
+      },
+      {
+        "id": "combat.rules.evaluate",
+        "name": "Evaluate one bounded server combat rule decision",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.core.combat-rules",
+          "shark.server.combat",
+          "shark.core.lua",
+          "shark.core.script-runtime"
+        ],
+        "test_sources": [
+          "tests/combat_rule_tests.cpp",
+          "tests/server_movement_tests.cpp",
+          "tests/lua_vm_tests.cpp",
+          "tests/script_runtime_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/core/src/combat_rules.cpp",
+          "engine/core/src/lua_vm.cpp",
+          "docs/authoritative-combat.md"
+        ],
+        "fixture_reason": "A purpose-specific value owner reuses LuaVm allocator, instruction, native-contact and thread guards without binding Scene/physics/network/durable services. Independent input/return/resource/profile expectations connect to actual fixed-tick server outcomes and a later-rule partial failure. This is not a new entity ScriptRuntime phase or a client gameplay grant.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "This is an authenticated player/authoritative-server surface, not a semantic source-authoring command. Real durable ownership, mTLS admission and native fixed-tick lifecycle fixtures establish the boundary. Tools FeatureWorld cannot stand in for those authorities or acquire a server-only Storage dependency. The pure rule callback is a value-only trusted-host entry, separate from entity ScriptRuntime bindings; dedicated VM and connected server fixtures exercise its actual supported context."
+      },
       {
         "id": "net.movement.prediction",
         "name": "Prepare/send exact inputs and reconcile owned-character presentation",
@@ -6798,6 +6904,29 @@
       }
     ],
     "lua_api": [
+      {
+        "id": "lua.combat-rule",
+        "name": "on_combat(kind,tick,actor_health,target_health,distance)",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.core.combat-rules",
+          "shark.server.combat"
+        ],
+        "test_sources": [
+          "tests/combat_rule_tests.cpp",
+          "tests/server_movement_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/core/src/combat_rules.cpp",
+          "engine/core/src/lua_vm.cpp",
+          "docs/authoritative-combat.md"
+        ],
+        "fixture_reason": "A purpose-specific value owner reuses LuaVm allocator, instruction, native-contact and thread guards without binding Scene/physics/network/durable services. Independent input/return/resource/profile expectations connect to actual fixed-tick server outcomes and a later-rule partial failure. This is not a new entity ScriptRuntime phase or a client gameplay grant.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "This is an authenticated player/authoritative-server surface, not a semantic source-authoring command. Real durable ownership, mTLS admission and native fixed-tick lifecycle fixtures establish the boundary. Tools FeatureWorld cannot stand in for those authorities or acquire a server-only Storage dependency. The pure rule callback is a value-only trusted-host entry, separate from entity ScriptRuntime bindings; dedicated VM and connected server fixtures exercise its actual supported context."
+      },
       {
         "id": "lua.prefab.spawn", "name": "shark.prefab.spawn",
         "requirement_ids": ["REQ-21"],

@@ -118,5 +118,7 @@ The [M04a handoff](handoffs/M04a-authoritative-movement.md) records focused CPU,
 actual mTLS and native collision verification. M04b's
 [client contract](client-movement.md) connects bounded prediction/reconciliation,
 timed remote interpolation and publication through this existing character owner.
-Combat, durable-effect deduplication and full two-client network adversity retain
-M04c-M04e; full REQ-M04 remains NOT_RUN.
+M04c now supplies [authoritative combat](authoritative-combat.md), including a
+trusted checked movement release that discards pending input on death and requires
+a fresh stream on respawn. M04d-M04e retain full lifetime/effect and adversity
+integration; full REQ-M04 remains NOT_RUN.

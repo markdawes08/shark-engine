@@ -356,6 +356,38 @@ Result<MovementStats> CharacterMovement::stats() const {
     return MovementStats{impl_->ticks, impl_->actors.size(), pending, impl_->faulted};
 }
 
+Result<net::MovementState> CharacterMovement::observe(const Scene& scene,
+                                                      const PhysicsWorld& physics,
+                                                      net::MovementStreamId stream) const {
+    if (auto valid = impl_->context(scene, physics, impl_->last_time, "server.movement.observe");
+        !valid)
+        return valid.error();
+    const auto found = std::find_if(impl_->actors.begin(), impl_->actors.end(),
+                                    [&](const auto& actor) { return actor.stream == stream; });
+    if (found == impl_->actors.end())
+        return rejected("server.movement.observe", "Unknown movement stream");
+    return impl_->snapshot(*found, scene, physics);
+}
+
+Result<void> CharacterMovement::release(const Scene& scene, PhysicsWorld& physics,
+                                        net::MovementStreamId stream) {
+    if (auto valid = impl_->context(scene, physics, impl_->last_time, "server.movement.release");
+        !valid)
+        return valid;
+    const auto found = std::find_if(impl_->actors.begin(), impl_->actors.end(),
+                                    [&](const auto& actor) { return actor.stream == stream; });
+    if (found == impl_->actors.end())
+        return rejected("server.movement.release", "Unknown movement stream");
+    if (auto valid = impl_->body(*found, scene, physics); !valid)
+        return valid.error();
+    if (auto stopped = physics.set_velocity(scene, found->body, {}); !stopped) {
+        impl_->faulted = true;
+        return stopped.error();
+    }
+    impl_->actors.erase(found);
+    return {};
+}
+
 Result<WorldPosition> CharacterMovement::position(const Scene& scene, const PhysicsWorld& physics,
                                                   net::MovementStreamId stream) const {
     if (auto valid = impl_->context(scene, physics, impl_->last_time, "server.movement.position");
