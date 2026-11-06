@@ -234,7 +234,7 @@ struct CharacterAuthority::Impl {
         return result;
     }
 
-    Result<EntityReference> binding(Scene& scene, EntityHandle handle,
+    Result<EntityReference> binding(const Scene& scene, EntityHandle handle,
                                     const net::SessionSnapshot& session) const {
         auto reference = scene.reference(handle);
         if (!reference)
@@ -468,6 +468,23 @@ Result<net::SessionSnapshot> CharacterAuthority::apply(net::TlsTransport& transp
         return result.error();
     }
     return impl_->sessions->apply(transport, request, now);
+}
+
+Result<net::SessionSnapshot> CharacterAuthority::authorize_entity(net::TlsTransport& transport,
+                                                                  const Scene& scene,
+                                                                  EntityHandle entity,
+                                                                  MonotonicTime now) {
+    constexpr auto operation = "storage.characters.authorize_entity";
+    if (auto result = impl_->check(operation); !result)
+        return result.error();
+    auto session = impl_->sessions->current(transport, now);
+    if (!session)
+        return session.error();
+    if (!session.value().ready || !session.value().active)
+        return rejected(operation, "Gameplay requires a live ready character session");
+    if (auto reference = impl_->binding(scene, entity, session.value()); !reference)
+        return reference.error();
+    return session;
 }
 
 Result<CharacterRecord> CharacterAuthority::load(net::TlsTransport& transport,

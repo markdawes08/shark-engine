@@ -80,6 +80,14 @@ class CharacterAuthority final {
                                                            MonotonicTime now);
     [[nodiscard]] Result<net::SessionSnapshot>
     apply(net::TlsTransport& transport, const net::SessionRequest& request, MonotonicTime now);
+    // Trusted gameplay read of the actual live ready session and its owned
+    // authoritative entity. Uses cached durable bindings without database I/O,
+    // spending a command sequence or refreshing the session lease. The returned
+    // snapshot is an observation, not a reusable authorization grant.
+    [[nodiscard]] Result<net::SessionSnapshot> authorize_entity(net::TlsTransport& transport,
+                                                                const Scene& scene,
+                                                                EntityHandle entity,
+                                                                MonotonicTime now);
     // Both operations require a current ready session and spend the exact next
     // command sequence/rate admission. Rejected revision/state never changes the
     // database; admitted stale-revision/storage failures consume their sequence.

@@ -26,6 +26,7 @@ add_library(EngineCore STATIC
     src/net_transport.cpp
     src/net_session.cpp
     src/net_session_wire.cpp
+    src/net_movement_wire.cpp
     src/net_replication.cpp
     src/net_replication_wire.cpp
     src/net_interest.cpp

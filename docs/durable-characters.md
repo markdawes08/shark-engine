@@ -1,5 +1,11 @@
 # Owned durable character contract
 
+M04a's [movement adapter](authoritative-movement.md) uses the nonblocking
+`authorize_entity` read to recheck the actual ready mTLS session and cached
+durable world/entity ownership. It consumes no command sequence and refreshes no
+lease. The returned snapshot grants no later authority; movement admission still
+spends the existing shared exact-next session sequence.
+
 M03b adds [`CharacterAuthority`](../server/storage/include/shark/storage/characters.hpp)
 as the server-only owner of a durable Store and the existing authenticated
 SessionAuthority. [ADR 0016](architecture/0016-owned-durable-characters.md) records

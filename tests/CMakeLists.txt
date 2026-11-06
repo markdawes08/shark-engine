@@ -58,6 +58,7 @@ add_executable(Tests
     core_net_transport_tests.cpp
     core_net_mtls_tests.cpp
     core_net_session_tests.cpp
+    core_net_movement_wire_tests.cpp
     core_net_replication_tests.cpp
     core_net_replication_wire_tests.cpp
     net_interest_tests.cpp
@@ -201,6 +202,15 @@ shark_configure_target(Tests)
 shark_classify_target(Tests test)
 
 if(TARGET EngineStorage)
+    add_executable(ServerMovementTests server_movement_tests.cpp)
+    target_link_libraries(ServerMovementTests PRIVATE EngineStorage Catch2::Catch2WithMain)
+    target_compile_definitions(ServerMovementTests PRIVATE
+        SHARK_NETWORK_FIXTURE_DIRECTORY="${PROJECT_SOURCE_DIR}/tests/fixtures/network"
+        SHARK_MOVEMENT_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}/movement-scratch")
+    shark_configure_target(ServerMovementTests)
+    shark_classify_target(ServerMovementTests test)
+    add_test(NAME shark.server.movement COMMAND ServerMovementTests "[server-movement]" --rng-seed 1337)
+    set_tests_properties(shark.server.movement PROPERTIES LABELS "cpu;server;physics;integration" TIMEOUT 60)
     add_executable(StorageTests storage_tests.cpp storage_records_tests.cpp)
     target_link_libraries(StorageTests PRIVATE EngineStorage SharkSQLite Catch2::Catch2WithMain)
     target_include_directories(StorageTests PRIVATE "${PROJECT_SOURCE_DIR}/server/storage/src")
@@ -604,6 +614,8 @@ set_tests_properties(shark.core.net-transport PROPERTIES LABELS "cpu;unit;server
 add_test(NAME shark.core.net-mtls COMMAND Tests "[net-mtls]" --rng-seed 1337)
 set_tests_properties(shark.core.net-mtls PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)
 add_test(NAME shark.core.net-session COMMAND Tests "[net-session]" --rng-seed 1337)
+add_test(NAME shark.core.net-movement-wire COMMAND Tests "[net-movement-wire]" --rng-seed 1337)
+set_tests_properties(shark.core.net-movement-wire PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
 set_tests_properties(shark.core.net-session PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)
 add_test(NAME shark.core.net-replication-wire COMMAND Tests "[net-replication-wire]" --rng-seed 1337)
 set_tests_properties(shark.core.net-replication-wire PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)

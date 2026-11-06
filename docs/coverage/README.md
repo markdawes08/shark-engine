@@ -8,7 +8,12 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-Assignment 21 is in progress. The [prefab checkpoints](../roadmap/prefab-plan.md)
+M04 is in progress under the [gameplay checkpoints](../roadmap/authoritative-gameplay-plan.md).
+[M04a](../handoffs/M04a-authoritative-movement.md) records passing authenticated
+sequenced movement, native collision and committed corrections on Windows and
+WSL sanitizers. Prediction, combat and connected acceptance remain open.
+
+The [prefab checkpoints](../roadmap/prefab-plan.md)
 record completed source values, shared instance commands, deferred runtime/Lua
 mutation and Editor/terminal workflows. [21e](../handoffs/21e-prefab-acceptance.md)
 records passing connected CPU and both-GPU lifetime acceptance. REQ-21 remains

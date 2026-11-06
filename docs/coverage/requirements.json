@@ -1,6 +1,6 @@
 {
   "schema_version": 3,
-  "current_assignment": "21",
+  "current_assignment": "M04",
   "qualification_profile": "current-machine",
   "scope_document": "docs/architecture/0010-current-machine-scope.md",
   "product_profile": "seamless-open-world-mmorpg",
@@ -836,7 +836,7 @@
       "planned_fixture": "AuthoritativeCharacterMovement, PredictionCorrection, CombatAuthorityReject and ClientPauseWorldContinuity fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "Planning amendment only; MMORPG implementation and qualification belong to M04. No server/network/persistence/streaming/load result is claimed."
+        "reason": "M04a implements authenticated sequenced directions, bounded server-owned character movement with native collision, committed corrections, live session/entity/body fences and an explicit local origin. Selected Windows Debug and WSL ASan+UBSan checks pass; see docs/handoffs/M04a-authoritative-movement.md. Prediction, remote interpolation, combat, connected durable/presentation effect deduplication and full two-client adversity/continuity acceptance remain M04b-M04e under docs/roadmap/authoritative-gameplay-plan.md. Full REQ-M04 remains NOT_RUN."
       }
     },
     {
@@ -1012,6 +1012,35 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "server.authoritative-movement",
+        "name": "Authenticated bounded character movement and committed corrections",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.server.movement",
+          "shark.core.net-movement-wire",
+          "shark.core.net-mtls",
+          "shark.storage.characters",
+          "shark.core.physics"
+        ],
+        "test_sources": [
+          "tests/server_movement_tests.cpp",
+          "tests/core_net_movement_wire_tests.cpp",
+          "tests/core_net_mtls_tests.cpp",
+          "tests/storage_character_tests.cpp",
+          "tests/core_physics_simulation_tests.cpp"
+        ],
+        "fixtures": [
+          "server/storage/src/movement.cpp",
+          "server/storage/src/characters.cpp",
+          "engine/core/src/net_movement_wire.cpp",
+          "engine/core/src/net_transport.cpp"
+        ],
+        "fixture_reason": "Real local Store and mTLS transport services connect current durable character ownership to the existing native physics owner. Literal fixed-distance and static-wall expectations, bounded queue/sequence rejection, actual input/correction packets, stale generations, session replacement, native-owner replacement and completed-tick uncertainty qualify M04a. Core wire goldens are independent of its encoder. This is CPU server behavior; prediction, two-client network adversity, graphical continuity and active-load qualification remain later owners.",
+        "featureworld_cases": []
+      },
       {
         "id": "core.runtime-prefabs",
         "name": "Bounded Core runtime prefab values and revocable trusted-host spawning authority",
@@ -3690,6 +3719,29 @@
       }
     ],
     "commands": [
+      {
+        "id": "server.movement.submit",
+        "name": "Sequenced authenticated movement input and fixed-tick correction publication",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.server.movement",
+          "shark.core.net-movement-wire"
+        ],
+        "test_sources": [
+          "tests/server_movement_tests.cpp",
+          "tests/core_net_movement_wire_tests.cpp"
+        ],
+        "fixtures": [
+          "server/storage/src/movement.cpp",
+          "engine/core/src/net_movement_wire.cpp",
+          "docs/authoritative-movement.md"
+        ],
+        "fixture_reason": "A server-only host adapter consumes bounded directions through actual shared session admission and publishes committed movement values through authenticated wire kinds. Queue admission is distinct from tick completion; generations and ready sessions are rechecked before native work.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Player gameplay admission requires actual mTLS transport, a durable CharacterAuthority and native server physics. The Tools FeatureWorld authoring fixture cannot substitute for these authorities or gain a server-only Storage dependency. Focused real-service CPU integration is the owning fixture; no authoring RPC or client setter is exposed."
+      },
       {
         "id": "content.prefab.prepare",
         "name": "Prepare an owned Core runtime prefab from validated source values",

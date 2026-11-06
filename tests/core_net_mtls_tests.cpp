@@ -137,6 +137,8 @@ TEST_CASE("diagnostic TLS cannot furnish a player identity or admit session traf
     CHECK_FALSE(pair.server->send(MessageKind::session_reply, {}));
     CHECK_FALSE(pair.client->send(MessageKind::replication_control, {}));
     CHECK_FALSE(pair.server->send(MessageKind::replication_state, {}));
+    CHECK_FALSE(pair.client->send(MessageKind::movement_input, {}));
+    CHECK_FALSE(pair.server->send(MessageKind::movement_state, {}));
 }
 
 TEST_CASE("mutual TLS replication channels preserve server and client message directions",

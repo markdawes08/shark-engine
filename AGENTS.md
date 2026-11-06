@@ -54,7 +54,19 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [21e, connected prefab acceptance](docs/handoffs/21e-prefab-acceptance.md).**
+**Current handoff: [M04a, authoritative movement](docs/handoffs/M04a-authoritative-movement.md).**
+Follow the [M04 checkpoints](docs/roadmap/authoritative-gameplay-plan.md),
+[movement contract](docs/authoritative-movement.md) and
+[ADR 0059](docs/architecture/0059-authoritative-character-movement.md).
+The server-only movement adapter uses actual CharacterAuthority admission and the
+existing leased PhysicsWorld: 20 Hz, three collision substeps, bounded directions,
+one input per tick and committed corrections. Preserve shared session command
+sequencing, separate fresh movement streams/input IDs, exact live transport and
+entity/body fences, explicit local origins and terminal fault semantics. Queued
+input never grants later authority. M04b prediction/reconciliation and remote
+interpolation are next; full REQ-M04 remains NOT_RUN.
+
+The [21e handoff](docs/handoffs/21e-prefab-acceptance.md) remains applicable.
 Follow the [prefab checkpoints](docs/roadmap/prefab-plan.md),
 [source contract](docs/prefab-assets.md) and [ADR 0057](docs/architecture/0057-prefab-source-assets.md).
 The CPU Tools codec shares bounded SourceEntity validation and preserves one rooted
