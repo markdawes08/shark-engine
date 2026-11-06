@@ -87,3 +87,8 @@ failure leaves the old owner intact. During loading, validation can temporarily
 hold more than one decoded Scene candidate; the existing scene and asset limits
 bound logical work per candidate, not allocator overhead, peak RSS or total
 resident memory. M05b must bound concurrent/resident owners before async work.
+
+M05b now supplies [asynchronous residency](world-cell-residency.md) around this
+same loader: one reader worker returns owned bytes, and explicit creating-thread
+drain publishes complete candidates under pending/resident reservation limits.
+The synchronous loader remains available with its original ownership contract.

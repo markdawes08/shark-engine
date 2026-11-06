@@ -54,14 +54,20 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [M05a, world-cell foundation](docs/handoffs/M05a-world-cell-foundation.md).**
+**Current handoff: [M05b, world-cell residency](docs/handoffs/M05b-world-cell-residency.md).**
 Follow the [M05 checkpoints](docs/roadmap/seamless-world-plan.md),
-[cell contract](docs/world-cells.md) and [ADR 0063](docs/architecture/0063-world-cell-content.md).
-M05a passes its selected CPU gate. M05b is next: bounded asynchronous content
-residency. Keep cell identity separate from region authority; static content
-loading grants no native/gameplay readiness. Preserve exact source anchors,
-immutable asset closure, creating-thread Scene lifetimes and generation-bound
-local conversion. Workers may return bytes, not worker-created Scene owners.
+[cell contract](docs/world-cells.md), [residency contract](docs/world-cell-residency.md)
+and [ADR 0064](docs/architecture/0064-world-cell-residency.md).
+M05b passes its selected CPU gate. M05c is next: static-world collision/navigation
+and traversal readiness. Keep cell identity separate from region authority;
+content publication grants no native/gameplay readiness. Preserve exact source
+anchors, immutable assets, owner-thread Scene lifetimes and generation-bound
+local conversion. One worker returns bytes; explicit drain publishes at most one
+complete owner. Retain original terminal receipts until take, last-valid cells
+on failures/cancel, pending/peak reservations and exact eviction generations.
+Native consumers must pin or lease residency before retaining borrowed cell
+pointers across replacement/eviction. M05a's [handoff](docs/handoffs/M05a-world-cell-foundation.md)
+and [ADR 0063](docs/architecture/0063-world-cell-content.md) remain applicable.
 Full REQ-M05 remains NOT_RUN pending later connected streaming/transfer gates.
 
 The [M04e handoff](docs/handoffs/M04e-gameplay-acceptance.md) remains applicable.

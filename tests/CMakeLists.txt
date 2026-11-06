@@ -351,6 +351,13 @@ shark_classify_target(WorldCellTests test)
 add_test(NAME shark.core.world-cell COMMAND WorldCellTests "[world-cell]" --rng-seed 1337)
 set_tests_properties(shark.core.world-cell PROPERTIES LABELS "cpu;unit;server;integration" TIMEOUT 60)
 
+add_executable(WorldCellResidencyTests world_cell_residency_tests.cpp world_cell_io_tests.cpp world_cell_streaming_tests.cpp)
+target_link_libraries(WorldCellResidencyTests PRIVATE EngineCore Catch2::Catch2WithMain)
+shark_configure_target(WorldCellResidencyTests)
+shark_classify_target(WorldCellResidencyTests test)
+add_test(NAME shark.core.world-cell-residency COMMAND WorldCellResidencyTests "[world-cell-residency],[world-cell-io]" --rng-seed 1337)
+set_tests_properties(shark.core.world-cell-residency PROPERTIES LABELS "cpu;unit;server;integration" TIMEOUT 60)
+
 if(TARGET EngineTools)
     add_executable(ClientExportTests client_export_tests.cpp)
     target_link_libraries(ClientExportTests PRIVATE EngineTools nlohmann_json::nlohmann_json Catch2::Catch2WithMain)

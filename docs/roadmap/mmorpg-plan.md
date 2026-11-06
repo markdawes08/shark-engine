@@ -360,6 +360,9 @@ Follow the [seven checkpoints](seamless-world-plan.md). M05a's
 and bounded static development cell content; later checkpoints add
 asynchronous residency, collision/navigation, same-process regions, consistent
 transfer, separate-process recovery and connected acceptance.
+M05b's [handoff](../handoffs/M05b-world-cell-residency.md) records passing CPU
+checks for explicit owner publication, retained outcomes, cooperative cancellation
+and resident/IO budgets under the [residency contract](../world-cell-residency.md).
 
 After 11-13, 18/20 and M04. Implement in reviewable internal steps: (1) global
 cell/local coordinates and origin-safe content/collision/navigation streaming,

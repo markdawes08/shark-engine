@@ -116,6 +116,7 @@ not establish file or gameplay-wire formats.
 | [0061](0061-authoritative-combat.md) | Current-pose combat, bounded server Lua rules, death/respawn and checked action/life identities |
 | [0062](0062-gameplay-lifecycles.md) | Owned contact/script lifetimes, preserved reconnect state and once-only presentation outcomes |
 | [0063](0063-world-cell-content.md) | Static world-cell development payloads and bounded generation-bound local coordinates |
+| [0064](0064-world-cell-residency.md) | One reader worker, retained outcomes and bounded owner-thread cell residency |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an
