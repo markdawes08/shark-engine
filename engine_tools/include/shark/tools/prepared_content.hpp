@@ -5,6 +5,7 @@
 #include "shark/runtime_prefab.hpp"
 #include "shark/tools/authored_scene.hpp"
 #include "shark/tools/prefab_document.hpp"
+#include "shark/world_cell.hpp"
 
 namespace shark::tools {
 
@@ -31,6 +32,15 @@ prepare_mesh_asset(AssetId asset, std::span<const std::byte> cached_gltf_payload
 [[nodiscard]] Result<std::vector<std::byte>>
 prepare_scene(const AuthoredScene& owner,
               std::optional<SceneRevision> expected_revision = std::nullopt);
+
+// Capture one exact committed revision as static world-cell development content.
+// The source anchor must already equal the supplied world/cell at zero offset;
+// preparation never relocates content or grants runtime/region authority.
+// Retains the existing capture guards, source dirty state and authoring history.
+[[nodiscard]] Result<std::vector<std::byte>> prepare_world_cell(const AuthoredScene& owner,
+                                                                SceneRevision expected_revision,
+                                                                WorldCellKey key,
+                                                                std::uint64_t content_revision);
 
 // Build a prepared scene from the same cached glTF artifact used for its mesh
 // payload. Callers supply one stable entity ID per dense converted node. Names

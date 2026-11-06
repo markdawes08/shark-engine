@@ -137,6 +137,12 @@ origin selection, generation-checked bounded float conversion, streaming and
 actual region handoff. No global float vector or premature rebasing service is
 introduced here.
 
+M05a's [local-frame and cell contract](world-cells.md) now adds explicit bounded
+double conversion and generation-bound float packing without constructing a
+global float. Existing coordinate normalization/translation and source/wire
+versions remain compatible. Actual Scene/native origin changes and region
+handoff follow later M05 checkpoints.
+
 ## Dependency and verification
 
 EnTT 4.0.0 is pinned to commit

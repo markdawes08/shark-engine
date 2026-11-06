@@ -854,7 +854,7 @@
       "planned_fixture": "MMOWorld/ContinuousTraversal, RegionAuthorityTransferFaultMatrix, CrossBoundaryCombatAI, OriginShiftPrecision and CellStreamingBudget fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "Planning amendment only; MMORPG implementation and qualification belong to M05. No server/network/persistence/streaming/load result is claimed."
+        "reason": "M05a implements bounded local frames, static development cell codecs/loading and exact authored preparation; see docs/handoffs/M05a-world-cell-foundation.md. Async residency, native world collision/navigation, continuous gameplay and fenced multi-process transfer/recovery remain with the later M05 checkpoints; full REQ-M05 stays NOT_RUN."
       }
     },
     {
@@ -1012,6 +1012,16 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "core.world-cell-content",
+        "name": "Bounded local frames and immutable static world-cell development content",
+        "requirement_ids": ["REQ-M05"],
+        "test_ids": ["shark.core.world-position", "shark.core.world-cell", "shark.tools.world-cell"],
+        "test_sources": ["tests/core_world_position_tests.cpp", "tests/world_cell_tests.cpp", "tests/world_cell_tools_tests.cpp"],
+        "fixtures": ["docs/world-cells.md", "engine/core/src/world_cell.cpp"],
+        "fixture_reason": "Independent in-memory cell envelopes, far-origin coordinate expectations and actual AuthoredScene-to-Core activation exercise exact anchors, source/history preservation, static profile, complete mesh closure, generation fences, owned lifetimes and failed-candidate preservation. These CPU content/coordinate fixtures grant no region authority or seamless-traversal qualification; no component, public command, Lua binding or FeatureWorld case is added.",
+        "featureworld_cases": []
+      },
       {
         "id": "server.connected-gameplay",
         "name": "Two-client authoritative gameplay under bounded semantic network faults",

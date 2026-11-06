@@ -40,6 +40,7 @@ add_library(EngineCore STATIC
     src/stable_id.cpp
     src/time.cpp
     src/transform.cpp
+    src/world_cell.cpp
     src/world_position.cpp)
 target_include_directories(EngineCore PUBLIC ../include include PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/generated")
 # Standard-library sleeping and ordinary worker synchronization use the OS thread

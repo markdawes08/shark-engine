@@ -355,6 +355,12 @@ client while the world continues. Server runs these cases without graphics/audio
 
 ### M05 - Seamless world streaming, navigation and authority transfer
 
+Follow the [seven checkpoints](seamless-world-plan.md). M05a's
+[handoff](../handoffs/M05a-world-cell-foundation.md) records checked local frames
+and bounded static development cell content; later checkpoints add
+asynchronous residency, collision/navigation, same-process regions, consistent
+transfer, separate-process recovery and connected acceptance.
+
 After 11-13, 18/20 and M04. Implement in reviewable internal steps: (1) global
 cell/local coordinates and origin-safe content/collision/navigation streaming,
 (2) adjacent regions in one process with overlapping interest and continuous

@@ -83,6 +83,19 @@ Result<void> normalize_axis(std::int64_t& cell, double& offset, const char* oper
     return {};
 }
 
+Result<void> validate_local_arithmetic(const double maximum_abs_meters, const char* operation) {
+    if (!std::isfinite(maximum_abs_meters) || maximum_abs_meters <= 0.0 ||
+        maximum_abs_meters > world_local_coordinate_limit) {
+        return position_error(operation,
+                              "Local coordinate bound must be positive and within the limit");
+    }
+    if (std::fegetround() != FE_TONEAREST) {
+        return position_error(operation, "World position arithmetic requires round-to-nearest mode",
+                              ErrorCode::invalid_configuration);
+    }
+    return {};
+}
+
 } // namespace
 
 Result<void> validate_world_position(const WorldPosition& position) {
@@ -136,6 +149,109 @@ Result<WorldPosition> translate_world_position(const WorldPosition& position,
         }
     }
     return translated;
+}
+
+Result<std::array<double, 3>> world_position_relative_to(const WorldPosition& position,
+                                                         const WorldPosition& origin,
+                                                         const double maximum_abs_meters) {
+    constexpr auto operation = "world-position.relative-to";
+    if (auto valid = validate_local_arithmetic(maximum_abs_meters, operation); !valid)
+        return valid.error();
+    if (auto valid = validate(position, operation); !valid)
+        return valid.error();
+    if (auto valid = validate(origin, operation); !valid)
+        return valid.error();
+    if (position.world != origin.world)
+        return position_error(operation, "Local conversion requires matching world identities");
+    // Canonical cell bounds make these signed differences safe. Forming only
+    // the relative integer distance preserves nearby detail at distant cells.
+    const std::array cells{position.cell.x - origin.cell.x, position.cell.y - origin.cell.y,
+                           position.cell.z - origin.cell.z};
+    std::array<double, 3> result{};
+    for (std::size_t axis = 0; axis < result.size(); ++axis) {
+        const auto local = static_cast<double>(cells[axis]) * world_cell_size_meters +
+                           (position.offset[axis] - origin.offset[axis]);
+        if (!std::isfinite(local) || std::abs(local) > maximum_abs_meters)
+            return position_error(operation, "Position exceeds the local coordinate bound");
+        result[axis] = local == 0.0 ? 0.0 : local;
+    }
+    return result;
+}
+
+Result<WorldPosition> world_position_from_local(const WorldPosition& origin,
+                                                const std::array<double, 3>& local_meters,
+                                                const double maximum_abs_meters) {
+    constexpr auto operation = "world-position.from-local";
+    if (auto valid = validate_local_arithmetic(maximum_abs_meters, operation); !valid)
+        return valid.error();
+    if (auto valid = validate(origin, operation); !valid)
+        return valid.error();
+    for (const auto local : local_meters) {
+        if (!std::isfinite(local) || std::abs(local) > maximum_abs_meters)
+            return position_error(operation, "Position exceeds the local coordinate bound");
+    }
+    auto result = translate_world_position(origin, local_meters);
+    if (!result) {
+        auto error = result.error();
+        error.context.operation = operation;
+        return error;
+    }
+    return result;
+}
+
+Result<LocalWorldPosition> pack_world_position(const WorldPosition& position,
+                                               const WorldLocalFrame& frame) {
+    constexpr auto operation = "world-position.pack";
+    if (frame.generation == 0)
+        return position_error(operation, "Local frame generation must be nonzero");
+    auto local = world_position_relative_to(position, frame.origin, world_local_coordinate_limit);
+    if (!local) {
+        auto error = local.error();
+        error.context.operation = operation;
+        return error;
+    }
+    LocalWorldPosition result{{}, frame.generation};
+    for (std::size_t axis = 0; axis < result.meters.size(); ++axis) {
+        const auto packed = static_cast<float>(local.value()[axis]);
+        result.meters[axis] = packed == 0.0F ? 0.0F : packed;
+    }
+    const std::array rounded{static_cast<double>(result.meters[0]),
+                             static_cast<double>(result.meters[1]),
+                             static_cast<double>(result.meters[2])};
+    // Rounding can carry into the next global cell. A successful pack must
+    // remain unpackable through this same frame, including at the world edge.
+    if (auto represented =
+            world_position_from_local(frame.origin, rounded, world_local_coordinate_limit);
+        !represented) {
+        auto error = represented.error();
+        error.context.operation = operation;
+        return error;
+    }
+    return result;
+}
+
+Result<WorldPosition> unpack_world_position(const LocalWorldPosition& position,
+                                            const WorldLocalFrame& frame) {
+    constexpr auto operation = "world-position.unpack";
+    if (frame.generation == 0)
+        return position_error(operation, "Local frame generation must be nonzero");
+    if (position.origin_generation == 0 || position.origin_generation != frame.generation)
+        return position_error(operation, "Local position belongs to a different frame generation",
+                              ErrorCode::conflict);
+    std::array<double, 3> local{};
+    for (std::size_t axis = 0; axis < local.size(); ++axis) {
+        const auto value = position.meters[axis];
+        if (!std::isfinite(value) || (value == 0.0F && std::signbit(value)))
+            return position_error(operation, "Local position floats must be finite and canonical");
+        local[axis] = static_cast<double>(value);
+    }
+    auto result = world_position_from_local(frame.origin, local, world_local_coordinate_limit);
+    if (!result) {
+        auto error = result.error();
+        error.context.operation = operation;
+        return error;
+    }
+    return result;
 }
 
 } // namespace shark

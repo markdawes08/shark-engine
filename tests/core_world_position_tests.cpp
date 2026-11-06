@@ -300,3 +300,190 @@ TEST_CASE("world position fixed-seed grid agrees with integer reference and roun
         CHECK(returned.value() == normalized.value());
     }
 }
+
+TEST_CASE("bounded local coordinates preserve nearby detail at distant world cells",
+          "[world-position]") {
+    const auto origin = position({2'000'000'000, -2'000'000'000, 7}, {1023.75, 12.5, 0.125});
+    const std::array local{0.5, -1024.25, 2048.125};
+    const auto global = shark::world_position_from_local(origin, local, 4096.0);
+    REQUIRE(global);
+    CHECK(global.value().cell == shark::WorldCell{2'000'000'001, -2'000'000'001, 9});
+    CHECK(global.value().offset == std::array{0.25, 12.25, 0.25});
+    const auto relative = shark::world_position_relative_to(global.value(), origin, 4096.0);
+    REQUIRE(relative);
+    CHECK(relative.value() == local);
+
+    const auto distant = position({2'000'000'000, -2'000'000'000, 0});
+    const auto nearby = position(distant.cell, {0.0000001, 0.25, 0});
+    const auto precise = shark::world_position_relative_to(nearby, distant, 1.0);
+    REQUIRE(precise);
+    CHECK(precise.value() == std::array{0.0000001, 0.25, 0.0});
+    const auto repeated = shark::world_position_from_local(distant, precise.value(), 1.0);
+    REQUIRE(repeated);
+    CHECK(repeated.value() == nearby);
+    const auto zero = shark::world_position_relative_to(origin, origin, 1.0);
+    REQUIRE(zero);
+    for (const auto value : zero.value()) {
+        CHECK(value == 0.0);
+        CHECK_FALSE(std::signbit(value));
+    }
+}
+
+TEST_CASE("bounded local coordinates admit exact endpoints and reject excess", "[world-position]") {
+    const auto origin = position();
+    constexpr auto bound = shark::world_local_coordinate_limit;
+    const auto global = shark::world_position_from_local(origin, {bound, -bound, -0.0}, bound);
+    REQUIRE(global);
+    const auto relative = shark::world_position_relative_to(global.value(), origin, bound);
+    REQUIRE(relative);
+    CHECK(relative.value() == std::array{bound, -bound, 0.0});
+    CHECK_FALSE(std::signbit(relative.value()[2]));
+    const auto beyond = std::nextafter(bound, std::numeric_limits<double>::infinity());
+    CHECK_FALSE(shark::world_position_from_local(origin, {beyond, 0, 0}, bound));
+    CHECK_FALSE(shark::world_position_from_local(origin, {0, -beyond, 0}, bound));
+    const auto too_distant = shark::translate_world_position(origin, {beyond, 0, 0});
+    REQUIRE(too_distant);
+    CHECK_FALSE(shark::world_position_relative_to(too_distant.value(), origin, bound));
+    CHECK_FALSE(shark::world_position_relative_to(global.value(), origin, 1.0));
+
+    for (const auto invalid :
+         std::array{0.0, -0.0, -1.0, beyond, std::numeric_limits<double>::infinity(),
+                    std::numeric_limits<double>::quiet_NaN()}) {
+        CHECK_FALSE(shark::world_position_relative_to(origin, origin, invalid));
+        CHECK_FALSE(shark::world_position_from_local(origin, {}, invalid));
+    }
+}
+
+TEST_CASE("local coordinate conversion checks world identity canonical inputs and overflow",
+          "[world-position]") {
+    const auto origin = position();
+    auto foreign = origin;
+    foreign.world = world(true);
+    CHECK_FALSE(shark::world_position_relative_to(foreign, origin, 1024));
+    auto invalid = origin;
+    invalid.offset[1] = -0.0;
+    CHECK_FALSE(shark::world_position_relative_to(invalid, origin, 1024));
+    CHECK_FALSE(shark::world_position_relative_to(origin, invalid, 1024));
+    CHECK_FALSE(shark::world_position_from_local(invalid, {}, 1024));
+    invalid.cell.x = std::numeric_limits<std::int64_t>::max();
+    CHECK_FALSE(shark::world_position_relative_to(invalid, origin, 1024));
+
+    const auto lower = position({shark::world_cell_min, 0, 0});
+    const auto upper = position({shark::world_cell_max, 0, 0});
+    CHECK_FALSE(shark::world_position_relative_to(upper, lower, 65536));
+    CHECK_FALSE(shark::world_position_relative_to(lower, upper, 65536));
+    const auto overflow = shark::world_position_from_local(upper, {1024, 0, 0}, 1024);
+    REQUIRE_FALSE(overflow);
+    CHECK(overflow.error().context.operation == "world-position.from-local");
+    CHECK_FALSE(shark::world_position_from_local(lower, {-1, 0, 0}, 1024));
+    for (const auto value : std::array{std::numeric_limits<double>::infinity(),
+                                       -std::numeric_limits<double>::infinity(),
+                                       std::numeric_limits<double>::quiet_NaN()}) {
+        for (std::size_t axis = 0; axis < 3; ++axis) {
+            std::array<double, 3> local{};
+            local[axis] = value;
+            CHECK_FALSE(shark::world_position_from_local(origin, local, 1024));
+        }
+    }
+}
+
+TEST_CASE("packed local positions retain frame generations and declare float loss",
+          "[world-position]") {
+    const shark::WorldLocalFrame frame{position({2'000'000'000, -2'000'000'000, 7}), 19};
+    const auto source = position(frame.origin.cell, {0.1, 0.25, 0.0});
+    const auto packed = shark::pack_world_position(source, frame);
+    REQUIRE(packed);
+    CHECK(packed.value().origin_generation == 19);
+    CHECK(packed.value().meters == std::array{0.1F, 0.25F, 0.0F});
+    CHECK_FALSE(std::signbit(packed.value().meters[2]));
+    const auto unpacked = shark::unpack_world_position(packed.value(), frame);
+    REQUIRE(unpacked);
+    CHECK(unpacked.value().world == source.world);
+    CHECK(unpacked.value().cell == source.cell);
+    CHECK(unpacked.value().offset[0] == static_cast<double>(0.1F));
+    CHECK(unpacked.value().offset[0] != source.offset[0]);
+    CHECK(std::abs(unpacked.value().offset[0] - source.offset[0]) < 0.00000001);
+    CHECK(unpacked.value().offset[1] == 0.25);
+
+    auto changed = frame;
+    changed.origin = position(frame.origin.cell, {1, 0, 0});
+    ++changed.generation;
+    const auto stale = shark::unpack_world_position(packed.value(), changed);
+    REQUIRE_FALSE(stale);
+    CHECK(stale.error().code == shark::ErrorCode::conflict);
+    changed.generation = 0;
+    CHECK_FALSE(shark::pack_world_position(source, changed));
+    CHECK_FALSE(shark::unpack_world_position(packed.value(), changed));
+    auto missing = packed.value();
+    missing.origin_generation = 0;
+    CHECK_FALSE(shark::unpack_world_position(missing, frame));
+}
+
+TEST_CASE("packed local positions validate float bounds canonical values and rounding",
+          "[world-position]") {
+    const shark::WorldLocalFrame frame{position(), 1};
+    constexpr auto bound = shark::world_local_coordinate_limit;
+    const auto endpoint = shark::world_position_from_local(frame.origin, {bound, -bound, 0}, bound);
+    REQUIRE(endpoint);
+    const auto packed = shark::pack_world_position(endpoint.value(), frame);
+    REQUIRE(packed);
+    const auto unpacked = shark::unpack_world_position(packed.value(), frame);
+    REQUIRE(unpacked);
+    CHECK(unpacked.value() == endpoint.value());
+    for (const auto invalid : std::array{
+             -0.0F, std::numeric_limits<float>::infinity(), std::numeric_limits<float>::quiet_NaN(),
+             std::nextafter(65536.0F, std::numeric_limits<float>::infinity())}) {
+        auto candidate = packed.value();
+        candidate.meters[1] = invalid;
+        CHECK_FALSE(shark::unpack_world_position(candidate, frame));
+    }
+    const auto too_distant = shark::translate_world_position(frame.origin, {bound + 1, 0, 0});
+    REQUIRE(too_distant);
+    CHECK_FALSE(shark::pack_world_position(too_distant.value(), frame));
+    auto foreign = frame.origin;
+    foreign.world = world(true);
+    CHECK_FALSE(shark::pack_world_position(foreign, frame));
+
+    const RoundingRestore restore;
+    REQUIRE(std::fesetround(FE_DOWNWARD) == 0);
+    const auto relative = shark::world_position_relative_to(frame.origin, frame.origin, 1024);
+    REQUIRE_FALSE(relative);
+    CHECK(relative.error().code == shark::ErrorCode::invalid_configuration);
+    const auto global = shark::world_position_from_local(frame.origin, {}, 1024);
+    REQUIRE_FALSE(global);
+    CHECK(global.error().code == shark::ErrorCode::invalid_configuration);
+    const auto pack = shark::pack_world_position(frame.origin, frame);
+    REQUIRE_FALSE(pack);
+    CHECK(pack.error().code == shark::ErrorCode::invalid_configuration);
+    const auto unpack = shark::unpack_world_position(packed.value(), frame);
+    REQUIRE_FALSE(unpack);
+    CHECK(unpack.error().code == shark::ErrorCode::invalid_configuration);
+}
+
+TEST_CASE("packed local rounding preserves global representability at world edges",
+          "[world-position]") {
+    const shark::WorldLocalFrame upper_frame{position({shark::world_cell_max, 0, 0}), 1};
+    const auto rounded_outside = position(upper_frame.origin.cell, {1023.99999, 0, 0});
+    const auto rejected = shark::pack_world_position(rounded_outside, upper_frame);
+    REQUIRE_FALSE(rejected);
+    CHECK(rejected.error().context.operation == "world-position.pack");
+
+    const auto inside = position(upper_frame.origin.cell, {1023.5, 0, 0});
+    const auto packed_inside = shark::pack_world_position(inside, upper_frame);
+    REQUIRE(packed_inside);
+    const auto unpacked_inside = shark::unpack_world_position(packed_inside.value(), upper_frame);
+    REQUIRE(unpacked_inside);
+    CHECK(unpacked_inside.value() == inside);
+
+    const shark::WorldLocalFrame lower_frame{
+        position({shark::world_cell_min, 0, 0}, {std::numeric_limits<double>::denorm_min(), 0, 0}),
+        2};
+    const auto lower_edge = position(lower_frame.origin.cell);
+    const auto packed_zero = shark::pack_world_position(lower_edge, lower_frame);
+    REQUIRE(packed_zero);
+    CHECK(packed_zero.value().meters[0] == 0.0F);
+    CHECK_FALSE(std::signbit(packed_zero.value().meters[0]));
+    const auto unpacked_zero = shark::unpack_world_position(packed_zero.value(), lower_frame);
+    REQUIRE(unpacked_zero);
+    CHECK(unpacked_zero.value() == lower_frame.origin);
+}

@@ -8,8 +8,14 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
+M05a passes the selected CPU foundation gate under the
+[M05 checkpoints](../roadmap/seamless-world-plan.md). Its
+[handoff](../handoffs/M05a-world-cell-foundation.md) records bounded local-frame
+conversion, immutable static cell content and exact authored preparation. Full
+REQ-M05 remains NOT_RUN; M05b's asynchronous residency is next.
+
 M04 and full REQ-M04 PASS under the [gameplay checkpoints](../roadmap/authoritative-gameplay-plan.md)
-and declared current-machine functional profile. M05 is next in manifest order.
+and declared current-machine functional profile.
 [M04a](../handoffs/M04a-authoritative-movement.md) records authenticated sequenced
 movement, native collision and committed corrections.
 [M04b](../handoffs/M04b-client-movement.md) adds bounded prediction/reconciliation,

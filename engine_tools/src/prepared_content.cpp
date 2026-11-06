@@ -155,6 +155,28 @@ Result<std::vector<std::byte>> prepare_scene(const AuthoredScene& owner,
     }
 }
 
+Result<std::vector<std::byte>> prepare_world_cell(const AuthoredScene& owner,
+                                                  SceneRevision expected_revision, WorldCellKey key,
+                                                  std::uint64_t content_revision) {
+    constexpr auto operation = "content.cell.prepare";
+    try {
+        auto captured = prepare_scene(owner, expected_revision);
+        if (!captured)
+            return contextualize(std::move(captured).error(), operation);
+        auto scene = decode_prepared_scene(captured.value());
+        if (!scene)
+            return contextualize(std::move(scene).error(), operation);
+        auto encoded =
+            encode_world_cell({std::move(key), content_revision, std::move(scene).value()});
+        if (!encoded)
+            return contextualize(std::move(encoded).error(), operation);
+        return encoded;
+    } catch (...) {
+        return failure(operation, "World cell allocation or preparation failed",
+                       ErrorCode::execution_failed);
+    }
+}
+
 Result<std::vector<std::byte>> prepare_gltf_scene(AssetId asset, SceneId scene,
                                                   std::span<const std::byte> cached_gltf_payload,
                                                   std::span<const AuthoredEntityId> node_ids) {

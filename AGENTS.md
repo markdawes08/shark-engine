@@ -54,12 +54,22 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [M04e, connected gameplay acceptance](docs/handoffs/M04e-gameplay-acceptance.md).**
+**Current handoff: [M05a, world-cell foundation](docs/handoffs/M05a-world-cell-foundation.md).**
+Follow the [M05 checkpoints](docs/roadmap/seamless-world-plan.md),
+[cell contract](docs/world-cells.md) and [ADR 0063](docs/architecture/0063-world-cell-content.md).
+M05a passes its selected CPU gate. M05b is next: bounded asynchronous content
+residency. Keep cell identity separate from region authority; static content
+loading grants no native/gameplay readiness. Preserve exact source anchors,
+immutable asset closure, creating-thread Scene lifetimes and generation-bound
+local conversion. Workers may return bytes, not worker-created Scene owners.
+Full REQ-M05 remains NOT_RUN pending later connected streaming/transfer gates.
+
+The [M04e handoff](docs/handoffs/M04e-gameplay-acceptance.md) remains applicable.
 M04 and full REQ-M04 PASS under the declared current-machine functional profile.
 Follow [gameplay acceptance](docs/gameplay-acceptance.md); preserve the distinction
 between shaped verified observations, reliable player/replica traffic and native
-physics. M05 is next in manifest order: seamless streaming and authority transfer.
-Its scope is in the [MMORPG plan](docs/roadmap/mmorpg-plan.md). The manual UI pause
+physics. M05 owns seamless streaming and authority transfer under the
+[MMORPG plan](docs/roadmap/mmorpg-plan.md). The manual UI pause
 and independent backlog statuses remain unchanged.
 
 The [M04d handoff](docs/handoffs/M04d-gameplay-lifecycle.md) remains applicable.

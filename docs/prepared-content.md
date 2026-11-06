@@ -133,6 +133,11 @@ resolver, implicit import, export CLI or final-cook claim is made in 13b.
 
 ## Public Core example
 
+M05a adds [static world-cell envelopes](world-cells.md) around this same prepared
+Scene format and immutable asset closure. The new envelope carries an explicit
+world/cell key and content revision; existing mesh/Scene bytes and readers retain
+their compatibility. Loaded cell content has no region or native-physics authority.
+
 ```cpp
 #include <shark/prepared_scene.hpp>
 
