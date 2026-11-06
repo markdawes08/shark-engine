@@ -10,6 +10,7 @@ retains the exact SQL spelling accepted by its historical store owner.
 | `schema-1.sql` | `d2c521ebb66f023bb5e1ff7d9c4936a2300518b3`, `server/storage/src/store.cpp` | The original metadata-only schema. |
 | `schema-2.sql` | `64ffe0b8b2a00d4bbf75ef54c0562148b0ac69e1`, same path | Three accounts, four certificate enrollments and three owned character checkpoints. |
 | `schema-3.sql` | `9dd0a925981c844f751abe8144a1ff204da404c8`, same path | The same character state plus two economic records and eight retained outcomes after nine consumed operations. |
+| `schema-4.sql` | Independently authored for M05e against the reviewed version-4 format | The same economic history with an empty regional-ownership table. Migration does not invent a writer grant. |
 
 All fixtures use distinct fixed UUIDv4 values: StoreId suffix 700, WorldId 900,
 accounts 1/2/3, characters 101/102/103 and world entities 201/202/203 (decimal

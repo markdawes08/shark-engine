@@ -1,4 +1,5 @@
 #include "shark/server/combat.hpp"
+#include "execution_cut_encoding.hpp"
 #include "shark/world_traversal.hpp"
 
 #include <algorithm>
@@ -75,22 +76,32 @@ struct CharacterCombat::Impl {
     bool faulted{false};
     bool script_mode_bound{false};
     std::optional<std::uint64_t> script_instance{};
+    std::shared_ptr<ExecutionFence> fence;
+    std::optional<ExecutionPermit> execution;
 
     Impl(std::uint64_t scene, std::uint64_t native, std::uint64_t completed,
-         std::unique_ptr<CombatRules> configured)
+         std::unique_ptr<CombatRules> configured, std::shared_ptr<ExecutionFence> execution_fence,
+         std::optional<ExecutionPermit> permit)
         : scene_instance(scene), world(native), ticks(completed), rules(std::move(configured)) {
         actors.reserve(movement_maximum_characters);
+        fence = std::move(execution_fence);
+        execution = permit;
     }
-    Result<void> check(const char* operation) const {
+    Result<void> executing(bool allow_frozen = false) const {
+        if (fence)
+            return fence->check(*execution, allow_frozen);
+        return {};
+    }
+    Result<void> check(const char* operation, bool allow_frozen = false) const {
         if (owner != std::this_thread::get_id())
             return rejected(operation, "Combat requires its creating thread");
         if (faulted)
             return rejected(operation, "Combat has partial effects; reconcile and replace owner");
-        return {};
+        return executing(allow_frozen);
     }
     Result<void> context(const Scene& scene, const PhysicsWorld& physics, MonotonicTime now,
-                         const char* operation) const {
-        if (auto valid = check(operation); !valid)
+                         const char* operation, bool allow_frozen = false) const {
+        if (auto valid = check(operation, allow_frozen); !valid)
             return valid;
         if (now < MonotonicTime::zero() || now < last_time)
             return rejected(operation, "Combat clock cannot regress");
@@ -139,6 +150,8 @@ struct CharacterCombat::Impl {
     Result<void> mutations(ScriptRuntime* scripts, CombatTick& report) {
         if (!scripts)
             return {};
+        if (auto valid = executing(); !valid)
+            return valid;
         auto results = scripts->take_entity_mutations();
         if (!results)
             return results.error();
@@ -171,6 +184,8 @@ struct CharacterCombat::Impl {
                           bool keep_movement) {
         std::size_t observed = 0;
         while (!events.empty()) {
+            if (auto valid = executing(); !valid)
+                return valid;
             observed += events.size();
             if (keep_movement)
                 report.movement.contacts.insert(report.movement.contacts.end(), events.begin(),
@@ -184,6 +199,8 @@ struct CharacterCombat::Impl {
                  offset += script_runtime_maximum_contact_events) {
                 const auto count =
                     std::min(script_runtime_maximum_contact_events, events.size() - offset);
+                if (auto valid = executing(); !valid)
+                    return valid;
                 auto delivery = scripts->dispatch_contact_events(
                     scene, physics,
                     std::span<const PhysicsContactEvent>{events}.subspan(offset, count));
@@ -206,6 +223,8 @@ struct CharacterCombat::Impl {
                          CombatTick& report) {
         if (!scripts)
             return {};
+        if (auto valid = executing(); !valid)
+            return valid;
         auto stopped = scripts->suspend_entity(scene, physics, actor.entity);
         if (!stopped)
             return stopped.error();
@@ -220,6 +239,8 @@ struct CharacterCombat::Impl {
                         PhysicsWorld& physics, ScriptRuntime* scripts, CombatTick& report) {
         if (actor.detached)
             return {};
+        if (auto valid = executing(); !valid)
+            return valid;
         if (auto stopped = suspend(actor, scene, physics, scripts, report); !stopped)
             return stopped;
         if (actor.health != 0) {
@@ -230,6 +251,8 @@ struct CharacterCombat::Impl {
             if (auto released = movement.release(scene, physics, actor.movement.stream); !released)
                 return released;
             ++report.released_movements;
+            if (auto valid = executing(); !valid)
+                return valid;
             if (auto removed = physics.remove_body(scene, *actor.body); !removed)
                 return removed;
             ++report.removed_bodies;
@@ -244,6 +267,8 @@ struct CharacterCombat::Impl {
                         net::CombatActionResult& outcome, CharacterMovement& movement, Scene& scene,
                         PhysicsWorld& physics, ScriptRuntime* scripts, CombatTick& report,
                         bool& recorded) {
+        if (auto valid = executing(); !valid)
+            return valid;
         outcome.outcome = CombatOutcome::hit;
         outcome.amount = std::min(target.health, amount);
         target.health = static_cast<std::uint16_t>(target.health - outcome.amount);
@@ -263,6 +288,8 @@ struct CharacterCombat::Impl {
         if (auto released = movement.release(scene, physics, target.movement.stream); !released)
             return released;
         ++report.released_movements;
+        if (auto valid = executing(); !valid)
+            return valid;
         if (auto removed = physics.remove_body(scene, *target.body); !removed)
             return removed;
         ++report.removed_bodies;
@@ -276,8 +303,17 @@ CharacterCombat::~CharacterCombat() = default;
 
 Result<std::unique_ptr<CharacterCombat>>
 CharacterCombat::create(const Scene& scene, const PhysicsWorld& physics,
-                        std::unique_ptr<CombatRules> rules) {
+                        std::unique_ptr<CombatRules> rules, std::shared_ptr<ExecutionFence> fence) {
     constexpr auto operation = "server.combat.create";
+    std::optional<ExecutionPermit> execution;
+    if (fence) {
+        auto current = fence->permit();
+        if (!current)
+            return current.error();
+        if (auto valid = fence->check(current.value()); !valid)
+            return valid.error();
+        execution = current.value();
+    }
     if (!rules)
         return rejected(operation, "Combat requires explicit server rules",
                         ErrorCode::invalid_argument);
@@ -297,9 +333,9 @@ CharacterCombat::create(const Scene& scene, const PhysicsWorld& physics,
         return page.error();
     if (!std::holds_alternative<RegionSceneScope>(page.value().scope()))
         return rejected(operation, "Combat requires an authoritative Region Scene");
-    auto owner = std::unique_ptr<CharacterCombat>{new CharacterCombat{
-        std::make_unique<Impl>(scene_state.value().instance, poses.value().world,
-                               poses.value().completed_ticks, std::move(rules))}};
+    auto owner = std::unique_ptr<CharacterCombat>{new CharacterCombat{std::make_unique<Impl>(
+        scene_state.value().instance, poses.value().world, poses.value().completed_ticks,
+        std::move(rules), std::move(fence), execution)}};
     if (auto valid = owner->impl_->context(scene, physics, {}, operation); !valid)
         return valid.error();
     return owner;
@@ -391,6 +427,8 @@ Result<void> CharacterCombat::submit(storage::CharacterAuthority& authority,
         return body.error();
     if (auto body = impl_->live_body(*target, scene, physics); !body)
         return body.error();
+    if (auto valid = impl_->executing(); !valid)
+        return valid;
     if (auto admitted = authority.apply(transport, net::HeartbeatRequest{action.authority}, now);
         !admitted)
         return admitted.error();
@@ -461,6 +499,8 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
         }
     }
     if (scripts) {
+        if (auto valid = impl_->executing(); !valid)
+            return fail(valid.error());
         auto updated = scripts->fixed_update(scene, physics, impl_->ticks, 1.0 / movement_tick_hz);
         if (auto retained = impl_->mutations(scripts, report); !retained)
             return fail(retained.error());
@@ -641,6 +681,8 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
                 if (distance > range || distance == 0) {
                     outcome.outcome = CombatOutcome::out_of_range;
                 } else if (request.kind == CombatActionKind::projectile) {
+                    if (auto valid = impl_->executing(); !valid)
+                        return fail(valid.error());
                     auto decision = impl_->rules->evaluate(
                         {request.kind, impl_->ticks, actor.health, target->health, distance});
                     if (!decision) {
@@ -671,6 +713,8 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
                         ray.value().hits.front().body != *target->body) {
                         outcome.outcome = CombatOutcome::blocked;
                     } else {
+                        if (auto valid = impl_->executing(); !valid)
+                            return fail(valid.error());
                         auto decision = impl_->rules->evaluate(
                             {request.kind, impl_->ticks, actor.health, target->health, distance});
                         if (!decision) {
@@ -722,11 +766,15 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
         auto target = generate_stable_id();
         if (!stream || !target)
             return fail(!stream ? stream.error() : target.error());
+        if (auto valid = impl_->executing(); !valid)
+            return fail(valid.error());
         auto body = physics.create_runtime_body(scene, actor.entity, actor.settings);
         if (!body)
             return fail(body.error());
         actor.body = body.value();
         ++report.created_bodies;
+        if (auto valid = impl_->executing(); !valid)
+            return fail(valid.error());
         if (auto placed = physics.teleport(scene, *actor.body, actor.spawn); !placed)
             return fail(placed.error());
         ++report.teleported_bodies;
@@ -749,6 +797,8 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
         report.rebindings.push_back({previous, {actor.stream, actor.target, actor.movement}});
         ++report.respawns;
         if (scripts) {
+            if (auto valid = impl_->executing(); !valid)
+                return fail(valid.error());
             auto resumed = scripts->resume_entity(scene, physics, actor.entity);
             if (!resumed)
                 return fail(resumed.error());
@@ -837,11 +887,15 @@ CharacterCombat::reconnect(storage::CharacterAuthority& authority, net::TlsTrans
         return std::move(report);
     };
     if (actor->health != 0) {
+        if (auto valid = impl_->executing(); !valid)
+            return fail(valid.error());
         auto body = physics.create_runtime_body(scene, actor->entity, actor->settings);
         if (!body)
             return fail(body.error());
         actor->body = body.value();
         ++report.created_bodies;
+        if (auto valid = impl_->executing(); !valid)
+            return fail(valid.error());
         if (auto placed = physics.teleport(scene, *actor->body, actor->detached_pose); !placed)
             return fail(placed.error());
         ++report.teleported_bodies;
@@ -863,6 +917,8 @@ CharacterCombat::reconnect(storage::CharacterAuthority& authority, net::TlsTrans
     actor->detached = false;
     actor->fenced = false;
     if (scripts && actor->health != 0) {
+        if (auto valid = impl_->executing(); !valid)
+            return fail(valid.error());
         auto resumed = scripts->resume_entity(scene, physics, actor->entity);
         if (!resumed)
             return fail(resumed.error());
@@ -952,6 +1008,108 @@ Result<CombatStats> CharacterCombat::stats() const {
     return CombatStats{impl_->ticks, impl_->actors.size() - detached,
                        pending,      impl_->faulted,
                        detached,     projectiles};
+}
+
+Result<void> CharacterCombat::adopt_execution(ExecutionPermit permit) {
+    constexpr auto operation = "server.combat.execution.adopt";
+    if (impl_->owner != std::this_thread::get_id() || impl_->faulted || !impl_->fence)
+        return rejected(operation, "Execution adoption requires its healthy fenced owner");
+    if (auto valid = impl_->fence->check(permit, true); !valid)
+        return valid;
+    impl_->execution = permit;
+    return {};
+}
+
+Result<CombatCut> CharacterCombat::capture_cut(const Scene& scene,
+                                               const PhysicsWorld& physics) const {
+    constexpr auto operation = "server.combat.cut";
+    if (auto valid = impl_->context(scene, physics, impl_->last_time, operation, true); !valid)
+        return valid.error();
+    auto scene_state = scene.stats();
+    if (!scene_state)
+        return scene_state.error();
+    auto page = scene.query_entities();
+    if (!page)
+        return page.error();
+    auto native = physics.stats();
+    if (!native)
+        return native.error();
+    if (native.value().pending_events != 0)
+        return rejected(operation, "Combat cut requires drained native contact events");
+    auto rules = impl_->rules->stats();
+    if (!rules)
+        return rules.error();
+    if (rules.value().faulted)
+        return rejected(operation, "Combat cut cannot capture faulted rules");
+    try {
+        CombatCut cut{{scene_state.value().instance, scene_state.value().revision},
+                      page.value().scope(),
+                      impl_->world,
+                      impl_->ticks,
+                      impl_->last_time,
+                      impl_->admission,
+                      impl_->script_mode_bound,
+                      impl_->script_instance,
+                      rules.value(),
+                      impl_->execution,
+                      {},
+                      {}};
+        cut.actors.reserve(impl_->actors.size());
+        for (const auto& actor : impl_->actors) {
+            if (auto valid = scene.resolve(actor.entity); !valid)
+                return valid.error();
+            CombatActorCut copied{actor.connection,
+                                  actor.session,
+                                  actor.stream,
+                                  actor.target,
+                                  actor.entity,
+                                  actor.body,
+                                  {},
+                                  {},
+                                  actor.settings,
+                                  actor.spawn,
+                                  actor.movement,
+                                  actor.health,
+                                  actor.ready_tick,
+                                  actor.respawn_tick,
+                                  actor.accepted,
+                                  actor.pending_order,
+                                  actor.pending,
+                                  {},
+                                  actor.fenced,
+                                  actor.detached,
+                                  actor.detached_pose,
+                                  {}};
+            if (actor.body) {
+                auto body = impl_->live_body(actor, scene, physics);
+                if (!body)
+                    return body.error();
+                auto velocity = physics.velocity(scene, *actor.body);
+                if (!velocity)
+                    return velocity.error();
+                copied.native = body.value();
+                copied.velocity = velocity.value();
+            }
+            copied.outcomes.reserve(actor.outcome_count);
+            for (std::size_t index = 0; index < actor.outcome_count; ++index)
+                copied.outcomes.push_back(*actor.outcomes[index]);
+            if (actor.projectile) {
+                const auto& flight = *actor.projectile;
+                copied.projectile.emplace(ProjectileCut{
+                    flight.request, flight.decision, flight.owner_life, flight.owner_body,
+                    flight.target_body, flight.target_entity, flight.position, flight.direction,
+                    flight.remaining_ticks, flight.order});
+            }
+            cut.actors.push_back(std::move(copied));
+        }
+        detail::CutEncoder encoded;
+        encoded.value(cut);
+        cut.bytes = std::move(encoded.bytes);
+        return cut;
+    } catch (...) {
+        return rejected(operation, "Cannot allocate bounded combat cut",
+                        ErrorCode::execution_failed);
+    }
 }
 
 } // namespace shark::server

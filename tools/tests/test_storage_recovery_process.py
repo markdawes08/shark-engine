@@ -102,7 +102,7 @@ def validate_seed(snapshot, mutation):
                                     "cell": [1, 2, 3], "offset": [0, 1.5, 1023.75]})
     require(len(set(all_ids)) == len(all_ids) and not set(all_ids) & {WORLD, *ACCOUNTS, identity(3)},
             "seed identities are not distinct")
-    expected = {"store": snapshot["store"], "world": WORLD, "schema": 3,
+    expected = {"store": snapshot["store"], "world": WORLD, "schema": 4,
                 "accounts": [{"id": owner, "revoked": False, "roster_revision": 2} for owner in ACCOUNTS],
                 "certificates": [{"account": owner, "fingerprint": f"{index + 1:064x}", "revoked": False}
                                  for index, owner in enumerate(ACCOUNTS)],

@@ -81,8 +81,11 @@ There is no projectile Scene entity, native rigid body, radius sweep, ballistics
 area damage, client hit claim, historical rewind or replicated flight-animation
 surface. The authoritative point trajectory and its final outcome are the
 implemented profile. Shared-island movement can cross a logical region boundary
-without changing the retained flight. M05e/f must explicitly capture/reconcile
-this state when introducing transfer cuts and separate native/process owners.
+without changing the retained flight. M05e's
+[gameplay cuts](gameplay-transfer-cuts.md) retain all incoming and outgoing flights,
+their exact original decisions/order and the same native/Lua owners while the
+shared island is frozen. Commit cannot launch again, reevaluate rules or emit a
+premature outcome. Transfer across separate native/process owners remains M05f.
 
 ## Combat wire compatibility
 

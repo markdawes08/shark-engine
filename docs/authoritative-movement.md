@@ -113,6 +113,14 @@ current grant before actual session command admission. One shared native world
 still commits movement; post-native escape faults the regional owner rather than
 inventing a rollback. This process-local grant is not a persistence fencing token.
 
+M05e adds [consistent gameplay cuts](gameplay-transfer-cuts.md) and shared
+execution permits. A frozen island retains every original FIFO input and both
+accepted/applied watermarks; commit preserves the native body and movement
+stream. Persistent regional mode also checks an actor's current writer coverage
+band before native movement. Leaving that band consumes the input as a horizontal
+stop until an explicit handoff changes the writer. Stale captured execution
+permits reject before session admission or native work.
+
 Outer authenticated client-to-server kind 9 is `movement_input`; server-to-client
 kind 10 is `movement_state`. Diagnostic TLS and reversed directions reject.
 Each payload starts with version u16 BE, kind u8, reserved-zero u8. All UUIDs use

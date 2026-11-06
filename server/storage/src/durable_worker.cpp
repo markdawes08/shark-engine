@@ -58,13 +58,22 @@ StoreResult execute_store(Store& store, const StoreCommand& command) {
                 return boxed(store.create_character(value.account, value.revision, value.state));
             else if constexpr (std::is_same_v<T, SaveCharacter>)
                 return boxed(store.save_character(value.account, value.character, value.revision,
-                                                  value.state));
+                                                  value.state, value.writer));
             else if constexpr (std::is_same_v<T, InitializeEconomy>)
                 return boxed(store.initialize_economy(value.account, value.character, value.state));
             else if constexpr (std::is_same_v<T, ReadEconomy>)
                 return boxed(store.economy(value.account, value.character));
             else if constexpr (std::is_same_v<T, ReadOperationStream>)
                 return boxed(store.operation_stream(value.account));
+            else if constexpr (std::is_same_v<T, FencedTransfer>)
+                return boxed(store.transfer(value.request, value.writer));
+            else if constexpr (std::is_same_v<T, ClaimRegion>)
+                return boxed(store.claim_region(value.character, value.entity, value.region,
+                                                value.instance));
+            else if constexpr (std::is_same_v<T, ReadRegionOwnership>)
+                return boxed(store.region_ownership(value.character));
+            else if constexpr (std::is_same_v<T, RegionTransferRequest>)
+                return boxed(store.commit_region(value));
             else
                 return boxed(store.transfer(value));
         },

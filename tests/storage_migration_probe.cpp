@@ -58,6 +58,8 @@ std::string_view phase_name(detail::MaintenancePhase phase) {
         return "after_v1_to_v2";
     case detail::MaintenancePhase::after_v2_to_v3:
         return "after_v2_to_v3";
+    case detail::MaintenancePhase::after_v3_to_v4:
+        return "after_v3_to_v4";
     case detail::MaintenancePhase::before_migration_commit:
         return "before_migration_commit";
     case detail::MaintenancePhase::after_migration_commit:
@@ -126,7 +128,7 @@ void seed(const fs::path& source, const fs::path& destination, int version,
         sf::take(Store::backup(source, destination, sf::store_id(), sf::world()));
     if (selected_kind == "reject") {
         if (selected_phase == "future")
-            sf::execute(source, "PRAGMA user_version=4");
+            sf::execute(source, "PRAGMA user_version=5");
         else if (selected_phase == "foreign")
             sf::execute(source, "PRAGMA application_id=17");
         else if (selected_phase == "extra-schema")
@@ -238,7 +240,7 @@ void reconcile(const fs::path& source, const fs::path& destination, const fs::pa
         print_migration(result);
         std::cout << ",\"repeated\":";
         print_migration(repeated);
-        std::cout << ",\"source\":" << sf::snapshot(source, 3)
+        std::cout << ",\"source\":" << sf::snapshot(source, 4)
                   << ",\"backup\":" << sf::snapshot(destination, version) << "}\n";
         return;
     }
@@ -247,9 +249,9 @@ void reconcile(const fs::path& source, const fs::path& destination, const fs::pa
     sf::check(!existing && existing.error().code == ErrorCode::conflict,
               "Copy retry overwrote allocated destination");
     const auto copied = sf::take(copy_snapshot(source, retry));
-    if (version == 3) {
+    if (version == 4) {
         auto owner = sf::take(Store::open(retry, sf::world()));
-        sf::verify_current(*owner, 3);
+        sf::verify_current(*owner, 4);
         verify_replays(*owner);
     }
     std::cout << "{\"status\":\"PASS\",\"event\":\"reconcile\",\"destination_valid\":"
@@ -264,7 +266,7 @@ void reconcile(const fs::path& source, const fs::path& destination, const fs::pa
     print_info(copied);
     std::cout << ",\"source\":" << sf::snapshot(source, version)
               << ",\"retry\":" << sf::snapshot(retry, version)
-              << ",\"economic_replays_checked\":" << (version == 3 ? "true" : "false") << "}\n";
+              << ",\"economic_replays_checked\":" << (version == 4 ? "true" : "false") << "}\n";
 }
 } // namespace
 

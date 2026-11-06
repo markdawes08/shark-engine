@@ -2,6 +2,7 @@
 
 #include "shark/net/movement.hpp"
 #include "shark/physics.hpp"
+#include "shark/server/execution_fence.hpp"
 #include "shark/storage/characters.hpp"
 #include "shark/world_position.hpp"
 
@@ -48,6 +49,36 @@ struct MovementDomain {
     double min_z{0};
     double max_z{0};
 };
+
+struct MovementActorCut {
+    std::uint64_t connection;
+    net::SessionSnapshot session;
+    net::MovementStreamId stream;
+    EntityReference entity;
+    PhysicsBodyHandle body;
+    PhysicsBodyState native;
+    PhysicsBodyVelocity velocity;
+    std::uint64_t accepted;
+    std::uint64_t applied;
+    std::optional<MovementDomain> domain;
+    // Original admitted values in FIFO order; at most eight.
+    std::vector<net::MovementInput> pending;
+};
+struct MovementCut {
+    SceneRevision revision;
+    SceneScope scope;
+    std::uint64_t physics_world;
+    WorldPosition origin;
+    std::optional<std::uint64_t> traversal_instance;
+    std::vector<MovementDomain> domains;
+    std::uint64_t completed_tick;
+    MonotonicTime last_time;
+    std::optional<ExecutionPermit> execution;
+    std::vector<MovementActorCut> actors;
+    // Canonical process-local fingerprint of every field above. This is not
+    // portable native state or an installable authority credential.
+    std::vector<std::byte> bytes;
+};
 [[nodiscard]] Result<bool> movement_coverage(std::span<const MovementDomain> domains,
                                              math::Vec3 from, math::Vec3 to);
 
@@ -62,7 +93,8 @@ class CharacterMovement final {
     [[nodiscard]] static Result<std::unique_ptr<CharacterMovement>>
     create(const Scene& scene, const PhysicsWorld& physics, WorldPosition origin,
            std::optional<std::uint64_t> traversal_instance = std::nullopt,
-           std::span<const MovementDomain> domains = {});
+           std::span<const MovementDomain> domains = {},
+           std::shared_ptr<ExecutionFence> fence = {});
     ~CharacterMovement();
     CharacterMovement(const CharacterMovement&) = delete;
     CharacterMovement& operator=(const CharacterMovement&) = delete;
@@ -103,9 +135,15 @@ class CharacterMovement final {
     // save or a client-proposed checkpoint; only committed poses are converted.
     [[nodiscard]] Result<WorldPosition> position(const Scene& scene, const PhysicsWorld& physics,
                                                  net::MovementStreamId stream) const;
+    [[nodiscard]] Result<MovementCut> capture_cut(const Scene& scene,
+                                                  const PhysicsWorld& physics) const;
 
   private:
+    friend class RegionWorld;
     friend class CharacterCombat;
+    [[nodiscard]] Result<void> adopt_execution(ExecutionPermit permit);
+    [[nodiscard]] Result<void> set_actor_domain(net::MovementStreamId stream,
+                                                std::optional<MovementDomain> domain);
     [[nodiscard]] Result<void> check_traversal(const WorldTraversal* traversal) const;
     struct Impl;
     explicit CharacterMovement(std::unique_ptr<Impl> impl) noexcept;

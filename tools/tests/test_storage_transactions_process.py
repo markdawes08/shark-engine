@@ -100,7 +100,7 @@ def validate_scenarios(phases: list[dict]) -> None:
                     require(integer(value.get(key), count), "transaction server count differs: " + key)
         result = processes[-1]["result"]
         require(uuid(result.get("store_id")) and result.get("world_id") == WORLD
-                and integer(result.get("schema_version"), 3), "transaction metadata differs")
+                and integer(result.get("schema_version"), 4), "transaction metadata differs")
         records = result.get("records")
         require(isinstance(records, list) and len(records) == 2, "economy record count differs")
         for index, record in enumerate(records):

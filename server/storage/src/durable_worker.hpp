@@ -41,6 +41,20 @@ struct SaveCharacter {
     net::CharacterId character;
     std::uint64_t revision;
     CharacterState state;
+    std::optional<RegionWriter> writer{};
+};
+struct FencedTransfer {
+    TransferRequest request;
+    std::optional<RegionWriter> writer{};
+};
+struct ClaimRegion {
+    net::CharacterId character;
+    WorldEntityId entity;
+    RegionId region;
+    RegionInstanceId instance;
+};
+struct ReadRegionOwnership {
+    net::CharacterId character;
 };
 struct InitializeEconomy {
     net::AccountId account;
@@ -57,10 +71,12 @@ struct ReadOperationStream {
 using StoreCommand =
     std::variant<ReadMetadata, ReadRegistry, ProvisionAccount, EnrollCertificate, RevokeAccount,
                  RevokeCertificate, ReadRoster, ReadCharacter, CreateCharacter, SaveCharacter,
-                 InitializeEconomy, ReadEconomy, ReadOperationStream, TransferRequest>;
+                 InitializeEconomy, ReadEconomy, ReadOperationStream, TransferRequest,
+                 FencedTransfer, ClaimRegion, ReadRegionOwnership, RegionTransferRequest>;
 using StoreValue =
     std::variant<std::monostate, StoreMetadata, DurableRegistry, AccountRecord, CharacterRoster,
-                 CharacterRecord, EconomyRecord, OperationStream, TransferResult>;
+                 CharacterRecord, EconomyRecord, OperationStream, TransferResult, RegionOwnership,
+                 std::optional<RegionOwnership>, RegionTransferResult>;
 using StoreResult = Result<StoreValue>;
 [[nodiscard]] StoreResult execute_store(Store& store, const StoreCommand& command);
 

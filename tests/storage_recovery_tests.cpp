@@ -274,7 +274,161 @@ TransferResult transfer_outcome(const RuntimeCompletion& completion) {
     REQUIRE(std::holds_alternative<TransferResult>(completion.outcome->value()));
     return std::get<TransferResult>(completion.outcome->value());
 }
+RegionWriter regional_writer(Fixture& fixture) {
+    auto store = value(Store::open(fixture.path, world()));
+    return value(store->claim_region(fixture.first.character, fixture.first.entity,
+                                     RegionId{value(generate_stable_id())},
+                                     RegionInstanceId{value(generate_stable_id())}))
+        .writer;
+}
+RegionTransferRequest regional_cut(const RegionWriter& source) {
+    return {RegionTransferId{value(generate_stable_id())},
+            source,
+            RegionId{value(generate_stable_id())},
+            RegionInstanceId{value(generate_stable_id())},
+            7,
+            3,
+            2,
+            5,
+            value(sha256(std::array{std::byte{1}}))};
+}
 } // namespace
+
+TEST_CASE("regional CAS fences a previously admitted stale worker write at its SQL boundary",
+          "[storage-recovery]") {
+    Fixture f;
+    const auto original = regional_writer(f);
+    const auto cut = regional_cut(original);
+    Gate gate{f, storage_detail::RuntimeWorkerPhase::before_execute};
+    f.start({2});
+    Pair pair;
+    const auto session = f.login(pair);
+    CHECK(value(f.owner->region_ownership(f.first.character))->writer == original);
+    const auto control = value(f.owner->submit_region_commit(cut, 10s, 0ns));
+    gate.entered();
+    const auto request = f.transfer();
+    const auto pending = value(f.owner->submit_transfer(
+        *pair.server, envelope(session, 2), *f.scene, f.entity, request, 10s, 0ns, original));
+    CHECK(value(f.owner->runtime_pending()).size() == 2);
+    rejected(f.owner->take(control, *pair.server, *f.scene, 0ns, original));
+    rejected(f.owner->take_region(pending, 0ns));
+    gate.release();
+    f.settled();
+    const auto committed = value(f.owner->take_region(control, 0ns));
+    REQUIRE(committed.outcome);
+    REQUIRE(*committed.outcome);
+    const auto next = std::get<RegionTransferResult>(committed.outcome->value()).writer;
+    CHECK(next.epoch == original.epoch + 1);
+    rejected(f.owner->take(pending, *pair.server, *f.scene, 0ns, original));
+    CHECK(value(f.owner->runtime_stats()).retained == 1);
+    const auto fenced = value(f.owner->take(pending, *pair.server, *f.scene, 0ns, next));
+    REQUIRE(fenced.outcome);
+    REQUIRE_FALSE(*fenced.outcome);
+    CHECK(fenced.outcome->error().code == ErrorCode::conflict);
+    CHECK(fenced.transfer == request);
+    CHECK(fenced.writer == original);
+    // Failed SQL admission does not consume the economic OperationId. The exact
+    // original request commits under its new writer, without a fabricated intent.
+    const auto retry = value(f.owner->submit_transfer(*pair.server, envelope(session, 3), *f.scene,
+                                                      f.entity, *fenced.transfer, 10s, 0ns, next));
+    f.settled();
+    const auto transferred =
+        transfer_outcome(value(f.owner->take(retry, *pair.server, *f.scene, 0ns, next)));
+    CHECK_FALSE(transferred.replayed);
+    CHECK(transferred.receipt.source->state == EconomyState{93, 18});
+    CHECK(transferred.receipt.target->state == EconomyState{107, 22});
+    rejected(f.owner->submit_save(*pair.server, envelope(session, 4), *f.scene, f.entity, 1,
+                                  state(true), 10s, 0ns, original));
+    const auto saved = value(f.owner->submit_save(*pair.server, envelope(session, 4), *f.scene,
+                                                  f.entity, 1, state(true), 10s, 0ns, next));
+    f.settled();
+    REQUIRE(value(f.owner->take(saved, *pair.server, *f.scene, 0ns, next)).outcome);
+}
+
+TEST_CASE("a late precommit save retains its original receipt and routes to the committed writer",
+          "[storage-recovery]") {
+    Fixture f;
+    const auto original = regional_writer(f);
+    const auto cut = regional_cut(original);
+    Gate gate{f, storage_detail::RuntimeWorkerPhase::before_publish};
+    f.start({2});
+    Pair pair;
+    const auto session = f.login(pair);
+    const auto saved = value(f.owner->submit_save(*pair.server, envelope(session, 2), *f.scene,
+                                                  f.entity, 1, state(true), 10s, 0ns, original));
+    gate.entered(); // SQL committed, but no owner-thread completion exists yet.
+    const auto captured = value(f.owner->runtime_pending());
+    REQUIRE(captured.size() == 1);
+    CHECK(captured.front().ticket == saved);
+    CHECK(captured.front().writer == original);
+    CHECK(captured.front().save == RuntimeSaveRequest{1, state(true)});
+    CHECK_FALSE(captured.front().outcome);
+    const auto control = value(f.owner->submit_region_commit(cut, 10s, 0ns));
+    gate.release();
+    f.settled();
+    const auto next = value(f.owner->region_ownership(f.first.character))->writer;
+    rejected(f.owner->take(saved, *pair.server, *f.scene, 0ns, original));
+    const auto delivered = value(f.owner->take(saved, *pair.server, *f.scene, 0ns, next));
+    CHECK(delivered.delivery == RuntimeDelivery::ready);
+    CHECK(delivered.ticket == saved);
+    CHECK(delivered.writer == original);
+    CHECK(delivered.save == RuntimeSaveRequest{1, state(true)});
+    REQUIRE(delivered.outcome);
+    REQUIRE(*delivered.outcome);
+    const auto receipt = std::get<CharacterRecord>(delivered.outcome->value());
+    CHECK(receipt.revision == 2);
+    CHECK(receipt.state == state(true));
+    const auto committed = value(f.owner->take_region(control, 0ns));
+    REQUIRE(committed.outcome);
+    REQUIRE(*committed.outcome);
+    CHECK(std::get<RegionTransferResult>(committed.outcome->value()).request == cut);
+    CHECK(value(f.owner->runtime_stats()).retained == 0);
+}
+
+TEST_CASE(
+    "regional postcommit uncertainty requires reopening the actual store before ownership use",
+    "[storage-recovery]") {
+    Fixture f;
+    const auto original = regional_writer(f);
+    const auto cut = regional_cut(original);
+    Gate gate{f, storage_detail::RuntimeWorkerPhase::before_publish,
+              storage_detail::WritePhase::after_commit};
+    f.start();
+    Pair pair;
+    const auto old_session = f.login(pair);
+    const auto ticket = value(f.owner->submit_region_commit(cut, 10s, 0ns));
+    gate.entered();
+    gate.release();
+    f.settled();
+    const auto uncertain = value(f.owner->take_region(ticket, 0ns));
+    CHECK(uncertain.delivery == RuntimeDelivery::reconciliation_required);
+    CHECK(uncertain.region_transfer == cut);
+    REQUIRE(uncertain.outcome);
+    REQUIRE_FALSE(*uncertain.outcome);
+    CHECK(uncertain.outcome->error().code == ErrorCode::io_failure);
+    rejected(f.owner->region_ownership(f.first.character));
+    rejected(f.owner->submit_save(*pair.server, envelope(old_session, 2), *f.scene, f.entity, 1,
+                                  state(true), 10s, 0ns, original));
+    storage_detail::set_runtime_worker_hook(nullptr); // Inject only the original commit.
+    value(f.owner->recover());
+    const auto ownership = value(f.owner->region_ownership(f.first.character));
+    REQUIRE(ownership);
+    CHECK(ownership->last_transfer == cut);
+    CHECK(ownership->writer.epoch == original.epoch + 1);
+    rejected(f.owner->take_region(ticket, 0ns)); // No old runtime ticket resurrects.
+    rejected(f.owner->authorize_entity(*pair.server, *f.scene, f.entity, 0ns));
+    const auto session = f.login(pair);
+    CHECK(session.session != old_session.session);
+    const auto request = f.transfer();
+    const auto fresh =
+        value(f.owner->submit_transfer(*pair.server, envelope(session, 2), *f.scene, f.entity,
+                                       request, 10s, 0ns, ownership->writer));
+    f.settled();
+    const auto committed = transfer_outcome(
+        value(f.owner->take(fresh, *pair.server, *f.scene, 0ns, ownership->writer)));
+    CHECK(committed.receipt.source->state == EconomyState{93, 18});
+    CHECK(committed.receipt.target->state == EconomyState{107, 22});
+}
 
 TEST_CASE("runtime shutdown joins dispatched writes and cancels queued writes",
           "[storage-recovery]") {

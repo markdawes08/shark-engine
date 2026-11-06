@@ -1643,3 +1643,4 @@ function on_combat(kind,tick,actor,target,distance) return true,25,10 end
 }
 
 #include "server_region_cases.hpp"
+#include "server_transfer_cases.hpp"

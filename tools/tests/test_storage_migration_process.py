@@ -20,22 +20,23 @@ from process_runner import run_process
 ROOT = Path(__file__).resolve().parents[2]
 FIXTURES = ROOT / "tests/fixtures/storage"
 RECIPES = []
-for version in (1, 2):
-    phases = (["after_v1_to_v2"] if version == 1 else []) + [
-        "after_v2_to_v3", "before_migration_commit", "after_migration_commit", "after_reply"]
+for version in (1, 2, 3):
+    phases = (["after_v1_to_v2"] if version == 1 else []) + (
+        ["after_v2_to_v3"] if version <= 2 else []) + [
+        "after_v3_to_v4", "before_migration_commit", "after_migration_commit", "after_reply"]
     for kind in ("crash", "fail"):
         RECIPES.extend(("migrate", version, phase, kind) for phase in phases
                        if kind == "crash" or phase != "after_reply")
 for operation in ("backup", "restore"):
-    for version in (1, 2, 3):
+    for version in (1, 2, 3, 4):
         for kind in ("crash", "fail"):
             RECIPES.extend((operation, version, phase, kind) for phase in
                            (operation + "_step", operation + "_complete", operation + "_validated", "after_reply")
                            if kind == "crash" or phase != "after_reply")
-RECIPES.extend((("backup", 3, "future", "reject"), ("restore", 3, "foreign", "reject"),
+RECIPES.extend((("backup", 4, "future", "reject"), ("restore", 4, "foreign", "reject"),
                 ("migrate", 2, "extra-schema", "reject"), ("migrate", 2, "missing-backup", "reject"),
                 ("migrate", 2, "mismatched-backup", "reject"), ("migrate", 2, "corrupt-backup", "reject")))
-RECIPES.extend(("migrate", version, "main_write", "crash") for version in (1, 2))
+RECIPES.extend(("migrate", version, "main_write", "crash") for version in (1, 2, 3))
 RECIPES = tuple(RECIPES)
 NEGATIVES = ("missing-row", "duplicate-row", "wrong-phase", "wrong-child-mode", "wrong-database",
              "nonzero-exit", "timeout", "cleanup-failure", "stdout-mismatch", "missing-hook",
@@ -68,7 +69,7 @@ def blob(value): return {"blob": value}
 
 def fixture_hashes():
     return {f"schema-{version}.sql": hashlib.sha256((FIXTURES / f"schema-{version}.sql").read_bytes()).hexdigest()
-            for version in (1, 2, 3)}
+            for version in (1, 2, 3, 4)}
 
 
 def expected_snapshot(version, *, migrated_from=None):
@@ -78,10 +79,11 @@ def expected_snapshot(version, *, migrated_from=None):
         if match:
             name = match[1]
             schema.append([text("table"), text(name), text(name), text(line[:-1])])
-    require(len(schema) == {1: 1, 2: 4, 3: 6}[version], "independent fixture schema inventory differs")
+    require(len(schema) == {1: 1, 2: 4, 3: 6, 4: 7}[version], "independent fixture schema inventory differs")
     for table, count in (("accounts", 1), ("certificates", 1), ("characters", 2),
-                         ("economy", 1), ("transfer_receipts", 1)):
-        if version < (3 if table in ("economy", "transfer_receipts") else 2):
+                         ("economy", 1), ("transfer_receipts", 1), ("region_ownership", 1)):
+        minimum = 4 if table == "region_ownership" else 3 if table in ("economy", "transfer_receipts") else 2
+        if version < minimum:
             continue
         for number in range(1, count + 1):
             schema.append([text("index"), text(f"sqlite_autoindex_shark_{table}_{number}"),
@@ -109,21 +111,23 @@ def expected_snapshot(version, *, migrated_from=None):
     if version == 2:
         return result
     for index, row in enumerate(result["accounts"]):
-        row.append(integer(9 if migrated_from is None and index == 0 else 0))
+        row.append(integer(9 if migrated_from in (None, 3, 4) and index == 0 else 0))
     result.update(economies=[], receipts=[])
-    if migrated_from is None:
+    if migrated_from in (None, 3, 4):
         result["economies"] = [[text(identity(owner + 100)), integer(3), integer(currency), integer(items)]
                                for owner, currency, items in ((1, 90, 17), (2, 110, 23))]
         for sequence in range(2, 10):
             values = [2, 2, 3, 1, 0, 3, 90, 17, 3, 110, 23] if sequence == 9 else [1, 1, 7, 2, 1, 2, 93, 18, 2, 107, 22]
             result["receipts"].append([text(identity(1)), integer(sequence), text(identity(101)), text(identity(102)),
                                        *map(integer, values)])
+    if version >= 4:
+        result["region_ownership"] = []
     return result
 
 
 def expected_rejected(version, phase):
     source, backup = expected_snapshot(version), expected_snapshot(version)
-    if phase == "future": source["user_version"] = [[integer(4)]]
+    if phase == "future": source["user_version"] = [[integer(5)]]
     elif phase == "foreign": source["header"] = [[integer(17)]]
     elif phase == "extra-schema":
         source["schema"].append([text("table"), text("unexpected"), text("unexpected"),
@@ -140,7 +144,7 @@ def metadata(version):
 
 
 def migration(value, before, current):
-    same(value, {"before": metadata(before), "after": metadata(3), "already_current": current},
+    same(value, {"before": metadata(before), "after": metadata(4), "already_current": current},
          "migration result/identity differs")
 
 
@@ -151,8 +155,8 @@ def info(value, version):
     require(type(value["bytes"]) is int and 4096 <= value["bytes"] <= 16 * 1024 * 1024
             and value["bytes"] % 4096 == 0, "snapshot byte bound differs")
     expected = {"accounts": 0 if version == 1 else 3, "certificates": 0 if version == 1 else 4,
-                "characters": 0 if version == 1 else 3, "economies": 2 if version == 3 else 0,
-                "operation_streams": 3 if version == 3 else 0, "receipts": 8 if version == 3 else 0}
+                "characters": 0 if version == 1 else 3, "economies": 2 if version >= 3 else 0,
+                "operation_streams": 3 if version >= 3 else 0, "receipts": 8 if version >= 3 else 0}
     same({key: value[key] for key in expected}, expected, "snapshot counts differ")
 
 
@@ -245,9 +249,9 @@ def validate_scenarios(rows):
             require(set(final) == {"status", "event", "migration", "repeated", "source", "backup"}
                     and final["event"] == "reconcile", "migration reconciliation fields differ")
             committed = phase in ("after_migration_commit", "after_reply")
-            migration(final["migration"], 3 if committed else version, committed)
-            migration(final["repeated"], 3, True)
-            same(final["source"], expected_snapshot(3, migrated_from=version), "migration lost or granted durable state")
+            migration(final["migration"], 4 if committed else version, committed)
+            migration(final["repeated"], 4, True)
+            same(final["source"], expected_snapshot(4, migrated_from=version), "migration lost or granted durable state")
             same(final["backup"], backup, "pre-upgrade backup changed")
             require(hashes["seed"]["destination"] == hashes["operated"]["destination"] == hashes["reconciled"]["destination"],
                     "migration overwrote pre-upgrade backup bytes")
@@ -279,7 +283,7 @@ def validate_scenarios(rows):
             info(final["fresh_copy"], version)
             same(final["source"], source, "copy changed source state")
             same(final["retry"], source, "fresh retry did not preserve complete snapshot")
-            require(final["economic_replays_checked"] is (version == 3), "restored economic retry/expiry checks missing")
+            require(final["economic_replays_checked"] is (version == 4), "restored economic retry/expiry checks missing")
             require(hashes["seed"]["source"] == hashes["operated"]["source"] == hashes["reconciled"]["source"],
                     "copy changed source bytes")
             require(hashes["seed"]["destination"] is None and hashes["operated"]["destination"] is not None
@@ -368,17 +372,17 @@ def negative_controls(args, rows):
         elif name == "source-overwrite": changed[RECIPES.index(("migrate", 2, "corrupt-backup", "reject"))]["hashes"]["operated"]["source"] = "0" * 64
         elif name == "backup-overwrite": changed[0]["hashes"]["operated"]["destination"] = "0" * 64
         elif name == "destination-overwrite":
-            selected = changed[RECIPES.index(("backup", 3, "after_reply", "crash"))]
+            selected = changed[RECIPES.index(("backup", 4, "after_reply", "crash"))]
             selected["hashes"]["reconciled"]["destination"] = "0" * 64
         elif name == "hot-inspection-mutated":
             changed[RECIPES.index(("migrate", 1, "main_write", "crash"))]["hot_journal"]["after_inspection"] = "0" * 64
         elif name == "completed-copy-rejected":
-            child = changed[RECIPES.index(("backup", 3, "backup_complete", "crash"))]["processes"][2]
+            child = changed[RECIPES.index(("backup", 4, "backup_complete", "crash"))]["processes"][2]
             child["result"]["destination_valid"] = False
             child["result"]["destination"] = {"code": "io_failure", "operation": "storage.inspect_snapshot"}
             child["stdout"] = json.dumps(child["result"]) + "\n"
         elif name != "empty-exception":
-            index = RECIPES.index(("restore", 3, "after_reply", "crash"))
+            index = RECIPES.index(("restore", 4, "after_reply", "crash"))
             if name == "missing-hook": index = 0
             elif name == "lost-acknowledged-migration": index = RECIPES.index(("migrate", 1, "after_reply", "crash"))
             elif name in ("missing-native-write", "missing-hot-journal"):

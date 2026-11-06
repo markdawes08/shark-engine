@@ -368,9 +368,11 @@ collision, authored walk-surface navigation, resident pins and owner-bound movem
 readiness. M05d's [handoff](../handoffs/M05d-colocated-regions.md) connects
 co-located regional grants, overlapping interest, player/NPC travel, projectiles
 and original pending durable operations. The [authoring contract](../world-cell-authoring.md)
-adds retained human/terminal cell preparation and export. M05e next supplies
-consistent transfer cuts and persistence fencing; these local results do not
-close the full gate or establish separate-process authority transfer.
+adds retained human/terminal cell preparation and export. M05e's
+[handoff](../handoffs/M05e-fenced-region-handoffs.md) records consistent final
+cuts, retained queues/flights/Lua/native owners and schema-4 transactional writer
+fencing. M05f next supplies portable state and actual separate-process transfer
+and recovery; these local results do not close the full gate.
 
 After 11-13, 18/20 and M04. Implement in reviewable internal steps: (1) global
 cell/local coordinates and origin-safe content/collision/navigation streaming,

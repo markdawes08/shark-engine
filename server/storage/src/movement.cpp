@@ -1,4 +1,5 @@
 #include "shark/server/movement.hpp"
+#include "execution_cut_encoding.hpp"
 #include "shark/world_traversal.hpp"
 
 #include <algorithm>
@@ -94,6 +95,7 @@ struct CharacterMovement::Impl {
         std::size_t count{0};
         std::uint64_t accepted{0};
         std::uint64_t applied{0};
+        std::optional<MovementDomain> domain{};
     };
     std::thread::id owner{std::this_thread::get_id()};
     std::uint64_t scene_instance;
@@ -106,25 +108,34 @@ struct CharacterMovement::Impl {
     MonotonicTime last_time{};
     bool faulted{false};
     std::vector<Actor> actors;
+    std::shared_ptr<ExecutionFence> fence;
+    std::optional<ExecutionPermit> execution;
 
     Impl(std::uint64_t scene, std::uint64_t world, WorldPosition anchor, std::uint64_t completed,
-         std::optional<std::uint64_t> traversal, std::span<const MovementDomain> coverage)
+         std::optional<std::uint64_t> traversal, std::span<const MovementDomain> coverage,
+         std::shared_ptr<ExecutionFence> execution_fence, std::optional<ExecutionPermit> permit)
         : scene_instance(scene), physics_world(world), origin(anchor),
-          traversal_instance(traversal), ticks(completed) {
+          traversal_instance(traversal), ticks(completed), fence(std::move(execution_fence)),
+          execution(permit) {
         actors.reserve(movement_maximum_characters);
         domain_count = coverage.size();
         std::copy(coverage.begin(), coverage.end(), domains.begin());
     }
-    Result<void> check(const char* operation) const {
+    Result<void> executing(bool allow_frozen = false) const {
+        if (fence)
+            return fence->check(*execution, allow_frozen);
+        return {};
+    }
+    Result<void> check(const char* operation, bool allow_frozen = false) const {
         if (owner != std::this_thread::get_id())
             return rejected(operation, "Movement requires its creating thread");
         if (faulted)
             return rejected(operation, "Movement tick has uncertain native effects; replace owner");
-        return {};
+        return executing(allow_frozen);
     }
     Result<void> context(const Scene& scene, const PhysicsWorld& physics, MonotonicTime now,
-                         const char* operation) const {
-        if (auto checked = check(operation); !checked)
+                         const char* operation, bool allow_frozen = false) const {
+        if (auto checked = check(operation, allow_frozen); !checked)
             return checked;
         if (now < MonotonicTime::zero() || now < last_time)
             return rejected(operation, "Movement clock cannot regress");
@@ -193,10 +204,20 @@ CharacterMovement::~CharacterMovement() = default;
 Result<std::unique_ptr<CharacterMovement>>
 CharacterMovement::create(const Scene& scene, const PhysicsWorld& physics, WorldPosition origin,
                           std::optional<std::uint64_t> traversal_instance,
-                          std::span<const MovementDomain> domains) {
+                          std::span<const MovementDomain> domains,
+                          std::shared_ptr<ExecutionFence> fence) {
     constexpr auto operation = "server.movement.create";
     if (auto valid = validate_world_position(origin); !valid)
         return valid.error();
+    std::optional<ExecutionPermit> execution;
+    if (fence) {
+        auto current = fence->permit();
+        if (!current)
+            return current.error();
+        if (auto checked = fence->check(current.value()); !checked)
+            return checked.error();
+        execution = current.value();
+    }
     if (traversal_instance && *traversal_instance == 0)
         return rejected(operation, "Movement traversal instance must be nonzero",
                         ErrorCode::invalid_configuration);
@@ -234,15 +255,15 @@ CharacterMovement::create(const Scene& scene, const PhysicsWorld& physics, World
         return rejected(operation,
                         "Movement requires its Region, origin and 20 Hz/3-substep profile",
                         ErrorCode::invalid_configuration);
-    return std::unique_ptr<CharacterMovement>{new CharacterMovement{
-        std::make_unique<Impl>(scene_state.value().instance, poses.value().world, origin,
-                               stats.value().completed_ticks, traversal_instance, domains)}};
+    return std::unique_ptr<CharacterMovement>{new CharacterMovement{std::make_unique<Impl>(
+        scene_state.value().instance, poses.value().world, origin, stats.value().completed_ticks,
+        traversal_instance, domains, std::move(fence), execution)}};
 }
 
 Result<void> CharacterMovement::check_traversal(const WorldTraversal* traversal) const {
     constexpr auto operation = "server.movement.traversal";
-    if (impl_->owner != std::this_thread::get_id())
-        return rejected(operation, "Movement requires its creating thread");
+    if (auto valid = impl_->check(operation); !valid)
+        return valid;
     if (impl_->traversal_instance) {
         if (!traversal || traversal->instance() != *impl_->traversal_instance ||
             traversal->frame().origin != impl_->origin)
@@ -321,6 +342,8 @@ Result<void> CharacterMovement::submit(storage::CharacterAuthority& authority,
         return valid.error();
     // Existing Heartbeat admission checks the exact envelope and shares its rate
     // budget with readiness, replication and durable operations. No storage IO.
+    if (auto valid = impl_->executing(); !valid)
+        return valid;
     auto admitted = authority.apply(transport, net::HeartbeatRequest{input.authority}, now);
     if (!admitted)
         return admitted.error();
@@ -414,6 +437,19 @@ Result<MovementTick> CharacterMovement::step(storage::CharacterAuthority& author
                     plan.velocity.linear.z = 0;
                 }
             }
+            if (plan.live && actor.domain) {
+                const auto intended = body.value().pose.translation +
+                                      plan.velocity.linear / static_cast<double>(movement_tick_hz);
+                const auto covered =
+                    movement_coverage(std::span<const MovementDomain>{&*actor.domain, 1},
+                                      body.value().pose.translation, intended);
+                if (!covered)
+                    return covered.error();
+                if (!covered.value()) {
+                    plan.velocity.linear.x = 0;
+                    plan.velocity.linear.z = 0;
+                }
+            }
             if (plan.live && traversal) {
                 const auto from =
                     translate_world_position(impl_->origin, {body.value().pose.translation.x,
@@ -444,12 +480,16 @@ Result<MovementTick> CharacterMovement::step(storage::CharacterAuthority& author
     impl_->faulted = true;
     for (std::size_t index = 0; index < impl_->actors.size(); ++index) {
         if (plans[index].body_valid) {
+            if (auto valid = impl_->executing(); !valid)
+                return valid.error();
             auto changed =
                 physics.set_velocity(scene, impl_->actors[index].body, plans[index].velocity);
             if (!changed)
                 return changed.error();
         }
     }
+    if (auto valid = impl_->executing(); !valid)
+        return valid.error();
     if (auto stepped = physics.step(scene); !stepped)
         return stepped.error();
     ++impl_->ticks;
@@ -513,6 +553,8 @@ Result<void> CharacterMovement::release(const Scene& scene, PhysicsWorld& physic
         return rejected("server.movement.release", "Unknown movement stream");
     if (auto valid = impl_->body(*found, scene, physics); !valid)
         return valid.error();
+    if (auto valid = impl_->executing(); !valid)
+        return valid;
     if (auto stopped = physics.set_velocity(scene, found->body, {}); !stopped) {
         impl_->faulted = true;
         return stopped.error();
@@ -536,6 +578,101 @@ Result<WorldPosition> CharacterMovement::position(const Scene& scene, const Phys
     return translate_world_position(
         impl_->origin,
         {state.value().position.x, state.value().position.y, state.value().position.z});
+}
+
+Result<void> CharacterMovement::adopt_execution(ExecutionPermit permit) {
+    constexpr auto operation = "server.movement.execution.adopt";
+    if (impl_->owner != std::this_thread::get_id() || impl_->faulted || !impl_->fence)
+        return rejected(operation, "Execution adoption requires its healthy fenced owner");
+    if (auto valid = impl_->fence->check(permit, true); !valid)
+        return valid;
+    impl_->execution = permit;
+    return {};
+}
+
+Result<void> CharacterMovement::set_actor_domain(net::MovementStreamId stream,
+                                                 std::optional<MovementDomain> domain) {
+    constexpr auto operation = "server.movement.domain";
+    if (auto valid = impl_->check(operation); !valid)
+        return valid;
+    if (domain) {
+        // Validation has fixed storage and no native or session effects.
+        auto valid = movement_coverage(std::span<const MovementDomain>{&*domain, 1}, {}, {});
+        if (!valid)
+            return valid.error();
+    }
+    const auto actor = std::find_if(impl_->actors.begin(), impl_->actors.end(),
+                                    [&](const auto& value) { return value.stream == stream; });
+    if (actor == impl_->actors.end())
+        return rejected(operation, "Unknown movement stream for regional domain");
+    actor->domain = domain;
+    return {};
+}
+
+Result<MovementCut> CharacterMovement::capture_cut(const Scene& scene,
+                                                   const PhysicsWorld& physics) const {
+    constexpr auto operation = "server.movement.cut";
+    if (auto valid = impl_->context(scene, physics, impl_->last_time, operation, true); !valid)
+        return valid.error();
+    auto scene_state = scene.stats();
+    if (!scene_state)
+        return scene_state.error();
+    auto page = scene.query_entities();
+    if (!page)
+        return page.error();
+    auto native = physics.stats();
+    if (!native)
+        return native.error();
+    if (native.value().pending_events != 0)
+        return rejected(operation, "Movement cut requires drained native contact events");
+    try {
+        MovementCut cut{{scene_state.value().instance, scene_state.value().revision},
+                        page.value().scope(),
+                        impl_->physics_world,
+                        impl_->origin,
+                        impl_->traversal_instance,
+                        {},
+                        impl_->ticks,
+                        impl_->last_time,
+                        impl_->execution,
+                        {},
+                        {}};
+        cut.domains.assign(impl_->domains.begin(),
+                           impl_->domains.begin() +
+                               static_cast<std::ptrdiff_t>(impl_->domain_count));
+        cut.actors.reserve(impl_->actors.size());
+        for (const auto& actor : impl_->actors) {
+            auto body = impl_->body(actor, scene, physics);
+            if (!body)
+                return body.error();
+            auto velocity = physics.velocity(scene, actor.body);
+            if (!velocity)
+                return velocity.error();
+            MovementActorCut copied{actor.connection,
+                                    actor.session,
+                                    actor.stream,
+                                    actor.entity,
+                                    actor.body,
+                                    body.value(),
+                                    velocity.value(),
+                                    actor.accepted,
+                                    actor.applied,
+                                    actor.domain,
+                                    {}};
+            copied.pending.reserve(actor.count);
+            for (std::size_t index = 0; index < actor.count; ++index)
+                copied.pending.push_back(
+                    *actor.queue[(actor.head + index) % movement_pending_inputs]);
+            cut.actors.push_back(std::move(copied));
+        }
+        detail::CutEncoder encoded;
+        encoded.value(cut);
+        cut.bytes = std::move(encoded.bytes);
+        return cut;
+    } catch (...) {
+        return rejected(operation, "Cannot allocate bounded movement cut",
+                        ErrorCode::execution_failed);
+    }
 }
 
 } // namespace shark::server

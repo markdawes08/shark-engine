@@ -11,6 +11,7 @@ enum class MaintenancePhase {
     backup_validated,
     after_v1_to_v2,
     after_v2_to_v3,
+    after_v3_to_v4,
     before_migration_commit,
     after_migration_commit,
     restore_step,

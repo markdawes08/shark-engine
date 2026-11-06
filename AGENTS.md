@@ -54,17 +54,39 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [M05d, co-located regions](docs/handoffs/M05d-colocated-regions.md).**
-M05d passes its selected CPU gate. Follow the [M05 checkpoints](docs/roadmap/seamless-world-plan.md),
+**Current handoff: [M05e, fenced region handoffs](docs/handoffs/M05e-fenced-region-handoffs.md).**
+M05e passes its selected current-machine gate. Follow the
+[M05 checkpoints](docs/roadmap/seamless-world-plan.md),
+[ADR 0067](docs/architecture/0067-fenced-region-handoffs.md),
+[cut contract](docs/gameplay-transfer-cuts.md) and
+[durable ownership](docs/regional-ownership.md). Persistent RegionWorld mode
+requires actual durable claims. Prepare can overlap gameplay; cut freezes the
+whole shared native/gameplay island at the latest complete tick. Preserve full
+FIFO/accepted/applied/shared-session watermarks, life/history/deadlines, original
+incoming/outgoing flights and pending saves/economic requests. Exact native,
+Lua, interest, session and worker owners remain retained; cut bytes/digest cannot
+install portable native or VM state. Execution permits fence stale lower owners.
+Store schema 4 validates captured writers inside checkpoint/economic transactions
+and commits ownership CAS with the exact last-cut receipt. Historical 1/2/3
+migration preserves economics and invents no ownership. Source/prepared/player
+wire formats are unchanged. Unknown commits stay frozen; only exact persisted
+receipt reconciliation can activate the successor. Preserve readiness fences,
+500ms clock-budget reporting and bounded terminal receipt release. Never
+timeout-abort unknown ownership or rewrite original worker requests.
+M05f is next: actual separate-process routing, supported portable state/import,
+staged native reconstruction and source/destination loss/partition recovery.
+
+The [M05d handoff](docs/handoffs/M05d-colocated-regions.md),
 [regional contract](docs/region-world.md) and
-[ADR 0066](docs/architecture/0066-colocated-regions.md). RegionWorld privately owns
+[ADR 0066](docs/architecture/0066-colocated-regions.md) remain applicable. RegionWorld privately owns
 movement/combat/interest over one shared Scene/native/traversal island. Current
 grants gate ingress before session sequencing and rotate after committed movement;
 crossing preserves actors, streams, replicas, cooldowns and original durable
 requests/tickets. NPCs use checked native bodies and the same fixed tick. Preserve
 full-segment coverage, availability versus privacy and partial-effect faults.
-M05e is next: consistent transfer cuts and mutation/persistence fencing. Co-located
-grants are not distributed leases or persisted writer tokens.
+The default M05d functional mode remains explicit; its co-located grants are not
+distributed leases or persisted writer tokens. Use persistent mode for later
+transfer work; keep regional writers, grants, execution and session epochs distinct.
 Follow the [projectile contract](docs/authoritative-projectiles.md): kind 3 uses
 bounded current-native straight flight and one original final outcome; legacy v1
 bytes remain stable alongside v2. Preserve full original flight state for later

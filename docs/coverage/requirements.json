@@ -854,7 +854,7 @@
       "planned_fixture": "MMOWorld/ContinuousTraversal, RegionAuthorityTransferFaultMatrix, CrossBoundaryCombatAI, OriginShiftPrecision and CellStreamingBudget fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "M05a-d supply local frames, bounded residency, static terrain/navigation readiness, co-located regional ownership, overlapping interest, native player/NPC travel, targeted projectile continuity and original durable-operation identity. Retained human/terminal adapters prepare and publish digest-bound development cell files. See docs/handoffs/M05d-colocated-regions.md. Consistent transfer cuts, persistence fencing, actual separate-process recovery and connected acceptance remain M05e-g; full REQ-M05 stays NOT_RUN. Native World cells UI interaction remains deferred under the manual UI pause."
+        "reason": "M05a-e supply local frames/residency, static terrain/navigation readiness, co-located regions/interest, native player/NPC travel, projectiles and shared cell authoring. M05e adds final tick/input cuts, retained queues/Lua/native owners, original pending durable work, execution permit rotation and Store schema-4 writer CAS/fencing. See docs/handoffs/M05e-fenced-region-handoffs.md. Portable state/reconstruction, actual separate-process routing/failure recovery and connected acceptance remain M05f-g; full REQ-M05 stays NOT_RUN. Native World cells interaction remains deferred under the manual UI pause."
       }
     },
     {
@@ -1012,6 +1012,71 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "server.fenced-region-handoffs",
+        "name": "Consistent co-located gameplay cuts and checked regional writer activation",
+        "requirement_ids": [
+          "REQ-M05"
+        ],
+        "test_ids": [
+          "shark.server.transfer",
+          "shark.server.regions",
+          "shark.server.movement",
+          "shark.server.combat",
+          "shark.server.gameplay-lifecycle",
+          "shark.storage.recovery"
+        ],
+        "test_sources": [
+          "tests/server_transfer_cases.hpp",
+          "tests/server_region_cases.hpp",
+          "tests/server_movement_tests.cpp",
+          "tests/storage_recovery_tests.cpp"
+        ],
+        "fixtures": [
+          "docs/gameplay-transfer-cuts.md",
+          "docs/region-world.md",
+          "server/storage/src/regions.cpp",
+          "server/storage/src/execution_fence.cpp"
+        ],
+        "fixture_reason": "Actual mTLS/Store/native cases advance after preparation, capture current shared sequence and original movement FIFO, preserve incoming/outgoing flights and mutable rule state, pause NPC/native ticks, retain original durable work, rotate the writer without rebind, preserve dead-life respawn deadlines/history, reject stale lower movement/combat owners, abort safely, reconcile an actual withheld commit result, bound retained receipts and reject missing or changed destination readiness.",
+        "external_fixture_reason": "Final gameplay state depends on private server/session/storage/native owners and real workers, outside CPU Tools FeatureWorld. The exact co-located owners are retained; fingerprint bytes are not an installable VM/native image or proof of separate-process recovery.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "storage.regional-writers",
+        "name": "Persistent regional ownership CAS and transaction-bound checkpoint/economic fences",
+        "requirement_ids": [
+          "REQ-M05",
+          "REQ-M03"
+        ],
+        "test_ids": [
+          "shark.storage.region-ownership",
+          "shark.storage.recovery",
+          "shark.storage.migration",
+          "shark.storage.migration-process",
+          "shark.storage.recovery-process",
+          "shark.storage.integration-process"
+        ],
+        "test_sources": [
+          "tests/storage_region_ownership_tests.cpp",
+          "tests/storage_recovery_tests.cpp",
+          "tests/storage_migration_tests.cpp",
+          "tests/storage_migration_probe.cpp",
+          "tools/tests/test_storage_migration_process.py",
+          "tools/tests/test_storage_recovery_process.py",
+          "tools/tests/test_storage_integration_process.py"
+        ],
+        "fixtures": [
+          "docs/regional-ownership.md",
+          "tests/fixtures/storage/schema-4.sql",
+          "tests/fixtures/storage/schema-3.sql",
+          "server/storage/src/store.cpp",
+          "server/storage/src/durable_worker.cpp"
+        ],
+        "fixture_reason": "Independent exact v1/v2/v3/v4 databases, real transaction hooks, worker barriers and abrupt-exit processes check schema-3 economy/receipt preservation, complete ownership backup/restore equality, canonical uint64 cut watermarks, exact last-cut replay/mismatch, epoch exhaustion, stale/missing SQL writers, original late save/economic results and postcommit uncertainty recovered from actual rows.",
+        "external_fixture_reason": "Transactional ownership, journal recovery and late dispatched writes require real SQLite/worker/process fixtures and cannot be qualified by authored source Scenes. The exclusive local Store remains one authority decision owner; distributed routing and simulation recovery are M05f work.",
+        "featureworld_cases": []
+      },
       {
         "id": "server.colocated-regions",
         "name": "Co-located regional gameplay ownership with continuous native actors and interest",

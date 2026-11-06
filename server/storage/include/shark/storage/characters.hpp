@@ -18,7 +18,13 @@ struct RuntimeTicket {
     bool operator==(const RuntimeTicket&) const = default;
 };
 enum class RuntimeDelivery { pending, ready, timed_out, fenced, reconciliation_required };
-using RuntimeValue = std::variant<CharacterRecord, TransferResult>;
+using RuntimeValue =
+    std::variant<CharacterRecord, TransferResult, RegionOwnership, RegionTransferResult>;
+struct RuntimeSaveRequest {
+    std::uint64_t expected_revision;
+    CharacterState state;
+    bool operator==(const RuntimeSaveRequest&) const = default;
+};
 struct RuntimeCompletion {
     RuntimeTicket ticket;
     RuntimeDelivery delivery;
@@ -28,6 +34,23 @@ struct RuntimeCompletion {
     // Every settled result is returned, including fenced or timed-out delivery.
     // Delivery status still forbids applying those values to the old session/Scene.
     std::optional<Result<RuntimeValue>> outcome;
+    // Original admission context is never rewritten by a regional handoff.
+    std::optional<RegionWriter> writer{};
+    std::optional<RegionTransferRequest> region_transfer{};
+    std::optional<RuntimeSaveRequest> save{};
+};
+struct RuntimePendingCut {
+    RuntimeTicket ticket;
+    std::optional<net::SessionSnapshot> session;
+    std::optional<EntityReference> entity;
+    MonotonicTime deadline;
+    std::optional<TransferRequest> transfer;
+    std::optional<RegionWriter> writer;
+    std::optional<RegionTransferRequest> region_transfer;
+    bool control;
+    bool timed_out;
+    std::optional<Result<RuntimeValue>> outcome;
+    std::optional<RuntimeSaveRequest> save{};
 };
 struct RuntimeStats {
     std::size_t capacity;
@@ -59,6 +82,21 @@ class CharacterAuthority final {
     CharacterAuthority& operator=(CharacterAuthority&&) = delete;
 
     [[nodiscard]] Result<StoreMetadata> metadata() const;
+    // Bounded cached durable observations. Hydrated at startup/recovery and
+    // updated only when the original worker result is drained on this owner.
+    [[nodiscard]] Result<std::optional<RegionOwnership>>
+    region_ownership(net::CharacterId character) const;
+    [[nodiscard]] Result<std::vector<RuntimePendingCut>> runtime_pending() const;
+    // Trusted host controls, not player intents. They share the sixteen-slot
+    // worker budget; one control and one gameplay operation per account may
+    // coexist so a cut can retain an unsettled original economic request.
+    [[nodiscard]] Result<RuntimeTicket>
+    submit_region_claim(net::CharacterId character, WorldEntityId entity, RegionId region,
+                        RegionInstanceId instance, MonotonicTime deadline, MonotonicTime now);
+    [[nodiscard]] Result<RuntimeTicket> submit_region_commit(const RegionTransferRequest& request,
+                                                             MonotonicTime deadline,
+                                                             MonotonicTime now);
+    [[nodiscard]] Result<RuntimeCompletion> take_region(RuntimeTicket ticket, MonotonicTime now);
     // Trusted owner administration; never a player or authoring endpoint.
     [[nodiscard]] Result<void> provision_account(net::AccountId account);
     [[nodiscard]] Result<void> enroll_certificate(net::AccountId account,
@@ -143,12 +181,14 @@ class CharacterAuthority final {
     [[nodiscard]] Result<RuntimeTicket>
     submit_save(net::TlsTransport& transport, const net::SessionEnvelope& authority, Scene& scene,
                 EntityHandle entity, std::uint64_t expected_revision,
-                const CharacterState& accepted_state, MonotonicTime deadline, MonotonicTime now);
+                const CharacterState& accepted_state, MonotonicTime deadline, MonotonicTime now,
+                std::optional<RegionWriter> writer = {});
     [[nodiscard]] Result<RuntimeTicket> submit_transfer(net::TlsTransport& transport,
                                                         const net::SessionEnvelope& authority,
                                                         Scene& scene, EntityHandle entity,
                                                         const TransferRequest& request,
-                                                        MonotonicTime deadline, MonotonicTime now);
+                                                        MonotonicTime deadline, MonotonicTime now,
+                                                        std::optional<RegionWriter> writer = {});
     [[nodiscard]] Result<RuntimeStats> poll(MonotonicTime now);
     [[nodiscard]] Result<RuntimeStats> runtime_stats() const;
     // Rechecks live transport/session and the exact Scene EntityReference. Never
@@ -156,7 +196,8 @@ class CharacterAuthority final {
     // delivery; an unsettled timeout remains retained. Keep original save inputs
     // and use the returned transfer request for explicit durable reconciliation.
     [[nodiscard]] Result<RuntimeCompletion> take(RuntimeTicket ticket, net::TlsTransport& transport,
-                                                 Scene& scene, MonotonicTime now);
+                                                 Scene& scene, MonotonicTime now,
+                                                 std::optional<RegionWriter> current_writer = {});
     // Explicit blocking maintenance, only after every retained result is settled
     // and taken. Joins the worker, reopens the exact StoreId/world/schema, hydrates
     // authorization, and rotates runtime identity. All prior sessions/tickets

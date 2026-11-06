@@ -58,13 +58,66 @@ struct CombatReconnectReport {
     std::optional<Error> error;
 };
 
+struct ProjectileCut {
+    net::CombatAction request;
+    CombatRuleDecision decision;
+    net::CombatTargetId owner_life;
+    PhysicsBodyHandle owner_body;
+    PhysicsBodyHandle target_body;
+    EntityReference target_entity;
+    math::Vec3 position;
+    math::Vec3 direction;
+    std::uint32_t remaining_ticks;
+    std::uint64_t order;
+};
+struct CombatActorCut {
+    std::uint64_t connection;
+    net::SessionSnapshot session;
+    net::CombatStreamId stream;
+    net::CombatTargetId target;
+    EntityReference entity;
+    std::optional<PhysicsBodyHandle> body;
+    std::optional<PhysicsBodyState> native;
+    std::optional<PhysicsBodyVelocity> velocity;
+    RigidBody settings;
+    Transform spawn;
+    net::MovementState movement;
+    std::uint16_t health;
+    std::uint64_t ready_tick;
+    std::uint64_t respawn_tick;
+    std::uint64_t accepted;
+    std::uint64_t pending_order;
+    std::optional<net::CombatAction> pending;
+    std::vector<net::CombatActionResult> outcomes;
+    bool fenced;
+    bool detached;
+    Transform detached_pose;
+    std::optional<ProjectileCut> projectile;
+};
+struct CombatCut {
+    SceneRevision revision;
+    SceneScope scope;
+    std::uint64_t physics_world;
+    std::uint64_t completed_tick;
+    MonotonicTime last_time;
+    std::uint64_t admission;
+    bool script_mode_bound;
+    std::optional<std::uint64_t> script_instance;
+    CombatRulesStats rules;
+    std::optional<ExecutionPermit> execution;
+    std::vector<CombatActorCut> actors;
+    // Fingerprints exposed values only. Exact native and Lua owners are retained.
+    std::vector<std::byte> bytes;
+};
+
 // Creating-thread authoritative host over the retained movement/physics and
 // durable session owners. Rules return bounded values and hold no Scene access.
 // Actors and interaction outcomes are ephemeral; no item/reward endpoint exists.
 class CharacterCombat final {
   public:
     [[nodiscard]] static Result<std::unique_ptr<CharacterCombat>>
-    create(const Scene& scene, const PhysicsWorld& physics, std::unique_ptr<CombatRules> rules);
+    create(const Scene& scene, const PhysicsWorld& physics, std::unique_ptr<CombatRules> rules,
+           std::shared_ptr<ExecutionFence> fence = {});
     ~CharacterCombat();
     CharacterCombat(const CharacterCombat&) = delete;
     CharacterCombat& operator=(const CharacterCombat&) = delete;
@@ -105,8 +158,12 @@ class CharacterCombat final {
                                                 std::span<const net::CombatTargetId> visible,
                                                 MonotonicTime now) const;
     [[nodiscard]] Result<CombatStats> stats() const;
+    [[nodiscard]] Result<CombatCut> capture_cut(const Scene& scene,
+                                                const PhysicsWorld& physics) const;
 
   private:
+    friend class RegionWorld;
+    [[nodiscard]] Result<void> adopt_execution(ExecutionPermit permit);
     struct Impl;
     explicit CharacterCombat(std::unique_ptr<Impl> impl) noexcept;
     std::unique_ptr<Impl> impl_;

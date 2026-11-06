@@ -108,7 +108,7 @@ void prepare(const Options& options) {
     take(Store::backup(database, backup, fixture::store_id(), fixture::world()));
     const auto migrated =
         take(Store::migrate(database, backup, fixture::store_id(), fixture::world()));
-    check(migrated.before.schema_version == 2 && migrated.after.schema_version == 3 &&
+    check(migrated.before.schema_version == 2 && migrated.after.schema_version == 4 &&
               !migrated.already_current,
           "Integrated legacy migration did not run");
     {
@@ -123,14 +123,14 @@ void prepare(const Options& options) {
     std::cout << "{\"status\":\"PASS\",\"mode\":\"prepare\",\"phase\":\"prepare\",\"legacy_"
                  "snapshot\":"
               << legacy << ",\"pre_backup_snapshot\":" << fixture::snapshot(backup, 2)
-              << ",\"snapshot\":" << fixture::snapshot(database, 3) << "}\n";
+              << ",\"snapshot\":" << fixture::snapshot(database, 4) << "}\n";
 }
 void restore(const Options& options) {
     const auto source = path(options.at("--database"));
     const auto pre = path(options.at("--pre-backup"));
     const auto snapshot = path(options.at("--snapshot"));
     const auto restored = path(options.at("--restored"));
-    const auto before = fixture::snapshot(source, 3);
+    const auto before = fixture::snapshot(source, 4);
     check(take(Store::inspect_snapshot(pre, fixture::store_id(), fixture::world()))
                   .metadata.schema_version == 2,
           "Original pre-upgrade backup changed schema");
@@ -140,13 +140,13 @@ void restore(const Options& options) {
         take(Store::backup(source, snapshot, fixture::store_id(), fixture::world()));
     const auto candidate =
         take(Store::restore(snapshot, restored, fixture::store_id(), fixture::world()));
-    check(copied.metadata == candidate.metadata && fixture::snapshot(source, 3) == before,
+    check(copied.metadata == candidate.metadata && fixture::snapshot(source, 4) == before,
           "Isolated restore changed the authoritative source");
     std::cout << "{\"status\":\"PASS\",\"mode\":\"restore\",\"phase\":\"restore\",\"source_"
                  "snapshot\":"
               << before << ",\"pre_backup_snapshot\":" << fixture::snapshot(pre, 2)
-              << ",\"snapshot\":" << fixture::snapshot(snapshot, 3)
-              << ",\"candidate_snapshot\":" << fixture::snapshot(restored, 3) << "}\n";
+              << ",\"snapshot\":" << fixture::snapshot(snapshot, 4)
+              << ",\"candidate_snapshot\":" << fixture::snapshot(restored, 4) << "}\n";
 }
 
 class Hooks final {
@@ -530,7 +530,7 @@ void server(const Options& options) {
     std::cout << "],\"outcomes\":[";
     for (std::size_t index = 0; index < evidence.outcomes.size(); ++index)
         std::cout << (index == 0 ? "" : ",") << evidence.outcomes[index];
-    std::cout << "],\"snapshot\":" << fixture::snapshot(database, 3) << "}\n";
+    std::cout << "],\"snapshot\":" << fixture::snapshot(database, 4) << "}\n";
 }
 
 void client(const Options& options) {

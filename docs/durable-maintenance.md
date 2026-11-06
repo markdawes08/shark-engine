@@ -25,7 +25,9 @@ expose no SQLite handle, SQL text, mutable authorization state or player protoco
 character, economy, operation-stream and receipt counts. Those counts are not
 a substitute for validation or a proof of freshness. `MigrationResult` contains
 before/after metadata and `already_current`; `before` describes the source found
-by this call, including schema 3 after a committed retry. It is not a live session.
+by this call, including schema 4 after a committed retry. It is not a live session.
+Schema-4 ownership/cut rows participate in complete equality and validation;
+the summary counts do not replace those comparisons.
 
 Drain and take all runtime work, reconcile uncertain outcomes, and destroy the
 active CharacterAuthority/Store before maintenance. Each call owns its local
@@ -48,7 +50,7 @@ main file without SQLite locking. Backup keeps exclusive source ownership;
 restore holds a read transaction on its closed snapshot. The
 destination is reopened and checked against the full source snapshot before
 success, including exact schema/metadata, all records and bounded economic
-receipts/high-water marks. The 16 MiB main-file limit and existing SQLite
+receipts/high-water marks and regional ownership/cut rows. The 16 MiB main-file limit and existing SQLite
 query/record limits remain in force.
 
 Read-only inspection and restore can accept an inert rollback journal, but they
@@ -66,18 +68,22 @@ lost acknowledgement; compare its validated contents with the source.
 
 | Database | Ordinary current open | Explicit migration |
 | --- | --- | --- |
-| Exact schema 1 | Reject without mutation | Validate backup, then 1 to 2 to 3 in one transaction |
-| Exact schema 2 | Reject without mutation | Validate backup, then 2 to 3 in one transaction |
-| Exact schema 3 | Validate and open | Accept only exact agreement with the original backup's deterministic upgrade |
+| Exact schema 1 | Reject without mutation | Validate backup, then 1 to 2 to 3 to 4 in one transaction |
+| Exact schema 2 | Reject without mutation | Validate backup, then 2 to 3 to 4 in one transaction |
+| Exact schema 3 | Reject without mutation | Validate backup, then 3 to 4 in one transaction |
+| Exact schema 4 | Validate and open | Accept only exact agreement with the original backup's deterministic upgrade |
 | Unknown/future/foreign | Reject before SQLite recovery | Reject before SQLite recovery |
 
 Migration retains store/world IDs, account and character ownership, stable entity
 IDs, names/positions, revisions and revocation tombstones. Schema 1 has only
 metadata. Schema 2 introduces the bounded registry; its migration adds zero
 operation high-water marks and empty economic/receipt tables. No economic grant,
-re-enrollment, new durable identity or restored session is implied.
+re-enrollment, new durable identity or restored session is implied. Schema 3 to 4
+preserves all economic records, operation high-water marks and retained receipts,
+and adds empty regional ownership. Migration does not invent a region, instance,
+writer epoch or committed cut for historical characters.
 
-Both sequential transforms and their full validation occur before one COMMIT.
+All sequential transforms and their full validation occur before one COMMIT.
 The required backup is an existing independently validated snapshot of the exact
 pre-upgrade logical state. A different backup of the same StoreId is insufficient.
 Missing, corrupt, wrong-world, wrong-store or mismatched backups reject without
@@ -91,14 +97,15 @@ If subsequent state changed, reject and require explicit reconciliation. A lost
 reply never authorizes a new backup of the upgraded source to conceal history.
 
 M03a accepts schema 1; M03b accepts schema 2; M03c, M03d and M03e accept schema 3.
-Current ordinary open does not accept legacy schemas and M03a/M03b builds do not
-accept schema 3. There is no downgrade transform. Historical-build rollback
+M05e accepts schema 4. Current ordinary open does not accept legacy schemas;
+historical builds reject newer schemas. There is no downgrade transform. Historical-build rollback
 requires a matching pre-upgrade backup and the isolation restrictions below.
 
 ## Restored restart and rollback
 
 Restore preserves the snapshot's schema and all logical values, including
-retained terminal receipts, expired-operation high-water marks and revocations.
+retained terminal receipts, expired-operation high-water marks, revocations and
+current regional writers/last cuts where the snapshot's schema contains them.
 It never activates the candidate or overwrites the current database. A legacy
 candidate must be explicitly migrated before current-server open.
 

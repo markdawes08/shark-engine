@@ -83,7 +83,7 @@ def typed_receipt(actor: int, sequence: int, expected: int, quantity: tuple[int,
 def expected_state(phase: str) -> dict:
     """Independent SQL-fixture oracle plus explicit, conserved operation equations."""
     require(phase in PHASES, "unknown integrated state")
-    result = expected_snapshot(3, migrated_from=2)
+    result = expected_snapshot(4, migrated_from=2)
     revision, balances = 1, ((100, 20), (100, 20))
     if phase != "prepare":
         row = result["characters"][0]

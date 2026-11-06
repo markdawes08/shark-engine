@@ -59,7 +59,7 @@ struct Fixture {
     fs::path source{root / "live" / fs::path{u8"World \u4e16\u754c.db"}};
     fs::path backup{root / "backup" / fs::path{u8"Snapshot caf\u00e9.db"}};
     fs::path restored{root / "restored" / "candidate.db"};
-    explicit Fixture(int version = 3) {
+    explicit Fixture(int version = 4) {
         REQUIRE(root.is_absolute());
         REQUIRE(root.parent_path() == parent);
         REQUIRE(fs::create_directory(root));
@@ -158,7 +158,7 @@ SessionSnapshot login(CharacterAuthority& owner, Pair& pair) {
 
 TEST_CASE("independent historical and current snapshots inspect without changing bytes",
           "[storage-migration]") {
-    for (const int version : {1, 2, 3}) {
+    for (const int version : {1, 2, 3, 4}) {
         CAPTURE(version);
         Fixture fixture{version};
         const auto before = bytes(fixture.source);
@@ -170,15 +170,15 @@ TEST_CASE("independent historical and current snapshots inspect without changing
         CHECK(info.accounts == (version == 1 ? 0U : 3U));
         CHECK(info.certificates == (version == 1 ? 0U : 4U));
         CHECK(info.characters == (version == 1 ? 0U : 3U));
-        CHECK(info.economies == (version == 3 ? 2U : 0U));
-        CHECK(info.receipts == (version == 3 ? 8U : 0U));
+        CHECK(info.economies == (version >= 3 ? 2U : 0U));
+        CHECK(info.receipts == (version >= 3 ? 8U : 0U));
         CHECK(bytes(fixture.source) == before);
     }
 }
 
 TEST_CASE("ordinary open continues to reject actual legacy databases without migration",
           "[storage-migration]") {
-    for (const int version : {1, 2}) {
+    for (const int version : {1, 2, 3}) {
         Fixture fixture{version};
         const auto before = bytes(fixture.source);
         reject(Store::open(fixture.source, fixture_data::world()));
@@ -190,7 +190,7 @@ TEST_CASE("ordinary open continues to reject actual legacy databases without mig
 
 TEST_CASE("sequential database upgrades preserve full historical records without economic grants",
           "[storage-migration]") {
-    for (const int version : {1, 2}) {
+    for (const int version : {1, 2, 3}) {
         CAPTURE(version);
         Fixture fixture{version};
         const auto original = fixture_data::snapshot(fixture.source, version);
@@ -199,7 +199,7 @@ TEST_CASE("sequential database upgrades preserve full historical records without
         CHECK(fixture_data::snapshot(fixture.backup, version) == original);
         const auto result = take(fixture.migrate());
         CHECK(result.before == backup_info.metadata);
-        CHECK(result.after == StoreMetadata{fixture_data::store_id(), fixture_data::world(), 3});
+        CHECK(result.after == StoreMetadata{fixture_data::store_id(), fixture_data::world(), 4});
         CHECK_FALSE(result.already_current);
         auto owner = fixture.open(fixture.source);
         fixture_data::verify_current(*owner, version);
@@ -215,7 +215,7 @@ TEST_CASE("committed migration retries use the original backup and reject subseq
     const auto before_retry = bytes(fixture.source);
     const auto retried = take(fixture.migrate());
     CHECK(retried.already_current);
-    CHECK(retried.before == StoreMetadata{backup_info.metadata.id, backup_info.metadata.world, 3});
+    CHECK(retried.before == StoreMetadata{backup_info.metadata.id, backup_info.metadata.world, 4});
     CHECK(bytes(fixture.source) == before_retry);
     {
         auto owner = fixture.open(fixture.source);
@@ -263,24 +263,24 @@ TEST_CASE("matching database identities do not excuse a different backup logical
 TEST_CASE("current backup and isolated restore retain complete economic history and expired ids",
           "[storage-migration]") {
     Fixture fixture;
-    const auto original = fixture_data::snapshot(fixture.source, 3);
+    const auto original = fixture_data::snapshot(fixture.source, 4);
     const auto copied = fixture.copy();
     const auto restored = take(fixture.restore());
     CHECK(restored.metadata == copied.metadata);
-    CHECK(fixture_data::snapshot(fixture.backup, 3) == original);
-    CHECK(fixture_data::snapshot(fixture.restored, 3) == original);
+    CHECK(fixture_data::snapshot(fixture.backup, 4) == original);
+    CHECK(fixture_data::snapshot(fixture.restored, 4) == original);
     auto owner = fixture.open(fixture.restored);
-    fixture_data::verify_current(*owner, 3);
+    fixture_data::verify_current(*owner, 4);
     const auto retry = take(owner->transfer(fixture_data::request(9)));
     CHECK(retry.replayed);
     CHECK(retry.receipt == fixture_data::expected_stream().receipts.back());
     reject(owner->transfer(fixture_data::request(1)));
-    fixture_data::verify_current(*owner, 3);
+    fixture_data::verify_current(*owner, 4);
 }
 
 TEST_CASE("legacy restoration retains its schema until explicit migration of the candidate",
           "[storage-migration]") {
-    for (const int version : {1, 2}) {
+    for (const int version : {1, 2, 3}) {
         Fixture fixture{version};
         fixture.copy();
         const auto restored = take(fixture.restore());
@@ -321,6 +321,7 @@ TEST_CASE("injected migration failures roll back every uncommitted sequential st
           "[storage-migration]") {
     for (const auto phase :
          {detail::MaintenancePhase::after_v1_to_v2, detail::MaintenancePhase::after_v2_to_v3,
+          detail::MaintenancePhase::after_v3_to_v4,
           detail::MaintenancePhase::before_migration_commit}) {
         CAPTURE(static_cast<int>(phase));
         Fixture fixture{1};
@@ -347,7 +348,7 @@ TEST_CASE("lost migration acknowledgement reconciles the real committed outcome"
         reject(fixture.migrate());
         CHECK(phase_visits == 1);
     }
-    CHECK(take(fixture.inspect(fixture.source)).metadata.schema_version == 3);
+    CHECK(take(fixture.inspect(fixture.source)).metadata.schema_version == 4);
     CHECK(take(fixture.migrate()).already_current);
     auto owner = fixture.open(fixture.source);
     fixture_data::verify_current(*owner, 2);
@@ -359,14 +360,14 @@ TEST_CASE("backup failures preserve source and never authorize overwrite retries
          {detail::MaintenancePhase::backup_step, detail::MaintenancePhase::backup_complete,
           detail::MaintenancePhase::backup_validated}) {
         Fixture fixture;
-        const auto original = fixture_data::snapshot(fixture.source, 3);
+        const auto original = fixture_data::snapshot(fixture.source, 4);
         {
             Fault fault{phase};
             reject(Store::backup(fixture.source, fixture.backup, fixture_data::store_id(),
                                  fixture_data::world()));
             CHECK(phase_visits == 1);
         }
-        CHECK(fixture_data::snapshot(fixture.source, 3) == original);
+        CHECK(fixture_data::snapshot(fixture.source, 4) == original);
         REQUIRE(fs::exists(fixture.backup));
         const auto partial = bytes(fixture.backup);
         reject(Store::backup(fixture.source, fixture.backup, fixture_data::store_id(),
@@ -400,7 +401,7 @@ TEST_CASE("future databases reject all maintenance before recovery or modificati
           "[storage-migration]") {
     Fixture fixture;
     fixture.copy();
-    fixture_data::execute(fixture.source, "PRAGMA user_version=4");
+    fixture_data::execute(fixture.source, "PRAGMA user_version=5");
     const auto source = bytes(fixture.source);
     const auto backup = bytes(fixture.backup);
     reject(fixture.inspect(fixture.source));
@@ -513,7 +514,7 @@ TEST_CASE("active database ownership excludes maintenance without changing durab
     reject(fixture.migrate());
     reject(Store::backup(fixture.source, fixture.restored, fixture_data::store_id(),
                          fixture_data::world()));
-    fixture_data::verify_current(*owner, 3);
+    fixture_data::verify_current(*owner, 4);
     CHECK_FALSE(fs::exists(fixture.restored));
 }
 
@@ -530,12 +531,12 @@ TEST_CASE("old snapshot restoration is isolated and does not rewind the active s
         take(owner->transfer(request));
         take(owner->revoke_account(fixture_data::account(2)));
     }
-    const auto current = fixture_data::snapshot(fixture.source, 3);
+    const auto current = fixture_data::snapshot(fixture.source, 4);
     take(fixture.restore());
-    CHECK(fixture_data::snapshot(fixture.source, 3) == current);
+    CHECK(fixture_data::snapshot(fixture.source, 4) == current);
     {
         auto candidate = fixture.open(fixture.restored);
-        fixture_data::verify_current(*candidate, 3);
+        fixture_data::verify_current(*candidate, 4);
         CHECK(take(candidate->operation_stream(fixture_data::account())).high_watermark == 9);
     }
     auto live = fixture.open(fixture.source);
@@ -626,5 +627,5 @@ TEST_CASE("readonly inspection and restore preserve inert journal bytes", "[stor
     CHECK(fs::exists(journal));
     CHECK(bytes(journal) == inert_journal);
     auto owner = fixture.open(fixture.restored);
-    fixture_data::verify_current(*owner, 3);
+    fixture_data::verify_current(*owner, 4);
 }

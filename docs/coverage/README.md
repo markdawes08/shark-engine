@@ -8,14 +8,20 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-M05d passes its selected CPU gate. Its [handoff](../handoffs/M05d-colocated-regions.md) connects co-located regional
+M05e passes its selected current-machine gate. Its
+[handoff](../handoffs/M05e-fenced-region-handoffs.md) records latest-tick cuts,
+original queues/flights/worker context, retained native/Lua/session owners and
+schema-4 transactional writer fencing. The [cut](../gameplay-transfer-cuts.md)
+and [ownership](../regional-ownership.md) contracts keep portable reconstruction,
+actual separate-process routing/recovery and connected qualification with M05f-g.
+Full REQ-M05 remains NOT_RUN.
+
+M05d's [handoff](../handoffs/M05d-colocated-regions.md) connects co-located regional
 ownership, overlapping interest, native player/NPC travel, targeted projectiles
 and pending durable identity. [Cell authoring](../world-cell-authoring.md) adds
 three shared human/terminal methods with digest-bound publication and typed
 inspection. Native panel interaction remains deferred. The
-[M05 checkpoints](../roadmap/seamless-world-plan.md) retain consistent transfer
-cuts/persistence fencing in M05e and separate-process recovery in M05f;
-full REQ-M05 remains NOT_RUN.
+[M05 checkpoints](../roadmap/seamless-world-plan.md) retain the later connected gates.
 
 [M05c](../handoffs/M05c-world-traversal.md) records actual static terrain
 collision, authored triangle navigation, resident pins and exact owner-bound

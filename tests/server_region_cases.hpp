@@ -16,7 +16,8 @@ struct RegionalFixture {
         {{id<RegionId>(101), -10, .5, -10, 10, 12}, {id<RegionId>(102), .5, 10, -10, 10, 12}}};
     std::optional<StoreMetadata> durable;
 
-    explicit RegionalFixture(bool runtime = false, bool npc = false)
+    explicit RegionalFixture(bool runtime = false, bool npc = false, bool persistent = false,
+                             const char* rules_source = nullptr)
         : base{false, false, character_body(), true, false, npc} {
         base.movement.reset(); // The regional host privately owns the gameplay owners.
         if (runtime) {
@@ -91,13 +92,31 @@ struct RegionalFixture {
         InterestLimits limits;
         limits.enter_radius = 10;
         limits.exit_radius = 12;
+        if (persistent) {
+            REQUIRE(runtime);
+            const auto claim_a = take(base.authority->submit_region_claim(
+                base.session.character, base.record.entity, regions[0].id,
+                id<RegionInstanceId>(104), base.now + 10s, base.now));
+            const auto claim_b = take(base.authority->submit_region_claim(
+                base.peer_session->character,
+                std::get<WorldEntityId>(take(base.scene->reference(base.peer_entity)).identity),
+                regions[1].id, id<RegionInstanceId>(105), base.now + 10s, base.now));
+            settled();
+            for (const auto ticket : {claim_a, claim_b}) {
+                const auto completion = take(base.authority->take_region(ticket, base.now));
+                REQUIRE(completion.outcome);
+                take(*completion.outcome);
+            }
+        }
         world = take(RegionWorld::create(
             *base.scene, *base.physics, {base.origin, 1}, *traversal,
             take(CombatRules::create(
                 {"scripts/regional.lua",
-                 "function on_combat(kind,tick,actor,target,distance) "
-                 "if kind==1 or kind==3 then return true,25,10 end return true,0,5 end"})),
-            regions, limits));
+                 rules_source
+                     ? rules_source
+                     : "function on_combat(kind,tick,actor,target,distance) "
+                       "if kind==1 or kind==3 then return true,25,10 end return true,0,5 end"})),
+            regions, limits, persistent));
         a = take(world->bind(*base.authority, *base.pair.server, base.entity, base.now));
         b = take(world->bind(*base.authority, *base.peer->server, base.peer_entity, base.now));
     }

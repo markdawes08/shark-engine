@@ -70,7 +70,7 @@ inline net::CertificateFingerprint fingerprint(std::string_view text) {
     return result;
 }
 inline DurableRegistry expected_registry(int source_version = 2) {
-    check(source_version >= 1 && source_version <= 3, "Fixture version differs");
+    check(source_version >= 1 && source_version <= 4, "Fixture version differs");
     if (source_version == 1)
         return {};
     DurableRegistry result;
@@ -132,24 +132,26 @@ inline OperationStream expected_stream(unsigned owner = 1) {
     return result;
 }
 inline void verify_current(Store& owner, int source_version) {
-    check(take(owner.metadata()) == StoreMetadata{store_id(), world(), 3},
+    check(take(owner.metadata()) == StoreMetadata{store_id(), world(), 4},
           "Fixture metadata changed");
     check(take(owner.registry()) == expected_registry(source_version), "Fixture registry changed");
     for (const auto& row : expected_registry(source_version).accounts) {
         const auto number = row.account == account(1) ? 1U : (row.account == account(2) ? 2U : 3U);
-        const OperationStream expected = source_version == 3
+        const OperationStream expected = source_version >= 3
                                              ? expected_stream(number)
                                              : OperationStream{store_id(), row.account, 0, {}};
         check(take(owner.operation_stream(row.account)) == expected,
               "Fixture operation stream changed");
         const auto actual = owner.economy(row.account, character(number + 100));
-        if (source_version == 3 && number != 3)
+        if (source_version >= 3 && number != 3)
             check(actual && actual.value() == economic_record(number),
                   "Fixture economic record changed");
         else
             check(!actual && actual.error().code == ErrorCode::conflict,
                   "Fixture gained economic resources");
     }
+    for (const auto& row : expected_registry(source_version).characters)
+        check(!take(owner.region_ownership(row.character)), "Fixture gained regional ownership");
 }
 
 inline std::string utf8(const fs::path& path) {
@@ -187,7 +189,7 @@ inline void execute(const fs::path& path, const char* sql) {
     execute(connection, sql);
 }
 inline void create(const fs::path& path, int version, const fs::path& fixture_dir) {
-    check(version >= 1 && version <= 3, "Fixture version differs");
+    check(version >= 1 && version <= 4, "Fixture version differs");
     check(!fs::exists(path), "Fixture refuses existing file");
     const auto source = fixture_dir / ("schema-" + std::to_string(version) + ".sql");
     const auto length = fs::file_size(source);
@@ -278,7 +280,7 @@ inline std::string query(Connection& connection, const char* sql) {
     return output.str();
 }
 inline std::string snapshot(const fs::path& path, int version) {
-    check(version >= 1 && version <= 3, "Fixture snapshot version differs");
+    check(version >= 1 && version <= 4, "Fixture snapshot version differs");
     Connection connection{path, SQLITE_OPEN_READONLY};
     std::ostringstream output;
     output << "{\"version\":" << version << ",\"schema\":"
@@ -293,12 +295,15 @@ inline std::string snapshot(const fs::path& path, int version) {
                << query(connection, "SELECT * FROM shark_certificates ORDER BY certificate")
                << ",\"characters\":"
                << query(connection, "SELECT * FROM shark_characters ORDER BY character_id");
-    if (version == 3)
+    if (version >= 3)
         output << ",\"economies\":"
                << query(connection, "SELECT * FROM shark_economy ORDER BY character_id")
                << ",\"receipts\":"
                << query(connection,
                         "SELECT * FROM shark_transfer_receipts ORDER BY actor_id,sequence");
+    if (version >= 4)
+        output << ",\"region_ownership\":"
+               << query(connection, "SELECT * FROM shark_region_ownership ORDER BY character_id");
     output << '}';
     return output.str();
 }

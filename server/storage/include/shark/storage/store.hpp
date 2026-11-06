@@ -1,5 +1,6 @@
 #pragma once
 
+#include "shark/content_digest.hpp"
 #include "shark/error.hpp"
 #include "shark/name.hpp"
 #include "shark/net/session.hpp"
@@ -17,7 +18,42 @@ namespace shark::storage {
 struct StoreIdDomain;
 using StoreId = TypedId<StoreIdDomain>;
 
-inline constexpr std::uint32_t store_schema_version = 3;
+struct RegionTransferIdDomain;
+using RegionTransferId = TypedId<RegionTransferIdDomain>;
+struct RegionWriter {
+    StoreId store;
+    net::CharacterId character;
+    WorldEntityId entity;
+    RegionId region;
+    RegionInstanceId instance;
+    std::uint64_t epoch;
+    bool operator==(const RegionWriter&) const = default;
+};
+struct RegionTransferRequest {
+    RegionTransferId transfer;
+    RegionWriter source;
+    RegionId destination;
+    RegionInstanceId destination_instance;
+    std::uint64_t cut_tick;
+    std::uint64_t accepted_input;
+    std::uint64_t applied_input;
+    std::uint64_t command_sequence;
+    ContentDigest cut_digest;
+    bool operator==(const RegionTransferRequest&) const = default;
+};
+struct RegionOwnership {
+    RegionWriter writer;
+    std::optional<RegionTransferRequest> last_transfer;
+    bool operator==(const RegionOwnership&) const = default;
+};
+struct RegionTransferResult {
+    RegionTransferRequest request;
+    RegionWriter writer;
+    bool replayed;
+    bool operator==(const RegionTransferResult&) const = default;
+};
+
+inline constexpr std::uint32_t store_schema_version = 4;
 inline constexpr std::uint64_t maximum_store_bytes = 16 * 1024 * 1024;
 inline constexpr std::size_t maximum_durable_accounts = 64;
 inline constexpr std::size_t maximum_durable_characters = 128;
@@ -169,7 +205,7 @@ class Store final {
     // and expected world. Foreign/future headers reject before SQLite can write.
     [[nodiscard]] static Result<std::unique_ptr<Store>> open(const std::filesystem::path& path,
                                                              WorldId expected_world);
-    // Explicit offline maintenance. Exact historical schemas 1/2 and current 3
+    // Explicit offline maintenance. Exact historical schemas 1/2/3 and current 4
     // are supported here; ordinary open remains current-schema-only. Inspection
     // is read-only and cannot recover a hot journal. Caller releases live owners.
     [[nodiscard]] static Result<SnapshotInfo> inspect_snapshot(const std::filesystem::path& path,
@@ -183,8 +219,9 @@ class Store final {
                                                      StoreId expected_store,
                                                      WorldId expected_world);
     // Requires an independently validated backup of the exact pre-upgrade state.
-    // Sequential 1->2->3 transforms commit together and never grant economy state.
-    // A retry at schema 3 succeeds only when it exactly matches that transform.
+    // Sequential 1->2->3->4 transforms commit together and never grant economy
+    // state or regional ownership. A retry at schema 4 succeeds only when it
+    // exactly matches that transform, including retained economics and cuts.
     // Supported interrupted source transactions may recover before inspection;
     // newer headers reject before SQLite can write. No downgrade is supported.
     [[nodiscard]] static Result<MigrationResult>
@@ -231,7 +268,18 @@ class Store final {
     [[nodiscard]] Result<CharacterRecord> save_character(net::AccountId account,
                                                          net::CharacterId character,
                                                          std::uint64_t expected_revision,
-                                                         const CharacterState& accepted_state);
+                                                         const CharacterState& accepted_state,
+                                                         std::optional<RegionWriter> writer = {});
+
+    // Persistent regional writer fencing is separate from session authority.
+    // Claim is exact-owner idempotent; transfer compares the source epoch and
+    // retains its last exact cut for uncertain-commit reconciliation.
+    [[nodiscard]] Result<RegionOwnership> claim_region(net::CharacterId character,
+                                                       WorldEntityId entity, RegionId region,
+                                                       RegionInstanceId instance);
+    [[nodiscard]] Result<std::optional<RegionOwnership>>
+    region_ownership(net::CharacterId character) const;
+    [[nodiscard]] Result<RegionTransferResult> commit_region(const RegionTransferRequest& request);
 
     // Trusted provisioning only, once per character. No arbitrary later grants.
     [[nodiscard]] Result<EconomyRecord> initialize_economy(net::AccountId account,
@@ -242,7 +290,8 @@ class Store final {
     // Exact next sequence admits one durable terminal outcome. Retained equal
     // retries return that same outcome before current revisions are considered.
     // Mismatched, expired or gapped operation IDs reject without admission.
-    [[nodiscard]] Result<TransferResult> transfer(const TransferRequest& request);
+    [[nodiscard]] Result<TransferResult> transfer(const TransferRequest& request,
+                                                  std::optional<RegionWriter> writer = {});
     // Owned, bounded trusted audit; receipts include committed business rejects.
     [[nodiscard]] Result<OperationStream> operation_stream(net::AccountId actor) const;
 

@@ -71,12 +71,17 @@ struct CharacterAuthority::Impl {
     };
     struct Pending {
         RuntimeTicket ticket;
-        net::SessionSnapshot session;
-        EntityReference entity;
+        std::optional<net::SessionSnapshot> session;
+        std::optional<EntityReference> entity;
         MonotonicTime deadline;
         std::optional<TransferRequest> transfer;
         std::optional<Result<RuntimeValue>> outcome;
         bool timed_out{false};
+        std::optional<RegionWriter> writer{};
+        bool control{false};
+        std::optional<RegionTransferRequest> region_transfer{};
+        std::optional<detail::ClaimRegion> claim{};
+        std::optional<RuntimeSaveRequest> save{};
     };
     std::unique_ptr<detail::RuntimeWorker> worker;
     std::filesystem::path runtime_path;
@@ -84,6 +89,7 @@ struct CharacterAuthority::Impl {
     std::optional<RuntimeId> runtime_id;
     RuntimeLimits runtime_limits;
     std::vector<Binding> bindings;
+    std::vector<RegionOwnership> region_owners;
     std::array<std::optional<Pending>, maximum_runtime_pending> pending{};
     std::uint64_t last_ticket{0};
     MonotonicTime last_time{0};
@@ -93,6 +99,7 @@ struct CharacterAuthority::Impl {
         : store(std::move(owned_store)), sessions(std::move(owned_sessions)),
           limits(session_limits), world(store_world), thread(std::this_thread::get_id()) {
         bindings.reserve(maximum_durable_characters);
+        region_owners.reserve(maximum_durable_characters);
     }
 
     ~Impl() {
@@ -255,7 +262,48 @@ struct CharacterAuthority::Impl {
     Result<RuntimeTicket> submit(net::TlsTransport& transport, const net::SessionEnvelope& envelope,
                                  Scene& scene, EntityHandle entity, detail::StoreCommand command,
                                  std::optional<TransferRequest> transfer, MonotonicTime deadline,
-                                 MonotonicTime now);
+                                 MonotonicTime now, std::optional<RegionWriter> writer);
+    const RegionOwnership* region_owner(net::CharacterId character) const {
+        const auto found =
+            std::find_if(region_owners.begin(), region_owners.end(),
+                         [&](const auto& record) { return record.writer.character == character; });
+        return found == region_owners.end() ? nullptr : &*found;
+    }
+    Result<void> writer_check(net::CharacterId character, WorldEntityId entity,
+                              const std::optional<RegionWriter>& writer) const {
+        const auto* current_owner = region_owner(character);
+        if ((current_owner && (!writer || *writer != current_owner->writer)) ||
+            (!current_owner && writer) ||
+            (writer && (writer->character != character || writer->entity != entity)))
+            return rejected("storage.runtime.writer",
+                            "Regional writer is stale, missing or foreign");
+        return {};
+    }
+    void publish_owner(const RegionOwnership& value) {
+        auto found = std::find_if(region_owners.begin(), region_owners.end(), [&](const auto& row) {
+            return row.writer.character == value.writer.character;
+        });
+        if (found == region_owners.end())
+            region_owners.push_back(value);
+        else
+            *found = value;
+    }
+    Result<void> hydrate_owners() {
+        region_owners.clear();
+        for (const auto& value : bindings) {
+            auto row =
+                call<std::optional<RegionOwnership>>(detail::ReadRegionOwnership{value.character});
+            if (!row)
+                return row.error();
+            if (row.value())
+                publish_owner(*row.value());
+        }
+        return {};
+    }
+    Result<RuntimeTicket> submit_control(net::CharacterId character, detail::StoreCommand command,
+                                         std::optional<detail::ClaimRegion> claim,
+                                         std::optional<RegionTransferRequest> transfer,
+                                         MonotonicTime deadline, MonotonicTime now);
 };
 
 CharacterAuthority::CharacterAuthority(std::unique_ptr<Impl> impl) noexcept
@@ -284,6 +332,9 @@ CharacterAuthority::create(std::unique_ptr<Store> store, const net::SessionLimit
                                        metadata.value().world);
     for (const auto& character : registry.value().characters)
         impl->bindings.push_back({character.account, character.character, character.entity});
+    impl->expected_store = metadata.value().id;
+    if (auto hydrated = impl->hydrate_owners(); !hydrated)
+        return hydrated.error();
     return std::unique_ptr<CharacterAuthority>(new CharacterAuthority(std::move(impl)));
 }
 
@@ -316,6 +367,8 @@ CharacterAuthority::open_runtime(const std::filesystem::path& path, StoreId expe
     impl->runtime_limits = runtime_limits;
     for (const auto& character : records.characters)
         impl->bindings.push_back({character.account, character.character, character.entity});
+    if (auto hydrated = impl->hydrate_owners(); !hydrated)
+        return hydrated.error();
     return std::unique_ptr<CharacterAuthority>(new CharacterAuthority(std::move(impl)));
 }
 
@@ -324,6 +377,129 @@ Result<StoreMetadata> CharacterAuthority::metadata() const {
         return result.error();
     }
     return impl_->call<StoreMetadata>(detail::ReadMetadata{});
+}
+
+Result<std::optional<RegionOwnership>>
+CharacterAuthority::region_ownership(net::CharacterId character) const {
+    if (auto checked = impl_->check("storage.characters.region_ownership"); !checked)
+        return checked.error();
+    const auto* found = impl_->region_owner(character);
+    return found ? std::optional<RegionOwnership>{*found} : std::nullopt;
+}
+
+Result<std::vector<RuntimePendingCut>> CharacterAuthority::runtime_pending() const {
+    if (auto checked = impl_->owner("storage.runtime.pending_cut"); !checked)
+        return checked.error();
+    if (!impl_->runtime_id)
+        return rejected("storage.runtime.pending_cut", "Runtime capture requires open_runtime");
+    std::vector<RuntimePendingCut> result;
+    result.reserve(impl_->retained());
+    for (const auto& slot : impl_->pending)
+        if (slot)
+            result.push_back({slot->ticket, slot->session, slot->entity, slot->deadline,
+                              slot->transfer, slot->writer, slot->region_transfer, slot->control,
+                              slot->timed_out, slot->outcome, slot->save});
+    return result;
+}
+
+Result<RuntimeTicket>
+CharacterAuthority::Impl::submit_control(net::CharacterId character, detail::StoreCommand command,
+                                         std::optional<detail::ClaimRegion> claim,
+                                         std::optional<RegionTransferRequest> transfer,
+                                         MonotonicTime deadline, MonotonicTime now) {
+    constexpr auto operation = "storage.runtime.region_control";
+    if (auto checked = check(operation); !checked)
+        return checked.error();
+    if (auto checked = submission_preflight(deadline, now); !checked)
+        return checked.error();
+    const auto found = std::find_if(bindings.begin(), bindings.end(),
+                                    [&](const auto& row) { return row.character == character; });
+    if (found == bindings.end())
+        return rejected(operation, "Regional control requires a durable character binding");
+    for (const auto& slot : pending) {
+        if (!slot || !slot->control)
+            continue;
+        const auto controlled =
+            slot->claim ? slot->claim->character : slot->region_transfer->source.character;
+        const auto binding = std::find_if(bindings.begin(), bindings.end(), [&](const auto& row) {
+            return row.character == controlled;
+        });
+        if (binding != bindings.end() && binding->account == found->account)
+            return rejected(operation, "Account already has a retained regional control");
+    }
+    const auto position =
+        std::find_if(pending.begin(), pending.end(), [](const auto& slot) { return !slot; });
+    const auto index = static_cast<std::size_t>(position - pending.begin());
+    const RuntimeTicket ticket{*runtime_id, last_ticket + 1};
+    Pending candidate{ticket, std::nullopt, std::nullopt, deadline, std::nullopt, std::nullopt};
+    candidate.control = true;
+    candidate.claim = claim;
+    candidate.region_transfer = transfer;
+    last_time = now;
+    last_ticket = ticket.sequence;
+    position->emplace(std::move(candidate));
+    if (auto submitted = worker->submit({index, ticket.sequence}, std::move(command)); !submitted) {
+        position->reset();
+        faulted = true;
+        return submitted.error();
+    }
+    return ticket;
+}
+
+Result<RuntimeTicket> CharacterAuthority::submit_region_claim(net::CharacterId character,
+                                                              WorldEntityId entity, RegionId region,
+                                                              RegionInstanceId instance,
+                                                              MonotonicTime deadline,
+                                                              MonotonicTime now) {
+    if (auto checked = impl_->owner("storage.runtime.region_claim"); !checked)
+        return checked.error();
+    const auto found = std::find_if(impl_->bindings.begin(), impl_->bindings.end(),
+                                    [&](const auto& row) { return row.character == character; });
+    if (found == impl_->bindings.end() || found->entity != entity)
+        return rejected("storage.runtime.region_claim", "Regional claim has a foreign entity");
+    const detail::ClaimRegion claim{character, entity, region, instance};
+    return impl_->submit_control(character, claim, claim, std::nullopt, deadline, now);
+}
+
+Result<RuntimeTicket> CharacterAuthority::submit_region_commit(const RegionTransferRequest& request,
+                                                               MonotonicTime deadline,
+                                                               MonotonicTime now) {
+    if (auto checked = impl_->check("storage.runtime.region_commit"); !checked)
+        return checked.error();
+    const auto* current = impl_->region_owner(request.source.character);
+    if (!current || (current->writer != request.source && current->last_transfer != request))
+        return rejected("storage.runtime.region_commit", "Regional commit has a stale source");
+    return impl_->submit_control(request.source.character, request, std::nullopt, request, deadline,
+                                 now);
+}
+
+Result<RuntimeCompletion> CharacterAuthority::take_region(RuntimeTicket ticket, MonotonicTime now) {
+    constexpr auto operation = "storage.runtime.region_take";
+    if (auto checked = impl_->owner(operation); !checked)
+        return checked.error();
+    if (!impl_->runtime_id || ticket.owner != *impl_->runtime_id || ticket.sequence == 0)
+        return rejected(operation, "Unknown regional control owner or ticket");
+    const auto position =
+        std::find_if(impl_->pending.begin(), impl_->pending.end(),
+                     [&](const auto& slot) { return slot && slot->ticket == ticket; });
+    if (position == impl_->pending.end() || !(**position).control)
+        return rejected(operation, "Ticket is not a retained regional control");
+    if (auto observed = poll(now); !observed)
+        return observed.error();
+    auto& slot = **position;
+    RuntimeCompletion completion{
+        ticket,       slot.timed_out ? RuntimeDelivery::timed_out : RuntimeDelivery::pending,
+        std::nullopt, std::nullopt,
+        std::nullopt, slot.region_transfer};
+    if (!slot.outcome)
+        return completion;
+    if (!slot.timed_out)
+        completion.delivery = !*slot.outcome && needs_reconciliation(slot.outcome->error())
+                                  ? RuntimeDelivery::reconciliation_required
+                                  : RuntimeDelivery::ready;
+    completion.outcome = std::move(slot.outcome);
+    position->reset();
+    return completion;
 }
 
 Result<void> CharacterAuthority::provision_account(net::AccountId account) {
@@ -668,12 +844,11 @@ Result<TransferResult> CharacterAuthority::transfer(net::TlsTransport& transport
     return stored;
 }
 
-Result<RuntimeTicket> CharacterAuthority::Impl::submit(net::TlsTransport& transport,
-                                                       const net::SessionEnvelope& envelope,
-                                                       Scene& scene, EntityHandle entity,
-                                                       detail::StoreCommand command,
-                                                       std::optional<TransferRequest> transfer,
-                                                       MonotonicTime deadline, MonotonicTime now) {
+Result<RuntimeTicket>
+CharacterAuthority::Impl::submit(net::TlsTransport& transport, const net::SessionEnvelope& envelope,
+                                 Scene& scene, EntityHandle entity, detail::StoreCommand command,
+                                 std::optional<TransferRequest> transfer, MonotonicTime deadline,
+                                 MonotonicTime now, std::optional<RegionWriter> writer) {
     constexpr auto operation = "storage.runtime.submit";
     if (auto checked = check(operation); !checked)
         return checked.error();
@@ -683,7 +858,8 @@ Result<RuntimeTicket> CharacterAuthority::Impl::submit(net::TlsTransport& transp
     if (!session)
         return session.error();
     if (std::any_of(pending.begin(), pending.end(), [&](const auto& slot) {
-            return slot && slot->session.account == session.value().account;
+            return slot && !slot->control && slot->session &&
+                   slot->session->account == session.value().account;
         }))
         return rejected(operation, "Account already has a retained runtime operation");
     if (transfer && (transfer->operation.actor != session.value().account ||
@@ -692,6 +868,10 @@ Result<RuntimeTicket> CharacterAuthority::Impl::submit(net::TlsTransport& transp
     auto reference = binding(scene, entity, session.value());
     if (!reference)
         return reference.error();
+    if (auto checked = writer_check(session.value().character,
+                                    std::get<WorldEntityId>(reference.value().identity), writer);
+        !checked)
+        return checked.error();
     // Save's account/character are derived from live admission, never caller IDs.
     if (auto* save = std::get_if<detail::SaveCharacter>(&command)) {
         save->account = session.value().account;
@@ -704,6 +884,9 @@ Result<RuntimeTicket> CharacterAuthority::Impl::submit(net::TlsTransport& transp
     Pending candidate{ticket,   session.value(), std::move(reference).value(),
                       deadline, transfer,        std::nullopt,
                       false};
+    candidate.writer = writer;
+    if (const auto* saved = std::get_if<detail::SaveCharacter>(&command))
+        candidate.save = RuntimeSaveRequest{saved->revision, saved->state};
     auto admitted = sessions->apply(transport, net::HeartbeatRequest{envelope}, now);
     if (!admitted)
         return admitted.error();
@@ -719,12 +902,11 @@ Result<RuntimeTicket> CharacterAuthority::Impl::submit(net::TlsTransport& transp
     return ticket;
 }
 
-Result<RuntimeTicket> CharacterAuthority::submit_save(net::TlsTransport& transport,
-                                                      const net::SessionEnvelope& authority,
-                                                      Scene& scene, EntityHandle entity,
-                                                      std::uint64_t expected_revision,
-                                                      const CharacterState& accepted_state,
-                                                      MonotonicTime deadline, MonotonicTime now) {
+Result<RuntimeTicket>
+CharacterAuthority::submit_save(net::TlsTransport& transport, const net::SessionEnvelope& authority,
+                                Scene& scene, EntityHandle entity, std::uint64_t expected_revision,
+                                const CharacterState& accepted_state, MonotonicTime deadline,
+                                MonotonicTime now, std::optional<RegionWriter> writer) {
     if (auto checked = impl_->check("storage.runtime.save"); !checked)
         return checked.error();
     if (auto validated = validate_character_state(accepted_state, impl_->world); !validated)
@@ -741,21 +923,22 @@ Result<RuntimeTicket> CharacterAuthority::submit_save(net::TlsTransport& transpo
         return session.error();
     return impl_->submit(transport, authority, scene, entity,
                          detail::SaveCharacter{session.value().account, session.value().character,
-                                               expected_revision, accepted_state},
-                         std::nullopt, deadline, now);
+                                               expected_revision, accepted_state, writer},
+                         std::nullopt, deadline, now, writer);
 }
 
 Result<RuntimeTicket> CharacterAuthority::submit_transfer(net::TlsTransport& transport,
                                                           const net::SessionEnvelope& authority,
                                                           Scene& scene, EntityHandle entity,
                                                           const TransferRequest& request,
-                                                          MonotonicTime deadline,
-                                                          MonotonicTime now) {
+                                                          MonotonicTime deadline, MonotonicTime now,
+                                                          std::optional<RegionWriter> writer) {
     if (auto checked = impl_->check("storage.runtime.transfer"); !checked)
         return checked.error();
     if (auto validated = validate_transfer_request(request); !validated)
         return validated.error();
-    return impl_->submit(transport, authority, scene, entity, request, request, deadline, now);
+    return impl_->submit(transport, authority, scene, entity,
+                         detail::FencedTransfer{request, writer}, request, deadline, now, writer);
 }
 
 Result<RuntimeStats> CharacterAuthority::poll(MonotonicTime now) {
@@ -787,6 +970,14 @@ Result<RuntimeStats> CharacterAuthority::poll(MonotonicTime now) {
             } else if (auto* transferred = std::get_if<TransferResult>(&result.value());
                        transferred && slot.transfer) {
                 slot.outcome.emplace(RuntimeValue{std::move(*transferred)});
+            } else if (auto* claimed = std::get_if<RegionOwnership>(&result.value());
+                       claimed && slot.control && slot.claim) {
+                impl_->publish_owner(*claimed);
+                slot.outcome.emplace(RuntimeValue{std::move(*claimed)});
+            } else if (auto* committed = std::get_if<RegionTransferResult>(&result.value());
+                       committed && slot.control && slot.region_transfer) {
+                impl_->publish_owner({committed->writer, committed->request});
+                slot.outcome.emplace(RuntimeValue{std::move(*committed)});
             } else {
                 impl_->faulted = true;
                 slot.outcome.emplace(rejected(operation,
@@ -814,7 +1005,8 @@ Result<RuntimeStats> CharacterAuthority::runtime_stats() const {
 
 Result<RuntimeCompletion> CharacterAuthority::take(RuntimeTicket ticket,
                                                    net::TlsTransport& transport, Scene& scene,
-                                                   MonotonicTime now) {
+                                                   MonotonicTime now,
+                                                   std::optional<RegionWriter> current_writer) {
     constexpr auto operation = "storage.runtime.take";
     if (auto checked = impl_->owner(operation); !checked)
         return checked.error();
@@ -825,21 +1017,30 @@ Result<RuntimeCompletion> CharacterAuthority::take(RuntimeTicket ticket,
                      [&](const auto& slot) { return slot && slot->ticket == ticket; });
     if (position == impl_->pending.end())
         return rejected(operation, "Runtime ticket is not retained");
+    if ((**position).control || !(**position).session || !(**position).entity)
+        return rejected(operation, "Regional controls require take_region");
     if (auto result = poll(now); !result)
         return result.error();
     auto& slot = **position;
+    if (auto checked =
+            impl_->writer_check(slot.session->character,
+                                std::get<WorldEntityId>(slot.entity->identity), current_writer);
+        !checked)
+        return checked.error();
     RuntimeCompletion completion{
         ticket, slot.timed_out ? RuntimeDelivery::timed_out : RuntimeDelivery::pending,
         slot.transfer, std::nullopt};
+    completion.writer = slot.writer;
+    completion.save = slot.save;
     if (!slot.outcome)
         return completion;
     auto live = impl_->sessions->current(transport, now);
     const bool authorized = live && live.value().active && live.value().ready &&
-                            live.value().session == slot.session.session &&
-                            live.value().account == slot.session.account &&
-                            live.value().character == slot.session.character &&
-                            live.value().ownership_epoch == slot.session.ownership_epoch;
-    auto resolved = scene.resolve(slot.entity);
+                            live.value().session == slot.session->session &&
+                            live.value().account == slot.session->account &&
+                            live.value().character == slot.session->character &&
+                            live.value().ownership_epoch == slot.session->ownership_epoch;
+    auto resolved = scene.resolve(*slot.entity);
     if (!slot.timed_out) {
         if (!authorized || !resolved)
             completion.delivery = RuntimeDelivery::fenced;
@@ -893,6 +1094,10 @@ Result<void> CharacterAuthority::recover() {
     impl_->runtime_id = RuntimeId{identity.value()};
     impl_->last_ticket = 0;
     impl_->faulted = false;
+    if (auto hydrated = impl_->hydrate_owners(); !hydrated) {
+        impl_->faulted = true;
+        return hydrated;
+    }
     return {};
 }
 

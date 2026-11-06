@@ -13,6 +13,11 @@ schema to 3 with [atomic economic transactions](durable-transactions.md), follow
 [ADR 0017](architecture/0017-atomic-durable-transactions.md). Earlier handoffs
 retain their historical schema-1/2 evidence.
 
+M05e advances the active schema to 4 with persisted regional writers and exact
+last-cut reconciliation. Regional epochs are distinct from session ownership,
+process-local grants and economic operation identities. The migration preserves
+schema-3 economic history and initially assigns no regional ownership.
+
 M03e adds explicit [offline maintenance](durable-maintenance.md) under
 [ADR 0019](architecture/0019-durable-maintenance.md): sequential upgrades,
 verified pre-upgrade backups and isolated restores. Ordinary open below remains
@@ -25,7 +30,7 @@ initialization commits. `Store::open(path, expected_world)` returns the same
 owner type after validating an existing supported database. Neither operation
 accepts SQL, credentials, source-scene files or a generic mutable record bag.
 `metadata()` returns an owned `StoreMetadata` value containing typed `StoreId`,
-typed `WorldId` and `schema_version`. Schema version is independently fixed at 3;
+typed `WorldId` and `schema_version`. Schema version is independently fixed at 4;
 source JSON, component and gameplay-wire version numbers do not set it.
 
 The store generates a new persistent store ID through the existing OS-entropy
@@ -76,12 +81,12 @@ the raw header must contain all of the following:
 | --- | --- |
 | SQLite file signature | `SQLite format 3` followed by NUL |
 | Application ID | `0x53484B44` |
-| User schema version | `3` |
+| User schema version | `4` |
 | Page size | `4096` bytes |
 | File read/write versions | Both `1`, the rollback-journal format |
 | Main-file size | Within `maximum_store_bytes`, 16 MiB |
 
-Foreign, legacy version-1/2, future headers and incomplete initialization reject without SQLite
+Foreign, legacy version-1/2/3, future headers and incomplete initialization reject without SQLite
 recovery or database mutation. No new database is silently substituted. A
 recognized supported header permits SQLite to recover a hot journal, after
 which the exact schema, metadata identity, expected world and integrity check
@@ -95,13 +100,14 @@ SQLite permits a read/write request to fall back to read-only, so an open return
 code alone is insufficient. [Open flags](https://www.sqlite.org/c3ref/open.html),
 [actual connection mode](https://www.sqlite.org/c3ref/db_readonly.html)
 
-M03c supports only its exact version-3 schema. Unsupported versions, additional
+Current ordinary open supports only its exact version-4 schema. Unsupported versions, additional
 schema objects or incompatible metadata reject; opening does not run a migration
 or rewrite them. Schema changes require an explicit compatibility decision and
 real-store fixtures in their owning checkpoint.
 
-The schema contains six fixed STRICT tables: metadata, accounts, certificate
-enrollment, characters, economic records and retained transaction receipts, plus
+The schema contains seven fixed STRICT tables: metadata, accounts, certificate
+enrollment, characters, economic records, retained transaction receipts and
+regional ownership, plus
 only their expected uniqueness autoindexes. Accounts include a durable operation
 high-water mark; the bounded economic contract defines receipt retention.
 Canonical DDL lives in [store.cpp](../server/storage/src/store.cpp); inspection
@@ -113,7 +119,7 @@ The `shark_store` metadata table must contain exactly one row:
 | `singleton` | INTEGER primary key, value `1`, constrained to `1` |
 | `store_id` | Non-null TEXT of length 36, parsed as lowercase canonical UUIDv4 |
 | `world_id` | Non-null TEXT of length 36, parsed as lowercase canonical UUIDv4 and matched to the caller's expected world |
-| `schema_version` | Non-null INTEGER, constrained to and equal to `3` |
+| `schema_version` | Non-null INTEGER, constrained to and equal to `4` |
 
 Both IDs use the existing validated non-nil identity type. The database
 application/user versions, exact schema, `quick_check(1)` result and sole row are
@@ -170,11 +176,55 @@ or I/O time. Schema validation operates on the bounded main file and stops on
 the first incompatible object or row. These settings are implementation limits,
 not public SQL capabilities.
 
-SQLite ownership excludes cooperating connections until the store closes. It
-does not implement distributed fencing, a persistent account epoch or a region
-lease. The selected limits are a small local foundation profile, not measured
+SQLite ownership excludes cooperating connections until the store closes.
+The persisted regional writer comparison below fences mutations through this
+Store; it does not turn the exclusive local database into a distributed lease
+service or add a persistent account-session epoch. The selected limits are a small local foundation profile, not measured
 LOCAL-MMO-1 character/economy capacity. Later checkpoints must explicitly review
 schema and limits as real workloads arrive.
+
+## Persistent regional writers
+
+`claim_region(character, entity, region, instance)` requires the exact durable
+character/entity and an active account. It creates epoch 1, or returns the current
+owned value when the same region and instance already own that character.
+Another owner rejects. `region_ownership(character)` returns an optional owned
+observation; reading it does not claim authority.
+
+`RegionWriter` contains StoreId, character, WorldEntityId, RegionId,
+RegionInstanceId and a positive nonwrapping epoch at most INT64_MAX.
+`commit_region(request)` compares that exact source writer and atomically advances
+to the supplied destination region/instance and epoch + 1. The request also
+contains its RegionTransferId, final tick, accepted/applied input watermarks,
+command sequence and cut SHA-256. Applied input cannot exceed accepted input.
+The complete last committed request remains with the new writer. An exact retry
+returns its original writer with `replayed:true`; a changed retained transfer ID,
+stale source or exhausted epoch rejects. Older cuts are not an unbounded receipt
+history and cannot execute again with their old epochs.
+
+Schema 4 adds `shark_region_ownership`, keyed by character and bound to its immutable
+entity. It stores current region/instance/epoch and nullable all-or-none last-cut
+fields. Cut tick/input/command counters use canonical unsigned decimal text so
+the complete uint64 domain survives SQLite's signed-integer representation.
+Epochs use bounded INTEGER values. Reads validate every field, the complete cut,
+character/entity correspondence and retained transfer-ID uniqueness.
+
+`save_character` and `transfer` accept a final optional RegionWriter. An unclaimed
+source accepts no writer; a claimed source requires the exact current persisted
+writer. Missing, foreign or stale writers reject, including through older
+unfenced overload usage and retained economic retries. New mutations re-read the
+persisted writer inside the same SQL transaction before writing checkpoints,
+balances, receipts or operation high-water marks. Economic requests retain their
+original payload and OperationId; a new regional writer is separate authorization
+context rather than a change to that durable retry identity. A transfer is still
+the central Store's atomic bilateral economic operation, authorized by its source
+writer; it does not grant a regional caller arbitrary target setters.
+
+Initial economy provisioning rejects a region-owned character. Complete snapshot
+validation, backup/restore equality and migration-retry equality include every
+ownership/cut row. These storage operations do not validate the cut against live
+physics or execute gameplay transfer; the trusted regional coordinator owns that
+boundary.
 
 ## Results and recovery
 

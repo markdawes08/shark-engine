@@ -8,6 +8,7 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
 #include <cstring>
 #include <fstream>
 #include <optional>
@@ -38,11 +39,38 @@ constexpr std::string_view table_v2_sql =
     "store_id TEXT NOT NULL CHECK(length(store_id)=36),"
     "world_id TEXT NOT NULL CHECK(length(world_id)=36),"
     "schema_version INTEGER NOT NULL CHECK(schema_version=2)) STRICT";
-constexpr std::string_view table_sql =
+constexpr std::string_view table_v3_sql =
     "CREATE TABLE shark_store(singleton INTEGER PRIMARY KEY CHECK(singleton=1),"
     "store_id TEXT NOT NULL CHECK(length(store_id)=36),"
     "world_id TEXT NOT NULL CHECK(length(world_id)=36),"
     "schema_version INTEGER NOT NULL CHECK(schema_version=3)) STRICT";
+constexpr std::string_view table_sql =
+    "CREATE TABLE shark_store(singleton INTEGER PRIMARY KEY CHECK(singleton=1),"
+    "store_id TEXT NOT NULL CHECK(length(store_id)=36),"
+    "world_id TEXT NOT NULL CHECK(length(world_id)=36),"
+    "schema_version INTEGER NOT NULL CHECK(schema_version=4)) STRICT";
+constexpr std::string_view region_ownership_sql =
+    "CREATE TABLE shark_region_ownership(character_id TEXT PRIMARY KEY NOT NULL "
+    "REFERENCES shark_characters(character_id),"
+    "entity_id TEXT NOT NULL CHECK(length(entity_id)=36),"
+    "region_id TEXT NOT NULL CHECK(length(region_id)=36),"
+    "instance_id TEXT NOT NULL CHECK(length(instance_id)=36),"
+    "epoch INTEGER NOT NULL CHECK(epoch>=1),"
+    "transfer_id TEXT CHECK(length(transfer_id)=36),"
+    "source_region TEXT CHECK(length(source_region)=36),"
+    "source_instance TEXT CHECK(length(source_instance)=36),"
+    "source_epoch INTEGER CHECK(source_epoch>=1),"
+    "cut_tick TEXT CHECK(length(cut_tick) BETWEEN 1 AND 20),"
+    "accepted_input TEXT CHECK(length(accepted_input) BETWEEN 1 AND 20),"
+    "applied_input TEXT CHECK(length(applied_input) BETWEEN 1 AND 20),"
+    "command_sequence TEXT CHECK(length(command_sequence) BETWEEN 1 AND 20),"
+    "cut_digest TEXT CHECK(length(cut_digest)=64),"
+    "CHECK((transfer_id IS NULL AND source_region IS NULL AND source_instance IS NULL AND "
+    "source_epoch IS NULL AND cut_tick IS NULL AND accepted_input IS NULL AND applied_input IS "
+    "NULL AND command_sequence IS NULL AND cut_digest IS NULL) OR (transfer_id IS NOT NULL AND "
+    "source_region IS NOT NULL AND source_instance IS NOT NULL AND source_epoch IS NOT NULL AND "
+    "cut_tick IS NOT NULL AND accepted_input IS NOT NULL AND applied_input IS NOT NULL AND "
+    "command_sequence IS NOT NULL AND cut_digest IS NOT NULL))) STRICT";
 constexpr std::string_view accounts_sql =
     "CREATE TABLE shark_accounts(account_id TEXT PRIMARY KEY NOT NULL CHECK(length(account_id)=36),"
     "revoked INTEGER NOT NULL CHECK(revoked IN(0,1)),"
@@ -434,21 +462,28 @@ Result<void> configure(Connection& connection) {
 }
 
 Result<void> create_schema(Connection& connection, const StoreMetadata& metadata,
-                           bool notify_creation = true) {
-    for (const auto sql :
-         {table_sql, accounts_sql, certificates_sql, characters_sql, economy_sql, receipts_sql}) {
+                           bool notify_creation = true,
+                           std::uint32_t version = store_schema_version) {
+    for (const auto sql : {version == 3 ? table_v3_sql : table_sql, accounts_sql, certificates_sql,
+                           characters_sql, economy_sql, receipts_sql}) {
         if (auto result = connection.execute(sql.data()); !result) {
             return result.error();
         }
     }
+    if (version >= 4)
+        if (auto created = connection.execute(region_ownership_sql.data()); !created)
+            return created.error();
     if (notify_creation && create_hook != nullptr) {
         create_hook(detail::CreatePhase::schema_written);
     }
     Statement insert;
-    if (auto result = prepare(connection, insert, "INSERT INTO shark_store VALUES(1,?1,?2,3)");
+    if (auto result = prepare(connection, insert, "INSERT INTO shark_store VALUES(1,?1,?2,?3)");
         !result) {
         return result.error();
     }
+    if (const auto result = sqlite3_bind_int(insert.value, 3, static_cast<int>(version));
+        result != SQLITE_OK)
+        return connection.error(result);
     const auto id = metadata.id.value().to_string();
     const auto world = metadata.world.value().to_string();
     for (const auto& [index, value] :
@@ -463,7 +498,9 @@ Result<void> create_schema(Connection& connection, const StoreMetadata& metadata
     if (step != SQLITE_DONE) {
         return connection.error(step);
     }
-    return connection.execute("PRAGMA application_id=1397246788; PRAGMA user_version=3");
+    return connection.execute(version == 3
+                                  ? "PRAGMA application_id=1397246788; PRAGMA user_version=3"
+                                  : "PRAGMA application_id=1397246788; PRAGMA user_version=4");
 }
 
 Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world,
@@ -488,13 +525,18 @@ Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world,
         std::string_view table;
         std::string_view sql;
     };
-    const auto metadata_sql = version == 1 ? table_v1_sql : version == 2 ? table_v2_sql : table_sql;
+    const auto metadata_sql = version == 1   ? table_v1_sql
+                              : version == 2 ? table_v2_sql
+                              : version == 3 ? table_v3_sql
+                                             : table_sql;
     const std::array objects{
         SchemaObject{"table", "shark_accounts", "shark_accounts",
                      version == 2 ? accounts_v2_sql : accounts_sql},
         SchemaObject{"table", "shark_certificates", "shark_certificates", certificates_sql},
         SchemaObject{"table", "shark_characters", "shark_characters", characters_sql},
         SchemaObject{"table", "shark_economy", "shark_economy", economy_sql},
+        SchemaObject{"table", "shark_region_ownership", "shark_region_ownership",
+                     region_ownership_sql},
         SchemaObject{"table", "shark_store", "shark_store", metadata_sql},
         SchemaObject{"table", "shark_transfer_receipts", "shark_transfer_receipts", receipts_sql},
         SchemaObject{"index", "sqlite_autoindex_shark_accounts_1", "shark_accounts", {}},
@@ -503,10 +545,13 @@ Result<StoreMetadata> inspect(Connection& connection, WorldId expected_world,
         SchemaObject{"index", "sqlite_autoindex_shark_characters_2", "shark_characters", {}},
         SchemaObject{"index", "sqlite_autoindex_shark_economy_1", "shark_economy", {}},
         SchemaObject{
+            "index", "sqlite_autoindex_shark_region_ownership_1", "shark_region_ownership", {}},
+        SchemaObject{
             "index", "sqlite_autoindex_shark_transfer_receipts_1", "shark_transfer_receipts", {}},
     };
     for (const auto& object : objects) {
-        if ((version == 1 && object.table != "shark_store") ||
+        if ((version < 4 && object.table == "shark_region_ownership") ||
+            (version == 1 && object.table != "shark_store") ||
             (version < 3 &&
              (object.table == "shark_economy" || object.table == "shark_transfer_receipts"))) {
             continue;
@@ -1129,10 +1174,120 @@ bool injected(detail::WritePhase phase) {
     return write_fault_hook != nullptr && write_fault_hook(phase);
 }
 
+Result<std::uint64_t> read_counter(const Connection& connection, sqlite3_stmt* row, int column) {
+    if (sqlite3_column_type(row, column) != SQLITE_TEXT)
+        return connection.invalid("regional cut counter must be canonical uint64 text");
+    const auto* raw = sqlite3_column_text(row, column);
+    const auto bytes = sqlite3_column_bytes(row, column);
+    if (raw == nullptr || bytes < 1 || bytes > 20)
+        return connection.invalid("regional cut counter exceeds its representation");
+    const std::string_view text{reinterpret_cast<const char*>(raw),
+                                static_cast<std::size_t>(bytes)};
+    std::uint64_t result{};
+    const auto parsed = std::from_chars(text.data(), text.data() + text.size(), result);
+    if ((text.size() > 1 && text.front() == '0') || text.front() < '0' || text.front() > '9' ||
+        parsed.ec != std::errc{} || parsed.ptr != text.data() + text.size())
+        return connection.invalid("regional cut counter must be canonical uint64 text");
+    return result;
+}
+
+Result<std::vector<RegionOwnership>> read_regions(const Connection& connection,
+                                                  const StoreMetadata& metadata,
+                                                  const DurableRegistry& registry) {
+    std::vector<RegionOwnership> result;
+    auto rows = read_rows(
+        connection,
+        "SELECT character_id,entity_id,region_id,instance_id,epoch,transfer_id,source_region,"
+        "source_instance,source_epoch,cut_tick,accepted_input,applied_input,command_sequence,"
+        "cut_digest FROM shark_region_ownership ORDER BY character_id",
+        maximum_durable_characters, [&](sqlite3_stmt* row) -> Result<void> {
+            std::array<std::optional<StableId>, 4> ids;
+            for (int index = 0; index < 4; ++index) {
+                auto parsed = read_id(connection, row, index);
+                if (!parsed)
+                    return parsed.error();
+                ids[static_cast<std::size_t>(index)] = parsed.value();
+            }
+            if (!valid_integer(row, 4, 1, static_cast<sqlite3_int64>(maximum_durable_revision)))
+                return connection.invalid("regional ownership epoch is invalid");
+            RegionWriter writer{metadata.id,
+                                net::CharacterId{*ids[0]},
+                                WorldEntityId{*ids[1]},
+                                RegionId{*ids[2]},
+                                RegionInstanceId{*ids[3]},
+                                static_cast<std::uint64_t>(sqlite3_column_int64(row, 4))};
+            const auto character = std::find_if(
+                registry.characters.begin(), registry.characters.end(),
+                [&](const auto& value) { return value.character == writer.character; });
+            if (character == registry.characters.end() || character->entity != writer.entity)
+                return connection.invalid(
+                    "regional ownership differs from durable character identity");
+            std::optional<RegionTransferRequest> transfer;
+            if (sqlite3_column_type(row, 5) == SQLITE_NULL) {
+                if (writer.epoch != 1)
+                    return connection.invalid("advanced regional ownership lacks its last cut");
+                for (int column = 6; column < 14; ++column)
+                    if (sqlite3_column_type(row, column) != SQLITE_NULL)
+                        return connection.invalid("regional cut has partial optional state");
+            } else {
+                const auto transfer_id = read_id(connection, row, 5);
+                const auto source_region = read_id(connection, row, 6);
+                const auto source_instance = read_id(connection, row, 7);
+                if (!transfer_id)
+                    return transfer_id.error();
+                if (!source_region)
+                    return source_region.error();
+                if (!source_instance)
+                    return source_instance.error();
+                if (!valid_integer(row, 8, 1,
+                                   static_cast<sqlite3_int64>(maximum_durable_revision - 1)))
+                    return connection.invalid("regional cut source epoch is invalid");
+                std::array<std::uint64_t, 4> counters{};
+                for (int index = 0; index < 4; ++index) {
+                    auto counter = read_counter(connection, row, 9 + index);
+                    if (!counter)
+                        return counter.error();
+                    counters[static_cast<std::size_t>(index)] = counter.value();
+                }
+                if (sqlite3_column_type(row, 13) != SQLITE_TEXT ||
+                    sqlite3_column_bytes(row, 13) != 64)
+                    return connection.invalid("regional cut digest is invalid");
+                const auto* raw = sqlite3_column_text(row, 13);
+                if (raw == nullptr)
+                    return connection.invalid("regional cut digest is missing");
+                auto digest = ContentDigest::parse({reinterpret_cast<const char*>(raw), 64});
+                if (!digest)
+                    return connection.invalid("regional cut digest is invalid");
+                auto source = writer;
+                source.region = RegionId{source_region.value()};
+                source.instance = RegionInstanceId{source_instance.value()};
+                source.epoch = static_cast<std::uint64_t>(sqlite3_column_int64(row, 8));
+                if (source.epoch + 1 != writer.epoch || counters[2] > counters[1] ||
+                    (source.region == writer.region && source.instance == writer.instance))
+                    return connection.invalid("regional cut does not describe the current owner");
+                transfer.emplace(RegionTransferRequest{
+                    RegionTransferId{transfer_id.value()}, source, writer.region, writer.instance,
+                    counters[0], counters[1], counters[2], counters[3], digest.value()});
+                if (std::any_of(result.begin(), result.end(), [&](const auto& value) {
+                        return value.last_transfer &&
+                               value.last_transfer->transfer == transfer->transfer;
+                    }))
+                    return connection.invalid(
+                        "regional transfer identity is retained by another character");
+            }
+            result.push_back({writer, transfer});
+            return {};
+        });
+    if (!rows)
+        return rows.error();
+    return result;
+}
+
 struct SnapshotData {
     StoreMetadata metadata;
     DurableRegistry records;
     EconomyLedger economy;
+    std::vector<RegionOwnership> regions{};
     bool operator==(const SnapshotData&) const = default;
 };
 
@@ -1176,12 +1331,18 @@ Result<SnapshotData> read_snapshot(Connection& connection, StoreId expected_stor
         }
         snapshot.records = std::move(records).value();
     }
-    if (version == store_schema_version) {
+    if (version >= 3) {
         auto economy = read_economy(connection, snapshot.metadata, snapshot.records);
         if (!economy) {
             return economy.error();
         }
         snapshot.economy = std::move(economy).value();
+    }
+    if (version >= 4) {
+        auto regions = read_regions(connection, snapshot.metadata, snapshot.records);
+        if (!regions)
+            return regions.error();
+        snapshot.regions = std::move(regions).value();
     }
     return snapshot;
 }
@@ -1397,9 +1558,9 @@ SnapshotData upgraded_snapshot(const SnapshotData& before) {
     auto after = before;
     if (after.metadata.schema_version < store_schema_version) {
         after.metadata.schema_version = store_schema_version;
-        for (const auto& account : after.records.accounts) {
-            after.economy.streams.push_back({after.metadata.id, account.account, 0, {}});
-        }
+        if (before.metadata.schema_version < 3)
+            for (const auto& account : after.records.accounts)
+                after.economy.streams.push_back({after.metadata.id, account.account, 0, {}});
     }
     return after;
 }
@@ -1435,7 +1596,7 @@ Result<void> migrate_v2_to_v3(Connection& connection, const SnapshotData& after)
         !dropped) {
         return dropped.error();
     }
-    if (auto created = create_schema(connection, after.metadata, false); !created) {
+    if (auto created = create_schema(connection, after.metadata, false, 3); !created) {
         return created.error();
     }
     for (const auto& account : after.records.accounts) {
@@ -1502,6 +1663,26 @@ Result<void> migrate_v2_to_v3(Connection& connection, const SnapshotData& after)
     }
     return {};
 }
+
+Result<void> migrate_v3_to_v4(Connection& connection, const StoreMetadata& metadata) {
+    if (auto changed = connection.execute("DROP TABLE shark_store"); !changed)
+        return changed.error();
+    if (auto created = connection.execute(table_sql.data()); !created)
+        return created.error();
+    if (auto created = connection.execute(region_ownership_sql.data()); !created)
+        return created.error();
+    auto inserted = change(
+        connection, "INSERT INTO shark_store VALUES(1,?1,?2,4)",
+        [&](Statement& statement) -> Result<void> {
+            if (auto bound = bind_text(connection, statement, 1, metadata.id.value().to_string());
+                !bound)
+                return bound.error();
+            return bind_text(connection, statement, 2, metadata.world.value().to_string());
+        });
+    if (!inserted)
+        return inserted.error();
+    return connection.execute("PRAGMA user_version=4");
+}
 } // namespace
 
 struct Store::Impl {
@@ -1510,6 +1691,7 @@ struct Store::Impl {
     std::thread::id thread;
     DurableRegistry records;
     EconomyLedger economy;
+    std::vector<RegionOwnership> regions;
     bool faulted{false};
 
     Result<void> guard(std::string_view operation) const {
@@ -1544,6 +1726,41 @@ struct Store::Impl {
     void publish(EconomyLedger& candidate) noexcept {
         economy.records.swap(candidate.records);
         economy.streams.swap(candidate.streams);
+    }
+
+    void publish(std::vector<RegionOwnership>& candidate) noexcept {
+        regions.swap(candidate);
+    }
+
+    // Re-read the persisted writer from this transaction, rather than treating
+    // session/ingress admission or a cached epoch as permission to write SQL.
+    Result<void> check_writer_sql(net::CharacterId character,
+                                  const std::optional<RegionWriter>& writer) const {
+        Statement query;
+        if (auto prepared = prepare(*connection, query,
+                                    "SELECT entity_id,region_id,instance_id,epoch FROM "
+                                    "shark_region_ownership WHERE character_id=?1");
+            !prepared)
+            return prepared.error();
+        if (auto bound = bind_text(*connection, query, 1, character.value().to_string()); !bound)
+            return bound.error();
+        const auto step = sqlite3_step(query.value);
+        if (step == SQLITE_DONE)
+            return writer
+                       ? Result<void>{reject("regional writer supplied for an unclaimed character")}
+                       : Result<void>{};
+        if (step != SQLITE_ROW)
+            return connection->error(step);
+        if (!writer || writer->store != metadata.id || writer->character != character ||
+            !text_is(query.value, 0, writer->entity.value().to_string()) ||
+            !text_is(query.value, 1, writer->region.value().to_string()) ||
+            !text_is(query.value, 2, writer->instance.value().to_string()) ||
+            !valid_integer(query.value, 3, 1,
+                           static_cast<sqlite3_int64>(maximum_durable_revision)) ||
+            static_cast<std::uint64_t>(sqlite3_column_int64(query.value, 3)) != writer->epoch)
+            return reject("missing or stale persisted regional writer");
+        const auto done = sqlite3_step(query.value);
+        return done == SQLITE_DONE ? Result<void>{} : Result<void>{connection->error(done)};
     }
 
     template <typename Candidate, typename Function>
@@ -1687,13 +1904,18 @@ Result<MigrationResult> Store::migrate(const std::filesystem::path& source,
             return phase.error();
         }
     }
-    if (auto migrated = migrate_v2_to_v3(connection, after); !migrated) {
+    if (before.metadata.schema_version < 3) {
+        if (auto migrated = migrate_v2_to_v3(connection, after); !migrated)
+            return migrated.error();
+        if (auto phase = maintenance_phase(connection, detail::MaintenancePhase::after_v2_to_v3);
+            !phase)
+            return phase.error();
+    }
+    if (auto migrated = migrate_v3_to_v4(connection, after.metadata); !migrated)
         return migrated.error();
-    }
-    if (auto phase = maintenance_phase(connection, detail::MaintenancePhase::after_v2_to_v3);
-        !phase) {
+    if (auto phase = maintenance_phase(connection, detail::MaintenancePhase::after_v3_to_v4);
+        !phase)
         return phase.error();
-    }
     auto candidate = read_snapshot(connection, expected_store, expected_world);
     if (!candidate) {
         return candidate.error();
@@ -1791,6 +2013,9 @@ Result<std::unique_ptr<Store>> Store::acquire(const std::filesystem::path& path,
     if (!economy) {
         return economy.error();
     }
+    auto regions = read_regions(*connection, inspected.value(), records.value());
+    if (!regions)
+        return regions.error();
     if (create_new && create_hook != nullptr) {
         create_hook(detail::CreatePhase::before_commit);
     }
@@ -1802,9 +2027,9 @@ Result<std::unique_ptr<Store>> Store::acquire(const std::filesystem::path& path,
     if (create_new && create_hook != nullptr) {
         create_hook(detail::CreatePhase::after_commit);
     }
-    auto impl = std::make_unique<Impl>(Impl{std::move(connection), inspected.value(),
-                                            std::this_thread::get_id(), std::move(records).value(),
-                                            std::move(economy).value()});
+    auto impl = std::make_unique<Impl>(
+        Impl{std::move(connection), inspected.value(), std::this_thread::get_id(),
+             std::move(records).value(), std::move(economy).value(), std::move(regions).value()});
     return std::unique_ptr<Store>(new Store(std::move(impl)));
 }
 
@@ -2075,10 +2300,13 @@ Result<CharacterRecord> Store::create_character(net::AccountId account,
 
 Result<CharacterRecord> Store::save_character(net::AccountId account, net::CharacterId character,
                                               std::uint64_t expected_revision,
-                                              const CharacterState& accepted_state) {
+                                              const CharacterState& accepted_state,
+                                              std::optional<RegionWriter> writer) {
     if (auto result = impl_->guard("storage.save_character"); !result) {
         return result.error();
     }
+    if (auto fenced = impl_->check_writer_sql(character, writer); !fenced)
+        return fenced.error();
     const auto owner = impl_->account(account);
     if (owner == impl_->records.accounts.end() || owner->revoked) {
         return impl_->reject("checkpoint requires an active durable account");
@@ -2105,7 +2333,9 @@ Result<CharacterRecord> Store::save_character(net::AccountId account, net::Chara
     const auto account_text = account.value().to_string();
     const auto character_text = character.value().to_string();
     auto& connection = *impl_->connection;
-    auto written = impl_->write(candidate, [&] {
+    auto written = impl_->write(candidate, [&]() -> Result<void> {
+        if (auto fenced = impl_->check_writer_sql(character, writer); !fenced)
+            return fenced.error();
         return change(
             connection,
             "UPDATE shark_characters SET revision=revision+1,name=?1,cell_x=?2,cell_y=?3,cell_z=?4,"
@@ -2128,6 +2358,141 @@ Result<CharacterRecord> Store::save_character(net::AccountId account, net::Chara
         return written.error();
     }
     return record;
+}
+
+Result<std::optional<RegionOwnership>> Store::region_ownership(net::CharacterId character) const {
+    if (auto checked = impl_->guard("storage.region_ownership"); !checked)
+        return checked.error();
+    const auto found =
+        std::find_if(impl_->regions.begin(), impl_->regions.end(),
+                     [&](const auto& value) { return value.writer.character == character; });
+    return found == impl_->regions.end() ? std::optional<RegionOwnership>{}
+                                         : std::optional<RegionOwnership>{*found};
+}
+
+Result<RegionOwnership> Store::claim_region(net::CharacterId character, WorldEntityId entity,
+                                            RegionId region, RegionInstanceId instance) {
+    if (auto checked = impl_->guard("storage.claim_region"); !checked)
+        return checked.error();
+    const auto source = std::find_if(
+        impl_->records.characters.begin(), impl_->records.characters.end(),
+        [&](const auto& value) { return value.character == character && value.entity == entity; });
+    if (source == impl_->records.characters.end())
+        return impl_->reject("regional claim requires the exact durable character/entity");
+    const auto account = impl_->account(source->account);
+    if (account == impl_->records.accounts.end() || account->revoked)
+        return impl_->reject("regional claim requires an active character owner");
+    const auto known =
+        std::find_if(impl_->regions.begin(), impl_->regions.end(),
+                     [&](const auto& value) { return value.writer.character == character; });
+    if (known != impl_->regions.end()) {
+        if (known->writer.entity != entity || known->writer.region != region ||
+            known->writer.instance != instance)
+            return impl_->reject("character is already owned by another regional writer");
+        return *known;
+    }
+    const RegionOwnership result{{impl_->metadata.id, character, entity, region, instance, 1}, {}};
+    auto candidate = impl_->regions;
+    candidate.push_back(result);
+    std::sort(candidate.begin(), candidate.end(),
+              [](const auto& a, const auto& b) { return a.writer.character < b.writer.character; });
+    auto written = impl_->write(candidate, [&]() -> Result<void> {
+        if (auto fenced = impl_->check_writer_sql(character, {}); !fenced)
+            return fenced.error();
+        return change(*impl_->connection,
+                      "INSERT INTO "
+                      "shark_region_ownership(character_id,entity_id,region_id,instance_id,epoch) "
+                      "VALUES(?1,?2,?3,?4,1)",
+                      [&](Statement& statement) -> Result<void> {
+                          int index = 1;
+                          for (const auto id : {character.value(), entity.value(), region.value(),
+                                                instance.value()})
+                              if (auto bound = bind_text(*impl_->connection, statement, index++,
+                                                         id.to_string());
+                                  !bound)
+                                  return bound.error();
+                          return {};
+                      });
+    });
+    if (!written)
+        return written.error();
+    return result;
+}
+
+Result<RegionTransferResult> Store::commit_region(const RegionTransferRequest& request) {
+    if (auto checked = impl_->guard("storage.commit_region"); !checked)
+        return checked.error();
+    if (request.source.store != impl_->metadata.id || request.source.epoch == 0 ||
+        request.source.epoch > maximum_durable_revision ||
+        request.applied_input > request.accepted_input ||
+        (request.source.region == request.destination &&
+         request.source.instance == request.destination_instance))
+        return impl_->reject("regional cut has invalid ownership or input watermarks");
+    const auto known =
+        std::find_if(impl_->regions.begin(), impl_->regions.end(), [&](const auto& value) {
+            return value.writer.character == request.source.character;
+        });
+    if (known == impl_->regions.end())
+        return impl_->reject("regional transfer requires a claimed character");
+    // The transfer ID is distinct from economic identity. Only the last exact
+    // committed cut is retained; older epochs can never execute again.
+    for (const auto& value : impl_->regions)
+        if (value.last_transfer && value.last_transfer->transfer == request.transfer) {
+            if (*value.last_transfer != request)
+                return impl_->reject("regional transfer ID was committed with a different cut");
+            return RegionTransferResult{request, value.writer, true};
+        }
+    if (known->writer != request.source || request.source.epoch == maximum_durable_revision)
+        return impl_->reject("regional source writer is stale or exhausted");
+    RegionWriter destination = request.source;
+    destination.region = request.destination;
+    destination.instance = request.destination_instance;
+    ++destination.epoch;
+    const RegionTransferResult result{request, destination, false};
+    auto candidate = impl_->regions;
+    candidate[static_cast<std::size_t>(known - impl_->regions.begin())] = {destination, request};
+    auto written = impl_->write(candidate, [&]() -> Result<void> {
+        if (auto fenced = impl_->check_writer_sql(request.source.character, request.source);
+            !fenced)
+            return fenced.error();
+        return change(
+            *impl_->connection,
+            "UPDATE shark_region_ownership SET region_id=?2,instance_id=?3,epoch=?4,transfer_id=?5,"
+            "source_region=?6,source_instance=?7,source_epoch=?8,cut_tick=?9,accepted_input=?10,"
+            "applied_input=?11,command_sequence=?12,cut_digest=?13 WHERE character_id=?1 AND "
+            "epoch=?14",
+            [&](Statement& statement) -> Result<void> {
+                for (const auto& [index, id] : std::array<std::pair<int, StableId>, 6>{
+                         {{1, destination.character.value()},
+                          {2, destination.region.value()},
+                          {3, destination.instance.value()},
+                          {5, request.transfer.value()},
+                          {6, request.source.region.value()},
+                          {7, request.source.instance.value()}}})
+                    if (auto bound =
+                            bind_text(*impl_->connection, statement, index, id.to_string());
+                        !bound)
+                        return bound.error();
+                for (const auto& [index, value] :
+                     std::array<std::pair<int, std::uint64_t>, 3>{{{4, destination.epoch},
+                                                                   {8, request.source.epoch},
+                                                                   {14, request.source.epoch}}})
+                    if (auto bound = bind_integer(*impl_->connection, statement, index, value);
+                        !bound)
+                        return bound.error();
+                int column = 9;
+                for (const auto value : {request.cut_tick, request.accepted_input,
+                                         request.applied_input, request.command_sequence})
+                    if (auto bound = bind_text(*impl_->connection, statement, column++,
+                                               std::to_string(value));
+                        !bound)
+                        return bound.error();
+                return bind_text(*impl_->connection, statement, 13, request.cut_digest.to_hex());
+            });
+    });
+    if (!written)
+        return written.error();
+    return result;
 }
 
 Result<void> validate_economy_state(const EconomyState& state) {
@@ -2160,6 +2525,8 @@ Result<EconomyRecord> Store::initialize_economy(net::AccountId account, net::Cha
     if (auto checked = impl_->guard("storage.initialize_economy"); !checked) {
         return checked.error();
     }
+    if (auto fenced = impl_->check_writer_sql(character, {}); !fenced)
+        return fenced.error();
     if (auto checked = validate_economy_state(initial); !checked) {
         return failure(checked.error().code, "storage.initialize_economy", checked.error().message,
                        impl_->connection->path);
@@ -2184,7 +2551,9 @@ Result<EconomyRecord> Store::initialize_economy(net::AccountId account, net::Cha
               [](const auto& a, const auto& b) { return a.character < b.character; });
     const auto id = character.value().to_string();
     auto& connection = *impl_->connection;
-    auto written = impl_->write(candidate, [&] {
+    auto written = impl_->write(candidate, [&]() -> Result<void> {
+        if (auto fenced = impl_->check_writer_sql(character, {}); !fenced)
+            return fenced.error();
         return change(connection, "INSERT INTO shark_economy VALUES(?1,1,?2,?3)",
                       [&](Statement& statement) -> Result<void> {
                           if (auto bound = bind_text(connection, statement, 1, id); !bound)
@@ -2227,10 +2596,13 @@ Result<OperationStream> Store::operation_stream(net::AccountId actor) const {
                                                  : *found;
 }
 
-Result<TransferResult> Store::transfer(const TransferRequest& request) {
+Result<TransferResult> Store::transfer(const TransferRequest& request,
+                                       std::optional<RegionWriter> writer) {
     if (auto checked = impl_->guard("storage.transfer"); !checked) {
         return checked.error();
     }
+    if (auto fenced = impl_->check_writer_sql(request.source, writer); !fenced)
+        return fenced.error();
     if (auto checked = validate_transfer_request(request); !checked) {
         return failure(checked.error().code, "storage.transfer", checked.error().message,
                        impl_->connection->path);
@@ -2342,6 +2714,8 @@ Result<TransferResult> Store::transfer(const TransferRequest& request) {
             });
     };
     auto written = impl_->write(candidate, [&]() -> Result<void> {
+        if (auto fenced = impl_->check_writer_sql(request.source, writer); !fenced)
+            return fenced.error();
         if (status == TransferStatus::committed) {
             if (auto changed =
                     update(*receipt.source, source_text, request.expected_source_revision);
