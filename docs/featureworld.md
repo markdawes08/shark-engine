@@ -1,5 +1,10 @@
 # Saved FeatureWorld
 
+21e extends `featureworld.prefab-instances` with the production source-to-Core
+runtime value bridge. The catalog remains at 21 cases. Connected repeated
+contact/owner lifetimes and actual GPU cleanup use the separate
+[prefab acceptance](prefab-acceptance.md) fixtures.
+
 21d adds the twenty-first case, `featureworld.prefab-workflows`: rooted subtree
 capture and exact source publication through the retained protocol owner,
 prepared instantiation and replay, one history group, and saved source reopen.

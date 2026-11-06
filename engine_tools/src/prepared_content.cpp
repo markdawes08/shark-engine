@@ -34,6 +34,30 @@ bool reserved(AssetId asset) {
 
 } // namespace
 
+Result<RuntimePrefab> prepare_runtime_prefab(const PrefabDocument& prefab) {
+    constexpr auto operation = "content.prefab.prepare";
+    try {
+        auto validated = validate_prefab_document(prefab);
+        if (!validated)
+            return contextualize(std::move(validated).error(), operation, prefab.asset);
+        const auto& source = validated.value();
+        RuntimePrefab prepared{source.asset, source.root, {}};
+        prepared.entities.reserve(source.entities.size());
+        for (const auto& entity : source.entities)
+            prepared.entities.push_back({entity.id, entity.parent, entity.name, entity.transform,
+                                         entity.camera, entity.mesh_renderer, entity.rigid_body,
+                                         entity.script});
+        auto result = validate_runtime_prefab(prepared);
+        if (!result)
+            return contextualize(std::move(result).error(), operation, prefab.asset);
+        return result;
+    } catch (...) {
+        return contextualize(
+            failure(operation, "Runtime prefab preparation failed", ErrorCode::execution_failed),
+            operation, prefab.asset);
+    }
+}
+
 Result<std::vector<std::byte>> prepare_mesh_asset(AssetId asset,
                                                   std::span<const std::byte> cached_gltf_payload) {
     constexpr auto operation = "content.mesh.prepare";

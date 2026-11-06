@@ -11,7 +11,7 @@ unperformed interactive checks in the existing [backlog](../backlog.md).
 | 21b | Instance creation through the shared authoring owner, fresh entity IDs, reference remapping, simple overrides and one undo/redo group. Complete; selected affected checks pass in the [handoff](../handoffs/21b-prefab-instances.md). |
 | 21c | Runtime and Lua spawn/self-destroy with bounded deferred requests, transform/physics/script initialization and reverse teardown, checked grants, replica rejection, ownership epochs and replay outcomes. Complete; selected CPU checks pass in the [handoff](../handoffs/21c-runtime-spawning.md). Actors are ephemeral; no durable reward operation is exposed. |
 | 21d | Shared Editor and terminal prefab file, creation and instantiation workflows, discovery, exact revision/retry reconciliation and saved-project handoff. Implementation and selected headless checks complete in the [handoff](../handoffs/21d-prefab-authoring.md); native interaction is deferred under BL-21D-UI-01. |
-| 21e | Connected instance independence, callback mutation, reload and repeated lifetime acceptance, including script, physics and render resource cleanup. |
+| 21e | Connected instance independence, callback mutation, reload and repeated lifetime acceptance, including script, physics and render resource cleanup. Complete for implementation and automated acceptance in the [handoff](../handoffs/21e-prefab-acceptance.md); full REQ-21 retains deferred native Editor interaction. |
 
 21a is a pure CPU source codec. It creates no Scene or runtime entity, reads no
 files and advertises no terminal method or importer. Subsequent checkpoints must
@@ -34,3 +34,7 @@ their connected movement and cross-region work.
 Use focused affected-owner checks as each increment lands. Reuse their valid
 results at 21e and add the connected behavior checks. The current manual UI pause
 does not turn unperformed interactive evidence into a pass.
+
+All five implementation checkpoints are complete. The next assignment in manifest
+order is M04, authoritative movement and gameplay. The existing UI backlog amendment
+permits later coding; BL-21D-UI-01 remains NOT_RUN until native interaction resumes.

@@ -1,6 +1,6 @@
 # ADR 0058: deferred runtime prefab mutation
 
-Status: accepted, 21c. Date: 2026-11-05.
+Status: accepted, 21c; extended by 21e. Date: 2026-11-05.
 
 ## Decision
 
@@ -30,5 +30,8 @@ and handoff gates retain their separate owners.
 
 No source, prepared-scene, wire or database version changes. Lua API version 1
 gains documented functions with explicit rejection outside supported profiles.
-Source importers stay excluded from Core/Runtime/Server. Editor/terminal prefab
-adapters retain 21d; connected assignment closure remains 21e.
+Source importers stay excluded from Core/Runtime/Server. 21d supplies shared
+Editor/terminal adapters. 21e adds a pure Tools source-to-Core value conversion
+and [connected acceptance](../prefab-acceptance.md), preserving the existing
+catalog, host admission and separate native Editor interaction gate. No new
+cooked prefab format or source loader enters Runtime.

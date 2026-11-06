@@ -13,6 +13,12 @@ preserves references for editor and physics preview, not executable script bytes
 actual standalone export/runtime activation rejects Script-bearing scenes until
 script execution and content closure are implemented.
 
+21e adds pure `prepare_runtime_prefab` conversion from validated Tools prefab
+source to an owned Core runtime value. It preserves component values and local
+references and checks complete composed transforms. Source metadata stays in
+Tools; this is not a cooked prefab payload or a runtime source loader. See
+[connected prefab acceptance](prefab-acceptance.md).
+
 ## Meshes and immutable ownership
 
 `PreparedMeshAsset` contains its AssetId and dense ordered meshes. Each mesh owns

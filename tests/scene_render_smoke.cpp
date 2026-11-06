@@ -2,6 +2,7 @@
 #include <shark/client/graphics.hpp>
 #include <shark/client/scene_viewport.hpp>
 #include <shark/physics.hpp>
+#include <shark/script_runtime.hpp>
 
 #include <algorithm>
 #include <cmath>
@@ -157,12 +158,12 @@ Options parse(int argc, char* argv[]) {
         return std::filesystem::path(std::u8string(value.begin(), value.end()));
     };
     const auto invalid = [] {
-        throw Failure(
-            {ErrorCode::invalid_argument,
-             "Use --describe, --render|--physics --device UUID --vertex PATH --pixel PATH --output "
-             "FRESH_DIRECTORY --validation required|off, or --native-fault NAME --device "
-             "UUID --vertex PATH --pixel PATH",
-             {.operation = "scene-render-smoke.arguments"}});
+        throw Failure({ErrorCode::invalid_argument,
+                       "Use --describe, --render|--physics|--spawning --device UUID --vertex PATH "
+                       "--pixel PATH --output "
+                       "FRESH_DIRECTORY --validation required|off, or --native-fault NAME --device "
+                       "UUID --vertex PATH --pixel PATH",
+                       {.operation = "scene-render-smoke.arguments"}});
     };
     if (argc == 2 &&
         (std::string_view(argv[1]) == "--describe" || std::string_view(argv[1]) == "--help"))
@@ -183,9 +184,10 @@ Options parse(int argc, char* argv[]) {
         return options;
     }
     if (argc != 12 ||
-        (std::string_view(argv[1]) != "--render" && std::string_view(argv[1]) != "--physics"))
+        (std::string_view(argv[1]) != "--render" && std::string_view(argv[1]) != "--physics" &&
+         std::string_view(argv[1]) != "--spawning"))
         invalid();
-    options.mode = std::string_view(argv[1]) == "--physics" ? "physics" : "render";
+    options.mode = std::string_view(argv[1]).substr(2);
     std::set<std::string_view> seen;
     for (int index = 2; index < argc; index += 2) {
         const std::string_view key{argv[index]}, value{argv[index + 1]};
@@ -522,6 +524,250 @@ int physics_run(const Options& options, const ShaderArtifact& vertex, const Shad
           {"viewport", viewport_json(closed)}});
     return 0;
 }
+void check_spawn_resources(const GraphicsResourceSnapshot& value, std::uint64_t targets) {
+    require(value.scene_target_resources == targets && value.scene_frame_resources == 0 &&
+                value.scene_submissions == 0 && value.scene_recordings == 0 &&
+                value.live_swapchains == 0 && value.offscreen_resources == 0 &&
+                value.pending_queue_workers == 0,
+            "Spawn rendering retained unexpected native graphics resources");
+}
+
+int spawning_run(const Options& options, const ShaderArtifact& vertex,
+                 const ShaderArtifact& pixel) {
+    require(!std::filesystem::exists(options.output), "Readback directory must be fresh");
+    std::filesystem::create_directories(options.output);
+    NativeGraphicsTestControl control; // Unarmed: observe existing owned counters, inject no fault.
+    auto backend = make_fault_graphics_backend(control);
+    auto* observed = backend.get();
+    auto device = take(create_graphics(options.config, std::move(backend)));
+    emit({{"kind", "adapter"}, {"adapter", adapter_json(take(device->adapter()))}});
+
+    const auto mesh = id<AssetId>(300);
+    const auto prefab_id = id<AssetId>(301);
+    PreparedMeshAsset geometry{mesh, {{{quad({1, 0, 0, 1})}}}};
+    const auto bytes = take(encode_prepared_mesh(geometry));
+    const std::array inputs{PreparedAssetInput{mesh, bytes}};
+    auto assets = take(PreparedAssets::create(inputs));
+    PreparedEntity actor{id<AuthoredEntityId>(302)};
+    actor.rigid_body = RigidBody{};
+    actor.rigid_body->motion = BodyMotion::dynamic_body;
+    actor.rigid_body->half_extents = {.1, .1, .1};
+    actor.rigid_body->collision_mask = 0;
+    actor.script = Script{"scripts/actor.lua", true};
+    PreparedEntity visual{id<AuthoredEntityId>(303), actor.id};
+    visual.transform.translation = {.5, 0, 0};
+    visual.transform.scale = {.75, .5, 1};
+    visual.mesh_renderer = MeshRenderer{mesh, 0, true};
+    visual.script = Script{"scripts/visual.lua", true};
+    const std::array prefabs{RuntimePrefab{prefab_id, actor.id, {visual, actor}}};
+    const std::array sources{
+        ScriptSourceSnapshot{"scripts/issuer.lua",
+                             "function on_update() pass=(pass or 0)+1; if pass%2==1 then "
+                             "sequence=(sequence or 0)+1; shark.prefab.spawn(sequence,'" +
+                                 prefab_id.value().to_string() + "',-.5,0,-3) end end"},
+        ScriptSourceSnapshot{
+            "scripts/actor.lua",
+            "function on_init() local vx,vy,vz=shark.physics.velocity(); "
+            "assert(vx==0 and vy==0 and vz==0); shark.log.info('actor-ready') end; "
+            "function on_update() shark.entity.destroy(1) end; "
+            "function on_destroy() shark.log.info('actor-destroy') end"},
+        ScriptSourceSnapshot{"scripts/visual.lua",
+                             "function on_init() local x,y,z=shark.entity.position(); "
+                             "assert(x==.5 and y==0 and z==0); shark.log.info('visual-ready') end; "
+                             "function on_destroy() shark.log.info('visual-destroy') end"}};
+    std::set<WorldEntityId> reserved;
+    std::optional<EntityReference> stale;
+    std::uint64_t previous_instance = 0, previous_submission = 0;
+    std::uint64_t frames = 0;
+    constexpr std::uint32_t lifetimes = 2, cycles = 4;
+    for (std::uint32_t lifetime = 0; lifetime < lifetimes; ++lifetime) {
+        const RegionSceneScope region{
+            id<WorldId>(300), {id<RegionId>(300), id<RegionInstanceId>(300), lifetime + 1U}};
+        auto scene = take(Scene::create(region, {.max_entities = 4}));
+        const auto instance = take(scene->stats()).instance;
+        require(instance != previous_instance && (!stale || !scene->resolve(*stale)),
+                "Reload reused an old Scene incarnation or entity reference");
+        previous_instance = instance;
+        EntitySeed camera{id<WorldEntityId>(304)};
+        camera.camera = Camera{CameraProjection::orthographic, 1.0, 8.0, 1.0, 9.0};
+        const auto camera_handle = take(scene->create_entity(camera));
+        EntitySeed issuer{id<WorldEntityId>(305)};
+        issuer.script = Script{"scripts/issuer.lua", true};
+        take(scene->create_entity(issuer));
+        auto world = take(PhysicsWorld::create({.max_bodies = 1,
+                                                .max_body_pairs = 4,
+                                                .max_contact_constraints = 4,
+                                                .gravity = {0, 0, 0}}));
+        take(world->begin_simulation(*scene));
+        auto authority = take(RuntimeSpawnAuthority::create(*scene, region));
+        auto runtime = take(ScriptRuntime::create(
+            *scene, sources, {.profile = ScriptProfile::server_gameplay, .max_scripts = 3}));
+        take(runtime->enable_spawning(*scene, *world, *authority, prefabs));
+        take(runtime->start(*scene, *world));
+        const auto pack = [&] {
+            const auto state = take(scene->stats());
+            RenderExtractionOptions extraction{camera_handle, {state.instance, state.revision}};
+            extraction.viewport = {128, 96};
+            extraction.physics_poses = take(world->render_poses(*scene, 1));
+            const auto rendered = take(extract_render_scene(*scene, *assets, extraction));
+            if (!rendered.records().empty()) {
+                const auto& pose = rendered.records().front().world_matrix;
+                require(rendered.records().size() == 1 && pose[3].x == 0 && pose[3].y == 0 &&
+                            pose[3].z == -3 && pose[0].x == .75 && pose[1].y == .5,
+                        "Spawned visual lost its complete parent transform");
+            }
+            return take(make_scene_viewport_request(rendered, vertex, pixel));
+        };
+        for (std::uint32_t cycle = 0; cycle < cycles; ++cycle) {
+            take(runtime->update(*scene, *world, 1.0 / 60.0));
+            const auto spawned = take(runtime->take_entity_mutations());
+            require(spawned.outcomes.size() == 1, "Spawn did not retain exactly one receipt");
+            const auto& creation = *spawned.outcomes.front();
+            require(creation.kind == ScriptEntityMutationKind::spawn &&
+                        creation.state == ScriptEntityMutationState::applied && !creation.error &&
+                        creation.root && reserved.insert(*creation.root).second &&
+                        creation.sequence == cycle + 1U && creation.created_entities.size() == 2 &&
+                        creation.created_bodies == 1 && creation.initialized_scripts == 2 &&
+                        take(scene->stats()).live_entities == 4 &&
+                        take(world->stats()).bodies == 1 && take(runtime->stats()).initialized == 3,
+                    "Spawn lost independent identities, complete bodies or script capacity");
+            const auto root = take(scene->find(*creation.root));
+            const auto root_reference = take(scene->reference(root));
+            const auto body = take(world->find_body(*scene, root_reference));
+            take(runtime->fixed_update(*scene, *world, cycle, .05));
+            take(world->step(*scene));
+            require(take(world->take_events()).empty(), "Isolated spawned body produced contacts");
+            auto occupied = pack();
+            require(occupied.draws.size() == 1, "Spawned visual was not extracted");
+            take(runtime->update(*scene, *world, 1.0 / 60.0));
+            const auto destroyed = take(runtime->take_entity_mutations());
+            require(destroyed.outcomes.size() == 1, "Destroy did not retain exactly one receipt");
+            const auto& removal = *destroyed.outcomes.front();
+            require(removal.kind == ScriptEntityMutationKind::destroy &&
+                        removal.state == ScriptEntityMutationState::applied && !removal.error &&
+                        removal.removed_entities.size() == 2 && removal.removed_bodies == 1 &&
+                        removal.destroyed_scripts == 2 &&
+                        removal.attempted_destroy_callbacks == 2 &&
+                        !scene->resolve(root_reference) && !world->body_state(*scene, body),
+                    "Destroy retained checked actors, bodies or VMs");
+            stale = root_reference;
+            const auto logs = take(runtime->take_logs());
+            constexpr std::array messages{"actor-ready", "visual-ready", "visual-destroy",
+                                          "actor-destroy"};
+            require(logs.size() == messages.size(), "Spawn lifecycle logs were lost or repeated");
+            for (std::size_t index = 0; index < messages.size(); ++index)
+                require(logs[index].message == messages[index], "Script teardown order changed");
+            auto empty = pack();
+            require(empty.draws.empty(), "Destroyed visual survived extraction");
+            const bool owners_closed = cycle + 1U == cycles;
+            if (owners_closed) {
+                const auto stopped = take(runtime->stop(*scene, *world));
+                require(stopped.errors.empty() && stopped.attempted == 1 &&
+                            stopped.discarded == 0 && stopped.remaining_spawned_roots == 0 &&
+                            take(runtime->close()) == 0,
+                        "Reload did not release the remaining ScriptRuntime owner");
+                take(authority->revoke());
+                take(world->close());
+                take(scene->close());
+            }
+            const auto before = take(scene->stats());
+            const auto script_stats = take(runtime->stats());
+            const auto physics_stats = take(world->stats());
+            require(before.live_entities == (owners_closed ? 0U : 2U) &&
+                        script_stats.initialized == (owners_closed ? 0U : 1U) &&
+                        script_stats.queued_logs == 0 && !script_stats.faulted &&
+                        script_stats.closed == owners_closed && physics_stats.bodies == 0 &&
+                        physics_stats.closed == owners_closed && !physics_stats.faulted,
+                    "Repeated spawn/destroy failed to return to bounded owner capacity");
+            // Both requests outlive actor destruction. The final pair also outlives
+            // explicit Scene, physics and ScriptRuntime closure, without borrowing them.
+            const std::array requests{std::move(occupied), std::move(empty)};
+            for (std::size_t phase = 0; phase < requests.size(); ++phase) {
+                const auto& request = requests[phase];
+                const auto captured = take(device->render_scene_offscreen(request));
+                const auto& pixels = captured.pixels;
+                ++frames;
+                require(pixels.extent == request.extent && pixels.submitted > previous_submission &&
+                            pixels.completed == pixels.submitted && pixels.created_resources > 0 &&
+                            pixels.created_resources == pixels.retired_resources &&
+                            captured.scene_revision == request.scene_revision &&
+                            captured.origin == request.origin &&
+                            captured.draw_count == (phase == 0 ? 1U : 0U) &&
+                            captured.viewport.generation == 1 &&
+                            captured.viewport.live_target_resources == 5 &&
+                            captured.viewport.rendered_frames == frames &&
+                            !captured.viewport.pending &&
+                            take(scene->stats()).revision == before.revision,
+                        "Spawn readback borrowed retired source or retained GPU work");
+                previous_submission = pixels.submitted;
+                const auto resources = observed->presentation_resources();
+                check_spawn_resources(resources, 5);
+                const auto name = "life-" + std::to_string(lifetime) + "-cycle-" +
+                                  std::to_string(cycle) + (phase == 0 ? "-occupied" : "-empty");
+                write_file(options.output / (name + ".rgba8"), pixels.rgba8.data(),
+                           pixels.rgba8.size());
+                write_file(options.output / (name + ".d32f"), pixels.depth.data(),
+                           pixels.depth.size() * sizeof(float));
+                emit({{"kind", "spawning-case"},
+                      {"name", name},
+                      {"lifetime", lifetime},
+                      {"cycle", cycle},
+                      {"phase", phase == 0 ? "occupied" : "empty"},
+                      {"extent", extent_json(pixels.extent)},
+                      {"draw_count", captured.draw_count},
+                      {"scene_instance", instance},
+                      {"snapshot_revision", request.scene_revision.revision},
+                      {"tick", physics_stats.completed_ticks},
+                      {"owners_closed", owners_closed},
+                      {"entities", before.live_entities},
+                      {"initialized_scripts", script_stats.initialized},
+                      {"bodies", physics_stats.bodies},
+                      {"queued_logs", script_stats.queued_logs},
+                      {"spawned_entities", creation.created_entities.size()},
+                      {"created_bodies", creation.created_bodies},
+                      {"created_scripts", creation.initialized_scripts},
+                      {"removed_entities", removal.removed_entities.size()},
+                      {"removed_bodies", removal.removed_bodies},
+                      {"destroyed_scripts", removal.destroyed_scripts},
+                      {"stale_rejected", true},
+                      {"render_preserved_revision", true},
+                      {"submitted", pixels.submitted},
+                      {"completed", pixels.completed},
+                      {"created_resources", pixels.created_resources},
+                      {"retired_resources", pixels.retired_resources},
+                      {"subpixel_precision_bits", pixels.subpixel_precision_bits},
+                      {"resources", resources_json(resources)},
+                      {"viewport", viewport_json(captured.viewport)},
+                      {"color_file", name + ".rgba8"},
+                      {"depth_file", name + ".d32f"}});
+            }
+        }
+    }
+    take(device->drain());
+    take(device->close());
+    const auto diagnostics = take(device->diagnostics());
+    const auto closed = take(device->scene_viewport_stats());
+    const auto resources = observed->presentation_resources();
+    check_spawn_resources(resources, 0);
+    require(clean(diagnostics) && closed.live_target_resources == 0 &&
+                closed.retired_generations == 1 && !closed.pending && control.teardown_calls == 5 &&
+                !control.fired,
+            "Spawn rendering did not close cleanly");
+    const bool validated = options.config.validation == GraphicsValidation::required;
+    emit({{"kind", "complete"},
+          {"status", validated ? "PASS" : "NOT_RUN"},
+          {"qualification", validated ? "PASS" : "NOT_RUN"},
+          {"assignment_21", "NOT_RUN"},
+          {"cases", frames},
+          {"closed_lifetimes", lifetimes},
+          {"unique_roots", reserved.size()},
+          {"teardown_calls", control.teardown_calls},
+          {"diagnostics", diagnostics_json(diagnostics)},
+          {"resources", resources_json(resources)},
+          {"viewport", viewport_json(closed)}});
+    return 0;
+}
+
 int fault_run(const Options& options, const SceneViewportRequest& request) {
     NativeGraphicsTestControl control;
     control.fault =
@@ -636,6 +882,8 @@ int run(const Options& options) {
         take(load_shader_artifact(options.pixel, ShaderStage::pixel, ShaderInterface::scene_unlit));
     if (options.mode == "physics")
         return physics_run(options, vertex, pixel);
+    if (options.mode == "spawning")
+        return spawning_run(options, vertex, pixel);
     auto source = fixture();
     if (options.mode == "fault")
         return fault_run(options, request(source, 0, vertex, pixel));

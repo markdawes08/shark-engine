@@ -491,6 +491,15 @@ if(TARGET EngineTools)
     add_test(NAME shark.tools.prefab-instances COMMAND PrefabInstanceTests "[prefab-instances]" --rng-seed 1337)
     set_tests_properties(shark.tools.prefab-instances PROPERTIES LABELS "cpu;unit;tooling;integration" TIMEOUT 60)
 
+    add_executable(PrefabAcceptanceTests prefab_acceptance_tests.cpp prefab_authoring_acceptance_tests.cpp)
+    target_link_libraries(PrefabAcceptanceTests PRIVATE EngineTools Catch2::Catch2WithMain)
+    target_compile_definitions(PrefabAcceptanceTests PRIVATE
+        SHARK_PREFAB_ACCEPTANCE_SCRATCH="${CMAKE_CURRENT_BINARY_DIR}/prefab-acceptance")
+    shark_configure_target(PrefabAcceptanceTests)
+    shark_classify_target(PrefabAcceptanceTests test)
+    add_test(NAME shark.tools.prefab-acceptance COMMAND PrefabAcceptanceTests "[prefab-acceptance]" --rng-seed 1337)
+    set_tests_properties(shark.tools.prefab-acceptance PROPERTIES LABELS "cpu;tooling;physics;integration" TIMEOUT 60 WORKING_DIRECTORY "${PROJECT_SOURCE_DIR}")
+
     add_executable(AuthoredSceneTests authored_scene_tests.cpp)
     target_link_libraries(AuthoredSceneTests PRIVATE EngineTools Catch2::Catch2WithMain)
     target_include_directories(AuthoredSceneTests PRIVATE "${PROJECT_SOURCE_DIR}/engine_tools/src")

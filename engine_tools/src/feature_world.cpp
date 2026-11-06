@@ -2456,6 +2456,14 @@ void prefab_instances(SceneRunContext& context) {
           {},
           Script{"scripts/prefab.lua", false}},
          {root(), {}, Name{"Prefab root"}, {}, "{\"role\":\"prefab\"}", {}, {}, RigidBody{}}}};
+    const auto runtime_prefab = take(prepare_runtime_prefab(prefab));
+    require(context,
+            runtime_prefab.asset == prefab.asset && runtime_prefab.root == root() &&
+                runtime_prefab.entities.size() == 2 &&
+                runtime_prefab.entities.front().parent == root() &&
+                runtime_prefab.entities.front().script == Script{"scripts/prefab.lua", false} &&
+                runtime_prefab.entities.back().rigid_body == RigidBody{},
+            "Source-to-Core prefab preparation changed hierarchy or component values");
     PrefabCaseEntropy entropy;
     const auto first = take(prepare_prefab_instance(
         prefab, PrefabInstanceOptions{{}, {{root(), Name{"First instance"}, translated(20)}}},

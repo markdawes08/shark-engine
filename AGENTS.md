@@ -54,7 +54,7 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [21d, shared prefab authoring](docs/handoffs/21d-prefab-authoring.md).**
+**Current handoff: [21e, connected prefab acceptance](docs/handoffs/21e-prefab-acceptance.md).**
 Follow the [prefab checkpoints](docs/roadmap/prefab-plan.md),
 [source contract](docs/prefab-assets.md) and [ADR 0057](docs/architecture/0057-prefab-source-assets.md).
 The CPU Tools codec shares bounded SourceEntity validation and preserves one rooted
@@ -72,7 +72,14 @@ prepared commands through the retained project owner. Instantiation uses existin
 mutation outcomes and one history group; preserve the original ID map for retries.
 Source write uncertainty and instance mutation uncertainty remain separate.
 Play and close/discard gates include prefab drafts. Actual native interaction is
-deferred under BL-21D-UI-01. 21e is next; full REQ-21 stays NOT_RUN. Preserve root-only
+deferred under BL-21D-UI-01; full REQ-21 stays NOT_RUN. 21e connects validated
+source-to-Core preparation, 32 saved authored instances, repeated contact spawning,
+owner reloads and automatic offscreen GPU lifetime checks on both GPUs. Follow
+[prefab acceptance](docs/prefab-acceptance.md). Ordinary Name writes still reject
+under the physics lease; do not widen authority to satisfy a fixture. Runtime
+values own content references, not source metadata or cooked closure. The next
+assignment in manifest order is M04, authoritative movement and gameplay, under
+the existing UI backlog amendment. Preserve root-only
 bodies and source, runtime, authority and durable identity boundaries.
 
 The [20e physics handoff](docs/handoffs/20e-physics-acceptance.md) remains applicable.

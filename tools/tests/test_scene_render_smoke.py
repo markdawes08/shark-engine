@@ -246,4 +246,102 @@ class PhysicsPresentationEvidenceTests(unittest.TestCase):
                          struct.pack(f"<{len(depths)}f", *depths), expected)["status"], "FAIL")
 
 
+def spawning_rows(validation="required"):
+    result = [identity("spawning", validation=validation), {"kind": "adapter", "adapter": adapter()}]
+    for case in range(smoke.SPAWNING_CASES):
+        expected = smoke.spawning_fixture(case)
+        result.append({"kind": "spawning-case", **expected,
+                       "scene_instance": 100+expected["lifetime"],
+                       "snapshot_revision": case % (smoke.SPAWNING_CYCLES*2)+2,
+                       "submitted": case+1, "completed": case+1,
+                       "created_resources": 10, "retired_resources": 10,
+                       "subpixel_precision_bits": 8, "resources": resources(5),
+                       "viewport": {"extent": {"width": 128, "height": 96},
+                                    "generation": 1, "retired_generations": 0,
+                                    "rendered_frames": case+1, "live_target_resources": 5,
+                                    "pending": False}})
+    status = "PASS" if validation == "required" else "NOT_RUN"
+    result.append({"kind": "complete", "status": status, "qualification": status,
+                   "assignment_21": "NOT_RUN", "cases": smoke.SPAWNING_CASES,
+                   "closed_lifetimes": smoke.SPAWNING_LIFETIMES,
+                   "unique_roots": smoke.SPAWNING_LIFETIMES*smoke.SPAWNING_CYCLES,
+                   "teardown_calls": 5, "diagnostics": diagnostics(), "resources": resources(),
+                   "viewport": {"extent": {"width": 0, "height": 0}, "generation": 1,
+                                "retired_generations": 1, "rendered_frames": smoke.SPAWNING_CASES,
+                                "live_target_resources": 0, "pending": False}})
+    return result
+
+
+class SpawnLifetimeEvidenceTests(unittest.TestCase):
+    """Independent pixels and consumed report rejection controls; no GPU qualification."""
+
+    @classmethod
+    def setUpClass(cls):
+        cls.temporary = tempfile.TemporaryDirectory()
+        cls.output = Path(cls.temporary.name)
+        for case in range(smoke.SPAWNING_CASES):
+            expected = smoke.spawning_fixture(case)
+            reference = smoke.spawning_reference(expected["phase"] == "occupied")
+            (cls.output/expected["color_file"]).write_bytes(reference.color)
+            (cls.output/expected["depth_file"]).write_bytes(
+                struct.pack(f"<{len(reference.depth)}f", *reference.depth))
+
+    @classmethod
+    def tearDownClass(cls):
+        cls.temporary.cleanup()
+
+    def inspect(self, records=None, validation="required", result=None):
+        return smoke.inspect_spawning(result or process(
+            records if records is not None else spawning_rows(validation)), UUID, validation,
+            LOCK, SOURCE, self.output)
+
+    def test_literal_spawn_pixels_distinguish_live_geometry_and_retired_clear(self):
+        self.assertFalse(self.inspect()[1])
+        occupied, empty = smoke.spawning_reference(True), smoke.spawning_reference(False)
+        self.assertGreaterEqual(occupied.foreground, 20)
+        self.assertEqual(empty.foreground, 0)
+        self.assertEqual(empty.background, 128*96)
+        for actual, expected in ((occupied, empty), (empty, occupied)):
+            self.assertEqual(smoke.raster.compare_readback(actual.color,
+                struct.pack(f"<{len(actual.depth)}f", *actual.depth), expected)["status"], "FAIL")
+
+    def test_capacity_generations_mutation_effects_and_gpu_retirement_are_required(self):
+        for index, key, value in ((2, "created_bodies", 0), (3, "destroyed_scripts", 1),
+                                  (3, "draw_count", 1), (2, "stale_rejected", False),
+                                  (8, "owners_closed", False), (8, "initialized_scripts", 1),
+                                  (2, "retired_resources", 9), (2, "completed", 0),
+                                  (-1, "closed_lifetimes", 1), (-1, "unique_roots", 1)):
+            with self.subTest(index=index, key=key):
+                changed = spawning_rows()
+                changed[index][key] = value
+                self.assertTrue(self.inspect(changed)[1])
+        changed = spawning_rows()
+        changed[3]["resources"]["frame"] = 1
+        self.assertTrue(self.inspect(changed)[1])
+        changed = spawning_rows()
+        changed[-1]["resources"]["target"] = 5
+        self.assertTrue(self.inspect(changed)[1])
+        changed = spawning_rows()
+        for row in changed[2+smoke.SPAWNING_CYCLES*2:-1]:
+            row["scene_instance"] = changed[2]["scene_instance"]
+        self.assertTrue(self.inspect(changed)[1])
+        changed = spawning_rows()
+        changed[3]["snapshot_revision"] = changed[2]["snapshot_revision"]
+        self.assertTrue(self.inspect(changed)[1])
+
+    def test_partial_runs_diagnostics_and_validation_off_cannot_claim_qualification(self):
+        self.assertFalse(self.inspect(validation="off")[1])
+        changed = spawning_rows("off")
+        changed[-1]["qualification"] = "PASS"
+        self.assertTrue(self.inspect(changed, "off")[1])
+        changed = spawning_rows()
+        changed[-1]["diagnostics"]["warnings"] = 1
+        self.assertTrue(self.inspect(changed)[1])
+        changed = spawning_rows()
+        changed[-1]["assignment_21"] = "PASS"
+        self.assertTrue(self.inspect(changed)[1])
+        self.assertTrue(self.inspect(spawning_rows()[:-1])[1])
+        self.assertTrue(self.inspect(result=replace(process(spawning_rows()), timed_out=True))[1])
+
+
 if __name__=="__main__": unittest.main()

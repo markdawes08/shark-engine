@@ -25,9 +25,15 @@ handoff or Scene replacement. Access belongs to the creating thread.
 
 Before start, call `enable_spawning(scene, physics, authority, prefabs)` on the
 existing server-gameplay runtime. Client-presentation, Authored and Replica
-execution cannot obtain this capability. Editor/terminal prefab integration
-retains 21d; ordinary preview remains client presentation. An empty catalog can
+execution cannot obtain this capability. [Editor/terminal prefab authoring](prefab-authoring.md)
+uses the separate authored owner; ordinary preview remains client presentation. An empty catalog can
 authorize self destruction without advertising any spawnable template.
+
+Tools' `prepare_runtime_prefab` validates source into an owned Core value for this
+catalog without adding a runtime source parser or granting execution. The host
+still supplies captured scripts and admitted mesh assets explicitly. [Connected
+acceptance](prefab-acceptance.md) covers repeated contact spawning, replacement
+and rendering lifetimes.
 
 ## Lua requests and identity
 

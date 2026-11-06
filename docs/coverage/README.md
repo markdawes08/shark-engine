@@ -9,9 +9,10 @@ evidence effort; historical full-profile counts are not recurring run lists.
 ## Current state
 
 Assignment 21 is in progress. The [prefab checkpoints](../roadmap/prefab-plan.md)
-record source values, shared instance commands, deferred runtime/Lua mutation and
-Editor/terminal workflows. Connected lifetime acceptance retains 21e. REQ-21
-remains NOT_RUN. [20e](../handoffs/20e-physics-acceptance.md) records connected CPU
+record completed source values, shared instance commands, deferred runtime/Lua
+mutation and Editor/terminal workflows. [21e](../handoffs/21e-prefab-acceptance.md)
+records passing connected CPU and both-GPU lifetime acceptance. REQ-21 remains
+NOT_RUN for deferred native Editor interaction. [20e](../handoffs/20e-physics-acceptance.md) records connected CPU
 physics acceptance; REQ-20 retains its deferred native interactive evidence.
 
 **19d and REQ-19 PASS under current-machine scope.** The

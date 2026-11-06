@@ -526,7 +526,7 @@
       "planned_fixture": "FeatureWorld/PrefabInstances, FeatureWorld/ScriptSpawning, PrefabReferenceRemap, PrefabNestingPolicy and SpawnDestroyLifetime fixtures.",
       "verification": {
         "status": "NOT_RUN",
-          "reason": "21a-21d implement source prefab assets, atomic authored instantiation, Core runtime/Lua spawn/self-destroy and shared Editor/terminal file/capture/prepare/instantiate workflows. Runtime actors are ephemeral; no durable-record or reward operation is exposed. Connected lifetime acceptance retains 21e and actual interactive 21d evidence is deferred under the manual UI pause. Network/handoff/durable integration retains its owning gates. Full REQ-21 remains NOT_RUN. See docs/roadmap/prefab-plan.md and docs/handoffs/21d-prefab-authoring.md."
+          "reason": "21a-21e implementation and connected automated acceptance pass under current-machine scope: source-to-Core conversion, independent saved instances, contact spawning/replay, replacement owners, repeated script/physics cleanup and validated offscreen GPU lifetimes on RTX and Intel. Actual native Editor interaction remains deferred under BL-21D-UI-01, so full REQ-21 remains NOT_RUN. Runtime actors are ephemeral; no durable-record or reward operation is exposed. Actual network/handoff/durable integration retains M04/M05 and its transaction owners. See docs/handoffs/21e-prefab-acceptance.md."
       }
     },
     {
@@ -1016,10 +1016,10 @@
         "id": "core.runtime-prefabs",
         "name": "Bounded Core runtime prefab values and revocable trusted-host spawning authority",
         "requirement_ids": ["REQ-21"],
-        "test_ids": ["shark.core.runtime-spawning", "shark.tools.featureworld", "shark.tools.featureworld-process"],
-        "test_sources": ["tests/runtime_spawn_tests.cpp", "tests/feature_world_tests.cpp", "tools/tests/test_feature_world_process.py"],
+        "test_ids": ["shark.core.runtime-spawning", "shark.tools.prefab-acceptance", "shark.tools.featureworld", "shark.tools.featureworld-process"],
+        "test_sources": ["tests/runtime_spawn_tests.cpp", "tests/prefab_acceptance_tests.cpp", "tests/feature_world_tests.cpp", "tools/tests/test_feature_world_process.py"],
         "fixtures": ["engine/core/src/runtime_prefab.cpp", "engine/core/src/script_runtime.cpp", "engine_tools/src/feature_world.cpp"],
-        "fixture_reason": "Core value validation, exact Region/Scene/revocation fences and deferred Lua lifecycle checks connect to an independently specified runtime Scene in FeatureWorld. No JSON importer or live durable actor/reward operation enters Core.",
+        "fixture_reason": "Core value validation, exact Region/Scene/revocation fences and deferred Lua lifecycle checks connect to an independently specified runtime Scene in FeatureWorld. Connected saved prefab contact spawning and owner reloads check repeated capacity, historical receipts and CPU render lease release. No JSON importer or live durable actor/reward operation enters Core.",
         "featureworld_cases": ["featureworld.script-spawning"]
       },
       {
@@ -3690,6 +3690,27 @@
       }
     ],
     "commands": [
+      {
+        "id": "content.prefab.prepare",
+        "name": "Prepare an owned Core runtime prefab from validated source values",
+        "requirement_ids": ["REQ-21"],
+        "test_ids": ["shark.tools.prefab-acceptance", "shark.tools.featureworld", "shark.tools.featureworld-process"],
+        "test_sources": ["tests/prefab_authoring_acceptance_tests.cpp", "tests/prefab_acceptance_tests.cpp", "tests/feature_world_tests.cpp", "tools/tests/test_feature_world_process.py"],
+        "fixtures": ["engine_tools/src/prepared_content.cpp", "engine_tools/src/feature_world.cpp", "docs/prefab-acceptance.md"],
+        "fixture_reason": "The pure Tools bridge validates source and complete Core transforms without IO, cooking or authority. Actual source/sidecar read, 32 independent authored instances, saved reload, repeated contact spawn and fresh runtime owners exercise owned content capture; a source-valid composed-transform overflow rejects with asset/entity context.",
+        "featureworld_cases": ["featureworld.prefab-instances"]
+      },
+      {
+        "id": "graphics.prefab-lifetimes",
+        "name": "Render owned spawned and removed prefab snapshots across native lifetimes",
+        "requirement_ids": ["REQ-21", "REQ-13"],
+        "test_ids": ["shark.client.scene-render-cli", "shark.tooling.scene-render-smoke"],
+        "test_sources": ["tests/scene_render_smoke.cpp", "tools/tests/test_scene_render_smoke.py"],
+        "fixtures": ["tools/scene_render_smoke.py", "docs/prefab-acceptance.md", "docs/handoffs/21e-prefab-acceptance.md"],
+        "fixture_reason": "CPU checks validate CLI, literal independent occupied/empty references and evidence rejection. Explicit native spawning mode verifies Lua/physics capacity, checked stale identities, packed snapshot ownership and GPU resource closure across two Scene owners and sixteen readbacks. Hardware receipts qualify RTX and Intel separately; CPU fixtures qualify no GPU.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "Actual offscreen GPU readback and private native resource counters require the existing SceneRenderSmoke fixture, required Vulkan/NVRHI validation and an explicit current-PC device. The CPU FeatureWorld does not initialize graphics."
+      },
       {
         "id": "tools.prefab-authoring",
         "name": "Shared prefab files, subtree capture and retained prepared instantiation",

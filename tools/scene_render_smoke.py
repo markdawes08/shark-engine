@@ -29,6 +29,8 @@ FAULTS = ("partial-creation", "submission-timeout", "recording-error")
 PHYSICS_NAMES = ("initial", "reset", "previous", "interpolated", "current",
                  "falling", "teleported", "retargeted")
 PHYSICS_EXTENT = (128, 96)
+SPAWNING_LIFETIMES, SPAWNING_CYCLES = 2, 4
+SPAWNING_CASES = SPAWNING_LIFETIMES * SPAWNING_CYCLES * 2
 TIMEOUT_SECONDS = 45
 require = raster.require
 integer = raster.integer
@@ -184,6 +186,55 @@ def physics_reference(case: int) -> raster.Reference:
                             foreground, background, 0)
 
 
+def spawning_fixture(case: int) -> dict:
+    require(type(case) is int and 0 <= case < SPAWNING_CASES, "Unknown spawn lifetime case")
+    lifetime, within = divmod(case, SPAWNING_CYCLES * 2)
+    cycle, phase = divmod(within, 2)
+    closed = cycle == SPAWNING_CYCLES - 1
+    phase_name = "empty" if phase else "occupied"
+    name = f"life-{lifetime}-cycle-{cycle}-{phase_name}"
+    return {"name": name, "lifetime": lifetime, "cycle": cycle, "phase": phase_name,
+            "extent": {"width": 128, "height": 96}, "draw_count": 0 if phase else 1,
+            "tick": cycle+1, "owners_closed": closed, "entities": 0 if closed else 2,
+            "initialized_scripts": 0 if closed else 1, "bodies": 0, "queued_logs": 0,
+            "spawned_entities": 2, "created_bodies": 1, "created_scripts": 2,
+            "removed_entities": 2, "removed_bodies": 1, "destroyed_scripts": 2,
+            "stale_rejected": True, "render_preserved_revision": True,
+            "color_file": name + ".rgba8", "depth_file": name + ".d32f"}
+
+
+@lru_cache(maxsize=2)
+def spawning_reference(occupied: bool) -> raster.Reference:
+    """Literal red .75x.5 quad at (0,0,-3), ortho height8, near1/far9.
+
+    No reported Scene transform, runtime identity or native matrix drives this
+    oracle. Empty frames must clear every pixel after actor destruction.
+    """
+    require(type(occupied) is bool, "Spawn oracle expects an occupied/empty state")
+    width, height = PHYSICS_EXTENT
+    count = width * height
+    rgba = bytearray((0, 0, 0, 255) * count)
+    depth, checked = [1.] * count, [True] * count
+    if occupied:
+        left, right, top, bottom = 59.5, 68.5, 45., 51.
+        for py in range(height):
+            for px in range(width):
+                sx, sy = px+.5, py+.5
+                index = py*width+px
+                if left-1 <= sx <= right+1 and top-1 <= sy <= bottom+1 and min(
+                        abs(sx-left), abs(sx-right), abs(sy-top), abs(sy-bottom)) <= 1:
+                    checked[index] = False
+                if left <= sx < right and top <= sy < bottom:
+                    rgba[index*4:index*4+4] = bytes((255, 0, 0, 255))
+                    depth[index] = .25
+    foreground = sum(ok and z < 1 for ok, z in zip(checked, depth, strict=True))
+    background = sum(ok and z == 1 for ok, z in zip(checked, depth, strict=True))
+    require((foreground >= 20 if occupied else foreground == 0) and
+            foreground+background >= count*.95, "Spawn oracle lost fixed foreground/clear coverage")
+    return raster.Reference(width, height, bytes(rgba), tuple(depth), tuple(checked),
+                            foreground, background, 0)
+
+
 def check_identity(row: dict, mode: str, device: str, validation: str, lock: str, digest: str, fault: str="") -> None:
     expected = {"kind":"identity","schema_version":1,"assignment_13":"NOT_RUN","mode":mode,
                 "dependency_lock_sha256":lock,"source_sha256":digest,"selection":device,
@@ -249,6 +300,78 @@ def inspect_physics(result: ProcessResult, device: str, validation: str, lock: s
                 "Physics owner completion changed or claimed assignment acceptance")
         clean(rows[-1]["diagnostics"])
         check_viewport(rows[-1]["viewport"], PHYSICS_EXTENT, 1, 8, True)
+    except (OSError, ValueError, TypeError, KeyError, OverflowError, RecursionError) as error:
+        errors.append(str(error))
+    return rows, errors, comparisons
+
+
+def inspect_spawning(result: ProcessResult, device: str, validation: str, lock: str,
+                     digest: str, readbacks: Path) -> tuple[list[dict], list[str], list[dict]]:
+    rows, errors, comparisons = [], [], []
+    try:
+        require(result.returncode == 0 and not result.stderr,
+                "Spawn rendering fixture failed or emitted diagnostics")
+        rows = rows_from(result)
+        require(len(rows) == SPAWNING_CASES+3, "Spawn rendering omitted a lifetime or phase")
+        check_identity(rows[0], "spawning", device, validation, lock, digest)
+        require(set(rows[1]) == {"kind", "adapter"} and rows[1]["kind"] == "adapter" and
+                not foundation.adapter_errors(rows[1]["adapter"], require_supported=True) and
+                rows[1]["adapter"]["uuid"] == device, "Wrong spawn rendering adapter")
+        previous_submission, previous_revision, files, instances = 0, 0, set(), []
+        for case, row in enumerate(rows[2:-1]):
+            expected = spawning_fixture(case)
+            extra = {"kind", "scene_instance", "snapshot_revision", "submitted", "completed",
+                     "created_resources", "retired_resources", "subpixel_precision_bits",
+                     "resources", "viewport"}
+            require(set(row) == {*expected, *extra} and row["kind"] == "spawning-case" and
+                    raster.close_values({key: row[key] for key in expected}, expected),
+                    "Spawn mutation effects, bounded capacity or lifetime inputs differ")
+            require(integer(row["scene_instance"]) and row["scene_instance"] > 0 and
+                    integer(row["snapshot_revision"]) and row["snapshot_revision"] > 0,
+                    "Spawn rendering lacks a checked source revision")
+            if case % (SPAWNING_CYCLES*2) == 0:
+                require(row["scene_instance"] not in instances, "Reload reused an old Scene incarnation")
+                instances.append(row["scene_instance"])
+                previous_revision = 0
+            require(row["scene_instance"] == instances[-1] and
+                    row["snapshot_revision"] > previous_revision,
+                    "Spawn snapshots crossed owners or reused a pre-mutation revision")
+            previous_revision = row["snapshot_revision"]
+            require(integer(row["submitted"]) and row["submitted"] > previous_submission and
+                    integer(row["completed"]) and row["completed"] == row["submitted"] and
+                    integer(row["created_resources"]) and row["created_resources"] > 0 and
+                    integer(row["retired_resources"]) and
+                    row["retired_resources"] == row["created_resources"] and
+                    type(row["subpixel_precision_bits"]) is int and row["subpixel_precision_bits"] == 8,
+                    "Spawn rendering retained transient resources or incomplete work")
+            previous_submission = row["submitted"]
+            resource_state(row["resources"], 5)
+            check_viewport(row["viewport"], PHYSICS_EXTENT, 1, case+1)
+            paths = [shader_pipeline.contained(readbacks, expected[field])
+                     for field in ("color_file", "depth_file")]
+            for path in paths:
+                files.add(path.name)
+                require(path.is_file() and path.stat().st_size == 128*96*4,
+                        "Spawn readback extent/format differs")
+            comparison = raster.compare_readback(paths[0].read_bytes(), paths[1].read_bytes(),
+                                                spawning_reference(expected["phase"] == "occupied"))
+            comparison.update(name=expected["name"], color_sha256=sha256(paths[0]),
+                              depth_sha256=sha256(paths[1]))
+            comparisons.append(comparison)
+            if comparison["status"] != "PASS":
+                errors.append(expected["name"] + " failed fixed spawn color/depth tolerances")
+        require({path.name for path in readbacks.iterdir()} == files, "Unexpected spawn readback files")
+        status = "PASS" if validation == "required" else "NOT_RUN"
+        expected = {"kind": "complete", "status": status, "qualification": status,
+                    "assignment_21": "NOT_RUN", "cases": SPAWNING_CASES,
+                    "closed_lifetimes": SPAWNING_LIFETIMES,
+                    "unique_roots": SPAWNING_LIFETIMES*SPAWNING_CYCLES, "teardown_calls": 5}
+        require(set(rows[-1]) == {*expected, "diagnostics", "resources", "viewport"} and
+                raster.close_values({key: rows[-1][key] for key in expected}, expected),
+                "Spawn lifetime completion changed or claimed assignment acceptance")
+        clean(rows[-1]["diagnostics"])
+        resource_state(rows[-1]["resources"], 0)
+        check_viewport(rows[-1]["viewport"], PHYSICS_EXTENT, 1, SPAWNING_CASES, True)
     except (OSError, ValueError, TypeError, KeyError, OverflowError, RecursionError) as error:
         errors.append(str(error))
     return rows, errors, comparisons
@@ -369,7 +492,7 @@ def cli_checks(executable: Path) -> int:
     for flag in ("--describe","--help"):
         result=run_process([str(executable),flag],cwd=executable.parent,timeout=5)
         errors.extend(inspect_result(result,"describe","auto","required",lock,digest)[1])
-    for arguments in ([],["--render"],["--physics"],["--describe","extra"],["--native-fault","unknown","--device","0"*32,"--vertex","x","--pixel","y"]):
+    for arguments in ([],["--render"],["--physics"],["--spawning"],["--describe","extra"],["--native-fault","unknown","--device","0"*32,"--vertex","x","--pixel","y"]):
         result=run_process([str(executable),*arguments],cwd=executable.parent,timeout=5)
         try:
             rows=rows_from(result)
@@ -382,7 +505,7 @@ def cli_checks(executable: Path) -> int:
 def main() -> int:
     parser=argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--executable",type=Path,required=True)
-    parser.add_argument("--mode",choices=("describe","render","physics","faults"),default="describe")
+    parser.add_argument("--mode",choices=("describe","render","physics","spawning","faults"),default="describe")
     parser.add_argument("--cli-only",action="store_true")
     parser.add_argument("--device",default="auto")
     parser.add_argument("--shaders",type=Path)
@@ -404,7 +527,7 @@ def main() -> int:
     try:
         shader_pipeline.no_links(output); output.mkdir(parents=True,exist_ok=False)
     except (OSError,ValueError) as error: parser.error(str(error))
-    summary={"schema_version":1,"checkpoint":"18e" if args.mode=="physics" else "13d","assignment_13":"NOT_RUN","status":"FAIL","qualification":"NOT_RUN","mode":args.mode,
+    summary={"schema_version":1,"checkpoint":"21e" if args.mode=="spawning" else "18e" if args.mode=="physics" else "13d","assignment_13":"NOT_RUN","status":"FAIL","qualification":"NOT_RUN","mode":args.mode,
              "started_utc":datetime.now(timezone.utc).isoformat(),"timeout_seconds_per_child":TIMEOUT_SECONDS,"runs":[],"errors":[]}
     started=time.monotonic(); exit_code=1
     try:
@@ -429,19 +552,20 @@ def main() -> int:
         for mode in modes:
             command=[str(executable),"--native-fault",mode] if args.mode=="faults" else [str(executable),"--"+mode]
             if args.mode!="describe": command += ["--device",args.device,"--vertex",str(vertex),"--pixel",str(pixel)]
-            if args.mode in ("render", "physics"): command += ["--output",str(output/"readbacks"),"--validation",args.validation]
+            if args.mode in ("render", "physics", "spawning"): command += ["--output",str(output/"readbacks"),"--validation",args.validation]
             result=run_process(command,cwd=executable.parent,timeout=TIMEOUT_SECONDS,env=environment)
             (output/(mode+".jsonl")).write_text(result.stdout,encoding="utf-8"); (output/(mode+".stderr.log")).write_text(result.stderr,encoding="utf-8")
             comparisons=[]
             if args.mode=="faults": rows,errors=inspect_fault(result,mode,args.device,lock,digest)
             elif args.mode=="physics": rows,errors,comparisons=inspect_physics(result,args.device,args.validation,lock,digest,output/"readbacks")
+            elif args.mode=="spawning": rows,errors,comparisons=inspect_spawning(result,args.device,args.validation,lock,digest,output/"readbacks")
             else: rows,errors,comparisons=inspect_result(result,mode,args.device,args.validation,lock,digest,output/"readbacks")
             summary["runs"].append({"mode":mode,"command":command,"process_exit_code":result.returncode,"timed_out":result.timed_out,"cleanup_errors":list(result.cleanup_errors),"records":rows,"comparisons":comparisons,"errors":errors})
             summary["errors"].extend(errors)
-            if args.mode in ("render", "physics"):
+            if args.mode in ("render", "physics", "spawning"):
                 for case in range(len(comparisons)):
-                    expected = physics_fixture(case) if args.mode=="physics" else fixture(case)
-                    oracle = physics_reference(case) if args.mode=="physics" else reference(case)
+                    expected = spawning_fixture(case) if args.mode=="spawning" else physics_fixture(case) if args.mode=="physics" else fixture(case)
+                    oracle = spawning_reference(expected["phase"]=="occupied") if args.mode=="spawning" else physics_reference(case) if args.mode=="physics" else reference(case)
                     raw=(output/"readbacks"/expected["color_file"]).read_bytes()
                     raster.write_png(output/(expected["name"]+".png"),oracle.width,oracle.height,raw)
                     raster.write_png(output/(expected["name"]+"-reference.png"),oracle.width,oracle.height,oracle.color)

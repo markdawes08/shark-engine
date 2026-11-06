@@ -2,9 +2,17 @@
 
 #include "shark/prepared_assets.hpp"
 #include "shark/prepared_scene.hpp"
+#include "shark/runtime_prefab.hpp"
 #include "shark/tools/authored_scene.hpp"
+#include "shark/tools/prefab_document.hpp"
 
 namespace shark::tools {
+
+// Pure source-to-Core value bridge for a trusted runtime host. Retains prefab
+// local IDs, hierarchy and current component/content references; source project
+// and extras are not runtime state. Validates composed transforms before return.
+// Performs no file read, asset closure/cook, Scene mutation or authority grant.
+[[nodiscard]] Result<RuntimePrefab> prepare_runtime_prefab(const PrefabDocument& prefab);
 
 // Pure bridge from an existing validated SHKGLT01 cache artifact. Keeps dense
 // mesh indices, all vertex attributes and temporary unlit base-color/culling
