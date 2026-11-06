@@ -190,6 +190,19 @@ struct ReplicaClientStats {
     std::size_t entity_capacity_bytes{0};
     std::size_t known_live_capacity_bytes{0};
     std::size_t latest_change_capacity_bytes{0};
+    std::size_t presentation_frames{0};
+    std::size_t presentation_entities{0};
+};
+
+inline constexpr std::size_t replica_presentation_maximum_frames = 8;
+// A display-only owned observation. Its poses do not replace the committed
+// replica cache, confer authority or authorize picking/Scene mutation.
+struct ReplicaPresentationSnapshot {
+    std::optional<ReplicaSessionId> stream;
+    std::uint64_t revision;
+    bool has_baseline;
+    bool interpolated;
+    std::vector<ReplicaEntity> entities;
 };
 
 // Single-owner presentation cache, not a second authoritative Scene. Caller
@@ -209,6 +222,14 @@ class ReplicaClient final {
     // yields resync_required without partial publication. Baselines can skip
     // revisions but cannot change the stream within an authenticated session.
     [[nodiscard]] Result<ReplicaApplyResult> apply(const ReplicationUpdate& update);
+    // Receive time comes from the verified-server host's monotonic clock, not
+    // the peer payload. Equal timestamps coalesce; duplicates never retime.
+    [[nodiscard]] Result<ReplicaApplyResult> apply(const ReplicationUpdate& update,
+                                                   MonotonicTime received_at);
+    // Samples bounded receive-time history with the current live topology.
+    // Outside history clamps without extrapolation; affine fallback retains a
+    // complete committed pose. This never changes the cache or ACK revision.
+    [[nodiscard]] Result<ReplicaPresentationSnapshot> sample(MonotonicTime timestamp) const;
     [[nodiscard]] Result<ReplicaSnapshot> snapshot() const;
     [[nodiscard]] Result<ReplicaClientStats> stats() const;
     // Cache loss retains stream/revision fences; only a newer full baseline can
@@ -216,6 +237,8 @@ class ReplicaClient final {
     [[nodiscard]] Result<void> discard_baseline();
 
   private:
+    [[nodiscard]] Result<ReplicaApplyResult> apply_impl(const ReplicationUpdate& update,
+                                                        std::optional<MonotonicTime> received_at);
     struct Impl;
     explicit ReplicaClient(std::unique_ptr<Impl> impl) noexcept;
     std::unique_ptr<Impl> impl_;

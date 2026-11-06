@@ -10,13 +10,14 @@
 namespace shark::server {
 
 inline constexpr std::size_t movement_maximum_characters = 32;
-inline constexpr std::size_t movement_pending_inputs = 8;
-inline constexpr double movement_speed = 6.0;
+inline constexpr std::size_t movement_pending_inputs = net::movement_maximum_pending_inputs;
+inline constexpr double movement_speed = net::movement_profile_speed;
 // Leaves headroom below the native 256 m/s total-vector ceiling even after
 // horizontal input is packed to float. Ordinary falling velocity is preserved.
-inline constexpr double movement_maximum_vertical_speed = 250.0;
-inline constexpr std::uint32_t movement_tick_hz = 20;
-inline constexpr std::uint32_t movement_collision_substeps = 3;
+inline constexpr double movement_maximum_vertical_speed = net::movement_profile_vertical_speed;
+inline constexpr std::uint32_t movement_tick_hz = net::movement_profile_tick_hz;
+inline constexpr std::uint32_t movement_collision_substeps =
+    net::movement_profile_collision_substeps;
 
 struct MovementDelivery {
     std::uint64_t connection;

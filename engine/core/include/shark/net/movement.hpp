@@ -16,6 +16,13 @@ inline constexpr std::uint16_t movement_protocol_version = 1;
 inline constexpr std::int32_t movement_axis_scale = 1000;
 inline constexpr std::size_t movement_input_bytes = 80;
 inline constexpr std::size_t movement_state_bytes = 108;
+// Shared nominal movement profile. Client modeling is approximate; native
+// collision and the server's configured gravity still own the committed result.
+inline constexpr std::uint32_t movement_profile_tick_hz = 20;
+inline constexpr std::uint32_t movement_profile_collision_substeps = 3;
+inline constexpr double movement_profile_speed = 6.0;
+inline constexpr double movement_profile_vertical_speed = 250.0;
+inline constexpr std::size_t movement_maximum_pending_inputs = 8;
 
 // Direction only, in bounded Scene X/Z axes. The authoritative host chooses
 // speed and fixed duration. Session admission and the movement stream's input

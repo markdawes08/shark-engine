@@ -254,7 +254,8 @@ int client(const Options& options) {
             continue;
         }
         const auto before = take(current->cache->snapshot());
-        const auto outcome = take(current->cache->apply(update));
+        const auto received_at = clock.now();
+        const auto outcome = take(current->cache->apply(update, received_at));
         if (outcome == ReplicaApplyResult::resync_required) {
             require(scenario == "missing-baseline" && !second && stage == 1 && !update.baseline,
                     "Unexpected missing replication baseline");
@@ -277,6 +278,10 @@ int client(const Options& options) {
             continue;
         }
         const auto snapshot = take(current->cache->snapshot());
+        const auto presented = take(current->cache->sample(received_at));
+        require(presented.has_baseline && presented.entities == snapshot.entities &&
+                    presented.revision == snapshot.revision,
+                "Timed presentation changed the committed replication endpoint");
         expected_state(snapshot, stage);
         if (stage == 0)
             original_revision = update.revision;

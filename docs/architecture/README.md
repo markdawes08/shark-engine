@@ -112,6 +112,7 @@ not establish file or gameplay-wire formats.
 | [0057](0057-prefab-source-assets.md) | Bounded prefab source assets, stable local references and explicit nesting rejection |
 | [0058](0058-runtime-prefab-mutation.md) | Core runtime prefab values, revocable authority and deferred Lua spawn/destroy |
 | [0059](0059-authoritative-character-movement.md) | Authenticated sequenced directions, fixed authoritative movement and committed corrections |
+| [0060](0060-client-movement-presentation.md) | Bounded client prediction/reconciliation and timed remote replica interpolation |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

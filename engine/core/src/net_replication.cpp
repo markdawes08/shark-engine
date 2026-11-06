@@ -1,6 +1,9 @@
 #include "shark/net/replication.hpp"
 
+#include "shark/transform.hpp"
+
 #include <algorithm>
+#include <cmath>
 #include <limits>
 #include <thread>
 #include <type_traits>
@@ -10,6 +13,45 @@ namespace shark::net {
 namespace {
 Error rejected(const char* operation, ErrorCode code = ErrorCode::conflict) {
     return {code, "Replication operation rejected", {.operation = operation}};
+}
+
+std::optional<ReplicatedPose> interpolate_pose(const ReplicatedPose& first,
+                                               const ReplicatedPose& second, double alpha) {
+    auto matrix = [](const ReplicatedPose& pose) {
+        math::Mat4 value{1};
+        for (int row = 0; row < 3; ++row)
+            for (int column = 0; column < 4; ++column)
+                value[column][row] = pose.coefficients[static_cast<std::size_t>(row * 4 + column)];
+        return value;
+    };
+    auto before = decompose_transform(matrix(first));
+    auto after = decompose_transform(matrix(second));
+    if (!before || !after)
+        return std::nullopt;
+    Transform blended;
+    for (int axis = 0; axis < 3; ++axis) {
+        if (std::signbit(before.value().scale[axis]) != std::signbit(after.value().scale[axis]))
+            return std::nullopt;
+        blended.translation[axis] =
+            std::lerp(before.value().translation[axis], after.value().translation[axis], alpha);
+        blended.scale[axis] =
+            std::lerp(before.value().scale[axis], after.value().scale[axis], alpha);
+    }
+    if (glm::dot(before.value().rotation, after.value().rotation) < 0)
+        after.value().rotation = -after.value().rotation;
+    blended.rotation = glm::slerp(before.value().rotation, after.value().rotation, alpha);
+    auto composed = transform_matrix(blended);
+    if (!composed)
+        return std::nullopt;
+    ReplicatedPose result;
+    for (int row = 0; row < 3; ++row)
+        for (int column = 0; column < 4; ++column)
+            result.coefficients[static_cast<std::size_t>(row * 4 + column)] =
+                composed.value()[column][row];
+    auto canonical = canonicalize_replicated_pose(result);
+    if (!canonical)
+        return std::nullopt;
+    return canonical.value();
 }
 
 struct Window {
@@ -567,6 +609,10 @@ Result<ReplicationStats> ReplicationServer::stats() const {
 }
 
 struct ReplicaClient::Impl {
+    struct PresentationFrame {
+        MonotonicTime received_at;
+        std::vector<ReplicaEntity> entities;
+    };
     Impl(const SessionSnapshot& value, std::size_t limit)
         : session(value.session), epoch(value.ownership_epoch), maximum(limit) {}
     Result<void> check_owner() const {
@@ -587,6 +633,8 @@ struct ReplicaClient::Impl {
     // Retain bounded lifecycle fences across explicit local cache loss.
     std::vector<ReplicaId> known_live;
     std::optional<ReplicationUpdate> latest;
+    std::optional<MonotonicTime> latest_received_at;
+    std::vector<PresentationFrame> presentation;
 };
 
 ReplicaClient::ReplicaClient(std::unique_ptr<Impl> impl) noexcept : impl_(std::move(impl)) {}
@@ -608,9 +656,22 @@ Result<std::unique_ptr<ReplicaClient>> ReplicaClient::create(const SessionSnapsh
 }
 
 Result<ReplicaApplyResult> ReplicaClient::apply(const ReplicationUpdate& update) {
+    return apply_impl(update, std::nullopt);
+}
+
+Result<ReplicaApplyResult> ReplicaClient::apply(const ReplicationUpdate& update,
+                                                MonotonicTime received_at) {
+    return apply_impl(update, received_at);
+}
+
+Result<ReplicaApplyResult> ReplicaClient::apply_impl(const ReplicationUpdate& update,
+                                                     std::optional<MonotonicTime> received_at) {
     if (auto owner = impl_->check_owner(); !owner) {
         return owner.error();
     }
+    if (received_at && (*received_at < MonotonicTime::zero() ||
+                        (impl_->latest_received_at && *received_at < *impl_->latest_received_at)))
+        return rejected("net.replica.receive-time", ErrorCode::invalid_argument);
     if (auto valid = validate_replication_update(update); !valid) {
         return rejected("net.replica.update", ErrorCode::invalid_argument);
     }
@@ -620,6 +681,8 @@ Result<ReplicaApplyResult> ReplicaClient::apply(const ReplicationUpdate& update)
     }
     if (update.revision == impl_->revision) {
         if (impl_->latest && update == *impl_->latest) {
+            if (received_at)
+                impl_->latest_received_at = received_at;
             return impl_->has_baseline ? ReplicaApplyResult::duplicate
                                        : ReplicaApplyResult::resync_required;
         }
@@ -629,6 +692,8 @@ Result<ReplicaApplyResult> ReplicaClient::apply(const ReplicationUpdate& update)
         return rejected("net.replica.revision");
     }
     if (!update.baseline && (!impl_->has_baseline || update.base_revision != impl_->revision)) {
+        if (received_at)
+            impl_->latest_received_at = received_at;
         return ReplicaApplyResult::resync_required;
     }
     try {
@@ -666,6 +731,20 @@ Result<ReplicaApplyResult> ReplicaClient::apply(const ReplicationUpdate& update)
             known.push_back(entity.id);
         }
         std::optional<ReplicationUpdate> latest{update};
+        // Build a complete candidate history before changing the committed cache.
+        // Untimed consumers retain their original behavior and shed timed state.
+        auto presentation = !received_at || update.baseline ? std::vector<Impl::PresentationFrame>{}
+                                                            : impl_->presentation;
+        if (received_at) {
+            Impl::PresentationFrame frame{*received_at, candidate};
+            if (!presentation.empty() && presentation.back().received_at == *received_at) {
+                presentation.back() = std::move(frame);
+            } else {
+                if (presentation.size() == replica_presentation_maximum_frames)
+                    presentation.erase(presentation.begin());
+                presentation.push_back(std::move(frame));
+            }
+        }
         impl_->entities.swap(candidate);
         impl_->known_live.swap(known);
         impl_->latest = std::move(latest);
@@ -673,9 +752,53 @@ Result<ReplicaApplyResult> ReplicaClient::apply(const ReplicationUpdate& update)
         impl_->stream = update.stream;
         impl_->revision = update.revision;
         impl_->has_baseline = true;
+        impl_->presentation.swap(presentation);
+        if (received_at)
+            impl_->latest_received_at = received_at;
         return ReplicaApplyResult::applied;
     } catch (...) {
         return rejected("net.replica.apply", ErrorCode::execution_failed);
+    }
+}
+
+Result<ReplicaPresentationSnapshot> ReplicaClient::sample(MonotonicTime timestamp) const {
+    if (auto owner = impl_->check_owner(); !owner)
+        return owner.error();
+    if (timestamp < MonotonicTime::zero())
+        return rejected("net.replica.sample-time", ErrorCode::invalid_argument);
+    try {
+        ReplicaPresentationSnapshot result{impl_->stream, impl_->revision, impl_->has_baseline,
+                                           false, impl_->entities};
+        if (!impl_->has_baseline || impl_->presentation.empty())
+            return result;
+        const auto& frames = impl_->presentation;
+        auto after = std::ranges::find_if(
+            frames, [&](const auto& frame) { return frame.received_at >= timestamp; });
+        if (after == frames.end())
+            after = std::prev(frames.end());
+        auto before = after;
+        if (after != frames.begin() && after->received_at > timestamp)
+            before = std::prev(after);
+        const auto elapsed = after->received_at - before->received_at;
+        const double alpha = elapsed == MonotonicTime::zero()
+                                 ? 0
+                                 : static_cast<double>((timestamp - before->received_at).count()) /
+                                       static_cast<double>(elapsed.count());
+        for (auto& entity : result.entities) {
+            const auto left = std::ranges::find(before->entities, entity.id, &ReplicaEntity::id);
+            const auto right = std::ranges::find(after->entities, entity.id, &ReplicaEntity::id);
+            if (left == before->entities.end() || right == after->entities.end())
+                continue;
+            if (before == after) {
+                entity.pose = left->pose;
+            } else if (auto pose = interpolate_pose(left->pose, right->pose, alpha)) {
+                entity.pose = *pose;
+                result.interpolated = true;
+            }
+        }
+        return result;
+    } catch (...) {
+        return rejected("net.replica.sample", ErrorCode::execution_failed);
     }
 }
 
@@ -697,6 +820,7 @@ Result<void> ReplicaClient::discard_baseline() {
     }
     impl_->entities.clear();
     impl_->has_baseline = false;
+    impl_->presentation.clear();
     return {};
 }
 
@@ -714,6 +838,9 @@ Result<ReplicaClientStats> ReplicaClient::stats() const {
         result.latest_change_capacity_bytes =
             impl_->latest->changes.capacity() * sizeof(ReplicationRecord);
     }
+    result.presentation_frames = impl_->presentation.size();
+    for (const auto& frame : impl_->presentation)
+        result.presentation_entities += frame.entities.size();
     return result;
 }
 

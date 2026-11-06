@@ -836,7 +836,7 @@
       "planned_fixture": "AuthoritativeCharacterMovement, PredictionCorrection, CombatAuthorityReject and ClientPauseWorldContinuity fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "M04a implements authenticated sequenced directions, bounded server-owned character movement with native collision, committed corrections, live session/entity/body fences and an explicit local origin. Selected Windows Debug and WSL ASan+UBSan checks pass; see docs/handoffs/M04a-authoritative-movement.md. Prediction, remote interpolation, combat, connected durable/presentation effect deduplication and full two-client adversity/continuity acceptance remain M04b-M04e under docs/roadmap/authoritative-gameplay-plan.md. Full REQ-M04 remains NOT_RUN."
+        "reason": "M04a-M04b implement authenticated bounded movement with native collision and committed corrections, bounded client prediction/reconciliation, timed remote interpolation and narrow publication/control through the durable character owner. Selected Windows Debug and WSL ASan+UBSan checks pass, including actual TLS/native correction, seeded decoded-message faults and a second authenticated client receiving/interpolating published movement. See docs/handoffs/M04b-client-movement.md. Combat, full connected durable/presentation effect deduplication, reconnect lifecycle and complete two-client adversity/continuity acceptance remain M04c-M04e. Full REQ-M04 remains NOT_RUN."
       }
     },
     {
@@ -1012,6 +1012,53 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "core.movement-prediction",
+        "name": "Bounded client input prediction and authoritative reconciliation",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.core.movement-prediction",
+          "shark.server.movement"
+        ],
+        "test_sources": [
+          "tests/core_movement_prediction_tests.cpp",
+          "tests/server_movement_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/core/src/net_movement_prediction.cpp",
+          "server/storage/src/movement.cpp"
+        ],
+        "fixture_reason": "Actual TLS FIFO admission and native server corrections connect immutable prepared inputs, eight-input backpressure, exact retry receipts, bounded replay and explicit suspension. Independent motion/gravity expectations and server wall collision distinguish the approximate client model from native authoritative physics. Seeded faults operate on decoded corrections, without claiming encrypted TCP loss or rendered qualification.",
+        "featureworld_cases": []
+      },
+      {
+        "id": "core.replica-interpolation",
+        "name": "Atomic timed replica history and display-only affine sampling",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.core.net-interpolation",
+          "shark.core.net-replication",
+          "shark.core.net-replication-process",
+          "shark.server.movement"
+        ],
+        "test_sources": [
+          "tests/core_net_interpolation_tests.cpp",
+          "tests/core_net_replication_tests.cpp",
+          "tests/replication_probe.cpp",
+          "tests/server_movement_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/core/src/net_replication.cpp",
+          "server/storage/src/characters.cpp",
+          "docs/client-movement.md"
+        ],
+        "fixture_reason": "The existing checked replica cache atomically retains at most eight complete receive-time frames. Literal midpoint/rotation, full affine fallback, current topology and lifecycle checks connect to actual two-client movement publication through the original durable/session owner. The existing separate-process fixture also exercises timed verified-server ingestion and endpoint parity; no graphical smoothing or new wire version is claimed.",
+        "featureworld_cases": []
+      },
       {
         "id": "server.authoritative-movement",
         "name": "Authenticated bounded character movement and committed corrections",
@@ -3719,6 +3766,55 @@
       }
     ],
     "commands": [
+      {
+        "id": "net.movement.prediction",
+        "name": "Prepare/send exact inputs and reconcile owned-character presentation",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.core.movement-prediction",
+          "shark.server.movement"
+        ],
+        "test_sources": [
+          "tests/core_movement_prediction_tests.cpp",
+          "tests/server_movement_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/core/src/net_movement_prediction.cpp",
+          "server/storage/src/movement.cpp"
+        ],
+        "fixture_reason": "Actual TLS FIFO admission and native server corrections connect immutable prepared inputs, eight-input backpressure, exact retry receipts, bounded replay and explicit suspension. Independent motion/gravity expectations and server wall collision distinguish the approximate client model from native authoritative physics. Seeded faults operate on decoded corrections, without claiming encrypted TCP loss or rendered qualification.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "These are player-connection presentation services and server publication, not semantic source-authoring commands. Actual TLS, native server movement and strict replica ownership/lifecycle fixtures establish their boundaries; the Tools FeatureWorld authoring host cannot substitute for those authorities or gain a server-only Storage dependency."
+      },
+      {
+        "id": "net.replica.presentation",
+        "name": "Apply timed verified-server replicas and sample bounded display history",
+        "requirement_ids": [
+          "REQ-M04"
+        ],
+        "test_ids": [
+          "shark.core.net-interpolation",
+          "shark.core.net-replication",
+          "shark.core.net-replication-process",
+          "shark.server.movement"
+        ],
+        "test_sources": [
+          "tests/core_net_interpolation_tests.cpp",
+          "tests/core_net_replication_tests.cpp",
+          "tests/replication_probe.cpp",
+          "tests/server_movement_tests.cpp"
+        ],
+        "fixtures": [
+          "engine/core/src/net_replication.cpp",
+          "server/storage/src/characters.cpp",
+          "docs/client-movement.md"
+        ],
+        "fixture_reason": "The existing checked replica cache atomically retains at most eight complete receive-time frames. Literal midpoint/rotation, full affine fallback, current topology and lifecycle checks connect to actual two-client movement publication through the original durable/session owner. The existing separate-process fixture also exercises timed verified-server ingestion and endpoint parity; no graphical smoothing or new wire version is claimed.",
+        "featureworld_cases": [],
+        "external_fixture_reason": "These are player-connection presentation services and server publication, not semantic source-authoring commands. Actual TLS, native server movement and strict replica ownership/lifecycle fixtures establish their boundaries; the Tools FeatureWorld authoring host cannot substitute for those authorities or gain a server-only Storage dependency."
+      },
       {
         "id": "server.movement.submit",
         "name": "Sequenced authenticated movement input and fixed-tick correction publication",

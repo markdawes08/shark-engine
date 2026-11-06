@@ -487,6 +487,36 @@ Result<net::SessionSnapshot> CharacterAuthority::authorize_entity(net::TlsTransp
     return session;
 }
 
+Result<net::ReplicationPublication> CharacterAuthority::publish_replication(
+    net::ReplicationServer& publisher, Scene& scene, std::span<const EntityHandle> published,
+    net::TlsTransport& transport, MonotonicTime now, std::size_t available_framed_bytes) {
+    constexpr auto operation = "storage.characters.replication.publish";
+    if (auto checked = impl_->check(operation); !checked)
+        return checked.error();
+    SceneQueryOptions query;
+    query.page_size = 1;
+    query.scan_budget = 1;
+    auto observation = scene.query_entities(query);
+    if (!observation)
+        return observation.error();
+    const auto* scope = std::get_if<RegionSceneScope>(&observation.value().scope());
+    if (!scope || scope->world != impl_->world)
+        return rejected(operation,
+                        "Replication source must belong to the durable authoritative world");
+    return publisher.publish(scene, published, *impl_->sessions, transport, now,
+                             available_framed_bytes);
+}
+
+Result<net::ReplicationControlResult>
+CharacterAuthority::control_replication(net::ReplicationServer& publisher,
+                                        net::TlsTransport& transport,
+                                        const net::ReplicationControl& control, MonotonicTime now) {
+    constexpr auto operation = "storage.characters.replication.control";
+    if (auto checked = impl_->check(operation); !checked)
+        return checked.error();
+    return publisher.control(*impl_->sessions, transport, control, now);
+}
+
 Result<CharacterRecord> CharacterAuthority::load(net::TlsTransport& transport,
                                                  const net::SessionEnvelope& authority,
                                                  MonotonicTime now) {

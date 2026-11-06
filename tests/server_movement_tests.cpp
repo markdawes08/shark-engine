@@ -1,3 +1,5 @@
+#include <shark/net/fault_link.hpp>
+#include <shark/net/movement_prediction.hpp>
 #include <shark/server/movement.hpp>
 
 #include <catch2/catch_approx.hpp>
@@ -68,12 +70,14 @@ struct Pair {
     std::unique_ptr<TlsListener> listener;
     std::unique_ptr<TlsTransport> client;
     std::unique_ptr<TlsTransport> server;
-    Pair() {
+    explicit Pair(bool second = false) {
         listener = take(TlsListener::listen_loopback_authenticated(
             0, {pem("server.pem"), pem("server-key.pem")}, pem("ca.pem")));
         client = take(TlsTransport::connect_loopback_authenticated(
             take(listener->port()), {pem("ca.pem"), "shark.test"},
-            {pem("session/client-a.pem"), pem("session/client-a-key.pem")}, 0ns));
+            {pem(second ? "session/client-b.pem" : "session/client-a.pem"),
+             pem(second ? "session/client-b-key.pem" : "session/client-a-key.pem")},
+            0ns));
         const auto deadline = std::chrono::steady_clock::now() + 5s;
         for (;;) {
             REQUIRE(std::chrono::steady_clock::now() < deadline);
@@ -482,4 +486,147 @@ TEST_CASE("Movement speed ceilings and uncertain completed ticks retain truthful
         REQUIRE(take(fixture.physics->stats()).completed_ticks == 1);
         fixture.complete = true;
     }
+}
+
+TEST_CASE("Predicted movement reconciles actual native corrections through bounded semantic faults",
+          "[server-movement][movement-connected]") {
+    Fixture fixture{true, true};
+    auto predictor = take(MovementPredictor::create(fixture.session, fixture.initial, {0, 8}));
+    FaultLinkConfig config;
+    config.seed = 1337;
+    config.delay = 100ms;
+    config.jitter = 30ms;
+    config.reorder_delay = 80ms;
+    config.loss_per_10000 = 500;
+    config.duplication_per_10000 = 10000;
+    config.reorder_per_10000 = 5000;
+    auto link = take(FaultLink::create(config));
+    bool saturated = false;
+    bool duplicate = false;
+    std::optional<MovementState> latest;
+    for (unsigned tick = 0; tick < 40; ++tick) {
+        for (const auto& delivery : take(link->drain(fixture.now, 64))) {
+            const auto before = take(predictor->snapshot());
+            const auto outcome = predictor->apply(take(decode_movement_reply(delivery.payload)));
+            if (!outcome) {
+                // Deliberately reordered older corrections cannot roll back a
+                // newer accepted state or repeat the predicted input history.
+                const auto after = take(predictor->snapshot());
+                REQUIRE(after.revision == before.revision);
+                REQUIRE(after.authoritative == before.authoritative);
+                REQUIRE(after.predicted == before.predicted);
+            } else {
+                duplicate = duplicate || outcome.value() == PredictionCorrectionResult::duplicate;
+            }
+        }
+        const auto before = take(predictor->snapshot());
+        auto prepared =
+            predictor->prepare(envelope(fixture.session, fixture.next_command), 1000, 0);
+        if (before.pending_inputs == 8) {
+            REQUIRE_FALSE(prepared);
+            saturated = true;
+        } else {
+            const auto exact = take(std::move(prepared));
+            REQUIRE(take(predictor->send(*fixture.pair.client, exact)) ==
+                    PredictionSendResult::admitted);
+            const auto received = fixture.pair.receive(true, fixture.now);
+            REQUIRE(received.kind == MessageKind::movement_input);
+            take(fixture.movement->submit(
+                *fixture.authority, *fixture.pair.server, *fixture.scene, *fixture.physics,
+                take(decode_movement_input(received.payload)), fixture.now));
+            ++fixture.next_command;
+        }
+        const auto advanced = fixture.step();
+        REQUIRE(advanced.deliveries.size() == 1);
+        latest = advanced.deliveries.front().state;
+        take(fixture.pair.server->send(MessageKind::movement_state,
+                                       take(encode_movement_reply(MovementReply{*latest}))));
+        const auto received = fixture.pair.receive(false, fixture.now);
+        REQUIRE(received.kind == MessageKind::movement_state);
+        if (tick == 5)
+            take(link->partition_until(fixture.now, fixture.now + 500ms));
+        take(link->send(fixture.now, received.payload, latest->completed_tick));
+        REQUIRE(take(predictor->snapshot()).pending_inputs <= 8);
+        REQUIRE(fixture.x() < 1.6);
+    }
+    REQUIRE(saturated);
+    REQUIRE(duplicate);
+    REQUIRE(take(link->stats()).partition_drops > 0);
+    REQUIRE(take(link->stats()).reordered_messages > 0);
+    REQUIRE(take(fixture.physics->stats()).completed_ticks == 40);
+    const auto committed_revision = take(fixture.scene->stats()).revision;
+    const auto final_result = take(predictor->apply(MovementReply{*latest}));
+    REQUIRE(final_result == PredictionCorrectionResult::applied);
+    const auto final = take(predictor->snapshot());
+    REQUIRE(final.pending_inputs == 0);
+    REQUIRE(final.predicted.position == latest->position);
+    REQUIRE(final.predicted.velocity == latest->velocity);
+    REQUIRE(take(fixture.scene->stats()).revision == committed_revision);
+    REQUIRE(take(predictor->apply(MovementReply{*latest})) ==
+            PredictionCorrectionResult::duplicate);
+    fixture.complete = true;
+}
+
+TEST_CASE("A second authenticated client interpolates published native character movement",
+          "[server-movement][movement-connected]") {
+    Fixture fixture;
+    Pair observer{true};
+    const auto account = id<AccountId>(20);
+    take(fixture.authority->provision_account(account));
+    take(fixture.authority->enroll_certificate(
+        account, take(certificate_fingerprint(pem("session/client-b.pem")))));
+    const auto roster = take(fixture.authority->roster(*observer.server, account, 0ns));
+    const auto record = take(fixture.authority->create_character(
+        *observer.server, account, roster.revision, {Name{"Observer"}, fixture.origin}, 0ns));
+    const auto logged = take(
+        fixture.authority->apply(*observer.server, LoginRequest{account, record.character}, 0ns));
+    const auto ready = take(fixture.authority->apply(
+        *observer.server, SetReadyRequest{envelope(logged, 1), true}, 0ns));
+    auto publisher = take(ReplicationServer::create());
+    auto replica = take(ReplicaClient::create(ready));
+    std::uint64_t control_sequence = 2;
+    const std::array<EntityHandle, 1> selection{fixture.entity};
+    // Reject another durable world before creating a stream or admitting bytes.
+    auto foreign = take(Scene::create(
+        RegionSceneScope{id<WorldId>(99), {id<RegionId>(3), id<RegionInstanceId>(4), 1}}));
+    const std::array<EntityHandle, 1> foreign_selection{
+        take(foreign->create_entity(EntitySeed{id<WorldEntityId>(90)}))};
+    REQUIRE_FALSE(fixture.authority->publish_replication(*publisher, *foreign, foreign_selection,
+                                                         *observer.server, 0ns, 4096));
+    REQUIRE(take(publisher->stats()).streams == 0);
+    REQUIRE(take(observer.server->stats()).send_queue_frames == 0);
+    for (unsigned tick = 0; tick < 6; ++tick) {
+        fixture.submit();
+        fixture.step();
+        const auto publication = take(fixture.authority->publish_replication(
+            *publisher, *fixture.scene, selection, *observer.server, fixture.now, 4096));
+        REQUIRE(publication.status == ReplicationPublishStatus::sent);
+        const auto received = observer.receive(false, fixture.now);
+        REQUIRE(received.kind == MessageKind::replication_state);
+        const auto update = take(decode_replication_update(received.payload));
+        REQUIRE(update.session == ready.session);
+        REQUIRE(take(replica->apply(update, fixture.now)) == ReplicaApplyResult::applied);
+        if (tick != 0) {
+            const auto committed = take(replica->snapshot());
+            const auto sampled = take(replica->sample(fixture.now - 25ms));
+            REQUIRE(sampled.interpolated);
+            REQUIRE(sampled.entities.size() == 1);
+            REQUIRE(sampled.entities.front().pose.coefficients[3] ==
+                    Catch::Approx(static_cast<double>(tick) * 0.3 + 0.15).margin(2e-6));
+            REQUIRE(take(replica->snapshot()).entities == committed.entities);
+        }
+        take(observer.client->send(
+            MessageKind::replication_control,
+            take(encode_replication_control(ReplicationAck{envelope(ready, control_sequence),
+                                                           update.stream, update.revision}))));
+        const auto control = observer.receive(true, fixture.now);
+        REQUIRE(control.kind == MessageKind::replication_control);
+        REQUIRE(take(fixture.authority->control_replication(
+                    *publisher, *observer.server, take(decode_replication_control(control.payload)),
+                    fixture.now)) == ReplicationControlResult::acknowledged);
+        ++control_sequence;
+    }
+    REQUIRE(take(replica->stats()).presentation_frames == 6);
+    REQUIRE(take(fixture.movement->stats()).completed_ticks == 6);
+    fixture.complete = true;
 }

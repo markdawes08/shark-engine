@@ -8,7 +8,7 @@ and pushing. Manual UI testing remains paused.
 | Checkpoint | Scope |
 | --- | --- |
 | M04a | Server-owned character movement/collision, authenticated sequenced directions, bounded input queues and committed movement corrections. Complete under the initial primitive movement profile; see the [handoff](../handoffs/M04a-authoritative-movement.md). |
-| M04b | Owned-character prediction/reconciliation, remote interpolation and bounded history, using actual authoritative corrections. Keep session, movement-stream, input and tick identities distinct; assume no cross-CPU physics lockstep. |
+| M04b | Owned-character prediction/reconciliation, remote interpolation and bounded history, using actual authoritative corrections. Complete; the [handoff](../handoffs/M04b-client-movement.md) records native correction and second-client publication/interpolation checks. |
 | M04c | Server-validated combat/interactions, cooldowns, range, damage, death/respawn and server Lua rules. Select and document the combat model and any lag-compensation policy before implementation. |
 | M04d | Connected spawn/despawn, disconnect/reconnect and replay lifecycle. Preserve Scene/entity/body/session epochs and original durable operation IDs; corrections cannot repeat durable effects or presentation events. |
 | M04e | Connected two-client acceptance under declared network adversity, client pause/disconnect and headless world continuity. Cover the full M04 behavioral gate and reuse valid earlier results. |

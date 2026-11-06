@@ -331,7 +331,10 @@ loss.
 Follow the [five implementation checkpoints](authoritative-gameplay-plan.md).
 M04a's [handoff](../handoffs/M04a-authoritative-movement.md) records completed
 authenticated sequenced movement, native collision and committed corrections.
-Prediction, combat, connected lifetime/effects and full acceptance retain M04b-M04e.
+M04b's [handoff](../handoffs/M04b-client-movement.md) records bounded prediction,
+reconciliation and remote interpolation through actual native corrections and
+authenticated replica publication. Combat, connected lifetime/effects and full
+acceptance retain M04c-M04e.
 
 After 18-21 and M02/M03. Add server-owned character movement/collision, input
 sequencing, prediction/reconciliation, remote interpolation, bounded history and

@@ -1,5 +1,6 @@
 #pragma once
 
+#include "shark/net/replication.hpp"
 #include "shark/scene.hpp"
 #include "shark/storage/store.hpp"
 
@@ -88,6 +89,19 @@ class CharacterAuthority final {
                                                                 const Scene& scene,
                                                                 EntityHandle entity,
                                                                 MonotonicTime now);
+    // Trusted public-field selection through the existing replication owner.
+    // Reuses this authority's sole private SessionAuthority, with no session
+    // borrow or database I/O. Source must belong to the durable world; selection
+    // remains a server allowlist, never a player-provided list of entity handles.
+    [[nodiscard]] Result<net::ReplicationPublication>
+    publish_replication(net::ReplicationServer& publisher, Scene& scene,
+                        std::span<const EntityHandle> published, net::TlsTransport& transport,
+                        MonotonicTime now, std::size_t available_framed_bytes);
+    // Existing ACK/resync validation and quotas retain exact shared session
+    // command admission; this adapter adds no sequencer or retry identity.
+    [[nodiscard]] Result<net::ReplicationControlResult>
+    control_replication(net::ReplicationServer& publisher, net::TlsTransport& transport,
+                        const net::ReplicationControl& control, MonotonicTime now);
     // Both operations require a current ready session and spend the exact next
     // command sequence/rate admission. Rejected revision/state never changes the
     // database; admitted stale-revision/storage failures consume their sequence.

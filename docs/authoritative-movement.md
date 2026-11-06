@@ -115,6 +115,8 @@ magnitude within 256 m/s. No native handle, source data or durable entity ID is
 serialized. Additive outer kinds do not claim negotiation with older peers.
 
 The [M04a handoff](handoffs/M04a-authoritative-movement.md) records focused CPU,
-actual mTLS and native collision verification. Prediction, remote interpolation,
-combat, durable-effect deduplication and two-client network adversity retain
-M04b-M04e; full REQ-M04 remains NOT_RUN.
+actual mTLS and native collision verification. M04b's
+[client contract](client-movement.md) connects bounded prediction/reconciliation,
+timed remote interpolation and publication through this existing character owner.
+Combat, durable-effect deduplication and full two-client network adversity retain
+M04c-M04e; full REQ-M04 remains NOT_RUN.

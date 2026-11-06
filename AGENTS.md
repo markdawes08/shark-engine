@@ -54,7 +54,21 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [M04a, authoritative movement](docs/handoffs/M04a-authoritative-movement.md).**
+**Current handoff: [M04b, client movement](docs/handoffs/M04b-client-movement.md).**
+Follow the [client movement contract](docs/client-movement.md) and
+[ADR 0060](docs/architecture/0060-client-movement-presentation.md).
+Prediction owns at most eight unacknowledged inputs and uses immutable prepared
+bytes with atomic FIFO/history publication. Preserve separate session/input/tick
+identities, exact retained receipts, server correction fences and explicit
+suspension on rejection or uncertainty. Approximate replay cannot veto a valid
+server correction or emit gameplay/durable/presentation effects. Timed ReplicaClient
+history publishes atomically with its existing cache; duplicates never retime,
+samples keep current live topology and affine fallback preserves a full committed
+pose. CharacterAuthority's narrow publication/control adapters retain its private
+session owner and durable-world boundary. M04c combat/interaction rules are next;
+choose their explicit profile before implementation. Full REQ-M04 remains NOT_RUN.
+
+The [M04a handoff](docs/handoffs/M04a-authoritative-movement.md) remains applicable.
 Follow the [M04 checkpoints](docs/roadmap/authoritative-gameplay-plan.md),
 [movement contract](docs/authoritative-movement.md) and
 [ADR 0059](docs/architecture/0059-authoritative-character-movement.md).
@@ -63,8 +77,7 @@ existing leased PhysicsWorld: 20 Hz, three collision substeps, bounded direction
 one input per tick and committed corrections. Preserve shared session command
 sequencing, separate fresh movement streams/input IDs, exact live transport and
 entity/body fences, explicit local origins and terminal fault semantics. Queued
-input never grants later authority. M04b prediction/reconciliation and remote
-interpolation are next; full REQ-M04 remains NOT_RUN.
+input never grants later authority. Its primitive movement profile remains explicit.
 
 The [21e handoff](docs/handoffs/21e-prefab-acceptance.md) remains applicable.
 Follow the [prefab checkpoints](docs/roadmap/prefab-plan.md),

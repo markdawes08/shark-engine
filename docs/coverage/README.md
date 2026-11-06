@@ -9,9 +9,11 @@ evidence effort; historical full-profile counts are not recurring run lists.
 ## Current state
 
 M04 is in progress under the [gameplay checkpoints](../roadmap/authoritative-gameplay-plan.md).
-[M04a](../handoffs/M04a-authoritative-movement.md) records passing authenticated
-sequenced movement, native collision and committed corrections on Windows and
-WSL sanitizers. Prediction, combat and connected acceptance remain open.
+[M04a](../handoffs/M04a-authoritative-movement.md) records authenticated sequenced
+movement, native collision and committed corrections.
+[M04b](../handoffs/M04b-client-movement.md) adds bounded prediction/reconciliation,
+timed remote interpolation and authenticated second-client publication. Combat
+and full connected acceptance remain open; full REQ-M04 remains NOT_RUN.
 
 The [prefab checkpoints](../roadmap/prefab-plan.md)
 record completed source values, shared instance commands, deferred runtime/Lua

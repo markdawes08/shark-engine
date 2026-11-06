@@ -59,6 +59,8 @@ add_executable(Tests
     core_net_mtls_tests.cpp
     core_net_session_tests.cpp
     core_net_movement_wire_tests.cpp
+    core_movement_prediction_tests.cpp
+    core_net_interpolation_tests.cpp
     core_net_replication_tests.cpp
     core_net_replication_wire_tests.cpp
     net_interest_tests.cpp
@@ -616,6 +618,10 @@ set_tests_properties(shark.core.net-mtls PROPERTIES LABELS "cpu;unit;server" TIM
 add_test(NAME shark.core.net-session COMMAND Tests "[net-session]" --rng-seed 1337)
 add_test(NAME shark.core.net-movement-wire COMMAND Tests "[net-movement-wire]" --rng-seed 1337)
 set_tests_properties(shark.core.net-movement-wire PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)
+add_test(NAME shark.core.movement-prediction COMMAND Tests "[movement-prediction]" --rng-seed 1337)
+set_tests_properties(shark.core.movement-prediction PROPERTIES LABELS "cpu;unit;integration" TIMEOUT 30)
+add_test(NAME shark.core.net-interpolation COMMAND Tests "[net-interpolation]" --rng-seed 1337)
+set_tests_properties(shark.core.net-interpolation PROPERTIES LABELS "cpu;unit" TIMEOUT 20)
 set_tests_properties(shark.core.net-session PROPERTIES LABELS "cpu;unit;server" TIMEOUT 30)
 add_test(NAME shark.core.net-replication-wire COMMAND Tests "[net-replication-wire]" --rng-seed 1337)
 set_tests_properties(shark.core.net-replication-wire PROPERTIES LABELS "cpu;unit;server" TIMEOUT 20)

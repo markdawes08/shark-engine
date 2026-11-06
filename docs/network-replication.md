@@ -93,6 +93,12 @@ ended streams; no background timer or cleanup thread is created.
 
 ## Client cache and controls
 
+M04b adds [timed presentation sampling](client-movement.md#remote-interpolation)
+to this same cache, with atomically staged bounded history and current-live-ID
+samples. The original untimed apply/snapshot/ACK contract below remains applicable.
+CharacterAuthority's narrow publication/control adapters use this publisher with
+its existing private session owner and durable Region world check.
+
 Construct `ReplicaClient` from this connection's accepted active, ready
 `SessionSnapshot`. Feed it decoded state received from the verified TLS server.
 A copied snapshot is only cache initialization data and grants no server-side
