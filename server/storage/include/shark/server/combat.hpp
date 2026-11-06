@@ -81,11 +81,10 @@ class CharacterCombat final {
     // first admitted step/reconnect fixes the optional runtime incarnation;
     // later omission, replacement or opt-in rejects before callbacks. Native
     // callbacks and client prediction never execute gameplay rules.
-    [[nodiscard]] Result<CombatTick> step(storage::CharacterAuthority& authority,
-                                          CharacterMovement& movement, Scene& scene,
-                                          PhysicsWorld& physics,
-                                          std::span<net::TlsTransport* const> transports,
-                                          MonotonicTime now, ScriptRuntime* scripts = nullptr);
+    [[nodiscard]] Result<CombatTick>
+    step(storage::CharacterAuthority& authority, CharacterMovement& movement, Scene& scene,
+         PhysicsWorld& physics, std::span<net::TlsTransport* const> transports, MonotonicTime now,
+         ScriptRuntime* scripts = nullptr, const WorldTraversal* traversal = nullptr);
     // A detached record is required; a fresh ready session restores its original
     // health/cooldown/death deadline and exact entity, never a reset/heal intent.
     [[nodiscard]] Result<CombatReconnectReport>

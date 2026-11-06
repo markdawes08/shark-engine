@@ -9,8 +9,8 @@ staging, commits and pushing. Manual UI testing remains paused.
 | --- | --- |
 | M05a | Checked world/local frames, generation-bound float conversion, validated static development cell payloads, Tools preparation and bounded synchronous Core loading. Complete; see the [handoff](../handoffs/M05a-world-cell-foundation.md). |
 | M05b | Asynchronous content loading, prefetch, cancellation, retry, last-valid replacement, eviction and explicit resident memory/IO limits. Complete; see the [handoff](../handoffs/M05b-world-cell-residency.md). |
-| M05c | Static-world collision and tiled navigation streaming, traversal readiness and bounded NPC pathfinding/pursuit across cell edges. |
-| M05d | Adjacent authoritative regions in one process, overlapping interest and continuous movement, targeting, combat/projectiles and durable-operation boundary fixtures. |
+| M05c | Static-world collision and tiled navigation streaming, traversal readiness and bounded NPC pathfinding/pursuit across cell edges. Complete under the explicit authored-surface profile; see the [handoff](../handoffs/M05c-world-traversal.md). |
+| M05d | Adjacent authoritative regions in one process, overlapping interest and continuous movement, targeting, combat/projectiles and durable-operation boundary fixtures; connect shared cell-geometry preparation to retained human/terminal authoring adapters. |
 | M05e | Consistent prepare/cut/commit transfer, final tick/input state, pending operations and stale-owner fencing at mutation and persistence boundaries. |
 | M05f | The same transfer across actual local processes, bounded routing of post-cut inputs/completions and recovery from source/destination loss and partitions before/after commit. |
 | M05g | Authored continuous-world connected acceptance with actual separate region processes, network faults, precision, readiness and resident-budget evidence. |

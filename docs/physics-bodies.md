@@ -1,5 +1,12 @@
 # Rigid bodies and colliders
 
+M05c adds [runtime static triangle meshes](world-traversal.md) through the same
+leased PhysicsWorld. Their checked region proxies have no authored RigidBody.
+PhysicsBodyState now reports geometry explicitly and settings as an optional:
+primitives retain their component value, while meshes expose actual bounds,
+material/filter properties and triangle count. C++ readers must check settings
+before using primitive fields. Source component values and versions are unchanged.
+
 18b extends the [physics owner](physics-world.md) with real native body lifetime
 and one optional `RigidBody` component. [ADR 0046](architecture/0046-rigid-bodies.md)
 and the [checkpoint plan](roadmap/physics-plan.md) separate this surface from

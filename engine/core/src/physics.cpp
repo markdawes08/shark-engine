@@ -21,6 +21,7 @@
 #include <Jolt/Physics/Collision/RayCast.h>
 #include <Jolt/Physics/Collision/Shape/BoxShape.h>
 #include <Jolt/Physics/Collision/Shape/CapsuleShape.h>
+#include <Jolt/Physics/Collision/Shape/MeshShape.h>
 #include <Jolt/Physics/Collision/Shape/SphereShape.h>
 #include <Jolt/Physics/Constraints/ContactConstraintManager.h>
 #include <Jolt/Physics/PhysicsSystem.h>
@@ -37,6 +38,7 @@
 #include <limits>
 #include <mutex>
 #include <new>
+#include <set>
 #include <thread>
 #include <tuple>
 #include <type_traits>
@@ -111,8 +113,10 @@ class MeteredTemporary final : public JPH::TempAllocator {
 };
 
 // Reviewed against the locked Update/IslandBuilder/ContactConstraintManager
-// allocation paths. Discrete rigid primitives only, no external constraints/step-listeners/
-// soft bodies, one native job thread, large-island splitting disabled. Include
+// allocation paths. Discrete rigid primitives and bounded immutable static mesh
+// triangles use the same capped body-pair/contact buffers; mesh visitors use
+// stack traversal, not additional Update arena arrays. No external constraints/
+// step-listeners/soft bodies, one native job thread, large-island splitting disabled. Include
 // simultaneous buffers, Array growth, alignment and a 64 KiB fixed allowance.
 std::size_t temporary_requirement(const PhysicsWorldConfig& config) {
     return 64 * 1024 + 2 * config.collision_substeps * sizeof(JPH::PhysicsUpdateContext::Step) +
@@ -615,6 +619,15 @@ struct PhysicsWorld::Impl {
         Transform previous_pose{};
         std::optional<Transform> target{};
         math::Vec3 pending_force{};
+        std::size_t mesh_triangles{0};
+        [[nodiscard]] bool matches(const SceneEntityState& source) const {
+            const auto expected =
+                mesh_triangles == 0 ? std::optional<RigidBody>{settings} : std::nullopt;
+            return source.reference == entity && source.rigid_body == expected &&
+                   source.local_transform == source_pose && !source.parent &&
+                   (mesh_triangles == 0 || (!source.camera && !source.mesh_renderer &&
+                                            !source.script && source.children.empty()));
+        }
     };
     struct BodySlot {
         std::uint64_t generation{1};
@@ -690,9 +703,7 @@ struct PhysicsWorld::Impl {
             error.context.operation = operation;
             return error;
         }
-        if (entity.value().reference != record.entity ||
-            entity.value().rigid_body != record.settings ||
-            entity.value().local_transform != record.source_pose || entity.value().parent)
+        if (!record.matches(entity.value()))
             return physics_error(ErrorCode::conflict,
                                  "Body source changed; remove and recreate explicitly", operation);
         return checked.value();
@@ -719,9 +730,7 @@ struct PhysicsWorld::Impl {
             error.context.operation = operation;
             return error;
         }
-        if (entity.value().reference != record.entity ||
-            entity.value().rigid_body != record.settings ||
-            entity.value().local_transform != record.source_pose || entity.value().parent)
+        if (!record.matches(entity.value()))
             return physics_error(ErrorCode::conflict,
                                  "Query body source changed; remove and recreate explicitly",
                                  operation);
@@ -982,6 +991,151 @@ Result<PhysicsBodyHandle> PhysicsWorld::create_runtime_body(Scene& scene,
         return checked.error();
     return create_body_impl(scene, entity.handle, &scene, &body);
 }
+Result<PhysicsBodyHandle>
+PhysicsWorld::create_static_mesh_body(Scene& scene, WorldEntityId identity, Name name,
+                                      const PhysicsStaticMesh& mesh,
+                                      PhysicsStaticMeshSettings settings) {
+    constexpr auto operation = "physics.body.create_static_mesh";
+    if (auto checked = impl_->check_simulation(scene, operation); !checked)
+        return checked.error();
+    if (temporary_requirement(impl_->config) > impl_->config.temporary_bytes)
+        return physics_error(ErrorCode::conflict, "Physics temporary arena cannot admit geometry",
+                             operation);
+    bool native_work = false;
+    try {
+        if (mesh.vertices.empty() || mesh.vertices.size() > physics_static_mesh_maximum_vertices ||
+            mesh.triangles.empty() || mesh.triangles.size() > physics_static_mesh_maximum_triangles)
+            return physics_error(ErrorCode::invalid_argument, "Static mesh exceeds geometry bounds",
+                                 operation);
+        if (auto checked = validate_name(name); !checked)
+            return checked.error();
+        RigidBody properties;
+        properties.friction = settings.friction;
+        properties.restitution = settings.restitution;
+        properties.collision_layer = settings.collision_layer;
+        properties.collision_mask = settings.collision_mask;
+        if (auto checked = validate_rigid_body(properties); !checked)
+            return checked.error();
+        SceneQueryOptions query;
+        query.fields = {false, false, false, false, false, false};
+        query.page_size = 1;
+        query.scan_budget = 1;
+        auto scope = scene.query_entities(query);
+        if (!scope)
+            return scope.error();
+        if (!std::holds_alternative<RegionSceneScope>(scope.value().scope()))
+            return physics_error(ErrorCode::conflict, "Static meshes require a region Scene",
+                                 operation);
+        const auto existing = scene.find(identity);
+        if (existing)
+            return physics_error(ErrorCode::conflict, "Static mesh entity identity is already live",
+                                 operation);
+        if (existing.error().code != ErrorCode::invalid_id)
+            return existing.error();
+        std::size_t triangles = mesh.triangles.size();
+        for (const auto& slot : impl_->bodies) {
+            if (!slot.value)
+                continue;
+            if (slot.value->entity.handle.scene_instance != scope.value().revision().scene_instance)
+                return physics_error(ErrorCode::conflict, "Physics contains another Scene",
+                                     operation);
+            triangles += slot.value->mesh_triangles;
+        }
+        if (triangles > physics_static_mesh_maximum_world_triangles)
+            return physics_error(ErrorCode::conflict, "Static mesh world triangle budget is full",
+                                 operation);
+        auto found = std::find_if(impl_->bodies.begin(), impl_->bodies.end(),
+                                  [](const auto& slot) { return !slot.retired && !slot.value; });
+        const auto index = static_cast<std::size_t>(found - impl_->bodies.begin());
+        if (index == impl_->bodies.size() && index >= impl_->config.max_bodies)
+            return physics_error(ErrorCode::conflict, "Physics body capacity exhausted", operation);
+
+        JPH::MeshShapeSettings native_mesh;
+        native_mesh.mTriangleVertices.reserve(mesh.vertices.size());
+        for (const auto& vertex : mesh.vertices) {
+            if (auto checked = validate_query_position(vertex, operation); !checked)
+                return checked.error();
+            native_mesh.mTriangleVertices.push_back(JPH::Float3{static_cast<float>(vertex.x),
+                                                                static_cast<float>(vertex.y),
+                                                                static_cast<float>(vertex.z)});
+        }
+        std::set<std::array<std::array<float, 3>, 3>> unique;
+        native_mesh.mIndexedTriangles.reserve(mesh.triangles.size());
+        for (const auto& triangle : mesh.triangles) {
+            for (const auto vertex : triangle)
+                if (vertex >= mesh.vertices.size())
+                    return physics_error(ErrorCode::invalid_argument,
+                                         "Static mesh index is outside its vertex array",
+                                         operation);
+            const JPH::Vec3 a{native_mesh.mTriangleVertices[triangle[0]]};
+            const JPH::Vec3 b{native_mesh.mTriangleVertices[triangle[1]]};
+            const JPH::Vec3 c{native_mesh.mTriangleVertices[triangle[2]]};
+            if ((b - a).Cross(c - a).IsNearZero())
+                return physics_error(ErrorCode::invalid_argument,
+                                     "Static mesh has a degenerate packed triangle", operation);
+            std::array<std::array<float, 3>, 3> points{};
+            for (std::size_t i = 0; i < points.size(); ++i) {
+                const auto& vertex = native_mesh.mTriangleVertices[triangle[i]];
+                points[i] = {vertex.x, vertex.y, vertex.z};
+            }
+            std::sort(points.begin(), points.end());
+            if (!unique.insert(points).second)
+                return physics_error(ErrorCode::invalid_argument,
+                                     "Static mesh has duplicate triangle geometry", operation);
+            native_mesh.mIndexedTriangles.emplace_back(triangle[0], triangle[1], triangle[2], 0);
+        }
+        // Deliberately bypass MeshShapeSettings' sanitizing constructors. The
+        // exact authored topology must validate or reject, never lose triangles.
+        native_diagnostic = {};
+        const auto shape = native_mesh.Create();
+        if (shape.HasError())
+            return physics_error(ErrorCode::invalid_argument, shape.GetError().c_str(), operation);
+        if (native_diagnostic.reported)
+            return reported_error(operation);
+        if (index == impl_->bodies.size())
+            impl_->bodies.emplace_back();
+        auto& slot = impl_->bodies[index];
+        JPH::BodyCreationSettings native_settings{shape.Get(), JPH::RVec3::sZero(),
+                                                  JPH::Quat::sIdentity(), JPH::EMotionType::Static,
+                                                  static_cast<JPH::ObjectLayer>(index)};
+        native_settings.mFriction = static_cast<float>(settings.friction);
+        native_settings.mRestitution = static_cast<float>(settings.restitution);
+        native_settings.mAllowSleeping = false;
+        native_settings.mCollideKinematicVsNonDynamic = true;
+        native_settings.mUserData = slot.generation;
+        impl_->pair_filter.rules[index] = {settings.collision_layer, settings.collision_mask};
+        auto& interface = impl_->system->GetBodyInterface();
+        auto* native = interface.CreateBody(native_settings);
+        if (!native)
+            return physics_error(ErrorCode::conflict, "Native physics body capacity exhausted",
+                                 operation);
+        native_work = true;
+        const auto id = native->GetID();
+        NativeBodyCandidate candidate{interface, id};
+        interface.AddBody(id, JPH::EActivation::DontActivate);
+        if (native_diagnostic.reported) {
+            impl_->faulted = true;
+            return reported_error(operation);
+        }
+        auto proxy = scene_detail::ScenePhysicsAccess::create_static_mesh_proxy(
+            scene, impl_->simulation, identity, std::move(name));
+        if (!proxy)
+            return proxy.error();
+        // Every value below is fixed-size: there is no fallible allocation after
+        // the owned proxy becomes visible. Native candidate rollback precedes it.
+        slot.value.emplace(proxy.value(), properties, Transform{}, id);
+        slot.value->mesh_triangles = mesh.triangles.size();
+        candidate.retained = true;
+        return PhysicsBodyHandle{impl_->instance, static_cast<std::uint32_t>(index),
+                                 slot.generation};
+    } catch (...) {
+        if (native_work)
+            impl_->faulted = true;
+        return physics_error(ErrorCode::execution_failed, "Cannot create static world geometry",
+                             operation);
+    }
+}
+
 Result<PhysicsBodyHandle> PhysicsWorld::create_body_impl(const Scene& scene, EntityHandle entity,
                                                          Scene* runtime,
                                                          const RigidBody* replacement) {
@@ -1135,7 +1289,8 @@ Result<void> PhysicsWorld::begin_simulation(Scene& scene) {
                     scene, {impl_->instance, static_cast<std::uint32_t>(index), slot.generation});
                 if (!checked)
                     return checked.error();
-                ++native_count;
+                if (slot.value->mesh_triangles == 0)
+                    ++native_count;
             }
         }
         SceneQueryOptions query;
@@ -1231,6 +1386,15 @@ Result<void> PhysicsWorld::step(Scene& scene) {
                              "physics.simulation.step");
     if (auto checked = impl_->event_capacity(2 * impl_->config.max_contact_pairs); !checked)
         return checked;
+    for (std::size_t index = 0; index < impl_->bodies.size(); ++index) {
+        const auto& slot = impl_->bodies[index];
+        if (slot.value && slot.value->mesh_triangles != 0) {
+            auto state = body_state(
+                scene, {impl_->instance, static_cast<std::uint32_t>(index), slot.generation});
+            if (!state)
+                return state.error();
+        }
+    }
     try {
         // Reserve the output before any native movement. Later Scene validation
         // can still fail; that faults the world and retains the last Scene state.
@@ -1276,7 +1440,7 @@ Result<void> PhysicsWorld::step(Scene& scene) {
                                  "physics.simulation.step");
         }
         for (const auto& slot : impl_->bodies)
-            if (slot.value) {
+            if (slot.value && slot.value->mesh_triangles == 0) {
                 const auto& record = *slot.value;
                 JPH::RVec3 position;
                 JPH::Quat rotation;
@@ -1337,7 +1501,7 @@ Result<void> PhysicsWorld::step(Scene& scene) {
         }
         std::size_t index = 0;
         for (auto& slot : impl_->bodies)
-            if (slot.value) {
+            if (slot.value && slot.value->mesh_triangles == 0) {
                 slot.value->previous_pose = slot.value->source_pose;
                 slot.value->source_pose = candidate.value().poses[index++].local;
                 slot.value->target.reset();
@@ -1363,6 +1527,9 @@ Result<void> PhysicsWorld::reset_pose(Scene& scene, PhysicsBodyHandle body, Tran
     if (!index)
         return index.error();
     auto& record = *impl_->bodies[index.value()].value;
+    if (record.mesh_triangles != 0)
+        return physics_error(ErrorCode::conflict, "Static mesh poses require explicit rebuild",
+                             "physics.simulation.reset");
     if (record.settings.motion != mode)
         return physics_error(ErrorCode::invalid_argument,
                              "Pose operation does not match body motion",
@@ -1699,7 +1866,7 @@ Result<PhysicsRenderSnapshot> PhysicsWorld::render_poses(const Scene& scene, dou
                                      {}};
         result.poses.reserve(impl_->system->GetNumBodies());
         for (const auto& slot : impl_->bodies)
-            if (slot.value) {
+            if (slot.value && slot.value->mesh_triangles == 0) {
                 const auto& record = *slot.value;
                 auto pose = record.source_pose;
                 pose.translation =
@@ -1752,8 +1919,7 @@ Result<PhysicsBodyState> PhysicsWorld::body_state(const Scene& scene,
     auto entity = scene.entity_state(record.entity.handle);
     if (!entity)
         return entity.error();
-    if (entity.value().reference != record.entity || entity.value().rigid_body != record.settings ||
-        entity.value().local_transform != record.source_pose || entity.value().parent)
+    if (!record.matches(entity.value()))
         return physics_error(ErrorCode::conflict,
                              "Body source changed; remove and recreate explicitly",
                              "physics.body.state");
@@ -1774,7 +1940,8 @@ Result<PhysicsBodyState> PhysicsWorld::body_state(const Scene& scene,
             ? static_cast<double>(locked.GetBody().GetMotionProperties()->GetInverseMass())
             : 0.0;
     return PhysicsBodyState{record.entity,
-                            record.settings,
+                            record.mesh_triangles == 0 ? std::optional<RigidBody>{record.settings}
+                                                       : std::nullopt,
                             pose,
                             {extent.GetX(), extent.GetY(), extent.GetZ()},
                             motion == JPH::EMotionType::Static    ? BodyMotion::static_body
@@ -1782,7 +1949,13 @@ Result<PhysicsBodyState> PhysicsWorld::body_state(const Scene& scene,
                                                                   : BodyMotion::kinematic_body,
                             inverse_mass,
                             interface.GetFriction(record.native),
-                            interface.GetRestitution(record.native)};
+                            interface.GetRestitution(record.native),
+                            record.mesh_triangles == 0 ? PhysicsBodyGeometry::primitive
+                                                       : PhysicsBodyGeometry::static_mesh,
+                            record.settings.collision_layer,
+                            record.settings.collision_mask,
+                            record.mesh_triangles,
+                            record.settings.is_trigger};
 }
 
 Result<PhysicsBodyHandle> PhysicsWorld::find_body(const Scene& scene,
@@ -1831,9 +2004,13 @@ Result<void> PhysicsWorld::remove_body_impl(Scene* scene, PhysicsBodyHandle body
         return checked.error();
     auto& slot = impl_->bodies[checked.value()];
     const auto entity = slot.value->entity.handle;
+    const bool mesh_proxy = slot.value->mesh_triangles != 0;
     if (scene) {
-        if (auto ready = scene_detail::ScenePhysicsAccess::check_detach(*scene, impl_->simulation,
-                                                                        slot.value->entity);
+        if (auto ready = mesh_proxy
+                             ? scene_detail::ScenePhysicsAccess::check_destroy_static_mesh_proxy(
+                                   *scene, impl_->simulation, slot.value->entity)
+                             : scene_detail::ScenePhysicsAccess::check_detach(
+                                   *scene, impl_->simulation, slot.value->entity);
             !ready)
             return ready;
     }
@@ -1865,8 +2042,12 @@ Result<void> PhysicsWorld::remove_body_impl(Scene* scene, PhysicsBodyHandle body
             impl_->faulted = true;
             return reported_error("physics.body.remove");
         }
-        if (scene)
-            scene_detail::ScenePhysicsAccess::detach(*scene, entity);
+        if (scene) {
+            if (mesh_proxy)
+                scene_detail::ScenePhysicsAccess::destroy_static_mesh_proxy(*scene, entity);
+            else
+                scene_detail::ScenePhysicsAccess::detach(*scene, entity);
+        }
         impl_->publish_events(exits);
         return {};
     } catch (...) {

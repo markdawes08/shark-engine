@@ -119,6 +119,8 @@ struct WorldCellResidency::Impl {
     std::condition_variable wake;
     std::array<std::unique_ptr<Job>, world_cell_maximum_jobs> slots{};
     std::array<std::optional<Resident>, maximum_cells> cells{};
+    std::array<std::optional<WorldCellPin>, world_cell_maximum_pins> pins{};
+    std::uint64_t next_pin{1};
     std::size_t resident_count{0};
     std::size_t resident_bytes{0};
     std::size_t pending_bytes{0};
@@ -160,6 +162,10 @@ struct WorldCellResidency::Impl {
             if (job && !terminal(job->status.state) && job->status.key == key)
                 return true;
         return false;
+    }
+    bool pinned(WorldCellKey key) const {
+        return std::any_of(pins.begin(), pins.end(),
+                           [&](const auto& pin) { return pin && pin->key == key; });
     }
     Job* queued() const {
         Job* result = nullptr;
@@ -284,6 +290,9 @@ WorldCellResidency::~WorldCellResidency() {
     try {
         const ApiGuard guard{impl_->api_active};
         impl_->shutdown();
+        if (std::any_of(impl_->pins.begin(), impl_->pins.end(),
+                        [](const auto& pin) { return pin.has_value(); }))
+            std::terminate();
     } catch (...) {
         std::terminate();
     }
@@ -387,11 +396,14 @@ Result<std::size_t> WorldCellResidency::drain() {
                 const auto baseline = current ? (*current)->info.generation : 0;
                 if (baseline != job->baseline_generation)
                     fail(ErrorCode::conflict, "World cell resident changed during preparation");
+                if (impl_->pinned(job->status.key))
+                    fail(ErrorCode::conflict, "World cell is pinned by an active consumer");
                 if (!current && impl_->resident_count == impl_->limits.maximum_resident_cells)
                     fail(ErrorCode::conflict, "World cell resident count is full");
-                const auto charge =
-                    add_bytes(add_bytes(prepared_scene_maximum_decoded_bytes, job->payload.size()),
-                              job->assets->retained_bytes());
+                const auto charge = add_bytes(add_bytes(prepared_scene_maximum_decoded_bytes +
+                                                            world_geometry_maximum_decoded_bytes,
+                                                        job->payload.size()),
+                                              job->assets->retained_bytes());
                 if (charge > impl_->limits.maximum_resident_bytes ||
                     impl_->resident_bytes > impl_->limits.maximum_resident_bytes - charge)
                     fail(ErrorCode::conflict,
@@ -524,6 +536,8 @@ Result<void> WorldCellResidency::evict(WorldCellKey key, std::uint64_t expected_
         const ApiGuard guard{impl_->api_active};
         validate_key(key);
         const std::lock_guard lock{impl_->mutex};
+        if (impl_->pinned(key))
+            fail(ErrorCode::conflict, "World cell is pinned by an active consumer");
         if (impl_->pending_key(key))
             fail(ErrorCode::conflict, "World cell has a pending intent; cancel and drain first");
         auto* cell = impl_->find_cell(key);
@@ -544,10 +558,52 @@ Result<WorldCellResidencyUsage> WorldCellResidency::usage() const {
         const std::lock_guard lock{impl_->mutex};
         const auto retained = static_cast<std::size_t>(std::count_if(
             impl_->slots.begin(), impl_->slots.end(), [](const auto& job) { return !!job; }));
-        return WorldCellResidencyUsage{impl_->resident_count,     impl_->resident_bytes,
-                                       impl_->pending_bytes,      retained,
-                                       impl_->bytes_read,         impl_->peak_resident_bytes,
-                                       impl_->peak_pending_bytes, impl_->closing};
+        return WorldCellResidencyUsage{impl_->resident_count,
+                                       impl_->resident_bytes,
+                                       impl_->pending_bytes,
+                                       retained,
+                                       impl_->bytes_read,
+                                       impl_->peak_resident_bytes,
+                                       impl_->peak_pending_bytes,
+                                       impl_->closing,
+                                       static_cast<std::size_t>(std::count_if(
+                                           impl_->pins.begin(), impl_->pins.end(),
+                                           [](const auto& pin) { return pin.has_value(); }))};
+    });
+}
+
+Result<WorldCellPin> WorldCellResidency::pin(WorldCellKey key, std::uint64_t expected_generation) {
+    return boundary<WorldCellPin>("world.cells.pin", [&] {
+        impl_->check_owner();
+        const ApiGuard guard{impl_->api_active};
+        validate_key(key);
+        const std::lock_guard lock{impl_->mutex};
+        const auto* current = impl_->find_cell(key);
+        if (!current || expected_generation == 0 ||
+            (*current)->info.generation != expected_generation)
+            fail(ErrorCode::conflict, "World cell pin requires the exact resident generation");
+        auto free = std::find_if(impl_->pins.begin(), impl_->pins.end(),
+                                 [](const auto& pin) { return !pin; });
+        if (free == impl_->pins.end() ||
+            impl_->next_pin == std::numeric_limits<std::uint64_t>::max())
+            fail(ErrorCode::conflict, "World cell pin capacity exhausted");
+        const WorldCellPin result{impl_->scope, impl_->next_pin++, key, expected_generation};
+        *free = result;
+        return result;
+    });
+}
+
+Result<void> WorldCellResidency::unpin(const WorldCellPin& pin) {
+    return boundary<void>("world.cells.unpin", [&] {
+        impl_->check_owner();
+        const ApiGuard guard{impl_->api_active};
+        const std::lock_guard lock{impl_->mutex};
+        auto found =
+            std::find_if(impl_->pins.begin(), impl_->pins.end(),
+                         [&](const auto& retained) { return retained && *retained == pin; });
+        if (pin.scope != impl_->scope || found == impl_->pins.end())
+            fail(ErrorCode::conflict, "World cell pin is stale or foreign");
+        found->reset();
     });
 }
 

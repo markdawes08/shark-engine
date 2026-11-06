@@ -46,13 +46,19 @@ readiness remain distinct; a visible mesh is not a collision surface.
 
 | Field | Encoding |
 | --- | --- |
-| Envelope | 8-byte `SHKCELL1`, uint32 version 1, 32-byte SHA-256 of the complete body |
+| Envelope | 8-byte `SHKCELL1`, uint32 version 1 or 2, 32-byte SHA-256 of the complete body |
 | World | 16-byte UUID |
 | Cell | Three signed int32 axes, x/y/z |
 | Content revision | uint64, nonzero |
 | Scene size / bytes | uint32 byte count and one complete `SHKSCNE1` payload |
 
-The total encoded bound is `prepared_scene_maximum_payload_bytes + 128`;
+M05c adds optional [collision/navigation geometry](world-traversal.md). Version 2
+appends bounded vertex and collision/navigation index arrays after the complete
+Scene. The encoder keeps identical version-1 output when geometry is absent;
+the decoder accepts both versions. Geometry-free legacy content stays loadable
+but cannot authorize traversal readiness.
+
+The total encoded bound is `prepared_scene_maximum_payload_bytes + 256 KiB + 128`;
 the nested scene retains its 4 MiB encoded, 16 MiB logical decoded, 4,096-entity
 and 256-depth limits. Truncation, extra bytes, unknown versions, bad digests,
 invalid source values and oversized fields reject before publication. The digest

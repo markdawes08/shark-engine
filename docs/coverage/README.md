@@ -8,13 +8,15 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
-M05b passes the selected CPU gate under the
+M05c passes the selected CPU gate under the
 [M05 checkpoints](../roadmap/seamless-world-plan.md). Its
-[handoff](../handoffs/M05b-world-cell-residency.md) records asynchronous input,
-retained outcomes, last-valid publication and bounded owner-thread residency.
+[handoff](../handoffs/M05c-world-traversal.md) records actual static terrain
+collision, authored triangle navigation, resident pins and exact owner-bound
+movement readiness. [M05b](../handoffs/M05b-world-cell-residency.md) retains
+asynchronous input, original outcomes and bounded owner-thread residency.
 [M05a](../handoffs/M05a-world-cell-foundation.md) retains local frames, static cell
-content and exact authored preparation. Full REQ-M05 remains NOT_RUN; M05c's
-static-world collision/navigation and readiness are next.
+content and exact authored preparation. Full REQ-M05 remains NOT_RUN; M05d's
+adjacent regions and cross-boundary gameplay are next.
 
 M04 and full REQ-M04 PASS under the [gameplay checkpoints](../roadmap/authoritative-gameplay-plan.md)
 and declared current-machine functional profile.

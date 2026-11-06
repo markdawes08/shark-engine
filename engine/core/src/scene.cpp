@@ -1444,6 +1444,44 @@ void ScenePhysicsAccess::attach(Scene& scene, EntityHandle entity, const RigidBo
     scene.impl_->record(entity).rigid_body = body;
     ++scene.impl_->revision;
 }
+Result<EntityReference> ScenePhysicsAccess::create_static_mesh_proxy(Scene& scene,
+                                                                     const PhysicsLease& lease,
+                                                                     WorldEntityId identity,
+                                                                     Name name) {
+    if (auto checked = check(scene, lease); !checked)
+        return checked.error();
+    if (!std::holds_alternative<RegionSceneScope>(scene.impl_->scope) || scene.impl_->edit_origin)
+        return scene_error(ErrorCode::conflict,
+                           "Static world geometry requires a live region Scene");
+    auto created = scene.impl_->insert(EntitySeed{identity, {}, std::move(name)});
+    if (!created)
+        return created.error();
+    return scene.impl_->reference_at(created.value().slot);
+}
+Result<void> ScenePhysicsAccess::check_destroy_static_mesh_proxy(const Scene& scene,
+                                                                 const PhysicsLease& lease,
+                                                                 const EntityReference& entity) {
+    if (auto checked = check(scene, lease); !checked)
+        return checked;
+    auto resolved = scene.resolve(entity);
+    if (!resolved)
+        return resolved.error();
+    const auto& value = scene.impl_->record(entity.handle);
+    if (!std::holds_alternative<RegionSceneScope>(scene.impl_->scope) || value.parent ||
+        !value.children.empty() || value.rigid_body || value.script || value.mesh_renderer ||
+        value.camera || value.transform != Transform{})
+        return scene_error(ErrorCode::conflict, "Static world proxy identity or contents changed");
+    return scene.impl_->check_revision();
+}
+void ScenePhysicsAccess::destroy_static_mesh_proxy(Scene& scene, EntityHandle entity) noexcept {
+    auto& owner = *scene.impl_;
+    auto& slot = owner.slots[entity.slot];
+    owner.identities.erase(owner.registry.get<Scene::Impl::Record>(slot.entity).identity);
+    owner.registry.destroy(slot.entity);
+    slot.entity = entt::null;
+    slot.retired = !detail::advance_entity_generation(slot.generation);
+    ++owner.revision;
+}
 Result<PhysicsPoseCandidate> ScenePhysicsAccess::prepare(const Scene& scene,
                                                          const PhysicsLease& lease,
                                                          std::span<const PhysicsPoseUpdate> poses) {

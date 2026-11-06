@@ -854,7 +854,7 @@
       "planned_fixture": "MMOWorld/ContinuousTraversal, RegionAuthorityTransferFaultMatrix, CrossBoundaryCombatAI, OriginShiftPrecision and CellStreamingBudget fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "M05a supplies local frames and static cell content; M05b adds asynchronous byte reads, retained outcomes and bounded owner-thread residency with last-valid replacement. See docs/handoffs/M05b-world-cell-residency.md. Native world collision/navigation, continuous gameplay and fenced multi-process transfer/recovery remain with later M05 checkpoints; full REQ-M05 stays NOT_RUN."
+        "reason": "M05a-c supply local frames, asynchronous bounded residency, prepared static terrain collision, authored triangle-surface navigation, pinned readiness and an exact owner-bound authoritative movement gate. See docs/handoffs/M05c-world-traversal.md. Same-process regions, authoring adapters, cross-boundary gameplay and fenced multi-process transfer/recovery remain with later M05 checkpoints; full REQ-M05 stays NOT_RUN."
       }
     },
     {
@@ -1012,6 +1012,16 @@
   ],
   "implemented_surface": {
     "features": [
+      {
+        "id": "core.world-traversal",
+        "name": "Pinned static terrain collision, authored navigation and authoritative readiness",
+        "requirement_ids": ["REQ-M05"],
+        "test_ids": ["shark.core.world-traversal", "shark.core.physics", "shark.tools.world-cell", "shark.server.movement"],
+        "test_sources": ["tests/world_geometry_tests.cpp", "tests/world_navigation_tests.cpp", "tests/world_traversal_tests.cpp", "tests/physics_static_mesh_tests.cpp", "tests/world_geometry_tools_tests.cpp", "tests/server_movement_tests.cpp"],
+        "fixtures": ["docs/world-traversal.md", "engine/core/src/world_geometry.cpp", "engine/core/src/world_navigation.cpp", "engine/core/src/world_traversal.cpp"],
+        "fixture_reason": "Independently expected v2/legacy cell bytes, explicit authored mesh selections, actual native static triangles/queries/contacts, exact far-origin seam routes, bounded graph/cursor values and pinned resident lifetimes connect in external CPU fixtures. A native NPC crosses adjacent ready cells; actual mTLS character admission consumes an unready-cell input as a stop and moves after activation. Exact Scene/native-owner fences and stale graph/body/generation rejection prevent foreign observations from granting readiness. The declared single-layer centerline profile does not claim automatic radius clearance, authoring adapters, region transfer or full seamless-world acceptance; no component, Lua binding or FeatureWorld case is added.",
+        "featureworld_cases": []
+      },
       {
         "id": "core.world-cell-residency",
         "name": "Bounded asynchronous cell input and owner-thread content residency",

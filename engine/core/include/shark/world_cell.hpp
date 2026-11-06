@@ -1,12 +1,13 @@
 #pragma once
 
 #include "shark/prepared_scene.hpp"
+#include "shark/world_geometry.hpp"
 
 namespace shark {
 
-inline constexpr std::uint32_t world_cell_payload_version = 1;
+inline constexpr std::uint32_t world_cell_payload_version = 2;
 inline constexpr std::size_t world_cell_maximum_payload_bytes =
-    prepared_scene_maximum_payload_bytes + 128;
+    prepared_scene_maximum_payload_bytes + world_geometry_maximum_decoded_bytes + 128;
 
 // Content coordinates, independent of simulation region and authority identity.
 struct WorldCellKey {
@@ -22,6 +23,7 @@ struct PreparedWorldCell {
     WorldCellKey key;
     std::uint64_t content_revision;
     PreparedScene scene;
+    std::optional<WorldCellGeometry> geometry{};
     bool operator==(const PreparedWorldCell&) const = default;
 };
 
@@ -59,15 +61,22 @@ class LoadedWorldCell final {
     [[nodiscard]] std::shared_ptr<const PreparedAssets> assets() const noexcept {
         return scene_->assets();
     }
+    [[nodiscard]] const std::optional<WorldCellGeometry>& geometry() const& noexcept {
+        return geometry_;
+    }
+    const std::optional<WorldCellGeometry>& geometry() const&& = delete;
 
   private:
     LoadedWorldCell(WorldCellKey key, std::uint64_t content_revision,
-                    std::unique_ptr<LoadedPreparedScene> scene)
-        : key_(key), content_revision_(content_revision), scene_(std::move(scene)) {}
+                    std::unique_ptr<LoadedPreparedScene> scene,
+                    std::optional<WorldCellGeometry> geometry)
+        : key_(key), content_revision_(content_revision), scene_(std::move(scene)),
+          geometry_(std::move(geometry)) {}
 
     WorldCellKey key_;
     std::uint64_t content_revision_;
     std::unique_ptr<LoadedPreparedScene> scene_;
+    std::optional<WorldCellGeometry> geometry_;
 };
 
 } // namespace shark

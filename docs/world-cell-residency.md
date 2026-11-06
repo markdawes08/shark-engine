@@ -1,5 +1,11 @@
 # Asynchronous static cell residency
 
+M05c adds [exact residency pins](world-traversal.md) for active native consumers.
+At most 32 scoped generation-bound pins block replacement and eviction. Close
+retains pinned residents; release every pin before destruction. Usage also reports
+the current pin count. Pinning extends content lifetime without granting gameplay
+authority or allowing a Scene to move to another thread.
+
 M05b extends [static cell content](world-cells.md) under
 [ADR 0064](architecture/0064-world-cell-residency.md). Follow the
 [M05 checkpoints](roadmap/seamless-world-plan.md) for native readiness, navigation,
@@ -71,13 +77,14 @@ stop token and no hard shutdown latency is promised.
 | Resident cell count | Default eight; configurable positive up to eight |
 | Pending reservation | Default and hard maximum 160 MiB |
 | Resident reservation | Default 128 MiB; configurable positive up to 256 MiB |
-| Returned payload | At most the existing 4 MiB + 128-byte cell envelope cap; excessive vector capacity also rejects |
+| Returned payload | At most the cell envelope cap (now 4 MiB + 256 KiB + 128 bytes for M05c geometry); excessive vector capacity also rejects |
 | Scene structure | Existing per-cell 4,096-entity and 256-depth profile |
 
 Each pending request reserves the complete payload cap plus its captured
 PreparedAssets::retained_bytes(), even when snapshots are shared or the file is
 small. Each resident is charged its encoded payload size plus a 16 MiB Scene
-reservation plus its assets' retained byte charge. Shared asset snapshots are
+reservation, a 256 KiB geometry reservation and its assets' retained byte charge.
+Shared asset snapshots are
 charged independently per retained owner, conservatively. Replacement must fit
 old plus complete candidate charges before Scene creation; it cannot temporarily
 hide the old owner by subtracting its charge first. Count allows only the one

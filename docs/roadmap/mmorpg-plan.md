@@ -363,6 +363,9 @@ transfer, separate-process recovery and connected acceptance.
 M05b's [handoff](../handoffs/M05b-world-cell-residency.md) records passing CPU
 checks for explicit owner publication, retained outcomes, cooperative cancellation
 and resident/IO budgets under the [residency contract](../world-cell-residency.md).
+M05c's [handoff](../handoffs/M05c-world-traversal.md) records actual static triangle
+collision, authored walk-surface navigation, resident pins and owner-bound movement
+readiness. M05d is next; these local cell results do not close the full gate.
 
 After 11-13, 18/20 and M04. Implement in reviewable internal steps: (1) global
 cell/local coordinates and origin-safe content/collision/navigation streaming,

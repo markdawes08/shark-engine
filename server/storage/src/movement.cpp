@@ -1,4 +1,5 @@
 #include "shark/server/movement.hpp"
+#include "shark/world_traversal.hpp"
 
 #include <algorithm>
 #include <array>
@@ -21,11 +22,12 @@ bool same_session(const net::SessionSnapshot& a, const net::SessionSnapshot& b) 
            a.ownership_epoch == b.ownership_epoch && b.active && b.ready;
 }
 bool character_body(const PhysicsBodyState& body) {
-    return body.motion == BodyMotion::dynamic_body &&
-           body.settings.shape == ColliderShape::sphere && body.settings.radius == 0.5 &&
-           body.settings.mass == 1 && body.settings.friction == 0 &&
-           body.settings.restitution == 0 && !body.settings.is_trigger &&
-           body.settings.collision_mask != 0 && body.pose.scale == math::Vec3{1};
+    return body.settings && body.geometry == PhysicsBodyGeometry::primitive &&
+           body.motion == BodyMotion::dynamic_body &&
+           body.settings->shape == ColliderShape::sphere && body.settings->radius == 0.5 &&
+           body.settings->mass == 1 && body.settings->friction == 0 &&
+           body.settings->restitution == 0 && !body.settings->is_trigger &&
+           body.settings->collision_mask != 0 && body.pose.scale == math::Vec3{1};
 }
 } // namespace
 
@@ -46,13 +48,16 @@ struct CharacterMovement::Impl {
     std::uint64_t scene_instance;
     std::uint64_t physics_world;
     WorldPosition origin;
+    std::optional<std::uint64_t> traversal_instance;
     std::uint64_t ticks;
     MonotonicTime last_time{};
     bool faulted{false};
     std::vector<Actor> actors;
 
-    Impl(std::uint64_t scene, std::uint64_t world, WorldPosition anchor, std::uint64_t completed)
-        : scene_instance(scene), physics_world(world), origin(anchor), ticks(completed) {
+    Impl(std::uint64_t scene, std::uint64_t world, WorldPosition anchor, std::uint64_t completed,
+         std::optional<std::uint64_t> traversal)
+        : scene_instance(scene), physics_world(world), origin(anchor),
+          traversal_instance(traversal), ticks(completed) {
         actors.reserve(movement_maximum_characters);
     }
     Result<void> check(const char* operation) const {
@@ -131,10 +136,14 @@ CharacterMovement::CharacterMovement(std::unique_ptr<Impl> impl) noexcept
 CharacterMovement::~CharacterMovement() = default;
 
 Result<std::unique_ptr<CharacterMovement>>
-CharacterMovement::create(const Scene& scene, const PhysicsWorld& physics, WorldPosition origin) {
+CharacterMovement::create(const Scene& scene, const PhysicsWorld& physics, WorldPosition origin,
+                          std::optional<std::uint64_t> traversal_instance) {
     constexpr auto operation = "server.movement.create";
     if (auto valid = validate_world_position(origin); !valid)
         return valid.error();
+    if (traversal_instance && *traversal_instance == 0)
+        return rejected(operation, "Movement traversal instance must be nonzero",
+                        ErrorCode::invalid_configuration);
     auto scene_state = scene.stats();
     if (!scene_state)
         return scene_state.error();
@@ -156,8 +165,23 @@ CharacterMovement::create(const Scene& scene, const PhysicsWorld& physics, World
         return rejected(operation,
                         "Movement requires its Region, origin and 20 Hz/3-substep profile",
                         ErrorCode::invalid_configuration);
-    return std::unique_ptr<CharacterMovement>{new CharacterMovement{std::make_unique<Impl>(
-        scene_state.value().instance, poses.value().world, origin, stats.value().completed_ticks)}};
+    return std::unique_ptr<CharacterMovement>{new CharacterMovement{
+        std::make_unique<Impl>(scene_state.value().instance, poses.value().world, origin,
+                               stats.value().completed_ticks, traversal_instance)}};
+}
+
+Result<void> CharacterMovement::check_traversal(const WorldTraversal* traversal) const {
+    constexpr auto operation = "server.movement.traversal";
+    if (impl_->owner != std::this_thread::get_id())
+        return rejected(operation, "Movement requires its creating thread");
+    if (impl_->traversal_instance) {
+        if (!traversal || traversal->instance() != *impl_->traversal_instance ||
+            traversal->frame().origin != impl_->origin)
+            return rejected(operation, "Movement requires its declared traversal owner/origin");
+    } else if (traversal) {
+        return rejected(operation, "Movement cannot opt into traversal after creation");
+    }
+    return {};
 }
 
 Result<net::MovementState> CharacterMovement::bind(storage::CharacterAuthority& authority,
@@ -241,8 +265,14 @@ Result<void> CharacterMovement::submit(storage::CharacterAuthority& authority,
 Result<MovementTick> CharacterMovement::step(storage::CharacterAuthority& authority, Scene& scene,
                                              PhysicsWorld& physics,
                                              std::span<net::TlsTransport* const> transports,
-                                             MonotonicTime now) {
+                                             MonotonicTime now, const WorldTraversal* traversal) {
     constexpr auto operation = "server.movement.step";
+    if (auto valid = check_traversal(traversal); !valid)
+        return valid.error();
+    if (traversal) {
+        if (auto valid = traversal->check_context(scene, physics); !valid)
+            return valid.error();
+    }
     if (auto valid = impl_->context(scene, physics, now, operation); !valid)
         return valid.error();
     if (transports.size() > movement_maximum_characters ||
@@ -301,6 +331,27 @@ Result<MovementTick> CharacterMovement::step(storage::CharacterAuthority& author
                 const auto& input = *actor.queue[actor.head];
                 plan.velocity.linear.x = movement_speed * input.x / net::movement_axis_scale;
                 plan.velocity.linear.z = movement_speed * input.z / net::movement_axis_scale;
+            }
+            if (plan.live && traversal) {
+                const auto from =
+                    translate_world_position(impl_->origin, {body.value().pose.translation.x,
+                                                             body.value().pose.translation.y,
+                                                             body.value().pose.translation.z});
+                if (!from)
+                    return from.error();
+                const auto intended = body.value().pose.translation +
+                                      plan.velocity.linear / static_cast<double>(movement_tick_hz);
+                const auto to =
+                    translate_world_position(impl_->origin, {intended.x, intended.y, intended.z});
+                if (!to)
+                    return to.error();
+                const auto allowed = traversal->allows_motion(from.value(), to.value(), 0.5);
+                if (!allowed)
+                    return allowed.error();
+                if (!allowed.value()) {
+                    plan.velocity.linear.x = 0.0;
+                    plan.velocity.linear.z = 0.0;
+                }
             }
         }
         if (!plan.live)

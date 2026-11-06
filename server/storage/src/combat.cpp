@@ -1,4 +1,5 @@
 #include "shark/server/combat.hpp"
+#include "shark/world_traversal.hpp"
 
 #include <algorithm>
 #include <array>
@@ -291,6 +292,8 @@ Result<CombatBinding> CharacterCombat::bind(storage::CharacterAuthority& authori
     auto state = physics.body_state(scene, body.value());
     if (!state)
         return state.error();
+    if (!state.value().settings || state.value().geometry != PhysicsBodyGeometry::primitive)
+        return rejected(operation, "Combat actor requires an owned primitive body");
     auto stream = generate_stable_id();
     auto target = generate_stable_id();
     if (!stream)
@@ -303,7 +306,7 @@ Result<CombatBinding> CharacterCombat::bind(storage::CharacterAuthority& authori
     impl_->actors.push_back({peer.value().connection_id, session.value(),
                              net::CombatStreamId{stream.value()},
                              net::CombatTargetId{target.value()}, reference.value(), body.value(),
-                             state.value().settings, state.value().pose, bound.value()});
+                             *state.value().settings, state.value().pose, bound.value()});
     impl_->last_time = now;
     return CombatBinding{net::CombatStreamId{stream.value()}, net::CombatTargetId{target.value()},
                          bound.value()};
@@ -358,8 +361,15 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
                                          CharacterMovement& movement, Scene& scene,
                                          PhysicsWorld& physics,
                                          std::span<net::TlsTransport* const> transports,
-                                         MonotonicTime now, ScriptRuntime* scripts) {
+                                         MonotonicTime now, ScriptRuntime* scripts,
+                                         const WorldTraversal* traversal) {
     constexpr auto operation = "server.combat.step";
+    if (auto checked = movement.check_traversal(traversal); !checked)
+        return checked.error();
+    if (traversal) {
+        if (auto checked = traversal->check_context(scene, physics); !checked)
+            return checked.error();
+    }
     if (auto valid = impl_->context(scene, physics, now, operation); !valid)
         return valid.error();
     if (impl_->ticks >= static_cast<std::uint64_t>(std::numeric_limits<std::int64_t>::max()) -
@@ -426,7 +436,7 @@ Result<CombatTick> CharacterCombat::step(storage::CharacterAuthority& authority,
         report.movement.contacts = std::move(prior).value();
     }
     auto before_contacts = std::move(report.movement.contacts);
-    auto moved = movement.step(authority, scene, physics, transports, now);
+    auto moved = movement.step(authority, scene, physics, transports, now, traversal);
     if (!moved) {
         impl_->faulted = true;
         // Movement can fail while publishing an already completed native tick.

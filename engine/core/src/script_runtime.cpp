@@ -315,7 +315,7 @@ struct ScriptRuntime::Impl {
         return {p[0], p[1], p[2]};
     }
     static bool same(const PhysicsBodyState& state, const PhysicsContactParticipant& p) {
-        return state.entity == p.entity && state.settings.is_trigger == p.is_trigger;
+        return state.entity == p.entity && state.is_trigger == p.is_trigger;
     }
     static bool same_entity_request(const detail::LuaEntityRequest& a,
                                     const detail::LuaEntityRequest& b) noexcept {
@@ -1035,7 +1035,10 @@ struct ScriptRuntime::Impl {
             if (!state || !peer || !same(state.value(), a) || !same(peer.value(), other))
                 return runtime_error(ErrorCode::conflict, "script.physics",
                                      "Contact body generation changed");
-            deferred.push_back(DeferredPhysics{request, a, other, state.value().settings});
+            if (!state.value().settings || state.value().geometry != PhysicsBodyGeometry::primitive)
+                return runtime_error(ErrorCode::conflict, "script.physics",
+                                     "Static world geometry requires its trusted content owner");
+            deferred.push_back(DeferredPhysics{request, a, other, *state.value().settings});
             return {};
         }
         if (op == Op::remove_body || op == Op::create_body)

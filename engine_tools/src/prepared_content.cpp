@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <limits>
+#include <set>
 #include <utility>
 
 namespace shark::tools {
@@ -173,6 +174,97 @@ Result<std::vector<std::byte>> prepare_world_cell(const AuthoredScene& owner,
         return encoded;
     } catch (...) {
         return failure(operation, "World cell allocation or preparation failed",
+                       ErrorCode::execution_failed);
+    }
+}
+
+Result<std::vector<std::byte>>
+prepare_world_cell_geometry(const AuthoredScene& owner, SceneRevision expected_revision,
+                            WorldCellKey key, std::uint64_t content_revision,
+                            std::shared_ptr<const PreparedAssets> assets,
+                            std::span<const AuthoredEntityId> collision_entities,
+                            std::span<const AuthoredEntityId> navigation_entities) {
+    constexpr auto operation = "content.cell.geometry.prepare";
+    try {
+        if (!assets || collision_entities.empty() ||
+            collision_entities.size() > prepared_scene_maximum_entities ||
+            navigation_entities.size() > collision_entities.size())
+            return failure(operation, "World geometry requires bounded explicit selections/assets");
+        const std::set<AuthoredEntityId> collision(collision_entities.begin(),
+                                                   collision_entities.end());
+        const std::set<AuthoredEntityId> navigation(navigation_entities.begin(),
+                                                    navigation_entities.end());
+        if (collision.size() != collision_entities.size() ||
+            navigation.size() != navigation_entities.size() ||
+            !std::includes(collision.begin(), collision.end(), navigation.begin(),
+                           navigation.end()))
+            return failure(operation, "Navigation selections must be a unique collision subset");
+        auto bytes = prepare_world_cell(owner, expected_revision, key, content_revision);
+        if (!bytes)
+            return contextualize(std::move(bytes).error(), operation);
+        auto captured = decode_world_cell(bytes.value());
+        if (!captured)
+            return contextualize(std::move(captured).error(), operation);
+        auto scene_bytes = encode_prepared_scene(captured.value().scene);
+        if (!scene_bytes)
+            return contextualize(std::move(scene_bytes).error(), operation);
+        auto loaded = LoadedPreparedScene::load(scene_bytes.value(), assets);
+        if (!loaded)
+            return contextualize(std::move(loaded).error(), operation);
+        WorldCellGeometry geometry;
+        for (const auto entity : collision_entities) {
+            auto handle = loaded.value()->scene().find(entity);
+            if (!handle)
+                return contextualize(std::move(handle).error(), operation);
+            auto state = loaded.value()->scene().entity_state(handle.value());
+            if (!state)
+                return contextualize(std::move(state).error(), operation);
+            if (!state.value().mesh_renderer)
+                return failure(operation, "Selected collision entity has no mesh renderer");
+            auto asset = assets->resolve(*state.value().mesh_renderer);
+            if (!asset)
+                return contextualize(std::move(asset).error(), operation);
+            const auto& mesh = asset.value()->meshes[state.value().mesh_renderer->mesh_index];
+            const auto mirrored = glm::determinant(glm::dmat3{state.value().world_matrix}) < 0.0;
+            for (const auto& primitive : mesh.primitives) {
+                if (primitive.vertices.size() >
+                        world_geometry_maximum_vertices - geometry.vertices.size() ||
+                    primitive.indices.size() / 3 > world_geometry_maximum_collision_triangles -
+                                                       geometry.collision_triangles.size() ||
+                    (navigation.contains(entity) &&
+                     primitive.indices.size() / 3 > world_geometry_maximum_navigation_triangles -
+                                                        geometry.navigation_triangles.size()))
+                    return failure(operation, "Selected geometry exceeds its cell profile");
+                const auto first = static_cast<std::uint32_t>(geometry.vertices.size());
+                for (const auto& vertex : primitive.vertices) {
+                    const auto point =
+                        state.value().world_matrix *
+                        glm::dvec4{vertex.position[0], vertex.position[1], vertex.position[2], 1.0};
+                    math::Vec3 position{point};
+                    for (int axis = 0; axis < 3; ++axis)
+                        if (position[axis] == 0.0)
+                            position[axis] = 0.0;
+                    geometry.vertices.push_back(position);
+                }
+                for (std::size_t index = 0; index < primitive.indices.size(); index += 3) {
+                    std::array triangle{first + primitive.indices[index],
+                                        first + primitive.indices[index + 1],
+                                        first + primitive.indices[index + 2]};
+                    if (mirrored)
+                        std::swap(triangle[1], triangle[2]);
+                    geometry.collision_triangles.push_back(triangle);
+                    if (navigation.contains(entity))
+                        geometry.navigation_triangles.push_back(triangle);
+                }
+            }
+        }
+        captured.value().geometry = std::move(geometry);
+        auto encoded = encode_world_cell(captured.value());
+        if (!encoded)
+            return contextualize(std::move(encoded).error(), operation);
+        return encoded;
+    } catch (...) {
+        return failure(operation, "World geometry capture or allocation failed",
                        ErrorCode::execution_failed);
     }
 }

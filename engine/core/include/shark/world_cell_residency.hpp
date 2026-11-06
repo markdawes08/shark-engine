@@ -8,6 +8,7 @@
 namespace shark {
 
 inline constexpr std::size_t world_cell_maximum_jobs = 4;
+inline constexpr std::size_t world_cell_maximum_pins = 32;
 
 struct WorldCellResidencyLimits {
     std::size_t maximum_resident_cells{8};
@@ -36,6 +37,13 @@ struct WorldCellResident {
     std::uint64_t generation;
     std::size_t charged_bytes;
 };
+struct WorldCellPin {
+    std::uint64_t scope;
+    std::uint64_t sequence;
+    WorldCellKey key;
+    std::uint64_t generation;
+    bool operator==(const WorldCellPin&) const = default;
+};
 struct WorldCellResidencyUsage {
     std::size_t resident_cells;
     std::size_t resident_bytes;
@@ -46,6 +54,7 @@ struct WorldCellResidencyUsage {
     std::size_t peak_resident_bytes;
     std::size_t peak_pending_bytes;
     bool closed;
+    std::size_t pins{0};
 };
 struct WorldCellReadRequest {
     WorldCellKey key;
@@ -81,6 +90,10 @@ class WorldCellResidency final {
     // Borrowed until replacement, eviction or owner destruction. The pointer does
     // not extend residency and may only be queried on the creating thread.
     [[nodiscard]] Result<const LoadedWorldCell*> resident(WorldCellKey key) const;
+    // Exact generation leases block replacement/eviction. Consumers must release
+    // every pin before destroying this owner; pins grant no gameplay authority.
+    [[nodiscard]] Result<WorldCellPin> pin(WorldCellKey key, std::uint64_t expected_generation);
+    [[nodiscard]] Result<void> unpin(const WorldCellPin& pin);
     [[nodiscard]] Result<void> evict(WorldCellKey key, std::uint64_t expected_generation);
     [[nodiscard]] Result<WorldCellResidencyUsage> usage() const;
     // Permanent admission close; joins the reader before releasing pending work.

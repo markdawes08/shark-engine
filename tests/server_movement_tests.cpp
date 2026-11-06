@@ -3,6 +3,7 @@
 #include <shark/net/movement_prediction.hpp>
 #include <shark/server/combat.hpp>
 #include <shark/server/movement.hpp>
+#include <shark/world_traversal.hpp>
 
 #include <catch2/catch_approx.hpp>
 #include <catch2/catch_test_macros.hpp>
@@ -351,6 +352,109 @@ function on_destroy() shark.log.info('destroy') end
     }
 };
 } // namespace
+
+TEST_CASE(
+    "Server movement preserves admitted input while traversal readiness stops a seam crossing",
+    "[server-movement]") {
+    Fixture fixture{false};
+    const auto assets = take(PreparedAssets::create());
+    const WorldCellGeometry geometry{{{0, 0, 0}, {0, 0, 1024}, {1024, 0, 1024}, {1024, 0, 0}},
+                                     {{0, 1, 2}, {0, 2, 3}},
+                                     {{0, 1, 2}, {0, 2, 3}}};
+    const auto source_scene = id<SceneId>(200);
+    const auto residency = take(WorldCellResidency::create(
+        [geometry, source_scene](const WorldCellReadRequest& request,
+                                 std::stop_token) -> Result<std::vector<std::byte>> {
+            return encode_world_cell(
+                {request.key,
+                 request.content_revision,
+                 {source_scene, WorldPosition{request.key.world, request.key.cell, {0, 0, 0}}, {}},
+                 geometry});
+        }));
+    const auto load = [&](WorldCellKey cell) {
+        const auto job = take(residency->submit(cell, 1, assets));
+        const auto deadline = std::chrono::steady_clock::now() + 5s;
+        for (;;) {
+            REQUIRE(std::chrono::steady_clock::now() < deadline);
+            const auto jobs = take(residency->jobs());
+            const auto found = std::find_if(jobs.begin(), jobs.end(), [&](const auto& candidate) {
+                return candidate.id == job;
+            });
+            REQUIRE(found != jobs.end());
+            if (found->state == WorldCellJobState::ready)
+                break;
+            std::this_thread::yield();
+        }
+        REQUIRE(take(residency->drain()) == 1);
+        const auto receipt = take(residency->take(job));
+        REQUIRE(receipt.state == WorldCellJobState::published);
+        REQUIRE(receipt.resident_generation);
+        return *receipt.resident_generation;
+    };
+    const auto traversal = take(
+        WorldTraversal::create(*residency, *fixture.physics, *fixture.scene, {fixture.origin, 1}));
+    const auto replacement = take(
+        WorldTraversal::create(*residency, *fixture.physics, *fixture.scene, {fixture.origin, 1}));
+    const WorldCellKey source{fixture.origin.world, fixture.origin.cell};
+    auto destination = source;
+    ++destination.cell.x;
+    const auto source_generation = load(source);
+    take(traversal->activate(source, source_generation, id<WorldEntityId>(90)));
+    fixture.movement = take(CharacterMovement::create(*fixture.scene, *fixture.physics,
+                                                      fixture.origin, traversal->instance()));
+    fixture.initial =
+        take(fixture.movement->bind(*fixture.authority, *fixture.pair.server, *fixture.scene,
+                                    *fixture.physics, fixture.entity, fixture.now));
+    const auto combat = take(
+        CharacterCombat::create(*fixture.scene, *fixture.physics,
+                                take(CombatRules::create({"scripts/combat.lua", combat_source}))));
+    const std::array<TlsTransport*, 1> transports{fixture.pair.server.get()};
+    fixture.submit();
+    CHECK_FALSE(fixture.movement->step(*fixture.authority, *fixture.scene, *fixture.physics,
+                                       transports, 50ms));
+    CHECK_FALSE(fixture.movement->step(*fixture.authority, *fixture.scene, *fixture.physics,
+                                       transports, 50ms, replacement.get()));
+    CHECK_FALSE(combat->step(*fixture.authority, *fixture.movement, *fixture.scene,
+                             *fixture.physics, transports, 50ms));
+    CHECK(take(fixture.movement->stats()).pending_inputs == 1);
+    CHECK(take(fixture.physics->stats()).completed_ticks == 0);
+    CHECK_FALSE(take(combat->stats()).faulted);
+    const auto undeclared =
+        take(CharacterMovement::create(*fixture.scene, *fixture.physics, fixture.origin));
+    CHECK_FALSE(undeclared->step(*fixture.authority, *fixture.scene, *fixture.physics, transports,
+                                 50ms, traversal.get()));
+    CHECK_FALSE(CharacterMovement::create(*fixture.scene, *fixture.physics, fixture.origin, 0));
+
+    const auto step = [&] {
+        fixture.now += 50ms;
+        const auto tick =
+            take(combat->step(*fixture.authority, *fixture.movement, *fixture.scene,
+                              *fixture.physics, transports, fixture.now, nullptr, traversal.get()));
+        REQUIRE_FALSE(tick.error);
+        return tick.movement;
+    };
+    const auto blocked = step();
+    REQUIRE(blocked.deliveries.size() == 1);
+    CHECK(blocked.deliveries.front().state.last_input == 1);
+    CHECK(blocked.deliveries.front().state.position.x == 0.0);
+    CHECK(blocked.deliveries.front().state.velocity.x == 0.0);
+    CHECK(take(fixture.movement->stats()).pending_inputs == 0);
+    const auto destination_generation = load(destination);
+    take(traversal->activate(destination, destination_generation, id<WorldEntityId>(91)));
+    fixture.submit();
+    const auto moved = step();
+    REQUIRE(moved.deliveries.size() == 1);
+    CHECK(moved.deliveries.front().state.last_input == 2);
+    CHECK(moved.deliveries.front().state.position.x == Catch::Approx(0.3).margin(1e-6));
+    CHECK(moved.deliveries.front().state.velocity.x == Catch::Approx(6).margin(1e-6));
+    const auto global =
+        take(fixture.movement->position(*fixture.scene, *fixture.physics, fixture.initial.stream));
+    CHECK(global.cell.x == destination.cell.x);
+    take(traversal->close());
+    take(replacement->close());
+    take(residency->close());
+    fixture.complete = true;
+}
 
 TEST_CASE("Server movement admits real TLS input and publishes the committed correction",
           "[server-movement]") {

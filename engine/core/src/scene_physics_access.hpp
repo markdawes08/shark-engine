@@ -33,6 +33,12 @@ struct ScenePhysicsAccess {
     static Result<void> check_attach(const Scene& scene, const PhysicsLease& lease,
                                      const EntityReference& entity, const RigidBody& body);
     static void attach(Scene& scene, EntityHandle entity, const RigidBody& body) noexcept;
+    static Result<EntityReference> create_static_mesh_proxy(Scene& scene, const PhysicsLease& lease,
+                                                            WorldEntityId identity, Name name);
+    static Result<void> check_destroy_static_mesh_proxy(const Scene& scene,
+                                                        const PhysicsLease& lease,
+                                                        const EntityReference& entity);
+    static void destroy_static_mesh_proxy(Scene& scene, EntityHandle entity) noexcept;
     static Result<PhysicsPoseCandidate> prepare(const Scene& scene, const PhysicsLease& lease,
                                                 std::span<const PhysicsPoseUpdate> poses);
     static Result<void> commit(Scene& scene, const PhysicsLease& lease,

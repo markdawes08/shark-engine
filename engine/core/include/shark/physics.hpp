@@ -2,11 +2,13 @@
 
 #include "shark/error.hpp"
 #include "shark/math.hpp"
+#include "shark/name.hpp"
 #include "shark/physics_components.hpp"
 #include "shark/scene_identity.hpp"
 #include "shark/scene_query.hpp"
 #include "shark/time.hpp"
 
+#include <array>
 #include <cstddef>
 #include <cstdint>
 #include <memory>
@@ -102,15 +104,36 @@ struct PhysicsContactEvent {
     PhysicsContactParticipant second;
 };
 
+enum class PhysicsBodyGeometry { primitive, static_mesh };
+struct PhysicsStaticMesh {
+    std::vector<math::Vec3> vertices;
+    std::vector<std::array<std::uint32_t, 3>> triangles;
+};
+struct PhysicsStaticMeshSettings {
+    double friction{0.5};
+    double restitution{0.0};
+    std::uint32_t collision_layer{0};
+    std::uint32_t collision_mask{0xffff};
+};
+inline constexpr std::size_t physics_static_mesh_maximum_vertices = 4096;
+inline constexpr std::size_t physics_static_mesh_maximum_triangles = 4096;
+inline constexpr std::size_t physics_static_mesh_maximum_world_triangles = 16384;
+
 struct PhysicsBodyState {
     EntityReference entity;
-    RigidBody settings;
+    // Absent for runtime static mesh proxies; no primitive component is invented.
+    std::optional<RigidBody> settings;
     Transform pose;
     math::Vec3 collider_half_extents;
     BodyMotion motion;
     double inverse_mass;
     double friction;
     double restitution;
+    PhysicsBodyGeometry geometry{PhysicsBodyGeometry::primitive};
+    std::uint32_t collision_layer{0};
+    std::uint32_t collision_mask{0xffff};
+    std::size_t triangle_count{0};
+    bool is_trigger{false};
 };
 
 inline constexpr std::uint32_t physics_maximum_bodies = 4096;
@@ -224,6 +247,11 @@ class PhysicsWorld final {
     // committed root with no body; the complete body value is validated first.
     [[nodiscard]] Result<PhysicsBodyHandle>
     create_runtime_body(Scene& scene, const EntityReference& entity, const RigidBody& body);
+    // Trusted region host only. Vertices are already in bounded Scene coordinates.
+    // Creates an owned identity-transform proxy with no serialized components.
+    [[nodiscard]] Result<PhysicsBodyHandle>
+    create_static_mesh_body(Scene& scene, WorldEntityId identity, Name name,
+                            const PhysicsStaticMesh& mesh, PhysicsStaticMeshSettings settings = {});
     [[nodiscard]] Result<PhysicsBodyHandle> find_body(const Scene& scene,
                                                       const EntityReference& entity) const;
     [[nodiscard]] Result<PhysicsBodyState> body_state(const Scene& scene,

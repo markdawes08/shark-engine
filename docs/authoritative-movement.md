@@ -95,6 +95,14 @@ physics floats. The origin and local pose must remain globally representable.
 
 ## Movement wire protocol 1
 
+M05c adds an optional [streamed traversal binding](world-traversal.md). The trusted
+host declares its exact traversal instance when constructing CharacterMovement
+and supplies that same owner/origin to every movement/Combat step. Omission,
+replacement and later opt-in reject before input/native/script work. Missing
+cell readiness stops horizontal movement while consuming the admitted input;
+it never queues an input to gain authority when content later arrives. Legacy
+primitive fixtures retain their explicit mode without a traversal binding.
+
 Outer authenticated client-to-server kind 9 is `movement_input`; server-to-client
 kind 10 is `movement_state`. Diagnostic TLS and reversed directions reject.
 Each payload starts with version u16 BE, kind u8, reserved-zero u8. All UUIDs use

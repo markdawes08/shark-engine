@@ -7,6 +7,10 @@
 
 #include <span>
 
+namespace shark {
+class WorldTraversal;
+}
+
 namespace shark::server {
 
 inline constexpr std::size_t movement_maximum_characters = 32;
@@ -42,8 +46,11 @@ struct MovementStats {
 // client predictions, durable checkpoints and region transfer are separate.
 class CharacterMovement final {
   public:
+    // Optional streamed-world mode fixes one trusted traversal incarnation.
+    // Every tick must supply that same owner and exact local origin.
     [[nodiscard]] static Result<std::unique_ptr<CharacterMovement>>
-    create(const Scene& scene, const PhysicsWorld& physics, WorldPosition origin);
+    create(const Scene& scene, const PhysicsWorld& physics, WorldPosition origin,
+           std::optional<std::uint64_t> traversal_instance = std::nullopt);
     ~CharacterMovement();
     CharacterMovement(const CharacterMovement&) = delete;
     CharacterMovement& operator=(const CharacterMovement&) = delete;
@@ -65,10 +72,13 @@ class CharacterMovement final {
     // belong to the host's existing ordered dispatch; this method invokes no Lua.
     // Failure after the first velocity write permanently faults this adapter;
     // native partial effects must never be replayed as an unexecuted tick.
+    // Unready swept cells stop horizontal motion while consuming that input as
+    // an applied stop; vertical native motion and committed corrections remain.
     [[nodiscard]] Result<MovementTick> step(storage::CharacterAuthority& authority, Scene& scene,
                                             PhysicsWorld& physics,
                                             std::span<net::TlsTransport* const> transports,
-                                            MonotonicTime now);
+                                            MonotonicTime now,
+                                            const WorldTraversal* traversal = nullptr);
     [[nodiscard]] Result<MovementStats> stats() const;
     // Trusted fixed-phase lifecycle controls. Release stops the exact old body
     // and discards queued input without acknowledging it as applied. Respawn
@@ -83,6 +93,8 @@ class CharacterMovement final {
                                                  net::MovementStreamId stream) const;
 
   private:
+    friend class CharacterCombat;
+    [[nodiscard]] Result<void> check_traversal(const WorldTraversal* traversal) const;
     struct Impl;
     explicit CharacterMovement(std::unique_ptr<Impl> impl) noexcept;
     std::unique_ptr<Impl> impl_;

@@ -294,8 +294,9 @@ TEST_CASE("cell residency limits count and simultaneous replacement charges",
           "[world-cell-residency]") {
     const auto assets = take(PreparedAssets::create());
     const auto payload = take(encode_world_cell(sample()));
-    const auto charge =
-        prepared_scene_maximum_decoded_bytes + payload.size() + assets->retained_bytes();
+    const auto charge = prepared_scene_maximum_decoded_bytes +
+                        world_geometry_maximum_decoded_bytes + payload.size() +
+                        assets->retained_bytes();
     WorldCellResidencyLimits limits;
     limits.maximum_resident_cells = 1;
     SECTION("a full cell inventory rejects a second key but admits replacement") {

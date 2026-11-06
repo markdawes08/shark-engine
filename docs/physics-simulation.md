@@ -1,5 +1,12 @@
 # Fixed-step physics and Scene synchronization
 
+M05c's [streamed static meshes](world-traversal.md) share this lease, contact
+pipeline and native update. The pinned mesh traversal uses stack visitors and
+the same capped body-pair/contact buffers; the reviewed temporary-arena formula
+below remains applicable. Native geometry preparation has separate bounded
+triangle/vertex allocations. Runtime proxy roots are excluded from primitive
+pose publication and removed explicitly before releasing their content pins.
+
 18c extends the existing [world](physics-world.md) and [bodies](physics-bodies.md)
 under [ADR 0047](architecture/0047-fixed-step-physics.md). This is CPU runtime
 simulation, using the [existing schedulers](time-and-work.md), with no window,

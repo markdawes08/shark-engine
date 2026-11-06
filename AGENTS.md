@@ -54,20 +54,24 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [M05b, world-cell residency](docs/handoffs/M05b-world-cell-residency.md).**
+**Current handoff: [M05c, world traversal](docs/handoffs/M05c-world-traversal.md).**
 Follow the [M05 checkpoints](docs/roadmap/seamless-world-plan.md),
-[cell contract](docs/world-cells.md), [residency contract](docs/world-cell-residency.md)
-and [ADR 0064](docs/architecture/0064-world-cell-residency.md).
-M05b passes its selected CPU gate. M05c is next: static-world collision/navigation
-and traversal readiness. Keep cell identity separate from region authority;
-content publication grants no native/gameplay readiness. Preserve exact source
-anchors, immutable assets, owner-thread Scene lifetimes and generation-bound
-local conversion. One worker returns bytes; explicit drain publishes at most one
-complete owner. Retain original terminal receipts until take, last-valid cells
-on failures/cancel, pending/peak reservations and exact eviction generations.
-Native consumers must pin or lease residency before retaining borrowed cell
-pointers across replacement/eviction. M05a's [handoff](docs/handoffs/M05a-world-cell-foundation.md)
-and [ADR 0063](docs/architecture/0063-world-cell-content.md) remain applicable.
+[traversal contract](docs/world-traversal.md) and
+[ADR 0065](docs/architecture/0065-world-traversal.md). M05c passes its selected CPU
+gate. M05d is next: adjacent regions in one process, overlapping interest and
+continuous cross-boundary gameplay. Keep cells separate from region authority.
+Cell v2 adds explicit terrain/walk geometry; v1 remains compatible. Native mesh
+proxies have no authored RigidBody; check optional PhysicsBodyState settings.
+Traversal pins exact resident generations until native detach, prepares whole
+navigation candidates before publication and fences old paths. Preserve the
+single-layer authored centerline profile, explicit fixed frames and checked native
+movement before adopting pursuit progress. Movement/combat must supply their
+declared traversal instance, origin and exact Scene/PhysicsWorld context; missing
+readiness consumes an input as a horizontal stop. Close traversal before its
+borrowed owners; native faults require explicit close/reconciliation, not replay.
+M05a/b [content](docs/world-cells.md) and [residency](docs/world-cell-residency.md)
+contracts remain applicable: one byte reader, explicit owner drain, retained
+terminal receipts, last-valid replacement and pending/peak reservations.
 Full REQ-M05 remains NOT_RUN pending later connected streaming/transfer gates.
 
 The [M04e handoff](docs/handoffs/M04e-gameplay-acceptance.md) remains applicable.

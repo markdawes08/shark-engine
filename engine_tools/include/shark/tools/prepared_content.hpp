@@ -42,6 +42,17 @@ prepare_scene(const AuthoredScene& owner,
                                                                 WorldCellKey key,
                                                                 std::uint64_t content_revision);
 
+// Explicitly select collision meshes and an oriented walkable subset from the
+// same exact captured source. Full composed transforms are baked into the cell
+// grid; off-grid results reject rather than being silently rounded. No implicit
+// import, file write, source mutation or agent-clearance bake is performed.
+[[nodiscard]] Result<std::vector<std::byte>>
+prepare_world_cell_geometry(const AuthoredScene& owner, SceneRevision expected_revision,
+                            WorldCellKey key, std::uint64_t content_revision,
+                            std::shared_ptr<const PreparedAssets> assets,
+                            std::span<const AuthoredEntityId> collision_entities,
+                            std::span<const AuthoredEntityId> navigation_entities);
+
 // Build a prepared scene from the same cached glTF artifact used for its mesh
 // payload. Callers supply one stable entity ID per dense converted node. Names
 // must fit Core Name rules; an unnamed node receives the name Node.
