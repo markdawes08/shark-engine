@@ -8,12 +8,19 @@ evidence effort; historical full-profile counts are not recurring run lists.
 
 ## Current state
 
+M05g's [handoff](../handoffs/M05g-connected-world-acceptance.md) connects saved
+authored terrain to live child-process residency, native pursuit, lossless staged
+frames and recovery with stable client/replica frames. The
+[acceptance procedure](../seamless-world-acceptance.md) distinguishes sampled child
+RSS, logical charges and verified-observation faults. Full REQ-M05 remains NOT_RUN
+for deferred native World cells UI; M06 is next under the backlog amendment.
+
 M05f's [handoff](../handoffs/M05f-process-region-execution.md) records real owned
 Server children, native reconstruction, portable Lua value state, atomic island
 writer batches, bounded actual-session routing and source/destination recovery.
 The [process contract](../region-process-execution.md) keeps actual gateway owners
 and original durable requests alive while moving the complete interacting island.
-M05g retains connected authored-world acceptance. Full REQ-M05 remains NOT_RUN.
+M05g extends its fixed-content/frame profile without splitting the interacting island.
 
 M05e passes its selected current-machine gate. Its
 [handoff](../handoffs/M05e-fenced-region-handoffs.md) records latest-tick cuts,

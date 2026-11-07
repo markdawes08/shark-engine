@@ -111,6 +111,43 @@ TEST_CASE("bounded navigation pursuit follows every portal without cutting an el
     CHECK_FALSE(owner->path(start, position(key(), {1, 0, 2}))); // Outside both arms.
 }
 
+TEST_CASE("walk projection adjusts only bounded vertical distance on the authored surface",
+          "[world-navigation]") {
+    auto slope = rectangle(0, 0, 4, 4);
+    slope.vertices[2].y = 2;
+    slope.vertices[3].y = 2;
+    const auto owner = graph(slope);
+    const auto exact = position(key(), {2, 1, 2});
+    const auto near = position(key(), {2, 1 + 1.0 / 2048, 2});
+    CHECK(take(owner->project_walk_surface(near)) == exact);
+    CHECK(take(owner->project_walk_surface(exact, 0)) == exact);
+    // Projection is an explicit adapter; ordinary path membership stays strict.
+    CHECK_FALSE(owner->path(near, position(key(), {3, 1.5, 2})));
+    const auto farther = position(key(), {2, 1 + 1.0 / 512, 2});
+    CHECK_FALSE(owner->project_walk_surface(farther));
+    CHECK(take(owner->project_walk_surface(farther, 1.0 / 256)) == exact);
+    CHECK_FALSE(owner->project_walk_surface(position(key(), {5, 2.5, 2})));
+    auto foreign = near;
+    foreign.world = world(true);
+    CHECK_FALSE(owner->project_walk_surface(foreign));
+    for (const auto bound : {-1.0, std::numeric_limits<double>::infinity(),
+                             std::numeric_limits<double>::quiet_NaN(), 65537.0})
+        CHECK_FALSE(owner->project_walk_surface(near, bound));
+    const auto empty = take(WorldNavigation::create(frame(), {}));
+    CHECK_FALSE(empty->project_walk_surface(exact));
+
+    const std::array next_tile{WorldNavigationTile{key(1), 12, rectangle(0, 0, 4, 4)}};
+    const auto fractional =
+        take(WorldNavigation::create({position(key(), {1023.9, 0, .1}), 8}, next_tile));
+    const auto precise = position(key(1), {.1, 1.0 / 2048, 2.1});
+    const auto projected = take(fractional->project_walk_surface(precise));
+    CHECK(projected == position(key(1), {.1, 0, 2.1}));
+    CHECK(projected.cell.x == precise.cell.x);
+    CHECK(projected.cell.z == precise.cell.z);
+    CHECK(projected.offset[0] == precise.offset[0]);
+    CHECK(projected.offset[2] == precise.offset[2]);
+}
+
 TEST_CASE("navigation rejects overlapping layers and invalid surface topology",
           "[world-navigation]") {
     auto geometry = rectangle(0, 0, 4, 4);

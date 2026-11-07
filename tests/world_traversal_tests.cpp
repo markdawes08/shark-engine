@@ -131,7 +131,11 @@ TEST_CASE("streamed collision and navigation gate a native NPC crossing at a dis
     const auto a = load(*f.content), b = load(*f.content, true);
     const auto start = surface(false, 1021), goal = surface(true, 3);
     CHECK_FALSE(f.traversal->path(start, goal));
+    CHECK_FALSE(f.traversal->project_walk_surface(start));
     const auto first = take(f.traversal->activate(key(), a, id<WorldEntityId>('6')));
+    auto near_surface = start;
+    near_surface.offset[1] = 1.0 / 2048;
+    CHECK(take(f.traversal->project_walk_surface(near_surface)) == start);
     CHECK_FALSE(f.traversal->path(start, goal));
     const auto before = take(world_position_from_local(origin(), {3.75, .25, 4}, 8192));
     const auto after = take(world_position_from_local(origin(), {4.1, .25, 4}, 8192));
@@ -190,12 +194,14 @@ TEST_CASE("streamed collision and navigation gate a native NPC crossing at a dis
         return event.first.body == second.collision || event.second.body == second.collision;
     }));
     take(f.traversal->deactivate(key(true), b));
+    CHECK_FALSE(f.traversal->project_walk_surface(goal));
     CHECK_FALSE(f.physics->body_state(*f.scene, second.collision));
     CHECK_FALSE(f.scene->find(id<WorldEntityId>('7')));
     CHECK_FALSE(f.traversal->begin(route));
     CHECK_FALSE(f.traversal->advance(route, cursor, .1));
     CHECK_FALSE(f.traversal->path(start, goal));
     take(f.traversal->close());
+    CHECK_FALSE(f.traversal->project_walk_surface(start));
     CHECK(take(f.content->usage()).pins == 0);
     take(f.content->evict(key(), a));
     take(f.content->evict(key(true), b));

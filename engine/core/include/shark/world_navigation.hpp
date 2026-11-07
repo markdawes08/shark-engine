@@ -67,6 +67,10 @@ class WorldNavigation final {
     WorldNavigation& operator=(WorldNavigation&&) = delete;
 
     [[nodiscard]] std::uint64_t instance() const noexcept;
+    // Vertical-only projection onto the authored single-layer walk surface.
+    // No horizontal nearest-point search or clearance/collision authority.
+    [[nodiscard]] Result<WorldPosition>
+    project_walk_surface(WorldPosition point, double maximum_vertical_delta = 1.0 / 1024.0) const;
     [[nodiscard]] Result<WorldNavigationPath>
     path(const WorldPosition& start, const WorldPosition& goal,
          std::size_t maximum_expansions = world_navigation_maximum_triangles,

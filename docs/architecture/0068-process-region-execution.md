@@ -6,6 +6,10 @@ Follow the [process contract](../region-process-execution.md),
 [durable ownership](../regional-ownership.md) and
 [testing policy](../testing-policy.md).
 
+[ADR 0069](0069-connected-world-streaming.md) extends the original fixed-content
+profile with a fixed catalog, live residency and lossless frame changes between
+executor incarnations. The complete-island ownership boundary below is retained.
+
 ## Decision
 
 Move the complete interacting native/gameplay island between actual owned

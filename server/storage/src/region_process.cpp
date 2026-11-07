@@ -90,6 +90,118 @@ Error read_error(std::span<const std::byte> bytes) {
     in.end();
     return result;
 }
+void write_job(Writer& out, const WorldCellJobStatus& job) {
+    out.u64(job.id.scope);
+    out.u64(job.id.sequence);
+    out.key(job.key);
+    out.u64(job.content_revision);
+    out.u64(static_cast<std::uint64_t>(job.state));
+    out.u64(job.cancellation_requested ? 1 : 0);
+    out.u64(job.resident_generation ? 1 : 0);
+    if (job.resident_generation)
+        out.u64(*job.resident_generation);
+    out.u64(job.error ? 1 : 0);
+    if (job.error)
+        out.blob(error_payload(*job.error));
+}
+WorldCellJobStatus read_job(Reader& in) {
+    const WorldCellJobId id{in.u64(), in.u64()};
+    const auto key = in.key();
+    const auto revision = in.u64(), state = in.u64();
+    if (id.scope == 0 || id.sequence == 0 || revision == 0 ||
+        state > static_cast<std::uint64_t>(WorldCellJobState::cancelled))
+        fail("Invalid cell job receipt");
+    const auto cancelled = in.flag();
+    std::optional<std::uint64_t> generation;
+    if (in.flag()) {
+        generation = in.u64();
+        if (*generation == 0)
+            fail("Invalid resident generation");
+    }
+    std::optional<Error> error;
+    if (in.flag())
+        error = read_error(in.blob());
+    return {id, key, revision, static_cast<WorldCellJobState>(state), cancelled, generation, error};
+}
+std::vector<std::byte> write_usage(const RegionCellUsage& value) {
+    Writer out;
+    const auto& u = value.usage;
+    for (const auto count :
+         {static_cast<std::uint64_t>(u.resident_cells),
+          static_cast<std::uint64_t>(u.resident_bytes), static_cast<std::uint64_t>(u.pending_bytes),
+          static_cast<std::uint64_t>(u.retained_jobs), u.bytes_read,
+          static_cast<std::uint64_t>(u.peak_resident_bytes),
+          static_cast<std::uint64_t>(u.peak_pending_bytes)})
+        out.u64(count);
+    out.u64(u.closed ? 1 : 0);
+    out.u64(u.pins);
+    out.u64(value.residents.size());
+    for (const auto& resident : value.residents) {
+        out.key(resident.key);
+        out.u64(resident.content_revision);
+        out.u64(resident.generation);
+        out.u64(resident.charged_bytes);
+    }
+    out.u64(value.active.size());
+    for (const auto& cell : value.active) {
+        out.key(cell.key);
+        out.u64(cell.resident_generation);
+        out.u64(cell.collision.world);
+        out.u64(cell.collision.slot);
+        out.u64(cell.collision.generation);
+        out.id(cell.proxy);
+    }
+    out.u64(value.jobs.size());
+    for (const auto& job : value.jobs)
+        write_job(out, job);
+    return std::move(out.bytes);
+}
+RegionCellUsage read_usage(std::span<const std::byte> bytes) {
+    Reader in{bytes};
+    const auto size = [&] {
+        const auto value = in.u64();
+        if (value > std::numeric_limits<std::size_t>::max())
+            fail("Cell usage size overflow");
+        return static_cast<std::size_t>(value);
+    };
+    const auto resident_cells = size(), resident_bytes = size(), pending_bytes = size(),
+               jobs = size();
+    const auto read = in.u64();
+    const auto peak_resident = size(), peak_pending = size();
+    const auto closed = in.flag();
+    const auto pins = size();
+    RegionCellUsage result{{resident_cells, resident_bytes, pending_bytes, jobs, read,
+                            peak_resident, peak_pending, closed, pins},
+                           {},
+                           {},
+                           {}};
+    auto count = in.u64();
+    if (count > world_navigation_maximum_tiles)
+        fail("Resident inventory overflow");
+    for (std::uint64_t i = 0; i < count; ++i)
+        result.residents.push_back({in.key(), in.u64(), in.u64(), size()});
+    count = in.u64();
+    if (count > world_navigation_maximum_tiles)
+        fail("Active inventory overflow");
+    for (std::uint64_t i = 0; i < count; ++i) {
+        const auto key = in.key();
+        const auto generation = in.u64(), world = in.u64(), slot = in.u64(),
+                   body_generation = in.u64();
+        if (generation == 0 || world == 0 || slot >= physics_maximum_bodies || body_generation == 0)
+            fail("Invalid active cell observation");
+        result.active.push_back({key,
+                                 generation,
+                                 {world, static_cast<std::uint32_t>(slot), body_generation},
+                                 in.id<WorldEntityId>()});
+    }
+    count = in.u64();
+    if (count > world_cell_maximum_jobs)
+        fail("Job inventory overflow");
+    for (std::uint64_t i = 0; i < count; ++i)
+        result.jobs.push_back(read_job(in));
+    in.end();
+    return result;
+}
 struct Worker {
     std::unique_ptr<RegionExecutor> executor;
     std::optional<RegionProcessImage> installed;
@@ -107,9 +219,20 @@ struct Worker {
             (prepared && !allow_prepared))
             fail("Worker is not available for this operation");
     }
-    std::vector<std::byte> capture() {
-        return need(
-            encode_region_process_image(need(executor->capture(peers, writers, watermark))));
+    std::vector<std::byte> capture(bool allow_jobs = true) {
+        auto state = executor->capture(peers, writers, watermark, allow_jobs);
+        if (!state) {
+            auto error = state.error();
+            error.code = ErrorCode::execution_failed;
+            throw Failure{error};
+        }
+        auto bytes = encode_region_process_image(state.value());
+        if (!bytes) {
+            auto error = bytes.error();
+            error.code = ErrorCode::execution_failed;
+            throw Failure{error};
+        }
+        return std::move(bytes).value();
     }
     Result<std::vector<std::byte>> apply(Op op, MonotonicTime now, Reader& in) {
         return boundary<std::vector<std::byte>>([&]() -> std::vector<std::byte> {
@@ -171,7 +294,7 @@ struct Worker {
                 ready();
                 in.end();
                 need(executor->freeze());
-                return capture();
+                return capture(false);
             }
             if (op == Op::cancel) {
                 ready(true);
@@ -194,6 +317,77 @@ struct Worker {
                     throw Failure{*report.gameplay.error};
                 peers = std::move(current);
                 return capture();
+            }
+            if (op == Op::cell_usage) {
+                in.end();
+                return write_usage(need(executor->cell_usage()));
+            }
+            if (op == Op::cell_prefetch) {
+                ready();
+                const auto key = in.key();
+                in.end();
+                const auto job = need(executor->prefetch_cell(key));
+                Writer out;
+                out.u64(job.scope);
+                out.u64(job.sequence);
+                return std::move(out.bytes);
+            }
+            if (op == Op::cell_cancel || op == Op::cell_take) {
+                ready();
+                const WorldCellJobId job{in.u64(), in.u64()};
+                in.end();
+                Writer out;
+                write_job(out, need(op == Op::cell_cancel ? executor->cancel_cell(job)
+                                                          : executor->take_cell(job)));
+                return std::move(out.bytes);
+            }
+            if (op == Op::cell_drain) {
+                ready();
+                in.end();
+                static_cast<void>(need(executor->drain_cells()));
+                return capture();
+            }
+            if (op == Op::cell_activate || op == Op::cell_deactivate || op == Op::cell_evict) {
+                ready();
+                const auto key = in.key();
+                in.end();
+                if (op == Op::cell_activate)
+                    static_cast<void>(need(executor->activate_cell(key)));
+                else if (op == Op::cell_deactivate)
+                    need(executor->deactivate_cell(key));
+                else
+                    need(executor->evict_cell(key));
+                return capture();
+            }
+            if (op == Op::pursuit_set || op == Op::pursuit_cancel) {
+                ready();
+                const auto npc = in.id<WorldEntityId>();
+                const auto request = in.u64();
+                if (op == Op::pursuit_cancel) {
+                    in.end();
+                    need(executor->cancel_pursuit(npc, request));
+                } else {
+                    const auto target = in.id<WorldEntityId>();
+                    const auto life = in.id<net::CombatTargetId>();
+                    const auto speed = in.real(), stop = in.real();
+                    in.end();
+                    need(executor->set_pursuit(npc, request, target, life, speed, stop));
+                }
+                return capture();
+            }
+            if (op == Op::combat_view) {
+                const auto connection = in.u64();
+                const auto current = in.peers();
+                const auto count = in.u64();
+                if (count > net::combat_maximum_targets)
+                    fail("Visible target overflow");
+                std::vector<net::CombatTargetId> visible;
+                for (std::uint64_t i = 0; i < count; ++i)
+                    visible.push_back(in.id<net::CombatTargetId>());
+                in.end();
+                RemoteAccess access{current};
+                return need(net::encode_combat_reply(
+                    net::CombatReply{need(executor->view(access, connection, visible, now))}));
             }
             const bool prepare = op == Op::prepare_move || op == Op::prepare_combat;
             const bool commit = op == Op::commit_move || op == Op::commit_combat;
@@ -414,6 +608,123 @@ Result<RegionProcessImage> RegionProcess::step(std::span<const RegionPeer> peers
 }
 Result<void> RegionProcess::terminate() {
     return impl_->child->terminate();
+}
+Result<WorldCellJobId> RegionProcess::prefetch_cell(WorldCellKey key, MonotonicTime now) {
+    return boundary<WorldCellJobId>([&] {
+        Writer out;
+        out.key(key);
+        const auto bytes = need(impl_->call(Op::cell_prefetch, std::move(out), now));
+        Reader in{bytes};
+        const WorldCellJobId result{in.u64(), in.u64()};
+        in.end();
+        if (result.scope == 0 || result.sequence == 0)
+            fail("Invalid admitted cell job");
+        return result;
+    });
+}
+Result<WorldCellJobStatus> RegionProcess::cancel_cell(WorldCellJobId job, MonotonicTime now) {
+    return boundary<WorldCellJobStatus>([&] {
+        Writer out;
+        out.u64(job.scope);
+        out.u64(job.sequence);
+        const auto bytes = need(impl_->call(Op::cell_cancel, std::move(out), now));
+        Reader in{bytes};
+        auto result = read_job(in);
+        in.end();
+        return result;
+    });
+}
+Result<WorldCellJobStatus> RegionProcess::take_cell(WorldCellJobId job, MonotonicTime now) {
+    return boundary<WorldCellJobStatus>([&] {
+        Writer out;
+        out.u64(job.scope);
+        out.u64(job.sequence);
+        const auto bytes = need(impl_->call(Op::cell_take, std::move(out), now));
+        Reader in{bytes};
+        auto result = read_job(in);
+        in.end();
+        return result;
+    });
+}
+Result<RegionProcessImage> RegionProcess::drain_cells(MonotonicTime now) {
+    return boundary<RegionProcessImage>([&] {
+        return need(decode_region_process_image(need(impl_->call(Op::cell_drain, {}, now))));
+    });
+}
+Result<RegionProcessImage> RegionProcess::activate_cell(WorldCellKey key, MonotonicTime now) {
+    return boundary<RegionProcessImage>([&] {
+        Writer out;
+        out.key(key);
+        return need(
+            decode_region_process_image(need(impl_->call(Op::cell_activate, std::move(out), now))));
+    });
+}
+Result<RegionProcessImage> RegionProcess::deactivate_cell(WorldCellKey key, MonotonicTime now) {
+    return boundary<RegionProcessImage>([&] {
+        Writer out;
+        out.key(key);
+        return need(decode_region_process_image(
+            need(impl_->call(Op::cell_deactivate, std::move(out), now))));
+    });
+}
+Result<RegionProcessImage> RegionProcess::evict_cell(WorldCellKey key, MonotonicTime now) {
+    return boundary<RegionProcessImage>([&] {
+        Writer out;
+        out.key(key);
+        return need(
+            decode_region_process_image(need(impl_->call(Op::cell_evict, std::move(out), now))));
+    });
+}
+Result<RegionCellUsage> RegionProcess::cell_usage(MonotonicTime now) {
+    return boundary<RegionCellUsage>(
+        [&] { return read_usage(need(impl_->call(Op::cell_usage, {}, now))); });
+}
+Result<RegionProcessImage> RegionProcess::set_pursuit(WorldEntityId npc, std::uint64_t request,
+                                                      WorldEntityId target,
+                                                      net::CombatTargetId life, double speed,
+                                                      double stop_distance, MonotonicTime now) {
+    return boundary<RegionProcessImage>([&] {
+        Writer out;
+        out.id(npc);
+        out.u64(request);
+        out.id(target);
+        out.id(life);
+        out.real(speed);
+        out.real(stop_distance);
+        return need(
+            decode_region_process_image(need(impl_->call(Op::pursuit_set, std::move(out), now))));
+    });
+}
+Result<RegionProcessImage> RegionProcess::cancel_pursuit(WorldEntityId npc, std::uint64_t request,
+                                                         MonotonicTime now) {
+    return boundary<RegionProcessImage>([&] {
+        Writer out;
+        out.id(npc);
+        out.u64(request);
+        return need(decode_region_process_image(
+            need(impl_->call(Op::pursuit_cancel, std::move(out), now))));
+    });
+}
+Result<net::CombatState> RegionProcess::view(std::uint64_t connection,
+                                             std::span<const RegionPeer> peers,
+                                             std::span<const net::CombatTargetId> visible,
+                                             MonotonicTime now) {
+    return boundary<net::CombatState>([&] {
+        Writer out;
+        out.u64(connection);
+        out.peers(peers);
+        if (visible.size() > net::combat_maximum_targets)
+            fail("Visible target overflow");
+        out.u64(visible.size());
+        for (const auto& target : visible)
+            out.id(target);
+        auto result =
+            need(net::decode_combat_reply(need(impl_->call(Op::combat_view, std::move(out), now))));
+        const auto* state = std::get_if<net::CombatState>(&result);
+        if (!state)
+            fail("Worker denied its trusted recipient observation");
+        return *state;
+    });
 }
 Result<void> RegionProcess::retire(MonotonicTime now) {
     return boundary<void>([&] {

@@ -854,7 +854,7 @@
       "planned_fixture": "MMOWorld/ContinuousTraversal, RegionAuthorityTransferFaultMatrix, CrossBoundaryCombatAI, OriginShiftPrecision and CellStreamingBudget fixtures.",
       "verification": {
         "status": "NOT_RUN",
-        "reason": "M05a-f supply local frames/residency, terrain/navigation readiness, co-located regions, native player/NPC travel, projectiles, shared cell authoring and fenced final cuts. M05f adds actual Server child execution, bounded portable native/rule state, atomic complete-island schema-4 writer batches, original session/input/economic routing and hard-fenced child loss/partition recovery. Selected Windows Debug and WSL ASan+UBSan evidence is recorded in docs/handoffs/M05f-process-region-execution.md. The declared whole-island functional profile does not claim concurrently independent neighboring simulations, gateway-session cold restoration, automatic SQL-fault recovery or production capacity. Connected authored-world acceptance, precision and streaming/resident budgets remain M05g; full REQ-M05 stays NOT_RUN. Native World cells interaction remains deferred under the manual UI pause."
+        "reason": "M05a-g implement bounded frames/content/residency, native terrain/navigation and pursuit, shared cell authoring, co-located grants, consistent cuts and actual Server child transfer/recovery. M05g connects saved authored near/far files, live IO/activation and pressure, exact native pursuit, projectile/recovery continuity, lossless staged frames, stable client/replica identities and original durable requests. Selected Windows Debug and WSL sanitizer evidence is recorded in docs/handoffs/M05g-connected-world-acceptance.md. The whole-island functional profile keeps one executing child and does not claim concurrently independent neighboring simulations, gateway-session cold restoration, automatic SQL-fault recovery or production capacity. Full REQ-M05 remains NOT_RUN for native World cells interaction deferred under BL-M05D-UI-01 and the manual UI pause. M06 is next for implementation under the existing backlog amendment."
       }
     },
     {
@@ -1013,6 +1013,37 @@
   "implemented_surface": {
     "features": [
       {
+        "id": "server.connected-world-streaming",
+        "name": "Authored live cell streaming, native pursuit and lossless process-frame handoffs",
+        "requirement_ids": [
+          "REQ-M05"
+        ],
+        "test_ids": [
+          "shark.server.seamless-world",
+          "shark.server.region-process",
+          "shark.server.region-image",
+          "shark.core.world-traversal",
+          "shark.tools.world-cell-authoring"
+        ],
+        "test_sources": [
+          "tests/seamless_world_tests.cpp",
+          "tests/seamless_world_content.hpp",
+          "tests/server_region_process_cases.hpp",
+          "tests/region_image_tests.cpp",
+          "tests/world_navigation_tests.cpp",
+          "tests/world_traversal_tests.cpp"
+        ],
+        "fixtures": [
+          "docs/seamless-world-acceptance.md",
+          "server/storage/src/region_executor.cpp",
+          "server/storage/src/region_gateway.cpp",
+          "server/storage/src/region_process.cpp"
+        ],
+        "fixture_reason": "Saved authored near/far terrain is exported to real files and read by actual Server children while native ticks continue. Missing/corrupt/cancelled IO, explicit owner drain and activation, two-cell residency and pending pressure, exact-life native pursuit, projectile continuity, cell-aligned lossless frame shifts, stable client/replica frames and original durable tickets connect through actual mTLS. Seeded faults shape verified combat observations; original admitted combat and completed-step reply loss checks retain exact recovery semantics. Independent v1/v2 images and native target packing reject lossy frame conversion.",
+        "external_fixture_reason": "Real file/reader lifetimes, native worlds, TLS, OS children, actual sampled child RSS and durable ownership require dedicated external fixtures. No new authoring command, component, Lua binding or FeatureWorld case is added. The profile moves the complete interacting island; independent concurrent islands, production capacity and native World cells UI are not qualified.",
+        "featureworld_cases": []
+      },
+      {
         "id": "server.process-region-execution",
         "name": "Portable native island execution, closed process routing and fenced recovery",
         "requirement_ids": ["REQ-M05"],
@@ -1020,7 +1051,7 @@
         "test_sources": ["tests/server_region_process_cases.hpp", "tests/server_movement_tests.cpp", "tests/region_image_tests.cpp", "tests/storage_region_process_tests.cpp", "tests/core_physics_transfer_tests.cpp", "tests/combat_rule_tests.cpp"],
         "fixtures": ["docs/region-process-execution.md", "server/storage/src/region_executor.cpp", "server/storage/src/region_gateway.cpp", "server/storage/src/region_process.cpp", "server/storage/src/region_journal.cpp", "server/storage/src/region_child.cpp"],
         "fixture_reason": "Actual owned Server children rebuild native bodies, static cell collision/traversal, contact state, movement FIFOs and combat/life/projectiles under fresh instance/body mappings. Real gateway mTLS sessions, reliable recipient streams and original economic tickets survive child handoff. Bounded post-cut buffering, lost real request/reply observations, confirmed child loss before/after SQL, same-request admission recovery and dead-life/respawn cases check execution fencing. Independent binary/native/SQL fixtures cover malformed images, portable Lua slots, queued force/targets, contact watermarks, atomic complete writer batches, stale SQL writers and two-slot journal publication.",
-        "external_fixture_reason": "Process and durable authority require actual TLS, native worlds, SQLite and owned OS children outside CPU Tools FeatureWorld. This profile moves the complete interacting island; independent concurrent neighboring islands, gateway-session cold restoration, automatic SQL-fault recovery and full authored-world acceptance are not claimed.",
+        "external_fixture_reason": "Process and durable authority require actual TLS, native worlds, SQLite and owned OS children outside CPU Tools FeatureWorld. This profile moves the complete interacting island; independent concurrent neighboring islands, gateway-session cold restoration, automatic SQL-fault recovery and production capacity are not claimed. M05g adds connected authored acceptance through its separate feature mapping.",
         "featureworld_cases": []
       },
       {

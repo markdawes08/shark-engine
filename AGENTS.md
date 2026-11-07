@@ -54,26 +54,43 @@ native interactive checks to [BL-20D-UI-01](docs/backlog.md#deferred-items) and
 authorized 20e; unperformed checks remain NOT_RUN and full REQ-20 stays NOT_RUN.
 Preserve prior evidence and failures.
 
-**Current handoff: [M05f, process region execution](docs/handoffs/M05f-process-region-execution.md).**
-Follow the [process contract](docs/region-process-execution.md) and
-[ADR 0068](docs/architecture/0068-process-region-execution.md). RegionGateway keeps
-actual player/session, original durable-operation and recipient publication owners;
-live TLS transports are borrowed only per call. Real Server children reconstruct
-the complete interacting native island in one fixed frame/content set. Transfer
-every player writer atomically, including stationary players; never split a retained
-source group. Source handles are relocation keys, not imported authority. Preserve
+**Current handoff: [M05g, connected authored-world acceptance](docs/handoffs/M05g-connected-world-acceptance.md).**
+Follow [ADR 0069](docs/architecture/0069-connected-world-streaming.md), the
+[acceptance procedure](docs/seamless-world-acceptance.md) and
+[process contract](docs/region-process-execution.md). Real Server children stream
+from an immutable bounded catalog while ticks continue; drain publishes content.
+Normal checkpoints retain committed residency, but transfer requires original jobs
+settled and taken. Gateway job tickets fence the child incarnation. Only validated
+collision proxies may change the otherwise fixed gameplay topology; preserve
+occupied/contact/spawn detach guards and last-valid content.
+Native pursuit checks actual target session/life and support. Retain only already
+adopted world steering anchors under current native/graph agreement, rebuild fresh
+paths and preserve existing tolerances and native progress checks.
+Image v2 retains v1 compatibility. Staged cell-aligned origin changes must preserve
+complete global and packed native values exactly, including pending body targets.
+The gateway retains its original client frame and existing wire/session/replica
+identities. Post-effect capture/publication failures require recovery. M06 is next
+in manifest order under the existing UI backlog amendment. Full REQ-M05 stays
+NOT_RUN for native World cells interaction under BL-M05D-UI-01; manual UI remains
+paused and independent backlog statuses are unchanged.
+
+The [M05f handoff](docs/handoffs/M05f-process-region-execution.md) and
+[ADR 0068](docs/architecture/0068-process-region-execution.md) remain applicable.
+RegionGateway retains actual player/session, original durable-operation and
+recipient owners; live TLS transports are borrowed per call. Transfer the complete
+interacting native island and every player writer atomically, including stationary
+players. Source handles are relocation keys, not imported authority. Preserve
 forces/targets, contact pairs/watermarks, FIFO/life/history and original flights.
 Jolt solver caches are rebuilt. Portable rules use fresh VMs with eight explicit
 int64 slots from first evaluation; ordinary mutable VMs and entity scripts reject.
 Persist actual image bytes before SQL and bind their SHA256 to every cut request.
-Checkpoint complete input/tick state before publishing it. Buffered post-cut intents
-remain unadmitted; uncertain admitted routes retain original immutable receipts and
-replay without spending the session sequence again. Timeout grants no authority;
-recovery confirms old child exit and settles original SQL before a fresh instance
-and all-writer CAS. Normal close must observe clean worker exit. Child recovery
-does not restore gateway sessions or automatically resolve storage uncertainty.
-M05g is next: connected authored-world acceptance, faults, precision, readiness and
-resident budgets. Full REQ-M05 remains NOT_RUN; manual UI remains paused.
+Checkpoint complete input/tick state before publishing. Buffered post-cut intents
+remain unadmitted; uncertain routes retain original immutable receipts without
+spending session sequence again. Timeout grants no authority; recovery confirms
+old child exit and settles original SQL before fresh instance/all-writer CAS.
+Normal close observes clean worker exit. Child recovery does not restore gateway
+sessions or automatically resolve storage uncertainty. This remains one executing
+whole island, not simultaneously independent neighboring simulations.
 
 The [M05e handoff](docs/handoffs/M05e-fenced-region-handoffs.md) remains applicable. Follow the
 [M05 checkpoints](docs/roadmap/seamless-world-plan.md),

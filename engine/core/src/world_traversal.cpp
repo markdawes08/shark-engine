@@ -271,6 +271,13 @@ Result<WorldNavigationCursor> WorldTraversal::begin(const WorldNavigationPath& p
         return checked(impl_->navigation->begin(path));
     });
 }
+Result<WorldPosition> WorldTraversal::project_walk_surface(WorldPosition point,
+                                                           double maximum_vertical_delta) const {
+    return boundary<WorldPosition>("world.traversal.project", [&] {
+        impl_->check_ready();
+        return checked(impl_->navigation->project_walk_surface(point, maximum_vertical_delta));
+    });
+}
 Result<WorldNavigationCursor> WorldTraversal::advance(const WorldNavigationPath& path,
                                                       const WorldNavigationCursor& cursor,
                                                       double maximum_distance) const {

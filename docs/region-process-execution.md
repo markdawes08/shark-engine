@@ -1,7 +1,10 @@
 # Region process execution
 
 M05f adds trusted local process execution under
-[ADR 0068](architecture/0068-process-region-execution.md). It extends
+[ADR 0068](architecture/0068-process-region-execution.md). M05g connects live
+authored content and staged frames under
+[ADR 0069](architecture/0069-connected-world-streaming.md) and the
+[acceptance procedure](seamless-world-acceptance.md). They extend
 [gameplay cuts](gameplay-transfer-cuts.md) and
 [durable ownership](regional-ownership.md). Verification belongs in the handoff;
 this contract does not assert a test result.
@@ -19,11 +22,12 @@ domains inside that island; they are not concurrent independent simulations.
 Transfer moves all player writers to the successor instance atomically, including
 players whose position stays in the same logical region.
 
-An executor keeps one explicit fixed frame, fixed hierarchy and content set.
-Checked combat death/respawn can change its managed body lifetime. General
-authoring, entity scripts, arbitrary spawning and live content replacement are
-outside this process profile. Existing actor, FIFO, history, flight, resident
-cell and prepared-asset bounds still apply.
+An executor keeps one explicit fixed frame and immutable content catalog.
+Checked combat death/respawn can change its managed body lifetime; validated
+catalog collision proxies can enter/leave the otherwise fixed gameplay hierarchy.
+General authoring, entity scripts, arbitrary spawning and replacement of admitted
+content identities are outside this process profile. Existing actor, FIFO,
+history, flight, resident-cell and prepared-asset bounds still apply.
 
 RegionProcess owns a closed child channel. Launch supplies only the worker mode
 and trusted startup arguments. The child has no database, player listener,
@@ -49,12 +53,16 @@ StoreId lease prevents two gateways in this host from using the same live store.
 
 ## Portable image and native reconstruction
 
-`RegionProcessImage` version 1 is a bounded engine-owned encoding, at most
+`RegionProcessImage` version 2 is a bounded engine-owned encoding, at most
 16 MiB minus 4 KiB reserved for its control envelope. It includes the fixed frame,
 regional definitions, Scene values, complete physics transfer state, movement and
 combat cuts, portable rules, cell/asset bytes, NPC intents, peer observations,
-writers, executor instance and route watermark. Unknown versions, malformed
-values, incomplete mappings and unsupported script state reject.
+writers, executor instance and route watermark. Version 2 also retains immutable
+cell file descriptors, unloaded/resident/active state, residency limits and
+exact-life pursuit intent/counters. Version 1 remains readable with its original
+inline active-cell defaults. World-cell payload versions 1/2 have their own
+compatibility rules, independently of the process image. Unknown versions,
+malformed values, incomplete mappings and unsupported script state reject.
 
 Build destination Scene/native/traversal owners without simulation. Source
 EntityReferences and body handles are lookup keys, never destination authority.
@@ -76,6 +84,52 @@ exactly eight int64 slots. Successful decisions publish those slots; snapshots
 also retain source/configuration and evaluation count. Ordinary mutable rule VMs
 cannot be converted by capture, and entity ScriptRuntime state rejects. Loading
 source alone is not a substitute for preserving an arbitrary Lua VM.
+
+## Live content and native pursuit
+
+The immutable catalog contains at most eight key/revision/proxy rows. Optional
+absolute file descriptors bind complete SHA-256 digests and exact bounded byte
+counts. The existing Core reader returns owned bytes without importing source or
+discovering files. Prepared asset closure remains explicit and immutable.
+
+The existing residency worker reads asynchronously while requested native ticks
+continue. Explicit drain publishes at most one ready result. Activation prepares
+the complete navigation candidate and native terrain; detach checks exact pins,
+native contacts, dynamic footprints, pending targets and retained spawn positions.
+Only validated catalog collision proxies can change topology, and those proxies
+have no authored RigidBody. Failures preserve last-valid resident/active content.
+Gateway tickets bind both the original reader job and executor incarnation.
+
+Normal checkpoints contain committed residency and collision state while pending
+jobs stay local. A transfer cut rejects until every retained original job has
+settled and been taken. Job IDs, reader work, pins and navigation IDs are not
+migrated. Each destination creates fresh owners from the complete committed
+image; teardown joins its reader before releasing captured bytes.
+
+Pursuit binds a checked native dynamic sphere to an exact current target life and
+actual ready player binding. It uses current native static support, bounded
+vertical projection and the existing authored centerline navigation profile.
+Every tick rebuilds a path from current surfaces. Only native committed movement
+that agrees with the candidate/support advances committed pursuit counters.
+Stopped, cancelled, blocked, awaiting-readiness and unavailable-target states
+remain explicit; no old path/cursor is imported into another executor.
+
+## Staged server frames and client observations
+
+A handoff may request a cell-aligned server frame in the same world, retaining
+the origin offset and advancing the frame generation by one. The pure complete
+image check runs before source freeze and SQL. It rejects local-bound overflow,
+changed represented global positions or native float requantization. It relocates
+root poses, previous poses, body targets, gameplay positions and native mesh
+vertices; identity collision-proxy poses and child-local TRS remain unchanged.
+The installed child retains this fixed frame until another handoff.
+
+The gateway's original client publication frame is immutable. Public root poses,
+interest/replicas and embedded movement corrections convert into that frame
+before observation. Movement/replication wire v1 and existing combat wire versions
+stay unchanged, with the original session/stream/life/replica identities. A failed
+post-effect capture or incomplete publication cannot be used as a new canonical
+observation; the gateway requires explicit reconciliation/recovery.
 
 ## Input admission and original receipts
 
@@ -135,8 +189,9 @@ commit together. One retained worker control slot covers the batch; overlapping
 account controls conflict while original gameplay jobs may remain retained.
 Schema 4 and economic OperationId semantics remain unchanged.
 
-Every accepted route image and complete tick is checkpointed before its new
-publication state, correction or outcomes become visible. A failure retains the
+Every accepted route image, complete tick and committed host-control image is
+checkpointed before its new publication state, correction or outcomes become
+visible. A failure retains the
 gateway's last known complete image; a published-but-uncertain file requires
 inspection before selecting recovery state. Original durable
 jobs stay on their existing worker; a child restart never recreates their tickets
@@ -166,6 +221,17 @@ SQL-fault recovery, activation of stale backups or a distributed lease. The
 existing durable recovery API can invalidate sessions/runtime tickets and therefore
 requires explicit reconciliation outside this gateway's continuity claim.
 
-The manual UI pause is unchanged. Full REQ-M05 remains NOT_RUN until M05g's
-complete connected authored-world gate; process implementation and CPU checks
-do not replace its remaining acceptance.
+M05g's connected procedure measures logical resident/pending charges separately
+from sampled child working-set/VmRSS. Its fixture fixes two resident cells and a
+pending-byte cap of one maximum-cell payload plus retained PreparedAssets; a
+second pending reservation rejects before IO. Sample each live child against the
+1 GiB functional budget without presenting samples as process-lifetime peaks or
+production capacity. Report provisional quiescence overruns without bypassing
+authority fences.
+
+Actual TLS carries player intents, reliable corrections and replica traffic.
+Seeded FaultLink loss/reorder acts only on already verified combat observations,
+not raw TLS/TCP bytes. Qualification and selected results belong in the handoff.
+The manual UI pause is unchanged; native World cells interaction remains
+NOT_RUN under [BL-M05D-UI-01](backlog.md#deferred-items). CPU/process evidence does
+not change that independent backlog status.

@@ -31,6 +31,15 @@ struct RegionGatewayStats {
     bool budget_exceeded{false};
 };
 enum class RegionProcessRole { source, destination };
+struct RegionCellTicket {
+    RegionInstanceId instance;
+    WorldCellJobId job;
+    bool operator==(const RegionCellTicket&) const = default;
+};
+struct RegionStreamUsage {
+    RegionInstanceId instance;
+    RegionCellUsage cells;
+};
 
 // Sole local gateway: actual player TLS/session and durable worker owners stay
 // here. A complete interaction island executes in exactly one owned Server child.
@@ -60,7 +69,27 @@ class RegionGateway final {
                                                   MonotonicTime now);
     [[nodiscard]] Result<void> prepare_handoff(RegionInstanceId destination,
                                                std::span<net::TlsTransport* const> transports,
-                                               MonotonicTime now);
+                                               MonotonicTime now,
+                                               std::optional<WorldLocalFrame> frame = {});
+    [[nodiscard]] Result<RegionCellTicket> prefetch_cell(WorldCellKey key, MonotonicTime now);
+    [[nodiscard]] Result<WorldCellJobStatus> cancel_cell(RegionCellTicket job, MonotonicTime now);
+    [[nodiscard]] Result<WorldCellJobStatus> take_cell(RegionCellTicket job, MonotonicTime now);
+    [[nodiscard]] Result<RegionProcessImage> drain_cells(MonotonicTime now);
+    [[nodiscard]] Result<RegionProcessImage> activate_cell(WorldCellKey key, MonotonicTime now);
+    [[nodiscard]] Result<RegionProcessImage> deactivate_cell(WorldCellKey key, MonotonicTime now);
+    [[nodiscard]] Result<RegionProcessImage> evict_cell(WorldCellKey key, MonotonicTime now);
+    [[nodiscard]] Result<RegionStreamUsage> cell_usage(MonotonicTime now);
+    [[nodiscard]] Result<RegionProcessImage> set_pursuit(WorldEntityId npc, std::uint64_t request,
+                                                         WorldEntityId target,
+                                                         net::CombatTargetId life, double speed,
+                                                         double stop_distance, MonotonicTime now);
+    [[nodiscard]] Result<RegionProcessImage>
+    cancel_pursuit(WorldEntityId npc, std::uint64_t request, MonotonicTime now);
+    // Player observations always use the original gateway publication frame,
+    // including after a lossless staged server-frame shift.
+    [[nodiscard]] Result<WorldLocalFrame> publication_frame() const;
+    [[nodiscard]] Result<net::CombatState> combat_state(net::TlsTransport& transport,
+                                                        MonotonicTime now);
     [[nodiscard]] Result<storage::RuntimeTicket> begin_commit(MonotonicTime deadline,
                                                               MonotonicTime now);
     [[nodiscard]] Result<RegionGatewayPhase> poll_commit(MonotonicTime now);

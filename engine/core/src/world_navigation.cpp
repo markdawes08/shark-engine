@@ -140,6 +140,42 @@ WorldNavigation::~WorldNavigation() = default;
 std::uint64_t WorldNavigation::instance() const noexcept {
     return impl_->id;
 }
+Result<WorldPosition> WorldNavigation::project_walk_surface(WorldPosition point,
+                                                            double maximum_vertical_delta) const {
+    return boundary<WorldPosition>("world.navigation.project", [&] {
+        if (!std::isfinite(maximum_vertical_delta) || maximum_vertical_delta < 0 ||
+            maximum_vertical_delta > world_local_coordinate_limit)
+            fail("World navigation projection has an invalid vertical bound",
+                 ErrorCode::invalid_argument);
+        const auto current = local(point, impl_->frame);
+        std::optional<math::Vec3> best;
+        double distance = std::numeric_limits<double>::infinity();
+        for (const auto& node : impl_->nodes) {
+            const auto& triangle = node.vertices;
+            const auto denominator = orient(triangle[0], triangle[1], triangle[2]);
+            const auto a = orient(triangle[1], triangle[2], current) / denominator;
+            const auto b = orient(triangle[2], triangle[0], current) / denominator;
+            auto projected = current;
+            projected.y = a * triangle[0].y + b * triangle[1].y + (1 - a - b) * triangle[2].y;
+            const auto delta = std::abs(projected.y - current.y);
+            if (delta <= maximum_vertical_delta && delta < distance &&
+                contains(triangle, projected)) {
+                best = projected;
+                distance = delta;
+            }
+        }
+        if (!best)
+            fail("Point has no authored walk surface within its vertical bound",
+                 ErrorCode::invalid_argument);
+        // Reconstruct only Y. Adding a fractional frame origin back to X/Z can
+        // round their canonical cell offsets even though no horizontal move
+        // was requested.
+        const auto projected = global(*best, impl_->frame);
+        point.cell.y = projected.cell.y;
+        point.offset[1] = projected.offset[1];
+        return point;
+    });
+}
 
 Result<std::unique_ptr<WorldNavigation>>
 WorldNavigation::create(WorldLocalFrame frame, std::span<const WorldNavigationTile> tiles) {

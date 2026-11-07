@@ -121,6 +121,7 @@ not establish file or gameplay-wire formats.
 | [0066](0066-colocated-regions.md) | Checked regional grants, shared native gameplay and overlapping interest in one co-located island |
 | [0067](0067-fenced-region-handoffs.md) | Final gameplay cuts, retained local owners and execution/SQL writer fencing for regional handoffs |
 | [0068](0068-process-region-execution.md) | Portable interacting islands, owned Server children, durable checkpoints and atomic all-writer process handoffs |
+| [0069](0069-connected-world-streaming.md) | Immutable streamed cell catalogs, native pursuit, lossless staged frames and connected authored-world acceptance |
 
 The [machine-readable requirements](../coverage/requirements.json) assign
 implementation and verification ownership. A later assignment may refine an

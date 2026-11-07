@@ -1,6 +1,7 @@
 #pragma once
 
 #include "shark/server/region_child.hpp"
+#include "shark/server/region_executor.hpp"
 #include "shark/server/region_image.hpp"
 
 namespace shark::server {
@@ -34,6 +35,24 @@ class RegionProcess final {
     [[nodiscard]] Result<void> cancel(MonotonicTime now);
     [[nodiscard]] Result<RegionProcessImage> step(std::span<const RegionPeer> peers,
                                                   MonotonicTime now);
+    [[nodiscard]] Result<WorldCellJobId> prefetch_cell(WorldCellKey key, MonotonicTime now);
+    [[nodiscard]] Result<WorldCellJobStatus> cancel_cell(WorldCellJobId job, MonotonicTime now);
+    [[nodiscard]] Result<WorldCellJobStatus> take_cell(WorldCellJobId job, MonotonicTime now);
+    [[nodiscard]] Result<RegionProcessImage> drain_cells(MonotonicTime now);
+    [[nodiscard]] Result<RegionProcessImage> activate_cell(WorldCellKey key, MonotonicTime now);
+    [[nodiscard]] Result<RegionProcessImage> deactivate_cell(WorldCellKey key, MonotonicTime now);
+    [[nodiscard]] Result<RegionProcessImage> evict_cell(WorldCellKey key, MonotonicTime now);
+    [[nodiscard]] Result<RegionCellUsage> cell_usage(MonotonicTime now);
+    [[nodiscard]] Result<RegionProcessImage> set_pursuit(WorldEntityId npc, std::uint64_t request,
+                                                         WorldEntityId target,
+                                                         net::CombatTargetId life, double speed,
+                                                         double stop_distance, MonotonicTime now);
+    [[nodiscard]] Result<RegionProcessImage>
+    cancel_pursuit(WorldEntityId npc, std::uint64_t request, MonotonicTime now);
+    [[nodiscard]] Result<net::CombatState> view(std::uint64_t connection,
+                                                std::span<const RegionPeer> peers,
+                                                std::span<const net::CombatTargetId> visible,
+                                                MonotonicTime now);
     [[nodiscard]] Result<void> terminate();
     [[nodiscard]] Result<void> retire(MonotonicTime now);
     [[nodiscard]] Result<bool> alive() const;

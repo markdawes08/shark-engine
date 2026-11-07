@@ -44,6 +44,8 @@ class WorldTraversal final {
     [[nodiscard]] Result<WorldNavigationPath> path(WorldPosition from, WorldPosition to,
                                                    std::size_t maximum_expansions = 2048,
                                                    std::size_t maximum_waypoints = 2048) const;
+    [[nodiscard]] Result<WorldPosition>
+    project_walk_surface(WorldPosition point, double maximum_vertical_delta = 1.0 / 1024.0) const;
     [[nodiscard]] Result<WorldNavigationCursor> begin(const WorldNavigationPath& path) const;
     // Pure steering candidate. Native committed movement must agree before a
     // host adopts this cursor. This does not move a character or grant a hit.

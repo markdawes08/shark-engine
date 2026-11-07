@@ -13,7 +13,7 @@ staging, commits and pushing. Manual UI testing remains paused.
 | M05d | Complete under the co-located functional profile: adjacent regional grants, overlapping interest, continuous player/NPC movement, targeting/projectiles and original durable-operation identity; shared cell preparation/export through retained human/terminal adapters. See the [handoff](../handoffs/M05d-colocated-regions.md) and [regional contract](../region-world.md). Native panel interaction remains deferred. |
 | M05e | Complete under the co-located persistent profile: final tick/input cuts, original pending operations, execution fencing and transactional durable writer CAS. See the [handoff](../handoffs/M05e-fenced-region-handoffs.md), [cut contract](../gameplay-transfer-cuts.md) and [ownership contract](../regional-ownership.md). The exact native/Lua/session owners remain retained; this is not a portable simulation image. |
 | M05f | Complete under the declared whole-island functional profile: real Server child execution, explicit portable native/rule state, all-writer CAS, bounded original input/completion routing and source/destination loss/partition recovery. See the [handoff](../handoffs/M05f-process-region-execution.md) and [process contract](../region-process-execution.md). |
-| M05g | Authored continuous-world connected acceptance with actual separate region processes, network faults, precision, readiness and resident-budget evidence. |
+| M05g | Connected authored-world streaming, native pursuit, lossless staged frames and actual child-process acceptance. See the [handoff](../handoffs/M05g-connected-world-acceptance.md) and [procedure](../seamless-world-acceptance.md) for selected evidence and limits. Native World cells UI stays deferred. |
 
 Each implementation checkpoint tests its changed behavior and failure paths as it
 lands. M05g connects those results and covers the complete affected subsystem;
@@ -31,4 +31,9 @@ Development payloads are prepared through EngineTools without bringing source
 importers into Core/Server. Final cooked cell/dependency manifests remain with
 31/M08. Actual party/trade continuity follows M07/M09. M09/M10 retain the declared
 LOCAL-MMO-1 crossing/load/endurance qualification. Local streaming alone cannot
-close full REQ-M05; its status remains NOT_RUN until the complete gate passes.
+close full REQ-M05; its status remains NOT_RUN for deferred native World cells
+interaction under [BL-M05D-UI-01](../backlog.md#deferred-items). M05g connects
+saved authored files, live reader/native owners, whole-island process handoffs,
+precision and budgets. This profile does not claim independent concurrently
+executing neighboring islands. M06 is the next implementation assignment under
+the existing UI backlog amendment; preserve the original UI gate.

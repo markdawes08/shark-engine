@@ -1,13 +1,18 @@
 #include "shark/server/region_executor.hpp"
+#include "shark/world_cell_io.hpp"
 
 #include <algorithm>
 #include <array>
 #include <chrono>
 #include <cmath>
+#include <limits>
+#include <mutex>
 #include <thread>
 
 namespace shark::server {
 namespace {
+constexpr double pursuit_horizontal_agreement = 0.02;
+constexpr double pursuit_support_agreement = 0.04;
 struct Failure {
     Error error;
 };
@@ -48,6 +53,67 @@ bool npc_intent(const std::optional<math::Vec3>& value) {
                       std::isfinite(value->z) && value->y == 0 &&
                       value->x * value->x + value->z * value->z <= movement_speed * movement_speed);
 }
+bool pursuit_intent(const RegionNpcPursuit& value) {
+    return value.request != 0 && std::isfinite(value.speed) && value.speed > 0 &&
+           value.speed <= movement_speed && std::isfinite(value.stop_distance) &&
+           value.stop_distance >= 1 && value.stop_distance <= physics_maximum_dimension &&
+           std::isfinite(value.committed_distance) && value.committed_distance >= 0 &&
+           static_cast<unsigned>(value.status) <=
+               static_cast<unsigned>(RegionPursuitStatus::cancelled);
+}
+struct CellReaderState {
+    std::vector<RegionImageCell> catalog;
+    std::array<std::optional<std::vector<std::byte>>, 8> raw{};
+    std::mutex mutex;
+    bool initial{true};
+    std::size_t index(WorldCellKey key) const {
+        for (std::size_t i = 0; i < catalog.size(); ++i)
+            if (catalog[i].key == key)
+                return i;
+        fail("Cell key is outside the immutable executor catalog");
+    }
+    Result<std::vector<std::byte>> read(const WorldCellReadRequest& request, std::stop_token stop) {
+        return boundary<std::vector<std::byte>>("server.executor.cell.read", [&] {
+            const auto i = index(request.key);
+            const auto& cell = catalog[i];
+            if (cell.content_revision != request.content_revision)
+                fail("Cell revision differs from immutable catalog");
+            std::vector<std::byte> bytes;
+            bool snapshot;
+            {
+                const std::lock_guard lock{mutex};
+                snapshot = initial && !cell.payload.empty();
+            }
+            if (!cell.source || snapshot)
+                bytes = cell.payload;
+            else
+                bytes = need(read_world_cell_file(cell.source->path, request.maximum_bytes, stop));
+            if (bytes.empty() || bytes.size() > request.maximum_bytes)
+                fail("Cell reader payload exceeds its bound");
+            if (cell.source &&
+                (bytes.size() != cell.source->bytes || need(sha256(bytes)) != cell.source->digest))
+                fail("Cell file differs from its immutable descriptor");
+            if (stop.stop_requested())
+                fail("Cell read was cancelled");
+            if (cell.source) {
+                const std::lock_guard lock{mutex};
+                std::size_t retained = bytes.size();
+                for (std::size_t j = 0; j < catalog.size(); ++j) {
+                    const auto size = !catalog[j].source ? catalog[j].payload.size()
+                                      : j != i && raw[j] ? raw[j]->size()
+                                                         : 0;
+                    if (size > region_process_image_maximum_bytes - retained)
+                        fail("Cell byte cache exceeds portable content bound");
+                    retained += size;
+                }
+                if (retained > region_process_image_maximum_bytes)
+                    fail("Cell byte cache exceeds portable content bound");
+                raw[i] = bytes;
+            }
+            return bytes;
+        });
+    }
+};
 } // namespace
 
 struct RegionExecutor::Impl {
@@ -56,6 +122,7 @@ struct RegionExecutor::Impl {
         PhysicsBodyHandle body;
         RigidBody settings;
         std::optional<math::Vec3> pending;
+        std::optional<RegionNpcPursuit> pursuit{};
     };
     const std::thread::id owner{std::this_thread::get_id()};
     RegionExecutorPhase phase{RegionExecutorPhase::staged};
@@ -63,7 +130,8 @@ struct RegionExecutor::Impl {
     RegionInstanceId instance;
     std::vector<RegionDefinition> regions;
     std::vector<MovementDomain> domains;
-    std::shared_ptr<const std::vector<RegionImageCell>> cells;
+    std::shared_ptr<CellReaderState> content;
+    WorldCellResidencyLimits residency_limits;
     std::vector<RegionImageAsset> assets;
     std::shared_ptr<const PreparedAssets> prepared;
     std::unique_ptr<Scene> scene;
@@ -127,6 +195,43 @@ struct RegionExecutor::Impl {
             fail("Executor clock cannot regress");
         last_time = now;
     }
+    WorldCellResident resident(WorldCellKey key) const {
+        const auto rows = need(residency->residents());
+        const auto found =
+            std::find_if(rows.begin(), rows.end(), [&](const auto& row) { return row.key == key; });
+        if (found == rows.end())
+            fail("Catalog cell is not resident");
+        return *found;
+    }
+    bool footprint(WorldCellKey key, math::Vec3 position, double extent) const {
+        const auto from = need(translate_world_position(
+            frame.origin, {position.x - extent, position.y, position.z - extent}));
+        const auto to = need(translate_world_position(
+            frame.origin, {position.x + extent, position.y, position.z + extent}));
+        return key.world == frame.origin.world && key.cell.x >= from.cell.x &&
+               key.cell.x <= to.cell.x && key.cell.y >= from.cell.y && key.cell.y <= to.cell.y &&
+               key.cell.z >= from.cell.z && key.cell.z <= to.cell.z;
+    }
+    void detachable(const WorldTraversalCell& cell) const {
+        const auto native = need(physics->capture_transfer(*scene));
+        for (const auto& pair : native.active_pairs)
+            if (pair.first.body == cell.collision || pair.second.body == cell.collision)
+                fail("Active native contacts retain this cell collision");
+        for (const auto& body : native.bodies)
+            if (body.native.motion != BodyMotion::static_body) {
+                const auto extent =
+                    body.native.settings && body.native.settings->shape == ColliderShape::sphere
+                        ? body.native.collider_half_extents.x
+                        : glm::length(body.native.collider_half_extents);
+                if (footprint(cell.key, body.native.pose.translation, extent) ||
+                    (body.target && footprint(cell.key, body.target->translation, extent)))
+                    fail("A native body or pending target retains this cell footprint");
+            }
+        const auto lives = need(combat->capture_cut(*scene, *physics));
+        for (const auto& actor : lives.actors)
+            if (footprint(cell.key, actor.spawn.translation, actor.settings.radius))
+                fail("A retained life spawn retains this ready cell");
+    }
     MovementDomain corridor(RegionId id) const {
         const auto region =
             std::find_if(regions.begin(), regions.end(), [&](const auto& r) { return r.id == id; });
@@ -155,16 +260,48 @@ struct RegionExecutor::Impl {
             fail("Region NPC footprint exceeds traversal bounds");
         return value;
     }
+    struct Support {
+        WorldPosition point;
+        double normal_y;
+    };
+    Support support(const PhysicsBodyState& body, PhysicsBodyHandle handle) const {
+        const auto center = body.pose.translation;
+        const auto depth = std::max(2 * body.collider_half_extents.y, 0.5);
+        const auto hits = need(physics->raycast(
+            *scene, center, center - math::Vec3{0, depth, 0},
+            PhysicsQueryFilter{body.collision_layer, body.collision_mask, false, handle}, 32));
+        for (const auto& hit : hits.hits) {
+            if (!hit.normal || hit.normal->y <= 0)
+                continue;
+            const auto native = need(physics->body_state(*scene, hit.body));
+            if (native.motion != BodyMotion::static_body)
+                continue;
+            const auto point = need(translate_world_position(
+                frame.origin, {hit.position.x, hit.position.y, hit.position.z}));
+            return {need(traversal->project_walk_surface(point)), hit.normal->y};
+        }
+        fail("NPC pursuit has no current native authored support");
+    }
     void add_npc(const EntityReference& entity, PhysicsBodyHandle body,
-                 std::optional<math::Vec3> pending) {
+                 std::optional<math::Vec3> pending, std::optional<RegionNpcPursuit> pursuit) {
         if (!npc_intent(pending) || npcs.size() >= region_world_maximum_npcs ||
+            (pursuit && (!pursuit_intent(*pursuit) || pending)) ||
             std::any_of(npcs.begin(), npcs.end(),
                         [&](const auto& n) { return n.entity == entity || n.body == body; }))
             fail("Executor NPC intent or native identity is invalid or duplicated");
         const auto native = need(physics->body_state(*scene, body));
         if (!native.settings)
             fail("Executor NPC requires a primitive");
-        Npc candidate{entity, body, *native.settings, pending};
+        Npc candidate{entity, body, *native.settings, pending, pursuit};
+        if (pursuit && candidate.settings.shape != ColliderShape::sphere)
+            fail("Native pursuit currently supports dynamic spheres");
+        if (pursuit && pursuit->steering_anchor) {
+            need(validate_world_position(*pursuit->steering_anchor));
+            if (pursuit->steering_anchor->world != frame.origin.world)
+                fail("NPC pursuit progress belongs to another world");
+            static_cast<void>(need(world_position_relative_to(
+                *pursuit->steering_anchor, frame.origin, physics_local_position_limit)));
+        }
         static_cast<void>(npc_body(candidate));
         const auto p = native.pose.translation;
         const auto global = need(translate_world_position(frame.origin, {p.x, p.y, p.z}));
@@ -209,7 +346,21 @@ struct RegionExecutor::Impl {
         for (const auto& asset : result->assets)
             inputs.push_back({asset.asset, asset.payload});
         result->prepared = need(PreparedAssets::create(inputs));
-        result->cells = std::make_shared<const std::vector<RegionImageCell>>(image.cells);
+        result->content = std::make_shared<CellReaderState>();
+        result->content->catalog = image.cells;
+        result->residency_limits = image.residency_limits;
+        for (auto& cell : result->content->catalog) {
+            if (cell.source && (!cell.source->path.is_absolute() || cell.source->bytes == 0 ||
+                                cell.source->bytes > world_cell_maximum_payload_bytes))
+                fail("Executor cell file descriptor is not absolute and bounded");
+            for (const auto& body : image.physics.bodies)
+                if (restore && body.mesh && identity(body.native.entity) == cell.proxy) {
+                    if (cell.state != RegionCellState::active)
+                        fail("Inactive catalog cell retains native collision");
+                    cell.settings = {body.settings.friction, body.settings.restitution,
+                                     body.settings.collision_layer, body.settings.collision_mask};
+                }
+        }
         result->scene = need(Scene::create(RegionSceneScope{
             image.frame.origin.world, {image.physics.scope.authority.region, instance, 1}}));
         result->physics = need(PhysicsWorld::create(image.physics.config));
@@ -280,18 +431,12 @@ struct RegionExecutor::Impl {
             }
         }
         need(result->physics->begin_simulation(*result->scene));
-        const auto cells = result->cells;
-        result->residency = need(
-            WorldCellResidency::create([cells](const WorldCellReadRequest& request,
-                                               std::stop_token) -> Result<std::vector<std::byte>> {
-                for (const auto& cell : *cells)
-                    if (cell.key == request.key &&
-                        cell.content_revision == request.content_revision)
-                        return cell.payload;
-                return Error{ErrorCode::conflict,
-                             "Requested cell is absent from immutable executor image",
-                             {}};
-            }));
+        const auto content = result->content;
+        result->residency = need(WorldCellResidency::create(
+            [content](const WorldCellReadRequest& request, std::stop_token stop) {
+                return content->read(request, stop);
+            },
+            image.residency_limits));
         result->traversal = need(WorldTraversal::create(*result->residency, *result->physics,
                                                         *result->scene, image.frame));
         const auto mesh_settings = [&](WorldEntityId proxy) {
@@ -303,7 +448,9 @@ struct RegionExecutor::Impl {
                                     body.settings.collision_layer, body.settings.collision_mask};
             return settings;
         };
-        for (const auto& cell : *cells) {
+        for (const auto& cell : content->catalog) {
+            if (cell.state == RegionCellState::unloaded)
+                continue;
             const auto job =
                 need(result->residency->submit(cell.key, cell.content_revision, result->prepared));
             const auto deadline = std::chrono::steady_clock::now() + std::chrono::seconds{5};
@@ -325,8 +472,16 @@ struct RegionExecutor::Impl {
             const auto loaded = need(result->residency->take(job));
             if (!loaded.resident_generation)
                 fail("Executor cell was not published");
-            need(result->traversal->activate(cell.key, *loaded.resident_generation, cell.proxy,
-                                             mesh_settings(cell.proxy)));
+            if (cell.state == RegionCellState::active)
+                need(result->traversal->activate(cell.key, *loaded.resident_generation, cell.proxy,
+                                                 cell.settings));
+        }
+        {
+            const std::lock_guard lock{content->mutex};
+            content->initial = false;
+            for (auto& cell : content->catalog)
+                if (cell.source)
+                    std::vector<std::byte>{}.swap(cell.payload);
         }
         if (restore)
             for (const auto& body : image.physics.bodies)
@@ -408,7 +563,7 @@ Result<std::unique_ptr<RegionExecutor>> RegionExecutor::bootstrap(const RegionPr
             const auto entity =
                 need(impl->scene->reference(need(impl->scene->find(identity(npc.source)))));
             const auto body = need(impl->physics->find_body(*impl->scene, entity));
-            impl->add_npc(entity, body, npc.pending);
+            impl->add_npc(entity, body, npc.pending, npc.pursuit);
         }
         need(impl->fence->freeze(impl->permit));
         return std::unique_ptr<RegionExecutor>{new RegionExecutor{std::move(impl)}};
@@ -435,7 +590,7 @@ Result<std::unique_ptr<RegionExecutor>> RegionExecutor::stage(const RegionProces
             const auto& map = impl->map(npc.source);
             if (map.source_body != npc.body || !map.destination_body)
                 fail("Executor NPC lacks its exact native map");
-            impl->add_npc(map.destination, *map.destination_body, npc.pending);
+            impl->add_npc(map.destination, *map.destination_body, npc.pending, npc.pursuit);
         }
         return std::unique_ptr<RegionExecutor>{new RegionExecutor{std::move(impl)}};
     });
@@ -525,6 +680,8 @@ Result<void> RegionExecutor::activate() {
 Result<void> RegionExecutor::freeze() {
     return boundary<void>("server.executor.freeze", [&] {
         impl_->check();
+        if (need(impl_->residency->usage()).retained_jobs != 0)
+            fail("Content jobs must settle and be taken before transfer freeze");
         if (impl_->phase == RegionExecutorPhase::active)
             need(impl_->fence->freeze(impl_->permit));
         impl_->phase = RegionExecutorPhase::frozen;
@@ -551,12 +708,126 @@ Result<void> RegionExecutor::submit_npc_velocity(WorldEntityId id, math::Vec3 ve
         impl_->check(true);
         const auto found = std::find_if(impl_->npcs.begin(), impl_->npcs.end(),
                                         [&](const auto& n) { return identity(n.entity) == id; });
-        if (found == impl_->npcs.end() || found->pending || !std::isfinite(velocity.x) ||
-            !std::isfinite(velocity.y) || !std::isfinite(velocity.z) || velocity.y != 0 ||
+        if (found == impl_->npcs.end() || found->pending || found->pursuit ||
+            !std::isfinite(velocity.x) || !std::isfinite(velocity.y) ||
+            !std::isfinite(velocity.z) || velocity.y != 0 ||
             glm::dot(velocity, velocity) > movement_speed * movement_speed)
             fail("Executor NPC intent is unknown, repeated or outside horizontal speed bounds");
         static_cast<void>(impl_->npc_body(*found));
         found->pending = velocity;
+    });
+}
+Result<WorldCellJobId> RegionExecutor::prefetch_cell(WorldCellKey key) {
+    return boundary<WorldCellJobId>("server.executor.cell.prefetch", [&] {
+        impl_->check(true);
+        const auto& cell = impl_->content->catalog[impl_->content->index(key)];
+        return need(impl_->residency->submit(key, cell.content_revision, impl_->prepared));
+    });
+}
+Result<WorldCellJobStatus> RegionExecutor::cancel_cell(WorldCellJobId job) {
+    return boundary<WorldCellJobStatus>("server.executor.cell.cancel", [&] {
+        impl_->check(true);
+        return need(impl_->residency->cancel(job));
+    });
+}
+Result<std::size_t> RegionExecutor::drain_cells() {
+    return boundary<std::size_t>("server.executor.cell.drain", [&] {
+        impl_->check(true);
+        return need(impl_->residency->drain());
+    });
+}
+Result<WorldCellJobStatus> RegionExecutor::take_cell(WorldCellJobId job) {
+    return boundary<WorldCellJobStatus>("server.executor.cell.take", [&] {
+        impl_->check(true);
+        auto result = need(impl_->residency->take(job));
+        const auto residents = need(impl_->residency->residents());
+        if (std::none_of(residents.begin(), residents.end(),
+                         [&](const auto& row) { return row.key == result.key; })) {
+            const std::lock_guard lock{impl_->content->mutex};
+            impl_->content->raw[impl_->content->index(result.key)].reset();
+        }
+        return result;
+    });
+}
+Result<WorldTraversalCell> RegionExecutor::activate_cell(WorldCellKey key) {
+    return boundary<WorldTraversalCell>("server.executor.cell.activate", [&] {
+        impl_->check(true);
+        const auto resident = impl_->resident(key);
+        const auto& cell = impl_->content->catalog[impl_->content->index(key)];
+        return need(
+            impl_->traversal->activate(key, resident.generation, cell.proxy, cell.settings));
+    });
+}
+Result<void> RegionExecutor::deactivate_cell(WorldCellKey key) {
+    return boundary<void>("server.executor.cell.deactivate", [&] {
+        impl_->check(true);
+        const auto active = need(impl_->traversal->cells());
+        const auto found = std::find_if(active.begin(), active.end(),
+                                        [&](const auto& row) { return row.key == key; });
+        if (found == active.end())
+            fail("Cell is not traversal-active");
+        impl_->detachable(*found);
+        need(impl_->traversal->deactivate(key, found->resident_generation));
+    });
+}
+Result<void> RegionExecutor::evict_cell(WorldCellKey key) {
+    return boundary<void>("server.executor.cell.evict", [&] {
+        impl_->check(true);
+        const auto resident = impl_->resident(key);
+        need(impl_->residency->evict(key, resident.generation));
+        const std::lock_guard lock{impl_->content->mutex};
+        impl_->content->raw[impl_->content->index(key)].reset();
+    });
+}
+Result<RegionCellUsage> RegionExecutor::cell_usage() const {
+    return boundary<RegionCellUsage>("server.executor.cell.usage", [&] {
+        impl_->check();
+        return RegionCellUsage{need(impl_->residency->usage()), need(impl_->residency->residents()),
+                               need(impl_->traversal->cells()), need(impl_->residency->jobs())};
+    });
+}
+Result<void> RegionExecutor::set_pursuit(WorldEntityId id, std::uint64_t request,
+                                         WorldEntityId target, net::CombatTargetId life,
+                                         double speed, double stop_distance) {
+    return boundary<void>("server.executor.pursuit.set", [&] {
+        impl_->check(true);
+        const auto found =
+            std::find_if(impl_->npcs.begin(), impl_->npcs.end(),
+                         [&](const auto& npc) { return identity(npc.entity) == id; });
+        RegionNpcPursuit pursuit{request,       target, life, speed,
+                                 stop_distance, 0,      0,    RegionPursuitStatus::active};
+        if (found == impl_->npcs.end() || found->pending || !pursuit_intent(pursuit) ||
+            found->settings.shape != ColliderShape::sphere)
+            fail("NPC pursuit intent is invalid");
+        if (found->pursuit) {
+            const auto& prior = *found->pursuit;
+            if (request == prior.request) {
+                if (target != prior.target || life != prior.life || speed != prior.speed ||
+                    stop_distance != prior.stop_distance)
+                    fail("NPC pursuit request was reused with different values");
+                return;
+            }
+            if (request < prior.request)
+                fail("NPC pursuit request regressed");
+        }
+        const auto actors = need(impl_->combat->capture_cut(*impl_->scene, *impl_->physics));
+        if (std::none_of(actors.actors.begin(), actors.actors.end(), [&](const auto& actor) {
+                return actor.entity.identity == EntityIdentity{target} && actor.target == life &&
+                       actor.body && actor.health != 0 && !actor.detached && !actor.fenced;
+            }))
+            fail("NPC pursuit target life is not available");
+        found->pursuit = pursuit;
+    });
+}
+Result<void> RegionExecutor::cancel_pursuit(WorldEntityId id, std::uint64_t request) {
+    return boundary<void>("server.executor.pursuit.cancel", [&] {
+        impl_->check(true);
+        const auto found =
+            std::find_if(impl_->npcs.begin(), impl_->npcs.end(),
+                         [&](const auto& npc) { return identity(npc.entity) == id; });
+        if (found == impl_->npcs.end() || !found->pursuit || found->pursuit->request != request)
+            fail("NPC pursuit cancellation does not match its retained request");
+        found->pursuit->status = RegionPursuitStatus::cancelled;
     });
 }
 Result<RegionTick> RegionExecutor::step(GameplayAccess& access,
@@ -577,10 +848,19 @@ Result<RegionTick> RegionExecutor::step(GameplayAccess& access,
             PhysicsBodyVelocity velocity;
             math::Vec3 from;
             double radius;
+            std::optional<math::Vec3> offered{};
+            std::optional<WorldPosition> candidate{};
         };
+        const bool pursuing =
+            std::any_of(impl_->npcs.begin(), impl_->npcs.end(), [](const auto& npc) {
+                return npc.pursuit && npc.pursuit->status != RegionPursuitStatus::cancelled;
+            });
+        const auto targets = pursuing ? std::optional<CombatCut>{need(impl_->combat->capture_cut(
+                                            *impl_->scene, *impl_->physics))}
+                                      : std::nullopt;
         std::array<Plan, 16> plans{};
         for (std::size_t i = 0; i < impl_->npcs.size(); ++i) {
-            const auto& npc = impl_->npcs[i];
+            auto& npc = impl_->npcs[i];
             const auto native = impl_->npc_body(npc);
             auto& plan = plans[i];
             plan.from = native.pose.translation;
@@ -592,6 +872,102 @@ Result<RegionTick> RegionExecutor::step(GameplayAccess& access,
             plan.velocity.linear.y =
                 std::clamp(plan.velocity.linear.y, -movement_maximum_vertical_speed,
                            movement_maximum_vertical_speed);
+            if (npc.pursuit && npc.pursuit->status != RegionPursuitStatus::cancelled) {
+                auto& pursuit = *npc.pursuit;
+                pursuit.status = RegionPursuitStatus::target_unavailable;
+                const auto target = std::find_if(
+                    targets->actors.begin(), targets->actors.end(), [&](const auto& actor) {
+                        return actor.entity.identity == EntityIdentity{pursuit.target} &&
+                               actor.target == pursuit.life && actor.body && actor.health != 0 &&
+                               !actor.detached && !actor.fenced;
+                    });
+                const bool available = [&] {
+                    if (target == targets->actors.end() || target->connection == 0 ||
+                        std::find(connections.begin(), connections.end(), target->connection) ==
+                            connections.end())
+                        return false;
+                    const auto authorized = access.authorize(target->connection, *impl_->scene,
+                                                             target->entity.handle, now);
+                    if (!authorized)
+                        return false;
+                    const auto& current = authorized.value();
+                    const auto& retained = target->session;
+                    return current.active && current.ready && current.session == retained.session &&
+                           current.account == retained.account &&
+                           current.character == retained.character &&
+                           current.ownership_epoch == retained.ownership_epoch;
+                }();
+                if (available) {
+                    const auto target_body =
+                        need(impl_->physics->body_state(*impl_->scene, *target->body));
+                    const auto delta = target_body.pose.translation - plan.from;
+                    const auto distance = std::hypot(delta.x, delta.z);
+                    if (distance <= pursuit.stop_distance)
+                        pursuit.status = RegionPursuitStatus::stopped;
+                    else if (pursuit.committed_steps == std::numeric_limits<std::uint64_t>::max())
+                        pursuit.status = RegionPursuitStatus::blocked;
+                    else {
+                        pursuit.status = RegionPursuitStatus::awaiting_readiness;
+                        const auto current = need(translate_world_position(
+                            impl_->frame.origin, {plan.from.x, plan.from.y, plan.from.z}));
+                        const auto destination = target_body.pose.translation;
+                        const auto goal = need(translate_world_position(
+                            impl_->frame.origin, {destination.x, destination.y, destination.z}));
+                        if (need(impl_->traversal->allows_motion(current, current, plan.radius)) &&
+                            need(impl_->traversal->allows_motion(goal, goal,
+                                                                 target_body.settings->radius))) {
+                            pursuit.status = RegionPursuitStatus::blocked;
+                            try {
+                                const auto from_surface = impl_->support(native, npc.body);
+                                const auto to_surface = impl_->support(target_body, *target->body);
+                                auto route_start = from_surface.point;
+                                if (pursuit.steering_anchor) {
+                                    const auto anchor_gap = need(world_position_relative_to(
+                                        *pursuit.steering_anchor, from_surface.point,
+                                        world_local_coordinate_limit));
+                                    if (std::hypot(anchor_gap[0], anchor_gap[2]) <=
+                                            pursuit_horizontal_agreement &&
+                                        std::abs(anchor_gap[1]) <= pursuit_support_agreement)
+                                        route_start = *pursuit.steering_anchor;
+                                    else
+                                        pursuit.steering_anchor.reset();
+                                }
+                                auto route = impl_->traversal->path(route_start, to_surface.point);
+                                if (!route && route_start != from_surface.point) {
+                                    pursuit.steering_anchor.reset();
+                                    route = impl_->traversal->path(from_surface.point,
+                                                                   to_surface.point);
+                                }
+                                const auto path = need(std::move(route));
+                                const auto cursor = need(impl_->traversal->begin(path));
+                                const auto candidate = need(impl_->traversal->advance(
+                                    path, cursor,
+                                    std::min(pursuit.speed / static_cast<double>(movement_tick_hz),
+                                             distance - pursuit.stop_distance)));
+                                const auto local = need(world_position_relative_to(
+                                    candidate.position, impl_->frame.origin,
+                                    physics_local_position_limit));
+                                plan.offered = math::Vec3{local[0], local[1], local[2]};
+                                plan.candidate = candidate.position;
+                                plan.velocity.linear.x =
+                                    (local[0] - plan.from.x) * movement_tick_hz;
+                                plan.velocity.linear.z =
+                                    (local[2] - plan.from.z) * movement_tick_hz;
+                                const auto speed =
+                                    std::hypot(plan.velocity.linear.x, plan.velocity.linear.z);
+                                if (speed > pursuit.speed) {
+                                    plan.velocity.linear.x *= pursuit.speed / speed;
+                                    plan.velocity.linear.z *= pursuit.speed / speed;
+                                }
+                                pursuit.status = RegionPursuitStatus::active;
+                            } catch (const Failure&) {
+                                plan.offered.reset();
+                                plan.candidate.reset();
+                            }
+                        }
+                    }
+                }
+            }
             const auto to =
                 plan.from + plan.velocity.linear / static_cast<double>(movement_tick_hz);
             const auto start = need(translate_world_position(
@@ -602,6 +978,10 @@ Result<RegionTick> RegionExecutor::step(GameplayAccess& access,
                 !need(impl_->traversal->allows_motion(start, end, plan.radius))) {
                 plan.velocity.linear.x = 0;
                 plan.velocity.linear.z = 0;
+                plan.offered.reset();
+                plan.candidate.reset();
+                if (npc.pursuit && npc.pursuit->status != RegionPursuitStatus::cancelled)
+                    npc.pursuit->status = RegionPursuitStatus::awaiting_readiness;
             }
         }
         impl_->phase = RegionExecutorPhase::faulted;
@@ -648,6 +1028,32 @@ Result<RegionTick> RegionExecutor::step(GameplayAccess& access,
                     return report;
                 }
                 impl_->npcs[i].pending.reset();
+                if (plans[i].offered && impl_->npcs[i].pursuit) {
+                    auto& pursuit = *impl_->npcs[i].pursuit;
+                    const auto& expected = *plans[i].offered;
+                    bool agreed = std::hypot(p.x - expected.x, p.z - expected.z) <=
+                                  pursuit_horizontal_agreement;
+                    try {
+                        const auto support = impl_->support(native, impl_->npcs[i].body);
+                        const auto ground = need(world_position_relative_to(
+                            support.point, impl_->frame.origin, physics_local_position_limit));
+                        agreed =
+                            agreed && std::abs(p.y - ground[1] -
+                                               native.collider_half_extents.x / support.normal_y) <=
+                                          pursuit_support_agreement;
+                    } catch (const Failure&) {
+                        agreed = false;
+                    }
+                    if (agreed) {
+                        pursuit.steering_anchor = plans[i].candidate;
+                        ++pursuit.committed_steps;
+                        pursuit.committed_distance +=
+                            std::hypot(p.x - plans[i].from.x, p.z - plans[i].from.z);
+                    } else {
+                        pursuit.steering_anchor.reset();
+                        pursuit.status = RegionPursuitStatus::blocked;
+                    }
+                }
             }
             for (const auto& rebound : report.gameplay.rebindings) {
                 const auto peer =
@@ -686,14 +1092,17 @@ Result<net::CombatState> RegionExecutor::view(GameplayAccess& access, std::uint6
                                              visible, now));
     });
 }
-Result<RegionProcessImage> RegionExecutor::capture() const {
-    return capture(impl_->peers, impl_->writers, impl_->watermark);
+Result<RegionProcessImage> RegionExecutor::capture(bool allow_content_jobs) const {
+    return capture(impl_->peers, impl_->writers, impl_->watermark, allow_content_jobs);
 }
 Result<RegionProcessImage> RegionExecutor::capture(std::span<const RegionPeer> peers,
                                                    std::span<const storage::RegionWriter> writers,
-                                                   std::uint64_t watermark) const {
+                                                   std::uint64_t watermark,
+                                                   bool allow_content_jobs) const {
     return boundary<RegionProcessImage>("server.executor.capture", [&] {
         impl_->check();
+        if (!allow_content_jobs && need(impl_->residency->usage()).retained_jobs != 0)
+            fail("Portable capture requires all content jobs explicitly settled and taken");
         RegionProcessImage image{impl_->frame,
                                  impl_->regions,
                                  {},
@@ -701,13 +1110,38 @@ Result<RegionProcessImage> RegionExecutor::capture(std::span<const RegionPeer> p
                                  need(impl_->movement->capture_cut(*impl_->scene, *impl_->physics)),
                                  need(impl_->combat->capture_cut(*impl_->scene, *impl_->physics)),
                                  need(impl_->combat->capture_portable_rules()),
-                                 *impl_->cells,
+                                 {},
                                  impl_->assets,
                                  {},
                                  {peers.begin(), peers.end()},
                                  {writers.begin(), writers.end()},
                                  watermark,
-                                 impl_->instance};
+                                 impl_->instance,
+                                 impl_->residency_limits};
+        const auto residents = need(impl_->residency->residents());
+        const auto active = need(impl_->traversal->cells());
+        {
+            const std::lock_guard lock{impl_->content->mutex};
+            image.cells = impl_->content->catalog;
+            for (std::size_t i = 0; i < image.cells.size(); ++i) {
+                auto& cell = image.cells[i];
+                const bool resident = std::any_of(residents.begin(), residents.end(),
+                                                  [&](const auto& r) { return r.key == cell.key; });
+                const bool ready = std::any_of(active.begin(), active.end(),
+                                               [&](const auto& r) { return r.key == cell.key; });
+                cell.state = ready      ? RegionCellState::active
+                             : resident ? RegionCellState::resident
+                                        : RegionCellState::unloaded;
+                if (cell.source) {
+                    cell.payload.clear();
+                    if (resident) {
+                        if (!impl_->content->raw[i])
+                            fail("Resident cell lost its exact reader snapshot");
+                        cell.payload = *impl_->content->raw[i];
+                    }
+                }
+            }
+        }
         SceneQueryOptions options;
         options.page_size = 256;
         options.scan_budget = 4096;
@@ -730,7 +1164,7 @@ Result<RegionProcessImage> RegionExecutor::capture(std::span<const RegionPeer> p
         }
         for (const auto& npc : impl_->npcs) {
             static_cast<void>(impl_->npc_body(npc));
-            image.npcs.push_back({npc.entity, npc.body, npc.pending});
+            image.npcs.push_back({npc.entity, npc.body, npc.pending, npc.pursuit});
         }
         return image;
     });

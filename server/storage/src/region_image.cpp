@@ -212,6 +212,15 @@ struct Reader {
         offset += size;
         return {reinterpret_cast<const char*>(value.data()), value.size()};
     }
+    ContentDigest digest() {
+        ContentDigest value;
+        if (remaining() < value.bytes.size())
+            invalid("Region image content digest is truncated");
+        std::copy_n(bytes.begin() + static_cast<std::ptrdiff_t>(offset), value.bytes.size(),
+                    value.bytes.begin());
+        offset += value.bytes.size();
+        return value;
+    }
     template <class F> auto optional(F decode) -> std::optional<decltype(decode())> {
         if (!boolean())
             return std::nullopt;
@@ -502,6 +511,11 @@ void validate_shape(const RegionProcessImage& image) {
         image.peers.size() > movement_maximum_characters ||
         image.writers.size() > movement_maximum_characters)
         invalid("Region image structural count exceeds its bound");
+    const auto& limits = image.residency_limits;
+    if (limits.maximum_resident_cells == 0 || limits.maximum_resident_cells > 8 ||
+        limits.maximum_resident_bytes == 0 || limits.maximum_resident_bytes > 256 * 1024 * 1024 ||
+        limits.maximum_pending_bytes == 0 || limits.maximum_pending_bytes > 160 * 1024 * 1024)
+        invalid("Region image cell residency limits exceed the existing owner profile");
     checked(validate_world_position(image.frame.origin));
     if (image.frame.generation == 0 || image.movement.origin != image.frame.origin ||
         image.physics.completed_tick != image.movement.completed_tick ||
@@ -549,6 +563,21 @@ void validate_shape(const RegionProcessImage& image) {
                             !std::isfinite(npc.pending->z) || npc.pending->y != 0 ||
                             glm::length(*npc.pending) > movement_speed))
             invalid("Region image NPC intent exceeds its horizontal movement profile");
+        if (npc.pursuit &&
+            (npc.pursuit->request == 0 || !std::isfinite(npc.pursuit->speed) ||
+             npc.pursuit->speed <= 0 || npc.pursuit->speed > movement_speed ||
+             !std::isfinite(npc.pursuit->stop_distance) || npc.pursuit->stop_distance < 1 ||
+             npc.pursuit->stop_distance > physics_maximum_dimension ||
+             !std::isfinite(npc.pursuit->committed_distance) ||
+             npc.pursuit->committed_distance < 0 ||
+             static_cast<std::uint32_t>(npc.pursuit->status) >
+                 static_cast<std::uint32_t>(RegionPursuitStatus::cancelled)))
+            invalid("Region image NPC pursuit exceeds its bounded value profile");
+        if (npc.pursuit && npc.pursuit->steering_anchor) {
+            checked(validate_world_position(*npc.pursuit->steering_anchor));
+            checked(world_position_relative_to(*npc.pursuit->steering_anchor, image.frame.origin,
+                                               physics_local_position_limit));
+        }
         for (std::size_t previous = 0; previous < index; ++previous)
             if (image.npcs[previous].source.identity == npc.source.identity ||
                 image.npcs[previous].source.handle == npc.source.handle ||
@@ -565,9 +594,31 @@ void validate_shape(const RegionProcessImage& image) {
         if (entity.rigid_body)
             checked(validate_rigid_body(*entity.rigid_body));
     }
-    for (const auto& cell : image.cells)
+    std::size_t residents = 0;
+    for (const auto& cell : image.cells) {
         if (cell.payload.size() > world_cell_maximum_payload_bytes)
             invalid("Region image cell payload exceeds its bound");
+        if (static_cast<std::uint32_t>(cell.state) >
+            static_cast<std::uint32_t>(RegionCellState::active))
+            invalid("Region image cell state is unknown");
+        RigidBody settings;
+        settings.friction = cell.settings.friction;
+        settings.restitution = cell.settings.restitution;
+        settings.collision_layer = cell.settings.collision_layer;
+        settings.collision_mask = cell.settings.collision_mask;
+        checked(validate_rigid_body(settings));
+        residents += cell.state != RegionCellState::unloaded;
+        if (cell.source) {
+            const auto path = cell.source->path.generic_u8string();
+            if (!cell.source->path.is_absolute() ||
+                cell.source->path.lexically_normal() != cell.source->path || path.empty() ||
+                path.size() > 4096 || path.find(u8'\0') != std::u8string::npos ||
+                cell.source->bytes == 0 || cell.source->bytes > world_cell_maximum_payload_bytes)
+                invalid("Region image cell file source is not a bounded absolute path/receipt");
+        }
+    }
+    if (residents > limits.maximum_resident_cells)
+        invalid("Region image resident cells exceed its declared capacity");
     for (const auto& asset : image.assets)
         if (asset.payload.size() > prepared_mesh_maximum_payload_bytes)
             invalid("Region image asset payload exceeds its bound");
@@ -629,6 +680,37 @@ Result<std::vector<std::byte>> encode_region_process_image(const RegionProcessIm
         list(out, image.writers, [&](const auto& writer) { write(out, writer); });
         out.value(image.route_watermark);
         out.value(image.executor_instance);
+        out.value(static_cast<std::uint64_t>(image.residency_limits.maximum_resident_cells));
+        out.value(static_cast<std::uint64_t>(image.residency_limits.maximum_resident_bytes));
+        out.value(static_cast<std::uint64_t>(image.residency_limits.maximum_pending_bytes));
+        list(out, image.cells, [&](const auto& cell) {
+            out.value(cell.state);
+            optional(out, cell.source, [&](const auto& source) {
+                const auto utf8 = source.path.generic_u8string();
+                text(out, {reinterpret_cast<const char*>(utf8.data()), utf8.size()});
+                cap(out, source.digest.bytes.size());
+                out.bytes.insert(out.bytes.end(), source.digest.bytes.begin(),
+                                 source.digest.bytes.end());
+                out.value(source.bytes);
+            });
+            out.value(cell.settings.friction);
+            out.value(cell.settings.restitution);
+            out.value(cell.settings.collision_layer);
+            out.value(cell.settings.collision_mask);
+        });
+        list(out, image.npcs, [&](const auto& npc) {
+            optional(out, npc.pursuit, [&](const auto& pursuit) {
+                out.value(pursuit.request);
+                out.value(pursuit.target);
+                out.value(pursuit.life);
+                out.value(pursuit.speed);
+                out.value(pursuit.stop_distance);
+                out.value(pursuit.committed_steps);
+                out.value(pursuit.committed_distance);
+                out.value(pursuit.status);
+                out.value(pursuit.steering_anchor);
+            });
+        });
         cap(out);
         return std::move(out.bytes);
     } catch (const InvalidImage& failure) {
@@ -647,7 +729,11 @@ Result<RegionProcessImage> decode_region_process_image(std::span<const std::byte
                      {.operation = "server.region-image.decode"}};
     try {
         Reader in{bytes};
-        if (in.u32() != 0x53485249 || in.u32() != region_process_image_version)
+        if (in.u32() != 0x53485249)
+            invalid("Region image magic/version is unsupported");
+        const auto version = in.u32();
+        if (version != region_process_image_version &&
+            version != region_process_image_legacy_version)
             invalid("Region image magic/version is unsupported");
         RegionProcessImage image{
             {in.position(), in.u64()},
@@ -693,6 +779,54 @@ Result<RegionProcessImage> decode_region_process_image(std::span<const std::byte
             in.list(movement_maximum_characters, [&] { return in.writer(); }),
             in.u64(),
             in.id<RegionInstanceId>()};
+        if (version == region_process_image_version) {
+            image.residency_limits = {static_cast<std::size_t>(in.u64()),
+                                      static_cast<std::size_t>(in.u64()),
+                                      static_cast<std::size_t>(in.u64())};
+            const auto cells = in.count(world_cell_maximum_pins);
+            if (cells != image.cells.size())
+                invalid("Region image cell extension count differs from its manifest");
+            for (auto& cell : image.cells) {
+                cell.state = in.enumeration<RegionCellState>(0, 2);
+                cell.source = in.optional([&] {
+                    const auto utf8 = in.text(4096);
+                    auto path = std::filesystem::path{
+                        std::u8string{reinterpret_cast<const char8_t*>(utf8.data()), utf8.size()}};
+                    return RegionCellFileSource{std::move(path), in.digest(), in.u64()};
+                });
+                cell.settings = {in.real(), in.real(), in.u32(), in.u32()};
+            }
+            const auto npcs = in.count(region_world_maximum_npcs);
+            if (npcs != image.npcs.size())
+                invalid("Region image NPC extension count differs from its manifest");
+            for (auto& npc : image.npcs)
+                npc.pursuit = in.optional([&] {
+                    return RegionNpcPursuit{in.u64(),
+                                            in.id<WorldEntityId>(),
+                                            in.id<net::CombatTargetId>(),
+                                            in.real(),
+                                            in.real(),
+                                            in.u64(),
+                                            in.real(),
+                                            in.enumeration<RegionPursuitStatus>(0, 5),
+                                            in.optional([&] { return in.position(); })};
+                });
+        } else {
+            // v1 had no separate cell material/filter fields. Its exact
+            // authored settings remain in the active mesh transfer record;
+            // native observation values have already been rounded to float.
+            for (auto& cell : image.cells) {
+                const auto body =
+                    std::find_if(image.physics.bodies.begin(), image.physics.bodies.end(),
+                                 [&](const auto& value) {
+                                     return value.mesh && value.native.entity.identity ==
+                                                              EntityIdentity{cell.proxy};
+                                 });
+                if (body != image.physics.bodies.end())
+                    cell.settings = {body->settings.friction, body->settings.restitution,
+                                     body->settings.collision_layer, body->settings.collision_mask};
+            }
+        }
         if (in.remaining() != 0)
             invalid("Region image contains trailing bytes");
         validate_shape(image);
@@ -708,6 +842,138 @@ Result<RegionProcessImage> decode_region_process_image(std::span<const std::byte
         return Error{ErrorCode::execution_failed,
                      "Cannot decode bounded region image",
                      {.operation = "server.region-image.decode"}};
+    }
+}
+
+Result<RegionProcessImage> reframe_region_process_image(const RegionProcessImage& image,
+                                                        WorldLocalFrame target) {
+    try {
+        validate_shape(image);
+        checked(validate_world_position(target.origin));
+        if (target.origin.world != image.frame.origin.world ||
+            target.origin.offset != image.frame.origin.offset || target.generation == 0 ||
+            image.frame.generation == std::numeric_limits<std::uint64_t>::max() ||
+            target.generation != image.frame.generation + 1)
+            invalid("Region reframe requires the next cell-aligned frame in the same world");
+        const auto relative = checked(world_position_relative_to(image.frame.origin, target.origin,
+                                                                 world_local_coordinate_limit));
+        const math::Vec3 delta{relative[0], relative[1], relative[2]};
+        const auto move = [&](math::Vec3 value, bool native) {
+            auto result = value + delta;
+            const auto maximum =
+                native ? physics_local_position_limit : world_local_coordinate_limit;
+            for (int axis = 0; axis < 3; ++axis) {
+                if (!std::isfinite(value[axis]) || !std::isfinite(result[axis]) ||
+                    std::abs(value[axis]) > maximum || std::abs(result[axis]) > maximum ||
+                    result[axis] - delta[axis] != value[axis])
+                    invalid("Region reframe cannot retain its bounded local coordinates exactly");
+                if (native) {
+                    const auto before = static_cast<float>(value[axis]);
+                    const auto after = static_cast<float>(result[axis]);
+                    if (!std::isfinite(before) || !std::isfinite(after) ||
+                        std::fpclassify(after) == FP_SUBNORMAL ||
+                        static_cast<double>(after) != static_cast<double>(before) + delta[axis])
+                        invalid("Region reframe would requantize native geometry or positions");
+                }
+                if (result[axis] == 0)
+                    result[axis] = 0;
+            }
+            const auto before = checked(world_position_from_local(
+                image.frame.origin, {value.x, value.y, value.z}, maximum));
+            const auto after = checked(
+                world_position_from_local(target.origin, {result.x, result.y, result.z}, maximum));
+            if (before != after)
+                invalid("Region reframe would change a global position");
+            return result;
+        };
+        const auto pose = [&](Transform& value, bool native) {
+            value.translation = move(value.translation, native);
+        };
+        const auto domain = [&](MovementDomain& value) {
+            const auto first = move({value.min_x, 0, value.min_z}, false);
+            const auto second = move({value.max_x, 0, value.max_z}, false);
+            value = {first.x, second.x, first.z, second.z};
+            if (value.min_x < -physics_local_position_limit ||
+                value.max_x > physics_local_position_limit ||
+                value.min_z < -physics_local_position_limit ||
+                value.max_z > physics_local_position_limit)
+                invalid("Region reframe moved coverage outside its native local bound");
+        };
+        auto result = image;
+        result.frame = target;
+        for (auto& region : result.regions) {
+            MovementDomain value{region.min_x, region.max_x, region.min_z, region.max_z};
+            domain(value);
+            region.min_x = value.min_x;
+            region.max_x = value.max_x;
+            region.min_z = value.min_z;
+            region.max_z = value.max_z;
+        }
+        const auto proxy = [&](const EntityIdentity& identity) {
+            return std::any_of(image.physics.bodies.begin(), image.physics.bodies.end(),
+                               [&](const auto& body) {
+                                   return body.mesh && body.native.entity.identity == identity;
+                               });
+        };
+        for (auto& entity : result.entities)
+            if (!entity.parent && !proxy(entity.source.identity))
+                pose(entity.transform, false);
+        for (auto& body : result.physics.bodies) {
+            if (body.mesh) {
+                // Mesh vertices already occupy the Scene-local frame. Proxy
+                // poses stay identity; moving both would apply the shift twice.
+                if (body.native.pose != Transform{} || body.source_pose != Transform{} ||
+                    body.previous_pose != Transform{} || body.target)
+                    invalid("Region reframe requires the existing identity mesh-proxy profile");
+                for (auto& vertex : body.mesh->vertices)
+                    vertex = move(vertex, true);
+            } else {
+                pose(body.source_pose, false);
+                pose(body.previous_pose, false);
+                pose(body.native.pose, true);
+                if (body.target)
+                    pose(*body.target, true);
+                checked(validate_rigid_body_pose(body.settings, body.source_pose));
+                checked(validate_rigid_body_pose(body.settings, body.previous_pose));
+                checked(validate_rigid_body_pose(body.settings, body.native.pose));
+                if (body.target)
+                    checked(validate_rigid_body_pose(body.settings, *body.target));
+            }
+        }
+        result.movement.origin = target.origin;
+        for (auto& value : result.movement.domains)
+            domain(value);
+        for (auto& actor : result.movement.actors) {
+            pose(actor.native.pose, true);
+            if (actor.domain)
+                domain(*actor.domain);
+        }
+        for (auto& actor : result.combat.actors) {
+            if (actor.native)
+                pose(actor.native->pose, true);
+            pose(actor.spawn, false);
+            pose(actor.detached_pose, false);
+            actor.movement.position = move(actor.movement.position, true);
+            if (actor.projectile)
+                actor.projectile->position = move(actor.projectile->position, false);
+        }
+        // Inputs, life IDs, rules/decisions, velocities, contact identities,
+        // global cell keys, immutable payloads and pursuit identities do not move.
+        validate_shape(result);
+        Writer movement, combat;
+        movement.value(result.movement);
+        combat.value(result.combat);
+        result.movement.bytes = std::move(movement.bytes);
+        result.combat.bytes = std::move(combat.bytes);
+        return result;
+    } catch (const InvalidImage& failure) {
+        auto error = failure.error;
+        error.context.operation = "server.region-image.reframe";
+        return error;
+    } catch (...) {
+        return Error{ErrorCode::execution_failed,
+                     "Cannot prepare bounded region reframe",
+                     {.operation = "server.region-image.reframe"}};
     }
 }
 

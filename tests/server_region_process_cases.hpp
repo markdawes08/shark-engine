@@ -1,245 +1,4 @@
-// Real owned Server children; reuses the actual mTLS/Store fixture in this TU.
-#include "region_process_test_hooks.hpp"
-#include "shark/server/region_executor.hpp"
-#include "shark/server/region_gateway.hpp"
-
-namespace {
-const CombatActorCut& process_actor(const RegionProcessImage& image, WorldEntityId entity) {
-    const auto found =
-        std::find_if(image.combat.actors.begin(), image.combat.actors.end(), [&](const auto& row) {
-            return row.entity.identity == EntityIdentity{entity};
-        });
-    REQUIRE(found != image.combat.actors.end());
-    return *found;
-}
-const MovementActorCut& process_mover(const RegionProcessImage& image, WorldEntityId entity) {
-    const auto found = std::find_if(
-        image.movement.actors.begin(), image.movement.actors.end(),
-        [&](const auto& row) { return row.entity.identity == EntityIdentity{entity}; });
-    REQUIRE(found != image.movement.actors.end());
-    return *found;
-}
-const PhysicsTransferBody& process_body(const RegionProcessImage& image, WorldEntityId entity) {
-    const auto found = std::find_if(
-        image.physics.bodies.begin(), image.physics.bodies.end(),
-        [&](const auto& row) { return row.native.entity.identity == EntityIdentity{entity}; });
-    REQUIRE(found != image.physics.bodies.end());
-    return *found;
-}
-struct ProcessFixture {
-    Fixture base{false, false, character_body(), true, false, true};
-    RegionInstanceId initial{id<RegionInstanceId>(800)};
-    std::unique_ptr<RegionGateway> gateway;
-    std::uint64_t input_a{1}, action_a{1}, command_b{2}, action_b{1};
-    WorldEntityId a, b;
-    fs::path journal;
-    explicit ProcessFixture(bool force = false, const char* source = nullptr)
-        : a{base.record.entity},
-          b{std::get<WorldEntityId>(take(base.scene->reference(base.peer_entity)).identity)},
-          journal{base.root / "region-journal"} {
-        const auto metadata = take(base.authority->metadata());
-        take(base.authority->initialize_economy(base.record.account, base.record.character,
-                                                {100, 20}));
-        take(base.authority->initialize_economy(base.peer_session->account,
-                                                base.peer_session->character, {100, 20}));
-        const auto old_peer = *base.peer_session;
-        base.authority.reset();
-        SessionLimits limits;
-        limits.commands_per_window = 256;
-        base.authority = take(CharacterAuthority::open_runtime(
-            base.root / "Movement.db", metadata.id, metadata.world, limits));
-        base.session = base.login(base.pair);
-        const auto logged = take(base.authority->apply(
-            *base.peer->server, LoginRequest{old_peer.account, old_peer.character}, base.now));
-        base.peer_session = take(base.authority->apply(
-            *base.peer->server, SetReadyRequest{envelope(logged, 1), true}, base.now));
-        const auto claim_a = take(base.authority->submit_region_claim(
-            base.session.character, a, id<RegionId>(101), initial, base.now + 10s, base.now));
-        const auto claim_b = take(base.authority->submit_region_claim(
-            base.peer_session->character, b, id<RegionId>(102), initial, base.now + 10s, base.now));
-        settled();
-        std::vector<RegionWriter> writers;
-        for (const auto ticket : {claim_a, claim_b}) {
-            const auto completion = take(base.authority->take_region(ticket, base.now));
-            REQUIRE(completion.outcome);
-            const auto value = take(*completion.outcome);
-            writers.push_back(std::get<RegionOwnership>(value).writer);
-        }
-        auto rules = take(CombatRules::create_portable(
-            {"scripts/process.lua",
-             source ? source
-                    : "function on_combat(k,t,a,b,d,s) s[1]=s[1]+1 return true,10+s[1],10 end"}));
-        const auto scene_stats = take(base.scene->stats());
-        const auto source_scope = take(base.scene->reference(base.entity)).scope;
-        const auto native = take(base.physics->capture_transfer(*base.scene));
-        const CombatCut empty_combat{{scene_stats.instance, scene_stats.revision},
-                                     source_scope,
-                                     native.world,
-                                     0,
-                                     MonotonicTime{},
-                                     0,
-                                     false,
-                                     {},
-                                     CombatRulesStats{0, false},
-                                     {},
-                                     {},
-                                     {}};
-        RegionProcessImage seeds{
-            {base.origin, 1},
-            {{id<RegionId>(101), -10, .5, -10, 10, 12}, {id<RegionId>(102), .5, 10, -10, 10, 12}},
-            {},
-            native,
-            take(base.movement->capture_cut(*base.scene, *base.physics)),
-            empty_combat,
-            take(rules->capture_portable()),
-            {},
-            {},
-            {},
-            {},
-            writers,
-            0,
-            initial};
-        seeds.physics.config.gravity = {0, -9.81, 0};
-        for (const auto entity : {base.entity, base.peer_entity, base.npc_entity}) {
-            const auto state = take(base.scene->entity_state(entity));
-            auto transform = state.local_transform;
-            transform.translation.y = -base.origin.offset[1] + .5;
-            seeds.entities.push_back({state.reference,
-                                      state.name,
-                                      transform,
-                                      {},
-                                      state.camera,
-                                      state.mesh_renderer,
-                                      state.rigid_body});
-        }
-        const WorldCellGeometry geometry{{{0, 0, 0}, {0, 0, 1024}, {1024, 0, 1024}, {1024, 0, 0}},
-                                         {{0, 1, 2}, {0, 2, 3}},
-                                         {{0, 1, 2}, {0, 2, 3}}};
-        for (int n = 0; n < 2; ++n) {
-            auto cell = base.origin.cell;
-            cell.x += n;
-            const WorldCellKey key{base.origin.world, cell};
-            seeds.cells.push_back(
-                {key, 1, id<WorldEntityId>(810 + static_cast<unsigned>(n)),
-                 take(encode_world_cell(
-                     {key,
-                      1,
-                      {id<SceneId>(812), WorldPosition{key.world, key.cell, {0, 0, 0}}, {}},
-                      geometry}))});
-        }
-        seeds.npcs.push_back({take(base.scene->reference(base.npc_entity)), base.npc_body,
-                              force ? std::optional<math::Vec3>{{2, 0, 0}} : std::nullopt});
-        const std::array<TlsTransport*, 2> transports{base.pair.server.get(),
-                                                      base.peer->server.get()};
-        for (auto* transport : transports) {
-            const auto entity = transport == base.pair.server.get() ? a : b;
-            const auto handle = take(base.scene->find(entity));
-            seeds.peers.push_back(
-                {LocalGameplayAccess::connection_id(*transport),
-                 take(base.authority->authorize_entity(*transport, *base.scene, handle, base.now)),
-                 entity});
-        }
-        LocalGameplayAccess access{*base.authority, transports};
-        auto bootstrap = take(RegionExecutor::bootstrap(seeds, initial, access, base.now));
-        auto image = take(bootstrap->capture());
-        bootstrap.reset(); // No gateway native simulation runs after this point.
-        base.movement.reset();
-        base.physics.reset();
-        if (force) {
-            auto body = std::find_if(
-                image.physics.bodies.begin(), image.physics.bodies.end(), [&](const auto& row) {
-                    return row.native.entity.identity == EntityIdentity{id<WorldEntityId>(40)};
-                });
-            REQUIRE(body != image.physics.bodies.end());
-            body->pending_force = {20, 0, 0};
-        }
-        REQUIRE(fs::create_directory(journal));
-        gateway = take(RegionGateway::create(*base.authority, fs::path{SHARK_REGION_SERVER},
-                                             journal, image, transports, base.now));
-    }
-    ~ProcessFixture() {
-        shark::server::detail::clear_region_control_fault();
-        gateway.reset();
-        if (base.complete) {
-            std::error_code ignored;
-            for (const auto* file :
-                 {"checkpoint.sharkregion", "staged.sharkregion", "checkpoint.sharkregion.partial",
-                  "staged.sharkregion.partial", ".shark-region-journal.lock"})
-                fs::remove(journal / file, ignored);
-            fs::remove(journal, ignored);
-        }
-    }
-    void settled() {
-        const auto deadline = std::chrono::steady_clock::now() + 5s;
-        while (take(base.authority->poll(base.now)).unsettled != 0) {
-            REQUIRE(std::chrono::steady_clock::now() < deadline);
-            std::this_thread::yield();
-        }
-    }
-    void finish() {
-        take(gateway->close(base.now));
-        base.complete = true;
-    }
-    std::array<TlsTransport*, 2> live() const {
-        return {base.pair.server.get(), base.peer->server.get()};
-    }
-    RegionProcessImage image() const {
-        return take(gateway->snapshot());
-    }
-    RegionProcessImage tick() {
-        base.now += 50ms;
-        return take(gateway->step(live(), base.now));
-    }
-    RegionRouteReceipt move(std::int16_t x = 1000) {
-        const auto current = image();
-        const auto& mover = process_mover(current, a);
-        const auto receipt =
-            take(gateway->submit(*base.pair.server,
-                                 MovementInput{envelope(base.session, base.next_command++),
-                                               mover.stream, input_a++, x, 0},
-                                 base.now));
-        return receipt;
-    }
-    RegionRouteReceipt combat(bool second, CombatActionKind kind) {
-        const auto current = image();
-        const auto& actor = process_actor(current, second ? b : a);
-        const auto& target = process_actor(current, second ? a : b);
-        auto& command = second ? command_b : base.next_command;
-        auto& action = second ? action_b : action_a;
-        return take(gateway->submit(
-            *(second ? base.peer->server : base.pair.server),
-            CombatAction{envelope(second ? *base.peer_session : base.session, command++),
-                         actor.stream, action++, target.target, kind},
-            base.now));
-    }
-    void commit() {
-        take(gateway->begin_commit(base.now + 10s, base.now));
-        const auto deadline = std::chrono::steady_clock::now() + 5s;
-        while (take(gateway->poll_commit(base.now)) == RegionGatewayPhase::committing) {
-            REQUIRE(std::chrono::steady_clock::now() < deadline);
-            std::this_thread::yield();
-        }
-        CHECK(take(gateway->stats()).phase == RegionGatewayPhase::committed);
-    }
-    void recover(unsigned instance) {
-        take(gateway->prepare_recovery(id<RegionInstanceId>(instance), live(), base.now));
-        commit();
-        take(gateway->activate(base.now));
-    }
-    ReplicationUpdate interest() {
-        const auto reply = take(gateway->publish_interest(*base.pair.server, base.now));
-        REQUIRE(reply.status == InterestPublishStatus::sent);
-        const auto frame = base.pair.receive(false, base.now);
-        REQUIRE(frame.kind == MessageKind::replication_state);
-        const auto update = take(decode_replication_update(frame.payload));
-        take(gateway->control_interest(*base.pair.server,
-                                       ReplicationAck{envelope(base.session, base.next_command++),
-                                                      update.stream, update.revision},
-                                       base.now));
-        return update;
-    }
-};
-} // namespace
+#include "server_region_process_fixture.hpp"
 
 TEST_CASE(
     "Separate native region processes retain admitted queues flights state and recipient replicas",
@@ -496,6 +255,130 @@ TEST_CASE("Lost real worker replies require hard fencing and never repeat shared
         CHECK(process_mover(f.tick(), f.a).applied == 1);
     } else
         CHECK(mover.accepted == 0);
+    f.finish();
+}
+
+TEST_CASE("A lost combat commit reply replays one original action without another admission",
+          "[server-region-process]") {
+    ProcessFixture f;
+    const auto initial = f.image();
+    const auto& actor = process_actor(initial, f.a);
+    const auto& target = process_actor(initial, f.b);
+    const CombatAction original{envelope(f.base.session, f.base.next_command), actor.stream,
+                                f.action_a, target.target, CombatActionKind::strike};
+    shark::server::detail::set_region_control_fault(
+        shark::server::detail::RegionControlPoint::combat_commit,
+        shark::server::detail::RegionControlFault::drop_reply);
+    CHECK(f.combat(false, CombatActionKind::strike).status == RegionRouteStatus::uncertain);
+    const auto admitted = take(f.base.authority->authorize_entity(
+        *f.base.pair.server, *f.base.scene, f.base.entity, f.base.now));
+    CHECK(admitted.last_sequence == original.authority.sequence);
+    CHECK(process_actor(f.image(), f.a).accepted == 0);
+    CHECK(f.image().rules.evaluations == 0);
+    f.recover(828);
+    const auto restored = f.image();
+    REQUIRE(process_actor(restored, f.a).pending);
+    CHECK(*process_actor(restored, f.a).pending == original);
+    CHECK(process_actor(restored, f.a).accepted == original.action_sequence);
+    CHECK(process_actor(restored, f.a).outcomes.empty());
+    CHECK(restored.rules.state[0] == 0);
+    CHECK(restored.rules.evaluations == 0);
+    CHECK(take(f.base.authority->authorize_entity(*f.base.pair.server, *f.base.scene, f.base.entity,
+                                                  f.base.now)) == admitted);
+    const auto resolved = f.tick();
+    REQUIRE(process_actor(resolved, f.a).outcomes.size() == 1);
+    CHECK(process_actor(resolved, f.a).outcomes.front() ==
+          CombatActionResult{original.action_sequence, original.target, CombatActionKind::strike,
+                             CombatOutcome::hit, 11});
+    CHECK(process_actor(resolved, f.b).health == 89);
+    CHECK(resolved.rules.state[0] == 1);
+    CHECK(resolved.rules.evaluations == 1);
+    CHECK_FALSE(f.gateway->submit(*f.base.pair.server, original, f.base.now));
+    const auto repeated = f.tick();
+    CHECK(process_actor(repeated, f.a).outcomes == process_actor(resolved, f.a).outcomes);
+    CHECK(process_actor(repeated, f.b).health == 89);
+    CHECK(repeated.rules.state[0] == 1);
+    CHECK(repeated.rules.evaluations == 1);
+    CHECK(take(f.base.authority->authorize_entity(*f.base.pair.server, *f.base.scene, f.base.entity,
+                                                  f.base.now)) == admitted);
+    f.finish();
+}
+
+TEST_CASE("A lost completed step restores the acknowledged cut and commits one outcome and effect",
+          "[server-region-process]") {
+    ProcessFixture f;
+    const auto initial = f.image();
+    const TransferRequest operation{{initial.writers.front().store, f.base.session.account, 1},
+                                    f.base.session.character,
+                                    f.base.peer_session->character,
+                                    1,
+                                    1,
+                                    {7, 2}};
+    const auto economic = take(f.gateway->submit_transfer(
+        *f.base.pair.server, envelope(f.base.session, f.base.next_command++), operation,
+        f.base.now + 10s, f.base.now));
+    CHECK(f.combat(false, CombatActionKind::strike).status == RegionRouteStatus::admitted);
+    const auto acknowledged = f.image();
+    REQUIRE(process_actor(acknowledged, f.a).pending);
+    const auto original = *process_actor(acknowledged, f.a).pending;
+    const auto admitted = take(f.base.authority->authorize_entity(
+        *f.base.pair.server, *f.base.scene, f.base.entity, f.base.now));
+    shark::server::detail::set_region_control_fault(
+        shark::server::detail::RegionControlPoint::step,
+        shark::server::detail::RegionControlFault::drop_reply);
+    f.base.now += 50ms;
+    CHECK_FALSE(f.gateway->step(f.live(), f.base.now));
+    const auto retained = f.image();
+    CHECK(retained.physics.completed_tick == acknowledged.physics.completed_tick);
+    CHECK(process_actor(retained, f.a).pending == process_actor(acknowledged, f.a).pending);
+    CHECK(process_actor(retained, f.b).health == 100);
+    CHECK(retained.rules.state[0] == 0);
+    CHECK(retained.rules.evaluations == 0);
+    f.recover(829);
+    const auto restored = f.image();
+    CHECK(restored.physics.completed_tick == acknowledged.physics.completed_tick);
+    CHECK(process_actor(restored, f.a).pending == process_actor(acknowledged, f.a).pending);
+    CHECK(process_actor(restored, f.a).outcomes.empty());
+    CHECK(restored.rules.state[0] == 0);
+    CHECK(restored.rules.evaluations == 0);
+    CHECK(take(f.base.authority->authorize_entity(*f.base.pair.server, *f.base.scene, f.base.entity,
+                                                  f.base.now)) == admitted);
+    const auto resolved = f.tick();
+    CHECK(resolved.physics.completed_tick == acknowledged.physics.completed_tick + 1);
+    REQUIRE(process_actor(resolved, f.a).outcomes.size() == 1);
+    CHECK(process_actor(resolved, f.a).outcomes.front() ==
+          CombatActionResult{original.action_sequence, original.target, CombatActionKind::strike,
+                             CombatOutcome::hit, 11});
+    CHECK(process_actor(resolved, f.b).health == 89);
+    CHECK(resolved.rules.state[0] == 1);
+    CHECK(resolved.rules.evaluations == 1);
+    const auto repeated = f.tick();
+    CHECK(process_actor(repeated, f.a).outcomes == process_actor(resolved, f.a).outcomes);
+    CHECK(process_actor(repeated, f.b).health == 89);
+    CHECK(repeated.rules.state[0] == 1);
+    CHECK(repeated.rules.evaluations == 1);
+    CHECK(take(f.base.authority->authorize_entity(*f.base.pair.server, *f.base.scene, f.base.entity,
+                                                  f.base.now)) == admitted);
+    f.settled();
+    const auto completion =
+        take(f.gateway->take_transfer(*f.base.pair.server, economic, f.base.now));
+    CHECK(completion.ticket == economic);
+    CHECK(completion.transfer == operation);
+    CHECK(completion.writer == initial.writers.front());
+    REQUIRE(completion.outcome);
+    const auto value = take(*completion.outcome);
+    REQUIRE(std::get<TransferResult>(value).receipt.source);
+    REQUIRE(std::get<TransferResult>(value).receipt.target);
+    CHECK(std::get<TransferResult>(value).receipt.source->state == EconomyState{93, 18});
+    CHECK(std::get<TransferResult>(value).receipt.target->state == EconomyState{107, 22});
+    const auto source_balance = take(f.base.authority->economy(
+        *f.base.pair.server, envelope(f.base.session, f.base.next_command++), f.base.now));
+    const auto target_balance = take(f.base.authority->economy(
+        *f.base.peer->server, envelope(*f.base.peer_session, f.command_b++), f.base.now));
+    CHECK(source_balance.state == EconomyState{93, 18});
+    CHECK(target_balance.state == EconomyState{107, 22});
+    CHECK(source_balance.revision == 2);
+    CHECK(target_balance.revision == 2);
     f.finish();
 }
 
